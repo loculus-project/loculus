@@ -1,0 +1,7 @@
+a {
+  @apply underline decoration-purple-200 decoration-4 #{!important};
+
+  &:hover {
+    @apply decoration-orange-200 #{!important};
+  }
+}
