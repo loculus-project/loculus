@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'preact/compat';
+import React, { useEffect, useState } from 'react';
+
 import { fetchSequenceList } from '../api';
 import type { Config } from '../config';
 
@@ -6,14 +7,17 @@ type Props = {
   config: Config;
 };
 
-export const PreactPaginatedSequenceList = ({ config }: Props) => {
+export const PaginatedSequenceList = ({ config }: Props): React.JSX.Element => {
   const [page, setPage] = useState(0);
   const [sequences, setSequences] = useState<any[] | undefined>();
   const offset = 100 * page;
 
   useEffect(() => {
-    fetchSequenceList(config).then((d) => setSequences(d));
-  }, []);
+    (async () => {
+      const list = await fetchSequenceList(config);
+      setSequences(list);
+    })().catch(() => new Error('Error fetching sequences'));
+  }, [config]);
 
   if (!sequences) {
     return <>Loading..</>;
@@ -21,7 +25,7 @@ export const PreactPaginatedSequenceList = ({ config }: Props) => {
 
   return (
     <div>
-      <button onClick={() => setPage(Math.max(page - 1, 0))} class='mr-2'>
+      <button onClick={() => setPage(Math.max(page - 1, 0))} className='mr-2'>
         Previous
       </button>
       <button onClick={() => setPage(page + 1)}>Next</button>

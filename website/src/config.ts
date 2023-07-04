@@ -1,6 +1,7 @@
 import fs from 'fs';
-import { parse } from 'yaml';
 import path from 'path';
+
+import { parse } from 'yaml';
 
 export type Config = {
   lapisHost: string;
