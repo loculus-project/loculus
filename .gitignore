@@ -1,0 +1,12 @@
+# macOS-specific files
+.DS_Store
+
+# Editor
+.idea/
+
+# build output
+dist/
+
+# dependencies
+node_modules/
+
