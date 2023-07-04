@@ -1,32 +1,29 @@
 import { DataGrid } from '@mui/x-data-grid';
+import { capitalCase } from 'change-case';
 import type { FC } from 'react';
 import * as React from 'react';
 
-export type SequenceData = {
-    strain: string;
-    date: string;
-    pangoLineage: string;
-};
+import { displayConfig } from '../../config';
+
+export type TableSequenceData = Record<(typeof displayConfig.searchPage.resultTableFields)[number], any>;
 
 type TableProps = {
-    data: SequenceData[];
+    data: TableSequenceData[];
 };
 
 export const Table: FC<TableProps> = ({ data }) => {
     const rows = data.map((entry, index) => ({
         id: index,
-        date: entry.date,
-        strain: entry.strain,
-        pangoLineage: entry.pangoLineage,
+        ...entry,
     }));
-    const columns = [
-        { field: 'date', headerName: 'Date', width: 150 },
-        { field: 'strain', headerName: 'Strain', width: 150 },
-        { field: 'pangoLineage', headerName: 'Pango Lineage', width: 150 },
-    ];
+    const columns = displayConfig.searchPage.resultTableFields.map((field) => ({
+        field,
+        headerName: capitalCase(field),
+        flex: 1,
+    }));
 
     return (
-        <div style={{ height: 300, width: '100%' }}>
+        <div style={{ height: 400, width: '100%' }}>
             <DataGrid rows={rows} columns={columns} />
         </div>
     );

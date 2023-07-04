@@ -1,13 +1,14 @@
 import { TextField } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import React, { type FC, useState } from 'react';
 
-import type { SequenceData } from './Table';
+import type { TableSequenceData } from './Table';
 import { fakeData } from '../../api/lapisFakeApi.json';
 import type { Metadata } from '../../config';
 
 interface SearchFormProps {
     fields: Metadata[];
-    setSequenceData: (sequenceData: SequenceData[]) => void;
+    setSequenceData: (sequenceData: TableSequenceData[]) => void;
 }
 
 export const SearchForm: FC<SearchFormProps> = ({ fields, setSequenceData }) => {
@@ -31,6 +32,7 @@ export const SearchForm: FC<SearchFormProps> = ({ fields, setSequenceData }) => 
         // country=Germany&dateFrom=2023-01-02&fields=strain&fields=pangoLineage&fields=date&limit=100
         // console.log('Search query:', searchQuery);
         // console.log('Field values:', fieldValues);
+
         setSequenceData(fakeData.data);
     };
 
@@ -52,23 +54,38 @@ export const SearchForm: FC<SearchFormProps> = ({ fields, setSequenceData }) => 
             />
             {fieldGroups.map((group, groupIndex) => (
                 <div key={groupIndex} className='flex gap-4 justify-evenly'>
-                    {group.map((field, index) => (
-                        <TextField
-                            key={index}
-                            variant='outlined'
-                            margin='dense'
-                            placeholder={field.name}
-                            type={field.type === 'date' ? 'string' : field.type}
-                            required
-                            size='small'
-                            value={fieldValues[groupIndex * 4 + index]}
-                            onChange={(e) => handleFieldChange(groupIndex * 4 + index, e.target.value)}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            className='w-1/4'
-                        />
-                    ))}
+                    {group.map((field, index) =>
+                        field.type !== 'date' ? (
+                            <TextField
+                                key={index}
+                                variant='outlined'
+                                margin='dense'
+                                placeholder={field.name}
+                                type={field.type}
+                                required
+                                size='small'
+                                value={fieldValues[groupIndex * 4 + index]}
+                                onChange={(e) => handleFieldChange(groupIndex * 4 + index, e.target.value)}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                className='w-1/4'
+                            />
+                        ) : (
+                            <DatePicker
+                                key={index}
+                                label={field.name}
+                                slotProps={{
+                                    textField: {
+                                        size: 'small',
+                                        variant: 'outlined',
+                                        margin: 'dense',
+                                        className: 'w-1/4',
+                                    },
+                                }}
+                            />
+                        ),
+                    )}
                 </div>
             ))}
             <div className='flex justify-center mt-4'>
