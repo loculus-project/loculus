@@ -11,5 +11,5 @@ test('has header', async ({ page }) => {
     await page.goto('http://localhost:3001/');
 
     // Expects the URL to contain intro.
-    await expect(page.locator('h1')).toContainText('My first Astro application');
+    await expect(page.locator('h1')).toContainText('Pathoplexus');
 });
