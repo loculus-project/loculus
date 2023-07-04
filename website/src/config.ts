@@ -3,14 +3,15 @@ import path from 'path';
 
 import { parse } from 'yaml';
 
+export type Metadata = {
+  name: string;
+  type: 'string' | 'date' | 'integer' | 'pangoLineage';
+};
 export type Config = {
   lapisHost: string;
   schema: {
     instanceName: string;
-    metadata: {
-      name: string;
-      type: string;
-    }[];
+    metadata: Metadata[];
     primaryKey: string;
   };
 };
