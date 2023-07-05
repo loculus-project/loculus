@@ -1,0 +1,11 @@
+---
+import { SearchPage } from '../../components/SearchPage/SearchPage';
+import { getConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const fields = getConfig().schema.metadata;
+---
+
+<BaseLayout title='Search'>
+    <SearchPage fields={fields} client:load />
+</BaseLayout>
