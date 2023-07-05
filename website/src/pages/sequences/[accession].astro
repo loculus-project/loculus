@@ -4,7 +4,7 @@ import { getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 interface Props {
-  accession: string;
+    accession: string;
 }
 
 const { accession } = Astro.params;
@@ -14,14 +14,14 @@ const config = getConfig();
 
 <!-- This is entirely server-side rendered -->
 <BaseLayout title={data[config.schema.primaryKey]}>
-  <h1 class='font-bold'>{data[config.schema.primaryKey]}</h1>
-  <ul>
-    {
-      config.schema.metadata.map(({ name }) => (
-        <li>
-          {name}: {data[name]}
-        </li>
-      ))
-    }
-  </ul>
+    <h1 class='font-bold'>{data[config.schema.primaryKey]}</h1>
+    <ul>
+        {
+            config.schema.metadata.map(({ name }) => (
+                <li>
+                    {name}: {data[name]}
+                </li>
+            ))
+        }
+    </ul>
 </BaseLayout>
