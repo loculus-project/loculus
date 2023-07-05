@@ -49,4 +49,9 @@ schema:
     - name: authors
       type: string
     # ... there are many more derived/QC metrics
+  tableColumns:
+    - strain
+    - country
+    - date
+    - pangoLineage
   primaryKey: genbankAccession

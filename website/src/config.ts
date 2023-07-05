@@ -12,14 +12,9 @@ export type Config = {
     schema: {
         instanceName: string;
         metadata: Metadata[];
+        tableColumns: string[];
         primaryKey: string;
     };
-};
-
-export const displayConfig = {
-    searchPage: {
-        resultTableFields: ['strain', 'country', 'date', 'pangoLineage'],
-    },
 };
 
 let _config: Config | null = null;
