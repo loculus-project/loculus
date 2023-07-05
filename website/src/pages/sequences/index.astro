@@ -9,9 +9,9 @@ const numberSequences = await fetchNumberSequences();
 ---
 
 <BaseLayout title='Sequences'>
-  <!-- The number of sequences is quick to load and will be rendered on the server side -->
-  Number sequences: {numberSequences}
+    <!-- The number of sequences is quick to load and will be rendered on the server side -->
+    Number sequences: {numberSequences}
 
-  <!-- Loading the full sequence list takes time and will be done on the client side -->
-  <div><PaginatedSequenceList client:load config={config} /></div>
+    <!-- Loading the full sequence list takes time and will be done on the client side -->
+    <div><PaginatedSequenceList client:load config={config} /></div>
 </BaseLayout>
