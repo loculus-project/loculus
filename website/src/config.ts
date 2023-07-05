@@ -16,6 +16,12 @@ export type Config = {
   };
 };
 
+export const displayConfig = {
+  searchPage: {
+    resultTableFields: ['strain', 'country', 'date', 'pangoLineage'],
+  },
+};
+
 let _config: Config | null = null;
 
 export function getConfig(): Config {

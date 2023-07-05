@@ -1,7 +1,7 @@
 import React, { useState, type FC } from 'react';
 
 import { SearchForm } from './SearchForm';
-import { type SequenceData, Table } from './Table';
+import { type TableSequenceData, Table } from './Table';
 import type { Metadata } from '../../config';
 
 interface SearchPageProps {
@@ -9,7 +9,7 @@ interface SearchPageProps {
 }
 
 export const SearchPage: FC<SearchPageProps> = ({ fields }) => {
-  const [data, setData] = useState<SequenceData[]>([]);
+  const [data, setData] = useState<TableSequenceData[]>([]);
 
   return (
     <>
