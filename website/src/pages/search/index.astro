@@ -3,9 +3,9 @@ import { SearchPage } from '../../components/SearchPage/SearchPage';
 import { getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-const fields = getConfig().schema.metadata;
+const config = getConfig();
 ---
 
 <BaseLayout title='Search'>
-    <SearchPage fields={fields} client:load />
+    <SearchPage schema={config.schema} client:load />
 </BaseLayout>

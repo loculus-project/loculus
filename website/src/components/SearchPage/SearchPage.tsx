@@ -1,22 +1,22 @@
-import React, { useState, type FC } from 'react';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
+import React, { type FC, useState } from 'react';
 
 import { SearchForm } from './SearchForm';
-import { type SequenceData, Table } from './Table';
-import type { Metadata } from '../../config';
+import { Table, type TableSequenceData } from './Table';
+import type { Config } from '../../config';
 
-interface SearchPageProps {
-    fields: Metadata[];
-}
-
-export const SearchPage: FC<SearchPageProps> = ({ fields }) => {
-    const [data, setData] = useState<SequenceData[]>([]);
+export const SearchPage: FC<Config> = ({ schema }) => {
+    const [data, setData] = useState<TableSequenceData[]>([]);
 
     return (
         <>
             <h1 className='text-sky-500 font-bold text-xl'>Search</h1>
             <div className='flex flex-col space-y-4'>
-                <SearchForm fields={fields} setSequenceData={setData} />
-                <Table data={data} />
+                <LocalizationProvider dateAdapter={AdapterLuxon}>
+                    <SearchForm fields={schema.metadata} setSequenceData={setData} />
+                </LocalizationProvider>
+                <Table data={data} idName={schema.primaryKey} columnNames={[...schema.tableColumns]} />
             </div>
         </>
     );

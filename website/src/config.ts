@@ -12,6 +12,7 @@ export type Config = {
     schema: {
         instanceName: string;
         metadata: Metadata[];
+        tableColumns: string[];
         primaryKey: string;
     };
 };
