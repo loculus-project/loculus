@@ -7,6 +7,10 @@ export type Metadata = {
     name: string;
     type: 'string' | 'date' | 'integer' | 'pangoLineage';
 };
+export type Filter = Metadata & {
+    filter: string;
+};
+
 export type Config = {
     lapisHost: string;
     schema: {
@@ -19,7 +23,7 @@ export type Config = {
 
 let _config: Config | null = null;
 
-export function getConfig(): Config {
+function getConfig(): Config {
     if (_config === null) {
         if (import.meta.env.USE_TEST_CONFIG === 'true' || import.meta.env.USE_TEST_CONFIG === true) {
             _config = testConfig as Config;
@@ -30,3 +34,5 @@ export function getConfig(): Config {
     }
     return _config;
 }
+
+export const config = getConfig();

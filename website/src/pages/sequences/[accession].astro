@@ -2,7 +2,7 @@
 import { sentenceCase } from 'change-case';
 
 import { fetchSequenceDetails } from '../../api';
-import { getConfig } from '../../config';
+import { config } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { titleClass } from '../../styles/theme';
 
@@ -12,7 +12,6 @@ interface Props {
 
 const { accession } = Astro.params;
 const data = await fetchSequenceDetails(accession);
-const config = getConfig();
 const versionPage = `/sequences/${accession}/versions`;
 ---
 
