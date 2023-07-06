@@ -10,14 +10,11 @@ export const SearchPage: FC<Config> = ({ schema }) => {
     const [data, setData] = useState<TableSequenceData[]>([]);
 
     return (
-        <>
-            <h1 className='text-sky-500 font-bold text-xl'>Search</h1>
-            <div className='flex flex-col space-y-4'>
-                <LocalizationProvider dateAdapter={AdapterLuxon}>
-                    <SearchForm fields={schema.metadata} setSequenceData={setData} />
-                </LocalizationProvider>
-                <Table data={data} idName={schema.primaryKey} columnNames={[...schema.tableColumns]} />
-            </div>
-        </>
+        <div className='flex flex-col space-y-4'>
+            <LocalizationProvider dateAdapter={AdapterLuxon}>
+                <SearchForm fields={schema.metadata} setSequenceData={setData} />
+            </LocalizationProvider>
+            <Table data={data} idName={schema.primaryKey} columnNames={[...schema.tableColumns]} />
+        </div>
     );
 };
