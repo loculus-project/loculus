@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { parse } from 'yaml';
+import testConfig from '../tests/config/config.json';
 
 export type Metadata = {
     name: string;
@@ -21,8 +21,12 @@ let _config: Config | null = null;
 
 export function getConfig(): Config {
     if (_config === null) {
-        const configFilePath = path.join(import.meta.env.CONFIG_DIR, 'config.yml');
-        _config = parse(fs.readFileSync(configFilePath, 'utf8')) as Config;
+        if (import.meta.env.USE_TEST_CONFIG === 'true' || import.meta.env.USE_TEST_CONFIG === true) {
+            _config = testConfig as Config;
+        } else {
+            const configFilePath = path.join(import.meta.env.CONFIG_DIR, 'config.json');
+            _config = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as Config;
+        }
     }
     return _config;
 }
