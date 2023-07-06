@@ -21,7 +21,7 @@ let _config: Config | null = null;
 
 export function getConfig(): Config {
     if (_config === null) {
-        if (import.meta.env.USE_TEST_CONFIG === 'true') {
+        if (import.meta.env.USE_TEST_CONFIG === 'true' || import.meta.env.USE_TEST_CONFIG === true) {
             _config = testConfig as Config;
         } else {
             const configFilePath = path.join(import.meta.env.CONFIG_DIR, 'config.json');

@@ -6,6 +6,7 @@
     "start": "astro dev",
     "start-test-server": "cross-env CONFIG_DIR=./tests/config astro dev --port 3001",
     "build": "astro build",
+    "build-netlify": "astro build --config astro.netlify.config.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "check-format": "prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,json,astro}\" && eslint \"src/**/*.{ts,tsx,astro}\" --fix",
@@ -13,6 +14,7 @@
     "e2e": "npx playwright test"
   },
   "dependencies": {
+    "@astrojs/netlify": "^2.3.0",
     "@astrojs/node": "^5.3.0",
     "@astrojs/react": "^2.2.1",
     "@astrojs/tailwind": "^4.0.0",
