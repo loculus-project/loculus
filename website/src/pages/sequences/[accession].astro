@@ -1,7 +1,10 @@
 ---
+import { sentenceCase } from 'change-case';
+
 import { fetchSequenceDetails } from '../../api';
 import { getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { titleClass } from '../../styles/theme';
 
 interface Props {
     accession: string;
@@ -10,18 +13,28 @@ interface Props {
 const { accession } = Astro.params;
 const data = await fetchSequenceDetails(accession);
 const config = getConfig();
+const versionPage = `/sequences/${accession}/versions`;
 ---
 
 <!-- This is entirely server-side rendered -->
 <BaseLayout title={data[config.schema.primaryKey]}>
-    <h1 class='font-bold'>{data[config.schema.primaryKey]}</h1>
-    <ul>
-        {
-            config.schema.metadata.map(({ name }) => (
-                <li>
-                    {name}: {data[name]}
-                </li>
-            ))
-        }
-    </ul>
+    <div class='flex items-center'>
+        <h1 class={titleClass}>Sequence {data[config.schema.primaryKey]}</h1>
+        <a href={versionPage} class='text-xs ml-10'>(See previous versions)</a>
+    </div>
+
+    <div class='mt-10'>
+        <table class='table-auto'>
+            <tbody>
+                {
+                    config.schema.metadata.map((metadata) => (
+                        <tr>
+                            <td class='font-semibold pr-4'>{sentenceCase(metadata.name)}:</td>
+                            <td>{data[metadata.name] ?? 'N/A'}</td>
+                        </tr>
+                    ))
+                }
+            </tbody>
+        </table>
+    </div>
 </BaseLayout>

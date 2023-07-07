@@ -2,10 +2,12 @@
 import { SearchPage } from '../../components/SearchPage/SearchPage';
 import { getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { titleClass } from '../../styles/theme';
 
 const config = getConfig();
 ---
 
 <BaseLayout title='Search'>
+    <h1 class={titleClass}>Search</h1>
     <SearchPage schema={config.schema} client:load />
 </BaseLayout>
