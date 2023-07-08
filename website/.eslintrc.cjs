@@ -9,7 +9,14 @@ module.exports = {
     project: 'tsconfig.eslint.json',
     sourceType: 'module',
   },
-  plugins: ['eslint-plugin-import', 'eslint-plugin-prefer-arrow', '@typescript-eslint', 'eslint-plugin-react', 'react-hooks'],
+  plugins: [
+    'eslint-plugin-import',
+    'eslint-plugin-prefer-arrow',
+    '@typescript-eslint',
+    'eslint-plugin-react',
+    'react-hooks',
+    '@tanstack/eslint-plugin-query'
+  ],
   settings: {
     react: {
       pragma: 'React', // Pragma to use, default to "React"
