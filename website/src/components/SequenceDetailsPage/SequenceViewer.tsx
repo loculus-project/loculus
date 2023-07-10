@@ -20,9 +20,9 @@ export const SequencesViewer: FC<Props> = ({ accession, config, sequenceType }) 
         queryFn: () => fetchSequence(accession, sequenceType, config),
     });
 
-    const lines = useMemo(() => (data != null ? splitString(data, LINE_LENGTH) : null), [data]);
+    const lines = useMemo(() => (data !== undefined ? splitString(data, LINE_LENGTH) : undefined), [data]);
 
-    if (isLoading || lines == null) {
+    if (isLoading || lines === undefined) {
         return <span className='loading loading-spinner loading-lg' />;
     }
 
