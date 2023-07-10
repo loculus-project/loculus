@@ -5,7 +5,6 @@ import { fetchSequenceDetails } from '../../api';
 import { SequencesContainer } from '../../components/SequenceDetailsPage/SequencesContainer';
 import { getConfig, getReferenceGenomes } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { titleClass } from '../../styles/theme';
 
 const config = getConfig();
 const { accession } = Astro.params;
@@ -19,7 +18,7 @@ const versionPage = `/sequences/${accession}/versions`;
 <BaseLayout title={data[config.schema.primaryKey]}>
     <!-- Header -->
     <div class='flex items-center'>
-        <h1 class={titleClass}>Sequence {data[config.schema.primaryKey]}</h1>
+        <h1 class='title'>Sequence {data[config.schema.primaryKey]}</h1>
         <a href={versionPage} class='text-xs ml-10'>(See previous versions)</a>
     </div>
 
@@ -31,7 +30,7 @@ const versionPage = `/sequences/${accession}/versions`;
                     config.schema.metadata.map((metadata) => (
                         <tr>
                             <td class='font-semibold pr-4'>{sentenceCase(metadata.name)}:</td>
-                            <td>{data[metadata.name] ?? 'N/A'}</td>
+                            <td class='break-all overflow-wrap-break-word'>{data[metadata.name] ?? 'N/A'}</td>
                         </tr>
                     ))
                 }

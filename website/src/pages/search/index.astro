@@ -5,7 +5,6 @@ import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
 import { getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { titleClass } from '../../styles/theme';
 import { type Filter } from '../../types';
 
 const config = getConfig();
@@ -26,10 +25,10 @@ const data =
 ---
 
 <BaseLayout title='Search'>
-    <h1 class={titleClass}>Search</h1>
+    <h1 class='title'>Search</h1>
     <div>
+        {data.status === SearchStatus.OK ? null : <ErrorFeedback client:only='react' />}
         <SearchForm metadataSettings={metadataSettings} client:only='react' />
-        {data.status !== SearchStatus.OK ? <ErrorFeedback client:only='react' /> : null}
-        <Table data={data.data} config={config} client:load />
+        <Table data={data.status === SearchStatus.OK ? data.data : []} config={config} client:only='react' />
     </div>
 </BaseLayout>
