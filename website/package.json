@@ -11,6 +11,7 @@
     "astro": "astro",
     "check-format": "prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,json,astro}\" && eslint \"src/**/*.{ts,tsx,astro}\" --fix",
     "format": "prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\" && eslint \"src/**/*.{ts,tsx,astro}\" --fix",
+    "test": "vitest --run /__tests__/",
     "e2e": "npx playwright test"
   },
   "dependencies": {
@@ -49,6 +50,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "2.8.8",
     "prettier-plugin-astro": "^0.10.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vitest": "^0.33.0"
   }
 }
