@@ -1,5 +1,6 @@
 import type { TableSequenceData } from '../../components/SearchPage/Table';
-import { getConfig, type Filter } from '../../config';
+import { getConfig } from '../../config';
+import type { Filter } from '../../types';
 
 export enum SearchStatus {
     OK,

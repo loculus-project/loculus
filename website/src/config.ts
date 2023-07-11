@@ -1,36 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
+import type { Config, ReferenceGenomes } from './types';
 import testConfig from '../tests/config/config.json';
 import testReferenceGenomes from '../tests/config/reference-genomes.json';
-
-export type Metadata = {
-    name: string;
-    type: 'string' | 'date' | 'integer' | 'pangoLineage';
-};
-export type Filter = Metadata & {
-    filter: string;
-};
-
-export type Config = {
-    lapisHost: string;
-    schema: {
-        instanceName: string;
-        metadata: Metadata[];
-        tableColumns: string[];
-        primaryKey: string;
-    };
-};
-
-type NamedSequence = {
-    name: string;
-    sequence: string;
-};
-
-export type ReferenceGenomes = {
-    nucleotideSequences: NamedSequence[];
-    genes: NamedSequence[];
-};
 
 let _config: Config | null = null;
 let _referenceGenomes: ReferenceGenomes | null = null;

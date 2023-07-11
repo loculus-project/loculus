@@ -2,8 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { type FC, useMemo } from 'react';
 
 import { fetchSequence } from '../../api';
-import type { Config } from '../../config';
-import type { SequenceType } from '../../types';
+import type { Config, SequenceType } from '../../types';
 import { splitString } from '../../utils/splitLines';
 
 const LINE_LENGTH = 100;

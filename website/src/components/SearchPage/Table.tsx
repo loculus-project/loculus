@@ -3,7 +3,7 @@ import { capitalCase } from 'change-case';
 import type { FC } from 'react';
 import * as React from 'react';
 
-import type { Config } from '../../config';
+import type { Config } from '../../types';
 
 export type TableSequenceData = {
     [key: string]: string;

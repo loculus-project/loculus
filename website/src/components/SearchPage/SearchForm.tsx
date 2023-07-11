@@ -3,7 +3,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import React, { type FC, type FormEventHandler, useState } from 'react';
 
-import type { Filter } from '../../config';
+import type { Filter } from '../../types';
 
 interface SearchFormProps {
     metadataSettings: Filter[];

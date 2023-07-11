@@ -3,9 +3,10 @@ import { getData, SearchStatus } from './search';
 import { ErrorFeedback } from '../../components/SearchPage/ErrorFeedback';
 import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
-import { getConfig, type Filter } from '../../config';
+import { getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { titleClass } from '../../styles/theme';
+import { type Filter } from '../../types';
 
 const config = getConfig();
 const getSearchParams = (field: string): string => {

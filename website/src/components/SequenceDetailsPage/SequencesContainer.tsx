@@ -2,8 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type FC, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer';
-import type { Config } from '../../config';
-import type { SequenceType } from '../../types';
+import type { Config, SequenceType } from '../../types';
 import {
     alignedSequence,
     geneSequence,

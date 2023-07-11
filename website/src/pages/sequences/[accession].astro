@@ -7,9 +7,10 @@ import { getConfig, getReferenceGenomes } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { titleClass } from '../../styles/theme';
 
-const { accession } = Astro.params;
-const data = await fetchSequenceDetails(accession);
 const config = getConfig();
+const { accession } = Astro.params;
+
+const data = await fetchSequenceDetails(accession, config);
 const genes = getReferenceGenomes().genes.map((g) => g.name);
 const versionPage = `/sequences/${accession}/versions`;
 ---
