@@ -11,6 +11,7 @@
     "astro": "astro",
     "check-format": "prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,json,astro}\" && eslint \"src/**/*.{ts,tsx,astro}\" --fix",
     "format": "prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\" && eslint \"src/**/*.{ts,tsx,astro}\" --fix",
+    "test": "vitest --run /__tests__/",
     "e2e": "npx playwright test"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
     "@mui/material": "^5.13.7",
     "@mui/x-data-grid": "^6.9.2",
     "@mui/x-date-pickers": "^6.9.1",
+    "@tanstack/react-query": "^4.29.19",
     "@types/react": "^18.2.14",
     "@types/react-dom": "^18.2.6",
     "astro": "^2.8.0",
@@ -33,6 +35,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.35.1",
+    "@tanstack/eslint-plugin-query": "^4.29.9",
     "@types/node": "^20.4.1",
     "@typescript-eslint/eslint-plugin": "^5.61.0",
     "@typescript-eslint/parser": "^5.61.0",
@@ -47,6 +50,7 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "prettier": "2.8.8",
     "prettier-plugin-astro": "^0.10.0",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "vitest": "^0.33.0"
   }
 }

@@ -3,10 +3,11 @@ import { getData, SearchStatus } from './search';
 import { ErrorFeedback } from '../../components/SearchPage/ErrorFeedback';
 import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
-import { config, type Filter } from '../../config';
+import { getConfig, type Filter } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { titleClass } from '../../styles/theme';
 
+const config = getConfig();
 const getSearchParams = (field: string): string => {
     const searchParameter = Astro.url.searchParams.get(field);
     return searchParameter === null ? '' : searchParameter;

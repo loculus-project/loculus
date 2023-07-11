@@ -1,5 +1,5 @@
 import type { TableSequenceData } from '../../components/SearchPage/Table';
-import { config, type Filter } from '../../config';
+import { getConfig, type Filter } from '../../config';
 
 export enum SearchStatus {
     OK,
@@ -11,6 +11,7 @@ export type SearchResponse = {
     data: TableSequenceData[];
 };
 export const getData = async (metadataFilter: Filter[]): Promise<SearchResponse> => {
+    const config = getConfig();
     const searchFilters = metadataFilter
         .filter((metadata) => metadata.filter !== '')
         .reduce((acc: Record<string, string>, metadata) => {
