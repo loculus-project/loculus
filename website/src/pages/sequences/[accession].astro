@@ -6,10 +6,6 @@ import { config } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { titleClass } from '../../styles/theme';
 
-interface Props {
-    accession: string;
-}
-
 const { accession } = Astro.params;
 const data = await fetchSequenceDetails(accession);
 const versionPage = `/sequences/${accession}/versions`;
