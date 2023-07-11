@@ -246,16 +246,6 @@ module.exports = {
     ],
     'use-isnan': 'error',
     'valid-typeof': 'off',
-    '@typescript-eslint/explicit-function-return-type': [
-      'error',
-      {
-        allowExpressions: true,
-        allowTypedFunctionExpressions: true,
-        allowHigherOrderFunctions: true,
-        allowDirectConstAssertionInArrowFunctions: false,
-        allowConciseArrowFunctionExpressionsStartingWithVoid: false,
-      },
-    ],
     '@typescript-eslint/explicit-member-accessibility': [
       'error',
       {

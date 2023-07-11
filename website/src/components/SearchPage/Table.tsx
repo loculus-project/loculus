@@ -3,26 +3,28 @@ import { capitalCase } from 'change-case';
 import type { FC } from 'react';
 import * as React from 'react';
 
+import type { Config } from '../../config';
+
 export type TableSequenceData = {
     [key: string]: string;
 };
 
 type TableProps = {
+    config: Config;
     data: TableSequenceData[];
-    idName: string;
-    columnNames: string[];
 };
 
-export const Table: FC<TableProps> = ({ data, idName, columnNames }) => {
+export const Table: FC<TableProps> = ({ data, config }) => {
+    const primaryKey = config.schema.primaryKey;
     const rows = data.map((entry, index) => ({
         id: index,
         ...entry,
-        [idName]: { label: entry[idName], url: `/sequences/${entry[idName]}` },
+        [primaryKey]: { label: entry[primaryKey], url: `/sequences/${entry[primaryKey]}` },
     }));
     const columns = [
         {
-            field: idName,
-            headerName: capitalCase(idName),
+            field: primaryKey,
+            headerName: capitalCase(primaryKey),
             flex: 1,
             renderCell: (params: any) => (
                 <a href={params.value.url} rel='noopener noreferrer'>
@@ -30,7 +32,7 @@ export const Table: FC<TableProps> = ({ data, idName, columnNames }) => {
                 </a>
             ),
         },
-        ...columnNames.map((field) => ({
+        ...config.schema.tableColumns.map((field) => ({
             field,
             headerName: capitalCase(field),
             flex: 1,
