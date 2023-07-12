@@ -13,10 +13,27 @@ const getSearchParams = (field: string): string => {
     return searchParameter === null ? '' : searchParameter;
 };
 
-const metadataSettings: Filter[] = config.schema.metadata.map((metadata) => ({
-    ...metadata,
-    filter: getSearchParams(metadata.name),
-}));
+const metadataSettings: Filter[] = config.schema.metadata.flatMap((metadata) => {
+    if (metadata.type === 'date') {
+        const metadataFrom = {
+            ...metadata,
+            name: `${metadata.name}From`,
+            filter: getSearchParams(`${metadata.name}From`),
+        };
+        const metadataTo = {
+            ...metadata,
+            name: `${metadata.name}To`,
+            filter: getSearchParams(`${metadata.name}To`),
+        };
+        return [metadataFrom, metadataTo];
+    } else {
+        const metadataSetting = {
+            ...metadata,
+            filter: getSearchParams(metadata.name),
+        };
+        return [metadataSetting];
+    }
+});
 
 const data =
     Astro.url.searchParams.get('search') === 'true'
