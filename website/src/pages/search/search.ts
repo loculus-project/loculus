@@ -5,6 +5,7 @@ import type { Filter } from '../../types';
 export enum SearchStatus {
     OK,
     ERROR,
+    READY,
 }
 
 export type SearchResponse = {

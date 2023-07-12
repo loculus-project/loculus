@@ -21,14 +21,14 @@ const metadataSettings: Filter[] = config.schema.metadata.map((metadata) => ({
 const data =
     Astro.url.searchParams.get('search') === 'true'
         ? await getData(metadataSettings)
-        : { status: SearchStatus.OK, data: [] };
+        : { status: SearchStatus.READY, data: [] };
 ---
 
 <BaseLayout title='Search'>
     <h1 class='title'>Search</h1>
     <div>
-        {data.status === SearchStatus.OK ? null : <ErrorFeedback client:only='react' />}
+        {data.status === SearchStatus.ERROR ? <ErrorFeedback client:only='react' /> : null}
         <SearchForm metadataSettings={metadataSettings} client:only='react' />
-        <Table data={data.status === SearchStatus.OK ? data.data : []} config={config} client:only='react' />
+        {data.status === SearchStatus.OK ? <Table data={data.data} config={config} client:only='react' /> : null}
     </div>
 </BaseLayout>

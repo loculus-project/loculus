@@ -60,10 +60,7 @@ export const Table: FC<TableProps> = ({ data, config }) => {
             {rows.length !== 0 ? (
                 <DataGrid rows={rows} columns={columns} disableColumnMenu />
             ) : (
-                <>
-                    <div className='flex justify-center font-bold text-xl mb-5'>No Data</div>
-                    <DataGrid rows={[]} columns={columns} disableColumnMenu />
-                </>
+                <div className='flex justify-center font-bold text-xl mb-5'>No Data</div>
             )}
         </div>
     );
