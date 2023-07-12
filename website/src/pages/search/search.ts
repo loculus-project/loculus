@@ -28,16 +28,23 @@ export const getData = async (metadataFilter: Filter[]): Promise<SearchResponse>
         ...searchFilters,
     });
 
-    const response = await fetch(query, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body,
-    });
+    try {
+        const response = await fetch(query, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body,
+        });
 
-    return {
-        status: response.ok ? SearchStatus.OK : SearchStatus.ERROR,
-        data: (await response.json()).data ?? [],
-    };
+        return {
+            status: response.ok ? SearchStatus.OK : SearchStatus.ERROR,
+            data: (await response.json()).data ?? [],
+        };
+    } catch {
+        return {
+            status: SearchStatus.ERROR,
+            data: [],
+        };
+    }
 };
