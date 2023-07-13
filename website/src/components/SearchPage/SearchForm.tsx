@@ -2,7 +2,6 @@ import { CircularProgress, TextField } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import { sentenceCase } from 'change-case';
-import { DateTime } from 'luxon';
 import React, { type FC, type FormEventHandler, useState } from 'react';
 
 import type { Filter } from '../../types';
