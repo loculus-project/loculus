@@ -32,7 +32,7 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                 }`}
                 onClick={toggleMenu}
             >
-                <div className='font-bold m-5 flex flex-col justify-between mi flex-grow'>
+                <div className='font-bold m-5 flex flex-col justify-between min-h-screen flex-grow'>
                     <div>
                         <div className='h-10'>
                             <a href='/'>Pathoplexus</a>

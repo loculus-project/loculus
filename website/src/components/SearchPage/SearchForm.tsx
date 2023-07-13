@@ -72,6 +72,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
                         ) : (
                             <DatePicker
                                 key={index}
+                                format='yyyy-MM-dd'
                                 label={field.name}
                                 disabled={isLoading}
                                 slotProps={{
@@ -81,6 +82,13 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
                                         margin: 'dense',
                                         className: 'w-60',
                                     },
+                                }}
+                                value={field.filter === '' ? null : DateTime.fromISO(field.filter)}
+                                onChange={(date: DateTime | null) => {
+                                    if (date === null || date.toISODate() === null) {
+                                        return handleFieldChange(field.name, '');
+                                    }
+                                    return handleFieldChange(field.name, date.toISODate()!);
                                 }}
                             />
                         ),
