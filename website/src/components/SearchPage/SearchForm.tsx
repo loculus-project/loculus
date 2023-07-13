@@ -1,9 +1,9 @@
-import { CircularProgress, TextField } from '@mui/material';
+import { Autocomplete, CircularProgress, createFilterOptions, TextField } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import { sentenceCase } from 'change-case';
 import { DateTime } from 'luxon';
-import React, { type FC, type FormEventHandler, useState } from 'react';
+import React, { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
 import type { Filter } from '../../types';
 
@@ -13,7 +13,12 @@ interface SearchFormProps {
 
 export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
     const [accessions, setAccessions] = useState('');
-    const [fieldValues, setFieldValues] = useState(metadataSettings);
+    const [fieldValues, setFieldValues] = useState(
+        metadataSettings.map((metadata) => ({
+            ...metadata,
+            label: metadata.label ?? sentenceCase(metadata.name),
+        })),
+    );
     const [isLoading, setIsLoading] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
@@ -38,6 +43,51 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
         location.href = buildQueryUrl(fieldValues);
     };
 
+    const dateFields = useMemo(
+        () =>
+            fieldValues
+                .filter((field) => field.type === 'date')
+                .map((field) => (
+                    <DateField
+                        key={field.name}
+                        field={field}
+                        handleFieldChange={handleFieldChange}
+                        isLoading={isLoading}
+                    />
+                )),
+        [fieldValues, isLoading],
+    );
+
+    const autoCompleteFields = useMemo(
+        () =>
+            fieldValues
+                .filter((field) => field.options !== undefined)
+                .map((field) => (
+                    <AutoCompleteField
+                        key={field.name}
+                        field={field}
+                        handleFieldChange={handleFieldChange}
+                        isLoading={isLoading}
+                    />
+                )),
+        [fieldValues, isLoading],
+    );
+
+    const otherFields = useMemo(
+        () =>
+            fieldValues
+                .filter((field) => field.options === undefined && field.type !== 'date')
+                .map((field) => (
+                    <NormalTextField
+                        key={field.name}
+                        field={field}
+                        handleFieldChange={handleFieldChange}
+                        isLoading={isLoading}
+                    />
+                )),
+        [fieldValues, isLoading],
+    );
+
     return (
         <LocalizationProvider dateAdapter={AdapterLuxon}>
             <form className='mb-5' onSubmit={handleSearch}>
@@ -51,46 +101,9 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
                     onChange={handleInputChange}
                 />
                 <div className='flex gap-4 justify-stretch flex-wrap'>
-                    {fieldValues.map((field, index) =>
-                        field.type !== 'date' ? (
-                            <TextField
-                                key={index}
-                                variant='outlined'
-                                margin='dense'
-                                label={field.filter === '' ? undefined : sentenceCase(field.name)}
-                                placeholder={field.filter !== '' ? undefined : sentenceCase(field.name)}
-                                type={field.type}
-                                size='small'
-                                value={field.filter}
-                                disabled={isLoading}
-                                onChange={(e) => handleFieldChange(field.name, e.target.value)}
-                                InputLabelProps={{
-                                    shrink: true,
-                                }}
-                                className='w-60'
-                            />
-                        ) : (
-                            <DatePicker
-                                key={index}
-                                format='yyyy-MM-dd'
-                                label={field.name}
-                                disabled={isLoading}
-                                slotProps={{
-                                    textField: {
-                                        size: 'small',
-                                        variant: 'outlined',
-                                        margin: 'dense',
-                                        className: 'w-60',
-                                    },
-                                }}
-                                value={field.filter === '' ? null : DateTime.fromISO(field.filter)}
-                                onChange={(date: DateTime | null) => {
-                                    const dateString = date?.toISODate() ?? '';
-                                    return handleFieldChange(field.name, dateString);
-                                }}
-                            />
-                        ),
-                    )}
+                    {dateFields}
+                    {autoCompleteFields}
+                    {otherFields}
                 </div>
                 <div className='flex justify-end mt-4'>
                     <button className='btn w-32' style={{ textTransform: 'none' }} type='submit' disabled={isLoading}>
@@ -109,3 +122,70 @@ function buildQueryUrl(fieldValues: Filter[]) {
     const redirectUrl = searchFilters.length === 0 ? '' : `&${searchFilters.join('&')}`;
     return `search?search=true${redirectUrl}`;
 }
+
+type FieldProps = {
+    field: Filter;
+    handleFieldChange: (metadataName: string, filter: string) => void;
+    isLoading: boolean;
+};
+
+const DateField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
+    <DatePicker
+        format='yyyy-MM-dd'
+        label={field.label}
+        disabled={isLoading}
+        slotProps={{
+            textField: {
+                size: 'small',
+                margin: 'dense',
+                className: 'w-60',
+            },
+        }}
+        value={field.filter === '' ? null : DateTime.fromISO(field.filter)}
+        onChange={(date: DateTime | null) => {
+            const dateString = date?.toISODate() ?? '';
+            return handleFieldChange(field.name, dateString);
+        }}
+    />
+);
+
+const AutoCompleteField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
+    <Autocomplete
+        filterOptions={createFilterOptions({
+            matchFrom: 'any',
+            limit: 200,
+        })}
+        className='w-60'
+        options={field.options ?? []}
+        getOptionLabel={(option) => option.option ?? ''}
+        disabled={isLoading}
+        size='small'
+        renderInput={(params) => (
+            <TextField {...params} label={field.label} margin='dense' size='small' className='w-60' />
+        )}
+        isOptionEqualToValue={(option, value) => option.option === value.option}
+        onChange={(_, value) => {
+            return handleFieldChange(field.name, value?.option ?? '');
+        }}
+        value={field.options?.find((option) => option.option === field.filter) ?? null}
+        autoComplete
+    />
+);
+
+const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
+    <TextField
+        variant='outlined'
+        margin='dense'
+        label={field.filter === '' ? undefined : field.label}
+        placeholder={field.filter !== '' ? undefined : field.label}
+        type={field.type}
+        size='small'
+        value={field.filter}
+        disabled={isLoading}
+        onChange={(e) => handleFieldChange(field.name, e.target.value)}
+        InputLabelProps={{
+            shrink: true,
+        }}
+        className='w-60'
+    />
+);

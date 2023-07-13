@@ -37,7 +37,8 @@
             },
             {
                 "name": "country",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "division",
@@ -61,7 +62,8 @@
             },
             {
                 "name": "host",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "age",
@@ -73,7 +75,8 @@
             },
             {
                 "name": "pangoLineage",
-                "type": "pango_lineage"
+                "type": "pango_lineage",
+                "autocomplete": true
             },
             {
                 "name": "nextcladePangoLineage",
