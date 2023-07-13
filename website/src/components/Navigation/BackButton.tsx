@@ -1,21 +1,24 @@
 import type { FC } from 'react';
 
-export const BackButton: FC<void> = () => {
+// Note: Props are not really necessary here, but astro has issues with
+//  react components without props and client:... directive
+type BackButtonProps = {
+    marginRight: number;
+};
+export const BackButton: FC<BackButtonProps> = ({ marginRight }) => {
     const goBack = () => {
         window.history.back();
     };
 
     return (
-        <button onClick={goBack}>
+        <button onClick={goBack} className={`mr-${marginRight}`}>
             <svg
-                xmlns='http://www.w3.org/2000/svg'
                 viewBox='0 0 24 24'
                 fill='none'
                 stroke='#54858c'
                 strokeWidth='4'
                 strokeLinecap='round'
                 strokeLinejoin='round'
-                className='feather feather-arrow-left'
                 style={{ width: '1.5rem', height: '1.5rem' }}
             >
                 <polyline points='15 17 9 11 15 5' />

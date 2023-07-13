@@ -5,7 +5,7 @@ import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
 import { getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { type Filter } from '../../types';
+import type { Filter } from '../../types';
 
 const config = getConfig();
 const getSearchParams = (field: string): string => {
@@ -44,7 +44,11 @@ const data =
 <BaseLayout title='Search'>
     <h1 class='title'>Search</h1>
     <div>
-        {data.status === SearchStatus.ERROR ? <ErrorFeedback client:only='react' /> : null}
+        {
+            data.status === SearchStatus.ERROR ? (
+                <ErrorFeedback message='Error while fetching data' client:only='react' />
+            ) : null
+        }
         <SearchForm metadataSettings={metadataSettings} client:only='react' />
         {data.status === SearchStatus.OK ? <Table data={data.data} config={config} client:only='react' /> : null}
     </div>
