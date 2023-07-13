@@ -3,9 +3,9 @@ import { getData, SearchStatus } from './search';
 import { ErrorFeedback } from '../../components/SearchPage/ErrorFeedback';
 import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
-import { getConfig, type Filter } from '../../config';
+import { getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { titleClass } from '../../styles/theme';
+import { type Filter } from '../../types';
 
 const config = getConfig();
 const getSearchParams = (field: string): string => {
@@ -21,14 +21,14 @@ const metadataSettings: Filter[] = config.schema.metadata.map((metadata) => ({
 const data =
     Astro.url.searchParams.get('search') === 'true'
         ? await getData(metadataSettings)
-        : { status: SearchStatus.OK, data: [] };
+        : { status: SearchStatus.READY, data: [] };
 ---
 
 <BaseLayout title='Search'>
-    <h1 class={titleClass}>Search</h1>
+    <h1 class='title'>Search</h1>
     <div>
+        {data.status === SearchStatus.ERROR ? <ErrorFeedback client:only='react' /> : null}
         <SearchForm metadataSettings={metadataSettings} client:only='react' />
-        {data.status !== SearchStatus.OK ? <ErrorFeedback client:only='react' /> : null}
-        <Table data={data.data} config={config} client:load />
+        {data.status === SearchStatus.OK ? <Table data={data.data} config={config} client:only='react' /> : null}
     </div>
 </BaseLayout>

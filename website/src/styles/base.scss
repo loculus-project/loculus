@@ -2,10 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
-a {
-  @apply underline decoration-purple-200 decoration-4 #{!important};
 
+a {
   &:hover {
-    @apply decoration-orange-200 #{!important};
+    @apply underline decoration-emerald-700 scale-105 #{!important};
   }
 }
+
+.fillColor{
+  background-color : #54858c;
+}
+
+.title{
+  background : linear-gradient(to right, #54858c 0%, #F18805 50%, #54858c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-decoration: red;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.subtitle{
+  background : linear-gradient(to right, #54858c 0%,#54858c 35%, #F18805 50%,#54858c 65%, #54858c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 18px;
+  font-weight: 400;
+}
+
+
+
