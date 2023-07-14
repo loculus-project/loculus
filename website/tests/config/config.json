@@ -29,7 +29,8 @@
             },
             {
                 "name": "samplingStrategy",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "region",
