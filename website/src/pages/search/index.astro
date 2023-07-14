@@ -58,7 +58,14 @@ const data = await getData(metadataSettings);
         </div>
 
         <div class='flex-1'>
-            {data.status === SearchStatus.OK ? <Table data={data.data} config={config} client:only='react' /> : null}
+            {
+                data.status === SearchStatus.OK ? (
+                    <>
+                        <div class='mb-1'>Total: {data.totalCount} sequences</div>
+                        <Table data={data.data} config={config} client:only='react' />
+                    </>
+                ) : null
+            }
         </div>
     </div>
 </BaseLayout>
