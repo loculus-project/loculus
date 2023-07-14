@@ -98,11 +98,9 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
 };
 
 function buildQueryUrl(fieldValues: Filter[]) {
-    const searchFilters = fieldValues
-        .filter((field) => field.filter !== '')
-        .map((field) => `${field.name}=${field.filter}`);
-    const redirectUrl = searchFilters.length === 0 ? '' : `&${searchFilters.join('&')}`;
-    return `search?search=true${redirectUrl}`;
+    const params = new URLSearchParams();
+    fieldValues.filter((field) => field.filter !== '').forEach((field) => params.set(field.name, field.filter));
+    return `search?${params.toString()}`;
 }
 
 type FieldProps = {

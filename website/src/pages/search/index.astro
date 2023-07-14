@@ -9,8 +9,7 @@ import type { Filter } from '../../types';
 
 const config = getConfig();
 const getSearchParams = (field: string): string => {
-    const searchParameter = Astro.url.searchParams.get(field);
-    return searchParameter === null ? '' : searchParameter;
+    return Astro.url.searchParams.get(field) ?? '';
 };
 
 const autoCompletions = await getAutoCompletionList();
@@ -40,10 +39,7 @@ const metadataSettings: Filter[] = config.schema.metadata.flatMap((metadata) => 
     }
 });
 
-const data =
-    Astro.url.searchParams.get('search') === 'true'
-        ? await getData(metadataSettings)
-        : { status: SearchStatus.READY, data: [] };
+const data = await getData(metadataSettings);
 ---
 
 <BaseLayout title='Search'>
