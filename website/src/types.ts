@@ -1,3 +1,5 @@
+import type { OptionList } from './config';
+
 export type SequenceType =
     | { type: 'nucleotide'; aligned: boolean; name: 'main' }
     | { type: 'aminoAcid'; aligned: true; name: string };
@@ -5,10 +7,13 @@ export type SequenceType =
 export type Metadata = {
     name: string;
     type: 'string' | 'date' | 'integer' | 'pangoLineage';
+    autocomplete?: boolean;
 };
 
 export type Filter = Metadata & {
     filter: string;
+    label?: string;
+    options?: OptionList;
 };
 
 type NamedSequence = {

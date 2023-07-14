@@ -33,35 +33,43 @@
             },
             {
                 "name": "region",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "country",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "division",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "location",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "regionExposure",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "countryExposure",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "divisionExposure",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "host",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "age",
@@ -69,19 +77,23 @@
             },
             {
                 "name": "sex",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "pangoLineage",
-                "type": "pango_lineage"
+                "type": "pango_lineage",
+                "autocomplete": true
             },
             {
                 "name": "nextcladePangoLineage",
-                "type": "pango_lineage"
+                "type": "pango_lineage",
+                "autocomplete": true
             },
             {
                 "name": "nextstrainClade",
-                "type": "string"
+                "type": "string",
+                "autocomplete": true
             },
             {
                 "name": "originatingLab",

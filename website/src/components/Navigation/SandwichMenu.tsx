@@ -37,7 +37,7 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                         <div className='h-10'>
                             <a href='/'>Pathoplexus</a>
                         </div>
-                        <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid'>
+                        <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
                             <OffCanvasNavItem text='Search' url='/search' />
                             <OffCanvasNavItem text='DOI' url='/doi' />
                         </div>
@@ -46,11 +46,11 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                     <div className='mt-auto mb-10'>
                         <div className='flex justify-end items-center py-5'>
                             <a href='https://github.com/pathoplexus'>
-                                <img src='/github-mark.svg' className='w-8' />
+                                <img src='/github-mark.svg' className='w-8' alt='GitHub logo' />
                             </a>
                         </div>
 
-                        <div className='font-light divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid'>
+                        <div className='font-light divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
                             <OffCanvasNavItem text='About' url='/about' type='small' />
                             <OffCanvasNavItem text='Api documentation' url='/api_documentation' type='small' />
                             <OffCanvasNavItem text='Governance' url='/governance' type='small' />

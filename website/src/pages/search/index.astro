@@ -3,7 +3,7 @@ import { getData, SearchStatus } from './search';
 import { ErrorFeedback } from '../../components/SearchPage/ErrorFeedback';
 import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
-import { getConfig } from '../../config';
+import { getAutoCompletionList, getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import type { Filter } from '../../types';
 
@@ -12,6 +12,8 @@ const getSearchParams = (field: string): string => {
     const searchParameter = Astro.url.searchParams.get(field);
     return searchParameter === null ? '' : searchParameter;
 };
+
+const autoCompletions = await getAutoCompletionList();
 
 const metadataSettings: Filter[] = config.schema.metadata.flatMap((metadata) => {
     if (metadata.type === 'date') {
@@ -27,10 +29,13 @@ const metadataSettings: Filter[] = config.schema.metadata.flatMap((metadata) => 
         };
         return [metadataFrom, metadataTo];
     } else {
-        const metadataSetting = {
+        const metadataSetting: Filter = {
             ...metadata,
             filter: getSearchParams(metadata.name),
         };
+        if (autoCompletions.completions !== undefined) {
+            metadataSetting.options = autoCompletions.completions[metadata.name];
+        }
         return [metadataSetting];
     }
 });
@@ -49,7 +54,11 @@ const data =
                 <ErrorFeedback message='Error while fetching data' client:only='react' />
             ) : null
         }
+
         <SearchForm metadataSettings={metadataSettings} client:only='react' />
-        {data.status === SearchStatus.OK ? <Table data={data.data} config={config} client:only='react' /> : null}
+
+        <div class='mt-5'>
+            {data.status === SearchStatus.OK ? <Table data={data.data} config={config} client:only='react' /> : null}
+        </div>
     </div>
 </BaseLayout>
