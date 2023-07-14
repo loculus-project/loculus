@@ -12,7 +12,6 @@ interface SearchFormProps {
 }
 
 export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
-    const [accessions, setAccessions] = useState('');
     const [fieldValues, setFieldValues] = useState(
         metadataSettings.map((metadata) => ({
             ...metadata,
@@ -20,10 +19,6 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
         })),
     );
     const [isLoading, setIsLoading] = useState(false);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        setAccessions(e.target.value);
-    };
 
     const handleFieldChange = (metadataName: string, filter: string) => {
         setFieldValues((prev) => {
@@ -91,15 +86,6 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
     return (
         <LocalizationProvider dateAdapter={AdapterLuxon}>
             <form className='mb-5' onSubmit={handleSearch}>
-                <TextField
-                    fullWidth
-                    variant='outlined'
-                    margin='normal'
-                    placeholder='Accessions'
-                    value={accessions}
-                    disabled={isLoading}
-                    onChange={handleInputChange}
-                />
                 <div className='flex gap-4 justify-stretch flex-wrap'>
                     {dateFields}
                     {autoCompleteFields}
