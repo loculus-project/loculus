@@ -85,16 +85,12 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
 
     return (
         <LocalizationProvider dateAdapter={AdapterLuxon}>
-            <form className='mb-5' onSubmit={handleSearch}>
-                <div className='flex gap-4 justify-stretch flex-wrap'>
+            <form onSubmit={handleSearch}>
+                <div className='flex flex-col'>
                     {dateFields}
                     {autoCompleteFields}
                     {otherFields}
-                </div>
-                <div className='flex justify-end mt-4'>
-                    <button className='btn w-32' style={{ textTransform: 'none' }} type='submit' disabled={isLoading}>
-                        {isLoading ? <CircularProgress size={20} color='primary' /> : 'Search'}
-                    </button>
+                    <SearchButton isLoading={isLoading} />
                 </div>
             </form>
         </LocalizationProvider>
@@ -124,7 +120,6 @@ const DateField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
             textField: {
                 size: 'small',
                 margin: 'dense',
-                className: 'w-60',
             },
         }}
         value={field.filter === '' ? null : DateTime.fromISO(field.filter)}
@@ -141,7 +136,6 @@ const AutoCompleteField: FC<FieldProps> = ({ field, handleFieldChange, isLoading
             matchFrom: 'any',
             limit: 200,
         })}
-        className='w-60'
         options={field.options ?? []}
         getOptionLabel={(option) => option.option ?? ''}
         disabled={isLoading}
@@ -172,6 +166,11 @@ const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }
         InputLabelProps={{
             shrink: true,
         }}
-        className='w-60'
     />
+);
+
+const SearchButton: FC<{ isLoading: boolean }> = ({ isLoading }) => (
+    <button className='btn normal-case my-2' type='submit' disabled={isLoading}>
+        {isLoading ? <CircularProgress size={20} color='primary' /> : 'Search'}
+    </button>
 );
