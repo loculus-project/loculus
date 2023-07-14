@@ -55,9 +55,10 @@ const data =
             ) : null
         }
 
+        <SearchForm metadataSettings={metadataSettings} client:only='react' />
+
         <div class='mt-5'>
             {data.status === SearchStatus.OK ? <Table data={data.data} config={config} client:only='react' /> : null}
         </div>
-        <SearchForm metadataSettings={metadataSettings} client:only='react' />
     </div>
 </BaseLayout>

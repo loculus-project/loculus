@@ -1,4 +1,4 @@
-import type { AutoCompletionList } from './config';
+import type { OptionList } from './config';
 
 export type SequenceType =
     | { type: 'nucleotide'; aligned: boolean; name: 'main' }
@@ -13,7 +13,7 @@ export type Metadata = {
 export type Filter = Metadata & {
     filter: string;
     label?: string;
-    options?: AutoCompletionList;
+    options?: OptionList;
 };
 
 type NamedSequence = {
