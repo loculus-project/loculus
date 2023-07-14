@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-import { useOffCanvas } from '../../reactUtils/useOffCanvas';
+import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 

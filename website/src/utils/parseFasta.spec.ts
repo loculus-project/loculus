@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'vitest';
 
-import { parseFasta } from '../parseFasta';
+import { parseFasta } from './parseFasta';
 
 describe('parseFasta', () => {
     test('should handle a single-line sequence', () => {

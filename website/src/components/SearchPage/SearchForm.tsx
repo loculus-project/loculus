@@ -15,7 +15,7 @@ import { DateTime } from 'luxon';
 import React, { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
 import { fetchAutoCompletion } from '../../config';
-import { useOffCanvas } from '../../reactUtils/useOffCanvas';
+import { useOffCanvas } from '../../hooks/useOffCanvas';
 import type { Config, Filter } from '../../types';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
@@ -125,7 +125,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, config }) =>
 function buildQueryUrl(fieldValues: Filter[]) {
     const params = new URLSearchParams();
     fieldValues.filter((field) => field.filter !== '').forEach((field) => params.set(field.name, field.filter));
-    return `search?${params.toString()}`;
+    return `search${params.size !== 0 ? `?${params.toString()}` : ''}`;
 }
 
 type FieldProps = {
