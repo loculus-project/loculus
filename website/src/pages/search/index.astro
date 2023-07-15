@@ -1,6 +1,7 @@
 ---
 import { getData, SearchStatus } from './search';
 import { ErrorFeedback } from '../../components/SearchPage/ErrorFeedback';
+import { Pagination } from '../../components/SearchPage/Pagination';
 import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
 import { getConfig } from '../../config';
@@ -34,7 +35,12 @@ const metadataSettings: Filter[] = config.schema.metadata.flatMap((metadata) => 
     }
 });
 
-const data = await getData(metadataSettings);
+const pageSize = 100;
+const pageParam = Astro.url.searchParams.get('page');
+const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
+const offset = (page - 1) * pageSize;
+
+const data = await getData(metadataSettings, offset, pageSize);
 ---
 
 <BaseLayout title='Search'>
@@ -59,6 +65,10 @@ const data = await getData(metadataSettings);
                             sequence{data.totalCount === 1 ? '' : 's'}
                         </div>
                         <Table data={data.data} config={config} client:only='react' />
+
+                        <div class='mt-4 flex justify-center'>
+                            <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)} />
+                        </div>
                     </>
                 ) : null
             }
