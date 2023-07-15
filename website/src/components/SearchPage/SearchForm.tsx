@@ -38,6 +38,11 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
         location.href = buildQueryUrl(fieldValues);
     };
 
+    const resetSearch = async () => {
+        setIsLoading(true);
+        location.href = buildQueryUrl([]);
+    };
+
     const dateFields = useMemo(
         () =>
             fieldValues
@@ -85,6 +90,11 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
 
     return (
         <LocalizationProvider dateAdapter={AdapterLuxon}>
+            <div className='text-right'>
+                <button className='underline' onClick={resetSearch}>
+                    Reset
+                </button>
+            </div>
             <form onSubmit={handleSearch}>
                 <div className='flex flex-col'>
                     {dateFields}
