@@ -1,4 +1,11 @@
-import { Autocomplete, CircularProgress, createFilterOptions, TextField } from '@mui/material';
+import {
+    Autocomplete,
+    Checkbox,
+    CircularProgress,
+    createFilterOptions,
+    FormControlLabel,
+    TextField,
+} from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import { sentenceCase } from 'change-case';
@@ -43,48 +50,21 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
         location.href = buildQueryUrl([]);
     };
 
-    const dateFields = useMemo(
+    const fields = useMemo(
         () =>
-            fieldValues
-                .filter((field) => field.type === 'date')
-                .map((field) => (
-                    <DateField
-                        key={field.name}
-                        field={field}
-                        handleFieldChange={handleFieldChange}
-                        isLoading={isLoading}
-                    />
-                )),
-        [fieldValues, isLoading],
-    );
-
-    const autoCompleteFields = useMemo(
-        () =>
-            fieldValues
-                .filter((field) => field.options !== undefined)
-                .map((field) => (
-                    <AutoCompleteField
-                        key={field.name}
-                        field={field}
-                        handleFieldChange={handleFieldChange}
-                        isLoading={isLoading}
-                    />
-                )),
-        [fieldValues, isLoading],
-    );
-
-    const otherFields = useMemo(
-        () =>
-            fieldValues
-                .filter((field) => field.options === undefined && field.type !== 'date')
-                .map((field) => (
-                    <NormalTextField
-                        key={field.name}
-                        field={field}
-                        handleFieldChange={handleFieldChange}
-                        isLoading={isLoading}
-                    />
-                )),
+            fieldValues.map((field) => {
+                const props = { key: field.name, field, handleFieldChange, isLoading };
+                if (field.type === 'date') {
+                    return <DateField {...props} />;
+                }
+                if (field.type === 'pango_lineage') {
+                    return <PangoLineageField {...props} />;
+                }
+                if (field.options !== undefined) {
+                    return <AutoCompleteField {...props} />;
+                }
+                return <NormalTextField {...props} />;
+            }),
         [fieldValues, isLoading],
     );
 
@@ -97,9 +77,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
             </div>
             <form onSubmit={handleSearch}>
                 <div className='flex flex-col'>
-                    {dateFields}
-                    {autoCompleteFields}
-                    {otherFields}
+                    {fields}
                     <SearchButton isLoading={isLoading} />
                 </div>
             </form>
@@ -159,6 +137,53 @@ const AutoCompleteField: FC<FieldProps> = ({ field, handleFieldChange, isLoading
         autoComplete
     />
 );
+
+const PangoLineageField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => {
+    const filter = field.filter;
+    const [includeSubLineages, setIncludeSubLineages] = useState(filter.length > 0 ? filter.endsWith('*') : true);
+
+    const textField = {
+        ...field,
+        filter: includeSubLineages ? filter.slice(0, filter.length - 1) : filter,
+    };
+    const handleTextFieldChange = (metadataName: string, newFilter: string) => {
+        if (newFilter.length > 0) {
+            handleFieldChange(metadataName, newFilter + (includeSubLineages ? '*' : ''));
+        } else {
+            handleFieldChange(metadataName, '');
+        }
+    };
+    const handleIncludeSubLineagesChange = (checked: boolean) => {
+        setIncludeSubLineages(checked);
+        if (filter.length > 0) {
+            handleFieldChange(field.name, textField.filter + (checked ? '*' : ''));
+        }
+    };
+
+    const textFieldProps = {
+        field: textField,
+        handleFieldChange: handleTextFieldChange,
+        isLoading,
+    };
+
+    return (
+        <>
+            {field.options !== undefined ? (
+                <AutoCompleteField {...textFieldProps} />
+            ) : (
+                <NormalTextField {...textFieldProps} />
+            )}
+            <div className='ml-2'>
+                <FormControlLabel
+                    control={<Checkbox checked={includeSubLineages} />}
+                    label='Include sublineages'
+                    disabled={isLoading}
+                    onChange={(_, checked) => handleIncludeSubLineagesChange(checked)}
+                />
+            </div>
+        </>
+    );
+};
 
 const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
     <TextField
