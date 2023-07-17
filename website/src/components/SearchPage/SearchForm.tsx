@@ -1,5 +1,6 @@
 import {
     Autocomplete,
+    Box,
     Checkbox,
     CircularProgress,
     createFilterOptions,
@@ -162,6 +163,11 @@ const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFieldChange
             size='small'
             renderInput={(params) => (
                 <TextField {...params} label={field.label} margin='dense' size='small' className='w-60' />
+            )}
+            renderOption={(props, option) => (
+                <Box component='li' {...props}>
+                    {option.option} ({option.count})
+                </Box>
             )}
             isOptionEqualToValue={(option, value) => option.option === value.option}
             onChange={(_, value) => {
