@@ -1,4 +1,4 @@
-import type { Config, SequenceType } from './types';
+import type { BaseType, Config, InsertionCount, MutationProportionCount, SequenceType } from './types';
 import { parseFasta } from './utils/parseFasta';
 import { isAlignedSequence, isUnalignedSequence } from './utils/sequenceTypeHelpers';
 
@@ -15,6 +15,22 @@ export async function fetchSequenceList(config: Config): Promise<any[]> {
 export async function fetchSequenceDetails(accession: string, config: Config): Promise<any> {
     const response = await fetch(`${config.lapisHost}/details?${config.schema.primaryKey}=${accession}`);
     return (await response.json()).data[0];
+}
+
+export async function fetchMutations(
+    accession: string,
+    type: BaseType,
+    config: Config,
+): Promise<MutationProportionCount[]> {
+    const endpoint = type === 'nucleotide' ? 'nuc-mutations' : 'aa-mutations';
+    const response = await fetch(`${config.lapisHost}/${endpoint}?${config.schema.primaryKey}=${accession}`);
+    return (await response.json()).data;
+}
+
+export async function fetchInsertions(accession: string, type: BaseType, config: Config): Promise<InsertionCount[]> {
+    const endpoint = type === 'nucleotide' ? 'nuc-insertions' : 'aa-insertions';
+    const response = await fetch(`${config.lapisHost}/${endpoint}?${config.schema.primaryKey}=${accession}`);
+    return (await response.json()).data;
 }
 
 export async function fetchSequence(

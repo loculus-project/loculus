@@ -1,3 +1,5 @@
+export type BaseType = 'nucleotide' | 'aminoAcid';
+
 export type SequenceType =
     | { type: 'nucleotide'; aligned: boolean; name: 'main' }
     | { type: 'aminoAcid'; aligned: true; name: string };
@@ -31,4 +33,15 @@ export type Config = {
         tableColumns: string[];
         primaryKey: string;
     };
+};
+
+export type MutationProportionCount = {
+    mutation: string;
+    proportion: number;
+    count: number;
+};
+
+export type InsertionCount = {
+    insertion: string;
+    count: number;
 };

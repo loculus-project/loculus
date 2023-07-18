@@ -23,16 +23,16 @@ test('can load and show sequences', async ({ page }) => {
     await expect(content?.includes('ACCAACCAAC')).toBeFalsy();
 
     // Click on the button "Load sequences" and wait a bit
-    await page.click('text=Load sequences');
-    await page.waitForTimeout(3000);
+    await page.getByRole('button', { name: 'Load sequences' }).click();
+    await page.waitForSelector('pre > code', { timeout: 3000 });
 
     // Check that the page now shows the nucleotide sequence
     content = await page.textContent('body');
     await expect(content?.includes('ACCAACCAAC')).toBeTruthy();
 
     // Click on the button "ORF1a" and wait a bit
-    await page.click('text=ORF1a');
-    await page.waitForTimeout(3000);
+    await page.getByRole('button', { name: 'ORF1a' }).click();
+    await page.waitForSelector('pre > code', { timeout: 3000 });
 
     // Check that the page now shows the amino acid sequence
     content = await page.textContent('body');
