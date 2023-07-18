@@ -38,7 +38,7 @@ const _autoCompletion: AutoCompletions = { lastUpdate: 0 };
 const CACHE_LIFETIME_IN_SECONDS = 3600;
 
 export async function getAutoCompletionList(): Promise<AutoCompletions> {
-    if (_autoCompletion.lastUpdate + CACHE_LIFETIME_IN_SECONDS < Date.now() * 1000) {
+    if (_autoCompletion.lastUpdate + CACHE_LIFETIME_IN_SECONDS < Date.now() / 1000) {
         const config = getConfig();
 
         const fieldsToAutoComplete = config.schema.metadata
@@ -59,7 +59,7 @@ export async function getAutoCompletionList(): Promise<AutoCompletions> {
             {},
         );
 
-        _autoCompletion.lastUpdate = Date.now() * 1000;
+        _autoCompletion.lastUpdate = Date.now() / 1000;
     }
     return _autoCompletion;
 }
