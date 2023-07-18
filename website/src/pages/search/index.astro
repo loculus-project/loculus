@@ -9,8 +9,7 @@ import type { Filter } from '../../types';
 
 const config = getConfig();
 const getSearchParams = (field: string): string => {
-    const searchParameter = Astro.url.searchParams.get(field);
-    return searchParameter === null ? '' : searchParameter;
+    return Astro.url.searchParams.get(field) ?? '';
 };
 
 const autoCompletions = await getAutoCompletionList();
@@ -40,25 +39,33 @@ const metadataSettings: Filter[] = config.schema.metadata.flatMap((metadata) => 
     }
 });
 
-const data =
-    Astro.url.searchParams.get('search') === 'true'
-        ? await getData(metadataSettings)
-        : { status: SearchStatus.READY, data: [] };
+const data = await getData(metadataSettings);
 ---
 
 <BaseLayout title='Search'>
     <h1 class='title'>Search</h1>
-    <div>
+    <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         {
             data.status === SearchStatus.ERROR ? (
                 <ErrorFeedback message='Error while fetching data' client:only='react' />
             ) : null
         }
 
-        <SearchForm metadataSettings={metadataSettings} client:only='react' />
+        <div class='md:w-72'>
+            <div class='shadow-xl rounded-r-lg p-4'>
+                <SearchForm metadataSettings={metadataSettings} client:only='react' />
+            </div>
+        </div>
 
-        <div class='mt-5'>
-            {data.status === SearchStatus.OK ? <Table data={data.data} config={config} client:only='react' /> : null}
+        <div class='flex-1'>
+            {
+                data.status === SearchStatus.OK ? (
+                    <>
+                        <div class='mb-1'>Total: {data.totalCount} sequences</div>
+                        <Table data={data.data} config={config} client:only='react' />
+                    </>
+                ) : null
+            }
         </div>
     </div>
 </BaseLayout>

@@ -11,6 +11,7 @@ export enum SearchStatus {
 export type SearchResponse = {
     status: SearchStatus;
     data: TableSequenceData[];
+    totalCount: number;
 };
 export const getData = async (metadataFilter: Filter[]): Promise<SearchResponse> => {
     const config = getConfig();
@@ -22,30 +23,40 @@ export const getData = async (metadataFilter: Filter[]): Promise<SearchResponse>
         }, {});
 
     // TODO: when switching to LAPISv2 limit should be handled differently
-    const query = `${config.lapisHost}/details?limit=100`;
+    const detailsQuery = `${config.lapisHost}/details?limit=100`;
+    const totalCountQuery = `${config.lapisHost}/aggregated`;
 
-    const body = JSON.stringify({
-        fields: [...config.schema.tableColumns, config.schema.primaryKey],
-        ...searchFilters,
-    });
+    const headers = {
+        'Content-Type': 'application/json',
+    };
 
     try {
-        const response = await fetch(query, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body,
-        });
+        const [detailsResponse, totalCountResponse] = await Promise.all([
+            fetch(detailsQuery, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    fields: [...config.schema.tableColumns, config.schema.primaryKey],
+                    ...searchFilters,
+                }),
+            }),
+            fetch(totalCountQuery, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(searchFilters),
+            }),
+        ]);
 
         return {
-            status: response.ok ? SearchStatus.OK : SearchStatus.ERROR,
-            data: (await response.json()).data ?? [],
+            status: detailsResponse.ok && totalCountResponse.ok ? SearchStatus.OK : SearchStatus.ERROR,
+            data: (await detailsResponse.json()).data ?? [],
+            totalCount: (await totalCountResponse.json()).data[0].count,
         };
     } catch {
         return {
             status: SearchStatus.ERROR,
             data: [],
+            totalCount: NaN,
         };
     }
 };

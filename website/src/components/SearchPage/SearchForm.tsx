@@ -1,4 +1,11 @@
-import { Autocomplete, CircularProgress, createFilterOptions, TextField } from '@mui/material';
+import {
+    Autocomplete,
+    Checkbox,
+    CircularProgress,
+    createFilterOptions,
+    FormControlLabel,
+    TextField,
+} from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import { sentenceCase } from 'change-case';
@@ -12,7 +19,6 @@ interface SearchFormProps {
 }
 
 export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
-    const [accessions, setAccessions] = useState('');
     const [fieldValues, setFieldValues] = useState(
         metadataSettings.map((metadata) => ({
             ...metadata,
@@ -20,10 +26,6 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
         })),
     );
     const [isLoading, setIsLoading] = useState(false);
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        setAccessions(e.target.value);
-    };
 
     const handleFieldChange = (metadataName: string, filter: string) => {
         setFieldValues((prev) => {
@@ -43,72 +45,40 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
         location.href = buildQueryUrl(fieldValues);
     };
 
-    const dateFields = useMemo(
-        () =>
-            fieldValues
-                .filter((field) => field.type === 'date')
-                .map((field) => (
-                    <DateField
-                        key={field.name}
-                        field={field}
-                        handleFieldChange={handleFieldChange}
-                        isLoading={isLoading}
-                    />
-                )),
-        [fieldValues, isLoading],
-    );
+    const resetSearch = async () => {
+        setIsLoading(true);
+        location.href = buildQueryUrl([]);
+    };
 
-    const autoCompleteFields = useMemo(
+    const fields = useMemo(
         () =>
-            fieldValues
-                .filter((field) => field.options !== undefined)
-                .map((field) => (
-                    <AutoCompleteField
-                        key={field.name}
-                        field={field}
-                        handleFieldChange={handleFieldChange}
-                        isLoading={isLoading}
-                    />
-                )),
-        [fieldValues, isLoading],
-    );
-
-    const otherFields = useMemo(
-        () =>
-            fieldValues
-                .filter((field) => field.options === undefined && field.type !== 'date')
-                .map((field) => (
-                    <NormalTextField
-                        key={field.name}
-                        field={field}
-                        handleFieldChange={handleFieldChange}
-                        isLoading={isLoading}
-                    />
-                )),
+            fieldValues.map((field) => {
+                const props = { key: field.name, field, handleFieldChange, isLoading };
+                if (field.type === 'date') {
+                    return <DateField {...props} />;
+                }
+                if (field.type === 'pango_lineage') {
+                    return <PangoLineageField {...props} />;
+                }
+                if (field.options !== undefined) {
+                    return <AutoCompleteField {...props} />;
+                }
+                return <NormalTextField {...props} />;
+            }),
         [fieldValues, isLoading],
     );
 
     return (
         <LocalizationProvider dateAdapter={AdapterLuxon}>
-            <form className='mb-5' onSubmit={handleSearch}>
-                <TextField
-                    fullWidth
-                    variant='outlined'
-                    margin='normal'
-                    placeholder='Accessions'
-                    value={accessions}
-                    disabled={isLoading}
-                    onChange={handleInputChange}
-                />
-                <div className='flex gap-4 justify-stretch flex-wrap'>
-                    {dateFields}
-                    {autoCompleteFields}
-                    {otherFields}
-                </div>
-                <div className='flex justify-end mt-4'>
-                    <button className='btn w-32' style={{ textTransform: 'none' }} type='submit' disabled={isLoading}>
-                        {isLoading ? <CircularProgress size={20} color='primary' /> : 'Search'}
-                    </button>
+            <div className='text-right'>
+                <button className='underline' onClick={resetSearch}>
+                    Reset
+                </button>
+            </div>
+            <form onSubmit={handleSearch}>
+                <div className='flex flex-col'>
+                    {fields}
+                    <SearchButton isLoading={isLoading} />
                 </div>
             </form>
         </LocalizationProvider>
@@ -116,11 +86,9 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
 };
 
 function buildQueryUrl(fieldValues: Filter[]) {
-    const searchFilters = fieldValues
-        .filter((field) => field.filter !== '')
-        .map((field) => `${field.name}=${field.filter}`);
-    const redirectUrl = searchFilters.length === 0 ? '' : `&${searchFilters.join('&')}`;
-    return `search?search=true${redirectUrl}`;
+    const params = new URLSearchParams();
+    fieldValues.filter((field) => field.filter !== '').forEach((field) => params.set(field.name, field.filter));
+    return `search?${params.toString()}`;
 }
 
 type FieldProps = {
@@ -138,7 +106,6 @@ const DateField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
             textField: {
                 size: 'small',
                 margin: 'dense',
-                className: 'w-60',
             },
         }}
         value={field.filter === '' ? null : DateTime.fromISO(field.filter)}
@@ -155,7 +122,6 @@ const AutoCompleteField: FC<FieldProps> = ({ field, handleFieldChange, isLoading
             matchFrom: 'any',
             limit: 200,
         })}
-        className='w-60'
         options={field.options ?? []}
         getOptionLabel={(option) => option.option ?? ''}
         disabled={isLoading}
@@ -172,6 +138,53 @@ const AutoCompleteField: FC<FieldProps> = ({ field, handleFieldChange, isLoading
     />
 );
 
+const PangoLineageField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => {
+    const filter = field.filter;
+    const [includeSubLineages, setIncludeSubLineages] = useState(filter.length > 0 ? filter.endsWith('*') : true);
+
+    const textField = {
+        ...field,
+        filter: includeSubLineages ? filter.slice(0, filter.length - 1) : filter,
+    };
+    const handleTextFieldChange = (metadataName: string, newFilter: string) => {
+        if (newFilter.length > 0) {
+            handleFieldChange(metadataName, newFilter + (includeSubLineages ? '*' : ''));
+        } else {
+            handleFieldChange(metadataName, '');
+        }
+    };
+    const handleIncludeSubLineagesChange = (checked: boolean) => {
+        setIncludeSubLineages(checked);
+        if (filter.length > 0) {
+            handleFieldChange(field.name, textField.filter + (checked ? '*' : ''));
+        }
+    };
+
+    const textFieldProps = {
+        field: textField,
+        handleFieldChange: handleTextFieldChange,
+        isLoading,
+    };
+
+    return (
+        <>
+            {field.options !== undefined ? (
+                <AutoCompleteField {...textFieldProps} />
+            ) : (
+                <NormalTextField {...textFieldProps} />
+            )}
+            <div className='ml-2'>
+                <FormControlLabel
+                    control={<Checkbox checked={includeSubLineages} />}
+                    label='Include sublineages'
+                    disabled={isLoading}
+                    onChange={(_, checked) => handleIncludeSubLineagesChange(checked)}
+                />
+            </div>
+        </>
+    );
+};
+
 const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
     <TextField
         variant='outlined'
@@ -186,6 +199,11 @@ const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }
         InputLabelProps={{
             shrink: true,
         }}
-        className='w-60'
     />
+);
+
+const SearchButton: FC<{ isLoading: boolean }> = ({ isLoading }) => (
+    <button className='btn normal-case my-2' type='submit' disabled={isLoading}>
+        {isLoading ? <CircularProgress size={20} color='primary' /> : 'Search'}
+    </button>
 );

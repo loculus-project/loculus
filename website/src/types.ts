@@ -6,7 +6,7 @@ export type SequenceType =
 
 export type Metadata = {
     name: string;
-    type: 'string' | 'date' | 'integer' | 'pangoLineage';
+    type: 'string' | 'date' | 'integer' | 'pango_lineage';
     autocomplete?: boolean;
 };
 
