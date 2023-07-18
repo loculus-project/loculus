@@ -8,18 +8,23 @@ import {
 } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
+import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { DateTime } from 'luxon';
 import React, { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
-import type { Filter } from '../../types';
+import { fetchAutoCompletion } from '../../config';
+import type { Config, Filter } from '../../types';
+
+const queryClient = new QueryClient();
 
 interface SearchFormProps {
     metadataSettings: Filter[];
+    config: Config;
 }
 
-export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
-    const [fieldValues, setFieldValues] = useState(
+export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, config }) => {
+    const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
         metadataSettings.map((metadata) => ({
             ...metadata,
             label: metadata.label ?? sentenceCase(metadata.name),
@@ -53,35 +58,37 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings }) => {
     const fields = useMemo(
         () =>
             fieldValues.map((field) => {
-                const props = { key: field.name, field, handleFieldChange, isLoading };
+                const props = { key: field.name, field, handleFieldChange, isLoading, config, allFields: fieldValues };
                 if (field.type === 'date') {
                     return <DateField {...props} />;
                 }
                 if (field.type === 'pango_lineage') {
                     return <PangoLineageField {...props} />;
                 }
-                if (field.options !== undefined) {
+                if (field.autocomplete === true) {
                     return <AutoCompleteField {...props} />;
                 }
                 return <NormalTextField {...props} />;
             }),
-        [fieldValues, isLoading],
+        [config, fieldValues, isLoading],
     );
 
     return (
-        <LocalizationProvider dateAdapter={AdapterLuxon}>
-            <div className='text-right'>
-                <button className='underline' onClick={resetSearch}>
-                    Reset
-                </button>
-            </div>
-            <form onSubmit={handleSearch}>
-                <div className='flex flex-col'>
-                    {fields}
-                    <SearchButton isLoading={isLoading} />
+        <QueryClientProvider client={queryClient}>
+            <LocalizationProvider dateAdapter={AdapterLuxon}>
+                <div className='text-right'>
+                    <button className='underline' onClick={resetSearch}>
+                        Reset
+                    </button>
                 </div>
-            </form>
-        </LocalizationProvider>
+                <form onSubmit={handleSearch}>
+                    <div className='flex flex-col'>
+                        {fields}
+                        <SearchButton isLoading={isLoading} />
+                    </div>
+                </form>
+            </LocalizationProvider>
+        </QueryClientProvider>
     );
 };
 
@@ -93,8 +100,10 @@ function buildQueryUrl(fieldValues: Filter[]) {
 
 type FieldProps = {
     field: Filter;
+    allFields: Filter[];
     handleFieldChange: (metadataName: string, filter: string) => void;
     isLoading: boolean;
+    config: Config;
 };
 
 const DateField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
@@ -116,29 +125,55 @@ const DateField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
     />
 );
 
-const AutoCompleteField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
-    <Autocomplete
-        filterOptions={createFilterOptions({
-            matchFrom: 'any',
-            limit: 200,
-        })}
-        options={field.options ?? []}
-        getOptionLabel={(option) => option.option ?? ''}
-        disabled={isLoading}
-        size='small'
-        renderInput={(params) => (
-            <TextField {...params} label={field.label} margin='dense' size='small' className='w-60' />
-        )}
-        isOptionEqualToValue={(option, value) => option.option === value.option}
-        onChange={(_, value) => {
-            return handleFieldChange(field.name, value?.option ?? '');
-        }}
-        value={field.options?.find((option) => option.option === field.filter) ?? null}
-        autoComplete
-    />
-);
+const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFieldChange, isLoading, config }) => {
+    const [open, setOpen] = useState(false);
 
-const PangoLineageField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => {
+    const { data: options, isLoading: isOptionListLoading } = useQuery({
+        queryKey: [field.name, open, allFields],
+        queryFn: async () => {
+            if (!open) {
+                return [];
+            }
+            const filterParams = new URLSearchParams();
+            allFields
+                .filter((f) => f.name !== field.name && f.filter !== '')
+                .forEach((f) => filterParams.set(f.name, f.filter));
+            return fetchAutoCompletion(field.name, filterParams, config);
+        },
+    });
+
+    return (
+        <Autocomplete
+            filterOptions={createFilterOptions({
+                matchFrom: 'any',
+                limit: 200,
+            })}
+            open={open}
+            onOpen={() => {
+                setOpen(true);
+            }}
+            onClose={() => {
+                setOpen(false);
+            }}
+            options={options ?? []}
+            loading={isOptionListLoading}
+            getOptionLabel={(option) => option.option ?? ''}
+            disabled={isLoading}
+            size='small'
+            renderInput={(params) => (
+                <TextField {...params} label={field.label} margin='dense' size='small' className='w-60' />
+            )}
+            isOptionEqualToValue={(option, value) => option.option === value.option}
+            onChange={(_, value) => {
+                return handleFieldChange(field.name, value?.option ?? '');
+            }}
+            value={{ option: field.filter, count: NaN }}
+            autoComplete
+        />
+    );
+};
+
+const PangoLineageField: FC<FieldProps> = ({ field, allFields, handleFieldChange, isLoading, config }) => {
     const filter = field.filter;
     const [includeSubLineages, setIncludeSubLineages] = useState(filter.length > 0 ? filter.endsWith('*') : true);
 
@@ -162,13 +197,15 @@ const PangoLineageField: FC<FieldProps> = ({ field, handleFieldChange, isLoading
 
     const textFieldProps = {
         field: textField,
+        allFields,
         handleFieldChange: handleTextFieldChange,
         isLoading,
+        config,
     };
 
     return (
         <>
-            {field.options !== undefined ? (
+            {field.autocomplete === true ? (
                 <AutoCompleteField {...textFieldProps} />
             ) : (
                 <NormalTextField {...textFieldProps} />

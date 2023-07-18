@@ -33,39 +33,13 @@ export function getReferenceGenomes(): ReferenceGenomes {
 }
 
 export type OptionList = { option: string | null; count: number }[];
-export type AutoCompletions = { lastUpdate: number; completions?: Record<string, OptionList> };
-const _autoCompletion: AutoCompletions = { lastUpdate: 0 };
-const CACHE_LIFETIME_IN_SECONDS = 3600;
 
-export async function getAutoCompletionList(): Promise<AutoCompletions> {
-    if (_autoCompletion.lastUpdate + CACHE_LIFETIME_IN_SECONDS < Date.now() / 1000) {
-        const config = getConfig();
-
-        const fieldsToAutoComplete = config.schema.metadata
-            .filter((metadata) => metadata.autocomplete === true)
-            .map((metadata) => metadata.name);
-
-        const completions = await Promise.all(
-            fieldsToAutoComplete.map(async (field) => ({
-                [field]: await fetchAutoCompletion(field, config),
-            })),
-        );
-
-        _autoCompletion.completions = completions.reduce(
-            (merged, completion) => ({
-                ...merged,
-                ...completion,
-            }),
-            {},
-        );
-
-        _autoCompletion.lastUpdate = Date.now() / 1000;
-    }
-    return _autoCompletion;
-}
-
-async function fetchAutoCompletion(field: string, config: Config): Promise<OptionList> {
-    const response = await fetch(`${config.lapisHost}/aggregated?fields=${field}`);
+export async function fetchAutoCompletion(
+    field: string,
+    filterParams: URLSearchParams,
+    config: Config,
+): Promise<OptionList> {
+    const response = await fetch(`${config.lapisHost}/aggregated?fields=${field}&${filterParams}`);
     // TODO: introduce validation of the response; will make working with the data easier
     const autoCompleteData = (await response.json()).data as { [key: string]: string | number | null }[];
 
