@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 
-const styledHamburger = (isOpen: boolean) => `
+const styledHamburger = `
     .hamburger {
         width: 2rem;
         height: 2rem;
@@ -19,16 +19,28 @@ const styledHamburger = (isOpen: boolean) => `
         background-color: #54858c;
     }
     
-    .burger1 {
-        transform: ${isOpen ? 'rotate(45deg)' : 'rotate(0)'};
+    .burger1--open {
+        transform: rotate(45deg);
     }
     
-    .burger2 {
-      opacity: ${isOpen ? 0 : 1};
+    .burger1--closed {
+        transform: rotate(0);
+    }
+    
+    .burger2--open {
+      opacity: 0;
+    }
+    
+    .burger2--closed {
+      opacity: 1;
     }
       
-    .burger3 {
-      transform: ${isOpen ? 'rotate(-45deg)' : 'rotate(0)'};
+    .burger3--open {
+      transform: rotate(-45deg);
+    }
+    
+    .burger3--closed {
+      transform: rotate(0);
     }
 `;
 
@@ -36,11 +48,11 @@ export const SandwichIcon: FC<{ isOpen: boolean }> = ({ isOpen }) => {
     return (
         <div className='relative' aria-label='main menu'>
             <div className='hamburger'>
-                <div className='burger burger1 ' />
-                <div className='burger burger2 ' />
-                <div className='burger burger3 ' />
+                <div className={`burger burger1--${isOpen ? 'open' : 'closed'}`} />
+                <div className={`burger burger2--${isOpen ? 'open' : 'closed'}`} />
+                <div className={`burger burger3--${isOpen ? 'open' : 'closed'}`} />
             </div>
-            <style>{styledHamburger(isOpen)}</style>
+            <style>{styledHamburger}</style>
         </div>
     );
 };

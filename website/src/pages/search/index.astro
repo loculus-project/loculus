@@ -47,9 +47,7 @@ const data = await getData(metadataSettings);
         }
 
         <div class='md:w-72'>
-            <div class='shadow-xl rounded-r-lg p-4'>
-                <SearchForm metadataSettings={metadataSettings} config={config} client:only='react' />
-            </div>
+            <SearchForm metadataSettings={metadataSettings} config={config} client:only='react' />
         </div>
 
         <div class='flex-1'>
