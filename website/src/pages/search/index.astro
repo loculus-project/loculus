@@ -54,7 +54,7 @@ const data = await getData(metadataSettings);
             {
                 data.status === SearchStatus.OK ? (
                     <>
-                        <div class='mb-1'>Total: {data.totalCount} sequences</div>
+                        <div class='mb-1'>Search returned {data.totalCount} sequences</div>
                         <Table data={data.data} config={config} client:only='react' />
                     </>
                 ) : null
