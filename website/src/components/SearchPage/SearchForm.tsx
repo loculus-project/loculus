@@ -109,7 +109,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, config }) =>
                                 <div
                                     className='h-3'
                                     style={{ background: 'linear-gradient(to bottom, transparent, white)' }}
-                                 />
+                                />
                                 <div className='bg-white pb-2 pt-1.5'>
                                     <SearchButton isLoading={isLoading} />
                                 </div>
