@@ -54,7 +54,10 @@ const data = await getData(metadataSettings);
             {
                 data.status === SearchStatus.OK ? (
                     <>
-                        <div class='mb-1'>Search returned {data.totalCount} sequences</div>
+                        <div class='mb-1'>
+                            Search returned {data.totalCount.toLocaleString()}
+                            sequence{data.totalCount === 1 ? '' : 's'}
+                        </div>
                         <Table data={data.data} config={config} client:only='react' />
                     </>
                 ) : null
