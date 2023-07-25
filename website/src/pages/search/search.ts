@@ -13,7 +13,7 @@ export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
 };
-export const getData = async (metadataFilter: Filter[]): Promise<SearchResponse> => {
+export const getData = async (metadataFilter: Filter[], offset: number, limit: number): Promise<SearchResponse> => {
     const config = getConfig();
     const searchFilters = metadataFilter
         .filter((metadata) => metadata.filter !== '')
@@ -22,8 +22,8 @@ export const getData = async (metadataFilter: Filter[]): Promise<SearchResponse>
             return acc;
         }, {});
 
-    // TODO: when switching to LAPISv2 limit should be handled differently
-    const detailsQuery = `${config.lapisHost}/details?limit=100`;
+    // TODO: when switching to LAPISv2 limit and offset should be handled differently
+    const detailsQuery = `${config.lapisHost}/details?limit=${limit}&offset=${offset}`;
     const totalCountQuery = `${config.lapisHost}/aggregated`;
 
     const headers = {
