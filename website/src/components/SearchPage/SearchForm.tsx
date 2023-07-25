@@ -15,7 +15,10 @@ import { DateTime } from 'luxon';
 import React, { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
 import { fetchAutoCompletion } from '../../config';
+import { useOffCanvas } from '../../reactUtils/useOffCanvas';
 import type { Config, Filter } from '../../types';
+import { OffCanvasOverlay } from '../OffCanvasOverlay';
+import { SandwichIcon } from '../SandwichIcon';
 
 const queryClient = new QueryClient();
 
@@ -32,6 +35,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, config }) =>
         })),
     );
     const [isLoading, setIsLoading] = useState(false);
+    const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
 
     const handleFieldChange = (metadataName: string, filter: string) => {
         setFieldValues((prev) => {
@@ -77,17 +81,36 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, config }) =>
     return (
         <QueryClientProvider client={queryClient}>
             <LocalizationProvider dateAdapter={AdapterLuxon}>
-                <div className='text-right'>
-                    <button className='underline' onClick={resetSearch}>
-                        Reset
+                <div className='text-right -mb-10 md:hidden'>
+                    <button onClick={toggleMobileOpen} className='btn btn-xs'>
+                        Modify search query
                     </button>
                 </div>
-                <form onSubmit={handleSearch}>
-                    <div className='flex flex-col'>
-                        {fields}
-                        <SearchButton isLoading={isLoading} />
+                {isMobileOpen && <OffCanvasOverlay className='md:hidden' onClick={closeOnMobile} />}
+                <div
+                    className={`${
+                        isMobileOpen ? 'translate-y-0' : 'translate-y-full'
+                    } fixed bottom-0 left-0 w-full bg-white h-4/5 rounded-t-lg overflow-auto offCanvasTransform
+                      md:translate-y-0 md:static md:h-auto md:overflow-visible`}
+                >
+                    <div className='shadow-xl rounded-r-lg px-4 pt-4'>
+                        <div className='flex'>
+                            <h2 className='text-lg font-semibold flex-1 md:hidden'>Search query</h2>
+                            <button className='underline' onClick={resetSearch}>
+                                Reset
+                            </button>
+                            <button className='ml-4 md:hidden' onClick={closeOnMobile}>
+                                <SandwichIcon isOpen />
+                            </button>
+                        </div>
+                        <form onSubmit={handleSearch}>
+                            <div className='flex flex-col'>{fields}</div>
+                            <div className='sticky bottom-0 z-10 py-4 bg-white'>
+                                <SearchButton isLoading={isLoading} />
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </LocalizationProvider>
         </QueryClientProvider>
     );
@@ -246,7 +269,7 @@ const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }
 );
 
 const SearchButton: FC<{ isLoading: boolean }> = ({ isLoading }) => (
-    <button className='btn normal-case my-2' type='submit' disabled={isLoading}>
+    <button className='btn normal-case w-full' type='submit' disabled={isLoading}>
         {isLoading ? <CircularProgress size={20} color='primary' /> : 'Search'}
     </button>
 );

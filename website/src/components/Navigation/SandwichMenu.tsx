@@ -1,13 +1,11 @@
-import React, { type FC, useState } from 'react';
+import type { FC } from 'react';
 
-import { SandwichIcon } from './SandwichIcon';
+import { useOffCanvas } from '../../reactUtils/useOffCanvas';
+import { OffCanvasOverlay } from '../OffCanvasOverlay';
+import { SandwichIcon } from '../SandwichIcon';
 
 export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right }) => {
-    const [isOpen, setIsOpen] = useState(false);
-
-    const toggleMenu = () => {
-        setIsOpen(!isOpen);
-    };
+    const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
         <div className='relative'>
@@ -19,18 +17,12 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                 <SandwichIcon isOpen={isOpen} />
             </button>
 
-            <div
-                className={`fixed inset-0 bg-gray-800 bg-opacity-50 z-40 transition-opacity ${
-                    isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                }`}
-                onClick={toggleMenu}
-            />
+            {isOpen && <OffCanvasOverlay onClick={closeMenu} />}
 
             <div
-                className={`fixed top-0 right-0 bg-white w-64 min-h-screen flex flex-col transform transition-transform duration-300 ease-in-out z-40 ${
+                className={`fixed top-0 right-0 bg-white w-64 min-h-screen flex flex-col offCanvasTransform ${
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
-                onClick={toggleMenu}
             >
                 <div className='font-bold m-5 flex flex-col justify-between min-h-screen flex-grow'>
                     <div>
