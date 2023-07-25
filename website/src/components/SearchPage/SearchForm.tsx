@@ -105,8 +105,14 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, config }) =>
                         </div>
                         <form onSubmit={handleSearch}>
                             <div className='flex flex-col'>{fields}</div>
-                            <div className='sticky bottom-0 z-10 py-4 bg-white'>
-                                <SearchButton isLoading={isLoading} />
+                            <div className='sticky bottom-0 z-10'>
+                                <div
+                                    className='h-3'
+                                    style={{ background: 'linear-gradient(to bottom, transparent, white)' }}
+                                 />
+                                <div className='bg-white pb-2 pt-1.5'>
+                                    <SearchButton isLoading={isLoading} />
+                                </div>
                             </div>
                         </form>
                     </div>
