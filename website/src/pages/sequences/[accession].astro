@@ -19,12 +19,10 @@ const versionPage = `/sequences/${accession}/versions`;
 <BaseLayout title={accession}>
     {
         tableData === undefined ? (
-            <>
-                <div class='flex items-center'>
-                    <BackButton marginRight={2} client:load />
-                    <h1 class='subtitle'>No sequence found with accession: {accession}</h1>
-                </div>
-            </>
+            <div class='flex items-center'>
+                <BackButton marginRight={2} client:load />
+                <h1 class='subtitle'>No sequence found with accession: {accession}</h1>
+            </div>
         ) : (
             <>
                 <div class='flex items-center'>

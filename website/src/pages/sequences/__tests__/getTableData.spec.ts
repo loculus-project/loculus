@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { getTableData } from '../getTableData';
-import type { Config } from '../../../types';
+
 import { fetchInsertions, fetchMutations, fetchSequenceDetails } from '../../../api';
+import type { Config } from '../../../types';
+import { getTableData } from '../getTableData';
 
 vi.mock('../../../api');
 
