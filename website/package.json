@@ -9,8 +9,8 @@
     "build-netlify": "astro build --config astro.netlify.config.mjs",
     "preview": "astro preview",
     "astro": "astro",
-    "check-format": "prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,json,astro}\" && eslint \"src/**/*.{ts,tsx,astro}\" --fix",
-    "format": "prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\" && eslint \"src/**/*.{ts,tsx,astro}\" --fix",
+    "check-format": "eslint \"src/**/*.{ts,tsx,astro}\" && prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
+    "format": "eslint \"src/**/*.{ts,tsx,astro}\" --fix && prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
     "test": "vitest --run /__tests__/",
     "e2e": "npx playwright test"
   },
