@@ -195,7 +195,7 @@ const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFieldChange
             )}
             renderOption={(props, option) => (
                 <Box component='li' {...props}>
-                    {option.option} ({option.count})
+                    {option.option} ({option.count.toLocaleString()})
                 </Box>
             )}
             isOptionEqualToValue={(option, value) => option.option === value.option}
