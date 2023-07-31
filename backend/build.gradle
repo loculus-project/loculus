@@ -1,0 +1,45 @@
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+
+plugins {
+	id 'org.springframework.boot' version '3.1.2'
+	id 'io.spring.dependency-management' version '1.1.2'
+	id 'org.jetbrains.kotlin.jvm' version '1.9.0'
+	id 'org.jetbrains.kotlin.plugin.spring' version '1.9.0'
+	id 'org.jlleitschuh.gradle.ktlint' version '11.5.0'
+}
+
+group = 'org.pathoplexus'
+version = '0.0.1'
+
+java {
+	sourceCompatibility = '19'
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
+	implementation 'org.jetbrains.kotlin:kotlin-reflect'
+	implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
+	testImplementation('org.springframework.boot:spring-boot-starter-test'){
+		exclude group: 'org.mockito'
+	}
+	testImplementation 'com.ninja-squad:springmockk:4.0.2'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	testLogging {
+		events TestLogEvent.FAILED
+		exceptionFormat TestExceptionFormat.FULL
+		showExceptions true
+	}
+}
+
+tasks.named('bootBuildImage') {
+	environment = ["BP_JVM_VERSION": "20"]
+}
