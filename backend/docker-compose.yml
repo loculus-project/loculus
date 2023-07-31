@@ -1,0 +1,22 @@
+version: "3"
+services:
+  database:
+    image: postgres:latest
+    volumes:
+      - ./database:/docker-entrypoint-initdb.d
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: unsecure
+      POSTGRES_DB: pathoplexus
+
+  backend:
+    image: ghcr.io/pathoplexus/backend:latest
+    depends_on:
+      - database
+    ports:
+      - "127.0.0.1:8079:8079"
+    environment:
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: unsecure
