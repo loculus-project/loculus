@@ -8,3 +8,7 @@ updates:
     directory: website/
     schedule:
       interval: weekly
+  - package-ecosystem: gradle
+    directory: backend/
+    schedule:
+      interval: weekly
