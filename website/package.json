@@ -42,7 +42,7 @@
     "cross-env": "^7.0.3",
     "daisyui": "^3.2.1",
     "eslint": "^8.46.0",
-    "eslint-plugin-astro": "^0.27.2",
+    "eslint-plugin-astro": "^0.28.0",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-jsx-a11y": "^6.7.1",
     "eslint-plugin-prefer-arrow": "^1.2.3",
