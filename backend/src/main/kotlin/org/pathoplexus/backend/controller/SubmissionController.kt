@@ -18,7 +18,7 @@ class SubmissionController(
     private val mapper: ObjectMapper,
 ) {
 
-    @PostMapping("/submit")
+    @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
         @RequestParam username: String,
         @RequestParam metadata: MultipartFile,
