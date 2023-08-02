@@ -11,8 +11,9 @@
     "astro": "astro",
     "check-format": "eslint \"src/**/*.{ts,tsx,astro}\" && prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
     "format": "eslint \"src/**/*.{ts,tsx,astro}\" --fix && prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
-    "test": "vitest --run /__tests__/",
-    "e2e": "npx playwright test"
+    "test": "vitest --dir ./src",
+    "e2e": "npx playwright test",
+    "e2e:headed": "npx playwright test --headed"
   },
   "dependencies": {
     "@astrojs/netlify": "^2.5.1",
@@ -25,6 +26,7 @@
     "@tanstack/react-query": "^4.32.0",
     "@types/react": "^18.2.18",
     "@types/react-dom": "^18.2.7",
+    "@vitejs/plugin-react": "^4.0.4",
     "astro": "^2.9.2",
     "change-case": "^4.1.2",
     "luxon": "^3.3.0",
@@ -34,6 +36,10 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.35.1",
+    "@testing-library/dom": "^9.3.1",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
     "@tanstack/eslint-plugin-query": "^4.29.25",
     "@types/luxon": "^3.3.0",
     "@types/node": "^20.4.1",
@@ -48,6 +54,7 @@
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "eslint-plugin-react": "^7.33.1",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "jsdom": "^22.1.0",
     "prettier": "3.0.0",
     "prettier-plugin-astro": "^0.11.0",
     "typescript": "^5.1.6",

@@ -1,6 +1,6 @@
 import { expect, test, describe } from 'vitest';
 
-import { splitString } from '../splitLines';
+import { splitString } from './splitLines';
 
 describe('splitString', () => {
     test('should handle empty string', () => {

@@ -1,15 +1,10 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, baseUrl } from '../e2e.fixture';
 
-test('has title', async ({ page }) => {
-    await page.goto('http://localhost:3001/');
+test.describe('The landing page', () => {
+    test('has title and header', async ({ page }) => {
+        await page.goto(baseUrl);
 
-    // Expect a title "to contain" a substring.
-    await expect(page).toHaveTitle('Home');
-});
-
-test('has header', async ({ page }) => {
-    await page.goto('http://localhost:3001/');
-
-    // Expects the URL to contain intro.
-    await expect(page.locator('h1')).toContainText('Pathoplexus');
+        await expect(page).toHaveTitle('Home');
+        await expect(page.locator('h1')).toContainText('Pathoplexus');
+    });
 });

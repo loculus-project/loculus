@@ -60,3 +60,28 @@ export const getData = async (metadataFilter: Filter[], offset: number, limit: n
         };
     }
 };
+
+export const getMetadataSettings = async (getSearchParams: (param: string) => string): Promise<Filter[]> => {
+    const config = getConfig();
+    return config.schema.metadata.flatMap((metadata) => {
+        if (metadata.type === 'date') {
+            const metadataFrom = {
+                ...metadata,
+                name: `${metadata.name}From`,
+                filter: getSearchParams(`${metadata.name}From`),
+            };
+            const metadataTo = {
+                ...metadata,
+                name: `${metadata.name}To`,
+                filter: getSearchParams(`${metadata.name}To`),
+            };
+            return [metadataFrom, metadataTo];
+        } else {
+            const metadataSetting: Filter = {
+                ...metadata,
+                filter: getSearchParams(metadata.name),
+            };
+            return [metadataSetting];
+        }
+    });
+};
