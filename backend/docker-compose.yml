@@ -17,3 +17,5 @@ services:
       - database
     ports:
       - "127.0.0.1:8079:8079"
+    environment:
+      DATABASE_HOST: database
