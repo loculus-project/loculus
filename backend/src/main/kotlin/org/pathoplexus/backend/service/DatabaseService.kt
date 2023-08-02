@@ -12,7 +12,7 @@ class DatabaseService(
 ) {
     private val pool: ComboPooledDataSource = ComboPooledDataSource().apply {
         driverClass = "org.postgresql.Driver"
-        jdbcUrl = "jdbc:postgresql://${databaseProperties.host}:${databaseProperties.port}/${databaseProperties.name}"
+        jdbcUrl = databaseProperties.jdbcUrl
         user = databaseProperties.username
         password = databaseProperties.password
     }

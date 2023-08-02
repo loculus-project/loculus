@@ -3,7 +3,7 @@ services:
   database:
     image: postgres:latest
     volumes:
-      - ./database:/docker-entrypoint-initdb.d
+      - ./src/main/resources/database:/docker-entrypoint-initdb.d
     ports:
       - "127.0.0.1:5432:5432"
     environment:
