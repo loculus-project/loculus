@@ -10,5 +10,5 @@ data class DatabaseProperties(
     var port: Int = 5432,
     var name: String = "",
     var username: String = "",
-    var password: String = ""
+    var password: String = "",
 )

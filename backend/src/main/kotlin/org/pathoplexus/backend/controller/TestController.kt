@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class TestController(
-    private val databaseService: DatabaseService
+    private val databaseService: DatabaseService,
 ) {
 
     @GetMapping("/test")

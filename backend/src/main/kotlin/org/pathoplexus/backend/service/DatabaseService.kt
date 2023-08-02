@@ -7,7 +7,7 @@ import java.sql.Connection
 
 @Service
 class DatabaseService(
-    private val databaseProperties: DatabaseProperties
+    private val databaseProperties: DatabaseProperties,
 ) {
     private val pool: ComboPooledDataSource = ComboPooledDataSource().apply {
         driverClass = "org.postgresql.Driver"
