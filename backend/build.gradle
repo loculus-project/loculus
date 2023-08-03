@@ -32,7 +32,10 @@ dependencies {
 		exclude group: 'org.mockito'
 	}
 	testImplementation 'com.ninja-squad:springmockk:4.0.2'
+	testImplementation 'org.testcontainers:postgresql:1.18.0'
 }
+
+
 
 tasks.named('test') {
 	useJUnitPlatform()
