@@ -21,7 +21,7 @@ class DatabaseService(
         password = databaseProperties.password
     }
 
-    fun getConnection(): Connection {
+    private fun getConnection(): Connection {
         return pool.connection
     }
 
