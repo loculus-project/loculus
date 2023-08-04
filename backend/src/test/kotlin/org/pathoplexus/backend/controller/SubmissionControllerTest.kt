@@ -88,6 +88,31 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         waitAndCountLinesInResponse(result0, 0)
     }
 
+    @Test
+    fun `test updating processed data`() {
+        submitTestData()
+
+        val result = queryUnprocessedSequences(10)
+        val testData = waitAndCountLinesInResponse(result, 10)
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/update-processed-data")
+                .contentType("application/x-ndjson")
+                .content(testData),
+        )
+            .andExpect(status().isOk())
+
+        val response = mockMvc.perform(
+            MockMvcRequestBuilders.post("/extract-processed-data")
+                .param("numberOfSequences", "10"),
+        )
+            .andExpect(status().isOk())
+            .andExpect(content().contentType("application/x-ndjson"))
+            .andReturn()
+
+        waitAndCountLinesInResponse(response, 10)
+    }
+
     private fun submitTestData(): ResultActions {
         val metadataFile = MockMultipartFile(
             "metadata",
@@ -123,7 +148,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         .andExpect(content().contentType("application/x-ndjson"))
         .andReturn()
 
-    private fun waitAndCountLinesInResponse(result: MvcResult, numberOfSequences: Int) {
+    private fun waitAndCountLinesInResponse(result: MvcResult, numberOfSequences: Int): String {
         await().until {
             result.response.isCommitted
         }
@@ -131,5 +156,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             it == '\n'
         }
         assertThat(sequenceCount).isEqualTo(numberOfSequences)
+
+        return result.response.contentAsString
     }
 }
