@@ -96,7 +96,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         val testData = waitAndCountLinesInResponse(result, 10)
 
         mockMvc.perform(
-            MockMvcRequestBuilders.post("/update-processed-data")
+            MockMvcRequestBuilders.post("/submit-processed-data")
                 .contentType("application/x-ndjson")
                 .content(testData),
         )

@@ -1,11 +1,17 @@
 package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import jakarta.servlet.http.HttpServletRequest
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.DatabaseService
+import org.pathoplexus.backend.service.Sequence
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.context.annotation.Description
 import org.springframework.http.HttpHeaders
@@ -64,10 +70,29 @@ class SubmissionController(
     }
 
     @Description("Submit processed data as a stream of NDJSON")
-    @PostMapping("/update-processed-data", consumes = [MediaType.APPLICATION_NDJSON_VALUE])
-    fun updateProcessedData(request: HttpServletRequest): ResponseEntity<String> {
+    @Operation(
+        requestBody = RequestBody(
+            content = [
+                Content(
+                    mediaType = MediaType.APPLICATION_NDJSON_VALUE,
+                    schema = Schema(implementation = Sequence::class),
+                    examples = [
+                        ExampleObject(
+                            name = "Example for submitting processed sequences. \n" +
+                                " NOTE: Due to formatting issues with swagger, remove all newlines from the example.",
+                            value = """{"sequenceId":"4","data":{"date":"2020-12-25","host":"Homo sapiens","header":"Switzerland/SH-ETHZ-430808/2020","region":"Europe","country":"Switzerland","division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
+                            summary = "Processed data (remove all newlines from the example)",
+                        ),
+                    ],
+                ),
+            ],
+        ),
+    )
+    @PostMapping("/submit-processed-data", consumes = [MediaType.APPLICATION_NDJSON_VALUE])
+    fun submitProcessedData(
+        request: HttpServletRequest,
+    ) {
         databaseService.updateProcessedData(request.inputStream)
-        return ResponseEntity.ok("Data updated successfully")
     }
 
     // TODO(#108): temporary method to ease testing, replace later

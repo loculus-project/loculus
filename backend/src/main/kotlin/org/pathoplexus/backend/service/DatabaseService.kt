@@ -153,7 +153,7 @@ class DatabaseService(
     }
 }
 
-private data class Sequence(
+data class Sequence(
     val sequenceId: Long,
     val data: JsonNode,
 )
