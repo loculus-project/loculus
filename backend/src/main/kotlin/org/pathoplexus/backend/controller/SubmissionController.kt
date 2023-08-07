@@ -12,12 +12,14 @@ import org.apache.commons.csv.CSVParser
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.Sequence
+import org.pathoplexus.backend.service.SequenceStatus
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.context.annotation.Description
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -109,5 +111,13 @@ class SubmissionController(
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
+
+    @Description("Get a list of all submitted sequences")
+    @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getUserSequenceList(
+        @RequestParam username: String,
+    ): List<SequenceStatus> {
+        return databaseService.getMySequenceList(username)
     }
 }
