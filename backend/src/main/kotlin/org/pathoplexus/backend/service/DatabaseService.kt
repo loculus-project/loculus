@@ -2,10 +2,15 @@ package org.pathoplexus.backend.service
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import org.pathoplexus.backend.config.DatabaseProperties
 import org.pathoplexus.backend.model.HeaderId
+import org.postgresql.util.PGobject
 import org.springframework.stereotype.Service
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
 import java.io.OutputStream
 import java.sql.Connection
 
@@ -45,7 +50,7 @@ class DatabaseService(
         val headerIds = mutableListOf<HeaderId>()
         val sql = """
             insert into sequences (submitter, submitted_at, started_processing_at, status, original_data)
-            values (?, now(), null, 'received', ?::jsonb)
+            values (?, now(), null, 'received', ?::jsonb )
             returning sequence_id, original_data->>'header' as header;
         """.trimIndent()
         useTransactionalConnection { conn ->
@@ -78,7 +83,7 @@ class DatabaseService(
                 val rs = statement.executeQuery()
                 rs.use {
                     while (rs.next()) {
-                        val sequence = Sequences(
+                        val sequence = Sequence(
                             rs.getLong("sequence_id"),
                             objectMapper.readTree(rs.getString("original_data")),
                         )
@@ -91,9 +96,64 @@ class DatabaseService(
             }
         }
     }
+
+    // TODO(#108): temporary method to ease testing, replace later
+    fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
+        val sql = """
+        update sequences set status = 'siloed'
+        where sequence_id in (
+            select sequence_id from sequences where status = 'processed' limit ?
+        )
+        returning sequence_id, processed_data
+        """.trimIndent()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setInt(1, numberOfSequences)
+                val rs = statement.executeQuery()
+                rs.use {
+                    while (rs.next()) {
+                        val sequence = Sequence(
+                            rs.getLong("sequence_id"),
+                            objectMapper.readTree(rs.getString("processed_data")),
+                        )
+                        val json = objectMapper.writeValueAsString(sequence)
+                        outputStream.write(json.toByteArray())
+                        outputStream.write('\n'.code)
+                        outputStream.flush()
+                    }
+                }
+            }
+        }
+    }
+
+    fun updateProcessedData(inputStream: InputStream) {
+        val reader = BufferedReader(InputStreamReader(inputStream))
+
+        reader.lineSequence().forEach { line ->
+
+            val sequence = objectMapper.readValue<Sequence>(line)
+
+            val sql = """
+            update sequences
+            set status = 'processed', finished_processing_at = now(), processed_data = ?
+            where sequence_id = ?
+            """.trimIndent()
+
+            useTransactionalConnection { conn ->
+                conn.prepareStatement(sql).use { statement ->
+                    statement.setObject(1, PGobject().apply { type = "jsonb"; value = sequence.data.toString() })
+                    statement.setLong(2, sequence.sequenceId)
+                    statement.executeUpdate()
+                }
+            }
+        }
+
+        reader.close()
+    }
 }
 
-private data class Sequences(
+data class Sequence(
     val sequenceId: Long,
-    val originalData: JsonNode,
+    val data: JsonNode,
 )

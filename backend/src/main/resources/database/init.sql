@@ -3,8 +3,10 @@ create table sequences (
     submitter text not null,
     submitted_at timestamp not null,
     started_processing_at timestamp,
+    finished_processing_at timestamp,
     status text not null,
-    original_data jsonb not null
+    original_data jsonb not null,
+    processed_data jsonb
 );
 
 create index on sequences (submitter);
