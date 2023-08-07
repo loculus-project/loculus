@@ -1,5 +1,6 @@
 {
     "lapisHost": "https://lapis.cov-spectrum.org/open/v1/sample",
+    "backendUrl": "http://localhost:8079",
     "schema": {
         "instanceName": "sars_cov-2_open",
         "metadata": [

@@ -27,6 +27,7 @@ export type ReferenceGenomes = {
 
 export type Config = {
     lapisHost: string;
+    backendUrl: string;
     schema: {
         instanceName: string;
         metadata: Metadata[];

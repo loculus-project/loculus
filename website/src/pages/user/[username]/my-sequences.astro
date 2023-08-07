@@ -1,0 +1,29 @@
+---
+import { getUserSequences } from './user';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+// accession is never undefined, but ESLint doesn't know that
+// eslint-disable-next-line
+const username = Astro.params.username!;
+
+const sequences = await getUserSequences(username);
+---
+
+<BaseLayout title='Sequences'>
+    <div class='flex flex-col'>
+        {
+            sequences.map((sequence) => (
+                <div class='flex mb-4'>
+                    <div class='flex-1 text-right pr-4'>
+                        {sequence.sequenceId} {sequence.status}
+                    </div>
+                    <div class='flex-1'>
+                        <a href={`/sequences/${sequence.sequenceId}`} class='text-blue-600 hover:underline'>
+                            View Details
+                        </a>
+                    </div>
+                </div>
+            ))
+        }
+    </div>
+</BaseLayout>
