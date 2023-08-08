@@ -29,7 +29,7 @@ dependencies {
 	implementation("org.postgresql:postgresql:42.6.0")
 	implementation("com.mchange:c3p0:0.9.5.5")
 	implementation("org.apache.commons:commons-csv:1.10.0")
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 	testImplementation('org.springframework.boot:spring-boot-starter-test'){
 		exclude group: 'org.mockito'
 	}
