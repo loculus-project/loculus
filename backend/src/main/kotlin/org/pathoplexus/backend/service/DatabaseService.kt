@@ -1,5 +1,6 @@
 package org.pathoplexus.backend.service
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -50,14 +51,15 @@ class DatabaseService(
         val headerIds = mutableListOf<HeaderId>()
         val sql = """
             insert into sequences (submitter, submitted_at, started_processing_at, status, original_data)
-            values (?, now(), null, 'received', ?::jsonb )
+            values (?, now(), null, ?, ?::jsonb )
             returning sequence_id, original_data->>'header' as header;
         """.trimIndent()
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
+                statement.setString(1, submitter)
+                statement.setString(2, Status.RECEIVED.name)
                 for (originalDataJson in originalDataJsons) {
-                    statement.setString(1, submitter)
-                    statement.setString(2, originalDataJson)
+                    statement.setString(3, originalDataJson)
                     statement.executeQuery().use { rs ->
                         rs.next()
                         headerIds.add(HeaderId(rs.getString("header"), rs.getLong("sequence_id")))
@@ -70,16 +72,18 @@ class DatabaseService(
 
     fun streamUnprocessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
         val sql = """
-        update sequences set status = 'processing', started_processing_at = now()
+        update sequences set status = ?, started_processing_at = now()
         where sequence_id in (
-            select sequence_id from sequences where status = 'received' limit ?
+            select sequence_id from sequences where status = ? limit ?
         )
         returning sequence_id, original_data
         """.trimIndent()
 
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
-                statement.setInt(1, numberOfSequences)
+                statement.setString(1, Status.PROCESSING.name)
+                statement.setString(2, Status.RECEIVED.name)
+                statement.setInt(3, numberOfSequences)
                 val rs = statement.executeQuery()
                 rs.use {
                     while (rs.next()) {
@@ -100,16 +104,18 @@ class DatabaseService(
     // TODO(#108): temporary method to ease testing, replace later
     fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
         val sql = """
-        update sequences set status = 'siloed'
+        update sequences set status = ?
         where sequence_id in (
-            select sequence_id from sequences where status = 'processed' limit ?
+            select sequence_id from sequences where status = ? limit ?
         )
         returning sequence_id, processed_data
         """.trimIndent()
 
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
-                statement.setInt(1, numberOfSequences)
+                statement.setString(1, Status.COMPLETED.name)
+                statement.setString(2, Status.PROCESSED.name)
+                statement.setInt(3, numberOfSequences)
                 val rs = statement.executeQuery()
                 rs.use {
                     while (rs.next()) {
@@ -127,29 +133,48 @@ class DatabaseService(
         }
     }
 
-    fun updateProcessedData(inputStream: InputStream) {
-        val reader = BufferedReader(InputStreamReader(inputStream))
+    fun getSequencesSubmittedBy(username: String): List<SequenceStatus> {
+        val sequenceStatusList = mutableListOf<SequenceStatus>()
+        val sql = """
+        select sequence_id, status from sequences where submitter = ?
+        """.trimIndent()
 
-        reader.lineSequence().forEach { line ->
-
-            val sequence = objectMapper.readValue<Sequence>(line)
-
-            val sql = """
-            update sequences
-            set status = 'processed', finished_processing_at = now(), processed_data = ?
-            where sequence_id = ?
-            """.trimIndent()
-
-            useTransactionalConnection { conn ->
-                conn.prepareStatement(sql).use { statement ->
-                    statement.setObject(1, PGobject().apply { type = "jsonb"; value = sequence.data.toString() })
-                    statement.setLong(2, sequence.sequenceId)
-                    statement.executeUpdate()
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setString(1, username)
+                statement.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        val sequenceId = rs.getLong("sequence_id")
+                        val status = Status.fromString(rs.getString("status"))
+                        sequenceStatusList.add(SequenceStatus(sequenceId, status))
+                    }
                 }
             }
         }
+        return sequenceStatusList
+    }
 
-        reader.close()
+    fun updateProcessedData(inputStream: InputStream) {
+        val reader = BufferedReader(InputStreamReader(inputStream))
+
+        val sql = """
+            update sequences
+            set status = ?, finished_processing_at = now(), processed_data = ?
+            where sequence_id = ?
+        """.trimIndent()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                reader.lineSequence().forEach { line ->
+                    val sequence = objectMapper.readValue<Sequence>(line)
+                    statement.setString(1, Status.PROCESSED.name)
+                    statement.setObject(2, PGobject().apply { type = "jsonb"; value = sequence.data.toString() })
+                    statement.setLong(3, sequence.sequenceId)
+                    statement.executeUpdate()
+                }
+                reader.close()
+            }
+        }
     }
 }
 
@@ -157,3 +182,33 @@ data class Sequence(
     val sequenceId: Long,
     val data: JsonNode,
 )
+
+data class SequenceStatus(
+    val sequenceId: Long,
+    val status: Status,
+)
+
+enum class Status {
+    @JsonProperty("RECEIVED")
+    RECEIVED,
+
+    @JsonProperty("PROCESSING")
+    PROCESSING,
+
+    @JsonProperty("PROCESSED")
+    PROCESSED,
+
+    @JsonProperty("COMPLETED")
+    COMPLETED,
+
+    ;
+
+    companion object {
+        private val stringToEnumMap: Map<String, Status> = entries.associateBy { it.name }
+
+        fun fromString(statusString: String): Status {
+            return stringToEnumMap[statusString]
+                ?: throw IllegalArgumentException("Unknown status: $statusString")
+        }
+    }
+}

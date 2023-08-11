@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -24,6 +25,12 @@ import org.testcontainers.shaded.org.awaitility.Awaitility.await
 @SpringBootTest
 @AutoConfigureMockMvc
 class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
+
+    private val testUsername = "testuser"
+
+    // number of testdata sequences
+    val numberOfSequences = 10
+
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
             .apply {
@@ -61,59 +68,94 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `submit sequences`() {
-        submitTestData()
+        submitInitialData()
             .andExpect(status().isOk)
-            .andExpect(content().contentType("application/json"))
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$[0].header").value("Switzerland/BE-ETHZ-560470/2020"))
             .andExpect(jsonPath("\$[0].id").isNumber())
     }
 
     @Test
     fun `extract unprocessed sequences`() {
-        val numberOfSequences = 10
-
         val emptyResponse = queryUnprocessedSequences(numberOfSequences)
+        expectLinesInResponse(emptyResponse, 0)
 
-        waitAndCountLinesInResponse(emptyResponse, 0)
-
-        submitTestData()
+        submitInitialData()
 
         val result7 = queryUnprocessedSequences(7)
-        waitAndCountLinesInResponse(result7, 7)
+        expectLinesInResponse(result7, 7)
 
         val result3 = queryUnprocessedSequences(5)
-        waitAndCountLinesInResponse(result3, 3)
+        expectLinesInResponse(result3, 3)
 
         val result0 = queryUnprocessedSequences(numberOfSequences)
-        waitAndCountLinesInResponse(result0, 0)
+        expectLinesInResponse(result0, 0)
     }
 
     @Test
     fun `test updating processed data`() {
-        submitTestData()
+        submitInitialData()
 
-        val result = queryUnprocessedSequences(10)
-        val testData = waitAndCountLinesInResponse(result, 10)
+        val result = queryUnprocessedSequences(numberOfSequences)
+        val testData = expectLinesInResponse(result, numberOfSequences)
 
-        mockMvc.perform(
-            MockMvcRequestBuilders.post("/submit-processed-data")
-                .contentType("application/x-ndjson")
-                .content(testData),
-        )
-            .andExpect(status().isOk())
+        submitProcessedData(testData)
 
         val response = mockMvc.perform(
             MockMvcRequestBuilders.post("/extract-processed-data")
-                .param("numberOfSequences", "10"),
+                .param("numberOfSequences", numberOfSequences.toString()),
         )
             .andExpect(status().isOk())
-            .andExpect(content().contentType("application/x-ndjson"))
+            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
             .andReturn()
 
-        waitAndCountLinesInResponse(response, 10)
+        expectLinesInResponse(response, numberOfSequences)
     }
 
-    private fun submitTestData(): ResultActions {
+    @Test
+    fun `get sequences of a user`() {
+        submitInitialData()
+        expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.RECEIVED.name)
+
+        val testData = expectLinesInResponse(queryUnprocessedSequences(numberOfSequences), numberOfSequences)
+        expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.PROCESSING.name)
+
+        submitProcessedData(testData)
+        expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.PROCESSED.name)
+
+        expectLinesInResponse(
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/extract-processed-data")
+                    .param("numberOfSequences", numberOfSequences.toString()),
+            )
+                .andExpect(status().isOk())
+                .andReturn(),
+            numberOfSequences,
+        )
+
+        expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.COMPLETED.name)
+    }
+
+    private fun submitProcessedData(testData: String) {
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/submit-processed-data")
+                .contentType(MediaType.APPLICATION_NDJSON_VALUE)
+                .content(testData),
+        )
+            .andExpect(status().isOk())
+    }
+
+    private fun queryMySequenceList(): MvcResult {
+        return mockMvc.perform(
+            MockMvcRequestBuilders.get("/get-sequences-of-user")
+                .param("username", testUsername),
+        )
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andReturn()
+    }
+
+    private fun submitInitialData(): ResultActions {
         val metadataFile = MockMultipartFile(
             "metadata",
             "metadata.tsv",
@@ -136,7 +178,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             MockMvcRequestBuilders.multipart("/submit")
                 .file(metadataFile)
                 .file(sequencesFile)
-                .param("username", "Parker"),
+                .param("username", testUsername),
         )
     }
 
@@ -148,7 +190,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         .andExpect(content().contentType("application/x-ndjson"))
         .andReturn()
 
-    private fun waitAndCountLinesInResponse(result: MvcResult, numberOfSequences: Int): String {
+    private fun expectLinesInResponse(result: MvcResult, numberOfSequences: Int): String {
         await().until {
             result.response.isCommitted
         }
@@ -158,5 +200,17 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         assertThat(sequenceCount).isEqualTo(numberOfSequences)
 
         return result.response.contentAsString
+    }
+    private fun expectStatusInResponse(result: MvcResult, numberOfSequences: Int, expectedStatus: String): String {
+        await().until {
+            result.response.isCommitted
+        }
+
+        val responseContent = result.response.contentAsString
+        val statusCount = responseContent.split(expectedStatus).size - 1
+
+        assertThat(statusCount).isEqualTo(numberOfSequences)
+
+        return responseContent
     }
 }
