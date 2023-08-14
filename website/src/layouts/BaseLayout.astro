@@ -1,6 +1,6 @@
 ---
 import '../styles/base.scss';
-import { Nav } from '../components/Navigation/Nav';
+import { Navigation } from '../components/Navigation/Navigation';
 
 const { title } = Astro.props;
 ---
@@ -21,7 +21,7 @@ const { title } = Astro.props;
                         <a href='/'><img class='h-8 mr-4' src='/favicon.svg' /></a>
                         <a href='/' class='title'>Pathoplexus</a>
                     </div>
-                    <Nav client:load />
+                    <Navigation client:load />
                 </nav>
                 <hr class='border-t border-gray-1000' />
             </header>

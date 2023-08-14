@@ -1,11 +1,14 @@
 FROM node:lts AS runtime
 WORKDIR /app
 
-COPY package.json .
-COPY package-lock.json .
+COPY .env.example .env
+
+COPY package.json package-lock.json ./
+
 RUN npm --quiet ci
 
 COPY . .
+
 RUN npm run build
 
 ENV HOST=0.0.0.0
