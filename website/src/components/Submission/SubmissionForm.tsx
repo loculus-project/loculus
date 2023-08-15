@@ -2,6 +2,7 @@ import { CircularProgress, TextField } from '@mui/material';
 import React, { type ChangeEvent, type FC, type FormEvent, useState } from 'react';
 
 import { ManagedErrorFeedback } from './ManagedErrorFeedback';
+import { clientLogger } from '../../api';
 import type { Config, HeaderId } from '../../types';
 
 type SubmissionFormProps = {
@@ -55,9 +56,13 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
                 handleOpenError(
                     `Submission failed with status code ${response.status} ${JSON.stringify(response.body, null, 2)}`,
                 );
+                await clientLogger.error(
+                    `Submission failed with status code ${response.status} ${JSON.stringify(response.body, null, 2)}`,
+                );
             }
         } catch (error) {
             handleOpenError('Submission failed with error ' + (error as Error).message);
+            await clientLogger.error(`Submission failed with error '${(error as Error).message}'`);
         }
         setIsLoading(false);
     };

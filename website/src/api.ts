@@ -33,6 +33,23 @@ export async function fetchInsertions(accession: string, type: BaseType, config:
     return (await response.json()).data;
 }
 
+export type Log = {
+    level: string;
+    message: string;
+};
+export const clientLogger = {
+    log: async ({ message, level }: Log): Promise<Response> =>
+        fetch('/admin/logs.txt', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ level, message }),
+        }),
+    error: async (message: string): Promise<Response> => clientLogger.log({ level: 'error', message }),
+    info: async (message: string) => clientLogger.log({ level: 'info', message }),
+};
+
 export async function fetchSequence(
     accession: string,
     sequenceType: SequenceType,

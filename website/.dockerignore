@@ -7,4 +7,4 @@
 !astro.config.mjs
 !tailwind.config.cjs
 !tsconfig.json
-!.env.example
+!.env.docker

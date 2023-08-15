@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import { clientLogger } from './api';
 import type { Config, ReferenceGenomes } from './types';
 import testConfig from '../tests/config/config.json';
 import testReferenceGenomes from '../tests/config/reference-genomes.json';
@@ -52,6 +53,14 @@ export async function fetchAutoCompletion(
     config: Config,
 ): Promise<OptionList> {
     const response = await fetch(`${config.lapisHost}/aggregated?fields=${field}&${filterParams}`);
+
+    if (!response.ok) {
+        await clientLogger.error(
+            `Failed to fetch auto-completion data for field ${field} with status ${response.status}`,
+        );
+        return [];
+    }
+
     // TODO: introduce validation of the response; will make working with the data easier
     const autoCompleteData = (await response.json()).data as { [key: string]: string | number | null }[];
 

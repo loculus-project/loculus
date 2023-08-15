@@ -9,6 +9,7 @@ import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField } from './fields/DateField';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
+import { clientLogger } from '../../api';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import type { Config, Filter } from '../../types';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
@@ -51,6 +52,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, config }) =>
 
     const resetSearch = async () => {
         setIsLoading(true);
+        await clientLogger.info('reset_search');
         location.href = buildQueryUrl([]);
     };
 
