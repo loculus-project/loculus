@@ -43,7 +43,7 @@
     "@tanstack/eslint-plugin-query": "^4.29.25",
     "@types/luxon": "^3.3.1",
     "@types/node": "^20.4.1",
-    "@typescript-eslint/eslint-plugin": "^6.2.1",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
     "@typescript-eslint/parser": "^6.4.0",
     "cross-env": "^7.0.3",
     "daisyui": "^3.5.1",
