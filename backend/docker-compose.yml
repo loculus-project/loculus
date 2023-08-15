@@ -4,8 +4,7 @@ services:
     image: postgres:latest
     volumes:
       - ./src/main/resources/database:/docker-entrypoint-initdb.d
-    ports:
-      - "0.0.0.0:5432:5432"
+    network_mode: "host"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: unsecure
@@ -13,8 +12,8 @@ services:
 
   backend:
     image: ${DOCKER_IMAGE_NAME}
-    command: --database.jdbcUrl=jdbc:postgresql://database:5432/pathoplexus
     depends_on:
       - database
-    ports:
-      - "0.0.0.0:8079:8079"
+    command: --database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus
+    network_mode: "host"
+
