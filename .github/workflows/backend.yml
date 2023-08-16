@@ -32,11 +32,12 @@ jobs:
           build-root-directory: ./backend
 
   dockerImage:
-    name: Build Docker Image
+    name: Build Backend Docker Image
     runs-on: ubuntu-latest
     permissions:
       packages: write
       contents: read
+      checks: read
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 19
@@ -44,12 +45,14 @@ jobs:
         with:
           java-version: '19'
           distribution: 'adopt'
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Docker metadata
         id: dockerMetadata
         uses: docker/metadata-action@v4
@@ -58,6 +61,7 @@ jobs:
           tags: |
             type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
       - name: Build Docker Image For Branch
         uses: gradle/gradle-build-action@v2
         env:
@@ -66,6 +70,7 @@ jobs:
         with:
           arguments: bootBuildImage --imageName=${{ steps.dockerMetadata.outputs.tags }}
           build-root-directory: ./backend
+
       - name: Push Docker Image For Branch
         run: docker push ${{ steps.dockerMetadata.outputs.tags }}
 

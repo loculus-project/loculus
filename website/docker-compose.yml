@@ -1,0 +1,10 @@
+version: '3'
+services:
+  pathoplexus:
+    image: ${DOCKER_IMAGE_NAME}
+    ports:
+      - "3000:3000"
+    environment:
+      - CONFIG_DIR=/config
+    volumes:
+      - ./tests/config:/config

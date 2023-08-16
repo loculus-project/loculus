@@ -12,7 +12,7 @@ services:
       POSTGRES_DB: pathoplexus
 
   backend:
-    image: ghcr.io/pathoplexus/backend:latest
+    image: ${DOCKER_IMAGE_NAME}
     depends_on:
       - database
     ports:

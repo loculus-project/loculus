@@ -68,11 +68,4 @@ export default defineConfig({
         //   use: { ..devices['Desktop Chrome'], channel: 'chrome' },
         // },
     ],
-
-    /* Run your local dev server before starting the tests */
-    webServer: {
-        command: 'cross-env CONFIG_DIR=./tests/config npm run start-test-server',
-        port: 3001,
-        reuseExistingServer: !process.env.CI,
-    },
 });
