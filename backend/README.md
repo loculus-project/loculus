@@ -9,12 +9,16 @@ The service listens, by default, to **port 8079**.
 
 ### Start from docker-compose
 
+Make sure you have configured access to the private container registry (see above).
+
 We have a [docker-compose config](./docker-compose.yml) to start the backend. For flexibility the docker image name is read from the environment. To use the `:latest` image along with an
 instance of the PostgreSQL database, you can just run:
 
 ```bash
 DOCKER_IMAGE_NAME=ghcr.io/pathoplexus/backend:latest docker compose up
 ```
+
+You can then access the backend at <http://127.0.0.1:8079/swagger-ui/index.html> :tada:
 
 To pull the latest version of the image, run:
 
