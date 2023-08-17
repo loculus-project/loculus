@@ -1,10 +1,20 @@
 # pathoplexus
 
+Detailed documentation is available in each folder's README. This file contains a high-level overview of the project and shared documentation that is best kept in one place.
+
 ## Architecture
 
 - Backend code is in `backend`, see [`backend/README.md`](/backend/README.md)
 - Frontend code is in `website`, see [`website/README.md`](/website/README.md)
 - Sequence and metadata processing pipeline is in [`preprocessing`](/preprocessing) folder
+
+## Github Actions
+
+While the documentation is still a work in progress, a look at the [`.github/workflows`](/.github/workflows) folder might be helpful:
+
+- [`backend.yml`](/.github/workflows/backend.yml) runs the backend tests and builds the backend docker image
+- [`website.yml`](/.github/workflows/website.yml) runs the website tests and builds the website docker image
+- [`e2e.yml`](/.github/workflows/e2e.yml) runs the end-to-end tests
 
 ## Setting up docker
 
