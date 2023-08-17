@@ -9,7 +9,7 @@ The service listens, by default, to **port 8079**.
 
 ### Start from docker-compose
 
-Make sure you have configured access to the private container registry (see above).
+Make sure you have configured access to the private container registry (see [/README.md](../README.md)).
 
 We have a [docker-compose config](./docker-compose.yml) to start the backend. For flexibility the docker image name is read from the environment. To use the `:latest` image along with an
 instance of the PostgreSQL database, you can just run:
