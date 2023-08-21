@@ -3,7 +3,9 @@
 ## Setup
 
 To start the backend, a PostgreSQL database is required. The schema is specified in [init.sql](src/main/resources/database/init.sql).
-The database connection is configured via Spring properties.
+The database connection is configured via Spring properties that need to be passed on startup:
+* Via command line argument: `--database.jdbcUrl=jdbc:postgresql://0.0.0.0:5432/pathoplexus`
+* Via environment variable: `SPRING_APPLICATION_JSON={"database":{"jdbcUrl":"jdbc:postgresql://0.0.0.0:5432/pathoplexus"}}`
 
 The service listens, by default, to **port 8079**.
 
