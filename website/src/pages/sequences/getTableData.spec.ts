@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { fetchInsertions, fetchMutations, fetchSequenceDetails } from '../../../api';
-import type { Config } from '../../../types';
-import { getTableData } from '../getTableData';
+import { getTableData } from './getTableData';
+import { fetchInsertions, fetchMutations, fetchSequenceDetails } from '../../api';
+import type { Config } from '../../types';
 
-vi.mock('../../../api');
+vi.mock('../../api');
 
 const config: Config = {
     lapisHost: 'lapis host',

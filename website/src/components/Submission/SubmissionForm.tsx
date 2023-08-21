@@ -119,7 +119,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
             </form>
 
             <div>
-                {responseSequenceHeaders && (
+                {responseSequenceHeaders ? (
                     <div className='p-6 space-y-6 max-w-md w-full'>
                         <h2 className='text-lg font-bold'>Response Sequence Headers</h2>
                         <ul className='list-disc list-inside'>
@@ -130,6 +130,8 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
                             ))}
                         </ul>
                     </div>
+                ) : (
+                    <div className='font-bold'>No data submitted yet</div>
                 )}
             </div>
         </div>

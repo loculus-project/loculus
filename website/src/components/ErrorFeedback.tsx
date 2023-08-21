@@ -16,7 +16,7 @@ export const ErrorFeedback: FC<ErrorFeedbackProps> = ({ message }) => {
     };
 
     const action = (
-        <Button color='secondary' size='small' onClick={handleClose}>
+        <Button color='secondary' size='small' onClick={handleClose} sx={{ color: 'white' }}>
             CLOSE
         </Button>
     );

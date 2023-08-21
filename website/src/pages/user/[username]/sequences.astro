@@ -1,0 +1,41 @@
+---
+import { getUserSequences, ResponseStatus } from './user';
+import { ErrorFeedback } from '../../../components/ErrorFeedback';
+import { BackButton } from '../../../components/Navigation/BackButton';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+// accession is never undefined, but ESLint doesn't know that
+// eslint-disable-next-line
+const username = Astro.params.username!;
+
+const { sequences, responseStatus } = await getUserSequences(username);
+---
+
+<BaseLayout title='Sequences'>
+    <>
+        <div class='flex items-center'>
+            <BackButton marginRight={2} client:load />
+            <h1 class='subtitle'>{`Submitted sequences of user ${username}`}</h1>
+        </div>
+        {
+            responseStatus === ResponseStatus.ERROR ? (
+                <ErrorFeedback message='Error while fetching user sequences' client:only='react' />
+            ) : (
+                <div class='flex flex-col'>
+                    {sequences.map((sequence) => (
+                        <div class='flex mb-4'>
+                            <div class='flex-1 text-right pr-4'>
+                                {sequence.sequenceId} {sequence.status}
+                            </div>
+                            <div class='flex-1'>
+                                <a href={`/sequences/${sequence.sequenceId}`} class='text-blue-600 hover:underline'>
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )
+        }
+    </>
+</BaseLayout>
