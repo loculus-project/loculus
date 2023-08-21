@@ -13,9 +13,8 @@ services:
 
   backend:
     image: ${DOCKER_IMAGE_NAME}
+    command: --database.jdbcUrl=jdbc:postgresql://database:5432/pathoplexus
     depends_on:
       - database
     ports:
       - "0.0.0.0:8079:8079"
-    environment:
-      DATABASE_HOST: database
