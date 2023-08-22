@@ -27,7 +27,7 @@
     "@types/react": "^18.2.18",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.4",
-    "astro": "^2.10.7",
+    "astro": "^2.10.12",
     "change-case": "^4.1.2",
     "luxon": "^3.4.0",
     "react": "^18.2.0",
