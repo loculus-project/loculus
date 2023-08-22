@@ -33,3 +33,10 @@ To only start the database with docker-compose, you can run:
 ```bash
 docker compose up database
 ```
+
+### Operating the backend behind a proxy
+
+When running the backend behind a proxy, the proxy needs to set X-Forwarded headers:
+* X-Forwarded-For
+* X-Forwarded-Proto
+* X-Forwarded-Prefix
