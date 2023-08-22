@@ -10,4 +10,5 @@ data class DatabaseProperties(
     var name: String = "",
     var username: String = "",
     var password: String = "",
+    var driver: String = "org.postgresql.Driver",
 )

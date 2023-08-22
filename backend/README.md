@@ -2,10 +2,11 @@
 
 ## Setup
 
-To start the backend, a PostgreSQL database is required. The schema is specified in [init.sql](src/main/resources/database/init.sql).
-The database connection is configured via Spring properties that need to be passed on startup:
-* Via command line argument: `--database.jdbcUrl=jdbc:postgresql://0.0.0.0:5432/pathoplexus`
-* Via environment variable: `SPRING_APPLICATION_JSON={"database":{"jdbcUrl":"jdbc:postgresql://0.0.0.0:5432/pathoplexus"}}`
+To start the backend, a PostgreSQL database is required. The database connection is configured via Spring properties that need to be passed on startup:
+* Via command line argument: `--database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus`
+* Via environment variable: `SPRING_APPLICATION_JSON={"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus"}}`
+
+We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
 
 The service listens, by default, to **port 8079**.
 

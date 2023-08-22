@@ -21,7 +21,7 @@ class DatabaseService(
     private val objectMapper: ObjectMapper,
 ) {
     private val pool: ComboPooledDataSource = ComboPooledDataSource().apply {
-        driverClass = "org.postgresql.Driver"
+        driverClass = databaseProperties.driver
         jdbcUrl = databaseProperties.jdbcUrl
         user = databaseProperties.username
         password = databaseProperties.password

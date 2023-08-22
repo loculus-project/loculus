@@ -13,49 +13,60 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+
       - name: Cache .npm
         uses: actions/cache@v3
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+
       - name: Install dependencies
         run: cd website && npm i
+
       - name: Get Installed Playwright Version
         id: playwright-version
         run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
+
       - name: Cache Playwright Browsers
         uses: actions/cache@v3
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+
       - name: Install Playwright Browsers and System Dependencies
         run: cd website && npx playwright install --with-deps
         if: steps.playwright-cache.outputs.cache-hit != 'true'
+
       - name: Install only System Dependencies
         run: cd website && npx playwright install-deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
+
       - name: Wait for Backend Docker Image
         uses: lewagon/wait-on-check-action@v1.3.1
         with:
           ref: ${{ github.ref }}
           check-name: Build Backend Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Wait for Website Docker Image
         uses: lewagon/wait-on-check-action@v1.3.1
         with:
           ref: ${{ github.ref }}
           check-name: Build Website Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Docker metadata Backend
         id: dockerMetadataBackend
         uses: docker/metadata-action@v4
@@ -64,8 +75,10 @@ jobs:
           tags: |
             type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
       - name: Start Backend Docker Container
         run: DOCKER_IMAGE_NAME=${{steps.dockerMetadataBackend.outputs.tags }} docker compose -f ./backend/docker-compose.yml up -d
+
       - name: Docker metadata Website
         id: dockerMetadataWebsite
         uses: docker/metadata-action@v4
@@ -74,15 +87,25 @@ jobs:
           tags: |
             type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
       - name: Start Website Docker Container
         run: DOCKER_IMAGE_NAME=${{steps.dockerMetadataWebsite.outputs.tags }} docker compose -f ./website/docker-compose.yml up -d
+
+      - name: Wait for Health Checks
+        run: ./wait_for_backend.sh && ./wait_for_frontend.sh
+
       - name: Run Playwright tests
         run: cd website && npm run e2e
+
       - uses: actions/upload-artifact@v3
         if: always()
         with:
           name: playwright-report
           path: website/playwright-report/
           retention-days: 30
+
+      - name: Log debugging info
+        if: always()
+        run: docker logs backend-backend-1 && docker logs website-pathoplexus-1
 
 
