@@ -8,6 +8,7 @@ vi.mock('../../../api');
 
 const config: Config = {
     lapisHost: 'lapis host',
+    backendUrl: 'backend url',
     schema: {
         instanceName: 'instance name',
         metadata: [

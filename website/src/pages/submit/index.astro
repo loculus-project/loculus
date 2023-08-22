@@ -1,0 +1,12 @@
+---
+import { SubmissionForm } from '../../components/Submission/SubmissionForm';
+import { getConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+const config = getConfig();
+---
+
+<BaseLayout title='Search'>
+    <h1 class='title'>Submission Page</h1>
+
+    <SubmissionForm config={config} client:load />
+</BaseLayout>

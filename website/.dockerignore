@@ -1,0 +1,10 @@
+*
+!src/
+!tests/
+!public/
+!package.json
+!package-lock.json
+!astro.config.mjs
+!tailwind.config.cjs
+!tsconfig.json
+!.env.example

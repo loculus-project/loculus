@@ -25,7 +25,7 @@ export type ReferenceGenomes = {
     genes: NamedSequence[];
 };
 
-export type Config = {
+type LapisConfig = {
     lapisHost: string;
     schema: {
         instanceName: string;
@@ -33,6 +33,10 @@ export type Config = {
         tableColumns: string[];
         primaryKey: string;
     };
+};
+
+export type Config = LapisConfig & {
+    backendUrl: string;
 };
 
 export type MutationProportionCount = {
@@ -44,4 +48,9 @@ export type MutationProportionCount = {
 export type InsertionCount = {
     insertion: string;
     count: number;
+};
+
+export type HeaderId = {
+    header: string;
+    id: number;
 };

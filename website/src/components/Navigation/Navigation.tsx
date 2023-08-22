@@ -1,14 +1,11 @@
 import { SandwichMenu } from './SandwichMenu';
 
-export const Nav = () => {
+export const Navigation = () => {
     return (
         <div className='flex justify-end'>
-            <div className='subtitle hidden sm:flex sm:z-6'>
-                <div className='navigation'>
-                    <div>
-                        <a href='/search'> Search </a>
-                    </div>
-                </div>
+            <div className='subtitle hidden sm:flex sm:z-6 gap-4'>
+                <a href='/search'>Search</a>
+                <a href='/submit'>Submit</a>
             </div>
 
             <div className='sm:hidden fixed z-0'>
