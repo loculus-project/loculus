@@ -8,5 +8,5 @@ const config = getConfig();
 <BaseLayout title='Search'>
     <h1 class='title'>Submission Page</h1>
 
-    <SubmissionForm config={config} client:load />
+    <SubmissionForm config={config} client:only='react' />
 </BaseLayout>

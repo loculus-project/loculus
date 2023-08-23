@@ -11,7 +11,7 @@ let _referenceGenomes: ReferenceGenomes | null = null;
 export function getConfig(): Config {
     if (_config === null) {
         if (import.meta.env.BACKEND_URL === undefined) {
-            throw new Error(`BACKEND_URL environment variable is not set. ${JSON.stringify(import.meta.env, null, 2)}`);
+            throw new Error('BACKEND_URL environment variable is not set');
         }
         if (import.meta.env.USE_TEST_CONFIG === 'true' || import.meta.env.USE_TEST_CONFIG === true) {
             _config = { ...testConfig, backendUrl: import.meta.env.BACKEND_URL } as Config;
