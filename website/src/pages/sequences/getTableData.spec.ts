@@ -7,7 +7,7 @@ import type { Config } from '../../types';
 vi.mock('../../api');
 
 const config: Config = {
-    lapisHost: 'lapis host',
+    lapisUrl: 'lapis host',
     backendUrl: 'backend url',
     schema: {
         instanceName: 'instance name',

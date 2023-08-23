@@ -11,21 +11,28 @@ let _referenceGenomes: ReferenceGenomes | null = null;
 
 export function getConfig(): Config {
     if (_config === null) {
-        if (import.meta.env.BACKEND_URL === undefined) {
-            throw new Error('BACKEND_URL environment variable is not set');
-        }
         if (import.meta.env.USE_TEST_CONFIG === 'true' || import.meta.env.USE_TEST_CONFIG === true) {
-            _config = { ...testConfig, backendUrl: import.meta.env.BACKEND_URL } as Config;
+            _config = testConfig as Config;
         } else {
             if (import.meta.env.CONFIG_DIR === undefined) {
                 throw new Error('CONFIG_DIR environment variable is not set');
             }
             const configFilePath = path.join(import.meta.env.CONFIG_DIR, 'config.json');
-            _config = {
-                ...JSON.parse(fs.readFileSync(configFilePath, 'utf8')),
-                backendUrl: import.meta.env.BACKEND_URL,
-            } as Config;
+            _config = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
         }
+
+        if (import.meta.env.BACKEND_URL === undefined) {
+            throw new Error('BACKEND_URL environment variable is not set');
+        }
+        if (import.meta.env.LAPIS_URL === undefined) {
+            throw new Error('LAPIS_URL environment variable is not set');
+        }
+
+        _config = {
+            ..._config,
+            backendUrl: import.meta.env.BACKEND_URL,
+            lapisUrl: import.meta.env.LAPIS_URL,
+        } as Config;
     }
     return _config;
 }
@@ -52,7 +59,7 @@ export async function fetchAutoCompletion(
     filterParams: URLSearchParams,
     config: Config,
 ): Promise<OptionList> {
-    const response = await fetch(`${config.lapisHost}/aggregated?fields=${field}&${filterParams}`);
+    const response = await fetch(`${config.lapisUrl}/aggregated?fields=${field}&${filterParams}`);
 
     if (!response.ok) {
         await clientLogger.error(
