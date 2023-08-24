@@ -49,7 +49,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
                 body: formData,
             });
 
-            if (response.ok) {
+            if (response.ok === true) {
                 setResponseSequenceHeaders(await response.json());
             } else {
                 handleOpenError(
