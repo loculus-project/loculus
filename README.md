@@ -33,3 +33,9 @@ If you are running on an ARM macOS machine, you need to configure docker to use 
 ```bash
 export DOCKER_DEFAULT_PLATFORM=linux/amd64
 ```
+
+## Contributing to Pathoplexus
+
+Contributions are very welcome!
+Please see [`CONTRIBUTING.md`](https://github.com/pathoplexus/pathoplexus/blob/main/CONTRIBUTING.md)
+for more information or ping us in case you need help.
