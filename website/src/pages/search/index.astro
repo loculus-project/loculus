@@ -1,11 +1,12 @@
 ---
-import { getData, SearchStatus } from './search';
+import { getData, getMetadataSettings, SearchStatus } from './search';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { Pagination } from '../../components/SearchPage/Pagination';
 import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
 import { getConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { logger } from '../../logger';
 import type { Filter } from '../../types';
 
 const config = getConfig();
@@ -13,27 +14,7 @@ const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
 };
 
-const metadataSettings: Filter[] = config.schema.metadata.flatMap((metadata) => {
-    if (metadata.type === 'date') {
-        const metadataFrom = {
-            ...metadata,
-            name: `${metadata.name}From`,
-            filter: getSearchParams(`${metadata.name}From`),
-        };
-        const metadataTo = {
-            ...metadata,
-            name: `${metadata.name}To`,
-            filter: getSearchParams(`${metadata.name}To`),
-        };
-        return [metadataFrom, metadataTo];
-    } else {
-        const metadataSetting: Filter = {
-            ...metadata,
-            filter: getSearchParams(metadata.name),
-        };
-        return [metadataSetting];
-    }
-});
+const metadataSettings: Filter[] = await getMetadataSettings(getSearchParams);
 
 const pageSize = 100;
 const pageParam = Astro.url.searchParams.get('page');
@@ -41,6 +22,10 @@ const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
 
 const data = await getData(metadataSettings, offset, pageSize);
+
+if (data.status === SearchStatus.ERROR) {
+    logger.error('Error while fetching data');
+}
 ---
 
 <BaseLayout title='Search'>

@@ -1,11 +1,19 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { describe, expect, test } from 'vitest';
+import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
 import type { HeaderId } from '../../types';
 import { mockRequest, testConfig, testuser } from '../vitest.setup';
+
+vi.mock('../../api', () => ({
+    clientLogger: {
+        error: vi.fn(),
+        log: vi.fn(),
+        info: vi.fn(),
+    },
+}));
 
 function renderSubmissionForm() {
     return render(<SubmissionForm config={testConfig} />);

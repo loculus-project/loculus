@@ -1,7 +1,7 @@
 FROM node:lts AS runtime
 WORKDIR /app
 
-COPY .env.example .env
+COPY .env.docker .env
 
 COPY package.json package-lock.json ./
 
@@ -12,8 +12,8 @@ COPY . .
 RUN npm run build
 
 ENV PORT=3000
-ENV CONFIG_DIR=/config
 VOLUME /config
+VOLUME /log
 EXPOSE 3000
 
-CMD node ./dist/server/entry.mjs
+CMD node ./dist/server/entry.mjs  > /log/website.log 2> /log/website_error.log

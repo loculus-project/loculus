@@ -6,10 +6,12 @@ on:
 jobs:
   E2ETests:
     runs-on: ubuntu-latest
+
     permissions:
       packages: read
       contents: read
       checks: read
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

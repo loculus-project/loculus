@@ -1,5 +1,6 @@
 import type { TableSequenceData } from '../../components/SearchPage/Table';
 import { getConfig } from '../../config';
+import { logger } from '../../logger';
 import type { Filter } from '../../types';
 
 export enum SearchStatus {
@@ -46,12 +47,19 @@ export const getData = async (metadataFilter: Filter[], offset: number, limit: n
             }),
         ]);
 
+        if (!detailsResponse.ok || !totalCountResponse.ok) {
+            logger.error(
+                `Failed to fetch search data with status ${detailsResponse.status} and ${totalCountResponse.status}`,
+            );
+        }
+
         return {
             status: detailsResponse.ok && totalCountResponse.ok ? SearchStatus.OK : SearchStatus.ERROR,
             data: (await detailsResponse.json()).data ?? [],
             totalCount: (await totalCountResponse.json()).data[0].count,
         };
-    } catch {
+    } catch (error) {
+        logger.error(`Failed to fetch data with error ${(error as Error).message} `);
         return {
             status: SearchStatus.ERROR,
             data: [],

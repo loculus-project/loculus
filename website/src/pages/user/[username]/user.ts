@@ -1,4 +1,5 @@
 import { getConfig } from '../../../config';
+import { logger } from '../../../logger';
 
 export enum ResponseStatus {
     OK = 'OK',
@@ -25,6 +26,7 @@ export const getUserSequences = async (name: string): Promise<UserSequenceRespon
         });
 
         if (!mySequencesResponse.ok) {
+            logger.error(`Failed to fetch user sequences with status ${mySequencesResponse.status}`);
             return {
                 responseStatus: ResponseStatus.ERROR,
                 sequences: [],
@@ -36,6 +38,7 @@ export const getUserSequences = async (name: string): Promise<UserSequenceRespon
             sequences: (await mySequencesResponse.json()) as SequenceStatus[],
         };
     } catch (error) {
+        logger.error(`Failed to fetch user sequences with error '${(error as Error).message}'`);
         return {
             responseStatus: ResponseStatus.ERROR,
             sequences: [],
