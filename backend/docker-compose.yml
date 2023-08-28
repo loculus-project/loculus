@@ -2,8 +2,6 @@ version: "3"
 services:
   database:
     image: postgres:latest
-    volumes:
-      - ./src/main/resources/database:/docker-entrypoint-initdb.d
     network_mode: "host"
     environment:
       POSTGRES_USER: postgres
