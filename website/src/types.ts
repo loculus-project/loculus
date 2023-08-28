@@ -26,7 +26,6 @@ export type ReferenceGenomes = {
 };
 
 type LapisConfig = {
-    lapisHost: string;
     schema: {
         instanceName: string;
         metadata: Metadata[];
@@ -37,6 +36,7 @@ type LapisConfig = {
 
 export type Config = LapisConfig & {
     backendUrl: string;
+    lapisUrl: string;
 };
 
 export type MutationProportionCount = {

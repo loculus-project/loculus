@@ -3,17 +3,17 @@ import { parseFasta } from './utils/parseFasta';
 import { isAlignedSequence, isUnalignedSequence } from './utils/sequenceTypeHelpers';
 
 export async function fetchNumberSequences(config: Config): Promise<number> {
-    const response = await fetch(`${config.lapisHost}/aggregated?country=Switzerland`);
+    const response = await fetch(`${config.lapisUrl}/aggregated?country=Switzerland`);
     return (await response.json()).data[0].count;
 }
 
 export async function fetchSequenceList(config: Config): Promise<any[]> {
-    const response = await fetch(`${config.lapisHost}/details?fields=${config.schema.primaryKey}&country=Switzerland`);
+    const response = await fetch(`${config.lapisUrl}/details?fields=${config.schema.primaryKey}&country=Switzerland`);
     return (await response.json()).data;
 }
 
 export async function fetchSequenceDetails(accession: string, config: Config): Promise<any> {
-    const response = await fetch(`${config.lapisHost}/details?${config.schema.primaryKey}=${accession}`);
+    const response = await fetch(`${config.lapisUrl}/details?${config.schema.primaryKey}=${accession}`);
     return (await response.json()).data[0];
 }
 
@@ -23,13 +23,13 @@ export async function fetchMutations(
     config: Config,
 ): Promise<MutationProportionCount[]> {
     const endpoint = type === 'nucleotide' ? 'nuc-mutations' : 'aa-mutations';
-    const response = await fetch(`${config.lapisHost}/${endpoint}?${config.schema.primaryKey}=${accession}`);
+    const response = await fetch(`${config.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
     return (await response.json()).data;
 }
 
 export async function fetchInsertions(accession: string, type: BaseType, config: Config): Promise<InsertionCount[]> {
     const endpoint = type === 'nucleotide' ? 'nuc-insertions' : 'aa-insertions';
-    const response = await fetch(`${config.lapisHost}/${endpoint}?${config.schema.primaryKey}=${accession}`);
+    const response = await fetch(`${config.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
     return (await response.json()).data;
 }
 
@@ -64,7 +64,7 @@ export async function fetchSequence(
         endpoint = 'aa-sequence-aligned/' + sequenceType.name;
     }
 
-    const response = await fetch(`${config.lapisHost}/${endpoint}?${config.schema.primaryKey}=${accession}`);
+    const response = await fetch(`${config.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
     const fastaText = await response.text();
     const fastaEntries = parseFasta(fastaText);
     if (fastaEntries.length === 0) {

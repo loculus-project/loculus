@@ -22,9 +22,6 @@ export const mockRequest = {
                 return res(ctx.status(statusCode), ctx.json(response));
             }),
         );
-        rest.post('/admin/logs.txt', (req, res, ctx) => {
-            return res(ctx.status(200));
-        });
     },
 };
 
