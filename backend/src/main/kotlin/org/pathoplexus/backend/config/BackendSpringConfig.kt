@@ -1,8 +1,13 @@
 package org.pathoplexus.backend.config
 
+import com.zaxxer.hikari.HikariConfig
+import com.zaxxer.hikari.HikariDataSource
+import org.flywaydb.core.Flyway
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Profile
 import org.springframework.web.filter.CommonsRequestLoggingFilter
+import javax.sql.DataSource
 
 @Configuration
 class BackendSpringConfig {
@@ -16,5 +21,28 @@ class BackendSpringConfig {
         filter.setIncludeHeaders(false)
         filter.setAfterMessagePrefix("REQUEST DATA: ")
         return filter
+    }
+
+    @Bean
+    @Profile("!test")
+    fun dataSource(databaseProperties: DatabaseProperties): HikariDataSource {
+        val config = HikariConfig()
+        config.jdbcUrl = databaseProperties.jdbcUrl
+        config.username = databaseProperties.username
+        config.password = databaseProperties.password
+        config.driverClassName = databaseProperties.driver
+        return HikariDataSource(config)
+    }
+
+    @Bean
+    @Profile("!test")
+    fun getFlyway(dataSource: DataSource): Flyway? {
+        val configuration = Flyway.configure()
+            .baselineOnMigrate(true)
+            .dataSource(dataSource)
+            .validateMigrationNaming(true)
+        val flyway = Flyway(configuration)
+        flyway.migrate()
+        return flyway
     }
 }

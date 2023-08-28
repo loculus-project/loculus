@@ -11,7 +11,6 @@ COPY . .
 
 RUN npm run build
 
-ENV HOST=0.0.0.0
 ENV PORT=3000
 ENV CONFIG_DIR=/config
 VOLUME /config

@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
+import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
@@ -23,6 +24,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
 @SpringBootTest
+@ActiveProfiles("test-with-database")
 @AutoConfigureMockMvc
 class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
 
@@ -34,7 +36,6 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
             .apply {
-                withInitScript("database/init.sql")
                 start()
             }
 
