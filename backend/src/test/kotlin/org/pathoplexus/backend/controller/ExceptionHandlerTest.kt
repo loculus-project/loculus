@@ -25,8 +25,8 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
         every { databaseService.insertSubmissions(any(), any()) }.throws(RuntimeException("test error message"))
 
         val submitFilesRequest = multipart("/submit")
-            .file("sequences", "sequences".toByteArray())
-            .file("metadata", "metadata".toByteArray())
+            .file("sequenceFile", "sequences".toByteArray())
+            .file("metadataFile", "metadata".toByteArray())
             .param("username", "name")
 
         mockMvc.perform(submitFilesRequest)

@@ -1,16 +1,19 @@
 package org.pathoplexus.backend.config
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import org.pathoplexus.backend.model.SchemaConfig
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.core.io.ClassPathResource
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import javax.sql.DataSource
 
 @Configuration
-class BackendSpringConfig {
+class BackendSpringConfig(private val objectMapper: ObjectMapper) {
 
     @Bean
     fun logFilter(): CommonsRequestLoggingFilter {
@@ -36,7 +39,7 @@ class BackendSpringConfig {
 
     @Bean
     @Profile("!test")
-    fun getFlyway(dataSource: DataSource): Flyway? {
+    fun getFlyway(dataSource: DataSource): Flyway {
         val configuration = Flyway.configure()
             .baselineOnMigrate(true)
             .dataSource(dataSource)
@@ -44,5 +47,11 @@ class BackendSpringConfig {
         val flyway = Flyway(configuration)
         flyway.migrate()
         return flyway
+    }
+
+    @Bean
+    fun schemaConfig(): SchemaConfig {
+        val configFile = ClassPathResource("config.json").file
+        return objectMapper.readValue(configFile, SchemaConfig::class.java)
     }
 }

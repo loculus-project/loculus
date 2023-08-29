@@ -40,8 +40,8 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
 
         const formData = new FormData();
         formData.append('username', username);
-        formData.append('metadata', metadataFile);
-        formData.append('sequences', sequencesFile);
+        formData.append('metadataFile', metadataFile);
+        formData.append('sequenceFile', sequencesFile);
 
         setIsLoading(true);
         try {

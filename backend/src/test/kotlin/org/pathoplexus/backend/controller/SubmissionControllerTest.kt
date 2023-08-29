@@ -1,9 +1,12 @@
 package org.pathoplexus.backend.controller
 
 import org.assertj.core.api.Assertions.assertThat
+import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -33,27 +36,6 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
     // number of testdata sequences
     val numberOfSequences = 10
 
-    companion object {
-        private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
-            .apply {
-                start()
-            }
-
-        @JvmStatic
-        @DynamicPropertySource
-        fun setDataSourceProperties(registry: DynamicPropertyRegistry) {
-            registry.add("database.jdbcUrl", postgres::getJdbcUrl)
-            registry.add("database.username", postgres::getUsername)
-            registry.add("database.password", postgres::getPassword)
-        }
-
-        @AfterAll
-        @JvmStatic
-        fun afterAll() {
-            postgres.stop()
-        }
-    }
-
     @BeforeEach
     fun beforeEach() {
         postgres.execInContainer(
@@ -63,7 +45,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             "-d",
             postgres.databaseName,
             "-c",
-            "truncate table sequences cascade;",
+            "truncate table sequences restart identity cascade;",
         )
     }
 
@@ -72,7 +54,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         submitInitialData()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$[0].header").value("Switzerland/BE-ETHZ-560470/2020"))
+            .andExpect(jsonPath("\$[0].customId").value("Switzerland/BE-ETHZ-560470/2020"))
             .andExpect(jsonPath("\$[0].id").isNumber())
     }
 
@@ -93,24 +75,60 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         expectLinesInResponse(result0, 0)
     }
 
-    @Test
-    fun `test updating processed data`() {
+    @ParameterizedTest(name = "{arguments}")
+    @MethodSource("provideTestData")
+    fun `validation of processed data`(testScenario: TestScenario) {
         submitInitialData()
 
-        val result = queryUnprocessedSequences(numberOfSequences)
-        val testData = expectLinesInResponse(result, numberOfSequences)
+        val requestBuilder = submitProcessedData(testScenario.inputData)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$").isArray())
 
-        submitProcessedData(testData)
+        if (testScenario.expectedValidationError == null) {
+            requestBuilder.andExpect(jsonPath("\$").isEmpty())
+        } else {
+            val error = testScenario.expectedValidationError
 
-        val response = mockMvc.perform(
-            MockMvcRequestBuilders.post("/extract-processed-data")
-                .param("numberOfSequences", numberOfSequences.toString()),
-        )
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
-            .andReturn()
+            error.fieldsWithTypeMismatch.forEach { mismatch ->
+                requestBuilder.andExpect(
+                    jsonPath(
+                        "\$[0].fieldsWithTypeMismatch",
+                        Matchers.hasItem(
+                            Matchers.allOf(
+                                Matchers.hasEntry("field", mismatch.field),
+                                Matchers.hasEntry("shouldBeType", mismatch.shouldBeType),
+                                Matchers.hasEntry("fieldValue", mismatch.fieldValue),
+                            ),
+                        ),
+                    ),
+                )
+            }
+            requestBuilder.andExpect(
+                jsonPath("\$[0].fieldsWithTypeMismatch", Matchers.hasSize<Any>(error.fieldsWithTypeMismatch.size)),
+            )
 
-        expectLinesInResponse(response, numberOfSequences)
+            for (err in error.unknownFields) {
+                requestBuilder.andExpect(jsonPath("\$[0].unknownFields", Matchers.hasItem(err)))
+            }
+            requestBuilder.andExpect(
+                jsonPath("\$[0].unknownFields", Matchers.hasSize<String>(error.unknownFields.size)),
+            )
+
+            for (err in error.missingRequiredFields) {
+                requestBuilder.andExpect(jsonPath("\$[0].missingRequiredFields", Matchers.hasItem(err)))
+            }
+            requestBuilder.andExpect(
+                jsonPath("\$[0].missingRequiredFields", Matchers.hasSize<String>(error.missingRequiredFields.size)),
+            )
+
+            for (err in error.genericError) {
+                requestBuilder.andExpect(jsonPath("\$[0].genericError", Matchers.hasItem(err)))
+            }
+            requestBuilder.andExpect(
+                jsonPath("\$[0].genericError", Matchers.hasSize<String>(error.genericError.size)),
+            )
+        }
     }
 
     @Test
@@ -137,8 +155,8 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.COMPLETED.name)
     }
 
-    private fun submitProcessedData(testData: String) {
-        mockMvc.perform(
+    private fun submitProcessedData(testData: String): ResultActions {
+        return mockMvc.perform(
             MockMvcRequestBuilders.post("/submit-processed-data")
                 .contentType(MediaType.APPLICATION_NDJSON_VALUE)
                 .content(testData),
@@ -158,7 +176,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
 
     private fun submitInitialData(): ResultActions {
         val metadataFile = MockMultipartFile(
-            "metadata",
+            "metadataFile",
             "metadata.tsv",
             MediaType.TEXT_PLAIN_VALUE,
             this.javaClass.classLoader.getResourceAsStream("metadata.tsv")?.readBytes() ?: error(
@@ -167,7 +185,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         )
 
         val sequencesFile = MockMultipartFile(
-            "sequences",
+            "sequenceFile",
             "sequences.fasta",
             MediaType.TEXT_PLAIN_VALUE,
             this.javaClass.classLoader.getResourceAsStream("sequences.fasta")?.readBytes() ?: error(
@@ -213,5 +231,109 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         assertThat(statusCount).isEqualTo(numberOfSequences)
 
         return responseContent
+    }
+
+    companion object {
+        private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
+            .apply {
+                start()
+            }
+
+        @JvmStatic
+        @DynamicPropertySource
+        fun setDataSourceProperties(registry: DynamicPropertyRegistry) {
+            registry.add("database.jdbcUrl", postgres::getJdbcUrl)
+            registry.add("database.username", postgres::getUsername)
+            registry.add("database.password", postgres::getPassword)
+        }
+
+        @AfterAll
+        @JvmStatic
+        fun afterAll() {
+            postgres.stop()
+        }
+
+        @JvmStatic
+        fun provideTestData() = listOf(
+            TestScenario(
+                name = "Happy Path",
+                submitData = true,
+                inputData = """{"sequenceId":1,"data":{"date":"2002-12-15","host":"Homo sapiens","region":"Europe","country": "Spain","division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNN"}}}""".trimIndent(), // ktlint-disable max-line-length
+                expectedValidationError = null,
+            ),
+            TestScenario(
+                name = "Unknown field",
+                submitData = true,
+                inputData = """{"sequenceId":1,"data":{"date":"2002-12-15","not_a_meta_data_field":"not_important","host":"Homo sapiens","country": "Spain","region":"Europe","division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNN"}}}""".trimIndent(), // ktlint-disable max-line-length
+                expectedValidationError = ValidationError(
+                    id = 1,
+                    missingRequiredFields = emptyList(),
+                    fieldsWithTypeMismatch = emptyList(),
+                    unknownFields = listOf("not_a_meta_data_field"),
+                    genericError = emptyList(),
+                ),
+            ),
+            TestScenario(
+                name = "Missing required field",
+                submitData = true,
+                inputData = """{"sequenceId":1,"data":{"host":"Homo sapiens","region":"Europe","division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNN"}}}""".trimIndent(), // ktlint-disable max-line-length
+                expectedValidationError = ValidationError(
+                    id = 1,
+                    missingRequiredFields = listOf("date", "country"),
+                    fieldsWithTypeMismatch = emptyList(),
+                    unknownFields = emptyList(),
+                    genericError = emptyList(),
+                ),
+            ),
+            TestScenario(
+                name = "Wrongly typed field",
+                submitData = true,
+                inputData = """{"sequenceId":1,"data":{"date":"15.12.2002","host":"Homo sapiens","region":"Europe","country": "Spain", "division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNN"}}}""".trimIndent(), // ktlint-disable max-line-length
+                expectedValidationError = ValidationError(
+                    id = 1,
+                    missingRequiredFields = emptyList(),
+                    fieldsWithTypeMismatch = listOf(
+                        TypeMismatch(field = "date", shouldBeType = "date", fieldValue = "\"15.12.2002\""),
+                    ),
+                    unknownFields = emptyList(),
+                    genericError = emptyList(),
+                ),
+            ),
+            TestScenario(
+                name = "Invalid ID / Non-existing ID",
+                submitData = false,
+                inputData = """{"sequenceId":12,"data": "not important"}""".trimIndent(),
+                expectedValidationError = ValidationError(
+                    id = 12,
+                    missingRequiredFields = emptyList(),
+                    fieldsWithTypeMismatch = emptyList(),
+                    unknownFields = emptyList(),
+                    genericError = listOf("SequenceId does not exist"),
+                ),
+            ),
+        )
+
+        data class TestScenario(
+            val name: String,
+            val submitData: Boolean,
+            val inputData: String,
+            val expectedValidationError: ValidationError?,
+        ) {
+            override fun toString() = name
+        }
+
+        data class ValidationError(
+            val id: Int,
+            val missingRequiredFields: List<String>,
+            val fieldsWithTypeMismatch: List<TypeMismatch>,
+            val unknownFields: List<String>,
+            val genericError: List<String>,
+        )
+
+        data class TypeMismatch(
+            val field: String,
+            val shouldBeType: String,
+            val fieldValue: String,
+        )
     }
 }
