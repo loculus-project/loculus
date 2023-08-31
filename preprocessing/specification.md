@@ -76,11 +76,6 @@ In the NDJSON, each row contains a sequence entry and a list of errors and a lis
         aminoAcidInsertions
     }
 }
-- sequenceId (integer)
-- errors
-- warnings
-- metadata
-
 ```
 
 The response may not contain any unused/unspecified field.
@@ -99,7 +94,7 @@ The `errors` and `warnings` fields contain an array of objects of the following 
 }
 ```
 
-The `source` field specify the source of the error. It can be empty if the error is very general or if it is not possible to pin-point a specific source. If the error is caused by the value in a metadata field, the `name` field should contain the name of a metadata field. If a nucleotide sequence caused the error, the `name` field should contain the (segment) name of the nucleotide sequence.
+The `source` field specifies the source of the error. It can be empty if the error is very general or if it is not possible to pinpoint a specific source. If the error is caused by the value in a metadata field, the `name` field should contain the name of a metadata field. If a nucleotide sequence caused the error, the `name` field should contain the (segment) name of the nucleotide sequence.
 
 The `message` should contain a human-readable message describing the error.
 
