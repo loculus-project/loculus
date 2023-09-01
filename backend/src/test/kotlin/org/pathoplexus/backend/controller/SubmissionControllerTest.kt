@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
+import java.io.File
 
 @SpringBootTest
 @ActiveProfiles("test-with-database")
@@ -32,9 +33,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility.await
 class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
 
     private val testUsername = "testuser"
-
-    // number of testdata sequences
-    val numberOfSequences = 10
+    private val numberOfSequences = 10
 
     @BeforeEach
     fun beforeEach() {
@@ -54,7 +53,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         submitInitialData()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$[0].customId").value("Switzerland/BE-ETHZ-560470/2020"))
+            .andExpect(jsonPath("\$[0].customId").value("custom0"))
             .andExpect(jsonPath("\$[0].id").isNumber())
     }
 
@@ -76,19 +75,19 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @ParameterizedTest(name = "{arguments}")
-    @MethodSource("provideTestData")
-    fun `validation of processed data`(testScenario: TestScenario) {
+    @MethodSource("provideValidationScenarios")
+    fun `validation of processed data`(scenario: Scenario<ValidationError>) {
         submitInitialData()
 
-        val requestBuilder = submitProcessedData(testScenario.inputData)
+        val requestBuilder = submitProcessedData(scenario.inputData)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray())
 
-        if (testScenario.expectedValidationError == null) {
+        if (scenario.expectedError == null) {
             requestBuilder.andExpect(jsonPath("\$").isEmpty())
         } else {
-            val error = testScenario.expectedValidationError
+            val error = scenario.expectedError
 
             error.fieldsWithTypeMismatch.forEach { mismatch ->
                 requestBuilder.andExpect(
@@ -131,6 +130,22 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         }
     }
 
+    @ParameterizedTest(name = "{arguments}")
+    @MethodSource("provideProcessingErrorScenarios")
+    fun `handling of errors in processed data`(scenario: Scenario<Array<ProcessingError>>) {
+        submitInitialData()
+        queryUnprocessedSequences(numberOfSequences + 42)
+
+        submitProcessedData(scenario.inputData)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$").isArray())
+            .andExpect(jsonPath("\$").isEmpty())
+        val sequenceList = queryMySequenceList()
+
+        expectStatusInResponse(sequenceList, 1, Status.NEEDS_REVIEW.name)
+    }
+
     @Test
     fun `get sequences of a user`() {
         submitInitialData()
@@ -140,6 +155,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.PROCESSING.name)
 
         submitProcessedData(testData)
+
         expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.PROCESSED.name)
 
         expectLinesInResponse(
@@ -151,8 +167,6 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
                 .andReturn(),
             numberOfSequences,
         )
-
-        expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.COMPLETED.name)
     }
 
     private fun submitProcessedData(testData: String): ResultActions {
@@ -254,18 +268,16 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         }
 
         @JvmStatic
-        fun provideTestData() = listOf(
-            TestScenario(
+        fun provideValidationScenarios() = listOf(
+            Scenario(
                 name = "Happy Path",
-                submitData = true,
-                inputData = """{"sequenceId":1,"data":{"date":"2002-12-15","host":"Homo sapiens","region":"Europe","country": "Spain","division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNN"}}}""".trimIndent(), // ktlint-disable max-line-length
-                expectedValidationError = null,
+                inputData = inputDataFromFile("happy_path"),
+                expectedError = null as ValidationError?,
             ),
-            TestScenario(
+            Scenario(
                 name = "Unknown field",
-                submitData = true,
-                inputData = """{"sequenceId":1,"data":{"date":"2002-12-15","not_a_meta_data_field":"not_important","host":"Homo sapiens","country": "Spain","region":"Europe","division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNN"}}}""".trimIndent(), // ktlint-disable max-line-length
-                expectedValidationError = ValidationError(
+                inputData = inputDataFromFile("unknown_field"),
+                expectedError = ValidationError(
                     id = 1,
                     missingRequiredFields = emptyList(),
                     fieldsWithTypeMismatch = emptyList(),
@@ -273,11 +285,10 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
                     genericError = emptyList(),
                 ),
             ),
-            TestScenario(
+            Scenario(
                 name = "Missing required field",
-                submitData = true,
-                inputData = """{"sequenceId":1,"data":{"host":"Homo sapiens","region":"Europe","division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNN"}}}""".trimIndent(), // ktlint-disable max-line-length
-                expectedValidationError = ValidationError(
+                inputData = inputDataFromFile("missing_required_field"),
+                expectedError = ValidationError(
                     id = 1,
                     missingRequiredFields = listOf("date", "country"),
                     fieldsWithTypeMismatch = emptyList(),
@@ -285,11 +296,10 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
                     genericError = emptyList(),
                 ),
             ),
-            TestScenario(
-                name = "Wrongly typed field",
-                submitData = true,
-                inputData = """{"sequenceId":1,"data":{"date":"15.12.2002","host":"Homo sapiens","region":"Europe","country": "Spain", "division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNN"}}}""".trimIndent(), // ktlint-disable max-line-length
-                expectedValidationError = ValidationError(
+            Scenario(
+                name = "Wrong type field",
+                inputData = inputDataFromFile("wrong_type_field"),
+                expectedError = ValidationError(
                     id = 1,
                     missingRequiredFields = emptyList(),
                     fieldsWithTypeMismatch = listOf(
@@ -299,11 +309,10 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
                     genericError = emptyList(),
                 ),
             ),
-            TestScenario(
+            Scenario(
                 name = "Invalid ID / Non-existing ID",
-                submitData = false,
-                inputData = """{"sequenceId":12,"data": "not important"}""".trimIndent(),
-                expectedValidationError = ValidationError(
+                inputData = inputDataFromFile("invalid_id"),
+                expectedError = ValidationError(
                     id = 12,
                     missingRequiredFields = emptyList(),
                     fieldsWithTypeMismatch = emptyList(),
@@ -311,16 +320,34 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
                     genericError = listOf("SequenceId does not exist"),
                 ),
             ),
+            Scenario(
+                name = "null in nullable field",
+                inputData = inputDataFromFile("null_value"),
+                expectedError = null,
+            ),
         )
 
-        data class TestScenario(
+        @JvmStatic
+        fun provideProcessingErrorScenarios() = listOf(
+            Scenario(
+                name = "Error in first sequence",
+                inputData = inputDataFromFile("error_feedback"),
+                expectedError = arrayOf(ProcessingError("Not this kind of host", "host")),
+            ),
+        )
+
+        data class Scenario<ErrorType>(
             val name: String,
-            val submitData: Boolean,
             val inputData: String,
-            val expectedValidationError: ValidationError?,
+            val expectedError: ErrorType?,
         ) {
             override fun toString() = name
         }
+
+        data class ProcessingError(
+            val message: String,
+            val field: String,
+        )
 
         data class ValidationError(
             val id: Int,
@@ -335,5 +362,23 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             val shouldBeType: String,
             val fieldValue: String,
         )
+
+        fun inputDataFromFile(fileName: String): String = inputData[fileName] ?: error("$fileName.json not found")
+
+        private val inputData: Map<String, String> by lazy {
+            val fileMap = mutableMapOf<String, String>()
+
+            val jsonResourceDirectory = "src/test/resources/processedInputData"
+
+            val directory = File(jsonResourceDirectory)
+
+            directory.listFiles { _, name -> name.endsWith(".json") }?.forEach { file ->
+                val fileName = file.nameWithoutExtension
+                val formattedJson = file.readText().replace("\n", "").replace("\r", "").replace(" ", "")
+                fileMap[fileName] = formattedJson
+            }
+
+            fileMap
+        }
     }
 }

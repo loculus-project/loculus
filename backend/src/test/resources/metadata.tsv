@@ -1,11 +1,11 @@
 header	date	region	country	division	host
-Switzerland/BE-ETHZ-560470/2020	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-Switzerland/SH-ETHZ-580390/2020	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-Switzerland/BE-ETHZ-521500/2020	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-Switzerland/SH-ETHZ-430808/2020	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens
-Switzerland/ZH-ETHZ-521621/2020	2020-12-03	Europe	Switzerland	Zürich	Homo sapiens
-Switzerland/BL-ETHZ-560697/2020	2020-12-23	Europe	Switzerland	Basel-Land	Homo sapiens
-Switzerland/AG-ETHZ-410114/2020	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens
-Switzerland/SG-ETHZ-430703/2020	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens
-Switzerland/AG-ETHZ-410033/2020	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens
-Switzerland/BS-UHB-42568157/2020	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens
+custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+custom3	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens
+custom4	2020-12-03	Europe	Switzerland	Zürich	Homo sapiens
+custom5	2020-12-23	Europe	Switzerland	Basel-Land	Homo sapiens
+custom6	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens
+custom7	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens
+custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens
+custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens

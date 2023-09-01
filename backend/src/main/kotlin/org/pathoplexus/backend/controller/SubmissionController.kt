@@ -73,6 +73,12 @@ class SubmissionController(
                             value = """{"sequenceId":"4","data":{"date":"2020-12-25","host":"Homo sapiens","region":"Europe","country":"Switzerland","division":"Schaffhausen", "nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
                             summary = "Processed data (remove all newlines from the example)",
                         ),
+                        ExampleObject(
+                            name = "Example for submitting processed sequences with errors. \n" +
+                                " NOTE: Due to formatting issues with swagger, remove all newlines from the example.",
+                            value = """{"sequenceId":"4","data":{"errors":[{"field":"host",message:"Not that kind of host"}],"date":"2020-12-25","host":"google.com","region":"Europe","country":"Switzerland","division":"Schaffhausen", "nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
+                            summary = "Processed data with errors (remove all newlines from the example)",
+                        ),
                     ],
                 ),
             ],
@@ -101,6 +107,22 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
+    @Description("Get data with errors to review as a stream of NDJSON")
+    @GetMapping("/get-data-to-review", produces = [MediaType.APPLICATION_NDJSON_VALUE])
+    fun getReviewNeededData(
+        @RequestParam submitter: String,
+        @RequestParam numberOfSequences: Int,
+    ): ResponseEntity<StreamingResponseBody> {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+
+        val streamBody = StreamingResponseBody { outputStream ->
+            databaseService.streamNeededReviewSubmissions(submitter, numberOfSequences, outputStream)
+        }
+
+        return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
+
     @Description("Get a list of all submitted sequences of the given user")
     @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserSequenceList(
@@ -121,12 +143,13 @@ class SubmissionController(
         val sequenceMap = fastaList.associate { it.sampleName to it.sequence }
 
         return metadataList.map { entry ->
-            val merged = entry.toMutableMap<String, Any>().apply {
-                this["nucleotideSequences"] = mapOf("main" to sequenceMap[entry["header"]])
-            }
-
-            val header = merged.remove("header") as String
-            Pair(header, objectMapper.writeValueAsString(merged))
+            val header = entry["header"] ?: error("Missing header field")
+            val metadata = entry.filterKeys { it != "header" }
+            val result = mapOf(
+                "metadata" to metadata,
+                "unalignedNucleotideSequences" to mapOf("main" to sequenceMap[header]),
+            )
+            Pair(header, objectMapper.writeValueAsString(result))
         }
     }
 }

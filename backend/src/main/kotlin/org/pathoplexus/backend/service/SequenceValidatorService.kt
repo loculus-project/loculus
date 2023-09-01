@@ -46,6 +46,9 @@ class SequenceValidatorService
     }
 
     fun validateFieldType(fieldValue: JsonNode, metadata: Metadata): Boolean {
+        if (fieldValue.isNull) {
+            return true
+        }
         return when (metadata.type) {
             "string" -> fieldValue.isTextual
             "int" -> fieldValue.isInt
@@ -63,9 +66,19 @@ class SequenceValidatorService
         val typeMismatchFields = mutableListOf<FieldError>()
         val unknownFields = mutableListOf<String>()
 
+        if (sequence.data["metadata"] == null) {
+            return ValidationResult(
+                sequence.sequenceId,
+                emptyList(),
+                emptyList(),
+                emptyList(),
+                listOf("Missing metadata field"),
+            )
+        }
+
         for (metadata in schemaConfig.schema.metadata) {
             val fieldName = metadata.name
-            val fieldValue = sequence.data[fieldName]
+            val fieldValue = sequence.data["metadata"][fieldName]
 
             if (fieldValue == null && metadata.required) {
                 missingFields.add(fieldName)
@@ -78,9 +91,9 @@ class SequenceValidatorService
             }
         }
 
-        val knownFieldNames = schemaConfig.schema.metadata.map { it.name } + listOf("nucleotideSequences")
+        val knownFieldNames = schemaConfig.schema.metadata.map { it.name }
 
-        sequence.data.fieldNames().forEachRemaining { fieldName ->
+        sequence.data["metadata"].fieldNames().forEachRemaining { fieldName ->
             if (!knownFieldNames.contains(fieldName)) {
                 unknownFields.add(fieldName)
             }

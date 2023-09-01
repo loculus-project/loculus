@@ -7,7 +7,9 @@ create table sequences (
                            finished_processing_at timestamp,
                            status text not null,
                            original_data jsonb not null,
-                           processed_data jsonb
+                           processed_data jsonb,
+                           processing_errors jsonb,
+                           processing_warnings jsonb
 );
 
 create index on sequences (submitter);

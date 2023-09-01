@@ -1,0 +1,16 @@
+{
+  "sequenceId": 1,
+  "processing_errors": [],
+  "processing_warnings": [],
+  "data": {
+    "metadata": {
+      "date": "2002-12-15",
+      "host": "Homo sapiens",
+      "region": "Europe",
+      "country": "Spain",
+      "division": "Schaffhausen",
+      "pangoLineage": "XBB.1.5"
+    },
+    "unalignedNucleotideSequences": { "main": "NNNNNNNNNNNNNNNN" }
+  }
+}

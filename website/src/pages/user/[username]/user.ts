@@ -5,8 +5,10 @@ export enum ResponseStatus {
     OK = 'OK',
     ERROR = 'ERROR',
 }
+export type SequenceStatusNames = 'RECEIVED' | 'PROCESSING' | 'NEEDS_REVIEW' | 'REVIEWED' | 'PROCESSED' | 'SILO_READY';
+
 export type SequenceStatus = {
-    status: string;
+    status: SequenceStatusNames;
     sequenceId: number;
 };
 export type UserSequenceResponse = {

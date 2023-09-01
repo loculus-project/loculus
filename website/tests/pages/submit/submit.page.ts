@@ -2,13 +2,14 @@ import { readFileSync } from 'fs';
 
 import type { Locator, Page } from '@playwright/test';
 
-import { baseUrl } from '../../e2e.fixture';
+import { baseUrl, testuser } from '../../e2e.fixture';
 
 export class SubmitPage {
     public readonly userField: Locator;
     public readonly submitButton: Locator;
     private readonly metadataFile: string = './tests/pages/submit/metadata.tsv';
     private readonly sequencesFile: string = './tests/pages/submit/sequences.fasta';
+    private readonly testSequenceCount: number = readFileSync(this.metadataFile, 'utf-8').split('\n').length - 2;
 
     constructor(public readonly page: Page) {
         this.submitButton = page.getByRole('button', { name: 'Submit' });
@@ -17,6 +18,15 @@ export class SubmitPage {
 
     public async goto() {
         await this.page.goto(`${baseUrl}/submit`);
+    }
+
+    public async gotoUserPage() {
+        await this.page.goto(`${baseUrl}/user/${testuser}/sequences`);
+    }
+
+    public async submit() {
+        await Promise.all([this.uploadSequenceData(), this.setUsername(testuser), this.uploadMetadata()]);
+        await this.submitButton.click();
     }
 
     public async uploadMetadata(file: string = this.metadataFile) {
@@ -28,7 +38,7 @@ export class SubmitPage {
     }
 
     public getTestSequenceCount() {
-        return readFileSync(this.metadataFile, 'utf-8').split('\n').length - 2;
+        return this.testSequenceCount;
     }
 
     public async setUsername(username: string) {
