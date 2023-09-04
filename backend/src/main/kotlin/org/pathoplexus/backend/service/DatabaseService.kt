@@ -3,6 +3,9 @@ package org.pathoplexus.backend.service
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.node.LongNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.mchange.v2.c3p0.ComboPooledDataSource
 import org.pathoplexus.backend.config.DatabaseProperties
@@ -116,7 +119,7 @@ class DatabaseService(
 
         val updateSql = """
         update sequences
-        set status = ?, finished_processing_at = now(), processed_data = ?, processing_errors = ?,processing_warnings = ?
+        set status = ?, finished_processing_at = now(), processed_data = ?, errors = ?,warnings = ?
         where sequence_id = ?
         """.trimIndent()
 
@@ -143,12 +146,12 @@ class DatabaseService(
 
                         val validationResult = sequenceValidatorService.validateSequence(sequence)
                         if (sequenceValidatorService.isValidResult(validationResult)) {
-                            val hasErrors = sequence.processing_errors != null &&
-                                sequence.processing_errors.isArray &&
-                                sequence.processing_errors.size() > 0
-                            val hasWarnings = sequence.processing_warnings != null &&
-                                sequence.processing_warnings.isArray &&
-                                sequence.processing_warnings.size() > 0
+                            val hasErrors = sequence.errors != null &&
+                                sequence.errors.isArray &&
+                                sequence.errors.size() > 0
+                            val hasWarnings = sequence.warnings != null &&
+                                sequence.warnings.isArray &&
+                                sequence.warnings.size() > 0
 
                             if (hasErrors || hasWarnings) {
                                 updateStatement.setString(1, Status.NEEDS_REVIEW.name)
@@ -165,13 +168,13 @@ class DatabaseService(
                             updateStatement.setObject(
                                 3,
                                 PGobject().apply {
-                                    type = "jsonb"; value = sequence.processing_errors.toString()
+                                    type = "jsonb"; value = sequence.errors.toString()
                                 },
                             )
                             updateStatement.setObject(
                                 4,
                                 PGobject().apply {
-                                    type = "jsonb"; value = sequence.processing_warnings.toString()
+                                    type = "jsonb"; value = sequence.warnings.toString()
                                 },
                             )
 
@@ -189,12 +192,11 @@ class DatabaseService(
         return validationResults
     }
 
-    // TODO(#108): temporary method to ease testing, replace later
     fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
         val sql = """
-        select sequence_id, processed_data from sequences
+        select sequence_id, processed_data, warnings from sequences
         where sequence_id in (
-            select sequence_id from sequences where status = ? limit ?
+            select sequence_id from sequences where status = ? limit ? 
         )
         """.trimIndent()
 
@@ -205,12 +207,18 @@ class DatabaseService(
                 val rs = statement.executeQuery()
                 rs.use {
                     while (rs.next()) {
-                        val sequence = Sequence(
-                            rs.getLong("sequence_id"),
-                            objectMapper.readTree(rs.getString("processed_data")),
+                        val processedDataObject = objectMapper.readTree(rs.getString("processed_data")) as ObjectNode
+
+                        val metadataJsonObject = processedDataObject["metadata"] as ObjectNode
+                        metadataJsonObject.set<JsonNode>("sequenceId", LongNode(rs.getLong("sequence_id")))
+                        metadataJsonObject.set<JsonNode>(
+                            "warnings",
+                            TextNode(rs.getString("warnings")),
                         )
-                        val json = objectMapper.writeValueAsString(sequence)
-                        outputStream.write(json.toByteArray())
+
+                        processedDataObject.set<JsonNode>("metadata", metadataJsonObject)
+
+                        outputStream.write(objectMapper.writeValueAsString(processedDataObject).toByteArray())
                         outputStream.write('\n'.code)
                         outputStream.flush()
                     }
@@ -218,9 +226,10 @@ class DatabaseService(
             }
         }
     }
+
     fun streamNeededReviewSubmissions(submitter: String, numberOfSequences: Int, outputStream: OutputStream) {
         val sql = """
-        select sequence_id, processed_data, processing_errors, processing_warnings from sequences
+        select sequence_id, processed_data, errors, warnings from sequences
         where sequence_id in (
             select sequence_id from sequences where status = ? and submitter = ? limit ?
         )
@@ -237,8 +246,8 @@ class DatabaseService(
                         val sequence = Sequence(
                             rs.getLong("sequence_id"),
                             objectMapper.readTree(rs.getString("processed_data")),
-                            objectMapper.readTree(rs.getString("processing_errors")),
-                            objectMapper.readTree(rs.getString("processing_warnings")),
+                            objectMapper.readTree(rs.getString("errors")),
+                            objectMapper.readTree(rs.getString("warnings")),
                         )
                         val json = objectMapper.writeValueAsString(sequence)
                         outputStream.write(json.toByteArray())
@@ -276,8 +285,8 @@ class DatabaseService(
 data class Sequence(
     val sequenceId: Long,
     val data: JsonNode,
-    val processing_errors: JsonNode? = null,
-    val processing_warnings: JsonNode? = null,
+    val errors: JsonNode? = null,
+    val warnings: JsonNode? = null,
 )
 
 data class SequenceStatus(

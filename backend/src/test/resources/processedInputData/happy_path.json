@@ -1,7 +1,7 @@
 {
   "sequenceId": 1,
-  "processing_errors": [],
-  "processing_warnings": [],
+  "errors": [],
+  "warnings": [],
   "data": {
     "metadata": {
       "date": "2002-12-15",

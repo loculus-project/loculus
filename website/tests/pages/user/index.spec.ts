@@ -23,10 +23,8 @@ const fakeProcessingPipeline = async () => {
         },
         body: JSON.stringify({
             sequenceId: 1,
-            processing_errors: [{ source: { fieldName: 'host', type: 'metadata' }, message: 'Not this kind of host' }],
-            processing_warnings: [
-                { source: { fieldName: 'all', type: 'all' }, message: '"There is no warning"-warning' },
-            ],
+            errors: [{ source: { fieldName: 'host', type: 'metadata' }, message: 'Not this kind of host' }],
+            warnings: [{ source: { fieldName: 'all', type: 'all' }, message: '"There is no warning"-warning' }],
             data: {
                 metadata: {
                     date: '2002-12-15',
@@ -35,7 +33,22 @@ const fakeProcessingPipeline = async () => {
                     country: 'Spain',
                     division: 'Schaffhausen',
                 },
-                unalignedNucleotideSequences: { main: 'NNNNNNNNNNNNNNNN' },
+                unalignedNucleotideSequences: {
+                    main: 'AATTCC...',
+                },
+                alignedNucleotideSequences: {
+                    main: 'NNNNNAATTCC...',
+                },
+                nucleotideInsertions: {
+                    insertions: [],
+                },
+                alignedAminoAcidSequences: {
+                    S: 'XXMSR...',
+                    ORF1a: '...',
+                },
+                aminoAcidInsertions: {
+                    S: [],
+                },
             },
         }),
     });
