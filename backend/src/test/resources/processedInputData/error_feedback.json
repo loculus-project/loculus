@@ -1,12 +1,12 @@
 {
   "sequenceId": 1,
-  "processing_errors": [
+  "errors": [
     {
       "source": [{ "type": "metadata", "name": "host" }],
       "message": "Not this kind of host"
     }
   ],
-  "processing_warnings": [],
+  "warnings": [],
   "data": {
     "metadata": {
       "date": "2002-12-15",

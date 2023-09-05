@@ -8,8 +8,8 @@ create table sequences (
                            status text not null,
                            original_data jsonb not null,
                            processed_data jsonb,
-                           processing_errors jsonb,
-                           processing_warnings jsonb
+                           errors jsonb,
+                           warnings jsonb
 );
 
 create index on sequences (submitter);

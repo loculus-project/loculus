@@ -5,8 +5,8 @@ type PangoLineage = string;
 
 export type SequenceReview = {
     sequenceId: number;
-    processing_errors: ProcessingAnnotation[];
-    processing_warnings: ProcessingAnnotation[];
+    errors: ProcessingAnnotation[];
+    warnings: ProcessingAnnotation[];
     data: {
         metadata: {
             date: string;

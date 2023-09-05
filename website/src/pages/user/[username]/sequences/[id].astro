@@ -52,7 +52,7 @@ const reviewData = reviewDataOfUser.find((review) => review.sequenceId.toString(
                                 <td class='font-semibold pr-4 mt-2'>Errors</td>
                                 <td />
                             </tr>
-                            {Object.values(reviewData.processing_errors).map((error) => (
+                            {Object.values(reviewData.errors).map((error) => (
                                 <tr>
                                     <td class='pr-4 align-top'>{error.source.name}:</td>
                                     <td class='break-normal'>{error.message}</td>
@@ -65,7 +65,7 @@ const reviewData = reviewDataOfUser.find((review) => review.sequenceId.toString(
                             <tr>
                                 <td> </td>
                             </tr>
-                            {Object.values(reviewData.processing_warnings).map((warning) => (
+                            {Object.values(reviewData.warnings).map((warning) => (
                                 <tr>
                                     <td class='pr-4 align-top'>{warning.source.name}:</td>
                                     <td class='break-normal'>{warning.message}</td>
