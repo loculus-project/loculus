@@ -1,0 +1,21 @@
+{
+  "sequenceId": 1,
+  "processing_errors": [
+    {
+      "source": [{ "type": "metadata", "name": "host" }],
+      "message": "Not this kind of host"
+    }
+  ],
+  "processing_warnings": [],
+  "data": {
+    "metadata": {
+      "date": "2002-12-15",
+      "host": "google.com",
+      "region": "Europe",
+      "country": "Spain",
+      "division": "Schaffhausen",
+      "pangoLineage": "XBB.1.5"
+    },
+    "unalignedNucleotideSequences": { "main": "NNNNNNNNNNNNNNNN" }
+  }
+}

@@ -9,11 +9,11 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.core.io.ClassPathResource
+import org.springframework.core.io.ResourceLoader
 import org.springframework.web.filter.CommonsRequestLoggingFilter
-import javax.sql.DataSource
 
 @Configuration
-class BackendSpringConfig(private val objectMapper: ObjectMapper) {
+class BackendSpringConfig(private val objectMapper: ObjectMapper, private val resourceLoader: ResourceLoader) {
 
     @Bean
     fun logFilter(): CommonsRequestLoggingFilter {
@@ -39,7 +39,7 @@ class BackendSpringConfig(private val objectMapper: ObjectMapper) {
 
     @Bean
     @Profile("!test")
-    fun getFlyway(dataSource: DataSource): Flyway {
+    fun getFlyway(dataSource: HikariDataSource): Flyway {
         val configuration = Flyway.configure()
             .baselineOnMigrate(true)
             .dataSource(dataSource)

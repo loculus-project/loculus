@@ -1,0 +1,14 @@
+{
+  "sequenceId": 1,
+  "data": {
+    "metadata": {
+      "date": "2002-12-15",
+      "not_a_meta_data_field": "not_important",
+      "host": "Homo sapiens",
+      "country": "Spain",
+      "region": "Europe",
+      "division": "Schaffhausen"
+    },
+    "nucleotideSequences": { "main": "NNNNNNNNNNNNNNNN" }
+  }
+}

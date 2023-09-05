@@ -103,59 +103,6 @@ class DatabaseService(
         }
     }
 
-    // TODO(#108): temporary method to ease testing, replace later
-    fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
-        val sql = """
-        update sequences set status = ?
-        where sequence_id in (
-            select sequence_id from sequences where status = ? limit ?
-        )
-        returning sequence_id, processed_data
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, Status.COMPLETED.name)
-                statement.setString(2, Status.PROCESSED.name)
-                statement.setInt(3, numberOfSequences)
-                val rs = statement.executeQuery()
-                rs.use {
-                    while (rs.next()) {
-                        val sequence = Sequence(
-                            rs.getLong("sequence_id"),
-                            objectMapper.readTree(rs.getString("processed_data")),
-                        )
-                        val json = objectMapper.writeValueAsString(sequence)
-                        outputStream.write(json.toByteArray())
-                        outputStream.write('\n'.code)
-                        outputStream.flush()
-                    }
-                }
-            }
-        }
-    }
-
-    fun getSequencesSubmittedBy(username: String): List<SequenceStatus> {
-        val sequenceStatusList = mutableListOf<SequenceStatus>()
-        val sql = """
-        select sequence_id, status from sequences where submitter = ?
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, username)
-                statement.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        val sequenceId = rs.getLong("sequence_id")
-                        val status = Status.fromString(rs.getString("status"))
-                        sequenceStatusList.add(SequenceStatus(sequenceId, status))
-                    }
-                }
-            }
-        }
-        return sequenceStatusList
-    }
-
     fun updateProcessedData(inputStream: InputStream): List<ValidationResult> {
         val reader = BufferedReader(InputStreamReader(inputStream))
 
@@ -169,7 +116,7 @@ class DatabaseService(
 
         val updateSql = """
         update sequences
-        set status = ?, finished_processing_at = now(), processed_data = ?
+        set status = ?, finished_processing_at = now(), processed_data = ?, processing_errors = ?,processing_warnings = ?
         where sequence_id = ?
         """.trimIndent()
 
@@ -196,14 +143,39 @@ class DatabaseService(
 
                         val validationResult = sequenceValidatorService.validateSequence(sequence)
                         if (sequenceValidatorService.isValidResult(validationResult)) {
-                            updateStatement.setString(1, Status.PROCESSED.name)
+                            val hasErrors = sequence.processing_errors != null &&
+                                sequence.processing_errors.isArray &&
+                                sequence.processing_errors.size() > 0
+                            val hasWarnings = sequence.processing_warnings != null &&
+                                sequence.processing_warnings.isArray &&
+                                sequence.processing_warnings.size() > 0
+
+                            if (hasErrors || hasWarnings) {
+                                updateStatement.setString(1, Status.NEEDS_REVIEW.name)
+                            } else {
+                                updateStatement.setString(1, Status.PROCESSED.name)
+                            }
+
                             updateStatement.setObject(
                                 2,
                                 PGobject().apply {
                                     type = "jsonb"; value = sequence.data.toString()
                                 },
                             )
-                            updateStatement.setLong(3, sequence.sequenceId)
+                            updateStatement.setObject(
+                                3,
+                                PGobject().apply {
+                                    type = "jsonb"; value = sequence.processing_errors.toString()
+                                },
+                            )
+                            updateStatement.setObject(
+                                4,
+                                PGobject().apply {
+                                    type = "jsonb"; value = sequence.processing_warnings.toString()
+                                },
+                            )
+
+                            updateStatement.setLong(5, sequence.sequenceId)
                             updateStatement.executeUpdate()
                         } else {
                             validationResults.add(validationResult)
@@ -216,11 +188,96 @@ class DatabaseService(
 
         return validationResults
     }
+
+    // TODO(#108): temporary method to ease testing, replace later
+    fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
+        val sql = """
+        select sequence_id, processed_data from sequences
+        where sequence_id in (
+            select sequence_id from sequences where status = ? limit ?
+        )
+        """.trimIndent()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setString(1, Status.PROCESSED.name)
+                statement.setInt(2, numberOfSequences)
+                val rs = statement.executeQuery()
+                rs.use {
+                    while (rs.next()) {
+                        val sequence = Sequence(
+                            rs.getLong("sequence_id"),
+                            objectMapper.readTree(rs.getString("processed_data")),
+                        )
+                        val json = objectMapper.writeValueAsString(sequence)
+                        outputStream.write(json.toByteArray())
+                        outputStream.write('\n'.code)
+                        outputStream.flush()
+                    }
+                }
+            }
+        }
+    }
+    fun streamNeededReviewSubmissions(submitter: String, numberOfSequences: Int, outputStream: OutputStream) {
+        val sql = """
+        select sequence_id, processed_data, processing_errors, processing_warnings from sequences
+        where sequence_id in (
+            select sequence_id from sequences where status = ? and submitter = ? limit ?
+        )
+        """.trimIndent()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setString(1, Status.NEEDS_REVIEW.name)
+                statement.setString(2, submitter)
+                statement.setInt(3, numberOfSequences)
+                val rs = statement.executeQuery()
+                rs.use {
+                    while (rs.next()) {
+                        val sequence = Sequence(
+                            rs.getLong("sequence_id"),
+                            objectMapper.readTree(rs.getString("processed_data")),
+                            objectMapper.readTree(rs.getString("processing_errors")),
+                            objectMapper.readTree(rs.getString("processing_warnings")),
+                        )
+                        val json = objectMapper.writeValueAsString(sequence)
+                        outputStream.write(json.toByteArray())
+                        outputStream.write('\n'.code)
+                        outputStream.flush()
+                    }
+                }
+            }
+        }
+    }
+
+    fun getSequencesSubmittedBy(username: String): List<SequenceStatus> {
+        val sequenceStatusList = mutableListOf<SequenceStatus>()
+        val sql = """
+        select sequence_id, status from sequences where submitter = ?
+        """.trimIndent()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setString(1, username)
+                statement.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        val sequenceId = rs.getLong("sequence_id")
+                        val status = Status.fromString(rs.getString("status"))
+
+                        sequenceStatusList.add(SequenceStatus(sequenceId, status))
+                    }
+                }
+            }
+        }
+        return sequenceStatusList
+    }
 }
 
 data class Sequence(
     val sequenceId: Long,
     val data: JsonNode,
+    val processing_errors: JsonNode? = null,
+    val processing_warnings: JsonNode? = null,
 )
 
 data class SequenceStatus(
@@ -235,11 +292,17 @@ enum class Status {
     @JsonProperty("PROCESSING")
     PROCESSING,
 
+    @JsonProperty("NEEDS_REVIEW")
+    NEEDS_REVIEW,
+
+    @JsonProperty("REVIEWED")
+    REVIEWED,
+
     @JsonProperty("PROCESSED")
     PROCESSED,
 
-    @JsonProperty("COMPLETED")
-    COMPLETED,
+    @JsonProperty("SILO_READY")
+    SILO_READY,
 
     ;
 

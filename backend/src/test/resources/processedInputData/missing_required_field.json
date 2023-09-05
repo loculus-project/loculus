@@ -1,0 +1,11 @@
+{
+  "sequenceId": 1,
+  "data": {
+    "metadata": {
+      "host": "Homo sapiens",
+      "region": "Europe",
+      "division": "Schaffhausen"
+    },
+    "nucleotideSequences": { "main": "NNNNNNNNNNNNNNNN" }
+  }
+}

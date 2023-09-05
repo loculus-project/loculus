@@ -3,11 +3,13 @@ import { expect, test as base } from '@playwright/test';
 import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
+import { UserPage } from './pages/user/user.page';
 
 type E2EFixture = {
     searchPage: SearchPage;
     sequencePage: SequencePage;
     submitPage: SubmitPage;
+    userPage: UserPage;
 };
 
 export const baseUrl = 'http://localhost:3000';
@@ -38,6 +40,12 @@ export const test = base.extend<E2EFixture>({
         await submitPage.goto();
 
         await use(submitPage);
+    },
+    userPage: async ({ page }, use) => {
+        const userPage = new UserPage(page);
+        await userPage.goto();
+
+        await use(userPage);
     },
 });
 
