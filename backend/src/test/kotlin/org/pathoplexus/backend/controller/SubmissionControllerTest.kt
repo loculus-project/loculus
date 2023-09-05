@@ -54,7 +54,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$[0].customId").value("custom0"))
-            .andExpect(jsonPath("\$[0].id").isNumber())
+            .andExpect(jsonPath("\$[0].sequenceId").isNumber())
     }
 
     @Test
@@ -130,20 +130,32 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         }
     }
 
-    @ParameterizedTest(name = "{arguments}")
-    @MethodSource("provideProcessingErrorScenarios")
-    fun `handling of errors in processed data`(scenario: Scenario<Array<ProcessingError>>) {
+    @Test
+    fun `handling of errors in processed data`() {
         submitInitialData()
-        queryUnprocessedSequences(numberOfSequences + 42)
+        queryUnprocessedSequences(numberOfSequences)
 
-        submitProcessedData(scenario.inputData)
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$").isArray())
-            .andExpect(jsonPath("\$").isEmpty())
-        val sequenceList = queryMySequenceList()
+        submitProcessedData(processedInputDataFromFile("error_feedback"))
 
-        expectStatusInResponse(sequenceList, 1, Status.NEEDS_REVIEW.name)
+        expectStatusInResponse(queryMySequenceList(), 1, Status.NEEDS_REVIEW.name)
+    }
+
+    @Test
+    fun `approving of processed data`() {
+        val sequencesThatAreProcessed = listOf(1)
+        submitInitialData()
+        queryUnprocessedSequences(numberOfSequences)
+        submitProcessedData(processedInputDataFromFile("no_validation_errors"))
+
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/approve-processed-data")
+                .param("username", testUsername)
+                .content("""{"sequenceIds":$sequencesThatAreProcessed}""")
+                .contentType(MediaType.APPLICATION_JSON_VALUE),
+        )
+            .andExpect(status().isOk())
+
+        expectStatusInResponse(queryMySequenceList(), sequencesThatAreProcessed.size, Status.SILO_READY.name)
     }
 
     @Test
@@ -176,6 +188,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
                 .content(testData),
         )
             .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
     }
 
     private fun queryMySequenceList(): MvcResult {
@@ -271,12 +284,12 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         fun provideValidationScenarios() = listOf(
             Scenario(
                 name = "Happy Path",
-                inputData = inputDataFromFile("happy_path"),
+                inputData = processedInputDataFromFile("no_validation_errors"),
                 expectedError = null as ValidationError?,
             ),
             Scenario(
                 name = "Unknown field",
-                inputData = inputDataFromFile("unknown_field"),
+                inputData = processedInputDataFromFile("unknown_field"),
                 expectedError = ValidationError(
                     id = 1,
                     missingRequiredFields = emptyList(),
@@ -287,7 +300,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             ),
             Scenario(
                 name = "Missing required field",
-                inputData = inputDataFromFile("missing_required_field"),
+                inputData = processedInputDataFromFile("missing_required_field"),
                 expectedError = ValidationError(
                     id = 1,
                     missingRequiredFields = listOf("date", "country"),
@@ -298,7 +311,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             ),
             Scenario(
                 name = "Wrong type field",
-                inputData = inputDataFromFile("wrong_type_field"),
+                inputData = processedInputDataFromFile("wrong_type_field"),
                 expectedError = ValidationError(
                     id = 1,
                     missingRequiredFields = emptyList(),
@@ -311,7 +324,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             ),
             Scenario(
                 name = "Invalid ID / Non-existing ID",
-                inputData = inputDataFromFile("invalid_id"),
+                inputData = processedInputDataFromFile("invalid_id"),
                 expectedError = ValidationError(
                     id = 12,
                     missingRequiredFields = emptyList(),
@@ -322,17 +335,8 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             ),
             Scenario(
                 name = "null in nullable field",
-                inputData = inputDataFromFile("null_value"),
+                inputData = processedInputDataFromFile("null_value"),
                 expectedError = null,
-            ),
-        )
-
-        @JvmStatic
-        fun provideProcessingErrorScenarios() = listOf(
-            Scenario(
-                name = "Error in first sequence",
-                inputData = inputDataFromFile("error_feedback"),
-                expectedError = arrayOf(ProcessingError("Not this kind of host", "host")),
             ),
         )
 
@@ -343,11 +347,6 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         ) {
             override fun toString() = name
         }
-
-        data class ProcessingError(
-            val message: String,
-            val field: String,
-        )
 
         data class ValidationError(
             val id: Int,
@@ -363,7 +362,9 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             val fieldValue: String,
         )
 
-        fun inputDataFromFile(fileName: String): String = inputData[fileName] ?: error("$fileName.json not found")
+        fun processedInputDataFromFile(fileName: String): String = inputData[fileName] ?: error(
+            "$fileName.json not found",
+        )
 
         private val inputData: Map<String, String> by lazy {
             val fileMap = mutableMapOf<String, String>()

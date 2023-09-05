@@ -1,6 +1,6 @@
 package org.pathoplexus.backend.model
 
 data class HeaderId(
-    val id: Long,
+    val sequenceId: Long,
     val customId: String,
 )

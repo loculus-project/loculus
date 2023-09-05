@@ -149,11 +149,8 @@ class DatabaseService(
                             val hasErrors = sequence.errors != null &&
                                 sequence.errors.isArray &&
                                 sequence.errors.size() > 0
-                            val hasWarnings = sequence.warnings != null &&
-                                sequence.warnings.isArray &&
-                                sequence.warnings.size() > 0
 
-                            if (hasErrors || hasWarnings) {
+                            if (hasErrors) {
                                 updateStatement.setString(1, Status.NEEDS_REVIEW.name)
                             } else {
                                 updateStatement.setString(1, Status.PROCESSED.name)
@@ -190,6 +187,26 @@ class DatabaseService(
         }
 
         return validationResults
+    }
+
+    fun approveProcessedData(submitter: String, sequenceIds: Array<Long>) {
+        val sql = """
+        update sequences
+        set status = ?
+        where sequence_id = any (?) 
+        and submitter = ? 
+        and status = ?
+        """.trimIndent()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setString(1, Status.SILO_READY.name)
+                statement.setArray(2, statement.connection.createArrayOf("BIGINT", sequenceIds))
+                statement.setString(3, submitter)
+                statement.setString(4, Status.PROCESSED.name)
+                statement.executeUpdate()
+            }
+        }
     }
 
     fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {

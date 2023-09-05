@@ -5,7 +5,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.parameters.RequestBody
 import jakarta.servlet.http.HttpServletRequest
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
@@ -22,11 +21,13 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import java.io.InputStreamReader
+import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @RestController
 class SubmissionController(
@@ -61,7 +62,7 @@ class SubmissionController(
 
     @Description("Submit processed data as a stream of NDJSON")
     @Operation(
-        requestBody = RequestBody(
+        requestBody = SwaggerRequestBody(
             content = [
                 Content(
                     mediaType = MediaType.APPLICATION_NDJSON_VALUE,
@@ -130,6 +131,23 @@ class SubmissionController(
     ): List<SequenceStatus> {
         return databaseService.getSequencesSubmittedBy(username)
     }
+
+    @Description("Approve that the processed data is correct")
+    @PostMapping(
+        "/approve-processed-data",
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = [MediaType.APPLICATION_JSON_VALUE],
+    )
+    fun approveProcessedData(
+        @RequestParam username: String,
+        @RequestBody body: ApprovalRequest,
+    ) {
+        databaseService.approveProcessedData(username, body.sequenceIds)
+    }
+
+    data class ApprovalRequest(
+        val sequenceIds: Array<Long>,
+    )
 
     private fun processFiles(
         metadataFile: MultipartFile,
