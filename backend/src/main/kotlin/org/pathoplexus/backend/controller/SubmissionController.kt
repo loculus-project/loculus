@@ -13,6 +13,7 @@ import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.Sequence
 import org.pathoplexus.backend.service.SequenceStatus
+import org.pathoplexus.backend.service.ValidationResult
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.context.annotation.Description
 import org.springframework.http.HttpHeaders
@@ -37,23 +38,10 @@ class SubmissionController(
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
         @RequestParam username: String,
-        @RequestParam metadata: MultipartFile,
-        @RequestParam sequences: MultipartFile,
+        @RequestParam metadataFile: MultipartFile,
+        @RequestParam sequenceFile: MultipartFile,
     ): List<HeaderId> {
-        val metadataList = CSVParser(
-            InputStreamReader(metadata.inputStream),
-            CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
-        ).map { it.toMap() }
-        val fastaList = FastaReader(sequences.bytes.inputStream()).toList()
-        val sequenceMap = fastaList.associate { it.sampleName to it.sequence }
-
-        val originalDataJsons = metadataList.map { entry ->
-            val merged = entry.toMutableMap<String, Any>().apply {
-                this["nucleotideSequences"] = mapOf("main" to sequenceMap[entry["header"]])
-            }
-            objectMapper.writeValueAsString(merged)
-        }
-        return databaseService.insertSubmissions(username, originalDataJsons)
+        return databaseService.insertSubmissions(username, processFiles(metadataFile, sequenceFile))
     }
 
     @Description("Get unprocessed data as a stream of NDJSON")
@@ -82,7 +70,7 @@ class SubmissionController(
                         ExampleObject(
                             name = "Example for submitting processed sequences. \n" +
                                 " NOTE: Due to formatting issues with swagger, remove all newlines from the example.",
-                            value = """{"sequenceId":"4","data":{"date":"2020-12-25","host":"Homo sapiens","header":"Switzerland/SH-ETHZ-430808/2020","region":"Europe","country":"Switzerland","division":"Schaffhausen","nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
+                            value = """{"sequenceId":"4","data":{"date":"2020-12-25","host":"Homo sapiens","region":"Europe","country":"Switzerland","division":"Schaffhausen", "nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
                             summary = "Processed data (remove all newlines from the example)",
                         ),
                     ],
@@ -93,8 +81,8 @@ class SubmissionController(
     @PostMapping("/submit-processed-data", consumes = [MediaType.APPLICATION_NDJSON_VALUE])
     fun submitProcessedData(
         request: HttpServletRequest,
-    ) {
-        databaseService.updateProcessedData(request.inputStream)
+    ): List<ValidationResult> {
+        return databaseService.updateProcessedData(request.inputStream)
     }
 
     // TODO(#108): temporary method to ease testing, replace later
@@ -119,5 +107,26 @@ class SubmissionController(
         @RequestParam username: String,
     ): List<SequenceStatus> {
         return databaseService.getSequencesSubmittedBy(username)
+    }
+
+    private fun processFiles(
+        metadataFile: MultipartFile,
+        sequenceFile: MultipartFile,
+    ): List<Pair<String, String>> {
+        val metadataList = CSVParser(
+            InputStreamReader(metadataFile.inputStream),
+            CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
+        ).map { it.toMap() }
+        val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
+        val sequenceMap = fastaList.associate { it.sampleName to it.sequence }
+
+        return metadataList.map { entry ->
+            val merged = entry.toMutableMap<String, Any>().apply {
+                this["nucleotideSequences"] = mapOf("main" to sequenceMap[entry["header"]])
+            }
+
+            val header = merged.remove("header") as String
+            Pair(header, objectMapper.writeValueAsString(merged))
+        }
     }
 }

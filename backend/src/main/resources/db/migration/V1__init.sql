@@ -1,5 +1,6 @@
 create table sequences (
                            sequence_id bigserial primary key,
+                           custom_id text not null,
                            submitter text not null,
                            submitted_at timestamp not null,
                            started_processing_at timestamp,

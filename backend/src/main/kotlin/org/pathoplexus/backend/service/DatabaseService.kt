@@ -18,6 +18,7 @@ import java.sql.Connection
 @Service
 class DatabaseService(
     private val databaseProperties: DatabaseProperties,
+    private val sequenceValidatorService: SequenceValidatorService,
     private val objectMapper: ObjectMapper,
 ) {
     private val pool: ComboPooledDataSource = ComboPooledDataSource().apply {
@@ -47,22 +48,23 @@ class DatabaseService(
         }
     }
 
-    fun insertSubmissions(submitter: String, originalDataJsons: List<String>): List<HeaderId> {
+    fun insertSubmissions(submitter: String, submittedData: List<Pair<String, String>>): List<HeaderId> {
         val headerIds = mutableListOf<HeaderId>()
         val sql = """
-            insert into sequences (submitter, submitted_at, started_processing_at, status, original_data)
-            values (?, now(), null, ?, ?::jsonb )
-            returning sequence_id, original_data->>'header' as header;
+            insert into sequences (submitter, submitted_at, started_processing_at, status, custom_id, original_data)
+            values (?, now(), null, ?,?, ?::jsonb )
+            returning sequence_id;
         """.trimIndent()
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
                 statement.setString(1, submitter)
                 statement.setString(2, Status.RECEIVED.name)
-                for (originalDataJson in originalDataJsons) {
-                    statement.setString(3, originalDataJson)
+                for (data in submittedData) {
+                    statement.setString(3, data.first)
+                    statement.setString(4, data.second)
                     statement.executeQuery().use { rs ->
                         rs.next()
-                        headerIds.add(HeaderId(rs.getString("header"), rs.getLong("sequence_id")))
+                        headerIds.add(HeaderId(rs.getLong("sequence_id"), data.first))
                     }
                 }
             }
@@ -154,27 +156,65 @@ class DatabaseService(
         return sequenceStatusList
     }
 
-    fun updateProcessedData(inputStream: InputStream) {
+    fun updateProcessedData(inputStream: InputStream): List<ValidationResult> {
         val reader = BufferedReader(InputStreamReader(inputStream))
 
-        val sql = """
-            update sequences
-            set status = ?, finished_processing_at = now(), processed_data = ?
-            where sequence_id = ?
+        val validationResults = mutableListOf<ValidationResult>()
+
+        val checkSql = """
+        select sequence_id
+        from sequences
+        where sequence_id = ?
+        """.trimIndent()
+
+        val updateSql = """
+        update sequences
+        set status = ?, finished_processing_at = now(), processed_data = ?
+        where sequence_id = ?
         """.trimIndent()
 
         useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                reader.lineSequence().forEach { line ->
-                    val sequence = objectMapper.readValue<Sequence>(line)
-                    statement.setString(1, Status.PROCESSED.name)
-                    statement.setObject(2, PGobject().apply { type = "jsonb"; value = sequence.data.toString() })
-                    statement.setLong(3, sequence.sequenceId)
-                    statement.executeUpdate()
+            conn.prepareStatement(updateSql).use { updateStatement ->
+                conn.prepareStatement(checkSql).use { checkIfIdExistsStatement ->
+                    reader.lineSequence().forEach { line ->
+                        val sequence = objectMapper.readValue<Sequence>(line)
+
+                        checkIfIdExistsStatement.setLong(1, sequence.sequenceId)
+                        val sequenceIdExists = checkIfIdExistsStatement.executeQuery().next()
+                        if (!sequenceIdExists) {
+                            validationResults.add(
+                                ValidationResult(
+                                    sequence.sequenceId,
+                                    emptyList(),
+                                    emptyList(),
+                                    emptyList(),
+                                    listOf("SequenceId does not exist"),
+                                ),
+                            )
+                            return@forEach
+                        }
+
+                        val validationResult = sequenceValidatorService.validateSequence(sequence)
+                        if (sequenceValidatorService.isValidResult(validationResult)) {
+                            updateStatement.setString(1, Status.PROCESSED.name)
+                            updateStatement.setObject(
+                                2,
+                                PGobject().apply {
+                                    type = "jsonb"; value = sequence.data.toString()
+                                },
+                            )
+                            updateStatement.setLong(3, sequence.sequenceId)
+                            updateStatement.executeUpdate()
+                        } else {
+                            validationResults.add(validationResult)
+                        }
+                    }
+                    reader.close()
                 }
-                reader.close()
             }
         }
+
+        return validationResults
     }
 }
 
