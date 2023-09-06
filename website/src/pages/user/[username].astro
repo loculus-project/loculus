@@ -12,7 +12,7 @@ const sequencesPage = `/user/${username}/sequences`;
 <BaseLayout title={username}>
     {
         // TODO: until we have a user model, only peter is our user
-        username !== 'peter' ? (
+        username !== 'testuser' ? (
             <div class='flex items-center'>
                 <BackButton marginRight={2} client:load />
                 <h1 class='subtitle'>No user found with name: {username}</h1>

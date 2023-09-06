@@ -14,7 +14,7 @@ export type SequenceReview = {
             region: string;
             country: string;
             division: string;
-            pangolinLineage: PangoLineage;
+            pangoLineage: PangoLineage;
         };
         unalignedNucleotideSequences: {
             main: string;
@@ -24,7 +24,7 @@ export type SequenceReview = {
 
 export type ProcessingAnnotation = {
     source: {
-        name: string;
+        fieldName: string;
         type: string;
     };
     message: string;
@@ -33,7 +33,7 @@ export type ProcessingAnnotation = {
 export const getReviewData = async (name: string): Promise<SequenceReview[]> => {
     try {
         const config = getConfig();
-        const mySequencesQuery = `${config.backendUrl}/get-data-to-review?submitter=${name}&numberOfSequences=10`;
+        const mySequencesQuery = `${config.backendUrl}/get-data-to-review?submitter=${name}&numberOfSequences=1000`;
 
         const mySequencesResponse = await fetch(mySequencesQuery, {
             method: 'GET',

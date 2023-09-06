@@ -15,6 +15,23 @@ export type UserSequenceResponse = {
     responseStatus: ResponseStatus;
     sequences: SequenceStatus[];
 };
+
+export const splitStatusArray = (sequences: SequenceStatus[]) =>
+    sequences.reduce(
+        (acc, item) => {
+            acc[item.status].push(item);
+            return acc;
+        },
+        {
+            RECEIVED: [] as SequenceStatus[],
+            PROCESSING: [] as SequenceStatus[],
+            NEEDS_REVIEW: [] as SequenceStatus[],
+            REVIEWED: [] as SequenceStatus[],
+            PROCESSED: [] as SequenceStatus[],
+            SILO_READY: [] as SequenceStatus[],
+        } as Record<SequenceStatusNames, SequenceStatus[]>,
+    );
+
 export const getUserSequences = async (name: string): Promise<UserSequenceResponse> => {
     try {
         const config = getConfig();

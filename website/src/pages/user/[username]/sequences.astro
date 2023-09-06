@@ -1,7 +1,11 @@
 ---
-import { getUserSequences, ResponseStatus } from './user';
+import SequenceStatusBox from './SequenceStatusBox.astro';
+import { getUserSequences, ResponseStatus, splitStatusArray } from './user';
 import { ErrorFeedback } from '../../../components/ErrorFeedback';
 import { BackButton } from '../../../components/Navigation/BackButton';
+import { SequencesProcessed } from '../../../components/UserSequenceList/SequencesProcessed';
+import { SequencesReceived } from '../../../components/UserSequenceList/SequencesReceived';
+import { SequencesWithReview } from '../../../components/UserSequenceList/SequencesWithReview';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 // accession is never undefined, but ESLint doesn't know that
@@ -9,6 +13,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 const username = Astro.params.username!;
 
 const { sequences, responseStatus } = await getUserSequences(username);
+const statusArray = splitStatusArray(sequences);
 ---
 
 <BaseLayout title='Sequences'>
@@ -21,25 +26,30 @@ const { sequences, responseStatus } = await getUserSequences(username);
             responseStatus === ResponseStatus.ERROR ? (
                 <ErrorFeedback message='Error while fetching user sequences' client:only='react' />
             ) : (
-                <div class='flex flex-col'>
-                    {sequences.map((sequence) => (
-                        <div class='flex mb-4'>
-                            <div class='flex-1'>{sequence.sequenceId}</div>
-                            <div class='flex-1'>{sequence.status}</div>
-                            {sequence.status === 'NEEDS_REVIEW' ? (
-                                <div class='flex-1'>
-                                    <a
-                                        href={`/user/${username}/sequences/${sequence.sequenceId}`}
-                                        class='hover:underline'
-                                    >
-                                        Processing Error - Click to view
-                                    </a>
-                                </div>
-                            ) : sequence.status === 'RECEIVED' ? (
-                                <div class='flex-1'>will be processed soon</div>
-                            ) : null}
-                        </div>
-                    ))}
+                <div class='flex flex-col gap-2 mt-5'>
+                    <SequenceStatusBox count={statusArray.RECEIVED.length} description='received'>
+                        <SequencesReceived sequences={statusArray.RECEIVED} />
+                    </SequenceStatusBox>
+
+                    <SequenceStatusBox count={statusArray.PROCESSING.length} description='in processing'>
+                        <SequencesReceived sequences={statusArray.PROCESSING} />
+                    </SequenceStatusBox>
+
+                    <SequenceStatusBox count={statusArray.NEEDS_REVIEW.length} description='needed review'>
+                        <SequencesWithReview sequences={statusArray.NEEDS_REVIEW} username={username} />
+                    </SequenceStatusBox>
+
+                    <SequenceStatusBox count={statusArray.REVIEWED.length} description='reviewed'>
+                        <SequencesWithReview sequences={statusArray.REVIEWED} username={username} client:load />
+                    </SequenceStatusBox>
+
+                    <SequenceStatusBox count={statusArray.PROCESSED.length} description='processed'>
+                        <SequencesProcessed sequences={statusArray.PROCESSED} username={username} client:load />
+                    </SequenceStatusBox>
+
+                    <SequenceStatusBox count={statusArray.SILO_READY.length} description='ready for SILO import'>
+                        <SequencesReceived sequences={statusArray.SILO_READY} />
+                    </SequenceStatusBox>
                 </div>
             )
         }
