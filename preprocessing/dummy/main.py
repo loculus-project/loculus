@@ -1,11 +1,11 @@
-from dataclasses import dataclass
-from typing import List
-
 import argparse
 import dataclasses
-import requests
 import json
 import random
+import requests
+from typing import List
+from typing import Optional
+from dataclasses import dataclass, field
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--backend-host", type=str, default="127.0.0.1",
@@ -13,11 +13,22 @@ parser.add_argument("--backend-host", type=str, default="127.0.0.1",
 args = parser.parse_args()
 host = "http://{}:8079".format(args.backend_host)
 
+@dataclass
+class AnnotationSource:
+    field: str
+    type: str
+
+@dataclass
+class ProcessingAnnotation:
+    source: AnnotationSource
+    message: str
 
 @dataclass
 class Sequence:
     sequenceId: int
     data: dict
+    errors: Optional[List[ProcessingAnnotation]] =field(default_factory=list)
+    warnings: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
 
 
 def fetch_unprocessed_sequences(n: int) -> List[Sequence]:
@@ -38,7 +49,6 @@ def parse_ndjson(ndjson_data: str) -> List[Sequence]:
             entries.append(Sequence(json_object["sequenceId"], json_object["data"]))
     return entries
 
-
 def process(unprocessed: List[Sequence]) -> List[Sequence]:
     with open("mock-sequences.json", "r") as f:
         mock_sequences = json.load(f)
@@ -46,13 +56,17 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
 
     processed = []
     for sequence in unprocessed:
-        processed.append(Sequence(
+        metadata = sequence.data.get("metadata", {})
+        metadata["pangoLineage"] = random.choice(possible_lineages)
+
+        updated_sequence = Sequence(
             sequence.sequenceId,
-            {**sequence.data, **mock_sequences, "lineage": random.choice(possible_lineages)}
-        ))
+            {"metadata": metadata, **mock_sequences},
+        )
+
+        processed.append(updated_sequence)
 
     return processed
-
 
 def submit_processed_sequences(processed: List[Sequence]):
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
@@ -62,7 +76,6 @@ def submit_processed_sequences(processed: List[Sequence]):
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:
         raise Exception("Submitting processed data failed. Status code: {}".format(response.status_code), response.text)
-
 
 def main():
     total_processed = 0
