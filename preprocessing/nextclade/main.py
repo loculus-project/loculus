@@ -1,7 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
 import tempfile
-from typing import List
+from typing import List, Optional
 from Bio import SeqIO
 
 import argparse
@@ -37,16 +37,26 @@ GENES = [
 
 @dataclass
 class InputData:
-    unalignedNuc: str
+    metadata: dict
+    unalignedNucleotideSequences: str
 
 
 @dataclass
-class OutputData:
-    unalignedNuc: str
-    alignedNuc: str
-    alignedTranslations: dict[str, str]
-    lineage: str
+class AnnotationSource:
+    field: str
+    type: str
 
+@dataclass
+class ProcessingAnnotation:
+    source: AnnotationSource
+    message: str
+
+@dataclass
+class OutputData:
+    metadata: dict
+    unalignedNucleotideSequences: str
+    alignedNucleotideSequences: str
+    alignedTranslations: dict[str, str]
 
 @dataclass
 class InputSequence:
@@ -58,6 +68,8 @@ class InputSequence:
 class OutputSequence:
     sequenceId: int
     data: OutputData
+    errors: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
+    warnings: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
 
 
 def fetch_unprocessed_sequences(n: int) -> List[InputSequence]:
@@ -98,7 +110,7 @@ def process(
         with open(input_file, "w") as f:
             for sequence in unprocessed:
                 f.write(f">{sequence.sequenceId}\n")
-                f.write(f"{(sequence.data).unalignedNuc}\n")
+                f.write(f"{(sequence.data).unalignedNucleotideSequences}\n")
         # Prep nextclade run
         command = (
             "nextclade run "
@@ -115,7 +127,7 @@ def process(
 
         processed = {
             unprocessed_sequence.sequenceId: {
-                "unalignedNuc": unprocessed_sequence.data.unalignedNuc,
+                "unalignedNuc": unprocessed_sequence.data.unalignedNucleotideSequences,
                 "alignedNuc": "",
                 "alignedTranslations": {},
                 "lineage": "",
