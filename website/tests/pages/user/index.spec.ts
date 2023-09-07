@@ -8,6 +8,8 @@ test.describe('The user page', () => {
         expect(firstId).toBeDefined();
         expect(secondId).toBeDefined();
 
+        await fakeUnprocessedDataQuery();
+
         await fakeProcessingPipeline({ sequenceId: firstId, error: true });
 
         await submitPage.gotoUserPage();
@@ -25,6 +27,21 @@ test.describe('The user page', () => {
         // await expect(submitPage.page.getByText('Not this kind of host')).toBeVisible();
     });
 });
+async function fakeUnprocessedDataQuery() {
+    let unprocessedData = 'should be empty when all data is processing';
+
+    while (unprocessedData !== '') {
+        const response = await fetch('http://localhost:8079/extract-unprocessed-data?numberOfSequences=10', {
+            method: 'POST',
+        });
+
+        if (!response.ok) {
+            throw new Error(`Unexpected response: ${response.statusText}`);
+        }
+
+        unprocessedData = await response.text();
+    }
+}
 
 const fakeProcessingPipeline = async ({ sequenceId, error }: { sequenceId: number; error: boolean }) => {
     const body = {
