@@ -19,6 +19,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -143,6 +144,26 @@ class SubmissionController(
         @RequestBody body: ApprovalRequest,
     ) {
         databaseService.approveProcessedData(username, body.sequenceIds)
+    }
+
+    @Description("Delete sequence data from user")
+    @DeleteMapping(
+        "/delete-user-sequences",
+    )
+    fun deleteUserData(
+        @RequestParam username: String,
+    ) {
+        databaseService.deleteUserSequences(username)
+    }
+
+    @Description("Delete sequences")
+    @DeleteMapping(
+        "/delete-sequences",
+    )
+    fun deleteSequence(
+        @RequestParam sequenceIds: Array<Long>,
+    ) {
+        databaseService.deleteSequences(sequenceIds)
     }
 
     data class ApprovalRequest(

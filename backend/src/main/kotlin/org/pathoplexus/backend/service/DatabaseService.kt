@@ -17,6 +17,7 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
 import java.sql.Connection
+import java.sql.PreparedStatement
 
 @Service
 class DatabaseService(
@@ -111,10 +112,17 @@ class DatabaseService(
 
         val validationResults = mutableListOf<ValidationResult>()
 
-        val checkSql = """
+        val checkIdSql = """
         select sequence_id
-        from sequences
+        from sequences 
         where sequence_id = ?
+        """.trimIndent()
+
+        val checkStatusSql = """
+        select sequence_id
+        from sequences 
+        where sequence_id = ?
+        and status = ?
         """.trimIndent()
 
         val updateSql = """
@@ -125,68 +133,106 @@ class DatabaseService(
 
         useTransactionalConnection { conn ->
             conn.prepareStatement(updateSql).use { updateStatement ->
-                conn.prepareStatement(checkSql).use { checkIfIdExistsStatement ->
-                    reader.lineSequence().forEach { line ->
-                        val sequence = objectMapper.readValue<Sequence>(line)
+                conn.prepareStatement(checkStatusSql).use { checkIfStatusExistsStatement ->
+                    conn.prepareStatement(checkIdSql).use { checkIfIdExistsStatement ->
+                        reader.lineSequence().forEach { line ->
+                            val sequence = objectMapper.readValue<Sequence>(line)
 
-                        checkIfIdExistsStatement.setLong(1, sequence.sequenceId)
-                        val sequenceIdExists = checkIfIdExistsStatement.executeQuery().next()
-                        if (!sequenceIdExists) {
-                            validationResults.add(
-                                ValidationResult(
-                                    sequence.sequenceId,
-                                    emptyList(),
-                                    emptyList(),
-                                    emptyList(),
-                                    listOf("SequenceId does not exist"),
-                                ),
-                            )
-                            return@forEach
-                        }
+                            if (!idExists(sequence, checkIfIdExistsStatement, validationResults)) return@forEach
 
-                        val validationResult = sequenceValidatorService.validateSequence(sequence)
-                        if (sequenceValidatorService.isValidResult(validationResult)) {
-                            val hasErrors = sequence.errors != null &&
-                                sequence.errors.isArray &&
-                                sequence.errors.size() > 0
+                            if (!statusExists(sequence, checkIfStatusExistsStatement, validationResults)) return@forEach
 
-                            if (hasErrors) {
-                                updateStatement.setString(1, Status.NEEDS_REVIEW.name)
+                            val validationResult = sequenceValidatorService.validateSequence(sequence)
+                            if (sequenceValidatorService.isValidResult(validationResult)) {
+                                executeUpdateProcessedData(sequence, updateStatement)
                             } else {
-                                updateStatement.setString(1, Status.PROCESSED.name)
+                                validationResults.add(validationResult)
                             }
-
-                            updateStatement.setObject(
-                                2,
-                                PGobject().apply {
-                                    type = "jsonb"; value = sequence.data.toString()
-                                },
-                            )
-                            updateStatement.setObject(
-                                3,
-                                PGobject().apply {
-                                    type = "jsonb"; value = sequence.errors.toString()
-                                },
-                            )
-                            updateStatement.setObject(
-                                4,
-                                PGobject().apply {
-                                    type = "jsonb"; value = sequence.warnings.toString()
-                                },
-                            )
-
-                            updateStatement.setLong(5, sequence.sequenceId)
-                            updateStatement.executeUpdate()
-                        } else {
-                            validationResults.add(validationResult)
                         }
+                        reader.close()
                     }
-                    reader.close()
                 }
             }
         }
 
         return validationResults
+    }
+
+    private fun statusExists(
+        sequence: Sequence,
+        checkIfStatusExistsStatement: PreparedStatement,
+        validationResults: MutableList<ValidationResult>,
+    ): Boolean {
+        checkIfStatusExistsStatement.setLong(1, sequence.sequenceId)
+        checkIfStatusExistsStatement.setString(2, Status.PROCESSING.name)
+        val statusIsProcessing = checkIfStatusExistsStatement.executeQuery().next()
+        if (!statusIsProcessing) {
+            validationResults.add(
+                ValidationResult(
+                    sequence.sequenceId,
+                    emptyList(),
+                    emptyList(),
+                    emptyList(),
+                    listOf("SequenceId does exist, but is not in processing state"),
+                ),
+            )
+        }
+        return statusIsProcessing
+    }
+
+    private fun idExists(
+        sequence: Sequence,
+        checkIfIdExistsStatement: PreparedStatement,
+        validationResults: MutableList<ValidationResult>,
+    ): Boolean {
+        checkIfIdExistsStatement.setLong(1, sequence.sequenceId)
+        val sequenceIdExists = checkIfIdExistsStatement.executeQuery().next()
+        if (!sequenceIdExists) {
+            validationResults.add(
+                ValidationResult(
+                    sequence.sequenceId,
+                    emptyList(),
+                    emptyList(),
+                    emptyList(),
+                    listOf("SequenceId does not exist"),
+                ),
+            )
+        }
+        return sequenceIdExists
+    }
+
+    private fun executeUpdateProcessedData(sequence: Sequence, updateStatement: PreparedStatement) {
+        val hasErrors = sequence.errors != null &&
+            sequence.errors.isArray &&
+            sequence.errors.size() > 0
+
+        if (hasErrors) {
+            updateStatement.setString(1, Status.NEEDS_REVIEW.name)
+        } else {
+            updateStatement.setString(1, Status.PROCESSED.name)
+        }
+
+        updateStatement.setObject(
+            2,
+            PGobject().apply {
+                type = "jsonb"; value = sequence.data.toString()
+            },
+        )
+        updateStatement.setObject(
+            3,
+            PGobject().apply {
+                type = "jsonb"; value = sequence.errors.toString()
+            },
+        )
+        updateStatement.setObject(
+            4,
+            PGobject().apply {
+                type = "jsonb"; value = sequence.warnings.toString()
+            },
+        )
+
+        updateStatement.setLong(5, sequence.sequenceId)
+        updateStatement.executeUpdate()
     }
 
     fun approveProcessedData(submitter: String, sequenceIds: Array<Long>) {
@@ -296,6 +342,33 @@ class DatabaseService(
             }
         }
         return sequenceStatusList
+    }
+    fun deleteUserSequences(username: String) {
+        val sql = """
+        DELETE FROM sequences
+        WHERE submitter = ?
+        """.trimIndent()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setString(1, username)
+                statement.executeUpdate()
+            }
+        }
+    }
+
+    fun deleteSequences(sequenceIds: Array<Long>) {
+        val sql = """
+        DELETE FROM sequences
+        WHERE sequence_id = any (?)
+        """.trimIndent()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setArray(1, statement.connection.createArrayOf("BIGINT", sequenceIds))
+                statement.executeUpdate()
+            }
+        }
     }
 }
 

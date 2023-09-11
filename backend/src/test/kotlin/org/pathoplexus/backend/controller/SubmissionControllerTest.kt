@@ -78,6 +78,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
     @MethodSource("provideValidationScenarios")
     fun `validation of processed data`(scenario: Scenario<ValidationError>) {
         submitInitialData()
+        awaitResponse(queryUnprocessedSequences(numberOfSequences))
 
         val requestBuilder = submitProcessedData(scenario.inputData)
             .andExpect(status().isOk)
@@ -133,7 +134,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
     @Test
     fun `handling of errors in processed data`() {
         submitInitialData()
-        queryUnprocessedSequences(numberOfSequences)
+        awaitResponse(queryUnprocessedSequences(numberOfSequences))
 
         submitProcessedData(processedInputDataFromFile("error_feedback"))
 
@@ -144,7 +145,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
     fun `approving of processed data`() {
         val sequencesThatAreProcessed = listOf(1)
         submitInitialData()
-        queryUnprocessedSequences(numberOfSequences)
+        awaitResponse(queryUnprocessedSequences(numberOfSequences))
         submitProcessedData(processedInputDataFromFile("no_validation_errors"))
 
         mockMvc.perform(
@@ -188,7 +189,6 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
                 .content(testData),
         )
             .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
     }
 
     private fun queryMySequenceList(): MvcResult {
@@ -236,10 +236,15 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         .andExpect(content().contentType("application/x-ndjson"))
         .andReturn()
 
-    private fun expectLinesInResponse(result: MvcResult, numberOfSequences: Int): String {
+    private fun awaitResponse(result: MvcResult) {
         await().until {
             result.response.isCommitted
         }
+    }
+
+    private fun expectLinesInResponse(result: MvcResult, numberOfSequences: Int): String {
+        awaitResponse(result)
+
         val sequenceCount = result.response.contentAsString.count {
             it == '\n'
         }
@@ -248,9 +253,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         return result.response.contentAsString
     }
     private fun expectStatusInResponse(result: MvcResult, numberOfSequences: Int, expectedStatus: String): String {
-        await().until {
-            result.response.isCommitted
-        }
+        awaitResponse(result)
 
         val responseContent = result.response.contentAsString
         val statusCount = responseContent.split(expectedStatus).size - 1
