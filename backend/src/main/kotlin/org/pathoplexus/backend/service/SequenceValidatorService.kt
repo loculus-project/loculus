@@ -72,7 +72,7 @@ class SequenceValidatorService
                 emptyList(),
                 emptyList(),
                 emptyList(),
-                listOf("Missing metadata field"),
+                listOf("Missing field: metadata"),
             )
         }
 
@@ -117,9 +117,15 @@ data class FieldError(
 )
 
 data class ValidationResult(
-    val id: Long,
+    val sequenceId: Long,
     val missingRequiredFields: List<String>,
     val fieldsWithTypeMismatch: List<FieldError>,
     val unknownFields: List<String>,
+    val genericError: List<String> = emptyList(),
+)
+
+data class RevisionResult(
+    val sequenceId: Long,
+    val version: Int,
     val genericError: List<String> = emptyList(),
 )

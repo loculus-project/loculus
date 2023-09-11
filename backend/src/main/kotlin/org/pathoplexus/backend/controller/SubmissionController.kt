@@ -10,6 +10,7 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.DatabaseService
+import org.pathoplexus.backend.service.RevisionResult
 import org.pathoplexus.backend.service.Sequence
 import org.pathoplexus.backend.service.SequenceStatus
 import org.pathoplexus.backend.service.ValidationResult
@@ -26,7 +27,11 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @RestController
@@ -144,15 +149,14 @@ class SubmissionController(
         databaseService.approveProcessedData(username, body.sequenceIds)
     }
 
-    @Operation(description = "Revise existing sequence initially submitted by user")
-    @PostMapping(
-        "/revise",
-        consumes = [MediaType.APPLICATION_JSON_VALUE],
-    )
-    fun reviseData(
-        @RequestParam sequenceId: Long,
-    ) {
-        databaseService.reviseData(sequenceId)
+    @Operation(description = "Revise unprocessed data as a multipart/form-data")
+    @PostMapping("/revise", consumes = ["multipart/form-data"])
+    fun revise(
+        @RequestParam username: String,
+        @RequestParam metadataFile: MultipartFile,
+        @RequestParam sequenceFile: MultipartFile,
+    ): List<RevisionResult> {
+        return databaseService.reviseData(username, generateInputStreamFromFiles(metadataFile, sequenceFile))
     }
 
     @Operation(description = "Revoke existing sequence and stage it for confirmation")
@@ -218,5 +222,42 @@ class SubmissionController(
             )
             Pair(header, objectMapper.writeValueAsString(result))
         }
+    }
+
+    private fun generateInputStreamFromFiles(
+        metadataFile: MultipartFile,
+        sequenceFile: MultipartFile,
+    ): InputStream {
+        val metadataList = CSVParser(
+            InputStreamReader(metadataFile.inputStream),
+            CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
+        ).map { it.toMap() }
+        val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
+        val sequenceMap = fastaList.associate { it.sampleName to it.sequence }
+
+        val outputStream = ByteArrayOutputStream()
+        val objectMapper = ObjectMapper()
+
+        metadataList.forEach { entry ->
+            val header = entry["header"] ?: error("Missing header field")
+            val sequenceId = entry["sequenceId"] ?: -1
+            val version = entry["version"] ?: -1
+            val metadata = entry.filterKeys { it != "header" }
+            val unprocessedData = mapOf(
+                "metadata" to metadata,
+                "unalignedNucleotideSequences" to mapOf("main" to sequenceMap[header]),
+            )
+            val lineInStream = mapOf(
+                "customId" to header,
+                "sequenceId" to sequenceId,
+                "version" to version,
+                "data" to unprocessedData,
+            )
+            val json = objectMapper.writeValueAsString(lineInStream)
+            outputStream.write(json.toByteArray(StandardCharsets.UTF_8))
+            outputStream.write("\n".toByteArray(StandardCharsets.UTF_8))
+        }
+
+        return ByteArrayInputStream(outputStream.toByteArray())
     }
 }

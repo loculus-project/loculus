@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "start": "astro dev",
+    "start": "astro dev --port 3000",
     "start-test-server": "astro build && astro preview --port 3000",
     "build": "astro check && tsc --noEmit && astro build",
     "build-netlify": "astro build --config astro.netlify.config.mjs",
@@ -35,6 +35,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwindcss": "^3.3.3",
+    "uuid": "^9.0.1",
     "winston": "^3.10.0"
   },
   "devDependencies": {
@@ -46,6 +47,7 @@
     "@testing-library/user-event": "^14.5.1",
     "@types/luxon": "^3.3.1",
     "@types/node": "^20.5.9",
+    "@types/uuid": "^9.0.4",
     "@typescript-eslint/eslint-plugin": "^6.7.0",
     "@typescript-eslint/parser": "^6.4.0",
     "cross-env": "^7.0.3",

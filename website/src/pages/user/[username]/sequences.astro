@@ -1,17 +1,19 @@
 ---
-import SequenceStatusBox from './SequenceStatusBox.astro';
 import { getUserSequences, ResponseStatus, splitStatusArray } from './user';
 import { ErrorFeedback } from '../../../components/ErrorFeedback';
 import { BackButton } from '../../../components/Navigation/BackButton';
+import { SequenceStatusBox } from '../../../components/UserSequenceList/SequenceStatusBox';
 import { SequencesProcessed } from '../../../components/UserSequenceList/SequencesProcessed';
+import { SequencesReady } from '../../../components/UserSequenceList/SequencesReady';
 import { SequencesReceived } from '../../../components/UserSequenceList/SequencesReceived';
+import { SequencesRevoked } from '../../../components/UserSequenceList/SequencesRevoked';
 import { SequencesWithReview } from '../../../components/UserSequenceList/SequencesWithReview';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 // accession is never undefined, but ESLint doesn't know that
 // eslint-disable-next-line
 const username = Astro.params.username!;
-
+const keyPrefix = `userSequences.${username}`;
 const { sequences, responseStatus } = await getUserSequences(username);
 const statusArray = splitStatusArray(sequences);
 ---
@@ -27,28 +29,67 @@ const statusArray = splitStatusArray(sequences);
                 <ErrorFeedback message='Error while fetching user sequences' client:only='react' />
             ) : (
                 <div class='flex flex-col gap-2 mt-5'>
-                    <SequenceStatusBox count={statusArray.RECEIVED.length} description='received'>
-                        <SequencesReceived sequences={statusArray.RECEIVED} />
+                    <SequenceStatusBox
+                        count={statusArray.RECEIVED.length}
+                        description='received'
+                        localStorageKey={`${keyPrefix}.receivedExpanded`}
+                        client:only='react'
+                    >
+                        <SequencesReceived sequences={statusArray.RECEIVED} client:only='react' />
                     </SequenceStatusBox>
 
-                    <SequenceStatusBox count={statusArray.PROCESSING.length} description='in processing'>
-                        <SequencesReceived sequences={statusArray.PROCESSING} />
+                    <SequenceStatusBox
+                        count={statusArray.PROCESSING.length}
+                        description='in processing'
+                        localStorageKey={`${keyPrefix}.processingExpanded`}
+                        client:only='react'
+                    >
+                        <SequencesReceived sequences={statusArray.PROCESSING} client:load />
                     </SequenceStatusBox>
 
-                    <SequenceStatusBox count={statusArray.NEEDS_REVIEW.length} description='needed review'>
-                        <SequencesWithReview sequences={statusArray.NEEDS_REVIEW} username={username} />
+                    <SequenceStatusBox
+                        count={statusArray.NEEDS_REVIEW.length}
+                        description='need(s) review'
+                        localStorageKey={`${keyPrefix}.needsReviewExpanded`}
+                        client:only='react'
+                    >
+                        <SequencesWithReview sequences={statusArray.NEEDS_REVIEW} username={username} client:load />
                     </SequenceStatusBox>
 
-                    <SequenceStatusBox count={statusArray.REVIEWED.length} description='reviewed'>
+                    <SequenceStatusBox
+                        count={statusArray.REVIEWED.length}
+                        description='reviewed'
+                        localStorageKey={`${keyPrefix}.reviewedExpanded`}
+                        client:only='react'
+                    >
                         <SequencesWithReview sequences={statusArray.REVIEWED} username={username} client:load />
                     </SequenceStatusBox>
 
-                    <SequenceStatusBox count={statusArray.PROCESSED.length} description='processed'>
+                    <SequenceStatusBox
+                        count={statusArray.PROCESSED.length}
+                        description='processed'
+                        localStorageKey={`${keyPrefix}.stagingExpanded`}
+                        client:only='react'
+                    >
                         <SequencesProcessed sequences={statusArray.PROCESSED} username={username} client:load />
                     </SequenceStatusBox>
 
-                    <SequenceStatusBox count={statusArray.SILO_READY.length} description='ready for SILO import'>
-                        <SequencesReceived sequences={statusArray.SILO_READY} />
+                    <SequenceStatusBox
+                        count={statusArray.SILO_READY.length}
+                        description='ready for SILO import'
+                        localStorageKey={`${keyPrefix}.readyExpanded`}
+                        client:only='react'
+                    >
+                        <SequencesReady sequences={statusArray.SILO_READY} username={username} client:load />
+                    </SequenceStatusBox>
+
+                    <SequenceStatusBox
+                        count={statusArray.REVOKED_STAGING.length}
+                        description='staged for revocation'
+                        localStorageKey={`${keyPrefix}.revokedExpanded`}
+                        client:only='react'
+                    >
+                        <SequencesRevoked sequences={statusArray.REVOKED_STAGING} username={username} client:load />
                     </SequenceStatusBox>
                 </div>
             )

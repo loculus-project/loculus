@@ -174,9 +174,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
         approveProcessedSequences(allSequenceIds)
         expectStatusInResponse(querySequenceList(), numberOfSequences, Status.SILO_READY.name)
 
-        allSequenceIds.forEach { sequenceId ->
-            reviseSiloReadySequences(sequenceId)
-        }
+        reviseSiloReadySequences(false)
         expectStatusInResponse(querySequenceList(), numberOfSequences, Status.RECEIVED.name)
     }
 
@@ -195,7 +193,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                 ),
             )
 
-        reviseSiloReadySequences(firstSequence)
+        reviseSiloReadySequences(false)
 
         assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
             .hasSize(2)
@@ -261,6 +259,100 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                     version = 2,
                     status = Status.SILO_READY,
                     revoked = true,
+                ),
+            )
+    }
+
+    @Test
+    fun `revise sequences`() {
+        prepareDataToSiloReady()
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            )
+
+        reviseSiloReadySequences(false)
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(2)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            ).contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 2,
+                    status = Status.RECEIVED,
+                    revoked = false,
+                ),
+            )
+    }
+
+    @Test
+    fun `revise sequences that latest version is not SILO_READY`() {
+        submitInitialData()
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.RECEIVED,
+                    revoked = false,
+                ),
+            )
+
+        reviseSiloReadySequences(false)
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.RECEIVED,
+                    revoked = false,
+                ),
+            )
+    }
+
+    @Test
+    fun `revise sequences with erroneous new input data that cannot be mapped to existing sequenceIds`() {
+        prepareDataToSiloReady()
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            )
+
+        reviseSiloReadySequences(true)
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
                 ),
             )
     }
@@ -331,13 +423,36 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
     )
         .andExpect(status().isOk())
 
-    private fun reviseSiloReadySequences(sequencesToRevise: Long): ResultActions = mockMvc.perform(
-        MockMvcRequestBuilders.post("/revise")
-            .param("username", testUsername)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .param("sequenceId", sequencesToRevise.toString()),
-    )
-        .andExpect(status().isOk())
+    private fun reviseSiloReadySequences(isSequenceIdMissing: Boolean): ResultActions {
+        val metadataFileName = if (isSequenceIdMissing) "metadata.tsv" else "revised_metadata.tsv"
+        val sequenceFileName = if (isSequenceIdMissing) "sequences.fasta" else "revised_sequences.fasta"
+
+        val metadataFile = MockMultipartFile(
+            "metadataFile",
+            metadataFileName,
+            MediaType.TEXT_PLAIN_VALUE,
+            this.javaClass.classLoader.getResourceAsStream(metadataFileName)?.readBytes() ?: error(
+                "metadata test file not found",
+            ),
+        )
+
+        val sequencesFile = MockMultipartFile(
+            "sequenceFile",
+            sequenceFileName,
+            MediaType.TEXT_PLAIN_VALUE,
+            this.javaClass.classLoader.getResourceAsStream(sequenceFileName)?.readBytes() ?: error(
+                "sequences.fasta for tests not found",
+            ),
+        )
+
+        return mockMvc.perform(
+            MockMvcRequestBuilders.multipart("/revise")
+                .file(metadataFile)
+                .file(sequencesFile)
+                .param("username", testUsername),
+        )
+            .andExpect(status().isOk())
+    }
 
     private fun revokeSequences(listOfSequencesToRevoke: List<Number>): ResultActions = mockMvc.perform(
         MockMvcRequestBuilders.post("/revoke")

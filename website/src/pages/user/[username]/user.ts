@@ -5,7 +5,14 @@ export enum ResponseStatus {
     OK = 'OK',
     ERROR = 'ERROR',
 }
-export type SequenceStatusNames = 'RECEIVED' | 'PROCESSING' | 'NEEDS_REVIEW' | 'REVIEWED' | 'PROCESSED' | 'SILO_READY';
+export type SequenceStatusNames =
+    | 'RECEIVED'
+    | 'PROCESSING'
+    | 'NEEDS_REVIEW'
+    | 'REVIEWED'
+    | 'PROCESSED'
+    | 'SILO_READY'
+    | 'REVOKED_STAGING';
 
 export type SequenceStatus = {
     status: SequenceStatusNames;
@@ -30,6 +37,7 @@ export const splitStatusArray = (sequences: SequenceStatus[]) =>
             REVIEWED: [] as SequenceStatus[],
             PROCESSED: [] as SequenceStatus[],
             SILO_READY: [] as SequenceStatus[],
+            REVOKED_STAGING: [] as SequenceStatus[],
         } as Record<SequenceStatusNames, SequenceStatus[]>,
     );
 

@@ -148,9 +148,13 @@ class DatabaseService(
                         reader.lineSequence().forEach { line ->
                             val sequence = objectMapper.readValue<Sequence>(line)
 
-                            if (!idExists(sequence, checkIfIdExistsStatement, validationResults)) return@forEach
+                            if (!idExists(sequence.sequenceId, checkIfIdExistsStatement, validationResults)) {
+                                return@forEach
+                            }
 
-                            if (!statusExists(sequence, checkIfStatusExistsStatement, validationResults)) return@forEach
+                            if (!statusExists(sequence.sequenceId, checkIfStatusExistsStatement, validationResults)) {
+                                return@forEach
+                            }
 
                             val validationResult = sequenceValidatorService.validateSequence(sequence)
                             if (sequenceValidatorService.isValidResult(validationResult)) {
@@ -169,17 +173,17 @@ class DatabaseService(
     }
 
     private fun statusExists(
-        sequence: Sequence,
+        sequenceId: Long,
         checkIfStatusExistsStatement: PreparedStatement,
         validationResults: MutableList<ValidationResult>,
     ): Boolean {
-        checkIfStatusExistsStatement.setLong(1, sequence.sequenceId)
+        checkIfStatusExistsStatement.setLong(1, sequenceId)
         checkIfStatusExistsStatement.setString(2, Status.PROCESSING.name)
         val statusIsProcessing = checkIfStatusExistsStatement.executeQuery().next()
         if (!statusIsProcessing) {
             validationResults.add(
                 ValidationResult(
-                    sequence.sequenceId,
+                    sequenceId,
                     emptyList(),
                     emptyList(),
                     emptyList(),
@@ -191,16 +195,16 @@ class DatabaseService(
     }
 
     private fun idExists(
-        sequence: Sequence,
+        sequenceId: Long,
         checkIfIdExistsStatement: PreparedStatement,
         validationResults: MutableList<ValidationResult>,
     ): Boolean {
-        checkIfIdExistsStatement.setLong(1, sequence.sequenceId)
+        checkIfIdExistsStatement.setLong(1, sequenceId)
         val sequenceIdExists = checkIfIdExistsStatement.executeQuery().next()
         if (!sequenceIdExists) {
             validationResults.add(
                 ValidationResult(
-                    sequence.sequenceId,
+                    sequenceId,
                     emptyList(),
                     emptyList(),
                     emptyList(),
@@ -373,11 +377,11 @@ class DatabaseService(
             group by sequence_id, status, revoked
             
             having max(version) = (
-                select max(version)
-                from sequences s
-                where s.sequence_id = sequences.sequence_id
-                and s.status = ?
-            )
+                    select max(version)
+                    from sequences s
+                    where s.sequence_id = sequences.sequence_id
+                    and s.status = ?
+                )
         """.trimIndent()
 
         useTransactionalConnection { conn ->
@@ -429,8 +433,28 @@ class DatabaseService(
         }
     }
 
-    fun reviseData(sequenceId: Long) {
-        val sql = """
+    fun reviseData(submitter: String, inputStream: InputStream): List<RevisionResult> {
+        val reader = BufferedReader(InputStreamReader(inputStream))
+        val checkIdSql = """
+        select sequence_id
+        from sequences 
+        where sequence_id = ?
+        and submitter = ?
+        """.trimIndent()
+
+        val checkStatusSql = """
+        select sequence_id
+        from sequences 
+        where sequence_id = ? 
+        and version = (
+            select max(version)
+            from sequences s
+            where s.sequence_id = sequences.sequence_id
+        )
+        and status = ?
+        """.trimIndent()
+
+        val reviseSql = """
         insert into sequences (sequence_id, version, custom_id, submitter, submitted_at, status, revoked, original_data)
         select ?, version + 1, custom_id, submitter, now(), ?, ?,  original_data
         from sequences
@@ -443,16 +467,66 @@ class DatabaseService(
         and status = ?
         """.trimIndent()
 
+        val revisionResults = mutableListOf<RevisionResult>()
+
         useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setLong(1, sequenceId)
-                statement.setString(2, Status.RECEIVED.name)
-                statement.setBoolean(3, false)
-                statement.setLong(4, sequenceId)
-                statement.setString(5, Status.SILO_READY.name)
-                statement.executeUpdate()
+            conn.prepareStatement(reviseSql).use { reviseStatement ->
+                conn.prepareStatement(checkStatusSql).use { checkIfStatusExistsStatement ->
+                    conn.prepareStatement(checkIdSql).use { checkIfIdExistsStatement ->
+                        reader.lineSequence().forEach { line ->
+
+                            val sequence = objectMapper.readValue<FileData>(line)
+
+                            checkIfIdExistsStatement.setLong(1, sequence.sequenceId)
+                            checkIfIdExistsStatement.setString(2, submitter)
+                            val sequenceIdExists = checkIfIdExistsStatement.executeQuery().next()
+                            if (!sequenceIdExists) {
+                                revisionResults.add(
+                                    RevisionResult(
+                                        sequence.sequenceId,
+                                        sequence.version,
+                                        listOf("SequenceId does not exist for user $submitter"),
+                                    ),
+                                )
+                                return@forEach
+                            }
+
+                            checkIfStatusExistsStatement.setLong(1, sequence.sequenceId)
+                            checkIfStatusExistsStatement.setString(2, Status.SILO_READY.name)
+
+                            val statusIsProcessing = checkIfStatusExistsStatement.executeQuery().next()
+                            if (!statusIsProcessing) {
+                                revisionResults.add(
+                                    RevisionResult(
+                                        sequence.sequenceId,
+                                        sequence.version,
+                                        listOf(
+                                            "SequenceId does exist, but the latest version is not in SILO_READY state",
+                                        ),
+                                    ),
+                                )
+                            }
+
+                            reviseStatement.setLong(1, sequence.sequenceId)
+                            reviseStatement.setString(2, Status.RECEIVED.name)
+                            reviseStatement.setBoolean(3, false)
+                            reviseStatement.setLong(4, sequence.sequenceId)
+                            reviseStatement.setString(5, Status.SILO_READY.name)
+                            if (reviseStatement.executeUpdate() == 1) {
+                                revisionResults.add(
+                                    RevisionResult(
+                                        sequence.sequenceId,
+                                        sequence.version,
+                                        emptyList(),
+                                    ),
+                                )
+                            }
+                        }
+                    }
+                }
             }
         }
+        return revisionResults
     }
 
     fun revokeData(sequenceIds: List<Long>): List<SequenceStatus> {
@@ -540,6 +614,13 @@ data class SequenceStatus(
     val version: Int,
     val status: Status,
     val revoked: Boolean = false,
+)
+
+data class FileData(
+    val customId: String,
+    val sequenceId: Long,
+    val version: Int,
+    val data: JsonNode,
 )
 
 enum class Status {

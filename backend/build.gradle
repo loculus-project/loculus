@@ -15,6 +15,7 @@ version = '0.0.1'
 
 java {
 	sourceCompatibility = '20'
+	targetCompatibility = '20'
 }
 
 repositories {
