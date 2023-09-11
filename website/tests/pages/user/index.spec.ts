@@ -3,7 +3,7 @@ import { expect, test, testuser } from '../../e2e.fixture';
 import { fakeProcessingPipeline } from '../../util/preprocessingPipeline';
 
 test.describe('The user page', () => {
-    test('should show sequences, their status and a link to reviews', async ({ submitPage }) => {
+    test('should show sequences, their status and a link to reviews', async ({ submitPage, userPage }) => {
         const submitResponse = await submitPage.submitDataViaApi();
         expect(submitResponse.length).toBeGreaterThanOrEqual(2);
         const [firstId, secondId] = submitResponse.map((entry) => entry.sequenceId);
@@ -13,18 +13,16 @@ test.describe('The user page', () => {
         await fakeUnprocessedDataQuery();
 
         await fakeProcessingPipeline({ sequenceId: firstId, error: true });
-
-        await submitPage.gotoUserPage();
-        const countOfNeedsReviewData = await submitPage.page.getByText('NEEDS_REVIEW').count();
-        expect(countOfNeedsReviewData).toBeGreaterThanOrEqual(1);
+        const reviewStatus = await userPage.gotoUserPageAndLocateSequenceWithStatus(firstId, 'NEEDS_REVIEW');
+        await expect(reviewStatus).toBeVisible();
 
         await fakeProcessingPipeline({ sequenceId: secondId, error: false });
-        const countOfProcessedData = await submitPage.page.getByText('PROCESSED', { exact: true }).count();
-        expect(countOfProcessedData).toBeGreaterThanOrEqual(1);
+        const processedStatus = await userPage.gotoUserPageAndLocateSequenceWithStatus(secondId, 'PROCESSED');
+        await expect(processedStatus).toBeVisible();
 
         await approveProcessedData(testuser, [secondId]);
-        const countOfSiloReadyData = await submitPage.page.getByText('SILO_READY').count();
-        expect(countOfSiloReadyData).toBeGreaterThanOrEqual(1);
+        const approvedStatus = await userPage.gotoUserPageAndLocateSequenceWithStatus(secondId, 'SILO_READY');
+        await expect(approvedStatus).toBeVisible();
     });
 });
 

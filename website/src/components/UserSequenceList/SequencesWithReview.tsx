@@ -21,7 +21,9 @@ export const SequencesWithReview: FC<SequenceWithReviewProps> = ({ sequences, us
                     <tbody>
                         {sequences.map((sequence, index) => (
                             <tr key={index}>
-                                <td>{sequence.sequenceId}</td>
+                                <td>
+                                    {sequence.sequenceId} (version {sequence.version})
+                                </td>
                                 <td> {sequence.status}</td>
                                 <td>
                                     <a

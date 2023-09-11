@@ -1,5 +1,7 @@
 package org.pathoplexus.backend.controller
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterAll
@@ -7,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.service.SequenceStatus
 import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -30,10 +33,13 @@ import java.io.File
 @SpringBootTest
 @ActiveProfiles("test-with-database")
 @AutoConfigureMockMvc
-class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
+class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val objectMapper: ObjectMapper) {
 
     private val testUsername = "testuser"
+
+    // This is the number of sequences and a list of sequenceIds in the test data, i.e. metadata.tsv and sequences.fasta
     private val numberOfSequences = 10
+    private val allSequenceIds = List<Long>(numberOfSequences) { (it + 1).toLong() }
 
     @BeforeEach
     fun beforeEach() {
@@ -138,7 +144,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
 
         submitProcessedData(processedInputDataFromFile("error_feedback"))
 
-        expectStatusInResponse(queryMySequenceList(), 1, Status.NEEDS_REVIEW.name)
+        expectStatusInResponse(querySequenceList(), 1, Status.NEEDS_REVIEW.name)
     }
 
     @Test
@@ -148,38 +154,50 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         awaitResponse(queryUnprocessedSequences(numberOfSequences))
         submitProcessedData(processedInputDataFromFile("no_validation_errors"))
 
-        mockMvc.perform(
-            MockMvcRequestBuilders.post("/approve-processed-data")
-                .param("username", testUsername)
-                .content("""{"sequenceIds":$sequencesThatAreProcessed}""")
-                .contentType(MediaType.APPLICATION_JSON_VALUE),
-        )
-            .andExpect(status().isOk())
+        approveProcessedSequences(sequencesThatAreProcessed)
 
-        expectStatusInResponse(queryMySequenceList(), sequencesThatAreProcessed.size, Status.SILO_READY.name)
+        expectStatusInResponse(querySequenceList(), sequencesThatAreProcessed.size, Status.SILO_READY.name)
     }
 
     @Test
-    fun `get sequences of a user`() {
+    fun `workflow from initial submit to releasable data and creating a new version`() {
         submitInitialData()
-        expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.RECEIVED.name)
+        expectStatusInResponse(querySequenceList(), numberOfSequences, Status.RECEIVED.name)
 
         val testData = expectLinesInResponse(queryUnprocessedSequences(numberOfSequences), numberOfSequences)
-        expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.PROCESSING.name)
+        expectStatusInResponse(querySequenceList(), numberOfSequences, Status.PROCESSING.name)
 
         submitProcessedData(testData)
+        expectStatusInResponse(querySequenceList(), numberOfSequences, Status.PROCESSED.name)
 
-        expectStatusInResponse(queryMySequenceList(), numberOfSequences, Status.PROCESSED.name)
+        approveProcessedSequences(allSequenceIds)
+        expectStatusInResponse(querySequenceList(), numberOfSequences, Status.SILO_READY.name)
 
-        expectLinesInResponse(
-            mockMvc.perform(
-                MockMvcRequestBuilders.post("/extract-processed-data")
-                    .param("numberOfSequences", numberOfSequences.toString()),
-            )
-                .andExpect(status().isOk())
-                .andReturn(),
-            numberOfSequences,
-        )
+        allSequenceIds.forEach { sequenceId ->
+            reviseSiloReadySequences(sequenceId)
+        }
+        expectStatusInResponse(querySequenceList(), numberOfSequences, Status.RECEIVED.name)
+    }
+
+    @Test
+    fun `verify that versions only go up`() {
+        prepareDataToSiloReady()
+
+        assertThat(getVersionNumbersFromSequenceList()).isEqualTo(List(numberOfSequences) { 1 })
+
+        allSequenceIds.forEach { sequenceId ->
+            reviseSiloReadySequences(sequenceId)
+        }
+
+        assertThat(getVersionNumbersFromSequenceList()).isEqualTo(List(numberOfSequences) { 2 })
+    }
+
+    private fun getVersionNumbersFromSequenceList(): List<Int> {
+        val responseJson = querySequenceList().response.contentAsString
+
+        val responseItems: List<SequenceStatus> = objectMapper.readValue(responseJson)
+
+        return responseItems.map { it.version }
     }
 
     private fun submitProcessedData(testData: String): ResultActions {
@@ -191,7 +209,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(status().isOk())
     }
 
-    private fun queryMySequenceList(): MvcResult {
+    private fun querySequenceList(): MvcResult {
         return mockMvc.perform(
             MockMvcRequestBuilders.get("/get-sequences-of-user")
                 .param("username", testUsername),
@@ -236,10 +254,33 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
         .andExpect(content().contentType("application/x-ndjson"))
         .andReturn()
 
-    private fun awaitResponse(result: MvcResult) {
+    private fun approveProcessedSequences(listOfSequencesToApprove: List<Number>): ResultActions = mockMvc.perform(
+        MockMvcRequestBuilders.post("/approve-processed-data")
+            .param("username", testUsername)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content("""{"sequenceIds":$listOfSequencesToApprove}"""),
+    )
+        .andExpect(status().isOk())
+
+    private fun reviseSiloReadySequences(sequencesToRevise: Long): ResultActions = mockMvc.perform(
+        MockMvcRequestBuilders.post("/revise")
+            .param("username", testUsername)
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .param("sequenceId", sequencesToRevise.toString()),
+    )
+        .andExpect(status().isOk())
+
+    private fun prepareDataToSiloReady() {
+        submitInitialData()
+        submitProcessedData(awaitResponse(queryUnprocessedSequences(numberOfSequences)))
+        approveProcessedSequences(allSequenceIds)
+    }
+
+    private fun awaitResponse(result: MvcResult): String {
         await().until {
             result.response.isCommitted
         }
+        return result.response.contentAsString
     }
 
     private fun expectLinesInResponse(result: MvcResult, numberOfSequences: Int): String {
@@ -252,6 +293,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc) {
 
         return result.response.contentAsString
     }
+
     private fun expectStatusInResponse(result: MvcResult, numberOfSequences: Int, expectedStatus: String): String {
         awaitResponse(result)
 

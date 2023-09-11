@@ -10,6 +10,7 @@ export type SequenceStatusNames = 'RECEIVED' | 'PROCESSING' | 'NEEDS_REVIEW' | '
 export type SequenceStatus = {
     status: SequenceStatusNames;
     sequenceId: number;
+    version: number;
 };
 export type UserSequenceResponse = {
     responseStatus: ResponseStatus;

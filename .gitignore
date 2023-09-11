@@ -3,6 +3,7 @@
 
 # Editor
 .idea/
+*.iml
 
 # build output
 dist/

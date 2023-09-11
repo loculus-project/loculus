@@ -57,7 +57,7 @@ class DatabaseService(
         val sql = """
             insert into sequences (submitter, submitted_at, started_processing_at, status, custom_id, original_data)
             values (?, now(), null, ?,?, ?::jsonb )
-            returning sequence_id;
+            returning sequence_id, version;
         """.trimIndent()
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
@@ -66,9 +66,11 @@ class DatabaseService(
                 for (data in submittedData) {
                     statement.setString(3, data.first)
                     statement.setString(4, data.second)
-                    statement.executeQuery().use { rs ->
-                        rs.next()
-                        headerIds.add(HeaderId(rs.getLong("sequence_id"), data.first))
+                    statement.executeQuery().use { resultSet ->
+                        resultSet.next()
+                        headerIds.add(
+                            HeaderId(resultSet.getLong("sequence_id"), resultSet.getInt("version"), data.first),
+                        )
                     }
                 }
             }
@@ -80,9 +82,15 @@ class DatabaseService(
         val sql = """
         update sequences set status = ?, started_processing_at = now()
         where sequence_id in (
-            select sequence_id from sequences where status = ? limit ?
+            select sequence_id from sequences 
+            where status = ? limit ?            
         )
-        returning sequence_id, original_data
+        and version = (
+            select max(version)
+            from sequences s
+            where s.sequence_id = sequences.sequence_id
+        )
+        returning sequence_id, version, original_data
         """.trimIndent()
 
         useTransactionalConnection { conn ->
@@ -90,12 +98,13 @@ class DatabaseService(
                 statement.setString(1, Status.PROCESSING.name)
                 statement.setString(2, Status.RECEIVED.name)
                 statement.setInt(3, numberOfSequences)
-                val rs = statement.executeQuery()
-                rs.use {
-                    while (rs.next()) {
+                val resultSet = statement.executeQuery()
+                resultSet.use {
+                    while (resultSet.next()) {
                         val sequence = Sequence(
-                            rs.getLong("sequence_id"),
-                            objectMapper.readTree(rs.getString("original_data")),
+                            resultSet.getLong("sequence_id"),
+                            resultSet.getInt("version"),
+                            objectMapper.readTree(resultSet.getString("original_data")),
                         )
                         val json = objectMapper.writeValueAsString(sequence)
                         outputStream.write(json.toByteArray())
@@ -127,8 +136,9 @@ class DatabaseService(
 
         val updateSql = """
         update sequences
-        set status = ?, finished_processing_at = now(), processed_data = ?, errors = ?,warnings = ?
-        where sequence_id = ?
+        set status = ?, finished_processing_at = now(), processed_data = ?, errors = ?, warnings = ?
+        where sequence_id = ? 
+        and version = ?
         """.trimIndent()
 
         useTransactionalConnection { conn ->
@@ -232,6 +242,7 @@ class DatabaseService(
         )
 
         updateStatement.setLong(5, sequence.sequenceId)
+        updateStatement.setInt(6, sequence.version)
         updateStatement.executeUpdate()
     }
 
@@ -240,6 +251,11 @@ class DatabaseService(
         update sequences
         set status = ?
         where sequence_id = any (?) 
+        and version = (
+            select max(version)
+            from sequences s
+            where s.sequence_id = sequences.sequence_id
+        )
         and submitter = ? 
         and status = ?
         """.trimIndent()
@@ -259,8 +275,14 @@ class DatabaseService(
         val sql = """
         select sequence_id, processed_data, warnings from sequences
         where sequence_id in (
-            select sequence_id from sequences where status = ? limit ? 
+            select sequence_id from sequences 
+            where status = ? limit ?        
         )
+        and version = (
+                select max(version)
+                from sequences s
+                where s.sequence_id = sequences.sequence_id
+            )
         """.trimIndent()
 
         useTransactionalConnection { conn ->
@@ -292,9 +314,14 @@ class DatabaseService(
 
     fun streamNeededReviewSubmissions(submitter: String, numberOfSequences: Int, outputStream: OutputStream) {
         val sql = """
-        select sequence_id, processed_data, errors, warnings from sequences
+        select sequence_id, version, processed_data, errors, warnings from sequences
         where sequence_id in (
             select sequence_id from sequences where status = ? and submitter = ? limit ?
+        )
+        and version = (
+            select max(version)
+            from sequences s
+            where s.sequence_id = sequences.sequence_id
         )
         """.trimIndent()
 
@@ -308,6 +335,7 @@ class DatabaseService(
                     while (rs.next()) {
                         val sequence = Sequence(
                             rs.getLong("sequence_id"),
+                            rs.getInt("version"),
                             objectMapper.readTree(rs.getString("processed_data")),
                             objectMapper.readTree(rs.getString("errors")),
                             objectMapper.readTree(rs.getString("warnings")),
@@ -325,7 +353,13 @@ class DatabaseService(
     fun getSequencesSubmittedBy(username: String): List<SequenceStatus> {
         val sequenceStatusList = mutableListOf<SequenceStatus>()
         val sql = """
-        select sequence_id, status from sequences where submitter = ?
+        select sequence_id, status, version from sequences 
+        where submitter = ?
+        and version = (
+            select max(version)
+            from sequences s
+            where s.sequence_id = sequences.sequence_id
+        )
         """.trimIndent()
 
         useTransactionalConnection { conn ->
@@ -334,9 +368,10 @@ class DatabaseService(
                 statement.executeQuery().use { rs ->
                     while (rs.next()) {
                         val sequenceId = rs.getLong("sequence_id")
+                        val version = rs.getInt("version")
                         val status = Status.fromString(rs.getString("status"))
 
-                        sequenceStatusList.add(SequenceStatus(sequenceId, status))
+                        sequenceStatusList.add(SequenceStatus(sequenceId, version, status))
                     }
                 }
             }
@@ -346,8 +381,8 @@ class DatabaseService(
 
     fun deleteUserSequences(username: String) {
         val sql = """
-        DELETE FROM sequences
-        WHERE submitter = ?
+        delete from sequences
+        where submitter = ?
         """.trimIndent()
 
         useTransactionalConnection { conn ->
@@ -360,8 +395,8 @@ class DatabaseService(
 
     fun deleteSequences(sequenceIds: List<Long>) {
         val sql = """
-        DELETE FROM sequences
-        WHERE sequence_id = any (?)
+        delete from sequences
+        where sequence_id = any (?)
         """.trimIndent()
 
         useTransactionalConnection { conn ->
@@ -371,10 +406,37 @@ class DatabaseService(
             }
         }
     }
+
+    fun reviseData(sequenceId: Long) {
+        val sql = """
+        insert into sequences (sequence_id, version, custom_id, submitter, submitted_at, status, revoked, original_data)
+        select ?, version + 1, custom_id, submitter, now(), ?, ?,  original_data
+        from sequences
+        where sequence_id = ?
+        and version = (
+            select max(version)
+            from sequences s
+            where s.sequence_id = sequences.sequence_id
+        )
+        and status = ?
+        """.trimIndent()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setLong(1, sequenceId)
+                statement.setString(2, Status.RECEIVED.name)
+                statement.setBoolean(3, false)
+                statement.setLong(4, sequenceId)
+                statement.setString(5, Status.SILO_READY.name)
+                statement.executeUpdate()
+            }
+        }
+    }
 }
 
 data class Sequence(
     val sequenceId: Long,
+    val version: Int,
     val data: JsonNode,
     val errors: JsonNode? = null,
     val warnings: JsonNode? = null,
@@ -382,6 +444,7 @@ data class Sequence(
 
 data class SequenceStatus(
     val sequenceId: Long,
+    val version: Int,
     val status: Status,
 )
 

@@ -24,7 +24,9 @@ export const SequencesProcessed: FC<SequencesProcessedProps> = ({ username, sequ
                     <tbody>
                         {sequences.map((sequence, index) => (
                             <tr key={index}>
-                                <td>{sequence.sequenceId}</td>
+                                <td>
+                                    {sequence.sequenceId} (version {sequence.version})
+                                </td>
                                 <td> {sequence.status}</td>
                                 <td>
                                     <button className='btn' onClick={handleApprove(username, sequence.sequenceId)}>

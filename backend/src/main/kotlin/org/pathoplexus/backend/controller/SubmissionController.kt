@@ -72,13 +72,13 @@ class SubmissionController(
                         ExampleObject(
                             name = "Example for submitting processed sequences. \n" +
                                 " NOTE: Due to formatting issues with swagger, remove all newlines from the example.",
-                            value = """{"sequenceId":"4","data":{"date":"2020-12-25","host":"Homo sapiens","region":"Europe","country":"Switzerland","division":"Schaffhausen", "nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
+                            value = """{"sequenceId":"4","version":"1",data":{"date":"2020-12-25","host":"Homo sapiens","region":"Europe","country":"Switzerland","division":"Schaffhausen", "nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
                             summary = "Processed data (remove all newlines from the example)",
                         ),
                         ExampleObject(
                             name = "Example for submitting processed sequences with errors. \n" +
                                 " NOTE: Due to formatting issues with swagger, remove all newlines from the example.",
-                            value = """{"sequenceId":"4","data":{"errors":[{"field":"host",message:"Not that kind of host"}],"date":"2020-12-25","host":"google.com","region":"Europe","country":"Switzerland","division":"Schaffhausen", "nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
+                            value = """{"sequenceId":"4","version":"1","data":{"errors":[{"field":"host",message:"Not that kind of host"}],"date":"2020-12-25","host":"google.com","region":"Europe","country":"Switzerland","division":"Schaffhausen", "nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
                             summary = "Processed data with errors (remove all newlines from the example)",
                         ),
                     ],
@@ -137,13 +137,22 @@ class SubmissionController(
     @PostMapping(
         "/approve-processed-data",
         consumes = [MediaType.APPLICATION_JSON_VALUE],
-        produces = [MediaType.APPLICATION_JSON_VALUE],
     )
     fun approveProcessedData(
         @RequestParam username: String,
         @RequestBody body: ApprovalRequest,
     ) {
         databaseService.approveProcessedData(username, body.sequenceIds)
+    }
+
+    @Description("Revise existing sequence initially submitted by user")
+    @PostMapping(
+        "/revise",
+    )
+    fun reviseData(
+        @RequestParam sequenceId: Long,
+    ) {
+        databaseService.reviseData(sequenceId)
     }
 
     @Description("Delete sequence data from user")

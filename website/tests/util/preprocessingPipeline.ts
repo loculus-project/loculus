@@ -1,6 +1,7 @@
 export const fakeProcessingPipeline = async ({ sequenceId, error }: { sequenceId: number; error: boolean }) => {
     const body = {
         sequenceId,
+        version: 1,
         errors: error ? [{ source: { fieldName: 'host', type: 'metadata' }, message: 'Not this kind of host' }] : [],
         warnings: [{ source: { fieldName: 'all', type: 'all' }, message: '"There is no warning"-warning' }],
         data: {
