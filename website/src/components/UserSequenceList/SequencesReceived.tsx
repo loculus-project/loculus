@@ -9,17 +9,17 @@ export const SequencesReceived: FC<{ sequences: SequenceStatus[] }> = ({ sequenc
                 <table className='table'>
                     <thead>
                         <tr>
-                            <td>Sequence ID</td>
-                            <td> Current status </td>
+                            <td>SequenceID.Version</td>
+                            <td>Current status</td>
                         </tr>
                     </thead>
                     <tbody>
                         {sequences.map((sequence, index) => (
                             <tr key={index}>
                                 <td>
-                                    {sequence.sequenceId} (version {sequence.version})
+                                    {sequence.sequenceId}.{sequence.version}
                                 </td>
-                                <td> {sequence.status}</td>
+                                <td> {sequence.status} </td>
                             </tr>
                         ))}
                     </tbody>

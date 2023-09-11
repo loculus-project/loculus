@@ -6,6 +6,7 @@ export const Navigation = () => {
             <div className='subtitle hidden sm:flex sm:z-6 gap-4'>
                 <a href='/search'>Search</a>
                 <a href='/submit'>Submit</a>
+                <a href='/revise'>Revise</a>
                 <a href='/user'>User</a>
             </div>
 

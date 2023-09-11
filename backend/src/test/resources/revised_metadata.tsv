@@ -1,0 +1,11 @@
+sequenceId	header	date	region	country	division	host
+1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+4	custom3	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens
+5	custom4	2020-12-03	Europe	Switzerland	Zürich	Homo sapiens
+6	custom5	2020-12-23	Europe	Switzerland	Basel-Land	Homo sapiens
+7	custom6	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens
+8	custom7	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens
+9	custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens
+10	custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens

@@ -23,24 +23,6 @@ class SequenceValidatorService
         }
     }
 
-    fun isValidFloatingPointNumber(floatStringCandidate: String): Boolean {
-        return try {
-            floatStringCandidate.toDouble()
-            true
-        } catch (e: NumberFormatException) {
-            false
-        }
-    }
-
-    fun isValidIntegerNumber(numberStringCandidate: String): Boolean {
-        return try {
-            numberStringCandidate.toInt()
-            true
-        } catch (e: NumberFormatException) {
-            false
-        }
-    }
-
     fun isValidPangoLineage(pangoLineageCandidate: String): Boolean {
         return pangoLineageCandidate.matches(Regex("[a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}"))
     }
@@ -61,24 +43,24 @@ class SequenceValidatorService
         }
     }
 
-    fun validateSequence(sequence: Sequence): ValidationResult {
+    fun validateSequence(sequenceVersion: SequenceVersion): ValidationResult {
         val missingFields = mutableListOf<String>()
         val typeMismatchFields = mutableListOf<FieldError>()
         val unknownFields = mutableListOf<String>()
 
-        if (sequence.data["metadata"] == null) {
+        if (sequenceVersion.data["metadata"] == null) {
             return ValidationResult(
-                sequence.sequenceId,
+                sequenceVersion.sequenceId,
                 emptyList(),
                 emptyList(),
                 emptyList(),
-                listOf("Missing metadata field"),
+                listOf("Missing field: metadata"),
             )
         }
 
         for (metadata in schemaConfig.schema.metadata) {
             val fieldName = metadata.name
-            val fieldValue = sequence.data["metadata"][fieldName]
+            val fieldValue = sequenceVersion.data["metadata"][fieldName]
 
             if (fieldValue == null && metadata.required) {
                 missingFields.add(fieldName)
@@ -93,20 +75,20 @@ class SequenceValidatorService
 
         val knownFieldNames = schemaConfig.schema.metadata.map { it.name }
 
-        sequence.data["metadata"].fieldNames().forEachRemaining { fieldName ->
+        sequenceVersion.data["metadata"].fieldNames().forEachRemaining { fieldName ->
             if (!knownFieldNames.contains(fieldName)) {
                 unknownFields.add(fieldName)
             }
         }
 
-        return ValidationResult(sequence.sequenceId, missingFields, typeMismatchFields, unknownFields)
+        return ValidationResult(sequenceVersion.sequenceId, missingFields, typeMismatchFields, unknownFields)
     }
 
     fun isValidResult(validationResult: ValidationResult): Boolean {
         return validationResult.missingRequiredFields.isEmpty() &&
             validationResult.fieldsWithTypeMismatch.isEmpty() &&
             validationResult.unknownFields.isEmpty() &&
-            validationResult.genericError.isEmpty()
+            validationResult.genericErrors.isEmpty()
     }
 }
 
@@ -117,9 +99,9 @@ data class FieldError(
 )
 
 data class ValidationResult(
-    val id: Long,
+    val sequenceId: Long,
     val missingRequiredFields: List<String>,
     val fieldsWithTypeMismatch: List<FieldError>,
     val unknownFields: List<String>,
-    val genericError: List<String> = emptyList(),
+    val genericErrors: List<String> = emptyList(),
 )

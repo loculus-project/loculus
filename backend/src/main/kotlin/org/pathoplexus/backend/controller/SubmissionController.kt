@@ -2,6 +2,7 @@ package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
@@ -10,8 +11,10 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.DatabaseService
-import org.pathoplexus.backend.service.Sequence
-import org.pathoplexus.backend.service.SequenceStatus
+import org.pathoplexus.backend.service.FileData
+import org.pathoplexus.backend.service.RevisionResult
+import org.pathoplexus.backend.service.SequenceVersion
+import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.ValidationResult
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.http.HttpHeaders
@@ -66,7 +69,7 @@ class SubmissionController(
             content = [
                 Content(
                     mediaType = MediaType.APPLICATION_NDJSON_VALUE,
-                    schema = Schema(implementation = Sequence::class),
+                    schema = Schema(implementation = SequenceVersion::class),
                     examples = [
                         ExampleObject(
                             name = "Example for submitting processed sequences. \n" +
@@ -128,7 +131,7 @@ class SubmissionController(
     @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserSequenceList(
         @RequestParam username: String,
-    ): List<SequenceStatus> {
+    ): List<SequenceVersionStatus> {
         return databaseService.getSequencesSubmittedBy(username)
     }
 
@@ -144,15 +147,20 @@ class SubmissionController(
         databaseService.approveProcessedData(username, body.sequenceIds)
     }
 
-    @Operation(description = "Revise existing sequence initially submitted by user")
-    @PostMapping(
-        "/revise",
-        consumes = [MediaType.APPLICATION_JSON_VALUE],
-    )
-    fun reviseData(
-        @RequestParam sequenceId: Long,
-    ) {
-        databaseService.reviseData(sequenceId)
+    @Operation(description = "Revise released data as a multipart/form-data")
+    @PostMapping("/revise", consumes = ["multipart/form-data"])
+    fun revise(
+        @RequestParam username: String,
+        @Parameter(
+            description = "Revised metadata file that contains a column 'sequenceId' that is used " +
+                "to associate the revision to the sequence that will be revised.",
+        )@RequestParam metadataFile: MultipartFile,
+        @Parameter(
+            description = "Nucleotide sequences in a fasta file format. " +
+                "No changes to the schema compared to an initial submit.",
+        )@RequestParam sequenceFile: MultipartFile,
+    ): List<RevisionResult> {
+        return databaseService.reviseData(username, generateFileDataSequence(metadataFile, sequenceFile))
     }
 
     @Operation(description = "Revoke existing sequence and stage it for confirmation")
@@ -163,7 +171,7 @@ class SubmissionController(
     )
     fun revokeData(
         @RequestBody body: SequenceIdList,
-    ): List<SequenceStatus> = databaseService.revokeData(body.sequenceIds)
+    ): List<SequenceVersionStatus> = databaseService.revokeData(body.sequenceIds)
 
     @Operation(description = "Confirm revocation of sequence")
     @PostMapping(
@@ -217,6 +225,28 @@ class SubmissionController(
                 "unalignedNucleotideSequences" to mapOf("main" to sequenceMap[header]),
             )
             Pair(header, objectMapper.writeValueAsString(result))
+        }
+    }
+
+    private fun generateFileDataSequence(
+        metadataFile: MultipartFile,
+        sequenceFile: MultipartFile,
+    ): Sequence<FileData> {
+        val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
+        val sequenceMap = fastaList.associate { it.sampleName to it.sequence }
+
+        return CSVParser(
+            InputStreamReader(metadataFile.inputStream),
+            CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
+        ).asSequence().map { line ->
+            val header = line["header"] ?: error("Missing header field")
+            val sequenceId = line["sequenceId"]?.toLong() ?: error("Missing sequenceId field")
+            val metadata = line.toMap().filterKeys { it != "header" }
+            val unprocessedData = mapOf(
+                "metadata" to metadata,
+                "unalignedNucleotideSequences" to mapOf("main" to sequenceMap[header]),
+            )
+            FileData(header, sequenceId, objectMapper.valueToTree(unprocessedData))
         }
     }
 }

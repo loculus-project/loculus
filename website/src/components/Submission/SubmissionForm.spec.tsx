@@ -1,6 +1,5 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import React from 'react';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
@@ -76,7 +75,7 @@ describe('SubmitForm', () => {
         const submitButton = getByText('Submit');
         await userEvent.click(submitButton);
         await waitFor(() => {
-            expect(getByText((text) => text.includes('Submission failed with status code 500'))).toBeInTheDocument();
+            expect(getByText((text) => text.includes('Upload failed with status code 500'))).toBeInTheDocument();
         });
     });
 });

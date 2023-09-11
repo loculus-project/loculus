@@ -5,7 +5,7 @@
   "scripts": {
     "start": "astro dev",
     "start-test-server": "astro build && astro preview --port 3000",
-    "build": "astro check && tsc --noEmit && astro build",
+    "build": "astro check > /dev/null && tsc --noEmit && astro build",
     "build-netlify": "astro build --config astro.netlify.config.mjs",
     "preview": "astro preview",
     "astro": "astro",
@@ -39,6 +39,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.38.1",
+    "uuid": "^9.0.1",
     "@tanstack/eslint-plugin-query": "^4.34.1",
     "@testing-library/dom": "^9.3.1",
     "@testing-library/jest-dom": "^6.1.3",
@@ -47,6 +48,7 @@
     "@types/luxon": "^3.3.1",
     "@types/node": "^20.5.9",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@types/uuid": "^9.0.4",
     "@typescript-eslint/parser": "^6.4.0",
     "cross-env": "^7.0.3",
     "daisyui": "^3.8.0",

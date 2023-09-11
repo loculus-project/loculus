@@ -1,43 +1,56 @@
 import { approveProcessedData } from '../../../src/components/UserSequenceList/approveProcessedData';
 import { expect, test, testuser } from '../../e2e.fixture';
-import { fakeProcessingPipeline } from '../../util/preprocessingPipeline';
+import { fakeProcessingPipeline, queryUnprocessedData } from '../../util/preprocessingPipeline';
 
 test.describe('The user page', () => {
     test('should show sequences, their status and a link to reviews', async ({ submitPage, userPage }) => {
-        const submitResponse = await submitPage.submitDataViaApi();
-        expect(submitResponse.length).toBeGreaterThanOrEqual(2);
-        const [firstId, secondId] = submitResponse.map((entry) => entry.sequenceId);
-        expect(firstId).toBeDefined();
-        expect(secondId).toBeDefined();
+        test.slow();
+        await submitPage.goto();
+        await submitPage.submit();
 
-        await fakeUnprocessedDataQuery();
+        const sequences = await queryUnprocessedData(submitPage.getTestSequenceCount());
+        expect(sequences.length).toBe(submitPage.getTestSequenceCount());
+        const [firstSequence, secondSequence] = sequences;
 
-        await fakeProcessingPipeline({ sequenceId: firstId, error: true });
-        const reviewStatus = await userPage.gotoUserPageAndLocateSequenceWithStatus(firstId, 'NEEDS_REVIEW');
-        await expect(reviewStatus).toBeVisible();
+        await fakeProcessingPipeline({
+            sequenceId: firstSequence.sequenceId,
+            version: firstSequence.version,
+            error: true,
+        });
+        await userPage.gotoUserSequencePage();
+        const sequenceNeedingReviewIsPresent = await userPage.verifyTableEntries([
+            {
+                sequenceId: firstSequence.sequenceId,
+                version: firstSequence.version,
+                status: 'NEEDS_REVIEW',
+            },
+        ]);
+        expect(sequenceNeedingReviewIsPresent).toBe(true);
 
-        await fakeProcessingPipeline({ sequenceId: secondId, error: false });
-        const processedStatus = await userPage.gotoUserPageAndLocateSequenceWithStatus(secondId, 'PROCESSED');
-        await expect(processedStatus).toBeVisible();
+        await fakeProcessingPipeline({
+            sequenceId: secondSequence.sequenceId,
+            version: secondSequence.version,
+            error: false,
+        });
+        await userPage.gotoUserSequencePage();
+        const sequenceThatIsProcessedIsPresent = await userPage.verifyTableEntries([
+            {
+                sequenceId: secondSequence.sequenceId,
+                version: secondSequence.version,
+                status: 'PROCESSED',
+            },
+        ]);
+        expect(sequenceThatIsProcessedIsPresent).toBe(true);
 
-        await approveProcessedData(testuser, [secondId]);
-        const approvedStatus = await userPage.gotoUserPageAndLocateSequenceWithStatus(secondId, 'SILO_READY');
-        await expect(approvedStatus).toBeVisible();
+        await approveProcessedData(testuser, [secondSequence.sequenceId]);
+        await userPage.gotoUserSequencePage();
+        const sequenceThatIsReleasableIsPresent = await userPage.verifyTableEntries([
+            {
+                sequenceId: secondSequence.sequenceId,
+                version: secondSequence.version,
+                status: 'SILO_READY',
+            },
+        ]);
+        expect(sequenceThatIsReleasableIsPresent).toBe(true);
     });
 });
-
-async function fakeUnprocessedDataQuery() {
-    let unprocessedData = 'should be empty when all data is processing';
-
-    while (unprocessedData !== '') {
-        const response = await fetch('http://localhost:8079/extract-unprocessed-data?numberOfSequences=10', {
-            method: 'POST',
-        });
-
-        if (!response.ok) {
-            throw new Error(`Unexpected response: ${response.statusText}`);
-        }
-
-        unprocessedData = await response.text();
-    }
-}
