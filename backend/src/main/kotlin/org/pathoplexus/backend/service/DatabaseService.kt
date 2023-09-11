@@ -353,25 +353,47 @@ class DatabaseService(
     fun getSequencesSubmittedBy(username: String): List<SequenceStatus> {
         val sequenceStatusList = mutableListOf<SequenceStatus>()
         val sql = """
-        select sequence_id, status, version from sequences 
-        where submitter = ?
-        and version = (
-            select max(version)
-            from sequences s
-            where s.sequence_id = sequences.sequence_id
-        )
+            select sequence_id, status, version, revoked 
+            from sequences 
+            where submitter = ?
+            and status != ?
+            and version = (
+                select max(version)
+                from sequences s
+                where s.sequence_id = sequences.sequence_id
+            )
+            
+            union
+            
+            select sequence_id, status, max(version) as version, revoked
+            from sequences
+            where submitter = ?
+            and status = ?
+            
+            group by sequence_id, status, revoked
+            
+            having max(version) = (
+                select max(version)
+                from sequences s
+                where s.sequence_id = sequences.sequence_id
+                and s.status = ?
+            )
         """.trimIndent()
 
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
                 statement.setString(1, username)
+                statement.setString(2, Status.SILO_READY.name)
+                statement.setString(3, username)
+                statement.setString(4, Status.SILO_READY.name)
+                statement.setString(5, Status.SILO_READY.name)
                 statement.executeQuery().use { rs ->
                     while (rs.next()) {
                         val sequenceId = rs.getLong("sequence_id")
                         val version = rs.getInt("version")
                         val status = Status.fromString(rs.getString("status"))
-
-                        sequenceStatusList.add(SequenceStatus(sequenceId, version, status))
+                        val revoked = rs.getBoolean("revoked")
+                        sequenceStatusList.add(SequenceStatus(sequenceId, version, status, revoked))
                     }
                 }
             }
@@ -432,6 +454,77 @@ class DatabaseService(
             }
         }
     }
+
+    fun revokeData(sequenceIds: List<Long>): List<SequenceStatus> {
+        val sql = """
+        insert into sequences (sequence_id, version, custom_id, submitter, submitted_at, status, revoked)
+        select sequence_id, version + 1, custom_id, submitter, now(), ?, true
+        from sequences
+        where sequence_id = any (?)
+        and version = (
+            select max(version)
+            from sequences s
+            where s.sequence_id = sequences.sequence_id
+        )
+        and status = ?
+        returning sequence_id, version
+        """.trimIndent()
+
+        val revokedList = mutableListOf<SequenceStatus>()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setString(1, Status.REVOKED_STAGING.name)
+                statement.setArray(2, statement.connection.createArrayOf("BIGINT", sequenceIds.toTypedArray()))
+                statement.setString(3, Status.SILO_READY.name)
+                statement.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        revokedList.add(
+                            SequenceStatus(rs.getLong("sequence_id"), rs.getInt("version"), Status.REVOKED_STAGING),
+                        )
+                    }
+                }
+            }
+        }
+        return revokedList
+    }
+
+    fun confirmRevocation(sequenceIds: List<Long>): List<SequenceStatus> {
+        val sql = """
+        update sequences set status = ?
+        where status = ? 
+        and sequence_id = any (?)   
+        and version = (
+            select max(version)
+            from sequences s
+            where s.sequence_id = sequences.sequence_id
+        )
+        returning sequence_id, version, status
+        """.trimIndent()
+
+        val confirmationList = mutableListOf<SequenceStatus>()
+
+        useTransactionalConnection { conn ->
+            conn.prepareStatement(sql).use { statement ->
+                statement.setString(1, Status.SILO_READY.name)
+                statement.setString(2, Status.REVOKED_STAGING.name)
+                statement.setArray(3, statement.connection.createArrayOf("BIGINT", sequenceIds.toTypedArray()))
+                statement.executeQuery().use { rs ->
+                    while (rs.next()) {
+                        confirmationList.add(
+                            SequenceStatus(
+                                rs.getLong("sequence_id"),
+                                rs.getInt("version"),
+                                Status.fromString(rs.getString("status")),
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+
+        return confirmationList
+    }
 }
 
 data class Sequence(
@@ -446,6 +539,7 @@ data class SequenceStatus(
     val sequenceId: Long,
     val version: Int,
     val status: Status,
+    val revoked: Boolean = false,
 )
 
 enum class Status {
@@ -466,6 +560,9 @@ enum class Status {
 
     @JsonProperty("SILO_READY")
     SILO_READY,
+
+    @JsonProperty("REVOKED_STAGING")
+    REVOKED_STAGING,
 
     ;
 

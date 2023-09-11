@@ -39,7 +39,8 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
 
     // This is the number of sequences and a list of sequenceIds in the test data, i.e. metadata.tsv and sequences.fasta
     private val numberOfSequences = 10
-    private val allSequenceIds = List<Long>(numberOfSequences) { (it + 1).toLong() }
+    private val allSequenceIds = (1L..10).toList()
+    private val firstSequence = allSequenceIds[0]
 
     @BeforeEach
     fun beforeEach() {
@@ -183,22 +184,90 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
     fun `verify that versions only go up`() {
         prepareDataToSiloReady()
 
-        assertThat(getVersionNumbersFromSequenceList()).isEqualTo(List(numberOfSequences) { 1 })
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            )
 
-        allSequenceIds.forEach { sequenceId ->
-            reviseSiloReadySequences(sequenceId)
-        }
+        reviseSiloReadySequences(firstSequence)
 
-        assertThat(getVersionNumbersFromSequenceList()).isEqualTo(List(numberOfSequences) { 2 })
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(2)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            ).contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 2,
+                    status = Status.RECEIVED,
+                    revoked = false,
+                ),
+            )
     }
 
-    private fun getVersionNumbersFromSequenceList(): List<Int> {
-        val responseJson = querySequenceList().response.contentAsString
+    @Test
+    fun `revoke sequences and check that the 'revoke' flag is set properly`() {
+        prepareDataToSiloReady()
 
-        val responseItems: List<SequenceStatus> = objectMapper.readValue(responseJson)
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            )
 
-        return responseItems.map { it.version }
+        revokeSequences(allSequenceIds)
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(2)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            ).contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 2,
+                    status = Status.REVOKED_STAGING,
+                    revoked = true,
+                ),
+            )
+
+        confirmRevocation(allSequenceIds)
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceStatus(
+                    sequenceId = firstSequence,
+                    version = 2,
+                    status = Status.SILO_READY,
+                    revoked = true,
+                ),
+            )
     }
+
+    private fun getSequenceList(): List<SequenceStatus> = objectMapper.readValue<List<SequenceStatus>>(
+        querySequenceList().response.contentAsString,
+    )
 
     private fun submitProcessedData(testData: String): ResultActions {
         return mockMvc.perform(
@@ -267,6 +336,20 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
             .param("username", testUsername)
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .param("sequenceId", sequencesToRevise.toString()),
+    )
+        .andExpect(status().isOk())
+
+    private fun revokeSequences(listOfSequencesToRevoke: List<Number>): ResultActions = mockMvc.perform(
+        MockMvcRequestBuilders.post("/revoke")
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
+    )
+        .andExpect(status().isOk())
+
+    private fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions = mockMvc.perform(
+        MockMvcRequestBuilders.post("/confirm-revocation")
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content("""{"sequenceIds":$listOfSequencesToConfirm}"""),
     )
         .andExpect(status().isOk())
 
