@@ -16,7 +16,7 @@
     "e2e:headed": "npx playwright test --headed"
   },
   "dependencies": {
-    "@astrojs/netlify": "^2.5.1",
+    "@astrojs/netlify": "^2.6.0",
     "@astrojs/node": "^5.3.0",
     "@astrojs/react": "^3.0.2",
     "@astrojs/tailwind": "^4.0.0",
