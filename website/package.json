@@ -37,7 +37,7 @@
     "winston": "^3.10.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.35.1",
+    "@playwright/test": "^1.37.1",
     "@tanstack/eslint-plugin-query": "^4.29.25",
     "@testing-library/dom": "^9.3.1",
     "@testing-library/jest-dom": "^5.17.0",
