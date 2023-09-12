@@ -1,0 +1,22 @@
+@startuml
+    start
+    ->initial submit;
+    :set status to 'RECEIVED';
+    while (if status is  'RECEIVED' or 'REVIEWED')
+    ->true;
+    :set status to 'PROCESSING';
+     if (if error) then (yes)
+          :set status to 'REVIEW_NEEDED';
+            -> user reviews;
+          :set status to 'REVIEWED';
+      else (no)
+            :set status to 'STAGING';
+      endif
+    ->repeat;
+    endwhile (false)
+    ->user approves data;
+    :set status to 'SILO_READY';
+    end
+@enduml
+
+

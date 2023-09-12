@@ -1,0 +1,59 @@
+@startuml
+    actor user
+    participant "Pathoplexus Frontend" as frontend #LightCyan
+    participant "(Pre-)Processing Pipeline" as processing #LightGreen
+    participant "Pathoplexus Backend" as backend #Orange
+    database "Database" as DB
+
+    user -> frontend: Submit initial sequence data
+    alt Sequence and Metadata Files are valid
+        frontend -> backend: submit initial sequence data
+        frontend -> user: response with sequenceIds
+        backend -> DB: Store initial sequence data
+        backend -> DB: set status to 'RECEIVED'
+    else Sequence and Metadata Files are invalid
+        frontend -> user: response with error
+    end
+
+    loop until no processing errors
+
+        processing -> backend: Query initial/reviewed data
+        backend -> DB: Query initial/reviewed data
+        backend -> DB: Set status from 'RECEIVED'/'REVIEW_NEEDED' to 'PROCESSING'
+        DB --> backend: initial/reviewed data
+        backend --> processing: initial/reviewed data
+
+        processing -> backend: submit processed sequence data
+        loop until no validation errors
+            backend -> processing: response with validation errors
+            processing -> backend: submit processed sequence data
+        end loop
+
+        alt processed data contain processing errors
+            backend -> DB: Store processed sequence data with errors
+            backend -> DB: set status to 'REVIEW_NEEDED'
+        else
+            backend -> DB: Store processed sequence data without errors
+            backend -> DB: set status to 'PROCESSED'
+        end
+        user -> frontend: query processed data with errors
+        user -> user: address errors and adapt data
+        user -> frontend: submit adapted data
+        frontend -> backend: submit adapted data
+        backend -> DB: store adapted data
+        backend -> DB: set status to 'REVIEWED'
+    end loop
+
+    user -> frontend: Query processed data
+    frontend -> backend: Query processed data
+    backend -> DB: Query processed data
+    DB --> backend: processed data
+    backend --> frontend: processed data
+    frontend -> user: Show processed data
+    alt user acknowledges processing
+        user -> frontend: acknowledge processing
+        frontend -> backend: acknowledge processing
+        backend -> DB: set status from 'PROCESSED' to 'SILO_READY'
+    end
+@enduml
+

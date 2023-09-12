@@ -1,0 +1,13 @@
+@startuml
+    :status SILO_READY, revoked=false;
+    ->user wants to revoke sequence;
+    :copy sequence, delete data, incr REVISION, set status to 'STAGING_REVOKED', set flag to 'revoked=true';
+    if(if user confirms revocation) then (yes)
+        :set latest revision (with revoked-flag) status to 'SILO_READY';
+    else (no)
+        :delete latest revision with status 'STAGING_REVOKED';
+    endif
+    end
+@enduml
+
+
