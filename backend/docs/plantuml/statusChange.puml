@@ -1,22 +1,26 @@
 @startuml
-    start
-    ->initial submit;
-    :set status to 'RECEIVED';
-    while (if status is  'RECEIVED' or 'REVIEWED')
-    ->true;
-    :set status to 'PROCESSING';
-     if (if error) then (yes)
-          :set status to 'REVIEW_NEEDED';
-            -> user reviews;
-          :set status to 'REVIEWED';
-      else (no)
-            :set status to 'STAGING';
-      endif
-    ->repeat;
-    endwhile (false)
-    ->user approves data;
-    :set status to 'SILO_READY';
-    end
+  hide empty description
+
+  state RECEIVED
+  state PROCESSING
+  state REVIEW_NEEDED
+  state REVIEWED
+  state SILO_READY
+  state entry_will_be_deleted
+
+  state is_error <<choice>>
+  state is_approved <<choice>>
+
+  [*] --> RECEIVED : initial submit or revision
+  RECEIVED --> PROCESSING : preprocessing pipeline starts;
+  PROCESSING --> is_error
+  is_error --> REVIEW_NEEDED : if error
+  REVIEW_NEEDED --> REVIEWED : user edits data
+  REVIEWED --> PROCESSING : preprocessing pipeline starts;
+  is_error --> STAGING : if no error
+  STAGING --> is_approved
+  is_approved --> SILO_READY : user approves
+  is_approved --> entry_will_be_deleted : user rejects
+  SILO_READY --> [*]
+  entry_will_be_deleted --> [*]
 @enduml
-
-
