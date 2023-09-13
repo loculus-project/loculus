@@ -25,14 +25,12 @@ The new entry will be treated the same way as a new submission and undergoes the
 
 ## Revocation
 
-To revoke a sequence that has been released (i.e., the status is SILO_READY), the user calls the `/revoke` endpoint and sends sequence IDs. For each revoked sequence, Pathoplexus creates a new row in the "sequences" table. The unpreprocessed data are empty. The "revoked" flag is set to true. The new rows have an incremented revision number.
+To revoke a sequence that has been released (i.e., the status is SILO_READY), the user calls the `/revoke` endpoint and sends sequence IDs. For each revoked sequence, Pathoplexus creates a new row in the "sequences" table. The unpreprocessed data are empty. The "revoked" flag is set to true. The new rows have an incremented revision number  (see diagram in the "Initial submission" section).
 
-The following diagram shows the different statuses and their transitions:
-
-![revoke_sequence](./plantuml/revokingSequenceData.svg)
 
 ## Example flow
 
+### Database changes
 In following, the changes of the databases are shown given a series of example events.
 
 **Event 1:** The user submits `[{data: d1}, {data: d2}]`.
@@ -111,8 +109,15 @@ In following, the changes of the databases are shown given a series of example e
 | 1           | 2        | user1     | t5           | t6                    | t7                     | t8          | SILO_READY | false      | d3            | ...            | []     | []       |
 | 1           | 3        | usre1     | t10          |                       |                        | t11         | SILO_READY | true       |               |                |        |          |
 
+### Sequence diagrams
 
+In following, there are sequence diagrams of the work-flow for the initial submission, revision and revocation process. Without loss of generality we depict the work-flow using the frontend as the user interface. However, the work-flow is the same if the user uses the API directly. 
 
-[//]: # (TODO: Update the sequence diagram)
-[//]: # (## Processing Sequence Data)
-[//]: # (![sequence_view]&#40;./plantuml/processingSequenceData.svg&#41;)
+#### Initial submission
+![sequence_view](./plantuml/sequenceInitialSubmission.svg)
+
+#### Revision
+![sequence_view](./plantuml/sequenceRevision.svg)
+
+#### Revocation
+![sequence_view](./plantuml/sequenceRevocation.svg)

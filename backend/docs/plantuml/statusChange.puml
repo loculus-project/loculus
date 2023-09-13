@@ -1,26 +1,66 @@
 @startuml
-  hide empty description
+    hide empty description
 
-  state RECEIVED
-  state PROCESSING
-  state REVIEW_NEEDED
-  state REVIEWED
-  state SILO_READY
-  state entry_will_be_deleted
+    ' input data
+    state INITIAL_DATA as "initial data" #aliceblue;line:blue;line.dotted;text:blue {
+        INITIAL_DATA: new unprocessed data
+        }
+    state REVISION_DATA as "revision data" #aliceblue;line:blue;line.dotted;text:blue {
+        REVISION_DATA: already existing sequence
+        REVISION_DATA: with status SILO_READY
+        REVISION_DATA: + new unprocessed data
+    }
+    state REVOKED_DATA as "revocation data" #aliceblue;line:blue;line.dotted;text:blue{
+        REVOKED_DATA: already existing sequence
+        REVOKED_DATA: with status SILO_READY
+    }
 
-  state is_error <<choice>>
-  state is_approved <<choice>>
+    ' Status states
+    state STAGING_REVISION {
+        STAGING_REVISION: create new entry with sequenceId
+        STAGING_REVISION: and increment revision number
+        STAGING_REVISION: set new unprocessed data
+        STAGING_REVISION: set submitted_at to current time
+    }
+    state STAGING_REVOKED {
+        STAGING_REVOKED: create new entry with sequenceId
+        STAGING_REVOKED: and increment revision number
+        STAGING_REVOKED: set revoked-flag to true
+        STAGING_REVOKED: set revoked_at to current time
+    }
+    state RECEIVED
+    state PROCESSING
+    state REVIEW_NEEDED
+    state REVIEWED
+    state SILO_READY
 
-  [*] --> RECEIVED : initial submit or revision
-  RECEIVED --> PROCESSING : preprocessing pipeline starts;
-  PROCESSING --> is_error
-  is_error --> REVIEW_NEEDED : if error
-  REVIEW_NEEDED --> REVIEWED : user edits data
-  REVIEWED --> PROCESSING : preprocessing pipeline starts;
-  is_error --> STAGING : if no error
-  STAGING --> is_approved
-  is_approved --> SILO_READY : user approves
-  is_approved --> entry_will_be_deleted : user rejects
-  SILO_READY --> [*]
-  entry_will_be_deleted --> [*]
+    ' actions
+    state DELETION as "entry will be deleted" #line:red;line.dotted
+    state DELETION2 as "entry will be deleted" #line:red;line.dotted
+    state is_error <<choice>>
+    state is_approved <<choice>>
+    state is_approved_revision <<choice>>
+
+
+    ' transitions
+    INITIAL_DATA -r-> RECEIVED : initial submission
+
+    REVOKED_DATA -right-> STAGING_REVOKED : user initiates revocation
+    STAGING_REVOKED -right-> is_approved
+
+    REVISION_DATA -l-> STAGING_REVISION : user initiates revision
+    STAGING_REVISION --> is_approved_revision <<choice>>
+    is_approved_revision -l-> RECEIVED : user approves
+    is_approved_revision -r-> DELETION2 : user cancels
+
+    RECEIVED --> PROCESSING : preprocessing starts
+    PROCESSING --> is_error
+    is_error -u-> REVIEW_NEEDED : data contain error(s)
+    REVIEW_NEEDED -l-> REVIEWED : user edits data
+    REVIEWED -l-> PROCESSING : preprocessing starts;
+    is_error --> STAGING : preprocessing successful
+    STAGING --> is_approved
+    is_approved -d-> SILO_READY : user approves
+    is_approved -r-> DELETION : user rejects
+
 @enduml

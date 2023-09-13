@@ -1,0 +1,29 @@
+@startuml
+    actor user
+    participant "Pathoplexus Frontend" as frontend #LightCyan
+    participant "Pathoplexus Backend" as backend #Orange
+    database "Database" as DB
+
+    user -> frontend: wants to revise already processed sequence\nwith revised unprocessed data
+
+        frontend -> backend: query sequence that will be revised
+
+    alt sequenceID with Status 'SILO_READY' exists
+        backend -> DB: copy latest revision to \nnew revision; omit preprocessed data\nupdate unprocessed data \nset status to 'REVISION_STAGING'
+    backend -> frontend: response with sequenceId + new revision number
+    frontend -> user: response with sequenceId + new revision number
+    else sequenceID with Status 'SILO_READY' does not exist
+        backend -> frontend: response with error message
+        frontend -> user: response with error message
+    end
+
+    alt
+        user -> frontend: confirms revision
+        frontend -> backend: confirms revision
+        backend -> DB: set status to 'RECEIVED'
+    else
+        user -> frontend: confirms revision
+        frontend -> backend: cancels revision
+        backend -> DB: delete latest revision \nwith sequenceId and Status \n'REVISION_STAGING'
+    end
+@enduml

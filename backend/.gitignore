@@ -38,3 +38,6 @@ out/
 
 ### Logging ###
 /log/
+
+### plantuml ###
+plantuml.jar

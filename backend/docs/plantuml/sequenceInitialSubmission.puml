@@ -50,9 +50,9 @@
     DB --> backend: processed data
     backend --> frontend: processed data
     frontend -> user: Show processed data
-    alt user acknowledges processing
-        user -> frontend: acknowledge processing
-        frontend -> backend: acknowledge processing
+    alt user approves processing
+        user -> frontend: approve processing
+        frontend -> backend: approve processing
         backend -> DB: set status from 'PROCESSED' to 'SILO_READY'
     end
 @enduml
