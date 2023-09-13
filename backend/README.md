@@ -29,6 +29,12 @@ To pull the latest version of the image, run:
 docker pull ghcr.io/pathoplexus/backend
 ```
 
+You may need to run `docker compose up` when the image is updated before running `docker compose up`:
+
+```bash
+DOCKER_IMAGE_NAME=ghcr.io/pathoplexus/backend:latest docker compose down
+```
+
 To only start the database with docker-compose, you can run:
 
 ```bash
