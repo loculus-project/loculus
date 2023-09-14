@@ -2,7 +2,8 @@ version: "3"
 services:
   database:
     image: postgres:latest
-    network_mode: "host"
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: unsecure
@@ -12,6 +13,6 @@ services:
     image: ${DOCKER_IMAGE_NAME}
     depends_on:
       - database
-    command: --database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus
-    network_mode: "host"
-
+    command: --database.jdbcUrl=jdbc:postgresql://database:5432/pathoplexus
+    ports:
+      - "8079:8079"
