@@ -14,7 +14,7 @@ group = 'org.pathoplexus'
 version = '0.0.1'
 
 java {
-	sourceCompatibility = '19'
+	sourceCompatibility = '20'
 }
 
 repositories {
