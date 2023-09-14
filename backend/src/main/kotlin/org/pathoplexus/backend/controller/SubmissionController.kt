@@ -161,13 +161,13 @@ class SubmissionController(
         "/delete-sequences",
     )
     fun deleteSequence(
-        @RequestParam sequenceIds: Array<Long>,
+        @RequestParam sequenceIds: List<Long>,
     ) {
         databaseService.deleteSequences(sequenceIds)
     }
 
     data class ApprovalRequest(
-        val sequenceIds: Array<Long>,
+        val sequenceIds: List<Long>,
     )
 
     private fun processFiles(
