@@ -51,3 +51,9 @@ tasks.named('test') {
 tasks.named('bootBuildImage') {
 	environment = ["BP_JVM_VERSION": "20"]
 }
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    kotlinOptions {
+        jvmTarget = "19"
+    }
+}

@@ -3,6 +3,7 @@
 ## Setup
 
 To start the backend, a PostgreSQL database is required. The database connection is configured via Spring properties that need to be passed on startup:
+
 * Via command line argument: `--database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus`
 * Via environment variable: `SPRING_APPLICATION_JSON={"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus"}}`
 
@@ -44,6 +45,28 @@ docker compose up database
 ### Operating the backend behind a proxy
 
 When running the backend behind a proxy, the proxy needs to set X-Forwarded headers:
+
 * X-Forwarded-For
 * X-Forwarded-Proto
 * X-Forwarded-Prefix
+
+## Development
+
+### Requirements
+
+* Java (tested to work with Java 19 and 20, though other version might work as well)
+
+### Build docker image
+
+In the `backend` directory run:
+
+```bash
+./gradlew bootBuildImage
+```
+
+### Run tests and lints
+
+```bash
+./gradlew test
+./gradlew ktlintCheck
+```
