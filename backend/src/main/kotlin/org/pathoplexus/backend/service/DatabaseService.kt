@@ -235,7 +235,7 @@ class DatabaseService(
         updateStatement.executeUpdate()
     }
 
-    fun approveProcessedData(submitter: String, sequenceIds: Array<Long>) {
+    fun approveProcessedData(submitter: String, sequenceIds: List<Long>) {
         val sql = """
         update sequences
         set status = ?
@@ -247,7 +247,7 @@ class DatabaseService(
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
                 statement.setString(1, Status.SILO_READY.name)
-                statement.setArray(2, statement.connection.createArrayOf("BIGINT", sequenceIds))
+                statement.setArray(2, statement.connection.createArrayOf("BIGINT", sequenceIds.toTypedArray()))
                 statement.setString(3, submitter)
                 statement.setString(4, Status.PROCESSED.name)
                 statement.executeUpdate()
@@ -343,6 +343,7 @@ class DatabaseService(
         }
         return sequenceStatusList
     }
+
     fun deleteUserSequences(username: String) {
         val sql = """
         DELETE FROM sequences
@@ -357,7 +358,7 @@ class DatabaseService(
         }
     }
 
-    fun deleteSequences(sequenceIds: Array<Long>) {
+    fun deleteSequences(sequenceIds: List<Long>) {
         val sql = """
         DELETE FROM sequences
         WHERE sequence_id = any (?)
@@ -365,7 +366,7 @@ class DatabaseService(
 
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
-                statement.setArray(1, statement.connection.createArrayOf("BIGINT", sequenceIds))
+                statement.setArray(1, statement.connection.createArrayOf("BIGINT", sequenceIds.toTypedArray()))
                 statement.executeUpdate()
             }
         }
