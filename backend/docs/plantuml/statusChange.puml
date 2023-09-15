@@ -15,19 +15,8 @@
         REVOKED_DATA: with status SILO_READY
     }
 
-    ' Status states
-    state STAGING_REVISION {
-        STAGING_REVISION: create new entry with sequenceId
-        STAGING_REVISION: and increment revision number
-        STAGING_REVISION: set new unprocessed data
-        STAGING_REVISION: set submitted_at to current time
-    }
-    state STAGING_REVOKED {
-        STAGING_REVOKED: create new entry with sequenceId
-        STAGING_REVOKED: and increment revision number
-        STAGING_REVOKED: set revoked-flag to true
-        STAGING_REVOKED: set revoked_at to current time
-    }
+    ' status states
+    state STAGING_REVOKED
     state RECEIVED
     state PROCESSING
     state REVIEW_NEEDED
@@ -35,30 +24,31 @@
     state SILO_READY
 
     ' actions
+    state CREATING_SUBMIT as "entry with new sequenceId\n will be created" #line:green;line.dotted
+    state CREATING_REVISE as "entry with existing sequenceId\n and incremented version number\n will be created" #line:green;line.dotted
+    state CREATING_REVOKE as "entry with existing sequenceId,\n incremented version number, \n and revoked-flag=true will be created" #line:green;line.dotted
     state DELETION as "entry will be deleted" #line:red;line.dotted
-    state DELETION2 as "entry will be deleted" #line:red;line.dotted
     state is_error <<choice>>
     state is_approved <<choice>>
-    state is_approved_revision <<choice>>
-
 
     ' transitions
-    INITIAL_DATA -r-> RECEIVED : initial submission
+    INITIAL_DATA -d-> CREATING_SUBMIT : initial submission
+    CREATING_SUBMIT -r-> RECEIVED
+    REVISION_DATA -d-> CREATING_REVISE : user initiates revision
+    CREATING_REVISE -l-> RECEIVED
 
-    REVOKED_DATA -right-> STAGING_REVOKED : user initiates revocation
-    STAGING_REVOKED -right-> is_approved
-
-    REVISION_DATA -l-> STAGING_REVISION : user initiates revision
-    STAGING_REVISION --> is_approved_revision <<choice>>
-    is_approved_revision -l-> RECEIVED : user approves
-    is_approved_revision -r-> DELETION2 : user cancels
+    REVOKED_DATA -d-> CREATING_REVOKE : user initiates revocation
+    CREATING_REVOKE -r-> STAGING_REVOKED
+    STAGING_REVOKED -r-> is_approved
+    STAGING_REVOKED --> SILO_READY : "release directly"-mode
 
     RECEIVED --> PROCESSING : preprocessing starts
     PROCESSING --> is_error
     is_error -u-> REVIEW_NEEDED : data contain error(s)
     REVIEW_NEEDED -l-> REVIEWED : user edits data
-    REVIEWED -l-> PROCESSING : preprocessing starts;
+    REVIEWED -l-> PROCESSING : preprocessing starts
     is_error --> STAGING : preprocessing successful
+    is_error --> SILO_READY : preprocessing successful &\n "release directly"-mode
     STAGING --> is_approved
     is_approved -d-> SILO_READY : user approves
     is_approved -r-> DELETION : user rejects
