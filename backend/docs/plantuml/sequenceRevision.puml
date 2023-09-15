@@ -1,23 +1,21 @@
 @startuml
-    actor user
-    participant "Pathoplexus Frontend" as frontend #LightCyan
+    participant "Pathoplexus Frontend / User" as frontend #LightCyan
     participant "Pathoplexus Backend" as backend #Orange
     database "Database" as DB
 
-    user -> frontend: wants to revise already processed sequence\nwith revised unprocessed data
 
-        frontend -> backend: query sequence that will be revised
+    frontend -> backend: wants to revise already processed sequence\n\
+    with revised unprocessed data\n\
+    query sequence that will be revised
 
     alt highest version of sequenceID with Status 'SILO_READY' exists
         backend -> DB: insert new version in status 'RECEIVED'
-    backend -> frontend: response with sequenceId + new revision number
-    frontend -> user: response with sequenceId + new revision number
+    backend -> frontend: response with sequenceId + new version number
     else sequenceID with Status 'SILO_READY' does not exist
         backend -> frontend: response with error message
-        frontend -> user: response with error message
     end
 
-    note right of user
+    note right of frontend
         At this point the same flow applies as if this was an inital submission
     end note
 @enduml

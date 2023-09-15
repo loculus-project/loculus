@@ -28,7 +28,6 @@
         processing -> backend: submit processed sequence data
         alt validation errors occur
             backend -> processing: response with validation errors
-            backend -> frontend: inform about internal error
              note right of frontend
                   Validation error are probably only redeemable by changing the pre-processing pipeline
                   In the following we assume that no validation error occurred

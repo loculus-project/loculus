@@ -1,29 +1,23 @@
 @startuml
-    actor user
-    participant "Pathoplexus Frontend" as frontend #LightCyan
+    participant "Pathoplexus Frontend / User" as frontend #LightCyan
     participant "Pathoplexus Backend" as backend #Orange
     database "Database" as DB
 
-    user -> frontend: wants to revoke already processed sequence
-
-        frontend -> backend: query sequence that will be revoked
+    frontend -> backend: wants to revoke already processed sequence\n\
+    query sequence that will be revoked
 
      alt highest version of sequenceID with Status 'SILO_READY' exists
-        backend -> DB: copy latest revision to \nnew revision; omit data \nset status to 'REVOKED_STAGING'
-    backend -> frontend: response with sequenceId + new revision number
-    frontend -> user: response with sequenceId + new revision number
+        backend -> DB: insert new version\nwith status 'REVISION_STAGING' \nand ' is_revoked = true'
+    backend -> frontend: response with sequenceId + new version number
     else highest version of sequenceID with Status 'SILO_READY' does not exist
         backend -> frontend: response with error message
-        frontend -> user: response with error message
     end
 
     alt
-        user -> frontend: confirms revocation
         frontend -> backend: confirms revocation
         backend -> DB: set status to 'SILO_READY'
     else
-        user -> frontend: cancels revocation
         frontend -> backend: cancels revocation
-        backend -> DB: delete latest revision \nwith sequenceId and Status \n'REVOKED_STAGING'
+        backend -> DB: delete latest version \nof the sequence and Status \n'REVOKED_STAGING'
     end
 @enduml
