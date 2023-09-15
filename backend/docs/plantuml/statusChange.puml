@@ -24,10 +24,10 @@
     state SILO_READY
 
     ' actions
-    state CREATING_SUBMIT as "entry with new sequenceId\n will be created" #line:green;line.dotted
-    state CREATING_REVISE as "entry with existing sequenceId\n and incremented version number\n will be created" #line:green;line.dotted
-    state CREATING_REVOKE as "entry with existing sequenceId,\n incremented version number, \n and revoked-flag=true will be created" #line:green;line.dotted
-    state DELETION as "entry will be deleted" #line:red;line.dotted
+    state CREATING_SUBMIT as "entry with new sequenceId\n will be created" #lightgreen;line:green;line.dotted
+    state CREATING_REVISE as "entry with existing sequenceId\n and incremented version number\n will be created" #lightgreen;line:green;line.dotted
+    state CREATING_REVOKE as "entry with existing sequenceId,\n incremented version number, \n and revoked-flag=true will be created" #lightgreen;line:green;line.dotted
+    state DELETION as "entry will be deleted" #IndianRed;line:red;line.dotted
     state is_error <<choice>>
     state is_approved <<choice>>
 
@@ -40,7 +40,6 @@
     REVOKED_DATA -d-> CREATING_REVOKE : user initiates revocation
     CREATING_REVOKE -r-> STAGING_REVOKED
     STAGING_REVOKED -r-> is_approved
-    STAGING_REVOKED --> SILO_READY : "release directly"-mode
 
     RECEIVED --> PROCESSING : preprocessing starts
     PROCESSING --> is_error
@@ -48,9 +47,8 @@
     REVIEW_NEEDED -l-> REVIEWED : user edits data
     REVIEWED -l-> PROCESSING : preprocessing starts
     is_error --> STAGING : preprocessing successful
-    is_error --> SILO_READY : preprocessing successful &\n "release directly"-mode
     STAGING --> is_approved
-    is_approved -d-> SILO_READY : user approves
+    is_approved -d-> SILO_READY : user approves \nor automatic approval\n via 'release_directly'
     is_approved -r-> DELETION : user rejects
 
 @enduml
