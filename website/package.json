@@ -23,7 +23,7 @@
     "@emotion/styled": "^11.11.0",
     "@mui/material": "^5.14.5",
     "@mui/x-date-pickers": "^6.9.1",
-    "@tanstack/react-query": "^4.32.6",
+    "@tanstack/react-query": "^4.35.3",
     "@types/react": "^18.2.18",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.0.4",
