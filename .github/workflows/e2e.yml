@@ -71,7 +71,7 @@ jobs:
 
       - name: Docker metadata Backend
         id: dockerMetadataBackend
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/pathoplexus/backend
           tags: |
@@ -83,7 +83,7 @@ jobs:
 
       - name: Docker metadata Website
         id: dockerMetadataWebsite
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: ghcr.io/pathoplexus/website
           tags: |
