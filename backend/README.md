@@ -2,44 +2,66 @@
 
 ## Setup
 
-To start the backend, a PostgreSQL database is required. The database connection is configured via Spring properties that need to be passed on startup:
+All commands mentioned in this section are run from the `backend` directory.
+
+### Prerequisites
+
+* Java 20 installed on your system
+* A running PostgreSQL database
+
+The easiest way to start a PostgreSQL database is to use Docker compose:
+
+```bash
+DOCKER_IMAGE_NAME=doesNotMatterHere docker compose up database
+```
+
+### Starting the backend
+
+The database connection is configured via Spring properties that need to be passed on startup:
 
 * Via command line argument: `--database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus`
 * Via environment variable: `SPRING_APPLICATION_JSON={"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus"}}`
 
 We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
 
-The service listens, by default, to **port 8079**.
+The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>.
 
-### Start from docker-compose
-
-Make sure you have configured access to the private container registry (see [/README.md](../README.md)).
-
-We have a [docker-compose config](./docker-compose.yml) to start the backend. For flexibility the docker image name is read from the environment. To use the `:latest` image along with an
-instance of the PostgreSQL database, you can just run:
-
+#### Start from command line: 
 ```bash
-DOCKER_IMAGE_NAME=ghcr.io/pathoplexus/backend:latest docker compose up
+./gradlew bootRun --args='--database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus'
+```
+or
+```bash
+SPRING_APPLICATION_JSON='{"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus"}}' ./gradlew bootRun
 ```
 
-You can then access the backend at <http://127.0.0.1:8079/swagger-ui/index.html> :tada:
+#### Start from docker-compose
 
-To pull the latest version of the image, run:
+Build an image and start it along with the database:
+
+```bash
+./gradlew bootBuildImage --imageName=pathoplexus-backend
+DOCKER_IMAGE_NAME=pathoplexus-backend docker compose up
+```
+
+`docker compose up backend` will start the backend only.
+
+We have a GitHub action that builds and pushes the image to the GitHub container registry.
+Make sure you have configured access to the private container registry (see [/README.md](../README.md)).
+To run the latest version of the image, run:
 
 ```bash
 docker pull ghcr.io/pathoplexus/backend
+DOCKER_IMAGE_NAME=ghcr.io/pathoplexus/backend:latest docker compose up
 ```
 
-You may need to run `docker compose down` when the image is updated before running `docker compose up`. This will delete the database and create a new one and can be helpful when breaking changes occur (after release migration scripts will keep the database schema up-to-date and this should not be necessary). Run:
+You may need to run `docker compose down` when the image is updated before running `docker compose up`.
+This will delete the database and create a new one and can be helpful when breaking changes occur.
+In the early development phase, we will introduce breaking changes to the database schema frequently.
+Run:
 
 ```bash
 DOCKER_IMAGE_NAME=ghcr.io/pathoplexus/backend:latest docker compose down
-```
-
-To only start the database with docker-compose, you can run:
-
-```bash
-docker compose up database
 ```
 
 ### Operating the backend behind a proxy
@@ -51,10 +73,6 @@ When running the backend behind a proxy, the proxy needs to set X-Forwarded head
 * X-Forwarded-Prefix
 
 ## Development
-
-### Requirements
-
-* Java 20
 
 ### Build docker image
 
@@ -70,3 +88,11 @@ In the `backend` directory run:
 ./gradlew test
 ./gradlew ktlintCheck
 ```
+
+## Logs
+
+The backend stores its logs in `./log/backend.log`, relative to the working directory.
+Details on potential problems are most likely found there.
+In the Docker container, the logs can be found in `/workspace/log/backend.log`.
+
+Once per day, the log file is rotated and compressed. Old log files are stored in `./log/archived/`.
