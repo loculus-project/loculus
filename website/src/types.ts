@@ -51,6 +51,7 @@ export type InsertionCount = {
 };
 
 export type HeaderId = {
-    header: string;
-    id: number;
+    sequenceId: number;
+    version: number;
+    customId: string;
 };

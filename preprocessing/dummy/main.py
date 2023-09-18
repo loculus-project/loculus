@@ -26,6 +26,7 @@ class ProcessingAnnotation:
 @dataclass
 class Sequence:
     sequenceId: int
+    version: int
     data: dict
     errors: Optional[List[ProcessingAnnotation]] =field(default_factory=list)
     warnings: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
@@ -46,7 +47,7 @@ def parse_ndjson(ndjson_data: str) -> List[Sequence]:
     for json_str in json_strings:
         if json_str:
             json_object = json.loads(json_str)
-            entries.append(Sequence(json_object["sequenceId"], json_object["data"]))
+            entries.append(Sequence(json_object["sequenceId"],json_object["version"], json_object["data"]))
     return entries
 
 def process(unprocessed: List[Sequence]) -> List[Sequence]:

@@ -21,10 +21,6 @@ export class SubmitPage {
         await this.page.goto(`${baseUrl}/submit`);
     }
 
-    public async gotoUserPage() {
-        await this.page.goto(`${baseUrl}/user/${testuser}/sequences`);
-    }
-
     public async submit() {
         await Promise.all([this.uploadSequenceData(), this.setUsername(testuser), this.uploadMetadata()]);
         await this.submitButton.click();

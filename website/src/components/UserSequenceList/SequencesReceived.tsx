@@ -14,10 +14,12 @@ export const SequencesReceived: FC<{ sequences: SequenceStatus[] }> = ({ sequenc
                         </tr>
                     </thead>
                     <tbody>
-                        {sequences.map((row, index) => (
+                        {sequences.map((sequence, index) => (
                             <tr key={index}>
-                                <td>{row.sequenceId}</td>
-                                <td> {row.status}</td>
+                                <td>
+                                    {sequence.sequenceId} (version {sequence.version})
+                                </td>
+                                <td> {sequence.status}</td>
                             </tr>
                         ))}
                     </tbody>

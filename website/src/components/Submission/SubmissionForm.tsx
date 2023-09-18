@@ -129,8 +129,8 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
                         <h2 className='text-lg font-bold'>Response Sequence Headers</h2>
                         <ul className='list-disc list-inside'>
                             {responseSequenceHeaders.map((header) => (
-                                <li key={header.id}>
-                                    {header.id} {header.header}
+                                <li key={header.sequenceId}>
+                                    {header.sequenceId}(v{header.version}) {header.customId}
                                 </li>
                             ))}
                         </ul>
