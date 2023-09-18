@@ -77,7 +77,7 @@ To send back the preprocessed data, the preprocessing pipeline sends a POST requ
 
 In the NDJSON, each row contains a sequence entry and a list of errors and a list of warnings represented as a JSON object. One JSON object has the following fields:
 
-```
+```js
 {
     sequenceId,
     version,
@@ -100,7 +100,7 @@ The response may not contain any unused/unspecified field.
 
 The `errors` and `warnings` fields contain an array of objects of the following schema:
 
-```
+```js
 {
     source: {
         type: "metadata" | "nucleotideSequence",

@@ -6,8 +6,4 @@ dependencies:
   - python=3.11
   - biopython
   - nextclade
-  - flask
   - requests
-  - pip
-  - pip:
-    - ndjson
