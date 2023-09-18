@@ -50,11 +50,26 @@ To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 
 ```
-{"sequenceId": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}}
-{"sequenceId": 2, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}}
+{"sequenceId": 1, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}}
+{"sequenceId": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}}
 ```
 
 The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter.
+
+The primary key is `[sequenceId,version]`. The preprocessing pipeline must be able to handle getting the same sequence twice with different versions.
+
+One JSON object has the following fields:
+
+```js
+{
+    sequenceId: integer,
+    version: integer,
+    data: {
+        metadata: Record<string, string>,
+        unalignedNucleotideSequences: Record<string, string>
+    }
+}
+```
 
 ### Returning preprocessed data
 
@@ -65,6 +80,7 @@ In the NDJSON, each row contains a sequence entry and a list of errors and a lis
 ```
 {
     sequenceId,
+    version,
     errors,
     warnings,
     data: {
