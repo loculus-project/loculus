@@ -42,7 +42,7 @@ class SequenceValidatorService
     }
 
     fun isValidPangoLineage(pangoLineageCandidate: String): Boolean {
-        return pangoLineageCandidate.matches(Regex("[a-zA-Z]{1,3}(\\.\\d{1,3}){1,3}"))
+        return pangoLineageCandidate.matches(Regex("[a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}"))
     }
 
     fun validateFieldType(fieldValue: JsonNode, metadata: Metadata): Boolean {
