@@ -19,8 +19,13 @@ DOCKER_IMAGE_NAME=doesNotMatterHere docker compose up database
 
 The database connection is configured via Spring properties that need to be passed on startup:
 
-* Via command line argument: `--database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus`
-* Via environment variable: `SPRING_APPLICATION_JSON={"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus"}}`
+* Via command line argument (also see docker-compose.yml): 
+```
+--database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus
+--database.username=postgres
+--database.password=unsecure
+```
+* Via environment variable: `SPRING_APPLICATION_JSON={"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus","username":"postgres","password":"unsecure"}}`
 
 We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
 
@@ -28,11 +33,11 @@ The service listens, by default, to **port 8079**: <http://localhost:8079/swagge
 
 #### Start from command line: 
 ```bash
-./gradlew bootRun --args='--database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus'
+./gradlew bootRun --args='--database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus --database.username=postgres --database.password=unsecure'
 ```
 or
 ```bash
-SPRING_APPLICATION_JSON='{"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus"}}' ./gradlew bootRun
+SPRING_APPLICATION_JSON='{"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus","username":"postgres","password":"unsecure"}}' ./gradlew bootRun
 ```
 
 #### Start from docker-compose
@@ -96,3 +101,15 @@ Details on potential problems are most likely found there.
 In the Docker container, the logs can be found in `/workspace/log/backend.log`.
 
 Once per day, the log file is rotated and compressed. Old log files are stored in `./log/archived/`.
+
+## Swagger UI
+
+The backend provides a Swagger UI at <http://localhost:8079/swagger-ui/index.html>.
+We use Swagger to document the API and to provide a playground for testing the API.
+Especially for manual testing during the development, this is very useful.
+
+OpenAPI does not deal well with NDJSON. 
+Since the API has endpoints that deal with NDJSON, the documentation of those endpoints is to be understood as
+"the provided schema is a valid JSON schema for each line of the NDJSON file".
+
+The Swagger UI and OpenAPI specification is generated via the [Springdoc plugin](https://springdoc.org/).

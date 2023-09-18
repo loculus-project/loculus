@@ -19,3 +19,8 @@ We value clean code, here are some guidelines on what we consider clean code:
 
 Keep in mind that Pathoplexus is designed to be run and maintained by anyone. 
 This means that the code that we develop needs to be suitably general and configurable.
+
+### OpenAPI docs
+
+The backend offers a Swagger UI and an OpenAPI specification.
+Try to keep the OpenAPI specification as correct and as useful as possible.
