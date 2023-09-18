@@ -23,14 +23,18 @@ This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It re
     mamba env create -n pathoplexus-nextclade -f environment.yml
     ```
 
-3. Start mock server
+3. Start backend (see [backend README](../backend/README.md))
+4. Submit sequences to backend
 
     ```bash
-    mamba activate pathoplexus-nextclade
-    python mock-server.py
+    curl -X 'POST' 'http://localhost:8079/submit?username=testuser' \
+        -H 'accept: application/json' \
+        -H 'Content-Type: multipart/form-data'  \
+        -F 'metadataFile=@testdata/metadata.tsv;type=text/tab-separated-values' \
+        -F 'sequenceFile=@testdata/sequences.fasta'
     ```
 
-4. Start pipeline
+5. Run pipeline
 
     ```bash
     mamba activate pathoplexus-nextclade
