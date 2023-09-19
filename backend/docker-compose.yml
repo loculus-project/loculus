@@ -14,5 +14,7 @@ services:
     depends_on:
       - database
     command: --database.jdbcUrl=jdbc:postgresql://database:5432/pathoplexus
+    volumes:
+      - ./log:/workspace/log
     ports:
       - "8079:8079"
