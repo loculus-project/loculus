@@ -79,7 +79,10 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
       - name: Start Backend Docker Container
-        run: DOCKER_IMAGE_NAME=${{steps.dockerMetadataBackend.outputs.tags }} docker compose -f ./backend/docker-compose.yml up -d
+        run: |
+          mkdir ./backend/log
+          chmod -R 777 ./backend/log
+          DOCKER_IMAGE_NAME=${{steps.dockerMetadataBackend.outputs.tags }} docker compose -f ./backend/docker-compose.yml up -d
 
       - name: Docker metadata Website
         id: dockerMetadataWebsite
@@ -109,5 +112,3 @@ jobs:
       - name: Log debugging info
         if: always()
         run: docker logs backend-backend-1 && docker logs website-pathoplexus-1
-
-
