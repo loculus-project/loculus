@@ -52,7 +52,7 @@ export const getReviewData = async (name: string): Promise<SequenceReview[]> => 
         const ndjsonText = await mySequencesResponse.text();
         const ndjsonLines = ndjsonText.split('\n');
 
-        ndjsonLines.forEach((line) => {
+        ndjsonLines.forEach((line: string) => {
             if (line.trim() === '') {
                 return;
             }
