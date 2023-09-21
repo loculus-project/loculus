@@ -14,7 +14,6 @@ import org.pathoplexus.backend.service.Sequence
 import org.pathoplexus.backend.service.SequenceStatus
 import org.pathoplexus.backend.service.ValidationResult
 import org.pathoplexus.backend.utils.FastaReader
-import org.springframework.context.annotation.Description
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -36,7 +35,7 @@ class SubmissionController(
     private val objectMapper: ObjectMapper,
 ) {
 
-    @Description("Submit unprocessed data as a multipart/form-data")
+    @Operation(description = "Submit unprocessed data as a multipart/form-data")
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
         @RequestParam username: String,
@@ -46,7 +45,7 @@ class SubmissionController(
         return databaseService.insertSubmissions(username, processFiles(metadataFile, sequenceFile))
     }
 
-    @Description("Get unprocessed data as a stream of NDJSON")
+    @Operation(description = "Get unprocessed data as a stream of NDJSON")
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getUnprocessedData(
         @RequestParam numberOfSequences: Int,
@@ -61,8 +60,8 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Description("Submit processed data as a stream of NDJSON")
     @Operation(
+        description = "Submit processed data as a stream of NDJSON",
         requestBody = SwaggerRequestBody(
             content = [
                 Content(
@@ -94,7 +93,7 @@ class SubmissionController(
     }
 
     // TODO(#108): temporary method to ease testing, replace later
-    @Description("Get processed data as a stream of NDJSON")
+    @Operation(description = "Get processed data as a stream of NDJSON")
     @PostMapping("/extract-processed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getProcessedData(
         @RequestParam numberOfSequences: Int,
@@ -109,7 +108,7 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Description("Get data with errors to review as a stream of NDJSON")
+    @Operation(description = "Get data with errors to review as a stream of NDJSON")
     @GetMapping("/get-data-to-review", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReviewNeededData(
         @RequestParam submitter: String,
@@ -125,7 +124,7 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Description("Get a list of all submitted sequences of the given user")
+    @Operation(description = "Get a list of all submitted sequences of the given user")
     @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserSequenceList(
         @RequestParam username: String,
@@ -133,21 +132,22 @@ class SubmissionController(
         return databaseService.getSequencesSubmittedBy(username)
     }
 
-    @Description("Approve that the processed data is correct")
+    @Operation(description = "Approve that the processed data is correct")
     @PostMapping(
         "/approve-processed-data",
         consumes = [MediaType.APPLICATION_JSON_VALUE],
     )
     fun approveProcessedData(
         @RequestParam username: String,
-        @RequestBody body: ApprovalRequest,
+        @RequestBody body: SequenceIdList,
     ) {
         databaseService.approveProcessedData(username, body.sequenceIds)
     }
 
-    @Description("Revise existing sequence initially submitted by user")
+    @Operation(description = "Revise existing sequence initially submitted by user")
     @PostMapping(
         "/revise",
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
     )
     fun reviseData(
         @RequestParam sequenceId: Long,
@@ -155,7 +155,26 @@ class SubmissionController(
         databaseService.reviseData(sequenceId)
     }
 
-    @Description("Delete sequence data from user")
+    @Operation(description = "Revoke existing sequence and stage it for confirmation")
+    @PostMapping(
+        "/revoke",
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+        produces = [MediaType.APPLICATION_JSON_VALUE],
+    )
+    fun revokeData(
+        @RequestBody body: SequenceIdList,
+    ): List<SequenceStatus> = databaseService.revokeData(body.sequenceIds)
+
+    @Operation(description = "Confirm revocation of sequence")
+    @PostMapping(
+        "/confirm-revocation",
+        consumes = [MediaType.APPLICATION_JSON_VALUE],
+    )
+    fun confirmRevocation(
+        @RequestBody body: SequenceIdList,
+    ) = databaseService.confirmRevocation(body.sequenceIds)
+
+    @Operation(description = "Delete sequence data from user")
     @DeleteMapping(
         "/delete-user-sequences",
     )
@@ -165,7 +184,7 @@ class SubmissionController(
         databaseService.deleteUserSequences(username)
     }
 
-    @Description("Delete sequences")
+    @Operation(description = "Delete sequences")
     @DeleteMapping(
         "/delete-sequences",
     )
@@ -175,7 +194,7 @@ class SubmissionController(
         databaseService.deleteSequences(sequenceIds)
     }
 
-    data class ApprovalRequest(
+    data class SequenceIdList(
         val sequenceIds: List<Long>,
     )
 
