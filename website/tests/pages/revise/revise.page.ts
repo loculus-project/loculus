@@ -35,43 +35,7 @@ export class RevisePage {
         ]);
         await this.submitButton.click();
         await this.page.waitForSelector('text=Result of Revision');
-        await unlinkSync(this.temporaryMetadataFile);
-    }
-
-    public async submitInitialDataViaApi(): Promise<SubmitResponse[]> {
-        const formData = new FormData();
-        formData.append(
-            'metadataFile',
-            new Blob([readFileSync(this.metadataFile, 'utf-8')], { type: 'text/tab-separated-values' }),
-            'metadata.tsv',
-        );
-        formData.append(
-            'sequenceFile',
-            new Blob([readFileSync(this.sequencesFile, 'utf-8')], { type: 'application/octet-stream' }),
-            'sequences.fasta',
-        );
-
-        const requestOptions = {
-            method: 'POST',
-            headers: {
-                accept: 'application/json',
-            },
-            body: formData,
-        };
-
-        const apiUrl = `http://localhost:8079/revise?username=${testuser}`;
-
-        try {
-            const response = await fetch(apiUrl, requestOptions);
-
-            if (response.ok) {
-                return (await response.json()) as SubmitResponse[];
-            } else {
-                throw new Error(`Unexpected response: ${response.statusText}`);
-            }
-        } catch (error) {
-            throw new Error(JSON.stringify(error));
-        }
+        unlinkSync(this.temporaryMetadataFile);
     }
 
     public async setUsername(username: string) {

@@ -13,8 +13,7 @@ export const SequencesReady: FC<SequencesReadyProps> = ({ sequences }) => {
     const [selectionStart, setSelectionStart] = useState<number | null>(null);
     const [selectionEnd, setSelectionEnd] = useState<number | null>(null);
 
-    // eslint-disable-next-line
-    const [sequencesWithRowId, setSequencesWithRowId] = useState<SequenceWithRowId[]>(
+    const [sequencesWithRowId] = useState<SequenceWithRowId[]>(
         sequences.map((sequence, index) => ({ ...sequence, rowId: index })),
     );
 
@@ -69,12 +68,6 @@ export const SequencesReady: FC<SequencesReadyProps> = ({ sequences }) => {
         }
     }, [selectionStart, selectionEnd, selectedSequences, sequencesWithRowId]);
 
-    // TODO: when table is reordered, the rowId needs to be updated
-    // const handleReordering = useCallback(() => {
-    //     const reordered = [...sequencesWithRowId];
-    //     setSequencesWithRowId(reordered);
-    // }, [sequencesWithRowId]);
-
     useEffect(() => {
         document.addEventListener('mouseup', handleMouseUp);
         return () => {
@@ -99,7 +92,6 @@ export const SequencesReady: FC<SequencesReadyProps> = ({ sequences }) => {
             <div className='w-full overflow-x-auto'>
                 {sequencesWithRowId.length !== 0 ? (
                     <div>
-                        {/* ... */}
                         <table className='table'>
                             <tbody>
                                 {sequencesWithRowId.map((sequence, index) => {

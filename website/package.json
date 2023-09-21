@@ -35,10 +35,10 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwindcss": "^3.3.3",
-    "uuid": "^9.0.1",
     "winston": "^3.10.0"
   },
   "devDependencies": {
+    "uuid": "^9.0.1",
     "@playwright/test": "^1.37.1",
     "@tanstack/eslint-plugin-query": "^4.34.1",
     "@testing-library/dom": "^9.3.1",

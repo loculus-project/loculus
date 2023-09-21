@@ -23,24 +23,6 @@ class SequenceValidatorService
         }
     }
 
-    fun isValidFloatingPointNumber(floatStringCandidate: String): Boolean {
-        return try {
-            floatStringCandidate.toDouble()
-            true
-        } catch (e: NumberFormatException) {
-            false
-        }
-    }
-
-    fun isValidIntegerNumber(numberStringCandidate: String): Boolean {
-        return try {
-            numberStringCandidate.toInt()
-            true
-        } catch (e: NumberFormatException) {
-            false
-        }
-    }
-
     fun isValidPangoLineage(pangoLineageCandidate: String): Boolean {
         return pangoLineageCandidate.matches(Regex("[a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}"))
     }
@@ -121,11 +103,5 @@ data class ValidationResult(
     val missingRequiredFields: List<String>,
     val fieldsWithTypeMismatch: List<FieldError>,
     val unknownFields: List<String>,
-    val genericError: List<String> = emptyList(),
-)
-
-data class RevisionResult(
-    val sequenceId: Long,
-    val version: Int,
     val genericError: List<String> = emptyList(),
 )

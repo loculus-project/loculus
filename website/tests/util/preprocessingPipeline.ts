@@ -43,7 +43,7 @@ export const fakeProcessingPipeline = async ({ sequenceId, error }: { sequenceId
     }
 };
 
-export async function fakeUnprocessedDataQuery(countOfSequences: number) {
+export async function queryUnprocessedData(countOfSequences: number) {
     const response = await fetch(
         `http://localhost:8079/extract-unprocessed-data?numberOfSequences=${countOfSequences}`,
         {

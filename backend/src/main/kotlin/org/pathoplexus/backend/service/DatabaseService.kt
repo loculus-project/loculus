@@ -435,35 +435,25 @@ class DatabaseService(
 
     fun reviseData(submitter: String, inputStream: InputStream): List<RevisionResult> {
         val reader = BufferedReader(InputStreamReader(inputStream))
-        val checkIdSql = """
-        select sequence_id
+
+        val checkSql = """
+        select sequence_id, version, status
         from sequences 
         where sequence_id = ?
-        and submitter = ?
-        """.trimIndent()
-
-        val checkStatusSql = """
-        select sequence_id
-        from sequences 
-        where sequence_id = ? 
         and version = (
             select max(version)
             from sequences s
             where s.sequence_id = sequences.sequence_id
         )
-        and status = ?
+        and submitter = ?
         """.trimIndent()
 
         val reviseSql = """
         insert into sequences (sequence_id, version, custom_id, submitter, submitted_at, status, revoked, original_data)
-        select ?, version + 1, custom_id, submitter, now(), ?, ?,  original_data
+        select ?, ?, custom_id, submitter, now(), ?, false, ?::jsonb
         from sequences
         where sequence_id = ?
-        and version = (
-            select max(version)
-            from sequences s
-            where s.sequence_id = sequences.sequence_id
-        )
+        and version = ?
         and status = ?
         """.trimIndent()
 
@@ -471,55 +461,54 @@ class DatabaseService(
 
         useTransactionalConnection { conn ->
             conn.prepareStatement(reviseSql).use { reviseStatement ->
-                conn.prepareStatement(checkStatusSql).use { checkIfStatusExistsStatement ->
-                    conn.prepareStatement(checkIdSql).use { checkIfIdExistsStatement ->
-                        reader.lineSequence().forEach { line ->
+                conn.prepareStatement(checkSql).use { checkStatement ->
+                    reader.lineSequence().forEach { line ->
+                        val sequence = objectMapper.readValue<FileData>(line)
 
-                            val sequence = objectMapper.readValue<FileData>(line)
+                        checkStatement.setLong(1, sequence.sequenceId)
+                        checkStatement.setString(2, submitter)
+                        val resultSet = checkStatement.executeQuery()
 
-                            checkIfIdExistsStatement.setLong(1, sequence.sequenceId)
-                            checkIfIdExistsStatement.setString(2, submitter)
-                            val sequenceIdExists = checkIfIdExistsStatement.executeQuery().next()
-                            if (!sequenceIdExists) {
+                        if (!resultSet.next()) {
+                            revisionResults.add(
+                                RevisionResult(
+                                    sequence.sequenceId,
+                                    sequence.version,
+                                    listOf("SequenceId does not exist for user $submitter"),
+                                ),
+                            )
+                        } else {
+                            val sequenceId = resultSet.getLong("sequence_id")
+                            val version = resultSet.getInt("version")
+
+                            if (resultSet.getString("status") != Status.SILO_READY.name) {
                                 revisionResults.add(
                                     RevisionResult(
-                                        sequence.sequenceId,
-                                        sequence.version,
-                                        listOf("SequenceId does not exist for user $submitter"),
-                                    ),
-                                )
-                                return@forEach
-                            }
-
-                            checkIfStatusExistsStatement.setLong(1, sequence.sequenceId)
-                            checkIfStatusExistsStatement.setString(2, Status.SILO_READY.name)
-
-                            val statusIsProcessing = checkIfStatusExistsStatement.executeQuery().next()
-                            if (!statusIsProcessing) {
-                                revisionResults.add(
-                                    RevisionResult(
-                                        sequence.sequenceId,
-                                        sequence.version,
+                                        sequenceId,
+                                        version,
                                         listOf(
                                             "SequenceId does exist, but the latest version is not in SILO_READY state",
                                         ),
                                     ),
                                 )
-                            }
+                            } else {
+                                reviseStatement.setLong(1, sequenceId)
+                                reviseStatement.setInt(2, version + 1)
+                                reviseStatement.setString(3, Status.RECEIVED.name)
+                                reviseStatement.setString(4, sequence.data.toString())
+                                reviseStatement.setLong(5, sequenceId)
+                                reviseStatement.setInt(6, version)
+                                reviseStatement.setString(7, Status.SILO_READY.name)
 
-                            reviseStatement.setLong(1, sequence.sequenceId)
-                            reviseStatement.setString(2, Status.RECEIVED.name)
-                            reviseStatement.setBoolean(3, false)
-                            reviseStatement.setLong(4, sequence.sequenceId)
-                            reviseStatement.setString(5, Status.SILO_READY.name)
-                            if (reviseStatement.executeUpdate() == 1) {
-                                revisionResults.add(
-                                    RevisionResult(
-                                        sequence.sequenceId,
-                                        sequence.version,
-                                        emptyList(),
-                                    ),
-                                )
+                                if (reviseStatement.executeUpdate() == 1) {
+                                    revisionResults.add(
+                                        RevisionResult(
+                                            sequenceId,
+                                            version,
+                                            emptyList(),
+                                        ),
+                                    )
+                                }
                             }
                         }
                     }
@@ -621,6 +610,12 @@ data class FileData(
     val sequenceId: Long,
     val version: Int,
     val data: JsonNode,
+)
+
+data class RevisionResult(
+    val sequenceId: Long,
+    val version: Int,
+    val genericError: List<String> = emptyList(),
 )
 
 enum class Status {

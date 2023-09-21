@@ -1,13 +1,13 @@
 import { approveProcessedData } from '../../../src/components/UserSequenceList/approveProcessedData';
 import { expect, test, testuser } from '../../e2e.fixture';
-import { fakeProcessingPipeline, fakeUnprocessedDataQuery } from '../../util/preprocessingPipeline';
+import { fakeProcessingPipeline, queryUnprocessedData } from '../../util/preprocessingPipeline';
 
 test.describe('The user page', () => {
     test('should show sequences, their status and a link to reviews', async ({ submitPage, userPage }) => {
         await submitPage.goto();
         await submitPage.submit();
 
-        const sequences = await fakeUnprocessedDataQuery(2);
+        const sequences = await queryUnprocessedData(2);
         expect(sequences.length).toBe(2);
         const [firstId, secondId] = sequences.map((entry) => entry.sequenceId);
 

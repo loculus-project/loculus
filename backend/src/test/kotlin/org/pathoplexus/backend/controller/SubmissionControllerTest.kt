@@ -300,7 +300,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
     }
 
     @Test
-    fun `revise sequences that latest version is not SILO_READY`() {
+    fun `revise sequences where the latest version is not SILO_READY`() {
         submitInitialData()
 
         assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
@@ -425,7 +425,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
 
     private fun reviseSiloReadySequences(isSequenceIdMissing: Boolean): ResultActions {
         val metadataFileName = if (isSequenceIdMissing) "metadata.tsv" else "revised_metadata.tsv"
-        val sequenceFileName = if (isSequenceIdMissing) "sequences.fasta" else "revised_sequences.fasta"
+        val sequenceFileName = "sequences.fasta"
 
         val metadataFile = MockMultipartFile(
             "metadataFile",

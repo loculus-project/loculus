@@ -10,25 +10,13 @@ const sequencesPage = `/user/${username}/sequences`;
 ---
 
 <BaseLayout title={username}>
-    {
-        // TODO: until we have a user model, only 'testuser' is our user
-        username !== 'testuser' ? (
-            <div class='flex items-center'>
-                <BackButton marginRight={2} client:load />
-                <h1 class='subtitle'>No user found with name: {username}</h1>
-            </div>
-        ) : (
-            <div class='flex items-center'>
-                <div class='flex items-center'>
-                    <BackButton marginRight={2} client:load />
-                    <h1 class='title'>User {username}</h1>
-                </div>
-                <div>
-                    <a href={sequencesPage} class='text-xs ml-10'>
-                        Sequence Overview
-                    </a>
-                </div>
-            </div>
-        )
-    }
+    <div class='flex items-center'>
+        <div class='flex items-center'>
+            <BackButton marginRight={2} client:load />
+            <h1 class='title'>User {username}</h1>
+        </div>
+        <div>
+            <a href={sequencesPage} class='text-xs ml-10'> Sequence Overview</a>
+        </div>
+    </div>
 </BaseLayout>

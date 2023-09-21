@@ -149,7 +149,7 @@ class SubmissionController(
         databaseService.approveProcessedData(username, body.sequenceIds)
     }
 
-    @Operation(description = "Revise unprocessed data as a multipart/form-data")
+    @Operation(description = "Revise released data as a multipart/form-data")
     @PostMapping("/revise", consumes = ["multipart/form-data"])
     fun revise(
         @RequestParam username: String,

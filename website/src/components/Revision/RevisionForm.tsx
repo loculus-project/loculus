@@ -12,7 +12,7 @@ type RevisionFormProps = {
 type RevisionResult = {
     sequenceId: number;
     version: number;
-    genericError: string[];
+    genericErrors: string[];
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({ config }) => {
@@ -135,13 +135,13 @@ export const RevisionForm: FC<RevisionFormProps> = ({ config }) => {
                         <h2 className='text-lg font-bold'>Result of Revision</h2>
                         <ul className='list-disc list-inside'>
                             {responseSequenceHeaders.map((header) =>
-                                header.genericError.length === 0 ? (
+                                header.genericErrors.length === 0 ? (
                                     <li key={header.sequenceId}>
                                         Sequence {header.sequenceId} successful revised; new version is {header.version}
                                     </li>
                                 ) : (
                                     <li key={header.sequenceId}>
-                                        Sequence {header.sequenceId} failed to revise: {header.genericError.join(', ')}
+                                        Sequence {header.sequenceId} failed to revise: {header.genericErrors.join(', ')}
                                     </li>
                                 ),
                             )}

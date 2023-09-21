@@ -1,13 +1,13 @@
 import { approveProcessedData } from '../../../src/components/UserSequenceList/approveProcessedData.ts';
 import { expect, test, testuser } from '../../e2e.fixture';
-import { fakeProcessingPipeline, fakeUnprocessedDataQuery } from '../../util/preprocessingPipeline.ts';
+import { fakeProcessingPipeline, queryUnprocessedData } from '../../util/preprocessingPipeline.ts';
 
 test.describe('The revise page', () => {
     test('should upload files and revise existing data', async ({ revisePage, submitPage, userPage }) => {
         await submitPage.goto();
         await submitPage.submit();
 
-        const sequences = await fakeUnprocessedDataQuery(submitPage.getTestSequenceCount());
+        const sequences = await queryUnprocessedData(submitPage.getTestSequenceCount());
         expect(sequences.length).toBe(submitPage.getTestSequenceCount());
 
         for (const sequence of sequences) {
