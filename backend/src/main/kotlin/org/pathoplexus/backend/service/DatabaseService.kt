@@ -16,11 +16,11 @@ import org.ktorm.schema.datetime
 import org.ktorm.schema.int
 import org.ktorm.schema.long
 import org.ktorm.schema.varchar
-import org.ktorm.support.postgresql.insertReturning
-import org.pathoplexus.backend.config.DatabaseProperties
+import org.ktorm.support.postgresql.bulkInsertReturning
 import org.pathoplexus.backend.model.HeaderId
 import org.postgresql.util.PGobject
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -46,19 +46,11 @@ object Sequences : Table<Nothing>("sequences") {
 
 @Service
 class DatabaseService(
-    private val databaseProperties: DatabaseProperties,
     private val sequenceValidatorService: SequenceValidatorService,
     private val objectMapper: ObjectMapper,
+    private val pool: ComboPooledDataSource,
+    private val db: Database,
 ) {
-    private val pool: ComboPooledDataSource = ComboPooledDataSource().apply {
-        driverClass = databaseProperties.driver
-        jdbcUrl = databaseProperties.jdbcUrl
-        user = databaseProperties.username
-        password = databaseProperties.password
-    }
-
-    private val db = Database.connect(pool)
-
     private fun getConnection(): Connection {
         return pool.connection
     }
@@ -79,29 +71,23 @@ class DatabaseService(
         }
     }
 
-    //    @Transactional(rollbackFor = [RuntimeException::class])
+    @Transactional
     fun insertSubmissions(submitter: String, submittedData: List<Pair<String, String>>): List<HeaderId> {
-        return db.useTransaction {
-            var i = 0
-            submittedData.map { data ->
-                val insert = db.insertReturning(Sequences, Sequences.sequenceId to Sequences.version) {
-                    set(it.submitter, submitter)
-                    set(it.submittedAt, java.time.LocalDateTime.now())
-                    set(it.status, Status.RECEIVED.name)
-                    set(it.revoked, false)
-                    set(it.customId, data.first)
-                    set(it.originalData, objectMapper.readTree(data.second))
+        val result =
+            db.bulkInsertReturning(Sequences, Triple(Sequences.sequenceId, Sequences.version, Sequences.customId)) {
+                submittedData.forEach { data ->
+                    item {
+                        set(it.submitter, submitter)
+                        set(it.submittedAt, java.time.LocalDateTime.now())
+                        set(it.status, Status.RECEIVED.name)
+                        set(it.revoked, false)
+                        set(it.customId, data.first)
+                        set(it.originalData, objectMapper.readTree(data.second))
+                    }
                 }
-                println("Inserted ${insert.first} with version ${insert.second}")
-
-                i++
-                if (i > 4) {
-                    throw RuntimeException("ohoh")
-                }
-
-                HeaderId(insert.first!!, insert.second!!, data.first)
             }
-        }
+
+        return result.map { (sequenceId, version, customId) -> HeaderId(sequenceId!!, version!!, customId!!) }
     }
 
     fun streamUnprocessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
