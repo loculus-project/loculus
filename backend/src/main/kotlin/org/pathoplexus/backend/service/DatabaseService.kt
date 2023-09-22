@@ -6,8 +6,21 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.mchange.v2.c3p0.ComboPooledDataSource
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.dao.id.LongIdTable
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.StdOutSqlLogger
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.json.jsonb
+import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.pathoplexus.backend.config.DatabaseProperties
 import org.pathoplexus.backend.model.HeaderId
 import org.postgresql.util.PGobject
@@ -18,6 +31,28 @@ import java.io.InputStreamReader
 import java.io.OutputStream
 import java.sql.Connection
 import java.sql.PreparedStatement
+
+inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: String) = jsonb<T>(
+    columnName,
+    { value -> jacksonObjectMapper().writeValueAsString(value) },
+    { string -> jacksonObjectMapper().readValue(string) },
+)
+
+object SequencesTable : LongIdTable("sequences", "sequence_id") {
+    val version = long("version")
+    val customId = varchar("custom_id", 255)
+    val submitter = varchar("submitter", 255)
+    val submittedAt = datetime("submitted_at")
+    val startedProcessingAt = datetime("started_processing_at").nullable()
+    val finishedProcessingAt = datetime("finished_processing_at").nullable()
+    val status = varchar("status", 255)
+    val revoked = bool("revoked").default(false)
+    val originalData =
+        jacksonSerializableJsonb<JsonNode>("original_data").nullable()
+    val processedData = jacksonSerializableJsonb<JsonNode>("processed_data").nullable()
+    val errors = jacksonSerializableJsonb<JsonNode>("errors").nullable()
+    val warnings = jacksonSerializableJsonb<JsonNode>("warnings").nullable()
+}
 
 @Service
 class DatabaseService(
@@ -31,6 +66,11 @@ class DatabaseService(
         user = databaseProperties.username
         password = databaseProperties.password
     }
+
+    init {
+        Database.connect(pool)
+    }
+
 
     private fun getConnection(): Connection {
         return pool.connection
@@ -53,28 +93,24 @@ class DatabaseService(
     }
 
     fun insertSubmissions(submitter: String, submittedData: List<Pair<String, String>>): List<HeaderId> {
-        val headerIds = mutableListOf<HeaderId>()
-        val sql = """
-            insert into sequences (submitter, submitted_at, started_processing_at, status, custom_id, original_data)
-            values (?, now(), null, ?,?, ?::jsonb )
-            returning sequence_id, version;
-        """.trimIndent()
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, submitter)
-                statement.setString(2, Status.RECEIVED.name)
-                for (data in submittedData) {
-                    statement.setString(3, data.first)
-                    statement.setString(4, data.second)
-                    statement.executeQuery().use { resultSet ->
-                        resultSet.next()
-                        headerIds.add(
-                            HeaderId(resultSet.getLong("sequence_id"), resultSet.getInt("version"), data.first),
-                        )
-                    }
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val headerIds = transaction {
+            addLogger(StdOutSqlLogger)
+            submittedData.map { data ->
+                val insert = SequencesTable.insert {
+                    it[version] = 1
+                    it[SequencesTable.submitter] = submitter
+                    it[submittedAt] = now
+                    it[version] = 1
+                    it[status] = Status.RECEIVED.name
+                    it[customId] = data.first
+                    it[originalData] = objectMapper.readTree(data.second)
                 }
+                HeaderId(insert[SequencesTable.id].value, 1, data.first)
             }
         }
+
         return headerIds
     }
 
