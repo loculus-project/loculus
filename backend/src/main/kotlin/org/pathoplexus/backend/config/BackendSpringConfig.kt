@@ -13,6 +13,7 @@ import org.springframework.core.io.ResourceLoader
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 
 @Configuration
+//@EnableTransactionManagement
 class BackendSpringConfig(private val objectMapper: ObjectMapper, private val resourceLoader: ResourceLoader) {
 
     @Bean

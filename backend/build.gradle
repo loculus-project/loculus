@@ -32,6 +32,12 @@ dependencies {
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
 	implementation("org.flywaydb:flyway-core")
 	implementation ("com.zaxxer:HikariCP:5.0.1")
+    implementation "org.ktorm:ktorm-core:3.6.0"
+    implementation "org.ktorm:ktorm-jackson:3.6.0"
+    implementation "org.ktorm:ktorm-support-postgresql:3.6.0"
+//    implementation "org.springframework:spring-jdbc"
+//    implementation "org.springframework:spring-tx"
+
 	testImplementation('org.springframework.boot:spring-boot-starter-test'){
 		exclude group: 'org.mockito'
 	}

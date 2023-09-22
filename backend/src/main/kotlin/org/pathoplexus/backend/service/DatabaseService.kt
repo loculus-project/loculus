@@ -8,6 +8,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.mchange.v2.c3p0.ComboPooledDataSource
+import org.ktorm.database.Database
+import org.ktorm.jackson.json
+import org.ktorm.schema.Table
+import org.ktorm.schema.boolean
+import org.ktorm.schema.datetime
+import org.ktorm.schema.int
+import org.ktorm.schema.long
+import org.ktorm.schema.varchar
+import org.ktorm.support.postgresql.insertReturning
 import org.pathoplexus.backend.config.DatabaseProperties
 import org.pathoplexus.backend.model.HeaderId
 import org.postgresql.util.PGobject
@@ -18,6 +27,22 @@ import java.io.InputStreamReader
 import java.io.OutputStream
 import java.sql.Connection
 import java.sql.PreparedStatement
+
+object Sequences : Table<Nothing>("sequences") {
+    val sequenceId = long("sequence_id").primaryKey()
+    val version = int("version")
+    val customId = varchar("custom_id")
+    val submitter = varchar("submitter")
+    val submittedAt = datetime("submitted_at")
+    val startedProcessingAt = datetime("started_processing_at")
+    val finishedProcessingAt = datetime("finished_processing_at")
+    val status = varchar("status")
+    val revoked = boolean("revoked")
+    val originalData = json<JsonNode>("original_data")
+    val processedData = json<JsonNode>("processed_data")
+    val errors = json<JsonNode>("errors")
+    val warnings = json<JsonNode>("warnings")
+}
 
 @Service
 class DatabaseService(
@@ -31,6 +56,8 @@ class DatabaseService(
         user = databaseProperties.username
         password = databaseProperties.password
     }
+
+    private val db = Database.connect(pool)
 
     private fun getConnection(): Connection {
         return pool.connection
@@ -52,30 +79,29 @@ class DatabaseService(
         }
     }
 
+    //    @Transactional(rollbackFor = [RuntimeException::class])
     fun insertSubmissions(submitter: String, submittedData: List<Pair<String, String>>): List<HeaderId> {
-        val headerIds = mutableListOf<HeaderId>()
-        val sql = """
-            insert into sequences (submitter, submitted_at, started_processing_at, status, custom_id, original_data)
-            values (?, now(), null, ?,?, ?::jsonb )
-            returning sequence_id, version;
-        """.trimIndent()
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, submitter)
-                statement.setString(2, Status.RECEIVED.name)
-                for (data in submittedData) {
-                    statement.setString(3, data.first)
-                    statement.setString(4, data.second)
-                    statement.executeQuery().use { resultSet ->
-                        resultSet.next()
-                        headerIds.add(
-                            HeaderId(resultSet.getLong("sequence_id"), resultSet.getInt("version"), data.first),
-                        )
-                    }
+        return db.useTransaction {
+            var i = 0
+            submittedData.map { data ->
+                val insert = db.insertReturning(Sequences, Sequences.sequenceId to Sequences.version) {
+                    set(it.submitter, submitter)
+                    set(it.submittedAt, java.time.LocalDateTime.now())
+                    set(it.status, Status.RECEIVED.name)
+                    set(it.revoked, false)
+                    set(it.customId, data.first)
+                    set(it.originalData, objectMapper.readTree(data.second))
                 }
+                println("Inserted ${insert.first} with version ${insert.second}")
+
+                i++
+                if (i > 4) {
+                    throw RuntimeException("ohoh")
+                }
+
+                HeaderId(insert.first!!, insert.second!!, data.first)
             }
         }
-        return headerIds
     }
 
     fun streamUnprocessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {

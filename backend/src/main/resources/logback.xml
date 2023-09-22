@@ -24,4 +24,7 @@
         <appender-ref ref="RollingFile"/>
     </logger>
 
+    <logger name="org.springframework.transaction" level="trace" />
+    <logger name="org.springframework.jdbc" level="trace" />
+
 </configuration>
