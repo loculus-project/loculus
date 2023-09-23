@@ -39,7 +39,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
 
     // This is the number of sequences and a list of sequenceIds in the test data, i.e. metadata.tsv and sequences.fasta
     private val numberOfSequences = 10
-    private val allSequenceIds = (1L..10).toList()
+    private val allSequenceIds = (1L..numberOfSequences).toList()
     private val firstSequence = allSequenceIds[0]
 
     @BeforeEach
@@ -397,9 +397,9 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
         @JvmStatic
         @DynamicPropertySource
         fun setDataSourceProperties(registry: DynamicPropertyRegistry) {
-            registry.add("database.jdbcUrl", postgres::getJdbcUrl)
-            registry.add("database.username", postgres::getUsername)
-            registry.add("database.password", postgres::getPassword)
+            registry.add("spring.datasource.url", postgres::getJdbcUrl)
+            registry.add("spring.datasource.username", postgres::getUsername)
+            registry.add("spring.datasource.password", postgres::getPassword)
         }
 
         @AfterAll

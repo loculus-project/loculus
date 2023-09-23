@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.mchange.v2.c3p0.ComboPooledDataSource
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -17,9 +16,7 @@ import org.jetbrains.exposed.dao.LongEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.addLogger
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
@@ -27,18 +24,18 @@ import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.wrapAsExpression
-import org.pathoplexus.backend.config.DatabaseProperties
 import org.pathoplexus.backend.model.HeaderId
 import org.postgresql.util.PGobject
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
 import java.sql.Connection
 import java.sql.PreparedStatement
+import javax.sql.DataSource
 
 private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
@@ -82,22 +79,15 @@ class SequenceEntity(id: EntityID<Long>) : LongEntity(id) {
 }
 
 @Service
+@Transactional
 class DatabaseService(
-    private val databaseProperties: DatabaseProperties,
     private val sequenceValidatorService: SequenceValidatorService,
     private val objectMapper: ObjectMapper,
+    private val pool: DataSource,
 ) {
-    private val pool: ComboPooledDataSource = ComboPooledDataSource().apply {
-        driverClass = databaseProperties.driver
-        jdbcUrl = databaseProperties.jdbcUrl
-        user = databaseProperties.username
-        password = databaseProperties.password
-    }
-
     init {
         Database.connect(pool)
     }
-
 
     private fun getConnection(): Connection {
         return pool.connection
@@ -122,23 +112,18 @@ class DatabaseService(
     fun insertSubmissions(submitter: String, submittedData: List<Pair<String, String>>): List<HeaderId> {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val headerIds = transaction {
-            addLogger(StdOutSqlLogger)
-            submittedData.map { data ->
-                val insert = SequencesTable.insert {
-                    it[version] = 1
-                    it[SequencesTable.submitter] = submitter
-                    it[submittedAt] = now
-                    it[version] = 1
-                    it[status] = Status.RECEIVED.name
-                    it[customId] = data.first
-                    it[originalData] = objectMapper.readTree(data.second)
-                }
-                HeaderId(insert[SequencesTable.id].value, 1, data.first)
+        return submittedData.map { data ->
+            val insert = SequencesTable.insert {
+                it[version] = 1
+                it[SequencesTable.submitter] = submitter
+                it[submittedAt] = now
+                it[version] = 1
+                it[status] = Status.RECEIVED.name
+                it[customId] = data.first
+                it[originalData] = objectMapper.readTree(data.second)
             }
+            HeaderId(insert[SequencesTable.id].value, 1, data.first)
         }
-
-        return headerIds
     }
 
     fun streamUnprocessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
@@ -150,28 +135,24 @@ class DatabaseService(
                 .select { subQueryTable[SequencesTable.id] eq SequencesTable.id },
         )
 
-        transaction {
-            addLogger(StdOutSqlLogger)
-
-            SequenceEntity.find {
-                (SequencesTable.status eq Status.RECEIVED.name)
-                    .and((SequencesTable.version eq maxVersionQuery))
-            }
-                .limit(numberOfSequences)
-                .forEach { sequenceEntity ->
-                    sequenceEntity.status = Status.PROCESSING.name
-
-                    val sequence = Sequence(
-                        sequenceEntity.id.value,
-                        sequenceEntity.version.toInt(),
-                        sequenceEntity.originalData!!,
-                    )
-                    val json = objectMapper.writeValueAsString(sequence)
-                    outputStream.write(json.toByteArray())
-                    outputStream.write('\n'.code)
-                    outputStream.flush()
-                }
+        SequenceEntity.find {
+            (SequencesTable.status eq Status.RECEIVED.name)
+                .and((SequencesTable.version eq maxVersionQuery))
         }
+            .limit(numberOfSequences)
+            .forEach { sequenceEntity ->
+                sequenceEntity.status = Status.PROCESSING.name
+
+                val sequence = Sequence(
+                    sequenceEntity.id.value,
+                    sequenceEntity.version.toInt(),
+                    sequenceEntity.originalData!!,
+                )
+                val json = objectMapper.writeValueAsString(sequence)
+                outputStream.write(json.toByteArray())
+                outputStream.write('\n'.code)
+                outputStream.flush()
+            }
     }
 
     fun updateProcessedData(inputStream: InputStream): List<ValidationResult> {
