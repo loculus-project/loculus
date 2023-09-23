@@ -12,15 +12,23 @@ import com.mchange.v2.c3p0.ComboPooledDataSource
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.exposed.dao.LongEntity
+import org.jetbrains.exposed.dao.LongEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.LongIdTable
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.StdOutSqlLogger
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.alias
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.config.DatabaseProperties
 import org.pathoplexus.backend.model.HeaderId
 import org.postgresql.util.PGobject
@@ -32,10 +40,12 @@ import java.io.OutputStream
 import java.sql.Connection
 import java.sql.PreparedStatement
 
-inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: String) = jsonb<T>(
+private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
+
+private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: String) = jsonb<T>(
     columnName,
-    { value -> jacksonObjectMapper().writeValueAsString(value) },
-    { string -> jacksonObjectMapper().readValue(string) },
+    { value -> jacksonObjectMapper.writeValueAsString(value) },
+    { string -> jacksonObjectMapper.readValue(string) },
 )
 
 object SequencesTable : LongIdTable("sequences", "sequence_id") {
@@ -52,6 +62,23 @@ object SequencesTable : LongIdTable("sequences", "sequence_id") {
     val processedData = jacksonSerializableJsonb<JsonNode>("processed_data").nullable()
     val errors = jacksonSerializableJsonb<JsonNode>("errors").nullable()
     val warnings = jacksonSerializableJsonb<JsonNode>("warnings").nullable()
+}
+
+class SequenceEntity(id: EntityID<Long>) : LongEntity(id) {
+    companion object : LongEntityClass<SequenceEntity>(SequencesTable)
+
+    var version by SequencesTable.version
+    var customId by SequencesTable.customId
+    var submitter by SequencesTable.submitter
+    var submittedAt by SequencesTable.submittedAt
+    var startedProcessingAt by SequencesTable.startedProcessingAt
+    var finishedProcessingAt by SequencesTable.finishedProcessingAt
+    var status by SequencesTable.status
+    var revoked by SequencesTable.revoked
+    var originalData by SequencesTable.originalData
+    var processedData by SequencesTable.processedData
+    var errors by SequencesTable.errors
+    var warnings by SequencesTable.warnings
 }
 
 @Service
@@ -115,40 +142,35 @@ class DatabaseService(
     }
 
     fun streamUnprocessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
-        val sql = """
-        update sequences set status = ?, started_processing_at = now()
-        where sequence_id in (
-            select sequence_id from sequences 
-            where status = ? limit ?            
-        )
-        and version = (
-            select max(version)
-            from sequences s
-            where s.sequence_id = sequences.sequence_id
-        )
-        returning sequence_id, version, original_data
-        """.trimIndent()
+        val subQueryTable = SequencesTable.alias("subQueryTable")
 
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, Status.PROCESSING.name)
-                statement.setString(2, Status.RECEIVED.name)
-                statement.setInt(3, numberOfSequences)
-                val resultSet = statement.executeQuery()
-                resultSet.use {
-                    while (resultSet.next()) {
-                        val sequence = Sequence(
-                            resultSet.getLong("sequence_id"),
-                            resultSet.getInt("version"),
-                            objectMapper.readTree(resultSet.getString("original_data")),
-                        )
-                        val json = objectMapper.writeValueAsString(sequence)
-                        outputStream.write(json.toByteArray())
-                        outputStream.write('\n'.code)
-                        outputStream.flush()
-                    }
-                }
+        val maxVersionQuery = wrapAsExpression<Long>(
+            subQueryTable
+                .slice(subQueryTable[SequencesTable.version].max())
+                .select { subQueryTable[SequencesTable.id] eq SequencesTable.id },
+        )
+
+        transaction {
+            addLogger(StdOutSqlLogger)
+
+            SequenceEntity.find {
+                (SequencesTable.status eq Status.RECEIVED.name)
+                    .and((SequencesTable.version eq maxVersionQuery))
             }
+                .limit(numberOfSequences)
+                .forEach { sequenceEntity ->
+                    sequenceEntity.status = Status.PROCESSING.name
+
+                    val sequence = Sequence(
+                        sequenceEntity.id.value,
+                        sequenceEntity.version.toInt(),
+                        sequenceEntity.originalData!!,
+                    )
+                    val json = objectMapper.writeValueAsString(sequence)
+                    outputStream.write(json.toByteArray())
+                    outputStream.write('\n'.code)
+                    outputStream.flush()
+                }
         }
     }
 
