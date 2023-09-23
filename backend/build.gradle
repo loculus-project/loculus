@@ -32,13 +32,11 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0"
     implementation "org.flywaydb:flyway-core"
     implementation "com.zaxxer:HikariCP:5.0.1"
-    implementation "org.jetbrains.exposed:exposed-core:$exposedVersion"
-    implementation "org.jetbrains.exposed:exposed-dao:$exposedVersion"
+    implementation "org.jetbrains.exposed:exposed-spring-boot-starter:$exposedVersion"
     implementation "org.jetbrains.exposed:exposed-jdbc:$exposedVersion"
     implementation "org.jetbrains.exposed:exposed-json:$exposedVersion"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.4.1"
-//    implementation("org.jetbrains.exposed:exposed-spring-boot-starter:$exposedVersion")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"

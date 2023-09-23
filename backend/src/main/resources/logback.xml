@@ -20,6 +20,8 @@
         <appender-ref ref="RollingFile"/>
     </root>
 
+    <logger name="Exposed" level="debug" />
+
     <logger name="org.springframework.web.filter.CommonsRequestLoggingFilter" level="debug" additivity="false">
         <appender-ref ref="RollingFile"/>
     </logger>
