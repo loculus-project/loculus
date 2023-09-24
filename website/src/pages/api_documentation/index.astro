@@ -1,8 +1,11 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const backendurl = import.meta.env.BACKEND_URL;
 ---
 
 <BaseLayout title='Api Docs'>
     <h1 class='text-sky-500 font-bold text-xl'>Api documentation</h1>
     <p class='text-gray-500'>This is the api documentation</p>
+    <iframe src={backendurl + '/swagger-ui/index.html'} class='w-full h-screen'></iframe>
 </BaseLayout>
