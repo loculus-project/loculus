@@ -13,6 +13,45 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequencesFile, setSequencesFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    const createTempFile = (content: BlobPart, mimeType: any, fileName: string) => {
+        const blob = new Blob([content], { type: mimeType });
+        const file = new File([blob], fileName, { type: mimeType });
+        return file;
+    };
+    const handleLoadSampleData = async () => {
+        const sampleMetadataContent =
+            targetUrl.split('/').pop() === `submit`
+                ? `
+            header	date	region	country	division	host
+            custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+            custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+            custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+            custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`
+                : `
+            sequenceId header	date	region	country	division	host
+            1 custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+            2 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+            3 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+            4 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
+        const sampleSequenceContent = `
+            >custom0
+            ACTG
+            >custom1
+            ACTG
+            >custom2
+            ACTG
+            >custom3
+            ACTG`;
+
+        const metadataFile = createTempFile(sampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
+        const sequenceFile = createTempFile(sampleSequenceContent, 'application/octet-stream', 'sequences.fasta');
+
+        setUsername('testuser');
+        setMetadataFile(metadataFile);
+        setSequencesFile(sequenceFile);
+    };
+
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
@@ -92,10 +131,15 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
                     shrink: true,
                 }}
             />
+            <div className='flex gap-4'>
+                <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadSampleData}>
+                    Load Sample Data
+                </button>
 
-            <button className='px-4 py-2 btn normal-case w-1/5' disabled={isLoading} type='submit'>
-                {isLoading ? <CircularProgress size={20} color='primary' /> : 'Submit'}
-            </button>
+                <button className='px-4 py-2 btn normal-case w-1/5' disabled={isLoading} type='submit'>
+                    {isLoading ? <CircularProgress size={20} color='primary' /> : 'Submit'}
+                </button>
+            </div>
         </form>
     );
 };
