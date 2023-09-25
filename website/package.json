@@ -18,7 +18,7 @@
   "dependencies": {
     "@astrojs/check": "^0.2.0",
     "@astrojs/netlify": "^3.0.1",
-    "@astrojs/node": "^6.0.0",
+    "@astrojs/node": "^6.0.1",
     "@astrojs/react": "^3.0.2",
     "@astrojs/tailwind": "^5.0.0",
     "@emotion/styled": "^11.11.0",
