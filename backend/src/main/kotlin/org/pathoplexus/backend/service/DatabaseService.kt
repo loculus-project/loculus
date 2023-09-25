@@ -11,11 +11,9 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import org.jetbrains.exposed.dao.LongEntity
-import org.jetbrains.exposed.dao.LongEntityClass
-import org.jetbrains.exposed.dao.id.EntityID
-import org.jetbrains.exposed.dao.id.LongIdTable
+import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
@@ -24,6 +22,7 @@ import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.model.HeaderId
 import org.postgresql.util.PGobject
@@ -37,6 +36,8 @@ import java.sql.Connection
 import java.sql.PreparedStatement
 import javax.sql.DataSource
 
+private val log = KotlinLogging.logger { }
+
 private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
 private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: String) = jsonb<T>(
@@ -45,7 +46,8 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
-object SequencesTable : LongIdTable("sequences", "sequence_id") {
+object SequencesTable : Table("sequences") {
+    val sequenceId = long("sequence_id").autoIncrement()
     val version = long("version")
     val customId = varchar("custom_id", 255)
     val submitter = varchar("submitter", 255)
@@ -59,23 +61,8 @@ object SequencesTable : LongIdTable("sequences", "sequence_id") {
     val processedData = jacksonSerializableJsonb<JsonNode>("processed_data").nullable()
     val errors = jacksonSerializableJsonb<JsonNode>("errors").nullable()
     val warnings = jacksonSerializableJsonb<JsonNode>("warnings").nullable()
-}
 
-class SequenceEntity(id: EntityID<Long>) : LongEntity(id) {
-    companion object : LongEntityClass<SequenceEntity>(SequencesTable)
-
-    var version by SequencesTable.version
-    var customId by SequencesTable.customId
-    var submitter by SequencesTable.submitter
-    var submittedAt by SequencesTable.submittedAt
-    var startedProcessingAt by SequencesTable.startedProcessingAt
-    var finishedProcessingAt by SequencesTable.finishedProcessingAt
-    var status by SequencesTable.status
-    var revoked by SequencesTable.revoked
-    var originalData by SequencesTable.originalData
-    var processedData by SequencesTable.processedData
-    var errors by SequencesTable.errors
-    var warnings by SequencesTable.warnings
+    override val primaryKey = PrimaryKey(sequenceId, version)
 }
 
 @Service
@@ -110,11 +97,12 @@ class DatabaseService(
     }
 
     fun insertSubmissions(submitter: String, submittedData: List<Pair<String, String>>): List<HeaderId> {
+        log.info { "submitting ${submittedData.size} new sequences by $submitter" }
+
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         return submittedData.map { data ->
             val insert = SequencesTable.insert {
-                it[version] = 1
                 it[SequencesTable.submitter] = submitter
                 it[submittedAt] = now
                 it[version] = 1
@@ -122,37 +110,61 @@ class DatabaseService(
                 it[customId] = data.first
                 it[originalData] = objectMapper.readTree(data.second)
             }
-            HeaderId(insert[SequencesTable.id].value, 1, data.first)
+            HeaderId(insert[SequencesTable.sequenceId], 1, data.first)
         }
     }
 
     fun streamUnprocessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
-        val subQueryTable = SequencesTable.alias("subQueryTable")
-
-        val maxVersionQuery = wrapAsExpression<Long>(
-            subQueryTable
-                .slice(subQueryTable[SequencesTable.version].max())
-                .select { subQueryTable[SequencesTable.id] eq SequencesTable.id },
-        )
-
-        SequenceEntity.find {
-            (SequencesTable.status eq Status.RECEIVED.name)
-                .and((SequencesTable.version eq maxVersionQuery))
-        }
-            .limit(numberOfSequences)
-            .forEach { sequenceEntity ->
-                sequenceEntity.status = Status.PROCESSING.name
-
-                val sequence = Sequence(
-                    sequenceEntity.id.value,
-                    sequenceEntity.version.toInt(),
-                    sequenceEntity.originalData!!,
+        val sequencesData = selectMaxVersionsOfReceivedSequences(numberOfSequences)
+            .map {
+                Sequence(
+                    it[SequencesTable.sequenceId],
+                    it[SequencesTable.version],
+                    it[SequencesTable.originalData]!!,
                 )
+            }
+
+        log.info { "streaming ${sequencesData.size} of $numberOfSequences requested unprocessed submissions" }
+
+        updateStatus(sequencesData)
+
+        sequencesData
+            .forEach { sequence ->
                 val json = objectMapper.writeValueAsString(sequence)
                 outputStream.write(json.toByteArray())
                 outputStream.write('\n'.code)
                 outputStream.flush()
             }
+    }
+
+    private fun selectMaxVersionsOfReceivedSequences(numberOfSequences: Int): Query {
+        val subQueryTable = SequencesTable.alias("subQueryTable")
+        val maxVersionQuery = wrapAsExpression<Long>(
+            subQueryTable
+                .slice(subQueryTable[SequencesTable.version].max())
+                .select { subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId },
+        )
+
+        return SequencesTable
+            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.originalData)
+            .select(
+                where = {
+                    (SequencesTable.status eq Status.RECEIVED.name)
+                        .and((SequencesTable.version eq maxVersionQuery))
+                },
+            )
+            .limit(numberOfSequences)
+    }
+
+    private fun updateStatus(sequences: List<Sequence>) {
+        val sequenceVersions = sequences.map { it.sequenceId to it.version }
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+        SequencesTable.update(
+            where = { Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions },
+        ) {
+            it[status] = Status.PROCESSING.name
+            it[startedProcessingAt] = now
+        }
     }
 
     fun updateProcessedData(inputStream: InputStream): List<ValidationResult> {
@@ -281,7 +293,7 @@ class DatabaseService(
         )
 
         updateStatement.setLong(5, sequence.sequenceId)
-        updateStatement.setInt(6, sequence.version)
+        updateStatement.setLong(6, sequence.version)
         updateStatement.executeUpdate()
     }
 
@@ -374,7 +386,7 @@ class DatabaseService(
                     while (rs.next()) {
                         val sequence = Sequence(
                             rs.getLong("sequence_id"),
-                            rs.getInt("version"),
+                            rs.getLong("version"),
                             objectMapper.readTree(rs.getString("processed_data")),
                             objectMapper.readTree(rs.getString("errors")),
                             objectMapper.readTree(rs.getString("warnings")),
@@ -568,7 +580,7 @@ class DatabaseService(
 
 data class Sequence(
     val sequenceId: Long,
-    val version: Int,
+    val version: Long,
     val data: JsonNode,
     val errors: JsonNode? = null,
     val warnings: JsonNode? = null,
