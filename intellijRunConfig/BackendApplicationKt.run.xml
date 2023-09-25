@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="BackendApplicationKt" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
     <envs>
-      <env name="SPRING_APPLICATION_JSON" value="{&quot;database&quot;:{&quot;jdbcUrl&quot;:&quot;jdbc:postgresql://0.0.0.0:5432/pathoplexus&quot;,&quot;username&quot;:&quot;postgres&quot;,&quot;password&quot;:&quot;unsecure&quot;}}" />
+      <env name="SPRING_APPLICATION_JSON" value="{&quot;spring&quot;:{&quot;datasource&quot;:{&quot;url&quot;:&quot;jdbc:postgresql://0.0.0.0:5432/pathoplexus&quot;, &quot;username&quot;:&quot;postgres&quot;, &quot;password&quot;:&quot;unsecure&quot;}}}" />
     </envs>
     <module name="backend.main" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="org.pathoplexus.backend.BackendApplicationKt" />
