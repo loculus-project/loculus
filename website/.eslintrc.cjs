@@ -41,6 +41,14 @@ module.exports = {
         // "astro/no-set-html-directive": "error"
       },
     },
+    {
+        // Prettier is stubborn, need to accept its rules in case of conflict
+        // See https://github.com/pathoplexus/pathoplexus/pull/283#issuecomment-1733872357
+        files: ['*'],
+        rules: {
+            'react/self-closing-comp': 'off',
+        },
+    },
   ],
   rules: {
     '@typescript-eslint/adjacent-overload-signatures': 'error',
