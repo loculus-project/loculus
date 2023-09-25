@@ -23,6 +23,44 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
         setErrorMessage('');
         setIsErrorOpen(false);
     };
+    const createTempFile = (content: BlobPart, mimeType: any, fileName: string) => {
+        // Create a Blob from the content
+        const blob = new Blob([content], { type: mimeType });
+
+        // Optionally, you can create a File object, but note that
+        // this won't give you a file path, just a file-like object
+        const file = new File([blob], fileName, { type: mimeType });
+
+        // Return the temporary URL and the File object
+        return file;
+    };
+    const handleLoadSampleData = async () => {
+        const sampleMetadataContent = `
+            header	date	region	country	division	host
+            custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+            custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+            custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+            custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+            custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
+        const sampleSequenceContent = `
+            >custom0
+            ACTG
+            >custom1
+            ACTG
+            >custom2
+            ACTG
+            >custom3
+            ACTG`;
+
+        const metadataFile = createTempFile(sampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
+        const sequenceFile = createTempFile(sampleSequenceContent, 'application/octet-stream', 'sequences.fasta');
+        document.getElementById('real-file')?.click();
+        // Set sample data here
+        setUsername('testuser');
+        setMetadataFile(metadataFile);
+        setSequencesFile(sequenceFile);
+        // setSequencesFile(sampleSequencesFile); // Assuming you have a way to set a sample file
+    };
 
     return (
         <div className='flex flex-col items-center'>
@@ -40,7 +78,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
                         <ul className='list-disc list-inside'>
                             {responseSequenceHeaders.map((header) => (
                                 <li key={header.sequenceId}>
-                                    {header.sequenceId}(v{header.version}) {header.customId}
+                                    {header.sequenceId}.{header.version}: {header.customId}
                                 </li>
                             ))}
                         </ul>
