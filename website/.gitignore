@@ -19,3 +19,5 @@ pnpm-debug.log*
 log/
 # Currently set as LOG_DIR in .env
 undefined/
+
+justfile
