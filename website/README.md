@@ -44,3 +44,17 @@ To pull the latest version of the image, run:
 ```bash
 docker pull ghcr.io/pathoplexus/website:latest
 ```
+
+## Development environment
+
+### Editor
+
+- [Astro](https://docs.astro.build/en/editor-setup/)
+
+### Setup
+
+- Install node version from `.nvmrc` with `nvm install`
+
+### General tips
+
+- Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
