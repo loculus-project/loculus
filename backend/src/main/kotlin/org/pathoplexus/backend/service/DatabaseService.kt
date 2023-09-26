@@ -25,7 +25,6 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.model.HeaderId
-import org.postgresql.util.PGobject
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
@@ -33,7 +32,6 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.OutputStream
 import java.sql.Connection
-import java.sql.PreparedStatement
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger { }
@@ -172,138 +170,66 @@ class DatabaseService(
 
         val validationResults = mutableListOf<ValidationResult>()
 
-        val checkIdSql = """
-        select sequence_id
-        from sequences 
-        where sequence_id = ?
-        """.trimIndent()
+        reader.lineSequence().forEach { line ->
+            val sequence = objectMapper.readValue<SequenceVersion>(line)
+            val validationResult = sequenceValidatorService.validateSequence(sequence)
 
-        val checkStatusSql = """
-        select sequence_id
-        from sequences 
-        where sequence_id = ?
-        and status = ?
-        """.trimIndent()
-
-        val updateSql = """
-        update sequences
-        set status = ?, finished_processing_at = now(), processed_data = ?, errors = ?, warnings = ?
-        where sequence_id = ? 
-        and version = ?
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(updateSql).use { updateStatement ->
-                conn.prepareStatement(checkStatusSql).use { checkIfStatusExistsStatement ->
-                    conn.prepareStatement(checkIdSql).use { checkIfIdExistsStatement ->
-                        reader.lineSequence().forEach { line ->
-                            val sequenceVersion = objectMapper.readValue<SequenceVersion>(line)
-
-                            if (!idExists(sequenceVersion.sequenceId, checkIfIdExistsStatement, validationResults)) {
-                                return@forEach
-                            }
-
-                            if (!statusExists(
-                                    sequenceVersion.sequenceId,
-                                    checkIfStatusExistsStatement,
-                                    validationResults,
-                                )
-                            ) {
-                                return@forEach
-                            }
-
-                            val validationResult = sequenceValidatorService.validateSequence(sequenceVersion)
-                            if (sequenceValidatorService.isValidResult(validationResult)) {
-                                executeUpdateProcessedData(sequenceVersion, updateStatement)
-                            } else {
-                                validationResults.add(validationResult)
-                            }
-                        }
-                        reader.close()
-                    }
+            if (sequenceValidatorService.isValidResult(validationResult)) {
+                val numInserted = insertProcessedData(sequence)
+                if (numInserted != 1) {
+                    validationResults.add(
+                        ValidationResult(
+                            sequence.sequenceId,
+                            emptyList(),
+                            emptyList(),
+                            emptyList(),
+                            listOf(insertProcessedDataError(sequence)),
+                        ),
+                    )
                 }
+            } else {
+                validationResults.add(validationResult)
             }
         }
 
         return validationResults
     }
 
-    private fun statusExists(
-        sequenceId: Long,
-        checkIfStatusExistsStatement: PreparedStatement,
-        validationResults: MutableList<ValidationResult>,
-    ): Boolean {
-        checkIfStatusExistsStatement.setLong(1, sequenceId)
-        checkIfStatusExistsStatement.setString(2, Status.PROCESSING.name)
-        val statusIsProcessing = checkIfStatusExistsStatement.executeQuery().next()
-        if (!statusIsProcessing) {
-            validationResults.add(
-                ValidationResult(
-                    sequenceId,
-                    emptyList(),
-                    emptyList(),
-                    emptyList(),
-                    listOf("SequenceId does exist, but is not in processing state"),
-                ),
-            )
-        }
-        return statusIsProcessing
-    }
-
-    private fun idExists(
-        sequenceId: Long,
-        checkIfIdExistsStatement: PreparedStatement,
-        validationResults: MutableList<ValidationResult>,
-    ): Boolean {
-        checkIfIdExistsStatement.setLong(1, sequenceId)
-        val sequenceIdExists = checkIfIdExistsStatement.executeQuery().next()
-        if (!sequenceIdExists) {
-            validationResults.add(
-                ValidationResult(
-                    sequenceId,
-                    emptyList(),
-                    emptyList(),
-                    emptyList(),
-                    listOf("SequenceId does not exist"),
-                ),
-            )
-        }
-        return sequenceIdExists
-    }
-
-    private fun executeUpdateProcessedData(sequenceVersion: SequenceVersion, updateStatement: PreparedStatement) {
-        val hasErrors = sequenceVersion.errors != null &&
-            sequenceVersion.errors.isArray &&
-            sequenceVersion.errors.size() > 0
-
-        if (hasErrors) {
-            updateStatement.setString(1, Status.NEEDS_REVIEW.name)
+    private fun insertProcessedData(sequenceVersion: SequenceVersion): Int {
+        val newStatus = if (sequenceVersion.errors != null && sequenceVersion.errors.isArray && sequenceVersion.errors.size() > 0) {
+            Status.NEEDS_REVIEW.name
         } else {
-            updateStatement.setString(1, Status.PROCESSED.name)
+            Status.PROCESSED.name
         }
 
-        updateStatement.setObject(
-            2,
-            PGobject().apply {
-                type = "jsonb"; value = sequenceVersion.data.toString()
+        return SequencesTable.update(
+            where = {
+                (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
+                    (SequencesTable.version eq sequenceVersion.version) and
+                    (SequencesTable.status eq Status.PROCESSING.name)
             },
-        )
-        updateStatement.setObject(
-            3,
-            PGobject().apply {
-                type = "jsonb"; value = sequenceVersion.errors.toString()
-            },
-        )
-        updateStatement.setObject(
-            4,
-            PGobject().apply {
-                type = "jsonb"; value = sequenceVersion.warnings.toString()
-            },
-        )
+        ) {
+            it[status] = newStatus
+            it[processedData] = sequenceVersion.data
+            it[errors] = sequenceVersion.errors
+            it[warnings] = sequenceVersion.warnings
+        }
+    }
 
-        updateStatement.setLong(5, sequenceVersion.sequenceId)
-        updateStatement.setLong(6, sequenceVersion.version)
-        updateStatement.executeUpdate()
+    private fun insertProcessedDataError(sequenceVersion: SequenceVersion): String {
+        val selectedSequences = SequencesTable.select(
+            where = {
+                (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
+                    (SequencesTable.version eq sequenceVersion.version)
+            },
+        )
+        if (selectedSequences.count().toInt() == 0) {
+            return "SequenceId does not exist"
+        }
+        if (selectedSequences.any { it[SequencesTable.status] != Status.PROCESSING.name }) {
+            return "SequenceId is not in processing state"
+        }
+        return "Unknown error"
     }
 
     fun approveProcessedData(submitter: String, sequenceIds: List<Long>) {
