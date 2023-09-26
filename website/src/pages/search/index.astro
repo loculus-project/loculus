@@ -4,12 +4,13 @@ import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { Pagination } from '../../components/SearchPage/Pagination';
 import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
-import { getConfig } from '../../config';
+import { getConfig, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { logger } from '../../logger';
 import type { Filter } from '../../types';
 
 const config = getConfig();
+const runtimeConfig = getRuntimeConfig();
 const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
 };
@@ -38,7 +39,7 @@ if (data.status === SearchStatus.ERROR) {
         }
 
         <div class='md:w-72'>
-            <SearchForm metadataSettings={metadataSettings} config={config} client:only='react' />
+            <SearchForm metadataSettings={metadataSettings} runtimeConfig={runtimeConfig} client:only='react' />
         </div>
 
         <div class='flex-1'>

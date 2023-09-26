@@ -2,52 +2,41 @@ import fs from 'fs';
 import path from 'path';
 
 import { clientLogger } from './api';
-import type { Config, ReferenceGenomes } from './types';
-import testConfig from '../tests/config/config.json';
-import testReferenceGenomes from '../tests/config/reference-genomes.json';
+import type { Config, ReferenceGenomes, RuntimeConfig } from './types';
+
+const configDir = import.meta.env.CONFIG_DIR;
 
 let _config: Config | null = null;
+let _runtimeConfig: RuntimeConfig | null = null;
 let _referenceGenomes: ReferenceGenomes | null = null;
+
+function getConfigDir(): string {
+    if (typeof configDir !== 'string' || configDir === '') {
+        throw new Error(`CONFIG_DIR environment variable was not set during build time, is ${configDir}`);
+    }
+    return configDir;
+}
 
 export function getConfig(): Config {
     if (_config === null) {
-        if (import.meta.env.USE_TEST_CONFIG === 'true' || import.meta.env.USE_TEST_CONFIG === true) {
-            _config = testConfig as Config;
-        } else {
-            if (import.meta.env.CONFIG_DIR === undefined) {
-                throw new Error('CONFIG_DIR environment variable is not set');
-            }
-            const configFilePath = path.join(import.meta.env.CONFIG_DIR, 'config.json');
-            _config = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
-        }
-
-        if (import.meta.env.BACKEND_URL === undefined) {
-            throw new Error('BACKEND_URL environment variable is not set');
-        }
-        if (import.meta.env.LAPIS_URL === undefined) {
-            throw new Error('LAPIS_URL environment variable is not set');
-        }
-
-        _config = {
-            ..._config,
-            backendUrl: import.meta.env.BACKEND_URL,
-            lapisUrl: import.meta.env.LAPIS_URL,
-        } as Config;
+        const configFilePath = path.join(getConfigDir(), 'config.json');
+        _config = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as Config;
     }
     return _config;
 }
 
+export function getRuntimeConfig(): RuntimeConfig {
+    if (_runtimeConfig === null) {
+        const configFilePath = path.join(getConfigDir(), 'runtime-config.json');
+        _runtimeConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as RuntimeConfig;
+    }
+    return _runtimeConfig;
+}
+
 export function getReferenceGenomes(): ReferenceGenomes {
     if (_referenceGenomes === null) {
-        if (import.meta.env.USE_TEST_CONFIG === 'true' || import.meta.env.USE_TEST_CONFIG === true) {
-            _referenceGenomes = testReferenceGenomes as ReferenceGenomes;
-        } else {
-            if (import.meta.env.CONFIG_DIR === undefined) {
-                throw new Error('CONFIG_DIR environment variable is not set');
-            }
-            const configFilePath = path.join(import.meta.env.CONFIG_DIR, 'reference-genomes.json');
-            _referenceGenomes = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as ReferenceGenomes;
-        }
+        const configFilePath = path.join(getConfigDir(), 'reference-genomes.json');
+        _referenceGenomes = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as ReferenceGenomes;
     }
     return _referenceGenomes;
 }
@@ -57,9 +46,9 @@ export type OptionList = { option: string | null; count: number }[];
 export async function fetchAutoCompletion(
     field: string,
     filterParams: URLSearchParams,
-    config: Config,
+    runtimeConfig: RuntimeConfig,
 ): Promise<OptionList> {
-    const response = await fetch(`${config.lapisUrl}/aggregated?fields=${field}&${filterParams}`);
+    const response = await fetch(`${runtimeConfig.lapisUrl}/aggregated?fields=${field}&${filterParams}`);
 
     if (!response.ok) {
         await clientLogger.error(

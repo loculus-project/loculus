@@ -1,12 +1,12 @@
-import { type FC, useState, useEffect, useCallback } from 'react';
+import { type FC, useCallback, useEffect, useState } from 'react';
 
 import { confirmRevokedData } from './revokeReadyData';
 import type { SequenceStatus } from '../../pages/user/[username]/user';
-import type { Config } from '../../types.ts';
+import type { RuntimeConfig } from '../../types.ts';
 
-type SequencesReadyProps = { config: Config; username: string; sequences: SequenceStatus[] };
+type SequencesReadyProps = { runtimeConfig: RuntimeConfig; username: string; sequences: SequenceStatus[] };
 
-export const SequencesRevoked: FC<SequencesReadyProps> = ({ config, sequences }) => {
+export const SequencesRevoked: FC<SequencesReadyProps> = ({ runtimeConfig, sequences }) => {
     const [selectedSequences, setSelectedSequences] = useState<number[]>([]);
     const [isSelecting, setIsSelecting] = useState(false);
     const [selectionStart, setSelectionStart] = useState<number | null>(null);
@@ -64,7 +64,7 @@ export const SequencesRevoked: FC<SequencesReadyProps> = ({ config, sequences })
 
     const handleConfirm = async () => {
         if (selectedSequences.length > 0) {
-            await confirmRevokedData(selectedSequences, config);
+            await confirmRevokedData(selectedSequences, runtimeConfig);
             window.location.reload();
         }
     };

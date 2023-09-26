@@ -1,4 +1,4 @@
-import { getConfig } from '../../../../config';
+import { getRuntimeConfig } from '../../../../config';
 import { logger } from '../../../../logger';
 
 type PangoLineage = string;
@@ -32,7 +32,7 @@ export type ProcessingAnnotation = {
 
 export const getReviewData = async (name: string): Promise<SequenceReview[]> => {
     try {
-        const config = getConfig();
+        const config = getRuntimeConfig();
         const mySequencesQuery = `${config.backendUrl}/get-data-to-review?submitter=${name}&numberOfSequences=1000`;
 
         const mySequencesResponse = await fetch(mySequencesQuery, {
