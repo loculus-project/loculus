@@ -10,6 +10,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.pathoplexus.backend.model.HeaderId
@@ -338,17 +339,7 @@ class DatabaseService(
     }
 
     fun deleteUserSequences(username: String) {
-        val sql = """
-        delete from sequences
-        where submitter = ?
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, username)
-                statement.executeUpdate()
-            }
-        }
+        SequencesTable.deleteWhere { submitter eq username }
     }
 
     fun deleteSequences(sequenceIds: List<Long>) {
