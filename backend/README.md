@@ -17,15 +17,17 @@ DOCKER_IMAGE_NAME=doesNotMatterHere docker compose up database
 
 ### Starting the backend
 
-The database connection is configured via Spring properties that need to be passed on startup:
+The database connection is configured via
+[Spring properties](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config)
+that need to be passed on startup:
 
 * Via command line argument (also see docker-compose.yml): 
 ```
---database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus
---database.username=postgres
---database.password=unsecure
+--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus
+--spring.datasource.username=postgres
+--spring.datasource.password=unsecure
 ```
-* Via environment variable: `SPRING_APPLICATION_JSON={"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus","username":"postgres","password":"unsecure"}}`
+* Via environment variable: `SPRING_APPLICATION_JSON='{"spring":{"datasource":{"url":"jdbc:postgresql://0.0.0.0:5432/pathoplexus", "username":"postgres", "password":"unsecure"}}}'`
 
 We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
 
@@ -33,11 +35,7 @@ The service listens, by default, to **port 8079**: <http://localhost:8079/swagge
 
 #### Start from command line: 
 ```bash
-./gradlew bootRun --args='--database.jdbcUrl=jdbc:postgresql://localhost:5432/pathoplexus --database.username=postgres --database.password=unsecure'
-```
-or
-```bash
-SPRING_APPLICATION_JSON='{"database":{"jdbcUrl":"jdbc:postgresql://localhost:5432/pathoplexus","username":"postgres","password":"unsecure"}}' ./gradlew bootRun
+./gradlew bootRun --args='--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus --spring.datasource.username=postgres --spring.datasource.password=unsecure'
 ```
 
 #### Start from docker-compose
