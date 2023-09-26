@@ -1,13 +1,13 @@
-import type { BaseType, Config, InsertionCount, MutationProportionCount, RuntimeConfig, SequenceType } from './types';
+import type { BaseType, Config, InsertionCount, MutationProportionCount, SequenceType, ServiceUrls } from './types';
 import { parseFasta } from './utils/parseFasta';
 import { isAlignedSequence, isUnalignedSequence } from './utils/sequenceTypeHelpers';
 
 export async function fetchSequenceDetails(
     accession: string,
     config: Config,
-    runtimeConfig: RuntimeConfig,
+    serviceConfig: ServiceUrls,
 ): Promise<any> {
-    const response = await fetch(`${runtimeConfig.lapisUrl}/details?${config.schema.primaryKey}=${accession}`);
+    const response = await fetch(`${serviceConfig.lapisUrl}/details?${config.schema.primaryKey}=${accession}`);
     return (await response.json()).data[0];
 }
 
@@ -15,10 +15,10 @@ export async function fetchMutations(
     accession: string,
     type: BaseType,
     config: Config,
-    runtimeConfig: RuntimeConfig,
+    serviceConfig: ServiceUrls,
 ): Promise<MutationProportionCount[]> {
     const endpoint = type === 'nucleotide' ? 'nuc-mutations' : 'aa-mutations';
-    const response = await fetch(`${runtimeConfig.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
+    const response = await fetch(`${serviceConfig.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
     return (await response.json()).data;
 }
 
@@ -26,10 +26,10 @@ export async function fetchInsertions(
     accession: string,
     type: BaseType,
     config: Config,
-    runtimeConfig: RuntimeConfig,
+    serviceConfig: ServiceUrls,
 ): Promise<InsertionCount[]> {
     const endpoint = type === 'nucleotide' ? 'nuc-insertions' : 'aa-insertions';
-    const response = await fetch(`${runtimeConfig.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
+    const response = await fetch(`${serviceConfig.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
     return (await response.json()).data;
 }
 
@@ -54,7 +54,7 @@ export async function fetchSequence(
     accession: string,
     sequenceType: SequenceType,
     config: Config,
-    runtimeConfig: RuntimeConfig,
+    serviceConfig: ServiceUrls,
 ): Promise<string | undefined> {
     let endpoint: string;
     if (isUnalignedSequence(sequenceType)) {
@@ -65,7 +65,7 @@ export async function fetchSequence(
         endpoint = 'aa-sequence-aligned/' + sequenceType.name;
     }
 
-    const response = await fetch(`${runtimeConfig.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
+    const response = await fetch(`${serviceConfig.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
     const fastaText = await response.text();
     const fastaEntries = parseFasta(fastaText);
     if (fastaEntries.length === 0) {

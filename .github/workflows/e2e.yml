@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Cache .npm
         uses: actions/cache@v3
@@ -69,35 +69,32 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Docker metadata Backend
-        id: dockerMetadataBackend
+      - name: Docker metadata
+        id: dockerMetadata
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/pathoplexus/backend
+          images: doesNotMatter
           tags: |
             type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
 
-      - name: Start Backend Docker Container
+      - name: Get Branch Tag
+        id: branchTag
+        env:
+          TAG: ${{ steps.dockerMetadata.outputs.tags }}
+        run: echo "dockerTag=${TAG##*:}" >> $GITHUB_OUTPUT
+
+      - name: Start Docker Containers
         run: |
-          mkdir ./backend/log
-          chmod -R 777 ./backend/log
-          DOCKER_IMAGE_NAME=${{steps.dockerMetadataBackend.outputs.tags }} docker compose -f ./backend/docker-compose.yml up -d
-
-      - name: Docker metadata Website
-        id: dockerMetadataWebsite
-        uses: docker/metadata-action@v5
-        with:
-          images: ghcr.io/pathoplexus/website
-          tags: |
-            type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-
-      - name: Start Website Docker Container
-        run: DOCKER_IMAGE_NAME=${{steps.dockerMetadataWebsite.outputs.tags }} docker compose -f ./website/docker-compose.yml up -d
+          mkdir ./log
+          chmod -R 777 ./log
+          docker compose up -d
+        env:
+          WEBSITE_IMAGE: ghcr.io/pathoplexus/website:${{ steps.branchTag.outputs.dockerTag }}
+          BACKEND_IMAGE: ghcr.io/pathoplexus/backend:${{ steps.branchTag.outputs.dockerTag }}
 
       - name: Wait for Health Checks
-        run: ./wait_for_backend.sh && ./wait_for_frontend.sh
+        run: ./.github/scripts/wait_for_backend.sh && ./.github/scripts/wait_for_frontend.sh
 
       - name: Run Playwright tests
         run: cd website && npm run e2e
@@ -111,4 +108,4 @@ jobs:
 
       - name: Log debugging info
         if: always()
-        run: docker logs backend-backend-1 && docker logs website-pathoplexus-1
+        run: docker logs pathoplexus-backend-1 && docker logs pathoplexus-website-1

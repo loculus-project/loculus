@@ -11,7 +11,7 @@ import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
 import { clientLogger } from '../../api';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import type { Filter, RuntimeConfig } from '../../types';
+import type { ClientConfig, Filter } from '../../types';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 
@@ -19,10 +19,10 @@ const queryClient = new QueryClient();
 
 interface SearchFormProps {
     metadataSettings: Filter[];
-    runtimeConfig: RuntimeConfig;
+    clientConfig: ClientConfig;
 }
 
-export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, runtimeConfig }) => {
+export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig }) => {
     const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
         metadataSettings.map((metadata) => ({
             ...metadata,
@@ -64,7 +64,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, runtimeConfi
                     field,
                     handleFieldChange,
                     isLoading,
-                    runtimeConfig,
+                    clientConfig,
                     allFields: fieldValues,
                 };
                 if (field.type === 'date') {
@@ -78,7 +78,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, runtimeConfi
                 }
                 return <NormalTextField {...props} />;
             }),
-        [runtimeConfig, fieldValues, isLoading],
+        [clientConfig, fieldValues, isLoading],
     );
 
     return (

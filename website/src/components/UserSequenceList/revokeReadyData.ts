@@ -1,13 +1,13 @@
-import type { RuntimeConfig } from '../../types.ts';
+import type { ServiceUrls } from '../../types.ts';
 
 export const revokeReadyData = async (
     sequenceIds: number[],
-    runtimeConfig: RuntimeConfig,
+    serviceUrls: ServiceUrls,
 ): Promise<{ approved: number }> => {
     const body = JSON.stringify({
         sequenceIds,
     });
-    const response = await fetch(`${runtimeConfig.backendUrl}/revoke`, {
+    const response = await fetch(`${serviceUrls.backendUrl}/revoke`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -23,14 +23,14 @@ export const revokeReadyData = async (
 
 export const confirmRevokedData = async (
     sequenceIds: number[],
-    runtimeConfig: RuntimeConfig,
+    serviceUrls: ServiceUrls,
 ): Promise<{
     approved: number;
 }> => {
     const body = JSON.stringify({
         sequenceIds,
     });
-    const response = await fetch(`${runtimeConfig.backendUrl}/confirm-revocation`, {
+    const response = await fetch(`${serviceUrls.backendUrl}/confirm-revocation`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

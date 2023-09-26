@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "start-test-server": "astro build && astro preview --port 3000",
+    "start-server": "astro build && node ./entry.js",
     "check-types": "astro check && tsc --noEmit",
     "build": "astro build",
     "build-netlify": "astro build --config astro.netlify.config.mjs",
@@ -22,6 +22,9 @@
     "@tanstack/react-query": "^4.35.3",
     "astro": "^3.1.1",
     "change-case": "^4.1.2",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "http-proxy-middleware": "^2.0.6",
     "luxon": "^3.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

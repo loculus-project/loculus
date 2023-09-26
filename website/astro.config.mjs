@@ -9,7 +9,7 @@ export default defineConfig({
     output: 'server',
     integrations: [tailwind(), react()],
     adapter: node({
-        mode: 'standalone',
+        mode: 'middleware',
     }),
     server: {
         port: 3000,
