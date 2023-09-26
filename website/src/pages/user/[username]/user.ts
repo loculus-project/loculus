@@ -1,4 +1,4 @@
-import { getConfig } from '../../../config';
+import { getRuntimeConfig } from '../../../config';
 import { logger } from '../../../logger';
 
 export enum ResponseStatus {
@@ -43,7 +43,7 @@ export const splitStatusArray = (sequences: SequenceStatus[]) =>
 
 export const getUserSequences = async (name: string): Promise<UserSequenceResponse> => {
     try {
-        const config = getConfig();
+        const config = getRuntimeConfig();
         const mySequencesQuery = `${config.backendUrl}/get-sequences-of-user?username=${name}`;
 
         const mySequencesResponse = await fetch(mySequencesQuery, {

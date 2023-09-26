@@ -1,5 +1,5 @@
 import type { TableSequenceData } from '../../components/SearchPage/Table';
-import { getConfig } from '../../config';
+import { getConfig, getRuntimeConfig } from '../../config';
 import { logger } from '../../logger';
 import type { Filter } from '../../types';
 
@@ -14,7 +14,6 @@ export type SearchResponse = {
     totalCount: number;
 };
 export const getData = async (metadataFilter: Filter[], offset: number, limit: number): Promise<SearchResponse> => {
-    const config = getConfig();
     const searchFilters = metadataFilter
         .filter((metadata) => metadata.filter !== '')
         .reduce((acc: Record<string, string>, metadata) => {
@@ -22,13 +21,16 @@ export const getData = async (metadataFilter: Filter[], offset: number, limit: n
             return acc;
         }, {});
 
+    const runtimeConfig = getRuntimeConfig();
     // TODO: when switching to LAPISv2 limit and offset should be handled differently
-    const detailsQuery = `${config.lapisUrl}/details?limit=${limit}&offset=${offset}`;
-    const totalCountQuery = `${config.lapisUrl}/aggregated`;
+    const detailsQuery = `${runtimeConfig.lapisUrl}/details?limit=${limit}&offset=${offset}`;
+    const totalCountQuery = `${runtimeConfig.lapisUrl}/aggregated`;
 
     const headers = {
         'Content-Type': 'application/json',
     };
+
+    const config = getConfig();
 
     try {
         const [detailsResponse, totalCountResponse] = await Promise.all([

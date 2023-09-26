@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type FC, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer';
-import type { Config, SequenceType } from '../../types';
+import type { Config, RuntimeConfig, SequenceType } from '../../types';
 import {
     alignedSequence,
     geneSequence,
@@ -17,10 +17,11 @@ const queryClient = new QueryClient();
 type Props = {
     accession: string;
     config: Config;
+    runtimeConfig: RuntimeConfig;
     genes: string[];
 };
 
-export const SequencesContainer: FC<Props> = ({ accession, config, genes }) => {
+export const SequencesContainer: FC<Props> = ({ accession, config, runtimeConfig, genes }) => {
     const [loadSequences, setLoadSequences] = useState(false);
     const [type, setType] = useState<SequenceType>(unalignedSequence);
 
@@ -55,7 +56,14 @@ export const SequencesContainer: FC<Props> = ({ accession, config, genes }) => {
                         Load sequences
                     </button>
                 )}
-                {loadSequences && <SequencesViewer accession={accession} config={config} sequenceType={type} />}
+                {loadSequences && (
+                    <SequencesViewer
+                        accession={accession}
+                        config={config}
+                        runtimeConfig={runtimeConfig}
+                        sequenceType={type}
+                    />
+                )}
             </div>
         </QueryClientProvider>
     );

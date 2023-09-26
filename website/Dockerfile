@@ -12,14 +12,14 @@ FROM node:lts-alpine
 
 WORKDIR /app
 
+COPY .env.docker .env
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+COPY --from=build-deps /app/dist ./dist
+
+CMD node ./dist/server/entry.mjs &> /log/website.log
+
 EXPOSE 3000
 VOLUME /config
 VOLUME /log
-
-COPY .env.docker .env
-COPY package*.json ./
-COPY --from=build-deps /app/dist ./dist
-
-RUN npm ci --omit=dev
-
-CMD node ./dist/server/entry.mjs &> /log/website.log

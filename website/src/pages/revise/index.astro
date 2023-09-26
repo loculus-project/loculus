@@ -1,8 +1,9 @@
 ---
 import { RevisionForm } from '../../components/Revision/RevisionForm';
-import { getConfig } from '../../config';
+import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-const config = getConfig();
+
+const runtimeConfig = getRuntimeConfig();
 ---
 
 <BaseLayout title='Revise'>
@@ -12,5 +13,5 @@ const config = getConfig();
     the sequence that should be revised, it will be ignored. Furthermore, the sequence that should be revised needs to be
     already released. If the latter does not hold, the sequence can be easily deleted and re-submitted
 
-    <RevisionForm config={config} client:only='react' />
+    <RevisionForm runtimeConfig={runtimeConfig} client:only='react' />
 </BaseLayout>

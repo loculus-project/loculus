@@ -3,6 +3,7 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
+    "dev": "astro dev",
     "start": "astro dev",
     "start-test-server": "astro build && astro preview --port 3000",
     "check-types": "astro check && tsc --noEmit",

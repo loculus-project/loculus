@@ -15,7 +15,7 @@ vi.mock('../../api', () => ({
 }));
 
 function renderSubmissionForm() {
-    return render(<SubmissionForm config={testConfig} />);
+    return render(<SubmissionForm runtimeConfig={testConfig} />);
 }
 
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
