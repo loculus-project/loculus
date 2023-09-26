@@ -3,13 +3,12 @@
     participant "Pathoplexus Backend" as backend #Orange
     database "Database" as DB
 
-    frontend -> backend: wants to revoke already processed sequence\n\
-    query sequence that will be revoked
+    frontend -> backend: wants to revoke already processed sequence
 
-     alt highest version of sequenceID with Status 'SILO_READY' exists
+     alt sequenceID exists and highest version is 'SILO_READY'
         backend -> DB: insert new version\nwith status 'REVISION_STAGING' \nand ' is_revoked = true'
     backend -> frontend: response with sequenceId + new version number
-    else highest version of sequenceID with Status 'SILO_READY' does not exist
+    else sequenceID exists and highest version is not 'SILO_READY'
         backend -> frontend: response with error message
     end
 

@@ -4,11 +4,9 @@
     database "Database" as DB
 
 
-    frontend -> backend: wants to revise already processed sequence\n\
-    with revised unprocessed data\n\
-    query sequence that will be revised
+    frontend -> backend: submit corrected data for existing sequenceIds
 
-    alt highest version of sequenceID with Status 'SILO_READY' exists
+    alt sequenceID exists and highest version is 'SILO_READY'
         backend -> DB: insert new version in status 'RECEIVED'
     backend -> frontend: response with sequenceId + new version number
     else sequenceID with Status 'SILO_READY' does not exist

@@ -14,16 +14,16 @@
     end
 
    note right of frontend
-      In the following we assume initial raw data are valid
+      In the following we assume initial raw sequence data are valid
    end note
 
     loop until no processing errors
 
-        processing -> backend: Query initial/reviewed data
-        backend -> DB: Query initial/reviewed data
+        processing -> backend: Query initial/reviewed sequence data
+        backend -> DB: Query initial/reviewed sequence data
         backend -> DB: Set status from 'RECEIVED'/'REVIEW_NEEDED' to 'PROCESSING'
-        DB --> backend: initial/reviewed data
-        backend --> processing: initial/reviewed data
+        DB --> backend: initial/reviewed sequence data
+        backend --> processing: initial/reviewed sequence data
 
         processing -> backend: submit processed sequence data
         alt validation errors occur
@@ -34,29 +34,29 @@
                end note
         end loop
 
-        alt processed data contain processing errors
+        alt processed sequence data contain processing errors
             backend -> DB: Store processed sequence data with errors
             backend -> DB: set status to 'REVIEW_NEEDED'
         else
             backend -> DB: Store processed sequence data without errors
             backend -> DB: set status to 'PROCESSED'
         end
-         frontend -> backend: query processed data with errors
-        frontend -> frontend: address errors and adapt data
+         frontend -> backend: query processed sequence data with errors
+        frontend -> frontend: address errors and adapt sequence data
 
-        frontend -> backend: submit adapted data
-        backend -> DB: store adapted data
+        frontend -> backend: submit adapted sequence data
+        backend -> DB: store adapted sequence data
         backend -> DB: set status to 'REVIEWED'
     end loop
 
 
-    frontend -> backend: Query processed data
-    backend -> DB: Query processed data
-    DB --> backend: processed data
-    backend --> frontend: processed data
-    alt user approves processing
-        frontend -> backend: approve processing
-        backend -> DB: set status from 'PROCESSED' to 'SILO_READY'
-    end
+    frontend -> backend: Query processed sequence data
+    backend -> DB: Query processed sequence data
+    DB -> backend: processed sequence data
+    backend -> frontend: processed sequence data
+
+    frontend -> backend: approve processed sequence data
+    backend -> DB: set status from 'PROCESSED' to 'SILO_READY'
+
 @enduml
 
