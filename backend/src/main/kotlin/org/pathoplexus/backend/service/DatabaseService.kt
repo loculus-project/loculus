@@ -166,6 +166,7 @@ class DatabaseService(
     }
 
     fun updateProcessedData(inputStream: InputStream): List<ValidationResult> {
+        log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
         val validationResults = mutableListOf<ValidationResult>()
@@ -233,27 +234,23 @@ class DatabaseService(
     }
 
     fun approveProcessedData(submitter: String, sequenceIds: List<Long>) {
-        val sql = """
-        update sequences
-        set status = ?
-        where sequence_id = any (?) 
-        and version = (
-            select max(version)
-            from sequences s
-            where s.sequence_id = sequences.sequence_id
+        log.info { "approving ${sequenceIds.size} sequences by $submitter" }
+        val subQueryTable = SequencesTable.alias("subQueryTable")
+        val maxVersionQuery = wrapAsExpression<Long>(
+            subQueryTable
+                .slice(subQueryTable[SequencesTable.version].max())
+                .select { subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId },
         )
-        and submitter = ? 
-        and status = ?
-        """.trimIndent()
 
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, Status.SILO_READY.name)
-                statement.setArray(2, statement.connection.createArrayOf("BIGINT", sequenceIds.toTypedArray()))
-                statement.setString(3, submitter)
-                statement.setString(4, Status.PROCESSED.name)
-                statement.executeUpdate()
-            }
+        SequencesTable.update(
+            where = {
+                (SequencesTable.sequenceId inList sequenceIds) and
+                    (SequencesTable.version eq maxVersionQuery) and
+                    (SequencesTable.status eq Status.PROCESSED.name)
+            },
+        ) {
+            it[status] = Status.SILO_READY.name
+            it[this.submitter] = submitter
         }
     }
 
