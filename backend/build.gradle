@@ -31,7 +31,6 @@ dependencies {
     implementation "org.apache.commons:commons-csv:1.10.0"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0"
     implementation "org.flywaydb:flyway-core"
-    implementation "com.zaxxer:HikariCP:5.0.1"
     implementation "org.jetbrains.exposed:exposed-spring-boot-starter:$exposedVersion"
     implementation "org.jetbrains.exposed:exposed-jdbc:$exposedVersion"
     implementation "org.jetbrains.exposed:exposed-json:$exposedVersion"
