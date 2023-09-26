@@ -3,27 +3,15 @@ package org.pathoplexus.backend.service
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.LongNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.Query
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.alias
-import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.update
-import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.model.HeaderId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -113,7 +101,17 @@ class DatabaseService(
     }
 
     fun streamUnprocessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
-        val sequencesData = selectMaxVersionsOfReceivedSequences(numberOfSequences)
+        val maxVersionQuery = maxVersionQuery()
+
+        val sequencesData = SequencesTable
+            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.originalData)
+            .select(
+                where = {
+                    (SequencesTable.status eq Status.RECEIVED.name)
+                        .and((SequencesTable.version eq maxVersionQuery))
+                },
+            )
+            .limit(numberOfSequences)
             .map {
                 SequenceVersion(
                     it[SequencesTable.sequenceId],
@@ -124,43 +122,27 @@ class DatabaseService(
 
         log.info { "streaming ${sequencesData.size} of $numberOfSequences requested unprocessed submissions" }
 
-        updateStatus(sequencesData)
+        updateStatus(sequencesData, Status.PROCESSING)
 
-        sequencesData
-            .forEach { sequence ->
-                val json = objectMapper.writeValueAsString(sequence)
-                outputStream.write(json.toByteArray())
-                outputStream.write('\n'.code)
-                outputStream.flush()
-            }
+        stream(sequencesData, outputStream)
     }
 
-    private fun selectMaxVersionsOfReceivedSequences(numberOfSequences: Int): Query {
+    private fun maxVersionQuery(): Expression<Long?> {
         val subQueryTable = SequencesTable.alias("subQueryTable")
-        val maxVersionQuery = wrapAsExpression<Long>(
+        return wrapAsExpression(
             subQueryTable
                 .slice(subQueryTable[SequencesTable.version].max())
                 .select { subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId },
         )
-
-        return SequencesTable
-            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.originalData)
-            .select(
-                where = {
-                    (SequencesTable.status eq Status.RECEIVED.name)
-                        .and((SequencesTable.version eq maxVersionQuery))
-                },
-            )
-            .limit(numberOfSequences)
     }
 
-    private fun updateStatus(sequences: List<SequenceVersion>) {
+    private fun updateStatus(sequences: List<SequenceVersion>, status: Status) {
         val sequenceVersions = sequences.map { it.sequenceId to it.version }
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         SequencesTable.update(
             where = { Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions },
         ) {
-            it[status] = Status.PROCESSING.name
+            it[this.status] = status.name
             it[startedProcessingAt] = now
         }
     }
@@ -235,12 +217,7 @@ class DatabaseService(
 
     fun approveProcessedData(submitter: String, sequenceIds: List<Long>) {
         log.info { "approving ${sequenceIds.size} sequences by $submitter" }
-        val subQueryTable = SequencesTable.alias("subQueryTable")
-        val maxVersionQuery = wrapAsExpression<Long>(
-            subQueryTable
-                .slice(subQueryTable[SequencesTable.version].max())
-                .select { subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId },
-        )
+        val maxVersionQuery = maxVersionQuery()
 
         SequencesTable.update(
             where = {
@@ -255,82 +232,61 @@ class DatabaseService(
     }
 
     fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
-        val sql = """
-        select sequence_id, processed_data, warnings from sequences
-        where sequence_id in (
-            select sequence_id from sequences 
-            where status = ? limit ?        
-        )
-        and version = (
-                select max(version)
-                from sequences s
-                where s.sequence_id = sequences.sequence_id
+        log.info { "streaming $numberOfSequences processed submissions" }
+        val maxVersionQuery = maxVersionQuery()
+
+        val sequencesData = SequencesTable.select(
+            where = {
+                (SequencesTable.status eq Status.PROCESSED.name) and
+                    (SequencesTable.version eq maxVersionQuery)
+            },
+        ).limit(numberOfSequences).map { row ->
+            SequenceVersion(
+                row[SequencesTable.sequenceId],
+                row[SequencesTable.version],
+                row[SequencesTable.processedData]!!,
+                row[SequencesTable.errors],
+                row[SequencesTable.warnings],
             )
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, Status.PROCESSED.name)
-                statement.setInt(2, numberOfSequences)
-                val rs = statement.executeQuery()
-                rs.use {
-                    while (rs.next()) {
-                        val processedDataObject = objectMapper.readTree(rs.getString("processed_data")) as ObjectNode
-
-                        val metadataJsonObject = processedDataObject["metadata"] as ObjectNode
-                        metadataJsonObject.set<JsonNode>("sequenceId", LongNode(rs.getLong("sequence_id")))
-                        metadataJsonObject.set<JsonNode>(
-                            "warnings",
-                            TextNode(rs.getString("warnings")),
-                        )
-
-                        processedDataObject.set<JsonNode>("metadata", metadataJsonObject)
-
-                        outputStream.write(objectMapper.writeValueAsString(processedDataObject).toByteArray())
-                        outputStream.write('\n'.code)
-                        outputStream.flush()
-                    }
-                }
-            }
         }
+
+        stream(sequencesData, outputStream)
     }
 
-    fun streamNeededReviewSubmissions(submitter: String, numberOfSequences: Int, outputStream: OutputStream) {
-        val sql = """
-        select sequence_id, version, processed_data, errors, warnings from sequences
-        where sequence_id in (
-            select sequence_id from sequences where status = ? and submitter = ? limit ?
-        )
-        and version = (
-            select max(version)
-            from sequences s
-            where s.sequence_id = sequences.sequence_id
-        )
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, Status.NEEDS_REVIEW.name)
-                statement.setString(2, submitter)
-                statement.setInt(3, numberOfSequences)
-                val rs = statement.executeQuery()
-                rs.use {
-                    while (rs.next()) {
-                        val sequenceVersion = SequenceVersion(
-                            rs.getLong("sequence_id"),
-                            rs.getLong("version"),
-                            objectMapper.readTree(rs.getString("processed_data")),
-                            objectMapper.readTree(rs.getString("errors")),
-                            objectMapper.readTree(rs.getString("warnings")),
-                        )
-                        val json = objectMapper.writeValueAsString(sequenceVersion)
-                        outputStream.write(json.toByteArray())
-                        outputStream.write('\n'.code)
-                        outputStream.flush()
-                    }
-                }
+    private fun stream(
+        sequencesData: List<SequenceVersion>,
+        outputStream: OutputStream,
+    ) {
+        sequencesData
+            .forEach { sequence ->
+                val json = objectMapper.writeValueAsString(sequence)
+                outputStream.write(json.toByteArray())
+                outputStream.write('\n'.code)
+                outputStream.flush()
             }
+    }
+
+    fun streamReviewNeededSubmissions(submitter: String, numberOfSequences: Int, outputStream: OutputStream) {
+        log.info { "streaming $numberOfSequences submissions that need review by $submitter" }
+        val maxVersionQuery = maxVersionQuery()
+
+        val sequencesData = SequencesTable.select(
+            where = {
+                (SequencesTable.status eq Status.NEEDS_REVIEW.name) and
+                    (SequencesTable.version eq maxVersionQuery) and
+                    (SequencesTable.submitter eq submitter)
+            },
+        ).limit(numberOfSequences).map { row ->
+            SequenceVersion(
+                row[SequencesTable.sequenceId],
+                row[SequencesTable.version],
+                row[SequencesTable.processedData]!!,
+                row[SequencesTable.errors],
+                row[SequencesTable.warnings],
+            )
         }
+
+        stream(sequencesData, outputStream)
     }
 
     fun getSequencesSubmittedBy(username: String): List<SequenceVersionStatus> {

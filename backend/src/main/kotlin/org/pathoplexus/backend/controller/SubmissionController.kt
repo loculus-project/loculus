@@ -121,7 +121,7 @@ class SubmissionController(
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamNeededReviewSubmissions(submitter, numberOfSequences, outputStream)
+            databaseService.streamReviewNeededSubmissions(submitter, numberOfSequences, outputStream)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
