@@ -289,55 +289,52 @@ class DatabaseService(
         stream(sequencesData, outputStream)
     }
 
-    fun getSequencesSubmittedBy(username: String): List<SequenceVersionStatus> {
-        val sequenceVersionStatusList = mutableListOf<SequenceVersionStatus>()
-        val sql = """
-            select sequence_id, status, version, revoked 
-            from sequences 
-            where submitter = ?
-            and status != ?
-            and version = (
-                select max(version)
-                from sequences s
-                where s.sequence_id = sequences.sequence_id
-            )
-            
-            union
-            
-            select sequence_id, status, max(version) as version, revoked
-            from sequences
-            where submitter = ?
-            and status = ?
-            
-            group by sequence_id, status, revoked
-            
-            having max(version) = (
-                    select max(version)
-                    from sequences s
-                    where s.sequence_id = sequences.sequence_id
-                    and s.status = ?
-                )
-        """.trimIndent()
+    private fun maxVersionQueryWithStatus(status: Status): Expression<Long?> {
+        val subQueryTable = SequencesTable.alias("subQueryTable")
+        return wrapAsExpression(
+            subQueryTable
+                .slice(subQueryTable[SequencesTable.version].max())
+                .select {
+                    (subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId) and
+                        (subQueryTable[SequencesTable.status] eq status.name)
+                },
+        )
+    }
 
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, username)
-                statement.setString(2, Status.SILO_READY.name)
-                statement.setString(3, username)
-                statement.setString(4, Status.SILO_READY.name)
-                statement.setString(5, Status.SILO_READY.name)
-                statement.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        val sequenceId = rs.getLong("sequence_id")
-                        val version = rs.getInt("version")
-                        val status = Status.fromString(rs.getString("status"))
-                        val revoked = rs.getBoolean("revoked")
-                        sequenceVersionStatusList.add(SequenceVersionStatus(sequenceId, version, status, revoked))
-                    }
-                }
-            }
+    fun getActiveSequencesSubmittedBy(username: String): List<SequenceVersionStatus> {
+        val maxVersionWithSiloReadyQuery = maxVersionQueryWithStatus(Status.SILO_READY)
+        val sequencesDataSiloReady = SequencesTable.select(
+            where = {
+                (SequencesTable.status eq Status.SILO_READY.name) and
+                    (SequencesTable.submitter eq username) and
+                    (SequencesTable.version eq maxVersionWithSiloReadyQuery)
+            },
+        ).map { row ->
+            SequenceVersionStatus(
+                row[SequencesTable.sequenceId],
+                row[SequencesTable.version],
+                Status.SILO_READY,
+                row[SequencesTable.revoked],
+            )
         }
-        return sequenceVersionStatusList
+
+        val maxVersionQuery = maxVersionQuery()
+        val sequencesDataNotSiloReady = SequencesTable.select(
+            where = {
+                (SequencesTable.status neq Status.SILO_READY.name) and
+                    (SequencesTable.submitter eq username) and
+                    (SequencesTable.version eq maxVersionQuery)
+            },
+        ).map { row ->
+            SequenceVersionStatus(
+                row[SequencesTable.sequenceId],
+                row[SequencesTable.version],
+                Status.fromString(row[SequencesTable.status]),
+                row[SequencesTable.revoked],
+            )
+        }
+
+        return sequencesDataSiloReady + sequencesDataNotSiloReady
     }
 
     fun deleteUserSequences(username: String) {
@@ -478,7 +475,7 @@ class DatabaseService(
                         revokedList.add(
                             SequenceVersionStatus(
                                 rs.getLong("sequence_id"),
-                                rs.getInt("version"),
+                                rs.getLong("version"),
                                 Status.REVOKED_STAGING,
                             ),
                         )
@@ -514,7 +511,7 @@ class DatabaseService(
                         confirmationList.add(
                             SequenceVersionStatus(
                                 rs.getLong("sequence_id"),
-                                rs.getInt("version"),
+                                rs.getLong("version"),
                                 Status.fromString(rs.getString("status")),
                             ),
                         )
@@ -537,7 +534,7 @@ data class SequenceVersion(
 
 data class SequenceVersionStatus(
     val sequenceId: Long,
-    val version: Int,
+    val version: Long,
     val status: Status,
     val revoked: Boolean = false,
 )

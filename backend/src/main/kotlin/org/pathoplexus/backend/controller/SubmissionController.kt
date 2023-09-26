@@ -132,7 +132,7 @@ class SubmissionController(
     fun getUserSequenceList(
         @RequestParam username: String,
     ): List<SequenceVersionStatus> {
-        return databaseService.getSequencesSubmittedBy(username)
+        return databaseService.getActiveSequencesSubmittedBy(username)
     }
 
     @Operation(description = "Approve that the processed data is correct")
