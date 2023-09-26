@@ -322,6 +322,7 @@ class DatabaseService(
     }
 
     fun getActiveSequencesSubmittedBy(username: String): List<SequenceVersionStatus> {
+        log.info { "getting active sequences submitted by $username" }
         val maxVersionWithSiloReadyQuery = maxVersionQueryWithStatus(Status.SILO_READY)
         val sequencesDataSiloReady = SequencesTable.select(
             where = {
@@ -405,78 +406,49 @@ class DatabaseService(
     }
 
     fun revokeData(sequenceIds: List<Long>): List<SequenceVersionStatus> {
-        val sql = """
-        insert into sequences (sequence_id, version, custom_id, submitter, submitted_at, status, revoked)
-        select sequence_id, version + 1, custom_id, submitter, now(), ?, true
-        from sequences
-        where sequence_id = any (?)
-        and version = (
-            select max(version)
-            from sequences s
-            where s.sequence_id = sequences.sequence_id
+        log.info { "revoking ${sequenceIds.size} sequences" }
+
+        val maxVersionQuery = maxVersionQuery()
+        val sequences = SequencesTable.select(
+            where = {
+                (SequencesTable.sequenceId inList sequenceIds) and
+                    (SequencesTable.version eq maxVersionQuery)
+            },
         )
-        and status = ?
-        returning sequence_id, version
-        """.trimIndent()
 
-        val revokedList = mutableListOf<SequenceVersionStatus>()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, Status.REVOKED_STAGING.name)
-                statement.setArray(2, statement.connection.createArrayOf("BIGINT", sequenceIds.toTypedArray()))
-                statement.setString(3, Status.SILO_READY.name)
-                statement.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        revokedList.add(
-                            SequenceVersionStatus(
-                                rs.getLong("sequence_id"),
-                                rs.getLong("version"),
-                                Status.REVOKED_STAGING,
-                            ),
-                        )
-                    }
-                }
+        val revokedList = sequences.map { sequence ->
+            SequencesTable.insert { insertStatement ->
+                insertStatement[sequenceId] = sequence[sequenceId]
+                insertStatement[version] = sequence[version] + 1
+                insertStatement[customId] = sequence[customId]
+                insertStatement[submitter] = sequence[submitter]
+                insertStatement[submittedAt] = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+                insertStatement[status] = Status.REVOKED_STAGING.name
+                insertStatement[revoked] = true
             }
+
+            SequenceVersionStatus(
+                sequence[SequencesTable.sequenceId],
+                sequence[SequencesTable.version] + 1,
+                Status.REVOKED_STAGING,
+            )
         }
+
         return revokedList
     }
 
-    fun confirmRevocation(sequenceIds: List<Long>): List<SequenceVersionStatus> {
-        val sql = """
-        update sequences set status = ?
-        where status = ? 
-        and sequence_id = any (?)   
-        and version = (
-            select max(version)
-            from sequences s
-            where s.sequence_id = sequences.sequence_id
-        )
-        returning sequence_id, version, status
-        """.trimIndent()
+    fun confirmRevocation(sequenceIds: List<Long>): Int {
+        val maxVersionQuery = maxVersionQuery()
 
-        val confirmationList = mutableListOf<SequenceVersionStatus>()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, Status.SILO_READY.name)
-                statement.setString(2, Status.REVOKED_STAGING.name)
-                statement.setArray(3, statement.connection.createArrayOf("BIGINT", sequenceIds.toTypedArray()))
-                statement.executeQuery().use { rs ->
-                    while (rs.next()) {
-                        confirmationList.add(
-                            SequenceVersionStatus(
-                                rs.getLong("sequence_id"),
-                                rs.getLong("version"),
-                                Status.fromString(rs.getString("status")),
-                            ),
-                        )
-                    }
-                }
-            }
+        return SequencesTable.update(
+            where = {
+                (SequencesTable.sequenceId inList sequenceIds) and
+                    (SequencesTable.version eq maxVersionQuery) and
+                    (SequencesTable.status eq Status.REVOKED_STAGING.name)
+            },
+        ) {
+            it[status] = Status.SILO_READY.name
         }
-
-        return confirmationList
     }
 }
 
