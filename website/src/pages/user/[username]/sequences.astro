@@ -19,7 +19,7 @@ const keyPrefix = `userSequences.${username}`;
 const { sequences, responseStatus } = await getUserSequences(username);
 const statusArray = splitStatusArray(sequences);
 
-const runtimeConfig = getRuntimeConfig();
+const clientConfig = getRuntimeConfig().forClient;
 ---
 
 <BaseLayout title='Sequences'>
@@ -84,7 +84,7 @@ const runtimeConfig = getRuntimeConfig();
                         localStorageKey={`${keyPrefix}.readyExpanded`}
                         client:only='react'
                     >
-                        <SequencesReady runtimeConfig={runtimeConfig} sequences={statusArray.SILO_READY} client:load />
+                        <SequencesReady clientConfig={clientConfig} sequences={statusArray.SILO_READY} client:load />
                     </SequenceStatusBox>
 
                     <SequenceStatusBox
@@ -94,7 +94,7 @@ const runtimeConfig = getRuntimeConfig();
                         client:only='react'
                     >
                         <SequencesRevoked
-                            runtimeConfig={runtimeConfig}
+                            clientConfig={clientConfig}
                             sequences={statusArray.REVOKED_STAGING}
                             username={username}
                             client:load

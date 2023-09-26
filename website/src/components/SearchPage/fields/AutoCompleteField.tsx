@@ -5,13 +5,7 @@ import { type FC, useState } from 'react';
 import type { FieldProps } from './FieldProps';
 import { fetchAutoCompletion } from '../../../config';
 
-export const AutoCompleteField: FC<FieldProps> = ({
-    field,
-    allFields,
-    handleFieldChange,
-    isLoading,
-    runtimeConfig,
-}) => {
+export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFieldChange, isLoading, clientConfig }) => {
     const [open, setOpen] = useState(false);
 
     const { data: options, isLoading: isOptionListLoading } = useQuery({
@@ -24,7 +18,7 @@ export const AutoCompleteField: FC<FieldProps> = ({
             allFields
                 .filter((f) => f.name !== field.name && f.filter !== '')
                 .forEach((f) => filterParams.set(f.name, f.filter));
-            return fetchAutoCompletion(field.name, filterParams, runtimeConfig);
+            return fetchAutoCompletion(field.name, filterParams, clientConfig);
         },
     });
 

@@ -10,7 +10,7 @@ import { logger } from '../../logger';
 import type { Filter } from '../../types';
 
 const config = getConfig();
-const runtimeConfig = getRuntimeConfig();
+const clientConfig = getRuntimeConfig().forClient;
 const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
 };
@@ -39,7 +39,7 @@ if (data.status === SearchStatus.ERROR) {
         }
 
         <div class='md:w-72'>
-            <SearchForm metadataSettings={metadataSettings} runtimeConfig={runtimeConfig} client:only='react' />
+            <SearchForm metadataSettings={metadataSettings} clientConfig={clientConfig} client:only='react' />
         </div>
 
         <div class='flex-1'>

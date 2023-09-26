@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { clientLogger } from './api';
-import type { Config, ReferenceGenomes, RuntimeConfig } from './types';
+import type { ClientConfig, Config, ReferenceGenomes, RuntimeConfig, ServerConfig, ServiceUrls } from './types';
 
 const configDir = import.meta.env.CONFIG_DIR;
 
@@ -28,9 +28,35 @@ export function getConfig(): Config {
 export function getRuntimeConfig(): RuntimeConfig {
     if (_runtimeConfig === null) {
         const configFilePath = path.join(getConfigDir(), 'runtime-config.json');
-        _runtimeConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as RuntimeConfig;
+        const serviceConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as ServiceUrls;
+
+        const urlsForClient = import.meta.env.DEV
+            ? serviceConfig
+            : {
+                  backendUrl: '/backendProxy',
+                  lapisUrl: '/lapisProxy',
+              };
+
+        _runtimeConfig = {
+            forClient: makeClientConfig(urlsForClient),
+            forServer: makeServerConfig(serviceConfig),
+        };
     }
     return _runtimeConfig;
+}
+
+function makeServerConfig(serviceConfig: ServiceUrls): ServerConfig {
+    return {
+        discriminator: 'server',
+        ...serviceConfig,
+    };
+}
+
+function makeClientConfig(serviceConfig: ServiceUrls): ClientConfig {
+    return {
+        discriminator: 'client',
+        ...serviceConfig,
+    };
 }
 
 export function getReferenceGenomes(): ReferenceGenomes {
@@ -46,7 +72,7 @@ export type OptionList = { option: string | null; count: number }[];
 export async function fetchAutoCompletion(
     field: string,
     filterParams: URLSearchParams,
-    runtimeConfig: RuntimeConfig,
+    runtimeConfig: ClientConfig,
 ): Promise<OptionList> {
     const response = await fetch(`${runtimeConfig.lapisUrl}/aggregated?fields=${field}&${filterParams}`);
 

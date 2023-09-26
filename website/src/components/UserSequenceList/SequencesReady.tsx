@@ -2,13 +2,13 @@ import { type FC, useCallback, useEffect, useState } from 'react';
 
 import { revokeReadyData } from './revokeReadyData';
 import type { SequenceStatus } from '../../pages/user/[username]/user';
-import type { RuntimeConfig } from '../../types.ts';
+import type { ClientConfig } from '../../types.ts';
 
-type SequencesReadyProps = { runtimeConfig: RuntimeConfig; sequences: SequenceStatus[] };
+type SequencesReadyProps = { clientConfig: ClientConfig; sequences: SequenceStatus[] };
 
 type SequenceWithRowId = SequenceStatus & { rowId: number };
 
-export const SequencesReady: FC<SequencesReadyProps> = ({ runtimeConfig, sequences }) => {
+export const SequencesReady: FC<SequencesReadyProps> = ({ clientConfig, sequences }) => {
     const [selectedSequences, setSelectedSequences] = useState<number[]>([]);
     const [isSelecting, setIsSelecting] = useState(false);
     const [selectionStart, setSelectionStart] = useState<number | null>(null);
@@ -78,7 +78,7 @@ export const SequencesReady: FC<SequencesReadyProps> = ({ runtimeConfig, sequenc
 
     const handleRevoke = async () => {
         if (selectedSequences.length > 0) {
-            await revokeReadyData(selectedSequences, runtimeConfig);
+            await revokeReadyData(selectedSequences, clientConfig);
             window.location.reload();
         }
     };

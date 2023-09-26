@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { type FC, useMemo } from 'react';
 
 import { fetchSequence } from '../../api';
-import type { Config, RuntimeConfig, SequenceType } from '../../types';
+import type { ClientConfig, Config, SequenceType } from '../../types';
 import { splitString } from '../../utils/splitLines';
 
 const LINE_LENGTH = 100;
@@ -10,14 +10,14 @@ const LINE_LENGTH = 100;
 type Props = {
     accession: string;
     config: Config;
-    runtimeConfig: RuntimeConfig;
+    clientConfig: ClientConfig;
     sequenceType: SequenceType;
 };
 
-export const SequencesViewer: FC<Props> = ({ accession, config, runtimeConfig, sequenceType }) => {
+export const SequencesViewer: FC<Props> = ({ accession, config, clientConfig, sequenceType }) => {
     const { isLoading, data } = useQuery({
         queryKey: [accession, sequenceType],
-        queryFn: () => fetchSequence(accession, sequenceType, config, runtimeConfig),
+        queryFn: () => fetchSequence(accession, sequenceType, config, clientConfig),
     });
 
     const lines = useMemo(() => (data !== undefined ? splitString(data, LINE_LENGTH) : undefined), [data]);

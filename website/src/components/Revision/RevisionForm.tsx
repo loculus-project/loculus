@@ -1,14 +1,14 @@
 import { type FC, useState } from 'react';
 
-import type { RuntimeConfig, HeaderId } from '../../types';
+import type { ClientConfig, HeaderId } from '../../types';
 import { DataUploadForm } from '../DataUploadForm.tsx';
 import { ManagedErrorFeedback } from '../Submission/ManagedErrorFeedback';
 
 type RevisionFormProps = {
-    runtimeConfig: RuntimeConfig;
+    clientConfig: ClientConfig;
 };
 
-export const RevisionForm: FC<RevisionFormProps> = ({ runtimeConfig }) => {
+export const RevisionForm: FC<RevisionFormProps> = ({ clientConfig }) => {
     const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<HeaderId[] | null>(null);
 
     const [isErrorOpen, setIsErrorOpen] = useState(false);
@@ -28,7 +28,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({ runtimeConfig }) => {
         <div className='flex flex-col items-center'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
             <DataUploadForm
-                targetUrl={`${runtimeConfig.backendUrl}/revise`}
+                targetUrl={`${clientConfig.backendUrl}/revise`}
                 onError={handleOpenError}
                 onSuccess={setResponseSequenceHeaders}
             />

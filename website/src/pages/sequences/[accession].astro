@@ -11,7 +11,7 @@ const runtimeConfig = getRuntimeConfig();
 // eslint-disable-next-line
 const accession = Astro.params.accession!;
 
-const tableData = await getTableData(accession, config, runtimeConfig);
+const tableData = await getTableData(accession, config, runtimeConfig.forServer);
 
 const genes = getReferenceGenomes().genes.map((g) => g.name);
 const versionPage = `/sequences/${accession}/versions`;
@@ -50,7 +50,7 @@ const versionPage = `/sequences/${accession}/versions`;
                         client:load
                         accession={accession}
                         config={config}
-                        runtimeConfig={runtimeConfig}
+                        clientConfig={runtimeConfig.forClient}
                         genes={genes}
                     />
                 </div>

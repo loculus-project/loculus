@@ -8,8 +8,14 @@ import { afterAll, afterEach, beforeAll } from 'vitest';
 import type { RuntimeConfig } from '../types';
 
 export const testConfig = {
-    backendUrl: 'http://localhost:8080',
-    lapisUrl: 'dummyLapisUrl',
+    forClient: {
+        backendUrl: 'http://localhost:8080',
+        lapisUrl: 'dummyLapisUrl',
+    },
+    forServer: {
+        backendUrl: 'http://localhost:8080',
+        lapisUrl: 'dummyLapisUrl',
+    },
 } as RuntimeConfig;
 
 export const testuser = 'testuser';
@@ -19,7 +25,7 @@ export const testServer = setupServer();
 export const mockRequest = {
     submit: (statusCode: number = 200, response: any = []) => {
         testServer.use(
-            rest.post(`${testConfig.backendUrl}/submit`, (_, res, ctx) => {
+            rest.post(`${testConfig.forServer.backendUrl}/submit`, (_, res, ctx) => {
                 return res(ctx.status(statusCode), ctx.json(response));
             }),
         );

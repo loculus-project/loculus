@@ -32,7 +32,7 @@ export type ProcessingAnnotation = {
 
 export const getReviewData = async (name: string): Promise<SequenceReview[]> => {
     try {
-        const config = getRuntimeConfig();
+        const config = getRuntimeConfig().forServer;
         const mySequencesQuery = `${config.backendUrl}/get-data-to-review?submitter=${name}&numberOfSequences=1000`;
 
         const mySequencesResponse = await fetch(mySequencesQuery, {

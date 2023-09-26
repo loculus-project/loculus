@@ -21,10 +21,10 @@ export const getData = async (metadataFilter: Filter[], offset: number, limit: n
             return acc;
         }, {});
 
-    const runtimeConfig = getRuntimeConfig();
+    const serverConfig = getRuntimeConfig().forServer;
     // TODO: when switching to LAPISv2 limit and offset should be handled differently
-    const detailsQuery = `${runtimeConfig.lapisUrl}/details?limit=${limit}&offset=${offset}`;
-    const totalCountQuery = `${runtimeConfig.lapisUrl}/aggregated`;
+    const detailsQuery = `${serverConfig.lapisUrl}/details?limit=${limit}&offset=${offset}`;
+    const totalCountQuery = `${serverConfig.lapisUrl}/aggregated`;
 
     const headers = {
         'Content-Type': 'application/json',
