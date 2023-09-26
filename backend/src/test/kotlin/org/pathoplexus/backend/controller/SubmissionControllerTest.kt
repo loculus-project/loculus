@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.pathoplexus.backend.service.RevisionResult
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
@@ -279,21 +278,8 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                 ),
             )
 
-        val reviseSiloReadySequencesResponse = objectMapper.readValue<List<RevisionResult>>(
-            reviseSiloReadySequences()
-                .andReturn()
-                .response
-                .contentAsString,
-        )
-        assertThat(reviseSiloReadySequencesResponse)
-            .hasSize(10)
-            .contains(
-                RevisionResult(
-                    sequenceId = firstSequence,
-                    version = 1,
-                    genericErrors = emptyList(),
-                ),
-            )
+        reviseSiloReadySequences()
+            .andExpect(status().isOk)
 
         assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
             .hasSize(2)

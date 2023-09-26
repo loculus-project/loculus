@@ -9,10 +9,26 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.*
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.alias
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.booleanParam
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.json.jsonb
+import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.stringParam
+import org.jetbrains.exposed.sql.update
+import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.model.HeaderId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -180,7 +196,10 @@ class DatabaseService(
     }
 
     private fun insertProcessedData(sequenceVersion: SequenceVersion): Int {
-        val newStatus = if (sequenceVersion.errors != null && sequenceVersion.errors.isArray && sequenceVersion.errors.size() > 0) {
+        val newStatus = if (sequenceVersion.errors != null &&
+            sequenceVersion.errors.isArray &&
+            sequenceVersion.errors.size() > 0
+        ) {
             Status.NEEDS_REVIEW.name
         } else {
             Status.PROCESSED.name
@@ -343,100 +362,46 @@ class DatabaseService(
     }
 
     fun deleteSequences(sequenceIds: List<Long>) {
-        val sql = """
-        delete from sequences
-        where sequence_id = any (?)
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setArray(1, statement.connection.createArrayOf("BIGINT", sequenceIds.toTypedArray()))
-                statement.executeUpdate()
-            }
-        }
+        SequencesTable.deleteWhere { sequenceId inList sequenceIds }
     }
 
-    fun reviseData(submitter: String, dataSequence: Sequence<FileData>): List<RevisionResult> {
-        val checkSql = """
-        select sequence_id, version, status
-        from sequences 
-        where sequence_id = ?
-        and version = (
-            select max(version)
-            from sequences s
-            where s.sequence_id = sequences.sequence_id
-        )
-        and submitter = ?
-        """.trimIndent()
+    fun reviseData(submitter: String, dataSequence: Sequence<FileData>) {
+        log.info { "revising sequences" }
 
-        val reviseSql = """
-        insert into sequences (sequence_id, version, custom_id, submitter, submitted_at, status, revoked, original_data)
-        select ?, ?, custom_id, submitter, now(), ?, false, ?::jsonb
-        from sequences
-        where sequence_id = ?
-        and version = ?
-        and status = ?
-        """.trimIndent()
+        val maxVersionQuery = maxVersionQuery()
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val revisionResults = mutableListOf<RevisionResult>()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(reviseSql).use { reviseStatement ->
-                conn.prepareStatement(checkSql).use { checkStatement ->
-                    dataSequence.forEach { sequence ->
-
-                        checkStatement.setLong(1, sequence.sequenceId)
-                        checkStatement.setString(2, submitter)
-                        val resultSet = checkStatement.executeQuery()
-
-                        if (!resultSet.next()) {
-                            revisionResults.add(
-                                RevisionResult(
-                                    sequence.sequenceId,
-                                    -1,
-                                    listOf("SequenceId does not exist for user $submitter"),
-                                ),
-                            )
-                        } else {
-                            val sequenceId = resultSet.getLong("sequence_id")
-                            val version = resultSet.getInt("version")
-
-                            if (resultSet.getString("status") != Status.SILO_READY.name) {
-                                revisionResults.add(
-                                    RevisionResult(
-                                        sequenceId,
-                                        version,
-                                        listOf(
-                                            "SequenceId does exist, but the latest version is not in SILO_READY state",
-                                        ),
-                                    ),
-                                )
-                                return@forEach
-                            } else {
-                                reviseStatement.setLong(1, sequenceId)
-                                reviseStatement.setInt(2, version + 1)
-                                reviseStatement.setString(3, Status.RECEIVED.name)
-                                reviseStatement.setString(4, sequence.data.toString())
-                                reviseStatement.setLong(5, sequenceId)
-                                reviseStatement.setInt(6, version)
-                                reviseStatement.setString(7, Status.SILO_READY.name)
-
-                                if (reviseStatement.executeUpdate() == 1) {
-                                    revisionResults.add(
-                                        RevisionResult(
-                                            sequenceId,
-                                            version,
-                                            emptyList(),
-                                        ),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        dataSequence.forEach {
+            SequencesTable.insert(
+                SequencesTable.slice(
+                    SequencesTable.sequenceId,
+                    SequencesTable.version.plus(1),
+                    SequencesTable.customId,
+                    SequencesTable.submitter,
+                    dateTimeParam(now),
+                    stringParam(Status.RECEIVED.name),
+                    booleanParam(false),
+                    QueryParameter(it.data, SequencesTable.originalData.columnType),
+                ).select(
+                    where = {
+                        (SequencesTable.sequenceId eq it.sequenceId) and
+                            (SequencesTable.version eq maxVersionQuery) and
+                            (SequencesTable.status eq Status.SILO_READY.name) and
+                            (SequencesTable.submitter eq submitter)
+                    },
+                ),
+                columns = listOf(
+                    SequencesTable.sequenceId,
+                    SequencesTable.version,
+                    SequencesTable.customId,
+                    SequencesTable.submitter,
+                    SequencesTable.submittedAt,
+                    SequencesTable.status,
+                    SequencesTable.revoked,
+                    SequencesTable.originalData,
+                ),
+            )
         }
-        return revisionResults
     }
 
     fun revokeData(sequenceIds: List<Long>): List<SequenceVersionStatus> {
