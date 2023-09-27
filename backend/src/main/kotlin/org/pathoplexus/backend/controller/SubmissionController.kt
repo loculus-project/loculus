@@ -1,17 +1,19 @@
 package org.pathoplexus.backend.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.servlet.http.HttpServletRequest
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.pathoplexus.backend.model.HeaderId
+import org.pathoplexus.backend.model.SubmitModel
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.FileData
+import org.pathoplexus.backend.service.OriginalData
 import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.ValidationResult
@@ -31,20 +33,38 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.io.InputStreamReader
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
+private const val SUBMIT_DESCRIPTION =
+    "Returns a list of sequenceId, version and customId of the submitted sequences. " +
+        "The customId is the (locally unique) id provided by the submitter as 'header' in the metadata file. " +
+        "The version will be 1 for every sequence. " +
+        "The sequenceId is the (globally unique) id that the system assigned to the sequence. " +
+        "You can use this response to associate the user provided customId with the system assigned sequenceId."
+private const val METADATA_FILE_DESCRIPTION =
+    "A TSV (tab separated values) file containing the metadata of the submitted sequences. " +
+        "The first row must contain the column names. " +
+        "The field 'header' is required and must be unique within the provided dataset. " +
+        "It is used to associate metadata to the sequences in the sequences fasta file."
+private const val SEQUENCE_FILE_DESCRIPTION =
+    "A fasta file containing the unaligned nucleotide sequences of the submitted sequences. " +
+        "The header of each sequence must match the 'header' field in the metadata file."
+
 @RestController
 class SubmissionController(
+    private val submitModel: SubmitModel,
     private val databaseService: DatabaseService,
-    private val objectMapper: ObjectMapper,
 ) {
 
     @Operation(description = "Submit unprocessed data as a multipart/form-data")
+    @ApiResponse(responseCode = "200", description = SUBMIT_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
-        @RequestParam username: String,
-        @RequestParam metadataFile: MultipartFile,
-        @RequestParam sequenceFile: MultipartFile,
+        @Parameter(description = "The username of the submitter - until we implement authentication")
+        @RequestParam
+        username: String,
+        @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
+        @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
     ): List<HeaderId> {
-        return databaseService.insertSubmissions(username, processFiles(metadataFile, sequenceFile))
+        return submitModel.processSubmission(username, metadataFile, sequenceFile)
     }
 
     @Operation(description = "Get unprocessed data as a stream of NDJSON")
@@ -153,11 +173,11 @@ class SubmissionController(
         @Parameter(
             description = "Revised metadata file that contains a column 'sequenceId' that is used " +
                 "to associate the revision to the sequence that will be revised.",
-        )@RequestParam metadataFile: MultipartFile,
+        ) @RequestParam metadataFile: MultipartFile,
         @Parameter(
             description = "Nucleotide sequences in a fasta file format. " +
                 "No changes to the schema compared to an initial submit.",
-        )@RequestParam sequenceFile: MultipartFile,
+        ) @RequestParam sequenceFile: MultipartFile,
     ): List<HeaderId> = databaseService.reviseData(username, generateFileDataSequence(metadataFile, sequenceFile))
 
     @Operation(description = "Revoke existing sequence and stage it for confirmation")
@@ -203,28 +223,6 @@ class SubmissionController(
         val sequenceIds: List<Long>,
     )
 
-    private fun processFiles(
-        metadataFile: MultipartFile,
-        sequenceFile: MultipartFile,
-    ): List<Pair<String, String>> {
-        val metadataList = CSVParser(
-            InputStreamReader(metadataFile.inputStream),
-            CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
-        ).map { it.toMap() }
-        val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
-        val sequenceMap = fastaList.associate { it.sampleName to it.sequence }
-
-        return metadataList.map { entry ->
-            val header = entry["header"] ?: error("Missing header field")
-            val metadata = entry.filterKeys { it != "header" }
-            val result = mapOf(
-                "metadata" to metadata,
-                "unalignedNucleotideSequences" to mapOf("main" to sequenceMap[header]),
-            )
-            Pair(header, objectMapper.writeValueAsString(result))
-        }
-    }
-
     private fun generateFileDataSequence(
         metadataFile: MultipartFile,
         sequenceFile: MultipartFile,
@@ -236,14 +234,13 @@ class SubmissionController(
             InputStreamReader(metadataFile.inputStream),
             CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
         ).asSequence().map { line ->
-            val header = line["header"] ?: error("Missing header field")
+            // TODO The errors do not work. Use throw
+            val customId = line["header"] ?: error("Missing header field")
             val sequenceId = line["sequenceId"]?.toLong() ?: error("Missing sequenceId field")
             val metadata = line.toMap().filterKeys { it != "header" }
-            val unprocessedData = mapOf(
-                "metadata" to metadata,
-                "unalignedNucleotideSequences" to mapOf("main" to sequenceMap[header]),
-            )
-            FileData(header, sequenceId, objectMapper.valueToTree(unprocessedData))
+            val sequence = sequenceMap[customId] ?: error("Missing sequence for header $customId")
+
+            FileData(customId, sequenceId, OriginalData(metadata, mapOf("main" to sequence)))
         }
     }
 }

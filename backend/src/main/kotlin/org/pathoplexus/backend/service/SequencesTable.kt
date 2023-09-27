@@ -26,7 +26,7 @@ object SequencesTable : Table("sequences") {
     val status = varchar("status", 255)
     val revoked = bool("revoked").default(false)
     val originalData =
-        jacksonSerializableJsonb<JsonNode>("original_data").nullable()
+        jacksonSerializableJsonb<OriginalData>("original_data").nullable()
     val processedData = jacksonSerializableJsonb<JsonNode>("processed_data").nullable()
     val errors = jacksonSerializableJsonb<JsonNode>("errors").nullable()
     val warnings = jacksonSerializableJsonb<JsonNode>("warnings").nullable()

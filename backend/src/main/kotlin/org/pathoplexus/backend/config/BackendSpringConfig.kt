@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.core.io.ClassPathResource
-import org.springframework.core.io.ResourceLoader
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import javax.sql.DataSource
 
@@ -21,7 +20,7 @@ import javax.sql.DataSource
     value = [ExposedAutoConfiguration::class],
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
 )
-class BackendSpringConfig(private val objectMapper: ObjectMapper, private val resourceLoader: ResourceLoader) {
+class BackendSpringConfig(private val objectMapper: ObjectMapper) {
 
     @Bean
     fun logFilter(): CommonsRequestLoggingFilter {
