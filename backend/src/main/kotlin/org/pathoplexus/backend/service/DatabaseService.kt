@@ -47,7 +47,7 @@ class DatabaseService(
         Database.connect(pool)
     }
 
-    fun insertSubmissions(submitter: String, submittedData: List<Pair<String, String>>): List<HeaderId> {
+    fun insertSubmissions(submitter: String, submittedData: List<SubmittedData>): List<HeaderId> {
         log.info { "submitting ${submittedData.size} new sequences by $submitter" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -58,10 +58,10 @@ class DatabaseService(
                 it[submittedAt] = now
                 it[version] = 1
                 it[status] = Status.RECEIVED.name
-                it[customId] = data.first
-                it[originalData] = objectMapper.readTree(data.second)
+                it[customId] = data.customId
+                it[originalData] = data.originalData
             }
-            HeaderId(insert[SequencesTable.sequenceId], 1, data.first)
+            HeaderId(insert[SequencesTable.sequenceId], 1, data.customId)
         }
     }
 
@@ -81,7 +81,8 @@ class DatabaseService(
                 SequenceVersion(
                     it[SequencesTable.sequenceId],
                     it[SequencesTable.version],
-                    it[SequencesTable.originalData]!!,
+                    // TODO(#305): Currently this is only a workaround until we have the new types
+                    objectMapper.readTree(objectMapper.writeValueAsString(it[SequencesTable.originalData]!!)),
                 )
             }
 
@@ -384,7 +385,7 @@ class DatabaseService(
                     dateTimeParam(now),
                     stringParam(Status.RECEIVED.name),
                     booleanParam(false),
-                    QueryParameter(it.data, SequencesTable.originalData.columnType),
+                    QueryParameter(it.originalData, SequencesTable.originalData.columnType),
                 ).select(
                     where = {
                         (SequencesTable.sequenceId eq it.sequenceId) and
@@ -500,7 +501,17 @@ data class SequenceVersionStatus(
 data class FileData(
     val customId: String,
     val sequenceId: Long,
-    val data: JsonNode,
+    val originalData: OriginalData,
+)
+
+data class SubmittedData(
+    val customId: String,
+    val originalData: OriginalData,
+)
+
+data class OriginalData(
+    val metadata: Map<String, String>,
+    val unalignedNucleotideSequences: Map<String, String>,
 )
 
 enum class Status {
