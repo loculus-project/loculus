@@ -22,10 +22,13 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
+import org.pathoplexus.backend.controller.ForbiddenException
+import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.model.HeaderId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -210,7 +213,9 @@ class DatabaseService(
         log.info { "approving ${sequenceIds.size} sequences by $submitter" }
 
         if (!hasPermissionToChange(submitter, sequenceIds)) {
-            throw IllegalArgumentException("User does not have right to change these sequences")
+            throw IllegalArgumentException(
+                "User $submitter does not have right to change these sequences ${sequenceIds.size}",
+            )
         }
 
         val maxVersionQuery = maxVersionQuery()
@@ -237,8 +242,10 @@ class DatabaseService(
                         (SequencesTable.version eq maxVersionQuery) and
                         (SequencesTable.submitter eq user)
                 },
-            ).count()
-        return sequencesOwnedByUser == sequenceIds.size.toLong()
+            )
+
+        log.error { sequencesOwnedByUser.map { it.toString() } + " " + sequenceIds.size.toLong() }
+        return sequencesOwnedByUser.count() == sequenceIds.size.toLong()
     }
 
     fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
@@ -480,6 +487,74 @@ class DatabaseService(
         ) {
             it[status] = Status.SILO_READY.name
         }
+    }
+
+    fun submitReviewedSequence(submitter: String, reviewedSequenceVersion: UnprocessedData) {
+        log.info { "reviewed sequence submitted $reviewedSequenceVersion" }
+
+        val sequencesReviewed = SequencesTable.update(
+            where = {
+                (SequencesTable.sequenceId eq reviewedSequenceVersion.sequenceId) and
+                    (SequencesTable.version eq reviewedSequenceVersion.version) and
+                    (SequencesTable.submitter eq submitter) and
+                    (
+                        (SequencesTable.status eq Status.PROCESSED.name) or
+                            (SequencesTable.status eq Status.NEEDS_REVIEW.name)
+                        )
+            },
+        ) {
+            it[status] = Status.REVIEWED.name
+            it[originalData] = reviewedSequenceVersion.data
+            it[errors] = null
+            it[warnings] = null
+            it[startedProcessingAt] = null
+            it[finishedProcessingAt] = null
+            it[processedData] = null
+        }
+
+        if (sequencesReviewed != 1) {
+            handleReviewedSubmissionError(reviewedSequenceVersion, submitter)
+        }
+    }
+
+    private fun handleReviewedSubmissionError(reviewedSequenceVersion: UnprocessedData, submitter: String) {
+        val selectedSequences = SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.status,
+                SequencesTable.submitter,
+            )
+            .select(
+                where = {
+                    (SequencesTable.sequenceId eq reviewedSequenceVersion.sequenceId) and
+                        (SequencesTable.version eq reviewedSequenceVersion.version)
+                },
+            )
+
+        val sequenceVersionString = "${reviewedSequenceVersion.sequenceId}.${reviewedSequenceVersion.version}"
+
+        if (selectedSequences.count().toInt() == 0) {
+            throw UnprocessableEntityException("Sequence $sequenceVersionString does not exist")
+        }
+
+        val hasCorrectStatus = selectedSequences.all {
+            (it[SequencesTable.status] == Status.PROCESSED.name) ||
+                (it[SequencesTable.status] == Status.NEEDS_REVIEW.name)
+        }
+        if (!hasCorrectStatus) {
+            throw UnprocessableEntityException(
+                "Sequence $sequenceVersionString is in status ${selectedSequences.first()[SequencesTable.status]} " +
+                    "not in ${Status.PROCESSED} or ${Status.NEEDS_REVIEW}",
+            )
+        }
+
+        if (selectedSequences.any { it[SequencesTable.submitter] != submitter }) {
+            throw ForbiddenException(
+                "Sequence $sequenceVersionString is not owned by user $submitter",
+            )
+        }
+        throw Exception("SequenceReview: Unknown error")
     }
 }
 

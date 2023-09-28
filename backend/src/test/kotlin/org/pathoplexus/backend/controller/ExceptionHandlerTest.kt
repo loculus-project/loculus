@@ -8,7 +8,6 @@ import io.mockk.every
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.model.HeaderId
-import org.pathoplexus.backend.model.InvalidSequenceFileException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.http.MediaType
@@ -63,7 +62,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `GIVEN InvalidSequenceFileException is thrown THEN returns Unprocessable Entity (422)`() {
-        every { validControllerCall() } throws InvalidSequenceFileException("SomeMessage")
+        every { validControllerCall() } throws UnprocessableEntityException("SomeMessage")
 
         mockMvc.perform(validRequest)
             .andExpect(status().isUnprocessableEntity)

@@ -2,6 +2,7 @@ package org.pathoplexus.backend.model
 
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
+import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.OriginalData
 import org.pathoplexus.backend.service.SubmittedData
@@ -35,7 +36,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
         val sequenceKeysSet = sequenceMap.keys.toSet()
         val metadataKeysNotInSequences = metadataKeysSet.subtract(sequenceKeysSet)
         if (metadataKeysNotInSequences.isNotEmpty()) {
-            throw InvalidSequenceFileException(
+            throw UnprocessableEntityException(
                 "Metadata file contains headers that are not present in the sequence file: " +
                     metadataKeysNotInSequences,
             )
@@ -43,7 +44,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
 
         val sequenceKeysNotInMetadata = sequenceKeysSet.subtract(metadataKeysSet)
         if (sequenceKeysNotInMetadata.isNotEmpty()) {
-            throw InvalidSequenceFileException(
+            throw UnprocessableEntityException(
                 "Sequence file contains headers that are not present in the metadata file: " +
                     sequenceKeysNotInMetadata,
             )
@@ -56,7 +57,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
 
     private fun metadataMap(metadataFile: MultipartFile): Map<String, Map<String, String>> {
         if (metadataFile.originalFilename == null || !metadataFile.originalFilename?.endsWith(".tsv")!!) {
-            throw InvalidSequenceFileException("Metadata file must have extension .tsv")
+            throw UnprocessableEntityException("Metadata file must have extension .tsv")
         }
 
         val csvParser = CSVParser(
@@ -65,7 +66,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
         )
 
         if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
-            throw InvalidSequenceFileException(
+            throw UnprocessableEntityException(
                 "The metadata file does not contain the header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES'",
             )
         }
@@ -74,7 +75,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
 
         val metadataMap = metadataList.associate {
             if (it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES].isNullOrEmpty()) {
-                throw InvalidSequenceFileException(
+                throw UnprocessableEntityException(
                     "A row in metadata file contains no $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES: $it",
                 )
             }
@@ -90,7 +91,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
                 .filter { it.value > 1 }
                 .keys
 
-            throw InvalidSequenceFileException(
+            throw UnprocessableEntityException(
                 "Metadata file contains duplicate ${HEADER_TO_CONNECT_METADATA_AND_SEQUENCES}s: $duplicateKeys",
             )
         }
@@ -99,7 +100,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
 
     private fun sequenceMap(sequenceFile: MultipartFile): Map<String, String> {
         if (sequenceFile.originalFilename == null || !sequenceFile.originalFilename?.endsWith(".fasta")!!) {
-            throw InvalidSequenceFileException("Sequence file must have extension .fasta")
+            throw UnprocessableEntityException("Sequence file must have extension .fasta")
         }
 
         val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
@@ -114,10 +115,8 @@ class SubmitModel(private val databaseService: DatabaseService) {
                 .filter { it.value > 1 }
                 .keys
 
-            throw InvalidSequenceFileException("Sequence file contains duplicate headers: $duplicateKeys")
+            throw UnprocessableEntityException("Sequence file contains duplicate headers: $duplicateKeys")
         }
         return sequenceMap
     }
 }
-
-class InvalidSequenceFileException(message: String) : Exception(message)

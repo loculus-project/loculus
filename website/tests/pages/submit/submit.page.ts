@@ -3,10 +3,9 @@ import { readFileSync } from 'fs';
 import type { Locator, Page } from '@playwright/test';
 
 import { approveProcessedData } from '../../../src/components/UserSequenceList/approveProcessedData.ts';
-import { baseUrl, metadataTestFile, sequencesTestFile, testuser, expect } from '../../e2e.fixture';
+import { baseUrl, expect, metadataTestFile, sequencesTestFile, testuser } from '../../e2e.fixture';
 import { fakeProcessingPipeline, queryUnprocessedData, type Sequence } from '../../util/preprocessingPipeline.ts';
 
-export type SubmitResponse = { sequenceId: number; customId: string };
 export class SubmitPage {
     public readonly userField: Locator;
     public readonly submitButton: Locator;
