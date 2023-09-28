@@ -6,6 +6,8 @@
 - Version: the version number of a sequence+metadata
 - Unpreprocessed data: the data that the submitter provides
 - Preprocessed data: the data that the preprocessing pipeline provides/derives based on the unpreprocesed data
+- Revision: a new version of unpreprocessed data associated with an existing sequence ID that is already released
+- Revocation: a new version that is associated with an existing sequence ID that is already released and that is marked as revoked. Data are empty.
 
 ## Initial submission
 

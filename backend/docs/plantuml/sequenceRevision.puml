@@ -9,7 +9,7 @@
     alt sequenceID exists and highest version is 'SILO_READY'
         backend -> DB: insert new version in status 'RECEIVED'
     backend -> frontend: response with sequenceId + new version number
-    else sequenceID with Status 'SILO_READY' does not exist
+    else
         backend -> frontend: response with error message
     end
 

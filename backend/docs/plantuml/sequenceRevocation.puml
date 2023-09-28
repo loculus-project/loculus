@@ -8,7 +8,7 @@
      alt sequenceID exists and highest version is 'SILO_READY'
         backend -> DB: insert new version\nwith status 'REVISION_STAGING' \nand ' is_revoked = true'
     backend -> frontend: response with sequenceId + new version number
-    else sequenceID exists and highest version is not 'SILO_READY'
+    else
         backend -> frontend: response with error message
     end
 
