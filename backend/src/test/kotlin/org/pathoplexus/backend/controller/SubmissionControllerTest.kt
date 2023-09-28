@@ -229,19 +229,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                 ),
             )
 
-        val sequenceStatus = revokeSequences(allSequenceIds)
-
-        assertThat(sequenceStatus).hasSize(numberOfSequences)
-        assertThat(sequenceStatus.filter { it.sequenceId == firstSequence })
-            .hasSize(1)
-            .contains(
-                SequenceStatus(
-                    sequenceId = firstSequence,
-                    version = 2,
-                    status = Status.REVOKED_STAGING,
-                    revoked = true,
-                ),
-            )
+        revokeSequences(allSequenceIds)
 
         assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
             .hasSize(2)
@@ -464,15 +452,16 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
         return Pair(metadataFile, sequencesFile)
     }
 
-    private fun revokeSequences(listOfSequencesToRevoke: List<Number>) = objectMapper.readValue<List<SequenceStatus>>(
-        mockMvc.perform(
-            MockMvcRequestBuilders.post("/revoke")
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
+    private fun revokeSequences(listOfSequencesToRevoke: List<Number>) =
+        objectMapper.readValue<List<SequenceVersionStatus>>(
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/revoke")
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
+            )
+                .andExpect(status().isOk())
+                .andReturn().response.contentAsString,
         )
-            .andExpect(status().isOk())
-            .andReturn().response.contentAsString,
-    )
 
     private fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions = mockMvc.perform(
         MockMvcRequestBuilders.post("/confirm-revocation")

@@ -10,6 +10,7 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
@@ -113,7 +114,7 @@ class DatabaseService(
     }
 
     private fun stream(
-        sequencesData: List<Sequence>,
+        sequencesData: List<SequenceVersion>,
         outputStream: OutputStream,
     ) {
         sequencesData
@@ -132,19 +133,19 @@ class DatabaseService(
         val validationResults = mutableListOf<ValidationResult>()
 
         reader.lineSequence().forEach { line ->
-            val sequence = objectMapper.readValue<SequenceVersion>(line)
-            val validationResult = sequenceValidatorService.validateSequence(sequence)
+            val sequenceVersion = objectMapper.readValue<SequenceVersion>(line)
+            val validationResult = sequenceValidatorService.validateSequence(sequenceVersion)
 
             if (sequenceValidatorService.isValidResult(validationResult)) {
-                val numInserted = insertProcessedData(sequence)
+                val numInserted = insertProcessedData(sequenceVersion)
                 if (numInserted != 1) {
                     validationResults.add(
                         ValidationResult(
-                            sequence.sequenceId,
+                            sequenceVersion.sequenceId,
                             emptyList(),
                             emptyList(),
                             emptyList(),
-                            listOf(insertProcessedDataError(sequence)),
+                            listOf(insertProcessedDataError(sequenceVersion)),
                         ),
                     )
                 }
@@ -192,7 +193,7 @@ class DatabaseService(
             .select(
                 where = {
                     (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
-                    (SequencesTable.version eq sequenceVersion.version)
+                        (SequencesTable.version eq sequenceVersion.version)
                 },
             )
         if (selectedSequences.count().toInt() == 0) {
@@ -367,25 +368,17 @@ class DatabaseService(
         SequencesTable.deleteWhere { sequenceId inList sequenceIds }
     }
 
-    fun reviseData(submitter: String, dataSequence: Sequence<FileData>) {
+    fun reviseData(submitter: String, dataSequence: Sequence<FileData>): List<HeaderId> {
         log.info { "revising sequences" }
 
         val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        dataSequence.forEach {
+        return dataSequence.map {
             SequencesTable.insert(
                 SequencesTable.slice(
-                    SequencesTable.sequenceId, SequencesTable
-            .slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.submitter,
-                SequencesTable.customId,
-                SequencesTable.status,
-                SequencesTable.originalData,
-            )
-            .version.plus(1),
+                    SequencesTable.sequenceId,
+                    SequencesTable.version.plus(1),
                     SequencesTable.customId,
                     SequencesTable.submitter,
                     dateTimeParam(now),
@@ -393,10 +386,9 @@ class DatabaseService(
                     booleanParam(false),
                     QueryParameter(it.data, SequencesTable.originalData.columnType),
                 ).select(
-                where = {
-                    (SequencesTable.sequenceId eq it.sequenceId) and
-                        (SequencesTable.version eq maxVersionQuery)
-                and
+                    where = {
+                        (SequencesTable.sequenceId eq it.sequenceId) and
+                            (SequencesTable.version eq maxVersionQuery) and
                             (SequencesTable.status eq Status.SILO_READY.name) and
                             (SequencesTable.submitter eq submitter)
                     },
@@ -412,7 +404,9 @@ class DatabaseService(
                     SequencesTable.originalData,
                 ),
             )
-        }
+
+            HeaderId(it.sequenceId, it.sequenceId.toInt(), it.customId)
+        }.toList()
     }
 
     fun revokeData(sequenceIds: List<Long>): List<SequenceVersionStatus> {
@@ -507,12 +501,6 @@ data class FileData(
     val customId: String,
     val sequenceId: Long,
     val data: JsonNode,
-)
-
-data class RevisionResult(
-    val sequenceId: Long,
-    val version: Int,
-    val genericErrors: List<String> = emptyList(),
 )
 
 enum class Status {

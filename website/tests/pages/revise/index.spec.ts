@@ -2,7 +2,6 @@ import { expect, test } from '../../e2e.fixture';
 
 test.describe('The revise page', () => {
     test('should upload files and revise existing data', async ({ revisePage, submitPage, userPage }) => {
-        test.slow();
         const sequences = await submitPage.prepareDataToBeReleasable();
 
         await revisePage.goto();

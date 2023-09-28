@@ -158,7 +158,7 @@ class SubmissionController(
             description = "Nucleotide sequences in a fasta file format. " +
                 "No changes to the schema compared to an initial submit.",
         )@RequestParam sequenceFile: MultipartFile,
-    ) = databaseService.reviseData(username, generateFileDataSequence(metadataFile, sequenceFile))
+    ): List<HeaderId> = databaseService.reviseData(username, generateFileDataSequence(metadataFile, sequenceFile))
 
     @Operation(description = "Revoke existing sequence and stage it for confirmation")
     @PostMapping(
