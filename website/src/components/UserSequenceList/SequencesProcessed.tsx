@@ -16,18 +16,17 @@ export const SequencesProcessed: FC<SequencesProcessedProps> = ({ username, sequ
                 <table className='table'>
                     <thead>
                         <tr>
-                            <td>Sequence ID</td>
+                            <td>SequenceID.Version</td>
                             <td>Current status</td>
-                            <td> </td>
                         </tr>
                     </thead>
                     <tbody>
                         {sequences.map((sequence, index) => (
                             <tr key={index}>
                                 <td>
-                                    {sequence.sequenceId} (version {sequence.version})
+                                    {sequence.sequenceId}.{sequence.version}
                                 </td>
-                                <td> {sequence.status}</td>
+                                <td> {sequence.status} </td>
                                 <td>
                                     <button className='btn' onClick={handleApprove(username, sequence.sequenceId)}>
                                         Approve

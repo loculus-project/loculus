@@ -2,8 +2,23 @@ import type { Page } from '@playwright/test';
 
 import { baseUrl, testuser } from '../../e2e.fixture';
 
-export type SubmitResponse = { sequenceId: number; customId: string };
+interface SequenceVersionWithStatus {
+    sequenceId: number;
+    version: number;
+    status: string;
+}
+
 export class UserPage {
+    private readonly sequenceBoxNames = [
+        `userSequences.${testuser}.receivedExpanded`,
+        `userSequences.${testuser}.processingExpanded`,
+        `userSequences.${testuser}.needsReviewExpanded`,
+        `userSequences.${testuser}.reviewedExpanded`,
+        `userSequences.${testuser}.stagingExpanded`,
+        `userSequences.${testuser}.readyExpanded`,
+        `userSequences.${testuser}.revokedExpanded`,
+    ] as const;
+
     constructor(public readonly page: Page) {}
 
     public async goto() {
@@ -12,18 +27,30 @@ export class UserPage {
 
     public async gotoUserSequencePage() {
         await this.page.goto(`${baseUrl}/user/${testuser}/sequences`);
-        const countOfDifferentStatuses = 6;
-        for (const id of Array.from({ length: countOfDifferentStatuses }, (_, i) => i + 1)) {
-            await this.page.locator(`div:nth-child(${id}) > input`).click();
+
+        for (const id of this.sequenceBoxNames) {
+            const checkbox = this.page.getByTestId(id);
+            if (!(await checkbox.isChecked())) {
+                await checkbox.click();
+            }
         }
+
+        await this.page.waitForSelector('text=REVOKE');
     }
 
-    public async gotoUserPageAndLocateSequenceWithStatus(sequenceId: number, status: string) {
-        await this.page.goto(`${baseUrl}/user/${testuser}/sequences`);
-        const countOfDifferentStatuses = 6;
-        for (const id of Array.from({ length: countOfDifferentStatuses }, (_, i) => i + 1)) {
-            await this.page.locator(`div:nth-child(${id}) > input`).click();
+    public async verifyTableEntries(sequencesToCheck: SequenceVersionWithStatus[]) {
+        const rows = (await this.page.locator('tr').allTextContents()).map((row) =>
+            row.split(/\s+/).filter((entry) => entry !== ''),
+        );
+
+        const rowsWithCorrectEntries: string[][] = [];
+        for (const sequenceVersionWithStatus of sequencesToCheck) {
+            const { sequenceId, version, status } = sequenceVersionWithStatus;
+            rowsWithCorrectEntries.push(
+                ...rows.filter((row) => row.includes(status) && row.includes(`${sequenceId}.${version}`)),
+            );
         }
-        return this.page.getByRole('row', { name: `${sequenceId}`, exact: false }).getByRole('cell', { name: status });
+
+        return rowsWithCorrectEntries.length === sequencesToCheck.length;
     }
 }

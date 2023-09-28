@@ -3,7 +3,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import React, { type FC, type FormEventHandler, useMemo, useState } from 'react';
+import { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
 import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField } from './fields/DateField';

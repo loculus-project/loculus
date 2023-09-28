@@ -1,5 +1,5 @@
 import { Checkbox, FormControlLabel } from '@mui/material';
-import React, { type FC, useState } from 'react';
+import { type FC, useState } from 'react';
 
 import { AutoCompleteField } from './AutoCompleteField';
 import type { FieldProps } from './FieldProps';
