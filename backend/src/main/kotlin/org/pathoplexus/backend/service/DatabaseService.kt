@@ -12,12 +12,16 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.model.HeaderId
@@ -212,8 +216,8 @@ class DatabaseService(
         SequencesTable.update(
             where = {
                 (SequencesTable.sequenceId inList sequenceIds) and
-                        (SequencesTable.version eq maxVersionQuery) and
-                        (SequencesTable.status eq Status.PROCESSED.name)
+                    (SequencesTable.version eq maxVersionQuery) and
+                    (SequencesTable.status eq Status.PROCESSED.name)
             },
         ) {
             it[status] = Status.SILO_READY.name
@@ -228,8 +232,8 @@ class DatabaseService(
             .select(
                 where = {
                     (SequencesTable.sequenceId inList sequenceIds) and
-                            (SequencesTable.version eq maxVersionQuery) and
-                            (SequencesTable.submitter eq user)
+                        (SequencesTable.version eq maxVersionQuery) and
+                        (SequencesTable.submitter eq user)
                 },
             ).count()
         return sequencesOwnedByUser == sequenceIds.size.toLong()
@@ -328,8 +332,8 @@ class DatabaseService(
         val sequencesStatusNotSiloReady = subTableSequenceStatus.select(
             where = {
                 (SequencesTable.status neq Status.SILO_READY.name) and
-                        (SequencesTable.submitter eq username) and
-                        (SequencesTable.version eq maxVersionQuery)
+                    (SequencesTable.submitter eq username) and
+                    (SequencesTable.version eq maxVersionQuery)
             },
         ).map { row ->
             SequenceVersionStatus(
@@ -350,7 +354,7 @@ class DatabaseService(
                 .slice(subQueryTable[SequencesTable.version].max())
                 .select {
                     (subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId) and
-                            (subQueryTable[SequencesTable.status] eq Status.SILO_READY.name)
+                        (subQueryTable[SequencesTable.status] eq Status.SILO_READY.name)
                 },
         )
     }
@@ -415,30 +419,56 @@ class DatabaseService(
         log.info { "revoking ${sequenceIds.size} sequences" }
 
         val maxVersionQuery = maxVersionQuery()
-        val sequences = SequencesTable.select(
-            where = {
-                (SequencesTable.sequenceId inList sequenceIds) and
-                        (SequencesTable.version eq maxVersionQuery)
-            },
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        SequencesTable.insert(
+            SequencesTable.slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version.plus(1),
+                SequencesTable.customId,
+                SequencesTable.submitter,
+                dateTimeParam(now),
+                stringParam(Status.REVOKED_STAGING.name),
+                booleanParam(true),
+            ).select(
+                where = {
+                    (SequencesTable.sequenceId inList sequenceIds) and
+                        (SequencesTable.version eq maxVersionQuery) and
+                        (SequencesTable.status eq Status.SILO_READY.name)
+                },
+            ),
+            columns = listOf(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.customId,
+                SequencesTable.submitter,
+                SequencesTable.submittedAt,
+                SequencesTable.status,
+                SequencesTable.revoked,
+            ),
         )
 
-        val revokedList = sequences.map { sequence ->
-            SequencesTable.insert { insertStatement ->
-                insertStatement[sequenceId] = sequence[sequenceId]
-                insertStatement[version] = sequence[version] + 1
-                insertStatement[customId] = sequence[customId]
-                insertStatement[submitter] = sequence[submitter]
-                insertStatement[submittedAt] = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-                insertStatement[status] = Status.REVOKED_STAGING.name
-                insertStatement[revoked] = true
-            }
-
-            SequenceVersionStatus(
-                sequence[SequencesTable.sequenceId],
-                sequence[SequencesTable.version] + 1,
-                Status.REVOKED_STAGING,
+        val revokedList = SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.status,
+                SequencesTable.revoked,
             )
-        }
+            .select(
+                where = {
+                    (SequencesTable.sequenceId inList sequenceIds) and
+                        (SequencesTable.version eq maxVersionQuery) and
+                        (SequencesTable.status eq Status.REVOKED_STAGING.name)
+                },
+            ).map {
+                SequenceVersionStatus(
+                    it[SequencesTable.sequenceId],
+                    it[SequencesTable.version],
+                    Status.REVOKED_STAGING,
+                    it[SequencesTable.revoked],
+                )
+            }
 
         return revokedList
     }
@@ -449,8 +479,8 @@ class DatabaseService(
         return SequencesTable.update(
             where = {
                 (SequencesTable.sequenceId inList sequenceIds) and
-                        (SequencesTable.version eq maxVersionQuery) and
-                        (SequencesTable.status eq Status.REVOKED_STAGING.name)
+                    (SequencesTable.version eq maxVersionQuery) and
+                    (SequencesTable.status eq Status.REVOKED_STAGING.name)
             },
         ) {
             it[status] = Status.SILO_READY.name
