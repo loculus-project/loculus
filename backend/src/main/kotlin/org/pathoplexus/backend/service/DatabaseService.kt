@@ -99,12 +99,13 @@ class DatabaseService(
     private fun updateStatusToProcessing(sequences: List<SequenceVersion>) {
         val sequenceVersions = sequences.map { it.sequenceId to it.version }
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        SequencesTable.update(
-            where = { Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions },
-        ) {
-            it[this.status] = Status.PROCESSING.name
-            it[startedProcessingAt] = now
-        }
+        SequencesTable
+            .update(
+                where = { Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions },
+            ) {
+                it[status] = Status.PROCESSING.name
+                it[startedProcessingAt] = now
+            }
     }
 
     private fun stream(
@@ -178,12 +179,18 @@ class DatabaseService(
     }
 
     private fun insertProcessedDataError(sequenceVersion: SequenceVersion): String {
-        val selectedSequences = SequencesTable.select(
-            where = {
-                (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
+        val selectedSequences = SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.status,
+            )
+            .select(
+                where = {
+                    (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
                     (SequencesTable.version eq sequenceVersion.version)
-            },
-        )
+                },
+            )
         if (selectedSequences.count().toInt() == 0) {
             return "SequenceId does not exist"
         }
@@ -232,20 +239,28 @@ class DatabaseService(
         log.info { "streaming $numberOfSequences processed submissions" }
         val maxVersionQuery = maxVersionQuery()
 
-        val sequencesData = SequencesTable.select(
-            where = {
-                (SequencesTable.status eq Status.PROCESSED.name) and
-                        (SequencesTable.version eq maxVersionQuery)
-            },
-        ).limit(numberOfSequences).map { row ->
-            SequenceVersion(
-                row[SequencesTable.sequenceId],
-                row[SequencesTable.version],
-                row[SequencesTable.processedData]!!,
-                row[SequencesTable.errors],
-                row[SequencesTable.warnings],
+        val sequencesData = SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.processedData,
+                SequencesTable.errors,
+                SequencesTable.warnings,
             )
-        }
+            .select(
+                where = {
+                    (SequencesTable.status eq Status.PROCESSED.name) and
+                        (SequencesTable.version eq maxVersionQuery)
+                },
+            ).limit(numberOfSequences).map { row ->
+                SequenceVersion(
+                    row[SequencesTable.sequenceId],
+                    row[SequencesTable.version],
+                    row[SequencesTable.processedData]!!,
+                    row[SequencesTable.errors],
+                    row[SequencesTable.warnings],
+                )
+            }
 
         stream(sequencesData, outputStream)
     }
@@ -254,21 +269,29 @@ class DatabaseService(
         log.info { "streaming $numberOfSequences submissions that need review by $submitter" }
         val maxVersionQuery = maxVersionQuery()
 
-        val sequencesData = SequencesTable.select(
-            where = {
-                (SequencesTable.status eq Status.NEEDS_REVIEW.name) and
+        val sequencesData = SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.processedData,
+                SequencesTable.errors,
+                SequencesTable.warnings,
+            )
+            .select(
+                where = {
+                    (SequencesTable.status eq Status.NEEDS_REVIEW.name) and
                         (SequencesTable.version eq maxVersionQuery) and
                         (SequencesTable.submitter eq submitter)
-            },
-        ).limit(numberOfSequences).map { row ->
-            SequenceVersion(
-                row[SequencesTable.sequenceId],
-                row[SequencesTable.version],
-                row[SequencesTable.processedData]!!,
-                row[SequencesTable.errors],
-                row[SequencesTable.warnings],
-            )
-        }
+                },
+            ).limit(numberOfSequences).map { row ->
+                SequenceVersion(
+                    row[SequencesTable.sequenceId],
+                    row[SequencesTable.version],
+                    row[SequencesTable.processedData]!!,
+                    row[SequencesTable.errors],
+                    row[SequencesTable.warnings],
+                )
+            }
 
         stream(sequencesData, outputStream)
     }
@@ -276,24 +299,33 @@ class DatabaseService(
     fun getActiveSequencesSubmittedBy(username: String): List<SequenceVersionStatus> {
         log.info { "getting active sequences submitted by $username" }
 
+        val subTableSequenceStatus = SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.status,
+                SequencesTable.revoked,
+            )
+
         val maxVersionWithSiloReadyQuery = maxVersionWithSiloReadyQuery()
-        val sequencesStatusSiloReady = SequencesTable.select(
-            where = {
-                (SequencesTable.status eq Status.SILO_READY.name) and
+        val sequencesStatusSiloReady = subTableSequenceStatus
+            .select(
+                where = {
+                    (SequencesTable.status eq Status.SILO_READY.name) and
                         (SequencesTable.submitter eq username) and
                         (SequencesTable.version eq maxVersionWithSiloReadyQuery)
-            },
-        ).map { row ->
-            SequenceVersionStatus(
-                row[SequencesTable.sequenceId],
-                row[SequencesTable.version],
-                Status.SILO_READY,
-                row[SequencesTable.revoked],
-            )
-        }
+                },
+            ).map { row ->
+                SequenceVersionStatus(
+                    row[SequencesTable.sequenceId],
+                    row[SequencesTable.version],
+                    Status.SILO_READY,
+                    row[SequencesTable.revoked],
+                )
+            }
 
         val maxVersionQuery = maxVersionQuery()
-        val sequencesStatusNotSiloReady = SequencesTable.select(
+        val sequencesStatusNotSiloReady = subTableSequenceStatus.select(
             where = {
                 (SequencesTable.status neq Status.SILO_READY.name) and
                         (SequencesTable.submitter eq username) and
@@ -340,8 +372,16 @@ class DatabaseService(
         dataSequence.forEach {
             SequencesTable.insert(
                 SequencesTable.slice(
-                    SequencesTable.sequenceId,
-                    SequencesTable.version.plus(1),
+                    SequencesTable.sequenceId, SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.submitter,
+                SequencesTable.customId,
+                SequencesTable.status,
+                SequencesTable.originalData,
+            )
+            .version.plus(1),
                     SequencesTable.customId,
                     SequencesTable.submitter,
                     dateTimeParam(now),
@@ -349,9 +389,10 @@ class DatabaseService(
                     booleanParam(false),
                     QueryParameter(it.data, SequencesTable.originalData.columnType),
                 ).select(
-                    where = {
-                        (SequencesTable.sequenceId eq it.sequenceId) and
-                            (SequencesTable.version eq maxVersionQuery) and
+                where = {
+                    (SequencesTable.sequenceId eq it.sequenceId) and
+                        (SequencesTable.version eq maxVersionQuery)
+                and
                             (SequencesTable.status eq Status.SILO_READY.name) and
                             (SequencesTable.submitter eq submitter)
                     },
