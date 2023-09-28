@@ -3,7 +3,6 @@ package org.pathoplexus.backend.service
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -11,22 +10,14 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
-import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
-import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.json.jsonb
-import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.model.HeaderId
@@ -39,33 +30,6 @@ import java.io.OutputStream
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger { }
-
-private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
-
-private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: String) = jsonb<T>(
-    columnName,
-    { value -> jacksonObjectMapper.writeValueAsString(value) },
-    { string -> jacksonObjectMapper.readValue(string) },
-)
-
-object SequencesTable : Table("sequences") {
-    val sequenceId = long("sequence_id").autoIncrement()
-    val version = long("version")
-    val customId = varchar("custom_id", 255)
-    val submitter = varchar("submitter", 255)
-    val submittedAt = datetime("submitted_at")
-    val startedProcessingAt = datetime("started_processing_at").nullable()
-    val finishedProcessingAt = datetime("finished_processing_at").nullable()
-    val status = varchar("status", 255)
-    val revoked = bool("revoked").default(false)
-    val originalData =
-            jacksonSerializableJsonb<JsonNode>("original_data").nullable()
-    val processedData = jacksonSerializableJsonb<JsonNode>("processed_data").nullable()
-    val errors = jacksonSerializableJsonb<JsonNode>("errors").nullable()
-    val warnings = jacksonSerializableJsonb<JsonNode>("warnings").nullable()
-
-    override val primaryKey = PrimaryKey(sequenceId, version)
-}
 
 @Service
 @Transactional
@@ -143,6 +107,19 @@ class DatabaseService(
         }
     }
 
+    private fun stream(
+        sequencesData: List<Sequence>,
+        outputStream: OutputStream,
+    ) {
+        sequencesData
+            .forEach { sequence ->
+                val json = objectMapper.writeValueAsString(sequence)
+                outputStream.write(json.toByteArray())
+                outputStream.write('\n'.code)
+                outputStream.flush()
+            }
+    }
+
     fun updateProcessedData(inputStream: InputStream): List<ValidationResult> {
         log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
@@ -218,18 +195,37 @@ class DatabaseService(
 
     fun approveProcessedData(submitter: String, sequenceIds: List<Long>) {
         log.info { "approving ${sequenceIds.size} sequences by $submitter" }
+
+        if (!hasPermissionToChange(submitter, sequenceIds)) {
+            throw IllegalArgumentException("User does not have right to change these sequences")
+        }
+
         val maxVersionQuery = maxVersionQuery()
 
         SequencesTable.update(
             where = {
                 (SequencesTable.sequenceId inList sequenceIds) and
-                    (SequencesTable.version eq maxVersionQuery) and
-                    (SequencesTable.status eq Status.PROCESSED.name)
+                        (SequencesTable.version eq maxVersionQuery) and
+                        (SequencesTable.status eq Status.PROCESSED.name)
             },
         ) {
             it[status] = Status.SILO_READY.name
             it[this.submitter] = submitter
         }
+    }
+
+    private fun hasPermissionToChange(user: String, sequenceIds: List<Long>): Boolean {
+        val maxVersionQuery = maxVersionQuery()
+        val sequencesOwnedByUser = SequencesTable
+            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter)
+            .select(
+                where = {
+                    (SequencesTable.sequenceId inList sequenceIds) and
+                            (SequencesTable.version eq maxVersionQuery) and
+                            (SequencesTable.submitter eq user)
+                },
+            ).count()
+        return sequencesOwnedByUser == sequenceIds.size.toLong()
     }
 
     fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
@@ -239,7 +235,7 @@ class DatabaseService(
         val sequencesData = SequencesTable.select(
             where = {
                 (SequencesTable.status eq Status.PROCESSED.name) and
-                    (SequencesTable.version eq maxVersionQuery)
+                        (SequencesTable.version eq maxVersionQuery)
             },
         ).limit(numberOfSequences).map { row ->
             SequenceVersion(
@@ -254,19 +250,6 @@ class DatabaseService(
         stream(sequencesData, outputStream)
     }
 
-    private fun stream(
-        sequencesData: List<SequenceVersion>,
-        outputStream: OutputStream,
-    ) {
-        sequencesData
-            .forEach { sequence ->
-                val json = objectMapper.writeValueAsString(sequence)
-                outputStream.write(json.toByteArray())
-                outputStream.write('\n'.code)
-                outputStream.flush()
-            }
-    }
-
     fun streamReviewNeededSubmissions(submitter: String, numberOfSequences: Int, outputStream: OutputStream) {
         log.info { "streaming $numberOfSequences submissions that need review by $submitter" }
         val maxVersionQuery = maxVersionQuery()
@@ -274,8 +257,8 @@ class DatabaseService(
         val sequencesData = SequencesTable.select(
             where = {
                 (SequencesTable.status eq Status.NEEDS_REVIEW.name) and
-                    (SequencesTable.version eq maxVersionQuery) and
-                    (SequencesTable.submitter eq submitter)
+                        (SequencesTable.version eq maxVersionQuery) and
+                        (SequencesTable.submitter eq submitter)
             },
         ).limit(numberOfSequences).map { row ->
             SequenceVersion(
@@ -292,12 +275,13 @@ class DatabaseService(
 
     fun getActiveSequencesSubmittedBy(username: String): List<SequenceVersionStatus> {
         log.info { "getting active sequences submitted by $username" }
+
         val maxVersionWithSiloReadyQuery = maxVersionWithSiloReadyQuery()
         val sequencesStatusSiloReady = SequencesTable.select(
             where = {
                 (SequencesTable.status eq Status.SILO_READY.name) and
-                    (SequencesTable.submitter eq username) and
-                    (SequencesTable.version eq maxVersionWithSiloReadyQuery)
+                        (SequencesTable.submitter eq username) and
+                        (SequencesTable.version eq maxVersionWithSiloReadyQuery)
             },
         ).map { row ->
             SequenceVersionStatus(
@@ -312,8 +296,8 @@ class DatabaseService(
         val sequencesStatusNotSiloReady = SequencesTable.select(
             where = {
                 (SequencesTable.status neq Status.SILO_READY.name) and
-                    (SequencesTable.submitter eq username) and
-                    (SequencesTable.version eq maxVersionQuery)
+                        (SequencesTable.submitter eq username) and
+                        (SequencesTable.version eq maxVersionQuery)
             },
         ).map { row ->
             SequenceVersionStatus(
@@ -334,7 +318,7 @@ class DatabaseService(
                 .slice(subQueryTable[SequencesTable.version].max())
                 .select {
                     (subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId) and
-                        (subQueryTable[SequencesTable.status] eq Status.SILO_READY.name)
+                            (subQueryTable[SequencesTable.status] eq Status.SILO_READY.name)
                 },
         )
     }
@@ -393,7 +377,7 @@ class DatabaseService(
         val sequences = SequencesTable.select(
             where = {
                 (SequencesTable.sequenceId inList sequenceIds) and
-                    (SequencesTable.version eq maxVersionQuery)
+                        (SequencesTable.version eq maxVersionQuery)
             },
         )
 
@@ -424,8 +408,8 @@ class DatabaseService(
         return SequencesTable.update(
             where = {
                 (SequencesTable.sequenceId inList sequenceIds) and
-                    (SequencesTable.version eq maxVersionQuery) and
-                    (SequencesTable.status eq Status.REVOKED_STAGING.name)
+                        (SequencesTable.version eq maxVersionQuery) and
+                        (SequencesTable.status eq Status.REVOKED_STAGING.name)
             },
         ) {
             it[status] = Status.SILO_READY.name
