@@ -2,10 +2,12 @@ import type { APIRoute } from 'astro';
 
 import { logger } from '../../logger';
 
-export const post: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request }) => {
     const logToAppend = await request.json();
     logger.log(logToAppend.level, logToAppend.message);
-    return {
-        body: 'ok',
-    };
+    return new Response(
+        JSON.stringify({
+            body: 'ok',
+        }),
+    );
 };
