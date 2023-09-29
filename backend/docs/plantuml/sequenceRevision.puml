@@ -1,0 +1,19 @@
+@startuml
+    participant "Pathoplexus Frontend / User" as frontend #LightCyan
+    participant "Pathoplexus Backend" as backend #Orange
+    database "Database" as DB
+
+
+    frontend -> backend: submit corrected data for existing sequenceIds
+
+    alt sequenceID exists and highest version is 'SILO_READY'
+        backend -> DB: insert new version in status 'RECEIVED'
+    backend -> frontend: response with sequenceId + new version number
+    else
+        backend -> frontend: response with error message
+    end
+
+    note right of frontend
+        At this point the same flow applies as if this was an inital submission
+    end note
+@enduml

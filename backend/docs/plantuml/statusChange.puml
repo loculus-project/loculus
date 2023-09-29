@@ -1,22 +1,54 @@
 @startuml
-    start
-    ->initial submit;
-    :set status to 'RECEIVED';
-    while (if status is  'RECEIVED' or 'REVIEWED')
-    ->true;
-    :set status to 'PROCESSING';
-     if (if error) then (yes)
-          :set status to 'REVIEW_NEEDED';
-            -> user reviews;
-          :set status to 'REVIEWED';
-      else (no)
-            :set status to 'STAGING';
-      endif
-    ->repeat;
-    endwhile (false)
-    ->user approves data;
-    :set status to 'SILO_READY';
-    end
+    hide empty description
+
+    ' input data
+    state INITIAL_DATA as "initial data" #aliceblue;line:blue;line.dotted;text:blue {
+        INITIAL_DATA: new unprocessed data
+        }
+    state REVISION_DATA as "revision data" #aliceblue;line:blue;line.dotted;text:blue {
+        REVISION_DATA: already existing sequence
+        REVISION_DATA: with status SILO_READY
+        REVISION_DATA: + new unprocessed data
+    }
+    state REVOKED_DATA as "revocation data" #aliceblue;line:blue;line.dotted;text:blue{
+        REVOKED_DATA: already existing sequence
+        REVOKED_DATA: with status SILO_READY
+    }
+
+    ' status states
+    state STAGING_REVOKED
+    state RECEIVED
+    state PROCESSING
+    state REVIEW_NEEDED
+    state REVIEWED
+    state SILO_READY
+
+    ' actions
+    state CREATING_SUBMIT as "entry with new sequenceId\n will be created" #lightgreen;line:green;line.dotted
+    state CREATING_REVISE as "entry with existing sequenceId\n and incremented version number\n will be created" #lightgreen;line:green;line.dotted
+    state CREATING_REVOKE as "entry with existing sequenceId,\n incremented version number, \n and revoked-flag=true will be created" #lightgreen;line:green;line.dotted
+    state DELETION as "entry will be deleted" #IndianRed;line:red;line.dotted
+    state is_error <<choice>>
+    state is_approved <<choice>>
+
+    ' transitions
+    INITIAL_DATA -d-> CREATING_SUBMIT : initial submission
+    CREATING_SUBMIT -r-> RECEIVED
+    REVISION_DATA -d-> CREATING_REVISE : user initiates revision
+    CREATING_REVISE -l-> RECEIVED
+
+    REVOKED_DATA -d-> CREATING_REVOKE : user initiates revocation
+    CREATING_REVOKE -r-> STAGING_REVOKED
+    STAGING_REVOKED -r-> is_approved
+
+    RECEIVED --> PROCESSING : preprocessing starts
+    PROCESSING --> is_error
+    is_error -u-> REVIEW_NEEDED : data contain error(s)
+    REVIEW_NEEDED -l-> REVIEWED : user edits data
+    REVIEWED -l-> PROCESSING : preprocessing starts
+    is_error --> STAGING : preprocessing successful
+    STAGING --> is_approved
+    is_approved -d-> SILO_READY : user approves \nor automatic approval\n via 'release_directly'
+    is_approved -r-> DELETION : user rejects
+
 @enduml
-
-
