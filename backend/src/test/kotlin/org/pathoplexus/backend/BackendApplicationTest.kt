@@ -1,9 +1,9 @@
 package org.pathoplexus.backend
 
+import SpringBootTestWithoutDatabase
 import org.junit.jupiter.api.Test
-import org.springframework.boot.test.context.SpringBootTest
 
-@SpringBootTest
+@SpringBootTestWithoutDatabase
 class BackendApplicationTest {
 
     @Test

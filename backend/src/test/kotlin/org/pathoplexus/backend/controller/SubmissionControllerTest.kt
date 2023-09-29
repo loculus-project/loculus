@@ -9,7 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.pathoplexus.backend.service.SequenceStatus
+import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -39,7 +39,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
 
     // This is the number of sequences and a list of sequenceIds in the test data, i.e. metadata.tsv and sequences.fasta
     private val numberOfSequences = 10
-    private val allSequenceIds = (1L..10).toList()
+    private val allSequenceIds = (1L..numberOfSequences).toList()
     private val firstSequence = allSequenceIds[0]
 
     @BeforeEach
@@ -129,11 +129,11 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                 jsonPath("\$[0].missingRequiredFields", Matchers.hasSize<String>(error.missingRequiredFields.size)),
             )
 
-            for (err in error.genericError) {
-                requestBuilder.andExpect(jsonPath("\$[0].genericError", Matchers.hasItem(err)))
+            for (err in error.genericErrors) {
+                requestBuilder.andExpect(jsonPath("\$[0].genericErrors", Matchers.hasItem(err)))
             }
             requestBuilder.andExpect(
-                jsonPath("\$[0].genericError", Matchers.hasSize<String>(error.genericError.size)),
+                jsonPath("\$[0].genericErrors", Matchers.hasSize<String>(error.genericErrors.size)),
             )
         }
     }
@@ -174,9 +174,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
         approveProcessedSequences(allSequenceIds)
         expectStatusInResponse(querySequenceList(), numberOfSequences, Status.SILO_READY.name)
 
-        allSequenceIds.forEach { sequenceId ->
-            reviseSiloReadySequences(sequenceId)
-        }
+        reviseSiloReadySequences()
         expectStatusInResponse(querySequenceList(), numberOfSequences, Status.RECEIVED.name)
     }
 
@@ -187,7 +185,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
         assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
             .hasSize(1)
             .contains(
-                SequenceStatus(
+                SequenceVersionStatus(
                     sequenceId = firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
@@ -195,19 +193,19 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                 ),
             )
 
-        reviseSiloReadySequences(firstSequence)
+        reviseSiloReadySequences()
 
         assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
             .hasSize(2)
             .contains(
-                SequenceStatus(
+                SequenceVersionStatus(
                     sequenceId = firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
                     revoked = false,
                 ),
             ).contains(
-                SequenceStatus(
+                SequenceVersionStatus(
                     sequenceId = firstSequence,
                     version = 2,
                     status = Status.RECEIVED,
@@ -223,7 +221,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
         assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
             .hasSize(1)
             .contains(
-                SequenceStatus(
+                SequenceVersionStatus(
                     sequenceId = firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
@@ -236,14 +234,14 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
         assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
             .hasSize(2)
             .contains(
-                SequenceStatus(
+                SequenceVersionStatus(
                     sequenceId = firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
                     revoked = false,
                 ),
             ).contains(
-                SequenceStatus(
+                SequenceVersionStatus(
                     sequenceId = firstSequence,
                     version = 2,
                     status = Status.REVOKED_STAGING,
@@ -256,7 +254,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
         assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
             .hasSize(1)
             .contains(
-                SequenceStatus(
+                SequenceVersionStatus(
                     sequenceId = firstSequence,
                     version = 2,
                     status = Status.SILO_READY,
@@ -265,7 +263,109 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
             )
     }
 
-    private fun getSequenceList(): List<SequenceStatus> = objectMapper.readValue<List<SequenceStatus>>(
+    @Test
+    fun `revise sequences`() {
+        prepareDataToSiloReady()
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceVersionStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            )
+
+        reviseSiloReadySequences()
+            .andExpect(status().isOk)
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(2)
+            .contains(
+                SequenceVersionStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            ).contains(
+                SequenceVersionStatus(
+                    sequenceId = firstSequence,
+                    version = 2,
+                    status = Status.RECEIVED,
+                    revoked = false,
+                ),
+            )
+    }
+
+    @Test
+    fun `revise sequences where the latest version is not SILO_READY`() {
+        submitInitialData()
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceVersionStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.RECEIVED,
+                    revoked = false,
+                ),
+            )
+
+        reviseSiloReadySequences()
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceVersionStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.RECEIVED,
+                    revoked = false,
+                ),
+            )
+    }
+
+    @Test
+    fun `revise sequences with erroneous new input data that cannot be mapped to existing sequenceIds`() {
+        prepareDataToSiloReady()
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceVersionStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            )
+
+        val files = getTestDataFiles(false)
+        mockMvc.perform(
+            MockMvcRequestBuilders.multipart("/revise")
+                .file(files.first)
+                .file(files.second)
+                .param("username", testUsername),
+        )
+            .andExpect(status().is5xxServerError)
+
+        assertThat(getSequenceList().filter { it.sequenceId == firstSequence })
+            .hasSize(1)
+            .contains(
+                SequenceVersionStatus(
+                    sequenceId = firstSequence,
+                    version = 1,
+                    status = Status.SILO_READY,
+                    revoked = false,
+                ),
+            )
+    }
+
+    private fun getSequenceList(): List<SequenceVersionStatus> = objectMapper.readValue<List<SequenceVersionStatus>>(
         querySequenceList().response.contentAsString,
     )
 
@@ -289,28 +389,12 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
     }
 
     private fun submitInitialData(): ResultActions {
-        val metadataFile = MockMultipartFile(
-            "metadataFile",
-            "metadata.tsv",
-            MediaType.TEXT_PLAIN_VALUE,
-            this.javaClass.classLoader.getResourceAsStream("metadata.tsv")?.readBytes() ?: error(
-                "metadata.tsv not found",
-            ),
-        )
-
-        val sequencesFile = MockMultipartFile(
-            "sequenceFile",
-            "sequences.fasta",
-            MediaType.TEXT_PLAIN_VALUE,
-            this.javaClass.classLoader.getResourceAsStream("sequences.fasta")?.readBytes() ?: error(
-                "sequences.fasta not found",
-            ),
-        )
+        val files = getTestDataFiles(false)
 
         return mockMvc.perform(
             MockMvcRequestBuilders.multipart("/submit")
-                .file(metadataFile)
-                .file(sequencesFile)
+                .file(files.first)
+                .file(files.second)
                 .param("username", testUsername),
         )
     }
@@ -331,20 +415,53 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
     )
         .andExpect(status().isOk())
 
-    private fun reviseSiloReadySequences(sequencesToRevise: Long): ResultActions = mockMvc.perform(
-        MockMvcRequestBuilders.post("/revise")
-            .param("username", testUsername)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .param("sequenceId", sequencesToRevise.toString()),
-    )
-        .andExpect(status().isOk())
+    private fun reviseSiloReadySequences(): ResultActions {
+        val files = getTestDataFiles(true)
 
-    private fun revokeSequences(listOfSequencesToRevoke: List<Number>): ResultActions = mockMvc.perform(
-        MockMvcRequestBuilders.post("/revoke")
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
-    )
-        .andExpect(status().isOk())
+        return mockMvc.perform(
+            MockMvcRequestBuilders.multipart("/revise")
+                .file(files.first)
+                .file(files.second)
+                .param("username", testUsername),
+        )
+            .andExpect(status().isOk())
+    }
+
+    private fun getTestDataFiles(withSequenceIds: Boolean): Pair<MockMultipartFile, MockMultipartFile> {
+        val metadataFileName = if (withSequenceIds) "revised_metadata.tsv" else "metadata.tsv"
+        val sequenceFileName = "sequences.fasta"
+
+        val metadataFile = MockMultipartFile(
+            "metadataFile",
+            metadataFileName,
+            MediaType.TEXT_PLAIN_VALUE,
+            this.javaClass.classLoader.getResourceAsStream(metadataFileName)?.readBytes() ?: error(
+                "metadata test file not found",
+            ),
+        )
+
+        val sequencesFile = MockMultipartFile(
+            "sequenceFile",
+            sequenceFileName,
+            MediaType.TEXT_PLAIN_VALUE,
+            this.javaClass.classLoader.getResourceAsStream(sequenceFileName)?.readBytes() ?: error(
+                "sequences.fasta for tests not found",
+            ),
+        )
+
+        return Pair(metadataFile, sequencesFile)
+    }
+
+    private fun revokeSequences(listOfSequencesToRevoke: List<Number>) =
+        objectMapper.readValue<List<SequenceVersionStatus>>(
+            mockMvc.perform(
+                MockMvcRequestBuilders.post("/revoke")
+                    .contentType(MediaType.APPLICATION_JSON_VALUE)
+                    .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
+            )
+                .andExpect(status().isOk())
+                .andReturn().response.contentAsString,
+        )
 
     private fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions = mockMvc.perform(
         MockMvcRequestBuilders.post("/confirm-revocation")
@@ -397,9 +514,9 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
         @JvmStatic
         @DynamicPropertySource
         fun setDataSourceProperties(registry: DynamicPropertyRegistry) {
-            registry.add("database.jdbcUrl", postgres::getJdbcUrl)
-            registry.add("database.username", postgres::getUsername)
-            registry.add("database.password", postgres::getPassword)
+            registry.add("spring.datasource.url", postgres::getJdbcUrl)
+            registry.add("spring.datasource.username", postgres::getUsername)
+            registry.add("spring.datasource.password", postgres::getPassword)
         }
 
         @AfterAll
@@ -423,7 +540,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                     missingRequiredFields = emptyList(),
                     fieldsWithTypeMismatch = emptyList(),
                     unknownFields = listOf("not_a_meta_data_field"),
-                    genericError = emptyList(),
+                    genericErrors = emptyList(),
                 ),
             ),
             Scenario(
@@ -434,7 +551,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                     missingRequiredFields = listOf("date", "country"),
                     fieldsWithTypeMismatch = emptyList(),
                     unknownFields = emptyList(),
-                    genericError = emptyList(),
+                    genericErrors = emptyList(),
                 ),
             ),
             Scenario(
@@ -447,7 +564,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                         TypeMismatch(field = "date", shouldBeType = "date", fieldValue = "\"15.12.2002\""),
                     ),
                     unknownFields = emptyList(),
-                    genericError = emptyList(),
+                    genericErrors = emptyList(),
                 ),
             ),
             Scenario(
@@ -458,7 +575,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
                     missingRequiredFields = emptyList(),
                     fieldsWithTypeMismatch = emptyList(),
                     unknownFields = emptyList(),
-                    genericError = listOf("SequenceId does not exist"),
+                    genericErrors = listOf("SequenceId does not exist"),
                 ),
             ),
             Scenario(
@@ -481,7 +598,7 @@ class SubmissionControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val o
             val missingRequiredFields: List<String>,
             val fieldsWithTypeMismatch: List<TypeMismatch>,
             val unknownFields: List<String>,
-            val genericError: List<String>,
+            val genericErrors: List<String>,
         )
 
         data class TypeMismatch(

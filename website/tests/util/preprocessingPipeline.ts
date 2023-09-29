@@ -1,7 +1,17 @@
-export const fakeProcessingPipeline = async ({ sequenceId, error }: { sequenceId: number; error: boolean }) => {
+import { backendUrl } from '../e2e.fixture.ts';
+
+export const fakeProcessingPipeline = async ({
+    sequenceId,
+    version,
+    error,
+}: {
+    sequenceId: number;
+    version: number;
+    error: boolean;
+}) => {
     const body = {
         sequenceId,
-        version: 1,
+        version,
         errors: error ? [{ source: { fieldName: 'host', type: 'metadata' }, message: 'Not this kind of host' }] : [],
         warnings: [{ source: { fieldName: 'all', type: 'all' }, message: '"There is no warning"-warning' }],
         data: {
@@ -31,7 +41,7 @@ export const fakeProcessingPipeline = async ({ sequenceId, error }: { sequenceId
         },
     };
 
-    const response = await fetch('http://localhost:8079/submit-processed-data', {
+    const response = await fetch(`${backendUrl}/submit-processed-data`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-ndjson',
@@ -41,4 +51,28 @@ export const fakeProcessingPipeline = async ({ sequenceId, error }: { sequenceId
     if (!response.ok) {
         throw new Error(`Unexpected response: ${response.statusText}`);
     }
+};
+
+export async function queryUnprocessedData(countOfSequences: number) {
+    const response = await fetch(`${backendUrl}/extract-unprocessed-data?numberOfSequences=${countOfSequences}`, {
+        method: 'POST',
+    });
+
+    if (!response.ok) {
+        throw new Error(`Unexpected response: ${response.statusText}`);
+    }
+
+    const unprocessedDataAsNdjson = (await response.text()) as string;
+    return unprocessedDataAsNdjson
+        .split('\n')
+        .filter((line) => line.length > 0)
+        .map((line): Sequence => JSON.parse(line));
+}
+
+export type Sequence = {
+    sequenceId: number;
+    version: number;
+    data: any;
+    errors?: any[];
+    warnings?: any[];
 };

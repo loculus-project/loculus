@@ -1,18 +1,26 @@
 package org.pathoplexus.backend.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.zaxxer.hikari.HikariConfig
-import com.zaxxer.hikari.HikariDataSource
 import org.flywaydb.core.Flyway
+import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
+import org.jetbrains.exposed.sql.DatabaseConfig
+import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
 import org.pathoplexus.backend.model.SchemaConfig
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.ResourceLoader
 import org.springframework.web.filter.CommonsRequestLoggingFilter
+import javax.sql.DataSource
 
 @Configuration
+@ImportAutoConfiguration(
+    value = [ExposedAutoConfiguration::class],
+    exclude = [DataSourceTransactionManagerAutoConfiguration::class],
+)
 class BackendSpringConfig(private val objectMapper: ObjectMapper, private val resourceLoader: ResourceLoader) {
 
     @Bean
@@ -27,19 +35,14 @@ class BackendSpringConfig(private val objectMapper: ObjectMapper, private val re
     }
 
     @Bean
-    @Profile("!test")
-    fun dataSource(databaseProperties: DatabaseProperties): HikariDataSource {
-        val config = HikariConfig()
-        config.jdbcUrl = databaseProperties.jdbcUrl
-        config.username = databaseProperties.username
-        config.password = databaseProperties.password
-        config.driverClassName = databaseProperties.driver
-        return HikariDataSource(config)
+    fun databaseConfig() = DatabaseConfig {
+        useNestedTransactions = true
+        sqlLogger = Slf4jSqlDebugLogger
     }
 
     @Bean
     @Profile("!test")
-    fun getFlyway(dataSource: HikariDataSource): Flyway {
+    fun getFlyway(dataSource: DataSource): Flyway {
         val configuration = Flyway.configure()
             .baselineOnMigrate(true)
             .dataSource(dataSource)

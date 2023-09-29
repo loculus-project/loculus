@@ -32,6 +32,7 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
                             <OffCanvasNavItem text='Search' url='/search' />
                             <OffCanvasNavItem text='Submit' url='/submit' />
+                            <OffCanvasNavItem text='Revise' url='/revise' />
                             <OffCanvasNavItem text='User' url='/user' />
                         </div>
                     </div>

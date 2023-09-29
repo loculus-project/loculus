@@ -10,10 +10,10 @@ export const SequencesWithReview: FC<SequenceWithReviewProps> = ({ sequences, us
     return (
         <div className='w-full overflow-x-auto'>
             {sequences.length !== 0 ? (
-                <table className='table'>
+                <table className='table' aria-label='list-of-sequences-to-review'>
                     <thead>
                         <tr>
-                            <td>Sequence ID</td>
+                            <td>SequenceID.Version</td>
                             <td>Current status</td>
                             <td>Link to Review</td>
                         </tr>
@@ -22,9 +22,9 @@ export const SequencesWithReview: FC<SequenceWithReviewProps> = ({ sequences, us
                         {sequences.map((sequence, index) => (
                             <tr key={index}>
                                 <td>
-                                    {sequence.sequenceId} (version {sequence.version})
+                                    {sequence.sequenceId}.{sequence.version}
                                 </td>
-                                <td> {sequence.status}</td>
+                                <td> {sequence.status} </td>
                                 <td>
                                     <a
                                         href={`/user/${username}/sequences/${sequence.sequenceId}`}

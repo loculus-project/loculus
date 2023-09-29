@@ -16,7 +16,7 @@ RUN npm ci --omit=dev
 COPY .env.docker .env
 ENV PORT=3000
 EXPOSE 3000
-CMD node ./dist/server/entry.mjs > /log/website.log 2> /log/website_error.log
+CMD node ./dist/server/entry.mjs &> /log/website.log
 
 
 VOLUME /config

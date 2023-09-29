@@ -1,1 +1,16 @@
-{ "sequenceId": 12,  "version": 1, "data": "not important when id not existent" }
+{
+  "sequenceId": 12,
+  "version": 1,
+  "data": {
+    "metadata": {
+      "host": "Homo sapiens",
+      "region": "Europe",
+      "division": "Schaffhausen",
+      "date": "2023-01-01",
+      "country": "Switzerland"
+    },
+    "nucleotideSequences": {
+      "main": "NNNNNNNNNNNNNNNN"
+    }
+  }
+}

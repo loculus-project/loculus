@@ -2,52 +2,57 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-	id 'org.springframework.boot' version '3.1.4'
-	id 'io.spring.dependency-management' version '1.1.3'
-	id 'org.jetbrains.kotlin.jvm' version '1.9.10'
-	id 'org.jetbrains.kotlin.plugin.spring' version '1.9.10'
-	id 'org.jlleitschuh.gradle.ktlint' version '11.6.0'
-	id 'org.springdoc.openapi-gradle-plugin' version '1.7.0'
+    id 'org.springframework.boot' version '3.1.4'
+    id 'io.spring.dependency-management' version '1.1.3'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.10'
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.10'
+    id 'org.jlleitschuh.gradle.ktlint' version '11.6.0'
+    id 'org.springdoc.openapi-gradle-plugin' version '1.7.0'
 }
 
 group = 'org.pathoplexus'
 version = '0.0.1'
 
 java {
-	sourceCompatibility = '20'
+    sourceCompatibility = '20'
+	targetCompatibility = '20'
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'com.fasterxml.jackson.module:jackson-module-kotlin'
-	implementation 'org.jetbrains.kotlin:kotlin-reflect'
-	implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
-	implementation("org.postgresql:postgresql:42.6.0")
-	implementation("com.mchange:c3p0:0.9.5.5")
-	implementation("org.apache.commons:commons-csv:1.10.0")
-	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0'
-	implementation("org.flywaydb:flyway-core")
-	implementation ("com.zaxxer:HikariCP:5.0.1")
-	testImplementation('org.springframework.boot:spring-boot-starter-test'){
-		exclude group: 'org.mockito'
-	}
-	testImplementation 'com.ninja-squad:springmockk:4.0.2'
-	testImplementation 'org.testcontainers:postgresql:1.19.0'
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
+    implementation "org.jetbrains.kotlin:kotlin-reflect"
+    implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
+    implementation "org.postgresql:postgresql:42.6.0"
+    implementation "org.apache.commons:commons-csv:1.10.0"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0"
+    implementation "org.flywaydb:flyway-core"
+    implementation "org.jetbrains.exposed:exposed-spring-boot-starter:$exposedVersion"
+    implementation "org.jetbrains.exposed:exposed-jdbc:$exposedVersion"
+    implementation "org.jetbrains.exposed:exposed-json:$exposedVersion"
+    implementation "org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.4.1"
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test") {
+        exclude group: "org.mockito"
+    }
+    testImplementation "com.ninja-squad:springmockk:4.0.2"
+    testImplementation "org.testcontainers:postgresql:1.19.0"
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
-	testLogging {
-		events TestLogEvent.FAILED
-		exceptionFormat TestExceptionFormat.FULL
-		showExceptions true
-	}
+    useJUnitPlatform()
+    testLogging {
+        events TestLogEvent.FAILED
+        exceptionFormat TestExceptionFormat.FULL
+        showExceptions true
+    }
 }
 
 tasks.named('bootBuildImage') {
-	environment = ["BP_JVM_VERSION": "20"]
+    environment = ["BP_JVM_VERSION": "20"]
 }

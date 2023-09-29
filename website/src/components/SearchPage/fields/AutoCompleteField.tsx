@@ -1,6 +1,6 @@
 import { Autocomplete, Box, createFilterOptions, TextField } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import React, { type FC, useState } from 'react';
+import { type FC, useState } from 'react';
 
 import type { FieldProps } from './FieldProps';
 import { fetchAutoCompletion } from '../../../config';
