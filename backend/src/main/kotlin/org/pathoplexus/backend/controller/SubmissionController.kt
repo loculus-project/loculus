@@ -12,7 +12,6 @@ import org.apache.commons.csv.CSVParser
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.FileData
-import org.pathoplexus.backend.service.RevisionResult
 import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.ValidationResult
@@ -121,7 +120,7 @@ class SubmissionController(
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamNeededReviewSubmissions(submitter, numberOfSequences, outputStream)
+            databaseService.streamReviewNeededSubmissions(submitter, numberOfSequences, outputStream)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -132,7 +131,7 @@ class SubmissionController(
     fun getUserSequenceList(
         @RequestParam username: String,
     ): List<SequenceVersionStatus> {
-        return databaseService.getSequencesSubmittedBy(username)
+        return databaseService.getActiveSequencesSubmittedBy(username)
     }
 
     @Operation(description = "Approve that the processed data is correct")
@@ -159,9 +158,7 @@ class SubmissionController(
             description = "Nucleotide sequences in a fasta file format. " +
                 "No changes to the schema compared to an initial submit.",
         )@RequestParam sequenceFile: MultipartFile,
-    ): List<RevisionResult> {
-        return databaseService.reviseData(username, generateFileDataSequence(metadataFile, sequenceFile))
-    }
+    ): List<HeaderId> = databaseService.reviseData(username, generateFileDataSequence(metadataFile, sequenceFile))
 
     @Operation(description = "Revoke existing sequence and stage it for confirmation")
     @PostMapping(

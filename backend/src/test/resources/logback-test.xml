@@ -9,6 +9,8 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
+    <logger name="Exposed" level="debug" />
+
     <logger name="org.pathoplexus" level="debug" />
     <logger name="org.testcontainers" level="warn" />
     <logger name="ch.qos.logback" level="warn" />
