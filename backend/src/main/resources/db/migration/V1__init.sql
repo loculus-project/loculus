@@ -17,3 +17,78 @@ create table sequences (
 
 create index on sequences (submitter);
 create index on sequences (status);
+
+-- CitationController
+create table authors (
+       author_id bigserial,
+
+       affiliation text not null,
+       email text not null,
+       name text not null,
+
+       created_at timestamp not null,
+       created_by text not null,
+       updated_at timestamp not null,
+       updated_by text not null,
+       metadata jsonb,
+       primary key (author_id)
+);
+
+create table bibliographies (
+       bibliography_id bigserial,
+
+       data text not null,
+       name text not null,
+       type text not null,
+
+       created_at timestamp not null,
+       created_by text not null,
+       updated_at timestamp not null,
+       updated_by text not null,
+       metadata jsonb,
+       primary key (bibliography_id)
+);
+
+create table authors_bibliographies (
+       author_id int8,
+       bibliography_id int8,
+
+       primary key (author_id, bibliography_id),
+       constraint foreign_key_author_id
+              foreign key(author_id)
+                     references authors(author_id)
+                     on delete no action,
+       constraint foreign_key_bibliography_id
+              foreign key(bibliography_id)
+                     references bibliographies(bibliography_id)
+                     on delete no action
+);
+
+create table citations (
+       citation_id bigserial,
+
+       data text not null,
+       type text not null,
+
+       created_at timestamp not null,
+       created_by text not null,
+       updated_at timestamp not null,
+       updated_by text not null,
+       metadata jsonb,
+       primary key (citation_id)
+);
+
+create table bibliographies_citations (
+       bibliography_id int8,
+       citation_id int8,
+
+       primary key (bibliography_id, citation_id),
+       constraint foreign_key_bibliography_id
+              foreign key(bibliography_id)
+                     references bibliographies(bibliography_id)
+                     on delete no action,
+       constraint foreign_key_citation_id
+              foreign key(citation_id)
+                     references citations(citation_id)
+                     on delete no action
+);
