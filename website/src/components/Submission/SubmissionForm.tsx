@@ -1,14 +1,14 @@
 import { type FC, useState } from 'react';
 
 import { ManagedErrorFeedback } from './ManagedErrorFeedback';
-import type { Config, HeaderId } from '../../types';
+import type { ClientConfig, HeaderId } from '../../types';
 import { DataUploadForm } from '../DataUploadForm.tsx';
 
 type SubmissionFormProps = {
-    config: Config;
+    clientConfig: ClientConfig;
 };
 
-export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
+export const SubmissionForm: FC<SubmissionFormProps> = ({ clientConfig }) => {
     const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<HeaderId[] | null>(null);
 
     const [isErrorOpen, setIsErrorOpen] = useState(false);
@@ -28,7 +28,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ config }) => {
         <div className='flex flex-col items-center'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
             <DataUploadForm
-                targetUrl={`${config.backendUrl}/submit`}
+                targetUrl={`${clientConfig.backendUrl}/submit`}
                 onError={handleOpenError}
                 onSuccess={setResponseSequenceHeaders}
             />

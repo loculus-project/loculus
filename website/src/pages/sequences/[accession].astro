@@ -2,15 +2,16 @@
 import { getTableData } from './getTableData';
 import { BackButton } from '../../components/Navigation/BackButton';
 import { SequencesContainer } from '../../components/SequenceDetailsPage/SequencesContainer';
-import { getConfig, getReferenceGenomes } from '../../config';
+import { getConfig, getReferenceGenomes, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const config = getConfig();
+const runtimeConfig = getRuntimeConfig();
 // accession is never undefined, but ESLint doesn't know that
 // eslint-disable-next-line
 const accession = Astro.params.accession!;
 
-const tableData = await getTableData(accession, config);
+const tableData = await getTableData(accession, config, runtimeConfig.forServer);
 
 const genes = getReferenceGenomes().genes.map((g) => g.name);
 const versionPage = `/sequences/${accession}/versions`;
@@ -45,7 +46,13 @@ const versionPage = `/sequences/${accession}/versions`;
                     </table>
                 </div>
                 <div class='mt-10'>
-                    <SequencesContainer client:load accession={accession} config={config} genes={genes} />
+                    <SequencesContainer
+                        client:load
+                        accession={accession}
+                        config={config}
+                        clientConfig={runtimeConfig.forClient}
+                        genes={genes}
+                    />
                 </div>
             </>
         )

@@ -2,13 +2,16 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { getTableData } from './getTableData';
 import { fetchInsertions, fetchMutations, fetchSequenceDetails } from '../../api';
-import type { Config } from '../../types';
+import type { Config, ServerConfig } from '../../types';
 
 vi.mock('../../api');
 
-const config: Config = {
+const serverConfig = {
     lapisUrl: 'lapis host',
     backendUrl: 'backend url',
+} as ServerConfig;
+
+const config: Config = {
     schema: {
         instanceName: 'instance name',
         metadata: [
@@ -34,13 +37,13 @@ describe('getTableData', () => {
     test('should return undefined for undefined details data', async () => {
         vi.mocked(fetchSequenceDetails).mockResolvedValue(undefined);
 
-        const result = await getTableData('accession', config);
+        const result = await getTableData('accession', config, serverConfig);
 
         expect(result).toBe(undefined);
     });
 
     test('should return default values when there is no data', async () => {
-        const result = await getTableData('accession', config);
+        const result = await getTableData('accession', config, serverConfig);
 
         expect(result).toStrictEqual([
             {
@@ -81,7 +84,7 @@ describe('getTableData', () => {
     test('should return details field values', async () => {
         vi.mocked(fetchSequenceDetails).mockResolvedValue({ metadataField1: 'value 1', metadataField2: 'value 2' });
 
-        const result = await getTableData('accession', config);
+        const result = await getTableData('accession', config, serverConfig);
 
         expect(result).toContainEqual({
             label: 'Metadata field1',
@@ -98,7 +101,7 @@ describe('getTableData', () => {
             type === 'nucleotide' ? nucleotideMutations : aminoAcidMutations,
         );
 
-        const result = await getTableData('accession', config);
+        const result = await getTableData('accession', config, serverConfig);
 
         expect(result).toContainEqual({
             label: 'Nucleotide substitutions',
@@ -123,7 +126,7 @@ describe('getTableData', () => {
             type === 'nucleotide' ? nucleotideInsertions : aminoAcidInsertions,
         );
 
-        const result = await getTableData('accession', config);
+        const result = await getTableData('accession', config, serverConfig);
 
         expect(result).toContainEqual({
             label: 'Nucleotide insertions',

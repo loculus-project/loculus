@@ -1,4 +1,4 @@
-import { expect, test as base } from '@playwright/test';
+import { test as base } from '@playwright/test';
 
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';

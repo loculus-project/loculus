@@ -25,7 +25,7 @@ export type ReferenceGenomes = {
     genes: NamedSequence[];
 };
 
-type LapisConfig = {
+export type Config = {
     schema: {
         instanceName: string;
         metadata: Metadata[];
@@ -34,7 +34,15 @@ type LapisConfig = {
     };
 };
 
-export type Config = LapisConfig & {
+export type RuntimeConfig = {
+    forClient: ClientConfig;
+    forServer: ServerConfig;
+};
+
+export type ClientConfig = { discriminator: 'client' } & ServiceUrls;
+export type ServerConfig = { discriminator: 'server' } & ServiceUrls;
+
+export type ServiceUrls = {
     backendUrl: string;
     lapisUrl: string;
 };

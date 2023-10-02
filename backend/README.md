@@ -2,17 +2,18 @@
 
 ## Setup
 
-All commands mentioned in this section are run from the `backend` directory.
+All commands mentioned in this section are run from the `backend` directory unless noted otherwise.
 
 ### Prerequisites
 
 * Java 20 installed on your system
 * A running PostgreSQL database
 
-The easiest way to start a PostgreSQL database is to use Docker compose:
+The easiest way to start a PostgreSQL database is to use [the Docker compose file](../docker-compose.yml)
+(at the project root):
 
 ```bash
-DOCKER_IMAGE_NAME=doesNotMatterHere docker compose up database
+BACKEND_IMAGE=doesNotMatter WEBSITE_IMAGE=doesNotMatter docker compose up database
 ```
 
 ### Starting the backend
@@ -44,10 +45,8 @@ Build an image and start it along with the database:
 
 ```bash
 ./gradlew bootBuildImage --imageName=pathoplexus-backend
-DOCKER_IMAGE_NAME=pathoplexus-backend docker compose up
+BACKEND_IMAGE=pathoplexus-backend WEBSITE_IMAGE=doesNotMatterHere docker compose -f ../docker-compose.yml up backend
 ```
-
-`docker compose up backend` will start the backend only.
 
 We have a GitHub action that builds and pushes the image to the GitHub container registry.
 Make sure you have configured access to the private container registry (see [/README.md](../README.md)).

@@ -1,15 +1,15 @@
 import { sentenceCase } from 'change-case';
 
 import { fetchInsertions, fetchMutations, fetchSequenceDetails } from '../../api';
-import type { Config, InsertionCount, MutationProportionCount } from '../../types';
+import type { Config, InsertionCount, MutationProportionCount, ServerConfig } from '../../types';
 
-export async function getTableData(accession: string, config: Config) {
+export async function getTableData(accession: string, config: Config, serverConfig: ServerConfig) {
     const [data, nucMutations, nucInsertions, aaMutations, aaInsertions] = await Promise.all([
-        fetchSequenceDetails(accession, config),
-        fetchMutations(accession, 'nucleotide', config),
-        fetchInsertions(accession, 'nucleotide', config),
-        fetchMutations(accession, 'aminoAcid', config),
-        fetchInsertions(accession, 'aminoAcid', config),
+        fetchSequenceDetails(accession, config, serverConfig),
+        fetchMutations(accession, 'nucleotide', config, serverConfig),
+        fetchInsertions(accession, 'nucleotide', config, serverConfig),
+        fetchMutations(accession, 'aminoAcid', config, serverConfig),
+        fetchInsertions(accession, 'aminoAcid', config, serverConfig),
     ]);
 
     if (data === undefined) {

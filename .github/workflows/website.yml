@@ -11,7 +11,7 @@ defaults:
     working-directory: ./website
 
 jobs:
-  checkFormat:
+  checks:
     name: Check format
     runs-on: ubuntu-latest
     steps:
@@ -26,6 +26,7 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
       - run: npm ci
       - run: npm run check-format
+      - run: npm run check-types
 
   unitTests:
     name: Unit Tests

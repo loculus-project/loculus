@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi, beforeEach } from 'vitest';
 
 import { SearchForm } from './SearchForm';
-import type { Config, Filter } from '../../types';
+import type { ClientConfig, Filter } from '../../types';
 
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),
@@ -17,11 +17,14 @@ const defaultMetadataSettings: [Filter, Filter, Filter] = [
     { name: 'field2', type: 'date', autocomplete: false, filter: '' },
     { name: 'field3', type: 'pango_lineage', label: 'Field 3', autocomplete: true, filter: '' },
 ];
-const defaultConfig: Config = {} as Config; // Provide a dummy config object
-function renderSearchForm(metadataSettings: Filter[] = defaultMetadataSettings, config: Config = defaultConfig) {
+const dummyConfig = {} as ClientConfig;
+function renderSearchForm(
+    metadataSettings: Filter[] = defaultMetadataSettings,
+    clientConfig: ClientConfig = dummyConfig,
+) {
     render(
         <QueryClientProvider client={queryClient}>
-            <SearchForm metadataSettings={metadataSettings} config={config} />
+            <SearchForm metadataSettings={metadataSettings} clientConfig={clientConfig} />
         </QueryClientProvider>,
     );
 }

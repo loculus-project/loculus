@@ -8,7 +8,7 @@ import { SequencesReady } from '../../../components/UserSequenceList/SequencesRe
 import { SequencesReceived } from '../../../components/UserSequenceList/SequencesReceived';
 import { SequencesRevoked } from '../../../components/UserSequenceList/SequencesRevoked';
 import { SequencesWithReview } from '../../../components/UserSequenceList/SequencesWithReview';
-import { getConfig } from '../../../config';
+import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 // accession is never undefined, but ESLint doesn't know that
@@ -19,7 +19,7 @@ const keyPrefix = `userSequences.${username}`;
 const { sequences, responseStatus } = await getUserSequences(username);
 const statusArray = splitStatusArray(sequences);
 
-const config = getConfig();
+const clientConfig = getRuntimeConfig().forClient;
 ---
 
 <BaseLayout title='Sequences'>
@@ -84,7 +84,7 @@ const config = getConfig();
                         localStorageKey={`${keyPrefix}.readyExpanded`}
                         client:only='react'
                     >
-                        <SequencesReady config={config} sequences={statusArray.SILO_READY} client:load />
+                        <SequencesReady clientConfig={clientConfig} sequences={statusArray.SILO_READY} client:load />
                     </SequenceStatusBox>
 
                     <SequenceStatusBox
@@ -94,7 +94,7 @@ const config = getConfig();
                         client:only='react'
                     >
                         <SequencesRevoked
-                            config={config}
+                            clientConfig={clientConfig}
                             sequences={statusArray.REVOKED_STAGING}
                             username={username}
                             client:load

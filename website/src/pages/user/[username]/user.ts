@@ -1,4 +1,4 @@
-import { getConfig } from '../../../config';
+import { getRuntimeConfig } from '../../../config';
 import { logger } from '../../../logger';
 
 export enum ResponseStatus {
@@ -42,10 +42,10 @@ export const splitStatusArray = (sequences: SequenceStatus[]) =>
     );
 
 export const getUserSequences = async (name: string): Promise<UserSequenceResponse> => {
-    try {
-        const config = getConfig();
-        const mySequencesQuery = `${config.backendUrl}/get-sequences-of-user?username=${name}`;
+    const serverConfig = getRuntimeConfig().forServer;
+    const mySequencesQuery = `${serverConfig.backendUrl}/get-sequences-of-user?username=${name}`;
 
+    try {
         const mySequencesResponse = await fetch(mySequencesQuery, {
             method: 'GET',
             headers: {
@@ -66,7 +66,9 @@ export const getUserSequences = async (name: string): Promise<UserSequenceRespon
             sequences: (await mySequencesResponse.json()) as SequenceStatus[],
         };
     } catch (error) {
-        logger.error(`Failed to fetch user sequences with error '${(error as Error).message}'`);
+        logger.error(
+            `Failed to fetch user sequences from ${mySequencesQuery} with error '${(error as Error).message}'`,
+        );
         return {
             responseStatus: ResponseStatus.ERROR,
             sequences: [],

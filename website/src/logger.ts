@@ -1,7 +1,7 @@
 import winston, { type Logger } from 'winston';
 
 const logPath = import.meta.env.LOG_DIR;
-const serverLogFile = `${logPath}/website_server.log`;
+const serverLogFile = `${logPath}/website.log`;
 
 let _logger: Logger | undefined;
 
