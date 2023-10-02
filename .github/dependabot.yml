@@ -8,7 +8,17 @@ updates:
     directory: website/
     schedule:
       interval: weekly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: gradle
     directory: backend/
     schedule:
       interval: weekly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
