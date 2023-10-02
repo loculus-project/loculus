@@ -3,6 +3,8 @@ import path from 'path';
 
 import { clientLogger } from './api';
 import type { ClientConfig, Config, ReferenceGenomes, RuntimeConfig, ServerConfig, ServiceUrls } from './types';
+import netlifyConfig from '../netlifyConfig/config.json';
+import netlifyRuntimeConfig from '../netlifyConfig/runtime-config.json';
 
 const configDir = import.meta.env.CONFIG_DIR;
 
@@ -12,13 +14,18 @@ let _referenceGenomes: ReferenceGenomes | null = null;
 
 function getConfigDir(): string {
     if (typeof configDir !== 'string' || configDir === '') {
-        throw new Error(`CONFIG_DIR environment variable was not set during build time, is ${configDir}`);
+        throw new Error(`CONFIG_DIR environment variable was not set during build time, is '${configDir}'`);
     }
     return configDir;
 }
 
 export function getConfig(): Config {
     if (_config === null) {
+        if (import.meta.env.NETLIFY === true) {
+            _config = getNetlifyConfigSoThatWeDontHaveToAccessTheFileSystemThere().config;
+            return _config;
+        }
+
         const configFilePath = path.join(getConfigDir(), 'config.json');
         _config = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as Config;
     }
@@ -27,6 +34,15 @@ export function getConfig(): Config {
 
 export function getRuntimeConfig(): RuntimeConfig {
     if (_runtimeConfig === null) {
+        if (import.meta.env.NETLIFY === true) {
+            const protoRuntimeConfig = getNetlifyConfigSoThatWeDontHaveToAccessTheFileSystemThere().runtimeConfig;
+            _runtimeConfig = {
+                forClient: makeClientConfig(protoRuntimeConfig),
+                forServer: makeServerConfig(protoRuntimeConfig),
+            };
+            return _runtimeConfig;
+        }
+
         const configFilePath = path.join(getConfigDir(), 'runtime-config.json');
         const serviceConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as ServiceUrls;
 
@@ -43,6 +59,13 @@ export function getRuntimeConfig(): RuntimeConfig {
         };
     }
     return _runtimeConfig;
+}
+
+function getNetlifyConfigSoThatWeDontHaveToAccessTheFileSystemThere() {
+    return {
+        config: netlifyConfig as Config,
+        runtimeConfig: netlifyRuntimeConfig,
+    };
 }
 
 function makeServerConfig(serviceConfig: ServiceUrls): ServerConfig {
