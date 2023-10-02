@@ -34,6 +34,7 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                             <OffCanvasNavItem text='Submit' url='/submit' />
                             <OffCanvasNavItem text='Revise' url='/revise' />
                             <OffCanvasNavItem text='User' url='/user' />
+                            <OffCanvasNavItem text='Datasets' url='/datasets' />
                         </div>
                     </div>
 

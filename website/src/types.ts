@@ -63,3 +63,41 @@ export type HeaderId = {
     version: number;
     customId: string;
 };
+
+/**
+ * The following types are used for datasets and citations.
+ */
+
+export type Dataset = {
+    datasetId: string;
+    datasetDOI?: string;
+    name: string;
+    description?: string;
+    version: string;
+    owner: string;
+    status: string;
+    createdDate: string;
+    lastModifiedDate: string;
+    sequences?: DatasetAccession[];
+};
+
+export type DatasetAccession = {
+    sequenceId: string;
+    version?: number;
+    genbankAccession?: string;
+    sraAccession?: string;
+};
+
+export type DatasetAccessionResults = {
+    [key: string]: any;
+};
+
+export type AccessionCitation = {
+    datasetId: string;
+    date: string;
+};
+
+export type DatasetCitationResults = {
+    sequenceId: string;
+    citations: AccessionCitation[];
+};

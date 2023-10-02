@@ -1,0 +1,12 @@
+---
+import { DatasetList } from '../../components/Datasets/DatasetList';
+import { getConfig, getRuntimeConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const config = getConfig();
+const clientConfig = getRuntimeConfig().forClient;
+---
+
+<BaseLayout title='Datasets' data-testid='datasets-list-container'>
+    <DatasetList config={config} clientConfig={clientConfig} client:load />
+</BaseLayout>
