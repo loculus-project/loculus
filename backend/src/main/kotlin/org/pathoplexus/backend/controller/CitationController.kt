@@ -3,7 +3,7 @@ package org.pathoplexus.backend.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import org.pathoplexus.backend.service.Author
-import org.pathoplexus.backend.service.Bibliography
+import org.pathoplexus.backend.service.BibliographySet
 import org.pathoplexus.backend.service.Citation
 import org.pathoplexus.backend.service.DatabaseService
 import org.springframework.http.MediaType
@@ -58,42 +58,42 @@ class CitationController(
         return databaseService.getAuthorCount()
     }
 
-    @Operation(description = "Create a new bibliography with the specified data")
-    @PostMapping("/create-bibliography", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun postCreateBibliography(
+    @Operation(description = "Create a new bibliography set with the specified data")
+    @PostMapping("/create-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun postCreateBibliographySet(
         @RequestParam data: String,
         @RequestParam name: String,
         @RequestParam type: String
         ): Long {
-        return databaseService.postCreateBibliography(data, name, type)
+        return databaseService.postCreateBibliographySet(data, name, type)
     }
-    @Operation(description = "Read a bibliographie's data")
-    @GetMapping("/read-bibliography", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getReadBibliography(
-        @RequestParam bibliographyId: Long,
-    ): List<Bibliography> {
-        return databaseService.getReadBibliography(bibliographyId)
+    @Operation(description = "Read a bibliography set's data")
+    @GetMapping("/read-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getReadBibliographySet(
+        @RequestParam bibliographySetId: Long,
+    ): List<BibliographySet> {
+        return databaseService.getReadBibliographySet(bibliographySetId)
     }
-    @Operation(description = "Update a bibliography with the specified data")
-    @PatchMapping("/update-bibliography", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun patchUpdateBibliography(
-        @RequestParam bibliographyId: Long,
+    @Operation(description = "Update a bibliography set with the specified data")
+    @PatchMapping("/update-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun patchUpdateBibliographySet(
+        @RequestParam bibliographySetId: Long,
         @RequestParam data: String,
         @RequestParam name: String,
         @RequestParam type: String
     ) {
-        return databaseService.patchUpdateBibliography(bibliographyId, data, name, type)
-    }@Operation(description = "Delete a bibliography")
-    @DeleteMapping("/delete-bibliography", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun deleteBibliography(
-        @RequestParam bibliographyId: Long
+        return databaseService.patchUpdateBibliographySet(bibliographySetId, data, name, type)
+    }@Operation(description = "Delete a bibliography set")
+    @DeleteMapping("/delete-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun deleteBibliographySet(
+        @RequestParam bibliographySetId: Long
     ) {
-        return databaseService.deleteBibliography(bibliographyId)
+        return databaseService.deleteBibliographySet(bibliographySetId)
     }
-    @Operation(description = "Get the total number of bibliographies registered")
-    @GetMapping("/get-bibliography-count", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getBibliographyCount(): Number {
-        return databaseService.getBibliographyCount()
+    @Operation(description = "Get the total number of bibliography sets registered")
+    @GetMapping("/get-bibliography-set-count", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getBibliographySetCount(): Number {
+        return databaseService.getBibliographySetCount()
     }
 
     @Operation(description = "Create a new citation with the specified data")

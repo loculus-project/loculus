@@ -7,6 +7,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toInstant
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
@@ -22,6 +24,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
@@ -483,113 +486,68 @@ class DatabaseService(
     }
 
     // CitationController
-    fun postCreateAuthor(affiliation: String, email: String, name: String): Long {
-        var createAuthorId: Long = -1
-        val sql = """
-            insert into authors (affiliation, email, name, created_at, created_by, updated_at, updated_by)
-            values (?, ?, ?, now(), ?, now(), ?)
-            returning author_id;
-        """.trimIndent()
+    fun postCreateAuthor(_affiliation: String, _email: String, _name: String): Long {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, affiliation)
-                statement.setString(2, email)
-                statement.setString(3, name)
-                statement.setString(4, "nobody")
-                statement.setString(5, "nobody")
-
-                statement.executeQuery().use { resultSet ->
-                    resultSet.next()
-                    createAuthorId = resultSet.getLong("author_id")
-                }
+        val insert = AuthorsTable
+            .insert {
+                it[affiliation] = _affiliation
+                it[email] = _email
+                it[name] = _name
+                it[createdAt] = now
+                it[createdBy] = "nobody"
+                it[updatedAt] = now
+                it[updatedBy] = "nobody"
             }
-        }
-        return createAuthorId
+
+        return insert[AuthorsTable.authorId]
     }
     fun getReadAuthor(authorId: Long): List<Author> {
         var authorList = mutableListOf<Author>()
-        val sql = """
-            select *
-            from authors 
-            where author_id = ?;
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setLong(1, authorId)
-                statement.executeQuery().use { rs ->
-                    if(rs.next()) {
-                        authorList.add(Author(
-                            rs.getLong("author_id"),
-                            rs.getString("affiliation"),
-                            rs.getString("email"),
-                            rs.getString("name"),
-                            rs.getTimestamp("created_at"),
-                            rs.getString("created_by"),
-                            rs.getTimestamp("updated_at"),
-                            rs.getString("updated_by")
-                        ))
-                    }
-                }
-            }
-        }
+        var selectedAuthors = AuthorsTable
+            .select(
+                where = { AuthorsTable.authorId eq authorId }
+            )
+        var selectedAuthor = selectedAuthors.single()
+        authorList.add(Author(
+            selectedAuthor[AuthorsTable.authorId],
+            selectedAuthor[AuthorsTable.affiliation],
+            selectedAuthor[AuthorsTable.email],
+            selectedAuthor[AuthorsTable.name],
+            Timestamp.valueOf(selectedAuthor[AuthorsTable.createdAt].toJavaLocalDateTime()),
+            selectedAuthor[AuthorsTable.createdBy],
+            Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
+            selectedAuthor[AuthorsTable.updatedBy]
+        ))
         return authorList
     }
-    fun patchUpdateAuthor(authorId: Long, affiliation: String, email: String, name: String) {
-        val sql = """
-            update authors set affiliation = ?, email = ?, name = ?, updated_at = now(), updated_by = ?
-            where author_id = ?;
-        """.trimIndent()
+    fun patchUpdateAuthor(authorId: Long, _affiliation: String, _email: String, _name: String) {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setString(1, affiliation)
-                statement.setString(2, email)
-                statement.setString(3, name)
-                statement.setString(4, "nobody")
-                statement.setLong(5, authorId)
-                statement.executeUpdate()
+        AuthorsTable
+            .update(
+                where = { AuthorsTable.authorId eq authorId }
+            ) {
+                it[affiliation] = _affiliation
+                it[email] = _email
+                it[name] = _name
+                it[updatedAt] = now
+                it[updatedBy] = "nobody"
             }
-        }
     }
-    fun deleteAuthor(authorId: Long) {
-        val sql = """
-            delete from authors
-            where author_id = ?
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.setLong(1, authorId)
-                statement.executeUpdate()
-            }
-        }
+    fun deleteAuthor(_authorId: Long) {
+        AuthorsTable.deleteWhere { authorId eq _authorId }
     }
     fun getAuthorCount(): Number {
-        var authorCount = 0
-        val sql = """
-            select count(author_id)
-            from authors;
-        """.trimIndent()
-
-        useTransactionalConnection { conn ->
-            conn.prepareStatement(sql).use { statement ->
-                statement.executeQuery().use { rs ->
-                    rs.next()
-                    authorCount = rs.getInt("count")
-                }
-            }
-        }
-        return authorCount
+        return AuthorsTable.selectAll().count()
     }
 
-    fun postCreateBibliography(data: String, name: String, type: String): Long {
-        var createBibliographyId: Long = -1
+    fun postCreateBibliographySet(data: String, name: String, type: String): Long {
+        var createBibliographySetId: Long = -1
         val sql = """
-            insert into bibliographies (data, name, type, created_at, created_by, updated_at, updated_by)
+            insert into bibliography_sets (data, name, type, created_at, created_by, updated_at, updated_by)
             values (?, ?, ?, now(), ?, now(), ?)
-            returning bibliography_id;
+            returning bibliography_set_id;
         """.trimIndent()
 
         useTransactionalConnection { conn ->
@@ -602,27 +560,27 @@ class DatabaseService(
 
                 statement.executeQuery().use { resultSet ->
                     resultSet.next()
-                    createBibliographyId = resultSet.getLong("bibliography_id")
+                    createBibliographySetId = resultSet.getLong("bibliography_set_id")
                 }
             }
         }
-        return createBibliographyId
+        return createBibliographySetId
     }
-    fun getReadBibliography(bibliographyId: Long): List<Bibliography> {
-        var bibliographyList = mutableListOf<Bibliography>()
+    fun getReadBibliographySet(bibliographySetId: Long): List<BibliographySet> {
+        var bibliographySetList = mutableListOf<BibliographySet>()
         val sql = """
             select *
-            from bibliographies 
-            where bibliography_id = ?;
+            from bibliography_sets
+            where bibliography_set_id = ?;
         """.trimIndent()
 
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
-                statement.setLong(1, bibliographyId)
+                statement.setLong(1, bibliographySetId)
                 statement.executeQuery().use { rs ->
                     if(rs.next()) {
-                        bibliographyList.add(Bibliography(
-                            rs.getLong("bibliography_id"),
+                        bibliographySetList.add(BibliographySet(
+                            rs.getLong("bibliography_set_id"),
                             rs.getString("data"),
                             rs.getString("name"),
                             rs.getString("type"),
@@ -635,12 +593,12 @@ class DatabaseService(
                 }
             }
         }
-        return bibliographyList
+        return bibliographySetList
     }
-    fun patchUpdateBibliography(bibliographyId: Long, data: String, name: String, type: String) {
+    fun patchUpdateBibliographySet(bibliographySetId: Long, data: String, name: String, type: String) {
         val sql = """
-            update bibliographies set data = ?, name = ?, type = ?, updated_at = now(), updated_by = ?
-            where bibliography_id = ?;
+            update bibliography_sets set data = ?, name = ?, type = ?, updated_at = now(), updated_by = ?
+            where bibliography_set_id = ?;
         """.trimIndent()
 
         useTransactionalConnection { conn ->
@@ -649,40 +607,40 @@ class DatabaseService(
                 statement.setString(2, name)
                 statement.setString(3, type)
                 statement.setString(4, "nobody")
-                statement.setLong(5, bibliographyId)
+                statement.setLong(5, bibliographySetId)
                 statement.executeUpdate()
             }
         }
     }
-    fun deleteBibliography(bibliographyId: Long) {
+    fun deleteBibliographySet(bibliographySetId: Long) {
         val sql = """
-            delete from bibliographies
-            where bibliography_id = ?
+            delete from bibliography_sets
+            where bibliography_set_id = ?
         """.trimIndent()
 
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
-                statement.setLong(1, bibliographyId)
+                statement.setLong(1, bibliographySetId)
                 statement.executeUpdate()
             }
         }
     }
-    fun getBibliographyCount(): Number {
-        var bibliographyCount = 0
+    fun getBibliographySetCount(): Number {
+        var bibliographySetCount = 0
         val sql = """
             select count(bilbiography_id)
-            from bibliographies;
+            from bibliography_sets;
         """.trimIndent()
 
         useTransactionalConnection { conn ->
             conn.prepareStatement(sql).use { statement ->
                 statement.executeQuery().use { rs ->
                     rs.next()
-                    bibliographyCount = rs.getInt("count")
+                    bibliographySetCount = rs.getInt("count")
                 }
             }
         }
-        return bibliographyCount
+        return bibliographySetCount
     }
 
     fun postCreateCitation(data: String, type: String): Long {
@@ -852,8 +810,8 @@ data class Author(
     val metadata: JsonNode? = null
 )
 
-data class Bibliography(
-    val bibliographyId: Long,
+data class BibliographySet(
+    val bibliographySetId: Long,
     val data: String,
     val name: String,
     val type: String,

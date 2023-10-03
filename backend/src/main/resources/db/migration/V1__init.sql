@@ -31,11 +31,12 @@ create table authors (
        updated_at timestamp not null,
        updated_by text not null,
        metadata jsonb,
+
        primary key (author_id)
 );
 
-create table bibliographies (
-       bibliography_id bigserial,
+create table bibliography_set (
+       bibliography_set_id bigserial,
 
        data text not null,
        name text not null,
@@ -46,21 +47,22 @@ create table bibliographies (
        updated_at timestamp not null,
        updated_by text not null,
        metadata jsonb,
-       primary key (bibliography_id)
+
+       primary key (bibliography_set_id)
 );
 
-create table authors_bibliographies (
+create table authors_bibliography_set (
        author_id int8,
-       bibliography_id int8,
+       bibliography_set_id int8,
 
-       primary key (author_id, bibliography_id),
+       primary key (author_id, bibliography_set_id),
        constraint foreign_key_author_id
               foreign key(author_id)
                      references authors(author_id)
                      on delete no action,
        constraint foreign_key_bibliography_id
-              foreign key(bibliography_id)
-                     references bibliographies(bibliography_id)
+              foreign key(bibliography_set_id)
+                     references bibliography_set(bibliography_set_id)
                      on delete no action
 );
 
@@ -75,17 +77,18 @@ create table citations (
        updated_at timestamp not null,
        updated_by text not null,
        metadata jsonb,
+       
        primary key (citation_id)
 );
 
-create table bibliographies_citations (
-       bibliography_id int8,
+create table bibliography_set_citations (
+       bibliography_set_id int8,
        citation_id int8,
 
-       primary key (bibliography_id, citation_id),
+       primary key (bibliography_set_id, citation_id),
        constraint foreign_key_bibliography_id
-              foreign key(bibliography_id)
-                     references bibliographies(bibliography_id)
+              foreign key(bibliography_set_id)
+                     references bibliography_set(bibliography_set_id)
                      on delete no action,
        constraint foreign_key_citation_id
               foreign key(citation_id)
