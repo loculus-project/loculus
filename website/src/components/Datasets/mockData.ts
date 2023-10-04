@@ -2,14 +2,14 @@ import type { Dataset } from '../../types';
 
 export const mockDatasets: Dataset[] = [
     {
-        datasetId: 'dataset_id_1',
+        datasetId: '45FXCV1XV82ha29uBaGbRh',
         datasetDOI: undefined,
         owner: 'User Name',
         version: '1',
         status: 'status_1',
         createdDate: '2021-01-01',
         lastModifiedDate: '2022-01-01',
-        name: 'Dataset Name Placeholder 1',
+        name: 'Dataset study name 1',
         description: 'description_1',
         sequences: [
             {
@@ -47,14 +47,14 @@ export const mockDatasets: Dataset[] = [
         ],
     },
     {
-        datasetId: 'dataset_id_2',
+        datasetId: 'g5VZLR5PDcZYnyWV8v35BT',
         datasetDOI: undefined,
         owner: 'User Name',
         version: '1',
         status: 'status_2',
         createdDate: '2022-01-01',
         lastModifiedDate: '2023-01-01',
-        name: 'Dataset Name Placeholder 2',
+        name: 'Dataset study name 2',
         description: 'description_2',
         sequences: [
             {
@@ -65,7 +65,40 @@ export const mockDatasets: Dataset[] = [
     },
 ];
 
-export const mockUserCitations = [
+export const mockDatasetAggCitations = [
+    {
+        citationId: 'citationId_1',
+        datasetId: '45FXCV1XV82ha29uBaGbRh',
+        authors: 'authors_1',
+        title: 'title_1',
+        journal: 'journal_1',
+        volume: 'volume_1',
+        issue: 'issue_1',
+        pages: 'pages_1',
+        year: 'year_1',
+        doi: 'doi_1',
+        pubmedId: 'pubmedId_1',
+        abstract: 'abstract_1',
+        comments: 'comments_1',
+    },
+    {
+        citationId: 'citationId_2',
+        datasetId: 'g5VZLR5PDcZYnyWV8v35BT',
+        authors: 'authors_2',
+        title: 'title_2',
+        journal: 'journal_2',
+        volume: 'volume_2',
+        issue: 'issue_2',
+        pages: 'pages_2',
+        year: 'year_2',
+        doi: 'doi_2',
+        pubmedId: 'pubmedId_2',
+        abstract: 'abstract_2',
+        comments: 'comments_2',
+    },
+];
+
+export const mockUserAggCitations = [
     {
         sequenceId: 'sequenceId1',
         citations: [

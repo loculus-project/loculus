@@ -1,11 +1,12 @@
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Link from '@mui/material/Link';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useQuery, useMutation, type UseQueryResult } from '@tanstack/react-query';
 import { type FC, useState } from 'react';
 
 import { DatasetForm } from './DatasetForm';
-import { mockDatasets } from './mockData';
+import { ExportDataset } from './ExportDataset';
+import { fetchDataset, deleteDataset } from './api';
 import { clientLogger, fetchSequenceDetails } from '../../api';
 import type { Config, ClientConfig, DatasetAccession } from '../../types';
 import { AlertDialog } from '../common/AlertDialog';
@@ -24,7 +25,7 @@ type SequencesTableProps = {
 };
 
 const SequencesTable: FC<SequencesTableProps> = ({ accessionQueries }) => {
-    if (accessionQueries == null || accessionQueries.length === 0) {
+    if (accessionQueries.length === 0) {
         return null;
     }
     const isFinishedFetching = accessionQueries.every((request) => request.isLoading === false);
@@ -35,8 +36,8 @@ const SequencesTable: FC<SequencesTableProps> = ({ accessionQueries }) => {
         <table className='table-auto w-full'>
             <thead>
                 <tr>
-                    <th className='w-1/10 text-left font-medium'>SRA Run Accession</th>
                     <th className='w-1/10 text-left font-medium'>Genbank Accession</th>
+                    <th className='w-1/10 text-left font-medium'>SRA Run Accession</th>
                     <th className='w-2/10 text-left font-medium'>Strain</th>
                     <th className='w-2/10 text-left font-medium'>Country</th>
                     <th className='w-2/10 text-left font-medium'>Date</th>
@@ -44,19 +45,9 @@ const SequencesTable: FC<SequencesTableProps> = ({ accessionQueries }) => {
             </thead>
             <tbody>
                 {accessionQueries.map((accessionQuery, index) => {
-                    const accessionData = accessionQuery?.data;
+                    const accessionData = accessionQuery.data;
                     return (
                         <tr key={`accessionData-${index}`}>
-                            <td className='text-left'>
-                                <Button
-                                    href={`/sequences/${accessionData?.sraAccession}`}
-                                    target='_blank'
-                                    variant='text'
-                                    sx={{ padding: 0, margin: 0 }}
-                                >
-                                    {accessionData?.sraAccession ?? 'N/A'}
-                                </Button>
-                            </td>
                             <td className='text-left'>
                                 <Button
                                     href={`/sequences/${accessionData?.genbankAccession}`}
@@ -65,6 +56,16 @@ const SequencesTable: FC<SequencesTableProps> = ({ accessionQueries }) => {
                                     sx={{ padding: 0, margin: 0 }}
                                 >
                                     {accessionData?.genbankAccession ?? 'N/A'}
+                                </Button>
+                            </td>
+                            <td className='text-left'>
+                                <Button
+                                    href={`/sequences/${accessionData?.sraAccession}`}
+                                    target='_blank'
+                                    variant='text'
+                                    sx={{ padding: 0, margin: 0 }}
+                                >
+                                    {accessionData?.sraAccession ?? 'N/A'}
                                 </Button>
                             </td>
                             <td className='text-left'>{accessionData?.strain ?? 'N/A'}</td>
@@ -82,6 +83,8 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
     const [doiDialogVisible, setDoiDialogVisible] = useState(false);
+    const [citationsDialogVisible, setCitationsDialogVisible] = useState(false);
+    const [exportModalVisible, setExportModalVisible] = useState(false);
 
     const [isErrorOpen, setIsErrorOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
@@ -96,27 +99,9 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
         setIsErrorOpen(false);
     };
 
-    // TODO: Fetch dataset from API via useQuery
-    const getDataset = (datasetId: string) => {
-        return mockDatasets.find((dataset) => dataset.datasetId === datasetId);
-    };
-    const dataset = getDataset(datasetId);
-
-    const exportDataset = () => {
-        const accessionData = accessionQueries.map((accessionQuery) => accessionQuery.data);
-        if (accessionData.length === 0 || !dataset) {
-            return;
-        }
-        const exportData = {
-            dataset,
-            sequences: accessionData,
-        };
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData));
-        const hiddenLink = document.createElement('a');
-        hiddenLink.href = dataStr;
-        hiddenLink.download = `${dataset.name}.json`;
-        hiddenLink.click();
-    };
+    const { data: dataset, isLoading: isLoadingDataset }: UseQueryResult = useQuery(['dataset', datasetId], () =>
+        fetchDataset(datasetId, clientConfig),
+    );
 
     const fetchAccessionDetails = async (sequence: DatasetAccession) => {
         let accessionConfig: Config = config;
@@ -142,144 +127,184 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
     };
 
     const accessionQueries = useQueries({
-        queries: dataset?.sequences?.map((sequence) => ({
-            queryKey: ['accessionDetails', sequence.sequenceId],
-            queryFn: () => fetchAccessionDetails(sequence),
-        })),
+        queries:
+            dataset != null
+                ? dataset.sequences?.map((sequence) => ({
+                      queryKey: ['accessionDetails', sequence.sequenceId],
+                      queryFn: () => fetchAccessionDetails(sequence),
+                  }))
+                : [],
     });
 
+    const deleteDatasetMutation = useMutation({
+        mutationFn: () => deleteDataset(datasetId, clientConfig),
+    });
+
+    const handleDeleteDataset = async () => {
+        const response = await deleteDatasetMutation.mutateAsync();
+        if (response.status === 200) {
+            await clientLogger.info(`deleteDataset succeeded for ${datasetId}`);
+            location.href = '/datasets';
+            return;
+        }
+        handleOpenError(`fetchSequenceDetails failed with error' + ${(error as Error).message}`);
+        await clientLogger.error(`deleteDataset failed with error' + ${(response as Error).message}`);
+    };
+
     // TODO: implement
-    const deleteDataset = () => {
+    const handleCreateDOI = () => {
         return true;
     };
 
     // TODO: implement
-    const createDOI = () => {
+    const handleCitationsClose = () => {
         return true;
     };
 
     return (
         <div className='flex flex-col items-left'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
-            <div className='flex-row items-center justify-between w-full'>
-                <div className='flex justify-start items-center py-8'>
-                    <div className='pr-2'>
-                        <Button
-                            sx={{
-                                'backgroundColor': 'whitesmoke',
-                                'color': 'black',
-                                'fontWeight': 'bold',
-                                '&:hover': {
-                                    backgroundColor: 'whitesmoke',
-                                },
-                            }}
-                            onClick={exportDataset}
-                            variant='contained'
-                        >
-                            Export
-                        </Button>
+            {isLoadingDataset ? (
+                <CircularProgress />
+            ) : (
+                <>
+                    <div className='flex-row items-center justify-between w-full'>
+                        <div className='flex justify-start items-center py-8'>
+                            <div className='pr-2'>
+                                <Button
+                                    sx={{
+                                        'backgroundColor': 'whitesmoke',
+                                        'color': 'black',
+                                        'fontWeight': 'bold',
+                                        '&:hover': {
+                                            backgroundColor: 'whitesmoke',
+                                        },
+                                    }}
+                                    onClick={() => setExportModalVisible(true)}
+                                    variant='contained'
+                                >
+                                    Export
+                                </Button>
+                            </div>
+                            <div className='px-2 '>
+                                {isAdminView ? (
+                                    <Button
+                                        sx={{
+                                            'backgroundColor': 'whitesmoke',
+                                            'color': 'black',
+                                            'fontWeight': 'bold',
+                                            '&:hover': {
+                                                backgroundColor: 'whitesmoke',
+                                            },
+                                        }}
+                                        onClick={() => setEditModalVisible(true)}
+                                        variant='contained'
+                                    >
+                                        Edit
+                                    </Button>
+                                ) : null}
+                            </div>
+                            <div className='px-2'>
+                                {isAdminView ? (
+                                    <Button
+                                        sx={{
+                                            'backgroundColor': 'whitesmoke',
+                                            'color': 'black',
+                                            'fontWeight': 'bold',
+                                            '&:hover': {
+                                                backgroundColor: 'whitesmoke',
+                                            },
+                                        }}
+                                        onClick={() => setDeleteDialogVisible(true)}
+                                        variant='contained'
+                                    >
+                                        Delete
+                                    </Button>
+                                ) : null}
+                            </div>
+                        </div>
+                        <div></div>
                     </div>
-                    <div className='px-2 '>
-                        {isAdminView ? (
-                            <Button
-                                sx={{
-                                    'backgroundColor': 'whitesmoke',
-                                    'color': 'black',
-                                    'fontWeight': 'bold',
-                                    '&:hover': {
-                                        backgroundColor: 'whitesmoke',
-                                    },
-                                }}
-                                onClick={() => setEditModalVisible(true)}
-                                variant='contained'
+                    <div>
+                        <h1 className='text-2xl font-semibold pb-8'>{dataset?.name}</h1>
+                    </div>
+                    <hr />
+                    <div className='flex flex-col my-4'>
+                        <div className='flex flex-row'>
+                            <p className='mr-8 font-medium w-[150px] text-right'>Description: </p>
+                            <p className='text'>{dataset?.description ?? 'N/A'}</p>
+                        </div>
+                        <div className='flex flex-row'>
+                            <p className='mr-8 font-medium w-[150px] text-right'>Version: </p>
+                            <p className='text'>{dataset?.version ?? 'N/A'}</p>
+                        </div>
+                        <div className='flex flex-row'>
+                            <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
+                            <p className='text'>{dataset?.createdDate ?? 'N/A'}</p>
+                        </div>
+                        <div className='flex flex-row'>
+                            <p className='mr-8 font-medium w-[150px] text-right'>Last Modified: </p>
+                            <p className='text'>{dataset?.lastModifiedDate ?? 'N/A'}</p>
+                        </div>
+                        <div className='flex flex-row'>
+                            <p className='mr-8 font-medium w-[150px] text-right'>DOI: </p>
+                            <p className='text'>{dataset?.datasetDOI ?? 'N/A'}</p>
+                            {dataset?.datasetDOI == null ? (
+                                <Link
+                                    className='ml-2'
+                                    component='button'
+                                    underline='none'
+                                    onClick={() => setDoiDialogVisible(true)}
+                                >
+                                    (Generate a DOI)
+                                </Link>
+                            ) : null}
+                        </div>
+                        <div className='flex flex-row'>
+                            <p className='mr-8 font-medium w-[150px] text-right'>Citations: </p>
+                            <p className='text'>{1}</p>
+                            <Link
+                                className='ml-2'
+                                component='button'
+                                underline='none'
+                                onClick={() => setCitationsDialogVisible(true)}
                             >
-                                Edit
-                            </Button>
-                        ) : null}
+                                (View)
+                            </Link>
+                        </div>
                     </div>
-                    <div className='px-2'>
-                        {isAdminView ? (
-                            <Button
-                                sx={{
-                                    'backgroundColor': 'whitesmoke',
-                                    'color': 'black',
-                                    'fontWeight': 'bold',
-                                    '&:hover': {
-                                        backgroundColor: 'whitesmoke',
-                                    },
-                                }}
-                                onClick={() => setDeleteDialogVisible(true)}
-                                variant='contained'
-                            >
-                                Delete
-                            </Button>
-                        ) : null}
+                    <div className='flex flex-col my-4'>
+                        <p className='text-xl py-4 font-semibold'>Sequences</p>
+                        <SequencesTable accessionQueries={accessionQueries} />
                     </div>
-                </div>
-                <div></div>
-            </div>
-            <div>
-                <h1 className='text-2xl font-semibold pb-8'>{dataset?.name}</h1>
-            </div>
-            <hr />
-            <div className='flex flex-col my-4'>
-                <div className='flex flex-row'>
-                    <p className='mr-8 font-medium w-[150px] text-right'>Name</p>
-                    <p className='text'>{dataset?.name}</p>
-                </div>
-                <div className='flex flex-row'>
-                    <p className='mr-8 font-medium w-[150px] text-right'>Description: </p>
-                    <p className='text'>{dataset?.description ?? 'N/A'}</p>
-                </div>
-                <div className='flex flex-row'>
-                    <p className='mr-8 font-medium w-[150px] text-right'>DOI: </p>
-                    <p className='text pr-4'>{dataset?.datasetDOI ?? 'N/A'}</p>
-                    {dataset?.datasetDOI == null ? (
-                        <Link
-                            className='ml-4'
-                            component='button'
-                            underline='none'
-                            onClick={() => {
-                                setDoiDialogVisible(true);
-                            }}
-                        >
-                            (Generate a DOI)
-                        </Link>
-                    ) : null}
-                </div>
-                <div className='flex flex-row'>
-                    <p className='mr-8 font-medium w-[150px] text-right'>Version: </p>
-                    <p className='text'>{dataset?.version ?? 'N/A'}</p>
-                </div>
-                <div className='flex flex-row'>
-                    <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
-                    <p className='text'>{dataset?.createdDate ?? 'N/A'}</p>
-                </div>
-                <div className='flex flex-row'>
-                    <p className='mr-8 font-medium w-[150px] text-right'>Last Modified: </p>
-                    <p className='text'>{dataset?.lastModifiedDate ?? 'N/A'}</p>
-                </div>
-            </div>
-            <div className='flex flex-col my-4'>
-                <p className='text-xl py-4 font-semibold'>Sequences</p>
-                <SequencesTable accessionQueries={accessionQueries} />
-            </div>
+                </>
+            )}
             <Modal isModalVisible={editModalVisible} setModalVisible={setEditModalVisible}>
                 <DatasetForm editDataset={dataset} config={config} clientConfig={clientConfig} />
+            </Modal>
+            <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
+                <ExportDataset dataset={dataset} accessionQueries={accessionQueries} />
             </Modal>
             <AlertDialog
                 isVisible={deleteDialogVisible}
                 setVisible={setDeleteDialogVisible}
                 title='Delete Dataset'
                 description='Are you sure you want to delete this dataset?'
-                onAccept={deleteDataset}
+                onAccept={handleDeleteDataset}
             />
             <AlertDialog
                 isVisible={doiDialogVisible}
                 setVisible={setDoiDialogVisible}
                 title='Generate a DOI'
-                description='This action is limited to 10 times per month per user. Are you sure you want to generate a DOI for this dataset?'
-                onAccept={createDOI}
+                description='This feature is under development and will be available soon!'
+                onAccept={handleCreateDOI}
+            />
+            <AlertDialog
+                isVisible={citationsDialogVisible}
+                setVisible={setCitationsDialogVisible}
+                title='Citations'
+                description='This feature is under development and will be available soon!'
+                onAccept={handleCitationsClose}
             />
         </div>
     );

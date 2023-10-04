@@ -27,7 +27,7 @@ export const testSequence = {
 
 export const testuser = 'testuser';
 
-export const testDatasetId = 'dataset_id_1';
+export const testDatasetId = '45FXCV1XV82ha29uBaGbRh';
 export const metadataTestFile: string = './tests/testData/metadata.tsv';
 export const sequencesTestFile: string = './tests/testData/sequences.fasta';
 

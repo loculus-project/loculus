@@ -11,10 +11,7 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import { visuallyHidden } from '@mui/utils';
 import { type MouseEvent, type ChangeEvent, useState, useMemo } from 'react';
 
-import { mockDatasets } from './mockData';
 import type { Dataset } from '../../types';
-
-const rows = mockDatasets;
 
 type Order = 'asc' | 'desc';
 
@@ -72,7 +69,7 @@ const headCells: readonly HeadCell[] = [
     {
         id: 'name',
         numeric: false,
-        label: 'Name',
+        label: 'Study Name',
     },
     {
         id: 'description',
@@ -86,14 +83,14 @@ const headCells: readonly HeadCell[] = [
     },
 ];
 
-interface EnhancedTableProps {
+interface DatasetsTableHeadProps {
     onRequestSort: (event: MouseEvent<unknown>, property: keyof Dataset) => void;
     order: Order;
     orderBy: string;
     rowCount: number;
 }
 
-const EnhancedTableHead = (props: EnhancedTableProps) => {
+const DatasetsTableHead = (props: DatasetsTableHeadProps) => {
     const { order, orderBy, onRequestSort } = props;
     const createSortHandler = (property: keyof Dataset) => (event: MouseEvent<unknown>) => {
         onRequestSort(event, property);
@@ -128,7 +125,13 @@ const EnhancedTableHead = (props: EnhancedTableProps) => {
     );
 };
 
-const EnhancedTable = () => {
+type DatasetsTableProps = {
+    rows: Dataset[];
+};
+
+const DatasetsTable = (props: DatasetsTableProps) => {
+    const { rows } = props;
+
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<keyof Dataset>('createdDate');
     const [page, setPage] = useState(0);
@@ -159,22 +162,33 @@ const EnhancedTable = () => {
     const visibleRows = useMemo(
         () =>
             stableSort(rows, getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-        [order, orderBy, page, rowsPerPage],
+        [rows, order, orderBy, page, rowsPerPage],
     );
+
+    const maxCellLength = 25;
+    const truncateCell = (cell: string | undefined) => {
+        if (cell == null) {
+            return 'N/A';
+        }
+        if (cell.length > maxCellLength) {
+            return cell.substring(0, maxCellLength) + '...';
+        }
+        return cell;
+    };
 
     return (
         <Box sx={{ width: '100%' }}>
             <Paper sx={{ width: '100%', mb: 2 }}>
                 <TableContainer>
                     <Table sx={{ minWidth: 750 }} aria-labelledby='tableTitle' size='medium'>
-                        <EnhancedTableHead
+                        <DatasetsTableHead
                             order={order}
                             orderBy={orderBy}
                             onRequestSort={handleRequestSort}
                             rowCount={rows.length}
                         />
                         <TableBody>
-                            {visibleRows.map((row, index) => {
+                            {visibleRows.map((row: Dataset, index: number) => {
                                 const labelId = `enhanced-table-checkbox-${index}`;
 
                                 return (
@@ -188,11 +202,13 @@ const EnhancedTable = () => {
                                     >
                                         <TableCell align='left'>{row.createdDate}</TableCell>
                                         <TableCell component='th' id={labelId} scope='row'>
-                                            {row.datasetId}
+                                            {truncateCell(row.datasetId)}
                                         </TableCell>
-                                        <TableCell align='left'>{row.name}</TableCell>
-                                        <TableCell align='left'> {row.description}</TableCell>
-                                        <TableCell align='left'> {row.datasetDOI}</TableCell>
+                                        <TableCell align='left'>{truncateCell(row.name)}</TableCell>
+                                        <TableCell align='left'> {truncateCell(row.description)}</TableCell>
+                                        <TableCell align='left'>
+                                            {row.datasetDOI == null ? 'N/A' : row.datasetDOI}
+                                        </TableCell>
                                     </TableRow>
                                 );
                             })}
@@ -218,4 +234,4 @@ const EnhancedTable = () => {
     );
 };
 
-export default EnhancedTable;
+export default DatasetsTable;

@@ -6,9 +6,10 @@ import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormHelperText from '@mui/material/FormHelperText';
 import TextField from '@mui/material/TextField';
-import { useQueries } from '@tanstack/react-query';
+import { useQueries, useMutation } from '@tanstack/react-query';
 import { type FC, type FormEvent, useState, useEffect } from 'react';
 
+import { createDataset, updateDataset } from './api';
 import { clientLogger, fetchSequenceDetails } from '../../api';
 import type { Config, ClientConfig, HeaderId, Dataset } from '../../types';
 import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
@@ -36,13 +37,13 @@ const serializeAccessions = (accessionType: string, dataset?: Dataset) => {
 };
 
 const parseAccessions = (accessionType: string, dataset?: Dataset): string[] => {
-    if (!accessionType || !dataset || !dataset.sequences || dataset.sequences.length == 0) {
+    if (!accessionType || !dataset || !dataset.sequences || dataset.sequences.length === 0) {
         return [];
     }
     if (accessionType === 'SRA') {
-        return dataset.sequences.map((sequence) => sequence.sraAccession ?? '').filter((accession) => accession != '');
+        return dataset.sequences.map((sequence) => sequence.sraAccession ?? '').filter((accession) => accession !== '');
     }
-    return dataset.sequences.map((sequence) => sequence.genbankAccession ?? '').filter((accession) => accession != '');
+    return dataset.sequences.map((sequence) => sequence.genbankAccession ?? '').filter((accession) => accession !== '');
 };
 
 export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientConfig }) => {
@@ -69,21 +70,63 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
         setIsErrorOpen(false);
     };
 
-    // TODO: implement using new API
+    const createDatasetMutation = useMutation({
+        mutationFn: (dataset) => createDataset(dataset, clientConfig),
+    });
+
+    const updateDatasetMutation = useMutation({
+        mutationFn: (dataset) => updateDataset(editDataset?.datasetId, dataset, clientConfig),
+    });
+
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
         setIsLoading(true);
+
+        const dataset = {
+            name: datasetName,
+            description: datasetDescription,
+            sequences: [
+                ...getAccessionsList('Genbank').map((accession) => ({
+                    genbankAccession: accession,
+                })),
+                ...getAccessionsList('SRA').map((accession) => ({
+                    sraAccession: accession,
+                })),
+            ],
+        };
+
+        const isEdit = editDataset != null;
+
+        if (isEdit) {
+            try {
+                const response = await updateDatasetMutation.mutateAsync(dataset);
+                setResponseSequenceHeaders(response.sequenceHeaders);
+                await clientLogger.info(`Dataset edit successful, datasetId: '${editDataset.datasetId}'`);
+            } catch (error) {
+                handleOpenError(
+                    `Dataset edit failed with error '${(error as Error).message}', datasetId: '${
+                        editDataset.datasetId
+                    }'`,
+                );
+                await clientLogger.error(
+                    `Dataset edit failed with error '${(error as Error).message}', datasetId: '${
+                        editDataset.datasetId
+                    }'`,
+                );
+            }
+            setIsLoading(false);
+            return;
+        }
         try {
-            setResponseSequenceHeaders(null);
+            const response = await createDatasetMutation.mutateAsync(dataset);
+            setResponseSequenceHeaders(response.sequenceHeaders);
+            await clientLogger.info(`Dataset create successful with datasetId: ${response?.datasetId}`);
         } catch (error) {
-            handleOpenError(
-                `Dataset ${editDataset ? 'Edit' : 'Create'} failed with error ' + ${(error as Error).message}`,
-            );
-            await clientLogger.error(
-                `Dataset ${editDataset ? 'Edit' : 'Create'} failed with error '${(error as Error).message}'`,
-            );
+            handleOpenError(`Dataset create failed with error '${(error as Error).message}'`);
+            await clientLogger.error(`Dataset create failed with error '${(error as Error).message}'`);
         }
         setIsLoading(false);
+        return;
     };
 
     const getAccessionsList = (accessionType: string) => {
@@ -168,7 +211,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
             (accessionQuery) =>
                 accessionQuery.data?.[accessionKey] === accession ||
                 (accessionQuery.failureReason != null &&
-                    accessionQuery?.failureReason?.message === `No sequence details found for accession: ${accession}`),
+                    accessionQuery.failureReason.message === `No sequence details found for accession: ${accession}`),
         );
 
         if (!accessionQuery || accessionQuery.isLoading) {
@@ -181,20 +224,20 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
     };
 
     return (
-        <div className='flex flex-col items-center w-full overflow-auto-y'>
+        <div className='flex flex-col items-center  overflow-auto-y w-full'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
             <div className='flex justify-start items-center py-5'>
                 <h1 className='text-xl font-semibold py-4'>{`${editDataset ? 'Edit' : 'Create'} Dataset`}</h1>
             </div>
-            <form onSubmit={handleSubmit} className='space-y-6 max-w-md w-100'>
+            <div className='space-y-6 max-w-md w-full'>
                 <FormControl variant='outlined' fullWidth>
                     <TextField
                         id='dataset-name'
                         className='text'
                         onInput={(e) => {
-                            setDatasetName((e?.target as HTMLInputElement)?.value);
+                            setDatasetName((e.target as HTMLInputElement).value);
                         }}
-                        label='Enter a name for your dataset'
+                        label='Enter a study name for your dataset'
                         variant='outlined'
                         placeholder=''
                         size='small'
@@ -207,7 +250,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
                         id='dataset-description'
                         className='text'
                         onInput={(e) => {
-                            setDatasetDescription((e?.target as HTMLInputElement)?.value);
+                            setDatasetDescription((e.target as HTMLInputElement).value);
                         }}
                         label='Enter an optional description'
                         variant='outlined'
@@ -258,10 +301,10 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
                         </FormHelperText>
                     </FormControl>
                 </FormGroup>
-                <h2 className='text-lg font-bold'>Verified</h2>
 
-                <div>
-                    {genbankAccessionsInput.length > 0 || sraAccessionsInput.length > 0 ? (
+                {genbankAccessionsInput.length > 0 || sraAccessionsInput.length > 0 ? (
+                    <div>
+                        <h2 className='text-lg font-bold'>Verified</h2>
                         <div className='p-6 space-y-6 max-w-md w-full'>
                             <div>
                                 {getAccessionsList('Genbank').map((accession) => (
@@ -278,13 +321,13 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
                                 ))}
                             </div>
                         </div>
-                    ) : null}
-                </div>
+                    </div>
+                ) : null}
 
-                <Button variant='outlined' disabled={isLoading} type='submit'>
+                <Button variant='outlined' disabled={isLoading} onClick={handleSubmit}>
                     {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}
                 </Button>
-            </form>
+            </div>
             <div>
                 {responseSequenceHeaders ? (
                     <div className='p-6 space-y-6 max-w-md w-full'>

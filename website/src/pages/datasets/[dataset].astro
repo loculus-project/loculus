@@ -15,8 +15,8 @@ const { dataset } = Astro.params;
     <BackButton marginRight={0} client:load />
     <div class='flex flex-col justify-start'>
         <div class='flex flex-row items-left'>
-            <div class='w-1/4'>
-                <AvatarBadge username={'testuser'} />
+            <div class='w-1/4 flex flex-col justify-start items-center'>
+                <AvatarBadge username='testuser' />
             </div>
             <div class='w-3/4'>
                 <DatasetItem datasetId={dataset} config={config} clientConfig={clientConfig} isAdminView client:load />

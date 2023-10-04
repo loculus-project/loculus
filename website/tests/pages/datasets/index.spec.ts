@@ -8,12 +8,12 @@ test.describe('The datasets list page', () => {
 
     test('displays dataset details on clicking row', async ({ datasetPage }) => {
         await datasetPage.gotoList();
-        await expect(datasetPage.page.getByText('dataset_id_2')).toBeVisible();
+        await expect(datasetPage.page.getByText('g5VZLR5PDcZYnyWV8v35BT')).toBeVisible();
 
         await expect(async () => {
             await datasetPage.page.getByText(testDatasetId).click();
             await datasetPage.waitForLoad();
-            await expect(datasetPage.page.getByRole('heading', { name: 'Dataset Name Placeholder 1' })).toBeVisible();
+            await expect(datasetPage.page.getByRole('heading', { name: 'Dataset study name 1' })).toBeVisible();
         }).toPass();
     });
 

@@ -7,6 +7,7 @@ export const Navigation = () => {
                 <a href='/search'>Search</a>
                 <a href='/submit'>Submit</a>
                 <a href='/revise'>Revise</a>
+                <a href='/datasets'>Datasets</a>
                 <a href='/user'>User</a>
                 <a href='/datasets'>Datasets</a>
             </div>

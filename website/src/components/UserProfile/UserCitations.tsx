@@ -1,28 +1,26 @@
-import { type FC, useState, useEffect } from 'react';
+import CircularProgress from '@mui/material/CircularProgress';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import type { FC } from 'react';
 
+import type { DatasetCitationResults, ClientConfig } from '../../types';
 import { CitationPlot } from '../Datasets/CitationPlot';
-import { mockUserCitations } from '../Datasets/mockData';
-import type { DatasetCitationResults } from '../../types';
+import { fetchAuthorCitations } from '../Datasets/api';
+import withQueryProvider from '../common/withQueryProvider';
 
 type Props = {
-    username?: string;
+    userId: string;
+    clientConfig: ClientConfig;
 };
 
 type DateAggCitations = {
     [key: number]: number;
 };
 
-export const UserCitations: FC<Props> = ({ username }) => {
-    const [userCitations, setUserCitations] = useState<DatasetCitationResults | {}>(mockUserCitations);
-
-    useEffect(() => {
-        const fetchUserCitations = () => {
-            // TODO: fetch user citations
-            return username;
-        };
-        fetchUserCitations();
-        setUserCitations(mockUserCitations);
-    }, [username]);
+const UserCitationsInner: FC<Props> = ({ userId, clientConfig }) => {
+    const { data: userCitations, isLoading: isLoadingCitationData }: UseQueryResult = useQuery(
+        ['citations', userId],
+        () => fetchAuthorCitations(userId, clientConfig),
+    );
 
     const transformCitationData = (citationData: DatasetCitationResults[]) => {
         const yearCounts: DateAggCitations = {};
@@ -49,12 +47,18 @@ export const UserCitations: FC<Props> = ({ username }) => {
         };
     };
 
-    const citationData = transformCitationData(userCitations);
+    const citationData = isLoadingCitationData ? null : transformCitationData(userCitations);
 
     return (
         <div>
             <h1 className='text-2xl font-medium pb-8'>Cited By</h1>
-            <CitationPlot xData={citationData.xData} yData={citationData.yData} />
+            {isLoadingCitationData ? (
+                <CircularProgress />
+            ) : (
+                <CitationPlot xData={citationData.xData} yData={citationData.yData} />
+            )}
         </div>
     );
 };
+
+export const UserCitations = withQueryProvider(UserCitationsInner);
