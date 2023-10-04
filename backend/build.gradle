@@ -36,6 +36,7 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-json:$exposedVersion"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.4.1"
+    implementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"

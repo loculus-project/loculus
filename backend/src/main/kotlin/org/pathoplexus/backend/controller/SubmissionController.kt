@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.constraints.Max
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.pathoplexus.backend.model.HeaderId
@@ -16,12 +17,14 @@ import org.pathoplexus.backend.service.FileData
 import org.pathoplexus.backend.service.OriginalData
 import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
+import org.pathoplexus.backend.service.UnprocessedData
 import org.pathoplexus.backend.service.ValidationResult
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -33,7 +36,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.io.InputStreamReader
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
-private const val SUBMIT_DESCRIPTION =
+private const val SUBMIT_RESPONSE_DESCRIPTION =
     "Returns a list of sequenceId, version and customId of the submitted sequences. " +
         "The customId is the (locally unique) id provided by the submitter as 'header' in the metadata file. " +
         "The version will be 1 for every sequence. " +
@@ -48,14 +51,24 @@ private const val SEQUENCE_FILE_DESCRIPTION =
     "A fasta file containing the unaligned nucleotide sequences of the submitted sequences. " +
         "The header of each sequence must match the 'header' field in the metadata file."
 
+private const val EXTRACT_UNPROCESSED_DATA_DESCRIPTION =
+    "Extract unprocessed sequences. This is supposed to be used as input for the preprocessing pipeline. " +
+        "Returns a stream of NDJSON and sets the status each sequence to 'PROCESSING'."
+private const val EXTRACT_UNPROCESSED_DATA_RESPONSE_DESCRIPTION =
+    "Sequence data as input for the preprocessing pipeline. " +
+        "The schema is to be understood per line of the NDJSON stream."
+
+private const val MAX_EXTRACTED_SEQUENCES = 100_000L
+
 @RestController
+@Validated
 class SubmissionController(
     private val submitModel: SubmitModel,
     private val databaseService: DatabaseService,
 ) {
 
-    @Operation(description = "Submit unprocessed data as a multipart/form-data")
-    @ApiResponse(responseCode = "200", description = SUBMIT_DESCRIPTION)
+    @Operation(description = "Submit data for new sequences as multipart/form-data")
+    @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
         @Parameter(description = "The username of the submitter - until we implement authentication")
@@ -67,10 +80,24 @@ class SubmissionController(
         return submitModel.processSubmission(username, metadataFile, sequenceFile)
     }
 
-    @Operation(description = "Get unprocessed data as a stream of NDJSON")
+    @Operation(description = EXTRACT_UNPROCESSED_DATA_DESCRIPTION)
+    @ApiResponse(
+        responseCode = "200",
+        description = EXTRACT_UNPROCESSED_DATA_RESPONSE_DESCRIPTION,
+        content = [
+            Content(
+                schema = Schema(implementation = UnprocessedData::class),
+            ),
+        ],
+    )
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
-    fun getUnprocessedData(
-        @RequestParam numberOfSequences: Int,
+    fun extractUnprocessedData(
+        @RequestParam
+        @Max(
+            value = MAX_EXTRACTED_SEQUENCES,
+            message = "You can extract at max $MAX_EXTRACTED_SEQUENCES sequences at once.",
+        )
+        numberOfSequences: Int,
     ): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)

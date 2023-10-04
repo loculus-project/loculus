@@ -1,5 +1,6 @@
 package org.pathoplexus.backend.controller
 
+import jakarta.validation.ConstraintViolationException
 import mu.KotlinLogging
 import org.pathoplexus.backend.model.InvalidSequenceFileException
 import org.springframework.http.HttpStatus
@@ -24,6 +25,17 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
 
         return responseEntity(
             HttpStatus.INTERNAL_SERVER_ERROR,
+            e.message,
+        )
+    }
+
+    @ExceptionHandler(ConstraintViolationException::class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    fun handleConstraintViolationException(e: ConstraintViolationException): ResponseEntity<ProblemDetail> {
+        log.error(e) { "Caught ConstraintViolationException: ${e.message}" }
+
+        return responseEntity(
+            HttpStatus.BAD_REQUEST,
             e.message,
         )
     }

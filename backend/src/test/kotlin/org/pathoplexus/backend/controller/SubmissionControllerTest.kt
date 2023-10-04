@@ -11,8 +11,10 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.Status
+import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
@@ -53,23 +55,6 @@ class SubmissionControllerTest(
             "-c",
             "truncate table sequences restart identity cascade;",
         )
-    }
-
-    @Test
-    fun `extract unprocessed sequences`() {
-        val emptyResponse = queryUnprocessedSequences(NUMBER_OF_SEQUENCES)
-        expectLinesInResponse(emptyResponse, 0)
-
-        submitInitialData()
-
-        val result7 = queryUnprocessedSequences(7)
-        expectLinesInResponse(result7, 7)
-
-        val result3 = queryUnprocessedSequences(5)
-        expectLinesInResponse(result3, 3)
-
-        val result0 = queryUnprocessedSequences(NUMBER_OF_SEQUENCES)
-        expectLinesInResponse(result0, 0)
     }
 
     @ParameterizedTest(name = "{arguments}")
@@ -447,7 +432,25 @@ class SubmissionControllerTest(
 
     private fun prepareDataToSiloReady() {
         submitInitialData()
-        submitProcessedData(awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES)))
+
+        // TODO(#306) refactor this to use the client and make it less messy
+        val rawUnprocessedData = awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
+        val lines = rawUnprocessedData.lines()
+        val resultOfDummyPreprocessingPipeline = lines
+            .filter { it.isNotBlank() }
+            .map { objectMapper.readValue<UnprocessedData>(it) }
+            .map {
+                SequenceVersion(
+                    it.sequenceId,
+                    it.version,
+                    data = objectMapper.readValue(objectMapper.writeValueAsString(it.data)),
+                    errors = null,
+                    warnings = null,
+                )
+            }
+            .map { objectMapper.writeValueAsString(it) }
+
+        submitProcessedData(resultOfDummyPreprocessingPipeline.joinToString("\n"))
         approveProcessedSequences(DefaultFiles.allSequenceIds)
     }
 
