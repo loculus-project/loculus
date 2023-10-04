@@ -3,17 +3,14 @@ package org.pathoplexus.backend.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
-import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.Status
+import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -28,11 +25,9 @@ import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
-import java.io.File
 
 @AutoConfigureMockMvc
 @SpringBootTest
@@ -55,79 +50,32 @@ class SubmissionControllerTest(
         )
     }
 
-    @ParameterizedTest(name = "{arguments}")
-    @MethodSource("provideValidationScenarios")
-    fun `validation of processed data`(scenario: Scenario<ValidationError>) {
-        submitInitialData()
-        awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
-
-        val requestBuilder = submitProcessedData(scenario.inputData)
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$").isArray())
-
-        if (scenario.expectedError == null) {
-            requestBuilder.andExpect(jsonPath("\$").isEmpty())
-        } else {
-            val error = scenario.expectedError
-
-            error.fieldsWithTypeMismatch.forEach { mismatch ->
-                requestBuilder.andExpect(
-                    jsonPath(
-                        "\$[0].fieldsWithTypeMismatch",
-                        Matchers.hasItem(
-                            Matchers.allOf(
-                                Matchers.hasEntry("field", mismatch.field),
-                                Matchers.hasEntry("shouldBeType", mismatch.shouldBeType),
-                                Matchers.hasEntry("fieldValue", mismatch.fieldValue),
-                            ),
-                        ),
-                    ),
-                )
-            }
-            requestBuilder.andExpect(
-                jsonPath("\$[0].fieldsWithTypeMismatch", Matchers.hasSize<Any>(error.fieldsWithTypeMismatch.size)),
-            )
-
-            for (err in error.unknownFields) {
-                requestBuilder.andExpect(jsonPath("\$[0].unknownFields", Matchers.hasItem(err)))
-            }
-            requestBuilder.andExpect(
-                jsonPath("\$[0].unknownFields", Matchers.hasSize<String>(error.unknownFields.size)),
-            )
-
-            for (err in error.missingRequiredFields) {
-                requestBuilder.andExpect(jsonPath("\$[0].missingRequiredFields", Matchers.hasItem(err)))
-            }
-            requestBuilder.andExpect(
-                jsonPath("\$[0].missingRequiredFields", Matchers.hasSize<String>(error.missingRequiredFields.size)),
-            )
-
-            for (err in error.genericErrors) {
-                requestBuilder.andExpect(jsonPath("\$[0].genericErrors", Matchers.hasItem(err)))
-            }
-            requestBuilder.andExpect(
-                jsonPath("\$[0].genericErrors", Matchers.hasSize<String>(error.genericErrors.size)),
-            )
-        }
-    }
-
-    @Test
-    fun `handling of errors in processed data`() {
-        submitInitialData()
-        awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
-
-        submitProcessedData(processedInputDataFromFile("error_feedback"))
-
-        expectStatusInResponse(querySequenceList(), 1, Status.NEEDS_REVIEW.name)
-    }
-
     @Test
     fun `approving of processed data`() {
         val sequencesThatAreProcessed = listOf(1)
         submitInitialData()
         awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
-        submitProcessedData(processedInputDataFromFile("no_validation_errors"))
+        submitProcessedData(
+            """
+            {
+              "sequenceId": 1,
+              "version": 1,
+              "errors": [],
+              "warnings": [],
+              "data": {
+                "metadata": {
+                  "date": "2002-12-15",
+                  "host": "Homo sapiens",
+                  "region": "Europe",
+                  "country": "Spain",
+                  "division": "Schaffhausen",
+                  "pangoLineage": "XBB.1.5"
+                },
+                "unalignedNucleotideSequences": { "main": "NNNNNNNNNNNNNNNN" }
+              }
+            }
+        """.replace(Regex("\\s"), ""),
+        ) // TODO(#311) replace this JSON by a method in PreparedProcessedData
 
         approveProcessedSequences(sequencesThatAreProcessed)
 
@@ -438,7 +386,7 @@ class SubmissionControllerTest(
             .filter { it.isNotBlank() }
             .map { objectMapper.readValue<UnprocessedData>(it) }
             .map {
-                SequenceVersion(
+                SubmittedProcessedData(
                     it.sequenceId,
                     it.version,
                     data = objectMapper.readValue(objectMapper.writeValueAsString(it.data)),
@@ -499,108 +447,6 @@ class SubmissionControllerTest(
         @JvmStatic
         fun afterAll() {
             postgres.stop()
-        }
-
-        @JvmStatic
-        fun provideValidationScenarios() = listOf(
-            Scenario(
-                name = "Happy Path",
-                inputData = processedInputDataFromFile("no_validation_errors"),
-                expectedError = null as ValidationError?,
-            ),
-            Scenario(
-                name = "Unknown field",
-                inputData = processedInputDataFromFile("unknown_field"),
-                expectedError = ValidationError(
-                    id = 1,
-                    missingRequiredFields = emptyList(),
-                    fieldsWithTypeMismatch = emptyList(),
-                    unknownFields = listOf("not_a_meta_data_field"),
-                    genericErrors = emptyList(),
-                ),
-            ),
-            Scenario(
-                name = "Missing required field",
-                inputData = processedInputDataFromFile("missing_required_field"),
-                expectedError = ValidationError(
-                    id = 1,
-                    missingRequiredFields = listOf("date", "country"),
-                    fieldsWithTypeMismatch = emptyList(),
-                    unknownFields = emptyList(),
-                    genericErrors = emptyList(),
-                ),
-            ),
-            Scenario(
-                name = "Wrong type field",
-                inputData = processedInputDataFromFile("wrong_type_field"),
-                expectedError = ValidationError(
-                    id = 1,
-                    missingRequiredFields = emptyList(),
-                    fieldsWithTypeMismatch = listOf(
-                        TypeMismatch(field = "date", shouldBeType = "date", fieldValue = "\"15.12.2002\""),
-                    ),
-                    unknownFields = emptyList(),
-                    genericErrors = emptyList(),
-                ),
-            ),
-            Scenario(
-                name = "Invalid ID / Non-existing ID",
-                inputData = processedInputDataFromFile("invalid_id"),
-                expectedError = ValidationError(
-                    id = 12,
-                    missingRequiredFields = emptyList(),
-                    fieldsWithTypeMismatch = emptyList(),
-                    unknownFields = emptyList(),
-                    genericErrors = listOf("SequenceId does not exist"),
-                ),
-            ),
-            Scenario(
-                name = "null in nullable field",
-                inputData = processedInputDataFromFile("null_value"),
-                expectedError = null,
-            ),
-        )
-
-        data class Scenario<ErrorType>(
-            val name: String,
-            val inputData: String,
-            val expectedError: ErrorType?,
-        ) {
-            override fun toString() = name
-        }
-
-        data class ValidationError(
-            val id: Int,
-            val missingRequiredFields: List<String>,
-            val fieldsWithTypeMismatch: List<TypeMismatch>,
-            val unknownFields: List<String>,
-            val genericErrors: List<String>,
-        )
-
-        data class TypeMismatch(
-            val field: String,
-            val shouldBeType: String,
-            val fieldValue: String,
-        )
-
-        fun processedInputDataFromFile(fileName: String): String = inputData[fileName] ?: error(
-            "$fileName.json not found",
-        )
-
-        private val inputData: Map<String, String> by lazy {
-            val fileMap = mutableMapOf<String, String>()
-
-            val jsonResourceDirectory = "src/test/resources/processedInputData"
-
-            val directory = File(jsonResourceDirectory)
-
-            directory.listFiles { _, name -> name.endsWith(".json") }?.forEach { file ->
-                val fileName = file.nameWithoutExtension
-                val formattedJson = file.readText().replace("\n", "").replace("\r", "").replace(" ", "")
-                fileMap[fileName] = formattedJson
-            }
-
-            fileMap
         }
     }
 }

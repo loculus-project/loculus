@@ -19,7 +19,10 @@ import org.testcontainers.containers.PostgreSQLContainer
 @ActiveProfiles("with-database")
 @ExtendWith(EndpointTestExtension::class)
 @DirtiesContext
-@Import(SubmissionControllerClient::class)
+@Import(
+    SubmissionControllerClient::class,
+    SubmissionConvenienceClient::class,
+)
 annotation class EndpointTest
 
 private const val SPRING_DATASOURCE_URL = "spring.datasource.url"
