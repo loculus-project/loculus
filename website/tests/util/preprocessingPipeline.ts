@@ -66,8 +66,17 @@ export async function queryUnprocessedData(countOfSequences: number) {
     return unprocessedDataAsNdjson
         .split('\n')
         .filter((line) => line.length > 0)
-        .map((line): Sequence => JSON.parse(line));
+        .map((line): UnprocessedData => JSON.parse(line));
 }
+
+export type UnprocessedData = {
+    sequenceId: number;
+    version: number;
+    data: {
+        metadata: Record<string, string>;
+        unalignedNucleotideSequences: Record<string, string>;
+    };
+};
 
 export type Sequence = {
     sequenceId: number;

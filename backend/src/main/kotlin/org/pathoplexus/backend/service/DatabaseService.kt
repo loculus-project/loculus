@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -78,11 +79,10 @@ class DatabaseService(
             )
             .limit(numberOfSequences)
             .map {
-                SequenceVersion(
+                UnprocessedData(
                     it[SequencesTable.sequenceId],
                     it[SequencesTable.version],
-                    // TODO(#305): Currently this is only a workaround until we have the new types
-                    objectMapper.readTree(objectMapper.writeValueAsString(it[SequencesTable.originalData]!!)),
+                    it[SequencesTable.originalData]!!,
                 )
             }
 
@@ -102,7 +102,7 @@ class DatabaseService(
         )
     }
 
-    private fun updateStatusToProcessing(sequences: List<SequenceVersion>) {
+    private fun updateStatusToProcessing(sequences: List<UnprocessedData>) {
         val sequenceVersions = sequences.map { it.sequenceId to it.version }
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         SequencesTable
@@ -114,8 +114,8 @@ class DatabaseService(
             }
     }
 
-    private fun stream(
-        sequencesData: List<SequenceVersion>,
+    private fun <T> stream(
+        sequencesData: List<T>,
         outputStream: OutputStream,
     ) {
         sequencesData
@@ -509,8 +509,22 @@ data class SubmittedData(
     val originalData: OriginalData,
 )
 
+data class UnprocessedData(
+    @Schema(example = "123") val sequenceId: Long,
+    @Schema(example = "1") val version: Long,
+    val data: OriginalData,
+)
+
 data class OriginalData(
+    @Schema(
+        example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
+        description = "Key value pairs of metadata, as submitted in the metadata file",
+    )
     val metadata: Map<String, String>,
+    @Schema(
+        example = "{\"segment1\": \"ACTG\", \"segment2\": \"GTCA\"}",
+        description = "The key is the segment name, the value is the nucleotide sequence",
+    )
     val unalignedNucleotideSequences: Map<String, String>,
 )
 

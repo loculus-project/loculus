@@ -29,12 +29,11 @@ private const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
 class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCallback {
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
-            .apply {
-                start()
-            }
     }
 
     override fun beforeAll(context: ExtensionContext) {
+        postgres.start()
+
         System.setProperty(SPRING_DATASOURCE_URL, postgres.jdbcUrl)
         System.setProperty(SPRING_DATASOURCE_USERNAME, postgres.username)
         System.setProperty(SPRING_DATASOURCE_PASSWORD, postgres.password)
