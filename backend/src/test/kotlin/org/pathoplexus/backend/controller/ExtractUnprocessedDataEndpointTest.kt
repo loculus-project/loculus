@@ -13,7 +13,10 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class ExtractUnprocessedDataEndpointTest(@Autowired val submissionControllerClient: SubmissionControllerClient) {
+class ExtractUnprocessedDataEndpointTest(
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val submissionControllerClient: SubmissionControllerClient,
+) {
 
     @Test
     fun `GIVEN no sequences in database THEN returns empty response`() {
@@ -25,7 +28,7 @@ class ExtractUnprocessedDataEndpointTest(@Autowired val submissionControllerClie
 
     @Test
     fun `WHEN extracting unprocessed data THEN only previously not extracted sequences are returned`() {
-        submissionControllerClient.submitDefaultFiles()
+        convenienceClient.submitDefaultFiles()
 
         val result7 = submissionControllerClient.extractUnprocessedData(7)
         val responseBody7 = result7.expectNdjsonAndGetContent<UnprocessedData>()

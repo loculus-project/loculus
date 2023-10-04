@@ -47,8 +47,7 @@
             {
                 "name": "division",
                 "type": "string",
-                "autocomplete": true,
-                "required": true
+                "autocomplete": true
             },
             {
                 "name": "location",
@@ -110,6 +109,10 @@
             {
                 "name": "authors",
                 "type": "string"
+            },
+            {
+                "name": "qc",
+                "type": "double"
             }
         ],
         "tableColumns": ["strain", "country", "date", "pangoLineage"],

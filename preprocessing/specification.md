@@ -43,6 +43,8 @@ Sequences without an error will be released. Sequences with an error will not be
 
 ## Technical specification
 
+Also see the Swagger UI available in the backend at `<backendUrl>/swagger-ui/index.html`.
+
 ### Pulling unpreprocessed data
 
 To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequences` (integer). This returns a response in [NDJSON](http://ndjson.org/) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
@@ -103,7 +105,7 @@ The `errors` and `warnings` fields contain an array of objects of the following 
 ```js
 {
     source: {
-        type: "metadata" | "nucleotideSequence",
+        type: "Metadata" | "NucleotideSequence",
         name: string
     }[],
     message: string

@@ -28,10 +28,10 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
-    @ExceptionHandler(ConstraintViolationException::class)
+    @ExceptionHandler(ConstraintViolationException::class, BadRequestException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleBadRequestException(e: ConstraintViolationException): ResponseEntity<ProblemDetail> {
-        log.warn(e) { "Caught ConstraintViolationException: ${e.message}" }
+    fun handleBadRequestException(e: Exception): ResponseEntity<ProblemDetail> {
+        log.warn(e) { "Caught ${e.javaClass}: ${e.message}" }
 
         return responseEntity(
             HttpStatus.BAD_REQUEST,
@@ -80,5 +80,6 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     }
 }
 
-class UnprocessableEntityException(message: String) : RuntimeException(message)
+class BadRequestException(message: String, override val cause: Throwable? = null) : RuntimeException(message)
 class ForbiddenException(message: String) : RuntimeException(message)
+class UnprocessableEntityException(message: String) : RuntimeException(message)
