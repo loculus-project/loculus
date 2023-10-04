@@ -40,7 +40,22 @@ class CitationControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val obj
     private fun queryDeleteAuthor(): Boolean { return true }
     private fun queryGetAuthorCount(): Boolean { return true }
 
+    private fun queryPostCreateBibliographyRecord(): Boolean { return true }
+    private fun queryGetReadBibliographyRecord(): Boolean { return true }
+    private fun queryPatchUpdateBibliographyRecord(): Boolean { return true }
+    private fun queryDeleteBibliographyRecord(): Boolean { return true }
+    private fun queryGetBibliographyRecordCount(): Boolean { return true }
+
+    private fun queryPostCreateBibliographySet(): Boolean { return true }
+    private fun queryGetReadBibliographySet(): Boolean { return true }
+    private fun queryPatchUpdateBibliographySet(): Boolean { return true }
+    private fun queryDeleteBibliographySet(): Boolean { return true }
     private fun queryGetBibliographySetCount(): Boolean { return true }
+
+    private fun queryPostCreateCitation(): Boolean { return true }
+    private fun queryGetReadCitation(): Boolean { return true }
+    private fun queryPatchUpdateCitation(): Boolean { return true }
+    private fun queryDeleteCitation(): Boolean { return true }
     private fun queryGetCitationCount(): Boolean { return true }
 
     companion object {

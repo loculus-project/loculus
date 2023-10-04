@@ -3,6 +3,7 @@ package org.pathoplexus.backend.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import org.pathoplexus.backend.service.Author
+import org.pathoplexus.backend.service.BibliographyRecord
 import org.pathoplexus.backend.service.BibliographySet
 import org.pathoplexus.backend.service.Citation
 import org.pathoplexus.backend.service.DatabaseService
@@ -56,6 +57,46 @@ class CitationController(
     @GetMapping("/get-author-count", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAuthorCount(): Number {
         return databaseService.getAuthorCount()
+    }
+
+    @Operation(description = "Create a new bibliography record with the specified data")
+    @PostMapping("/create-bibliography-record", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun postCreateBibliographyRecord(
+        @RequestParam data: String,
+        @RequestParam license: String,
+        @RequestParam name: String,
+        @RequestParam type: String
+        ): Long {
+        return databaseService.postCreateBibliographyRecord(data, license, name, type)
+    }
+    @Operation(description = "Read a bibliography record's data")
+    @GetMapping("/read-bibliography-record", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getReadBibliographyRecord(
+        @RequestParam bibliographyRecordId: Long,
+    ): List<BibliographyRecord> {
+        return databaseService.getReadBibliographyRecord(bibliographyRecordId)
+    }
+    @Operation(description = "Update a bibliography record with the specified data")
+    @PatchMapping("/update-bibliography-record", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun patchUpdateBibliographyRecord(
+        @RequestParam bibliographyRecordId: Long,
+        @RequestParam data: String,
+        @RequestParam license: String,
+        @RequestParam name: String,
+        @RequestParam type: String
+    ) {
+        return databaseService.patchUpdateBibliographyRecord(bibliographyRecordId, data, license, name, type)
+    }@Operation(description = "Delete a bibliography record")
+    @DeleteMapping("/delete-bibliography-record", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun deleteBibliographyRecord(
+        @RequestParam bibliographyRecordId: Long
+    ) {
+        return databaseService.deleteBibliographyRecord(bibliographyRecordId)
+    }
+    @Operation(description = "Get the total number of bibliography records registered")
+    @GetMapping("/get-bibliography-record-count", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getBibliographyRecordCount(): Number {
+        return databaseService.getBibliographyRecordCount()
     }
 
     @Operation(description = "Create a new bibliography set with the specified data")
