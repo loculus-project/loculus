@@ -117,6 +117,98 @@ Every submission must be associated with a study. The study can't be created usi
 
 ## Registering a sample programatically
 
+[Docs](https://ena-docs.readthedocs.io/en/latest/submit/samples.html)
+
+1. Find correct "minimal metadata" set defined by an appropriate [checklist](https://www.ebi.ac.uk/ena/browser/checklists). In our case, probably the [ENA virus pathogen reporting standard checklist](https://www.ebi.ac.uk/ena/browser/view/ERC000033). There's a more specific one for [Influenza](https://www.ebi.ac.uk/ena/browser/view/ERC000032) and a general [default](https://www.ebi.ac.uk/ena/browser/view/ERC000011) one. This in fact should be reflected in the Pathoplexus metadata model.
+2. Create the sample XML (multiple samples can be in one sample set):
+
+    ```xml
+    <!--filename: sample.xml-->
+    <SAMPLE_SET>
+        <SAMPLE alias="MT5176" center_name="">
+            <TITLE>human gastric microbiota, mucosal</TITLE>
+            <SAMPLE_NAME>
+                <TAXON_ID>1284369</TAXON_ID>
+                <SCIENTIFIC_NAME>stomach metagenome</SCIENTIFIC_NAME>
+                <COMMON_NAME></COMMON_NAME>
+            </SAMPLE_NAME>
+            <SAMPLE_ATTRIBUTES>
+                <SAMPLE_ATTRIBUTE>
+                    <TAG>investigation type</TAG>
+                    <VALUE>mimarks-survey</VALUE>
+                </SAMPLE_ATTRIBUTE>
+                <SAMPLE_ATTRIBUTE>
+                    <TAG>sequencing method</TAG>
+                    <VALUE>pyrosequencing</VALUE>
+                </SAMPLE_ATTRIBUTE>
+                <SAMPLE_ATTRIBUTE>
+                    <TAG>geographic location (latitude)</TAG>
+                    <VALUE>1.81</VALUE>
+                    <UNITS>DD</UNITS>
+                </SAMPLE_ATTRIBUTE>
+                <SAMPLE_ATTRIBUTE>
+                    <TAG>geographic location (longitude)</TAG>
+                    <VALUE>-78.76</VALUE>
+                    <UNITS>DD</UNITS>
+                </SAMPLE_ATTRIBUTE>
+                <SAMPLE_ATTRIBUTE>
+                    <TAG>geographic location (country and/or sea)</TAG>
+                    <VALUE>Colombia</VALUE>
+                </SAMPLE_ATTRIBUTE>
+                <SAMPLE_ATTRIBUTE>
+                    <TAG>geographic location (region and locality)</TAG>
+                    <VALUE>Tumaco</VALUE>
+                </SAMPLE_ATTRIBUTE>
+                <SAMPLE_ATTRIBUTE>
+                    <TAG>ENA-CHECKLIST</TAG>
+                    <VALUE>ERC000014</VALUE>
+                </SAMPLE_ATTRIBUTE>
+            </SAMPLE_ATTRIBUTES>
+        </SAMPLE>
+    </SAMPLE_SET>
+    ```
+
+3. Create the submission.xml as above:
+
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <SUBMISSION>
+        <ACTIONS>
+            <ACTION>
+                <ADD/>
+            </ACTION>
+        </ACTIONS>
+    </SUBMISSION>
+    ```
+
+4. Submit with e.g. `curl`:
+
+    ```bash
+    curl -u username:password \
+        -F "SUBMISSION=@submission.xml" \
+        -F "SAMPLE=@sample.xml" \
+        "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
+    ```
+
+5. Check success. The receipt XML looks like this:
+
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <?xml-stylesheet type="text/xsl" href="receipt.xsl"?>
+    <RECEIPT receiptDate="2017-07-25T16:07:50.248+01:00" submissionFile="submission.xml" success="true">
+        <SAMPLE accession="ERS1833148" alias="MT5176" status="PRIVATE">
+            <EXT_ID accession="SAMEA104174130" type="biosample"/>
+        </SAMPLE>
+        <SUBMISSION accession="ERA979927" alias="MT5176_submission"/>
+        <MESSAGES>
+            <INFO>This submission is a TEST submission and will be discarded within 24 hours</INFO>
+        </MESSAGES>
+        <ACTIONS>ADD</ACTIONS>
+    </RECEIPT>
+    ```
+
+    and contains the accession number(s).
+
 
 ## Promises made to ENA
 
