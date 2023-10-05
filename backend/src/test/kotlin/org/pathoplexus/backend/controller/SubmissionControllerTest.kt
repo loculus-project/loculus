@@ -42,8 +42,6 @@ class SubmissionControllerTest(
     @Autowired val objectMapper: ObjectMapper,
 ) {
 
-    private val testUsername = "testuser"
-
     @BeforeEach
     fun beforeEach() {
         postgres.execInContainer(
@@ -325,7 +323,7 @@ class SubmissionControllerTest(
             MockMvcRequestBuilders.multipart("/revise")
                 .file(files.first)
                 .file(files.second)
-                .param("username", testUsername),
+                .param("username", USER_NAME),
         )
             // TODO(#313) throw a more specific error exception that is mapped to a 400
             // .andExpect(status().isBadRequest)
@@ -343,10 +341,6 @@ class SubmissionControllerTest(
             )
     }
 
-    private fun getSequenceList(): List<SequenceVersionStatus> = objectMapper.readValue<List<SequenceVersionStatus>>(
-        querySequenceList().response.contentAsString,
-    )
-
     private fun submitProcessedData(testData: String): ResultActions {
         return mockMvc.perform(
             MockMvcRequestBuilders.post("/submit-processed-data")
@@ -359,12 +353,16 @@ class SubmissionControllerTest(
     private fun querySequenceList(): MvcResult {
         return mockMvc.perform(
             MockMvcRequestBuilders.get("/get-sequences-of-user")
-                .param("username", testUsername),
+                .param("username", USER_NAME),
         )
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andReturn()
     }
+
+    private fun getSequenceList(): List<SequenceVersionStatus> = objectMapper.readValue<List<SequenceVersionStatus>>(
+        querySequenceList().response.contentAsString,
+    )
 
     private fun submitInitialData(): ResultActions {
         val files = getTestDataFiles(false)
@@ -373,7 +371,7 @@ class SubmissionControllerTest(
             MockMvcRequestBuilders.multipart("/submit")
                 .file(files.first)
                 .file(files.second)
-                .param("username", testUsername),
+                .param("username", USER_NAME),
         )
     }
 
@@ -387,7 +385,7 @@ class SubmissionControllerTest(
 
     private fun approveProcessedSequences(listOfSequencesToApprove: List<Number>): ResultActions = mockMvc.perform(
         MockMvcRequestBuilders.post("/approve-processed-data")
-            .param("username", testUsername)
+            .param("username", USER_NAME)
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .content("""{"sequenceIds":$listOfSequencesToApprove}"""),
     )
@@ -400,7 +398,7 @@ class SubmissionControllerTest(
             MockMvcRequestBuilders.multipart("/revise")
                 .file(files.first)
                 .file(files.second)
-                .param("username", testUsername),
+                .param("username", USER_NAME),
         )
             .andExpect(status().isOk())
     }

@@ -2,7 +2,6 @@ package org.pathoplexus.backend.controller
 
 import jakarta.validation.ConstraintViolationException
 import mu.KotlinLogging
-import org.pathoplexus.backend.model.InvalidSequenceFileException
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
@@ -31,8 +30,8 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
 
     @ExceptionHandler(ConstraintViolationException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    fun handleConstraintViolationException(e: ConstraintViolationException): ResponseEntity<ProblemDetail> {
-        log.error(e) { "Caught ConstraintViolationException: ${e.message}" }
+    fun handleBadRequestException(e: ConstraintViolationException): ResponseEntity<ProblemDetail> {
+        log.warn(e) { "Caught ConstraintViolationException: ${e.message}" }
 
         return responseEntity(
             HttpStatus.BAD_REQUEST,
@@ -40,10 +39,10 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
-    @ExceptionHandler(InvalidSequenceFileException::class)
+    @ExceptionHandler(UnprocessableEntityException::class)
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-    fun handleIllegalArgumentException(e: InvalidSequenceFileException): ResponseEntity<ProblemDetail> {
-        log.error(e) { "Caught InvalidSequenceFileException: ${e.message}" }
+    fun handleUnprocessableEntityException(e: UnprocessableEntityException): ResponseEntity<ProblemDetail> {
+        log.warn(e) { "Caught unprocessable entity exception: ${e.message}" }
 
         return responseEntity(
             HttpStatus.UNPROCESSABLE_ENTITY,
@@ -51,11 +50,24 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
-    fun responseEntity(httpStatus: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> {
+    @ExceptionHandler(ForbiddenException::class)
+    fun handleForbiddenException(e: ForbiddenException): ResponseEntity<ProblemDetail> {
+        log.warn(e) { "Caught forbidden exception: ${e.message}" }
+        return responseEntity(
+            HttpStatus.FORBIDDEN,
+            e.message,
+        )
+    }
+
+    private fun responseEntity(httpStatus: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> {
         return responseEntity(httpStatus, httpStatus.reasonPhrase, detail)
     }
 
-    fun responseEntity(httpStatus: HttpStatusCode, title: String, detail: String?): ResponseEntity<ProblemDetail> {
+    private fun responseEntity(
+        httpStatus: HttpStatusCode,
+        title: String,
+        detail: String?,
+    ): ResponseEntity<ProblemDetail> {
         return ResponseEntity
             .status(httpStatus)
             .contentType(MediaType.APPLICATION_JSON)
@@ -67,3 +79,6 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
             )
     }
 }
+
+class UnprocessableEntityException(message: String) : RuntimeException(message)
+class ForbiddenException(message: String) : RuntimeException(message)

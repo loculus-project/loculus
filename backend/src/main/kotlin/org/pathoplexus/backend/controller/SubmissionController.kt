@@ -58,6 +58,11 @@ private const val EXTRACT_UNPROCESSED_DATA_RESPONSE_DESCRIPTION =
     "Sequence data as input for the preprocessing pipeline. " +
         "The schema is to be understood per line of the NDJSON stream."
 
+private const val SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION =
+    "Submit a review for a sequence that corrects errors found by the preprocessing pipeline " +
+        "or the user themselves. This will set the status of the sequence to " +
+        "'REVIEWED' and it will be processed by the next pipeline run."
+
 private const val MAX_EXTRACTED_SEQUENCES = 100_000L
 
 @RestController
@@ -173,13 +178,20 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
+    @Operation(
+        description = SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION,
+    )
+    @PostMapping("/submit-reviewed-sequence", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun submitReviewedSequence(
+        @RequestParam username: String,
+        @RequestBody sequenceVersion: UnprocessedData,
+    ) = databaseService.submitReviewedSequence(username, sequenceVersion)
+
     @Operation(description = "Get a list of all submitted sequences of the given user")
     @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserSequenceList(
         @RequestParam username: String,
-    ): List<SequenceVersionStatus> {
-        return databaseService.getActiveSequencesSubmittedBy(username)
-    }
+    ): List<SequenceVersionStatus> = databaseService.getActiveSequencesSubmittedBy(username)
 
     @Operation(description = "Approve that the processed data is correct")
     @PostMapping(
