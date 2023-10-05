@@ -78,7 +78,13 @@ export const SequencesReady: FC<SequencesReadyProps> = ({ clientConfig, sequence
 
     const handleRevoke = async () => {
         if (selectedSequences.length > 0) {
-            await revokeReadyData(selectedSequences, clientConfig);
+            await revokeReadyData(
+                selectedSequences.map(
+                    // eslint-disable-next-line
+                    (sequence) => sequencesWithRowId.find((seq) => seq.rowId === sequence)?.sequenceId || 0,
+                ),
+                clientConfig,
+            );
             window.location.reload();
         }
     };
