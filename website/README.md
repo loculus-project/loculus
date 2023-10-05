@@ -87,3 +87,4 @@ docker pull ghcr.io/pathoplexus/website:latest
 ### General tips
 
 - Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
+- Tipps & Tricks for using icons from MUI  https://mui.com/material-ui/guides/minimizing-bundle-size/

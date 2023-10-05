@@ -1,18 +1,12 @@
 import { getRuntimeConfig } from '../../../config';
-import { logger } from '../../../logger';
+import { getInstanceLogger } from '../../../logger';
+import type { SequenceStatusNames } from '../../../types.ts';
 
+const logger = getInstanceLogger('user.ts');
 export enum ResponseStatus {
     OK = 'OK',
     ERROR = 'ERROR',
 }
-export type SequenceStatusNames =
-    | 'RECEIVED'
-    | 'PROCESSING'
-    | 'NEEDS_REVIEW'
-    | 'REVIEWED'
-    | 'PROCESSED'
-    | 'SILO_READY'
-    | 'REVOKED_STAGING';
 
 export type SequenceStatus = {
     status: SequenceStatusNames;

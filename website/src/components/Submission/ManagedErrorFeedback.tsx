@@ -16,6 +16,7 @@ export const ManagedErrorFeedback: FC<ErrorFeedbackProps> = ({ message, open, on
     );
     return (
         <Snackbar
+            className='whitespace-pre-line'
             open={open}
             anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
             message={message}

@@ -1,18 +1,17 @@
 import fs from 'fs';
 import path from 'path';
 
-import { clientLogger } from './api';
+import { getClientLogger } from './api';
 import type { ClientConfig, Config, ReferenceGenomes, RuntimeConfig, ServerConfig, ServiceUrls } from './types';
 import netlifyConfig from '../netlifyConfig/config.json';
 import netlifyRuntimeConfig from '../netlifyConfig/runtime_config.json';
-
-const configDir = import.meta.env.CONFIG_DIR;
 
 let _config: Config | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
 let _referenceGenomes: ReferenceGenomes | null = null;
 
 function getConfigDir(): string {
+    const configDir = import.meta.env.CONFIG_DIR;
     if (typeof configDir !== 'string' || configDir === '') {
         throw new Error(`CONFIG_DIR environment variable was not set during build time, is '${configDir}'`);
     }
@@ -100,7 +99,7 @@ export async function fetchAutoCompletion(
     const response = await fetch(`${runtimeConfig.lapisUrl}/aggregated?fields=${field}&${filterParams}`);
 
     if (!response.ok) {
-        await clientLogger.error(
+        await getClientLogger('fetchAutoComplete').error(
             `Failed to fetch auto-completion data for field ${field} with status ${response.status}`,
         );
         return [];
