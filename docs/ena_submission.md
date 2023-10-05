@@ -4,9 +4,9 @@
 
 Three routes:
 
-- Interactive web form: not what we want because we want to automate
-- Webin command line tool: only one that allows assembly submission
-- HTTP API: Only one that allows study and sample submission
+- Interactive web form: not what we want because we want to automate ([docs](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html))
+- Webin command line tool: only one that allows assembly submission ([docs](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/webin-cli.html))
+- HTTP XML-based API: Only one that allows study and sample submission ([docs](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/programmatic.html))
 
 ## Metadata model
 
@@ -24,9 +24,116 @@ The following could be implement as post-MVP features:
 - Allow submitters to group their sequences into studies.
 - ORCID can be linked to studies/projects (see [citing ENA](https://www.ebi.ac.uk/ena/browser/about/citing-ena))
 
+## Submission process
+
+### Interactive web form
+
+It's possible to do interactive test submissions here: <https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html>.
+This is useful for testing as the interactive submission might have better error messages than the command line tool. See <https://ena-docs.readthedocs.io/en/latest/submit/general-guide/interactive.html>
+
+### Webin CLI
+
+Submission stages:
+
+1. Register Study, Register Sample (needs to be done with XML API)
+2. Prepare Files
+3. Validate Files, Submit Files
+
+Each submission must be associated with an existing study and sample.
+
+### Programmatically
+
+Schemas: <https://ena-docs.readthedocs.io/en/latest/submit/general-guide/programmatic.html#types-of-xml>
+
+## Registering a study programatically
+
+Every submission must be associated with a study. The study can't be created using the CLI. At the time of writing (October 2023) it's unclear whether each sequence should be its own study or whether all sequences from a submitter should belong to one study.
+
+1. Create the study XML ([schema](https://ftp.ebi.ac.uk/pub/databases/ena/doc/xsd/sra_1_5/ENA.project.xsd)):
+
+    ```xml
+    <!--filename: project.xml-->
+    <PROJECT_SET>
+    <PROJECT alias="iranensis_wgs">
+        <NAME>WGS Streptomyces iranensis</NAME>
+        <TITLE>Whole-genome sequencing of Streptomyces iranensis</TITLE>
+        <DESCRIPTION>The genome sequence of Streptomyces iranensis (DSM41954) was obtained using Illumina HiSeq2000. The genome was assembled using a hybrid assembly approach based on Velvet and Newbler. The resulting genome has been annotated with a specific focus on secondary metabolite gene clusters.</DESCRIPTION>
+        <SUBMISSION_PROJECT>
+            <SEQUENCING_PROJECT/>
+        </SUBMISSION_PROJECT>
+        <PROJECT_LINKS>
+            <PROJECT_LINK>
+                <XREF_LINK>
+                <DB>PUBMED</DB>
+                <ID>25035323</ID>
+                </XREF_LINK>
+            </PROJECT_LINK>
+        </PROJECT_LINKS>
+    </PROJECT>
+    </PROJECT_SET>
+    ```
+
+2. Create the submission XML:
+
+    ```xml
+    <!--filename: submission.xml-->
+    <SUBMISSION>
+    <ACTIONS>
+        <ACTION>
+            <ADD/>
+        </ACTION>
+        <ACTION>
+            <HOLD HoldUntilDate="2023-11-01"/>
+        </ACTION>
+    </ACTIONS>
+    </SUBMISSION>
+    ```
+
+3. Submit with e.g. `curl`:
+
+    ```bash
+    curl -u username:password \
+        -F "SUBMISSION=@submission.xml" \
+        -F "PROJECT=@project.xml" \
+        "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit/"
+    ```
+
+4. Check success. The receipt XML looks like this:
+
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <?xml-stylesheet type="text/xsl" href="receipt.xsl"?>
+    <RECEIPT receiptDate="2017-05-09T16:58:08.634+01:00" submissionFile="submission.xml" success="true">
+    <PROJECT accession="PRJEB20767" alias="cheddar_cheese" status="PRIVATE" />
+    <SUBMISSION accession="ERA912529" alias="cheese" />
+    <MESSAGES>
+        <INFO>This submission is a TEST submission and will be discarded within 24 hours</INFO>
+    </MESSAGES>
+    <ACTIONS>ADD</ACTIONS>
+    </RECEIPT>
+    ```
+
+    This is where one gets the accession from.
+
+## Registering a sample programatically
+
+
 ## Promises made to ENA
 
 - "I confirm that the data submitted through this account is NOT sensitive, restricted-access or human-identifiable." -> We will want to mirror this into Pathoplexus submissions, at least the sensitive and human-identifiable parts.
+
+## FAQs
+
+### What's the difference between `assemblies` and `annotated sequences`?
+
+### What would the end-to-end flow of submitting sequences for pathoplexus look like?
+
+1. [Register study programatically](https://ena-docs.readthedocs.io/en/latest/submit/study/programmatic.html)
+2. Upload sequences using what route? Which files are needed?
+
+### What information do we give to the original submitter?
+
+- There are "Webin Portal Reports" that we could share with original submitters?
 
 ## Links
 
