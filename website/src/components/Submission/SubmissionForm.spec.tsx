@@ -7,11 +7,11 @@ import type { HeaderId } from '../../types';
 import { mockRequest, testConfig, testuser } from '../vitest.setup';
 
 vi.mock('../../api', () => ({
-    clientLogger: {
+    getClientLogger: () => ({
         error: vi.fn(),
         log: vi.fn(),
         info: vi.fn(),
-    },
+    }),
 }));
 
 function renderSubmissionForm() {

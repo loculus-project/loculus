@@ -1,3 +1,4 @@
+import type { UnprocessedData } from '../../src/types.ts';
 import { backendUrl } from '../e2e.fixture.ts';
 
 export const fakeProcessingPipeline = async ({
@@ -69,20 +70,3 @@ export async function queryUnprocessedData(countOfSequences: number) {
         .filter((line) => line.length > 0)
         .map((line): UnprocessedData => JSON.parse(line));
 }
-
-export type UnprocessedData = {
-    sequenceId: number;
-    version: number;
-    data: {
-        metadata: Record<string, string>;
-        unalignedNucleotideSequences: Record<string, string>;
-    };
-};
-
-export type Sequence = {
-    sequenceId: number;
-    version: number;
-    data: any;
-    errors?: any[];
-    warnings?: any[];
-};

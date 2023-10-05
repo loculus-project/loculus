@@ -9,7 +9,7 @@ import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField } from './fields/DateField';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
-import { clientLogger } from '../../api';
+import { getClientLogger } from '../../api';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import type { ClientConfig, Filter } from '../../types';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
@@ -21,6 +21,8 @@ interface SearchFormProps {
     metadataSettings: Filter[];
     clientConfig: ClientConfig;
 }
+
+const clientLogger = getClientLogger('SearchForm');
 
 export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig }) => {
     const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
