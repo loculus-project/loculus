@@ -207,8 +207,69 @@ Every submission must be associated with a study. The study can't be created usi
     </RECEIPT>
     ```
 
-    and contains the accession number(s).
+    and contains the sample accession number(s).
 
+## Submitting sequences (assembly)
+
+[Docs](https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html)
+
+1. Create [manifest file](https://ena-docs.readthedocs.io/en/latest/submit/assembly/genome.html#manifest-files) for assembly metadata and file specification (manifest.tsv). The metadata rows are (relevant ones for us):
+
+    - STUDY: Study accession - mandatory
+    - SAMPLE: Sample accession - mandatory
+    - ASSEMBLYNAME: Unique assembly name, user-provided - mandatory
+    - ASSEMBLY_TYPE: ‘clone or isolate’ - mandatory
+    - COVERAGE: The estimated depth of sequencing coverage - mandatory
+    - PROGRAM: The assembly program - mandatory
+    - PLATFORM: The sequencing platform, or comma-separated list of platforms - mandatory
+
+    The file specification rows are:
+
+    - FASTA: sequences in fasta format
+    - CHROMOSOME_LIST: list of chromosomes
+
+    An example manifest.tsv:
+
+    ```tsv
+    STUDY	PRJEBxxxxxx
+    SAMPLE	SAMEAxxxxxx
+    ASSEMBLYNAME	Standard assembly
+    ASSEMBLY_TYPE	isolate
+    COVERAGE	100
+    PROGRAM	iVar
+    PLATFORM	Illumina
+    FASTA	genome.fasta.gz
+    CHROMOSOME_LIST	chromosome_list.tsv
+    ```
+
+2. Create chromosome list file (chromosome_list.tsv)
+
+    ```tsv
+    sequence_id	chromosome_name	chromosome_type
+    ha	ha	segmented
+    na	na	segmented
+    ```
+
+3. Create fasta file (genome.fasta) containing all the sequences in fasta format:
+
+    ```fasta
+    >ha
+    ACGT
+    >na
+    ACGT
+    ```
+
+4. Submit the files using the webin-cli:
+
+    ```bash
+    webin-cli -[validate|submit] \
+        -context genome \
+        -manifest manifest.tsv \
+        -username Webin-XXXXX \
+        -password YYYYYY
+    ```
+
+5. Save accession numbers (these will be returned by the webin-cli)
 
 ## Promises made to ENA
 
