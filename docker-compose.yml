@@ -2,6 +2,7 @@ version: '3'
 services:
   website:
     image: ${WEBSITE_IMAGE}
+    init: true
     ports:
       - "3000:3000"
     volumes:
