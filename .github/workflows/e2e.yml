@@ -3,6 +3,10 @@ name: e2e
 on:
   push:
 
+concurrency:
+  group: ci-${{ github.ref }}-e2e
+  cancel-in-progress: true
+
 jobs:
   E2ETests:
     runs-on: ubuntu-latest

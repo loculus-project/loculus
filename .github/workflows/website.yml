@@ -10,6 +10,10 @@ defaults:
   run:
     working-directory: ./website
 
+concurrency:
+  group: ci-${{ github.ref }}-website
+  cancel-in-progress: true
+
 jobs:
   checks:
     name: Check format
