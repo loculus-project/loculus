@@ -19,8 +19,8 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
         const file = new File([blob], fileName, { type: mimeType });
         return file;
     };
-    const handleLoadSampleData = async () => {
-        const sampleMetadataContent =
+    const handleLoadExampleData = async () => {
+        const exampleMetadataContent =
             targetUrl.split('/').pop() === `submit`
                 ? `
             header	date	region	country	division	host
@@ -34,7 +34,7 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
             2 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
             3 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
             4 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
-        const sampleSequenceContent = `
+        const exampleSequenceContent = `
             >custom0
             ACTG
             >custom1
@@ -44,8 +44,8 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
             >custom3
             ACTG`;
 
-        const metadataFile = createTempFile(sampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
-        const sequenceFile = createTempFile(sampleSequenceContent, 'application/octet-stream', 'sequences.fasta');
+        const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
+        const sequenceFile = createTempFile(exampleSequenceContent, 'application/octet-stream', 'sequences.fasta');
 
         setUsername('testuser');
         setMetadataFile(metadataFile);
@@ -131,8 +131,8 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
                 }}
             />
             <div className='flex gap-4'>
-                <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadSampleData}>
-                    Load Sample Data
+                <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
+                    Load Example Data
                 </button>
 
                 <button className='px-4 py-2 btn normal-case w-1/5' disabled={isLoading} type='submit'>
