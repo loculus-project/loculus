@@ -46,6 +46,7 @@
     is_error -u-> REVIEW_NEEDED : data contain error(s)
     REVIEW_NEEDED -l-> REVIEWED : user edits data
     REVIEWED -l-> PROCESSING : preprocessing starts
+    STAGING -u-> REVIEWED : user edits data
     is_error --> STAGING : preprocessing successful
     STAGING --> is_approved
     is_approved -d-> SILO_READY : user approves \nor automatic approval\n via 'release_directly'

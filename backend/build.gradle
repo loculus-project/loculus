@@ -36,12 +36,13 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-json:$exposedVersion"
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.4.1"
+    implementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }
     testImplementation "com.ninja-squad:springmockk:4.0.2"
-    testImplementation "org.testcontainers:postgresql:1.19.0"
+    testImplementation "org.testcontainers:postgresql:1.19.1"
 }
 
 tasks.named('test') {

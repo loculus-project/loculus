@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -23,11 +24,14 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
+import org.pathoplexus.backend.controller.ForbiddenException
+import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.model.HeaderId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -51,7 +55,7 @@ class DatabaseService(
         Database.connect(pool)
     }
 
-    fun insertSubmissions(submitter: String, submittedData: List<Pair<String, String>>): List<HeaderId> {
+    fun insertSubmissions(submitter: String, submittedData: List<SubmittedData>): List<HeaderId> {
         log.info { "submitting ${submittedData.size} new sequences by $submitter" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -62,10 +66,10 @@ class DatabaseService(
                 it[submittedAt] = now
                 it[version] = 1
                 it[status] = Status.RECEIVED.name
-                it[customId] = data.first
-                it[originalData] = objectMapper.readTree(data.second)
+                it[customId] = data.customId
+                it[originalData] = data.originalData
             }
-            HeaderId(insert[SequencesTable.sequenceId], 1, data.first)
+            HeaderId(insert[SequencesTable.sequenceId], 1, data.customId)
         }
     }
 
@@ -82,7 +86,7 @@ class DatabaseService(
             )
             .limit(numberOfSequences)
             .map {
-                SequenceVersion(
+                UnprocessedData(
                     it[SequencesTable.sequenceId],
                     it[SequencesTable.version],
                     it[SequencesTable.originalData]!!,
@@ -105,7 +109,7 @@ class DatabaseService(
         )
     }
 
-    private fun updateStatusToProcessing(sequences: List<SequenceVersion>) {
+    private fun updateStatusToProcessing(sequences: List<UnprocessedData>) {
         val sequenceVersions = sequences.map { it.sequenceId to it.version }
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         SequencesTable
@@ -117,8 +121,8 @@ class DatabaseService(
             }
     }
 
-    private fun stream(
-        sequencesData: List<SequenceVersion>,
+    private fun <T> stream(
+        sequencesData: List<T>,
         outputStream: OutputStream,
     ) {
         sequencesData
@@ -213,7 +217,9 @@ class DatabaseService(
         log.info { "approving ${sequenceIds.size} sequences by $submitter" }
 
         if (!hasPermissionToChange(submitter, sequenceIds)) {
-            throw IllegalArgumentException("User does not have right to change these sequences")
+            throw IllegalArgumentException(
+                "User $submitter does not have right to change these sequences ${sequenceIds.size}",
+            )
         }
 
         val maxVersionQuery = maxVersionQuery()
@@ -240,8 +246,10 @@ class DatabaseService(
                         (SequencesTable.version eq maxVersionQuery) and
                         (SequencesTable.submitter eq user)
                 },
-            ).count()
-        return sequencesOwnedByUser == sequenceIds.size.toLong()
+            )
+
+        log.error { sequencesOwnedByUser.map { it.toString() } + " " + sequenceIds.size.toLong() }
+        return sequencesOwnedByUser.count() == sequenceIds.size.toLong()
     }
 
     fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
@@ -388,7 +396,7 @@ class DatabaseService(
                     dateTimeParam(now),
                     stringParam(Status.RECEIVED.name),
                     booleanParam(false),
-                    QueryParameter(it.data, SequencesTable.originalData.columnType),
+                    QueryParameter(it.originalData, SequencesTable.originalData.columnType),
                 ).select(
                     where = {
                         (SequencesTable.sequenceId eq it.sequenceId) and
@@ -485,6 +493,74 @@ class DatabaseService(
         }
     }
 
+        fun submitReviewedSequence(submitter: String, reviewedSequenceVersion: UnprocessedData) {
+        log.info { "reviewed sequence submitted $reviewedSequenceVersion" }
+
+        val sequencesReviewed = SequencesTable.update(
+            where = {
+                (SequencesTable.sequenceId eq reviewedSequenceVersion.sequenceId) and
+                    (SequencesTable.version eq reviewedSequenceVersion.version) and
+                    (SequencesTable.submitter eq submitter) and
+                    (
+                        (SequencesTable.status eq Status.PROCESSED.name) or
+                            (SequencesTable.status eq Status.NEEDS_REVIEW.name)
+                        )
+            },
+        ) {
+            it[status] = Status.REVIEWED.name
+            it[originalData] = reviewedSequenceVersion.data
+            it[errors] = null
+            it[warnings] = null
+            it[startedProcessingAt] = null
+            it[finishedProcessingAt] = null
+            it[processedData] = null
+        }
+
+        if (sequencesReviewed != 1) {
+            handleReviewedSubmissionError(reviewedSequenceVersion, submitter)
+        }
+    }
+
+    private fun handleReviewedSubmissionError(reviewedSequenceVersion: UnprocessedData, submitter: String) {
+        val selectedSequences = SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.status,
+                SequencesTable.submitter,
+            )
+            .select(
+                where = {
+                    (SequencesTable.sequenceId eq reviewedSequenceVersion.sequenceId) and
+                        (SequencesTable.version eq reviewedSequenceVersion.version)
+                },
+            )
+
+        val sequenceVersionString = "${reviewedSequenceVersion.sequenceId}.${reviewedSequenceVersion.version}"
+
+        if (selectedSequences.count().toInt() == 0) {
+            throw UnprocessableEntityException("Sequence $sequenceVersionString does not exist")
+        }
+
+        val hasCorrectStatus = selectedSequences.all {
+            (it[SequencesTable.status] == Status.PROCESSED.name) ||
+                (it[SequencesTable.status] == Status.NEEDS_REVIEW.name)
+        }
+        if (!hasCorrectStatus) {
+            throw UnprocessableEntityException(
+                "Sequence $sequenceVersionString is in status ${selectedSequences.first()[SequencesTable.status]} " +
+                    "not in ${Status.PROCESSED} or ${Status.NEEDS_REVIEW}",
+            )
+        }
+
+        if (selectedSequences.any { it[SequencesTable.submitter] != submitter }) {
+            throw ForbiddenException(
+                "Sequence $sequenceVersionString is not owned by user $submitter",
+            )
+        }
+        throw Exception("SequenceReview: Unknown error")
+    }
+
     // CitationController
     fun postCreateAuthor(_affiliation: String, _email: String, _name: String): Long {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -519,7 +595,7 @@ class DatabaseService(
             Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
             selectedAuthor[AuthorsTable.updatedBy]
         ))
-        
+
         return authorList
     }
     fun patchUpdateAuthor(authorId: Long, _affiliation: String, _email: String, _name: String) {
@@ -733,7 +809,31 @@ data class SequenceVersionStatus(
 data class FileData(
     val customId: String,
     val sequenceId: Long,
-    val data: JsonNode,
+    val originalData: OriginalData,
+)
+
+data class SubmittedData(
+    val customId: String,
+    val originalData: OriginalData,
+)
+
+data class UnprocessedData(
+    @Schema(example = "123") val sequenceId: Long,
+    @Schema(example = "1") val version: Long,
+    val data: OriginalData,
+)
+
+data class OriginalData(
+    @Schema(
+        example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
+        description = "Key value pairs of metadata, as submitted in the metadata file",
+    )
+    val metadata: Map<String, String>,
+    @Schema(
+        example = "{\"segment1\": \"ACTG\", \"segment2\": \"GTCA\"}",
+        description = "The key is the segment name, the value is the nucleotide sequence",
+    )
+    val unalignedNucleotideSequences: Map<String, String>,
 )
 
 enum class Status {
