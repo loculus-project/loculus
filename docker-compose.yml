@@ -23,6 +23,7 @@ services:
       --spring.datasource.password=unsecure
     volumes:
       - ./log:/workspace/log
+      - ./website/tests/config/config.json:/workspace/config.json
 
   database:
     image: postgres:latest

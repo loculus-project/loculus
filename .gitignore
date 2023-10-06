@@ -2,7 +2,8 @@
 .DS_Store
 
 # Editor
-.idea/
+.idea/*
+!.idea/runConfigurations
 *.iml
 
 # build output

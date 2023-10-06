@@ -1,18 +1,20 @@
 package org.pathoplexus.backend.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
 import org.pathoplexus.backend.model.SchemaConfig
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
-import org.springframework.core.io.ClassPathResource
 import org.springframework.web.filter.CommonsRequestLoggingFilter
+import java.io.File
 import javax.sql.DataSource
 
 @Configuration
@@ -20,7 +22,7 @@ import javax.sql.DataSource
     value = [ExposedAutoConfiguration::class],
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
 )
-class BackendSpringConfig(private val objectMapper: ObjectMapper) {
+class BackendSpringConfig {
 
     @Bean
     fun logFilter(): CommonsRequestLoggingFilter {
@@ -52,8 +54,7 @@ class BackendSpringConfig(private val objectMapper: ObjectMapper) {
     }
 
     @Bean
-    fun schemaConfig(): SchemaConfig {
-        val configFile = ClassPathResource("config.json").file
-        return objectMapper.readValue(configFile, SchemaConfig::class.java)
+    fun schemaConfig(objectMapper: ObjectMapper, @Value("\${backend.config.path}") configPath: String): SchemaConfig {
+        return objectMapper.readValue(File(configPath))
     }
 }
