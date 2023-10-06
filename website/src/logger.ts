@@ -13,12 +13,12 @@ const getLogger = (): Logger => {
             transports.push(new winston.transports.File({ filename: serverLogFile }));
         }
 
-        if (import.meta.env.NODE_ENV !== 'production') {
+        if (import.meta.env.DEV) {
             transports.push(new winston.transports.Console());
         }
         _logger = winston.createLogger({
             level: 'info',
-            format: winston.format.json(),
+            format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
             transports,
         });
     }
