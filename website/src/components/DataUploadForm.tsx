@@ -23,26 +23,26 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
         const exampleMetadataContent =
             targetUrl.split('/').pop() === `submit`
                 ? `
-            header	date	region	country	division	host
-            custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-            custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-            custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-            custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`
+header	date	region	country	division	host
+custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`
                 : `
-            sequenceId header	date	region	country	division	host
-            1 custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-            2 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-            3 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-            4 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
+sequenceId header	date	region	country	division	host
+1 custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+2 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+3 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+4 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
         const exampleSequenceContent = `
-            >custom0
-            ACTG
-            >custom1
-            ACTG
-            >custom2
-            ACTG
-            >custom3
-            ACTG`;
+>custom0
+ACTG
+>custom1
+ACTG
+>custom2
+ACTG
+>custom3
+ACTG`;
 
         const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
         const sequenceFile = createTempFile(exampleSequenceContent, 'application/octet-stream', 'sequences.fasta');
