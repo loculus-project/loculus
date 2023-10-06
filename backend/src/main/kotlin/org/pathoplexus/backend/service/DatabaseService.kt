@@ -615,16 +615,23 @@ class DatabaseService(
     fun deleteAuthor(_authorId: Long) {
         AuthorsTable.deleteWhere { authorId eq _authorId }
     }
-    fun getAuthorCount(): Number {
-        return AuthorsTable.selectAll().count()
+    fun getAuthorList(): List<Long> {
+        var authorList = mutableListOf<Long>()
+        var selectedAuthors = AuthorsTable
+            .selectAll()
+        selectedAuthors.forEach { row ->
+            authorList.add(row[AuthorsTable.authorId])
+        }
+        
+        return authorList
     }
 
-    fun postCreateBibliographyRecord(_data: String, _name: String, _license: String, _type: String): Long {
+    fun postCreateBibliographyRecord(_accession: String, _name: String, _license: String, _type: String): Long {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val insert = BibliographyRecordsTable
             .insert {
-                it[data] = _data
+                it[accession] = _accession
                 it[license] = _license
                 it[name] = _name
                 it[type] = _type
@@ -645,7 +652,7 @@ class DatabaseService(
         var selectedBibliographyRecord = selectedBibliographyRecords.single()
         bibliographyRecordList.add(BibliographyRecord(
             selectedBibliographyRecord[BibliographyRecordsTable.bibliographyRecordId],
-            selectedBibliographyRecord[BibliographyRecordsTable.data],
+            selectedBibliographyRecord[BibliographyRecordsTable.accession],
             selectedBibliographyRecord[BibliographyRecordsTable.license],
             selectedBibliographyRecord[BibliographyRecordsTable.name],
             selectedBibliographyRecord[BibliographyRecordsTable.type],
@@ -657,14 +664,14 @@ class DatabaseService(
 
         return bibliographyRecordList
     }
-    fun patchUpdateBibliographyRecord(bibliographyRecordId: Long, _data: String, _license: String, _name: String, _type: String) {
+    fun patchUpdateBibliographyRecord(bibliographyRecordId: Long, _accession: String, _license: String, _name: String, _type: String) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         BibliographyRecordsTable
             .update(
                 where = { BibliographyRecordsTable.bibliographyRecordId eq bibliographyRecordId }
             ) {
-                it[data] = _data
+                it[accession] = _accession
                 it[license] = _license
                 it[name] = _name
                 it[type] = _type
@@ -675,17 +682,26 @@ class DatabaseService(
     fun deleteBibliographyRecord(_bibliographyRecordId: Long) {
         BibliographyRecordsTable.deleteWhere { bibliographyRecordId eq _bibliographyRecordId }
     }
-    fun getBibliographyRecordCount(): Number {
-        return BibliographyRecordsTable.selectAll().count()
+    fun getBibliographyRecordList(): List<Long> {
+        var bibliographyRecordList = mutableListOf<Long>()
+        var selectedBibliographyRecords = BibliographyRecordsTable
+            .selectAll()
+        selectedBibliographyRecords.forEach { row ->
+            bibliographyRecordList.add(row[BibliographyRecordsTable.bibliographyRecordId])
+        }
+        
+        return bibliographyRecordList
     }
 
-    fun postCreateBibliographySet(_data: String, _name: String, _type: String): Long {
+    fun postCreateBibliographySet(_version: Long, _description: String, _name: String, _status: String, _type: String): Long {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val insert = BibliographySetsTable
             .insert {
-                it[data] = _data
+                it[version] = _version
+                it[description] = _description
                 it[name] = _name
+                it[status] = _status
                 it[type] = _type
                 it[createdAt] = now
                 it[createdBy] = "nobody"
@@ -704,8 +720,10 @@ class DatabaseService(
         var selectedBibliographySet = selectedBibliographySets.single()
         bibliographySetList.add(BibliographySet(
             selectedBibliographySet[BibliographySetsTable.bibliographySetId],
-            selectedBibliographySet[BibliographySetsTable.data],
+            selectedBibliographySet[BibliographySetsTable.version],
+            selectedBibliographySet[BibliographySetsTable.description],
             selectedBibliographySet[BibliographySetsTable.name],
+            selectedBibliographySet[BibliographySetsTable.status],
             selectedBibliographySet[BibliographySetsTable.type],
             Timestamp.valueOf(selectedBibliographySet[BibliographySetsTable.createdAt].toJavaLocalDateTime()),
             selectedBibliographySet[BibliographySetsTable.createdBy],
@@ -715,15 +733,19 @@ class DatabaseService(
 
         return bibliographySetList
     }
-    fun patchUpdateBibliographySet(bibliographySetId: Long, _data: String, _name: String, _type: String) {
+    fun patchUpdateBibliographySet(bibliographySetId: Long, version: Long, _description: String, _name: String, _status: String, _type: String) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         BibliographySetsTable
             .update(
-                where = { BibliographySetsTable.bibliographySetId eq bibliographySetId }
+                where = {
+                        (BibliographySetsTable.bibliographySetId eq bibliographySetId)
+                    .and(BibliographySetsTable.version eq version)
+                }
             ) {
-                it[data] = _data
+                it[description] = _description
                 it[name] = _name
+                it[status] = _status
                 it[type] = _type
                 it[updatedAt] = now
                 it[updatedBy] = "nobody"
@@ -732,8 +754,15 @@ class DatabaseService(
     fun deleteBibliographySet(_bibliographySetId: Long) {
         BibliographySetsTable.deleteWhere { bibliographySetId eq _bibliographySetId }
     }
-    fun getBibliographySetCount(): Number {
-        return BibliographySetsTable.selectAll().count()
+    fun getBibliographySetList(): List<Long> {
+        var bibliographySetList = mutableListOf<Long>()
+        var selectedBibliographySets = BibliographySetsTable
+            .selectAll()
+        selectedBibliographySets.forEach { row ->
+            bibliographySetList.add(row[BibliographySetsTable.bibliographySetId])
+        }
+        
+        return bibliographySetList
     }
 
     fun postCreateCitation(_data: String, _type: String): Long {
@@ -786,8 +815,15 @@ class DatabaseService(
     fun deleteCitation(_citationId: Long) {
         CitationsTable.deleteWhere { citationId eq _citationId }
     }
-    fun getCitationCount(): Number {
-        return CitationsTable.selectAll().count()
+    fun getCitationList(): List<Long> {
+        var citationList = mutableListOf<Long>()
+        var selectedCitations = CitationsTable
+            .selectAll()
+        selectedCitations.forEach { row ->
+            citationList.add(row[CitationsTable.citationId])
+        }
+        
+        return citationList
     }
 }
 
@@ -885,7 +921,7 @@ data class Author(
 
 data class BibliographyRecord(
     val bibliographyRecordId: Long,
-    val data: String,
+    val accession: String,
     val license: String,
     val name: String,
     val type: String,
@@ -898,8 +934,10 @@ data class BibliographyRecord(
 
 data class BibliographySet(
     val bibliographySetId: Long,
-    val data: String,
+    var version: Long,
+    val description: String,
     val name: String,
+    val status: String,
     val type: String,
     val createdAt: Timestamp,
     val createdBy: String,

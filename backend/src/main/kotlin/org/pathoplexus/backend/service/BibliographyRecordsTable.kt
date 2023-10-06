@@ -18,7 +18,7 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
 object BibliographyRecordsTable : Table("bibliography_records") {
     val bibliographyRecordId = long("bibliography_record_id").autoIncrement()
 
-    val data = varchar("data", 255)
+    val accession = varchar("accession", 255)
     val license = varchar("license", 255)
     val name = varchar("name", 255)
     val type = varchar("type", 255)

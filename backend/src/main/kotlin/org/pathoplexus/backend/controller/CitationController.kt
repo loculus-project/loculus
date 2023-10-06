@@ -53,21 +53,21 @@ class CitationController(
     ) {
         return databaseService.deleteAuthor(authorId)
     }
-    @Operation(description = "Get the total number of authors registered")
-    @GetMapping("/get-author-count", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAuthorCount(): Number {
-        return databaseService.getAuthorCount()
+    @Operation(description = "Retrieves a list of all the author ids registered")
+    @GetMapping("/get-author-list", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getAuthorList(): List<Long> {
+        return databaseService.getAuthorList()
     }
 
     @Operation(description = "Create a new bibliography record with the specified data")
     @PostMapping("/create-bibliography-record", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun postCreateBibliographyRecord(
-        @RequestParam data: String,
+        @RequestParam accession: String,
         @RequestParam license: String,
         @RequestParam name: String,
         @RequestParam type: String
         ): Long {
-        return databaseService.postCreateBibliographyRecord(data, license, name, type)
+        return databaseService.postCreateBibliographyRecord(accession, license, name, type)
     }
     @Operation(description = "Read a bibliography record's data")
     @GetMapping("/read-bibliography-record", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -80,12 +80,12 @@ class CitationController(
     @PatchMapping("/update-bibliography-record", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun patchUpdateBibliographyRecord(
         @RequestParam bibliographyRecordId: Long,
-        @RequestParam data: String,
+        @RequestParam accession: String,
         @RequestParam license: String,
         @RequestParam name: String,
         @RequestParam type: String
     ) {
-        return databaseService.patchUpdateBibliographyRecord(bibliographyRecordId, data, license, name, type)
+        return databaseService.patchUpdateBibliographyRecord(bibliographyRecordId, accession, license, name, type)
     }@Operation(description = "Delete a bibliography record")
     @DeleteMapping("/delete-bibliography-record", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteBibliographyRecord(
@@ -93,20 +93,22 @@ class CitationController(
     ) {
         return databaseService.deleteBibliographyRecord(bibliographyRecordId)
     }
-    @Operation(description = "Get the total number of bibliography records registered")
-    @GetMapping("/get-bibliography-record-count", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getBibliographyRecordCount(): Number {
-        return databaseService.getBibliographyRecordCount()
+    @Operation(description = "Retrieves a list of all the bibliography record ids registered")
+    @GetMapping("/get-bibliography-record-list", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getBibliographyRecordList(): List<Long> {
+        return databaseService.getBibliographyRecordList()
     }
 
     @Operation(description = "Create a new bibliography set with the specified data")
     @PostMapping("/create-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun postCreateBibliographySet(
-        @RequestParam data: String,
+        @RequestParam version: Long,
+        @RequestParam description: String,
         @RequestParam name: String,
+        @RequestParam status: String,
         @RequestParam type: String
         ): Long {
-        return databaseService.postCreateBibliographySet(data, name, type)
+        return databaseService.postCreateBibliographySet(version, description, name, status, type)
     }
     @Operation(description = "Read a bibliography set's data")
     @GetMapping("/read-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -119,11 +121,13 @@ class CitationController(
     @PatchMapping("/update-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun patchUpdateBibliographySet(
         @RequestParam bibliographySetId: Long,
-        @RequestParam data: String,
+        @RequestParam version: Long,
+        @RequestParam description: String,
         @RequestParam name: String,
+        @RequestParam status: String,
         @RequestParam type: String
     ) {
-        return databaseService.patchUpdateBibliographySet(bibliographySetId, data, name, type)
+        return databaseService.patchUpdateBibliographySet(bibliographySetId, version, description, name, status, type)
     }@Operation(description = "Delete a bibliography set")
     @DeleteMapping("/delete-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteBibliographySet(
@@ -131,10 +135,10 @@ class CitationController(
     ) {
         return databaseService.deleteBibliographySet(bibliographySetId)
     }
-    @Operation(description = "Get the total number of bibliography sets registered")
-    @GetMapping("/get-bibliography-set-count", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getBibliographySetCount(): Number {
-        return databaseService.getBibliographySetCount()
+    @Operation(description = "Retrieves a list of all the bibliography set ids registered")
+    @GetMapping("/get-bibliography-set-list", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getBibliographySetList(): List<Long> {
+        return databaseService.getBibliographySetList()
     }
 
     @Operation(description = "Create a new citation with the specified data")
@@ -167,10 +171,10 @@ class CitationController(
     ) {
         return databaseService.deleteCitation(citationId)
     }
-    @Operation(description = "Get the total number of citations registered")
-    @GetMapping("/get-citation-count", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getCitationCount(): Number {
-        return databaseService.getCitationCount()
+    @Operation(description = "Retrieves a list of all the citation ids registered")
+    @GetMapping("/get-citation-list", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getCitationList(): List<Long> {
+        return databaseService.getCitationList()
     }
 
 }
