@@ -39,12 +39,12 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
 
     const getBibtex = () => {
         const bibtex = `@online{${dataset.name},
-            author = {${dataset.owner}},
-            title = {${dataset.name}},
-            year = {${dataset.createdDate}},
-            doi = {${dataset.datasetDOI ?? 'placeholder'}},
-            url = {https://doi.org/placeholder/${dataset.datasetDOI ?? 'placeholder'}},
-        }`;
+    author = {${dataset.owner}},
+    title = {${dataset.name}},
+    year = {${dataset.createdDate}},
+    doi = {${dataset.datasetDOI ?? 'placeholder'}},
+    url = {https://doi.org/placeholder/${dataset.datasetDOI ?? 'placeholder'}},
+}`;
         return bibtex;
     };
 
@@ -67,6 +67,19 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
             />
             <div className='flex flex-col justify-around max-w-md w-2/4'>
                 <div>
+                    <FormLabel component='legend'>Dataset</FormLabel>
+                    <h2 className='text-lg font-bold'></h2>
+                    <FormControlLabel control={<Checkbox defaultChecked />} label='JSON' />
+                    <FormControlLabel disabled control={<Checkbox />} label='CSV' />
+                    <FormControlLabel disabled control={<Checkbox />} label='XLSX' />
+                    <div className='py-4'>
+                        <Button variant='outlined' onClick={exportDataset} disabled={isDownloading}>
+                            Download
+                        </Button>
+                    </div>
+                </div>
+                <hr className='my-4' />
+                <div>
                     <FormLabel component='legend'>Citation</FormLabel>
                     <FormControlLabel control={<Checkbox defaultChecked />} label='BibTeX' />
                     <FormControlLabel disabled control={<Checkbox />} label='MLA' />
@@ -75,7 +88,6 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
                 <div className='py-4 w-full'>
                     <TextField
                         id='outlined-multiline-static'
-                        disabled
                         multiline
                         rows={4}
                         fullWidth
@@ -87,17 +99,6 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
                     <Button variant='outlined' onClick={copyToClipboard}>
                         Copy to clipboard
                     </Button>
-                </div>
-                <div>
-                    <FormLabel component='legend'>Dataset</FormLabel>
-                    <h2 className='text-lg font-bold'></h2>
-                    <FormControlLabel control={<Checkbox defaultChecked />} label='JSON' />
-                    <FormControlLabel disabled control={<Checkbox />} label='CSV' />
-                    <div className='py-4'>
-                        <Button variant='outlined' onClick={exportDataset} disabled={isDownloading}>
-                            Download
-                        </Button>
-                    </div>
                 </div>
             </div>
         </div>

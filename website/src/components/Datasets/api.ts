@@ -44,7 +44,7 @@ export const createDataset = async (dataset: Dataset, serviceUrls: ServiceUrls):
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (USE_MOCK_DATA) {
         return {
-            datasetId: 'mockDatasetId',
+            datasetId: '45FXCV1XV82ha29uBaGbRh',
             status: 200,
         };
     }
@@ -69,7 +69,7 @@ export const updateDataset = async (datasetId: string, dataset: Dataset, service
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (USE_MOCK_DATA) {
         return {
-            datasetId: 'mockDatasetId',
+            datasetId: '45FXCV1XV82ha29uBaGbRh',
             status: 200,
         };
     }
@@ -96,7 +96,7 @@ export const deleteDataset = async (datasetId: string, serviceUrls: ServiceUrls)
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (USE_MOCK_DATA) {
         return {
-            datasetId: 'mockDatasetId',
+            datasetId: '45FXCV1XV82ha29uBaGbRh',
             status: 200,
         };
     }

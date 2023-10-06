@@ -94,6 +94,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
                 })),
             ],
         };
+        let redirectUrl = '/datasets';
 
         const isEdit = editDataset != null;
 
@@ -102,6 +103,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
                 const response = await updateDatasetMutation.mutateAsync(dataset);
                 setResponseSequenceHeaders(response.sequenceHeaders);
                 await clientLogger.info(`Dataset edit successful, datasetId: '${editDataset.datasetId}'`);
+                redirectUrl = `/datasets/${editDataset.datasetId}`;
             } catch (error) {
                 handleOpenError(
                     `Dataset edit failed with error '${(error as Error).message}', datasetId: '${
@@ -114,18 +116,18 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
                     }'`,
                 );
             }
-            setIsLoading(false);
-            return;
         }
         try {
             const response = await createDatasetMutation.mutateAsync(dataset);
             setResponseSequenceHeaders(response.sequenceHeaders);
             await clientLogger.info(`Dataset create successful with datasetId: ${response?.datasetId}`);
+            redirectUrl = `/datasets/${response?.datasetId}`;
         } catch (error) {
             handleOpenError(`Dataset create failed with error '${(error as Error).message}'`);
             await clientLogger.error(`Dataset create failed with error '${(error as Error).message}'`);
         }
         setIsLoading(false);
+        location.href = redirectUrl;
         return;
     };
 
