@@ -1,7 +1,9 @@
 ---
+import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-const backendurl = import.meta.env.BACKEND_URL;
+const config = getRuntimeConfig().forClient;
+const backendurl = config.backendUrl;
 ---
 
 <BaseLayout title='Api Docs'>
