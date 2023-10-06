@@ -8,7 +8,6 @@ import org.pathoplexus.backend.model.SchemaConfig
 import org.pathoplexus.backend.service.ValidationErrorType.MissingRequiredField
 import org.pathoplexus.backend.service.ValidationErrorType.TypeMismatch
 import org.pathoplexus.backend.service.ValidationErrorType.UnknownField
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -19,21 +18,50 @@ private const val PANGO_LINEAGE_REGEX_PATTERN = "[a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}
 private val pangoLineageRegex = Regex(PANGO_LINEAGE_REGEX_PATTERN)
 
 @Component
-class SequenceValidatorService
-@Autowired constructor(private val schemaConfig: SchemaConfig) {
+class SequenceValidatorService(private val schemaConfig: SchemaConfig) {
 
-    fun isValidDate(dateStringCandidate: String): Boolean {
-        val formatter = DateTimeFormatter.ofPattern(DATE_FORMAT)
-        return try {
-            LocalDate.parse(dateStringCandidate, formatter)
-            true
-        } catch (e: DateTimeParseException) {
-            false
+    fun validateSequence(submittedProcessedData: SubmittedProcessedData): ValidationResult {
+        var validationResult: ValidationResult = ValidationResult.Ok()
+        val metadataFields = schemaConfig.schema.metadata
+
+        for (metadata in metadataFields) {
+            validationResult = validateKnownMetadataField(validationResult, metadata, submittedProcessedData)
         }
+
+        val knownFieldNames = metadataFields.map { it.name }
+        val unknownFields = submittedProcessedData.data.metadata.keys.subtract(knownFieldNames.toSet())
+        for (unknownField in unknownFields) {
+            validationResult = validationResult.withErrorAppended(ValidationError.unknownField(unknownField))
+        }
+
+        return validationResult
     }
 
-    fun isValidPangoLineage(pangoLineageCandidate: String): Boolean {
-        return pangoLineageCandidate.matches(pangoLineageRegex)
+    private fun validateKnownMetadataField(
+        validationResult: ValidationResult,
+        metadata: Metadata,
+        submittedProcessedData: SubmittedProcessedData,
+    ): ValidationResult {
+        val fieldName = metadata.name
+        val fieldValue = submittedProcessedData.data.metadata[fieldName]
+
+        if (metadata.required) {
+            if (fieldValue == null) {
+                return validationResult.withErrorAppended(ValidationError.missingRequiredField(fieldName))
+            }
+
+            if (fieldValue is NullNode) {
+                return validationResult.withErrorAppended(ValidationError.requiredFieldIsNull(fieldName))
+            }
+        }
+
+        if (fieldValue != null) {
+            when (val validationError = validateType(fieldValue, metadata)) {
+                null -> {}
+                else -> return validationResult.withErrorAppended(validationError)
+            }
+        }
+        return validationResult
     }
 
     fun validateType(fieldValue: JsonNode, metadata: Metadata): ValidationError? {
@@ -74,44 +102,18 @@ class SequenceValidatorService
         }
     }
 
-    fun validateSequence(submittedProcessedData: SubmittedProcessedData): ValidationResult {
-        var validationResult: ValidationResult = ValidationResult.Ok()
-
-        val metadataFields = schemaConfig.schema.metadata
-
-        for (metadata in metadataFields) {
-            val fieldName = metadata.name
-            val fieldValue = submittedProcessedData.data.metadata[fieldName]
-
-            if (metadata.required) {
-                if (fieldValue == null) {
-                    validationResult = validationResult.withErrorAppended(ValidationError.missingRequiredField(fieldName))
-                    continue
-                }
-
-                if (fieldValue is NullNode) {
-                    validationResult = validationResult.withErrorAppended(ValidationError.requiredFieldIsNull(fieldName))
-                    continue
-                }
-            }
-
-            if (fieldValue != null) {
-                when (val validationError = validateType(fieldValue, metadata)) {
-                    null -> {}
-                    else -> validationResult = validationResult.withErrorAppended(validationError)
-                }
-            }
+    fun isValidDate(dateStringCandidate: String): Boolean {
+        val formatter = DateTimeFormatter.ofPattern(DATE_FORMAT)
+        return try {
+            LocalDate.parse(dateStringCandidate, formatter)
+            true
+        } catch (e: DateTimeParseException) {
+            false
         }
+    }
 
-        val knownFieldNames = metadataFields.map { it.name }
-
-        val unknownFields = submittedProcessedData.data.metadata.keys.subtract(knownFieldNames.toSet())
-
-        for (unknownField in unknownFields) {
-            validationResult = validationResult.withErrorAppended(ValidationError.unknownField(unknownField))
-        }
-
-        return validationResult
+    fun isValidPangoLineage(pangoLineageCandidate: String): Boolean {
+        return pangoLineageCandidate.matches(pangoLineageRegex)
     }
 }
 
