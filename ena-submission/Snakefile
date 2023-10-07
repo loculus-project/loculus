@@ -1,0 +1,56 @@
+"""
+Virus sequence ENA submission workflow
+In production, sequences and metadata will be retrieved from the backend
+For now, we will use test data in the 
+"""
+
+test = True
+
+WEBIN_USERNAME = "Webin-66038"
+
+
+envvars:
+    "WEBIN_PASSWORD",
+
+
+TEST_URL = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
+PRODUCTION_URL = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
+
+URL = TEST_URL if test else PRODUCTION_URL
+
+
+rule project_xml:
+    """
+    Turn project.yaml into project.xml
+    """
+    input:
+        "test-input/project.yaml",
+    output:
+        "results/project.xml",
+    shell:
+        """
+        python3 scripts/project_xml.py {input} {output}
+        """
+
+
+rule create_project:
+    """
+    Create a project in ENA
+    """
+    input:
+        project="results/project.xml",
+        submission="resources/submission.xml",
+    output:
+        "results/project_accession.xml",
+    params:
+        username=WEBIN_USERNAME,
+        password=os.environ["WEBIN_PASSWORD"],
+        url=URL,
+    shell:
+        """
+        curl -u {params.username}:{params.password} \
+            -F "SUBMISSION=@{input.submission}" \
+            -F "PROJECT=@{input.project}" \
+            {params.url} \
+        > {output}
+        """
