@@ -41,6 +41,7 @@ import java.io.InputStreamReader
 import java.io.OutputStream
 import java.sql.Timestamp
 import javax.sql.DataSource
+import java.util.UUID
 
 private val log = KotlinLogging.logger { }
 
@@ -562,126 +563,6 @@ class DatabaseService(
     }
 
     // CitationController
-    fun postCreateAuthor(_affiliation: String, _email: String, _name: String): Long {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        val insert = AuthorsTable
-            .insert {
-                it[affiliation] = _affiliation
-                it[email] = _email
-                it[name] = _name
-                it[createdAt] = now
-                it[createdBy] = "nobody"
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
-            }
-
-        return insert[AuthorsTable.authorId]
-    }
-    fun getReadAuthor(authorId: Long): List<Author> {
-        var authorList = mutableListOf<Author>()
-        var selectedAuthors = AuthorsTable
-            .select(
-                where = { AuthorsTable.authorId eq authorId }
-            )
-        var selectedAuthor = selectedAuthors.single()
-        authorList.add(Author(
-            selectedAuthor[AuthorsTable.authorId],
-            selectedAuthor[AuthorsTable.affiliation],
-            selectedAuthor[AuthorsTable.email],
-            selectedAuthor[AuthorsTable.name],
-            Timestamp.valueOf(selectedAuthor[AuthorsTable.createdAt].toJavaLocalDateTime()),
-            selectedAuthor[AuthorsTable.createdBy],
-            Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
-            selectedAuthor[AuthorsTable.updatedBy]
-        ))
-
-        return authorList
-    }
-    fun patchUpdateAuthor(authorId: Long, _affiliation: String, _email: String, _name: String) {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        AuthorsTable
-            .update(
-                where = { AuthorsTable.authorId eq authorId }
-            ) {
-                it[affiliation] = _affiliation
-                it[email] = _email
-                it[name] = _name
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
-            }
-    }
-    fun deleteAuthor(_authorId: Long) {
-        AuthorsTable.deleteWhere { authorId eq _authorId }
-    }
-    fun getAuthorList(): List<Long> {
-        var authorList = mutableListOf<Long>()
-        var selectedAuthors = AuthorsTable
-            .selectAll()
-        selectedAuthors.forEach { row ->
-            authorList.add(row[AuthorsTable.authorId])
-        }
-        
-        return authorList
-    }
-
-    fun postCreateBibliographyRecord(_accession: String, _name: String, _license: String, _type: String): Long {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        val insert = BibliographyRecordsTable
-            .insert {
-                it[accession] = _accession
-                it[license] = _license
-                it[name] = _name
-                it[type] = _type
-                it[createdAt] = now
-                it[createdBy] = "nobody"
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
-            }
-
-        return insert[BibliographyRecordsTable.bibliographyRecordId]
-    }
-    fun getReadBibliographyRecord(bibliographyRecordId: Long): List<BibliographyRecord> {
-        var bibliographyRecordList = mutableListOf<BibliographyRecord>()
-        var selectedBibliographyRecords = BibliographyRecordsTable
-            .select(
-                where = { BibliographyRecordsTable.bibliographyRecordId eq bibliographyRecordId }
-            )
-        var selectedBibliographyRecord = selectedBibliographyRecords.single()
-        bibliographyRecordList.add(BibliographyRecord(
-            selectedBibliographyRecord[BibliographyRecordsTable.bibliographyRecordId],
-            selectedBibliographyRecord[BibliographyRecordsTable.accession],
-            selectedBibliographyRecord[BibliographyRecordsTable.license],
-            selectedBibliographyRecord[BibliographyRecordsTable.name],
-            selectedBibliographyRecord[BibliographyRecordsTable.type],
-            Timestamp.valueOf(selectedBibliographyRecord[BibliographyRecordsTable.createdAt].toJavaLocalDateTime()),
-            selectedBibliographyRecord[BibliographyRecordsTable.createdBy],
-            Timestamp.valueOf(selectedBibliographyRecord[BibliographyRecordsTable.updatedAt].toJavaLocalDateTime()),
-            selectedBibliographyRecord[BibliographyRecordsTable.updatedBy]
-        ))
-
-        return bibliographyRecordList
-    }
-    fun patchUpdateBibliographyRecord(bibliographyRecordId: Long, _accession: String, _license: String, _name: String, _type: String) {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        BibliographyRecordsTable
-            .update(
-                where = { BibliographyRecordsTable.bibliographyRecordId eq bibliographyRecordId }
-            ) {
-                it[accession] = _accession
-                it[license] = _license
-                it[name] = _name
-                it[type] = _type
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
-            }
-    }
-    fun deleteBibliographyRecord(_bibliographyRecordId: Long) {
-        BibliographyRecordsTable.deleteWhere { bibliographyRecordId eq _bibliographyRecordId }
-    }
     fun getBibliographyRecordList(): List<Long> {
         var bibliographyRecordList = mutableListOf<Long>()
         var selectedBibliographyRecords = BibliographyRecordsTable
@@ -689,83 +570,129 @@ class DatabaseService(
         selectedBibliographyRecords.forEach { row ->
             bibliographyRecordList.add(row[BibliographyRecordsTable.bibliographyRecordId])
         }
-        
+
         return bibliographyRecordList
     }
 
-    fun postCreateBibliographySet(_version: Long, _description: String, _name: String, _status: String, _type: String): Long {
+    fun createBibliographySet(
+        username: String,
+        bibliographyName: String,
+        bibliographyRecords: List<SubmittedBibliographyRecord>,
+        bibliographyDescription: String?,
+    ): String {
+        log.info { "creating bibliography set ${bibliographyName}, user ${username}" }
+
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val insert = BibliographySetsTable
+        val insertedSet = BibliographySetsTable
             .insert {
-                it[version] = _version
-                it[description] = _description
-                it[name] = _name
-                it[status] = _status
-                it[type] = _type
+                it[name] = bibliographyName
+                it[description] = bibliographyDescription ?: ""
+                it[bibliographySetVersion] = 1
                 it[createdAt] = now
-                it[createdBy] = "nobody"
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
+                it[createdBy] = username
             }
 
-        return insert[BibliographySetsTable.bibliographySetId]
+        for (record in bibliographyRecords) {
+            val insertedRecord = BibliographyRecordsTable
+                .insert {
+                    it[accession] = record.accession
+                    it[type] = record.type
+                }
+            BibliographyRecordsToSetsTable
+                .insert {
+                    it[bibliographyRecordId] = insertedRecord[BibliographyRecordsTable.bibliographyRecordId]
+                    it[bibliographySetId] = insertedSet[BibliographySetsTable.bibliographySetId]
+                    it[bibliographySetVersion] = 1
+                }
+        }
+
+        return insertedSet[BibliographySetsTable.bibliographySetId].toString()
     }
-    fun getReadBibliographySet(bibliographySetId: Long): List<BibliographySet> {
+
+    fun updateBibliographySet(
+        username: String,
+        bibliographySetId: String,
+        bibliographyName: String,
+        bibliographyRecords: List<SubmittedBibliographyRecord>,
+        bibliographyDescription: String?,
+    ) {
+        log.info { "updating bibliography set ${bibliographyName}, user ${username}" }
+
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val maxVersion = BibliographySetsTable
+            .slice(BibliographySetsTable.bibliographySetVersion.max())
+            .select { BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)  }
+            .singleOrNull()
+
+        if (maxVersion == null) {
+            throw IllegalArgumentException("Bibliography set $bibliographySetId does not exist")
+        }
+
+        val version = maxVersion[BibliographySetsTable.bibliographySetVersion] + 1
+
+        val insertedSet = BibliographySetsTable
+            .insert {
+                it[name] = bibliographyName
+                it[description] = bibliographyDescription ?: ""
+                it[bibliographySetVersion] = version
+                it[createdAt] = now
+                it[createdBy] = username
+            }
+
+        for (record in bibliographyRecords) {
+            val existingRecord = BibliographyRecordsTable
+                .select { BibliographyRecordsTable.accession eq record.accession }
+                .singleOrNull()
+
+            var bibliographyRecordId: Long
+
+            if (existingRecord == null) {
+                val insertedRecord = BibliographyRecordsTable
+                    .insert {
+                        it[accession] = record.accession
+                        it[type] = record.type
+                    }
+                bibliographyRecordId = insertedRecord[BibliographyRecordsTable.bibliographyRecordId]
+            } else {
+                bibliographyRecordId = existingRecord[BibliographyRecordsTable.bibliographyRecordId]
+            }
+
+            BibliographyRecordsToSetsTable
+                .insert {
+                    it[BibliographyRecordsToSetsTable.bibliographySetVersion] = version
+                    it[BibliographyRecordsToSetsTable.bibliographySetId] = insertedSet[BibliographySetsTable.bibliographySetId]
+                    it[BibliographyRecordsToSetsTable.bibliographyRecordId] = bibliographyRecordId
+                }
+        }
+    }
+
+    fun getBibliographySet(bibliographySetId: String): List<BibliographySet> {
         var bibliographySetList = mutableListOf<BibliographySet>()
         var selectedBibliographySets = BibliographySetsTable
-            .select(
-                where = { BibliographySetsTable.bibliographySetId eq bibliographySetId }
-            )
+            .select{ BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId) }
+
         var selectedBibliographySet = selectedBibliographySets.single()
         bibliographySetList.add(BibliographySet(
             selectedBibliographySet[BibliographySetsTable.bibliographySetId],
-            selectedBibliographySet[BibliographySetsTable.version],
-            selectedBibliographySet[BibliographySetsTable.description],
+            selectedBibliographySet[BibliographySetsTable.bibliographySetVersion],
             selectedBibliographySet[BibliographySetsTable.name],
-            selectedBibliographySet[BibliographySetsTable.status],
-            selectedBibliographySet[BibliographySetsTable.type],
+            selectedBibliographySet[BibliographySetsTable.description],
             Timestamp.valueOf(selectedBibliographySet[BibliographySetsTable.createdAt].toJavaLocalDateTime()),
             selectedBibliographySet[BibliographySetsTable.createdBy],
-            Timestamp.valueOf(selectedBibliographySet[BibliographySetsTable.updatedAt].toJavaLocalDateTime()),
-            selectedBibliographySet[BibliographySetsTable.updatedBy]
         ))
 
         return bibliographySetList
     }
-    fun patchUpdateBibliographySet(bibliographySetId: Long, version: Long, _description: String, _name: String, _status: String, _type: String) {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        BibliographySetsTable
-            .update(
-                where = {
-                        (BibliographySetsTable.bibliographySetId eq bibliographySetId)
-                    .and(BibliographySetsTable.version eq version)
-                }
-            ) {
-                it[description] = _description
-                it[name] = _name
-                it[status] = _status
-                it[type] = _type
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
-            }
-    }
-    fun deleteBibliographySet(_bibliographySetId: Long) {
-        BibliographySetsTable.deleteWhere { bibliographySetId eq _bibliographySetId }
-    }
-    fun getBibliographySetList(): List<Long> {
-        var bibliographySetList = mutableListOf<Long>()
-        var selectedBibliographySets = BibliographySetsTable
-            .selectAll()
-        selectedBibliographySets.forEach { row ->
-            bibliographySetList.add(row[BibliographySetsTable.bibliographySetId])
-        }
-        
-        return bibliographySetList
+
+
+    fun deleteBibliographySet(username: String, _bibliographySetId: String) {
+        BibliographySetsTable.deleteWhere { bibliographySetId eq UUID.fromString(_bibliographySetId) }
     }
 
-    fun postCreateCitation(_data: String, _type: String): Long {
+    fun createCitation(_data: String, _type: String): Long {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val insert = CitationsTable
@@ -780,7 +707,8 @@ class DatabaseService(
 
         return insert[CitationsTable.citationId]
     }
-    fun getReadCitation(citationId: Long): List<Citation> {
+
+    fun getCitation(citationId: Long): List<Citation> {
         var citationList = mutableListOf<Citation>()
         var selectedCitations = CitationsTable
             .select(
@@ -799,7 +727,8 @@ class DatabaseService(
 
         return citationList
     }
-    fun patchUpdateCitation(citationId: Long, _data: String, _type: String) {
+
+    fun updateCitation(citationId: Long, _data: String, _type: String) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         CitationsTable
@@ -812,18 +741,65 @@ class DatabaseService(
                 it[updatedBy] = "nobody"
             }
     }
+
     fun deleteCitation(_citationId: Long) {
         CitationsTable.deleteWhere { citationId eq _citationId }
     }
-    fun getCitationList(): List<Long> {
-        var citationList = mutableListOf<Long>()
-        var selectedCitations = CitationsTable
-            .selectAll()
-        selectedCitations.forEach { row ->
-            citationList.add(row[CitationsTable.citationId])
-        }
-        
-        return citationList
+
+    fun createAuthor(_affiliation: String, _email: String, _name: String): Long {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val insert = AuthorsTable
+            .insert {
+                it[affiliation] = _affiliation
+                it[email] = _email
+                it[name] = _name
+                it[createdAt] = now
+                it[createdBy] = "nobody"
+                it[updatedAt] = now
+                it[updatedBy] = "nobody"
+            }
+
+        return insert[AuthorsTable.authorId]
+    }
+
+    fun getAuthor(authorId: Long): List<Author> {
+        var authorList = mutableListOf<Author>()
+        var selectedAuthors = AuthorsTable
+            .select(
+                where = { AuthorsTable.authorId eq authorId }
+            )
+        var selectedAuthor = selectedAuthors.single()
+        authorList.add(Author(
+            selectedAuthor[AuthorsTable.authorId],
+            selectedAuthor[AuthorsTable.affiliation],
+            selectedAuthor[AuthorsTable.email],
+            selectedAuthor[AuthorsTable.name],
+            Timestamp.valueOf(selectedAuthor[AuthorsTable.createdAt].toJavaLocalDateTime()),
+            selectedAuthor[AuthorsTable.createdBy],
+            Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
+            selectedAuthor[AuthorsTable.updatedBy]
+        ))
+        return authorList
+    }
+
+    fun updateAuthor(authorId: Long, _affiliation: String, _email: String, _name: String) {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        AuthorsTable
+            .update(
+                where = { AuthorsTable.authorId eq authorId }
+            ) {
+                it[affiliation] = _affiliation
+                it[email] = _email
+                it[name] = _name
+                it[updatedAt] = now
+                it[updatedBy] = "nobody"
+            }
+    }
+
+    fun deleteAuthor(_authorId: Long) {
+        AuthorsTable.deleteWhere { authorId eq _authorId }
     }
 }
 
@@ -907,43 +883,36 @@ enum class Status {
 }
 
 // CitationController
-data class Author(
-    val authorId: Long,
-    val affiliation: String,
-    val email: String,
+
+
+data class SubmittedBibliographyRecord(
+    val accession: String,
+    val type: String,
+)
+
+data class SubmittedBibliographySet(
     val name: String,
-    val createdAt: Timestamp,
-    val createdBy: String,
-    val updatedAt: Timestamp,
-    val updatedBy: String,
-    val metadata: JsonNode? = null
+    val description: String,
+    val records: List<SubmittedBibliographyRecord>,
 )
 
 data class BibliographyRecord(
     val bibliographyRecordId: Long,
     val accession: String,
-    val license: String,
-    val name: String,
     val type: String,
     val createdAt: Timestamp,
     val createdBy: String,
     val updatedAt: Timestamp,
     val updatedBy: String,
-    val metadata: JsonNode? = null
 )
 
 data class BibliographySet(
-    val bibliographySetId: Long,
-    var version: Long,
-    val description: String,
+    val bibliographySetId: UUID,
+    val bibliographySetVersion: Long,
     val name: String,
-    val status: String,
-    val type: String,
+    val description: String? = null,
     val createdAt: Timestamp,
     val createdBy: String,
-    val updatedAt: Timestamp,
-    val updatedBy: String,
-    val metadata: JsonNode? = null
 )
 
 data class Citation(
@@ -954,5 +923,15 @@ data class Citation(
     val createdBy: String,
     val updatedAt: Timestamp,
     val updatedBy: String,
-    val metadata: JsonNode? = null
+)
+
+data class Author(
+    val authorId: Long,
+    val affiliation: String,
+    val email: String,
+    val name: String,
+    val createdAt: Timestamp,
+    val createdBy: String,
+    val updatedAt: Timestamp,
+    val updatedBy: String,
 )
