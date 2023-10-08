@@ -563,17 +563,6 @@ class DatabaseService(
     }
 
     // CitationController
-    fun getBibliographyRecordList(): List<Long> {
-        var bibliographyRecordList = mutableListOf<Long>()
-        var selectedBibliographyRecords = BibliographyRecordsTable
-            .selectAll()
-        selectedBibliographyRecords.forEach { row ->
-            bibliographyRecordList.add(row[BibliographyRecordsTable.bibliographyRecordId])
-        }
-
-        return bibliographyRecordList
-    }
-
     fun createBibliographySet(
         username: String,
         bibliographyName: String,
