@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class CitationController(
+class DatasetController(
     private val databaseService: DatabaseService,
     private val objectMapper: ObjectMapper,
 ) {

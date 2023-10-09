@@ -16,6 +16,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 
 const val USER_NAME = "testUser"
 
-class CitationControllerClient(private val mockMvc: MockMvc, @Autowired val objectMapper: ObjectMapper) {
+class DatasetControllerClient(private val mockMvc: MockMvc, @Autowired val objectMapper: ObjectMapper) {
     // ...
 }

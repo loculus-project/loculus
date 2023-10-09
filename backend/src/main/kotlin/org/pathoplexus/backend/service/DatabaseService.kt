@@ -562,7 +562,7 @@ class DatabaseService(
         throw Exception("SequenceReview: Unknown error")
     }
 
-    // CitationController
+    // DatasetController
     fun createDataset(
         username: String,
         datasetName: String,
@@ -957,7 +957,7 @@ enum class Status {
     }
 }
 
-// CitationController
+// DatasetController
 
 data class SubmittedDatasetRecord(
     val accession: String,

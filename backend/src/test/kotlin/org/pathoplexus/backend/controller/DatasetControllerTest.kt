@@ -17,7 +17,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 @SpringBootTest
 @ActiveProfiles("test-with-database")
 @AutoConfigureMockMvc
-class CitationControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val objectMapper: ObjectMapper) {
+class DatasetControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val objectMapper: ObjectMapper) {
 
     private val testUsername = "testuser"
 
