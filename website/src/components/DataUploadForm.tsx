@@ -75,10 +75,9 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
             if (response.ok === true) {
                 onSuccess(await response.json());
             } else {
-                onError(`Upload failed with status code ${response.status} ${JSON.stringify(response.body, null, 2)}`);
-                await clientLogger.error(
-                    `Upload failed with status code ${response.status} ${JSON.stringify(response.body, null, 2)}`,
-                );
+                const responseBody = await response.text();
+                onError(`Upload failed with status code ${response.status}: ${responseBody}`);
+                await clientLogger.error(`Upload failed with status code ${response.status}: ${responseBody}`);
             }
         } catch (error) {
             onError('Upload failed with error ' + (error as Error).message);
