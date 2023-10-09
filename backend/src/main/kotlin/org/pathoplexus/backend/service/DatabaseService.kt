@@ -657,25 +657,96 @@ class DatabaseService(
         }
     }
 
-    fun getBibliographySet(bibliographySetId: String): List<BibliographySet> {
+    fun getBibliographySet(bibliographySetId: String, version: Long?): List<BibliographySet> {
         var bibliographySetList = mutableListOf<BibliographySet>()
-        var selectedBibliographySets = BibliographySetsTable
-            .select{ BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId) }
 
-        var selectedBibliographySet = selectedBibliographySets.single()
-        bibliographySetList.add(BibliographySet(
-            selectedBibliographySet[BibliographySetsTable.bibliographySetId],
-            selectedBibliographySet[BibliographySetsTable.bibliographySetVersion],
-            selectedBibliographySet[BibliographySetsTable.name],
-            selectedBibliographySet[BibliographySetsTable.description],
-            Timestamp.valueOf(selectedBibliographySet[BibliographySetsTable.createdAt].toJavaLocalDateTime()),
-            selectedBibliographySet[BibliographySetsTable.createdBy],
-        ))
+        if (version == null) {
+            var selectedBibliographySets = BibliographySetsTable
+                .select{
+                    BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)
+                }
+            selectedBibliographySets.forEach {
+                bibliographySetList.add(BibliographySet(
+                    it[BibliographySetsTable.bibliographySetId],
+                    it[BibliographySetsTable.bibliographySetVersion],
+                    it[BibliographySetsTable.name],
+                    it[BibliographySetsTable.description],
+                    Timestamp.valueOf(it[BibliographySetsTable.createdAt].toJavaLocalDateTime()),
+                    it[BibliographySetsTable.createdBy],
+                ))
+            }
+        }
+        else {
+            var selectedBibliographySet = BibliographySetsTable
+                .select{
+                    (BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)) and
+                    (BibliographySetsTable.bibliographySetVersion eq version)
+                }.singleOrNull()
 
+            if (selectedBibliographySet == null) {
+                throw IllegalArgumentException("Bibliography set $bibliographySetId does not exist")
+            }
+
+            bibliographySetList.add(BibliographySet(
+                selectedBibliographySet[BibliographySetsTable.bibliographySetId],
+                selectedBibliographySet[BibliographySetsTable.bibliographySetVersion],
+                selectedBibliographySet[BibliographySetsTable.name],
+                selectedBibliographySet[BibliographySetsTable.description],
+                Timestamp.valueOf(selectedBibliographySet[BibliographySetsTable.createdAt].toJavaLocalDateTime()),
+                selectedBibliographySet[BibliographySetsTable.createdBy]
+            ))
+        }
         return bibliographySetList
     }
 
+    fun getBibliographyRecords(bibliographySetId: String, version: Long?): List<BibliographyRecord> {
+        var selectedVersion = version
+        if (selectedVersion == null) {
+            selectedVersion = BibliographySetsTable
+                .slice(BibliographySetsTable.bibliographySetVersion.max())
+                .select { BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)  }
+                .singleOrNull()?.get(BibliographySetsTable.bibliographySetVersion)
+        }
+        if (selectedVersion == null) {
+            throw IllegalArgumentException("Bibliography set $bibliographySetId does not exist")
+        }
 
+        var bibliographyRecordList = mutableListOf<BibliographyRecord>()
+
+        var selectedBibliographyRecords = BibliographyRecordsToSetsTable
+            .innerJoin(BibliographyRecordsTable)
+            .select{
+                (BibliographyRecordsToSetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)) and
+                (BibliographyRecordsToSetsTable.bibliographySetVersion eq selectedVersion)
+            }
+            .map {
+                BibliographyRecord(
+                    it[BibliographyRecordsTable.bibliographyRecordId],
+                    it[BibliographyRecordsTable.accession],
+                    it[BibliographyRecordsTable.type],
+                )
+            }
+
+        return bibliographyRecordList
+    }
+
+    fun getBibliographySets(username: String): List<BibliographySet> {
+        var bibliographySetList = mutableListOf<BibliographySet>()
+        var selectedBibliographySets = BibliographySetsTable
+            .select{ BibliographySetsTable.createdBy eq username }
+
+        selectedBibliographySets.forEach {
+            bibliographySetList.add(BibliographySet(
+                it[BibliographySetsTable.bibliographySetId],
+                it[BibliographySetsTable.bibliographySetVersion],
+                it[BibliographySetsTable.name],
+                it[BibliographySetsTable.description],
+                Timestamp.valueOf(it[BibliographySetsTable.createdAt].toJavaLocalDateTime()),
+                it[BibliographySetsTable.createdBy],
+            ))
+        }
+        return bibliographySetList
+    }
 
     fun deleteBibliographySet(username: String, _bibliographySetId: String) {
         BibliographySetsTable.deleteWhere { bibliographySetId eq UUID.fromString(_bibliographySetId) }
@@ -873,7 +944,6 @@ enum class Status {
 
 // CitationController
 
-
 data class SubmittedBibliographyRecord(
     val accession: String,
     val type: String,
@@ -889,10 +959,6 @@ data class BibliographyRecord(
     val bibliographyRecordId: Long,
     val accession: String,
     val type: String,
-    val createdAt: Timestamp,
-    val createdBy: String,
-    val updatedAt: Timestamp,
-    val updatedBy: String,
 )
 
 data class BibliographySet(

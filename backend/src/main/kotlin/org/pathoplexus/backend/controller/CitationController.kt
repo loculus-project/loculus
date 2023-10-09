@@ -28,7 +28,8 @@ class CitationController(
         @RequestParam username: String,
         @RequestBody body: SubmittedBibliographySet,
     ): String {
-        return databaseService.createBibliographySet(username, body.name, body.records, body.description)
+        return databaseService.createBibliographySet(
+            username, body.name, body.records, body.description)
     }
 
     @Operation(description = "Update a bibliography set with the specified data")
@@ -38,15 +39,34 @@ class CitationController(
         @RequestParam bibliographySetId: String,
         @RequestBody body: SubmittedBibliographySet,
     ) {
-        return databaseService.updateBibliographySet(username, bibliographySetId, body.name, body.records, body.description)
+        return databaseService.updateBibliographySet(
+            username, bibliographySetId, body.name, body.records, body.description)
     }
 
     @Operation(description = "Get a bibliography set")
     @GetMapping("/get-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getBibliographySet(
         @RequestParam bibliographySetId: String,
+        @RequestParam version: Long?,
     ): List<BibliographySet> {
-        return databaseService.getBibliographySet(bibliographySetId)
+        return databaseService.getBibliographySet(bibliographySetId, version)
+    }
+
+    @Operation(description = "Get records for a bibliography set")
+    @GetMapping("/get-bibliography-set-records", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getBibliographyRecords(
+        @RequestParam bibliographySetId: String,
+        @RequestParam version: Long?,
+    ): List<BibliographyRecord> {
+        return databaseService.getBibliographyRecords(bibliographySetId, version)
+    }
+
+    @Operation(description = "Get a list of bibliography sets created by a user")
+    @GetMapping("/get-bibliography-sets-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getBibliographySets(
+        @RequestParam username: String,
+    ): List<BibliographySet> {
+        return databaseService.getBibliographySets(username)
     }
 
     @Operation(description = "Delete a bibliography set")
@@ -67,7 +87,7 @@ class CitationController(
         return databaseService.createCitation(data, type)
     }
 
-    @Operation(description = "Get a citations")
+    @Operation(description = "Get a citation")
     @GetMapping("/get-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getCitation(
         @RequestParam citationId: Long,
