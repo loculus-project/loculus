@@ -40,11 +40,11 @@ class CitationControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val obj
     private fun queryDeleteAuthor(): Boolean { return true }
     private fun queryGetAuthorCount(): Boolean { return true }
 
-    private fun queryCreateBibliographySet(): Boolean { return true }
-    private fun queryGetBibliographySet(): Boolean { return true }
-    private fun queryUpdateBibliographySet(): Boolean { return true }
-    private fun queryDeleteBibliographySet(): Boolean { return true }
-    private fun queryGetBibliographySetCount(): Boolean { return true }
+    private fun queryCreateDataset(): Boolean { return true }
+    private fun queryGetDataset(): Boolean { return true }
+    private fun queryUpdateDataset(): Boolean { return true }
+    private fun queryDeleteDataset(): Boolean { return true }
+    private fun queryGetDatasetCount(): Boolean { return true }
 
     private fun queryCreateCitation(): Boolean { return true }
     private fun queryGetCitation(): Boolean { return true }

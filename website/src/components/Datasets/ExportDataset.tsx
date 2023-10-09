@@ -39,9 +39,9 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
 
     const getBibtex = () => {
         const bibtex = `@online{${dataset.name},
-    author = {${dataset.owner}},
+    author = {${dataset.createdBy}},
     title = {${dataset.name}},
-    year = {${dataset.createdDate}},
+    year = {${dataset.createdAt}},
     doi = {${dataset.datasetDOI ?? 'placeholder'}},
     url = {https://doi.org/placeholder/${dataset.datasetDOI ?? 'placeholder'}},
 }`;

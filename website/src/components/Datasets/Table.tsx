@@ -57,7 +57,7 @@ interface HeadCell {
 
 const headCells: readonly HeadCell[] = [
     {
-        id: 'createdDate',
+        id: 'createdAt',
         numeric: false,
         label: 'Created Date',
     },
@@ -133,7 +133,7 @@ const DatasetsTable = (props: DatasetsTableProps) => {
     const { rows } = props;
 
     const [order, setOrder] = useState<Order>('desc');
-    const [orderBy, setOrderBy] = useState<keyof Dataset>('createdDate');
+    const [orderBy, setOrderBy] = useState<keyof Dataset>('createdAt');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
@@ -200,7 +200,7 @@ const DatasetsTable = (props: DatasetsTableProps) => {
                                         key={row.datasetId}
                                         sx={{ cursor: 'pointer' }}
                                     >
-                                        <TableCell align='left'>{row.createdDate}</TableCell>
+                                        <TableCell align='left'>{row.createdAt}</TableCell>
                                         <TableCell component='th' id={labelId} scope='row'>
                                             {truncateCell(row.datasetId)}
                                         </TableCell>

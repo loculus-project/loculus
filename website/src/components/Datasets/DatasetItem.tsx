@@ -240,7 +240,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
-                            <p className='text'>{dataset?.createdDate ?? 'N/A'}</p>
+                            <p className='text'>{dataset?.createdAt ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Last Modified: </p>

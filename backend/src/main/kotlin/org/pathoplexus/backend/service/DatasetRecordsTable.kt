@@ -14,10 +14,10 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
-object BibliographyRecordsTable : Table("bibliography_records") {
-    val bibliographyRecordId = long("bibliography_record_id").autoIncrement()
+object DatasetRecordsTable : Table("dataset_records") {
+    val datasetRecordId = long("dataset_record_id").autoIncrement()
 
     val accession = varchar("accession", 255)
     val type = varchar("type", 255)
-    override val primaryKey = PrimaryKey(bibliographyRecordId)
+    override val primaryKey = PrimaryKey(datasetRecordId)
 }

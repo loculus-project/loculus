@@ -5,7 +5,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.json.jsonb
-import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 
 private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
@@ -15,14 +14,10 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
-object BibliographySetsTable : Table("bibliography_sets") {
-    val bibliographySetId = uuid("bibliography_set_id").autoGenerate()
-    val bibliographySetVersion = long("bibliography_set_version")
+object DatasetRecordsToSetsTable : Table("dataset_to_records") {
+    val datasetRecordId = long("dataset_record_id") references DatasetRecordsTable.datasetRecordId
+    val datasetId = uuid("dataset_id") references DatasetsTable.datasetId
+    val datasetVersion = long("dataset_version") references DatasetsTable.datasetVersion
 
-    val name = varchar("name", 255)
-    val description = varchar("description", 255)
-    val createdAt = datetime("created_at")
-    val createdBy = varchar("created_by", 255)
-
-    override val primaryKey = PrimaryKey(bibliographySetId)
+    override val primaryKey = PrimaryKey(datasetRecordId, datasetId, datasetVersion)
 }

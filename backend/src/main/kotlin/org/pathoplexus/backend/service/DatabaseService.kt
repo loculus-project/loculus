@@ -563,193 +563,193 @@ class DatabaseService(
     }
 
     // CitationController
-    fun createBibliographySet(
+    fun createDataset(
         username: String,
-        bibliographyName: String,
-        bibliographyRecords: List<SubmittedBibliographyRecord>,
-        bibliographyDescription: String?,
+        datasetName: String,
+        datasetRecords: List<SubmittedDatasetRecord>,
+        datasetDescription: String?,
     ): String {
-        log.info { "creating bibliography set ${bibliographyName}, user ${username}" }
+        log.info { "creating dataset ${datasetName}, user ${username}" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val insertedSet = BibliographySetsTable
+        val insertedSet = DatasetsTable
             .insert {
-                it[name] = bibliographyName
-                it[description] = bibliographyDescription ?: ""
-                it[bibliographySetVersion] = 1
+                it[name] = datasetName
+                it[description] = datasetDescription ?: ""
+                it[datasetVersion] = 1
                 it[createdAt] = now
                 it[createdBy] = username
             }
 
-        for (record in bibliographyRecords) {
-            val insertedRecord = BibliographyRecordsTable
+        for (record in datasetRecords) {
+            val insertedRecord = DatasetRecordsTable
                 .insert {
                     it[accession] = record.accession
                     it[type] = record.type
                 }
-            BibliographyRecordsToSetsTable
+            DatasetRecordsToSetsTable
                 .insert {
-                    it[bibliographyRecordId] = insertedRecord[BibliographyRecordsTable.bibliographyRecordId]
-                    it[bibliographySetId] = insertedSet[BibliographySetsTable.bibliographySetId]
-                    it[bibliographySetVersion] = 1
+                    it[datasetRecordId] = insertedRecord[DatasetRecordsTable.datasetRecordId]
+                    it[datasetId] = insertedSet[DatasetsTable.datasetId]
+                    it[datasetVersion] = 1
                 }
         }
 
-        return insertedSet[BibliographySetsTable.bibliographySetId].toString()
+        return insertedSet[DatasetsTable.datasetId].toString()
     }
 
-    fun updateBibliographySet(
+    fun updateDataset(
         username: String,
-        bibliographySetId: String,
-        bibliographyName: String,
-        bibliographyRecords: List<SubmittedBibliographyRecord>,
-        bibliographyDescription: String?,
+        datasetId: String,
+        datasetName: String,
+        datasetRecords: List<SubmittedDatasetRecord>,
+        datasetDescription: String?,
     ) {
-        log.info { "updating bibliography set ${bibliographyName}, user ${username}" }
+        log.info { "updating dataset ${datasetName}, user ${username}" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val maxVersion = BibliographySetsTable
-            .slice(BibliographySetsTable.bibliographySetVersion.max())
-            .select { BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)  }
+        val maxVersion = DatasetsTable
+            .slice(DatasetsTable.datasetVersion.max())
+            .select { DatasetsTable.datasetId eq UUID.fromString(datasetId)  }
             .singleOrNull()
 
         if (maxVersion == null) {
-            throw IllegalArgumentException("Bibliography set $bibliographySetId does not exist")
+            throw IllegalArgumentException("Dataset set $datasetId does not exist")
         }
 
-        val version = maxVersion[BibliographySetsTable.bibliographySetVersion] + 1
+        val version = maxVersion[DatasetsTable.datasetVersion] + 1
 
-        val insertedSet = BibliographySetsTable
+        val insertedSet = DatasetsTable
             .insert {
-                it[name] = bibliographyName
-                it[description] = bibliographyDescription ?: ""
-                it[bibliographySetVersion] = version
+                it[name] = datasetName
+                it[description] = datasetDescription ?: ""
+                it[datasetVersion] = version
                 it[createdAt] = now
                 it[createdBy] = username
             }
 
-        for (record in bibliographyRecords) {
-            val existingRecord = BibliographyRecordsTable
-                .select { BibliographyRecordsTable.accession eq record.accession }
+        for (record in datasetRecords) {
+            val existingRecord = DatasetRecordsTable
+                .select { DatasetRecordsTable.accession eq record.accession }
                 .singleOrNull()
 
-            var bibliographyRecordId: Long
+            var datasetRecordId: Long
 
             if (existingRecord == null) {
-                val insertedRecord = BibliographyRecordsTable
+                val insertedRecord = DatasetRecordsTable
                     .insert {
                         it[accession] = record.accession
                         it[type] = record.type
                     }
-                bibliographyRecordId = insertedRecord[BibliographyRecordsTable.bibliographyRecordId]
+                datasetRecordId = insertedRecord[DatasetRecordsTable.datasetRecordId]
             } else {
-                bibliographyRecordId = existingRecord[BibliographyRecordsTable.bibliographyRecordId]
+                datasetRecordId = existingRecord[DatasetRecordsTable.datasetRecordId]
             }
 
-            BibliographyRecordsToSetsTable
+            DatasetRecordsToSetsTable
                 .insert {
-                    it[BibliographyRecordsToSetsTable.bibliographySetVersion] = version
-                    it[BibliographyRecordsToSetsTable.bibliographySetId] = insertedSet[BibliographySetsTable.bibliographySetId]
-                    it[BibliographyRecordsToSetsTable.bibliographyRecordId] = bibliographyRecordId
+                    it[DatasetRecordsToSetsTable.datasetVersion] = version
+                    it[DatasetRecordsToSetsTable.datasetId] = insertedSet[DatasetsTable.datasetId]
+                    it[DatasetRecordsToSetsTable.datasetRecordId] = datasetRecordId
                 }
         }
     }
 
-    fun getBibliographySet(bibliographySetId: String, version: Long?): List<BibliographySet> {
-        var bibliographySetList = mutableListOf<BibliographySet>()
+    fun getDataSet(datasetId: String, version: Long?): List<Dataset> {
+        var datasetList = mutableListOf<Dataset>()
 
         if (version == null) {
-            var selectedBibliographySets = BibliographySetsTable
+            var selectedDatasets = DatasetsTable
                 .select{
-                    BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)
+                    DatasetsTable.datasetId eq UUID.fromString(datasetId)
                 }
-            selectedBibliographySets.forEach {
-                bibliographySetList.add(BibliographySet(
-                    it[BibliographySetsTable.bibliographySetId],
-                    it[BibliographySetsTable.bibliographySetVersion],
-                    it[BibliographySetsTable.name],
-                    it[BibliographySetsTable.description],
-                    Timestamp.valueOf(it[BibliographySetsTable.createdAt].toJavaLocalDateTime()),
-                    it[BibliographySetsTable.createdBy],
+            selectedDatasets.forEach {
+                datasetList.add(Dataset(
+                    it[DatasetsTable.datasetId],
+                    it[DatasetsTable.datasetVersion],
+                    it[DatasetsTable.name],
+                    it[DatasetsTable.description],
+                    Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                    it[DatasetsTable.createdBy],
                 ))
             }
         }
         else {
-            var selectedBibliographySet = BibliographySetsTable
+            var selectedDataset = DatasetsTable
                 .select{
-                    (BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)) and
-                    (BibliographySetsTable.bibliographySetVersion eq version)
+                    (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
+                    (DatasetsTable.datasetVersion eq version)
                 }.singleOrNull()
 
-            if (selectedBibliographySet == null) {
-                throw IllegalArgumentException("Bibliography set $bibliographySetId does not exist")
+            if (selectedDataset == null) {
+                throw IllegalArgumentException("Dataset set $datasetId does not exist")
             }
 
-            bibliographySetList.add(BibliographySet(
-                selectedBibliographySet[BibliographySetsTable.bibliographySetId],
-                selectedBibliographySet[BibliographySetsTable.bibliographySetVersion],
-                selectedBibliographySet[BibliographySetsTable.name],
-                selectedBibliographySet[BibliographySetsTable.description],
-                Timestamp.valueOf(selectedBibliographySet[BibliographySetsTable.createdAt].toJavaLocalDateTime()),
-                selectedBibliographySet[BibliographySetsTable.createdBy]
+            datasetList.add(Dataset(
+                selectedDataset[DatasetsTable.datasetId],
+                selectedDataset[DatasetsTable.datasetVersion],
+                selectedDataset[DatasetsTable.name],
+                selectedDataset[DatasetsTable.description],
+                Timestamp.valueOf(selectedDataset[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                selectedDataset[DatasetsTable.createdBy]
             ))
         }
-        return bibliographySetList
+        return datasetList
     }
 
-    fun getBibliographyRecords(bibliographySetId: String, version: Long?): List<BibliographyRecord> {
+    fun getDatasetRecords(datasetId: String, version: Long?): List<DatasetRecord> {
         var selectedVersion = version
         if (selectedVersion == null) {
-            selectedVersion = BibliographySetsTable
-                .slice(BibliographySetsTable.bibliographySetVersion.max())
-                .select { BibliographySetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)  }
-                .singleOrNull()?.get(BibliographySetsTable.bibliographySetVersion)
+            selectedVersion = DatasetsTable
+                .slice(DatasetsTable.datasetVersion.max())
+                .select { DatasetsTable.datasetId eq UUID.fromString(datasetId)  }
+                .singleOrNull()?.get(DatasetsTable.datasetVersion)
         }
         if (selectedVersion == null) {
-            throw IllegalArgumentException("Bibliography set $bibliographySetId does not exist")
+            throw IllegalArgumentException("Dataset set $datasetId does not exist")
         }
 
-        var bibliographyRecordList = mutableListOf<BibliographyRecord>()
+        var datasetRecordList = mutableListOf<DatasetRecord>()
 
-        var selectedBibliographyRecords = BibliographyRecordsToSetsTable
-            .innerJoin(BibliographyRecordsTable)
+        var selectedDatasetRecords = DatasetRecordsToSetsTable
+            .innerJoin(DatasetRecordsTable)
             .select{
-                (BibliographyRecordsToSetsTable.bibliographySetId eq UUID.fromString(bibliographySetId)) and
-                (BibliographyRecordsToSetsTable.bibliographySetVersion eq selectedVersion)
+                (DatasetRecordsToSetsTable.datasetId eq UUID.fromString(datasetId)) and
+                (DatasetRecordsToSetsTable.datasetVersion eq selectedVersion)
             }
             .map {
-                BibliographyRecord(
-                    it[BibliographyRecordsTable.bibliographyRecordId],
-                    it[BibliographyRecordsTable.accession],
-                    it[BibliographyRecordsTable.type],
+                DatasetRecord(
+                    it[DatasetRecordsTable.datasetRecordId],
+                    it[DatasetRecordsTable.accession],
+                    it[DatasetRecordsTable.type],
                 )
             }
 
-        return bibliographyRecordList
+        return datasetRecordList
     }
 
-    fun getBibliographySets(username: String): List<BibliographySet> {
-        var bibliographySetList = mutableListOf<BibliographySet>()
-        var selectedBibliographySets = BibliographySetsTable
-            .select{ BibliographySetsTable.createdBy eq username }
+    fun getDatasets(username: String): List<Dataset> {
+        var datasetList = mutableListOf<Dataset>()
+        var selectedDatasets = DatasetsTable
+            .select{ DatasetsTable.createdBy eq username }
 
-        selectedBibliographySets.forEach {
-            bibliographySetList.add(BibliographySet(
-                it[BibliographySetsTable.bibliographySetId],
-                it[BibliographySetsTable.bibliographySetVersion],
-                it[BibliographySetsTable.name],
-                it[BibliographySetsTable.description],
-                Timestamp.valueOf(it[BibliographySetsTable.createdAt].toJavaLocalDateTime()),
-                it[BibliographySetsTable.createdBy],
+        selectedDatasets.forEach {
+            datasetList.add(Dataset(
+                it[DatasetsTable.datasetId],
+                it[DatasetsTable.datasetVersion],
+                it[DatasetsTable.name],
+                it[DatasetsTable.description],
+                Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                it[DatasetsTable.createdBy],
             ))
         }
-        return bibliographySetList
+        return datasetList
     }
 
-    fun deleteBibliographySet(username: String, _bibliographySetId: String) {
-        BibliographySetsTable.deleteWhere { bibliographySetId eq UUID.fromString(_bibliographySetId) }
+    fun deleteDataset(username: String, _datasetId: String) {
+        DatasetsTable.deleteWhere { datasetId eq UUID.fromString(_datasetId) }
     }
 
     fun createCitation(_data: String, _type: String): Long {
@@ -944,26 +944,26 @@ enum class Status {
 
 // CitationController
 
-data class SubmittedBibliographyRecord(
+data class SubmittedDatasetRecord(
     val accession: String,
     val type: String,
 )
 
-data class SubmittedBibliographySet(
+data class SubmittedDataset(
     val name: String,
     val description: String,
-    val records: List<SubmittedBibliographyRecord>,
+    val records: List<SubmittedDatasetRecord>,
 )
 
-data class BibliographyRecord(
-    val bibliographyRecordId: Long,
+data class DatasetRecord(
+    val datasetRecordId: Long,
     val accession: String,
     val type: String,
 )
 
-data class BibliographySet(
-    val bibliographySetId: UUID,
-    val bibliographySetVersion: Long,
+data class Dataset(
+    val datasetId: UUID,
+    val datasetVersion: Long,
     val name: String,
     val description: String? = null,
     val createdAt: Timestamp,

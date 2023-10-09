@@ -1,15 +1,15 @@
 import { mockDatasets, mockDatasetAggCitations, mockUserAggCitations } from './mockData';
 import type { ServiceUrls, Dataset } from '../../types';
 
-const USE_MOCK_DATA = true;
+const USE_MOCK_DATA = false;
 
 export const fetchAuthorDatasets = async (userId: string, serviceConfig: ServiceUrls): Promise<any> => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (USE_MOCK_DATA) {
         return mockDatasets;
     }
-    const response = await fetch(`${serviceConfig.backendUrl}/user/datasets/${userId}`);
-    return (await response.json()).data;
+    const response = await fetch(`${serviceConfig.backendUrl}/get-bibliography-sets-of-user?username=${userId}`);
+    return await response.json();
 };
 
 export const fetchAuthorMetadata = async (userId: string, serviceConfig: ServiceUrls): Promise<any> => {
@@ -36,7 +36,7 @@ export const fetchDataset = async (datasetId: string, serviceConfig: ServiceUrls
         return mockDatasets.find((dataset) => dataset.datasetId === datasetId);
     }
 
-    const response = await fetch(`${serviceConfig.backendUrl}/read-bibliography?bibliographyId=${datasetId}`);
+    const response = await fetch(`${serviceConfig.backendUrl}/get-bibliography-set?bibliographyId=${datasetId}`);
     return (await response.json()).data;
 };
 

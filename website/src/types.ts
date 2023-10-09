@@ -65,8 +65,8 @@ export type HeaderId = {
 };
 
 /**
- * The following types are used for datasets and citations.
- */
+ * Types for datasets and citations.
+ **/
 
 export type Dataset = {
     datasetId: string;
@@ -74,9 +74,9 @@ export type Dataset = {
     name: string;
     description?: string;
     version: string;
-    owner: string;
+    createdBy: string;
     status: string;
-    createdDate: string;
+    createdAt: string;
     lastModifiedDate: string;
     sequences?: DatasetAccession[];
 };

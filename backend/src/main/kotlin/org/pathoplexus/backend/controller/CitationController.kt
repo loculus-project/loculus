@@ -3,9 +3,9 @@ package org.pathoplexus.backend.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import org.pathoplexus.backend.service.Author
-import org.pathoplexus.backend.service.BibliographyRecord
-import org.pathoplexus.backend.service.BibliographySet
-import org.pathoplexus.backend.service.SubmittedBibliographySet
+import org.pathoplexus.backend.service.DatasetRecord
+import org.pathoplexus.backend.service.Dataset
+import org.pathoplexus.backend.service.SubmittedDataset
 import org.pathoplexus.backend.service.Citation
 import org.pathoplexus.backend.service.DatabaseService
 import org.springframework.http.MediaType
@@ -22,60 +22,60 @@ class CitationController(
     private val databaseService: DatabaseService,
     private val objectMapper: ObjectMapper,
 ) {
-    @Operation(description = "Create a new bibliography set with the specified data")
-    @PostMapping("/create-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun createBibliographySet(
+    @Operation(description = "Create a new dataset with the specified data")
+    @PostMapping("/create-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun createDataset(
         @RequestParam username: String,
-        @RequestBody body: SubmittedBibliographySet,
+        @RequestBody body: SubmittedDataset,
     ): String {
-        return databaseService.createBibliographySet(
+        return databaseService.createDataset(
             username, body.name, body.records, body.description)
     }
 
-    @Operation(description = "Update a bibliography set with the specified data")
-    @PatchMapping("/update-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun updateBibliographySet(
+    @Operation(description = "Update a dataset with the specified data")
+    @PatchMapping("/update-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun updateDataset(
         @RequestParam username: String,
-        @RequestParam bibliographySetId: String,
-        @RequestBody body: SubmittedBibliographySet,
+        @RequestParam datasetId: String,
+        @RequestBody body: SubmittedDataset,
     ) {
-        return databaseService.updateBibliographySet(
-            username, bibliographySetId, body.name, body.records, body.description)
+        return databaseService.updateDataset(
+            username, datasetId, body.name, body.records, body.description)
     }
 
-    @Operation(description = "Get a bibliography set")
-    @GetMapping("/get-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getBibliographySet(
-        @RequestParam bibliographySetId: String,
+    @Operation(description = "Get a dataset")
+    @GetMapping("/get-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getDataSet(
+        @RequestParam datasetId: String,
         @RequestParam version: Long?,
-    ): List<BibliographySet> {
-        return databaseService.getBibliographySet(bibliographySetId, version)
+    ): List<Dataset> {
+        return databaseService.getDataSet(datasetId, version)
     }
 
-    @Operation(description = "Get records for a bibliography set")
-    @GetMapping("/get-bibliography-set-records", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getBibliographyRecords(
-        @RequestParam bibliographySetId: String,
+    @Operation(description = "Get records for a dataset")
+    @GetMapping("/get-dataset-records", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getDatasetRecords(
+        @RequestParam datasetId: String,
         @RequestParam version: Long?,
-    ): List<BibliographyRecord> {
-        return databaseService.getBibliographyRecords(bibliographySetId, version)
+    ): List<DatasetRecord> {
+        return databaseService.getDatasetRecords(datasetId, version)
     }
 
-    @Operation(description = "Get a list of bibliography sets created by a user")
-    @GetMapping("/get-bibliography-sets-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getBibliographySets(
+    @Operation(description = "Get a list of datasets created by a user")
+    @GetMapping("/get-datasets-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getDatasets(
         @RequestParam username: String,
-    ): List<BibliographySet> {
-        return databaseService.getBibliographySets(username)
+    ): List<Dataset> {
+        return databaseService.getDatasets(username)
     }
 
-    @Operation(description = "Delete a bibliography set")
-    @DeleteMapping("/delete-bibliography-set", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun deleteBibliographySet(
+    @Operation(description = "Delete a dataset")
+    @DeleteMapping("/delete-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun deleteDataset(
         @RequestParam username: String,
-        @RequestParam bibliographySetId: String,
+        @RequestParam datasetId: String,
     ) {
-        return databaseService.deleteBibliographySet(username, bibliographySetId)
+        return databaseService.deleteDataset(username, datasetId)
     }
 
     @Operation(description = "Create a new citation with the specified data")
