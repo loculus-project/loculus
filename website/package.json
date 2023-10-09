@@ -20,7 +20,7 @@
   "dependencies": {
     "@astrojs/node": "^6.0.2",
     "@tanstack/react-query": "^4.35.7",
-    "astro": "^3.2.2",
+    "astro": "^3.2.3",
     "change-case": "^5.0.2",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
