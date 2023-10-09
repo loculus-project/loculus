@@ -11,52 +11,58 @@ import { type FC, type FormEvent, useState, useEffect } from 'react';
 
 import { createDataset, updateDataset } from './api';
 import { clientLogger, fetchSequenceDetails } from '../../api';
-import type { Config, ClientConfig, HeaderId, Dataset } from '../../types';
+import type { Config, ClientConfig, Dataset, DatasetRecord } from '../../types';
 import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
 
 type DatasetFormProps = {
+    userId: string;
     editDataset?: Dataset;
+    editDatasetRecords?: DatasetRecord[];
     config: Config;
     clientConfig: ClientConfig;
 };
 
-const serializeAccessions = (accessionType: string, dataset?: Dataset) => {
-    if (!dataset || !accessionType) {
+const serializeRecords = (recordType: string, records?: DatasetRecord[]) => {
+    if (!recordType || !records) {
         return '';
     }
-    if (accessionType === 'SRA') {
-        const sraAccession = dataset.sequences
-            ?.filter((sequence) => sequence.sraAccession)
-            .map((sequence) => sequence.sraAccession);
-        return sraAccession?.join(', ') ?? '';
+    if (recordType === 'SRA') {
+        const sraAccession = records.filter((record) => record.type === 'SRA').map((record) => record.accession);
+        return sraAccession.join(', ');
     }
-    const genbankAccession = dataset.sequences
-        ?.filter((sequence) => sequence.genbankAccession)
-        .map((sequence) => sequence.genbankAccession);
-    return genbankAccession?.join(', ') ?? '';
+
+    const genbankAccession = records.filter((record) => record.type === 'Genbank').map((record) => record.accession);
+    return genbankAccession.join(', ');
 };
 
-const parseAccessions = (accessionType: string, dataset?: Dataset): string[] => {
-    if (!accessionType || !dataset || !dataset.sequences || dataset.sequences.length === 0) {
+const parseRecords = (recordType: string, records?: DatasetRecord[]): string[] => {
+    if (!recordType || !records || records.length === 0) {
         return [];
     }
-    if (accessionType === 'SRA') {
-        return dataset.sequences.map((sequence) => sequence.sraAccession ?? '').filter((accession) => accession !== '');
+    if (recordType === 'SRA') {
+        return records.filter((record) => record.type === 'SRA').map((record) => record.accession ?? '');
     }
-    return dataset.sequences.map((sequence) => sequence.genbankAccession ?? '').filter((accession) => accession !== '');
+    return records.filter((record) => record.type === 'Genbank').map((record) => record.accession ?? '');
 };
 
-export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientConfig }) => {
+export const DatasetForm: FC<DatasetFormProps> = ({
+    userId,
+    editDataset,
+    editDatasetRecords,
+    config,
+    clientConfig,
+}) => {
     const [datasetName, setDatasetName] = useState(editDataset?.name ?? '');
     const [datasetDescription, setDatasetDescription] = useState(editDataset?.description ?? '');
 
-    const [genbankAccessionsInput, setGenbankAccessionsInput] = useState(serializeAccessions('Genbank', editDataset));
-    const [parsedGenbankAccessions, setParsedGenbankAccessions] = useState(parseAccessions('Genbank', editDataset));
-    const [sraAccessionsInput, setSraAccessionsInput] = useState(serializeAccessions('SRA', editDataset));
-    const [parsedSraAccessions, setParsedSraAccessions] = useState(parseAccessions('SRA', editDataset));
+    const [genbankAccessionsInput, setGenbankAccessionsInput] = useState(
+        serializeRecords('Genbank', editDatasetRecords),
+    );
+    const [parsedGenbankAccessions, setParsedGenbankAccessions] = useState(parseRecords('Genbank', editDatasetRecords));
+    const [sraAccessionsInput, setSraAccessionsInput] = useState(serializeRecords('SRA', editDatasetRecords));
+    const [parsedSraAccessions, setParsedSraAccessions] = useState(parseRecords('SRA', editDatasetRecords));
 
     const [isLoading, setIsLoading] = useState(false);
-    const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<HeaderId[] | null>(null);
     const [isErrorOpen, setIsErrorOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
@@ -71,11 +77,11 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
     };
 
     const createDatasetMutation = useMutation({
-        mutationFn: (dataset) => createDataset(dataset, clientConfig),
+        mutationFn: (dataset) => createDataset(userId, dataset, clientConfig),
     });
 
     const updateDatasetMutation = useMutation({
-        mutationFn: (dataset) => updateDataset(editDataset?.datasetId, dataset, clientConfig),
+        mutationFn: (dataset) => updateDataset(userId, editDataset?.datasetId, dataset, clientConfig),
     });
 
     const handleSubmit = async (event: FormEvent) => {
@@ -85,12 +91,14 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
         const dataset = {
             name: datasetName,
             description: datasetDescription,
-            sequences: [
+            records: [
                 ...getAccessionsList('Genbank').map((accession) => ({
-                    genbankAccession: accession,
+                    accession,
+                    type: 'Genbank',
                 })),
                 ...getAccessionsList('SRA').map((accession) => ({
-                    sraAccession: accession,
+                    accession,
+                    type: 'SRA',
                 })),
             ],
         };
@@ -101,9 +109,8 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
         if (isEdit) {
             try {
                 const response = await updateDatasetMutation.mutateAsync(dataset);
-                setResponseSequenceHeaders(response.sequenceHeaders);
                 await clientLogger.info(`Dataset edit successful, datasetId: '${editDataset.datasetId}'`);
-                redirectUrl = `/datasets/${editDataset.datasetId}`;
+                redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
             } catch (error) {
                 handleOpenError(
                     `Dataset edit failed with error '${(error as Error).message}', datasetId: '${
@@ -116,15 +123,15 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
                     }'`,
                 );
             }
-        }
-        try {
-            const response = await createDatasetMutation.mutateAsync(dataset);
-            setResponseSequenceHeaders(response.sequenceHeaders);
-            await clientLogger.info(`Dataset create successful with datasetId: ${response?.datasetId}`);
-            redirectUrl = `/datasets/${response?.datasetId}`;
-        } catch (error) {
-            handleOpenError(`Dataset create failed with error '${(error as Error).message}'`);
-            await clientLogger.error(`Dataset create failed with error '${(error as Error).message}'`);
+        } else {
+            try {
+                const response = await createDatasetMutation.mutateAsync(dataset);
+                await clientLogger.info(`Dataset create successful with datasetId: ${response?.datasetId}`);
+                redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
+            } catch (error) {
+                handleOpenError(`Dataset create failed with error '${(error as Error).message}'`);
+                await clientLogger.error(`Dataset create failed with error '${(error as Error).message}'`);
+            }
         }
         setIsLoading(false);
         location.href = redirectUrl;
@@ -159,7 +166,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
     };
 
     useEffect(() => {
-        const parseAccessionsInput = () => {
+        const parseRecordsInput = () => {
             if (genbankAccessionsInput && genbankAccessionsInput.length > 0) {
                 const accessions = genbankAccessionsInput.split(',').map((accession) => accession.trim());
                 setParsedGenbankAccessions(accessions);
@@ -171,7 +178,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
         };
 
         const timeOutId = setTimeout(async () => {
-            parseAccessionsInput();
+            parseRecordsInput();
         }, 2000);
         return () => clearTimeout(timeOutId);
     }, [sraAccessionsInput, genbankAccessionsInput]);
@@ -239,7 +246,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
                         onInput={(e) => {
                             setDatasetName((e.target as HTMLInputElement).value);
                         }}
-                        label='Enter a study name for your dataset'
+                        label='Enter a name for your dataset'
                         variant='outlined'
                         placeholder=''
                         size='small'
@@ -329,20 +336,6 @@ export const DatasetForm: FC<DatasetFormProps> = ({ editDataset, config, clientC
                 <Button variant='outlined' disabled={isLoading} onClick={handleSubmit}>
                     {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}
                 </Button>
-            </div>
-            <div>
-                {responseSequenceHeaders ? (
-                    <div className='p-6 space-y-6 max-w-md w-full'>
-                        <h2 className='text-lg font-bold'>Response Sequence Headers</h2>
-                        <ul className='list-disc list-inside'>
-                            {responseSequenceHeaders.map((header) => (
-                                <li key={header.sequenceId}>
-                                    {header.sequenceId}(v{header.version}) {header.customId}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                ) : null}
             </div>
         </div>
     );

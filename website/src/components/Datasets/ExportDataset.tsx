@@ -18,6 +18,11 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
     const [isDownloading, setIsDownloading] = useState(false);
     const [isCopyAlertOpen, setIsCopyAlertOpen] = useState(false);
 
+    const formatYear = (date: string) => {
+        const dateObj = new Date(date);
+        return dateObj.getFullYear();
+    };
+
     const exportDataset = () => {
         if (accessionQueries.length === 0) {
             return;
@@ -41,9 +46,9 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
         const bibtex = `@online{${dataset.name},
     author = {${dataset.createdBy}},
     title = {${dataset.name}},
-    year = {${dataset.createdAt}},
-    doi = {${dataset.datasetDOI ?? 'placeholder'}},
-    url = {https://doi.org/placeholder/${dataset.datasetDOI ?? 'placeholder'}},
+    year = {${formatYear(dataset.createdAt)}},
+    doi = {${dataset.datasetId}},
+    url = {https://doi.org/placeholder/${dataset.datasetId}},
 }`;
         return bibtex;
     };
@@ -72,13 +77,13 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
                     <FormControlLabel control={<Checkbox defaultChecked />} label='JSON' />
                     <FormControlLabel disabled control={<Checkbox />} label='CSV' />
                     <FormControlLabel disabled control={<Checkbox />} label='XLSX' />
-                    <div className='py-4'>
+                    <div className='pb-8'>
                         <Button variant='outlined' onClick={exportDataset} disabled={isDownloading}>
                             Download
                         </Button>
                     </div>
                 </div>
-                <hr className='my-4' />
+                <hr className='mb-8' />
                 <div>
                     <FormLabel component='legend'>Citation</FormLabel>
                     <FormControlLabel control={<Checkbox defaultChecked />} label='BibTeX' />

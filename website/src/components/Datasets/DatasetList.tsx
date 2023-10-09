@@ -18,6 +18,8 @@ type DatasetListProps = {
 
 const DatasetListInner: FC<DatasetListProps> = ({ config, clientConfig }) => {
     const [createModalVisible, setCreateModalVisible] = useState(false);
+
+    // TODO: replace with actual user id
     const userId = 'testuser';
     const { data: datasets, isLoading: isLoadingDatasets }: UseQueryResult = useQuery(['datasets', userId], () =>
         fetchAuthorDatasets(userId, clientConfig),
@@ -32,10 +34,18 @@ const DatasetListInner: FC<DatasetListProps> = ({ config, clientConfig }) => {
                         <AddBoxIcon fontSize='large' sx={{ color: 'grey' }} />
                     </IconButton>
                 </div>
-                <div>{isLoadingDatasets ? <CircularProgress /> : <DatasetsTable rows={datasets} />}</div>
+                <div>
+                    {isLoadingDatasets ? (
+                        <CircularProgress />
+                    ) : datasets != null && datasets.length > 0 ? (
+                        <DatasetsTable datasets={datasets} />
+                    ) : (
+                        'You have no datasets yet.'
+                    )}
+                </div>
             </div>
             <Modal isModalVisible={createModalVisible} setModalVisible={setCreateModalVisible}>
-                <DatasetForm config={config} clientConfig={clientConfig} />
+                <DatasetForm userId={userId} config={config} clientConfig={clientConfig} />
             </Modal>
         </div>
     );

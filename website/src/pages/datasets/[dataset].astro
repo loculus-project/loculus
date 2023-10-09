@@ -9,6 +9,7 @@ const config = getConfig();
 const clientConfig = getRuntimeConfig().forClient;
 
 const { dataset } = Astro.params;
+const version = Astro.url.searchParams.get('version')! || '';
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-item-container'>
@@ -19,7 +20,14 @@ const { dataset } = Astro.params;
                 <AvatarBadge username='testuser' />
             </div>
             <div class='w-3/4'>
-                <DatasetItem datasetId={dataset} config={config} clientConfig={clientConfig} isAdminView client:load />
+                <DatasetItem
+                    datasetId={dataset}
+                    datasetVersion={version}
+                    config={config}
+                    clientConfig={clientConfig}
+                    isAdminView
+                    client:load
+                />
             </div>
         </div>
     </div>

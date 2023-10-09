@@ -6,13 +6,14 @@ import org.pathoplexus.backend.service.Author
 import org.pathoplexus.backend.service.DatasetRecord
 import org.pathoplexus.backend.service.Dataset
 import org.pathoplexus.backend.service.SubmittedDataset
+import org.pathoplexus.backend.service.ResponseDataset
 import org.pathoplexus.backend.service.Citation
 import org.pathoplexus.backend.service.DatabaseService
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -27,18 +28,18 @@ class CitationController(
     fun createDataset(
         @RequestParam username: String,
         @RequestBody body: SubmittedDataset,
-    ): String {
+    ): ResponseDataset {
         return databaseService.createDataset(
             username, body.name, body.records, body.description)
     }
 
     @Operation(description = "Update a dataset with the specified data")
-    @PatchMapping("/update-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping("/update-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun updateDataset(
         @RequestParam username: String,
         @RequestParam datasetId: String,
         @RequestBody body: SubmittedDataset,
-    ) {
+    ): ResponseDataset {
         return databaseService.updateDataset(
             username, datasetId, body.name, body.records, body.description)
     }
@@ -74,8 +75,9 @@ class CitationController(
     fun deleteDataset(
         @RequestParam username: String,
         @RequestParam datasetId: String,
+        @RequestParam version: Long,
     ) {
-        return databaseService.deleteDataset(username, datasetId)
+        return databaseService.deleteDataset(username, datasetId, version)
     }
 
     @Operation(description = "Create a new citation with the specified data")
@@ -96,7 +98,7 @@ class CitationController(
     }
 
     @Operation(description = "Update a citation with the specified data")
-    @PatchMapping("/update-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping("/update-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun updateCitation(
         @RequestParam citationId: Long,
         @RequestParam date: String,
@@ -133,7 +135,7 @@ class CitationController(
     }
 
     @Operation(description = "Update an author with the specified data")
-    @PatchMapping("/update-author", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping("/update-author", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun updateAuthor(
         @RequestParam authorId: Long,
         @RequestParam affiliation: String,

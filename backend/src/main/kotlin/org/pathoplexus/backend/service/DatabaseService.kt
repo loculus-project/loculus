@@ -568,7 +568,7 @@ class DatabaseService(
         datasetName: String,
         datasetRecords: List<SubmittedDatasetRecord>,
         datasetDescription: String?,
-    ): String {
+    ): ResponseDataset {
         log.info { "creating dataset ${datasetName}, user ${username}" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -588,7 +588,7 @@ class DatabaseService(
                     it[accession] = record.accession
                     it[type] = record.type
                 }
-            DatasetRecordsToSetsTable
+            DatasetToRecordsTable
                 .insert {
                     it[datasetRecordId] = insertedRecord[DatasetRecordsTable.datasetRecordId]
                     it[datasetId] = insertedSet[DatasetsTable.datasetId]
@@ -596,7 +596,10 @@ class DatabaseService(
                 }
         }
 
-        return insertedSet[DatasetsTable.datasetId].toString()
+        return ResponseDataset(
+            insertedSet[DatasetsTable.datasetId].toString(),
+            insertedSet[DatasetsTable.datasetVersion],
+        )
     }
 
     fun updateDataset(
@@ -605,7 +608,7 @@ class DatabaseService(
         datasetName: String,
         datasetRecords: List<SubmittedDatasetRecord>,
         datasetDescription: String?,
-    ) {
+    ): ResponseDataset {
         log.info { "updating dataset ${datasetName}, user ${username}" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -613,13 +616,14 @@ class DatabaseService(
         val maxVersion = DatasetsTable
             .slice(DatasetsTable.datasetVersion.max())
             .select { DatasetsTable.datasetId eq UUID.fromString(datasetId)  }
-            .singleOrNull()
+            .firstOrNull()
+            ?.get(DatasetsTable.datasetVersion.max())
 
         if (maxVersion == null) {
             throw IllegalArgumentException("Dataset set $datasetId does not exist")
         }
 
-        val version = maxVersion[DatasetsTable.datasetVersion] + 1
+        val version = maxVersion + 1
 
         val insertedSet = DatasetsTable
             .insert {
@@ -648,16 +652,23 @@ class DatabaseService(
                 datasetRecordId = existingRecord[DatasetRecordsTable.datasetRecordId]
             }
 
-            DatasetRecordsToSetsTable
+            DatasetToRecordsTable
                 .insert {
-                    it[DatasetRecordsToSetsTable.datasetVersion] = version
-                    it[DatasetRecordsToSetsTable.datasetId] = insertedSet[DatasetsTable.datasetId]
-                    it[DatasetRecordsToSetsTable.datasetRecordId] = datasetRecordId
+                    it[DatasetToRecordsTable.datasetVersion] = version
+                    it[DatasetToRecordsTable.datasetId] = insertedSet[DatasetsTable.datasetId]
+                    it[DatasetToRecordsTable.datasetRecordId] = datasetRecordId
                 }
         }
+
+        return ResponseDataset(
+            insertedSet[DatasetsTable.datasetId].toString(),
+            insertedSet[DatasetsTable.datasetVersion],
+        )
     }
 
     fun getDataSet(datasetId: String, version: Long?): List<Dataset> {
+        log.info { "Get dataset ${datasetId}, version ${version}" }
+
         var datasetList = mutableListOf<Dataset>()
 
         if (version == null) {
@@ -700,6 +711,8 @@ class DatabaseService(
     }
 
     fun getDatasetRecords(datasetId: String, version: Long?): List<DatasetRecord> {
+        log.info { "Get dataset records ${datasetId}, version ${version}" }
+
         var selectedVersion = version
         if (selectedVersion == null) {
             selectedVersion = DatasetsTable
@@ -711,13 +724,11 @@ class DatabaseService(
             throw IllegalArgumentException("Dataset set $datasetId does not exist")
         }
 
-        var datasetRecordList = mutableListOf<DatasetRecord>()
-
-        var selectedDatasetRecords = DatasetRecordsToSetsTable
+        var selectedDatasetRecords = DatasetToRecordsTable
             .innerJoin(DatasetRecordsTable)
             .select{
-                (DatasetRecordsToSetsTable.datasetId eq UUID.fromString(datasetId)) and
-                (DatasetRecordsToSetsTable.datasetVersion eq selectedVersion)
+                (DatasetToRecordsTable.datasetId eq UUID.fromString(datasetId)) and
+                (DatasetToRecordsTable.datasetVersion eq selectedVersion)
             }
             .map {
                 DatasetRecord(
@@ -727,7 +738,7 @@ class DatabaseService(
                 )
             }
 
-        return datasetRecordList
+        return selectedDatasetRecords
     }
 
     fun getDatasets(username: String): List<Dataset> {
@@ -748,8 +759,12 @@ class DatabaseService(
         return datasetList
     }
 
-    fun deleteDataset(username: String, _datasetId: String) {
-        DatasetsTable.deleteWhere { datasetId eq UUID.fromString(_datasetId) }
+    fun deleteDataset(username: String, _datasetId: String, _version: Long) {
+        DatasetsTable.deleteWhere {
+            (datasetId eq UUID.fromString(_datasetId)) and
+            (datasetVersion eq _version) and
+            (createdBy eq username)
+        }
     }
 
     fun createCitation(_data: String, _type: String): Long {
@@ -968,6 +983,11 @@ data class Dataset(
     val description: String? = null,
     val createdAt: Timestamp,
     val createdBy: String,
+)
+
+data class ResponseDataset(
+    val datasetId: String,
+    val datasetVersion: Long,
 )
 
 data class Citation(

@@ -2,7 +2,7 @@
 
 create table datasets (
        dataset_id uuid not null,
-       dataset_version int8,
+       dataset_version int8 not null,
        name text not null,
        description text,
 
@@ -29,11 +29,11 @@ create table dataset_to_records (
        constraint foreign_key_dataset_record_id
               foreign key(dataset_record_id)
                      references dataset_records(dataset_record_id)
-                     on delete no action,
+                     on delete cascade,
        constraint foreign_key_dataset_id
               foreign key(dataset_id, dataset_version)
                      references datasets(dataset_id, dataset_version)
-                     on delete no action
+                     on delete cascade
 );
 
 create table citations (
@@ -59,11 +59,11 @@ create table datasets_citations (
        constraint foreign_key_dataset_id
               foreign key(dataset_id, dataset_version)
                      references datasets(dataset_id, dataset_version)
-                     on delete no action,
+                     on delete cascade,
        constraint foreign_key_citation_id
               foreign key(citation_id)
                      references citations(citation_id)
-                     on delete no action
+                     on delete cascade
 );
 
 create table authors (

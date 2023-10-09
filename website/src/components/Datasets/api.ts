@@ -1,15 +1,11 @@
-import { mockDatasets, mockDatasetAggCitations, mockUserAggCitations } from './mockData';
+import { mockDatasetAggCitations, mockUserAggCitations } from './mockData';
 import type { ServiceUrls, Dataset } from '../../types';
 
-const USE_MOCK_DATA = false;
+const USE_MOCK_DATA = true;
 
 export const fetchAuthorDatasets = async (userId: string, serviceConfig: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return mockDatasets;
-    }
-    const response = await fetch(`${serviceConfig.backendUrl}/get-bibliography-sets-of-user?username=${userId}`);
-    return await response.json();
+    const response = await fetch(`${serviceConfig.backendUrl}/get-datasets-of-user?username=${userId}`);
+    return response.json();
 };
 
 export const fetchAuthorMetadata = async (userId: string, serviceConfig: ServiceUrls): Promise<any> => {
@@ -18,7 +14,7 @@ export const fetchAuthorMetadata = async (userId: string, serviceConfig: Service
         return {};
     }
     const response = await fetch(`${serviceConfig.backendUrl}/read-author?authorId=${userId}`);
-    return (await response.json()).data;
+    return response.json();
 };
 
 export const fetchAuthorCitations = async (userId: string, serviceConfig: ServiceUrls): Promise<any> => {
@@ -27,31 +23,34 @@ export const fetchAuthorCitations = async (userId: string, serviceConfig: Servic
         return mockUserAggCitations;
     }
     const response = await fetch(`${serviceConfig.backendUrl}/user/citations/${userId}`);
-    return (await response.json()).data;
+    return response.json();
 };
 
-export const fetchDataset = async (datasetId: string, serviceConfig: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return mockDatasets.find((dataset) => dataset.datasetId === datasetId);
-    }
-
-    const response = await fetch(`${serviceConfig.backendUrl}/get-bibliography-set?bibliographyId=${datasetId}`);
-    return (await response.json()).data;
+export const fetchDataset = async (
+    datasetId: string,
+    datasetVersion: string,
+    serviceConfig: ServiceUrls,
+): Promise<any> => {
+    const response = await fetch(
+        `${serviceConfig.backendUrl}/get-dataset?datasetId=${datasetId}&version=${datasetVersion}`,
+    );
+    return response.json();
 };
 
-export const createDataset = async (dataset: Dataset, serviceUrls: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return {
-            datasetId: '45FXCV1XV82ha29uBaGbRh',
-            status: 200,
-        };
-    }
-    const body = JSON.stringify({
-        dataset,
-    });
-    const response = await fetch(`${serviceUrls.backendUrl}/create-bibliography`, {
+export const fetchDatasetRecords = async (
+    datasetId: string,
+    datasetVersion: string,
+    serviceConfig: ServiceUrls,
+): Promise<any> => {
+    const response = await fetch(
+        `${serviceConfig.backendUrl}/get-dataset-records?datasetId=${datasetId}&version=${datasetVersion}`,
+    );
+    return response.json();
+};
+
+export const createDataset = async (userId: string, dataset: Dataset, serviceUrls: ServiceUrls): Promise<any> => {
+    const body = JSON.stringify(dataset);
+    const response = await fetch(`${serviceUrls.backendUrl}/create-dataset?username=${userId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -62,26 +61,21 @@ export const createDataset = async (dataset: Dataset, serviceUrls: ServiceUrls):
     if (!response.ok) {
         throw new Error(`Unexpected response: ${response.statusText}`);
     }
-    return response;
+    return response.json();
 };
 
-export const updateDataset = async (datasetId: string, dataset: Dataset, serviceUrls: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return {
-            datasetId: '45FXCV1XV82ha29uBaGbRh',
-            status: 200,
-        };
-    }
-
-    const body = JSON.stringify({
-        datasetId,
-        dataset,
-    });
-    const response = await fetch(`${serviceUrls.backendUrl}/update-bibliography}`, {
+export const updateDataset = async (
+    userId: string,
+    datasetId: string,
+    dataset: Dataset,
+    serviceUrls: ServiceUrls,
+): Promise<any> => {
+    const body = JSON.stringify(dataset);
+    const response = await fetch(`${serviceUrls.backendUrl}/update-dataset?username=${userId}&datasetId=${datasetId}`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
         },
         body,
     });
@@ -89,28 +83,21 @@ export const updateDataset = async (datasetId: string, dataset: Dataset, service
     if (!response.ok) {
         throw new Error(`Unexpected response: ${response.statusText}`);
     }
-    return response;
+    return response.json();
 };
 
-export const deleteDataset = async (datasetId: string, serviceUrls: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return {
-            datasetId: '45FXCV1XV82ha29uBaGbRh',
-            status: 200,
-        };
-    }
-
-    const body = JSON.stringify({
-        datasetId,
-    });
-    const response = await fetch(`${serviceUrls.backendUrl}/delete-bibliography}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
+export const deleteDataset = async (
+    userId: string,
+    datasetId: string,
+    datasetVersion: string,
+    serviceUrls: ServiceUrls,
+): Promise<any> => {
+    const response = await fetch(
+        `${serviceUrls.backendUrl}/delete-dataset?username=${userId}&datasetId=${datasetId}&version=${datasetVersion}`,
+        {
+            method: 'DELETE',
         },
-        body,
-    });
+    );
 
     if (!response.ok) {
         throw new Error(`Unexpected response: ${response.statusText}`);
@@ -125,7 +112,7 @@ export const fetchCitation = async (citationId: string, serviceConfig: ServiceUr
     }
 
     const response = await fetch(`${serviceConfig.backendUrl}/read-citation?citationId=${citationId}`);
-    return (await response.json()).data;
+    return response.json();
 };
 
 export const createCitation = async (citation: any, serviceUrls: ServiceUrls): Promise<any> => {

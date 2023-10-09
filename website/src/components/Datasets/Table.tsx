@@ -59,17 +59,17 @@ const headCells: readonly HeadCell[] = [
     {
         id: 'createdAt',
         numeric: false,
-        label: 'Created Date',
+        label: 'Last Updated',
     },
     {
-        id: 'datasetId',
+        id: 'datasetVersion',
         numeric: false,
-        label: 'Dataset ID',
+        label: 'Version',
     },
     {
         id: 'name',
         numeric: false,
-        label: 'Study Name',
+        label: 'Name',
     },
     {
         id: 'description',
@@ -126,11 +126,11 @@ const DatasetsTableHead = (props: DatasetsTableHeadProps) => {
 };
 
 type DatasetsTableProps = {
-    rows: Dataset[];
+    datasets: Dataset[];
 };
 
 const DatasetsTable = (props: DatasetsTableProps) => {
-    const { rows } = props;
+    const { datasets } = props;
 
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<keyof Dataset>('createdAt');
@@ -143,8 +143,8 @@ const DatasetsTable = (props: DatasetsTableProps) => {
         setOrderBy(property);
     };
 
-    const handleClick = (_: MouseEvent<unknown>, datasetId: string) => {
-        window.location.href = '/datasets/' + datasetId;
+    const handleClick = (_: MouseEvent<unknown>, datasetId: string, datasetVersion: string) => {
+        window.location.href = '/datasets/' + datasetId + '?version=' + datasetVersion;
     };
 
     const handleChangePage = (_: unknown, newPage: number) => {
@@ -157,12 +157,15 @@ const DatasetsTable = (props: DatasetsTableProps) => {
     };
 
     // Avoid a layout jump when reaching the last page with empty rows.
-    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - datasets.length) : 0;
 
     const visibleRows = useMemo(
         () =>
-            stableSort(rows, getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage),
-        [rows, order, orderBy, page, rowsPerPage],
+            stableSort(datasets, getComparator(order, orderBy)).slice(
+                page * rowsPerPage,
+                page * rowsPerPage + rowsPerPage,
+            ),
+        [datasets, order, orderBy, page, rowsPerPage],
     );
 
     const maxCellLength = 25;
@@ -176,6 +179,11 @@ const DatasetsTable = (props: DatasetsTableProps) => {
         return cell;
     };
 
+    const formatDate = (date: string) => {
+        const dateObj = new Date(date);
+        return dateObj.toLocaleDateString();
+    };
+
     return (
         <Box sx={{ width: '100%' }}>
             <Paper sx={{ width: '100%', mb: 2 }}>
@@ -185,24 +193,25 @@ const DatasetsTable = (props: DatasetsTableProps) => {
                             order={order}
                             orderBy={orderBy}
                             onRequestSort={handleRequestSort}
-                            rowCount={rows.length}
+                            rowCount={datasets.length}
                         />
                         <TableBody>
                             {visibleRows.map((row: Dataset, index: number) => {
-                                const labelId = `enhanced-table-checkbox-${index}`;
+                                const labelId = `table-row-${index}`;
 
                                 return (
                                     <TableRow
+                                        id={labelId}
                                         hover
-                                        onClick={(event) => handleClick(event, row.datasetId)}
+                                        onClick={(event) => handleClick(event, row.datasetId, row.datasetVersion)}
                                         role='checkbox'
                                         tabIndex={-1}
                                         key={row.datasetId}
                                         sx={{ cursor: 'pointer' }}
                                     >
-                                        <TableCell align='left'>{row.createdAt}</TableCell>
-                                        <TableCell component='th' id={labelId} scope='row'>
-                                            {truncateCell(row.datasetId)}
+                                        <TableCell align='left'>{formatDate(row.createdAt)}</TableCell>
+                                        <TableCell component='th' scope='row'>
+                                            {row.datasetVersion}
                                         </TableCell>
                                         <TableCell align='left'>{truncateCell(row.name)}</TableCell>
                                         <TableCell align='left'> {truncateCell(row.description)}</TableCell>
@@ -223,7 +232,7 @@ const DatasetsTable = (props: DatasetsTableProps) => {
                 <TablePagination
                     rowsPerPageOptions={[5, 10, 25]}
                     component='div'
-                    count={rows.length}
+                    count={datasets.length}
                     rowsPerPage={rowsPerPage}
                     page={page}
                     onPageChange={handleChangePage}

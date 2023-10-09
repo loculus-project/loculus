@@ -71,25 +71,18 @@ export type HeaderId = {
 export type Dataset = {
     datasetId: string;
     datasetDOI?: string;
+    datasetVersion: string;
     name: string;
     description?: string;
-    version: string;
-    createdBy: string;
     status: string;
     createdAt: string;
-    lastModifiedDate: string;
-    sequences?: DatasetAccession[];
+    createdBy: string;
 };
 
-export type DatasetAccession = {
-    sequenceId: string;
-    version?: number;
-    genbankAccession?: string;
-    sraAccession?: string;
-};
-
-export type DatasetAccessionResults = {
-    [key: string]: any;
+export type DatasetRecord = {
+    internalId?: string;
+    accession?: string;
+    type?: string;
 };
 
 export type AccessionCitation = {

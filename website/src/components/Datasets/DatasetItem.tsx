@@ -6,25 +6,19 @@ import { type FC, useState } from 'react';
 
 import { DatasetForm } from './DatasetForm';
 import { ExportDataset } from './ExportDataset';
-import { fetchDataset, deleteDataset } from './api';
+import { fetchDataset, fetchDatasetRecords, deleteDataset } from './api';
 import { clientLogger, fetchSequenceDetails } from '../../api';
-import type { Config, ClientConfig, DatasetAccession } from '../../types';
+import type { Config, ClientConfig } from '../../types';
 import { AlertDialog } from '../common/AlertDialog';
 import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
 import withQueryProvider from '../common/withQueryProvider';
 
-type DatasetItemProps = {
-    datasetId: string;
-    config: Config;
-    clientConfig: ClientConfig;
-    isAdminView?: boolean;
-};
-type SequencesTableProps = {
+type DatasetRecordsTableProps = {
     accessionQueries: UseQueryResult[];
 };
 
-const SequencesTable: FC<SequencesTableProps> = ({ accessionQueries }) => {
+const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ accessionQueries }) => {
     if (accessionQueries.length === 0) {
         return null;
     }
@@ -79,7 +73,21 @@ const SequencesTable: FC<SequencesTableProps> = ({ accessionQueries }) => {
     );
 };
 
-const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfig, isAdminView = false }) => {
+type DatasetItemProps = {
+    datasetId: string;
+    datasetVersion: string;
+    config: Config;
+    clientConfig: ClientConfig;
+    isAdminView?: boolean;
+};
+
+const DatasetItemInner: FC<DatasetItemProps> = ({
+    datasetId,
+    datasetVersion,
+    config,
+    clientConfig,
+    isAdminView = false,
+}) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
     const [doiDialogVisible, setDoiDialogVisible] = useState(false);
@@ -88,6 +96,9 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
 
     const [isErrorOpen, setIsErrorOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    // TODO: replace with actual user id
+    const userId = 'testuser';
 
     // TODO: centralize this into an ErrorBoundary component (react-error-boundary)
     const handleOpenError = (message: string) => {
@@ -99,14 +110,19 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
         setIsErrorOpen(false);
     };
 
-    const { data: dataset, isLoading: isLoadingDataset }: UseQueryResult = useQuery(['dataset', datasetId], () =>
-        fetchDataset(datasetId, clientConfig),
+    const { data: dataset, isLoading: isLoadingDataset }: UseQueryResult = useQuery(
+        ['dataset', datasetId, datasetVersion],
+        () => fetchDataset(datasetId, datasetVersion, clientConfig),
     );
 
-    const fetchAccessionDetails = async (sequence: DatasetAccession) => {
+    const { data: datasetRecords, isLoading: isLoadingDatasetRecords }: UseQueryResult = useQuery(
+        ['datasetRecords', datasetId, datasetVersion],
+        () => fetchDatasetRecords(datasetId, datasetVersion, clientConfig),
+    );
+
+    const fetchAccessionDetails = async (accession: string, type: string) => {
         let accessionConfig: Config = config;
-        let accession = sequence.genbankAccession ?? '';
-        if (sequence.sraAccession != null) {
+        if (type === 'SRA') {
             accessionConfig = {
                 ...config,
                 schema: {
@@ -114,7 +130,6 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
                     primaryKey: 'sraAccession',
                 },
             };
-            accession = sequence.sraAccession;
         }
         try {
             const response = await fetchSequenceDetails(accession, accessionConfig, clientConfig);
@@ -128,16 +143,16 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
 
     const accessionQueries = useQueries({
         queries:
-            dataset != null
-                ? dataset.sequences?.map((sequence) => ({
-                      queryKey: ['accessionDetails', sequence.sequenceId],
-                      queryFn: () => fetchAccessionDetails(sequence),
+            datasetRecords != null
+                ? datasetRecords.map((record) => ({
+                      queryKey: ['accessionDetails', record.accession, record.type],
+                      queryFn: () => fetchAccessionDetails(record.accession, record.type),
                   }))
                 : [],
     });
 
     const deleteDatasetMutation = useMutation({
-        mutationFn: () => deleteDataset(datasetId, clientConfig),
+        mutationFn: () => deleteDataset(userId, datasetId, datasetVersion, clientConfig),
     });
 
     const handleDeleteDataset = async () => {
@@ -159,6 +174,14 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
     // TODO: implement
     const handleCitationsClose = () => {
         return true;
+    };
+
+    const formatDate = (date?: string) => {
+        if (date == null) {
+            return null;
+        }
+        const dateObj = new Date(date);
+        return dateObj.toLocaleDateString();
     };
 
     return (
@@ -226,29 +249,25 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
                         <div></div>
                     </div>
                     <div>
-                        <h1 className='text-2xl font-semibold pb-8'>{dataset?.name}</h1>
+                        <h1 className='text-2xl font-semibold pb-8'>{dataset?.[0]?.name}</h1>
                     </div>
                     <hr />
                     <div className='flex flex-col my-4'>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Description: </p>
-                            <p className='text'>{dataset?.description ?? 'N/A'}</p>
+                            <p className='text'>{dataset?.[0]?.description ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Version: </p>
-                            <p className='text'>{dataset?.version ?? 'N/A'}</p>
+                            <p className='text'>{dataset?.[0]?.datasetVersion ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
-                            <p className='text'>{dataset?.createdAt ?? 'N/A'}</p>
-                        </div>
-                        <div className='flex flex-row'>
-                            <p className='mr-8 font-medium w-[150px] text-right'>Last Modified: </p>
-                            <p className='text'>{dataset?.lastModifiedDate ?? 'N/A'}</p>
+                            <p className='text'>{formatDate(dataset?.[0]?.createdAt) ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>DOI: </p>
-                            <p className='text'>{dataset?.datasetDOI ?? 'N/A'}</p>
+                            <p className='text'>{dataset?.[0]?.datasetDOI ?? 'N/A'}</p>
                             {dataset?.datasetDOI == null ? (
                                 <Link
                                     className='ml-2'
@@ -273,17 +292,27 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ datasetId, config, clientConfi
                             </Link>
                         </div>
                     </div>
-                    <div className='flex flex-col my-4'>
-                        <p className='text-xl py-4 font-semibold'>Sequences</p>
-                        <SequencesTable accessionQueries={accessionQueries} />
-                    </div>
+                    {isLoadingDatasetRecords ? (
+                        <CircularProgress />
+                    ) : (
+                        <div className='flex flex-col my-4'>
+                            <p className='text-xl py-4 font-semibold'>Sequences</p>
+                            <DatasetRecordsTable accessionQueries={accessionQueries} />
+                        </div>
+                    )}
                 </>
             )}
             <Modal isModalVisible={editModalVisible} setModalVisible={setEditModalVisible}>
-                <DatasetForm editDataset={dataset} config={config} clientConfig={clientConfig} />
+                <DatasetForm
+                    userId={userId}
+                    editDataset={dataset?.[0]}
+                    editDatasetRecords={datasetRecords}
+                    config={config}
+                    clientConfig={clientConfig}
+                />
             </Modal>
             <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
-                <ExportDataset dataset={dataset} accessionQueries={accessionQueries} />
+                <ExportDataset dataset={dataset?.[0]} accessionQueries={accessionQueries} />
             </Modal>
             <AlertDialog
                 isVisible={deleteDialogVisible}

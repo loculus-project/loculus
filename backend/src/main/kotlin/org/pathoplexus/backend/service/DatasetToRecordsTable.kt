@@ -14,7 +14,7 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
-object DatasetRecordsToSetsTable : Table("dataset_to_records") {
+object DatasetToRecordsTable : Table("dataset_to_records") {
     val datasetRecordId = long("dataset_record_id") references DatasetRecordsTable.datasetRecordId
     val datasetId = uuid("dataset_id") references DatasetsTable.datasetId
     val datasetVersion = long("dataset_version") references DatasetsTable.datasetVersion
