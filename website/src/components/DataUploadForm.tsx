@@ -29,11 +29,11 @@ custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`
                 : `
-sequenceId header	date	region	country	division	host
-1 custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-2 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-3 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-4 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
+sequenceId	header	date	region	country	division	host
+1	custom0	2020-11-26	Europe	Switzerland	Bern	Homo sapiens
+2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+4	custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
         const exampleSequenceContent = `
 >custom0
 ACTG
