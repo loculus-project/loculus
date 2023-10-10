@@ -29,14 +29,14 @@ export const fakeProcessingPipeline = async ({
                 main: 'NNNNNAATTCC...',
             },
             nucleotideInsertions: {
-                insertions: [],
+                insertions: ['123:TCTCT', '234:ATATAT'],
             },
-            alignedAminoAcidSequences: {
+            aminoAcidSequences: {
                 S: 'XXMSR...',
-                ORF1a: '...',
+                ORF1a: 'NRNR...',
             },
             aminoAcidInsertions: {
-                S: [],
+                S: ['123:NRNR'],
             },
         },
     };
