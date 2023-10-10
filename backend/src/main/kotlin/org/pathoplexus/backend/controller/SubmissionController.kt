@@ -225,9 +225,9 @@ class SubmissionController(
         consumes = [MediaType.APPLICATION_JSON_VALUE],
         produces = [MediaType.APPLICATION_JSON_VALUE],
     )
-    fun revokeData(
+    fun revoke(
         @RequestBody body: SequenceIdList,
-    ): List<SequenceVersionStatus> = databaseService.revokeData(body.sequenceIds)
+    ): List<SequenceVersionStatus> = databaseService.revoke(body.sequenceIds)
 
     @Operation(description = "Confirm revocation of sequence")
     @PostMapping(
