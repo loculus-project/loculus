@@ -1,6 +1,5 @@
 package org.pathoplexus.backend.service
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.Table

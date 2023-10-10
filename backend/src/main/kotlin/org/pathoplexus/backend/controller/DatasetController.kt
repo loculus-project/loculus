@@ -3,19 +3,19 @@ package org.pathoplexus.backend.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import org.pathoplexus.backend.service.Author
-import org.pathoplexus.backend.service.DatasetRecord
-import org.pathoplexus.backend.service.Dataset
-import org.pathoplexus.backend.service.SubmittedDataset
-import org.pathoplexus.backend.service.ResponseDataset
 import org.pathoplexus.backend.service.Citation
 import org.pathoplexus.backend.service.DatabaseService
+import org.pathoplexus.backend.service.Dataset
+import org.pathoplexus.backend.service.DatasetRecord
+import org.pathoplexus.backend.service.ResponseDataset
+import org.pathoplexus.backend.service.SubmittedDataset
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -29,8 +29,7 @@ class DatasetController(
         @RequestParam username: String,
         @RequestBody body: SubmittedDataset,
     ): ResponseDataset {
-        return databaseService.createDataset(
-            username, body.name, body.records, body.description)
+        return databaseService.createDataset(username, body.name, body.records, body.description)
     }
 
     @Operation(description = "Update a dataset with the specified data")
@@ -40,8 +39,7 @@ class DatasetController(
         @RequestParam datasetId: String,
         @RequestBody body: SubmittedDataset,
     ): ResponseDataset {
-        return databaseService.updateDataset(
-            username, datasetId, body.name, body.records, body.description)
+        return databaseService.updateDataset(username, datasetId, body.name, body.records, body.description)
     }
 
     @Operation(description = "Get a dataset")
@@ -84,7 +82,7 @@ class DatasetController(
     @PostMapping("/create-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createCitation(
         @RequestParam data: String,
-        @RequestParam type: String
+        @RequestParam type: String,
     ): Long {
         return databaseService.createCitation(data, type)
     }
@@ -102,7 +100,7 @@ class DatasetController(
     fun updateCitation(
         @RequestParam citationId: Long,
         @RequestParam date: String,
-        @RequestParam type: String
+        @RequestParam type: String,
     ) {
         return databaseService.updateCitation(citationId, date, type)
     }
@@ -110,18 +108,17 @@ class DatasetController(
     @Operation(description = "Delete a citation")
     @DeleteMapping("/delete-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteCitation(
-        @RequestParam citationId: Long
+        @RequestParam citationId: Long,
     ) {
         return databaseService.deleteCitation(citationId)
     }
-
 
     @Operation(description = "Create a new author with the specified data")
     @PostMapping("/create-author", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createAuthor(
         @RequestParam affiliation: String,
         @RequestParam email: String,
-        @RequestParam name: String
+        @RequestParam name: String,
     ): Long {
         return databaseService.createAuthor(affiliation, email, name)
     }
@@ -140,7 +137,7 @@ class DatasetController(
         @RequestParam authorId: Long,
         @RequestParam affiliation: String,
         @RequestParam email: String,
-        @RequestParam name: String
+        @RequestParam name: String,
     ) {
         return databaseService.updateAuthor(authorId, affiliation, email, name)
     }
@@ -148,7 +145,7 @@ class DatasetController(
     @Operation(description = "Delete an author")
     @DeleteMapping("/delete-author", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteAuthor(
-        @RequestParam authorId: Long
+        @RequestParam authorId: Long,
     ) {
         return databaseService.deleteAuthor(authorId)
     }

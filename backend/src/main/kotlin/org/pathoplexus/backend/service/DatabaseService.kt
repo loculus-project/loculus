@@ -6,28 +6,33 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.annotations.media.Schema
+import java.io.BufferedReader
+import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStream
+import java.sql.Timestamp
+import java.util.UUID
+import javax.sql.DataSource
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.toJavaLocalDateTime
-import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.Expression
-import org.jetbrains.exposed.sql.QueryParameter
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.booleanParam
+import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.or
+import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
@@ -38,13 +43,6 @@ import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.model.HeaderId
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.io.BufferedReader
-import java.io.InputStream
-import java.io.InputStreamReader
-import java.io.OutputStream
-import java.sql.Timestamp
-import javax.sql.DataSource
-import java.util.UUID
 
 private val log = KotlinLogging.logger { }
 
@@ -511,7 +509,7 @@ class DatabaseService(
         }
     }
 
-        fun submitReviewedSequence(submitter: String, reviewedSequenceVersion: UnprocessedData) {
+    fun submitReviewedSequence(submitter: String, reviewedSequenceVersion: UnprocessedData) {
         log.info { "reviewed sequence submitted $reviewedSequenceVersion" }
 
         val sequencesReviewed = SequencesTable.update(
@@ -670,7 +668,7 @@ class DatabaseService(
         datasetRecords: List<SubmittedDatasetRecord>,
         datasetDescription: String?,
     ): ResponseDataset {
-        log.info { "creating dataset ${datasetName}, user ${username}" }
+        log.info { "creating dataset $datasetName, user $username" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
@@ -710,13 +708,13 @@ class DatabaseService(
         datasetRecords: List<SubmittedDatasetRecord>,
         datasetDescription: String?,
     ): ResponseDataset {
-        log.info { "updating dataset ${datasetName}, user ${username}" }
+        log.info { "updating dataset $datasetName, user $username" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val maxVersion = DatasetsTable
             .slice(DatasetsTable.datasetVersion.max())
-            .select { DatasetsTable.datasetId eq UUID.fromString(datasetId)  }
+            .select { DatasetsTable.datasetId eq UUID.fromString(datasetId) }
             .firstOrNull()
             ?.get(DatasetsTable.datasetVersion.max())
 
@@ -768,57 +766,60 @@ class DatabaseService(
     }
 
     fun getDataSet(datasetId: String, version: Long?): List<Dataset> {
-        log.info { "Get dataset ${datasetId}, version ${version}" }
+        log.info { "Get dataset $datasetId, version $version" }
 
         var datasetList = mutableListOf<Dataset>()
 
         if (version == null) {
             var selectedDatasets = DatasetsTable
-                .select{
+                .select {
                     DatasetsTable.datasetId eq UUID.fromString(datasetId)
                 }
             selectedDatasets.forEach {
-                datasetList.add(Dataset(
-                    it[DatasetsTable.datasetId],
-                    it[DatasetsTable.datasetVersion],
-                    it[DatasetsTable.name],
-                    it[DatasetsTable.description],
-                    Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
-                    it[DatasetsTable.createdBy],
-                ))
+                datasetList.add(
+                    Dataset(
+                        it[DatasetsTable.datasetId],
+                        it[DatasetsTable.datasetVersion],
+                        it[DatasetsTable.name],
+                        it[DatasetsTable.description],
+                        Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                        it[DatasetsTable.createdBy],
+                    ),
+                )
             }
-        }
-        else {
+        } else {
             var selectedDataset = DatasetsTable
-                .select{
+                .select {
                     (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
-                    (DatasetsTable.datasetVersion eq version)
+                        (DatasetsTable.datasetVersion eq version)
                 }.singleOrNull()
 
             if (selectedDataset == null) {
                 throw IllegalArgumentException("Dataset set $datasetId does not exist")
             }
 
-            datasetList.add(Dataset(
-                selectedDataset[DatasetsTable.datasetId],
-                selectedDataset[DatasetsTable.datasetVersion],
-                selectedDataset[DatasetsTable.name],
-                selectedDataset[DatasetsTable.description],
-                Timestamp.valueOf(selectedDataset[DatasetsTable.createdAt].toJavaLocalDateTime()),
-                selectedDataset[DatasetsTable.createdBy]
-            ))
+            datasetList.add(
+                Dataset(
+                    selectedDataset[DatasetsTable.datasetId],
+                    selectedDataset[DatasetsTable.datasetVersion],
+                    selectedDataset[DatasetsTable.name],
+                    selectedDataset[DatasetsTable.description],
+                    Timestamp.valueOf(selectedDataset[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                    selectedDataset[DatasetsTable.createdBy],
+                ),
+            )
         }
         return datasetList
     }
 
     fun getDatasetRecords(datasetId: String, version: Long?): List<DatasetRecord> {
-        log.info { "Get dataset records ${datasetId}, version ${version}" }
+        log.info { "Get dataset records $datasetId, version $version" }
 
         var selectedVersion = version
         if (selectedVersion == null) {
             selectedVersion = DatasetsTable
                 .slice(DatasetsTable.datasetVersion.max())
-                .select { DatasetsTable.datasetId eq UUID.fromString(datasetId)  }
+                .select { DatasetsTable.datasetId eq UUID.fromString(datasetId) }
                 .singleOrNull()?.get(DatasetsTable.datasetVersion)
         }
         if (selectedVersion == null) {
@@ -827,9 +828,9 @@ class DatabaseService(
 
         var selectedDatasetRecords = DatasetToRecordsTable
             .innerJoin(DatasetRecordsTable)
-            .select{
+            .select {
                 (DatasetToRecordsTable.datasetId eq UUID.fromString(datasetId)) and
-                (DatasetToRecordsTable.datasetVersion eq selectedVersion)
+                    (DatasetToRecordsTable.datasetVersion eq selectedVersion)
             }
             .map {
                 DatasetRecord(
@@ -845,17 +846,19 @@ class DatabaseService(
     fun getDatasets(username: String): List<Dataset> {
         var datasetList = mutableListOf<Dataset>()
         var selectedDatasets = DatasetsTable
-            .select{ DatasetsTable.createdBy eq username }
+            .select { DatasetsTable.createdBy eq username }
 
         selectedDatasets.forEach {
-            datasetList.add(Dataset(
-                it[DatasetsTable.datasetId],
-                it[DatasetsTable.datasetVersion],
-                it[DatasetsTable.name],
-                it[DatasetsTable.description],
-                Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
-                it[DatasetsTable.createdBy],
-            ))
+            datasetList.add(
+                Dataset(
+                    it[DatasetsTable.datasetId],
+                    it[DatasetsTable.datasetVersion],
+                    it[DatasetsTable.name],
+                    it[DatasetsTable.description],
+                    Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                    it[DatasetsTable.createdBy],
+                ),
+            )
         }
         return datasetList
     }
@@ -863,8 +866,8 @@ class DatabaseService(
     fun deleteDataset(username: String, _datasetId: String, _version: Long) {
         DatasetsTable.deleteWhere {
             (datasetId eq UUID.fromString(_datasetId)) and
-            (datasetVersion eq _version) and
-            (createdBy eq username)
+                (datasetVersion eq _version) and
+                (createdBy eq username)
         }
     }
 
@@ -888,18 +891,20 @@ class DatabaseService(
         var citationList = mutableListOf<Citation>()
         var selectedCitations = CitationsTable
             .select(
-                where = { CitationsTable.citationId eq citationId }
+                where = { CitationsTable.citationId eq citationId },
             )
         var selectedCitation = selectedCitations.single()
-        citationList.add(Citation(
-            selectedCitation[CitationsTable.citationId],
-            selectedCitation[CitationsTable.data],
-            selectedCitation[CitationsTable.type],
-            Timestamp.valueOf(selectedCitation[CitationsTable.createdAt].toJavaLocalDateTime()),
-            selectedCitation[CitationsTable.createdBy],
-            Timestamp.valueOf(selectedCitation[CitationsTable.updatedAt].toJavaLocalDateTime()),
-            selectedCitation[CitationsTable.updatedBy]
-        ))
+        citationList.add(
+            Citation(
+                selectedCitation[CitationsTable.citationId],
+                selectedCitation[CitationsTable.data],
+                selectedCitation[CitationsTable.type],
+                Timestamp.valueOf(selectedCitation[CitationsTable.createdAt].toJavaLocalDateTime()),
+                selectedCitation[CitationsTable.createdBy],
+                Timestamp.valueOf(selectedCitation[CitationsTable.updatedAt].toJavaLocalDateTime()),
+                selectedCitation[CitationsTable.updatedBy],
+            ),
+        )
 
         return citationList
     }
@@ -909,7 +914,7 @@ class DatabaseService(
 
         CitationsTable
             .update(
-                where = { CitationsTable.citationId eq citationId }
+                where = { CitationsTable.citationId eq citationId },
             ) {
                 it[data] = _data
                 it[type] = _type
@@ -943,19 +948,21 @@ class DatabaseService(
         var authorList = mutableListOf<Author>()
         var selectedAuthors = AuthorsTable
             .select(
-                where = { AuthorsTable.authorId eq authorId }
+                where = { AuthorsTable.authorId eq authorId },
             )
         var selectedAuthor = selectedAuthors.single()
-        authorList.add(Author(
-            selectedAuthor[AuthorsTable.authorId],
-            selectedAuthor[AuthorsTable.affiliation],
-            selectedAuthor[AuthorsTable.email],
-            selectedAuthor[AuthorsTable.name],
-            Timestamp.valueOf(selectedAuthor[AuthorsTable.createdAt].toJavaLocalDateTime()),
-            selectedAuthor[AuthorsTable.createdBy],
-            Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
-            selectedAuthor[AuthorsTable.updatedBy]
-        ))
+        authorList.add(
+            Author(
+                selectedAuthor[AuthorsTable.authorId],
+                selectedAuthor[AuthorsTable.affiliation],
+                selectedAuthor[AuthorsTable.email],
+                selectedAuthor[AuthorsTable.name],
+                Timestamp.valueOf(selectedAuthor[AuthorsTable.createdAt].toJavaLocalDateTime()),
+                selectedAuthor[AuthorsTable.createdBy],
+                Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
+                selectedAuthor[AuthorsTable.updatedBy],
+            ),
+        )
         return authorList
     }
 
@@ -964,7 +971,7 @@ class DatabaseService(
 
         AuthorsTable
             .update(
-                where = { AuthorsTable.authorId eq authorId }
+                where = { AuthorsTable.authorId eq authorId },
             ) {
                 it[affiliation] = _affiliation
                 it[email] = _email

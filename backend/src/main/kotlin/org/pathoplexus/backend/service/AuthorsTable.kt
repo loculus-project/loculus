@@ -27,6 +27,6 @@ object AuthorsTable : Table("authors") {
     val updatedAt = datetime("updated_at")
     val updatedBy = varchar("updated_by", 255)
     val metadata = jacksonSerializableJsonb<JsonNode>("metadata").nullable()
-    
+
     override val primaryKey = PrimaryKey(authorId)
 }

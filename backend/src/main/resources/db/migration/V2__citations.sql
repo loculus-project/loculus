@@ -1,5 +1,4 @@
 -- CitationController
-
 create table datasets (
        dataset_id uuid not null,
        dataset_version int8 not null,
