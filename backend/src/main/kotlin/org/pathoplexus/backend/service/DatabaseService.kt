@@ -30,6 +30,7 @@ import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.ForbiddenException
+import org.pathoplexus.backend.controller.NotFoundException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.model.HeaderId
 import org.springframework.stereotype.Service
@@ -259,7 +260,6 @@ class DatabaseService(
                 },
             )
 
-        log.error { sequencesOwnedByUser.map { it.toString() } + " " + sequenceIds.size.toLong() }
         return sequencesOwnedByUser.count() == sequenceIds.size.toLong()
     }
 
@@ -301,7 +301,9 @@ class DatabaseService(
             .slice(
                 SequencesTable.sequenceId,
                 SequencesTable.version,
+                SequencesTable.status,
                 SequencesTable.processedData,
+                SequencesTable.originalData,
                 SequencesTable.errors,
                 SequencesTable.warnings,
             )
@@ -312,10 +314,12 @@ class DatabaseService(
                         (SequencesTable.submitter eq submitter)
                 },
             ).limit(numberOfSequences).map { row ->
-                SubmittedProcessedData(
+                SequenceReview(
                     row[SequencesTable.sequenceId],
                     row[SequencesTable.version],
+                    Status.fromString(row[SequencesTable.status]),
                     row[SequencesTable.processedData]!!,
+                    row[SequencesTable.originalData]!!,
                     row[SequencesTable.errors],
                     row[SequencesTable.warnings],
                 )
@@ -569,17 +573,116 @@ class DatabaseService(
         }
         throw Exception("SequenceReview: Unknown error")
     }
+
+    fun getReviewData(submitter: String, sequenceId: Long, version: Long): SequenceReview {
+        log.info { "Getting Sequence $sequenceId.$version that needs review by $submitter" }
+
+        val selectedSequences = SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.processedData,
+                SequencesTable.originalData,
+                SequencesTable.errors,
+                SequencesTable.warnings,
+                SequencesTable.status,
+            )
+            .select(
+                where = {
+                    (
+                        (SequencesTable.status eq Status.NEEDS_REVIEW.name)
+                            or (SequencesTable.status eq Status.PROCESSED.name)
+                        ) and
+                        (SequencesTable.sequenceId eq sequenceId) and
+                        (SequencesTable.version eq version) and
+                        (SequencesTable.submitter eq submitter)
+                },
+            )
+
+        if (selectedSequences.count().toInt() != 1) {
+            handleGetReviewDataError(submitter, sequenceId, version)
+        }
+
+        return selectedSequences.first().let {
+            SequenceReview(
+                it[SequencesTable.sequenceId],
+                it[SequencesTable.version],
+                Status.fromString(it[SequencesTable.status]),
+                it[SequencesTable.processedData]!!,
+                it[SequencesTable.originalData]!!,
+                it[SequencesTable.errors],
+                it[SequencesTable.warnings],
+            )
+        }
+    }
+
+    private fun handleGetReviewDataError(submitter: String, sequenceId: Long, version: Long): Nothing {
+        val sequenceVersion = "$sequenceId.$version"
+
+        val selectedSequences = SequencesTable
+            .slice(
+                SequencesTable.sequenceId,
+                SequencesTable.version,
+                SequencesTable.status,
+            )
+            .select(
+                where = {
+                    (SequencesTable.sequenceId eq sequenceId) and
+                        (SequencesTable.version eq version)
+                },
+            )
+
+        if (selectedSequences.count().toInt() == 0) {
+            throw NotFoundException("Sequence version $sequenceVersion does not exist")
+        }
+
+        val selectedSequence = selectedSequences.first()
+
+        val hasCorrectStatus =
+            (selectedSequence[SequencesTable.status] == Status.PROCESSED.name) ||
+                (selectedSequence[SequencesTable.status] == Status.NEEDS_REVIEW.name)
+
+        if (!hasCorrectStatus) {
+            throw UnprocessableEntityException(
+                "Sequence version $sequenceVersion is in not in state ${Status.NEEDS_REVIEW.name} or " +
+                    "${Status.PROCESSED.name} (was ${selectedSequence[SequencesTable.status]})",
+            )
+        }
+
+        if (!hasPermissionToChange(submitter, listOf(sequenceId))) {
+            throw ForbiddenException(
+                "Sequence $sequenceVersion is not owned by user $submitter",
+            )
+        }
+
+        throw RuntimeException("Get review data: Unexpected error for sequence version $sequenceVersion")
+    }
 }
 
 data class SubmittedProcessedData(
     val sequenceId: Long,
     val version: Long,
     val data: ProcessedData,
-    @Schema(description = "The preprocessing will be considered failed if this is not empty")
+    @Schema(description = "The processing failed due to these errors.")
     val errors: List<PreprocessingAnnotation>? = null,
     @Schema(
         description =
         "Issues where data is not necessarily wrong, but the submitter might want to look into those warnings.",
+    )
+    val warnings: List<PreprocessingAnnotation>? = null,
+)
+
+data class SequenceReview(
+    val sequenceId: Long,
+    val version: Long,
+    val status: Status,
+    val data: ProcessedData,
+    val originalData: OriginalData,
+    @Schema(description = "The preprocessing will be considered failed if this is not empty")
+    val errors: List<PreprocessingAnnotation>? = null,
+    @Schema(
+        description =
+        "Issues where data is not necessarily wrong, but the user might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
 )

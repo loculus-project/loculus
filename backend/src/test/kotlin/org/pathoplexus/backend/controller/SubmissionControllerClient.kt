@@ -48,6 +48,19 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .param("username", userName),
         )
 
+    fun getSequenceThatNeedsReview(sequenceId: Long, version: Long, userName: String): ResultActions =
+        mockMvc.perform(
+            get("/get-data-to-review/$sequenceId/$version")
+                .param("username", userName),
+        )
+
+    fun getNumberOfSequencesThatNeedReview(userName: String, numberOfSequences: Int): ResultActions =
+        mockMvc.perform(
+            get("/get-data-to-review")
+                .param("username", userName)
+                .param("numberOfSequences", numberOfSequences.toString()),
+        )
+
     fun submitReviewedSequence(userName: String, reviewedData: UnprocessedData): ResultActions {
         return mockMvc.perform(
             post("/submit-reviewed-sequence")

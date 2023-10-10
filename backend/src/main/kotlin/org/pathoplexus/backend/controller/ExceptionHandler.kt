@@ -50,7 +50,19 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
+    @ExceptionHandler(NotFoundException::class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    fun handleNotFoundException(e: NotFoundException): ResponseEntity<ProblemDetail> {
+        log.warn(e) { "Caught not found exception: ${e.message}" }
+
+        return responseEntity(
+            HttpStatus.NOT_FOUND,
+            e.message,
+        )
+    }
+
     @ExceptionHandler(ForbiddenException::class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleForbiddenException(e: ForbiddenException): ResponseEntity<ProblemDetail> {
         log.warn(e) { "Caught forbidden exception: ${e.message}" }
         return responseEntity(
@@ -83,3 +95,4 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
 class BadRequestException(message: String, override val cause: Throwable? = null) : RuntimeException(message)
 class ForbiddenException(message: String) : RuntimeException(message)
 class UnprocessableEntityException(message: String) : RuntimeException(message)
+class NotFoundException(message: String) : RuntimeException(message)
