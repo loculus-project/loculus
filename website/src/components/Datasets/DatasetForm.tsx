@@ -77,12 +77,12 @@ export const DatasetForm: FC<DatasetFormProps> = ({
     };
 
     const createDatasetMutation = useMutation({
-        mutationFn: (dataset: Partial<Dataset>) => createDataset(userId, dataset ?? {}, clientConfig),
+        mutationFn: (dataset: Partial<Dataset>) => createDataset(userId, dataset, clientConfig),
     });
 
     const updateDatasetMutation = useMutation({
         mutationFn: (dataset: Partial<Dataset>) =>
-            updateDataset(userId, editDataset?.datasetId ?? '', dataset ?? {}, clientConfig),
+            updateDataset(userId, editDataset?.datasetId ?? '', dataset, clientConfig),
     });
 
     const handleSubmit = async (event: FormEvent) => {

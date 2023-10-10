@@ -65,6 +65,7 @@ export type HeaderId = {
 };
 
 export type SequenceDetails = {
+    [otherDetails: string | number | symbol]: unknown;
     genbankAccession?: string;
     sraAccession?: string;
     gisaidEpiIsl?: string;
@@ -76,7 +77,6 @@ export type SequenceDetails = {
     region?: string;
     host?: string;
     database?: string;
-    [otherFields: string | number | symbol]: unknown;
 };
 
 /**

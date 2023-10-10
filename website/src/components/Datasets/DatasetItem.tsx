@@ -251,26 +251,25 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                         <div></div>
                     </div>
                     <div>
-                        <h1 className='text-2xl font-semibold pb-8'>{dataset?.name}</h1>
+                        <h1 className='text-2xl font-semibold pb-8'>{dataset.name}</h1>
                     </div>
                     <hr />
                     <div className='flex flex-col my-4'>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Description: </p>
-                            <p className='text'>{dataset?.description ?? 'N/A'}</p>
+                            <p className='text'>{dataset.description ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Version: </p>
-                            <p className='text'>{dataset?.datasetVersion ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
-                            <p className='text'>{formatDate(dataset?.createdAt) ?? 'N/A'}</p>
+                            <p className='text'>{formatDate(dataset.createdAt) ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>DOI: </p>
-                            <p className='text'>{dataset?.datasetDOI ?? 'N/A'}</p>
-                            {dataset?.datasetDOI == null ? (
+                            <p className='text'>{dataset.datasetDOI ?? 'N/A'}</p>
+                            {dataset.datasetDOI == null ? (
                                 <Link
                                     className='ml-2'
                                     component='button'

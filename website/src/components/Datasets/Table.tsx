@@ -20,12 +20,6 @@ const getComparator = <Key extends keyof any>(
     orderBy: Key,
 ): ((a: { [key in Key]: number | string }, b: { [key in Key]: number | string }) => number) => {
     const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) => {
-        if (b[orderBy] == null) {
-            return -1;
-        }
-        if (a[orderBy] == null) {
-            return 1;
-        }
         if (b[orderBy] < a[orderBy]) {
             return -1;
         }
@@ -227,9 +221,7 @@ const DatasetsTable = (props: DatasetsTableProps) => {
                                         </TableCell>
                                         <TableCell align='left'>{truncateCell(row.name as string)}</TableCell>
                                         <TableCell align='left'> {truncateCell(row.description as string)}</TableCell>
-                                        <TableCell align='left'>
-                                            {row.datasetDOI == null ? 'N/A' : row.datasetDOI}
-                                        </TableCell>
+                                        <TableCell align='left'>N/A</TableCell>
                                     </TableRow>
                                 );
                             })}
