@@ -2,8 +2,14 @@ package org.pathoplexus.backend.service
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.core.JacksonException
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.Clock
@@ -33,6 +39,7 @@ import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.NotFoundException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.model.HeaderId
+import org.springframework.boot.jackson.JsonComponent
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
@@ -687,6 +694,10 @@ data class SequenceReview(
     val warnings: List<PreprocessingAnnotation>? = null,
 )
 
+typealias SegmentName = String
+typealias GeneName = String
+typealias NucleotideSequence = String
+typealias AminoAcidSequence = String
 data class ProcessedData(
     @Schema(
         example = """{"date": "2020-01-01", "country": "Germany", "age": 42, "qc": 0.95}""",
@@ -697,8 +708,63 @@ data class ProcessedData(
         example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
-    val unalignedNucleotideSequences: Map<String, String>,
+    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
+    @Schema(
+        example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
+        description = "The key is the segment name, the value is the aligned nucleotide sequence",
+    )
+    val alignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
+    @Schema(
+        example = """{"segment1": ["123:GTCA", "345:AAAA"], "segment2": "[123:GTCA", "345:AAAA"]}""",
+        description = "The key is the segment name, the value is a list of nucleotide insertions",
+    )
+    val nucleotideInsertions: Map<SegmentName, List<Insertion>>,
+    @Schema(
+        example = """{"gene1": "NRNR", "gene2": "NRNR"}""",
+        description = "The key is the gene name, the value is the amino acid sequence",
+    )
+    val aminoAcidSequences: Map<GeneName, AminoAcidSequence>,
+    @Schema(
+        example = """{"gene1": ["123:RRN", "345:NNN"], "gene2": ["123:NNR", "345:RN"]}""",
+        description = "The key is the gene name, the value is a list of amino acid insertions",
+    )
+    val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
 )
+
+data class Insertion(
+    @Schema(example = "123", description = "Position in the sequence where the insertion starts")
+    val position: Int,
+    @Schema(example = "GTCA", description = "Inserted sequence")
+    val sequence: String,
+) {
+    companion object {
+        fun fromString(insertionString: String): Insertion {
+            val parts = insertionString.split(":")
+            if (parts.size != 2) {
+                throw IllegalArgumentException("Invalid insertion string: $insertionString")
+            }
+            return Insertion(parts[0].toInt(), parts[1])
+        }
+    }
+
+    override fun toString(): String {
+        return "$position:$sequence"
+    }
+}
+
+@JsonComponent
+class InsertionDeserializer : JsonDeserializer<Insertion>() {
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Insertion {
+        return Insertion.fromString(p.valueAsString)
+    }
+}
+
+@JsonComponent
+class InsertionSerializer : JsonSerializer<Insertion>() {
+    override fun serialize(value: Insertion, gen: JsonGenerator, serializers: SerializerProvider) {
+        gen.writeString(value.toString())
+    }
+}
 
 data class PreprocessingAnnotation(
     val source: List<PreprocessingAnnotationSource>,

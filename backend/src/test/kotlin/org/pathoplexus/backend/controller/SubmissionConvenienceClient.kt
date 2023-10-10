@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.SequenceReview
 import org.pathoplexus.backend.service.SequenceVersionStatus
+import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -39,6 +40,14 @@ class SubmissionConvenienceClient(
     fun extractUnprocessedData(numberOfSequences: Int = SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES) =
         client.extractUnprocessedData(numberOfSequences)
             .expectNdjsonAndGetContent<UnprocessedData>()
+
+    fun prepareDatabaseWith(
+        vararg processedData: SubmittedProcessedData,
+    ) {
+        submitDefaultFiles()
+        awaitResponse(client.extractUnprocessedData(SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES).andReturn())
+        client.submitProcessedData(*processedData)
+    }
 
     fun getSequencesOfUser(userName: String = USER_NAME): List<SequenceVersionStatus> {
         return deserializeJsonResponse(client.getSequencesOfUser(userName))

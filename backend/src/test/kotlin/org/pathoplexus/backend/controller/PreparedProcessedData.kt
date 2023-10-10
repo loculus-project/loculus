@@ -6,10 +6,15 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.service.AminoAcidSequence
+import org.pathoplexus.backend.service.GeneName
+import org.pathoplexus.backend.service.Insertion
+import org.pathoplexus.backend.service.NucleotideSequence
 import org.pathoplexus.backend.service.PreprocessingAnnotation
 import org.pathoplexus.backend.service.PreprocessingAnnotationSource
 import org.pathoplexus.backend.service.PreprocessingAnnotationSourceType
 import org.pathoplexus.backend.service.ProcessedData
+import org.pathoplexus.backend.service.SegmentName
 import org.pathoplexus.backend.service.SubmittedProcessedData
 
 private val defaultProcessedData = ProcessedData(
@@ -23,7 +28,23 @@ private val defaultProcessedData = ProcessedData(
         "pangoLineage" to TextNode("XBB.1.5"),
     ),
     unalignedNucleotideSequences = mapOf(
-        "main" to "NNNNNN",
+        "main" to "NNACTGNN",
+    ),
+    alignedNucleotideSequences = mapOf(
+        "main" to "ACTG",
+    ),
+    nucleotideInsertions = mapOf(
+        "main" to listOf(
+            Insertion(123, "ACTG"),
+        ),
+    ),
+    aminoAcidSequences = mapOf(
+        "ORF1a" to "RNRNRN",
+    ),
+    aminoAcidInsertions = mapOf(
+        "ORF1a" to listOf(
+            Insertion(123, "RNRNRN"),
+        ),
     ),
 )
 
@@ -39,6 +60,19 @@ object PreparedProcessedData {
     fun successfullyProcessed(sequenceId: Long = DefaultFiles.firstSequence) =
         defaultSuccessfulSubmittedData.withValues(
             sequenceId = sequenceId,
+        )
+
+    fun withMetadataAndNucleotideSequence(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        metadata: Map<String, JsonNode>,
+        unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
+    ) =
+        defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(
+                metadata = metadata,
+                unalignedNucleotideSequences = unalignedNucleotideSequences,
+            ),
         )
 
     fun withNullForFields(sequenceId: Long = DefaultFiles.firstSequence, fields: List<String>) =
@@ -163,8 +197,16 @@ fun SubmittedProcessedData.withValues(
 
 fun ProcessedData.withValues(
     metadata: Map<String, JsonNode>? = null,
-    unalignedNucleotideSequences: Map<String, String>? = null,
+    unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>? = null,
+    alignedNucleotideSequences: Map<SegmentName, NucleotideSequence>? = null,
+    nucleotideInsertions: Map<SegmentName, List<Insertion>>? = null,
+    aminoAcidSequences: Map<GeneName, AminoAcidSequence>? = null,
+    aminoAcidInsertions: Map<GeneName, List<Insertion>>? = null,
 ) = ProcessedData(
     metadata = metadata ?: this.metadata,
     unalignedNucleotideSequences = unalignedNucleotideSequences ?: this.unalignedNucleotideSequences,
+    alignedNucleotideSequences = alignedNucleotideSequences ?: this.alignedNucleotideSequences,
+    nucleotideInsertions = nucleotideInsertions ?: this.nucleotideInsertions,
+    aminoAcidSequences = aminoAcidSequences ?: this.aminoAcidSequences,
+    aminoAcidInsertions = aminoAcidInsertions ?: this.aminoAcidInsertions,
 )

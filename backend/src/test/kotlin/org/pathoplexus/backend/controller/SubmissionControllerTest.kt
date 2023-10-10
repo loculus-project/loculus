@@ -1,5 +1,6 @@
 package org.pathoplexus.backend.controller
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.assertj.core.api.Assertions.assertThat
@@ -10,7 +11,6 @@ import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.Status
-import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -54,28 +54,8 @@ class SubmissionControllerTest(
     fun `approving of processed data`() {
         val sequencesThatAreProcessed = listOf(1)
         submitInitialData()
-        awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
-        submitProcessedData(
-            """
-            {
-              "sequenceId": 1,
-              "version": 1,
-              "errors": [],
-              "warnings": [],
-              "data": {
-                "metadata": {
-                  "date": "2002-12-15",
-                  "host": "Homo sapiens",
-                  "region": "Europe",
-                  "country": "Spain",
-                  "division": "Schaffhausen",
-                  "pangoLineage": "XBB.1.5"
-                },
-                "unalignedNucleotideSequences": { "main": "NNNNNNNNNNNNNNNN" }
-              }
-            }
-        """.replace(Regex("\\s"), ""),
-        ) // TODO(#311) replace this JSON by a method in PreparedProcessedData
+        val rawUnprocessedSequences = awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
+        submitProcessedData(dummyPreprocessing(rawUnprocessedSequences))
 
         approveProcessedSequences(sequencesThatAreProcessed)
 
@@ -87,10 +67,13 @@ class SubmissionControllerTest(
         submitInitialData()
         expectStatusInResponse(querySequenceList(), NUMBER_OF_SEQUENCES, Status.RECEIVED.name)
 
-        val testData = expectLinesInResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES), NUMBER_OF_SEQUENCES)
+        val rawUnprocessedData = expectLinesInResponse(
+            queryUnprocessedSequences(NUMBER_OF_SEQUENCES),
+            NUMBER_OF_SEQUENCES,
+        )
         expectStatusInResponse(querySequenceList(), NUMBER_OF_SEQUENCES, Status.PROCESSING.name)
 
-        submitProcessedData(testData)
+        submitProcessedData(dummyPreprocessing(rawUnprocessedData))
         expectStatusInResponse(querySequenceList(), NUMBER_OF_SEQUENCES, Status.PROCESSED.name)
 
         approveProcessedSequences(DefaultFiles.allSequenceIds)
@@ -378,27 +361,28 @@ class SubmissionControllerTest(
 
     private fun prepareDataToSiloReady() {
         submitInitialData()
-
-        // TODO(#306) refactor this to use the client and make it less messy
         val rawUnprocessedData = awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
-        val lines = rawUnprocessedData.lines()
-        val resultOfDummyPreprocessingPipeline = lines
+        submitProcessedData(dummyPreprocessing(rawUnprocessedData))
+        approveProcessedSequences(DefaultFiles.allSequenceIds)
+    }
+
+    // TODO: Remove this function when all tests are migrated to the new format (with client)
+    private fun dummyPreprocessing(rawUnprocessedData: String) =
+        rawUnprocessedData.lines()
+            .asSequence()
             .filter { it.isNotBlank() }
             .map { objectMapper.readValue<UnprocessedData>(it) }
             .map {
-                SubmittedProcessedData(
+                PreparedProcessedData.withMetadataAndNucleotideSequence(
                     it.sequenceId,
-                    it.version,
-                    data = objectMapper.readValue(objectMapper.writeValueAsString(it.data)),
-                    errors = null,
-                    warnings = null,
+                    metadata = objectMapper.readValue<Map<String, JsonNode>>(
+                        objectMapper.writeValueAsString(it.data.metadata),
+                    ),
+                    it.data.unalignedNucleotideSequences,
                 )
             }
             .map { objectMapper.writeValueAsString(it) }
-
-        submitProcessedData(resultOfDummyPreprocessingPipeline.joinToString("\n"))
-        approveProcessedSequences(DefaultFiles.allSequenceIds)
-    }
+            .joinToString("\n")
 
     private fun awaitResponse(result: MvcResult): String {
         await().until {
