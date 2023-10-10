@@ -64,6 +64,21 @@ export type HeaderId = {
     customId: string;
 };
 
+export type SequenceDetails = {
+    genbankAccession?: string;
+    sraAccession?: string;
+    gisaidEpiIsl?: string;
+    strain?: string;
+    date?: string;
+    year?: number;
+    month?: number;
+    dateSubmitted?: string;
+    region?: string;
+    host?: string;
+    database?: string;
+    [otherFields: string | number | symbol]: unknown;
+};
+
 /**
  * Types for datasets and citations.
  **/
@@ -77,6 +92,7 @@ export type Dataset = {
     status: string;
     createdAt: string;
     createdBy: string;
+    records?: DatasetRecord[];
 };
 
 export type DatasetRecord = {

@@ -8,6 +8,7 @@ const withQueryProvider = (WrappedComponent: FC<any>) => {
             defaultOptions: {
                 queries: {
                     refetchOnWindowFocus: false,
+                    retry: 0,
                 },
             },
         });

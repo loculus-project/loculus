@@ -20,6 +20,12 @@ const getComparator = <Key extends keyof any>(
     orderBy: Key,
 ): ((a: { [key in Key]: number | string }, b: { [key in Key]: number | string }) => number) => {
     const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) => {
+        if (b[orderBy] == null) {
+            return -1;
+        }
+        if (a[orderBy] == null) {
+            return 1;
+        }
         if (b[orderBy] < a[orderBy]) {
             return -1;
         }
@@ -159,14 +165,18 @@ const DatasetsTable = (props: DatasetsTableProps) => {
     // Avoid a layout jump when reaching the last page with empty rows.
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - datasets.length) : 0;
 
-    const visibleRows = useMemo(
-        () =>
-            stableSort(datasets, getComparator(order, orderBy)).slice(
-                page * rowsPerPage,
-                page * rowsPerPage + rowsPerPage,
-            ),
-        [datasets, order, orderBy, page, rowsPerPage],
-    );
+    const visibleRows = useMemo(() => {
+        const strRepresentation = (value: any) => {
+            if (value == null) {
+                return '';
+            }
+            return value.toString();
+        };
+        return stableSort(strRepresentation(datasets), getComparator(order, orderBy)).slice(
+            page * rowsPerPage,
+            page * rowsPerPage + rowsPerPage,
+        );
+    }, [datasets, order, orderBy, page, rowsPerPage]);
 
     const maxCellLength = 25;
     const truncateCell = (cell: string | undefined) => {
@@ -196,36 +206,38 @@ const DatasetsTable = (props: DatasetsTableProps) => {
                             rowCount={datasets.length}
                         />
                         <TableBody>
-                            {visibleRows.map((row: Dataset, index: number) => {
+                            {visibleRows.map((row, index: number) => {
                                 const labelId = `table-row-${index}`;
 
                                 return (
                                     <TableRow
                                         id={labelId}
                                         hover
-                                        onClick={(event) => handleClick(event, row.datasetId, row.datasetVersion)}
+                                        onClick={(event) =>
+                                            handleClick(event, row.datasetId as string, row.datasetVersion as string)
+                                        }
                                         role='checkbox'
                                         tabIndex={-1}
                                         key={row.datasetId}
                                         sx={{ cursor: 'pointer' }}
                                     >
-                                        <TableCell align='left'>{formatDate(row.createdAt)}</TableCell>
+                                        <TableCell align='left'>{formatDate(row.createdAt as string)}</TableCell>
                                         <TableCell component='th' scope='row'>
                                             {row.datasetVersion}
                                         </TableCell>
-                                        <TableCell align='left'>{truncateCell(row.name)}</TableCell>
-                                        <TableCell align='left'> {truncateCell(row.description)}</TableCell>
+                                        <TableCell align='left'>{truncateCell(row.name as string)}</TableCell>
+                                        <TableCell align='left'> {truncateCell(row.description as string)}</TableCell>
                                         <TableCell align='left'>
                                             {row.datasetDOI == null ? 'N/A' : row.datasetDOI}
                                         </TableCell>
                                     </TableRow>
                                 );
                             })}
-                            {emptyRows > 0 && (
-                                <TableRow height={53 * emptyRows}>
+                            {emptyRows > 0 ? (
+                                <TableRow sx={{ height: 53 * emptyRows }}>
                                     <TableCell colSpan={6} />
                                 </TableRow>
-                            )}
+                            ) : null}
                         </TableBody>
                     </Table>
                 </TableContainer>

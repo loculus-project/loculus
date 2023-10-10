@@ -7,7 +7,7 @@ import { type FC, useState } from 'react';
 import { DatasetForm } from './DatasetForm';
 import DatasetsTable from './Table';
 import { fetchAuthorDatasets } from './api';
-import type { Config, ClientConfig } from '../../types';
+import type { Config, ClientConfig, Dataset } from '../../types';
 import Modal from '../common/Modal';
 import withQueryProvider from '../common/withQueryProvider';
 
@@ -21,8 +21,9 @@ const DatasetListInner: FC<DatasetListProps> = ({ config, clientConfig }) => {
 
     // TODO: replace with actual user id
     const userId = 'testuser';
-    const { data: datasets, isLoading: isLoadingDatasets }: UseQueryResult = useQuery(['datasets', userId], () =>
-        fetchAuthorDatasets(userId, clientConfig),
+    const { data: datasets, isLoading: isLoadingDatasets }: UseQueryResult<Dataset[]> = useQuery(
+        ['datasets', userId],
+        () => fetchAuthorDatasets(userId, clientConfig),
     );
 
     return (
@@ -37,7 +38,7 @@ const DatasetListInner: FC<DatasetListProps> = ({ config, clientConfig }) => {
                 <div>
                     {isLoadingDatasets ? (
                         <CircularProgress />
-                    ) : datasets != null && datasets.length > 0 ? (
+                    ) : datasets != null && datasets?.length > 0 ? (
                         <DatasetsTable datasets={datasets} />
                     ) : (
                         'You have no datasets yet.'

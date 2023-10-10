@@ -47,12 +47,14 @@ const UserCitationsInner: FC<Props> = ({ userId, clientConfig }) => {
         };
     };
 
-    const citationData = isLoadingCitationData ? null : transformCitationData(userCitations);
+    const citationData = isLoadingCitationData
+        ? null
+        : transformCitationData(userCitations as DatasetCitationResults[]);
 
     return (
         <div>
             <h1 className='text-2xl font-medium pb-8'>Cited By</h1>
-            {isLoadingCitationData ? (
+            {isLoadingCitationData || citationData == null ? (
                 <CircularProgress />
             ) : (
                 <CitationPlot xData={citationData.xData} yData={citationData.yData} />

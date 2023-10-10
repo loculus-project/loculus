@@ -1,20 +1,9 @@
-import { expect, test, testDatasetId } from '../../e2e.fixture';
+import { expect, test, testDataset } from '../../e2e.fixture';
 
 test.describe('The datasets list page', () => {
-    test('displays list of datasets in table', async ({ datasetPage }) => {
-        await datasetPage.gotoList();
-        await expect(datasetPage.page.getByRole('table')).toBeVisible();
-    });
-
-    test('displays dataset details on clicking row', async ({ datasetPage }) => {
-        await datasetPage.gotoList();
-        await expect(datasetPage.page.getByText('g5VZLR5PDcZYnyWV8v35BT')).toBeVisible();
-
-        await expect(async () => {
-            await datasetPage.page.getByText(testDatasetId).click();
-            await datasetPage.waitForLoad();
-            await expect(datasetPage.page.getByRole('heading', { name: 'Dataset study name 1' })).toBeVisible();
-        }).toPass();
+    test('allows successfully creating dataset', async ({ datasetPage }) => {
+        // Note: this test validates before/after hooks in e2e.fixture.ts
+        await expect(datasetPage.page.getByText(testDataset?.name)).toBeVisible();
     });
 
     test('displays create dataset icon and opens modal on click', async ({ datasetPage }) => {
@@ -26,5 +15,24 @@ test.describe('The datasets list page', () => {
             await datasetPage.waitForLoad();
             await expect(datasetPage.page.getByText('Create Dataset')).toBeVisible();
         }).toPass();
+    });
+
+    test('displays list of datasets in table', async ({ datasetPage }) => {
+        await datasetPage.gotoList();
+        await expect(datasetPage.page.getByRole('table')).toBeVisible();
+    });
+
+    test('displays dataset details on clicking row', async ({ datasetPage }) => {
+        await datasetPage.createTestDataset();
+        await datasetPage.gotoList();
+        await expect(async () => {
+            await datasetPage.page
+                .getByText(testDataset?.name)
+                .first()
+                .click();
+            await datasetPage.waitForLoad();
+            await expect(datasetPage.page.getByRole('heading', { name: testDataset?.name })).toBeVisible();
+        }).toPass();
+        await datasetPage.deleteLastDataset();
     });
 });

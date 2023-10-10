@@ -8,14 +8,14 @@ import { DatasetForm } from './DatasetForm';
 import { ExportDataset } from './ExportDataset';
 import { fetchDataset, fetchDatasetRecords, deleteDataset } from './api';
 import { clientLogger, fetchSequenceDetails } from '../../api';
-import type { Config, ClientConfig } from '../../types';
+import type { Config, ClientConfig, SequenceDetails, DatasetRecord, Dataset } from '../../types';
 import { AlertDialog } from '../common/AlertDialog';
 import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
 import withQueryProvider from '../common/withQueryProvider';
 
 type DatasetRecordsTableProps = {
-    accessionQueries: UseQueryResult[];
+    accessionQueries: UseQueryResult<any>[];
 };
 
 const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ accessionQueries }) => {
@@ -110,12 +110,12 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
         setIsErrorOpen(false);
     };
 
-    const { data: dataset, isLoading: isLoadingDataset }: UseQueryResult = useQuery(
-        ['dataset', datasetId, datasetVersion],
+    const { data: datasets, isLoading: isLoadingDataset }: UseQueryResult<Dataset[]> = useQuery(
+        ['datasets', datasetId, datasetVersion],
         () => fetchDataset(datasetId, datasetVersion, clientConfig),
     );
 
-    const { data: datasetRecords, isLoading: isLoadingDatasetRecords }: UseQueryResult = useQuery(
+    const { data: datasetRecords, isLoading: isLoadingDatasetRecords }: UseQueryResult<DatasetRecord[]> = useQuery(
         ['datasetRecords', datasetId, datasetVersion],
         () => fetchDatasetRecords(datasetId, datasetVersion, clientConfig),
     );
@@ -132,7 +132,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
             };
         }
         try {
-            const response = await fetchSequenceDetails(accession, accessionConfig, clientConfig);
+            const response: SequenceDetails[] = await fetchSequenceDetails(accession, accessionConfig, clientConfig);
             await clientLogger.info(`fetchSequenceDetails succeeded for ${accession}`);
             return response;
         } catch (error) {
@@ -144,9 +144,9 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     const accessionQueries = useQueries({
         queries:
             datasetRecords != null
-                ? datasetRecords.map((record) => ({
+                ? datasetRecords.map((record: DatasetRecord) => ({
                       queryKey: ['accessionDetails', record.accession, record.type],
-                      queryFn: () => fetchAccessionDetails(record.accession, record.type),
+                      queryFn: () => fetchAccessionDetails(record.accession ?? '', record.type ?? ''),
                   }))
                 : [],
     });
@@ -162,7 +162,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
             location.href = '/datasets';
             return;
         }
-        handleOpenError(`fetchSequenceDetails failed with error' + ${(error as Error).message}`);
+        handleOpenError(`fetchSequenceDetails failed with error' + ${(response as Error).message}`);
         await clientLogger.error(`deleteDataset failed with error' + ${(response as Error).message}`);
     };
 
@@ -184,10 +184,12 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
         return dateObj.toLocaleDateString();
     };
 
+    const dataset = datasets?.[0];
+
     return (
         <div className='flex flex-col items-left'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
-            {isLoadingDataset ? (
+            {isLoadingDataset || dataset == null ? (
                 <CircularProgress />
             ) : (
                 <>
@@ -249,25 +251,25 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                         <div></div>
                     </div>
                     <div>
-                        <h1 className='text-2xl font-semibold pb-8'>{dataset?.[0]?.name}</h1>
+                        <h1 className='text-2xl font-semibold pb-8'>{dataset?.name}</h1>
                     </div>
                     <hr />
                     <div className='flex flex-col my-4'>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Description: </p>
-                            <p className='text'>{dataset?.[0]?.description ?? 'N/A'}</p>
+                            <p className='text'>{dataset?.description ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Version: </p>
-                            <p className='text'>{dataset?.[0]?.datasetVersion ?? 'N/A'}</p>
+                            <p className='text'>{dataset?.datasetVersion ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
-                            <p className='text'>{formatDate(dataset?.[0]?.createdAt) ?? 'N/A'}</p>
+                            <p className='text'>{formatDate(dataset?.createdAt) ?? 'N/A'}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>DOI: </p>
-                            <p className='text'>{dataset?.[0]?.datasetDOI ?? 'N/A'}</p>
+                            <p className='text'>{dataset?.datasetDOI ?? 'N/A'}</p>
                             {dataset?.datasetDOI == null ? (
                                 <Link
                                     className='ml-2'
@@ -300,41 +302,41 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                             <DatasetRecordsTable accessionQueries={accessionQueries} />
                         </div>
                     )}
+                    <Modal isModalVisible={editModalVisible} setModalVisible={setEditModalVisible}>
+                        <DatasetForm
+                            userId={userId}
+                            editDataset={dataset}
+                            editDatasetRecords={datasetRecords}
+                            config={config}
+                            clientConfig={clientConfig}
+                        />
+                    </Modal>
+                    <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
+                        <ExportDataset dataset={dataset} accessionQueries={accessionQueries} />
+                    </Modal>
+                    <AlertDialog
+                        isVisible={deleteDialogVisible}
+                        setVisible={setDeleteDialogVisible}
+                        title='Delete Dataset'
+                        description='Are you sure you want to delete this dataset?'
+                        onAccept={handleDeleteDataset}
+                    />
+                    <AlertDialog
+                        isVisible={doiDialogVisible}
+                        setVisible={setDoiDialogVisible}
+                        title='Generate a DOI'
+                        description='This feature is under development and will be available soon!'
+                        onAccept={handleCreateDOI}
+                    />
+                    <AlertDialog
+                        isVisible={citationsDialogVisible}
+                        setVisible={setCitationsDialogVisible}
+                        title='Citations'
+                        description='This feature is under development and will be available soon!'
+                        onAccept={handleCitationsClose}
+                    />
                 </>
             )}
-            <Modal isModalVisible={editModalVisible} setModalVisible={setEditModalVisible}>
-                <DatasetForm
-                    userId={userId}
-                    editDataset={dataset?.[0]}
-                    editDatasetRecords={datasetRecords}
-                    config={config}
-                    clientConfig={clientConfig}
-                />
-            </Modal>
-            <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
-                <ExportDataset dataset={dataset?.[0]} accessionQueries={accessionQueries} />
-            </Modal>
-            <AlertDialog
-                isVisible={deleteDialogVisible}
-                setVisible={setDeleteDialogVisible}
-                title='Delete Dataset'
-                description='Are you sure you want to delete this dataset?'
-                onAccept={handleDeleteDataset}
-            />
-            <AlertDialog
-                isVisible={doiDialogVisible}
-                setVisible={setDoiDialogVisible}
-                title='Generate a DOI'
-                description='This feature is under development and will be available soon!'
-                onAccept={handleCreateDOI}
-            />
-            <AlertDialog
-                isVisible={citationsDialogVisible}
-                setVisible={setCitationsDialogVisible}
-                title='Citations'
-                description='This feature is under development and will be available soon!'
-                onAccept={handleCitationsClose}
-            />
         </div>
     );
 };

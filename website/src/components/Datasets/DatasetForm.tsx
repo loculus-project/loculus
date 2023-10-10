@@ -6,7 +6,7 @@ import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormHelperText from '@mui/material/FormHelperText';
 import TextField from '@mui/material/TextField';
-import { useQueries, useMutation } from '@tanstack/react-query';
+import { useQueries, useMutation, type UseQueryResult } from '@tanstack/react-query';
 import { type FC, type FormEvent, useState, useEffect } from 'react';
 
 import { createDataset, updateDataset } from './api';
@@ -77,11 +77,12 @@ export const DatasetForm: FC<DatasetFormProps> = ({
     };
 
     const createDatasetMutation = useMutation({
-        mutationFn: (dataset) => createDataset(userId, dataset, clientConfig),
+        mutationFn: (dataset: Partial<Dataset>) => createDataset(userId, dataset ?? {}, clientConfig),
     });
 
     const updateDatasetMutation = useMutation({
-        mutationFn: (dataset) => updateDataset(userId, editDataset?.datasetId, dataset, clientConfig),
+        mutationFn: (dataset: Partial<Dataset>) =>
+            updateDataset(userId, editDataset?.datasetId ?? '', dataset ?? {}, clientConfig),
     });
 
     const handleSubmit = async (event: FormEvent) => {
@@ -183,7 +184,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({
         return () => clearTimeout(timeOutId);
     }, [sraAccessionsInput, genbankAccessionsInput]);
 
-    const genBankQueries = useQueries(
+    const genBankQueries: UseQueryResult<DatasetRecord>[] = useQueries(
         parsedGenbankAccessions.length === 0
             ? {
                   queries: [],
@@ -197,7 +198,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({
               },
     );
 
-    const sraQueries = useQueries(
+    const sraQueries: UseQueryResult<DatasetRecord>[] = useQueries(
         parsedSraAccessions.length === 0
             ? {
                   queries: [],
@@ -217,10 +218,10 @@ export const DatasetForm: FC<DatasetFormProps> = ({
 
         // TODO: improve this code to not rely on failure message (via queryCache?)
         const accessionQuery = accessionQueries.find(
-            (accessionQuery) =>
+            (accessionQuery: any) =>
                 accessionQuery.data?.[accessionKey] === accession ||
-                (accessionQuery.failureReason != null &&
-                    accessionQuery.failureReason.message === `No sequence details found for accession: ${accession}`),
+                (accessionQuery?.failureReason != null &&
+                    accessionQuery?.failureReason?.message === `No sequence details found for accession: ${accession}`),
         );
 
         if (!accessionQuery || accessionQuery.isLoading) {
@@ -276,7 +277,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                     <div className='mb-4'>
                         <FormControl variant='outlined' fullWidth>
                             <TextField
-                                id='accession-input'
+                                id='genbank-accession-input'
                                 label='GenBank accessions'
                                 fullWidth
                                 multiline
@@ -294,7 +295,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                     </div>
                     <FormControl variant='outlined' fullWidth>
                         <TextField
-                            id='accession-input'
+                            id='sra-accession-input'
                             label='SRA run accessions'
                             fullWidth
                             multiline

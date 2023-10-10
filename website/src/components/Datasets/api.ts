@@ -1,9 +1,9 @@
 import { mockDatasetAggCitations, mockUserAggCitations } from './mockData';
-import type { ServiceUrls, Dataset } from '../../types';
+import type { ServiceUrls, Dataset, DatasetRecord, DatasetCitationResults } from '../../types';
 
 const USE_MOCK_DATA = true;
 
-export const fetchAuthorDatasets = async (userId: string, serviceConfig: ServiceUrls): Promise<any> => {
+export const fetchAuthorDatasets = async (userId: string, serviceConfig: ServiceUrls): Promise<Dataset[]> => {
     const response = await fetch(`${serviceConfig.backendUrl}/get-datasets-of-user?username=${userId}`);
     return response.json();
 };
@@ -17,7 +17,10 @@ export const fetchAuthorMetadata = async (userId: string, serviceConfig: Service
     return response.json();
 };
 
-export const fetchAuthorCitations = async (userId: string, serviceConfig: ServiceUrls): Promise<any> => {
+export const fetchAuthorCitations = async (
+    userId: string,
+    serviceConfig: ServiceUrls,
+): Promise<DatasetCitationResults[]> => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (USE_MOCK_DATA) {
         return mockUserAggCitations;
@@ -30,7 +33,7 @@ export const fetchDataset = async (
     datasetId: string,
     datasetVersion: string,
     serviceConfig: ServiceUrls,
-): Promise<any> => {
+): Promise<Dataset[]> => {
     const response = await fetch(
         `${serviceConfig.backendUrl}/get-dataset?datasetId=${datasetId}&version=${datasetVersion}`,
     );
@@ -41,14 +44,18 @@ export const fetchDatasetRecords = async (
     datasetId: string,
     datasetVersion: string,
     serviceConfig: ServiceUrls,
-): Promise<any> => {
+): Promise<DatasetRecord[]> => {
     const response = await fetch(
         `${serviceConfig.backendUrl}/get-dataset-records?datasetId=${datasetId}&version=${datasetVersion}`,
     );
     return response.json();
 };
 
-export const createDataset = async (userId: string, dataset: Dataset, serviceUrls: ServiceUrls): Promise<any> => {
+export const createDataset = async (
+    userId: string,
+    dataset: Partial<Dataset>,
+    serviceUrls: ServiceUrls,
+): Promise<any> => {
     const body = JSON.stringify(dataset);
     const response = await fetch(`${serviceUrls.backendUrl}/create-dataset?username=${userId}`, {
         method: 'POST',
@@ -67,7 +74,7 @@ export const createDataset = async (userId: string, dataset: Dataset, serviceUrl
 export const updateDataset = async (
     userId: string,
     datasetId: string,
-    dataset: Dataset,
+    dataset: Partial<Dataset>,
     serviceUrls: ServiceUrls,
 ): Promise<any> => {
     const body = JSON.stringify(dataset);
