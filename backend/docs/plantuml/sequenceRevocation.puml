@@ -6,7 +6,7 @@
     frontend -> backend: wants to revoke already processed sequence
 
      alt sequenceID exists and highest version is 'SILO_READY'
-        backend -> DB: insert new version\nwith status 'REVISION_STAGING' \nand ' is_revoked = true'
+        backend -> DB: insert new version\nwith status 'REVISION_STAGING' \nand ' is_revocation = true'
     backend -> frontend: response with sequenceId + new version number
     else
         backend -> frontend: response with error message

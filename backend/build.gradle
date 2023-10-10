@@ -15,7 +15,7 @@ version = '0.0.1'
 
 java {
     sourceCompatibility = '20'
-	targetCompatibility = '20'
+    targetCompatibility = '20'
 }
 
 repositories {
@@ -55,5 +55,7 @@ tasks.named('test') {
 }
 
 tasks.named('bootBuildImage') {
-    environment = ["BP_JVM_VERSION": "20"]
+    environment["BP_JVM_VERSION"] = "20"
+    // https://paketo.io/docs/howto/configuration/
+    environment["BPE_SPRING_PROFILES_ACTIVE"] = "docker"
 }

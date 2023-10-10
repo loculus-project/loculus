@@ -12,8 +12,8 @@ export const fakeProcessingPipeline = async ({
     const body = {
         sequenceId,
         version,
-        errors: error ? [{ source: { fieldName: 'host', type: 'metadata' }, message: 'Not this kind of host' }] : [],
-        warnings: [{ source: { fieldName: 'all', type: 'all' }, message: '"There is no warning"-warning' }],
+        errors: error ? [{ source: [{ name: 'host', type: 'Metadata' }], message: 'Not this kind of host' }] : [],
+        warnings: [{ source: [{ name: 'date', type: 'Metadata' }], message: '"There is no warning"-warning' }],
         data: {
             metadata: {
                 date: '2002-12-15',
@@ -49,7 +49,8 @@ export const fakeProcessingPipeline = async ({
         body: JSON.stringify(body),
     });
     if (!response.ok) {
-        throw new Error(`Unexpected response: ${response.statusText}`);
+        const body = await response.text();
+        throw new Error(`Unexpected response with status '${response.statusText}': ${body}`);
     }
 };
 

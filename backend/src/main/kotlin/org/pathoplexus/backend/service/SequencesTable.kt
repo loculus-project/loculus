@@ -1,6 +1,5 @@
 package org.pathoplexus.backend.service
 
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.Table
@@ -24,12 +23,12 @@ object SequencesTable : Table("sequences") {
     val startedProcessingAt = datetime("started_processing_at").nullable()
     val finishedProcessingAt = datetime("finished_processing_at").nullable()
     val status = varchar("status", 255)
-    val revoked = bool("revoked").default(false)
+    val isRevocation = bool("is_revocation").default(false)
     val originalData =
         jacksonSerializableJsonb<OriginalData>("original_data").nullable()
-    val processedData = jacksonSerializableJsonb<JsonNode>("processed_data").nullable()
-    val errors = jacksonSerializableJsonb<JsonNode>("errors").nullable()
-    val warnings = jacksonSerializableJsonb<JsonNode>("warnings").nullable()
+    val processedData = jacksonSerializableJsonb<ProcessedData>("processed_data").nullable()
+    val errors = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
+    val warnings = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
 
     override val primaryKey = PrimaryKey(sequenceId, version)
 }

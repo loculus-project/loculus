@@ -2,6 +2,7 @@ package org.pathoplexus.backend.controller
 
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
 import org.pathoplexus.backend.service.Status
 import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,79 +12,62 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @EndpointTest
 class SubmitReviewEndpoint(
     @Autowired val client: SubmissionControllerClient,
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
     fun `GIVEN a sequence needs review WHEN I submit a reviewed sequence THEN the status changes to REVIEWED`() {
-        client.submitDefaultFiles()
+        convenienceClient.submitDefaultFiles()
         awaitResponse(client.extractUnprocessedData(NUMBER_OF_SEQUENCES).andReturn())
 
-        client.submitProcessedData(processedInputDataFromFile("error_feedback"))
+        client.submitProcessedData(PreparedProcessedData.withErrors())
 
-        expectStatusInResponse(
-            client.getSequencesOfUser(),
-            1,
-            Status.NEEDS_REVIEW.name,
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.NEEDS_REVIEW)
+
+        val reviewedData = UnprocessedData(
+            sequenceId = 1,
+            version = 1,
+            data = emptyOriginalData,
         )
-
-        val reviewedData =
-            UnprocessedData(
-                sequenceId = 1,
-                version = 1,
-                data = emptyOriginalData,
-            )
-
         client.submitReviewedSequence(USER_NAME, reviewedData)
             .andExpect(status().isOk())
 
-        expectStatusInResponse(
-            client.getSequencesOfUser(),
-            1,
-            Status.REVIEWED.name,
-        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.REVIEWED)
     }
 
     @Test
     fun `GIVEN a sequence is processed WHEN I submit a review to that sequence THEN the status changes to REVIEWED`() {
-        client.submitDefaultFiles()
+        convenienceClient.submitDefaultFiles()
         awaitResponse(client.extractUnprocessedData(NUMBER_OF_SEQUENCES).andReturn())
 
-        client.submitProcessedData(processedInputDataFromFile("no_validation_errors"))
+        client.submitProcessedData(PreparedProcessedData.successfullyProcessed())
 
-        expectStatusInResponse(
-            client.getSequencesOfUser(),
-            1,
-            Status.PROCESSED.name,
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.PROCESSED)
+
+        val reviewedData = UnprocessedData(
+            sequenceId = 1,
+            version = 1,
+            data = emptyOriginalData,
         )
-
-        val reviewedData =
-            UnprocessedData(
-                sequenceId = 1,
-                version = 1,
-                data = emptyOriginalData,
-            )
 
         client.submitReviewedSequence(USER_NAME, reviewedData)
             .andExpect(status().isOk())
 
-        expectStatusInResponse(
-            client.getSequencesOfUser(),
-            1,
-            Status.REVIEWED.name,
-        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.REVIEWED)
     }
 
     @Test
     fun `WHEN a version does not exist THEN it returns an unprocessable entity error`() {
-        client.submitDefaultFiles()
+        convenienceClient.submitDefaultFiles()
         awaitResponse(client.extractUnprocessedData(NUMBER_OF_SEQUENCES).andReturn())
 
-        client.submitProcessedData(processedInputDataFromFile("error_feedback"))
+        client.submitProcessedData(PreparedProcessedData.withErrors())
 
-        expectStatusInResponse(
-            client.getSequencesOfUser(),
-            1,
-            Status.NEEDS_REVIEW.name,
-        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.NEEDS_REVIEW)
 
         val reviewedDataWithNonExistingVersion =
             UnprocessedData(
@@ -104,16 +88,13 @@ class SubmitReviewEndpoint(
 
     @Test
     fun `WHEN a sequenceId does not exist THEN it returns an unprocessable entity error`() {
-        client.submitDefaultFiles()
+        convenienceClient.submitDefaultFiles()
         awaitResponse(client.extractUnprocessedData(NUMBER_OF_SEQUENCES).andReturn())
 
-        client.submitProcessedData(processedInputDataFromFile("error_feedback"))
+        client.submitProcessedData(PreparedProcessedData.withErrors())
 
-        expectStatusInResponse(
-            client.getSequencesOfUser(),
-            1,
-            Status.NEEDS_REVIEW.name,
-        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.NEEDS_REVIEW)
 
         val reviewedDataWithNonExistingSequenceId = UnprocessedData(
             sequenceId = 2,
@@ -131,25 +112,19 @@ class SubmitReviewEndpoint(
                 ),
             )
 
-        expectStatusInResponse(
-            client.getSequencesOfUser(),
-            0,
-            Status.REVIEWED.name,
-        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.NEEDS_REVIEW)
     }
 
     @Test
     fun `WHEN a sequenceId does not belong to a user THEN it returns an forbidden error`() {
-        client.submitDefaultFiles()
+        convenienceClient.submitDefaultFiles()
         awaitResponse(client.extractUnprocessedData(NUMBER_OF_SEQUENCES).andReturn())
 
-        client.submitProcessedData(processedInputDataFromFile("error_feedback"))
+        client.submitProcessedData(PreparedProcessedData.withErrors())
 
-        expectStatusInResponse(
-            client.getSequencesOfUser(),
-            1,
-            Status.NEEDS_REVIEW.name,
-        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.NEEDS_REVIEW)
 
         val reviewedDataFromWrongSubmitter =
             UnprocessedData(
@@ -169,10 +144,7 @@ class SubmitReviewEndpoint(
                 ),
             )
 
-        expectStatusInResponse(
-            client.getSequencesOfUser(),
-            0,
-            Status.REVIEWED.name,
-        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.NEEDS_REVIEW)
     }
 }

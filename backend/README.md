@@ -18,17 +18,20 @@ BACKEND_IMAGE=doesNotMatter WEBSITE_IMAGE=doesNotMatter docker compose up databa
 
 ### Starting the backend
 
-The database connection is configured via
+The backend is configured via
 [Spring properties](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config)
-that need to be passed on startup:
-
-* Via command line argument (also see docker-compose.yml): 
+that need to be passed on startup, e.g. via command line argument (also see docker-compose.yml).
+You need to set:
+* the database URL, username and password:
 ```
 --spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus
 --spring.datasource.username=postgres
 --spring.datasource.password=unsecure
 ```
-* Via environment variable: `SPRING_APPLICATION_JSON='{"spring":{"datasource":{"url":"jdbc:postgresql://0.0.0.0:5432/pathoplexus", "username":"postgres", "password":"unsecure"}}}'`
+* the path to the config file:
+```
+--backend.config.path=src/test/resources/config.json
+```
 
 We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
 
@@ -36,7 +39,7 @@ The service listens, by default, to **port 8079**: <http://localhost:8079/swagge
 
 #### Start from command line: 
 ```bash
-./gradlew bootRun --args='--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus --spring.datasource.username=postgres --spring.datasource.password=unsecure'
+./gradlew bootRun --args='--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus --spring.datasource.username=postgres --spring.datasource.password=unsecure --backend.config.path=src/test/resources/config.json'
 ```
 
 #### Start from docker-compose

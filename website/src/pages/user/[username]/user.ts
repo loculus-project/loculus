@@ -66,9 +66,9 @@ export const getUserSequences = async (name: string): Promise<UserSequenceRespon
             sequences: (await mySequencesResponse.json()) as SequenceStatus[],
         };
     } catch (error) {
-        logger.error(
-            `Failed to fetch user sequences from ${mySequencesQuery} with error '${(error as Error).message}'`,
-        );
+        const errorDetails = error instanceof Error ? `'${error.message}', cause '${error.cause}'` : `'${error}'`;
+
+        logger.error(`Failed to fetch user sequences from ${mySequencesQuery} with error ${errorDetails}`);
         return {
             responseStatus: ResponseStatus.ERROR,
             sequences: [],

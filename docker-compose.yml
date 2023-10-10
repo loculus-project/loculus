@@ -2,6 +2,7 @@ version: '3'
 services:
   website:
     image: ${WEBSITE_IMAGE}
+    init: true
     ports:
       - "3000:3000"
     volumes:
@@ -22,6 +23,7 @@ services:
       --spring.datasource.password=unsecure
     volumes:
       - ./log:/workspace/log
+      - ./website/tests/config/config.json:/workspace/config.json
 
   database:
     image: postgres:latest

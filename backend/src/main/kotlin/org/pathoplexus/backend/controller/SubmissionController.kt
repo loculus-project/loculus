@@ -3,7 +3,6 @@ package org.pathoplexus.backend.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
-import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.servlet.http.HttpServletRequest
@@ -15,10 +14,11 @@ import org.pathoplexus.backend.model.SubmitModel
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.FileData
 import org.pathoplexus.backend.service.OriginalData
-import org.pathoplexus.backend.service.SequenceVersion
+import org.pathoplexus.backend.service.SequenceReview
+import org.pathoplexus.backend.service.SequenceValidation
 import org.pathoplexus.backend.service.SequenceVersionStatus
+import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
-import org.pathoplexus.backend.service.ValidationResult
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -27,6 +27,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
@@ -64,6 +65,19 @@ private const val SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION =
         "'REVIEWED' and it will be processed by the next pipeline run."
 
 private const val MAX_EXTRACTED_SEQUENCES = 100_000L
+
+private const val SUBMIT_PROCESSED_DATA_DESCRIPTION = """
+Submit processed data as a stream of NDJSON. The schema is to be understood per line of the NDJSON stream. 
+This endpoint performs some server side validation and returns the validation result for every submitted sequence.
+Any server side validation errors will be appended to the 'errors' field of the sequence.
+On a technical error, this endpoint will roll back all previously inserted data.
+"""
+private const val SUBMIT_PROCESSED_DATA_RESPONSE_DESCRIPTION = "Contains an entry for every submitted sequence."
+
+private const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
+On sequence version that cannot be written to the database, e.g. if the sequence id does not exist.
+Rolls back the whole transaction.
+"""
 
 @RestController
 @Validated
@@ -115,34 +129,23 @@ class SubmissionController(
     }
 
     @Operation(
-        description = "Submit processed data as a stream of NDJSON",
+        description = SUBMIT_PROCESSED_DATA_DESCRIPTION,
         requestBody = SwaggerRequestBody(
             content = [
                 Content(
                     mediaType = MediaType.APPLICATION_NDJSON_VALUE,
-                    schema = Schema(implementation = SequenceVersion::class),
-                    examples = [
-                        ExampleObject(
-                            name = "Example for submitting processed sequences. \n" +
-                                " NOTE: Due to formatting issues with swagger, remove all newlines from the example.",
-                            value = """{"sequenceId":"4","version":"1",data":{"date":"2020-12-25","host":"Homo sapiens","region":"Europe","country":"Switzerland","division":"Schaffhausen", "nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
-                            summary = "Processed data (remove all newlines from the example)",
-                        ),
-                        ExampleObject(
-                            name = "Example for submitting processed sequences with errors. \n" +
-                                " NOTE: Due to formatting issues with swagger, remove all newlines from the example.",
-                            value = """{"sequenceId":"4","version":"1","data":{"errors":[{"field":"host",message:"Not that kind of host"}],"date":"2020-12-25","host":"google.com","region":"Europe","country":"Switzerland","division":"Schaffhausen", "nucleotideSequences":{"main":"NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNAGATC..."}}}""", // ktlint-disable max-line-length
-                            summary = "Processed data with errors (remove all newlines from the example)",
-                        ),
-                    ],
+                    schema = Schema(implementation = SubmittedProcessedData::class),
                 ),
             ],
         ),
     )
+    @ApiResponse(responseCode = "200", description = SUBMIT_PROCESSED_DATA_RESPONSE_DESCRIPTION)
+    @ApiResponse(responseCode = "400", description = "On invalid NDJSON line. Rolls back the whole transaction.")
+    @ApiResponse(responseCode = "422", description = SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION)
     @PostMapping("/submit-processed-data", consumes = [MediaType.APPLICATION_NDJSON_VALUE])
     fun submitProcessedData(
         request: HttpServletRequest,
-    ): List<ValidationResult> {
+    ): List<SequenceValidation> {
         return databaseService.updateProcessedData(request.inputStream)
     }
 
@@ -162,21 +165,33 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Operation(description = "Get data with errors to review as a stream of NDJSON")
+    @Operation(description = "Get processed sequence data with errors to review as a stream of NDJSON")
     @GetMapping("/get-data-to-review", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReviewNeededData(
-        @RequestParam submitter: String,
-        @RequestParam numberOfSequences: Int,
+        @RequestParam username: String,
+        @Max(
+            value = MAX_EXTRACTED_SEQUENCES,
+            message = "You can extract at max $MAX_EXTRACTED_SEQUENCES sequences at once.",
+        )
+        numberOfSequences: Int,
     ): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamReviewNeededSubmissions(submitter, numberOfSequences, outputStream)
+            databaseService.streamReviewNeededSubmissions(username, numberOfSequences, outputStream)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
+
+    @Operation(description = "Get processed sequence data with errors to review for a single sequence id ")
+    @GetMapping("/get-data-to-review/{sequenceId}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getSequenceThatNeedsReview(
+        @PathVariable sequenceId: Long,
+        @PathVariable version: Long,
+        @RequestParam username: String,
+    ): SequenceReview = databaseService.getReviewData(username, sequenceId, version)
 
     @Operation(
         description = SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION,
@@ -225,9 +240,9 @@ class SubmissionController(
         consumes = [MediaType.APPLICATION_JSON_VALUE],
         produces = [MediaType.APPLICATION_JSON_VALUE],
     )
-    fun revokeData(
+    fun revoke(
         @RequestBody body: SequenceIdList,
-    ): List<SequenceVersionStatus> = databaseService.revokeData(body.sequenceIds)
+    ): List<SequenceVersionStatus> = databaseService.revoke(body.sequenceIds)
 
     @Operation(description = "Confirm revocation of sequence")
     @PostMapping(

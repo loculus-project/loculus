@@ -19,33 +19,33 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
         const file = new File([blob], fileName, { type: mimeType });
         return file;
     };
-    const handleLoadSampleData = async () => {
-        const sampleMetadataContent =
+    const handleLoadExampleData = async () => {
+        const exampleMetadataContent =
             targetUrl.split('/').pop() === `submit`
                 ? `
-            header	date	region	country	division	host
-            custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-            custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-            custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-            custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`
+header	date	region	country	division	host
+custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`
                 : `
-            sequenceId header	date	region	country	division	host
-            1 custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-            2 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-            3 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-            4 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
-        const sampleSequenceContent = `
-            >custom0
-            ACTG
-            >custom1
-            ACTG
-            >custom2
-            ACTG
-            >custom3
-            ACTG`;
+sequenceId header	date	region	country	division	host
+1 custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+2 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+3 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+4 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
+        const exampleSequenceContent = `
+>custom0
+ACTG
+>custom1
+ACTG
+>custom2
+ACTG
+>custom3
+ACTG`;
 
-        const metadataFile = createTempFile(sampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
-        const sequenceFile = createTempFile(sampleSequenceContent, 'application/octet-stream', 'sequences.fasta');
+        const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
+        const sequenceFile = createTempFile(exampleSequenceContent, 'application/octet-stream', 'sequences.fasta');
 
         setUsername('testuser');
         setMetadataFile(metadataFile);
@@ -75,10 +75,9 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
             if (response.ok === true) {
                 onSuccess(await response.json());
             } else {
-                onError(`Upload failed with status code ${response.status} ${JSON.stringify(response.body, null, 2)}`);
-                await clientLogger.error(
-                    `Upload failed with status code ${response.status} ${JSON.stringify(response.body, null, 2)}`,
-                );
+                const responseBody = await response.text();
+                onError(`Upload failed with status code ${response.status}: ${responseBody}`);
+                await clientLogger.error(`Upload failed with status code ${response.status}: ${responseBody}`);
             }
         } catch (error) {
             onError('Upload failed with error ' + (error as Error).message);
@@ -132,8 +131,8 @@ export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: D
                 }}
             />
             <div className='flex gap-4'>
-                <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadSampleData}>
-                    Load Sample Data
+                <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
+                    Load Example Data
                 </button>
 
                 <button className='px-4 py-2 btn normal-case w-1/5' disabled={isLoading} type='submit'>
