@@ -14,6 +14,7 @@ import org.pathoplexus.backend.model.SubmitModel
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.FileData
 import org.pathoplexus.backend.service.OriginalData
+import org.pathoplexus.backend.service.SequenceReview
 import org.pathoplexus.backend.service.SequenceValidation
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.SubmittedProcessedData
@@ -26,6 +27,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
@@ -71,6 +73,7 @@ Any server side validation errors will be appended to the 'errors' field of the 
 On a technical error, this endpoint will roll back all previously inserted data.
 """
 private const val SUBMIT_PROCESSED_DATA_RESPONSE_DESCRIPTION = "Contains an entry for every submitted sequence."
+
 private const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
 On sequence version that cannot be written to the database, e.g. if the sequence id does not exist.
 Rolls back the whole transaction.
@@ -162,21 +165,33 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Operation(description = "Get data with errors to review as a stream of NDJSON")
+    @Operation(description = "Get processed sequence data with errors to review as a stream of NDJSON")
     @GetMapping("/get-data-to-review", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReviewNeededData(
-        @RequestParam submitter: String,
-        @RequestParam numberOfSequences: Int,
+        @RequestParam username: String,
+        @Max(
+            value = MAX_EXTRACTED_SEQUENCES,
+            message = "You can extract at max $MAX_EXTRACTED_SEQUENCES sequences at once.",
+        )
+        numberOfSequences: Int,
     ): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamReviewNeededSubmissions(submitter, numberOfSequences, outputStream)
+            databaseService.streamReviewNeededSubmissions(username, numberOfSequences, outputStream)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
+
+    @Operation(description = "Get processed sequence data with errors to review for a single sequence id ")
+    @GetMapping("/get-data-to-review/{sequenceId}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getSequenceThatNeedsReview(
+        @PathVariable sequenceId: Long,
+        @PathVariable version: Long,
+        @RequestParam username: String,
+    ): SequenceReview = databaseService.getReviewData(username, sequenceId, version)
 
     @Operation(
         description = SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION,
