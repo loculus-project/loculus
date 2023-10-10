@@ -5,18 +5,9 @@
 
     frontend -> backend: wants to revoke already processed sequence
 
-     alt sequenceID exists and highest version is 'SILO_READY'
-        backend -> DB: insert new version\nwith status 'REVISION_STAGING' \nand ' is_revoked = true'
-    backend -> frontend: response with sequenceId + new version number
+    alt sequenceID/version combinantion exists, is 'SILO_READY', and is owned by user
+        backend -> DB: set 'is_revoked' to true
     else
-        backend -> frontend: response with error message
-    end
-
-    alt
-        frontend -> backend: confirms revocation
-        backend -> DB: set status to 'SILO_READY'
-    else
-        frontend -> backend: cancels revocation
-        backend -> DB: delete latest version \nof the sequence and Status \n'REVOKED_STAGING'
+        backend -> frontend: respond with error message
     end
 @enduml

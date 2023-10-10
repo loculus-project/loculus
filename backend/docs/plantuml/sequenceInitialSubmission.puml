@@ -1,62 +1,63 @@
-@startuml
+@startuml sequenceInitialSubmission
     participant "Pathoplexus Frontend / User" as frontend #LightCyan
     participant "(Pre-)Processing Pipeline" as processing #LightGreen
     participant "Pathoplexus Backend" as backend #Orange
     database "Database" as DB
 
     frontend -> backend: submit initial sequence data
-    alt Sequence and Metadata Files are valid
-        backend -> frontend: response with sequenceIds
-        backend -> DB: Store initial sequence data
+    alt Sequence and Metadata files are valid
+        backend -> frontend: respond with sequenceIds
+        backend -> DB: store initial sequence data
         backend -> DB: set status to 'RECEIVED'
-    else Sequence and Metadata Files are invalid
-        backend -> frontend: response with error
+    else Sequence or Metadata files are invalid
+        backend -> frontend: respond with error
     end
 
-   note right of frontend
-      In the following we assume initial raw sequence data are valid
-   end note
+    note right of frontend
+        In the following we assume initial raw sequence data pass basic validation
+        We also treat each sequence separately (for each sequence a separate path is possible)
+    end note
 
-    loop until no processing errors
+    processing -> backend: query sequence data
+    backend -> DB: query sequence data
+    backend -> DB: set status from 'RECEIVED' to 'PROCESSING'
+    DB --> backend: respond with sequence data
+    backend --> processing: respond with sequence data
 
-        processing -> backend: Query initial/reviewed sequence data
-        backend -> DB: Query initial/reviewed sequence data
-        backend -> DB: Set status from 'RECEIVED'/'REVIEW_NEEDED' to 'PROCESSING'
-        DB --> backend: initial/reviewed sequence data
-        backend --> processing: initial/reviewed sequence data
+    processing -> backend: submit processed sequence data
+    alt processing response fails backend validation
+        backend -> processing: respond with validation errors
+            note right of frontend
+                Validation errors should be loudly logged and brought to the attention of the admin
+            end note
+        backend -> DB: log validation errors so that they can be reviewed by admin
+        backend -> DB: set status to 'PROCESSING_PIPELINE_ERROR'
+    else processed sequence data contain processing errors
+        backend -> processing: respond with OK
+        backend -> DB: Store processed sequence data with errors
+        backend -> DB: set status to 'PROCESSING_ERROR'
+    else processed sequences pass processing validation
+        backend -> processing: respond with OK
+        backend -> DB: Store processed sequence data without errors
+        backend -> DB: set status to 'PROCESSED'
+    end
 
-        processing -> backend: submit processed sequence data
-        alt validation errors occur
-            backend -> processing: response with validation errors
-             note right of frontend
-                  Validation error are probably only redeemable by changing the pre-processing pipeline
-                  In the following we assume that no validation error occurred
-               end note
-        end loop
+    frontend -> backend: query processed sequence data
+    backend -> DB: query processed sequence data
+    DB -> backend: respond with processed sequence data (if available) and warnings/errors
+    backend -> frontend: respond with processed sequence data (if available) and warnings/errors
 
-        alt processed sequence data contain processing errors
-            backend -> DB: Store processed sequence data with errors
-            backend -> DB: set status to 'REVIEW_NEEDED'
-        else
-            backend -> DB: Store processed sequence data without errors
-            backend -> DB: set status to 'PROCESSED'
-        end
-         frontend -> backend: query processed sequence data with errors
-        frontend -> frontend: address errors and adapt sequence data
-
-        frontend -> backend: submit adapted sequence data
-        backend -> DB: store adapted sequence data
-        backend -> DB: set status to 'REVIEWED'
-    end loop
-
-
-    frontend -> backend: Query processed sequence data
-    backend -> DB: Query processed sequence data
-    DB -> backend: processed sequence data
-    backend -> frontend: processed sequence data
-
-    frontend -> backend: approve processed sequence data
-    backend -> DB: set status from 'PROCESSED' to 'SILO_READY'
+    alt status is 'PROCESSED' and user approves:
+        frontend -> backend: approve processed sequence data 
+        backend -> DB: set status from 'PROCESSED' to 'SILO_READY'
+    else user rejects:
+        frontend -> backend: reject processed sequence data 
+        backend -> DB: delete sequence data
+    else after 5 days:
+        backend -> frontend: email reminder to user to approve/reject processed sequence data
+    else after 30 days:
+        backend -> DB: delete sequence data
+    end
 
 @enduml
 

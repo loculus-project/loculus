@@ -6,11 +6,15 @@
 
     frontend -> backend: submit corrected data for existing sequenceIds
 
-    alt sequenceID exists and highest version is 'SILO_READY'
+    backend -> DB: check if sequenceID exists and is owned by user and if highest version is 'SILO_READY'
+    alt sequenceID doesn't exist
+        backend -> frontend: respond with error message: "sequenceID doesn't exist"
+    else sequenceID exists but is not owned by user
+        backend -> frontend: respond with error message: "sequenceID doesn't belong to user"
+    else sequenceID exists and is owned by user but highest version is not 'SILO_READY'
+        backend -> frontend: respond with error message: "need to delete staged data first"
+    else sequenceID exists and is owned by user and highest version is 'SILO_READY'
         backend -> DB: insert new version in status 'RECEIVED'
-    backend -> frontend: response with sequenceId + new version number
-    else
-        backend -> frontend: response with error message
     end
 
     note right of frontend
