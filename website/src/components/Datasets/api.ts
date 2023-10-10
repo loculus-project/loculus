@@ -1,19 +1,51 @@
-import { mockDatasetAggCitations, mockUserAggCitations } from './mockData';
 import type { ServiceUrls, Dataset, DatasetRecord, DatasetCitationResults } from '../../types';
 
 const USE_MOCK_DATA = true;
 
+export const mockUserAggCitations = [
+    {
+        sequenceId: 'sequenceId1',
+        citations: [
+            {
+                datasetId: 'datasetId1',
+                date: '2023-01-01',
+            },
+            {
+                datasetId: 'datasetId2',
+                date: '2022-01-01',
+            },
+        ],
+    },
+    {
+        sequenceId: 'sequenceId2',
+        citations: [
+            {
+                datasetId: 'datasetId3',
+                date: '2023-01-01',
+            },
+            {
+                datasetId: 'datasetId4',
+                date: '2021-01-01',
+            },
+        ],
+    },
+    {
+        sequenceId: 'sequenceId3',
+        citations: [
+            {
+                datasetId: 'datasetId5',
+                date: '2023-01-01',
+            },
+            {
+                datasetId: 'datasetId6',
+                date: '2021-01-01',
+            },
+        ],
+    },
+];
+
 export const fetchAuthorDatasets = async (userId: string, serviceConfig: ServiceUrls): Promise<Dataset[]> => {
     const response = await fetch(`${serviceConfig.backendUrl}/get-datasets-of-user?username=${userId}`);
-    return response.json();
-};
-
-export const fetchAuthorMetadata = async (userId: string, serviceConfig: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return {};
-    }
-    const response = await fetch(`${serviceConfig.backendUrl}/read-author?authorId=${userId}`);
     return response.json();
 };
 
@@ -25,7 +57,7 @@ export const fetchAuthorCitations = async (
     if (USE_MOCK_DATA) {
         return mockUserAggCitations;
     }
-    const response = await fetch(`${serviceConfig.backendUrl}/user/citations/${userId}`);
+    const response = await fetch(`${serviceConfig.backendUrl}/get-citations-of-user?username=${userId}`);
     return response.json();
 };
 
@@ -105,95 +137,6 @@ export const deleteDataset = async (
             method: 'DELETE',
         },
     );
-
-    if (!response.ok) {
-        throw new Error(`Unexpected response: ${response.statusText}`);
-    }
-    return response;
-};
-
-export const fetchCitation = async (citationId: string, serviceConfig: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return mockDatasetAggCitations.find((citation) => citation.citationId === citationId);
-    }
-
-    const response = await fetch(`${serviceConfig.backendUrl}/read-citation?citationId=${citationId}`);
-    return response.json();
-};
-
-export const createCitation = async (citation: any, serviceUrls: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return {
-            citationId: 'mockCitationId',
-            status: 200,
-        };
-    }
-
-    const body = JSON.stringify({
-        citation,
-    });
-    const response = await fetch(`${serviceUrls.backendUrl}/create-citation`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body,
-    });
-
-    if (!response.ok) {
-        throw new Error(`Unexpected response: ${response.statusText}`);
-    }
-    return response;
-};
-
-export const updateCitation = async (citationId: string, citation: any, serviceUrls: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return {
-            citationId: 'mockCitationId',
-            status: 200,
-        };
-    }
-
-    const body = JSON.stringify({
-        citationId,
-        citation,
-    });
-    const response = await fetch(`${serviceUrls.backendUrl}/update-citation}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body,
-    });
-
-    if (!response.ok) {
-        throw new Error(`Unexpected response: ${response.statusText}`);
-    }
-    return response;
-};
-
-export const deleteCitation = async (citationId: string, serviceUrls: ServiceUrls): Promise<any> => {
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
-        return {
-            citationId: 'mockCitationId',
-            status: 200,
-        };
-    }
-
-    const body = JSON.stringify({
-        citationId,
-    });
-    const response = await fetch(`${serviceUrls.backendUrl}/delete-citation}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body,
-    });
 
     if (!response.ok) {
         throw new Error(`Unexpected response: ${response.statusText}`);

@@ -216,7 +216,6 @@ export const DatasetForm: FC<DatasetFormProps> = ({
         const accessionQueries = accessionType === 'Genbank' ? genBankQueries : sraQueries;
         const accessionKey = accessionType === 'Genbank' ? 'genbankAccession' : 'sraAccession';
 
-        // TODO: improve this code to not rely on failure message (via queryCache?)
         const accessionQuery = accessionQueries.find(
             (accessionQuery: any) =>
                 accessionQuery.data?.[accessionKey] === accession ||

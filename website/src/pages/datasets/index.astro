@@ -8,5 +8,5 @@ const clientConfig = getRuntimeConfig().forClient;
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>
-    <DatasetList config={config} clientConfig={clientConfig} client:load />
+    <DatasetList config={config} clientConfig={clientConfig} client:only='react' />
 </BaseLayout>

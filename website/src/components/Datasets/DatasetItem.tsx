@@ -171,7 +171,6 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
         return true;
     };
 
-    // TODO: implement
     const handleCitationsClose = () => {
         return true;
     };

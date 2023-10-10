@@ -13,7 +13,7 @@ const version = Astro.url.searchParams.get('version')! || '';
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-item-container'>
-    <BackButton marginRight={0} client:load />
+    <BackButton marginRight={0} client:only='react' />
     <div class='flex flex-col justify-start'>
         <div class='flex flex-row items-left'>
             <div class='w-1/4 flex flex-col justify-start items-center'>
@@ -26,7 +26,7 @@ const version = Astro.url.searchParams.get('version')! || '';
                     config={config}
                     clientConfig={clientConfig}
                     isAdminView
-                    client:load
+                    client:only='react'
                 />
             </div>
         </div>
