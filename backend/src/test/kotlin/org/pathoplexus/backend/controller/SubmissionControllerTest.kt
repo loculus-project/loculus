@@ -111,7 +111,7 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             )
 
@@ -124,14 +124,14 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             ).contains(
                 SequenceVersionStatus(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 2,
                     status = Status.RECEIVED,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             )
     }
@@ -147,7 +147,7 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             )
 
@@ -160,14 +160,14 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             ).contains(
                 SequenceVersionStatus(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 2,
                     status = Status.REVOKED_STAGING,
-                    revoked = true,
+                    isRevocation = true,
                 ),
             )
 
@@ -180,7 +180,7 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 2,
                     status = Status.SILO_READY,
-                    revoked = true,
+                    isRevocation = true,
                 ),
             )
     }
@@ -196,7 +196,7 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             )
 
@@ -210,14 +210,14 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             ).contains(
                 SequenceVersionStatus(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 2,
                     status = Status.RECEIVED,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             )
     }
@@ -233,7 +233,7 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.RECEIVED,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             )
 
@@ -246,7 +246,7 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.RECEIVED,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             )
     }
@@ -262,7 +262,7 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             )
 
@@ -284,7 +284,7 @@ class SubmissionControllerTest(
                     sequenceId = DefaultFiles.firstSequence,
                     version = 1,
                     status = Status.SILO_READY,
-                    revoked = false,
+                    isRevocation = false,
                 ),
             )
     }

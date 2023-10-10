@@ -23,7 +23,7 @@ object SequencesTable : Table("sequences") {
     val startedProcessingAt = datetime("started_processing_at").nullable()
     val finishedProcessingAt = datetime("finished_processing_at").nullable()
     val status = varchar("status", 255)
-    val revoked = bool("revoked").default(false)
+    val isRevocation = bool("is_revocation").default(false)
     val originalData =
         jacksonSerializableJsonb<OriginalData>("original_data").nullable()
     val processedData = jacksonSerializableJsonb<ProcessedData>("processed_data").nullable()

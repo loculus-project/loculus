@@ -332,7 +332,7 @@ class DatabaseService(
                 SequencesTable.sequenceId,
                 SequencesTable.version,
                 SequencesTable.status,
-                SequencesTable.revoked,
+                SequencesTable.isRevocation,
             )
 
         val maxVersionWithSiloReadyQuery = maxVersionWithSiloReadyQuery()
@@ -348,7 +348,7 @@ class DatabaseService(
                     row[SequencesTable.sequenceId],
                     row[SequencesTable.version],
                     Status.SILO_READY,
-                    row[SequencesTable.revoked],
+                    row[SequencesTable.isRevocation],
                 )
             }
 
@@ -364,7 +364,7 @@ class DatabaseService(
                 row[SequencesTable.sequenceId],
                 row[SequencesTable.version],
                 Status.fromString(row[SequencesTable.status]),
-                row[SequencesTable.revoked],
+                row[SequencesTable.isRevocation],
             )
         }
 
@@ -423,7 +423,7 @@ class DatabaseService(
                     SequencesTable.submitter,
                     SequencesTable.submittedAt,
                     SequencesTable.status,
-                    SequencesTable.revoked,
+                    SequencesTable.isRevocation,
                     SequencesTable.originalData,
                 ),
             )
@@ -432,7 +432,7 @@ class DatabaseService(
         }.toList()
     }
 
-    fun revokeData(sequenceIds: List<Long>): List<SequenceVersionStatus> {
+    fun revoke(sequenceIds: List<Long>): List<SequenceVersionStatus> {
         log.info { "revoking ${sequenceIds.size} sequences" }
 
         val maxVersionQuery = maxVersionQuery()
@@ -461,16 +461,16 @@ class DatabaseService(
                 SequencesTable.submitter,
                 SequencesTable.submittedAt,
                 SequencesTable.status,
-                SequencesTable.revoked,
+                SequencesTable.isRevocation,
             ),
         )
 
-        val revokedList = SequencesTable
+        return SequencesTable
             .slice(
                 SequencesTable.sequenceId,
                 SequencesTable.version,
                 SequencesTable.status,
-                SequencesTable.revoked,
+                SequencesTable.isRevocation,
             )
             .select(
                 where = {
@@ -483,11 +483,9 @@ class DatabaseService(
                     it[SequencesTable.sequenceId],
                     it[SequencesTable.version],
                     Status.REVOKED_STAGING,
-                    it[SequencesTable.revoked],
+                    it[SequencesTable.isRevocation],
                 )
             }
-
-        return revokedList
     }
 
     fun confirmRevocation(sequenceIds: List<Long>): Int {
@@ -618,7 +616,7 @@ data class SequenceVersionStatus(
     val sequenceId: Long,
     val version: Long,
     val status: Status,
-    val revoked: Boolean = false,
+    val isRevocation: Boolean = false,
 )
 
 data class FileData(

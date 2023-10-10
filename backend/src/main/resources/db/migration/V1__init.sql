@@ -7,7 +7,7 @@ create table sequences (
        started_processing_at timestamp,
        finished_processing_at timestamp,
        status text not null,
-       revoked boolean not null default false,
+       is_revocation boolean not null default false,
        original_data jsonb,
        processed_data jsonb,
        errors jsonb,
