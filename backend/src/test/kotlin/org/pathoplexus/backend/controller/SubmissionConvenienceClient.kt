@@ -45,7 +45,7 @@ class SubmissionConvenienceClient(
         vararg processedData: SubmittedProcessedData,
     ) {
         submitDefaultFiles()
-        awaitResponse(client.extractUnprocessedData(SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES).andReturn())
+        extractUnprocessedData()
         client.submitProcessedData(*processedData)
     }
 
