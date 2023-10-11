@@ -12,6 +12,7 @@ import type {
     SequenceReview,
     UnprocessedData,
 } from '../../types.ts';
+import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback } from '../Submission/ManagedErrorFeedback.tsx';
 
 type ReviewPageProps = {
@@ -41,7 +42,7 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
         const result = await submitReview(reviewData, editedMetadata, editedSequences, username, clientConfig);
         await result.match(
             async () => {
-                window.history.back();
+                location.href = `/user/${username}/sequences`;
                 await logger.info('Successfully submitted review ' + reviewData.sequenceId + '.' + reviewData.version);
             },
             async (error) => {
@@ -71,7 +72,10 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
             </button>
 
             <dialog ref={dialogRef} className='modal'>
-                <ConfirmationDialog onConfirmation={submitReviewForSequenceVersion} />
+                <ConfirmationDialog
+                    dialogText='Do you really want to submit your review?'
+                    onConfirmation={submitReviewForSequenceVersion}
+                />
             </dialog>
 
             <table className='customTable'>
@@ -113,28 +117,6 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
         </>
     );
 };
-
-type ConfirmationDialogProps = {
-    onConfirmation: () => Promise<void>;
-};
-const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ onConfirmation }) => (
-    <div className='modal-box'>
-        <form method='dialog'>
-            <button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2'>✕</button>
-        </form>
-
-        <h3 className='font-bold text-lg'>Do you really want to submit?</h3>
-
-        <div className='flex items-center gap-4 mt-4'>
-            <button className='btn' onClick={onConfirmation}>
-                Confirm Submission
-            </button>
-            <form method='dialog'>
-                <button className='btn btn-error'>Cancel</button>
-            </form>
-        </div>
-    </div>
-);
 
 type SubtitleProps = {
     title: string;
