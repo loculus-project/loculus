@@ -27,7 +27,13 @@ class SubmissionConvenienceClient(
 
     fun prepareDefaultSequencesToProcessing() {
         submitDefaultFiles()
-        awaitResponse(client.extractUnprocessedData(SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES).andReturn())
+        extractUnprocessedData()
+    }
+
+    fun submitProcessedData(vararg submittedProcessedData: SubmittedProcessedData) {
+        client.submitProcessedData(*submittedProcessedData)
+            .andExpect(MockMvcResultMatchers.status().isOk)
+            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
     }
 
     fun prepareDefaultSequencesToNeedReview() {
@@ -70,6 +76,17 @@ class SubmissionConvenienceClient(
         userName: String = USER_NAME,
     ): SequenceReview =
         deserializeJsonResponse<SequenceReview>(client.getSequenceThatNeedsReview(sequenceId, version, userName))
+
+    fun approveProcessedSequences(listOfSequencesToApprove: List<Number>): ResultActions =
+        client.approveProcessedSequences(listOfSequencesToApprove)
+            .andExpect(MockMvcResultMatchers.status().isOk())
+
+    fun revokeSequences(listOfSequencesToRevoke: List<Number>): List<SequenceVersionStatus> =
+        deserializeJsonResponse(client.revokeSequences(listOfSequencesToRevoke))
+
+    fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions =
+        client.confirmRevocation(listOfSequencesToConfirm)
+            .andExpect(MockMvcResultMatchers.status().isOk())
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =

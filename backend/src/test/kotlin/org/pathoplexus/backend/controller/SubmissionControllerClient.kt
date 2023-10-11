@@ -69,6 +69,27 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .content(objectMapper.writeValueAsString(reviewedData)),
         )
     }
+
+    fun approveProcessedSequences(listOfSequencesToApprove: List<Number>): ResultActions =
+        mockMvc.perform(
+            post("/approve-processed-data")
+                .param("username", USER_NAME)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content("""{"sequenceIds":$listOfSequencesToApprove}"""),
+        )
+
+    fun revokeSequences(listOfSequencesToRevoke: List<Number>) =
+        mockMvc.perform(
+            post("/revoke")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
+        )
+
+    fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions = mockMvc.perform(
+        post("/confirm-revocation")
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content("""{"sequenceIds":$listOfSequencesToConfirm}"""),
+    )
 }
 
 val emptyOriginalData = OriginalData(metadata = emptyMap(), unalignedNucleotideSequences = emptyMap())

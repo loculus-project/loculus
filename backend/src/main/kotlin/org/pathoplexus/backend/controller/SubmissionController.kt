@@ -79,6 +79,22 @@ On sequence version that cannot be written to the database, e.g. if the sequence
 Rolls back the whole transaction.
 """
 
+private const val GET_DATA_TO_REVIEW_DESCRIPTION = """
+Get processed sequence data with errors to review as a stream of NDJSON.
+This returns all sequences of the user that have the status 'REVIEW_NEEDED'.
+"""
+
+private const val GET_DATA_TO_REVIEW_SEQUENCE_VERSION_DESCRIPTION = """
+Get processed sequence data with errors to review for a single sequence version.
+The sequence version must be in status 'REVIEW_NEEDED' or 'PROCESSED'.
+"""
+
+private const val GET_SEQUENCES_OF_USER_DESCRIPTION = """
+Get a list of submitted sequence versions and their status for the given user.
+This returns the last sequence version in status SILO_READY and
+the sequence version that is not 'SILO_READY' (if it exists).
+"""
+
 @RestController
 @Validated
 class SubmissionController(
@@ -165,7 +181,7 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Operation(description = "Get processed sequence data with errors to review as a stream of NDJSON")
+    @Operation(description = GET_DATA_TO_REVIEW_DESCRIPTION)
     @GetMapping("/get-data-to-review", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReviewNeededData(
         @RequestParam username: String,
@@ -185,7 +201,7 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Operation(description = "Get processed sequence data with errors to review for a single sequence id ")
+    @Operation(description = GET_DATA_TO_REVIEW_SEQUENCE_VERSION_DESCRIPTION)
     @GetMapping("/get-data-to-review/{sequenceId}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getSequenceThatNeedsReview(
         @PathVariable sequenceId: Long,
@@ -193,16 +209,14 @@ class SubmissionController(
         @RequestParam username: String,
     ): SequenceReview = databaseService.getReviewData(username, sequenceId, version)
 
-    @Operation(
-        description = SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION,
-    )
+    @Operation(description = SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION)
     @PostMapping("/submit-reviewed-sequence", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun submitReviewedSequence(
         @RequestParam username: String,
         @RequestBody sequenceVersion: UnprocessedData,
     ) = databaseService.submitReviewedSequence(username, sequenceVersion)
 
-    @Operation(description = "Get a list of all submitted sequences of the given user")
+    @Operation(description = GET_SEQUENCES_OF_USER_DESCRIPTION)
     @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserSequenceList(
         @RequestParam username: String,
