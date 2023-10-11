@@ -63,3 +63,8 @@ export type HeaderId = {
     version: number;
     customId: string;
 };
+
+export interface SequenceVersion {
+    sequenceId: number;
+    version: number;
+}

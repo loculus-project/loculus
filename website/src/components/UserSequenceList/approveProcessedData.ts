@@ -1,6 +1,11 @@
-export const approveProcessedData = async (username: string, sequenceIds: number[]): Promise<{ approved: number }> => {
+import type { SequenceVersion } from '../../types.ts';
+
+export const approveProcessedData = async (
+    username: string,
+    sequenceVersions: SequenceVersion[],
+): Promise<{ approved: number }> => {
     const body = JSON.stringify({
-        sequenceIds,
+        sequenceVersions,
     });
     const response = await fetch(`http://localhost:8079/approve-processed-data?username=${username}`, {
         method: 'POST',

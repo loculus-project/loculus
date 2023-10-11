@@ -44,10 +44,7 @@ export class SubmitPage {
         for (const sequence of sequences) {
             await fakeProcessingPipeline({ sequenceId: sequence.sequenceId, version: sequence.version, error: false });
         }
-        await approveProcessedData(
-            testuser,
-            sequences.map((entry) => entry.sequenceId),
-        );
+        await approveProcessedData(testuser, sequences);
 
         return sequences;
     }

@@ -17,6 +17,7 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
@@ -215,7 +216,7 @@ class DatabaseService(
                 },
             )
 
-        val sequenceVersion = "${submittedProcessedData.sequenceId}.${submittedProcessedData.version}"
+        val sequenceVersion = submittedProcessedData.displaySequenceVersion()
         if (selectedSequences.count() == 0L) {
             throw UnprocessableEntityException("Sequence version $sequenceVersion does not exist")
         }
@@ -230,42 +231,74 @@ class DatabaseService(
         throw RuntimeException("Update processed data: Unexpected error for sequence version $sequenceVersion")
     }
 
-    fun approveProcessedData(submitter: String, sequenceIds: List<Long>) {
-        log.info { "approving ${sequenceIds.size} sequences by $submitter" }
+    fun approveProcessedData(submitter: String, sequenceVersions: List<SequenceVersion>) {
+        log.info { "approving ${sequenceVersions.size} sequences by $submitter" }
 
-        if (!hasPermissionToChange(submitter, sequenceIds)) {
-            throw IllegalArgumentException(
-                "User $submitter does not have right to change these sequences ${sequenceIds.size}",
-            )
-        }
-
-        val maxVersionQuery = maxVersionQuery()
+        validateApprovalPreconditions(submitter, sequenceVersions)
 
         SequencesTable.update(
             where = {
-                (SequencesTable.sequenceId inList sequenceIds) and
-                    (SequencesTable.version eq maxVersionQuery) and
+                (Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions.toPairs()) and
                     (SequencesTable.status eq Status.PROCESSED.name)
             },
         ) {
             it[status] = Status.SILO_READY.name
-            it[this.submitter] = submitter
         }
     }
 
-    private fun hasPermissionToChange(user: String, sequenceIds: List<Long>): Boolean {
-        val maxVersionQuery = maxVersionQuery()
-        val sequencesOwnedByUser = SequencesTable
-            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter)
+    private fun validateApprovalPreconditions(submitter: String, sequenceVersions: List<SequenceVersion>) {
+        val sequences = SequencesTable
+            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter, SequencesTable.status)
             .select(
                 where = {
-                    (SequencesTable.sequenceId inList sequenceIds) and
-                        (SequencesTable.version eq maxVersionQuery) and
-                        (SequencesTable.submitter eq user)
+                    Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions.toPairs()
                 },
             )
 
-        return sequencesOwnedByUser.count() == sequenceIds.size.toLong()
+        validateSequenceVersionsExist(sequences, sequenceVersions)
+        validateSequencesAreInStateProcessed(sequences)
+        validateUserIsAllowedToEditSequences(sequences, submitter)
+    }
+
+    private fun validateSequenceVersionsExist(sequences: Query, sequenceVersions: List<SequenceVersion>) {
+        if (sequences.count() == sequenceVersions.size.toLong()) {
+            return
+        }
+
+        val sequenceVersionsNotFound = sequenceVersions
+            .filter { sequenceVersion ->
+                sequences.none {
+                    it[SequencesTable.sequenceId] == sequenceVersion.sequenceId &&
+                        it[SequencesTable.version] == sequenceVersion.version
+                }
+            }.joinToString(", ") { it.displaySequenceVersion() }
+
+        throw UnprocessableEntityException("Sequence versions $sequenceVersionsNotFound do not exist")
+    }
+
+    private fun validateSequencesAreInStateProcessed(sequences: Query) {
+        val sequencesNotProcessed = sequences
+            .filter { it[SequencesTable.status] != Status.PROCESSED.name }
+            .map { "${it[SequencesTable.sequenceId]}.${it[SequencesTable.version]} - ${it[SequencesTable.status]}" }
+
+        if (sequencesNotProcessed.isNotEmpty()) {
+            throw UnprocessableEntityException(
+                "Sequence versions are in not in state ${Status.PROCESSED}: " +
+                    sequencesNotProcessed.joinToString(", "),
+            )
+        }
+    }
+
+    private fun validateUserIsAllowedToEditSequences(sequences: Query, submitter: String) {
+        val sequencesNotSubmittedByUser = sequences.filter { it[SequencesTable.submitter] != submitter }
+            .map { SequenceVersion(it[SequencesTable.sequenceId], it[SequencesTable.version]) }
+
+        if (sequencesNotSubmittedByUser.isNotEmpty()) {
+            throw ForbiddenException(
+                "User '$submitter' does not have right to change the sequence versions " +
+                    sequencesNotSubmittedByUser.joinToString(", ") { it.displaySequenceVersion() },
+            )
+        }
     }
 
     fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
@@ -554,7 +587,7 @@ class DatabaseService(
                 },
             )
 
-        val sequenceVersionString = "${reviewedSequenceVersion.sequenceId}.${reviewedSequenceVersion.version}"
+        val sequenceVersionString = reviewedSequenceVersion.displaySequenceVersion()
 
         if (selectedSequences.count().toInt() == 0) {
             throw UnprocessableEntityException("Sequence $sequenceVersionString does not exist")
@@ -579,8 +612,8 @@ class DatabaseService(
         throw Exception("SequenceReview: Unknown error")
     }
 
-    fun getReviewData(submitter: String, sequenceId: Long, version: Long): SequenceReview {
-        log.info { "Getting Sequence $sequenceId.$version that needs review by $submitter" }
+    fun getReviewData(submitter: String, sequenceVersion: SequenceVersion): SequenceReview {
+        log.info { "Getting Sequence ${sequenceVersion.displaySequenceVersion()} that needs review by $submitter" }
 
         val selectedSequences = SequencesTable
             .slice(
@@ -598,14 +631,14 @@ class DatabaseService(
                         (SequencesTable.status eq Status.NEEDS_REVIEW.name)
                             or (SequencesTable.status eq Status.PROCESSED.name)
                         ) and
-                        (SequencesTable.sequenceId eq sequenceId) and
-                        (SequencesTable.version eq version) and
+                        (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
+                        (SequencesTable.version eq sequenceVersion.version) and
                         (SequencesTable.submitter eq submitter)
                 },
             )
 
         if (selectedSequences.count().toInt() != 1) {
-            handleGetReviewDataError(submitter, sequenceId, version)
+            handleGetReviewDataError(submitter, sequenceVersion)
         }
 
         return selectedSequences.first().let {
@@ -621,9 +654,7 @@ class DatabaseService(
         }
     }
 
-    private fun handleGetReviewDataError(submitter: String, sequenceId: Long, version: Long): Nothing {
-        val sequenceVersion = "$sequenceId.$version"
-
+    private fun handleGetReviewDataError(submitter: String, sequenceVersion: SequenceVersion): Nothing {
         val selectedSequences = SequencesTable
             .slice(
                 SequencesTable.sequenceId,
@@ -632,13 +663,13 @@ class DatabaseService(
             )
             .select(
                 where = {
-                    (SequencesTable.sequenceId eq sequenceId) and
-                        (SequencesTable.version eq version)
+                    (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
+                        (SequencesTable.version eq sequenceVersion.version)
                 },
             )
 
         if (selectedSequences.count().toInt() == 0) {
-            throw NotFoundException("Sequence version $sequenceVersion does not exist")
+            throw NotFoundException("Sequence version ${sequenceVersion.displaySequenceVersion()} does not exist")
         }
 
         val selectedSequence = selectedSequences.first()
@@ -649,24 +680,55 @@ class DatabaseService(
 
         if (!hasCorrectStatus) {
             throw UnprocessableEntityException(
-                "Sequence version $sequenceVersion is in not in state ${Status.NEEDS_REVIEW.name} or " +
-                    "${Status.PROCESSED.name} (was ${selectedSequence[SequencesTable.status]})",
+                "Sequence version ${sequenceVersion.displaySequenceVersion()} is in not in state " +
+                    "${Status.NEEDS_REVIEW.name} or ${Status.PROCESSED.name} " +
+                    "(was ${selectedSequence[SequencesTable.status]})",
             )
         }
 
-        if (!hasPermissionToChange(submitter, listOf(sequenceId))) {
+        if (!hasPermissionToChange(submitter, sequenceVersion)) {
             throw ForbiddenException(
-                "Sequence $sequenceVersion is not owned by user $submitter",
+                "Sequence ${sequenceVersion.displaySequenceVersion()} is not owned by user $submitter",
             )
         }
 
-        throw RuntimeException("Get review data: Unexpected error for sequence version $sequenceVersion")
+        throw RuntimeException(
+            "Get review data: Unexpected error for sequence version ${sequenceVersion.displaySequenceVersion()}",
+        )
+    }
+
+    private fun hasPermissionToChange(user: String, sequenceVersion: SequenceVersion): Boolean {
+        val sequencesOwnedByUser = SequencesTable
+            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter)
+            .select(
+                where = {
+                    (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
+                        (SequencesTable.version eq sequenceVersion.version) and
+                        (SequencesTable.submitter eq user)
+                },
+            )
+
+        return sequencesOwnedByUser.count() == 1L
     }
 }
 
+interface SequenceVersionInterface {
+    val sequenceId: Long
+    val version: Long
+
+    fun displaySequenceVersion() = "$sequenceId.$version"
+}
+
+data class SequenceVersion(
+    override val sequenceId: Long,
+    override val version: Long,
+) : SequenceVersionInterface
+
+fun List<SequenceVersion>.toPairs() = map { Pair(it.sequenceId, it.version) }
+
 data class SubmittedProcessedData(
-    val sequenceId: Long,
-    val version: Long,
+    override val sequenceId: Long,
+    override val version: Long,
     val data: ProcessedData,
     @Schema(description = "The processing failed due to these errors.")
     val errors: List<PreprocessingAnnotation>? = null,
@@ -675,7 +737,7 @@ data class SubmittedProcessedData(
         "Issues where data is not necessarily wrong, but the submitter might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
-)
+) : SequenceVersionInterface
 
 data class SequenceReview(
     val sequenceId: Long,
@@ -793,10 +855,10 @@ data class SubmittedData(
 )
 
 data class UnprocessedData(
-    @Schema(example = "123") val sequenceId: Long,
-    @Schema(example = "1") val version: Long,
+    @Schema(example = "123") override val sequenceId: Long,
+    @Schema(example = "1") override val version: Long,
     val data: OriginalData,
-)
+) : SequenceVersionInterface
 
 data class OriginalData(
     @Schema(

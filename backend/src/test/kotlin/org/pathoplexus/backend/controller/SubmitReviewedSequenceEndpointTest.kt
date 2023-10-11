@@ -26,7 +26,7 @@ class SubmitReviewedSequenceEndpointTest(
             data = emptyOriginalData,
         )
         client.submitReviewedSequence(USER_NAME, reviewedData)
-            .andExpect(status().isOk())
+            .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.REVIEWED)
@@ -46,7 +46,7 @@ class SubmitReviewedSequenceEndpointTest(
         )
 
         client.submitReviewedSequence(USER_NAME, reviewedData)
-            .andExpect(status().isOk())
+            .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.REVIEWED)

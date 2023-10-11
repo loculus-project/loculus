@@ -2,6 +2,7 @@ package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.pathoplexus.backend.service.OriginalData
+import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.http.MediaType
@@ -65,29 +66,32 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         return mockMvc.perform(
             post("/submit-reviewed-sequence")
                 .param("username", userName)
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(reviewedData)),
         )
     }
 
-    fun approveProcessedSequences(listOfSequencesToApprove: List<Number>): ResultActions =
+    fun approveProcessedSequences(
+        listOfSequencesToApprove: List<SequenceVersion>,
+        userName: String = USER_NAME,
+    ): ResultActions =
         mockMvc.perform(
             post("/approve-processed-data")
-                .param("username", USER_NAME)
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content("""{"sequenceIds":$listOfSequencesToApprove}"""),
+                .param("username", userName)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}"""),
         )
 
     fun revokeSequences(listOfSequencesToRevoke: List<Number>) =
         mockMvc.perform(
             post("/revoke")
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
         )
 
     fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions = mockMvc.perform(
         post("/confirm-revocation")
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .contentType(MediaType.APPLICATION_JSON)
             .content("""{"sequenceIds":$listOfSequencesToConfirm}"""),
     )
 }
