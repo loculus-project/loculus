@@ -1,15 +1,14 @@
 package org.pathoplexus.backend.service
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.core.JacksonException
-import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.Clock
@@ -39,7 +38,6 @@ import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.NotFoundException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.model.HeaderId
-import org.springframework.boot.jackson.JsonComponent
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
@@ -698,6 +696,7 @@ typealias SegmentName = String
 typealias GeneName = String
 typealias NucleotideSequence = String
 typealias AminoAcidSequence = String
+
 data class ProcessedData(
     @Schema(
         example = """{"date": "2020-01-01", "country": "Germany", "age": 42, "qc": 0.95}""",
@@ -715,7 +714,7 @@ data class ProcessedData(
     )
     val alignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
     @Schema(
-        example = """{"segment1": ["123:GTCA", "345:AAAA"], "segment2": "[123:GTCA", "345:AAAA"]}""",
+        example = """{"segment1": ["123:GTCA", "345:AAAA"], "segment2": ["123:GTCA", "345:AAAA"]}""",
         description = "The key is the segment name, the value is a list of nucleotide insertions",
     )
     val nucleotideInsertions: Map<SegmentName, List<Insertion>>,
@@ -731,6 +730,7 @@ data class ProcessedData(
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
 )
 
+@JsonDeserialize(using = InsertionDeserializer::class)
 data class Insertion(
     @Schema(example = "123", description = "Position in the sequence where the insertion starts")
     val position: Int,
@@ -747,22 +747,15 @@ data class Insertion(
         }
     }
 
+    @JsonValue
     override fun toString(): String {
         return "$position:$sequence"
     }
 }
 
-@JsonComponent
 class InsertionDeserializer : JsonDeserializer<Insertion>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Insertion {
         return Insertion.fromString(p.valueAsString)
-    }
-}
-
-@JsonComponent
-class InsertionSerializer : JsonSerializer<Insertion>() {
-    override fun serialize(value: Insertion, gen: JsonGenerator, serializers: SerializerProvider) {
-        gen.writeString(value.toString())
     }
 }
 
