@@ -2,14 +2,17 @@ package org.pathoplexus.backend.controller
 
 import jakarta.validation.ConstraintViolationException
 import mu.KotlinLogging
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.MediaType
 import org.springframework.http.ProblemDetail
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.context.request.WebRequest
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 
 private val log = KotlinLogging.logger {}
@@ -65,6 +68,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleForbiddenException(e: ForbiddenException): ResponseEntity<ProblemDetail> {
         log.warn(e) { "Caught forbidden exception: ${e.message}" }
+
         return responseEntity(
             HttpStatus.FORBIDDEN,
             e.message,
@@ -89,6 +93,29 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
                     it.detail = detail
                 },
             )
+    }
+
+    override fun createProblemDetail(
+        ex: java.lang.Exception,
+        status: HttpStatusCode,
+        defaultDetail: String,
+        detailMessageCode: String?,
+        detailMessageArguments: Array<out Any>?,
+        request: WebRequest,
+    ): ProblemDetail {
+        log.warn { "Caught ${ex.javaClass}: ${ex.message}" }
+
+        return super.createProblemDetail(ex, status, defaultDetail, detailMessageCode, detailMessageArguments, request)
+    }
+
+    override fun handleHttpMessageNotReadable(
+        ex: HttpMessageNotReadableException,
+        headers: HttpHeaders,
+        status: HttpStatusCode,
+        request: WebRequest,
+    ): ResponseEntity<Any>? {
+        val body = createProblemDetail(ex, status, ex.message ?: "Failed to read request", null, null, request)
+        return handleExceptionInternal(ex, body, headers, status, request)
     }
 }
 

@@ -8,6 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
+import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -69,7 +70,7 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
                 setupDescription = "I submitted, processed and approved sequences",
                 prepareDatabase = {
                     it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequences(listOf(firstSequence))
+                    it.approveProcessedSequences(listOf(SequenceVersion(firstSequence, 1)))
                 },
                 expectedStatus = Status.SILO_READY,
                 expectedIsRevocation = false,
@@ -78,7 +79,7 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
                 setupDescription = "I submitted a revocation",
                 prepareDatabase = {
                     it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequences(listOf(firstSequence))
+                    it.approveProcessedSequences(listOf(SequenceVersion(firstSequence, 1)))
                     it.revokeSequences(listOf(firstSequence))
                 },
                 expectedStatus = Status.REVOKED_STAGING,
@@ -89,7 +90,7 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
                 setupDescription = "I approved a revocation",
                 prepareDatabase = {
                     it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequences(listOf(firstSequence))
+                    it.approveProcessedSequences(listOf(SequenceVersion(firstSequence, 1)))
                     it.revokeSequences(listOf(firstSequence))
                     it.confirmRevocation(listOf(firstSequence))
                 },

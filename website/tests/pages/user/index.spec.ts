@@ -42,7 +42,7 @@ test.describe('The user page', () => {
         ]);
         expect(sequenceThatIsProcessedIsPresent).toBe(true);
 
-        await approveProcessedData(testuser, [secondSequence.sequenceId]);
+        await approveProcessedData(testuser, [secondSequence]);
         await userPage.gotoUserSequencePage();
         const sequenceThatIsReleasableIsPresent = await userPage.verifyTableEntries([
             {

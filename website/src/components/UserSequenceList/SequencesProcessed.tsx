@@ -2,12 +2,13 @@ import type { FC, FormEvent } from 'react';
 
 import { approveProcessedData } from './approveProcessedData';
 import type { SequenceStatus } from '../../pages/user/[username]/user';
+import type { SequenceVersion } from '../../types.ts';
 
 type SequencesProcessedProps = { username: string; sequences: SequenceStatus[] };
 export const SequencesProcessed: FC<SequencesProcessedProps> = ({ username, sequences }) => {
-    const handleApprove = (username: string, sequenceId: number) => async (event: FormEvent) => {
+    const handleApprove = (username: string, sequenceVersion: SequenceVersion) => async (event: FormEvent) => {
         event.preventDefault();
-        await approveProcessedData(username, [sequenceId]);
+        await approveProcessedData(username, [sequenceVersion]);
         window.location.reload();
     };
     return (
@@ -28,7 +29,7 @@ export const SequencesProcessed: FC<SequencesProcessedProps> = ({ username, sequ
                                 </td>
                                 <td> {sequence.status} </td>
                                 <td>
-                                    <button className='btn' onClick={handleApprove(username, sequence.sequenceId)}>
+                                    <button className='btn' onClick={handleApprove(username, sequence)}>
                                         Approve
                                     </button>
                                 </td>

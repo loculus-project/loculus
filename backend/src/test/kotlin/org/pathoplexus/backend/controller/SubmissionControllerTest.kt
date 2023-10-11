@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.Status
 import org.pathoplexus.backend.service.UnprocessedData
@@ -51,18 +52,6 @@ class SubmissionControllerTest(
     }
 
     @Test
-    fun `approving of processed data`() {
-        val sequencesThatAreProcessed = listOf(1)
-        submitInitialData()
-        val rawUnprocessedSequences = awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
-        submitProcessedData(dummyPreprocessing(rawUnprocessedSequences))
-
-        approveProcessedSequences(sequencesThatAreProcessed)
-
-        expectStatusInResponse(querySequenceList(), sequencesThatAreProcessed.size, Status.SILO_READY.name)
-    }
-
-    @Test
     fun `workflow from initial submit to releasable data and creating a new version`() {
         submitInitialData()
         expectStatusInResponse(querySequenceList(), NUMBER_OF_SEQUENCES, Status.RECEIVED.name)
@@ -76,7 +65,7 @@ class SubmissionControllerTest(
         submitProcessedData(dummyPreprocessing(rawUnprocessedData))
         expectStatusInResponse(querySequenceList(), NUMBER_OF_SEQUENCES, Status.PROCESSED.name)
 
-        approveProcessedSequences(DefaultFiles.allSequenceIds)
+        approveProcessedSequences(DefaultFiles.allSequenceIds.map { SequenceVersion(it, 1) })
         expectStatusInResponse(querySequenceList(), NUMBER_OF_SEQUENCES, Status.SILO_READY.name)
 
         reviseSiloReadySequences()
@@ -314,13 +303,14 @@ class SubmissionControllerTest(
         .andExpect(content().contentType("application/x-ndjson"))
         .andReturn()
 
-    private fun approveProcessedSequences(listOfSequencesToApprove: List<Number>): ResultActions = mockMvc.perform(
-        MockMvcRequestBuilders.post("/approve-processed-data")
-            .param("username", USER_NAME)
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content("""{"sequenceIds":$listOfSequencesToApprove}"""),
-    )
-        .andExpect(status().isOk())
+    private fun approveProcessedSequences(listOfSequencesToApprove: List<SequenceVersion>): ResultActions =
+        mockMvc.perform(
+            MockMvcRequestBuilders.post("/approve-processed-data")
+                .param("username", USER_NAME)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}"""),
+        )
+            .andExpect(status().isNoContent)
 
     private fun reviseSiloReadySequences(): ResultActions {
         val files = getTestDataFiles(true)
@@ -363,7 +353,7 @@ class SubmissionControllerTest(
         submitInitialData()
         val rawUnprocessedData = awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
         submitProcessedData(dummyPreprocessing(rawUnprocessedData))
-        approveProcessedSequences(DefaultFiles.allSequenceIds)
+        approveProcessedSequences(DefaultFiles.allSequenceIds.map { SequenceVersion(it, 1) })
     }
 
     // TODO: Remove this function when all tests are migrated to the new format (with client)

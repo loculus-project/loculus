@@ -16,6 +16,7 @@ import org.pathoplexus.backend.service.FileData
 import org.pathoplexus.backend.service.OriginalData
 import org.pathoplexus.backend.service.SequenceReview
 import org.pathoplexus.backend.service.SequenceValidation
+import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
@@ -31,6 +32,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
@@ -93,6 +95,11 @@ private const val GET_SEQUENCES_OF_USER_DESCRIPTION = """
 Get a list of submitted sequence versions and their status for the given user.
 This returns the last sequence version in status SILO_READY and
 the sequence version that is not 'SILO_READY' (if it exists).
+"""
+
+private const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
+Approve processed sequence versions and set the status to 'SILO_READY'.
+This can only be done for sequences in status 'PROCESSED' that the user submitted themselves.
 """
 
 @RestController
@@ -207,9 +214,10 @@ class SubmissionController(
         @PathVariable sequenceId: Long,
         @PathVariable version: Long,
         @RequestParam username: String,
-    ): SequenceReview = databaseService.getReviewData(username, sequenceId, version)
+    ): SequenceReview = databaseService.getReviewData(username, SequenceVersion(sequenceId, version))
 
     @Operation(description = SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/submit-reviewed-sequence", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun submitReviewedSequence(
         @RequestParam username: String,
@@ -222,16 +230,14 @@ class SubmissionController(
         @RequestParam username: String,
     ): List<SequenceVersionStatus> = databaseService.getActiveSequencesSubmittedBy(username)
 
-    @Operation(description = "Approve that the processed data is correct")
-    @PostMapping(
-        "/approve-processed-data",
-        consumes = [MediaType.APPLICATION_JSON_VALUE],
-    )
+    @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PostMapping("/approve-processed-data", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun approveProcessedData(
         @RequestParam username: String,
-        @RequestBody body: SequenceIdList,
+        @RequestBody body: SequenceVersions,
     ) {
-        databaseService.approveProcessedData(username, body.sequenceIds)
+        databaseService.approveProcessedData(username, body.sequenceVersions)
     }
 
     @Operation(description = "Revise released data as a multipart/form-data")
@@ -289,6 +295,10 @@ class SubmissionController(
 
     data class SequenceIdList(
         val sequenceIds: List<Long>,
+    )
+
+    data class SequenceVersions(
+        val sequenceVersions: List<SequenceVersion>,
     )
 
     private fun generateFileDataSequence(
