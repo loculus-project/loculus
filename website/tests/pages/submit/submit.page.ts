@@ -2,9 +2,8 @@ import { readFileSync } from 'fs';
 
 import type { Locator, Page } from '@playwright/test';
 
-import { approveProcessedData } from '../../../src/components/UserSequenceList/approveProcessedData.ts';
-import type { Sequence } from '../../../src/types.ts';
-import { baseUrl, expect, metadataTestFile, sequencesTestFile, testuser } from '../../e2e.fixture';
+import type { Sequence, SequenceVersion } from '../../../src/types.ts';
+import { backendUrl, baseUrl, expect, metadataTestFile, sequencesTestFile, testuser } from '../../e2e.fixture';
 import { fakeProcessingPipeline, queryUnprocessedData } from '../../util/preprocessingPipeline.ts';
 
 export class SubmitPage {
@@ -45,7 +44,7 @@ export class SubmitPage {
         for (const sequence of sequences) {
             await fakeProcessingPipeline({ sequenceId: sequence.sequenceId, version: sequence.version, error: false });
         }
-        await approveProcessedData(testuser, sequences);
+        await this.approveProcessedData(testuser, sequences);
 
         return sequences;
     }
@@ -56,5 +55,26 @@ export class SubmitPage {
 
     public async setUsername(username: string) {
         await this.userField.fill(username);
+    }
+
+    public async approveProcessedData(
+        username: string,
+        sequenceVersions: SequenceVersion[],
+    ): Promise<{ approved: number }> {
+        const body = JSON.stringify({
+            sequenceVersions,
+        });
+        const response = await fetch(`${backendUrl}/approve-processed-data?username=${username}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body,
+        });
+
+        if (!response.ok) {
+            throw new Error(`Unexpected response: ${response.statusText} - ${await response.text()}`);
+        }
+        return response as unknown as { approved: number };
     }
 }

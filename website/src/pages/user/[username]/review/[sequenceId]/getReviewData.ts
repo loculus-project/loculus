@@ -7,17 +7,21 @@ import { sequenceReview, type SequenceReview } from '../../../../../types.ts';
 
 const logger = getInstanceLogger('getReviewData');
 
-export const backendFetch = async <ResponseType>(
+export const backendFetch = async <T extends z.Schema | undefined>(
     endpoint: `/${string}`,
-    zodSchema: z.Schema<ResponseType>,
+    zodSchema: T,
     options?: RequestInit,
-): Promise<Result<ResponseType, string>> => {
+): Promise<Result<T extends z.Schema<infer S> ? S : never, string>> => {
     try {
         const response = await fetch(`${getRuntimeConfig().forServer.backendUrl}${endpoint}`, options);
 
         if (!response.ok) {
             logger.error(`Failed to fetch with status ${response.status}`);
             return err(`Failed to fetch. Reason: ${JSON.stringify((await response.json()).detail)}`);
+        }
+
+        if (zodSchema === undefined) {
+            return ok(undefined as never);
         }
 
         try {

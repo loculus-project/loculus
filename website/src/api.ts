@@ -89,19 +89,19 @@ export async function fetchSequence(
     return fastaEntries[0].sequence;
 }
 
-type FetchParameter<ResponseType> = {
+type FetchParameter<T> = {
     endpoint: `/${string}`;
     backendUrl: string;
-    zodSchema?: z.Schema<ResponseType>;
+    zodSchema: T;
     options?: RequestInit;
 };
 
-export const clientFetch = async <ResponseType>({
+export const clientFetch = async <T extends z.Schema | undefined>({
     endpoint,
     backendUrl,
     zodSchema,
     options,
-}: FetchParameter<ResponseType>): Promise<Result<ResponseType, string>> => {
+}: FetchParameter<T>): Promise<Result<T extends z.Schema<infer S> ? S : never, string>> => {
     const logger = getClientLogger('clientFetch ' + endpoint);
     try {
         const response = await fetch(`${backendUrl}${endpoint}`, options);
@@ -113,7 +113,7 @@ export const clientFetch = async <ResponseType>({
 
         try {
             if (zodSchema === undefined) {
-                return ok(undefined as unknown as ResponseType);
+                return ok(undefined as never);
             }
 
             const parser = (candidate: unknown) => {
