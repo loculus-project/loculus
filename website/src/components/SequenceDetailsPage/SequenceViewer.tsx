@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { noCase } from 'change-case';
 import { type FC, useMemo } from 'react';
 
 import { fetchSequence } from '../../api';
@@ -15,12 +16,20 @@ type Props = {
 };
 
 export const SequencesViewer: FC<Props> = ({ accession, config, clientConfig, sequenceType }) => {
-    const { isLoading, data } = useQuery({
+    const { isLoading, data, error } = useQuery({
         queryKey: [accession, sequenceType],
         queryFn: () => fetchSequence(accession, sequenceType, config, clientConfig),
     });
 
     const lines = useMemo(() => (data !== undefined ? splitString(data, LINE_LENGTH) : undefined), [data]);
+
+    if (error !== null) {
+        return (
+            <div className='text-error'>
+                Failed to load {noCase(sequenceType.type)} sequence {sequenceType.name}: {JSON.stringify(error)}
+            </div>
+        );
+    }
 
     if (isLoading || lines === undefined) {
         return <span className='loading loading-spinner loading-lg' />;

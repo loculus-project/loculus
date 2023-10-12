@@ -1,17 +1,24 @@
 package org.pathoplexus.backend.controller
 
-import org.hamcrest.CoreMatchers
+import org.hamcrest.CoreMatchers.containsString
+import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.hasItems
+import org.hamcrest.Matchers.hasProperty
 import org.junit.jupiter.api.Test
+import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
+import org.pathoplexus.backend.service.PreprocessingAnnotation
 import org.pathoplexus.backend.service.SequenceReview
 import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class GetReviewDataEndpointTest(
+class GetDataToReviewEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
@@ -22,17 +29,42 @@ class GetReviewDataEndpointTest(
 
         client.submitProcessedData(PreparedProcessedData.withErrors())
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = SubmitFiles.DefaultFiles.firstSequence, version = 1)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.NEEDS_REVIEW)
 
         val reviewData = convenienceClient.getSequenceThatNeedsReview(
-            sequenceId = SubmitFiles.DefaultFiles.firstSequence,
+            sequenceId = firstSequence,
             version = 1,
         )
 
-        assertThat(reviewData.sequenceId, `is`(SubmitFiles.DefaultFiles.firstSequence))
+        assertThat(reviewData.sequenceId, `is`(firstSequence))
         assertThat(reviewData.version, `is`(1))
         assertThat(reviewData.data, `is`(PreparedProcessedData.withErrors().data))
+    }
+
+    @Test
+    fun `GIVEN I submitted invalid data and errors THEN shows validation error and submitted error`() {
+        convenienceClient.submitDefaultFiles()
+        convenienceClient.extractUnprocessedData(1)
+        convenienceClient.submitProcessedData(
+            PreparedProcessedData.withWrongDateFormat().withValues(
+                sequenceId = firstSequence,
+                errors = PreparedProcessedData.withErrors().errors,
+            ),
+        )
+
+        val reviewData = convenienceClient.getSequenceThatNeedsReview(sequenceId = firstSequence, version = 1)
+
+        assertThat(reviewData.errors, hasItems(*PreparedProcessedData.withErrors().errors!!.toTypedArray()))
+        assertThat(
+            reviewData.errors,
+            hasItem(
+                hasProperty<PreprocessingAnnotation>(
+                    "message",
+                    containsString("Expected type 'date' in format"),
+                ),
+            ),
+        )
     }
 
     @Test
@@ -40,10 +72,10 @@ class GetReviewDataEndpointTest(
         val nonExistentSequenceId = 999L
 
         client.getSequenceThatNeedsReview(nonExistentSequenceId, 1, USER_NAME)
-            .andExpect(MockMvcResultMatchers.status().isNotFound)
-            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                MockMvcResultMatchers.jsonPath("\$.detail").value(
+                jsonPath("\$.detail").value(
                     "Sequence version $nonExistentSequenceId.1 does not exist",
                 ),
             )
@@ -56,10 +88,10 @@ class GetReviewDataEndpointTest(
         convenienceClient.prepareDefaultSequencesToNeedReview()
 
         client.getSequenceThatNeedsReview(1, nonExistentSequenceVersion, USER_NAME)
-            .andExpect(MockMvcResultMatchers.status().isNotFound)
-            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                MockMvcResultMatchers.jsonPath("\$.detail").value(
+                jsonPath("\$.detail").value(
                     "Sequence version 1.$nonExistentSequenceVersion does not exist",
                 ),
             )
@@ -70,14 +102,14 @@ class GetReviewDataEndpointTest(
         convenienceClient.prepareDefaultSequencesToProcessing()
 
         client.getSequenceThatNeedsReview(
-            sequenceId = SubmitFiles.DefaultFiles.firstSequence,
+            sequenceId = firstSequence,
             version = 1,
             userName = USER_NAME,
         )
-            .andExpect(MockMvcResultMatchers.status().isUnprocessableEntity)
-            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                MockMvcResultMatchers.jsonPath("\$.detail").value(
+                jsonPath("\$.detail").value(
                     "Sequence version 1.1 is in not in state NEEDS_REVIEW or PROCESSED (was PROCESSING)",
                 ),
             )
@@ -89,14 +121,14 @@ class GetReviewDataEndpointTest(
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
         client.getSequenceThatNeedsReview(
-            sequenceId = SubmitFiles.DefaultFiles.firstSequence,
+            sequenceId = firstSequence,
             version = 1,
             userName = userNameThatDoesNotHavePermissionToQuery,
         )
-            .andExpect(MockMvcResultMatchers.status().isForbidden)
-            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                MockMvcResultMatchers.jsonPath("\$.detail").value(
+                jsonPath("\$.detail").value(
                     "Sequence 1.1 is not owned by user $userNameThatDoesNotHavePermissionToQuery",
                 ),
             )
@@ -110,8 +142,8 @@ class GetReviewDataEndpointTest(
             USER_NAME,
             SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
         )
-            .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
             .expectNdjsonAndGetContent<SequenceReview>().size
         assertThat(numberOfReturnedSequenceReviews, `is`(SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES))
 
@@ -120,8 +152,8 @@ class GetReviewDataEndpointTest(
             userNameThatDoesNotHavePermissionToQuery,
             SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
         )
-            .andExpect(MockMvcResultMatchers.status().isOk)
-            .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
             .expectNdjsonAndGetContent<SequenceReview>().size
         assertThat(numberOfReturnedSequenceReviewsForAWrongUser, `is`(0))
     }
@@ -129,12 +161,7 @@ class GetReviewDataEndpointTest(
     @Test
     fun `WHEN I want to get more than allowed number of review sequences at once THEN returns Bad Request`() {
         client.extractUnprocessedData(100_001)
-            .andExpect(MockMvcResultMatchers.status().isBadRequest)
-            .andExpect(
-                MockMvcResultMatchers.jsonPath(
-                    "\$.detail",
-                    CoreMatchers.containsString("You can extract at max 100000 sequences at once."),
-                ),
-            )
+            .andExpect(status().isBadRequest)
+            .andExpect(jsonPath("\$.detail", containsString("You can extract at max 100000 sequences at once.")))
     }
 }

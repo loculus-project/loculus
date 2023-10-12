@@ -5,6 +5,7 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.MockKAnnotations
 import io.mockk.MockKMatcherScope
 import io.mockk.every
+import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.model.HeaderId
@@ -13,8 +14,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -45,7 +47,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     fun `throw NOT_FOUND(404) when route is not found`() {
         every { validControllerCall() } returns validResponse
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/notAValidRoute"))
+        mockMvc.perform(get("/notAValidRoute"))
             .andExpect(status().isNotFound)
     }
 
@@ -69,5 +71,19 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
             .andExpect(jsonPath("$.detail").value("SomeMessage"))
+    }
+
+    @Test
+    fun `WHEN I submit a request with invalid schema THEN it should return a descriptive error message`() {
+        mockMvc.perform(
+            post("/approve-processed-data")
+                .param("username", "userName")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"fieldThatDoesNotExist": null}"""),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+            .andExpect(jsonPath("$.title").value("Bad Request"))
+            .andExpect(jsonPath("$.detail", containsString("failed for JSON property sequenceVersions")))
     }
 }

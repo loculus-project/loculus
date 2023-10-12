@@ -1,0 +1,101 @@
+accession	pango_lineage	date	region	country	division	unsorted_date	age	qc_value	insertions	aaInsertions
+id_408408	B.1.1.7	2021-03-18	Europe	Switzerland	Basel-Land		4	0.98		S:214:EPE
+id_749899	B.1.1.7	2021-04-13	Europe	Switzerland	Bern	2020-03-08	5	0.97		
+id_016901	B.1.1.7	2021-04-25	Europe	Switzerland	Aargau	2021-01-29	6	0.96		
+id_749892	B.1.1.7	2021-04-13	Europe	Switzerland	Bern	2020-12-24	4	0.95		
+id_597932	B.1.1.7	2021-03-19	Europe	Switzerland	Solothurn	2021-02-10	54	0.94		S:214:EPE
+id_407962	B.1.1.7		Europe	Switzerland	Solothurn	2021-01-16	55	0.93		
+id_750503	B.1.258.17	2020-12-24	Europe	Switzerland	Zürich	2021-02-14	56	0.92		
+id_360935	B.1.1.7	2021-03-08	Europe	Switzerland	Jura	2021-01-03	57	0.91		
+id_019235	B.1.1.7	2021-04-28	Europe	Switzerland	Basel-Stadt	2021-01-22	58	0.90		
+id_749960	B.1.1.7	2021-04-15	Europe	Switzerland	Basel-Land	2021-02-03	59	0.89		
+id_361468	B.1.1.7	2021-03-06	Europe	Switzerland	Zürich	2021-01-20	50	0.98		
+id_408062	B.1.1.7	2021-03-03	Europe	Switzerland	Valais	2020-11-24	50	0.97	22204:CAGAA	
+id_597890	B.1.1.7	2021-03-21		Switzerland	Vaud	2021-01-25	51	0.96	22339:GCTGGT	
+id_682849	XA.1	2020-12-17	Europe	Switzerland	Thurgau	2021-01-21	52	0.95		
+id_408805	B.1.221	2020-11-24	Europe	Switzerland	Schwyz	2020-12-09	53	0.94		
+id_750868	B.1.1.189	2020-12-15	Europe	Switzerland	Solothurn	2021-01-20	54	0.93		S:214:EPE
+id_019350	B.1.1.7	2021-04-27	Europe	Switzerland	Valais	2020-12-21	55	0.92		
+id_017036	B.1.1.7	2021-04-23	Europe	Switzerland	Solothurn	2021-03-09	56	0.91		
+id_599113	B.1.1.39	2020-12-08	Europe	Switzerland	Zürich	2021-03-05	57	0.90		
+id_214128	B.1.1.7	2021-05-10	Europe	Switzerland	Geneva	2020-11-13	58	0.89		
+id_408472	B.1.1.7	2021-05-25	Europe	Switzerland	Obwalden	2021-03-02	59	0.98		
+id_30864	B.1.177	2020-10-08	Europe	Switzerland	Basel-Stadt	2021-03-03	50	0.97		
+id_81968	B.1.160	2020-08-17	Europe	Switzerland	Basel-Stadt	2021-03-25	50	0.96		S:214:EPE
+id_213804	Q.7	2021-05-08	Europe	Switzerland	Geneva	2021-04-12	51		25701:CCC	
+id_405276	B.1.1.7	2021-05-24	Europe	Switzerland	Vaud	2021-04-28	52	0.94		
+id_213934	B.1.1.7	2021-05-13	Europe	Switzerland	Geneva	2021-04-23	53	0.93		
+id_213984	B.1.1.7	2021-05-08	Europe	Switzerland	Geneva	2021-05-09	54	0.92	25701:CCC	
+id_574088	B.1.1.7	2021-06-10	Europe	Switzerland	Sankt Gallen	2021-05-05	55	0.91	25701:CCC	
+id_544226	B.1.1.7	2021-06-05	Europe	Switzerland	Ticino	2021-05-12	56	0.90		
+id_360326	Q.7	2021-05-23	Europe	Switzerland	Ticino	2021-03-10	57	0.89		
+id_379651	B.1.1.7	2021-05-11	Europe	Switzerland	Valais	2021-06-01	58	0.98		
+id_036103	B.1.258	2020-12-09	Europe	Switzerland	Aargau	2021-06-03	59	0.97		
+id_31279	B.1.1	2020-10-28	Europe	Switzerland	Basel-Stadt	2021-05-11	50	0.96		
+id_31031	B.1.177	2020-10-22	Europe	Switzerland	Basel-Stadt	2021-05-10	50	0.95		
+id_273458	B.1.1.7	2021-01-26	Europe	Switzerland	Basel-Land	2021-05-18	51	0.94	25701:CCC	
+id_273715	B.1.160	2021-01-20	Europe	Switzerland	Basel-Stadt	2021-05-08	52	0.93		
+id_37604	B.1.1	2020-12-14	Europe	Switzerland	Bern	2021-05-14	53	0.92		
+id_129663	B.1.1.7	2020-12-29	Europe	Switzerland	Bern	2021-05-07	54	0.91		
+id_003629	B.1.1.39	2021-01-25	Europe	Switzerland	Aargau	2021-05-18	55	0.90		S:214:EPE
+id_37715	B.1.177	2020-12-13	Europe	Switzerland	Bern	2021-05-16	56	0.89		S:247:SGE
+id_003036	B.1.177	2021-01-16	Europe	Switzerland	Aargau	2021-07-14	57	0.98	5959:TAT	
+id_99762	B.1.177	2020-12-25	Europe	Switzerland	Schwyz	2021-07-19	58	0.97		
+id_99725	B.1.177	2021-01-12	Europe	Switzerland	Solothurn	2021-07-14	59	0.96		S:210:IV
+id_195052	B.1.1.7	2021-02-23	Europe	Switzerland	Solothurn	2021-07-04	50	0.95		
+id_003519	B.1.160.16	2021-01-22	Europe	Switzerland		2021-07-29	50	0.94		
+id_003010	B.1.36.35	2021-01-15	Europe	Switzerland	Solothurn	2021-07-19	51	0.93		
+id_119584	B.1.1	2020-11-04	Europe	Switzerland	Solothurn	2021-07-05	52	0.92		
+id_002052	B.1	2021-01-15	Europe	Switzerland	Solothurn	2021-07-15	53	0.91		
+id_66942	B.1	2020-03-08	Europe	Switzerland	Basel-Stadt	2021-05-12	54	0.90		
+id_003849	B.1.160	2021-01-29	Europe	Switzerland	Neuchâtel	2021-08-05	55	0.89		
+id_68148	GD.1	2020-12-24	Europe	Switzerland	Sankt Gallen	2020-03-16	56	0.98	25701:CCC	
+id_080536	B.1.1.7	2021-02-10	Europe	Switzerland	Basel-Land	2021-08-04	57	0.97		
+id_002156	B.1.221	2021-01-16	Europe	Switzerland	Basel-Land	2021-02-03	58	0.96		
+id_119315	B.1.1.7	2021-02-14	Europe	Switzerland	Graubünden	2021-03-18	59	0.95		
+id_004495	B.1.177.44	2021-01-03	Europe	Switzerland		2021-04-13	50	0.94	25701:CCC	
+id_001920	B.1.177	2021-01-22	Europe	Switzerland	Bern	2021-04-25	50	0.93		
+id_131102	B.1.160	2021-02-03	Europe	Switzerland	Zürich	2021-04-13	51	0.92		
+id_003373	B.1.177	2021-01-20	Europe	Switzerland	Zürich	2021-03-19	52	0.91		
+id_21941	B.1.1.70	2020-11-24	Europe	Switzerland	Zürich	2021-03-15	53	0.90		
+id_130868	B.1.525	2021-01-25	Europe	Switzerland	Zürich	2020-12-24	54	0.89	25701:CCC	
+id_003425	B.1.177	2021-01-21	Europe	Switzerland	Uri	2021-03-08	55	0.98		
+id_37860	B.1.160	2020-12-09	Europe	Switzerland	Valais	2021-04-28	56	0.97		
+id_001493	B.1.177.44	2021-01-20	Europe	Switzerland	Vaud	2021-04-15	57	0.96		
+id_260480	B.1.160	2020-12-21	Europe	Switzerland	Zürich	2021-03-06	58	0.95		
+id_747885	B.1.1.7	2021-03-09	Europe	Switzerland	Solothurn	2021-03-03	59	0.94		
+id_747752	B.1.1.7	2021-03-05	Europe	Switzerland	Basel-Land	2021-03-21	50	0.93		
+id_005148	B.1.221	2020-11-13	Europe	Switzerland	Solothurn	2020-12-17	50	0.92	25701:CCC	
+id_748243	B.1.1.7	2021-03-02	Europe	Switzerland	Solothurn	2020-11-24		0.91		
+id_748215	B.1.1.7	2021-03-03	Europe	Switzerland	Solothurn	2020-12-15	52	0.90		
+id_748395	B.1.1.7	2021-03-25	Europe	Switzerland	Basel-Stadt	2021-04-27	53	0.89		
+id_760534	B.1.1.7	2021-04-12	Europe	Switzerland	Ticino	2021-04-23	54	0.98		
+id_086867	C.36.3	2021-04-28	Europe	Switzerland	Zürich	2020-12-08	55	0.97	25701:CCC	
+id_840634	Q.7	2021-04-23	Europe	Switzerland	Ticino	2021-05-10	56	0.96		
+id_180995	B.1.1.7	2021-05-09	Europe	Switzerland	Basel-Stadt	2021-05-25	57	0.95		
+id_181005	B.1.1.7	2021-05-05	Europe	Switzerland	Basel-Stadt	2020-10-08	58	0.94		
+id_180023	B.1.1.7	2021-05-12	Europe	Switzerland	Ticino	2020-08-17	59	0.93	25701:CCC	
+id_270139	B.1.1.7	2021-03-10	Europe	Switzerland	Basel-Stadt	2021-05-08	50	0.92		
+id_544452	B.1.1.7	2021-06-01	Europe	Switzerland	Schwyz	2021-05-24	50	0.91		
+id_544332	B.1.1.7	2021-06-03	Europe	Switzerland	Bern	2021-05-13	51	0.90	25701:CCC	
+id_307766	B.1.1.7	2021-05-11	Europe	Switzerland	Bern	2021-05-08	52	0.89		
+id_375490	B.1.1.7	2021-05-10	Europe	Switzerland	Valais	2021-06-10	53	0.98		
+id_374969	B.1.1.7	2021-05-18	Europe	Switzerland	Aargau	2021-06-05	54	0.97	25701:CCC	
+id_307888	B.1.1.7	2021-05-08	Europe	Switzerland	Solothurn	2021-05-23	55	0.96		
+id_375247	B.1.1.7	2021-05-14	Europe	Switzerland	Sankt Gallen	2021-05-11	56		25701:CCC	
+id_308054	B.1.1.7	2021-05-07	Europe	Switzerland	Zürich	2020-12-09	57	0.94		
+id_375165	B.1.1.7	2021-05-18	Europe	Switzerland	Basel-Land	2020-10-28	58	0.93		
+id_375097	B.1.1.7	2021-05-16	Europe	Switzerland	Basel-Land	2020-10-22	59	0.92		
+id_128737	AY.9.2	2021-07-14	Europe	Switzerland	Zürich	2021-01-26	50	0.91		
+id_128811	B.1.617.2	2021-07-19	Europe	Switzerland	Aargau	2021-01-20	50	0.90		
+id_086369	AY.122	2021-07-14	Europe	Switzerland	Ticino	2020-12-14	51	0.89	25701:CCC	
+id_259931	AY.43	2021-07-04	Europe	Switzerland	Vaud	2020-12-29	52	0.98		S:143:T,ORF1a:3602:FEP
+id_267832	AY.43	2021-07-29	Europe	Switzerland	Bern	2021-01-25	53	0.97		
+id_128796	B.1.617.2	2021-07-19	Europe	Switzerland	Zürich	2020-12-13	54	0.96	25701:CCC	
+id_016465	B.1.1.7	2021-07-05	Europe	Switzerland	Valais	2021-01-16		0.95		
+id_247294		2021-07-15	Europe	Switzerland	Basel-Stadt	2020-12-25	56	0.94		
+id_578231	P.1	2021-05-12	Europe	Switzerland	Zürich	2021-01-12	57	0.93	25701:CCC,5959:TAT	
+id_465732	AY.43	2021-08-05	Europe	Switzerland	Vaud	2021-02-23	58	0.92		
+id_367431	B.1	2020-03-16	Europe	Switzerland	Vaud	2021-01-22	59	0.91		
+id_465556	AY.43	2021-08-04	Europe	Switzerland	Solothurn	2021-01-15	50	0.90		
+id_359636	B.1.1.189	2021-02-03	Europe	Switzerland	Vaud	2020-11-04	57	0.89	25701:CCC	ORF1a:3602:F

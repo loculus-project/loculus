@@ -20,8 +20,7 @@ export const baseUrl = 'http://localhost:3000';
 export const backendUrl = 'http://localhost:8079';
 
 export const testSequence = {
-    name: 'OU189322',
-    sequence: 'ACCAACCAAC',
+    name: 'id_002156',
     orf1a: 'MESLVPGFNE',
 };
 

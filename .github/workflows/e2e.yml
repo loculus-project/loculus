@@ -104,12 +104,19 @@ jobs:
         run: cd website && npm run e2e
 
       - uses: actions/upload-artifact@v3
-        if: always()
+        if: ${{ failure() }}
         with:
           name: playwright-report
           path: website/playwright-report/
           retention-days: 30
+          
+      - uses: actions/upload-artifact@v3
+        if: ${{ failure() }}
+        with:
+          name: log
+          path: log/
+          retention-days: 30
 
       - name: Log debugging info
-        if: always()
+        if: ${{ failure() }}
         run: docker logs pathoplexus-backend-1 && docker logs pathoplexus-website-1

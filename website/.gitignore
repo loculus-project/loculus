@@ -17,7 +17,6 @@ pnpm-debug.log*
 /playwright/.cache/
 
 log/
-# Currently set as LOG_DIR in .env
-undefined/
+tests/initialSiloData/preprocessingOutput/
 
 justfile

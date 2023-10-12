@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.SequenceReview
+import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
+import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 class SubmissionConvenienceClient(
     private val client: SubmissionControllerClient,
@@ -26,7 +29,13 @@ class SubmissionConvenienceClient(
 
     fun prepareDefaultSequencesToProcessing() {
         submitDefaultFiles()
-        awaitResponse(client.extractUnprocessedData(SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES).andReturn())
+        extractUnprocessedData()
+    }
+
+    fun submitProcessedData(vararg submittedProcessedData: SubmittedProcessedData) {
+        client.submitProcessedData(*submittedProcessedData)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
     }
 
     fun prepareDefaultSequencesToNeedReview() {
@@ -40,9 +49,22 @@ class SubmissionConvenienceClient(
         client.extractUnprocessedData(numberOfSequences)
             .expectNdjsonAndGetContent<UnprocessedData>()
 
+    fun prepareDatabaseWith(
+        vararg processedData: SubmittedProcessedData,
+    ) {
+        submitDefaultFiles()
+        extractUnprocessedData()
+        client.submitProcessedData(*processedData)
+    }
+
     fun getSequencesOfUser(userName: String = USER_NAME): List<SequenceVersionStatus> {
         return deserializeJsonResponse(client.getSequencesOfUser(userName))
     }
+
+    fun getSequenceVersionOfUser(
+        sequenceVersion: SequenceVersion,
+        userName: String = USER_NAME,
+    ) = getSequenceVersionOfUser(sequenceVersion.sequenceId, sequenceVersion.version, userName)
 
     fun getSequenceVersionOfUser(
         sequenceId: Long,
@@ -62,11 +84,22 @@ class SubmissionConvenienceClient(
     ): SequenceReview =
         deserializeJsonResponse<SequenceReview>(client.getSequenceThatNeedsReview(sequenceId, version, userName))
 
+    fun approveProcessedSequences(listOfSequencesToApprove: List<SequenceVersion>): ResultActions =
+        client.approveProcessedSequences(listOfSequencesToApprove)
+            .andExpect(status().isNoContent)
+
+    fun revokeSequences(listOfSequencesToRevoke: List<Number>): List<SequenceVersionStatus> =
+        deserializeJsonResponse(client.revokeSequences(listOfSequencesToRevoke))
+
+    fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions =
+        client.confirmRevocation(listOfSequencesToConfirm)
+            .andExpect(status().isOk)
+
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =
             resultActions
-                .andExpect(MockMvcResultMatchers.status().isOk)
-                .andExpect(MockMvcResultMatchers.content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andReturn()
                 .response
                 .contentAsString

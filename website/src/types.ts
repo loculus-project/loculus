@@ -64,19 +64,23 @@ export type HeaderId = {
     customId: string;
 };
 
+export interface SequenceVersion {
+    sequenceId: number;
+    version: number;
+}
+
 export type SequenceDetails = {
     [otherDetails: string | number | symbol]: unknown;
     genbankAccession?: string;
     sraAccession?: string;
     gisaidEpiIsl?: string;
-    strain?: string;
+    database?: string;
     date?: string;
     year?: number;
     month?: number;
     dateSubmitted?: string;
     region?: string;
     host?: string;
-    database?: string;
 };
 
 /**

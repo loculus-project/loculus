@@ -22,8 +22,7 @@ export const getData = async (metadataFilter: Filter[], offset: number, limit: n
         }, {});
 
     const serverConfig = getRuntimeConfig().forServer;
-    // TODO: when switching to LAPISv2 limit and offset should be handled differently
-    const detailsQuery = `${serverConfig.lapisUrl}/details?limit=${limit}&offset=${offset}`;
+    const detailsQuery = `${serverConfig.lapisUrl}/details`;
     const totalCountQuery = `${serverConfig.lapisUrl}/aggregated`;
 
     const headers = {
@@ -39,6 +38,8 @@ export const getData = async (metadataFilter: Filter[], offset: number, limit: n
                 headers,
                 body: JSON.stringify({
                     fields: [...config.schema.tableColumns, config.schema.primaryKey],
+                    limit,
+                    offset,
                     ...searchFilters,
                 }),
             }),
@@ -49,9 +50,17 @@ export const getData = async (metadataFilter: Filter[], offset: number, limit: n
             }),
         ]);
 
-        if (!detailsResponse.ok || !totalCountResponse.ok) {
+        if (!detailsResponse.ok) {
             logger.error(
-                `Failed to fetch search data with status ${detailsResponse.status} and ${totalCountResponse.status}`,
+                `Failed to fetch details with status ${detailsResponse.status}: ${await detailsResponse.text()}`,
+            );
+        }
+
+        if (!totalCountResponse.ok) {
+            logger.error(
+                `Failed to fetch total count with status ${
+                    totalCountResponse.status
+                }: ${await totalCountResponse.text()}`,
             );
         }
 
@@ -61,7 +70,7 @@ export const getData = async (metadataFilter: Filter[], offset: number, limit: n
             totalCount: (await totalCountResponse.json()).data[0].count,
         };
     } catch (error) {
-        logger.error(`Failed to fetch data with error ${(error as Error).message} `);
+        logger.error(`Failed to fetch data with error ${(error as Error).message}: ${(error as Error).cause}`);
         return {
             status: SearchStatus.ERROR,
             data: [],

@@ -33,7 +33,7 @@ function logProvider() {
 if (typeof configDir !== 'string' || configDir === '') {
     throw new Error('CONFIG_DIR environment variable is not set');
 }
-const configFilePath = path.join(configDir, 'runtime-config.json');
+const configFilePath = path.join(configDir, 'runtime_config.json');
 const serviceConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
 
 const backendProxy = createProxyMiddleware('/backendProxy/**', {
