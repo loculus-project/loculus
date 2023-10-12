@@ -7,8 +7,8 @@ services:
       - "3000:3000"
     volumes:
       - ./website/tests/config/config.json:/config/config.json
-      - ./website/tests/config/docker-runtime-config.json:/config/runtime-config.json
-      - ./website/tests/config/reference-genomes.json:/config/reference-genomes.json
+      - ./website/tests/config/docker_runtime_config.json:/config/runtime_config.json
+      - ./website/tests/config/reference_genomes.json:/config/reference_genomes.json
       - ./log:/log
 
   backend:
@@ -33,3 +33,36 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: unsecure
       POSTGRES_DB: pathoplexus
+
+  lapis:
+    image: ghcr.io/genspectrum/lapis-v2:latest
+    ports:
+      - "8080:8080"
+    command: --silo.url=http://silo:8081
+    volumes:
+      - ./website/tests/config/database_config.yaml:/workspace/database_config.yaml
+      - ./website/tests/config/silo_reference_genomes.json:/workspace/reference_genomes.json
+      - ./log:/workspace/log
+
+  silo:
+    image: ghcr.io/genspectrum/lapis-silo:latest
+    ports:
+      - "8081:8081"
+    command: --api
+    volumes:
+      - ./website/tests/initialSiloData/preprocessingOutput/:/data
+      - ./log/silo:/app/logs
+    depends_on:
+      siloPreprocessing:
+        condition: service_completed_successfully
+
+  siloPreprocessing:
+    image: ghcr.io/genspectrum/lapis-silo:latest
+    command: --preprocessing
+    volumes:
+      - ./website/tests/initialSiloData:/preprocessing/input
+      - ./website/tests/initialSiloData/preprocessingOutput:/preprocessing/output
+      - ./website/tests/config/silo_reference_genomes.json:/preprocessing/input/reference_genomes.json
+      - ./website/tests/config/preprocessing_config.yaml:/app/preprocessing_config.yaml
+      - ./website/tests/config/database_config.yaml:/app/database_config.yaml
+      - ./log/preprocessing:/app/logs

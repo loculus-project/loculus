@@ -2,6 +2,8 @@ import type { Locator, Page } from '@playwright/test';
 
 import { baseUrl } from '../../e2e.fixture';
 
+const ACCESSION = 'Accession';
+
 export class SearchPage {
     public readonly searchButton: Locator;
     public readonly table: Locator;
@@ -26,12 +28,12 @@ export class SearchPage {
     }
 
     // Note: This only gets a locator when the field is empty
-    public getEmptyGenbankAccessionField() {
-        return this.page.getByPlaceholder('Genbank accession', { exact: true });
+    public getEmptyAccessionField() {
+        return this.page.getByPlaceholder(ACCESSION, { exact: true });
     }
 
-    public getFilledGenbankAccessionField() {
-        return this.page.getByLabel('Genbank accession', { exact: true });
+    public getFilledAccessionField() {
+        return this.page.getByLabel(ACCESSION, { exact: true });
     }
 
     public async searchFor(params: { [key: string]: string }) {

@@ -4,7 +4,7 @@ import path from 'path';
 import { clientLogger } from './api';
 import type { ClientConfig, Config, ReferenceGenomes, RuntimeConfig, ServerConfig, ServiceUrls } from './types';
 import netlifyConfig from '../netlifyConfig/config.json';
-import netlifyRuntimeConfig from '../netlifyConfig/runtime-config.json';
+import netlifyRuntimeConfig from '../netlifyConfig/runtime_config.json';
 
 const configDir = import.meta.env.CONFIG_DIR;
 
@@ -43,7 +43,7 @@ export function getRuntimeConfig(): RuntimeConfig {
             return _runtimeConfig;
         }
 
-        const configFilePath = path.join(getConfigDir(), 'runtime-config.json');
+        const configFilePath = path.join(getConfigDir(), 'runtime_config.json');
         const serviceConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as ServiceUrls;
 
         const urlsForClient = import.meta.env.DEV
@@ -84,7 +84,7 @@ function makeClientConfig(serviceConfig: ServiceUrls): ClientConfig {
 
 export function getReferenceGenomes(): ReferenceGenomes {
     if (_referenceGenomes === null) {
-        const configFilePath = path.join(getConfigDir(), 'reference-genomes.json');
+        const configFilePath = path.join(getConfigDir(), 'reference_genomes.json');
         _referenceGenomes = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as ReferenceGenomes;
     }
     return _referenceGenomes;

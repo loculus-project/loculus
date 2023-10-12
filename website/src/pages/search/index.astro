@@ -6,7 +6,6 @@ import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
 import { getConfig, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { logger } from '../../logger';
 import type { Filter } from '../../types';
 
 const config = getConfig();
@@ -23,10 +22,6 @@ const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
 
 const data = await getData(metadataSettings, offset, pageSize);
-
-if (data.status === SearchStatus.ERROR) {
-    logger.error('Error while fetching data');
-}
 ---
 
 <BaseLayout title='Search'>

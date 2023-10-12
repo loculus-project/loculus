@@ -16,7 +16,7 @@ export const approveProcessedData = async (
     });
 
     if (!response.ok) {
-        throw new Error(`Unexpected response: ${response.statusText}`);
+        throw new Error(`Unexpected response: ${response.statusText} - ${await response.text()}`);
     }
     return response as unknown as { approved: number };
 };
