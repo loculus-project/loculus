@@ -17,7 +17,7 @@ export async function fetchMutations(
     config: Config,
     serviceConfig: ServiceUrls,
 ): Promise<MutationProportionCount[]> {
-    const endpoint = type === 'nucleotide' ? 'nuc-mutations' : 'aa-mutations';
+    const endpoint = type === 'nucleotide' ? 'nucleotideMutations' : 'aminoAcidMutations';
     const response = await fetch(`${serviceConfig.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
     return (await response.json()).data;
 }
@@ -28,7 +28,7 @@ export async function fetchInsertions(
     config: Config,
     serviceConfig: ServiceUrls,
 ): Promise<InsertionCount[]> {
-    const endpoint = type === 'nucleotide' ? 'nuc-insertions' : 'aa-insertions';
+    const endpoint = type === 'nucleotide' ? 'nucleotideInsertions' : 'aminoAcidInsertions';
     const response = await fetch(`${serviceConfig.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);
     return (await response.json()).data;
 }
@@ -58,11 +58,12 @@ export async function fetchSequence(
 ): Promise<string | undefined> {
     let endpoint: string;
     if (isUnalignedSequence(sequenceType)) {
-        endpoint = 'nuc-sequence';
+        // endpoint = 'nuc-sequence';
+        return Promise.reject("LAPIS v2 doesn't support unaligned nucleotide sequences yet");
     } else if (isAlignedSequence(sequenceType)) {
-        endpoint = 'nuc-sequence-aligned';
+        endpoint = 'alignedNucleotideSequences';
     } else {
-        endpoint = 'aa-sequence-aligned/' + sequenceType.name;
+        endpoint = 'aminoAcidSequences/' + sequenceType.name;
     }
 
     const response = await fetch(`${serviceConfig.lapisUrl}/${endpoint}?${config.schema.primaryKey}=${accession}`);

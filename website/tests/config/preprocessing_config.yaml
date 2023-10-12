@@ -1,0 +1,3 @@
+metadataFilename: metadata.tsv
+pangoLineageDefinitionFilename: pangolineage_alias.json
+referenceGenomeFilename: reference_genomes.json

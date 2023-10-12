@@ -7,7 +7,7 @@
                 "type": "string"
             },
             {
-                "name": "gisaidEpiIsl",
+                "name": "accession",
                 "type": "string"
             },
             {
@@ -81,7 +81,7 @@
                 "autocomplete": true
             },
             {
-                "name": "pangoLineage",
+                "name": "pango_lineage",
                 "type": "pango_lineage",
                 "autocomplete": true
             },
@@ -108,7 +108,7 @@
                 "type": "string"
             }
         ],
-        "tableColumns": ["strain", "country", "date", "pangoLineage"],
-        "primaryKey": "genbankAccession"
+        "tableColumns": ["country", "division", "date", "pango_lineage"],
+        "primaryKey": "accession"
     }
 }
