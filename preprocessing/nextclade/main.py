@@ -161,7 +161,7 @@ def run_nextclade(
         for gene in GENES:
             try:
                 with open(
-                    result_dir + f"/nextclade.aligned.{gene}.fasta", "r"
+                    result_dir + f"/nextclade_gene_{gene}.translation.fasta", "r"
                 ) as alignedTranslations:
                     aligned_translation = SeqIO.parse(
                         alignedTranslations, "fasta"
