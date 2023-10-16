@@ -128,9 +128,7 @@ def run_nextclade(
         with open(input_file, "w") as f:
             for sequence in unprocessed:
                 f.write(f">{sequence.idVersion}\n")
-                f.write(
-                    f"{sequence.data.unalignedNucleotideSequences['main']}\n"
-                )
+                f.write(f"{sequence.data.unalignedNucleotideSequences['main']}\n")
         command = (
             "nextclade run "
             + f"--output-all {result_dir} "
@@ -139,9 +137,7 @@ def run_nextclade(
         )
         exit_code = os.system(command)
         if exit_code != 0:
-            raise Exception(
-                "nextclade failed with exit code {}".format(exit_code)
-            )
+            raise Exception("nextclade failed with exit code {}".format(exit_code))
         processed = {
             unprocessed_sequence.idVersion: {
                 "unalignedNuc": unprocessed_sequence.data.unalignedNucleotideSequences,
@@ -163,14 +159,12 @@ def run_nextclade(
                 with open(
                     result_dir + f"/nextclade_gene_{gene}.translation.fasta", "r"
                 ) as alignedTranslations:
-                    aligned_translation = SeqIO.parse(
-                        alignedTranslations, "fasta"
-                    )
+                    aligned_translation = SeqIO.parse(alignedTranslations, "fasta")
                     for aligned_sequence in aligned_translation:
                         sequence_id = aligned_sequence.id
-                        processed[sequence_id]["alignedTranslations"][
-                            gene
-                        ] = str(aligned_sequence.seq)
+                        processed[sequence_id]["alignedTranslations"][gene] = str(
+                            aligned_sequence.seq
+                        )
             except FileNotFoundError:
                 # TODO: Add warning to each sequence
                 for id in processed.keys():
@@ -212,14 +206,14 @@ def process(
                 unalignedNucleotideSequences=nextclade_results[sequence_id][
                     "unalignedNuc"
                 ],
-                alignedNucleotideSequences=nextclade_results[sequence_id][
-                    "alignedNuc"
-                ],
-                nucleotideInsertions={},
+                alignedNucleotideSequences={
+                    "main": nextclade_results[sequence_id]["alignedNuc"]
+                },
+                nucleotideInsertions={"main": []},
                 alignedAminoAcidSequences=nextclade_results[sequence_id][
                     "alignedTranslations"
                 ],
-                aminoAcidInsertions={},
+                aminoAcidInsertions={gene: [] for gene in GENES},
             ),
         )
         for sequence_id in nextclade_results.keys()
@@ -229,21 +223,17 @@ def process(
 
 
 def submit_processed_sequences(processed: Sequence[ProcessedEntry]):
-    json_strings = [
-        json.dumps(dataclasses.asdict(sequence)) for sequence in processed
-    ]
+    json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = "\n".join(json_strings)
     url = host + "/submit-processed-data"
     headers = {"Content-Type": "application/x-ndjson"}
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:
         raise Exception(
-            "Submitting processed data failed. Status code: {}".format(
-                response.status_code
-            ),
-            response.text,
+            f"Submitting processed data failed. Status code: {response.status_code}\n"
+            + f"Response: {response.text}\n"
+            + f"Data sent in request: {ndjson_string}\n"
         )
-    print(ndjson_string)
     print(response.text)
 
 
