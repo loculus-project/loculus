@@ -87,3 +87,4 @@ docker pull ghcr.io/pathoplexus/website:latest
 ### General tips
 
 - Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
+- [TanStack Query](https://tanstack.com/query/latest/docs/react/overview) is being used for asynchronous requests and their state management.
