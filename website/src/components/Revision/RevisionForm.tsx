@@ -2,7 +2,7 @@ import { type FC, useState } from 'react';
 
 import type { ClientConfig, HeaderId } from '../../types';
 import { DataUploadForm } from '../DataUploadForm.tsx';
-import { ManagedErrorFeedback } from '../Submission/ManagedErrorFeedback';
+import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
 
 type RevisionFormProps = {
     clientConfig: ClientConfig;
