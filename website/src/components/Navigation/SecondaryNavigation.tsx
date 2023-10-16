@@ -2,7 +2,7 @@ export const SecondaryNavigation = ({ url }: { url: string }) => {
     const splitUrl = url.split('/');
     const curPage = splitUrl[splitUrl.length - 1];
 
-    if (curPage === 'user') {
+    if (curPage == 'user' || curPage=='') {
         return null;
     }
 
