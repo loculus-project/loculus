@@ -1,7 +1,7 @@
 import { SandwichMenu } from './SandwichMenu';
 
 export const Navigation = ({ url }: { url: string }) => {
-    const whatTab = url.includes('/user') ? 'user' : 'ebola';
+    const whatTab = url.includes('/user') ? 'user' : url[url.length - 1] == "/" ? "home" : "ebola";
 
     return (
         <div className='flex justify-end'>
