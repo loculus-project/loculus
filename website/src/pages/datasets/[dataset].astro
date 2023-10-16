@@ -1,0 +1,34 @@
+---
+import { DatasetItem } from '../../components/Datasets/DatasetItem';
+import { BackButton } from '../../components/Navigation/BackButton';
+import { AvatarBadge } from '../../components/UserProfile/AvatarBadge';
+import { getConfig, getRuntimeConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const config = getConfig();
+const clientConfig = getRuntimeConfig().forClient;
+
+const { dataset } = Astro.params;
+const version = Astro.url.searchParams.get('version')! || '';
+---
+
+<BaseLayout title='Datasets' data-testid='datasets-item-container'>
+    <BackButton marginRight={0} client:only='react' />
+    <div class='flex flex-col justify-start'>
+        <div class='flex flex-row items-left'>
+            <div class='w-1/4 flex flex-col justify-start items-center'>
+                <AvatarBadge username='testuser' />
+            </div>
+            <div class='w-3/4'>
+                <DatasetItem
+                    datasetId={dataset}
+                    datasetVersion={version}
+                    config={config}
+                    clientConfig={clientConfig}
+                    isAdminView
+                    client:only='react'
+                />
+            </div>
+        </div>
+    </div>
+</BaseLayout>
