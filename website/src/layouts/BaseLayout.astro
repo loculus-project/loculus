@@ -1,8 +1,10 @@
 ---
 import '../styles/base.scss';
 import { Navigation } from '../components/Navigation/Navigation';
+import { SecondaryNavigation } from '../components/Navigation/SecondaryNavigation';
 
 const { title } = Astro.props;
+const { url } = Astro.request;
 ---
 
 <html lang='en'>
@@ -21,9 +23,10 @@ const { title } = Astro.props;
                         <a href='/'><img class='h-8 mr-4' src='/favicon.svg' /></a>
                         <a href='/' class='title'>Pathoplexus</a>
                     </div>
-                    <Navigation client:load />
+                    <Navigation url={url} client:load />
                 </nav>
                 <hr class='border-t border-gray-1000' />
+                <SecondaryNavigation url={url} client:load />
             </header>
 
             <div class='mt-3 mb-5'>
