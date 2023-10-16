@@ -11,7 +11,8 @@ import { type FC, type FormEvent, useState, useEffect } from 'react';
 
 import { createDataset, updateDataset } from './api';
 import { clientLogger, fetchSequenceDetails } from '../../api';
-import type { Config, ClientConfig, Dataset, DatasetRecord } from '../../types';
+import { AccessionType, type Config, type ClientConfig, type Dataset, type DatasetRecord } from '../../types';
+import { serializeRecordsToAccessionsInput, parseRecordsFromAccessionInput } from '../../utils/parseAccessionInput';
 import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
 
 type DatasetFormProps = {
@@ -20,29 +21,6 @@ type DatasetFormProps = {
     editDatasetRecords?: DatasetRecord[];
     config: Config;
     clientConfig: ClientConfig;
-};
-
-const serializeRecords = (recordType: string, records?: DatasetRecord[]) => {
-    if (!recordType || !records) {
-        return '';
-    }
-    if (recordType === 'SRA') {
-        const sraAccession = records.filter((record) => record.type === 'SRA').map((record) => record.accession);
-        return sraAccession.join(', ');
-    }
-
-    const genbankAccession = records.filter((record) => record.type === 'Genbank').map((record) => record.accession);
-    return genbankAccession.join(', ');
-};
-
-const parseRecords = (recordType: string, records?: DatasetRecord[]): string[] => {
-    if (!recordType || !records || records.length === 0) {
-        return [];
-    }
-    if (recordType === 'SRA') {
-        return records.filter((record) => record.type === 'SRA').map((record) => record.accession ?? '');
-    }
-    return records.filter((record) => record.type === 'Genbank').map((record) => record.accession ?? '');
 };
 
 export const DatasetForm: FC<DatasetFormProps> = ({
@@ -55,12 +33,8 @@ export const DatasetForm: FC<DatasetFormProps> = ({
     const [datasetName, setDatasetName] = useState(editDataset?.name ?? '');
     const [datasetDescription, setDatasetDescription] = useState(editDataset?.description ?? '');
 
-    const [genbankAccessionsInput, setGenbankAccessionsInput] = useState(
-        serializeRecords('Genbank', editDatasetRecords),
-    );
-    const [parsedGenbankAccessions, setParsedGenbankAccessions] = useState(parseRecords('Genbank', editDatasetRecords));
-    const [sraAccessionsInput, setSraAccessionsInput] = useState(serializeRecords('SRA', editDatasetRecords));
-    const [parsedSraAccessions, setParsedSraAccessions] = useState(parseRecords('SRA', editDatasetRecords));
+    const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editDatasetRecords));
+    const [datasetRecords, setDatasetRecords] = useState(editDatasetRecords);
 
     const [isLoading, setIsLoading] = useState(false);
     const [isErrorOpen, setIsErrorOpen] = useState(false);
@@ -93,13 +67,21 @@ export const DatasetForm: FC<DatasetFormProps> = ({
             name: datasetName,
             description: datasetDescription,
             records: [
-                ...getAccessionsList('Genbank').map((accession) => ({
+                ...getAccessionsList(AccessionType.pathoplexus).map((accession) => ({
                     accession,
-                    type: 'Genbank',
+                    type: AccessionType.pathoplexus,
                 })),
-                ...getAccessionsList('SRA').map((accession) => ({
+                ...getAccessionsList(AccessionType.genbank).map((accession) => ({
                     accession,
-                    type: 'SRA',
+                    type: AccessionType.genbank,
+                })),
+                ...getAccessionsList(AccessionType.sra).map((accession) => ({
+                    accession,
+                    type: AccessionType.sra,
+                })),
+                ...getAccessionsList(AccessionType.gisaid).map((accession) => ({
+                    accession,
+                    type: AccessionType.gisaid,
                 })),
             ],
         };
@@ -139,18 +121,18 @@ export const DatasetForm: FC<DatasetFormProps> = ({
         return;
     };
 
-    const getAccessionsList = (accessionType: string) => {
-        const accessions = accessionType === 'Genbank' ? genbankAccessionsInput : sraAccessionsInput;
+    const getAccessionsList = (type: AccessionType) => {
+        const accessions = accessionsInput[type];
         return accessions
             .split(',')
             .map((accession) => accession.trim())
             .filter(Boolean);
     };
 
-    const querySequenceDetails = async (accessionType: string, accession: string) => {
+    const querySequenceDetails = async (type: AccessionType, accession: string) => {
         let accessionConfig: Config = config;
 
-        if (accessionType === 'SRA') {
+        if (type === 'SRA') {
             accessionConfig = {
                 ...config,
                 schema: {
@@ -159,77 +141,63 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                 },
             };
         }
-        const response = await fetchSequenceDetails(accession, accessionConfig, clientConfig);
-        if (response == null) {
-            throw new Error(`No sequence details found for accession: ${accession}`);
+        try {
+            const response = await fetchSequenceDetails(accession, accessionConfig, clientConfig);
+            return response;
+        } catch (error) {
+            throw new Error(
+                `Failed to fetch sequence details for accession: ${accession}. Error: ${(error as Error).message}`,
+            );
         }
-        return response;
     };
 
     useEffect(() => {
-        const parseRecordsInput = () => {
-            if (genbankAccessionsInput && genbankAccessionsInput.length > 0) {
-                const accessions = genbankAccessionsInput.split(',').map((accession) => accession.trim());
-                setParsedGenbankAccessions(accessions);
-            }
-            if (sraAccessionsInput && sraAccessionsInput.length > 0) {
-                const accessions = sraAccessionsInput.split(',').map((accession) => accession.trim());
-                setParsedSraAccessions(accessions);
-            }
+        const parseRecordsFromInput = () => {
+            const parsedRecords = parseRecordsFromAccessionInput(accessionsInput);
+            setDatasetRecords(parsedRecords);
         };
 
         const timeOutId = setTimeout(async () => {
-            parseRecordsInput();
+            parseRecordsFromInput();
         }, 2000);
         return () => clearTimeout(timeOutId);
-    }, [sraAccessionsInput, genbankAccessionsInput]);
+    }, [accessionsInput]);
 
-    const genBankQueries: UseQueryResult<DatasetRecord>[] = useQueries(
-        parsedGenbankAccessions.length === 0
+    const accessionQueries: UseQueryResult<DatasetRecord>[] = useQueries(
+        datasetRecords == null || datasetRecords.length === 0
             ? {
                   queries: [],
               }
             : {
-                  queries: parsedGenbankAccessions.map((accession: string) => ({
-                      queryKey: ['genbankAccession', accession],
-                      queryFn: () => querySequenceDetails('Genbank', accession),
+                  queries: datasetRecords.map((record) => ({
+                      queryKey: [record.type, record.accession],
+                      queryFn: () => querySequenceDetails(record.type as AccessionType, record.accession ?? ''),
                       retry: false,
                   })),
               },
     );
 
-    const sraQueries: UseQueryResult<DatasetRecord>[] = useQueries(
-        parsedSraAccessions.length === 0
-            ? {
-                  queries: [],
-              }
-            : {
-                  queries: parsedSraAccessions.map((accession) => ({
-                      queryKey: ['sraAccession', accession],
-                      queryFn: () => querySequenceDetails('SRA', accession),
-                      retry: false,
-                  })),
-              },
-    );
-
-    const renderAccessionStatus = (accessionType: string, accession: string) => {
-        const accessionQueries = accessionType === 'Genbank' ? genBankQueries : sraQueries;
-        const accessionKey = accessionType === 'Genbank' ? 'genbankAccession' : 'sraAccession';
-
+    const renderAccessionStatus = (type: string, accession: string) => {
         const accessionQuery = accessionQueries.find(
             (accessionQuery: any) =>
-                accessionQuery.data?.[accessionKey] === accession ||
-                (accessionQuery?.failureReason != null &&
-                    accessionQuery?.failureReason?.message === `No sequence details found for accession: ${accession}`),
+                accessionQuery.data?.[type] === accession ||
+                (accessionQuery?.failureReason != null && accessionQuery?.failureReason?.message.includes(accession)),
         );
 
-        if (!accessionQuery || accessionQuery.isLoading) {
+        if (accessionQuery == null || accessionQuery.isLoading === true) {
             return <CircularProgress size={20} color='primary' />;
         }
         if (accessionQuery.status === 'success') {
             return <CheckIcon />;
         }
         return <ErrorIcon />;
+    };
+
+    const setAccessionInput = (accessionInput: string, type: AccessionType) => {
+        setAccessionsInput((prevState) => ({
+            ...prevState,
+            [type]: accessionInput,
+        }));
     };
 
     return (
@@ -271,67 +239,57 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                     />
                 </FormControl>
                 <h2 className='text-lg font-bold'>Accessions</h2>
-
                 <FormGroup>
-                    <div className='mb-4'>
-                        <FormControl variant='outlined' fullWidth>
-                            <TextField
-                                id='genbank-accession-input'
-                                label='GenBank accessions'
-                                fullWidth
-                                multiline
-                                rows={4}
-                                variant='outlined'
-                                margin='none'
-                                size='small'
-                                value={genbankAccessionsInput}
-                                onChange={(event) => setGenbankAccessionsInput(event.target.value)}
-                            />
-                            <FormHelperText id='outlined-weight-helper-text'>
-                                Enter a list of comma-separated GenBank accessions.
-                            </FormHelperText>
-                        </FormControl>
-                    </div>
-                    <FormControl variant='outlined' fullWidth>
-                        <TextField
-                            id='sra-accession-input'
-                            label='SRA run accessions'
-                            fullWidth
-                            multiline
-                            rows={4}
-                            variant='outlined'
-                            margin='none'
-                            size='small'
-                            value={sraAccessionsInput}
-                            onChange={(event) => setSraAccessionsInput(event.target.value)}
-                        />
-                        <FormHelperText id='outlined-weight-helper-text'>
-                            Enter a list of comma-separated SRA run accessions.
-                        </FormHelperText>
-                    </FormControl>
+                    {Object.keys(accessionsInput).map((type) => (
+                        <div className='mb-4' key={`${type}-input-field`}>
+                            <FormControl variant='outlined' fullWidth>
+                                <TextField
+                                    id={`${type}-accession-input`}
+                                    label={`${type} accessions`}
+                                    fullWidth
+                                    multiline
+                                    rows={4}
+                                    variant='outlined'
+                                    margin='none'
+                                    size='small'
+                                    value={accessionsInput[type as AccessionType]}
+                                    onChange={(event: any) =>
+                                        setAccessionInput(event.target.value, type as AccessionType)
+                                    }
+                                />
+                                <FormHelperText id='outlined-weight-helper-text'>
+                                    {`Enter a list of comma-separated ${type} accessions.`}
+                                </FormHelperText>
+                            </FormControl>
+                        </div>
+                    ))}
                 </FormGroup>
 
-                {genbankAccessionsInput.length > 0 || sraAccessionsInput.length > 0 ? (
-                    <div>
-                        <h2 className='text-lg font-bold'>Verified</h2>
-                        <div className='p-6 space-y-6 max-w-md w-full'>
-                            <div>
-                                {getAccessionsList('Genbank').map((accession) => (
-                                    <div key={accession} className='flex flex-row justify-between'>
-                                        <div>{accession}</div>
-                                        {renderAccessionStatus('Genbank', accession)}
-                                    </div>
-                                ))}
-                                {getAccessionsList('SRA').map((accession) => (
-                                    <div key={accession} className='flex flex-row justify-between'>
-                                        <div>{accession}</div>
-                                        {renderAccessionStatus('SRA', accession)}
-                                    </div>
-                                ))}
-                            </div>
+                <div>
+                    <h2 className='text-lg font-bold'>Verified</h2>
+                    <div className='p-6 space-y-6 max-w-md w-full'>
+                        <div>
+                            {getAccessionsList(AccessionType.pathoplexus).map((accession) => (
+                                <div key={accession} className='flex flex-row justify-between'>
+                                    <div>{accession}</div>
+                                    {renderAccessionStatus(AccessionType.pathoplexus, accession)}
+                                </div>
+                            ))}
+                            {getAccessionsList(AccessionType.genbank).map((accession) => (
+                                <div key={accession} className='flex flex-row justify-between'>
+                                    <div>{accession}</div>
+                                    {renderAccessionStatus(AccessionType.genbank, accession)}
+                                </div>
+                            ))}
+                            {getAccessionsList(AccessionType.sra).map((accession) => (
+                                <div key={accession} className='flex flex-row justify-between'>
+                                    <div>{accession}</div>
+                                    {renderAccessionStatus(AccessionType.sra, accession)}
+                                </div>
+                            ))}
                         </div>
                     </div>
-                ) : null}
+                </div>
 
                 <Button variant='outlined' disabled={isLoading} onClick={handleSubmit}>
                     {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}

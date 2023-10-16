@@ -71,21 +71,30 @@ export interface SequenceVersion {
 
 export type SequenceDetails = {
     [otherDetails: string | number | symbol]: unknown;
+    accession?: string;
     genbankAccession?: string;
     sraAccession?: string;
     gisaidEpiIsl?: string;
-    database?: string;
     date?: string;
-    year?: number;
-    month?: number;
-    dateSubmitted?: string;
+    country?: string;
     region?: string;
-    host?: string;
 };
 
 /**
  * Types for datasets and citations.
  **/
+
+export enum AccessionType {
+    pathoplexus = 'Pathoplexus',
+    genbank = 'GenBank',
+    sra = 'SRA',
+    gisaid = 'GISAID',
+}
+
+export type DatasetRecord = {
+    accession?: string;
+    type?: AccessionType[keyof AccessionType];
+};
 
 export type Dataset = {
     datasetId: string;
@@ -93,16 +102,9 @@ export type Dataset = {
     datasetVersion: string;
     name: string;
     description?: string;
-    status: string;
     createdAt: string;
     createdBy: string;
     records?: DatasetRecord[];
-};
-
-export type DatasetRecord = {
-    internalId?: string;
-    accession?: string;
-    type?: string;
 };
 
 export type AccessionCitation = {

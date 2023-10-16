@@ -33,10 +33,6 @@ const getComparator = <Key extends keyof any>(
         : (a, b) => -descendingComparator(a, b, orderBy);
 };
 
-// Since 2020 all major browsers ensure sort stability with Array.prototype.sort().
-// stableSort() brings sort stability to non-modern browsers (notably IE11). If you
-// only support modern browsers you can replace stableSort(exampleArray, exampleComparator)
-// with exampleArray.slice().sort(exampleComparator)
 function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number) {
     const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
     stabilizedThis.sort((a, b) => {
@@ -160,13 +156,18 @@ const DatasetsTable = (props: DatasetsTableProps) => {
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - datasets.length) : 0;
 
     const visibleRows = useMemo(() => {
-        const strRepresentation = (value: any) => {
-            if (value == null) {
-                return '';
-            }
-            return value.toString();
+        const stringifyKeys = (obj: any) => {
+            Object.keys(obj).forEach((k) => {
+                if (typeof obj[k] === 'object') {
+                    return stringifyKeys(obj[k]);
+                }
+                obj[k] = '' + obj[k];
+            });
+            return obj;
         };
-        return stableSort(strRepresentation(datasets), getComparator(order, orderBy)).slice(
+        const serializedDatasets = datasets.map((dataset) => stringifyKeys(dataset));
+
+        return stableSort(serializedDatasets, getComparator(order, orderBy)).slice(
             page * rowsPerPage,
             page * rowsPerPage + rowsPerPage,
         );
@@ -202,7 +203,6 @@ const DatasetsTable = (props: DatasetsTableProps) => {
                         <TableBody>
                             {visibleRows.map((row, index: number) => {
                                 const labelId = `table-row-${index}`;
-
                                 return (
                                     <TableRow
                                         id={labelId}

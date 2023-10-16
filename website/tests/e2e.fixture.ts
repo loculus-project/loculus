@@ -26,15 +26,6 @@ export const testSequence = {
 
 export const testuser = 'testuser';
 
-export const testDataset = {
-    datasetId: '45FXCV1XV82ha29uBaGbRh',
-    datasetVersion: 1,
-    name: 'Test dataset name',
-    description: 'Test dataset description',
-    genbankAccessions: 'OU009684, OU538915, OX411625',
-    sraAccessions: 'ERR10737858, ERR10744766, ERR10012106',
-};
-
 export const metadataTestFile: string = './tests/testData/metadata.tsv';
 export const sequencesTestFile: string = './tests/testData/sequences.fasta';
 
@@ -57,9 +48,7 @@ export const test = base.extend<E2EFixture>({
     },
     datasetPage: async ({ page }, use) => {
         const datasetPage = new DatasetPage(page);
-        await datasetPage.createTestDataset();
         await use(datasetPage);
-        await datasetPage.deleteLastDataset();
     },
     revisePage: async ({ page }, use) => {
         const revisePage = new RevisePage(page);

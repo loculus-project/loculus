@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
-import { baseUrl, testDataset } from '../../e2e.fixture';
+import { baseUrl } from '../../e2e.fixture';
+import { testDataset } from '../../testData/dataset';
 
 export type SubmitResponse = { sequenceId: number; customId: string };
 export class DatasetPage {
@@ -11,12 +12,11 @@ export class DatasetPage {
         await this.waitForLoad();
     }
 
-    public async gotoDetail() {
+    public async gotoDetail(overrideName?: string) {
+        const datasetName = overrideName ? overrideName : testDataset?.name;
+
         await this.gotoList();
-        await this.page
-            .getByText(testDataset?.name)
-            .first()
-            .click();
+        await this.page.getByText(datasetName).first().click();
         await this.waitForLoad();
     }
 
@@ -26,24 +26,25 @@ export class DatasetPage {
         await this.page.waitForLoadState('networkidle', { timeout: 5000 });
     }
 
-    public async createTestDataset() {
+    public async createTestDataset(overrideName?: string) {
         await this.gotoList();
         await this.page.getByTestId('AddToPhotosIcon').waitFor();
         await this.page.getByTestId('AddToPhotosIcon').click();
-        await this.page.locator('#dataset-name').fill(testDataset?.name);
+        const datasetName = overrideName ? overrideName : testDataset?.name;
+
+        await this.page.locator('#dataset-name').fill(datasetName);
         await this.page.locator('#dataset-description').fill(testDataset?.description);
-        await this.page.locator('#genbank-accession-input').fill(testDataset?.genbankAccessions);
-        await this.page.locator('#sra-accession-input').fill(testDataset?.sraAccessions);
+        await this.page.locator('#Pathoplexus-accession-input').fill(testDataset?.genbankAccessions);
+        await this.page.locator('#GenBank-accession-input').fill(testDataset?.genbankAccessions);
+        await this.page.locator('#SRA-accession-input').fill(testDataset?.sraAccessions);
         await this.page.getByRole('button', { name: 'Save' }).click();
         await this.waitForLoad();
     }
 
-    public async deleteLastDataset() {
+    public async deleteTestDataset(overrideName?: string) {
+        const datasetName = overrideName ? overrideName : testDataset?.name;
         await this.gotoList();
-        this.page
-            .getByText(testDataset?.name)
-            .first()
-            .click();
+        await this.page.getByText(datasetName).first().click();
         await this.page.getByRole('button', { name: 'Delete' }).click();
         await this.page.getByRole('button', { name: 'Confirm' }).click();
         await this.waitForLoad();

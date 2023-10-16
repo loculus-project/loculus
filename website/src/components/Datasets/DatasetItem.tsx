@@ -16,9 +16,10 @@ import withQueryProvider from '../common/withQueryProvider';
 
 type DatasetRecordsTableProps = {
     accessionQueries: UseQueryResult<any>[];
+    datasetRecords: DatasetRecord[];
 };
 
-const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ accessionQueries }) => {
+const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ accessionQueries, datasetRecords }) => {
     if (accessionQueries.length === 0) {
         return null;
     }
@@ -30,39 +31,35 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ accessionQueries })
         <table className='table-auto w-full'>
             <thead>
                 <tr>
-                    <th className='w-1/10 text-left font-medium'>Genbank Accession</th>
-                    <th className='w-1/10 text-left font-medium'>SRA Run Accession</th>
-                    <th className='w-2/10 text-left font-medium'>Strain</th>
+                    <th className='w-1/10 text-left font-medium'>Accession</th>
+                    <th className='w-1/10 text-left font-medium'>Source</th>
                     <th className='w-2/10 text-left font-medium'>Country</th>
                     <th className='w-2/10 text-left font-medium'>Date</th>
                 </tr>
             </thead>
             <tbody>
-                {accessionQueries.map((accessionQuery, index) => {
-                    const accessionData = accessionQuery.data;
+                {datasetRecords.map((datasetRecord, index) => {
+                    const accessionData = accessionQueries.find(
+                        (query) => query.data?.[0]?.accession === datasetRecord.accession,
+                    )?.data;
+
                     return (
                         <tr key={`accessionData-${index}`}>
                             <td className='text-left'>
-                                <Button
-                                    href={`/sequences/${accessionData?.genbankAccession}`}
-                                    target='_blank'
-                                    variant='text'
-                                    sx={{ padding: 0, margin: 0 }}
-                                >
-                                    {accessionData?.genbankAccession ?? 'N/A'}
-                                </Button>
+                                {datasetRecord.type === 'pathoplexus' ? (
+                                    <Button
+                                        href={`/sequences/${datasetRecord.accession}`}
+                                        target='_blank'
+                                        variant='text'
+                                        sx={{ padding: 0, margin: 0 }}
+                                    >
+                                        {datasetRecord.accession ?? 'N/A'}
+                                    </Button>
+                                ) : (
+                                    datasetRecord.accession ?? 'N/A'
+                                )}
                             </td>
-                            <td className='text-left'>
-                                <Button
-                                    href={`/sequences/${accessionData?.sraAccession}`}
-                                    target='_blank'
-                                    variant='text'
-                                    sx={{ padding: 0, margin: 0 }}
-                                >
-                                    {accessionData?.sraAccession ?? 'N/A'}
-                                </Button>
-                            </td>
-                            <td className='text-left'>{accessionData?.strain ?? 'N/A'}</td>
+                            <td className='text-left'>{datasetRecord.type as string}</td>
                             <td className='text-left'>{accessionData?.country ?? 'N/A'}</td>
                             <td className='text-left'>{accessionData?.date ?? 'N/A'}</td>
                         </tr>
@@ -97,7 +94,6 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     const [isErrorOpen, setIsErrorOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
-    // TODO: replace with actual user id
     const userId = 'testuser';
 
     // TODO: centralize this into an ErrorBoundary component (react-error-boundary)
@@ -143,10 +139,10 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
 
     const accessionQueries = useQueries({
         queries:
-            datasetRecords != null
+            datasetRecords != null && datasetRecords.length > 0
                 ? datasetRecords.map((record: DatasetRecord) => ({
                       queryKey: ['accessionDetails', record.accession, record.type],
-                      queryFn: () => fetchAccessionDetails(record.accession ?? '', record.type ?? ''),
+                      queryFn: () => fetchAccessionDetails(record.accession ?? '', record.type as string),
                   }))
                 : [],
     });
@@ -166,7 +162,6 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
         await clientLogger.error(`deleteDataset failed with error' + ${(response as Error).message}`);
     };
 
-    // TODO: implement
     const handleCreateDOI = () => {
         return true;
     };
@@ -260,6 +255,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Version: </p>
+                            <p className='text'>{dataset.datasetVersion}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
@@ -292,12 +288,12 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                             </Link>
                         </div>
                     </div>
-                    {isLoadingDatasetRecords ? (
+                    {isLoadingDatasetRecords || datasetRecords == null ? (
                         <CircularProgress />
                     ) : (
                         <div className='flex flex-col my-4'>
                             <p className='text-xl py-4 font-semibold'>Sequences</p>
-                            <DatasetRecordsTable accessionQueries={accessionQueries} />
+                            <DatasetRecordsTable datasetRecords={datasetRecords} accessionQueries={accessionQueries} />
                         </div>
                     )}
                     <Modal isModalVisible={editModalVisible} setModalVisible={setEditModalVisible}>

@@ -18,8 +18,6 @@ type DatasetListProps = {
 
 const DatasetListInner: FC<DatasetListProps> = ({ config, clientConfig }) => {
     const [createModalVisible, setCreateModalVisible] = useState(false);
-
-    // TODO: replace with actual user id
     const userId = 'testuser';
     const { data: datasets, isLoading: isLoadingDatasets }: UseQueryResult<Dataset[]> = useQuery(
         ['datasets', userId],
