@@ -5,12 +5,14 @@ import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
+import { DatasetPage } from './pages/datasets/dataset.page';
 
 type E2EFixture = {
     searchPage: SearchPage;
     sequencePage: SequencePage;
     submitPage: SubmitPage;
     userPage: UserPage;
+    datasetPage: DatasetPage;
     revisePage: RevisePage;
 };
 
@@ -43,6 +45,10 @@ export const test = base.extend<E2EFixture>({
     userPage: async ({ page }, use) => {
         const userPage = new UserPage(page);
         await use(userPage);
+    },
+    datasetPage: async ({ page }, use) => {
+        const datasetPage = new DatasetPage(page);
+        await use(datasetPage);
     },
     revisePage: async ({ page }, use) => {
         const revisePage = new RevisePage(page);
