@@ -42,7 +42,7 @@ const defaultReviewData: SequenceReview = {
             [metadataKey]: editableEntry,
         },
         unalignedNucleotideSequences: {
-            originalUnalignedNucleotideSequencesField: 'originalUnalignedNucleotideSequencesValue',
+            originalSequenceName: 'originalUnalignedNucleotideSequencesValue',
         },
     },
     processedData: {
@@ -50,12 +50,25 @@ const defaultReviewData: SequenceReview = {
             processedMetaDataField: 'processedMetaDataValue',
         },
         unalignedNucleotideSequences: {
-            processedUnalignedNucleotideSequencesField: 'processedUnalignedNucleotideSequencesValue',
+            unalignedProcessedSequenceName: 'processedUnalignedNucleotideSequencesValue',
+        },
+        alignedNucleotideSequences: {
+            alignedProcessedSequenceName: 'processedAlignedNucleotideSequencesValue',
+        },
+        nucleotideInsertions: {
+            processedInsertionSequenceName: ['nucleotideInsertion1', 'nucleotideInsertion2'],
+        },
+        aminoAcidSequences: {
+            alignedProcessedGeneName: 'processedAminoAcidSequencesValue',
+        },
+        aminoAcidInsertions: {
+            processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
         },
     },
 };
 
 const dummyConfig = {} as ClientConfig;
+
 function renderReviewPage(reviewData: SequenceReview = defaultReviewData, clientConfig: ClientConfig = dummyConfig) {
     render(
         <QueryClientProvider client={queryClient}>
@@ -87,12 +100,26 @@ describe('ReviewPage', () => {
         renderReviewPage();
 
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
+        expectTextInSequenceData.original(defaultReviewData.originalData.metadata);
 
-        expectTextInMetadata.original(defaultReviewData.originalData.metadata);
+        expect(screen.getAllByText(/Unaligned nucleotide sequences/i)[0]).toBeInTheDocument();
+        expectTextInSequenceData.original(defaultReviewData.originalData.unalignedNucleotideSequences);
 
         expect(screen.getByText(/Processed Data/i)).toBeInTheDocument();
+        expectTextInSequenceData.processed(defaultReviewData.processedData.metadata);
+        expectTextInSequenceData.processed(defaultReviewData.processedData.unalignedNucleotideSequences);
 
-        expectTextInMetadata.processed(defaultReviewData.processedData.metadata);
+        expect(screen.getByText(/^Aligned nucleotide sequences/i)).toBeInTheDocument();
+        expectTextInSequenceData.processed(defaultReviewData.processedData.alignedNucleotideSequences);
+
+        expect(screen.getByText(/Amino acid sequences/i)).toBeInTheDocument();
+        expectTextInSequenceData.processed(defaultReviewData.processedData.aminoAcidSequences);
+
+        expect(screen.getByText('Processed insertion sequence name:')).toBeInTheDocument();
+        expect(screen.getByText('nucleotideInsertion1,nucleotideInsertion2')).toBeInTheDocument();
+
+        expect(screen.getByText('Processed insertion gene name:')).toBeInTheDocument();
+        expect(screen.getByText('aminoAcidInsertion1,aminoAcidInsertion2')).toBeInTheDocument();
     });
 
     test('should show error and warning tooltips', async () => {
@@ -113,18 +140,18 @@ describe('ReviewPage', () => {
         const someTextToAdd = '_addedText';
         await userEvent.type(screen.getByDisplayValue(editableEntry), someTextToAdd);
 
-        expectTextInMetadata.original({
+        expectTextInSequenceData.original({
             [metadataKey]: editableEntry + someTextToAdd,
         });
         const undoButton = document.querySelector(`.tooltip[data-tip="Revert to: ${editableEntry}"]`);
         expect(undoButton).not.toBeNull();
 
         await userEvent.click(undoButton!);
-        expectTextInMetadata.original(defaultReviewData.originalData.metadata);
+        expectTextInSequenceData.original(defaultReviewData.originalData.metadata);
     });
 });
 
-const expectTextInMetadata = {
+const expectTextInSequenceData = {
     original: (metadata: Record<string, MetadataField>): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();

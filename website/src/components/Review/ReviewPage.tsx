@@ -2,10 +2,16 @@ import { sentenceCase, snakeCase } from 'change-case';
 import { type Result } from 'neverthrow';
 import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef, useState } from 'react';
 
-import { DataRow, ProcessedDataRow } from './DataRow.tsx';
-import type { KeyValuePair, Row } from './InputField.tsx';
+import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
+import type { Row } from './InputField.tsx';
 import { clientFetch, getClientLogger } from '../../api.ts';
-import type { ClientConfig, ProcessingAnnotationSourceType, SequenceReview, UnprocessedData } from '../../types.ts';
+import type {
+    ClientConfig,
+    MetadataRecord,
+    ProcessingAnnotationSourceType,
+    SequenceReview,
+    UnprocessedData,
+} from '../../types.ts';
 import { ManagedErrorFeedback } from '../Submission/ManagedErrorFeedback.tsx';
 
 type ReviewPageProps = {
@@ -53,8 +59,8 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
         setIsErrorOpen(false);
     };
 
-    const processedSequenceRows = useMemo(() => mapProcessedSequencesToRow(reviewData), [reviewData]);
-    const processedMetadataRows = useMemo(() => mapProcessedMetadataToRow(reviewData), [reviewData]);
+    const processedSequenceRows = useMemo(() => extractProcessedSequences(reviewData), [reviewData]);
+    const processedInsertions = useMemo(() => extractInsertions(reviewData), [reviewData]);
 
     return (
         <>
@@ -78,8 +84,27 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
                     />
 
                     <Subtitle title='Processed Data' bold />
-                    <ProcessedMetadata processedMetadataRows={processedMetadataRows} />
-                    <ProcessedSequences processedSequenceRows={processedSequenceRows} />
+                    <ProcessedMetadata processedMetadata={reviewData.processedData.metadata} />
+                    <ProcessedSequences
+                        processedSequenceRows={processedSequenceRows}
+                        sequenceType='unalignedNucleotideSequences'
+                    />
+                    <ProcessedSequences
+                        processedSequenceRows={processedSequenceRows}
+                        sequenceType='alignedNucleotideSequences'
+                    />
+                    <ProcessedSequences
+                        processedSequenceRows={processedSequenceRows}
+                        sequenceType='aminoAcidSequences'
+                    />
+                    <ProcessedInsertions
+                        processedInsertions={processedInsertions}
+                        insertionType='nucleotideInsertions'
+                    />
+                    <ProcessedInsertions
+                        processedInsertions={processedInsertions}
+                        insertionType='aminoAcidInsertions'
+                    />
                 </tbody>
             </table>
         </>
@@ -132,11 +157,10 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
     <>
         <Subtitle title='Metadata' />
         {editedMetadata.map((field) => (
-            <DataRow
+            <EditableDataRow
                 key={'raw_metadata' + field.key}
-                customKey={field.key}
                 row={field}
-                editable={(editedRow: Row) =>
+                onChange={(editedRow: Row) =>
                     setEditedMetadata((prevRows: Row[]) =>
                         prevRows.map((prevRow) =>
                             prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
@@ -156,11 +180,10 @@ const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedS
     <>
         <Subtitle title='Unaligned nucleotide sequences' />
         {editedSequences.map((field) => (
-            <DataRow
+            <EditableDataRow
                 key={'raw_unaligned' + field.key}
-                customKey={field.key}
                 row={field}
-                editable={(editedRow: Row) =>
+                onChange={(editedRow: Row) =>
                     setEditedSequences((prevRows: Row[]) =>
                         prevRows.map((prevRow) =>
                             prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
@@ -173,34 +196,40 @@ const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedS
 );
 
 type ProcessedMetadataProps = {
-    processedMetadataRows: KeyValuePair[];
+    processedMetadata: MetadataRecord;
 };
-const ProcessedMetadata: FC<ProcessedMetadataProps> = ({ processedMetadataRows }) => (
+const ProcessedMetadata: FC<ProcessedMetadataProps> = ({ processedMetadata }) => (
     <>
         <Subtitle title='Metadata' customKey='preprocessing_metadata' />
-        {processedMetadataRows.map((field) => (
-            <ProcessedDataRow key={'processed' + field.key} customKey={'preprocessing_' + field.key} row={field} />
+        {Object.entries(processedMetadata).map(([key, value]) => (
+            <ProcessedDataRow key={'processed' + key} row={{ key, value: value.toString() }} />
         ))}
     </>
 );
 
 type ProcessedSequencesProps = {
-    processedSequenceRows: SequenceRow[];
+    processedSequenceRows: ReturnType<typeof extractProcessedSequences>;
+    sequenceType: keyof ReturnType<typeof extractProcessedSequences>;
 };
-const ProcessedSequences: FC<ProcessedSequencesProps> = ({ processedSequenceRows }) => (
+const ProcessedSequences: FC<ProcessedSequencesProps> = ({ processedSequenceRows, sequenceType }) => (
     <>
-        {processedSequenceRows.map((sequenceRow) => (
-            <Subtitle key={`preprocessing_sequences_${sequenceRow.type}`} title={sentenceCase(sequenceRow.type)} />
+        <Subtitle key={`preprocessing_sequences_${sequenceType}`} title={sentenceCase(sequenceType)} />
+        {Object.entries(processedSequenceRows[sequenceType]).map(([key, value]) => (
+            <ProcessedDataRow key={`processed_${sequenceType}_${key}`} row={{ key, value }} />
         ))}
-        {processedSequenceRows.map((sequenceRow) =>
-            sequenceRow.data.map((field) => (
-                <ProcessedDataRow
-                    key={`processed_${sequenceRow.type}_${field.key}`}
-                    customKey={`preprocessing_${sequenceRow.type}_${field.key}`}
-                    row={field}
-                />
-            )),
-        )}
+    </>
+);
+
+type ProcessedInsertionsProps = {
+    processedInsertions: ReturnType<typeof extractInsertions>;
+    insertionType: keyof ReturnType<typeof extractInsertions>;
+};
+const ProcessedInsertions: FC<ProcessedInsertionsProps> = ({ processedInsertions, insertionType }) => (
+    <>
+        <Subtitle key={`processed_insertions_${insertionType}`} title={sentenceCase(insertionType)} />
+        {Object.entries(processedInsertions[insertionType]).map(([key, value]) => (
+            <ProcessedDataRow key={`processed_${insertionType}_${key}`} row={{ key, value: value.join(',') }} />
+        ))}
     </>
 );
 
@@ -220,26 +249,16 @@ const mapSequencesToRow = (reviewData: SequenceReview): Row[] =>
         ...mapErrorsAndWarnings(reviewData, key, 'NucleotideSequence'),
     }));
 
-const mapProcessedMetadataToRow = (reviewData: SequenceReview): KeyValuePair[] =>
-    Object.entries(reviewData.processedData.metadata).map(([key, value]) => ({
-        key,
-        value: value.toString(),
-    }));
+const extractProcessedSequences = (reviewData: SequenceReview) => ({
+    unalignedNucleotideSequences: reviewData.processedData.unalignedNucleotideSequences,
+    alignedNucleotideSequences: reviewData.processedData.alignedNucleotideSequences,
+    aminoAcidSequences: reviewData.processedData.aminoAcidSequences,
+});
 
-type SequenceRow = { type: string; data: KeyValuePair[] };
-
-const mapProcessedSequencesToRow = (reviewData: SequenceReview): SequenceRow[] =>
-    Object.entries(reviewData.processedData)
-        .filter(([sequenceType]) => sequenceType !== 'metadata')
-        .map(([sequenceType, sequenceData]) => ({
-            type: sequenceType,
-            data: Object.entries(sequenceData).map(
-                ([key, value]): KeyValuePair => ({
-                    key,
-                    value: value.toString(),
-                }),
-            ),
-        }));
+const extractInsertions = (reviewData: SequenceReview) => ({
+    nucleotideInsertions: reviewData.processedData.nucleotideInsertions,
+    aminoAcidInsertions: reviewData.processedData.aminoAcidInsertions,
+});
 
 const mapErrorsAndWarnings = (
     reviewData: SequenceReview,
