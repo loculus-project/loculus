@@ -144,8 +144,8 @@ type SubtitleProps = {
 const Subtitle: FC<SubtitleProps> = ({ title, bold, customKey }) => (
     <Fragment key={snakeCase(customKey ?? title) + '_fragment'}>
         <tr key={snakeCase(customKey ?? title) + '_spacing'} className='h-4' />
-        <tr key={snakeCase(customKey ?? title)}>
-            <td className={`${bold ?? false ? 'font-semibold' : 'font-normal'} subtitle`} colSpan={3}>
+        <tr key={snakeCase(customKey ?? title)} className='subtitle'>
+            <td className={bold ?? false ? 'font-semibold' : 'font-normal'} colSpan={3}>
                 {title}
             </td>
         </tr>
