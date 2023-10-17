@@ -372,7 +372,7 @@ class SubmissionControllerTest(
                     metadata = objectMapper.readValue<Map<String, JsonNode>>(
                         objectMapper.writeValueAsString(it.data.metadata),
                     ),
-                    it.data.unalignedNucleotideSequences,
+                    unalignedNucleotideSequences = it.data.unalignedNucleotideSequences + ("secondSegment" to "ATAG"),
                 )
             }
             .map { objectMapper.writeValueAsString(it) }

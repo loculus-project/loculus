@@ -1,13 +1,13 @@
 package org.pathoplexus.backend.service
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
-import io.swagger.v3.oas.annotations.media.Schema
+import org.pathoplexus.backend.config.ReferenceGenome
+import org.pathoplexus.backend.config.ReferenceSequence
+import org.pathoplexus.backend.controller.ProcessingValidationException
 import org.pathoplexus.backend.model.Metadata
 import org.pathoplexus.backend.model.SchemaConfig
-import org.pathoplexus.backend.service.ValidationErrorType.MissingRequiredField
-import org.pathoplexus.backend.service.ValidationErrorType.TypeMismatch
-import org.pathoplexus.backend.service.ValidationErrorType.UnknownField
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -17,71 +17,102 @@ private const val DATE_FORMAT = "yyyy-MM-dd"
 private const val PANGO_LINEAGE_REGEX_PATTERN = "[a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}"
 private val pangoLineageRegex = Regex(PANGO_LINEAGE_REGEX_PATTERN)
 
-@Component
-class SequenceValidatorService(private val schemaConfig: SchemaConfig) {
+enum class AminoAcidSymbols {
+    A, C, D, E, F, G, H, I, K, L, M, N, P, Q, R, S, T, V, W, Y, B, Z, X,
 
-    fun validateSequence(submittedProcessedData: SubmittedProcessedData): ValidationResult {
-        var validationResult: ValidationResult = ValidationResult.Ok()
+    @JsonProperty("-")
+    GAP,
+
+    @JsonProperty("*")
+    STOP,
+}
+
+enum class NucleotideSymbols {
+    A, C, G, T, M, R, W, S, Y, K, V, H, D, B, N,
+
+    @JsonProperty("-")
+    GAP,
+}
+
+@Component
+class SequenceValidatorService(
+    private val schemaConfig: SchemaConfig,
+    private val referenceGenome: ReferenceGenome,
+) {
+    fun validateSequence(submittedProcessedData: SubmittedProcessedData) {
+        validateMetadata(submittedProcessedData)
+        validateNucleotideSequences(submittedProcessedData)
+        validateAminoAcidSequences(submittedProcessedData)
+    }
+
+    private fun validateMetadata(
+        submittedProcessedData: SubmittedProcessedData,
+    ) {
         val metadataFields = schemaConfig.schema.metadata
+        validateNoUnknownInMetaData(submittedProcessedData.data.metadata, metadataFields.map { it.name })
 
         for (metadata in metadataFields) {
-            validationResult = validateKnownMetadataField(validationResult, metadata, submittedProcessedData)
+            validateKnownMetadataField(metadata, submittedProcessedData)
         }
+    }
 
-        val knownFieldNames = metadataFields.map { it.name }
-        val unknownFields = submittedProcessedData.data.metadata.keys.subtract(knownFieldNames.toSet())
-        for (unknownField in unknownFields) {
-            validationResult = validationResult.withErrorAppended(ValidationError.unknownField(unknownField))
+    private fun <T> validateNoUnknownInMetaData(
+        data: Map<String, T>,
+        known: List<String>,
+    ) {
+        val unknowns = data.keys.subtract(known.toSet())
+        if (unknowns.isNotEmpty()) {
+            throw ProcessingValidationException("Unknown fields in processed data: ${unknowns.joinToString(", ")}.")
         }
-
-        return validationResult
     }
 
     private fun validateKnownMetadataField(
-        validationResult: ValidationResult,
         metadata: Metadata,
         submittedProcessedData: SubmittedProcessedData,
-    ): ValidationResult {
+    ) {
         val fieldName = metadata.name
         val fieldValue = submittedProcessedData.data.metadata[fieldName]
 
         if (metadata.required) {
             if (fieldValue == null) {
-                return validationResult.withErrorAppended(ValidationError.missingRequiredField(fieldName))
+                throw ProcessingValidationException("Missing the required field '$fieldName'.")
             }
 
             if (fieldValue is NullNode) {
-                return validationResult.withErrorAppended(ValidationError.requiredFieldIsNull(fieldName))
+                throw ProcessingValidationException("Field '$fieldName' is null, but a value is required.")
             }
         }
 
         if (fieldValue != null) {
-            when (val validationError = validateType(fieldValue, metadata)) {
-                null -> {}
-                else -> return validationResult.withErrorAppended(validationError)
-            }
+            validateType(fieldValue, metadata)
         }
-        return validationResult
     }
 
-    fun validateType(fieldValue: JsonNode, metadata: Metadata): ValidationError? {
+    fun validateType(fieldValue: JsonNode, metadata: Metadata) {
         if (fieldValue.isNull) {
-            return null
+            return
         }
 
         when (metadata.type) {
             "date" -> {
                 if (!isValidDate(fieldValue.asText())) {
-                    return ValidationError.invalidDate(metadata.name, fieldValue)
+                    throw ProcessingValidationException(
+                        "Expected type 'date' in format '$DATE_FORMAT' for field '${metadata.name}', " +
+                            "found value '$fieldValue'.",
+                    )
                 }
-                return null
+                return
             }
 
             "pango_lineage" -> {
                 if (!isValidPangoLineage(fieldValue.asText())) {
-                    return ValidationError.invalidPangoLineage(metadata.name, fieldValue)
+                    throw ProcessingValidationException(
+                        "Expected type 'pango_lineage' for field '${metadata.name}', " +
+                            "found value '$fieldValue'. " +
+                            "A pango lineage must be of the form $PANGO_LINEAGE_REGEX_PATTERN, e.g. 'XBB' or 'BA.1.5'.",
+                    )
                 }
-                return null
+                return
             }
         }
 
@@ -91,14 +122,14 @@ class SequenceValidatorService(private val schemaConfig: SchemaConfig) {
             "float" -> fieldValue.isFloat
             "double" -> fieldValue.isDouble
             "number" -> fieldValue.isNumber
-            else -> throw RuntimeException(
-                "Found unknown metadata type in config: ${metadata.type}. Refactor this to an enum",
-            )
+            else -> false
         }
 
-        return when (isOfCorrectPrimitiveType) {
-            true -> null
-            false -> ValidationError.typeMismatch(metadata.name, metadata.type, fieldValue)
+        if (!isOfCorrectPrimitiveType) {
+            throw ProcessingValidationException(
+                "Expected type '${metadata.type}' for field '${metadata.name}', " +
+                    "found value '$fieldValue'.",
+            )
         }
     }
 
@@ -115,75 +146,200 @@ class SequenceValidatorService(private val schemaConfig: SchemaConfig) {
     fun isValidPangoLineage(pangoLineageCandidate: String): Boolean {
         return pangoLineageCandidate.matches(pangoLineageRegex)
     }
-}
 
-@Schema(
-    oneOf = [ValidationResult.Ok::class, ValidationResult.Error::class],
-    discriminatorProperty = "type",
-)
-sealed interface ValidationResult {
-    val type: String
+    private fun validateNucleotideSequences(
+        submittedProcessedData: SubmittedProcessedData,
+    ) {
+        for (segment in referenceGenome.nucleotideSequences) {
+            validateNoMissingSegment(
+                segment,
+                submittedProcessedData.data.alignedNucleotideSequences,
+                "alignedNucleotideSequences",
+            )
+            validateLengthOfSequence(
+                segment,
+                submittedProcessedData.data.alignedNucleotideSequences,
+                "alignedNucleotideSequences",
+            )
 
-    fun withErrorAppended(validationError: ValidationError): ValidationResult
+            validateNoMissingSegment(
+                segment,
+                submittedProcessedData.data.unalignedNucleotideSequences,
+                "unalignedNucleotideSequences",
+            )
+        }
 
-    class Ok : ValidationResult {
-        @Schema(allowableValues = ["Ok"])
-        override val type = "Ok"
-
-        override fun withErrorAppended(validationError: ValidationError) = Error(listOf(validationError))
-    }
-
-    class Error(val validationErrors: List<ValidationError>) : ValidationResult {
-        @Schema(allowableValues = ["Error"])
-        override val type = "Error"
-
-        override fun withErrorAppended(validationError: ValidationError) = Error(validationErrors + validationError)
-    }
-}
-
-class ValidationError(val type: ValidationErrorType, val fieldName: String, val message: String) {
-    companion object {
-        fun missingRequiredField(field: String) = ValidationError(
-            MissingRequiredField,
-            field,
-            "Missing the required field '$field'.",
+        validateNoUnknownSegment(
+            submittedProcessedData.data.alignedNucleotideSequences,
+            "alignedNucleotideSequences",
         )
 
-        fun requiredFieldIsNull(field: String) = ValidationError(
-            MissingRequiredField,
-            field,
-            "Field '$field' is null, but a value is required.",
+        validateNoUnknownSegment(
+            submittedProcessedData.data.unalignedNucleotideSequences,
+            "unalignedNucleotideSequences",
         )
 
-        fun typeMismatch(fieldName: String, expectedType: String, fieldValue: JsonNode) = ValidationError(
-            TypeMismatch,
-            fieldName,
-            "Expected type '$expectedType' for field '$fieldName', found value '$fieldValue'.",
+        validateNoUnknownSegment(
+            submittedProcessedData.data.nucleotideInsertions,
+            "nucleotideInsertions",
         )
 
-        fun invalidDate(fieldName: String, fieldValue: JsonNode) = ValidationError(
-            TypeMismatch,
-            fieldName,
-            "Expected type 'date' in format '$DATE_FORMAT' for field '$fieldName', found value '$fieldValue'.",
+        validateNoUnknownNucleotideSymbol(
+            submittedProcessedData.data.alignedNucleotideSequences,
+            "alignedNucleotideSequences",
         )
 
-        fun invalidPangoLineage(fieldName: String, fieldValue: JsonNode) = ValidationError(
-            TypeMismatch,
-            fieldName,
-            "Expected type 'pango_lineage' for field '$fieldName', found value '$fieldValue'. " +
-                "A pango lineage must be of the form $PANGO_LINEAGE_REGEX_PATTERN, e.g. 'XBB' or 'BA.1.5'.",
+        validateNoUnknownNucleotideSymbol(
+            submittedProcessedData.data.unalignedNucleotideSequences,
+            "unalignedNucleotideSequences",
         )
 
-        fun unknownField(fieldName: String) = ValidationError(
-            UnknownField,
-            fieldName,
-            "Found unknown field '$fieldName' in processed data.",
+        validateNoUnknownNucleotideSymbolInInsertion(
+            submittedProcessedData.data.nucleotideInsertions,
         )
     }
-}
 
-enum class ValidationErrorType {
-    MissingRequiredField,
-    TypeMismatch,
-    UnknownField,
+    private fun <T> validateNoMissingSegment(
+        segment: ReferenceSequence,
+        sequenceData: Map<String, T>,
+        sequence: String,
+    ) {
+        if (!sequenceData.containsKey(segment.name)) {
+            throw ProcessingValidationException("Missing the required segment '${segment.name}' in '$sequence'.")
+        }
+    }
+
+    private fun validateLengthOfSequence(
+        referenceSequence: ReferenceSequence,
+        sequenceData: Map<String, String>,
+        sequenceGrouping: String,
+    ) {
+        val sequence = sequenceData[referenceSequence.name]!!
+        if (sequence.length != referenceSequence.sequence.length) {
+            throw ProcessingValidationException(
+                "The length of '${referenceSequence.name}' in '$sequenceGrouping' is ${sequence.length}, " +
+                    "but it should be ${referenceSequence.sequence.length}.",
+            )
+        }
+    }
+
+    private fun <T> validateNoUnknownSegment(
+        dataToValidate: Map<String, T>,
+        sequenceGrouping: String,
+    ) {
+        val unknowns = dataToValidate.keys.subtract(referenceGenome.nucleotideSequences.map { it.name }.toSet())
+        if (unknowns.isNotEmpty()) {
+            throw ProcessingValidationException(
+                "Unknown segments in '$sequenceGrouping': ${unknowns.joinToString(", ")}.",
+            )
+        }
+    }
+
+    private fun validateNoUnknownNucleotideSymbol(
+        dataToValidate: Map<String, String>,
+        sequenceGrouping: String,
+    ) {
+        for (sequence in dataToValidate) {
+            val invalidSymbols = sequence.value.getInvalidSymbols<NucleotideSymbols>()
+            if (invalidSymbols.isNotEmpty()) {
+                throw ProcessingValidationException(
+                    "The sequence of segment '${sequence.key}' in '$sequenceGrouping' " +
+                        "contains invalid symbols: $invalidSymbols.",
+                )
+            }
+        }
+    }
+
+    private fun validateNoUnknownNucleotideSymbolInInsertion(
+        dataToValidate: Map<String, List<Insertion>>,
+    ) {
+        for (sequence in dataToValidate) {
+            for (insertion in sequence.value) {
+                val invalidSymbols = insertion.sequence.getInvalidSymbols<NucleotideSymbols>()
+                if (invalidSymbols.isNotEmpty()) {
+                    throw ProcessingValidationException(
+                        "The insertion $insertion of segment '${sequence.key}' in 'nucleotideInsertions' " +
+                            "contains invalid symbols: $invalidSymbols.",
+                    )
+                }
+            }
+        }
+    }
+
+    private inline fun <reified ValidSymbols : Enum<ValidSymbols>> String.getInvalidSymbols() =
+        this.filter { !it.isValidSymbol<ValidSymbols>() }.toList()
+
+    private inline fun <reified ValidSymbols : Enum<ValidSymbols>> Char.isValidSymbol() =
+        enumValues<ValidSymbols>().any { it.name == this.toString() }
+
+    private fun validateAminoAcidSequences(
+        submittedProcessedData: SubmittedProcessedData,
+    ) {
+        for (gene in referenceGenome.genes) {
+            validateNoMissingGene(gene, submittedProcessedData)
+            validateLengthOfSequence(gene, submittedProcessedData.data.aminoAcidSequences, "aminoAcidSequences")
+        }
+
+        validateNoUnknownGeneInData(
+            submittedProcessedData.data.aminoAcidSequences,
+            "aminoAcidSequences",
+        )
+
+        validateNoUnknownGeneInData(
+            submittedProcessedData.data.aminoAcidInsertions,
+            "aminoAcidInsertions",
+        )
+
+        validateNoUnknownAminoAcidSymbol(submittedProcessedData.data.aminoAcidSequences)
+        validateNoUnknownAminoAcidSymbolInInsertion(submittedProcessedData.data.aminoAcidInsertions)
+    }
+
+    private fun validateNoMissingGene(
+        gene: ReferenceSequence,
+        submittedProcessedData: SubmittedProcessedData,
+    ) {
+        if (!submittedProcessedData.data.aminoAcidSequences.containsKey(gene.name)) {
+            throw ProcessingValidationException("Missing the required gene '${gene.name}'.")
+        }
+    }
+
+    private fun <T> validateNoUnknownGeneInData(
+        data: Map<String, T>,
+        geneGrouping: String,
+    ) {
+        val unknowns = data.keys.subtract(referenceGenome.genes.map { it.name }.toSet())
+        if (unknowns.isNotEmpty()) {
+            throw ProcessingValidationException("Unknown genes in '$geneGrouping': ${unknowns.joinToString(", ")}.")
+        }
+    }
+
+    private fun validateNoUnknownAminoAcidSymbol(
+        dataToValidate: Map<String, String>,
+    ) {
+        for (sequence in dataToValidate) {
+            val invalidSymbols = sequence.value.getInvalidSymbols<AminoAcidSymbols>()
+            if (invalidSymbols.isNotEmpty()) {
+                throw ProcessingValidationException(
+                    "The gene '${sequence.key}' in 'aminoAcidSequences' " +
+                        "contains invalid symbols: $invalidSymbols.",
+                )
+            }
+        }
+    }
+
+    private fun validateNoUnknownAminoAcidSymbolInInsertion(
+        dataToValidate: Map<String, List<Insertion>>,
+    ) {
+        for (sequence in dataToValidate) {
+            for (insertion in sequence.value) {
+                val invalidSymbols = insertion.sequence.getInvalidSymbols<AminoAcidSymbols>()
+                if (invalidSymbols.isNotEmpty()) {
+                    throw ProcessingValidationException(
+                        "An insertion of gene '${sequence.key}' in 'aminoAcidInsertions' " +
+                            "contains invalid symbols: $invalidSymbols.",
+                    )
+                }
+            }
+        }
+    }
 }
