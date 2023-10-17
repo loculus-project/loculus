@@ -74,6 +74,17 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     }
 
     @Test
+    fun `GIVEN ProcessingException is thrown THEN returns Unprocessable Entity (422)`() {
+        every { validControllerCall() } throws ProcessingValidationException("SomeMessage")
+
+        mockMvc.perform(validRequest)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.title").value("Unprocessable Entity"))
+            .andExpect(jsonPath("$.detail").value("SomeMessage"))
+    }
+
+    @Test
     fun `WHEN I submit a request with invalid schema THEN it should return a descriptive error message`() {
         mockMvc.perform(
             post("/approve-processed-data")

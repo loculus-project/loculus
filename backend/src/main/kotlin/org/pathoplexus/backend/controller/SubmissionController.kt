@@ -15,7 +15,6 @@ import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.FileData
 import org.pathoplexus.backend.service.OriginalData
 import org.pathoplexus.backend.service.SequenceReview
-import org.pathoplexus.backend.service.SequenceValidation
 import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.SubmittedProcessedData
@@ -70,15 +69,17 @@ private const val MAX_EXTRACTED_SEQUENCES = 100_000L
 
 private const val SUBMIT_PROCESSED_DATA_DESCRIPTION = """
 Submit processed data as a stream of NDJSON. The schema is to be understood per line of the NDJSON stream. 
-This endpoint performs some server side validation and returns the validation result for every submitted sequence.
-Any server side validation errors will be appended to the 'errors' field of the sequence.
-On a technical error, this endpoint will roll back all previously inserted data.
+This endpoint performs validation (type validation, missing/required fields, comparison to reference genome) on the data
+returned by the processing pipeline, so that it can technically be used for release. On a technical error, this endpoint
+ will roll back all previously inserted data. It is the responsibility of the processing pipeline to ensure that the 
+ content of the data is correct. If the pipeline is unable to provide valid data, it should submit the data with errors.
+ In this case, no validation will be performed and the status of the sequence version will be set to 'NEEDS_REVIEW'.
+ The user can then review the data and submit a corrected version.
 """
-private const val SUBMIT_PROCESSED_DATA_RESPONSE_DESCRIPTION = "Contains an entry for every submitted sequence."
 
 private const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
-On sequence version that cannot be written to the database, e.g. if the sequence id does not exist.
-Rolls back the whole transaction.
+On sequence version that cannot be written to the database, e.g. if the sequence id does not exist or processing
+ pipeline submits invalid data. Rolls back the whole transaction.
 """
 
 private const val GET_DATA_TO_REVIEW_DESCRIPTION = """
@@ -169,15 +170,13 @@ class SubmissionController(
             ],
         ),
     )
-    @ApiResponse(responseCode = "200", description = SUBMIT_PROCESSED_DATA_RESPONSE_DESCRIPTION)
+    @ApiResponse(responseCode = "204", description = "On successful submission")
     @ApiResponse(responseCode = "400", description = "On invalid NDJSON line. Rolls back the whole transaction.")
     @ApiResponse(responseCode = "422", description = SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION)
     @PostMapping("/submit-processed-data", consumes = [MediaType.APPLICATION_NDJSON_VALUE])
     fun submitProcessedData(
         request: HttpServletRequest,
-    ): List<SequenceValidation> {
-        return databaseService.updateProcessedData(request.inputStream)
-    }
+    ) = databaseService.updateProcessedData(request.inputStream)
 
     // TODO(#108): temporary method to ease testing, replace later
     @Operation(description = "Get processed data as a stream of NDJSON")

@@ -139,51 +139,39 @@ class DatabaseService(
             }
     }
 
-    fun updateProcessedData(inputStream: InputStream): List<SequenceValidation> {
+    fun updateProcessedData(inputStream: InputStream) {
         log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
-        return reader.lineSequence().map { line ->
+        reader.lineSequence().forEach { line ->
             val submittedProcessedData = try {
                 objectMapper.readValue<SubmittedProcessedData>(line)
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
-            val validationResult = sequenceValidatorService.validateSequence(submittedProcessedData)
 
-            val numInserted = insertProcessedDataWithStatus(submittedProcessedData, validationResult)
+            val numInserted = insertProcessedDataWithStatus(submittedProcessedData)
             if (numInserted != 1) {
                 throwInsertFailedException(submittedProcessedData)
             }
-
-            SequenceValidation(submittedProcessedData.sequenceId, submittedProcessedData.version, validationResult)
-        }.toList()
+        }
     }
 
     private fun insertProcessedDataWithStatus(
         submittedProcessedData: SubmittedProcessedData,
-        validationResult: ValidationResult,
     ): Int {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val validationErrors = when (validationResult) {
-            is ValidationResult.Error -> validationResult.validationErrors
-            is ValidationResult.Ok -> emptyList()
-        }.map {
-            PreprocessingAnnotation(
-                listOf(
-                    PreprocessingAnnotationSource(
-                        PreprocessingAnnotationSourceType.Metadata,
-                        it.fieldName,
-                    ),
-                ),
-                "${it.type}: ${it.message}",
-            )
+        val submittedErrors = submittedProcessedData.errors.orEmpty()
+
+        if (submittedErrors.isEmpty()) {
+            sequenceValidatorService.validateSequence(submittedProcessedData)
         }
-        val computedErrors = validationErrors + submittedProcessedData.errors.orEmpty()
+
+        val submittedWarnings = submittedProcessedData.warnings.orEmpty()
 
         val newStatus = when {
-            computedErrors.isEmpty() -> Status.PROCESSED
+            submittedErrors.isEmpty() -> Status.PROCESSED
             else -> Status.NEEDS_REVIEW
         }
 
@@ -196,8 +184,8 @@ class DatabaseService(
         ) {
             it[status] = newStatus.name
             it[processedData] = submittedProcessedData.data
-            it[errors] = computedErrors
-            it[warnings] = submittedProcessedData.warnings
+            it[errors] = submittedErrors
+            it[warnings] = submittedWarnings
             it[finishedProcessingAt] = now
         }
     }
@@ -902,12 +890,6 @@ data class OriginalData(
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
     val unalignedNucleotideSequences: Map<String, String>,
-)
-
-data class SequenceValidation(
-    val sequenceId: Long,
-    val version: Long,
-    val validation: ValidationResult,
 )
 
 enum class Status {
