@@ -26,3 +26,9 @@ const getLogger = (): Logger => {
 };
 
 export const logger = getLogger();
+export const getInstanceLogger = (instance: string) => {
+    return {
+        info: (message: string) => logger.info(message, { instance }),
+        error: (message: string) => logger.error(message, { instance }),
+    };
+};

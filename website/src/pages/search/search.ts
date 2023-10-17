@@ -1,7 +1,9 @@
 import type { TableSequenceData } from '../../components/SearchPage/Table';
 import { getConfig, getRuntimeConfig } from '../../config';
-import { logger } from '../../logger';
+import { getInstanceLogger } from '../../logger';
 import type { Filter } from '../../types';
+
+const logger = getInstanceLogger('search.ts');
 
 export enum SearchStatus {
     OK,

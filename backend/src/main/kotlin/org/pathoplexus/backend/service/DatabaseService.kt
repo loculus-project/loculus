@@ -743,7 +743,7 @@ data class SequenceReview(
     val sequenceId: Long,
     val version: Long,
     val status: Status,
-    val data: ProcessedData,
+    val processedData: ProcessedData,
     val originalData: OriginalData,
     @Schema(description = "The preprocessing will be considered failed if this is not empty")
     val errors: List<PreprocessingAnnotation>? = null,

@@ -39,7 +39,7 @@ class GetDataToReviewEndpointTest(
 
         assertThat(reviewData.sequenceId, `is`(firstSequence))
         assertThat(reviewData.version, `is`(1))
-        assertThat(reviewData.data, `is`(PreparedProcessedData.withErrors().data))
+        assertThat(reviewData.processedData, `is`(PreparedProcessedData.withErrors().data))
     }
 
     @Test

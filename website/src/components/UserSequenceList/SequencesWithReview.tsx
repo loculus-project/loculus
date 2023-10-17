@@ -27,7 +27,7 @@ export const SequencesWithReview: FC<SequenceWithReviewProps> = ({ sequences, us
                                 <td> {sequence.status} </td>
                                 <td>
                                     <a
-                                        href={`/user/${username}/sequences/${sequence.sequenceId}`}
+                                        href={`/user/${username}/review/${sequence.sequenceId}/${sequence.version}`}
                                         className='hover:underline'
                                     >
                                         Click to view

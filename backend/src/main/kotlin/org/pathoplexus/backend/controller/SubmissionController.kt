@@ -214,7 +214,8 @@ class SubmissionController(
         @PathVariable sequenceId: Long,
         @PathVariable version: Long,
         @RequestParam username: String,
-    ): SequenceReview = databaseService.getReviewData(username, SequenceVersion(sequenceId, version))
+    ): SequenceReview =
+        databaseService.getReviewData(username, SequenceVersion(sequenceId, version))
 
     @Operation(description = SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -279,9 +280,7 @@ class SubmissionController(
     )
     fun deleteUserData(
         @RequestParam username: String,
-    ) {
-        databaseService.deleteUserSequences(username)
-    }
+    ) = databaseService.deleteUserSequences(username)
 
     @Operation(description = "Delete sequences")
     @DeleteMapping(
@@ -289,9 +288,7 @@ class SubmissionController(
     )
     fun deleteSequence(
         @RequestParam sequenceIds: List<Long>,
-    ) {
-        databaseService.deleteSequences(sequenceIds)
-    }
+    ) = databaseService.deleteSequences(sequenceIds)
 
     data class SequenceIdList(
         val sequenceIds: List<Long>,

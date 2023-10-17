@@ -1,7 +1,9 @@
 import { CircularProgress, TextField } from '@mui/material';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 
-import { clientLogger } from '../api.ts';
+import { getClientLogger } from '../api.ts';
+
+const clientLogger = getClientLogger('DataUploadForm');
 
 type DataUploadFormProps<ResultType> = {
     targetUrl: string;
