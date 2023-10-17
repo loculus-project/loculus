@@ -1,63 +1,59 @@
 import CircularProgress from '@mui/material/CircularProgress';
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import type { FC } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { type FC, useState, useEffect } from 'react';
 
-import type { DatasetCitationResults, ClientConfig } from '../../types';
+import { getClientLogger } from '../../api';
+import type { ClientConfig } from '../../types';
 import { CitationPlot } from '../Datasets/CitationPlot';
 import { fetchAuthorCitations } from '../Datasets/api';
+import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
 import withQueryProvider from '../common/withQueryProvider';
+
+const clientLogger = getClientLogger('UserCitations');
 
 type Props = {
     userId: string;
     clientConfig: ClientConfig;
 };
 
-type DateAggCitations = {
-    [key: number]: number;
-};
-
 const UserCitationsInner: FC<Props> = ({ userId, clientConfig }) => {
-    const { data: userCitations, isLoading: isLoadingCitationData }: UseQueryResult = useQuery(
-        ['citations', userId],
-        () => fetchAuthorCitations(userId, clientConfig),
-    );
+    const [isErrorOpen, setIsErrorOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
-    const transformCitationData = (citationData: DatasetCitationResults[]) => {
-        const yearCounts: DateAggCitations = {};
-
-        citationData.forEach((citationData) => {
-            citationData.citations.forEach((citation) => {
-                const year = new Date(citation.date).getFullYear();
-                if (!yearCounts[year]) {
-                    yearCounts[year] = 0;
-                }
-                yearCounts[year]++;
-            });
-        });
-
-        const xData = Object.keys(yearCounts).map((year) => parseInt(year, 10));
-        const yData = Object.values(yearCounts);
-
-        xData.sort();
-        yData.sort((a, b) => xData.indexOf(a) - xData.indexOf(b));
-
-        return {
-            xData,
-            yData,
-        };
+    const handleOpenError = (message: string) => {
+        setErrorMessage(message);
+        setIsErrorOpen(true);
+    };
+    const handleCloseError = () => {
+        setErrorMessage('');
+        setIsErrorOpen(false);
     };
 
-    const citationData = isLoadingCitationData
-        ? null
-        : transformCitationData(userCitations as DatasetCitationResults[]);
+    const {
+        data: userCitations,
+        isLoading: isLoadingCitationData,
+        error: userCitationsError,
+    } = useQuery(['citations', userId], () => fetchAuthorCitations(userId, clientConfig));
+
+    useEffect(() => {
+        const handleError = async () => {
+            handleOpenError(`fetchDataset failed with error: ${(userCitationsError as Error).message}`);
+            await clientLogger.error(`fetchDataset failed with error: ${(userCitationsError as Error).message}`);
+        };
+        if (userCitationsError !== null) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            handleError();
+        }
+    }, [userCitationsError]);
 
     return (
         <div>
-            <h1 className='text-2xl font-medium pb-8'>Cited By</h1>
-            {isLoadingCitationData || citationData == null ? (
-                <CircularProgress />
-            ) : (
-                <CitationPlot xData={citationData.xData} yData={citationData.yData} />
+            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
+            {userCitationsError !== null ? null : (
+                <>
+                    <h1 className='text-2xl font-medium pb-8'>Cited By</h1>
+                    {isLoadingCitationData ? <CircularProgress /> : <CitationPlot citationData={userCitations} />}
+                </>
             )}
         </div>
     );

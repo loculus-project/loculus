@@ -1,46 +1,25 @@
 import { BarChart } from '@mui/x-charts/BarChart';
 import type { FC } from 'react';
 
+import type { DatasetCitationResults } from '../../types';
+
 type CitationPlotProps = {
-    xData: number[];
-    yData: number[];
+    citationData: DatasetCitationResults;
 };
 
-export const CitationPlot: FC<CitationPlotProps> = ({ xData, yData }) => {
-    const getSequentialXData = () => {
-        const minYear = Math.min(...xData);
-        const maxYear = Math.max(...xData);
-        const xSeq = [];
-        for (let i = minYear; i <= maxYear; i++) {
-            xSeq.push(i);
-        }
-        return xSeq.map((year) => year.toString());
-    };
-
-    const getSequentialYData = () => {
-        const xSeq = getSequentialXData();
-        const ySeq = Array(xSeq.length).fill(0);
-        for (const [i, v] of xSeq.entries()) {
-            const numericYear = parseInt(v, 10);
-            if (xData.includes(numericYear)) {
-                ySeq[i] = yData[xData.indexOf(numericYear)];
-            }
-        }
-        return ySeq;
-    };
-
+export const CitationPlot: FC<CitationPlotProps> = ({ citationData }) => {
     return (
         <BarChart
             xAxis={[
                 {
                     id: 'citationDates',
-                    data: getSequentialXData(),
+                    data: citationData.years,
                     scaleType: 'band',
                 },
             ]}
             series={[
                 {
-                    data: getSequentialYData(),
+                    data: citationData.citations,
                     color: '#54858c',
                 },
             ]}

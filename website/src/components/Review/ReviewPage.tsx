@@ -6,7 +6,7 @@ import { DataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row, KeyValuePair } from './InputField.tsx';
 import { clientFetch, getClientLogger } from '../../api.ts';
 import type { ClientConfig, ProcessingAnnotationSourceType, SequenceReview, UnprocessedData } from '../../types.ts';
-import { ManagedErrorFeedback } from '../Submission/ManagedErrorFeedback.tsx';
+import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
 
 type ReviewPageProps = {
     clientConfig: ClientConfig;

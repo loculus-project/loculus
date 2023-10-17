@@ -65,7 +65,6 @@ test.describe('The dataset item page', () => {
             await datasetPage.page.locator('#dataset-name').fill(editDatasetName);
             await datasetPage.page.getByRole('button', { name: 'Save' }).click();
             await datasetPage.waitForLoad();
-            await datasetPage.page.waitForNavigation();
             await expect(datasetPage.page.getByText(editDatasetName)).toBeVisible();
         }).toPass();
 

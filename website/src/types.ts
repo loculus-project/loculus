@@ -179,6 +179,6 @@ export type AccessionCitation = {
 };
 
 export type DatasetCitationResults = {
-    sequenceId: string;
-    citations: AccessionCitation[];
+    years: string[];
+    citations: number[];
 };

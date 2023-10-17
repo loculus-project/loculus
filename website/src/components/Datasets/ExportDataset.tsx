@@ -43,14 +43,13 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
     };
 
     const getBibtex = () => {
-        const bibtex = `@online{${dataset.name},
+        return `@online{${dataset.name},
     author = {${dataset.createdBy}},
     title = {${dataset.name}},
     year = {${formatYear(dataset.createdAt)}},
     doi = {${dataset.datasetId}},
     url = {https://doi.org/placeholder/${dataset.datasetId}},
 }`;
-        return bibtex;
     };
 
     const copyToClipboard = async () => {

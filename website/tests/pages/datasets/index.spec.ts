@@ -16,7 +16,7 @@ test.describe('The datasets list page', () => {
         });
     });
 
-    test.describe('with existing datatsets', () => {
+    test.describe('with existing datasets', () => {
         // Create test dataset
         test.beforeAll(async ({ browser }) => {
             const page = await browser.newPage();
@@ -29,8 +29,7 @@ test.describe('The datasets list page', () => {
             await testDatasetManager.deleteTestDataset(testDatasetName);
         });
 
-        test('allows successfully creating dataset', async () => {
-            // validate beforeAll hook creates dataset
+        test('successfully creates test dataset in beforeAll', async () => {
             await expect(testDatasetManager.page.getByText(testDatasetName)).toBeVisible();
         });
 

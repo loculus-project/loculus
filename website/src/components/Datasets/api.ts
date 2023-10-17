@@ -2,47 +2,10 @@ import type { ServiceUrls, Dataset, DatasetRecord, DatasetCitationResults } from
 
 const USE_MOCK_API_DATA = true;
 
-const mockUserAggCitations = [
-    {
-        sequenceId: 'sequenceId1',
-        citations: [
-            {
-                datasetId: 'datasetId1',
-                date: '2023-01-01',
-            },
-            {
-                datasetId: 'datasetId2',
-                date: '2022-01-01',
-            },
-        ],
-    },
-    {
-        sequenceId: 'sequenceId2',
-        citations: [
-            {
-                datasetId: 'datasetId3',
-                date: '2023-01-01',
-            },
-            {
-                datasetId: 'datasetId4',
-                date: '2021-01-01',
-            },
-        ],
-    },
-    {
-        sequenceId: 'sequenceId3',
-        citations: [
-            {
-                datasetId: 'datasetId5',
-                date: '2023-01-01',
-            },
-            {
-                datasetId: 'datasetId6',
-                date: '2021-01-01',
-            },
-        ],
-    },
-];
+const mockUserAggCitations: DatasetCitationResults = {
+    years: ['2021', '2022', '2023'],
+    citations: [5, 10, 20],
+};
 
 const mockDataset = {
     datasetId: 'testDatasetId',
@@ -73,7 +36,7 @@ export const fetchAuthorDatasets = async (userId: string, serviceConfig: Service
 export const fetchAuthorCitations = async (
     userId: string,
     serviceConfig: ServiceUrls,
-): Promise<DatasetCitationResults[]> => {
+): Promise<DatasetCitationResults> => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (USE_MOCK_API_DATA) {
         return mockUserAggCitations;
