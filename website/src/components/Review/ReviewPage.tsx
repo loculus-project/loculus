@@ -1,9 +1,9 @@
 import { sentenceCase, snakeCase } from 'change-case';
 import { type Result } from 'neverthrow';
-import { type FC, Fragment, useMemo, useRef, useState } from 'react';
+import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef, useState } from 'react';
 
 import { DataRow, ProcessedDataRow } from './DataRow.tsx';
-import type { Row, KeyValuePair } from './InputField.tsx';
+import type { KeyValuePair, Row } from './InputField.tsx';
 import { clientFetch, getClientLogger } from '../../api.ts';
 import type { ClientConfig, ProcessingAnnotationSourceType, SequenceReview, UnprocessedData } from '../../types.ts';
 import { ManagedErrorFeedback } from '../Submission/ManagedErrorFeedback.tsx';
@@ -65,92 +65,48 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
             </button>
 
             <dialog ref={dialogRef} className='modal'>
-                <div className='modal-box'>
-                    <form method='dialog'>
-                        <button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2'>✕</button>
-                    </form>
-
-                    <h3 className='font-bold text-lg'>Do you really want to submit?</h3>
-
-                    <div className='flex items-center gap-4 mt-4'>
-                        <button className='btn' onClick={submitReviewForSequenceVersion}>
-                            Confirm Submission
-                        </button>
-                        <form method='dialog'>
-                            <button className='btn btn-error'>Cancel</button>
-                        </form>
-                    </div>
-                </div>
+                <ConfirmationDialog onConfirmation={submitReviewForSequenceVersion} />
             </dialog>
 
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
-                    <Subtitle title='Metadata' />
-                    {editedMetadata.map((field) => (
-                        <DataRow
-                            key={'raw_metadata' + field.key}
-                            customKey={field.key}
-                            row={field}
-                            editable={(editedRow: Row) =>
-                                setEditedMetadata((prevRows: Row[]) =>
-                                    prevRows.map((prevRow) =>
-                                        prevRow.key === editedRow.key
-                                            ? { ...prevRow, value: editedRow.value }
-                                            : prevRow,
-                                    ),
-                                )
-                            }
-                        />
-                    ))}
-
-                    <Subtitle title='Unaligned nucleotide sequences' />
-                    {editedSequences.map((field) => (
-                        <DataRow
-                            key={'raw_unaligned' + field.key}
-                            customKey={field.key}
-                            row={field}
-                            editable={(editedRow: Row) =>
-                                setEditedSequences((prevRows: Row[]) =>
-                                    prevRows.map((prevRow) =>
-                                        prevRow.key === editedRow.key
-                                            ? { ...prevRow, value: editedRow.value }
-                                            : prevRow,
-                                    ),
-                                )
-                            }
-                        />
-                    ))}
+                    <EditableOriginalData editedMetadata={editedMetadata} setEditedMetadata={setEditedMetadata} />
+                    <EditableOriginalSequences
+                        editedSequences={editedSequences}
+                        setEditedSequences={setEditedSequences}
+                    />
 
                     <Subtitle title='Processed Data' bold />
-                    <Subtitle title='Metadata' customKey='preprocessing_metadata' />
-                    {processedMetadataRows.map((field) => (
-                        <ProcessedDataRow
-                            key={'processed' + field.key}
-                            customKey={'preprocessing_' + field.key}
-                            row={field}
-                        />
-                    ))}
-                    {processedSequenceRows.map((sequenceRow) => (
-                        <Subtitle
-                            key={`preprocessing_sequences_${sequenceRow.type}`}
-                            title={sentenceCase(sequenceRow.type)}
-                        />
-                    ))}
-                    {processedSequenceRows.map((sequenceRow) =>
-                        sequenceRow.data.map((field) => (
-                            <ProcessedDataRow
-                                key={`processed_${sequenceRow.type}_${field.key}`}
-                                customKey={`preprocessing_${sequenceRow.type}_${field.key}`}
-                                row={field}
-                            />
-                        )),
-                    )}
+                    <ProcessedMetadata processedMetadataRows={processedMetadataRows} />
+                    <ProcessedSequences processedSequenceRows={processedSequenceRows} />
                 </tbody>
             </table>
         </>
     );
 };
+
+type ConfirmationDialogProps = {
+    onConfirmation: () => Promise<void>;
+};
+const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ onConfirmation }) => (
+    <div className='modal-box'>
+        <form method='dialog'>
+            <button className='btn btn-sm btn-circle btn-ghost absolute right-2 top-2'>✕</button>
+        </form>
+
+        <h3 className='font-bold text-lg'>Do you really want to submit?</h3>
+
+        <div className='flex items-center gap-4 mt-4'>
+            <button className='btn' onClick={onConfirmation}>
+                Confirm Submission
+            </button>
+            <form method='dialog'>
+                <button className='btn btn-error'>Cancel</button>
+            </form>
+        </div>
+    </div>
+);
 
 type SubtitleProps = {
     title: string;
@@ -166,6 +122,86 @@ const Subtitle: FC<SubtitleProps> = ({ title, bold, customKey }) => (
             </td>
         </tr>
     </Fragment>
+);
+
+type EditableOriginalDataProps = {
+    editedMetadata: Row[];
+    setEditedMetadata: Dispatch<SetStateAction<Row[]>>;
+};
+const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata }) => (
+    <>
+        <Subtitle title='Metadata' />
+        {editedMetadata.map((field) => (
+            <DataRow
+                key={'raw_metadata' + field.key}
+                customKey={field.key}
+                row={field}
+                editable={(editedRow: Row) =>
+                    setEditedMetadata((prevRows: Row[]) =>
+                        prevRows.map((prevRow) =>
+                            prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+                        ),
+                    )
+                }
+            />
+        ))}
+    </>
+);
+
+type EditableOriginalSequencesProps = {
+    editedSequences: Row[];
+    setEditedSequences: Dispatch<SetStateAction<Row[]>>;
+};
+const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedSequences, setEditedSequences }) => (
+    <>
+        <Subtitle title='Unaligned nucleotide sequences' />
+        {editedSequences.map((field) => (
+            <DataRow
+                key={'raw_unaligned' + field.key}
+                customKey={field.key}
+                row={field}
+                editable={(editedRow: Row) =>
+                    setEditedSequences((prevRows: Row[]) =>
+                        prevRows.map((prevRow) =>
+                            prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+                        ),
+                    )
+                }
+            />
+        ))}
+    </>
+);
+
+type ProcessedMetadataProps = {
+    processedMetadataRows: KeyValuePair[];
+};
+const ProcessedMetadata: FC<ProcessedMetadataProps> = ({ processedMetadataRows }) => (
+    <>
+        <Subtitle title='Metadata' customKey='preprocessing_metadata' />
+        {processedMetadataRows.map((field) => (
+            <ProcessedDataRow key={'processed' + field.key} customKey={'preprocessing_' + field.key} row={field} />
+        ))}
+    </>
+);
+
+type ProcessedSequencesProps = {
+    processedSequenceRows: SequenceRow[];
+};
+const ProcessedSequences: FC<ProcessedSequencesProps> = ({ processedSequenceRows }) => (
+    <>
+        {processedSequenceRows.map((sequenceRow) => (
+            <Subtitle key={`preprocessing_sequences_${sequenceRow.type}`} title={sentenceCase(sequenceRow.type)} />
+        ))}
+        {processedSequenceRows.map((sequenceRow) =>
+            sequenceRow.data.map((field) => (
+                <ProcessedDataRow
+                    key={`processed_${sequenceRow.type}_${field.key}`}
+                    customKey={`preprocessing_${sequenceRow.type}_${field.key}`}
+                    row={field}
+                />
+            )),
+        )}
+    </>
 );
 
 const mapMetadataToRow = (reviewData: SequenceReview): Row[] =>
