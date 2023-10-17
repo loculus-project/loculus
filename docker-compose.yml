@@ -24,6 +24,7 @@ services:
     volumes:
       - ./log:/workspace/log
       - ./website/tests/config/config.json:/workspace/config.json
+      - ./website/tests/config/reference_genomes.json:/config/reference_genomes.json
 
   database:
     image: postgres:latest

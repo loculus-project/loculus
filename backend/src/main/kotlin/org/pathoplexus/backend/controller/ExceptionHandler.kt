@@ -53,6 +53,17 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
+    @ExceptionHandler(ProcessingException::class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    fun handleProcessingException(e: ProcessingException): ResponseEntity<ProblemDetail> {
+        log.warn(e) { "Caught processing exception: ${e.message}" }
+
+        return responseEntity(
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            e.message,
+        )
+    }
+
     @ExceptionHandler(NotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handleNotFoundException(e: NotFoundException): ResponseEntity<ProblemDetail> {
@@ -123,3 +134,4 @@ class BadRequestException(message: String, override val cause: Throwable? = null
 class ForbiddenException(message: String) : RuntimeException(message)
 class UnprocessableEntityException(message: String) : RuntimeException(message)
 class NotFoundException(message: String) : RuntimeException(message)
+class ProcessingException(message: String) : RuntimeException(message)

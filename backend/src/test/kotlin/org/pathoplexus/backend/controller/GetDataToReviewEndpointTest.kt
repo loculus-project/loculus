@@ -1,14 +1,10 @@
 package org.pathoplexus.backend.controller
 
 import org.hamcrest.CoreMatchers.containsString
-import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.hasItems
-import org.hamcrest.Matchers.hasProperty
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
-import org.pathoplexus.backend.service.PreprocessingAnnotation
 import org.pathoplexus.backend.service.SequenceReview
 import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
@@ -43,28 +39,23 @@ class GetDataToReviewEndpointTest(
     }
 
     @Test
-    fun `GIVEN I submitted invalid data and errors THEN shows validation error and submitted error`() {
+    fun `GIVEN I submitted invalid data and errors THEN throws an error`() {
         convenienceClient.submitDefaultFiles()
         convenienceClient.extractUnprocessedData(1)
-        convenienceClient.submitProcessedData(
+        client.submitProcessedData(
             PreparedProcessedData.withWrongDateFormat().withValues(
                 sequenceId = firstSequence,
                 errors = PreparedProcessedData.withErrors().errors,
             ),
-        )
-
-        val reviewData = convenienceClient.getSequenceThatNeedsReview(sequenceId = firstSequence, version = 1)
-
-        assertThat(reviewData.errors, hasItems(*PreparedProcessedData.withErrors().errors!!.toTypedArray()))
-        assertThat(
-            reviewData.errors,
-            hasItem(
-                hasProperty<PreprocessingAnnotation>(
-                    "message",
-                    containsString("Expected type 'date' in format"),
-                ),
-            ),
-        )
+        ).andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail")
+                    .value(
+                        "Expected type 'date' in format 'yyyy-MM-dd' for field 'date', found value " +
+                            "'\"1.2.2021\"'.",
+                    ),
+            )
     }
 
     @Test

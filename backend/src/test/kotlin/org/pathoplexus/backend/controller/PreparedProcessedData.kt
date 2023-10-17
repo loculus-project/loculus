@@ -31,7 +31,7 @@ private val defaultProcessedData = ProcessedData(
         "main" to "NNACTGNN",
     ),
     alignedNucleotideSequences = mapOf(
-        "main" to "ACTG",
+        "main" to "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT",
     ),
     nucleotideInsertions = mapOf(
         "main" to listOf(
@@ -39,11 +39,15 @@ private val defaultProcessedData = ProcessedData(
         ),
     ),
     aminoAcidSequences = mapOf(
-        "ORF1a" to "RNRNRN",
+        "someLongGene" to "MYSFVSEETGTLIVNSVLLFL",
+        "someShortGene" to "MADS",
     ),
     aminoAcidInsertions = mapOf(
-        "ORF1a" to listOf(
+        "someLongGene" to listOf(
             Insertion(123, "RNRNRN"),
+        ),
+        "someShortGene" to listOf(
+            Insertion(123, "RN"),
         ),
     ),
 )
@@ -129,6 +133,161 @@ object PreparedProcessedData {
                 ),
             ),
         )
+
+    fun withMissingSegmentInUnalignedNucleotideSequences(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        segment: SegmentName,
+    ) =
+        defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(
+                unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences - segment,
+            ),
+        )
+
+    fun withMissingSegmentInAlignedNucleotideSequences(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        segment: SegmentName,
+    ) =
+        defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(
+                alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences - segment,
+            ),
+        )
+
+    fun withAlignedNucleotideSequenceOfWrongLength(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        segment: SegmentName,
+        length: Int = 123,
+    ): SubmittedProcessedData {
+        val alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences.toMutableMap()
+        alignedNucleotideSequences[segment] = "A".repeat(length)
+
+        return defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(alignedNucleotideSequences = alignedNucleotideSequences),
+        )
+    }
+
+    fun withAlignedNucleotideSequenceWithWrongSymbols(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        segment: SegmentName,
+    ): SubmittedProcessedData {
+        val alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences.toMutableMap()
+        alignedNucleotideSequences[segment] = "ÄÖ" + alignedNucleotideSequences[segment]!!.substring(2)
+
+        return defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(alignedNucleotideSequences = alignedNucleotideSequences),
+        )
+    }
+
+    fun withUnalignedNucleotideSequenceWithWrongSymbols(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        segment: SegmentName,
+    ): SubmittedProcessedData {
+        val unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences.toMutableMap()
+        unalignedNucleotideSequences[segment] = "ÄÖ" + unalignedNucleotideSequences[segment]!!.substring(2)
+
+        return defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(unalignedNucleotideSequences = unalignedNucleotideSequences),
+        )
+    }
+
+    fun withNucleotideInsertionsWithWrongSymbols(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        segment: SegmentName,
+    ): SubmittedProcessedData {
+        val nucleotideInsertions = defaultProcessedData.nucleotideInsertions.toMutableMap()
+        nucleotideInsertions[segment] = listOf(Insertion(123, "ÄÖ"))
+
+        return defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(nucleotideInsertions = nucleotideInsertions),
+        )
+    }
+
+    fun withMissingGeneInAminoAcidSequences(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        gene: GeneName,
+    ) =
+        defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(
+                aminoAcidSequences = defaultProcessedData.aminoAcidSequences - gene,
+            ),
+        )
+
+    fun withUnknownGeneInAminoAcidSequences(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        gene: GeneName,
+    ) =
+        defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(
+                aminoAcidSequences = defaultProcessedData.aminoAcidSequences + (gene to "RNRNRN"),
+            ),
+        )
+
+    fun withUnknownGeneInAminoAcidInsertions(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        gene: GeneName,
+    ) =
+        defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(
+                aminoAcidInsertions = defaultProcessedData.aminoAcidInsertions + (
+                    gene to listOf(
+                        Insertion(
+                            123,
+                            "RNRNRN",
+                        ),
+                    )
+                    ),
+            ),
+        )
+
+    fun withAminoAcidSequenceOfWrongLength(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        gene: SegmentName,
+        length: Int = 123,
+    ): SubmittedProcessedData {
+        val aminoAcidSequences = defaultProcessedData.aminoAcidSequences.toMutableMap()
+        aminoAcidSequences[gene] = "A".repeat(length)
+
+        return defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(aminoAcidSequences = aminoAcidSequences),
+        )
+    }
+
+    fun withAminoAcidSequenceWithWrongSymbols(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        gene: SegmentName,
+    ): SubmittedProcessedData {
+        val aminoAcidSequence = defaultProcessedData.aminoAcidSequences.toMutableMap()
+        aminoAcidSequence[gene] = "ÄÖ" + aminoAcidSequence[gene]!!.substring(2)
+
+        return defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(aminoAcidSequences = aminoAcidSequence),
+        )
+    }
+
+    fun withAminoAcidInsertionsWithWrongSymbols(
+        sequenceId: Long = DefaultFiles.firstSequence,
+        gene: SegmentName,
+    ): SubmittedProcessedData {
+        val aminoAcidInsertions = defaultProcessedData.aminoAcidInsertions.toMutableMap()
+        aminoAcidInsertions[gene] = listOf(Insertion(123, "ÄÖ"))
+
+        return defaultSuccessfulSubmittedData.withValues(
+            sequenceId = sequenceId,
+            data = defaultProcessedData.withValues(aminoAcidInsertions = aminoAcidInsertions),
+        )
+    }
 
     fun withErrors(sequenceId: Long = DefaultFiles.firstSequence) =
         defaultSuccessfulSubmittedData.withValues(

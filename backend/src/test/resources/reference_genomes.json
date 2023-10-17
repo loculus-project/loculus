@@ -1,0 +1,18 @@
+{
+  "nucleotideSequences": [
+    {
+      "name": "main",
+      "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+    }
+  ],
+  "genes": [
+    {
+      "name": "someLongGene",
+      "sequence": "MYSFVSEETGTLIVNSVLLFL"
+    },
+    {
+      "name": "someShortGene",
+      "sequence": "MADS"
+    }
+  ]
+}
