@@ -77,7 +77,10 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
             <table className='customTable'>
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
-                    <EditableOriginalData editedMetadata={editedMetadata} setEditedMetadata={setEditedMetadata} />
+                    <EditableOriginalData
+                        editedMetadata={editedMetadata.filter(({ key }) => key !== 'sequenceId')}
+                        setEditedMetadata={setEditedMetadata}
+                    />
                     <EditableOriginalSequences
                         editedSequences={editedSequences}
                         setEditedSequences={setEditedSequences}
