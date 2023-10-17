@@ -113,6 +113,10 @@ export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 
 export const metadataField = z.union([z.string(), z.number(), z.date(), z.string()]);
 export type MetadataField = z.infer<typeof metadataField>;
+
+const metadataRecord = z.record(metadataField);
+export type MetadataRecord = z.infer<typeof metadataRecord>;
+
 export const sequenceReview = z.object({
     sequenceId: z.number(),
     version: z.number(),
@@ -120,12 +124,16 @@ export const sequenceReview = z.object({
     errors: z.array(processingAnnotation).nullable(),
     warnings: z.array(processingAnnotation).nullable(),
     originalData: z.object({
-        metadata: z.record(metadataField),
+        metadata: metadataRecord,
         unalignedNucleotideSequences: z.record(z.string()),
     }),
     processedData: z.object({
-        metadata: z.record(metadataField),
+        metadata: metadataRecord,
         unalignedNucleotideSequences: z.record(z.string()),
+        alignedNucleotideSequences: z.record(z.string()),
+        nucleotideInsertions: z.record(z.array(z.string())),
+        aminoAcidSequences: z.record(z.string()),
+        aminoAcidInsertions: z.record(z.array(z.string())),
     }),
 });
 export type SequenceReview = z.infer<typeof sequenceReview>;
