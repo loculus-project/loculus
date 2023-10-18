@@ -6,13 +6,13 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-  - host: {{ .Values.host }}
-    http:
-      paths:
-      - backend:
-          service:
-            name: website-{{ .Values.version }}-service
-            port:
-              number: 3000
-        path: /
-        pathType: Prefix
+    - host: {{ .Values.host }}
+      http:
+        paths:
+          - backend:
+              service:
+                name: website-{{ .Values.version }}-service
+                port:
+                  number: 3000
+            path: /
+            pathType: Prefix

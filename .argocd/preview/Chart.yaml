@@ -1,4 +1,4 @@
 apiVersion: v2
-name: my-helm-chart
-description: A basic Helm chart for demonstration
+name: pp-preview
+description: A Helm chart for pathoplexus previews
 version: 0.1.0

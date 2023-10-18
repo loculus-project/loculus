@@ -8,5 +8,5 @@ spec:
   selector:
     app: website-{{ .Values.version }}
   ports:
-  - port: 3000
-    name: http-port
+    - port: 3000
+      name: http-port
