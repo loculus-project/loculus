@@ -52,7 +52,11 @@ const UserCitationsInner: FC<Props> = ({ userId, clientConfig }) => {
             {userCitationsError !== null ? null : (
                 <>
                     <h1 className='text-2xl font-medium pb-8'>Cited By</h1>
-                    {isLoadingCitationData ? <CircularProgress /> : <CitationPlot citationData={userCitations} />}
+                    {isLoadingCitationData ? (
+                        <CircularProgress />
+                    ) : userCitations ? (
+                        <CitationPlot citationData={userCitations} />
+                    ) : null}
                 </>
             )}
         </div>
