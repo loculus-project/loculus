@@ -1,5 +1,6 @@
 import DangerousTwoToneIcon from '@mui/icons-material/DangerousTwoTone';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import NoSsr from '@mui/material/NoSsr';
 import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
 
@@ -32,14 +33,18 @@ type ErrorAndWarningIconsProps = {
 const ErrorAndWarningIcons: FC<ErrorAndWarningIconsProps> = ({ row }) => {
     return (
         <>
-            {row.warnings.length > 0 ? (
-                <div className='tooltip tooltip-warning whitespace-pre-line' data-tip={row.warnings.join('\n')}>
-                    <WarningAmberIcon color='warning' />
-                </div>
-            ) : null}
             {row.errors.length > 0 ? (
                 <div className='tooltip tooltip-error whitespace-pre-line' data-tip={row.errors.join('\n')}>
-                    <DangerousTwoToneIcon color='error' />
+                    <NoSsr>
+                        <DangerousTwoToneIcon color='error' />
+                    </NoSsr>
+                </div>
+            ) : null}
+            {row.warnings.length > 0 ? (
+                <div className='tooltip tooltip-warning whitespace-pre-line' data-tip={row.warnings.join('\n')}>
+                    <NoSsr>
+                        <WarningAmberIcon color='warning' />
+                    </NoSsr>
                 </div>
             ) : null}
         </>
