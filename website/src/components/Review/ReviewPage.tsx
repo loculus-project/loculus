@@ -12,6 +12,7 @@ import type {
     SequenceReview,
     UnprocessedData,
 } from '../../types.ts';
+import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback } from '../Submission/ManagedErrorFeedback.tsx';
 
@@ -50,6 +51,24 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
             },
         );
     };
+
+    const generateAndDownloadFastaFile = () => {
+        const sequenceVersion = getSequenceVersionString(reviewData);
+        const fileContent = editedSequences
+            .map((sequence) => `>${sequenceVersion}.${sequence.key}\n${sequence.value}\n\n`)
+            .join();
+
+        const blob = new Blob([fileContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sequenceVersion${sequenceVersion}.fasta`;
+        a.click();
+
+        URL.revokeObjectURL(url);
+    };
+
     const handleOpenError = (message: string) => {
         setErrorMessage(message);
         setIsErrorOpen(true);
@@ -67,9 +86,15 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
         <>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
 
-            <button className='btn normal-case' onClick={handleOpenConfirmationDialog}>
-                Submit Review
-            </button>
+            <div className='flex items-center gap-4'>
+                <button className='btn normal-case' onClick={handleOpenConfirmationDialog}>
+                    Submit Review
+                </button>
+
+                <button className='btn normal-case' onClick={generateAndDownloadFastaFile}>
+                    Download Sequences as fasta file
+                </button>
+            </div>
 
             <dialog ref={dialogRef} className='modal'>
                 <ConfirmationDialog
