@@ -1,8 +1,8 @@
 import { ok, type Result } from 'neverthrow';
 
-import { clientFetch } from '../../api.ts';
+import { ClientSideBackendClient } from '../../services/clientSideBackendClient.ts';
 import { type ClientConfig, type SequenceStatus, type SequenceVersion } from '../../types.ts';
-import { extractSequenceVersion, getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
+import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 
 export type BulkSequenceAction = {
     name: string;
@@ -18,21 +18,8 @@ export type BulkSequenceAction = {
 
 const deleteAction: BulkSequenceAction = {
     name: 'delete',
-    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig, username: string) =>
-        clientFetch({
-            endpoint: `/delete-sequences?username=${username}`,
-            zodSchema: undefined,
-            options: {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sequenceVersions: selectedSequences.map(extractSequenceVersion),
-                }),
-            },
-            backendUrl: clientConfig.backendUrl,
-        }),
+    actionOnSequences: async (selectedSequences, clientConfig, username) =>
+        ClientSideBackendClient.create(clientConfig).deleteSequences(username, selectedSequences),
     confirmationDialog: {
         message: (selectedSequences) =>
             `Are you sure you want to delete the selected sequence ${pluralizeWord(
@@ -49,20 +36,7 @@ const approveAction: BulkSequenceAction = {
         clientConfig: ClientConfig,
         username: string,
     ): Promise<Result<never, string>> => {
-        return clientFetch({
-            endpoint: `/approve-processed-data?username=${username}`,
-            zodSchema: undefined,
-            options: {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sequenceVersions: selectedSequences.map(extractSequenceVersion),
-                }),
-            },
-            backendUrl: clientConfig.backendUrl,
-        });
+        return ClientSideBackendClient.create(clientConfig).approveProcessedData(username, selectedSequences);
     },
     confirmationDialog: {
         message: (selectedSequences) =>
@@ -75,40 +49,14 @@ const approveAction: BulkSequenceAction = {
 
 const confirmRevocationAction: BulkSequenceAction = {
     name: 'confirmRevocation',
-    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig) =>
-        clientFetch({
-            endpoint: `/confirm-revocation`,
-            zodSchema: undefined,
-            options: {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId),
-                }),
-            },
-            backendUrl: clientConfig.backendUrl,
-        }),
+    actionOnSequences: async (selectedSequences, clientConfig, username) =>
+        ClientSideBackendClient.create(clientConfig).confirmRevocation(username, selectedSequences),
 };
 
 const revokeAction: BulkSequenceAction = {
     name: 'revoke',
-    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig, username: string) => {
-        return clientFetch({
-            endpoint: `/revoke?username=${username}`,
-            zodSchema: undefined,
-            options: {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId),
-                }),
-            },
-            backendUrl: clientConfig.backendUrl,
-        });
+    actionOnSequences: async (selectedSequences, clientConfig, username) => {
+        return ClientSideBackendClient.create(clientConfig).revokeSequences(username, selectedSequences);
     },
     confirmationDialog: {
         message: (selectedSequences) =>

@@ -60,7 +60,7 @@ const base = '/';
 
 const logger = logProvider();
 if (logger !== undefined) {
-    app.use((req, res, next) => {
+    app.use((req, _, next) => {
         if (req.url.startsWith('/_astro/')) {
             logger.debug(`Request: ${req.url}`);
         } else {
