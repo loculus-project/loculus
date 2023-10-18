@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: website-{{ .Values.version }}
+  namespace: preview
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: website-{{ .Values.version }}
+  template:
+    metadata:
+      labels:
+        app: website-{{ .Values.version }}
+    spec:
+      initContainers:
+      - name: init-website-{{ .Values.version }}
+        image: alpine/git
+        command:
+        - /bin/sh
+        - -c
+        - |
+          git clone -b {{ .Values.version }} https://{{ .Values.githubToken }}@github.com/pathoplexus/pathoplexus.git /repo
+        volumeMounts:
+        - name: repo-volume
+          mountPath: /repo
+      - name: silo-preprocessing-{{ .Values.version }}
+        image: ghcr.io/genspectrum/lapis-silo:latest
+        args:
+        - "--preprocessing"
+        volumeMounts:
+        - name: repo-volume
+          mountPath: /preprocessing/input
+          subPath: website/tests/initialSiloData
+        - name: repo-volume
+          mountPath: /preprocessing/input/reference_genomes.json
+          subPath: website/tests/config/reference_genomes.json
+        - name: repo-volume
+          mountPath: /app/preprocessing_config.yaml
+          subPath: website/tests/config/preprocessing_config.yaml
+        - name: repo-volume
+          mountPath: /app/database_config.yaml
+          subPath: website/tests/config/database_config.yaml
+        - name: repo-volume
+          mountPath: /preprocessing/output
+          subPath: website/tests/initialSiloData/processingOutput
+
+      containers:
+      - name: website-{{ .Values.version }}
+        image: ghcr.io/pathoplexus/website:{{ .Values.version }}
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "1300Mi"
+            cpu: "100m"
+          limits:
+            memory: "2000Mi"
+            cpu: "1000m"
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: repo-volume  
+          mountPath: /config  
+          subPath: website/tests/config    
+      - name: backend-{{ .Values.version }}
+        image: ghcr.io/pathoplexus/backend:{{ .Values.version }}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8079
+        args:
+        - "--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus"
+        - "--spring.datasource.username=postgres"
+        - "--spring.datasource.password=unsecure"
+        - "--backend.config.path=/repo/website/tests/config/config.json"
+        volumeMounts:
+        - name: repo-volume
+          mountPath: /repo
+      - name: database-{{ .Values.version }}
+        image: postgres:latest
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "unsecure"
+        - name: POSTGRES_DB
+          value: "pathoplexus"
+      - name: silo-{{ .Values.version }}
+        image: ghcr.io/genspectrum/lapis-silo:latest
+        ports:
+        - containerPort: 8081
+        args:
+        - "--api"
+        volumeMounts:
+        - name: repo-volume
+          mountPath: /data
+          subPath: website/tests/initialSiloData/processingOutput
+      - name: lapis-{{ .Values.version }}
+        image: ghcr.io/genspectrum/lapis-v2:latest
+        ports:
+        - containerPort: 8080
+        args:
+        - "--silo.url=http://localhost:8081"
+        volumeMounts:
+        - name: repo-volume
+          mountPath: /workspace/database_config.yaml
+          subPath: website/tests/config/database_config.yaml
+        - name: repo-volume
+          mountPath: /workspace/reference_genomes.json
+          subPath: website/tests/config/reference_genomes.json
+      imagePullSecrets:
+      - name: regcred
+      volumes:
+      - name: repo-volume
+        emptyDir: {}

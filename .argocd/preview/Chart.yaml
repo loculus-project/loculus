@@ -1,0 +1,4 @@
+apiVersion: v2
+name: my-helm-chart
+description: A basic Helm chart for demonstration
+version: 0.1.0

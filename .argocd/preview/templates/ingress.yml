@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: website-{{ .Values.version }}
+  namespace: preview
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.host }}
+    http:
+      paths:
+      - backend:
+          service:
+            name: website-{{ .Values.version }}-service
+            port:
+              number: 3000
+        path: /
+        pathType: Prefix
