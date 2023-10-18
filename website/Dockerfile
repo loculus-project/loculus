@@ -1,7 +1,6 @@
 FROM node:lts-alpine as build-deps
 WORKDIR /app
 
-COPY .env.docker .env
 COPY package*.json ./
 
 RUN npm ci
@@ -10,9 +9,11 @@ RUN npm run build
 
 FROM node:lts-alpine
 
+ENV CONFIG_DIR=/config
+ENV LOG_DIR=/log
+
 WORKDIR /app
 
-COPY .env.docker .env
 COPY entry.js package*.json ./
 RUN npm ci --omit=dev
 
