@@ -4,6 +4,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { BackendClient } from '../../../src/services/backendClient.ts';
 import type { Sequence, SequenceVersion } from '../../../src/types.ts';
+import { extractSequenceVersion } from '../../../src/utils/extractSequenceVersion.ts';
 import {
     backendUrl,
     baseUrl,
@@ -31,8 +32,13 @@ export class SubmitPage {
     }
 
     public async submit() {
+        await this.page.waitForSelector('text=Response Sequence Headers', { state: 'hidden' });
+
         await Promise.all([this.uploadSequenceData(), this.setUsername(testuser), this.uploadMetadata()]);
+
+        await this.page.waitForTimeout(1000);
         await this.submitButton.click();
+
         await this.page.waitForSelector('text=Response Sequence Headers');
     }
 
@@ -57,6 +63,33 @@ export class SubmitPage {
         await this.approveProcessedData(testuser, sequences);
 
         return sequences;
+    }
+
+    public async prepareDataToBeReviewable(): Promise<SequenceVersion[]> {
+        await this.goto();
+        await this.submit();
+
+        const sequences = await queryUnprocessedData(this.getTestSequenceCount());
+        expect(sequences.length).toBe(this.getTestSequenceCount());
+
+        for (const sequence of sequences) {
+            await fakeProcessingPipeline({ ...sequence, error: true });
+        }
+        return sequences.map(extractSequenceVersion);
+    }
+
+    public async prepareDataToBeStaged(): Promise<SequenceVersion[]> {
+        await this.goto();
+        await this.submit();
+
+        const sequences = await queryUnprocessedData(this.getTestSequenceCount());
+        expect(sequences.length).toBe(this.getTestSequenceCount());
+
+        for (const sequence of sequences) {
+            await fakeProcessingPipeline({ ...sequence, error: false });
+        }
+
+        return sequences.map(extractSequenceVersion);
     }
 
     public getTestSequenceCount() {
