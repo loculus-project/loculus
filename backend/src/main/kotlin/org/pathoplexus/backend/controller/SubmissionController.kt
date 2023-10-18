@@ -102,6 +102,13 @@ Approve processed sequence versions and set the status to 'SILO_READY'.
 This can only be done for sequences in status 'PROCESSED' that the user submitted themselves.
 """
 
+private const val REVOKE_DESCRIPTION = """
+Revoke existing sequence. Creates a new revocation version and stages it for confirmation. 
+If successfully, this returns the sequenceIds, versions and status of the revocation versions.
+If any of the given sequences do not exist, or do not have the latest version in status 'SILO_READY', 
+or the given user has no right to the sequence, this will return an error and roll back the whole transaction.
+"""
+
 @RestController
 @Validated
 class SubmissionController(
@@ -255,15 +262,12 @@ class SubmissionController(
         ) @RequestParam sequenceFile: MultipartFile,
     ): List<HeaderId> = databaseService.reviseData(username, generateFileDataSequence(metadataFile, sequenceFile))
 
-    @Operation(description = "Revoke existing sequence and stage it for confirmation")
-    @PostMapping(
-        "/revoke",
-        consumes = [MediaType.APPLICATION_JSON_VALUE],
-        produces = [MediaType.APPLICATION_JSON_VALUE],
-    )
+    @Operation(description = REVOKE_DESCRIPTION)
+    @PostMapping("/revoke", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun revoke(
         @RequestBody body: SequenceIdList,
-    ): List<SequenceVersionStatus> = databaseService.revoke(body.sequenceIds)
+        @RequestParam username: String,
+    ): List<SequenceVersionStatus> = databaseService.revoke(body.sequenceIds, username)
 
     @Operation(description = "Confirm revocation of sequence")
     @PostMapping(

@@ -96,9 +96,9 @@ const confirmRevocationAction: BulkSequenceAction = {
 
 const revokeAction: BulkSequenceAction = {
     name: 'revoke',
-    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig) => {
+    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig, username: string) => {
         return clientFetch({
-            endpoint: `/revoke`,
+            endpoint: `/revoke?username=${username}`,
             zodSchema: undefined,
             options: {
                 method: 'POST',

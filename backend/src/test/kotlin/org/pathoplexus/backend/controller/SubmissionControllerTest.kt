@@ -24,7 +24,9 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.PostgreSQLContainer
@@ -108,6 +110,7 @@ class SubmissionControllerTest(
             )
     }
 
+    // TODO(#312) Remove this once complete
     @Test
     fun `revoke sequences and check that the 'revoke' flag is set properly`() {
         prepareDataToSiloReady()
@@ -240,7 +243,7 @@ class SubmissionControllerTest(
 
         val files = getTestDataFiles(false)
         mockMvc.perform(
-            MockMvcRequestBuilders.multipart("/revise")
+            multipart("/revise")
                 .file(files.first)
                 .file(files.second)
                 .param("username", USER_NAME),
@@ -263,7 +266,7 @@ class SubmissionControllerTest(
 
     private fun submitProcessedData(testData: String): ResultActions {
         return mockMvc.perform(
-            MockMvcRequestBuilders.post("/submit-processed-data")
+            post("/submit-processed-data")
                 .contentType(MediaType.APPLICATION_NDJSON_VALUE)
                 .content(testData),
         )
@@ -272,7 +275,7 @@ class SubmissionControllerTest(
 
     private fun querySequenceList(): MvcResult {
         return mockMvc.perform(
-            MockMvcRequestBuilders.get("/get-sequences-of-user")
+            get("/get-sequences-of-user")
                 .param("username", USER_NAME),
         )
             .andExpect(status().isOk())
@@ -288,7 +291,7 @@ class SubmissionControllerTest(
         val files = getTestDataFiles(false)
 
         return mockMvc.perform(
-            MockMvcRequestBuilders.multipart("/submit")
+            multipart("/submit")
                 .file(files.first)
                 .file(files.second)
                 .param("username", USER_NAME),
@@ -296,7 +299,7 @@ class SubmissionControllerTest(
     }
 
     private fun queryUnprocessedSequences(numberOfSequences: Int): MvcResult = mockMvc.perform(
-        MockMvcRequestBuilders.post("/extract-unprocessed-data")
+        post("/extract-unprocessed-data")
             .param("numberOfSequences", numberOfSequences.toString()),
     )
         .andExpect(status().isOk())
@@ -305,7 +308,7 @@ class SubmissionControllerTest(
 
     private fun approveProcessedSequences(listOfSequencesToApprove: List<SequenceVersion>): ResultActions =
         mockMvc.perform(
-            MockMvcRequestBuilders.post("/approve-processed-data")
+            post("/approve-processed-data")
                 .param("username", USER_NAME)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}"""),
@@ -316,7 +319,7 @@ class SubmissionControllerTest(
         val files = getTestDataFiles(true)
 
         return mockMvc.perform(
-            MockMvcRequestBuilders.multipart("/revise")
+            multipart("/revise")
                 .file(files.first)
                 .file(files.second)
                 .param("username", USER_NAME),
@@ -334,7 +337,8 @@ class SubmissionControllerTest(
     private fun revokeSequences(listOfSequencesToRevoke: List<Number>) =
         objectMapper.readValue<List<SequenceVersionStatus>>(
             mockMvc.perform(
-                MockMvcRequestBuilders.post("/revoke")
+                post("/revoke")
+                    .param("username", USER_NAME)
                     .contentType(MediaType.APPLICATION_JSON_VALUE)
                     .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
             )
@@ -343,7 +347,7 @@ class SubmissionControllerTest(
         )
 
     private fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions = mockMvc.perform(
-        MockMvcRequestBuilders.post("/confirm-revocation")
+        post("/confirm-revocation")
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .content("""{"sequenceIds":$listOfSequencesToConfirm}"""),
     )

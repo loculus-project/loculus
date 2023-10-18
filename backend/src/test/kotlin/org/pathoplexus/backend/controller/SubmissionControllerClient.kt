@@ -82,9 +82,10 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}"""),
         )
 
-    fun revokeSequences(listOfSequencesToRevoke: List<Number>) =
+    fun revokeSequences(listOfSequencesToRevoke: List<Number>, userName: String = USER_NAME): ResultActions =
         mockMvc.perform(
             post("/revoke")
+                .param("username", userName)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
         )

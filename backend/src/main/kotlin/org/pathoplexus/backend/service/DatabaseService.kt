@@ -256,7 +256,7 @@ class DatabaseService(
             )
 
         validateSequenceVersionsExist(sequences, sequenceVersions)
-        validateSequencesAreInStateProcessed(sequences)
+        validateSequencesAreInState(sequences, Status.PROCESSED)
         validateUserIsAllowedToEditSequences(sequences, submitter)
     }
 
@@ -276,14 +276,14 @@ class DatabaseService(
         throw UnprocessableEntityException("Sequence versions $sequenceVersionsNotFound do not exist")
     }
 
-    private fun validateSequencesAreInStateProcessed(sequences: Query) {
+    private fun validateSequencesAreInState(sequences: Query, status: Status) {
         val sequencesNotProcessed = sequences
-            .filter { it[SequencesTable.status] != Status.PROCESSED.name }
+            .filter { it[SequencesTable.status] != status.name }
             .map { "${it[SequencesTable.sequenceId]}.${it[SequencesTable.version]} - ${it[SequencesTable.status]}" }
 
         if (sequencesNotProcessed.isNotEmpty()) {
             throw UnprocessableEntityException(
-                "Sequence versions are in not in state ${Status.PROCESSED}: " +
+                "Sequence versions are in not in state $status: " +
                     sequencesNotProcessed.joinToString(", "),
             )
         }
@@ -474,8 +474,10 @@ class DatabaseService(
         }.toList()
     }
 
-    fun revoke(sequenceIds: List<Long>): List<SequenceVersionStatus> {
+    fun revoke(sequenceIds: List<Long>, username: String): List<SequenceVersionStatus> {
         log.info { "revoking ${sequenceIds.size} sequences" }
+
+        validateRevokePreconditions(username, sequenceIds)
 
         val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -528,6 +530,35 @@ class DatabaseService(
                     it[SequencesTable.isRevocation],
                 )
             }
+    }
+
+    private fun validateRevokePreconditions(submitter: String, sequenceIds: List<Long>) {
+        val sequences = SequencesTable
+            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter, SequencesTable.status)
+            .select(
+                where = {
+                    SequencesTable.sequenceId inList sequenceIds
+                },
+            )
+
+        validateSequenceIdExist(sequences, sequenceIds)
+        validateSequencesAreInState(sequences, Status.SILO_READY)
+        validateUserIsAllowedToEditSequences(sequences, submitter)
+    }
+
+    private fun validateSequenceIdExist(sequences: Query, sequenceIds: List<Long>) {
+        if (sequences.count() == sequenceIds.size.toLong()) {
+            return
+        }
+
+        val sequenceVersionsNotFound = sequenceIds
+            .filter { sequenceId ->
+                sequences.none {
+                    it[SequencesTable.sequenceId] == sequenceId
+                }
+            }.joinToString(", ") { it.toString() }
+
+        throw UnprocessableEntityException("SequenceIds $sequenceVersionsNotFound do not exist")
     }
 
     fun confirmRevocation(sequenceIds: List<Long>): Int {
