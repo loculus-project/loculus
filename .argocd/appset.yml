@@ -25,7 +25,7 @@ spec:
       project: default
       source:
         path: .argocd/preview/
-        repoURL: 'https://github.com/pathoplexus/argocd.git'
+        repoURL: 'https://github.com/pathoplexus/pathoplexus.git'
         targetRevision: {{branch}}
         helm:
           parameters:
