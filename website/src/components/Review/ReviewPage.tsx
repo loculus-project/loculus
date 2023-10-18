@@ -1,10 +1,10 @@
 import { sentenceCase, snakeCase } from 'change-case';
-import { type Result } from 'neverthrow';
 import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef, useState } from 'react';
 
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
-import { clientFetch, getClientLogger } from '../../api.ts';
+import { getClientLogger } from '../../api.ts';
+import { ClientSideBackendClient } from '../../services/clientSideBackendClient.ts';
 import type {
     ClientConfig,
     MetadataRecord,
@@ -39,7 +39,19 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
     };
 
     const submitReviewForSequenceVersion = async () => {
-        const result = await submitReview(reviewData, editedMetadata, editedSequences, username, clientConfig);
+        const backendClient = ClientSideBackendClient.create(clientConfig);
+        const result = await backendClient.submitReviewedSequence(username, {
+            sequenceId: reviewData.sequenceId,
+            version: reviewData.version,
+            data: {
+                metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
+                unalignedNucleotideSequences: editedSequences.reduce(
+                    (prev, row) => ({ ...prev, [row.key]: row.value }),
+                    {},
+                ),
+            },
+        });
+
         await result.match(
             async () => {
                 location.href = `/user/${username}/sequences`;
@@ -271,36 +283,3 @@ const mapErrorsAndWarnings = (
         .filter((warning) => warning.source.find((source) => source.name === key && source.type === type) !== undefined)
         .map((warning) => warning.message),
 });
-
-const submitReview = async (
-    reviewData: SequenceReview,
-    editedMetadata: Row[],
-    editedSequences: Row[],
-    username: string,
-    clientConfig: ClientConfig,
-): Promise<Result<undefined, string>> => {
-    const body: UnprocessedData = {
-        sequenceId: reviewData.sequenceId,
-        version: reviewData.version,
-        data: {
-            metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
-            unalignedNucleotideSequences: editedSequences.reduce(
-                (prev, row) => ({ ...prev, [row.key]: row.value }),
-                {},
-            ),
-        },
-    };
-
-    return clientFetch({
-        endpoint: `/submit-reviewed-sequence?username=${username}`,
-        backendUrl: clientConfig.backendUrl,
-        zodSchema: undefined,
-        options: {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        },
-    });
-};

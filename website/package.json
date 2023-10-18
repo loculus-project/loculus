@@ -23,6 +23,7 @@
     "@mui/icons-material": "^5.14.12",
     "@tanstack/react-query": "^4.36.1",
     "astro": "^3.3.0",
+    "axios": "^1.5.1",
     "change-case": "^5.0.2",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",

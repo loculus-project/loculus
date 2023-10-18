@@ -74,11 +74,6 @@ const sequenceStatusNames = z.union([
 export type SequenceStatusNames = z.infer<typeof sequenceStatusNames>;
 const statusThatAllowsReview = z.union([z.literal('NEEDS_REVIEW'), z.literal('PROCESSED')]);
 
-export type SequenceStatus = SequenceVersion & {
-    status: SequenceStatusNames;
-    isRevocation: boolean;
-};
-
 const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
 
@@ -104,6 +99,14 @@ export const sequenceVersion = z.object({
     version: z.number(),
 });
 export type SequenceVersion = z.infer<typeof sequenceVersion>;
+
+export const sequenceStatus = sequenceVersion.merge(
+    z.object({
+        status: sequenceStatusNames,
+        isRevocation: z.boolean(),
+    }),
+);
+export type SequenceStatus = z.infer<typeof sequenceStatus>;
 
 export type HeaderId = SequenceVersion & {
     customId: string;

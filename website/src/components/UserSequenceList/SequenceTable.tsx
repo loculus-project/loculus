@@ -1,5 +1,5 @@
 import { sentenceCase } from 'change-case';
-import React, { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
     type BulkSequenceAction,
