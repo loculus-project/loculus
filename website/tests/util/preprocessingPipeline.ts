@@ -4,6 +4,35 @@ import { type UnprocessedData } from '../../src/types.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
 import { backendUrl } from '../e2e.fixture.ts';
 
+const sequenceData = {
+    unalignedNucleotideSequences: {
+        main: 'A'.repeat(123),
+    },
+    alignedNucleotideSequences: {
+        main: 'A'.repeat(29903),
+    },
+    nucleotideInsertions: {
+        main: ['123:TCTCT', '234:ATATAT'],
+    },
+    alignedAminoAcidSequences: {
+        E: 'M'.repeat(76),
+        M: 'A'.repeat(223),
+        N: 'S'.repeat(420),
+        ORF1a: 'E'.repeat(4401),
+        ORF1b: 'R'.repeat(2696),
+        ORF3a: 'D'.repeat(276),
+        ORF6: 'F'.repeat(62),
+        ORF7a: 'K'.repeat(122),
+        ORF7b: 'I'.repeat(44),
+        ORF8: 'L'.repeat(122),
+        ORF9b: 'P'.repeat(98),
+        S: 'V'.repeat(1274),
+    },
+    aminoAcidInsertions: {
+        S: ['123:NRNR'],
+    },
+} as const;
+
 export const fakeProcessingPipeline = async ({
     sequenceId,
     version,
@@ -26,32 +55,7 @@ export const fakeProcessingPipeline = async ({
                 country: 'Spain',
                 division: 'Schaffhausen',
             },
-            unalignedNucleotideSequences: {
-                main: 'A'.repeat(123),
-            },
-            alignedNucleotideSequences: {
-                main: 'A'.repeat(29903),
-            },
-            nucleotideInsertions: {
-                main: ['123:TCTCT', '234:ATATAT'],
-            },
-            alignedAminoAcidSequences: {
-                E: 'M'.repeat(76),
-                M: 'A'.repeat(223),
-                N: 'S'.repeat(420),
-                ORF1a: 'E'.repeat(4401),
-                ORF1b: 'R'.repeat(2696),
-                ORF3a: 'D'.repeat(276),
-                ORF6: 'F'.repeat(62),
-                ORF7a: 'K'.repeat(122),
-                ORF7b: 'I'.repeat(44),
-                ORF8: 'L'.repeat(122),
-                ORF9b: 'P'.repeat(98),
-                S: 'V'.repeat(1274),
-            },
-            aminoAcidInsertions: {
-                S: ['123:NRNR'],
-            },
+            ...sequenceData,
         },
     };
     try {

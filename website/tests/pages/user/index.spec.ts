@@ -22,6 +22,7 @@ test.describe('The user page', () => {
                 sequenceId: firstSequence.sequenceId,
                 version: firstSequence.version,
                 status: 'NEEDS_REVIEW',
+                isRevocation: false,
             },
         ]);
         expect(sequenceNeedingReviewIsPresent).toBe(true);
@@ -37,6 +38,7 @@ test.describe('The user page', () => {
                 sequenceId: secondSequence.sequenceId,
                 version: secondSequence.version,
                 status: 'PROCESSED',
+                isRevocation: false,
             },
         ]);
         expect(sequenceThatIsProcessedIsPresent).toBe(true);
@@ -48,6 +50,7 @@ test.describe('The user page', () => {
                 sequenceId: secondSequence.sequenceId,
                 version: secondSequence.version,
                 status: 'SILO_READY',
+                isRevocation: false,
             },
         ]);
         expect(sequenceThatIsReleasableIsPresent).toBe(true);

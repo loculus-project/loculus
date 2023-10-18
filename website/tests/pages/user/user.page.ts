@@ -1,12 +1,8 @@
 import type { Page } from '@playwright/test';
 
+import type { SequenceStatus, SequenceVersion } from '../../../src/types.ts';
+import { getSequenceVersionString } from '../../../src/utils/extractSequenceVersion.ts';
 import { baseUrl, testuser } from '../../e2e.fixture';
-
-interface SequenceVersionWithStatus {
-    sequenceId: number;
-    version: number;
-    status: string;
-}
 
 export class UserPage {
     private readonly sequenceBoxNames = [
@@ -27,6 +23,7 @@ export class UserPage {
 
     public async gotoUserSequencePage() {
         await this.page.goto(`${baseUrl}/user/${testuser}/sequences`);
+        await this.page.waitForURL(`${baseUrl}/user/${testuser}/sequences`);
 
         for (const id of this.sequenceBoxNames) {
             const checkbox = this.page.getByTestId(id);
@@ -38,7 +35,7 @@ export class UserPage {
         await this.page.waitForSelector('text=REVOKE');
     }
 
-    public async verifyTableEntries(sequencesToCheck: SequenceVersionWithStatus[]) {
+    public async verifyTableEntries(sequencesToCheck: SequenceStatus[]) {
         const rows = (await this.page.locator('tr').allTextContents()).map((row) =>
             row.split(/\s+/).filter((entry) => entry !== ''),
         );
@@ -52,5 +49,15 @@ export class UserPage {
         }
 
         return rowsWithCorrectEntries.length === sequencesToCheck.length;
+    }
+
+    public async clickOnReviewForSequence(sequenceToCheck: SequenceVersion) {
+        const testIdOfButton = `${getSequenceVersionString(sequenceToCheck)}.review`;
+        const reviewButton = this.page.getByTestId(testIdOfButton);
+        await reviewButton.click();
+
+        await this.page.waitForURL(
+            `${baseUrl}/user/${testuser}/review/${sequenceToCheck.sequenceId}/${sequenceToCheck.version}`,
+        );
     }
 }

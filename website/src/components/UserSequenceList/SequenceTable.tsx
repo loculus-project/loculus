@@ -222,6 +222,7 @@ const DisplayTable: FC<{
                                         <button
                                             className='btn btn-xs normal-case btn-ghost'
                                             onClick={() => handleSingleAction(sequence, action)}
+                                            data-testid={`${getSequenceVersionString(sequence)}.${action.name}`}
                                         >
                                             {sentenceCase(action.name)}
                                         </button>
