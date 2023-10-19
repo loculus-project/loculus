@@ -75,7 +75,7 @@ describe('SubmitForm', () => {
         const submitButton = getByText('Submit');
         await userEvent.click(submitButton);
         await waitFor(() => {
-            expect(getByText((text) => text.includes('Upload failed with status code 500'))).toBeInTheDocument();
+            expect(getByText((text) => text.includes('Unknown error from backend'))).toBeInTheDocument();
         });
     });
 });
