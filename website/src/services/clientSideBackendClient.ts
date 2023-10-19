@@ -17,4 +17,8 @@ export class ClientSideBackendClient extends BackendClient {
     protected async logError(message: string): Promise<void> {
         await this.logger.error(message);
     }
+
+    protected async logInfo(message: string): Promise<void> {
+        await this.logger.info(message);
+    }
 }

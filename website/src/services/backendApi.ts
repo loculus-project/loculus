@@ -1,5 +1,6 @@
 import { makeApi, makeEndpoint, makeParameters } from '@zodios/core';
 import z from 'zod';
+
 import {
     headerId,
     sequenceIds,
@@ -118,9 +119,9 @@ const deleteSequencesEndpoint = makeEndpoint({
     parameters: [
         ...usernameParameters,
         {
-            name: 'data',
+            name: 'sequenceIds',
             type: 'Body',
-            schema: sequenceIds,
+            schema: z.array(z.number()),
         },
     ],
     response: z.never(),

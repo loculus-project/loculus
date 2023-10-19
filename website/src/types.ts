@@ -159,3 +159,12 @@ export const submitFiles = z.object({
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File),
 });
+
+export const problemDetail = z.object({
+    type: z.string(),
+    title: z.string(),
+    status: z.number(),
+    detail: z.string(),
+    instance: z.string(),
+});
+export type ProblemDetail = z.infer<typeof problemDetail>;

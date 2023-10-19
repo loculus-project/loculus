@@ -21,7 +21,10 @@ const userSequencesResponse = await ServerSideBackendClient.create().astroFileTy
             userSequencesResponse.match(
                 (sequences) => <UserSequences sequences={sequences} username={username} />,
                 (error) => (
-                    <ErrorFeedback message={'Error while fetching user sequences: ' + error} client:only='react' />
+                    <ErrorFeedback
+                        message={'Error while fetching user sequences: ' + JSON.stringify(error)}
+                        client:only='react'
+                    />
                 ),
             )
         }
