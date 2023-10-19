@@ -1,21 +1,28 @@
 import { CircularProgress, TextField } from '@mui/material';
+import { isErrorFromAlias } from '@zodios/core';
+import type { AxiosError } from 'axios';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 
+import { withQueryProvider } from './common/withQueryProvider.tsx';
+import { backendApi } from '../services/backendApi.ts';
 import { ClientSideBackendClient } from '../services/clientSideBackendClient.ts';
 import type { ClientConfig, HeaderId } from '../types.ts';
 
+type Action = 'submit' | 'revise';
+
 type DataUploadFormProps = {
     clientConfig: ClientConfig;
-    action: 'submit' | 'revise';
+    action: Action;
     onSuccess: (value: HeaderId[]) => void;
     onError: (message: string) => void;
 };
 
-export const DataUploadForm = ({ clientConfig, action, onSuccess, onError }: DataUploadFormProps) => {
+const InnerDataUploadForm = ({ clientConfig, action, onSuccess, onError }: DataUploadFormProps) => {
     const [username, setUsername] = useState('');
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+
+    const { submit, revise, isLoading } = useSubmitFiles(clientConfig, onSuccess, onError);
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData();
@@ -38,25 +45,14 @@ export const DataUploadForm = ({ clientConfig, action, onSuccess, onError }: Dat
             return;
         }
 
-        const formData = new FormData();
-        formData.append('username', username);
-        formData.append('metadataFile', metadataFile);
-        formData.append('sequenceFile', sequenceFile);
-
-        const backendClient = ClientSideBackendClient.create(clientConfig);
-
-        setIsLoading(true);
-        const result = await backendClient.call(action, {
-            username,
-            metadataFile,
-            sequenceFile,
-        });
-
-        result.match(
-            (value) => onSuccess(value),
-            (error) => onError(error.detail),
-        );
-        setIsLoading(false);
+        switch (action) {
+            case 'submit':
+                submit({ username, metadataFile, sequenceFile });
+                break;
+            case 'revise':
+                revise({ username, metadataFile, sequenceFile });
+                break;
+        }
     };
 
     return (
@@ -115,6 +111,43 @@ export const DataUploadForm = ({ clientConfig, action, onSuccess, onError }: Dat
         </form>
     );
 };
+
+export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
+
+function useSubmitFiles(
+    clientConfig: ClientConfig,
+    onSuccess: (value: HeaderId[]) => void,
+    onError: (message: string) => void,
+) {
+    const hooks = ClientSideBackendClient.create(clientConfig).getHooks();
+    const submit = hooks.useSubmit({}, { onSuccess, onError: handleError(onError, 'submit') });
+    const revise = hooks.useRevise({}, { onSuccess, onError: handleError(onError, 'revise') });
+
+    return {
+        submit: submit.mutate,
+        revise: revise.mutate,
+        isLoading: submit.isLoading || revise.isLoading,
+    };
+}
+
+function handleError(onError: (message: string) => void, action: Action) {
+    return (error: unknown | AxiosError) => {
+        if (isErrorFromAlias(backendApi, action, error)) {
+            switch (error.response.status) {
+                case 400:
+                    onError('The submitted files were invalid: ' + error.response.data.detail);
+                    return;
+                case 422:
+                    onError('The submitted file content was invalid: ' + error.response.data.detail);
+                    return;
+                default:
+                    onError(error.response.data.title + ': ' + error.response.data.detail);
+                    return;
+            }
+        }
+        onError('Received unexpected message from backend: ' + (error?.toString() ?? JSON.stringify(error)));
+    };
+}
 
 function getExampleData() {
     return {

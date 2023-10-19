@@ -3,6 +3,7 @@ import z from 'zod';
 
 import {
     headerId,
+    problemDetail,
     sequenceIds,
     sequenceReview,
     sequenceStatus,
@@ -32,6 +33,11 @@ const submitEndpoint = makeEndpoint({
         },
     ],
     response: z.array(headerId),
+    errors: [
+        { status: 'default', schema: problemDetail },
+        { status: 400, schema: problemDetail },
+        { status: 422, schema: problemDetail },
+    ],
 });
 
 const reviseEndpoint = makeEndpoint({
@@ -47,6 +53,11 @@ const reviseEndpoint = makeEndpoint({
         },
     ],
     response: z.array(headerId),
+    errors: [
+        { status: 'default', schema: problemDetail },
+        { status: 400, schema: problemDetail },
+        { status: 422, schema: problemDetail },
+    ],
 });
 
 const getDataToReviewEndpoint = makeEndpoint({
