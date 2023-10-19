@@ -1,6 +1,6 @@
 import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
-import type { FC } from 'react';
+import { type FC, useState } from 'react';
 
 type ErrorFeedbackProps = {
     message: string;
@@ -25,3 +25,20 @@ export const ManagedErrorFeedback: FC<ErrorFeedbackProps> = ({ message, open, on
         />
     );
 };
+
+export function useErrorFeedbackState() {
+    const [isErrorOpen, setIsErrorOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+
+    const openErrorFeedback = (message: string) => {
+        setErrorMessage(message);
+        setIsErrorOpen(true);
+    };
+
+    const closeErrorFeedback = () => {
+        setErrorMessage('');
+        setIsErrorOpen(false);
+    };
+
+    return { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback };
+}
