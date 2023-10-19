@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   dockerImage:
-    name: Build preprocessing/nextclade Docker Image
+    name: Build preprocessing-nextclade Docker Image
     runs-on: ubuntu-latest
     permissions:
       contents: read
