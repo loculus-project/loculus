@@ -113,7 +113,7 @@ spec:
           image: ghcr.io/pathoplexus/preprocessing-nextclade:{{ .Values.version }}
           imagePullPolicy: Always
           command: ["/bin/bash", "-c"]
-          args: ["while true; do python main.py; sleep 10; done"]
+          args: ["while true; do micromamba run python main.py; sleep 10; done"]
       imagePullSecrets:
         - name: regcred
       volumes:
