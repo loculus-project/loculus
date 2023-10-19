@@ -13,7 +13,10 @@
 
 To submit new sequences, the user calls the `/submit` endpoint and sends unpreprocessed data. For each sequence, Pathoplexus creates a new row in the "sequences" table. It generates a new sequence ID. The version number of the sequences is 1.
 
-The data will be processed by a preprocessing pipeline (see [preprocessing pipeline specification](../../preprocessing/specification.md)). If the data contain errors, the user has to review the errors and edit the data. The edited data will be preprocessed again. If the data do not contain errors, they will be staged unless the user selected the "release directly"-mode. The user can then review the data and approve them. If the "release directly"-mode is used, the staging phase will be skipped and the data directly released. If the user decides to not approve a sequence, the entry will be (permanently) removed from the database.
+### Preprocessing & Review
+The data will be processed by a preprocessing pipeline (see [preprocessing pipeline specification](../../preprocessing/specification.md)). If the data contain errors, the user has to review the errors and edit the data (sequence data can be downloaded as _fasta_ file to ease reviewing).
+
+The reviewed data will be preprocessed again. If the data do not contain errors, they will be staged unless the user selected the "release directly"-mode. The user can then review the data and approve them. If the "release directly"-mode is used, the staging phase will be skipped and the data directly released. If the user decides to not approve a sequence, the entry will be (permanently) removed from the database.
 
 The following diagram shows the different statuses and their transitions. The **blue-dotted** boxes represent data. The **green-dotted** boxes represent entry creation actions. The **red-dotted** boxes represent entry deletion actions.
 
