@@ -1,18 +1,58 @@
-import { makeApi, makeEndpoint } from '@zodios/core';
+import { makeApi, makeEndpoint, makeParameters } from '@zodios/core';
 import z from 'zod';
-import { sequenceIds, sequenceReview, sequenceStatus, sequenceVersion, unprocessedData } from '../types.ts';
+import {
+    headerId,
+    sequenceIds,
+    sequenceReview,
+    sequenceStatus,
+    sequenceVersion,
+    submitFiles,
+    unprocessedData,
+} from '../types.ts';
+
+const usernameParameters = makeParameters([
+    {
+        name: 'username',
+        type: 'Query',
+        schema: z.string(),
+    },
+]);
+
+const submitEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/submit',
+    alias: 'submit',
+    requestFormat: 'form-data',
+    parameters: [
+        {
+            name: 'data',
+            type: 'Body',
+            schema: submitFiles,
+        },
+    ],
+    response: z.array(headerId),
+});
+
+const reviseEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/revise',
+    alias: 'revise',
+    requestFormat: 'form-data',
+    parameters: [
+        {
+            name: 'data',
+            type: 'Body',
+            schema: submitFiles,
+        },
+    ],
+    response: z.array(headerId),
+});
 
 const getDataToReviewEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-data-to-review/:sequenceId/:version',
     alias: 'getDataToReview',
-    parameters: [
-        {
-            name: 'username',
-            type: 'Query',
-            schema: z.string(),
-        },
-    ],
+    parameters: usernameParameters,
     response: sequenceReview,
 });
 
@@ -21,11 +61,7 @@ const revokeSequencesEndpoint = makeEndpoint({
     path: '/revoke',
     alias: 'revokeSequences',
     parameters: [
-        {
-            name: 'username',
-            type: 'Query',
-            schema: z.string(),
-        },
+        ...usernameParameters,
         {
             name: 'sequenceIds',
             type: 'Body',
@@ -40,11 +76,7 @@ const submitReviewedSequenceEndpoint = makeEndpoint({
     path: '/submit-reviewed-sequence',
     alias: 'submitReviewedSequence',
     parameters: [
-        {
-            name: 'username',
-            type: 'Query',
-            schema: z.string(),
-        },
+        ...usernameParameters,
         {
             name: 'data',
             type: 'Body',
@@ -58,13 +90,7 @@ const getSequencesOfUserEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-sequences-of-user',
     alias: 'getSequencesOfUser',
-    parameters: [
-        {
-            name: 'username',
-            type: 'Query',
-            schema: z.string(),
-        },
-    ],
+    parameters: usernameParameters,
     response: z.array(sequenceStatus),
 });
 
@@ -73,11 +99,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
     path: '/approve-processed-data',
     alias: 'approveProcessedData',
     parameters: [
-        {
-            name: 'username',
-            type: 'Query',
-            schema: z.string(),
-        },
+        ...usernameParameters,
         {
             name: 'data',
             type: 'Body',
@@ -94,11 +116,7 @@ const deleteSequencesEndpoint = makeEndpoint({
     path: '/delete-sequences',
     alias: 'deleteSequences',
     parameters: [
-        {
-            name: 'username',
-            type: 'Query',
-            schema: z.string(),
-        },
+        ...usernameParameters,
         {
             name: 'data',
             type: 'Body',
@@ -113,11 +131,7 @@ const confirmRevocationEndpoint = makeEndpoint({
     path: '/confirm-revocation',
     alias: 'confirmRevocation',
     parameters: [
-        {
-            name: 'username',
-            type: 'Query',
-            schema: z.string(),
-        },
+        ...usernameParameters,
         {
             name: 'sequenceIds',
             type: 'Body',
@@ -128,6 +142,8 @@ const confirmRevocationEndpoint = makeEndpoint({
 });
 
 export const backendApi = makeApi([
+    submitEndpoint,
+    reviseEndpoint,
     getDataToReviewEndpoint,
     revokeSequencesEndpoint,
     submitReviewedSequenceEndpoint,
