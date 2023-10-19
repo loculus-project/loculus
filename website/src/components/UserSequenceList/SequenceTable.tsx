@@ -12,7 +12,7 @@ import {
 import type { ClientConfig, SequenceStatus } from '../../types.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { ManagedErrorFeedback } from '../Submission/ManagedErrorFeedback.tsx';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
 
 type SequenceTableProps = {
     username: string;
@@ -31,8 +31,7 @@ export const SequenceTable: FC<SequenceTableProps> = ({
 }) => {
     const [selectedSequenceRowIds, setSelectedSequenceRowIds] = useState<number[]>([]);
 
-    const [isErrorOpen, setIsErrorOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [dialogText, setDialogText] = useState('');
@@ -44,16 +43,6 @@ export const SequenceTable: FC<SequenceTableProps> = ({
         if (dialogRef.current) {
             dialogRef.current.showModal();
         }
-    };
-
-    const handleOpenError = (message: string) => {
-        setErrorMessage(message);
-        setIsErrorOpen(true);
-    };
-
-    const handleCloseError = () => {
-        setErrorMessage('');
-        setIsErrorOpen(false);
     };
 
     const getSelectedSequences = useMemo(() => {
@@ -74,7 +63,7 @@ export const SequenceTable: FC<SequenceTableProps> = ({
     const handleSingleAction = async (sequenceStatus: SequenceStatus, action: SingleSequenceAction) => {
         const result = await action.actionOnSequence(sequenceStatus, clientConfig, username);
         if (result.isErr()) {
-            handleOpenError(result.error);
+            openErrorFeedback(result.error);
         }
     };
 
@@ -82,7 +71,7 @@ export const SequenceTable: FC<SequenceTableProps> = ({
         const result = await action.actionOnSequences(getSelectedSequences, clientConfig, username);
 
         if (result.isErr()) {
-            handleOpenError(result.error);
+            openErrorFeedback(result.error);
         } else {
             window.location.reload();
         }
@@ -90,7 +79,7 @@ export const SequenceTable: FC<SequenceTableProps> = ({
 
     return (
         <>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
+            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <dialog ref={dialogRef} className='modal'>
                 <ConfirmationDialog
                     onConfirmation={() => (dialogAction ? executeBulkAction(dialogAction) : null)}

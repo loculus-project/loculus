@@ -14,7 +14,7 @@ import type {
 } from '../../types.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { ManagedErrorFeedback } from '../Submission/ManagedErrorFeedback.tsx';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
 
 type ReviewPageProps = {
     clientConfig: ClientConfig;
@@ -28,8 +28,7 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(reviewData));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(reviewData));
 
-    const [isErrorOpen, setIsErrorOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -47,7 +46,7 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
                 await logger.info('Successfully submitted review ' + reviewData.sequenceId + '.' + reviewData.version);
             },
             async (error) => {
-                handleOpenError(`Failed to submit review with error '${JSON.stringify(error)})}'`);
+                openErrorFeedback(`Failed to submit review with error '${JSON.stringify(error)})}'`);
             },
         );
     };
@@ -69,22 +68,12 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
         URL.revokeObjectURL(url);
     };
 
-    const handleOpenError = (message: string) => {
-        setErrorMessage(message);
-        setIsErrorOpen(true);
-    };
-
-    const handleCloseError = () => {
-        setErrorMessage('');
-        setIsErrorOpen(false);
-    };
-
     const processedSequenceRows = useMemo(() => extractProcessedSequences(reviewData), [reviewData]);
     const processedInsertions = useMemo(() => extractInsertions(reviewData), [reviewData]);
 
     return (
         <>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
+            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
 
             <div className='flex items-center gap-4'>
                 <button className='btn normal-case' onClick={handleOpenConfirmationDialog}>
