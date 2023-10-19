@@ -34,6 +34,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
+import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.NotFoundException
@@ -55,6 +56,7 @@ class DatabaseService(
     private val sequenceValidatorService: SequenceValidatorService,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
+    private val referenceGenome: ReferenceGenome,
 ) {
     init {
         Database.connect(pool)
@@ -169,6 +171,7 @@ class DatabaseService(
         }
 
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
+        val submittedProcessedDataWithAllKeysForInsertions = addMissingKeysForInsertions(submittedProcessedData)
 
         val newStatus = when {
             submittedErrors.isEmpty() -> Status.PROCESSED
@@ -177,17 +180,44 @@ class DatabaseService(
 
         return SequencesTable.update(
             where = {
-                (SequencesTable.sequenceId eq submittedProcessedData.sequenceId) and
-                    (SequencesTable.version eq submittedProcessedData.version) and
+                (SequencesTable.sequenceId eq submittedProcessedDataWithAllKeysForInsertions.sequenceId) and
+                    (SequencesTable.version eq submittedProcessedDataWithAllKeysForInsertions.version) and
                     (SequencesTable.status eq Status.PROCESSING.name)
             },
         ) {
             it[status] = newStatus.name
-            it[processedData] = submittedProcessedData.data
+            it[processedData] = submittedProcessedDataWithAllKeysForInsertions.data
             it[errors] = submittedErrors
             it[warnings] = submittedWarnings
             it[finishedProcessingAt] = now
         }
+    }
+
+    private fun addMissingKeysForInsertions(
+        submittedProcessedData: SubmittedProcessedData,
+    ): SubmittedProcessedData {
+        val nucleotideInsertions = referenceGenome.nucleotideSequences.associate {
+            if (it.name in submittedProcessedData.data.nucleotideInsertions.keys) {
+                it.name to submittedProcessedData.data.nucleotideInsertions[it.name]!!
+            } else {
+                (it.name to emptyList())
+            }
+        }
+
+        val aminoAcidInsertions = referenceGenome.genes.associate {
+            if (it.name in submittedProcessedData.data.aminoAcidInsertions.keys) {
+                it.name to submittedProcessedData.data.aminoAcidInsertions[it.name]!!
+            } else {
+                (it.name to emptyList())
+            }
+        }
+
+        return submittedProcessedData.copy(
+            data = submittedProcessedData.data.copy(
+                nucleotideInsertions = nucleotideInsertions,
+                aminoAcidInsertions = aminoAcidInsertions,
+            ),
+        )
     }
 
     private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData): String {
