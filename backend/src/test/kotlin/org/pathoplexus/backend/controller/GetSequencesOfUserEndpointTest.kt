@@ -92,7 +92,7 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
                     it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
                     it.approveProcessedSequences(listOf(SequenceVersion(firstSequence, 1)))
                     it.revokeSequences(listOf(firstSequence))
-                    it.confirmRevocation(listOf(firstSequence))
+                    it.confirmRevocation(listOf(SequenceVersion(firstSequence, 2)))
                 },
                 expectedStatus = Status.SILO_READY,
                 expectedIsRevocation = true,

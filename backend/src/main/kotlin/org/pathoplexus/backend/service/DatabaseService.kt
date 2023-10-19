@@ -40,6 +40,13 @@ import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.NotFoundException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.model.HeaderId
+import org.pathoplexus.backend.service.Status.NEEDS_REVIEW
+import org.pathoplexus.backend.service.Status.PROCESSED
+import org.pathoplexus.backend.service.Status.PROCESSING
+import org.pathoplexus.backend.service.Status.RECEIVED
+import org.pathoplexus.backend.service.Status.REVIEWED
+import org.pathoplexus.backend.service.Status.REVOKED_STAGING
+import org.pathoplexus.backend.service.Status.SILO_READY
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
@@ -72,7 +79,7 @@ class DatabaseService(
                 it[SequencesTable.submitter] = submitter
                 it[submittedAt] = now
                 it[version] = 1
-                it[status] = Status.RECEIVED.name
+                it[status] = RECEIVED.name
                 it[customId] = data.customId
                 it[originalData] = data.originalData
             }
@@ -87,7 +94,7 @@ class DatabaseService(
             .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.originalData)
             .select(
                 where = {
-                    (SequencesTable.status eq Status.RECEIVED.name)
+                    (SequencesTable.status eq RECEIVED.name)
                         .and((SequencesTable.version eq maxVersionQuery))
                 },
             )
@@ -123,7 +130,7 @@ class DatabaseService(
             .update(
                 where = { Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions },
             ) {
-                it[status] = Status.PROCESSING.name
+                it[status] = PROCESSING.name
                 it[startedProcessingAt] = now
             }
     }
@@ -240,9 +247,9 @@ class DatabaseService(
         }
 
         val selectedSequence = selectedSequences.first()
-        if (selectedSequence[SequencesTable.status] != Status.PROCESSING.name) {
+        if (selectedSequence[SequencesTable.status] != PROCESSING.name) {
             throw UnprocessableEntityException(
-                "Sequence version $sequenceVersion is in not in state ${Status.PROCESSING} " +
+                "Sequence version $sequenceVersion is in not in state $PROCESSING " +
                     "(was ${selectedSequence[SequencesTable.status]})",
             )
         }
@@ -252,19 +259,19 @@ class DatabaseService(
     fun approveProcessedData(submitter: String, sequenceVersions: List<SequenceVersion>) {
         log.info { "approving ${sequenceVersions.size} sequences by $submitter" }
 
-        validateApprovalPreconditions(submitter, sequenceVersions)
+        validatePreconditions(submitter, sequenceVersions, PROCESSED)
 
         SequencesTable.update(
             where = {
                 (Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions.toPairs()) and
-                    (SequencesTable.status eq Status.PROCESSED.name)
+                    (SequencesTable.status eq PROCESSED.name)
             },
         ) {
-            it[status] = Status.SILO_READY.name
+            it[status] = SILO_READY.name
         }
     }
 
-    private fun validateApprovalPreconditions(submitter: String, sequenceVersions: List<SequenceVersion>) {
+    private fun validatePreconditions(submitter: String, sequenceVersions: List<SequenceVersion>, status: Status) {
         val sequences = SequencesTable
             .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter, SequencesTable.status)
             .select(
@@ -274,7 +281,7 @@ class DatabaseService(
             )
 
         validateSequenceVersionsExist(sequences, sequenceVersions)
-        validateSequencesAreInState(sequences, Status.PROCESSED)
+        validateSequencesAreInState(sequences, status)
         validateUserIsAllowedToEditSequences(sequences, submitter)
     }
 
@@ -333,7 +340,7 @@ class DatabaseService(
             )
             .select(
                 where = {
-                    (SequencesTable.status eq Status.PROCESSED.name) and
+                    (SequencesTable.status eq PROCESSED.name) and
                         (SequencesTable.version eq maxVersionQuery)
                 },
             ).limit(numberOfSequences).map { row ->
@@ -365,7 +372,7 @@ class DatabaseService(
             )
             .select(
                 where = {
-                    (SequencesTable.status eq Status.NEEDS_REVIEW.name) and
+                    (SequencesTable.status eq NEEDS_REVIEW.name) and
                         (SequencesTable.version eq maxVersionQuery) and
                         (SequencesTable.submitter eq submitter)
                 },
@@ -399,7 +406,7 @@ class DatabaseService(
         val sequencesStatusSiloReady = subTableSequenceStatus
             .select(
                 where = {
-                    (SequencesTable.status eq Status.SILO_READY.name) and
+                    (SequencesTable.status eq SILO_READY.name) and
                         (SequencesTable.submitter eq username) and
                         (SequencesTable.version eq maxVersionWithSiloReadyQuery)
                 },
@@ -407,7 +414,7 @@ class DatabaseService(
                 SequenceVersionStatus(
                     row[SequencesTable.sequenceId],
                     row[SequencesTable.version],
-                    Status.SILO_READY,
+                    SILO_READY,
                     row[SequencesTable.isRevocation],
                 )
             }
@@ -415,7 +422,7 @@ class DatabaseService(
         val maxVersionQuery = maxVersionQuery()
         val sequencesStatusNotSiloReady = subTableSequenceStatus.select(
             where = {
-                (SequencesTable.status neq Status.SILO_READY.name) and
+                (SequencesTable.status neq SILO_READY.name) and
                     (SequencesTable.submitter eq username) and
                     (SequencesTable.version eq maxVersionQuery)
             },
@@ -438,7 +445,7 @@ class DatabaseService(
                 .slice(subQueryTable[SequencesTable.version].max())
                 .select {
                     (subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId) and
-                        (subQueryTable[SequencesTable.status] eq Status.SILO_READY.name)
+                        (subQueryTable[SequencesTable.status] eq SILO_READY.name)
                 },
         )
     }
@@ -465,14 +472,14 @@ class DatabaseService(
                     SequencesTable.customId,
                     SequencesTable.submitter,
                     dateTimeParam(now),
-                    stringParam(Status.RECEIVED.name),
+                    stringParam(RECEIVED.name),
                     booleanParam(false),
                     QueryParameter(it.originalData, SequencesTable.originalData.columnType),
                 ).select(
                     where = {
                         (SequencesTable.sequenceId eq it.sequenceId) and
                             (SequencesTable.version eq maxVersionQuery) and
-                            (SequencesTable.status eq Status.SILO_READY.name) and
+                            (SequencesTable.status eq SILO_READY.name) and
                             (SequencesTable.submitter eq submitter)
                     },
                 ),
@@ -507,13 +514,13 @@ class DatabaseService(
                 SequencesTable.customId,
                 SequencesTable.submitter,
                 dateTimeParam(now),
-                stringParam(Status.REVOKED_STAGING.name),
+                stringParam(REVOKED_STAGING.name),
                 booleanParam(true),
             ).select(
                 where = {
                     (SequencesTable.sequenceId inList sequenceIds) and
                         (SequencesTable.version eq maxVersionQuery) and
-                        (SequencesTable.status eq Status.SILO_READY.name)
+                        (SequencesTable.status eq SILO_READY.name)
                 },
             ),
             columns = listOf(
@@ -538,13 +545,13 @@ class DatabaseService(
                 where = {
                     (SequencesTable.sequenceId inList sequenceIds) and
                         (SequencesTable.version eq maxVersionQuery) and
-                        (SequencesTable.status eq Status.REVOKED_STAGING.name)
+                        (SequencesTable.status eq REVOKED_STAGING.name)
                 },
             ).map {
                 SequenceVersionStatus(
                     it[SequencesTable.sequenceId],
                     it[SequencesTable.version],
-                    Status.REVOKED_STAGING,
+                    REVOKED_STAGING,
                     it[SequencesTable.isRevocation],
                 )
             }
@@ -560,7 +567,7 @@ class DatabaseService(
             )
 
         validateSequenceIdExist(sequences, sequenceIds)
-        validateSequencesAreInState(sequences, Status.SILO_READY)
+        validateSequencesAreInState(sequences, SILO_READY)
         validateUserIsAllowedToEditSequences(sequences, submitter)
     }
 
@@ -579,17 +586,18 @@ class DatabaseService(
         throw UnprocessableEntityException("SequenceIds $sequenceVersionsNotFound do not exist")
     }
 
-    fun confirmRevocation(sequenceIds: List<Long>): Int {
-        val maxVersionQuery = maxVersionQuery()
+    fun confirmRevocation(sequenceVersions: List<SequenceVersion>, username: String): Int {
+        log.info { "Confirming revocation for ${sequenceVersions.size} sequences" }
+
+        validatePreconditions(username, sequenceVersions, REVOKED_STAGING)
 
         return SequencesTable.update(
             where = {
-                (SequencesTable.sequenceId inList sequenceIds) and
-                    (SequencesTable.version eq maxVersionQuery) and
-                    (SequencesTable.status eq Status.REVOKED_STAGING.name)
+                (Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions.toPairs()) and
+                    (SequencesTable.status eq REVOKED_STAGING.name)
             },
         ) {
-            it[status] = Status.SILO_READY.name
+            it[status] = SILO_READY.name
         }
     }
 
@@ -602,12 +610,12 @@ class DatabaseService(
                     (SequencesTable.version eq reviewedSequenceVersion.version) and
                     (SequencesTable.submitter eq submitter) and
                     (
-                        (SequencesTable.status eq Status.PROCESSED.name) or
-                            (SequencesTable.status eq Status.NEEDS_REVIEW.name)
+                        (SequencesTable.status eq PROCESSED.name) or
+                            (SequencesTable.status eq NEEDS_REVIEW.name)
                         )
             },
         ) {
-            it[status] = Status.REVIEWED.name
+            it[status] = REVIEWED.name
             it[originalData] = reviewedSequenceVersion.data
             it[errors] = null
             it[warnings] = null
@@ -643,13 +651,13 @@ class DatabaseService(
         }
 
         val hasCorrectStatus = selectedSequences.all {
-            (it[SequencesTable.status] == Status.PROCESSED.name) ||
-                (it[SequencesTable.status] == Status.NEEDS_REVIEW.name)
+            (it[SequencesTable.status] == PROCESSED.name) ||
+                (it[SequencesTable.status] == NEEDS_REVIEW.name)
         }
         if (!hasCorrectStatus) {
             throw UnprocessableEntityException(
                 "Sequence $sequenceVersionString is in status ${selectedSequences.first()[SequencesTable.status]} " +
-                    "not in ${Status.PROCESSED} or ${Status.NEEDS_REVIEW}",
+                    "not in $PROCESSED or $NEEDS_REVIEW",
             )
         }
 
@@ -677,8 +685,8 @@ class DatabaseService(
             .select(
                 where = {
                     (
-                        (SequencesTable.status eq Status.NEEDS_REVIEW.name)
-                            or (SequencesTable.status eq Status.PROCESSED.name)
+                        (SequencesTable.status eq NEEDS_REVIEW.name)
+                            or (SequencesTable.status eq PROCESSED.name)
                         ) and
                         (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
                         (SequencesTable.version eq sequenceVersion.version) and
@@ -724,13 +732,13 @@ class DatabaseService(
         val selectedSequence = selectedSequences.first()
 
         val hasCorrectStatus =
-            (selectedSequence[SequencesTable.status] == Status.PROCESSED.name) ||
-                (selectedSequence[SequencesTable.status] == Status.NEEDS_REVIEW.name)
+            (selectedSequence[SequencesTable.status] == PROCESSED.name) ||
+                (selectedSequence[SequencesTable.status] == NEEDS_REVIEW.name)
 
         if (!hasCorrectStatus) {
             throw UnprocessableEntityException(
                 "Sequence version ${sequenceVersion.displaySequenceVersion()} is in not in state " +
-                    "${Status.NEEDS_REVIEW.name} or ${Status.PROCESSED.name} " +
+                    "${NEEDS_REVIEW.name} or ${PROCESSED.name} " +
                     "(was ${selectedSequence[SequencesTable.status]})",
             )
         }

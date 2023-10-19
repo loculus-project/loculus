@@ -61,6 +61,11 @@ class SubmissionConvenienceClient(
         )
     }
 
+    fun prepareDefaultSequencesToRevokedStaging() {
+        prepareDefaultSequencesToSiloReady()
+        revokeSequences(DefaultFiles.allSequenceIds)
+    }
+
     fun extractUnprocessedData(numberOfSequences: Int = DefaultFiles.NUMBER_OF_SEQUENCES) =
         client.extractUnprocessedData(numberOfSequences)
             .expectNdjsonAndGetContent<UnprocessedData>()
@@ -107,9 +112,9 @@ class SubmissionConvenienceClient(
     fun revokeSequences(listOfSequencesToRevoke: List<Number>): List<SequenceVersionStatus> =
         deserializeJsonResponse(client.revokeSequences(listOfSequencesToRevoke))
 
-    fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions =
+    fun confirmRevocation(listOfSequencesToConfirm: List<SequenceVersion>): ResultActions =
         client.confirmRevocation(listOfSequencesToConfirm)
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =

@@ -110,6 +110,13 @@ If any of the given sequences do not exist, or do not have the latest version in
 or the given user has no right to the sequence, this will return an error and roll back the whole transaction.
 """
 
+private const val CONFIRM_REVOCATION_DESCRIPTION = """
+Confirm revocation of existing sequences. This will set the status 'REVOKED_STAGING' of the revocation version to 
+'SILO_READY'. If any of the given sequence versions do not exist, or do not have the latest version in status 
+'REVOKED_STAGING', or the given user has no right to the sequence, this will return an error and roll back the whole 
+transaction.
+"""
+
 @RestController
 @Validated
 class SubmissionController(
@@ -268,14 +275,13 @@ class SubmissionController(
         @RequestParam username: String,
     ): List<SequenceVersionStatus> = databaseService.revoke(body.sequenceIds, username)
 
-    @Operation(description = "Confirm revocation of sequence")
-    @PostMapping(
-        "/confirm-revocation",
-        consumes = [MediaType.APPLICATION_JSON_VALUE],
-    )
+    @Operation(description = CONFIRM_REVOCATION_DESCRIPTION)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PostMapping("/confirm-revocation")
     fun confirmRevocation(
-        @RequestBody body: SequenceIdList,
-    ) = databaseService.confirmRevocation(body.sequenceIds)
+        @RequestParam username: String,
+        @RequestBody body: SequenceVersions,
+    ) = databaseService.confirmRevocation(body.sequenceVersions, username)
 
     @Operation(description = "Delete sequence data from user")
     @DeleteMapping(
