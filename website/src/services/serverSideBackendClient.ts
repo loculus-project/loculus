@@ -21,4 +21,9 @@ export default class ServerSideBackendClient extends BackendClient {
         this.logger.error(message);
         return Promise.resolve();
     }
+
+    protected logInfo(message: string): Promise<void> {
+        this.logger.info(message);
+        return Promise.resolve();
+    }
 }

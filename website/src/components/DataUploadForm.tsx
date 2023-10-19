@@ -1,7 +1,8 @@
 import { CircularProgress, TextField } from '@mui/material';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
-import type { ClientConfig, HeaderId } from '../types.ts';
+
 import { ClientSideBackendClient } from '../services/clientSideBackendClient.ts';
+import type { ClientConfig, HeaderId } from '../types.ts';
 
 type DataUploadFormProps = {
     clientConfig: ClientConfig;
@@ -53,7 +54,7 @@ export const DataUploadForm = ({ clientConfig, action, onSuccess, onError }: Dat
 
         result.match(
             (value) => onSuccess(value),
-            (error) => onError(error.message),
+            (error) => onError(error.detail),
         );
         setIsLoading(false);
     };

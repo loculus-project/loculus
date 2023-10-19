@@ -5,13 +5,7 @@ import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
 import { getClientLogger } from '../../api.ts';
 import { ClientSideBackendClient } from '../../services/clientSideBackendClient.ts';
-import type {
-    ClientConfig,
-    MetadataRecord,
-    ProcessingAnnotationSourceType,
-    SequenceReview,
-    UnprocessedData,
-} from '../../types.ts';
+import type { ClientConfig, MetadataRecord, ProcessingAnnotationSourceType, SequenceReview } from '../../types.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
@@ -40,7 +34,7 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
 
     const submitReviewForSequenceVersion = async () => {
         const backendClient = ClientSideBackendClient.create(clientConfig);
-        let data = {
+        const data = {
             sequenceId: reviewData.sequenceId,
             version: reviewData.version,
             data: {

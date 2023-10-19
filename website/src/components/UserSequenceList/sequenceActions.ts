@@ -3,7 +3,6 @@ import { err, ok, type Result } from 'neverthrow';
 import { ClientSideBackendClient } from '../../services/clientSideBackendClient.ts';
 import { type ClientConfig, type SequenceStatus, type SequenceVersion } from '../../types.ts';
 import { extractSequenceVersion, getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
-import type { AxiosError } from 'axios';
 
 export type BulkSequenceAction = {
     name: string;
@@ -23,9 +22,7 @@ const deleteAction: BulkSequenceAction = {
         ClientSideBackendClient.create(clientConfig)
             .call(
                 'deleteSequences',
-                {
-                    sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId),
-                },
+                selectedSequences.map((sequence) => sequence.sequenceId),
                 { queries: { username } },
             )
             .then((result) => result.mapErr((error) => JSON.stringify(error))),
@@ -52,7 +49,7 @@ const approveAction: BulkSequenceAction = {
             .then((result) =>
                 result.match(
                     () => ok(undefined as never) as Result<never, string>,
-                    (error: AxiosError) => err(JSON.stringify(error)),
+                    (error) => err(JSON.stringify(error)),
                 ),
             );
     },
@@ -79,7 +76,7 @@ const confirmRevocationAction: BulkSequenceAction = {
             .then((result) =>
                 result.match(
                     () => ok(undefined as never) as Result<never, string>,
-                    (error: AxiosError) => err(JSON.stringify(error)),
+                    (error) => err(JSON.stringify(error)),
                 ),
             ),
 };
@@ -98,7 +95,7 @@ const revokeAction: BulkSequenceAction = {
             .then((result) =>
                 result.match(
                     () => ok(undefined as never) as Result<never, string>,
-                    (error: AxiosError) => err(JSON.stringify(error)),
+                    (error) => err(JSON.stringify(error)),
                 ),
             );
     },
