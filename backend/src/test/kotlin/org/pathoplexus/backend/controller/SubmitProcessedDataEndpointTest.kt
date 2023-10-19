@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
+import org.pathoplexus.backend.service.Insertion
 import org.pathoplexus.backend.service.Status
 import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,7 +21,6 @@ class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
-
     @Test
     fun `WHEN I submit successfully preprocessed data THEN the sequence is in status processed`() {
         prepareExtractedSequencesInDatabase()
@@ -32,6 +32,33 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isOk)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
+    }
+
+    @Test
+    fun `WHEN I submit preprocessed data without insertions THEN the missing keys of the reference will be added`() {
+        prepareExtractedSequencesInDatabase()
+
+        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed().data.withValues(
+            nucleotideInsertions = mapOf("main" to listOf(Insertion(1, "A"))),
+            aminoAcidInsertions = emptyMap(),
+        )
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(sequenceId = 3).withValues(data = dataWithoutInsertions),
+        ).andExpect(status().isOk)
+
+        convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
+
+        submissionControllerClient.getSequenceThatNeedsReview(sequenceId = 3, version = 1, userName = USER_NAME)
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath("\$.processedData.nucleotideInsertions")
+                    .value(mapOf("main" to listOf(Insertion(1, "A").toString()), "secondSegment" to emptyList())),
+            )
+            .andExpect(
+                jsonPath("\$.processedData.aminoAcidInsertions")
+                    .value(mapOf("someShortGene" to emptyList<String>(), "someLongGene" to emptyList())),
+            )
     }
 
     @Test
@@ -55,6 +82,21 @@ class SubmitProcessedDataEndpointTest(
 
         submissionControllerClient.submitProcessedData(PreparedProcessedData.withErrors(firstSequence))
             .andExpect(status().isOk)
+
+        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+            .assertStatusIs(Status.NEEDS_REVIEW)
+    }
+
+    @Test
+    fun `GIVEN I submitted invalid data and errors THEN the sequence is in status needs review`() {
+        convenienceClient.submitDefaultFiles()
+        convenienceClient.extractUnprocessedData(1)
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withWrongDateFormat().withValues(
+                sequenceId = firstSequence,
+                errors = PreparedProcessedData.withErrors().errors,
+            ),
+        ).andExpect(status().isOk)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.NEEDS_REVIEW)
@@ -180,26 +222,6 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.detail").value(containsString("Failed to deserialize NDJSON")))
             .andExpect(jsonPath("\$.detail").value(containsString("failed for JSON property metadata")))
-    }
-
-    @Test
-    fun `GIVEN I submitted invalid data and errors THEN throws an error`() {
-        convenienceClient.submitDefaultFiles()
-        convenienceClient.extractUnprocessedData(1)
-        submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.withWrongDateFormat().withValues(
-                sequenceId = firstSequence,
-                errors = PreparedProcessedData.withErrors().errors,
-            ),
-        ).andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(
-                jsonPath("\$.detail")
-                    .value(
-                        "Expected type 'date' in format 'yyyy-MM-dd' for field 'date', found value " +
-                            "'\"1.2.2021\"'.",
-                    ),
-            )
     }
 
     private fun prepareExtractedSequencesInDatabase() {
