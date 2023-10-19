@@ -4,6 +4,7 @@ kind: ApplicationSet
 metadata:
   name: pp-preview
 spec:
+  goTemplate: true
   generators:
     - pullRequest:
         github:
@@ -17,7 +18,7 @@ spec:
         requeueAfterSeconds: 60
   template:
     metadata:
-      name: "pp-{{branch | truncate 25}}-{{number}}"
+      name: "pp-{{.branch | truncate 25}}-{{.number}}"
     spec:
       destination:
         server: "https://kubernetes.default.svc"
@@ -26,17 +27,17 @@ spec:
       source:
         path: .argocd/preview/
         repoURL: "https://github.com/pathoplexus/pathoplexus.git"
-        targetRevision: "{{branch}}"
+        targetRevision: "{{.branch}}"
         helm:
           parameters:
             - name: namespace
-              value: "preview-{{branch}}"
+              value: "preview-{{.branch}}"
             - name: version
-              value: "{{branch}}"
+              value: "{{.branch}}"
             - name: githubToken
               value: ""
             - name: host
-              value: "{{branch}}.preview.pathoplexus.org"
+              value: "{{.branch}}.preview.pathoplexus.org"
 
       syncPolicy:
         automated:
