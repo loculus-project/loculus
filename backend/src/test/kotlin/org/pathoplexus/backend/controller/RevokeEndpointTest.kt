@@ -2,6 +2,7 @@ package org.pathoplexus.backend.controller
 
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.service.Status
 import org.pathoplexus.backend.service.Status.REVOKED_STAGING
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -35,7 +36,7 @@ class RevokeEndpointTest(
     fun `WHEN revoking non-existing sequenceIds THEN throws an unprocessableEntity error`() {
         convenienceClient.prepareDefaultSequencesToSiloReady()
 
-        val nonExistingSequenceId = 123
+        val nonExistingSequenceId = 123L
         client.revokeSequences(listOf(nonExistingSequenceId))
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -71,8 +72,8 @@ class RevokeEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence versions are in not in state SILO_READY: " +
-                        "1.1 - NEEDS_REVIEW, 2.1 - NEEDS_REVIEW",
+                    "Sequence versions are in not in state [${Status.SILO_READY}]: " +
+                        "1.1 - ${Status.NEEDS_REVIEW}, 2.1 - ${Status.NEEDS_REVIEW}",
                 ),
             )
     }

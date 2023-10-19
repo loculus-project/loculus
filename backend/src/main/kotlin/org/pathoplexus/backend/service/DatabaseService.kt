@@ -18,7 +18,6 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.QueryParameter
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.alias
@@ -259,7 +258,7 @@ class DatabaseService(
     fun approveProcessedData(submitter: String, sequenceVersions: List<SequenceVersion>) {
         log.info { "approving ${sequenceVersions.size} sequences by $submitter" }
 
-        queryPreconditionValidator.validate(submitter, sequenceVersions, PROCESSED)
+        queryPreconditionValidator.validate(submitter, sequenceVersions, listOf(PROCESSED))
 
         SequencesTable.update(
             where = {
@@ -395,14 +394,6 @@ class DatabaseService(
         )
     }
 
-    fun deleteUserSequences(username: String) {
-        SequencesTable.deleteWhere { submitter eq username }
-    }
-
-    fun deleteSequences(sequenceIds: List<Long>) {
-        SequencesTable.deleteWhere { sequenceId inList sequenceIds }
-    }
-
     fun reviseData(submitter: String, dataSequence: Sequence<FileData>): List<HeaderId> {
         log.info { "revising sequences" }
 
@@ -440,7 +431,7 @@ class DatabaseService(
                 ),
             )
 
-            HeaderId(it.sequenceId, it.sequenceId.toInt(), it.customId)
+            HeaderId(it.sequenceId, it.sequenceId, it.customId)
         }.toList()
     }
 
@@ -505,7 +496,7 @@ class DatabaseService(
     fun confirmRevocation(sequenceVersions: List<SequenceVersion>, username: String): Int {
         log.info { "Confirming revocation for ${sequenceVersions.size} sequences" }
 
-        queryPreconditionValidator.validate(username, sequenceVersions, REVOKED_STAGING)
+        queryPreconditionValidator.validate(username, sequenceVersions, listOf(REVOKED_STAGING))
 
         return SequencesTable.update(
             where = {
@@ -514,6 +505,20 @@ class DatabaseService(
             },
         ) {
             it[status] = SILO_READY.name
+        }
+    }
+
+    fun deleteSequences(sequenceVersions: List<SequenceVersion>, submitter: String) {
+        log.info { "Deleting sequence versions: $sequenceVersions" }
+
+        queryPreconditionValidator.validate(
+            submitter,
+            sequenceVersions,
+            listOf(RECEIVED, PROCESSED, NEEDS_REVIEW, REVIEWED, REVOKED_STAGING),
+        )
+
+        SequencesTable.deleteWhere {
+            (Pair(sequenceId, version) inList sequenceVersions.toPairs())
         }
     }
 
