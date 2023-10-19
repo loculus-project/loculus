@@ -37,7 +37,7 @@ const reviewData = await ServerSideBackendClient.create().astroFileTypeHelpers.g
                             Error while fetching review data for sequence version: {sequenceId}.{version}
                         </h1>
                     </div>
-                    <div>{error}</div>
+                    <div>{JSON.stringify(error)}</div>
                 </>
             ),
         )

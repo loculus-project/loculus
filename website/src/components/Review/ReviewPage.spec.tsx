@@ -67,7 +67,7 @@ const defaultReviewData: SequenceReview = {
     },
 };
 
-const dummyConfig = {} as ClientConfig;
+const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 
 function renderReviewPage(reviewData: SequenceReview = defaultReviewData, clientConfig: ClientConfig = dummyConfig) {
     render(

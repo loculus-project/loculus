@@ -1,3 +1,5 @@
+import { ZodiosHooks } from '@zodios/react';
+
 import { BackendClient } from './backendClient.ts';
 import { type ClientLogger, getClientLogger } from '../api.ts';
 import { type ClientConfig } from '../types.ts';
@@ -12,6 +14,10 @@ export class ClientSideBackendClient extends BackendClient {
 
     public static create(clientConfig: ClientConfig) {
         return new ClientSideBackendClient(getClientLogger('clientSideBackendClient'), clientConfig.backendUrl);
+    }
+
+    public getHooks() {
+        return new ZodiosHooks('pathoplexus', this.zodios);
     }
 
     protected async logError(message: string): Promise<void> {
