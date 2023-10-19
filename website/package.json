@@ -22,6 +22,7 @@
     "@emotion/react": "^11.11.1",
     "@mui/icons-material": "^5.14.12",
     "@tanstack/react-query": "^4.36.1",
+    "@zodios/core": "^10.9.6",
     "astro": "^3.3.0",
     "axios": "^1.5.1",
     "change-case": "^5.0.2",

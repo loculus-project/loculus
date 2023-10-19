@@ -88,11 +88,15 @@ const processingAnnotation = z.object({
 });
 export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 
-export const metadataField = z.union([z.string(), z.number(), z.date(), z.string()]);
+export const metadataField = z.union([z.string(), z.number(), z.date()]);
 export type MetadataField = z.infer<typeof metadataField>;
 
 const metadataRecord = z.record(metadataField);
 export type MetadataRecord = z.infer<typeof metadataRecord>;
+
+export const sequenceIds = z.object({
+    sequenceIds: z.array(z.number()),
+});
 
 export const sequenceVersion = z.object({
     sequenceId: z.number(),
@@ -112,12 +116,15 @@ export type HeaderId = SequenceVersion & {
     customId: string;
 };
 
-export type UnprocessedData = SequenceVersion & {
-    data: {
-        metadata: { [key in string]: string | number | PangoLineage | Date };
-        unalignedNucleotideSequences: { [key in string]: string };
-    };
-};
+export const unprocessedData = sequenceVersion.merge(
+    z.object({
+        data: z.object({
+            metadata: metadataRecord,
+            unalignedNucleotideSequences: z.record(z.string()),
+        }),
+    }),
+);
+export type UnprocessedData = z.infer<typeof unprocessedData>;
 
 export type Sequence = SequenceVersion & {
     data: any;
