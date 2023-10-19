@@ -1,8 +1,9 @@
-import { ok, type Result } from 'neverthrow';
+import { err, ok, type Result } from 'neverthrow';
 
 import { ClientSideBackendClient } from '../../services/clientSideBackendClient.ts';
 import { type ClientConfig, type SequenceStatus, type SequenceVersion } from '../../types.ts';
-import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
+import { extractSequenceVersion, getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
+import type { AxiosError } from 'axios';
 
 export type BulkSequenceAction = {
     name: string;
@@ -19,7 +20,15 @@ export type BulkSequenceAction = {
 const deleteAction: BulkSequenceAction = {
     name: 'delete',
     actionOnSequences: async (selectedSequences, clientConfig, username) =>
-        ClientSideBackendClient.create(clientConfig).deleteSequences(username, selectedSequences),
+        ClientSideBackendClient.create(clientConfig)
+            .call(
+                'deleteSequences',
+                {
+                    sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId),
+                },
+                { queries: { username } },
+            )
+            .then((result) => result.mapErr((error) => JSON.stringify(error))),
     confirmationDialog: {
         message: (selectedSequences) =>
             `Are you sure you want to delete the selected sequence ${pluralizeWord(
@@ -31,12 +40,21 @@ const deleteAction: BulkSequenceAction = {
 
 const approveAction: BulkSequenceAction = {
     name: 'approve',
-    actionOnSequences: async (
-        selectedSequences: SequenceStatus[],
-        clientConfig: ClientConfig,
-        username: string,
-    ): Promise<Result<never, string>> => {
-        return ClientSideBackendClient.create(clientConfig).approveProcessedData(username, selectedSequences);
+    actionOnSequences: async (selectedSequences, clientConfig, username) => {
+        return ClientSideBackendClient.create(clientConfig)
+            .call(
+                'approveProcessedData',
+                { sequenceVersions: selectedSequences.map(extractSequenceVersion) },
+                {
+                    queries: { username },
+                },
+            )
+            .then((result) =>
+                result.match(
+                    () => ok(undefined as never) as Result<never, string>,
+                    (error: AxiosError) => err(JSON.stringify(error)),
+                ),
+            );
     },
     confirmationDialog: {
         message: (selectedSequences) =>
@@ -50,13 +68,39 @@ const approveAction: BulkSequenceAction = {
 const confirmRevocationAction: BulkSequenceAction = {
     name: 'confirmRevocation',
     actionOnSequences: async (selectedSequences, clientConfig, username) =>
-        ClientSideBackendClient.create(clientConfig).confirmRevocation(username, selectedSequences),
+        ClientSideBackendClient.create(clientConfig)
+            .call(
+                'confirmRevocation',
+                {
+                    sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId),
+                },
+                { queries: { username } },
+            )
+            .then((result) =>
+                result.match(
+                    () => ok(undefined as never) as Result<never, string>,
+                    (error: AxiosError) => err(JSON.stringify(error)),
+                ),
+            ),
 };
 
 const revokeAction: BulkSequenceAction = {
     name: 'revoke',
     actionOnSequences: async (selectedSequences, clientConfig, username) => {
-        return ClientSideBackendClient.create(clientConfig).revokeSequences(username, selectedSequences);
+        return ClientSideBackendClient.create(clientConfig)
+            .call(
+                'revokeSequences',
+                { sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId) },
+                {
+                    queries: { username },
+                },
+            )
+            .then((result) =>
+                result.match(
+                    () => ok(undefined as never) as Result<never, string>,
+                    (error: AxiosError) => err(JSON.stringify(error)),
+                ),
+            );
     },
     confirmationDialog: {
         message: (selectedSequences) =>

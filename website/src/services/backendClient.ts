@@ -1,125 +1,56 @@
-import { err, ok, type Result } from 'neverthrow';
-import z from 'zod';
+import { err, ok } from 'neverthrow';
+import { Zodios, type ZodiosEndpointDefinitions, type ZodiosInstance } from '@zodios/core';
+import type { AxiosError } from 'axios';
+import type { ZodiosAliases } from '@zodios/core/lib/zodios.types';
+import { backendApi } from './backendApi.ts';
 
-import { sequenceReview, sequenceStatus, type SequenceVersion, type UnprocessedData } from '../types.ts';
-import { extractSequenceVersion } from '../utils/extractSequenceVersion.ts';
+type ZodiosMethods<Api extends ZodiosEndpointDefinitions> = keyof ZodiosAliases<Api>;
+
+type ZodiosMethod<Api extends ZodiosEndpointDefinitions, Method extends ZodiosMethods<Api>> = {
+    args: Parameters<ZodiosAliases<Api>[Method]>;
+    response: ReturnType<ZodiosAliases<Api>[Method]>;
+};
 
 export abstract class BackendClient {
-    protected constructor(protected readonly backendUrl: string) {}
+    public readonly zodios: ZodiosInstance<typeof backendApi>;
 
-    public async submitReviewedSequence(username: string, data: UnprocessedData) {
-        return this.call(`/submit-reviewed-sequence?username=${username}`, undefined, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data),
-        });
+    protected constructor(backendUrl: string) {
+        this.zodios = new Zodios(backendUrl, backendApi);
     }
 
-    public async getDataToReview(userName: string, sequenceId: number | string, version: number | string) {
-        return this.call(`/get-data-to-review/${sequenceId}/${version}?username=${userName}`, sequenceReview, {
-            method: 'GET',
-            headers: {
-                accept: 'application/json',
+    public call<Method extends ZodiosMethods<typeof backendApi>>(
+        method: Method,
+        ...args: ZodiosMethod<typeof backendApi, Method>['args']
+    ) {
+        let zodiosResponse = this.zodios[method](...(args as [any, any])) as ZodiosMethod<
+            typeof backendApi,
+            Method
+        >['response'];
+
+        return zodiosResponse.then(
+            (response) => {
+                return ok(response);
             },
-        });
+            async (error: AxiosError) => {
+                await this.logError(JSON.stringify(error));
+                return err(error);
+            },
+        );
     }
 
-    public async approveProcessedData(username: string, selectedSequences: SequenceVersion[]) {
-        return this.call(`/approve-processed-data?username=${username}`, undefined, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sequenceVersions: selectedSequences.map(extractSequenceVersion),
+    /** Somehow Typescript's type inference currently doesn't work properly in Astro files */
+    public astroFileTypeHelpers = {
+        getSequencesOfUser: (username: string) =>
+            this.call('getSequencesOfUser', {
+                queries: { username },
             }),
-        });
-    }
 
-    public async deleteSequences(userName: string, sequenceVersions: SequenceVersion[]) {
-        return this.call(`/delete-sequences?username=${userName}`, undefined, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sequenceIds: sequenceVersions.map((sequence) => sequence.sequenceId),
+        getDataToReview: (username: string, sequenceId: string | number, version: string | number) =>
+            this.call('getDataToReview', {
+                params: { sequenceId, version },
+                queries: { username },
             }),
-        });
-    }
-
-    public async revokeSequences(userName: string, sequenceVersions: SequenceVersion[]) {
-        return this.call(`/revoke-sequences?username=${userName}`, undefined, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sequenceIds: sequenceVersions.map((sequence) => sequence.sequenceId),
-            }),
-        });
-    }
-
-    public async confirmRevocation(userName: string, sequenceVersions: SequenceVersion[]) {
-        return this.call(`/confirm-revocation?username=${userName}`, undefined, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sequenceIds: sequenceVersions.map((sequence) => sequence.sequenceId),
-            }),
-        });
-    }
-
-    public async getSequencesOfUser(userName: string) {
-        return this.call(`/get-sequences-of-user?username=${userName}`, z.array(sequenceStatus), {
-            method: 'GET',
-            headers: {
-                accept: 'application/json',
-            },
-        });
-    }
-
-    private async call<T extends z.Schema | undefined>(
-        endpoint: `/${string}`,
-        zodSchema: T,
-        options?: RequestInit,
-    ): Promise<Result<T extends z.Schema<infer S> ? S : never, string>> {
-        try {
-            const response = await fetch(`${this.backendUrl}${endpoint}`, options);
-
-            if (!response.ok) {
-                await this.logError(`Failed to fetch with status ${response.status}`);
-                return err(`Failed to fetch. Reason: ${JSON.stringify((await response.json()).detail)}`);
-            }
-
-            if (zodSchema === undefined) {
-                return ok(undefined as never);
-            }
-
-            try {
-                const parser = (candidate: unknown): Result<z.infer<typeof zodSchema>, string> => {
-                    try {
-                        return ok(zodSchema.parse(candidate));
-                    } catch (error) {
-                        return err((error as Error).message);
-                    }
-                };
-
-                const responseJson = await response.json();
-                return parser(responseJson);
-            } catch (error) {
-                await this.logError(`Parsing the response failed with error '${JSON.stringify(error)}'`);
-                return err(`Parsing the response failed with error '${JSON.stringify(error)}'`);
-            }
-        } catch (error) {
-            await this.logError(`Failed to fetch with error '${JSON.stringify(error)}'`);
-            return err(`Failed to fetch with error '${JSON.stringify(error)}'`);
-        }
-    }
+    };
 
     protected abstract logError(message: string): Promise<void>;
 }

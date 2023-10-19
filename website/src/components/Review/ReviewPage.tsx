@@ -40,7 +40,7 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
 
     const submitReviewForSequenceVersion = async () => {
         const backendClient = ClientSideBackendClient.create(clientConfig);
-        const result = await backendClient.submitReviewedSequence(username, {
+        let data = {
             sequenceId: reviewData.sequenceId,
             version: reviewData.version,
             data: {
@@ -50,7 +50,8 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
                     {},
                 ),
             },
-        });
+        };
+        const result = await backendClient.call('submitReviewedSequence', data, { queries: { username } });
 
         await result.match(
             async () => {

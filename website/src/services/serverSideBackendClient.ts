@@ -3,10 +3,18 @@ import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 
 export default class ServerSideBackendClient extends BackendClient {
-    private readonly logger = getInstanceLogger('serverSideBackendClient');
+    private constructor(
+        private readonly logger: ReturnType<typeof getInstanceLogger>,
+        backendUrl: string,
+    ) {
+        super(backendUrl);
+    }
 
-    constructor() {
-        super(getRuntimeConfig().forServer.backendUrl);
+    public static create() {
+        return new ServerSideBackendClient(
+            getInstanceLogger('serverSideBackendClient'),
+            getRuntimeConfig().forServer.backendUrl,
+        );
     }
 
     protected logError(message: string): Promise<void> {

@@ -8,7 +8,7 @@ import ServerSideBackendClient from '../../../services/serverSideBackendClient';
 // eslint-disable-next-line
 const username = Astro.params.username!;
 
-const userSequencesResponse = await new ServerSideBackendClient().getSequencesOfUser(username);
+const userSequencesResponse = await ServerSideBackendClient.create().astroFileTypeHelpers.getSequencesOfUser(username);
 ---
 
 <BaseLayout title='Sequences'>
