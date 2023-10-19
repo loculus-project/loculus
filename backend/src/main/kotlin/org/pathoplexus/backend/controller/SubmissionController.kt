@@ -104,17 +104,26 @@ This can only be done for sequences in status 'PROCESSED' that the user submitte
 """
 
 private const val REVOKE_DESCRIPTION = """
-Revoke existing sequence. Creates a new revocation version and stages it for confirmation. 
+Revoke existing sequence. 
+Creates a new revocation version and stages it for confirmation. 
 If successfully, this returns the sequenceIds, versions and status of the revocation versions.
 If any of the given sequences do not exist, or do not have the latest version in status 'SILO_READY', 
 or the given user has no right to the sequence, this will return an error and roll back the whole transaction.
 """
 
 private const val CONFIRM_REVOCATION_DESCRIPTION = """
-Confirm revocation of existing sequences. This will set the status 'REVOKED_STAGING' of the revocation version to 
+Confirm revocation of existing sequences. 
+This will set the status 'REVOKED_STAGING' of the revocation version to 
 'SILO_READY'. If any of the given sequence versions do not exist, or do not have the latest version in status 
 'REVOKED_STAGING', or the given user has no right to the sequence, this will return an error and roll back the whole 
 transaction.
+"""
+
+private const val DELETE_SEQUENCES_DESCRIPTION = """
+Delete existing sequence versions. 
+If any of the given sequences do not exist, or the user has no right to delete any of the sequences or a 
+sequence version is in status 'SILO_READY' or 'PROCESSING', i.e. not deletable, this will return an error 
+and roll back the whole transaction.
 """
 
 @RestController
@@ -283,21 +292,15 @@ class SubmissionController(
         @RequestBody body: SequenceVersions,
     ) = databaseService.confirmRevocation(body.sequenceVersions, username)
 
-    @Operation(description = "Delete sequence data from user")
-    @DeleteMapping(
-        "/delete-user-sequences",
-    )
-    fun deleteUserData(
-        @RequestParam username: String,
-    ) = databaseService.deleteUserSequences(username)
-
-    @Operation(description = "Delete sequences")
+    @Operation(description = DELETE_SEQUENCES_DESCRIPTION)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping(
         "/delete-sequences",
     )
     fun deleteSequence(
-        @RequestParam sequenceIds: List<Long>,
-    ) = databaseService.deleteSequences(sequenceIds)
+        @RequestParam username: String,
+        @RequestBody body: SequenceVersions,
+    ) = databaseService.deleteSequences(body.sequenceVersions, username)
 
     data class SequenceIdList(
         val sequenceIds: List<Long>,

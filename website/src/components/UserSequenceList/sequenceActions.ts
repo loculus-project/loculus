@@ -18,11 +18,9 @@ export type BulkSequenceAction = {
 
 const deleteAction: BulkSequenceAction = {
     name: 'delete',
-    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig) =>
+    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig, username: string) =>
         clientFetch({
-            endpoint: `/delete-sequences?sequenceIds=${selectedSequences
-                .map((sequence) => sequence.sequenceId)
-                .join(',')}`,
+            endpoint: `/delete-sequences?username=${username}`,
             zodSchema: undefined,
             options: {
                 method: 'DELETE',
@@ -30,7 +28,7 @@ const deleteAction: BulkSequenceAction = {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    sequenceIds: selectedSequences,
+                    sequenceVersions: selectedSequences.map(extractSequenceVersion),
                 }),
             },
             backendUrl: clientConfig.backendUrl,
