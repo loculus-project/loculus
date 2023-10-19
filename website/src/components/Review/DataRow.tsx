@@ -1,8 +1,6 @@
-import DangerousTwoToneIcon from '@mui/icons-material/DangerousTwoTone';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import NoSsr from '@mui/material/NoSsr';
 import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
+import { AiOutlineWarning } from 'react-icons/ai';
 
 import { InputField, type KeyValuePair, type Row } from './InputField.tsx';
 
@@ -35,16 +33,12 @@ const ErrorAndWarningIcons: FC<ErrorAndWarningIconsProps> = ({ row }) => {
         <>
             {row.errors.length > 0 ? (
                 <div className='tooltip tooltip-error whitespace-pre-line' data-tip={row.errors.join('\n')}>
-                    <NoSsr>
-                        <DangerousTwoToneIcon color='error' />
-                    </NoSsr>
+                    <AiOutlineWarning color='warning' />
                 </div>
             ) : null}
             {row.warnings.length > 0 ? (
                 <div className='tooltip tooltip-warning whitespace-pre-line' data-tip={row.warnings.join('\n')}>
-                    <NoSsr>
-                        <WarningAmberIcon color='warning' />
-                    </NoSsr>
+                    <AiOutlineWarning color='warning' />
                 </div>
             ) : null}
         </>
