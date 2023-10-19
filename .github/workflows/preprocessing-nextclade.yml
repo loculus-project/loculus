@@ -1,4 +1,4 @@
-name: preprocessing/nextclade
+name: preprocessing-nextclade
 
 on:
   push:
