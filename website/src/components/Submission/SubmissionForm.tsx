@@ -17,7 +17,8 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ clientConfig }) => {
         <div className='flex flex-col items-center'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <DataUploadForm
-                targetUrl={`${clientConfig.backendUrl}/submit`}
+                clientConfig={clientConfig}
+                action='submit'
                 onError={openErrorFeedback}
                 onSuccess={setResponseSequenceHeaders}
             />

@@ -1,7 +1,5 @@
 import z from 'zod';
 
-export type PangoLineage = string;
-
 export type BaseType = 'nucleotide' | 'aminoAcid';
 
 export type SequenceType =
@@ -112,9 +110,12 @@ export const sequenceStatus = sequenceVersion.merge(
 );
 export type SequenceStatus = z.infer<typeof sequenceStatus>;
 
-export type HeaderId = SequenceVersion & {
-    customId: string;
-};
+export const headerId = sequenceVersion.merge(
+    z.object({
+        customId: z.string(),
+    }),
+);
+export type HeaderId = z.infer<typeof headerId>;
 
 export const unprocessedData = sequenceVersion.merge(
     z.object({
@@ -152,3 +153,9 @@ export const sequenceReview = sequenceVersion.merge(
     }),
 );
 export type SequenceReview = z.infer<typeof sequenceReview>;
+
+export const submitFiles = z.object({
+    username: z.string(),
+    metadataFile: z.instanceof(File),
+    sequenceFile: z.instanceof(File),
+});

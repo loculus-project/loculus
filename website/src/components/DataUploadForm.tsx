@@ -1,63 +1,38 @@
 import { CircularProgress, TextField } from '@mui/material';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
+import type { ClientConfig, HeaderId } from '../types.ts';
+import { ClientSideBackendClient } from '../services/clientSideBackendClient.ts';
 
-import { getClientLogger } from '../api.ts';
-
-const clientLogger = getClientLogger('DataUploadForm');
-
-type DataUploadFormProps<ResultType> = {
-    targetUrl: string;
-    onSuccess: (value: ResultType[]) => void;
+type DataUploadFormProps = {
+    clientConfig: ClientConfig;
+    action: 'submit' | 'revise';
+    onSuccess: (value: HeaderId[]) => void;
     onError: (message: string) => void;
 };
-export const DataUploadForm = <ResultType,>({ targetUrl, onSuccess, onError }: DataUploadFormProps<ResultType>) => {
+
+export const DataUploadForm = ({ clientConfig, action, onSuccess, onError }: DataUploadFormProps) => {
     const [username, setUsername] = useState('');
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
-    const [sequencesFile, setSequencesFile] = useState<File | null>(null);
+    const [sequenceFile, setSequenceFile] = useState<File | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    const createTempFile = (content: BlobPart, mimeType: any, fileName: string) => {
-        const blob = new Blob([content], { type: mimeType });
-        const file = new File([blob], fileName, { type: mimeType });
-        return file;
-    };
     const handleLoadExampleData = async () => {
-        const exampleMetadataContent =
-            targetUrl.split('/').pop() === `submit`
-                ? `
-header	date	region	country	division	host
-custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`
-                : `
-sequenceId header	date	region	country	division	host
-1 custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-2 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-3 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-4 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`;
-        const exampleSequenceContent = `
->custom0
-ACTG
->custom1
-ACTG
->custom2
-ACTG
->custom3
-ACTG`;
+        const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData();
+
+        const exampleMetadataContent = action === `submit` ? metadataFileContent : revisedMetadataFileContent;
 
         const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
-        const sequenceFile = createTempFile(exampleSequenceContent, 'application/octet-stream', 'sequences.fasta');
+        const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
 
         setUsername('testuser');
         setMetadataFile(metadataFile);
-        setSequencesFile(sequenceFile);
+        setSequenceFile(sequenceFile);
     };
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
-        if (!metadataFile || !sequencesFile) {
+        if (!metadataFile || !sequenceFile) {
             onError('Please select both a metadata and sequences file');
             return;
         }
@@ -65,26 +40,21 @@ ACTG`;
         const formData = new FormData();
         formData.append('username', username);
         formData.append('metadataFile', metadataFile);
-        formData.append('sequenceFile', sequencesFile);
+        formData.append('sequenceFile', sequenceFile);
+
+        const backendClient = ClientSideBackendClient.create(clientConfig);
 
         setIsLoading(true);
-        try {
-            const response = await fetch(targetUrl, {
-                method: 'POST',
-                body: formData,
-            });
+        const result = await backendClient.call(action, {
+            username,
+            metadataFile,
+            sequenceFile,
+        });
 
-            if (response.ok === true) {
-                onSuccess(await response.json());
-            } else {
-                const responseBody = await response.text();
-                onError(`Upload failed with status code ${response.status}: ${responseBody}`);
-                await clientLogger.error(`Upload failed with status code ${response.status}: ${responseBody}`);
-            }
-        } catch (error) {
-            onError('Upload failed with error ' + (error as Error).message);
-            await clientLogger.error(`Revision failed with error '${(error as Error).message}'`);
-        }
+        result.match(
+            (value) => onSuccess(value),
+            (error) => onError(error.message),
+        );
         setIsLoading(false);
     };
 
@@ -126,7 +96,7 @@ ACTG`;
                 placeholder='Sequences File:'
                 size='small'
                 type='file'
-                onChange={(event: ChangeEvent<HTMLInputElement>) => setSequencesFile(event.target.files?.[0] || null)}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => setSequenceFile(event.target.files?.[0] || null)}
                 disabled={false}
                 InputLabelProps={{
                     shrink: true,
@@ -144,3 +114,34 @@ ACTG`;
         </form>
     );
 };
+
+function getExampleData() {
+    return {
+        metadataFileContent: `
+header	date	region	country	division	host
+custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`,
+        revisedMetadataFileContent: `
+sequenceId	header	date	region	country	division	host
+1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
+2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
+3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
+4	custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`,
+        sequenceFileContent: `
+>custom0
+ACTG
+>custom1
+ACTG
+>custom2
+ACTG
+>custom3
+ACTG`,
+    };
+}
+
+function createTempFile(content: BlobPart, mimeType: any, fileName: string) {
+    const blob = new Blob([content], { type: mimeType });
+    return new File([blob], fileName, { type: mimeType });
+}
