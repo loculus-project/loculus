@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
-import type { HeaderId } from '../../types';
+import type { HeaderId, ProblemDetail } from '../../types';
 import { mockRequest, testConfig, testuser } from '../vitest.setup';
 
 vi.mock('../../api', () => ({
@@ -63,9 +63,27 @@ describe('SubmitForm', () => {
         });
     });
 
-    test('should answer with feedback that the backend respond with an internal server error', async () => {
-        mockRequest.submit(500);
+    test('should unexpected error with proper error message', async () => {
+        mockRequest.submit(500, 'a weird, unexpected test error');
 
+        await submitAndExpectErrorMessageContains('Received unexpected message from backend');
+    });
+
+    test('should handle unprocessable entity error with proper error message', async () => {
+        const problemDetail: ProblemDetail = {
+            title: 'Dummy unprocessable entity',
+            detail: 'dummy error message',
+            instance: 'dummy instance',
+            status: 422,
+            type: 'dummy type',
+        };
+        mockRequest.submit(422, problemDetail);
+
+        const expectedErrorMessage = `The submitted file content was invalid: ${problemDetail.detail}`;
+        await submitAndExpectErrorMessageContains(expectedErrorMessage);
+    });
+
+    async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
         const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
 
         await userEvent.type(getByPlaceholderText('Username:'), testuser);
@@ -74,8 +92,9 @@ describe('SubmitForm', () => {
 
         const submitButton = getByText('Submit');
         await userEvent.click(submitButton);
+
         await waitFor(() => {
-            expect(getByText((text) => text.includes('Unknown error from backend'))).toBeInTheDocument();
+            expect(getByText((text) => text.includes(receivedUnexpectedMessageFromBackend))).toBeInTheDocument();
         });
-    });
+    }
 });
