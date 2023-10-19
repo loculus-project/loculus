@@ -109,8 +109,8 @@ spec:
             - name: repo-volume
               mountPath: /workspace/reference_genomes.json
               subPath: website/tests/config/reference_genomes.json
-        - name: nextclade-processing-{{ .Values.version }}
-          image: ghcr.io/pathoplexus/nextclade-processing:{{ .Values.version }}
+        - name: preprocessing-nextclade-{{ .Values.version }}
+          image: ghcr.io/pathoplexus/preprocessing-nextclade:{{ .Values.version }}
           imagePullPolicy: Always
           command: ["/bin/sh", "-c"]
           args: ["while true; do python main.py; sleep 10; done"]
