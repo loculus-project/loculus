@@ -19,6 +19,5 @@ export default defineConfig({
         optimizeDeps: {
             exclude: ['fsevents'],
         },
-    
     },
 });
