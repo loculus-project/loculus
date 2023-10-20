@@ -4,7 +4,7 @@ import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef,
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
 import { getClientLogger } from '../../api.ts';
-import { ClientSideBackendClient } from '../../services/clientSideBackendClient.ts';
+import { backendClientHooks } from '../../services/backendHooks.ts';
 import type { ClientConfig, MetadataRecord, ProcessingAnnotationSourceType, SequenceReview } from '../../types.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -130,26 +130,22 @@ function useSubmitReviewedSequence(
     reviewData: SequenceReview,
     openErrorFeedback: (message: string) => void,
 ) {
-    return ClientSideBackendClient.create(clientConfig)
-        .getHooks()
-        .useSubmitReviewedSequence(
-            { queries: { username } },
-            {
-                onSuccess: async () => {
-                    await logger.info(
-                        'Successfully submitted review ' + reviewData.sequenceId + '.' + reviewData.version,
-                    );
-                    location.href = `/user/${username}/sequences`;
-                },
-                onError: async (error) => {
-                    const message = `Failed to submit review for ${getSequenceVersionString(
-                        reviewData,
-                    )} with error '${JSON.stringify(error)})}'`;
-                    await logger.info(message);
-                    openErrorFeedback(message);
-                },
+    return backendClientHooks(clientConfig).useSubmitReviewedSequence(
+        { queries: { username } },
+        {
+            onSuccess: async () => {
+                await logger.info('Successfully submitted review ' + reviewData.sequenceId + '.' + reviewData.version);
+                location.href = `/user/${username}/sequences`;
             },
-        );
+            onError: async (error) => {
+                const message = `Failed to submit review for ${getSequenceVersionString(
+                    reviewData,
+                )} with error '${JSON.stringify(error)})}'`;
+                await logger.info(message);
+                openErrorFeedback(message);
+            },
+        },
+    );
 }
 
 function generateAndDownloadFastaFile(editedSequences: Row[], reviewData: SequenceReview) {

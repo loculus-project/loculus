@@ -186,7 +186,7 @@ class SubmissionController(
             ],
         ),
     )
-    @ApiResponse(responseCode = "204", description = "On successful submission")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "400", description = "On invalid NDJSON line. Rolls back the whole transaction.")
     @ApiResponse(responseCode = "422", description = SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION)
     @PostMapping("/submit-processed-data", consumes = [MediaType.APPLICATION_NDJSON_VALUE])

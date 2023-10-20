@@ -2,9 +2,14 @@ package org.pathoplexus.backend.service
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.wrapAsExpression
 
 private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
@@ -31,4 +36,13 @@ object SequencesTable : Table("sequences") {
     val warnings = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
 
     override val primaryKey = PrimaryKey(sequenceId, version)
+}
+
+fun maxVersionQuery(): Expression<Long?> {
+    val subQueryTable = SequencesTable.alias("subQueryTable")
+    return wrapAsExpression(
+        subQueryTable
+            .slice(subQueryTable[SequencesTable.version].max())
+            .select { subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId },
+    )
 }

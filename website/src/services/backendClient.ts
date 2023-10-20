@@ -4,6 +4,8 @@ import type { AxiosError } from 'axios';
 import { type Err, err, ok } from 'neverthrow';
 
 import { backendApi } from './backendApi.ts';
+import { getRuntimeConfig } from '../config.ts';
+import { getInstanceLogger } from '../logger.ts';
 import { problemDetail, type ProblemDetail } from '../types.ts';
 
 type ZodiosMethods<Api extends ZodiosEndpointDefinitions> = keyof ZodiosAliases<Api>;
@@ -15,11 +17,32 @@ type ZodiosMethod<Api extends ZodiosEndpointDefinitions, Method extends ZodiosMe
 
 type TypeThatCanBeUsedAsArgs = [any, any];
 
-export abstract class BackendClient {
+export class BackendClient {
     public readonly zodios: ZodiosInstance<typeof backendApi>;
 
-    protected constructor(backendUrl: string) {
+    /** Somehow Typescript's type inference currently doesn't work properly in Astro files */
+    public readonly astroFileTypeHelpers = {
+        getSequencesOfUser: (username: string) =>
+            this.call('getSequencesOfUser', {
+                queries: { username },
+            }),
+
+        getDataToReview: (username: string, sequenceId: string | number, version: string | number) =>
+            this.call('getDataToReview', {
+                params: { sequenceId, version },
+                queries: { username },
+            }),
+    };
+
+    constructor(
+        backendUrl: string,
+        private readonly logger: ReturnType<typeof getInstanceLogger>,
+    ) {
         this.zodios = new Zodios(backendUrl, backendApi);
+    }
+
+    public static create() {
+        return new BackendClient(getRuntimeConfig().forServer.backendUrl, getInstanceLogger('serverSideBackendClient'));
     }
 
     public call<Method extends ZodiosMethods<typeof backendApi>>(
@@ -45,7 +68,7 @@ export abstract class BackendClient {
             try {
                 problemDetailResponse = problemDetail.parse(error.response.data);
             } catch (e) {
-                await this.logError('Unknown error from backend: ' + JSON.stringify(error.response.data));
+                this.logger.error('Unknown error from backend: ' + JSON.stringify(error.response.data));
                 return {
                     type: 'about:blank',
                     title: error.message,
@@ -55,11 +78,11 @@ export abstract class BackendClient {
                 };
             }
 
-            await this.logInfo(`${message}: ${problemDetailResponse.detail}`);
+            this.logger.info(`${message}: ${problemDetailResponse.detail}`);
             return problemDetailResponse;
         }
 
-        await this.logError('Unknown error from backend: ' + JSON.stringify(error));
+        this.logger.error('Unknown error from backend: ' + JSON.stringify(error));
         return {
             type: 'about:blank',
             title: error.message,
@@ -68,8 +91,4 @@ export abstract class BackendClient {
             instance: method,
         };
     }
-
-    protected abstract logError(message: string): Promise<void>;
-
-    protected abstract logInfo(message: string): Promise<void>;
 }

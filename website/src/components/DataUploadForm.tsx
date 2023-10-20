@@ -5,7 +5,7 @@ import { type ChangeEvent, type FormEvent, useState } from 'react';
 
 import { withQueryProvider } from './common/withQueryProvider.tsx';
 import { backendApi } from '../services/backendApi.ts';
-import { ClientSideBackendClient } from '../services/clientSideBackendClient.ts';
+import { backendClientHooks } from '../services/backendHooks.ts';
 import type { ClientConfig, HeaderId } from '../types.ts';
 
 type Action = 'submit' | 'revise';
@@ -119,7 +119,7 @@ function useSubmitFiles(
     onSuccess: (value: HeaderId[]) => void,
     onError: (message: string) => void,
 ) {
-    const hooks = ClientSideBackendClient.create(clientConfig).getHooks();
+    const hooks = backendClientHooks(clientConfig);
     const submit = hooks.useSubmit({}, { onSuccess, onError: handleError(onError, 'submit') });
     const revise = hooks.useRevise({}, { onSuccess, onError: handleError(onError, 'revise') });
 

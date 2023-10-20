@@ -81,6 +81,10 @@ const revokeSequencesEndpoint = makeEndpoint({
         },
     ],
     response: z.array(sequenceStatus),
+    errors: [
+        { status: 'default', schema: problemDetail },
+        { status: 422, schema: problemDetail },
+    ],
 });
 
 const submitReviewedSequenceEndpoint = makeEndpoint({
@@ -119,6 +123,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
         },
     ],
     response: z.never(),
+    errors: [{ status: 'default', schema: problemDetail }],
 });
 
 const deleteSequencesEndpoint = makeEndpoint({
@@ -134,6 +139,7 @@ const deleteSequencesEndpoint = makeEndpoint({
         },
     ],
     response: z.never(),
+    errors: [{ status: 'default', schema: problemDetail }],
 });
 
 const confirmRevocationEndpoint = makeEndpoint({
@@ -143,12 +149,16 @@ const confirmRevocationEndpoint = makeEndpoint({
     parameters: [
         ...usernameParameters,
         {
-            name: 'sequenceIds',
+            name: 'sequenceVersions',
             type: 'Body',
-            schema: sequenceIds,
+            schema: sequenceVersionsObject,
         },
     ],
-    response: z.number(),
+    response: z.never(),
+    errors: [
+        { status: 'default', schema: problemDetail },
+        { status: 422, schema: problemDetail },
+    ],
 });
 
 export const backendApi = makeApi([

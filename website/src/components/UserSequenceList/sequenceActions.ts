@@ -1,16 +1,10 @@
-import { err, ok, type Result } from 'neverthrow';
-
-import { ClientSideBackendClient } from '../../services/clientSideBackendClient.ts';
-import { type ClientConfig, type SequenceStatus, type SequenceVersion } from '../../types.ts';
+import type { ActionHooks } from './SequenceTable.tsx';
+import { type SequenceStatus, type SequenceVersion } from '../../types.ts';
 import { extractSequenceVersion, getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 
 export type BulkSequenceAction = {
     name: string;
-    actionOnSequences: (
-        selectedSequences: SequenceStatus[],
-        clientConfig: ClientConfig,
-        username: string,
-    ) => Promise<Result<never, string>>;
+    actionOnSequences: (selectedSequences: SequenceStatus[], actionHooks: ActionHooks) => Promise<void>;
     confirmationDialog?: {
         message: (selectedSequences: SequenceVersion[]) => string;
     };
@@ -18,14 +12,8 @@ export type BulkSequenceAction = {
 
 const deleteAction: BulkSequenceAction = {
     name: 'delete',
-    actionOnSequences: async (selectedSequences, clientConfig, username) =>
-        ClientSideBackendClient.create(clientConfig)
-            .call(
-                'deleteSequences',
-                { sequenceVersions: selectedSequences.map(extractSequenceVersion) },
-                { queries: { username } },
-            )
-            .then((result) => result.mapErr((error) => JSON.stringify(error))),
+    actionOnSequences: async (selectedSequences, actionHooks) =>
+        actionHooks.deleteSequences({ sequenceVersions: selectedSequences.map(extractSequenceVersion) }),
     confirmationDialog: {
         message: (selectedSequences) =>
             `Are you sure you want to delete the selected sequence ${pluralizeWord(
@@ -37,22 +25,8 @@ const deleteAction: BulkSequenceAction = {
 
 const approveAction: BulkSequenceAction = {
     name: 'approve',
-    actionOnSequences: async (selectedSequences, clientConfig, username) => {
-        return ClientSideBackendClient.create(clientConfig)
-            .call(
-                'approveProcessedData',
-                { sequenceVersions: selectedSequences.map(extractSequenceVersion) },
-                {
-                    queries: { username },
-                },
-            )
-            .then((result) =>
-                result.match(
-                    () => ok(undefined as never) as Result<never, string>,
-                    (error) => err(JSON.stringify(error)),
-                ),
-            );
-    },
+    actionOnSequences: async (selectedSequences, actionHooks) =>
+        actionHooks.approveProcessedData({ sequenceVersions: selectedSequences.map(extractSequenceVersion) }),
     confirmationDialog: {
         message: (selectedSequences) =>
             `Are you sure you want to approve the selected sequence ${pluralizeWord(
@@ -64,41 +38,14 @@ const approveAction: BulkSequenceAction = {
 
 const confirmRevocationAction: BulkSequenceAction = {
     name: 'confirmRevocation',
-    actionOnSequences: async (selectedSequences, clientConfig, username) =>
-        ClientSideBackendClient.create(clientConfig)
-            .call(
-                'confirmRevocation',
-                {
-                    sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId),
-                },
-                { queries: { username } },
-            )
-            .then((result) =>
-                result.match(
-                    () => ok(undefined as never) as Result<never, string>,
-                    (error) => err(JSON.stringify(error)),
-                ),
-            ),
+    actionOnSequences: async (selectedSequences, actionHooks) =>
+        actionHooks.confirmRevocation({ sequenceVersions: selectedSequences.map(extractSequenceVersion) }),
 };
 
 const revokeAction: BulkSequenceAction = {
     name: 'revoke',
-    actionOnSequences: async (selectedSequences, clientConfig, username) => {
-        return ClientSideBackendClient.create(clientConfig)
-            .call(
-                'revokeSequences',
-                { sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId) },
-                {
-                    queries: { username },
-                },
-            )
-            .then((result) =>
-                result.match(
-                    () => ok(undefined as never) as Result<never, string>,
-                    (error) => err(JSON.stringify(error)),
-                ),
-            );
-    },
+    actionOnSequences: async (selectedSequences, actionHooks) =>
+        actionHooks.revokeSequences({ sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId) }),
     confirmationDialog: {
         message: (selectedSequences) =>
             `Are you sure you want to revoke the selected sequence ${pluralizeWord(
@@ -120,20 +67,15 @@ export type BulkSequenceActionName = keyof typeof bulkSequenceActions;
 export type SingleSequenceAction = {
     name: string;
     tableHeader: string;
-    actionOnSequence: (
-        selectedSequence: SequenceStatus,
-        clientConfig: ClientConfig,
-        username: string,
-    ) => Promise<Result<never, string>>;
+    actionOnSequence: (selectedSequence: SequenceStatus, username: string) => Promise<void>;
 };
 export type SingleSequenceActionName = keyof typeof singleSequenceActions;
 
 const reviewAction: SingleSequenceAction = {
     name: 'review',
     tableHeader: 'Link to Review',
-    actionOnSequence: async (selectedSequence: SequenceStatus, _clientConfig: ClientConfig, username: string) => {
+    actionOnSequence: async (selectedSequence: SequenceStatus, username: string) => {
         window.location.href = `/user/${username}/review/${selectedSequence.sequenceId}/${selectedSequence.version}`;
-        return ok(undefined as never);
     },
 };
 export const singleSequenceActions = {

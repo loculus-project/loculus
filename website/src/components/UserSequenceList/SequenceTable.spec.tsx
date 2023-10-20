@@ -26,7 +26,7 @@ const defaultSequencesWithStatus: readonly SequenceStatus[] = [
     },
 ] as const;
 
-const dummyConfig = {} as ClientConfig;
+const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 const everyBulkActionImplemented: readonly BulkSequenceActionName[] = [
     'delete',
     'approve',
@@ -34,6 +34,7 @@ const everyBulkActionImplemented: readonly BulkSequenceActionName[] = [
     'confirmRevocation',
 ] as const;
 const everySingleActionImplemented: readonly SingleSequenceActionName[] = ['review'] as const;
+
 function renderSequenceTable(
     sequencesWithStatus: SequenceStatus[] = [...defaultSequencesWithStatus],
     clientConfig: ClientConfig = dummyConfig,
