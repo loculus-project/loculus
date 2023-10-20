@@ -1,4 +1,4 @@
-name: Node Server Test
+name: Dev server test
 
 on: [push]
 
@@ -21,14 +21,13 @@ jobs:
         npm install
         npm install playwright --save-dev
     
-    - name: Test Node server
+    - name: Test dev node server
       working-directory: website
       run: |
         # Start the Node server in the background
         npm run start &
-        
-        # Allow some time for the server to start up
-        sleep 10
+        npx playwright install
+   
         
         # Use Playwright to open localhost
         npx playwright open localhost:3000
