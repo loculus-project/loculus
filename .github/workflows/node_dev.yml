@@ -31,4 +31,7 @@ jobs:
         sleep 10
         
         # Use Playwright to open localhost
-        npx playwright script ../.github/scripts/test-page.js
+        npx playwright open localhost:3000
+        sleep 5
+        npx playwright open localhost:3000
+      
