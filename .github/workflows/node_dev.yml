@@ -26,7 +26,7 @@ jobs:
       run: |
         # Start the Node server in the background
         npm run start &
-        npx playwright install
+        npx playwright install chromium
    
         
         # Use Playwright to open localhost
