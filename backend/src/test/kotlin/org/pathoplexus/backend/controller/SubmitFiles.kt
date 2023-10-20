@@ -40,6 +40,20 @@ object SubmitFiles {
         )
     }
 
+    fun revisedMetadataFileWith(
+        name: String = "metadataFile",
+        originalFilename: String = "metadata.tsv",
+        mediaType: String = TEXT_PLAIN_VALUE,
+        content: String = "sequenceId\theader\tfirstColumn\n1\tsomeHeader\tsomeValue\nsomeHeader2\tsomeValue2",
+    ): MockMultipartFile {
+        return MockMultipartFile(
+            name,
+            originalFilename,
+            mediaType,
+            content.byteInputStream(),
+        )
+    }
+
     fun sequenceFileWith(
         name: String = "sequenceFile",
         originalFilename: String = "sequences.fasta",

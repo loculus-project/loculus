@@ -114,6 +114,18 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                     """{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequenceVersionsToDelete)}}""",
                 ),
         )
+
+    fun reviseSequences(
+        metadataFile: MockMultipartFile,
+        sequencesFile: MockMultipartFile,
+        username: String = USER_NAME,
+    ): ResultActions =
+        mockMvc.perform(
+            multipart("/revise")
+                .file(sequencesFile)
+                .file(metadataFile)
+                .param("username", username),
+        )
 }
 
 val emptyOriginalData = OriginalData(metadata = emptyMap(), unalignedNucleotideSequences = emptyMap())

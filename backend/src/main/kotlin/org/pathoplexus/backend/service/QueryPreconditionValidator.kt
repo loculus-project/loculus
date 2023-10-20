@@ -5,13 +5,12 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
-import org.pathoplexus.backend.service.Status.SILO_READY
 import org.springframework.stereotype.Component
 
 @Component
 class QueryPreconditionValidator {
 
-    fun validate(submitter: String, sequenceVersions: List<SequenceVersion>, statuses: List<Status>) {
+    fun validateSequenceVersions(submitter: String, sequenceVersions: List<SequenceVersion>, statuses: List<Status>) {
         val sequences = SequencesTable
             .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter, SequencesTable.status)
             .select(
@@ -25,7 +24,7 @@ class QueryPreconditionValidator {
         validateUserIsAllowedToEditSequences(sequences, submitter)
     }
 
-    fun validateRevokePreconditions(submitter: String, sequenceIds: List<Long>) {
+    fun validateSequenceIds(submitter: String, sequenceIds: List<Long>, statuses: List<Status>): List<SequenceVersion> {
         val maxVersionQuery = maxVersionQuery()
 
         val sequences = SequencesTable
@@ -38,8 +37,15 @@ class QueryPreconditionValidator {
             )
 
         validateSequenceIdsExist(sequences, sequenceIds)
-        validateSequencesAreInStates(sequences, listOf(SILO_READY))
+        validateSequencesAreInStates(sequences, statuses)
         validateUserIsAllowedToEditSequences(sequences, submitter)
+
+        return sequences.map {
+            SequenceVersion(
+                it[SequencesTable.sequenceId],
+                it[SequencesTable.version],
+            )
+        }
     }
 
     private fun validateSequenceVersionsExist(sequences: Query, sequenceVersions: List<SequenceVersion>) {
@@ -67,7 +73,7 @@ class QueryPreconditionValidator {
 
         if (sequencesNotProcessed.isNotEmpty()) {
             throw UnprocessableEntityException(
-                "Sequence versions are in not in state $statuses: " +
+                "Sequence versions are in not in one of the states $statuses: " +
                     sequencesNotProcessed.joinToString(", "),
             )
         }
