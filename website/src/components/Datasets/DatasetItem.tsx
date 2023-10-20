@@ -114,7 +114,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             handleError();
         }
-    }, [datasetError]);
+    }, [datasetError, openErrorFeedback]);
 
     const {
         data: datasetRecords,
@@ -133,7 +133,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
             // eslint-disable-next-line @typescript-eslint/no-floating-promises
             handleError().then();
         }
-    }, [recordsError]);
+    }, [recordsError, openErrorFeedback]);
 
     const handleFetchSequence = async (accession: string) => {
         try {

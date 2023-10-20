@@ -1,8 +1,8 @@
 import { type FC, useState } from 'react';
 
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import type { ClientConfig, HeaderId } from '../../types';
 import { DataUploadForm } from '../DataUploadForm.tsx';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
 type SubmissionFormProps = {
     clientConfig: ClientConfig;
