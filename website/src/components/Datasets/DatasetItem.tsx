@@ -10,7 +10,7 @@ import { fetchDataset, fetchDatasetRecords, deleteDataset } from './api';
 import { getClientLogger, fetchSequenceDetails } from '../../api';
 import { type Config, type ClientConfig, type DatasetRecord, type Dataset, AccessionType } from '../../types';
 import { AlertDialog } from '../common/AlertDialog';
-import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
 import withQueryProvider from '../common/withQueryProvider';
 
@@ -92,20 +92,9 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     const [doiDialogVisible, setDoiDialogVisible] = useState(false);
     const [citationsDialogVisible, setCitationsDialogVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
-
-    const [isErrorOpen, setIsErrorOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     const userId = 'testuser';
-
-    const handleOpenError = (message: string) => {
-        setErrorMessage(message);
-        setIsErrorOpen(true);
-    };
-    const handleCloseError = () => {
-        setErrorMessage('');
-        setIsErrorOpen(false);
-    };
 
     const {
         data: datasets,
@@ -118,7 +107,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
 
     useEffect(() => {
         const handleError = async (): Promise<void> => {
-            handleOpenError(`fetchDataset failed with error: ${(datasetError as Error).message}`);
+            openErrorFeedback(`fetchDataset failed with error: ${(datasetError as Error).message}`);
             await clientLogger.error(`fetchDataset failed with error: ${(datasetError as Error).message}`);
         };
         if (datasetError !== null) {
@@ -137,7 +126,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
 
     useEffect(() => {
         const handleError = async () => {
-            handleOpenError(`fetchDatasetRecords failed with error: ${(recordsError as Error).message}`);
+            openErrorFeedback(`fetchDatasetRecords failed with error: ${(recordsError as Error).message}`);
             await clientLogger.error(`fetchDatasetRecords failed with error: ${(recordsError as Error).message}`);
         };
         if (recordsError !== null) {
@@ -152,7 +141,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
             await clientLogger.info(`fetchSequenceDetails succeeded for ${accession}`);
             return response;
         } catch (error) {
-            handleOpenError(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
+            openErrorFeedback(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
             await clientLogger.error(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
         }
     };
@@ -177,7 +166,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
             await clientLogger.info(`deleteDataset succeeded for ${datasetId}`);
             location.href = '/datasets';
         } catch (error) {
-            handleOpenError(`deleteDataset failed with error: ${(error as Error).message}`);
+            openErrorFeedback(`deleteDataset failed with error: ${(error as Error).message}`);
             await clientLogger.error(`deleteDataset failed with error: ${(error as Error).message}`);
         }
     };
@@ -202,7 +191,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
 
     return (
         <div className='flex flex-col items-left'>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
+            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             {isLoadingDataset || dataset === undefined ? (
                 <CircularProgress />
             ) : (

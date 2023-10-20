@@ -1,8 +1,8 @@
 import { type FC, useState } from 'react';
 
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import type { ClientConfig, HeaderId } from '../../types';
 import { DataUploadForm } from '../DataUploadForm.tsx';
-import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
 
 type SubmissionFormProps = {
     clientConfig: ClientConfig;
@@ -11,25 +11,14 @@ type SubmissionFormProps = {
 export const SubmissionForm: FC<SubmissionFormProps> = ({ clientConfig }) => {
     const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<HeaderId[] | null>(null);
 
-    const [isErrorOpen, setIsErrorOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
-
-    const handleOpenError = (message: string) => {
-        setErrorMessage(message);
-        setIsErrorOpen(true);
-    };
-
-    const handleCloseError = () => {
-        setErrorMessage('');
-        setIsErrorOpen(false);
-    };
+    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     return (
         <div className='flex flex-col items-center'>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
+            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <DataUploadForm
                 targetUrl={`${clientConfig.backendUrl}/submit`}
-                onError={handleOpenError}
+                onError={openErrorFeedback}
                 onSuccess={setResponseSequenceHeaders}
             />
 

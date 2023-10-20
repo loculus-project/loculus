@@ -13,8 +13,18 @@ a {
   background-color : #54858c;
 }
 
-.title{
+.fancytitle{
   background : linear-gradient(to right, #54858c 0%, #F18805 50%, #54858c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-decoration: red;
+  font-size: 24px;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.title{
+  background : #54858c ;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-decoration: red;

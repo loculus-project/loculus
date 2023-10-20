@@ -1,4 +1,3 @@
-import { approveProcessedData } from '../../../src/components/UserSequenceList/approveProcessedData';
 import { expect, test, testuser } from '../../e2e.fixture';
 import { fakeProcessingPipeline, queryUnprocessedData } from '../../util/preprocessingPipeline';
 
@@ -42,7 +41,7 @@ test.describe('The user page', () => {
         ]);
         expect(sequenceThatIsProcessedIsPresent).toBe(true);
 
-        await approveProcessedData(testuser, [secondSequence]);
+        await submitPage.approveProcessedData(testuser, [secondSequence]);
         await userPage.gotoUserSequencePage();
         const sequenceThatIsReleasableIsPresent = await userPage.verifyTableEntries([
             {

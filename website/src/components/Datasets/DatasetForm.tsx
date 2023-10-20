@@ -13,7 +13,7 @@ import { createDataset, updateDataset } from './api';
 import { getClientLogger, fetchSequenceDetails } from '../../api';
 import { AccessionType, type Config, type ClientConfig, type Dataset, type DatasetRecord } from '../../types';
 import { serializeRecordsToAccessionsInput, parseRecordsFromAccessionInput } from '../../utils/parseAccessionInput';
-import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
 const clientLogger = getClientLogger('DatasetForm');
 
@@ -38,19 +38,8 @@ export const DatasetForm: FC<DatasetFormProps> = ({
     const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editDatasetRecords));
     const [datasetRecords, setDatasetRecords] = useState(editDatasetRecords);
 
+    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
     const [isLoading, setIsLoading] = useState(false);
-    const [isErrorOpen, setIsErrorOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
-
-    const handleOpenError = (message: string) => {
-        setErrorMessage(message);
-        setIsErrorOpen(true);
-    };
-
-    const handleCloseError = () => {
-        setErrorMessage('');
-        setIsErrorOpen(false);
-    };
 
     useEffect(() => {
         const parseRecordsFromInput = () => {
@@ -118,7 +107,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                 await clientLogger.info(`updateDataset succeeded for datasetId: '${editDataset.datasetId}'`);
                 redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
             } catch (error) {
-                handleOpenError(
+                openErrorFeedback(
                     `updateDataset failed with error: ${(error as Error).message} for datasetId: ${
                         editDataset.datasetId
                     }'`,
@@ -135,7 +124,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                 await clientLogger.info(`Dataset create successful with datasetId: ${response?.datasetId}`);
                 redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
             } catch (error) {
-                handleOpenError(`Dataset create failed with error '${(error as Error).message}'`);
+                openErrorFeedback(`Dataset create failed with error '${(error as Error).message}'`);
                 await clientLogger.error(`Dataset create failed with error '${(error as Error).message}'`);
             }
         }
@@ -158,7 +147,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({
             await clientLogger.info(`fetchSequenceDetails succeeded for ${accession}`);
             return response;
         } catch (error) {
-            handleOpenError(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
+            openErrorFeedback(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
             await clientLogger.error(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
         }
     };
@@ -196,7 +185,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({
 
     return (
         <div className='flex flex-col items-center  overflow-auto-y w-full'>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
+            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex justify-start items-center py-5'>
                 <h1 className='text-xl font-semibold py-4'>{`${editDataset ? 'Edit' : 'Create'} Dataset`}</h1>
             </div>

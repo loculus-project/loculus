@@ -1,6 +1,6 @@
 import { getRuntimeConfig } from '../../../config';
 import { getInstanceLogger } from '../../../logger';
-import type { SequenceStatusNames } from '../../../types.ts';
+import type { SequenceStatus, SequenceStatusNames } from '../../../types.ts';
 
 const logger = getInstanceLogger('user.ts');
 export enum ResponseStatus {
@@ -8,11 +8,6 @@ export enum ResponseStatus {
     ERROR = 'ERROR',
 }
 
-export type SequenceStatus = {
-    status: SequenceStatusNames;
-    sequenceId: number;
-    version: number;
-};
 export type UserSequenceResponse = {
     responseStatus: ResponseStatus;
     sequences: SequenceStatus[];
