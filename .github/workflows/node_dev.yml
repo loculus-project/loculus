@@ -14,11 +14,11 @@ jobs:
     - name: Install curl (Windows)
       if: matrix.os == 'windows-latest'
       run: choco install curl
-    - name: Change to website directory
-      run: cd website
 
     - name: Test Node server
+      working-directory: website
       run: |
+        npm install
         # Start the Node server in the background
         npm run start &
 
@@ -50,4 +50,5 @@ jobs:
             fi
             exit 0
         fi
+
 
