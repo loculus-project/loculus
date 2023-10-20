@@ -14,41 +14,21 @@ jobs:
     - name: Install curl (Windows)
       if: matrix.os == 'windows-latest'
       run: choco install curl
-
-    - name: Test Node server
+ 
+    - name: Install dependencies
       working-directory: website
       run: |
         npm install
+        npm install playwright --save-dev
+    
+    - name: Test Node server
+      working-directory: website
+      run: |
         # Start the Node server in the background
         npm run start &
-
+        
         # Allow some time for the server to start up
-        sleep 5
-
-        # Call the localhost server using curl
-        curl localhost:3000
-
-        # Get the PID of the Node server (platform-dependent logic)
-        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-          NODE_PID=$(netstat -ano | findstr :3000 | awk '{print $5}')
-        else
-          NODE_PID=$(lsof -t -i:3000)
-        fi
-
-        # Check if the Node server is still running or has exited
-        if [ -z "$NODE_PID" ]; then
-            echo "Node server has exited."
-            exit 1
-        else
-            echo "Node server is still running with PID: $NODE_PID."
-            
-            # Optionally, you can kill the server if you want after the test
-            if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-              taskkill /PID $NODE_PID /F
-            else
-              kill -9 $NODE_PID
-            fi
-            exit 0
-        fi
-
-
+        sleep 10
+        
+        # Use Playwright to open localhost
+        npx playwright script ../.github/scripts/test-page.js
