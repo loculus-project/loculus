@@ -12,7 +12,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "check-format": "eslint \"src/**/*.{ts,tsx,astro}\" && prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
-    "format": "eslint \"src/**/*.{ts,tsx,astro}\" --fix && prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
+    "format": "eslint \"src/**/*.{ts,tsx,astro}\" --fix && prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,jsx,json,astro}\"",
     "test": "vitest",
     "e2e": "npx playwright test",
     "e2e:headed": "npx playwright test --headed"
@@ -31,6 +31,7 @@
     "neverthrow": "^6.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-spinners": "^0.13.8",
     "winston": "^3.11.0",
     "zod": "^3.22.4"
   },
@@ -40,9 +41,12 @@
     "@astrojs/react": "^3.0.3",
     "@astrojs/tailwind": "^5.0.2",
     "@emotion/styled": "^11.11.0",
+    "@iconify/json": "^2.2.131",
     "@mui/material": "^5.14.13",
     "@mui/x-date-pickers": "^6.16.2",
     "@playwright/test": "^1.39.0",
+    "@svgr/core": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
     "@tanstack/eslint-plugin-query": "^4.36.1",
     "@testing-library/dom": "^9.3.1",
     "@testing-library/jest-dom": "^6.1.3",
@@ -72,6 +76,7 @@
     "sass": "^1.69.3",
     "tailwindcss": "^3.3.3",
     "typescript": "^5.2.2",
+    "unplugin-icons": "^0.17.1",
     "uuid": "^9.0.1",
     "vitest": "^0.34.6"
   }

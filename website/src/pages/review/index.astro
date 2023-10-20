@@ -1,0 +1,13 @@
+---
+import ReviewPage from '../../components/ReviewPage2';
+import { getRuntimeConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+const clientConfig = getRuntimeConfig().forClient;
+---
+
+<BaseLayout title='Revise'>
+    <h1 class='title'>Review</h1>
+
+    <ReviewPage clientConfig={clientConfig} client:only='react' />
+</BaseLayout>
