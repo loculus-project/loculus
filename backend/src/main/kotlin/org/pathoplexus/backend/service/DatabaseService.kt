@@ -113,15 +113,6 @@ class DatabaseService(
         stream(sequencesData, outputStream)
     }
 
-    private fun maxVersionQuery(): Expression<Long?> {
-        val subQueryTable = SequencesTable.alias("subQueryTable")
-        return wrapAsExpression(
-            subQueryTable
-                .slice(subQueryTable[SequencesTable.version].max())
-                .select { subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId },
-        )
-    }
-
     private fun updateStatusToProcessing(sequences: List<UnprocessedData>) {
         val sequenceVersions = sequences.map { it.sequenceId to it.version }
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -493,12 +484,12 @@ class DatabaseService(
             }
     }
 
-    fun confirmRevocation(sequenceVersions: List<SequenceVersion>, username: String): Int {
+    fun confirmRevocation(sequenceVersions: List<SequenceVersion>, username: String) {
         log.info { "Confirming revocation for ${sequenceVersions.size} sequences" }
 
         queryPreconditionValidator.validate(username, sequenceVersions, listOf(REVOKED_STAGING))
 
-        return SequencesTable.update(
+        SequencesTable.update(
             where = {
                 (Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions.toPairs()) and
                     (SequencesTable.status eq REVOKED_STAGING.name)

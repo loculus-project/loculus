@@ -1,6 +1,7 @@
 package org.pathoplexus.backend.service
 
 import org.jetbrains.exposed.sql.Query
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
@@ -25,15 +26,18 @@ class QueryPreconditionValidator {
     }
 
     fun validateRevokePreconditions(submitter: String, sequenceIds: List<Long>) {
+        val maxVersionQuery = maxVersionQuery()
+
         val sequences = SequencesTable
             .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter, SequencesTable.status)
             .select(
                 where = {
-                    SequencesTable.sequenceId inList sequenceIds
+                    (SequencesTable.sequenceId inList sequenceIds)
+                        .and((SequencesTable.version eq maxVersionQuery))
                 },
             )
 
-        validateSequenceIdExist(sequences, sequenceIds)
+        validateSequenceIdsExist(sequences, sequenceIds)
         validateSequencesAreInStates(sequences, listOf(SILO_READY))
         validateUserIsAllowedToEditSequences(sequences, submitter)
     }
@@ -81,7 +85,7 @@ class QueryPreconditionValidator {
         }
     }
 
-    private fun validateSequenceIdExist(sequences: Query, sequenceIds: List<Long>) {
+    private fun validateSequenceIdsExist(sequences: Query, sequenceIds: List<Long>) {
         if (sequences.count() == sequenceIds.size.toLong()) {
             return
         }

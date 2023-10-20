@@ -220,7 +220,7 @@ class SubmissionControllerTest(
                 .contentType(MediaType.APPLICATION_NDJSON_VALUE)
                 .content(testData),
         )
-            .andExpect(status().isOk())
+            .andExpect(status().isNoContent)
     }
 
     private fun querySequenceList(): MvcResult {

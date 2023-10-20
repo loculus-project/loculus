@@ -29,7 +29,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessed(sequenceId = 3),
             PreparedProcessedData.successfullyProcessed(sequenceId = 4),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
     }
@@ -45,7 +45,7 @@ class SubmitProcessedDataEndpointTest(
 
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(sequenceId = 3).withValues(data = dataWithoutInsertions),
-        ).andExpect(status().isOk)
+        ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
 
@@ -68,7 +68,7 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.withNullForFields(fields = listOf("dateSubmitted")),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
         prepareExtractedSequencesInDatabase()
 
@@ -81,7 +81,7 @@ class SubmitProcessedDataEndpointTest(
         prepareExtractedSequencesInDatabase()
 
         submissionControllerClient.submitProcessedData(PreparedProcessedData.withErrors(firstSequence))
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.NEEDS_REVIEW)
@@ -96,7 +96,7 @@ class SubmitProcessedDataEndpointTest(
                 sequenceId = firstSequence,
                 errors = PreparedProcessedData.withErrors().errors,
             ),
-        ).andExpect(status().isOk)
+        ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.NEEDS_REVIEW)
@@ -107,7 +107,7 @@ class SubmitProcessedDataEndpointTest(
         prepareExtractedSequencesInDatabase()
 
         submissionControllerClient.submitProcessedData(PreparedProcessedData.withWarnings(firstSequence))
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.PROCESSED)

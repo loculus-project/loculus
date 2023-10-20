@@ -3,12 +3,12 @@ import { ErrorFeedback } from '../../../components/ErrorFeedback';
 import { BackButton } from '../../../components/Navigation/BackButton';
 import UserSequences from '../../../components/UserSequenceList/UserSequences.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import ServerSideBackendClient from '../../../services/serverSideBackendClient';
+import { BackendClient } from '../../../services/backendClient';
 
 // eslint-disable-next-line
 const username = Astro.params.username!;
 
-const userSequencesResponse = await ServerSideBackendClient.create().astroFileTypeHelpers.getSequencesOfUser(username);
+const userSequencesResponse = await BackendClient.create().astroFileTypeHelpers.getSequencesOfUser(username);
 ---
 
 <BaseLayout title='Sequences'>
