@@ -35,7 +35,7 @@ enum class NucleotideSymbols {
 }
 
 @Component
-class SequenceValidatorService(
+class SequenceValidator(
     private val schemaConfig: SchemaConfig,
     private val referenceGenome: ReferenceGenome,
 ) {

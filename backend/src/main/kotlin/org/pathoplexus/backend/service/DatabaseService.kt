@@ -17,7 +17,6 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
-import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
@@ -60,7 +59,8 @@ private val log = KotlinLogging.logger { }
 @Service
 @Transactional
 class DatabaseService(
-    private val sequenceValidatorService: SequenceValidatorService,
+    private val sequenceValidator: SequenceValidator,
+    private val queryPreconditionValidator: QueryPreconditionValidator,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val referenceGenome: ReferenceGenome,
@@ -174,7 +174,7 @@ class DatabaseService(
         val submittedErrors = submittedProcessedData.errors.orEmpty()
 
         if (submittedErrors.isEmpty()) {
-            sequenceValidatorService.validateSequence(submittedProcessedData)
+            sequenceValidator.validateSequence(submittedProcessedData)
         }
 
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
@@ -259,7 +259,7 @@ class DatabaseService(
     fun approveProcessedData(submitter: String, sequenceVersions: List<SequenceVersion>) {
         log.info { "approving ${sequenceVersions.size} sequences by $submitter" }
 
-        validatePreconditions(submitter, sequenceVersions, PROCESSED)
+        queryPreconditionValidator.validate(submitter, sequenceVersions, PROCESSED)
 
         SequencesTable.update(
             where = {
@@ -268,61 +268,6 @@ class DatabaseService(
             },
         ) {
             it[status] = SILO_READY.name
-        }
-    }
-
-    private fun validatePreconditions(submitter: String, sequenceVersions: List<SequenceVersion>, status: Status) {
-        val sequences = SequencesTable
-            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter, SequencesTable.status)
-            .select(
-                where = {
-                    Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions.toPairs()
-                },
-            )
-
-        validateSequenceVersionsExist(sequences, sequenceVersions)
-        validateSequencesAreInState(sequences, status)
-        validateUserIsAllowedToEditSequences(sequences, submitter)
-    }
-
-    private fun validateSequenceVersionsExist(sequences: Query, sequenceVersions: List<SequenceVersion>) {
-        if (sequences.count() == sequenceVersions.size.toLong()) {
-            return
-        }
-
-        val sequenceVersionsNotFound = sequenceVersions
-            .filter { sequenceVersion ->
-                sequences.none {
-                    it[SequencesTable.sequenceId] == sequenceVersion.sequenceId &&
-                        it[SequencesTable.version] == sequenceVersion.version
-                }
-            }.joinToString(", ") { it.displaySequenceVersion() }
-
-        throw UnprocessableEntityException("Sequence versions $sequenceVersionsNotFound do not exist")
-    }
-
-    private fun validateSequencesAreInState(sequences: Query, status: Status) {
-        val sequencesNotProcessed = sequences
-            .filter { it[SequencesTable.status] != status.name }
-            .map { "${it[SequencesTable.sequenceId]}.${it[SequencesTable.version]} - ${it[SequencesTable.status]}" }
-
-        if (sequencesNotProcessed.isNotEmpty()) {
-            throw UnprocessableEntityException(
-                "Sequence versions are in not in state $status: " +
-                    sequencesNotProcessed.joinToString(", "),
-            )
-        }
-    }
-
-    private fun validateUserIsAllowedToEditSequences(sequences: Query, submitter: String) {
-        val sequencesNotSubmittedByUser = sequences.filter { it[SequencesTable.submitter] != submitter }
-            .map { SequenceVersion(it[SequencesTable.sequenceId], it[SequencesTable.version]) }
-
-        if (sequencesNotSubmittedByUser.isNotEmpty()) {
-            throw ForbiddenException(
-                "User '$submitter' does not have right to change the sequence versions " +
-                    sequencesNotSubmittedByUser.joinToString(", ") { it.displaySequenceVersion() },
-            )
         }
     }
 
@@ -502,7 +447,7 @@ class DatabaseService(
     fun revoke(sequenceIds: List<Long>, username: String): List<SequenceVersionStatus> {
         log.info { "revoking ${sequenceIds.size} sequences" }
 
-        validateRevokePreconditions(username, sequenceIds)
+        queryPreconditionValidator.validateRevokePreconditions(username, sequenceIds)
 
         val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -557,39 +502,10 @@ class DatabaseService(
             }
     }
 
-    private fun validateRevokePreconditions(submitter: String, sequenceIds: List<Long>) {
-        val sequences = SequencesTable
-            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter, SequencesTable.status)
-            .select(
-                where = {
-                    SequencesTable.sequenceId inList sequenceIds
-                },
-            )
-
-        validateSequenceIdExist(sequences, sequenceIds)
-        validateSequencesAreInState(sequences, SILO_READY)
-        validateUserIsAllowedToEditSequences(sequences, submitter)
-    }
-
-    private fun validateSequenceIdExist(sequences: Query, sequenceIds: List<Long>) {
-        if (sequences.count() == sequenceIds.size.toLong()) {
-            return
-        }
-
-        val sequenceVersionsNotFound = sequenceIds
-            .filter { sequenceId ->
-                sequences.none {
-                    it[SequencesTable.sequenceId] == sequenceId
-                }
-            }.joinToString(", ") { it.toString() }
-
-        throw UnprocessableEntityException("SequenceIds $sequenceVersionsNotFound do not exist")
-    }
-
     fun confirmRevocation(sequenceVersions: List<SequenceVersion>, username: String): Int {
         log.info { "Confirming revocation for ${sequenceVersions.size} sequences" }
 
-        validatePreconditions(username, sequenceVersions, REVOKED_STAGING)
+        queryPreconditionValidator.validate(username, sequenceVersions, REVOKED_STAGING)
 
         return SequencesTable.update(
             where = {
