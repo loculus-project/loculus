@@ -82,7 +82,7 @@ class ConfirmRevocationEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence versions are in not in state [${Status.REVOKED_STAGING.name}]: " +
+                    "Sequence versions are in not in one of the states [${Status.REVOKED_STAGING.name}]: " +
                         "1.1 - ${Status.SILO_READY.name}, 2.1 - ${Status.SILO_READY.name}",
                 ),
             )

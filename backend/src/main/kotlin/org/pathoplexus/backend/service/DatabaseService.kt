@@ -171,15 +171,15 @@ class DatabaseService(
         val submittedProcessedDataWithAllKeysForInsertions = addMissingKeysForInsertions(submittedProcessedData)
 
         val newStatus = when {
-            submittedErrors.isEmpty() -> Status.PROCESSED
-            else -> Status.NEEDS_REVIEW
+            submittedErrors.isEmpty() -> PROCESSED
+            else -> NEEDS_REVIEW
         }
 
         return SequencesTable.update(
             where = {
                 (SequencesTable.sequenceId eq submittedProcessedDataWithAllKeysForInsertions.sequenceId) and
                     (SequencesTable.version eq submittedProcessedDataWithAllKeysForInsertions.version) and
-                    (SequencesTable.status eq Status.PROCESSING.name)
+                    (SequencesTable.status eq PROCESSING.name)
             },
         ) {
             it[status] = newStatus.name
@@ -249,7 +249,7 @@ class DatabaseService(
     fun approveProcessedData(submitter: String, sequenceVersions: List<SequenceVersion>) {
         log.info { "approving ${sequenceVersions.size} sequences by $submitter" }
 
-        queryPreconditionValidator.validate(submitter, sequenceVersions, listOf(PROCESSED))
+        queryPreconditionValidator.validateSequenceVersions(submitter, sequenceVersions, listOf(PROCESSED))
 
         SequencesTable.update(
             where = {
@@ -385,13 +385,16 @@ class DatabaseService(
         )
     }
 
-    fun reviseData(submitter: String, dataSequence: Sequence<FileData>): List<HeaderId> {
+    fun reviseData(submitter: String, revisedData: List<RevicedData>): List<HeaderId> {
         log.info { "revising sequences" }
 
         val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        return dataSequence.map {
+        return revisedData.map {
+            val sequenceVersions =
+                queryPreconditionValidator.validateSequenceIds(submitter, listOf(it.sequenceId), listOf(SILO_READY))
+
             SequencesTable.insert(
                 SequencesTable.slice(
                     SequencesTable.sequenceId,
@@ -422,14 +425,14 @@ class DatabaseService(
                 ),
             )
 
-            HeaderId(it.sequenceId, it.sequenceId, it.customId)
+            HeaderId(it.sequenceId, sequenceVersions.first().version + 1, it.customId)
         }.toList()
     }
 
     fun revoke(sequenceIds: List<Long>, username: String): List<SequenceVersionStatus> {
         log.info { "revoking ${sequenceIds.size} sequences" }
 
-        queryPreconditionValidator.validateRevokePreconditions(username, sequenceIds)
+        queryPreconditionValidator.validateSequenceIds(username, sequenceIds, listOf(SILO_READY))
 
         val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -487,7 +490,7 @@ class DatabaseService(
     fun confirmRevocation(sequenceVersions: List<SequenceVersion>, username: String) {
         log.info { "Confirming revocation for ${sequenceVersions.size} sequences" }
 
-        queryPreconditionValidator.validate(username, sequenceVersions, listOf(REVOKED_STAGING))
+        queryPreconditionValidator.validateSequenceVersions(username, sequenceVersions, listOf(REVOKED_STAGING))
 
         SequencesTable.update(
             where = {
@@ -502,7 +505,7 @@ class DatabaseService(
     fun deleteSequences(sequenceVersions: List<SequenceVersion>, submitter: String) {
         log.info { "Deleting sequence versions: $sequenceVersions" }
 
-        queryPreconditionValidator.validate(
+        queryPreconditionValidator.validateSequenceVersions(
             submitter,
             sequenceVersions,
             listOf(RECEIVED, PROCESSED, NEEDS_REVIEW, REVIEWED, REVOKED_STAGING),
@@ -812,7 +815,7 @@ data class SequenceVersionStatus(
     val isRevocation: Boolean = false,
 )
 
-data class FileData(
+data class RevicedData(
     val customId: String,
     val sequenceId: Long,
     val originalData: OriginalData,

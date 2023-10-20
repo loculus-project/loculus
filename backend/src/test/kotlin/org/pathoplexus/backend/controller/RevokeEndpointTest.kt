@@ -72,7 +72,7 @@ class RevokeEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence versions are in not in state [${Status.SILO_READY}]: " +
+                    "Sequence versions are in not in one of the states [${Status.SILO_READY}]: " +
                         "1.1 - ${Status.NEEDS_REVIEW}, 2.1 - ${Status.NEEDS_REVIEW}",
                 ),
             )
