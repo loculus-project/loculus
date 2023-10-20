@@ -11,9 +11,6 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v2
-    - name: Install curl (Windows)
-      if: matrix.os == 'windows-latest'
-      run: choco install curl
  
     - name: Install dependencies
       working-directory: website
