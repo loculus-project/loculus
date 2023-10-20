@@ -30,7 +30,7 @@ jobs:
    
         
         # Use Playwright to open localhost
-        npx playwright open localhost:3000
+        npx playwright screenshot localhost:3000 test.png
         sleep 5
-        npx playwright open localhost:3000
+        npx playwright screenshot localhost:3000 test.png
       
