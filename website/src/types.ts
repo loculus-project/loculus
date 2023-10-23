@@ -102,6 +102,10 @@ export const sequenceVersion = z.object({
 });
 export type SequenceVersion = z.infer<typeof sequenceVersion>;
 
+export const sequenceVersionsObject = z.object({
+    sequenceVersions: z.array(sequenceVersion),
+});
+
 export const sequenceStatus = sequenceVersion.merge(
     z.object({
         status: sequenceStatusNames,

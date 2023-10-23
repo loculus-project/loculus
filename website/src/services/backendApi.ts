@@ -6,7 +6,7 @@ import {
     sequenceIds,
     sequenceReview,
     sequenceStatus,
-    sequenceVersion,
+    sequenceVersionsObject,
     submitFiles,
     unprocessedData,
 } from '../types.ts';
@@ -104,9 +104,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: z.object({
-                sequenceVersions: z.array(sequenceVersion),
-            }),
+            schema: sequenceVersionsObject,
         },
     ],
     response: z.never(),
@@ -119,9 +117,9 @@ const deleteSequencesEndpoint = makeEndpoint({
     parameters: [
         ...usernameParameters,
         {
-            name: 'sequenceIds',
+            name: 'sequenceVersions',
             type: 'Body',
-            schema: z.array(z.number()),
+            schema: sequenceVersionsObject,
         },
     ],
     response: z.never(),

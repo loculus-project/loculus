@@ -22,7 +22,7 @@ const deleteAction: BulkSequenceAction = {
         ClientSideBackendClient.create(clientConfig)
             .call(
                 'deleteSequences',
-                selectedSequences.map((sequence) => sequence.sequenceId),
+                { sequenceVersions: selectedSequences.map(extractSequenceVersion) },
                 { queries: { username } },
             )
             .then((result) => result.mapErr((error) => JSON.stringify(error))),
