@@ -75,6 +75,9 @@ spec:
           volumeMounts:
             - name: repo-volume
               mountPath: /repo
+            - name: repo-volume
+              mountPath: /workspace/log
+              subPath: mylog/
         - name: database-{{ .Values.shortbranch }}
           image: postgres:latest
           ports:
