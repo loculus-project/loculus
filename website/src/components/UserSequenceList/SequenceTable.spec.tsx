@@ -19,12 +19,14 @@ const defaultSequenceEntryStatuses: readonly SequenceEntryStatus[] = [
         version: 1,
         status: 'HAS_ERRORS',
         isRevocation: false,
+        submissionId: 'custom1',
     },
     {
         accession: '2',
         version: 1,
         status: 'HAS_ERRORS',
         isRevocation: false,
+        submissionId: 'custom2',
     },
 ];
 

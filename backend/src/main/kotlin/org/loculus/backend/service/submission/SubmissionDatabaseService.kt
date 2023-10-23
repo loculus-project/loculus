@@ -377,10 +377,12 @@ class SubmissionDatabaseService(
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
+                    table.submissionIdColumn,
                     table.statusColumn,
                     table.isRevocationColumn,
                     table.groupNameColumn,
                     table.organismColumn,
+                    table.submittedAtColumn,
                 )
                 .select(
                     where = {
@@ -388,13 +390,15 @@ class SubmissionDatabaseService(
                             table.groupIsOneOf(validatedGroupNames) and
                             table.organismIs(organism)
                     },
-                ).map { row ->
+                ).sortedBy { it[table.submittedAtColumn] }
+                .map { row ->
                     SequenceEntryStatus(
                         row[table.accessionColumn],
                         row[table.versionColumn],
                         Status.fromString(row[table.statusColumn]),
                         row[table.groupNameColumn],
                         row[table.isRevocationColumn],
+                        row[table.submissionIdColumn],
                     )
                 }
         }
@@ -450,6 +454,7 @@ class SubmissionDatabaseService(
                     table.versionColumn,
                     table.isRevocationColumn,
                     table.groupNameColumn,
+                    table.submissionIdColumn,
                 )
                 .select(
                     where = {
@@ -464,6 +469,7 @@ class SubmissionDatabaseService(
                         AWAITING_APPROVAL_FOR_REVOCATION,
                         it[table.groupNameColumn],
                         it[table.isRevocationColumn],
+                        it[table.submissionIdColumn],
                     )
                 }.sortedBy { it.accession }
         }

@@ -110,6 +110,8 @@ const InnerDataUploadForm = ({
                 revise({ metadataFile, sequenceFile });
                 break;
         }
+
+        window.location.href = routes.userSequenceReviewPage(organism);
     };
 
     return (

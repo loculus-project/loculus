@@ -44,6 +44,7 @@ export const routes = {
         return groupPagePath;
     },
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
+    userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submit/review`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/seq/${accession}/versions`),
     notFoundPage: () => `/404`,
     logout: () => '/logout',

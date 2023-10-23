@@ -153,6 +153,7 @@ data class SequenceEntryStatus(
     val status: Status,
     val group: String,
     val isRevocation: Boolean = false,
+    val submissionId: String,
 ) : AccessionVersionInterface
 
 data class UnprocessedData(

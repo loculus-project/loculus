@@ -1,14 +1,21 @@
 import z from 'zod';
 
+export const receivedStatus = 'RECEIVED';
+export const inProcessingStatus = 'IN_PROCESSING';
+export const hasErrorsStatus = 'HAS_ERRORS';
+export const awaitingApprovalStatus = 'AWAITING_APPROVAL';
+export const approvedForReleaseStatus = 'APPROVED_FOR_RELEASE';
+export const awaitingApprovalForRevocationStatus = 'AWAITING_APPROVAL_FOR_REVOCATION';
+
 export const sequenceEntryStatusNames = z.union([
-    z.literal('RECEIVED'),
-    z.literal('IN_PROCESSING'),
-    z.literal('HAS_ERRORS'),
-    z.literal('AWAITING_APPROVAL'),
-    z.literal('APPROVED_FOR_RELEASE'),
-    z.literal('AWAITING_APPROVAL_FOR_REVOCATION'),
+    z.literal(receivedStatus),
+    z.literal(inProcessingStatus),
+    z.literal(hasErrorsStatus),
+    z.literal(awaitingApprovalStatus),
+    z.literal(approvedForReleaseStatus),
+    z.literal(awaitingApprovalForRevocationStatus),
 ]);
-const statusThatAllowsEditing = z.union([z.literal('HAS_ERRORS'), z.literal('AWAITING_APPROVAL')]);
+const statusThatAllowsEditing = z.union([z.literal(hasErrorsStatus), z.literal(awaitingApprovalStatus)]);
 
 const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
@@ -49,6 +56,7 @@ export const accessionVersionsObject = z.object({
 export const sequenceEntryStatus = accessionVersion.merge(
     z.object({
         status: sequenceEntryStatusNames,
+        submissionId: z.string(),
         isRevocation: z.boolean(),
     }),
 );
