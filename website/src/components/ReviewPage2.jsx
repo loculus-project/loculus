@@ -196,7 +196,10 @@ const ReviewCard = ({ data }) => {
                 data.processedData && data.processedData.errors && data.processedData.errors.length > 0 && <div className="flex flex-col m-2 ">
                    {data.processedData.errors.map((error, index) => (
                   <p className="text-red-500">
-                        {error.message}
+                        {error.message}<br />
+                        <span className=" text-sm">
+                            You must fix this issue before you can release this sequence.
+                        </span>
                     </p>
 
                 ))}
