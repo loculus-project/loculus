@@ -302,6 +302,7 @@ const ReviewPage = () => {
     return (
         <div>
             <Tooltip id="hi" className='z-50' place="top" effect="solid" />
+            <div className='bg-white p-4 sticky z-30 top-0 '>
             <div className='float-right'>
                {/* discard all sequences with errors */}
                {errorCount>0 &&
@@ -383,6 +384,7 @@ const ReviewPage = () => {
                     }
                 }
                 } /> Other
+            </div>
             </div>
         <div className="p-4 space-y-2">
             {filteredData && filteredData.map((item, index) => (
