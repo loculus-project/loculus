@@ -1,10 +1,18 @@
 import type { APIRoute } from 'astro';
 
-import { logger } from '../../logger';
+import { getInstanceLogger } from '../../logger';
 
 export const POST: APIRoute = async ({ request }) => {
     const logToAppend = await request.json();
-    logger.log({ level: logToAppend.level, message: logToAppend.message, instance: logToAppend.instance });
+
+    switch (logToAppend.level) {
+        case 'info':
+            getInstanceLogger(logToAppend.instance).info(logToAppend.message);
+            break;
+        default:
+            getInstanceLogger(logToAppend.instance).error(logToAppend.message);
+    }
+
     return new Response(
         JSON.stringify({
             body: 'ok',

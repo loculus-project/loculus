@@ -2,14 +2,24 @@ import { readFileSync } from 'fs';
 
 import type { Locator, Page } from '@playwright/test';
 
+import { BackendClient } from '../../../src/services/backendClient.ts';
 import type { Sequence, SequenceVersion } from '../../../src/types.ts';
-import { backendUrl, baseUrl, expect, metadataTestFile, sequencesTestFile, testuser } from '../../e2e.fixture';
+import {
+    backendUrl,
+    baseUrl,
+    e2eLogger,
+    expect,
+    metadataTestFile,
+    sequencesTestFile,
+    testuser,
+} from '../../e2e.fixture';
 import { fakeProcessingPipeline, queryUnprocessedData } from '../../util/preprocessingPipeline.ts';
 
 export class SubmitPage {
     public readonly userField: Locator;
     public readonly submitButton: Locator;
     private readonly testSequenceCount: number = readFileSync(metadataTestFile, 'utf-8').split('\n').length - 2;
+    private readonly backendClient = new BackendClient(backendUrl, e2eLogger);
 
     constructor(public readonly page: Page) {
         this.submitButton = page.getByRole('button', { name: 'Submit' });
@@ -57,24 +67,23 @@ export class SubmitPage {
         await this.userField.fill(username);
     }
 
-    public async approveProcessedData(
-        username: string,
-        sequenceVersions: SequenceVersion[],
-    ): Promise<{ approved: number }> {
-        const body = JSON.stringify({
+    public async approveProcessedData(username: string, sequenceVersions: SequenceVersion[]): Promise<void> {
+        const body = {
             sequenceVersions,
-        });
-        const response = await fetch(`${backendUrl}/approve-processed-data?username=${username}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body,
+        };
+
+        const response = await this.backendClient.call('approveProcessedData', body, {
+            queries: { username },
+            headers: { 'Content-Type': 'application/json' },
         });
 
-        if (!response.ok) {
-            throw new Error(`Unexpected response: ${response.statusText} - ${await response.text()}`);
-        }
-        return response as unknown as { approved: number };
+        return response.match(
+            () => {
+                return;
+            },
+            (error) => {
+                throw new Error(`Unexpected error while approving: ${JSON.stringify(error)}`);
+            },
+        );
     }
 }
