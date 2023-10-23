@@ -19,7 +19,7 @@ const defaultMetadataSettings = [
     { name: 'field3', type: 'pango_lineage' as const, label: 'Field 3', autocomplete: true, filterValue: '' },
 ];
 
-const dummyConfig = {} as ClientConfig;
+const dummyConfig = { backendUrl: 'dummy', lapisUrl: 'dummy' } as ClientConfig;
 
 function renderSearchForm(
     metadataSettings: Filter[] = [...defaultMetadataSettings],

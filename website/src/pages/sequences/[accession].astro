@@ -2,9 +2,11 @@
 import { getTableData } from './getTableData';
 import { BackButton } from '../../components/Navigation/BackButton';
 import { SequencesContainer } from '../../components/SequenceDetailsPage/SequencesContainer';
+import ErrorBox from '../../components/common/ErrorBox.astro';
 import { getConfig, getReferenceGenomes, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes';
+import { LapisClient } from '../../services/lapisClient';
 
 const config = getConfig();
 const runtimeConfig = getRuntimeConfig();
@@ -12,49 +14,45 @@ const runtimeConfig = getRuntimeConfig();
 // eslint-disable-next-line
 const accession = Astro.params.accession!;
 
-const tableData = await getTableData(accession, config, runtimeConfig.forServer);
+const tableData = await getTableData(accession, config, LapisClient.create());
 
 const genes = getReferenceGenomes().genes.map((g) => g.name);
 ---
 
 <BaseLayout title={accession}>
+    <div class='flex items-center'>
+        <BackButton marginRight={2} client:load />
+        <h1 class='title'>Sequence {accession}</h1>
+        <a href={routes.versionPage(accession)} class='text-xs ml-10'> (See previous versions)</a>
+    </div>
     {
-        tableData === undefined ? (
-            <div class='flex items-center'>
-                <BackButton marginRight={2} client:load />
-                <h1 class='subtitle'>No sequence found with accession: {accession}</h1>
-            </div>
-        ) : (
-            <>
-                <div class='flex items-center'>
-                    <BackButton marginRight={2} client:load />
-                    <h1 class='title'>Sequence {accession}</h1>
-                    <a href={routes.versionPage(accession)} class='text-xs ml-10'>
-                        (See previous versions)
-                    </a>
-                </div>
-                <div class='mt-10'>
-                    <table class='table-auto'>
-                        <tbody>
-                            {tableData.map(({ label, value }) => (
-                                <tr>
-                                    <td class='font-semibold pr-4 align-top'>{label}:</td>
-                                    <td class='break-normal'>{value}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                <div class='mt-10'>
-                    <SequencesContainer
-                        client:load
-                        accession={accession}
-                        config={config}
-                        clientConfig={runtimeConfig.forClient}
-                        genes={genes}
-                    />
-                </div>
-            </>
+        tableData.match(
+            (tableData) => (
+                <>
+                    <div class='mt-10'>
+                        <table class='table-auto'>
+                            <tbody>
+                                {tableData.map(({ label, value }) => (
+                                    <tr>
+                                        <td class='font-semibold pr-4 align-top'>{label}:</td>
+                                        <td class='break-normal'>{value}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class='mt-10'>
+                        <SequencesContainer
+                            client:load
+                            sequenceVersion={accession}
+                            config={config}
+                            clientConfig={runtimeConfig.forClient}
+                            genes={genes}
+                        />
+                    </div>
+                </>
+            ),
+            (error) => <h1 class='subtitle'>Error: {error.detail}</h1>,
         )
     }
 </BaseLayout>

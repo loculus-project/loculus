@@ -73,7 +73,8 @@
             },
             {
                 "name": "age",
-                "type": "integer"
+                "type": "integer",
+                "autocomplete": true
             },
             {
                 "name": "sex",

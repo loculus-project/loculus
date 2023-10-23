@@ -5,7 +5,7 @@ import { type ChangeEvent, type FormEvent, useState } from 'react';
 
 import { withQueryProvider } from './common/withQueryProvider.tsx';
 import { backendApi } from '../services/backendApi.ts';
-import { backendClientHooks } from '../services/backendHooks.ts';
+import { backendClientHooks } from '../services/serviceHooks.ts';
 import type { ClientConfig, HeaderId } from '../types.ts';
 
 type Action = 'submit' | 'revise';

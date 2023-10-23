@@ -15,13 +15,13 @@ import {
 const queryClient = new QueryClient();
 
 type Props = {
-    accession: string;
+    sequenceVersion: string;
     config: Config;
     clientConfig: ClientConfig;
     genes: string[];
 };
 
-export const SequencesContainer: FC<Props> = ({ accession, config, clientConfig, genes }) => {
+export const SequencesContainer: FC<Props> = ({ sequenceVersion, config, clientConfig, genes }) => {
     const [loadSequences, setLoadSequences] = useState(false);
     const [type, setType] = useState<SequenceType>(unalignedSequence);
 
@@ -58,7 +58,7 @@ export const SequencesContainer: FC<Props> = ({ accession, config, clientConfig,
                 )}
                 {loadSequences && (
                     <SequencesViewer
-                        accession={accession}
+                        sequenceVersion={sequenceVersion}
                         config={config}
                         clientConfig={clientConfig}
                         sequenceType={type}

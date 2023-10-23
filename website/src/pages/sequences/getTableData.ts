@@ -1,50 +1,105 @@
 import { sentenceCase } from 'change-case';
+import { err, Result } from 'neverthrow';
 
-import { fetchInsertions, fetchMutations, fetchSequenceDetails } from '../../api';
-import type { Config, InsertionCount, MutationProportionCount, ServerConfig } from '../../types';
+import type { Details, DetailsResponse, MutationProportionCount } from '../../services/lapisApi.ts';
+import type { LapisClient } from '../../services/lapisClient.ts';
+import type { Config, InsertionCount, ProblemDetail } from '../../types';
 
-export async function getTableData(accession: string, config: Config, serverConfig: ServerConfig) {
-    const [data, nucMutations, nucInsertions, aaMutations, aaInsertions] = await Promise.all([
-        fetchSequenceDetails(accession, config, serverConfig),
-        fetchMutations(accession, 'nucleotide', config, serverConfig),
-        fetchInsertions(accession, 'nucleotide', config, serverConfig),
-        fetchMutations(accession, 'aminoAcid', config, serverConfig),
-        fetchInsertions(accession, 'aminoAcid', config, serverConfig),
-    ]);
+export async function getTableData(sequenceVersion: string, config: Config, lapisClient: LapisClient) {
+    return Promise.all([
+        lapisClient.getSequenceDetails(sequenceVersion),
+        lapisClient.getSequenceMutations(sequenceVersion, 'nucleotide'),
+        lapisClient.getSequenceMutations(sequenceVersion, 'aminoAcid'),
+        lapisClient.getSequenceInsertions(sequenceVersion, 'nucleotide'),
+        lapisClient.getSequenceInsertions(sequenceVersion, 'aminoAcid'),
+    ])
+        .then((results) => Result.combine(results))
+        .then(validateDetailsAreNotEmpty(sequenceVersion))
+        .then((result) =>
+            result
+                .map(
+                    ([
+                        details,
+                        nucleotideMutations,
+                        aminoAcidMutations,
+                        nucleotideInsertions,
+                        aminoAcidInsertions,
+                    ]) => ({
+                        details: details.data[0],
+                        nucleotideMutations: nucleotideMutations.data,
+                        aminoAcidMutations: aminoAcidMutations.data,
+                        nucleotideInsertions: nucleotideInsertions.data,
+                        aminoAcidInsertions: aminoAcidInsertions.data,
+                    }),
+                )
+                .map(toTableData(config)),
+        );
+}
 
-    if (data === undefined) {
-        return undefined;
-    }
+function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(sequenceVersion: string) {
+    return (result: Result<T, ProblemDetail>): Result<T, ProblemDetail> => {
+        if (result.isOk()) {
+            const detailsResult = result.value[0];
+            if (detailsResult.data.length === 0) {
+                return err({
+                    type: 'about:blank',
+                    title: 'Not Found',
+                    status: 0,
+                    detail: 'No data found for sequence version ' + sequenceVersion,
+                    instance: '/sequences/' + sequenceVersion,
+                });
+            }
+        }
+        return result;
+    };
+}
 
-    const tableData: { label: string; value: string }[] = [];
-    config.schema.metadata.forEach((metadata) => {
-        tableData.push({
+function toTableData(config: Config) {
+    return ({
+        details,
+        nucleotideMutations,
+        aminoAcidMutations,
+        nucleotideInsertions,
+        aminoAcidInsertions,
+    }: {
+        details: Details;
+        nucleotideMutations: MutationProportionCount[];
+        aminoAcidMutations: MutationProportionCount[];
+        nucleotideInsertions: InsertionCount[];
+        aminoAcidInsertions: InsertionCount[];
+    }) => {
+        const tableData = config.schema.metadata.map((metadata) => ({
             label: sentenceCase(metadata.name),
-            value: data[metadata.name] ?? 'N/A',
-        });
-    });
-    tableData.push(
-        {
-            label: 'Nucleotide substitutions',
-            value: mutationsToCommaSeparatedString(nucMutations, (m) => !m.endsWith('-')),
-        },
-        {
-            label: 'Nucleotide deletions',
-            value: mutationsToCommaSeparatedString(nucMutations, (m) => m.endsWith('-')),
-        },
-        { label: 'Nucleotide insertions', value: insertionsToCommaSeparatedString(nucInsertions) },
-        {
-            label: 'Amino acid substitutions',
-            value: mutationsToCommaSeparatedString(aaMutations, (m) => !m.endsWith('-')),
-        },
-        {
-            label: 'Amino acid deletions',
-            value: mutationsToCommaSeparatedString(aaMutations, (m) => m.endsWith('-')),
-        },
-        { label: 'Amino acid insertions', value: insertionsToCommaSeparatedString(aaInsertions) },
-    );
-
-    return tableData;
+            value: details[metadata.name] ?? 'N/A',
+        }));
+        tableData.push(
+            {
+                label: 'Nucleotide substitutions',
+                value: mutationsToCommaSeparatedString(nucleotideMutations, (m) => !m.endsWith('-')),
+            },
+            {
+                label: 'Nucleotide deletions',
+                value: mutationsToCommaSeparatedString(nucleotideMutations, (m) => m.endsWith('-')),
+            },
+            {
+                label: 'Nucleotide insertions',
+                value: insertionsToCommaSeparatedString(nucleotideInsertions),
+            },
+            {
+                label: 'Amino acid substitutions',
+                value: mutationsToCommaSeparatedString(aminoAcidMutations, (m) => !m.endsWith('-')),
+            },
+            {
+                label: 'Amino acid deletions',
+                value: mutationsToCommaSeparatedString(aminoAcidMutations, (m) => m.endsWith('-')),
+            },
+            {
+                label: 'Amino acid insertions',
+                value: insertionsToCommaSeparatedString(aminoAcidInsertions),
+            },
+        );
+        return tableData;
+    };
 }
 
 function mutationsToCommaSeparatedString(

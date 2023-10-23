@@ -1,5 +1,5 @@
 ---
-import { getData, getMetadataSettings, SearchStatus } from './search';
+import { getData, getMetadataSettings } from './search';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { Pagination } from '../../components/SearchPage/Pagination';
 import { SearchForm } from '../../components/SearchPage/SearchForm';
@@ -28,9 +28,12 @@ const data = await getData(metadataSettings, offset, pageSize);
     <h1 class='title'>Search</h1>
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         {
-            data.status === SearchStatus.ERROR ? (
-                <ErrorFeedback message='Error while fetching data' client:only='react' />
-            ) : null
+            data.isErr() && (
+                <ErrorFeedback
+                    message={'Error while fetching data: ' + data._unsafeUnwrapErr().detail}
+                    client:only='react'
+                />
+            )
         }
 
         <div class='md:w-72'>
@@ -39,19 +42,22 @@ const data = await getData(metadataSettings, offset, pageSize);
 
         <div class='flex-1'>
             {
-                data.status === SearchStatus.OK ? (
+                data.isOk() && (
                     <>
                         <div class='mb-1'>
-                            Search returned {data.totalCount.toLocaleString()}
-                            sequence{data.totalCount === 1 ? '' : 's'}
+                            Search returned {data._unsafeUnwrap().totalCount.toLocaleString()}
+                            sequence{data._unsafeUnwrap().totalCount === 1 ? '' : 's'}
                         </div>
-                        <Table data={data.data} config={config} client:load />
+                        <Table data={data._unsafeUnwrap().data} config={config} client:load />
 
                         <div class='mt-4 flex justify-center'>
-                            <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)} />
+                            <Pagination
+                                client:only='react'
+                                count={Math.ceil(data._unsafeUnwrap().totalCount / pageSize)}
+                            />
                         </div>
                     </>
-                ) : null
+                )
             }
         </div>
     </div>

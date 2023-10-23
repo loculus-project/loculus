@@ -170,6 +170,6 @@ export const problemDetail = z.object({
     title: z.string(),
     status: z.number(),
     detail: z.string(),
-    instance: z.string(),
+    instance: z.string().optional(),
 });
 export type ProblemDetail = z.infer<typeof problemDetail>;
