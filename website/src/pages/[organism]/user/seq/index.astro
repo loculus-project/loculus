@@ -1,9 +1,9 @@
 ---
-import { ErrorFeedback } from '../../../components/ErrorFeedback';
-import UserSequences from '../../../components/UserSequenceList/UserSequences.astro';
-import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { BackendClient } from '../../../services/backendClient';
-import { getAccessToken } from '../../../utils/getAccessToken';
+import { ErrorFeedback } from '../../../../components/ErrorFeedback';
+import UserSequences from '../../../../components/UserSequenceList/UserSequences.astro';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { BackendClient } from '../../../../services/backendClient';
+import { getAccessToken } from '../../../../utils/getAccessToken';
 
 const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;

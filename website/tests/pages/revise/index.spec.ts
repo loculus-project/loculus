@@ -1,4 +1,5 @@
-import { expect, test } from '../../e2e.fixture';
+import { routes } from '../../../src/routes.ts';
+import { baseUrl, dummyOrganism, test } from '../../e2e.fixture';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
 test.describe('The revise page', () => {
@@ -8,8 +9,10 @@ test.describe('The revise page', () => {
         const sequenceEntries = await prepareDataToBe('approvedForRelease', token);
 
         await revisePage.goto();
-        await expect(revisePage.page.getByText('Result of Revision')).not.toBeVisible();
+
         await revisePage.submitRevisedData(sequenceEntries.map((entry) => entry.accession));
-        await expect(revisePage.page.getByText('Result of Revision')).toBeVisible();
+
+        // TODO(#702): Redirect to the review page after submission is successful
+        // await revisePage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
     });
 });

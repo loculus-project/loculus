@@ -110,6 +110,8 @@ const InnerDataUploadForm = ({
                 revise({ metadataFile, sequenceFile });
                 break;
         }
+        // TODO(#702): Redirect to the review page after submission is successful
+        // window.location.href = routes.userSequenceReviewPage(organism);
     };
 
     return (

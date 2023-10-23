@@ -8,7 +8,6 @@ import {
     dataUseTermsHistoryEntry,
     problemDetail,
     sequenceEntryStatus,
-    sequenceEntryStatusNames,
     sequenceEntryToEdit,
     submissionIdMapping,
     submitFiles,
@@ -115,7 +114,7 @@ const getSequencesEndpoint = makeEndpoint({
         {
             name: 'statusesFilter',
             type: 'Query',
-            schema: z.array(sequenceEntryStatusNames).optional(),
+            schema: z.string().optional(),
         },
     ],
     response: z.array(sequenceEntryStatus),
