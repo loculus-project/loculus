@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 @Component
 class QueryPreconditionValidator {
 
-    fun validate(submitter: String, sequenceVersions: List<SequenceVersion>, status: Status) {
+    fun validate(submitter: String, sequenceVersions: List<SequenceVersion>, statuses: List<Status>) {
         val sequences = SequencesTable
             .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter, SequencesTable.status)
             .select(
@@ -20,7 +20,7 @@ class QueryPreconditionValidator {
             )
 
         validateSequenceVersionsExist(sequences, sequenceVersions)
-        validateSequencesAreInState(sequences, status)
+        validateSequencesAreInStates(sequences, statuses)
         validateUserIsAllowedToEditSequences(sequences, submitter)
     }
 
@@ -34,7 +34,7 @@ class QueryPreconditionValidator {
             )
 
         validateSequenceIdExist(sequences, sequenceIds)
-        validateSequencesAreInState(sequences, SILO_READY)
+        validateSequencesAreInStates(sequences, listOf(SILO_READY))
         validateUserIsAllowedToEditSequences(sequences, submitter)
     }
 
@@ -54,14 +54,16 @@ class QueryPreconditionValidator {
         throw UnprocessableEntityException("Sequence versions $sequenceVersionsNotFound do not exist")
     }
 
-    private fun validateSequencesAreInState(sequences: Query, status: Status) {
+    private fun validateSequencesAreInStates(sequences: Query, statuses: List<Status>) {
         val sequencesNotProcessed = sequences
-            .filter { it[SequencesTable.status] != status.name }
+            .filter {
+                statuses.none { status -> it[SequencesTable.status] == status.name }
+            }
             .map { "${it[SequencesTable.sequenceId]}.${it[SequencesTable.version]} - ${it[SequencesTable.status]}" }
 
         if (sequencesNotProcessed.isNotEmpty()) {
             throw UnprocessableEntityException(
-                "Sequence versions are in not in state $status: " +
+                "Sequence versions are in not in state $statuses: " +
                     sequencesNotProcessed.joinToString(", "),
             )
         }

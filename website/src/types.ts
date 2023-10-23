@@ -1,7 +1,5 @@
 import z from 'zod';
 
-export type PangoLineage = string;
-
 export type BaseType = 'nucleotide' | 'aminoAcid';
 
 export type SequenceType =
@@ -74,11 +72,6 @@ const sequenceStatusNames = z.union([
 export type SequenceStatusNames = z.infer<typeof sequenceStatusNames>;
 const statusThatAllowsReview = z.union([z.literal('NEEDS_REVIEW'), z.literal('PROCESSED')]);
 
-export type SequenceStatus = SequenceVersion & {
-    status: SequenceStatusNames;
-    isRevocation: boolean;
-};
-
 const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
 
@@ -93,11 +86,15 @@ const processingAnnotation = z.object({
 });
 export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 
-export const metadataField = z.union([z.string(), z.number(), z.date(), z.string()]);
+export const metadataField = z.union([z.string(), z.number(), z.date()]);
 export type MetadataField = z.infer<typeof metadataField>;
 
 const metadataRecord = z.record(metadataField);
 export type MetadataRecord = z.infer<typeof metadataRecord>;
+
+export const sequenceIds = z.object({
+    sequenceIds: z.array(z.number()),
+});
 
 export const sequenceVersion = z.object({
     sequenceId: z.number(),
@@ -105,16 +102,34 @@ export const sequenceVersion = z.object({
 });
 export type SequenceVersion = z.infer<typeof sequenceVersion>;
 
-export type HeaderId = SequenceVersion & {
-    customId: string;
-};
+export const sequenceVersionsObject = z.object({
+    sequenceVersions: z.array(sequenceVersion),
+});
 
-export type UnprocessedData = SequenceVersion & {
-    data: {
-        metadata: { [key in string]: string | number | PangoLineage | Date };
-        unalignedNucleotideSequences: { [key in string]: string };
-    };
-};
+export const sequenceStatus = sequenceVersion.merge(
+    z.object({
+        status: sequenceStatusNames,
+        isRevocation: z.boolean(),
+    }),
+);
+export type SequenceStatus = z.infer<typeof sequenceStatus>;
+
+export const headerId = sequenceVersion.merge(
+    z.object({
+        customId: z.string(),
+    }),
+);
+export type HeaderId = z.infer<typeof headerId>;
+
+export const unprocessedData = sequenceVersion.merge(
+    z.object({
+        data: z.object({
+            metadata: metadataRecord,
+            unalignedNucleotideSequences: z.record(z.string()),
+        }),
+    }),
+);
+export type UnprocessedData = z.infer<typeof unprocessedData>;
 
 export type Sequence = SequenceVersion & {
     data: any;
@@ -142,3 +157,18 @@ export const sequenceReview = sequenceVersion.merge(
     }),
 );
 export type SequenceReview = z.infer<typeof sequenceReview>;
+
+export const submitFiles = z.object({
+    username: z.string(),
+    metadataFile: z.instanceof(File),
+    sequenceFile: z.instanceof(File),
+});
+
+export const problemDetail = z.object({
+    type: z.string(),
+    title: z.string(),
+    status: z.number(),
+    detail: z.string(),
+    instance: z.string(),
+});
+export type ProblemDetail = z.infer<typeof problemDetail>;

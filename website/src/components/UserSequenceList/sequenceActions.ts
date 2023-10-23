@@ -1,6 +1,6 @@
-import { ok, type Result } from 'neverthrow';
+import { err, ok, type Result } from 'neverthrow';
 
-import { clientFetch } from '../../api.ts';
+import { ClientSideBackendClient } from '../../services/clientSideBackendClient.ts';
 import { type ClientConfig, type SequenceStatus, type SequenceVersion } from '../../types.ts';
 import { extractSequenceVersion, getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 
@@ -18,23 +18,14 @@ export type BulkSequenceAction = {
 
 const deleteAction: BulkSequenceAction = {
     name: 'delete',
-    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig) =>
-        clientFetch({
-            endpoint: `/delete-sequences?sequenceIds=${selectedSequences
-                .map((sequence) => sequence.sequenceId)
-                .join(',')}`,
-            zodSchema: undefined,
-            options: {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sequenceIds: selectedSequences,
-                }),
-            },
-            backendUrl: clientConfig.backendUrl,
-        }),
+    actionOnSequences: async (selectedSequences, clientConfig, username) =>
+        ClientSideBackendClient.create(clientConfig)
+            .call(
+                'deleteSequences',
+                { sequenceVersions: selectedSequences.map(extractSequenceVersion) },
+                { queries: { username } },
+            )
+            .then((result) => result.mapErr((error) => JSON.stringify(error))),
     confirmationDialog: {
         message: (selectedSequences) =>
             `Are you sure you want to delete the selected sequence ${pluralizeWord(
@@ -46,25 +37,21 @@ const deleteAction: BulkSequenceAction = {
 
 const approveAction: BulkSequenceAction = {
     name: 'approve',
-    actionOnSequences: async (
-        selectedSequences: SequenceStatus[],
-        clientConfig: ClientConfig,
-        username: string,
-    ): Promise<Result<never, string>> => {
-        return clientFetch({
-            endpoint: `/approve-processed-data?username=${username}`,
-            zodSchema: undefined,
-            options: {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+    actionOnSequences: async (selectedSequences, clientConfig, username) => {
+        return ClientSideBackendClient.create(clientConfig)
+            .call(
+                'approveProcessedData',
+                { sequenceVersions: selectedSequences.map(extractSequenceVersion) },
+                {
+                    queries: { username },
                 },
-                body: JSON.stringify({
-                    sequenceVersions: selectedSequences.map(extractSequenceVersion),
-                }),
-            },
-            backendUrl: clientConfig.backendUrl,
-        });
+            )
+            .then((result) =>
+                result.match(
+                    () => ok(undefined as never) as Result<never, string>,
+                    (error) => err(JSON.stringify(error)),
+                ),
+            );
     },
     confirmationDialog: {
         message: (selectedSequences) =>
@@ -77,40 +64,40 @@ const approveAction: BulkSequenceAction = {
 
 const confirmRevocationAction: BulkSequenceAction = {
     name: 'confirmRevocation',
-    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig) =>
-        clientFetch({
-            endpoint: `/confirm-revocation`,
-            zodSchema: undefined,
-            options: {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
+    actionOnSequences: async (selectedSequences, clientConfig, username) =>
+        ClientSideBackendClient.create(clientConfig)
+            .call(
+                'confirmRevocation',
+                {
                     sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId),
-                }),
-            },
-            backendUrl: clientConfig.backendUrl,
-        }),
+                },
+                { queries: { username } },
+            )
+            .then((result) =>
+                result.match(
+                    () => ok(undefined as never) as Result<never, string>,
+                    (error) => err(JSON.stringify(error)),
+                ),
+            ),
 };
 
 const revokeAction: BulkSequenceAction = {
     name: 'revoke',
-    actionOnSequences: async (selectedSequences: SequenceStatus[], clientConfig: ClientConfig, username: string) => {
-        return clientFetch({
-            endpoint: `/revoke?username=${username}`,
-            zodSchema: undefined,
-            options: {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+    actionOnSequences: async (selectedSequences, clientConfig, username) => {
+        return ClientSideBackendClient.create(clientConfig)
+            .call(
+                'revokeSequences',
+                { sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId) },
+                {
+                    queries: { username },
                 },
-                body: JSON.stringify({
-                    sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId),
-                }),
-            },
-            backendUrl: clientConfig.backendUrl,
-        });
+            )
+            .then((result) =>
+                result.match(
+                    () => ok(undefined as never) as Result<never, string>,
+                    (error) => err(JSON.stringify(error)),
+                ),
+            );
     },
     confirmationDialog: {
         message: (selectedSequences) =>

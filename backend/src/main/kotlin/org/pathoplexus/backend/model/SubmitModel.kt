@@ -2,6 +2,7 @@ package org.pathoplexus.backend.model
 
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
+import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.OriginalData
@@ -57,7 +58,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
 
     private fun metadataMap(metadataFile: MultipartFile): Map<String, Map<String, String>> {
         if (metadataFile.originalFilename == null || !metadataFile.originalFilename?.endsWith(".tsv")!!) {
-            throw UnprocessableEntityException("Metadata file must have extension .tsv")
+            throw BadRequestException("Metadata file must have extension .tsv")
         }
 
         val csvParser = CSVParser(
@@ -100,7 +101,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
 
     private fun sequenceMap(sequenceFile: MultipartFile): Map<String, String> {
         if (sequenceFile.originalFilename == null || !sequenceFile.originalFilename?.endsWith(".fasta")!!) {
-            throw UnprocessableEntityException("Sequence file must have extension .fasta")
+            throw BadRequestException("Sequence file must have extension .fasta")
         }
 
         val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
