@@ -22,21 +22,25 @@ test.describe('The user sequence page', () => {
                 ...sequenceEntryWithErrors,
                 status: 'HAS_ERRORS',
                 isRevocation: false,
+                submissionId: 'custom1',
             },
             {
                 ...sequenceEntryAwaitingApproval,
                 status: 'AWAITING_APPROVAL',
                 isRevocation: false,
+                submissionId: 'custom1',
             },
             {
                 ...sequenceEntryReleasable,
                 status: 'APPROVED_FOR_RELEASE',
                 isRevocation: false,
+                submissionId: 'custom1',
             },
             {
                 ...sequenceEntryToBeRevised,
                 status: 'APPROVED_FOR_RELEASE',
                 isRevocation: false,
+                submissionId: 'custom1',
             },
         ]);
 

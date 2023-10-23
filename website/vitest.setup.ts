@@ -33,7 +33,7 @@ export const testConfig = {
 export const testOrganism = 'testOrganism';
 export const testAccessToken = 'someTestToken';
 
-const testServer = setupServer();
+export const testServer = setupServer();
 
 const backendRequestMocks = {
     submit: (statusCode: number = 200, response: SubmissionIdMapping[] | any = []) => {
@@ -48,6 +48,33 @@ const backendRequestMocks = {
     getGroupsOfUser: (statusCode: number = 200, response: any = [{ groupName: DEFAULT_GROUP_NAME }]) => {
         testServer.use(
             http.get(`${testConfig.serverSide.backendUrl}/user/groups`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
+            }),
+        );
+    },
+    getSequences: (statusCode: number = 200, response: any = []) => {
+        testServer.use(
+            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-sequences`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
+            }),
+        );
+    },
+    deleteSequences: (statusCode: number = 200, response: any = []) => {
+        testServer.use(
+            http.delete(`${testConfig.serverSide.backendUrl}/${testOrganism}/delete-sequence-entry-versions`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
+            }),
+        );
+    },
+    approveSequences: (statusCode: number = 200, response: any = []) => {
+        testServer.use(
+            http.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/approve-processed-data`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });

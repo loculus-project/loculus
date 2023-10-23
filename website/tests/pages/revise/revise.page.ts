@@ -3,10 +3,10 @@ import { unlinkSync, writeFileSync } from 'fs';
 import type { Locator, Page } from '@playwright/test';
 import { v4 as uuid } from 'uuid';
 
+import { routes } from '../../../src/routes.ts';
 import type { Accession } from '../../../src/types/backend.ts';
 import { baseUrl, dummyOrganism, sequencesTestFile } from '../../e2e.fixture';
 import { createModifiedFileContent } from '../../util/createFileContent.ts';
-import { routes } from '../../../src/routes.ts';
 
 export class RevisePage {
     public readonly submitButton: Locator;
@@ -28,7 +28,6 @@ export class RevisePage {
         try {
             await Promise.all([this.uploadSequenceData(), this.uploadRevisedMetadata(accessions)]);
             await this.submitButton.click();
-            await this.page.waitForSelector('text=Result of Revision');
         } finally {
             unlinkSync(this.temporaryMetadataFile);
         }
