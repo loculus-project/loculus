@@ -7,14 +7,24 @@ import Trash from '~icons/bxs/trash'
 import Note from '~icons/fluent/note-24-filled'
 import {ClipLoader} from "react-spinners";
 
+import { Tooltip } from 'react-tooltip'
+
 const KeyValueComponent = ({ keyName, value,extraStyle , keyStyle, warningNote, errorNote}) => {
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle? keyStyle:"text-gray-500 uppercase text-xs"}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>{value}
-            {warningNote && <span className="text-yellow-500"><Note   className="inline-block"/></span>}
+            {warningNote && <span className="text-yellow-500"><Note   className="inline-block"
+            data-tooltip-content="[Note about what this warning is about]"
+            data-tooltip-id="hi"
+            /></span>}
             {errorNote && <span className="text-red-500"><Note
-            className="inline-block" /></span>}
+            className="inline-block" 
+            data-tooltip-content="[Note about what this error is about]"
+            data-tooltip-id="hi"
+
+            
+            /></span>}
             </span>
         </div>
     );
@@ -136,10 +146,16 @@ const ReviewCard = ({ data }) => {
         <div className="p-3 border rounded-md shadow-lg relative transition-all duration-500">
             <div className="absolute top-3 right-3 ">
                <div className="text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block">
-                <Edit />
+                <Edit 
+                 data-tooltip-content = "Edit this sequence entry" 
+                 data-tooltip-id="hi"
+                />
                 </div>
                 <div className="text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block ml-2">
-        <Trash />
+        <Trash 
+        data-tooltip-content = "Discard this sequence entry" 
+        data-tooltip-id="hi"/>
+
         </div>
 
             </div>
@@ -221,6 +237,7 @@ const ReviewPage = () => {
                         processSequence(data[i+j])
                     }
                 }
+                setTestData([...data]);
             }
             
 
@@ -230,16 +247,26 @@ const ReviewPage = () => {
     }, []);
 
     // count number of sequences with warnings and errors
+    let processedCount = 0;
+    let unProcessedCount = 0;
+    let processingCount = 0;
     let warningCount = 0;
     let errorCount = 0;
     testData.forEach((sequence) => {
         if (sequence.processedData) {
+            processedCount++;
             if (sequence.processedData.warnings) {
                 warningCount += sequence.processedData.warnings.length;
             }
             if (sequence.processedData.errors) {
                 errorCount += sequence.processedData.errors.length;
             }
+        }
+        if (sequence.status == "received") {
+            unProcessedCount++;
+        }
+        if (sequence.status == "processing") {
+            processingCount++;
         }
     });
 
@@ -264,7 +291,32 @@ const ReviewPage = () => {
 
     return (
         <div>
-            <div className="h-10">
+            <Tooltip id="hi" className='z-50' place="top" effect="solid" />
+            <div className='float-right'>
+               {/* discard all sequences with errors */}
+               {errorCount>0 &&
+               <button className="border rounded-md p-1 bg-gray-500 text-white px-2"
+                    onClick={()=>{
+                        setTestData(testData.filter(item=>item.processedData&&item.processedData.errors.length==0))
+                    }
+                    }
+                    >Discard {errorCount} sequences with errors</button>
+                }
+                { processedCount>0 &&
+                    <button className="border rounded-md p-1 bg-gray-500 text-white px-2 ml-2"
+                    >
+                        Release {processedCount - errorCount} sequences
+                    </button>
+                    }
+
+            </div>
+            <div className="h-20">
+                <div>
+                {processingCount>0 &&
+                   <ClipLoader color="#333333" loading={true} size={20} className='mr-2 inline-block' />
+                   }
+                   {parseInt(processedCount)} of {testData.length} sequences processed. 
+                </div>
             {
                 (showThese.length==1 && showThese[0]=="error") ?
                 <div>
@@ -277,7 +329,10 @@ const ReviewPage = () => {
 
                 </div>
                 :
-                errorCount>0 && <div className="text-red-500">
+                 <div className="">
+                   
+                   <div>
+                   
                     {errorCount} sequences with errors: <button className="border rounded-md p-1 bg-red-500 text-white"
                     onClick={()=>{
                         setShowThese(["error"])
@@ -285,6 +340,7 @@ const ReviewPage = () => {
                     }
                     >Filter to errors</button>
 
+                </div>
                 </div>
             }
             </div>
