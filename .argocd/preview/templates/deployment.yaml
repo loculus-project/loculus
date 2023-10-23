@@ -62,22 +62,6 @@ spec:
             - name: repo-volume
               mountPath: /config
               subPath: website/tests/config
-        - name: backend-{{ .Values.shortbranch }}
-          image: ghcr.io/pathoplexus/backend:{{ .Values.branch }}
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 8079
-          args:
-            - "--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus"
-            - "--spring.datasource.username=postgres"
-            - "--spring.datasource.password=unsecure"
-            - "--backend.config.path=/repo/website/tests/config/config.json"
-          volumeMounts:
-            - name: repo-volume
-              mountPath: /repo
-            - name: repo-volume
-              mountPath: /workspace/log
-              subPath: mylog/
         - name: database-{{ .Values.shortbranch }}
           image: postgres:latest
           ports:
