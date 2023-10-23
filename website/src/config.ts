@@ -3,8 +3,8 @@ import path from 'path';
 
 import { getClientLogger } from './api';
 import type { ClientConfig, Config, ReferenceGenomes, RuntimeConfig, ServerConfig, ServiceUrls } from './types';
-import netlifyConfig from '../netlifyConfig/config.json';
-import netlifyRuntimeConfig from '../netlifyConfig/runtime_config.json';
+import netlifyConfig from '../netlifyConfig/config.json' assert { type: 'json' };
+import netlifyRuntimeConfig from '../netlifyConfig/runtime_config.json' assert { type: 'json' };
 
 let _config: Config | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;

@@ -1,4 +1,7 @@
-import type { UnprocessedData } from '../../src/types.ts';
+import axios, { type AxiosError } from 'axios';
+
+import { type UnprocessedData } from '../../src/types.ts';
+import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
 import { backendUrl } from '../e2e.fixture.ts';
 
 export const fakeProcessingPipeline = async ({
@@ -51,32 +54,52 @@ export const fakeProcessingPipeline = async ({
             },
         },
     };
+    try {
+        const response = await axios.post(`${backendUrl}/submit-processed-data`, body, {
+            headers: {
+                'Content-Type': 'application/x-ndjson',
+            },
+        });
 
-    const response = await fetch(`${backendUrl}/submit-processed-data`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-ndjson',
-        },
-        body: JSON.stringify(body),
-    });
-    if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`Unexpected response with status '${response.statusText}': ${body}`);
+        if (!(response.status === 204)) {
+            throw new Error(JSON.stringify(response.data));
+        }
+    } catch (error) {
+        handleError(error);
     }
 };
 
 export async function queryUnprocessedData(countOfSequences: number) {
-    const response = await fetch(`${backendUrl}/extract-unprocessed-data?numberOfSequences=${countOfSequences}`, {
-        method: 'POST',
-    });
+    try {
+        const response = await axios.post(
+            `${backendUrl}/extract-unprocessed-data?numberOfSequences=${countOfSequences}`,
+            undefined,
+            {
+                headers: {
+                    'Content-Type': 'application/x-ndjson',
+                },
+            },
+        );
 
-    if (!response.ok) {
-        throw new Error(`Unexpected response: ${response.statusText}`);
+        if (!(response.status === 200)) {
+            throw new Error('Request failed: ' + JSON.stringify(response.data));
+        }
+
+        const unprocessedDataAsNdjson = await response.data;
+        return unprocessedDataAsNdjson
+            .split('\n')
+            .filter((line: string) => line.length > 0)
+            .map((line: string): UnprocessedData => JSON.parse(line));
+    } catch (error) {
+        handleError(error);
     }
-
-    const unprocessedDataAsNdjson = (await response.text()) as string;
-    return unprocessedDataAsNdjson
-        .split('\n')
-        .filter((line) => line.length > 0)
-        .map((line): UnprocessedData => JSON.parse(line));
 }
+
+const handleError = (error: unknown) => {
+    const axiosError = error as AxiosError;
+    if (axiosError.response !== undefined) {
+        throw new Error('Error: ' + JSON.stringify(axiosError.response.data));
+    } else {
+        throw new Error('Unknown error from backend: ' + stringifyMaybeAxiosError(axiosError));
+    }
+};
