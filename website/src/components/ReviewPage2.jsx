@@ -5,6 +5,7 @@ import QuestionMark from '~icons/fluent/tag-question-mark-24-filled'
 import Edit from '~icons/bxs/edit'
 import Trash from '~icons/bxs/trash'
 import Note from '~icons/fluent/note-24-filled'
+import Arrow from '~icons/mdi/arrow'
 import {ClipLoader} from "react-spinners";
 
 import { Tooltip } from 'react-tooltip'
@@ -145,13 +146,19 @@ const ReviewCard = ({ data }) => {
         
         <div className="p-3 border rounded-md shadow-lg relative transition-all duration-500">
             <div className="absolute top-3 right-3 ">
-               <div className="text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block">
+            <div className="text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block mr-2  text-xl">
+                <Arrow 
+                 data-tooltip-content = "Release this sequence entry" 
+                 data-tooltip-id="hi"
+                />
+                </div>
+               <div className="text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block  text-xl">
                 <Edit 
                  data-tooltip-content = "Edit this sequence entry" 
                  data-tooltip-id="hi"
                 />
                 </div>
-                <div className="text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block ml-2">
+                <div className="text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block ml-2 text-xl">
         <Trash 
         data-tooltip-content = "Discard this sequence entry" 
         data-tooltip-id="hi"/>
@@ -305,13 +312,13 @@ const ReviewPage = () => {
                 { processedCount>0 &&
                     <button className="border rounded-md p-1 bg-gray-500 text-white px-2 ml-2"
                     >
-                        Release {processedCount - errorCount} sequences
+                        Release {processedCount - errorCount} sequences without errors
                     </button>
                     }
 
             </div>
-            <div className="h-20">
-                <div>
+            <div className="h-24">
+                <div className='py-2'>
                 {processingCount>0 &&
                    <ClipLoader color="#333333" loading={true} size={20} className='mr-2 inline-block' />
                    }
@@ -329,11 +336,14 @@ const ReviewPage = () => {
 
                 </div>
                 :
+
                  <div className="">
-                   
+                   {errorCount>0 &&
                    <div>
                    
-                    {errorCount} sequences with errors: <button className="border rounded-md p-1 bg-red-500 text-white"
+                    <span
+                    className="text-red-500"
+                    >{errorCount} sequences with errors:</span> <button className="border rounded-md p-1 bg-gray-500 text-white"
                     onClick={()=>{
                         setShowThese(["error"])
                     }
@@ -341,6 +351,7 @@ const ReviewPage = () => {
                     >Filter to errors</button>
 
                 </div>
+}
                 </div>
             }
             </div>
