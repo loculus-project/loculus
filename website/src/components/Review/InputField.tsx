@@ -1,5 +1,6 @@
-import UndoTwoToneIcon from '@mui/icons-material/UndoTwoTone';
 import { type FC, useState } from 'react';
+
+import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
 export type KeyValuePair = {
     value: string;

@@ -1,10 +1,9 @@
-import DangerousTwoToneIcon from '@mui/icons-material/DangerousTwoTone';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import NoSsr from '@mui/material/NoSsr';
 import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
 
 import { InputField, type KeyValuePair, type Row } from './InputField.tsx';
+import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
+import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
 
 type EditableRowProps = {
     row: Row;
@@ -34,17 +33,16 @@ const ErrorAndWarningIcons: FC<ErrorAndWarningIconsProps> = ({ row }) => {
     return (
         <>
             {row.errors.length > 0 ? (
-                <div className='tooltip tooltip-error whitespace-pre-line' data-tip={row.errors.join('\n')}>
-                    <NoSsr>
-                        <DangerousTwoToneIcon color='error' />
-                    </NoSsr>
+                <div className='tooltip tooltip-error whitespace-pre-line text-error' data-tip={row.errors.join('\n')}>
+                    <DangerousTwoToneIcon />
                 </div>
             ) : null}
             {row.warnings.length > 0 ? (
-                <div className='tooltip tooltip-warning whitespace-pre-line' data-tip={row.warnings.join('\n')}>
-                    <NoSsr>
-                        <WarningAmberIcon color='warning' />
-                    </NoSsr>
+                <div
+                    className='tooltip tooltip-warning whitespace-pre-line text-warning'
+                    data-tip={row.warnings.join('\n')}
+                >
+                    <WarningAmberIcon />
                 </div>
             ) : null}
         </>
