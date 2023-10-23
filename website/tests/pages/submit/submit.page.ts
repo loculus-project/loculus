@@ -20,7 +20,7 @@ export class SubmitPage {
     public readonly userField: Locator;
     public readonly submitButton: Locator;
     private readonly testSequenceCount: number = readFileSync(metadataTestFile, 'utf-8').split('\n').length - 2;
-    private readonly backendClient = new BackendClient(backendUrl, e2eLogger);
+    private readonly backendClient = BackendClient.create(backendUrl, e2eLogger);
 
     constructor(public readonly page: Page) {
         this.submitButton = page.getByRole('button', { name: 'Submit' });
@@ -110,13 +110,8 @@ export class SubmitPage {
             headers: { 'Content-Type': 'application/json' },
         });
 
-        return response.match(
-            () => {
-                return;
-            },
-            (error) => {
-                throw new Error(`Unexpected error while approving: ${JSON.stringify(error)}`);
-            },
-        );
+        if (response.isErr()) {
+            throw new Error(`Unexpected error while approving: ${JSON.stringify(response.error)}`);
+        }
     }
 }

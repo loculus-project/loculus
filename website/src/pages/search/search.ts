@@ -1,21 +1,19 @@
+import { Result } from 'neverthrow';
+
 import type { TableSequenceData } from '../../components/SearchPage/Table';
-import { getConfig, getRuntimeConfig } from '../../config';
-import { getInstanceLogger } from '../../logger';
-import type { Filter } from '../../types';
-
-const logger = getInstanceLogger('search.ts');
-
-export enum SearchStatus {
-    OK,
-    ERROR,
-}
+import { getConfig } from '../../config';
+import { LapisClient } from '../../services/lapisClient';
+import type { Filter, ProblemDetail } from '../../types';
 
 export type SearchResponse = {
-    status: SearchStatus;
     data: TableSequenceData[];
     totalCount: number;
 };
-export const getData = async (metadataFilter: Filter[], offset: number, limit: number): Promise<SearchResponse> => {
+export const getData = async (
+    metadataFilter: Filter[],
+    offset: number,
+    limit: number,
+): Promise<Result<SearchResponse, ProblemDetail>> => {
     const searchFilters = metadataFilter
         .filter((metadata) => metadata.filterValue !== '')
         .reduce((acc: Record<string, string>, metadata) => {
@@ -23,62 +21,24 @@ export const getData = async (metadataFilter: Filter[], offset: number, limit: n
             return acc;
         }, {});
 
-    const serverConfig = getRuntimeConfig().forServer;
-    const detailsQuery = `${serverConfig.lapisUrl}/details`;
-    const totalCountQuery = `${serverConfig.lapisUrl}/aggregated`;
-
-    const headers = {
-        'Content-Type': 'application/json',
-    };
-
     const config = getConfig();
 
-    try {
-        const [detailsResponse, totalCountResponse] = await Promise.all([
-            fetch(detailsQuery, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify({
-                    fields: [...config.schema.tableColumns, config.schema.primaryKey],
-                    limit,
-                    offset,
-                    ...searchFilters,
-                }),
-            }),
-            fetch(totalCountQuery, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(searchFilters),
-            }),
-        ]);
+    const lapisClient = LapisClient.create();
 
-        if (!detailsResponse.ok) {
-            logger.error(
-                `Failed to fetch details with status ${detailsResponse.status}: ${await detailsResponse.text()}`,
-            );
-        }
+    const aggregateResult = await lapisClient.call('aggregated', searchFilters);
+    const detailsResult = await lapisClient.call('details', {
+        fields: [...config.schema.tableColumns, config.schema.primaryKey],
+        limit,
+        offset,
+        ...searchFilters,
+    });
 
-        if (!totalCountResponse.ok) {
-            logger.error(
-                `Failed to fetch total count with status ${
-                    totalCountResponse.status
-                }: ${await totalCountResponse.text()}`,
-            );
-        }
-
+    return Result.combine([detailsResult, aggregateResult]).map(([details, aggregate]) => {
         return {
-            status: detailsResponse.ok && totalCountResponse.ok ? SearchStatus.OK : SearchStatus.ERROR,
-            data: (await detailsResponse.json()).data ?? [],
-            totalCount: (await totalCountResponse.json()).data[0].count,
+            data: details.data,
+            totalCount: aggregate.data[0].count,
         };
-    } catch (error) {
-        logger.error(`Failed to fetch data with error ${(error as Error).message}: ${(error as Error).cause}`);
-        return {
-            status: SearchStatus.ERROR,
-            data: [],
-            totalCount: NaN,
-        };
-    }
+    });
 };
 
 export const getMetadataSettings = async (getSearchParams: (param: string) => string): Promise<Filter[]> => {

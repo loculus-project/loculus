@@ -28,7 +28,7 @@ const testResponse: HeaderId[] = [
 
 describe('SubmitForm', () => {
     test('should handle file upload and server response', async () => {
-        mockRequest.submit(200, testResponse);
+        mockRequest.backend.submit(200, testResponse);
 
         const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
 
@@ -46,7 +46,7 @@ describe('SubmitForm', () => {
     });
 
     test('should answer with feedback that a file is missing', async () => {
-        mockRequest.submit(200, testResponse);
+        mockRequest.backend.submit(200, testResponse);
 
         const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
 
@@ -64,7 +64,7 @@ describe('SubmitForm', () => {
     });
 
     test('should unexpected error with proper error message', async () => {
-        mockRequest.submit(500, 'a weird, unexpected test error');
+        mockRequest.backend.submit(500, 'a weird, unexpected test error');
 
         await submitAndExpectErrorMessageContains('Received unexpected message from backend');
     });
@@ -77,7 +77,7 @@ describe('SubmitForm', () => {
             status: 422,
             type: 'dummy type',
         };
-        mockRequest.submit(422, problemDetail);
+        mockRequest.backend.submit(422, problemDetail);
 
         const expectedErrorMessage = `The submitted file content was invalid: ${problemDetail.detail}`;
         await submitAndExpectErrorMessageContains(expectedErrorMessage);

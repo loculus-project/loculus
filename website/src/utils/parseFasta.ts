@@ -1,9 +1,11 @@
+import z from 'zod';
+
 export type FastaEntry = {
     name: string;
     sequence: string;
 };
 
-export function parseFasta(fasta: string): FastaEntry[] {
+export function parseFasta(fasta: string) {
     const fastaEntries: FastaEntry[] = [];
     let currentEntry: FastaEntry | null = null;
 
@@ -25,3 +27,5 @@ export function parseFasta(fasta: string): FastaEntry[] {
 
     return fastaEntries;
 }
+
+export const fastaEntries = z.string().transform(parseFasta);

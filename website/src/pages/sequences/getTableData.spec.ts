@@ -1,15 +1,10 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
+import { err, ok } from 'neverthrow';
+import { beforeEach, describe, expect, test } from 'vitest';
 
 import { getTableData } from './getTableData';
-import { fetchInsertions, fetchMutations, fetchSequenceDetails } from '../../api';
-import type { Config, ServerConfig } from '../../types';
-
-vi.mock('../../api');
-
-const serverConfig = {
-    lapisUrl: 'lapis host',
-    backendUrl: 'backend url',
-} as ServerConfig;
+import { mockRequest, testConfig } from '../../components/vitest.setup.ts';
+import { LapisClient } from '../../services/lapisClient.ts';
+import type { Config } from '../../types/config.ts';
 
 const config: Config = {
     schema: {
@@ -23,116 +18,157 @@ const config: Config = {
     },
 };
 
+const dummyError = {
+    error: {
+        status: 500,
+        type: 'type',
+        title: 'title',
+        detail: 'error detail',
+        instance: 'instance',
+    },
+};
+
+const sequenceVersion = 'accession';
+
+const lapisClient = LapisClient.create(testConfig.forServer.lapisUrl, config);
+
 describe('getTableData', () => {
     beforeEach(() => {
-        vi.mocked(fetchSequenceDetails).mockResolvedValue({});
-        vi.mocked(fetchMutations).mockResolvedValue([]);
-        vi.mocked(fetchInsertions).mockResolvedValue([]);
+        mockRequest.lapis.details(200, { data: [{ dummyField: 'dummyValue' }] });
+        mockRequest.lapis.nucleotideMutations(200, { data: [] });
+        mockRequest.lapis.aminoAcidMutations(200, { data: [] });
+        mockRequest.lapis.nucleotideInsertions(200, { data: [] });
+        mockRequest.lapis.aminoAcidInsertions(200, { data: [] });
     });
 
-    afterEach(() => {
-        vi.clearAllMocks();
+    test('should return an error when getSequenceDetails fails', async () => {
+        mockRequest.lapis.details(500, dummyError);
+
+        const result = await getTableData(sequenceVersion, config, lapisClient);
+
+        expect(result).toStrictEqual(err(dummyError.error));
     });
 
-    test('should return undefined for undefined details data', async () => {
-        vi.mocked(fetchSequenceDetails).mockResolvedValue(undefined);
+    test('should return an error when getSequenceMutations fails', async () => {
+        mockRequest.lapis.nucleotideMutations(500, dummyError);
 
-        const result = await getTableData('accession', config, serverConfig);
+        const result = await getTableData(sequenceVersion, config, lapisClient);
 
-        expect(result).toBe(undefined);
+        expect(result).toStrictEqual(err(dummyError.error));
+    });
+
+    test('should return an error when getSequenceInsertions fails', async () => {
+        mockRequest.lapis.nucleotideInsertions(500, dummyError);
+
+        const result = await getTableData(sequenceVersion, config, lapisClient);
+
+        expect(result).toStrictEqual(err(dummyError.error));
     });
 
     test('should return default values when there is no data', async () => {
-        const result = await getTableData('accession', config, serverConfig);
+        const result = await getTableData(sequenceVersion, config, lapisClient);
 
-        expect(result).toStrictEqual([
-            {
-                label: 'Metadata field1',
-                value: 'N/A',
-            },
-            {
-                label: 'Metadata field2',
-                value: 'N/A',
-            },
-            {
-                label: 'Nucleotide substitutions',
-                value: '',
-            },
-            {
-                label: 'Nucleotide deletions',
-                value: '',
-            },
-            {
-                label: 'Nucleotide insertions',
-                value: '',
-            },
-            {
-                label: 'Amino acid substitutions',
-                value: '',
-            },
-            {
-                label: 'Amino acid deletions',
-                value: '',
-            },
-            {
-                label: 'Amino acid insertions',
-                value: '',
-            },
-        ]);
+        expect(result).toStrictEqual(
+            ok([
+                {
+                    label: 'Metadata field1',
+                    value: 'N/A',
+                },
+                {
+                    label: 'Metadata field2',
+                    value: 'N/A',
+                },
+                {
+                    label: 'Nucleotide substitutions',
+                    value: '',
+                },
+                {
+                    label: 'Nucleotide deletions',
+                    value: '',
+                },
+                {
+                    label: 'Nucleotide insertions',
+                    value: '',
+                },
+                {
+                    label: 'Amino acid substitutions',
+                    value: '',
+                },
+                {
+                    label: 'Amino acid deletions',
+                    value: '',
+                },
+                {
+                    label: 'Amino acid insertions',
+                    value: '',
+                },
+            ]),
+        );
     });
 
     test('should return details field values', async () => {
-        vi.mocked(fetchSequenceDetails).mockResolvedValue({ metadataField1: 'value 1', metadataField2: 'value 2' });
+        const value1 = 'value 1';
+        const value2 = 'value 2';
 
-        const result = await getTableData('accession', config, serverConfig);
-
-        expect(result).toContainEqual({
-            label: 'Metadata field1',
-            value: 'value 1',
+        mockRequest.lapis.details(200, {
+            data: [
+                {
+                    metadataField1: value1,
+                    metadataField2: value2,
+                },
+            ],
         });
-        expect(result).toContainEqual({
+
+        const result = await getTableData('accession', config, lapisClient);
+
+        const data = result._unsafeUnwrap();
+        expect(data).toContainEqual({
+            label: 'Metadata field1',
+            value: value1,
+        });
+        expect(data).toContainEqual({
             label: 'Metadata field2',
-            value: 'value 2',
+            value: value2,
         });
     });
 
     test('should return data of mutations', async () => {
-        vi.mocked(fetchMutations).mockImplementation(async (_, type) =>
-            type === 'nucleotide' ? nucleotideMutations : aminoAcidMutations,
-        );
+        mockRequest.lapis.nucleotideMutations(200, { data: nucleotideMutations });
+        mockRequest.lapis.aminoAcidMutations(200, { data: aminoAcidMutations });
 
-        const result = await getTableData('accession', config, serverConfig);
+        const result = await getTableData('accession', config, lapisClient);
 
-        expect(result).toContainEqual({
+        const data = result._unsafeUnwrap();
+        expect(data).toContainEqual({
             label: 'Nucleotide substitutions',
             value: 'nucleotideMutation1, nucleotideMutation2',
         });
-        expect(result).toContainEqual({
+        expect(data).toContainEqual({
             label: 'Nucleotide deletions',
             value: 'nucleotideDeletion1-, nucleotideDeletion2-',
         });
-        expect(result).toContainEqual({
+        expect(data).toContainEqual({
             label: 'Amino acid substitutions',
             value: 'aminoAcidMutation1, aminoAcidMutation2',
         });
-        expect(result).toContainEqual({
+        expect(data).toContainEqual({
             label: 'Amino acid deletions',
             value: 'aminoAcidDeletion1-, aminoAcidDeletion2-',
         });
     });
 
     test('should return data of insertions', async () => {
-        vi.mocked(fetchInsertions).mockImplementation(async (_, type) =>
-            type === 'nucleotide' ? nucleotideInsertions : aminoAcidInsertions,
-        );
+        mockRequest.lapis.nucleotideInsertions(200, { data: nucleotideInsertions });
+        mockRequest.lapis.aminoAcidInsertions(200, { data: aminoAcidInsertions });
 
-        const result = await getTableData('accession', config, serverConfig);
+        const result = await getTableData('accession', config, lapisClient);
 
-        expect(result).toContainEqual({
+        const data = result._unsafeUnwrap();
+        expect(data).toContainEqual({
             label: 'Nucleotide insertions',
             value: 'nucleotideInsertion1, nucleotideInsertion2',
         });
-        expect(result).toContainEqual({
+        expect(data).toContainEqual({
             label: 'Amino acid insertions',
             value: 'aminoAcidInsertion1, aminoAcidInsertion2',
         });

@@ -4,7 +4,7 @@ import type { FC } from 'react';
 import type { Config } from '../../types';
 
 export type TableSequenceData = {
-    [key: string]: string;
+    [key: string]: string | number | null;
 };
 
 type TableProps = {

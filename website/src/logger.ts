@@ -24,6 +24,8 @@ const getLogger = (): Logger => {
     return _logger;
 };
 
+export type InstanceLogger = ReturnType<typeof getInstanceLogger>;
+
 export const getInstanceLogger = (instance: string) => {
     return {
         info: (message: string) => getLogger().info(message, { instance }),

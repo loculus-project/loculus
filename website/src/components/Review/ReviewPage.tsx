@@ -5,7 +5,7 @@ import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
 import { getClientLogger } from '../../api.ts';
 import { routes } from '../../routes.ts';
-import { backendClientHooks } from '../../services/backendHooks.ts';
+import { backendClientHooks } from '../../services/serviceHooks.ts';
 import type { ClientConfig, MetadataRecord, ProcessingAnnotationSourceType, SequenceReview } from '../../types.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';

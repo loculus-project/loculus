@@ -12,7 +12,7 @@ import {
     singleSequenceActions,
 } from './sequenceActions.ts';
 import { backendApi } from '../../services/backendApi.ts';
-import { backendClientHooks } from '../../services/backendHooks.ts';
+import { backendClientHooks } from '../../services/serviceHooks.ts';
 import type { ClientConfig, SequenceStatus } from '../../types.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';

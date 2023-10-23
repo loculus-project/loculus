@@ -1,7 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 
-import { getClientLogger } from './api';
 import type { ClientConfig, Config, ReferenceGenomes, RuntimeConfig, ServerConfig, ServiceUrls } from './types';
 import netlifyConfig from '../netlifyConfig/config.json' assert { type: 'json' };
 import netlifyRuntimeConfig from '../netlifyConfig/runtime_config.json' assert { type: 'json' };
@@ -87,33 +86,4 @@ export function getReferenceGenomes(): ReferenceGenomes {
         _referenceGenomes = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as ReferenceGenomes;
     }
     return _referenceGenomes;
-}
-
-export type OptionList = { option: string | null; count: number }[];
-
-export async function fetchAutoCompletion(
-    field: string,
-    filterParams: URLSearchParams,
-    runtimeConfig: ClientConfig,
-): Promise<OptionList> {
-    const response = await fetch(`${runtimeConfig.lapisUrl}/aggregated?fields=${field}&${filterParams}`);
-
-    if (!response.ok) {
-        await getClientLogger('fetchAutoComplete').error(
-            `Failed to fetch auto-completion data for field ${field} with status ${response.status}`,
-        );
-        return [];
-    }
-
-    // TODO: introduce validation of the response; will make working with the data easier
-    const autoCompleteData = (await response.json()).data as { [key: string]: string | number | null }[];
-
-    return (
-        autoCompleteData
-            .map((entry) => ({ option: entry[field] as string | null, count: entry.count as number }))
-            .filter((entry) => entry.option !== null)
-            // As option:null values are already filtered out, we can safely cast option to string
-            // eslint-disable-next-line
-            .sort((a, b) => (a.option!.toLowerCase() < b.option!.toLowerCase() ? -1 : 1))
-    );
 }
