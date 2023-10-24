@@ -1,12 +1,11 @@
 ---
 import { BackButton } from '../../components/Navigation/BackButton';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { routes } from '../../routes';
 
 // accession is never undefined, but ESLint doesn't know that
 // eslint-disable-next-line
 const username = Astro.params.username!;
-
-const sequencesPage = `/user/${username}/sequences`;
 ---
 
 <BaseLayout title={username}>
@@ -16,7 +15,7 @@ const sequencesPage = `/user/${username}/sequences`;
             <h1 class='title'>User {username}</h1>
         </div>
         <div>
-            <a href={sequencesPage} class='text-xs ml-10'> Sequence Overview</a>
+            <a href={routes.userSequencesPage(username)} class='text-xs ml-10'> Sequence Overview</a>
         </div>
     </div>
 </BaseLayout>

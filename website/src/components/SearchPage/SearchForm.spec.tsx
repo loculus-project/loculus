@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
+import { routes } from '../../routes.ts';
 import type { ClientConfig, Filter } from '../../types';
 
 vi.mock('../../config', () => ({
@@ -12,14 +13,14 @@ vi.mock('../../config', () => ({
 
 const queryClient = new QueryClient();
 
-const defaultMetadataSettings: [Filter, Filter, Filter] = [
+const defaultMetadataSettings = [
     { name: 'field1', type: 'string', label: 'Field 1', autocomplete: false, filter: '' },
     { name: 'field2', type: 'date', autocomplete: false, filter: '' },
     { name: 'field3', type: 'pango_lineage', label: 'Field 3', autocomplete: true, filter: '' },
-];
+] as const;
 const dummyConfig = {} as ClientConfig;
 function renderSearchForm(
-    metadataSettings: Filter[] = defaultMetadataSettings,
+    metadataSettings: Filter[] = [...defaultMetadataSettings],
     clientConfig: ClientConfig = dummyConfig,
 ) {
     render(
@@ -49,11 +50,12 @@ describe('SearchForm', () => {
     test('should redirect according to filters', async () => {
         renderSearchForm();
 
-        await userEvent.type(screen.getByPlaceholderText('Field 1'), 'test');
+        const filterValue = 'test';
+        await userEvent.type(screen.getByPlaceholderText(defaultMetadataSettings[0].label), filterValue);
 
         const searchButton = screen.getByRole('button', { name: 'Search' });
         await userEvent.click(searchButton);
 
-        expect(window.location.href).toBe('search?field1=test');
+        expect(window.location.href).toBe(routes.searchPage([{ ...defaultMetadataSettings[0], filter: filterValue }]));
     });
 });

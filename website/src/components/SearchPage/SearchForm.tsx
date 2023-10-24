@@ -11,6 +11,7 @@ import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../api';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
+import { routes } from '../../routes.ts';
 import type { ClientConfig, Filter } from '../../types';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
@@ -49,13 +50,13 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig
     const handleSearch: FormEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();
         setIsLoading(true);
-        location.href = buildQueryUrl(fieldValues);
+        location.href = routes.searchPage(fieldValues);
     };
 
     const resetSearch = async () => {
         setIsLoading(true);
         await clientLogger.info('reset_search');
-        location.href = buildQueryUrl([]);
+        location.href = routes.searchPage([]);
     };
 
     const fields = useMemo(
@@ -126,12 +127,6 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig
         </QueryClientProvider>
     );
 };
-
-function buildQueryUrl(fieldValues: Filter[]) {
-    const params = new URLSearchParams();
-    fieldValues.filter((field) => field.filter !== '').forEach((field) => params.set(field.name, field.filter));
-    return `search${params.size !== 0 ? `?${params.toString()}` : ''}`;
-}
 
 const SearchButton: FC<{ isLoading: boolean }> = ({ isLoading }) => (
     <button className='btn normal-case w-full' type='submit' disabled={isLoading}>

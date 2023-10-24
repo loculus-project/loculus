@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { SequenceTable } from './SequenceTable.tsx';
 import type { BulkSequenceActionName, SingleSequenceActionName } from './sequenceActions.ts';
 import { testuser } from '../../../tests/e2e.fixture.ts';
+import { routes } from '../../routes.ts';
 import type { ClientConfig, SequenceStatus } from '../../types';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 
@@ -107,8 +108,6 @@ describe('SequenceTable', () => {
         expect(reviewButton).toBeDefined();
         await userEvent.click(reviewButton);
 
-        expect(window.location.href).toBe(
-            `/user/${testuser}/review/${sequenceVersionToReview.sequenceId}/${sequenceVersionToReview.version}`,
-        );
+        expect(window.location.href).toBe(routes.reviewPage(testuser, sequenceVersionToReview));
     });
 });
