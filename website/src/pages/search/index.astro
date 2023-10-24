@@ -6,6 +6,7 @@ import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
 import { getConfig, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { pageSize } from '../../settings';
 import type { Filter } from '../../types';
 
 const config = getConfig();
@@ -16,7 +17,6 @@ const getSearchParams = (field: string): string => {
 
 const metadataSettings: Filter[] = await getMetadataSettings(getSearchParams);
 
-const pageSize = 100;
 const pageParam = Astro.url.searchParams.get('page');
 const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;

@@ -1,4 +1,5 @@
 import type { ActionHooks } from './SequenceTable.tsx';
+import { routes } from '../../routes.ts';
 import { type SequenceStatus, type SequenceVersion } from '../../types.ts';
 import { extractSequenceVersion, getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 
@@ -75,7 +76,7 @@ const reviewAction: SingleSequenceAction = {
     name: 'review',
     tableHeader: 'Link to Review',
     actionOnSequence: async (selectedSequence: SequenceStatus, username: string) => {
-        window.location.href = `/user/${username}/review/${selectedSequence.sequenceId}/${selectedSequence.version}`;
+        window.location.href = routes.reviewPage(username, selectedSequence);
     },
 };
 export const singleSequenceActions = {

@@ -4,6 +4,7 @@ import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef,
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
 import { getClientLogger } from '../../api.ts';
+import { routes } from '../../routes.ts';
 import { backendClientHooks } from '../../services/backendHooks.ts';
 import type { ClientConfig, MetadataRecord, ProcessingAnnotationSourceType, SequenceReview } from '../../types.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
@@ -134,8 +135,8 @@ function useSubmitReviewedSequence(
         { queries: { username } },
         {
             onSuccess: async () => {
-                await logger.info('Successfully submitted review ' + reviewData.sequenceId + '.' + reviewData.version);
-                location.href = `/user/${username}/sequences`;
+                await logger.info('Successfully submitted review ' + getSequenceVersionString(reviewData));
+                location.href = routes.userSequencesPage(username);
             },
             onError: async (error) => {
                 const message = `Failed to submit review for ${getSequenceVersionString(

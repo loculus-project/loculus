@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon';
 
+import { routes } from '../../../src/routes.ts';
+import { pageSize } from '../../../src/settings.ts';
 import { baseUrl, expect, test, testSequence } from '../../e2e.fixture';
-
-const pageSize = 100;
 
 test.describe('The search page', () => {
     test('should show the search form with button and a table', async ({ searchPage }) => {
@@ -26,7 +26,9 @@ test.describe('The search page', () => {
         await searchPage.getEmptyAccessionField().fill(testSequence.name);
         await searchPage.clickSearchButton();
 
-        await searchPage.page.waitForURL(`${baseUrl}/search?accession=${testSequence.name}`);
+        await searchPage.page.waitForURL(
+            `${baseUrl}${routes.searchPage([{ name: 'accession', type: 'string', filter: testSequence.name }])}`,
+        );
         await expect(searchPage.page.getByText(testSequence.name)).toBeVisible();
         await expect(searchPage.page.getByText('2021-01-16')).toBeVisible();
         await expect(searchPage.page.getByText('B.1.221')).toBeVisible();
