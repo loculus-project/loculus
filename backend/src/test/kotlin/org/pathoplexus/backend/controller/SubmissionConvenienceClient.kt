@@ -69,6 +69,18 @@ class SubmissionConvenienceClient(
         )
     }
 
+    fun prepareDefaultSequencesWithReleasedRevision() {
+        prepareDefaultSequencesToSiloReady()
+        reviseDefaultProcessedSequences()
+        extractUnprocessedData()
+        submitProcessedData(
+            *DefaultFiles.allSequenceIds.map {
+                PreparedProcessedData.successfullyProcessed(sequenceId = it, version = 2)
+            }.toTypedArray(),
+        )
+        approveProcessedSequences(DefaultFiles.allSequenceIds.map { SequenceVersion(it, 2) })
+    }
+
     fun prepareDefaultSequencesToRevokedStaging() {
         prepareDefaultSequencesToSiloReady()
         revokeSequences(DefaultFiles.allSequenceIds)

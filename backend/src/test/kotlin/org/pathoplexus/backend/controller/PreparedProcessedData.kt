@@ -17,7 +17,7 @@ import org.pathoplexus.backend.service.ProcessedData
 import org.pathoplexus.backend.service.SegmentName
 import org.pathoplexus.backend.service.SubmittedProcessedData
 
-private val defaultProcessedData = ProcessedData(
+val defaultProcessedData = ProcessedData(
     metadata = mapOf(
         "date" to TextNode("2002-12-15"),
         "host" to TextNode("google.com"),

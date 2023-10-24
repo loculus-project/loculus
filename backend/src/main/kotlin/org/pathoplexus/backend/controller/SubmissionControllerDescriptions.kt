@@ -112,3 +112,13 @@ If any of the given sequences do not exist, or the user has no right to delete a
 sequence version is in status 'SILO_READY' or 'PROCESSING', i.e. not deletable, this will return an error 
 and roll back the whole transaction.
 """
+
+const val GET_RELEASED_DATA_DESCRIPTION = """
+Get released data as a stream of NDJSON.
+This returns all sequences versions that have the status 'SILO_READY' 
+"""
+
+const val GET_RELEASED_DATA_RESPONSE_DESCRIPTION = """
+Sequence data as input for the preprocessing pipeline.
+The schema is to be understood per line of the NDJSON stream.    
+"""
