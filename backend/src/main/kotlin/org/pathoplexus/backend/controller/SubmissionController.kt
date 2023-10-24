@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Max
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.model.SubmitModel
 import org.pathoplexus.backend.service.DatabaseService
+import org.pathoplexus.backend.service.ProcessedData
 import org.pathoplexus.backend.service.SequenceReview
 import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
@@ -100,17 +101,24 @@ class SubmissionController(
         request: HttpServletRequest,
     ) = databaseService.updateProcessedData(request.inputStream)
 
-    // TODO(#108): temporary method to ease testing, replace later
-    @Operation(description = "Get processed data as a stream of NDJSON")
-    @PostMapping("/extract-processed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
-    fun getProcessedData(
-        @RequestParam numberOfSequences: Int,
-    ): ResponseEntity<StreamingResponseBody> {
+    @Operation(description = GET_RELEASED_DATA_DESCRIPTION)
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponse(
+        responseCode = "200",
+        description = GET_RELEASED_DATA_RESPONSE_DESCRIPTION,
+        content = [
+            Content(
+                schema = Schema(implementation = ProcessedData::class),
+            ),
+        ],
+    )
+    @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
+    fun getReleasedData(): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamProcessedSubmissions(numberOfSequences, outputStream)
+            databaseService.streamReleasedSubmissions(outputStream)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)

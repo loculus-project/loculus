@@ -12,7 +12,7 @@ test.describe('The review page', () => {
             const [testSequence] = await submitPage.prepareDataToBeReviewable();
             expect(testSequence).toBeDefined();
 
-            await testReviewFlow(reviewPage, submitPage, userPage, testSequence);
+            await testReviewFlow(reviewPage, userPage, testSequence);
         },
     );
 
@@ -24,15 +24,10 @@ test.describe('The review page', () => {
         const [testSequence] = await submitPage.prepareDataToBeStaged();
         expect(testSequence).toBeDefined();
 
-        await testReviewFlow(reviewPage, submitPage, userPage, testSequence);
+        await testReviewFlow(reviewPage, userPage, testSequence);
     });
 
-    const testReviewFlow = async (
-        reviewPage: ReviewPage,
-        submitPage: SubmitPage,
-        userPage: UserPage,
-        testSequence: SequenceVersion,
-    ) => {
+    const testReviewFlow = async (reviewPage: ReviewPage, userPage: UserPage, testSequence: SequenceVersion) => {
         await userPage.gotoUserSequencePage();
         await userPage.clickOnReviewForSequence(testSequence);
 

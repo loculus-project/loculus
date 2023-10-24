@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.Clock
@@ -262,30 +263,56 @@ class DatabaseService(
         }
     }
 
-    fun streamProcessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
-        log.info { "streaming $numberOfSequences processed submissions" }
-        val maxVersionQuery = maxVersionQuery()
+    fun streamReleasedSubmissions(outputStream: OutputStream) {
+        log.info { "streaming released submissions" }
+
+        val latestVersions = SequencesTable
+            .slice(SequencesTable.sequenceId, SequencesTable.version.max())
+            .select(
+                where = {
+                    (SequencesTable.status eq SILO_READY.name)
+                },
+            )
+            .groupBy(SequencesTable.sequenceId).associate { row ->
+                row[SequencesTable.sequenceId] to row[SequencesTable.version.max()]
+            }
 
         val sequencesData = SequencesTable
             .slice(
                 SequencesTable.sequenceId,
                 SequencesTable.version,
+                SequencesTable.isRevocation,
                 SequencesTable.processedData,
-                SequencesTable.errors,
-                SequencesTable.warnings,
+                SequencesTable.submitter,
             )
             .select(
                 where = {
-                    (SequencesTable.status eq PROCESSED.name) and
-                        (SequencesTable.version eq maxVersionQuery)
+                    (SequencesTable.status eq SILO_READY.name)
                 },
-            ).limit(numberOfSequences).map { row ->
-                SubmittedProcessedData(
-                    row[SequencesTable.sequenceId],
-                    row[SequencesTable.version],
-                    row[SequencesTable.processedData]!!,
-                    row[SequencesTable.errors],
-                    row[SequencesTable.warnings],
+                // TODO(#xxx): This needs clarification of how to handle revocations. Until then, revocations are filtered out.
+            )
+            .filter { !it[SequencesTable.isRevocation] }
+            .map { row ->
+                val id = row[SequencesTable.sequenceId]
+                val version = row[SequencesTable.version]
+
+                val isLatestVersion = (latestVersions[id] == version)
+
+                val metadata = row[SequencesTable.processedData]!!.metadata +
+                    ("sequenceId" to TextNode(id.toString())) +
+                    ("version" to TextNode(version.toString())) +
+                    ("sequenceVersion" to TextNode("$id.$version")) +
+                    ("isRevocation" to TextNode(row[SequencesTable.isRevocation].toString())) +
+                    ("submitter" to TextNode(row[SequencesTable.submitter].toString())) +
+                    ("isLatestVersion" to TextNode(isLatestVersion.toString()))
+
+                ProcessedData(
+                    metadata = metadata,
+                    unalignedNucleotideSequences = row[SequencesTable.processedData]!!.unalignedNucleotideSequences,
+                    alignedNucleotideSequences = row[SequencesTable.processedData]!!.alignedNucleotideSequences,
+                    nucleotideInsertions = row[SequencesTable.processedData]!!.nucleotideInsertions,
+                    aminoAcidInsertions = row[SequencesTable.processedData]!!.aminoAcidInsertions,
+                    alignedAminoAcidSequences = row[SequencesTable.processedData]!!.alignedAminoAcidSequences,
                 )
             }
 

@@ -101,6 +101,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToConfirm)}}"""),
         )
 
+    fun getReleasedData(): ResultActions =
+        mockMvc.perform(
+            get("/get-released-data"),
+        )
+
     fun deleteSequences(
         listOfSequenceVersionsToDelete: List<SequenceVersion>,
         userName: String = USER_NAME,
