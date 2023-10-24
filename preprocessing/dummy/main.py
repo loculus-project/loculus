@@ -3,15 +3,19 @@ import dataclasses
 import json
 import random
 import requests
+import time
 from typing import List
 from typing import Optional
 from dataclasses import dataclass, field
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--backend-host", type=str, default="127.0.0.1",
+parser.add_argument("--backend-host", type=str, default="127.0.0.1:8079",
                     help="Host address of the Pathoplexus backend")
+parser.add_argument("--watch", action="store_true", help="Watch and keep running. Fetches new data every 10 seconds.")
+
 args = parser.parse_args()
-host = "http://{}:8079".format(args.backend_host)
+host = "http://{}".format(args.backend_host)
+watch_mode = args.watch
 
 @dataclass
 class AnnotationSource:
@@ -62,6 +66,7 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
 
         updated_sequence = Sequence(
             sequence.sequenceId,
+            sequence.version,
             {"metadata": metadata, **mock_sequences},
         )
 
@@ -80,13 +85,26 @@ def submit_processed_sequences(processed: List[Sequence]):
 
 def main():
     total_processed = 0
+    locally_processed = 0
+
+    if watch_mode:
+        print("Started in watch mode - waiting 10 seconds before fetching data.")
+        time.sleep(10)
+
     while True:
         unprocessed = fetch_unprocessed_sequences(5)
         if len(unprocessed) == 0:
-            break
+            if watch_mode:
+                print("Processed {} sequences. Sleeping for 10 seconds.".format(locally_processed))
+                time.sleep(10)
+                locally_processed = 0
+                continue
+            else:
+                break
         processed = process(unprocessed)
         submit_processed_sequences(processed)
         total_processed += len(processed)
+        locally_processed += len(processed)
     print("Total processed sequences: {}".format(total_processed))
 
 

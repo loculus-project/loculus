@@ -1,5 +1,7 @@
+import { isErrorFromAlias } from '@zodios/core';
+import type { AxiosError } from 'axios';
 import { sentenceCase } from 'change-case';
-import React, { type FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type Dispatch, type FC, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
     type BulkSequenceAction,
@@ -9,10 +11,14 @@ import {
     type SingleSequenceActionName,
     singleSequenceActions,
 } from './sequenceActions.ts';
+import { backendApi } from '../../services/backendApi.ts';
+import { backendClientHooks } from '../../services/backendHooks.ts';
 import type { ClientConfig, SequenceStatus } from '../../types.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
+import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type SequenceTableProps = {
     username: string;
@@ -22,7 +28,7 @@ type SequenceTableProps = {
     singleActionNames: SingleSequenceActionName[];
 };
 
-export const SequenceTable: FC<SequenceTableProps> = ({
+const InnerSequenceTable: FC<SequenceTableProps> = ({
     username,
     clientConfig,
     sequences,
@@ -36,6 +42,8 @@ export const SequenceTable: FC<SequenceTableProps> = ({
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [dialogText, setDialogText] = useState('');
     const [dialogAction, setDialogAction] = useState<BulkSequenceAction>();
+
+    const actionHooks = useActionHooks(clientConfig, username, openErrorFeedback);
 
     const handleOpenConfirmationDialog = (action: BulkSequenceAction) => {
         setDialogText(action.confirmationDialog?.message(getSelectedSequences) ?? '');
@@ -61,20 +69,11 @@ export const SequenceTable: FC<SequenceTableProps> = ({
     };
 
     const handleSingleAction = async (sequenceStatus: SequenceStatus, action: SingleSequenceAction) => {
-        const result = await action.actionOnSequence(sequenceStatus, clientConfig, username);
-        if (result.isErr()) {
-            openErrorFeedback(result.error);
-        }
+        await action.actionOnSequence(sequenceStatus, username);
     };
 
     const executeBulkAction = async (action: BulkSequenceAction) => {
-        const result = await action.actionOnSequences(getSelectedSequences, clientConfig, username);
-
-        if (result.isErr()) {
-            openErrorFeedback(result.error);
-        } else {
-            window.location.reload();
-        }
+        await action.actionOnSequences(getSelectedSequences, actionHooks);
     };
 
     return (
@@ -105,9 +104,11 @@ export const SequenceTable: FC<SequenceTableProps> = ({
     );
 };
 
+export const SequenceTable = withQueryProvider(InnerSequenceTable);
+
 const DisplayTable: FC<{
     selectedSequenceRowIds: number[];
-    setSelectedSequenceRowIds: React.Dispatch<React.SetStateAction<number[]>>;
+    setSelectedSequenceRowIds: Dispatch<SetStateAction<number[]>>;
     sequences: SequenceStatus[];
     bulkActions: BulkSequenceAction[];
     singleActions: SingleSequenceAction[];
@@ -241,7 +242,7 @@ const DisplayBulkActions: FC<{
     bulkActions: BulkSequenceAction[];
     handleBulkAction: (action: BulkSequenceAction) => void;
     selectedSequenceRowIds: number[];
-    setSelectedSequenceRowIds: React.Dispatch<React.SetStateAction<number[]>>;
+    setSelectedSequenceRowIds: Dispatch<SetStateAction<number[]>>;
     sequences: SequenceStatus[];
 }> = ({ bulkActions, handleBulkAction, selectedSequenceRowIds, setSelectedSequenceRowIds, sequences }) => {
     return (
@@ -290,3 +291,73 @@ const DisplayBulkActions: FC<{
         )
     );
 };
+
+export type ActionHooks = ReturnType<typeof useActionHooks>;
+
+function useActionHooks(clientConfig: ClientConfig, username: string, openErrorFeedback: (message: string) => void) {
+    const hooks = backendClientHooks(clientConfig);
+
+    const useDeleteSequences = hooks.useDeleteSequences(
+        { queries: { username } },
+        {
+            onSuccess: () => window.location.reload(),
+            onError: (error) => openErrorFeedback(deleteSequencesErrorMessage(error)),
+        },
+    );
+    const useApproveProcessedData = hooks.useApproveProcessedData(
+        { queries: { username } },
+        {
+            onSuccess: () => window.location.reload(),
+            onError: (error) => openErrorFeedback(approveProcessedDataErrorMessage(error)),
+        },
+    );
+    const useRevokeSequences = hooks.useRevokeSequences(
+        { queries: { username } },
+        {
+            onSuccess: () => window.location.reload(),
+            onError: (error) => openErrorFeedback(getRevokeSequencesErrorMessage(error)),
+        },
+    );
+    const useConfirmRevocation = hooks.useConfirmRevocation(
+        { queries: { username } },
+        {
+            onSuccess: () => window.location.reload(),
+            onError: (error) => openErrorFeedback(getConfirmRevocationErrorMessage(error)),
+        },
+    );
+
+    return {
+        deleteSequences: useDeleteSequences.mutate,
+        approveProcessedData: useApproveProcessedData.mutate,
+        revokeSequences: useRevokeSequences.mutate,
+        confirmRevocation: useConfirmRevocation.mutate,
+    };
+}
+
+function deleteSequencesErrorMessage(error: unknown | AxiosError) {
+    if (isErrorFromAlias(backendApi, 'deleteSequences', error)) {
+        return 'Failed to delete sequences: ' + error.response.data.detail;
+    }
+    return 'Failed to delete sequences: ' + stringifyMaybeAxiosError(error);
+}
+
+function approveProcessedDataErrorMessage(error: unknown | AxiosError) {
+    if (isErrorFromAlias(backendApi, 'approveProcessedData', error)) {
+        return 'Failed to approve processed sequences: ' + error.response.data.detail;
+    }
+    return 'Failed to approve processed sequences: ' + stringifyMaybeAxiosError(error);
+}
+
+function getRevokeSequencesErrorMessage(error: unknown | AxiosError) {
+    if (isErrorFromAlias(backendApi, 'revokeSequences', error)) {
+        return 'Failed to revoke sequences: ' + error.response.data.detail;
+    }
+    return 'Failed to revoke sequences: ' + stringifyMaybeAxiosError(error);
+}
+
+function getConfirmRevocationErrorMessage(error: unknown | AxiosError) {
+    if (isErrorFromAlias(backendApi, 'confirmRevocation', error)) {
+        return 'Failed to confirm revocation: ' + error.response.data.detail;
+    }
+    return 'Failed to confirm revocation: ' + stringifyMaybeAxiosError(error);
+}

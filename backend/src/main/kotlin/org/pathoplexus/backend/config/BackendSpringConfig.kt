@@ -57,4 +57,12 @@ class BackendSpringConfig {
     fun schemaConfig(objectMapper: ObjectMapper, @Value("\${backend.config.path}") configPath: String): SchemaConfig {
         return objectMapper.readValue(File(configPath))
     }
+
+    @Bean
+    fun referenceGenome(
+        objectMapper: ObjectMapper,
+        @Value("\${backend.referenceGenome.path}") referenceGenomePath: String,
+    ): ReferenceGenome {
+        return objectMapper.readValue(File(referenceGenomePath))
+    }
 }

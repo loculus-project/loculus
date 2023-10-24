@@ -9,6 +9,7 @@ import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.ResultActions
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -82,7 +83,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}"""),
         )
 
-    fun revokeSequences(listOfSequencesToRevoke: List<Number>, userName: String = USER_NAME): ResultActions =
+    fun revokeSequences(listOfSequencesToRevoke: List<Long>, userName: String = USER_NAME): ResultActions =
         mockMvc.perform(
             post("/revoke")
                 .param("username", userName)
@@ -90,11 +91,29 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
         )
 
-    fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions = mockMvc.perform(
-        post("/confirm-revocation")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"sequenceIds":$listOfSequencesToConfirm}"""),
-    )
+    fun confirmRevocation(
+        listOfSequencesToConfirm: List<SequenceVersion>,
+        userName: String = USER_NAME,
+    ): ResultActions =
+        mockMvc.perform(
+            post("/confirm-revocation")
+                .param("username", userName)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToConfirm)}}"""),
+        )
+
+    fun deleteSequences(
+        listOfSequenceVersionsToDelete: List<SequenceVersion>,
+        userName: String = USER_NAME,
+    ): ResultActions =
+        mockMvc.perform(
+            delete("/delete-sequences")
+                .param("username", userName)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(
+                    """{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequenceVersionsToDelete)}}""",
+                ),
+        )
 }
 
 val emptyOriginalData = OriginalData(metadata = emptyMap(), unalignedNucleotideSequences = emptyMap())

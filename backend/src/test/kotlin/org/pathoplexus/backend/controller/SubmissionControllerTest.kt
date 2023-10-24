@@ -110,56 +110,6 @@ class SubmissionControllerTest(
             )
     }
 
-    // TODO(#312) Remove this once complete
-    @Test
-    fun `revoke sequences and check that the 'revoke' flag is set properly`() {
-        prepareDataToSiloReady()
-
-        assertThat(getSequenceList().filter { it.sequenceId == DefaultFiles.firstSequence })
-            .hasSize(1)
-            .contains(
-                SequenceVersionStatus(
-                    sequenceId = DefaultFiles.firstSequence,
-                    version = 1,
-                    status = Status.SILO_READY,
-                    isRevocation = false,
-                ),
-            )
-
-        revokeSequences(DefaultFiles.allSequenceIds)
-
-        assertThat(getSequenceList().filter { it.sequenceId == DefaultFiles.firstSequence })
-            .hasSize(2)
-            .contains(
-                SequenceVersionStatus(
-                    sequenceId = DefaultFiles.firstSequence,
-                    version = 1,
-                    status = Status.SILO_READY,
-                    isRevocation = false,
-                ),
-            ).contains(
-                SequenceVersionStatus(
-                    sequenceId = DefaultFiles.firstSequence,
-                    version = 2,
-                    status = Status.REVOKED_STAGING,
-                    isRevocation = true,
-                ),
-            )
-
-        confirmRevocation(DefaultFiles.allSequenceIds)
-
-        assertThat(getSequenceList().filter { it.sequenceId == DefaultFiles.firstSequence })
-            .hasSize(1)
-            .contains(
-                SequenceVersionStatus(
-                    sequenceId = DefaultFiles.firstSequence,
-                    version = 2,
-                    status = Status.SILO_READY,
-                    isRevocation = true,
-                ),
-            )
-    }
-
     @Test
     fun `revise sequences`() {
         prepareDataToSiloReady()
@@ -270,7 +220,7 @@ class SubmissionControllerTest(
                 .contentType(MediaType.APPLICATION_NDJSON_VALUE)
                 .content(testData),
         )
-            .andExpect(status().isOk())
+            .andExpect(status().isNoContent)
     }
 
     private fun querySequenceList(): MvcResult {
@@ -334,25 +284,6 @@ class SubmissionControllerTest(
         return Pair(metadataFile, sequencesFile)
     }
 
-    private fun revokeSequences(listOfSequencesToRevoke: List<Number>) =
-        objectMapper.readValue<List<SequenceVersionStatus>>(
-            mockMvc.perform(
-                post("/revoke")
-                    .param("username", USER_NAME)
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
-            )
-                .andExpect(status().isOk())
-                .andReturn().response.contentAsString,
-        )
-
-    private fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions = mockMvc.perform(
-        post("/confirm-revocation")
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content("""{"sequenceIds":$listOfSequencesToConfirm}"""),
-    )
-        .andExpect(status().isOk())
-
     private fun prepareDataToSiloReady() {
         submitInitialData()
         val rawUnprocessedData = awaitResponse(queryUnprocessedSequences(NUMBER_OF_SEQUENCES))
@@ -372,7 +303,7 @@ class SubmissionControllerTest(
                     metadata = objectMapper.readValue<Map<String, JsonNode>>(
                         objectMapper.writeValueAsString(it.data.metadata),
                     ),
-                    it.data.unalignedNucleotideSequences,
+                    unalignedNucleotideSequences = it.data.unalignedNucleotideSequences + ("secondSegment" to "ATAG"),
                 )
             }
             .map { objectMapper.writeValueAsString(it) }

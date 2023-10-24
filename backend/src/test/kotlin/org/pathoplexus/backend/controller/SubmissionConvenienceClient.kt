@@ -7,6 +7,7 @@ import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.SequenceReview
 import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
+import org.pathoplexus.backend.service.Status
 import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.http.MediaType
@@ -46,19 +47,37 @@ class SubmissionConvenienceClient(
         }
     }
 
-    fun prepareDefaultSequencesToSiloReady() {
-        prepareDefaultSequencesToProcessing()
+    fun prepareDefaultSequencesToReviewed() {
+        prepareDefaultSequencesToNeedReview()
 
+        DefaultFiles.allSequenceIds.forEach { sequenceId ->
+            client.submitReviewedSequence(
+                USER_NAME,
+                UnprocessedData(sequenceId, 1L, emptyOriginalData),
+            )
+        }
+    }
+
+    fun prepareDefaultSequencesToProcessed() {
+        prepareDefaultSequencesToProcessing()
         client.submitProcessedData(
             *DefaultFiles.allSequenceIds.map {
                 PreparedProcessedData.successfullyProcessed(sequenceId = it)
             }.toTypedArray(),
         )
+    }
+
+    fun prepareDefaultSequencesToSiloReady() {
+        prepareDefaultSequencesToProcessed()
 
         approveProcessedSequences(
-            DefaultFiles.allSequenceIds.map
-            { SequenceVersion(it, 1) },
+            DefaultFiles.allSequenceIds.map { SequenceVersion(it, 1L) },
         )
+    }
+
+    fun prepareDefaultSequencesToRevokedStaging() {
+        prepareDefaultSequencesToSiloReady()
+        revokeSequences(DefaultFiles.allSequenceIds)
     }
 
     fun extractUnprocessedData(numberOfSequences: Int = DefaultFiles.NUMBER_OF_SEQUENCES) =
@@ -76,6 +95,11 @@ class SubmissionConvenienceClient(
     fun getSequencesOfUser(userName: String = USER_NAME): List<SequenceVersionStatus> {
         return deserializeJsonResponse(client.getSequencesOfUser(userName))
     }
+
+    fun getSequencesOfUserInState(
+        userName: String = USER_NAME,
+        status: Status,
+    ): List<SequenceVersionStatus> = getSequencesOfUser(userName).filter { it.status == status }
 
     fun getSequenceVersionOfUser(
         sequenceVersion: SequenceVersion,
@@ -104,12 +128,24 @@ class SubmissionConvenienceClient(
         client.approveProcessedSequences(listOfSequencesToApprove)
             .andExpect(status().isNoContent)
 
-    fun revokeSequences(listOfSequencesToRevoke: List<Number>): List<SequenceVersionStatus> =
+    fun revokeSequences(listOfSequencesToRevoke: List<Long>): List<SequenceVersionStatus> =
         deserializeJsonResponse(client.revokeSequences(listOfSequencesToRevoke))
 
-    fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions =
+    fun confirmRevocation(listOfSequencesToConfirm: List<SequenceVersion>): ResultActions =
         client.confirmRevocation(listOfSequencesToConfirm)
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
+
+    fun prepareDataTo(status: Status) {
+        when (status) {
+            Status.RECEIVED -> submitDefaultFiles()
+            Status.PROCESSING -> prepareDefaultSequencesToProcessing()
+            Status.NEEDS_REVIEW -> prepareDefaultSequencesToNeedReview()
+            Status.REVIEWED -> prepareDefaultSequencesToReviewed()
+            Status.PROCESSED -> prepareDefaultSequencesToProcessed()
+            Status.SILO_READY -> prepareDefaultSequencesToSiloReady()
+            Status.REVOKED_STAGING -> prepareDefaultSequencesToRevokedStaging()
+        }
+    }
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =

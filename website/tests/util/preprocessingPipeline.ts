@@ -24,17 +24,27 @@ export const fakeProcessingPipeline = async ({
                 division: 'Schaffhausen',
             },
             unalignedNucleotideSequences: {
-                main: 'AATTCC...',
+                main: 'A'.repeat(123),
             },
             alignedNucleotideSequences: {
-                main: 'NNNNNAATTCC...',
+                main: 'A'.repeat(29903),
             },
             nucleotideInsertions: {
-                insertions: ['123:TCTCT', '234:ATATAT'],
+                main: ['123:TCTCT', '234:ATATAT'],
             },
-            aminoAcidSequences: {
-                S: 'XXMSR...',
-                ORF1a: 'NRNR...',
+            alignedAminoAcidSequences: {
+                E: 'M'.repeat(76),
+                M: 'A'.repeat(223),
+                N: 'S'.repeat(420),
+                ORF1a: 'E'.repeat(4401),
+                ORF1b: 'R'.repeat(2696),
+                ORF3a: 'D'.repeat(276),
+                ORF6: 'F'.repeat(62),
+                ORF7a: 'K'.repeat(122),
+                ORF7b: 'I'.repeat(44),
+                ORF8: 'L'.repeat(122),
+                ORF9b: 'P'.repeat(98),
+                S: 'V'.repeat(1274),
             },
             aminoAcidInsertions: {
                 S: ['123:NRNR'],
