@@ -33,7 +33,7 @@ private val defaultProcessedData = ProcessedData(
     ),
     alignedNucleotideSequences = mapOf(
         "main" to "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT",
-        "secondSegment" to "ATAG",
+        "secondSegment" to "ACGTMRWSYKVHDBN-",
     ),
     nucleotideInsertions = mapOf(
         "main" to listOf(
@@ -44,7 +44,7 @@ private val defaultProcessedData = ProcessedData(
         ),
     ),
     alignedAminoAcidSequences = mapOf(
-        "someLongGene" to "MYSFVSEETGTLIVNSVLLFL",
+        "someLongGene" to "ACDEFGHIKLMNPQRSTVWYBZX-*",
         "someShortGene" to "MADS",
     ),
     aminoAcidInsertions = mapOf(
