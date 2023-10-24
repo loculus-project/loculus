@@ -6,7 +6,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 const clientConfig = getRuntimeConfig().forClient;
 ---
 
-<BaseLayout title='Search'>
+<BaseLayout title='Submit'>
     <h1 class='title'>Submission Page</h1>
 
     <SubmissionForm clientConfig={clientConfig} client:only='react' />
