@@ -43,7 +43,7 @@ private val defaultProcessedData = ProcessedData(
             Insertion(1, "ACTG"),
         ),
     ),
-    aminoAcidSequences = mapOf(
+    alignedAminoAcidSequences = mapOf(
         "someLongGene" to "MYSFVSEETGTLIVNSVLLFL",
         "someShortGene" to "MADS",
     ),
@@ -261,7 +261,7 @@ object PreparedProcessedData {
         defaultSuccessfulSubmittedData.withValues(
             sequenceId = sequenceId,
             data = defaultProcessedData.withValues(
-                aminoAcidSequences = defaultProcessedData.aminoAcidSequences - gene,
+                alignedAminoAcidSequences = defaultProcessedData.alignedAminoAcidSequences - gene,
             ),
         )
 
@@ -272,7 +272,7 @@ object PreparedProcessedData {
         defaultSuccessfulSubmittedData.withValues(
             sequenceId = sequenceId,
             data = defaultProcessedData.withValues(
-                aminoAcidSequences = defaultProcessedData.aminoAcidSequences + (gene to "RNRNRN"),
+                alignedAminoAcidSequences = defaultProcessedData.alignedAminoAcidSequences + (gene to "RNRNRN"),
             ),
         )
 
@@ -299,12 +299,12 @@ object PreparedProcessedData {
         gene: SegmentName,
         length: Int = 123,
     ): SubmittedProcessedData {
-        val aminoAcidSequences = defaultProcessedData.aminoAcidSequences.toMutableMap()
+        val aminoAcidSequences = defaultProcessedData.alignedAminoAcidSequences.toMutableMap()
         aminoAcidSequences[gene] = "A".repeat(length)
 
         return defaultSuccessfulSubmittedData.withValues(
             sequenceId = sequenceId,
-            data = defaultProcessedData.withValues(aminoAcidSequences = aminoAcidSequences),
+            data = defaultProcessedData.withValues(alignedAminoAcidSequences = aminoAcidSequences),
         )
     }
 
@@ -312,12 +312,12 @@ object PreparedProcessedData {
         sequenceId: Long = DefaultFiles.firstSequence,
         gene: SegmentName,
     ): SubmittedProcessedData {
-        val aminoAcidSequence = defaultProcessedData.aminoAcidSequences.toMutableMap()
+        val aminoAcidSequence = defaultProcessedData.alignedAminoAcidSequences.toMutableMap()
         aminoAcidSequence[gene] = "ÄÖ" + aminoAcidSequence[gene]!!.substring(2)
 
         return defaultSuccessfulSubmittedData.withValues(
             sequenceId = sequenceId,
-            data = defaultProcessedData.withValues(aminoAcidSequences = aminoAcidSequence),
+            data = defaultProcessedData.withValues(alignedAminoAcidSequences = aminoAcidSequence),
         )
     }
 
@@ -404,13 +404,13 @@ fun ProcessedData.withValues(
     unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>? = null,
     alignedNucleotideSequences: Map<SegmentName, NucleotideSequence>? = null,
     nucleotideInsertions: Map<SegmentName, List<Insertion>>? = null,
-    aminoAcidSequences: Map<GeneName, AminoAcidSequence>? = null,
+    alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence>? = null,
     aminoAcidInsertions: Map<GeneName, List<Insertion>>? = null,
 ) = ProcessedData(
     metadata = metadata ?: this.metadata,
     unalignedNucleotideSequences = unalignedNucleotideSequences ?: this.unalignedNucleotideSequences,
     alignedNucleotideSequences = alignedNucleotideSequences ?: this.alignedNucleotideSequences,
     nucleotideInsertions = nucleotideInsertions ?: this.nucleotideInsertions,
-    aminoAcidSequences = aminoAcidSequences ?: this.aminoAcidSequences,
+    alignedAminoAcidSequences = alignedAminoAcidSequences ?: this.alignedAminoAcidSequences,
     aminoAcidInsertions = aminoAcidInsertions ?: this.aminoAcidInsertions,
 )

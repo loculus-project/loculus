@@ -151,7 +151,7 @@ export const sequenceReview = sequenceVersion.merge(
             unalignedNucleotideSequences: z.record(z.string()),
             alignedNucleotideSequences: z.record(z.string()),
             nucleotideInsertions: z.record(z.array(z.string())),
-            aminoAcidSequences: z.record(z.string()),
+            alignedAminoAcidSequences: z.record(z.string()),
             aminoAcidInsertions: z.record(z.array(z.string())),
         }),
     }),
