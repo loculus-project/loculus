@@ -36,8 +36,7 @@ class SubmissionConvenienceClient(
 
     fun submitProcessedData(vararg submittedProcessedData: SubmittedProcessedData) {
         client.submitProcessedData(*submittedProcessedData)
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(status().isNoContent)
     }
 
     fun prepareDefaultSequencesToNeedReview() {
@@ -50,12 +49,7 @@ class SubmissionConvenienceClient(
     fun prepareDefaultSequencesToReviewed() {
         prepareDefaultSequencesToNeedReview()
 
-        DefaultFiles.allSequenceIds.forEach { sequenceId ->
-            client.submitReviewedSequence(
-                USER_NAME,
-                UnprocessedData(sequenceId, 1L, emptyOriginalData),
-            )
-        }
+        submitDefaultReviewedData()
     }
 
     fun prepareDefaultSequencesToProcessed() {
@@ -124,9 +118,27 @@ class SubmissionConvenienceClient(
     ): SequenceReview =
         deserializeJsonResponse<SequenceReview>(client.getSequenceThatNeedsReview(sequenceId, version, userName))
 
+    fun submitDefaultReviewedData(
+        userName: String = USER_NAME,
+    ) {
+        DefaultFiles.allSequenceIds.forEach { sequenceId ->
+            client.submitReviewedSequence(
+                userName,
+                UnprocessedData(sequenceId, 1L, defaultOriginalData),
+            )
+        }
+    }
+
     fun approveProcessedSequences(listOfSequencesToApprove: List<SequenceVersion>): ResultActions =
         client.approveProcessedSequences(listOfSequencesToApprove)
             .andExpect(status().isNoContent)
+
+    fun reviseDefaultProcessedSequences(): ResultActions =
+        client.reviseSequences(
+            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.sequencesFile,
+        )
+            .andExpect(status().isOk)
 
     fun revokeSequences(listOfSequencesToRevoke: List<Long>): List<SequenceVersionStatus> =
         deserializeJsonResponse(client.revokeSequences(listOfSequencesToRevoke))

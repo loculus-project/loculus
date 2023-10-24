@@ -6,7 +6,7 @@ import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.OriginalData
-import org.pathoplexus.backend.service.RevicedData
+import org.pathoplexus.backend.service.RevisedData
 import org.pathoplexus.backend.service.SubmittedData
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.stereotype.Service
@@ -57,7 +57,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
     private fun processRevisedData(
         metadataFile: MultipartFile,
         sequenceFile: MultipartFile,
-    ): List<RevicedData> {
+    ): List<RevisedData> {
         val metadataMap = metadataMap(metadataFile)
         val metadataMapWithoutSequenceId =
             metadataMap.mapValues { it.value.filterKeys { column -> column != SEQUENCE_ID_HEADER } }
@@ -67,7 +67,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
         val sequenceIdMap = sequenceIdMap(metadataMap)
 
         return metadataMapWithoutSequenceId.map { entry ->
-            RevicedData(
+            RevisedData(
                 entry.key,
                 sequenceIdMap[entry.key]!!,
                 OriginalData(entry.value, mapOf("main" to sequenceMap[entry.key]!!)),

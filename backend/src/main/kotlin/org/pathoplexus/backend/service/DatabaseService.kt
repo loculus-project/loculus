@@ -87,13 +87,14 @@ class DatabaseService(
     }
 
     fun streamUnprocessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
+        log.info { "streaming unprocessed submissions. Requested $numberOfSequences sequences." }
         val maxVersionQuery = maxVersionQuery()
 
         val sequencesData = SequencesTable
             .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.originalData)
             .select(
                 where = {
-                    (SequencesTable.status eq RECEIVED.name)
+                    (SequencesTable.status inList listOf(RECEIVED.name, REVIEWED.name))
                         .and((SequencesTable.version eq maxVersionQuery))
                 },
             )
@@ -385,16 +386,20 @@ class DatabaseService(
         )
     }
 
-    fun reviseData(submitter: String, revisedData: List<RevicedData>): List<HeaderId> {
+    fun reviseData(submitter: String, revisedData: List<RevisedData>): List<HeaderId> {
         log.info { "revising sequences" }
 
         val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        return revisedData.map {
-            val sequenceVersions =
-                queryPreconditionValidator.validateSequenceIds(submitter, listOf(it.sequenceId), listOf(SILO_READY))
+        val sequenceVersions =
+            queryPreconditionValidator.validateSequenceIds(
+                submitter,
+                revisedData.map { it.sequenceId },
+                listOf(SILO_READY),
+            ).associateBy { it.sequenceId }
 
+        revisedData.map { data ->
             SequencesTable.insert(
                 SequencesTable.slice(
                     SequencesTable.sequenceId,
@@ -404,10 +409,10 @@ class DatabaseService(
                     dateTimeParam(now),
                     stringParam(RECEIVED.name),
                     booleanParam(false),
-                    QueryParameter(it.originalData, SequencesTable.originalData.columnType),
+                    QueryParameter(data.originalData, SequencesTable.originalData.columnType),
                 ).select(
                     where = {
-                        (SequencesTable.sequenceId eq it.sequenceId) and
+                        (SequencesTable.sequenceId eq data.sequenceId) and
                             (SequencesTable.version eq maxVersionQuery) and
                             (SequencesTable.status eq SILO_READY.name) and
                             (SequencesTable.submitter eq submitter)
@@ -424,9 +429,9 @@ class DatabaseService(
                     SequencesTable.originalData,
                 ),
             )
+        }
 
-            HeaderId(it.sequenceId, sequenceVersions.first().version + 1, it.customId)
-        }.toList()
+        return revisedData.map { HeaderId(it.sequenceId, sequenceVersions[it.sequenceId]!!.version + 1, it.customId) }
     }
 
     fun revoke(sequenceIds: List<Long>, username: String): List<SequenceVersionStatus> {
@@ -815,7 +820,7 @@ data class SequenceVersionStatus(
     val isRevocation: Boolean = false,
 )
 
-data class RevicedData(
+data class RevisedData(
     val customId: String,
     val sequenceId: Long,
     val originalData: OriginalData,

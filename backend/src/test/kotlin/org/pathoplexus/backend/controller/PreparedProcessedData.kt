@@ -66,22 +66,13 @@ private val defaultSuccessfulSubmittedData = SubmittedProcessedData(
 )
 
 object PreparedProcessedData {
-    fun successfullyProcessed(sequenceId: Long = DefaultFiles.firstSequence) =
-        defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
-        )
-
-    fun withMetadataAndNucleotideSequence(
+    fun successfullyProcessed(
         sequenceId: Long = DefaultFiles.firstSequence,
-        metadata: Map<String, JsonNode>,
-        unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
+        version: Long = defaultSuccessfulSubmittedData.version,
     ) =
         defaultSuccessfulSubmittedData.withValues(
             sequenceId = sequenceId,
-            data = defaultProcessedData.withValues(
-                metadata = metadata,
-                unalignedNucleotideSequences = unalignedNucleotideSequences,
-            ),
+            version = version,
         )
 
     fun withNullForFields(sequenceId: Long = DefaultFiles.firstSequence, fields: List<String>) =

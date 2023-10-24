@@ -1,5 +1,7 @@
 package org.pathoplexus.backend.controller
 
+import org.hamcrest.CoreMatchers.hasItem
+import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -7,6 +9,8 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.service.Status.RECEIVED
+import org.pathoplexus.backend.service.Status.SILO_READY
+import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
@@ -21,7 +25,7 @@ class ReviseEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `GIVEN sequences with status 'SILO_READY' THEN the status changes to 'RECEIVED' and returns HeaderIds`() {
+    fun `GIVEN sequences with status 'SILO_READY' THEN there is a revised version and returns HeaderIds`() {
         convenienceClient.prepareDefaultSequencesToSiloReady()
 
         client.reviseSequences(
@@ -37,6 +41,23 @@ class ReviseEndpointTest(
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 2)
             .assertStatusIs(RECEIVED)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
+            .assertStatusIs(SILO_READY)
+
+        val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
+        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
+        MatcherAssert.assertThat(responseBody, Matchers.hasSize(10))
+
+        MatcherAssert.assertThat(
+            responseBody,
+            hasItem(
+                UnprocessedData(
+                    sequenceId = DefaultFiles.firstSequence,
+                    version = 2,
+                    data = defaultOriginalData,
+                ),
+            ),
+        )
     }
 
     @Test
@@ -77,7 +98,7 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User '$notSubmitter' does not have right to change the sequence versions " +
-                        "1.1",
+                        "1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1",
                 ),
             )
     }
@@ -95,7 +116,9 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Sequence versions are in not in one of the states [SILO_READY]: " +
-                        "1.1 - NEEDS_REVIEW",
+                        "1.1 - NEEDS_REVIEW, 3.1 - NEEDS_REVIEW, 4.1 - NEEDS_REVIEW, 5.1 - NEEDS_REVIEW, " +
+                        "6.1 - NEEDS_REVIEW, 10.1 - NEEDS_REVIEW, 2.1 - NEEDS_REVIEW, 7.1 - NEEDS_REVIEW, 8.1 " +
+                        "- NEEDS_REVIEW, 9.1 - NEEDS_REVIEW",
                 ),
             )
     }
