@@ -58,7 +58,7 @@ const defaultReviewData: SequenceReview = {
         nucleotideInsertions: {
             processedInsertionSequenceName: ['nucleotideInsertion1', 'nucleotideInsertion2'],
         },
-        aminoAcidSequences: {
+        alignedAminoAcidSequences: {
             alignedProcessedGeneName: 'processedAminoAcidSequencesValue',
         },
         aminoAcidInsertions: {
@@ -113,7 +113,7 @@ describe('ReviewPage', () => {
         expectTextInSequenceData.processed(defaultReviewData.processedData.alignedNucleotideSequences);
 
         expect(screen.getByText(/Amino acid sequences/i)).toBeInTheDocument();
-        expectTextInSequenceData.processed(defaultReviewData.processedData.aminoAcidSequences);
+        expectTextInSequenceData.processed(defaultReviewData.processedData.alignedAminoAcidSequences);
 
         expect(screen.getByText('Processed insertion sequence name:')).toBeInTheDocument();
         expect(screen.getByText('nucleotideInsertion1,nucleotideInsertion2')).toBeInTheDocument();

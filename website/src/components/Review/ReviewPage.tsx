@@ -106,7 +106,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, userna
                     />
                     <ProcessedSequences
                         processedSequenceRows={processedSequenceRows}
-                        sequenceType='aminoAcidSequences'
+                        sequenceType='alignedAminoAcidSequences'
                     />
                     <ProcessedInsertions
                         processedInsertions={processedInsertions}
@@ -284,7 +284,7 @@ const mapSequencesToRow = (reviewData: SequenceReview): Row[] =>
 const extractProcessedSequences = (reviewData: SequenceReview) => ({
     unalignedNucleotideSequences: reviewData.processedData.unalignedNucleotideSequences,
     alignedNucleotideSequences: reviewData.processedData.alignedNucleotideSequences,
-    aminoAcidSequences: reviewData.processedData.aminoAcidSequences,
+    alignedAminoAcidSequences: reviewData.processedData.alignedAminoAcidSequences,
 });
 
 const extractInsertions = (reviewData: SequenceReview) => ({

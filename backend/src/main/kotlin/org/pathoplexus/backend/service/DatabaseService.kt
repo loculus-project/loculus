@@ -753,7 +753,7 @@ data class ProcessedData(
         example = """{"gene1": "NRNR", "gene2": "NRNR"}""",
         description = "The key is the gene name, the value is the amino acid sequence",
     )
-    val aminoAcidSequences: Map<GeneName, AminoAcidSequence>,
+    val alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence>,
     @Schema(
         example = """{"gene1": ["123:RRN", "345:NNN"], "gene2": ["123:NNR", "345:RN"]}""",
         description = "The key is the gene name, the value is a list of amino acid insertions",

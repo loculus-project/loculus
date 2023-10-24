@@ -32,7 +32,7 @@ export const fakeProcessingPipeline = async ({
             nucleotideInsertions: {
                 main: ['123:TCTCT', '234:ATATAT'],
             },
-            aminoAcidSequences: {
+            alignedAminoAcidSequences: {
                 E: 'M'.repeat(76),
                 M: 'A'.repeat(223),
                 N: 'S'.repeat(420),
