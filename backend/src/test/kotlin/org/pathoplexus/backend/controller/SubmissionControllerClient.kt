@@ -1,7 +1,6 @@
 package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.pathoplexus.backend.service.OriginalData
 import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
@@ -127,5 +126,3 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .param("username", username),
         )
 }
-
-val emptyOriginalData = OriginalData(metadata = emptyMap(), unalignedNucleotideSequences = emptyMap())
