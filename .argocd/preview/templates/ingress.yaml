@@ -4,7 +4,7 @@ metadata:
   name: website-{{ .Values.shortbranch }}
   namespace: {{ .Values.namespace }}
   annotations:
-    cert-manager.io/clusterissuer: "letsencrypt-prod"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   tls:
   - hosts:
