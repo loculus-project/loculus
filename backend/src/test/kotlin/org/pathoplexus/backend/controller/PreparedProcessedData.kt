@@ -33,7 +33,7 @@ private val defaultProcessedData = ProcessedData(
     ),
     alignedNucleotideSequences = mapOf(
         "main" to "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT",
-        "secondSegment" to "ATAG",
+        "secondSegment" to "ACGTMRWSYKVHDBN-",
     ),
     nucleotideInsertions = mapOf(
         "main" to listOf(
@@ -44,7 +44,7 @@ private val defaultProcessedData = ProcessedData(
         ),
     ),
     alignedAminoAcidSequences = mapOf(
-        "someLongGene" to "MYSFVSEETGTLIVNSVLLFL",
+        "someLongGene" to "ACDEFGHIKLMNPQRSTVWYBZX-*",
         "someShortGene" to "MADS",
     ),
     aminoAcidInsertions = mapOf(
@@ -66,22 +66,13 @@ private val defaultSuccessfulSubmittedData = SubmittedProcessedData(
 )
 
 object PreparedProcessedData {
-    fun successfullyProcessed(sequenceId: Long = DefaultFiles.firstSequence) =
-        defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
-        )
-
-    fun withMetadataAndNucleotideSequence(
+    fun successfullyProcessed(
         sequenceId: Long = DefaultFiles.firstSequence,
-        metadata: Map<String, JsonNode>,
-        unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
+        version: Long = defaultSuccessfulSubmittedData.version,
     ) =
         defaultSuccessfulSubmittedData.withValues(
             sequenceId = sequenceId,
-            data = defaultProcessedData.withValues(
-                metadata = metadata,
-                unalignedNucleotideSequences = unalignedNucleotideSequences,
-            ),
+            version = version,
         )
 
     fun withNullForFields(sequenceId: Long = DefaultFiles.firstSequence, fields: List<String>) =

@@ -1,6 +1,5 @@
 package org.pathoplexus.backend.service
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
 import org.pathoplexus.backend.config.ReferenceGenome
@@ -17,21 +16,55 @@ private const val DATE_FORMAT = "yyyy-MM-dd"
 private const val PANGO_LINEAGE_REGEX_PATTERN = "[a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}"
 private val pangoLineageRegex = Regex(PANGO_LINEAGE_REGEX_PATTERN)
 
-enum class AminoAcidSymbols {
-    A, C, D, E, F, G, H, I, K, L, M, N, P, Q, R, S, T, V, W, Y, B, Z, X,
-
-    @JsonProperty("-")
-    GAP,
-
-    @JsonProperty("*")
-    STOP,
+interface Symbol {
+    val symbol: Char
 }
 
-enum class NucleotideSymbols {
-    A, C, G, T, M, R, W, S, Y, K, V, H, D, B, N,
+enum class AminoAcidSymbols(override val symbol: Char) : Symbol {
+    A('A'),
+    C('C'),
+    D('D'),
+    E('E'),
+    F('F'),
+    G('G'),
+    H('H'),
+    I('I'),
+    K('K'),
+    L('L'),
+    M('M'),
+    N('N'),
+    P('P'),
+    Q('Q'),
+    R('R'),
+    S('S'),
+    T('T'),
+    V('V'),
+    W('W'),
+    Y('Y'),
+    B('B'),
+    Z('Z'),
+    X('X'),
+    GAP('-'),
+    STOP('*'),
+}
 
-    @JsonProperty("-")
-    GAP,
+enum class NucleotideSymbols(override val symbol: Char) : Symbol {
+    A('A'),
+    C('C'),
+    G('G'),
+    T('T'),
+    M('M'),
+    R('R'),
+    W('W'),
+    S('S'),
+    Y('Y'),
+    K('K'),
+    V('V'),
+    H('H'),
+    D('D'),
+    B('B'),
+    N('N'),
+    GAP('-'),
 }
 
 @Component
@@ -266,11 +299,13 @@ class SequenceValidator(
         }
     }
 
-    private inline fun <reified ValidSymbols : Enum<ValidSymbols>> String.getInvalidSymbols() =
+    private inline fun <reified ValidSymbols> String.getInvalidSymbols()
+        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         this.filter { !it.isValidSymbol<ValidSymbols>() }.toList()
 
-    private inline fun <reified ValidSymbols : Enum<ValidSymbols>> Char.isValidSymbol() =
-        enumValues<ValidSymbols>().any { it.name == this.toString() }
+    private inline fun <reified ValidSymbols> Char.isValidSymbol()
+        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+        enumValues<ValidSymbols>().any { it.symbol == this }
 
     private fun validateAminoAcidSequences(
         submittedProcessedData: SubmittedProcessedData,

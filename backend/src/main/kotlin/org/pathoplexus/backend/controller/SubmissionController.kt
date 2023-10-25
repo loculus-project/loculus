@@ -7,19 +7,14 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.constraints.Max
-import org.apache.commons.csv.CSVFormat
-import org.apache.commons.csv.CSVParser
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.model.SubmitModel
 import org.pathoplexus.backend.service.DatabaseService
-import org.pathoplexus.backend.service.FileData
-import org.pathoplexus.backend.service.OriginalData
 import org.pathoplexus.backend.service.SequenceReview
 import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SequenceVersionStatus
 import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
-import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -35,96 +30,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
-import java.io.InputStreamReader
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
-
-private const val SUBMIT_RESPONSE_DESCRIPTION =
-    "Returns a list of sequenceId, version and customId of the submitted sequences. " +
-        "The customId is the (locally unique) id provided by the submitter as 'header' in the metadata file. " +
-        "The version will be 1 for every sequence. " +
-        "The sequenceId is the (globally unique) id that the system assigned to the sequence. " +
-        "You can use this response to associate the user provided customId with the system assigned sequenceId."
-private const val METADATA_FILE_DESCRIPTION =
-    "A TSV (tab separated values) file containing the metadata of the submitted sequences. " +
-        "The first row must contain the column names. " +
-        "The field 'header' is required and must be unique within the provided dataset. " +
-        "It is used to associate metadata to the sequences in the sequences fasta file."
-private const val SEQUENCE_FILE_DESCRIPTION =
-    "A fasta file containing the unaligned nucleotide sequences of the submitted sequences. " +
-        "The header of each sequence must match the 'header' field in the metadata file."
-
-private const val EXTRACT_UNPROCESSED_DATA_DESCRIPTION =
-    "Extract unprocessed sequences. This is supposed to be used as input for the preprocessing pipeline. " +
-        "Returns a stream of NDJSON and sets the status each sequence to 'PROCESSING'."
-private const val EXTRACT_UNPROCESSED_DATA_RESPONSE_DESCRIPTION =
-    "Sequence data as input for the preprocessing pipeline. " +
-        "The schema is to be understood per line of the NDJSON stream."
-
-private const val SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION =
-    "Submit a review for a sequence that corrects errors found by the preprocessing pipeline " +
-        "or the user themselves. This will set the status of the sequence to " +
-        "'REVIEWED' and it will be processed by the next pipeline run."
-
-private const val MAX_EXTRACTED_SEQUENCES = 100_000L
-
-private const val SUBMIT_PROCESSED_DATA_DESCRIPTION = """
-Submit processed data as a stream of NDJSON. The schema is to be understood per line of the NDJSON stream. 
-This endpoint performs validation (type validation, missing/required fields, comparison to reference genome) on the data
-returned by the processing pipeline, so that it can technically be used for release. On a technical error, this endpoint
- will roll back all previously inserted data. It is the responsibility of the processing pipeline to ensure that the 
- content of the data is correct. If the pipeline is unable to provide valid data, it should submit the data with errors.
- In this case, no validation will be performed and the status of the sequence version will be set to 'NEEDS_REVIEW'.
- The user can then review the data and submit a corrected version.
-"""
-
-private const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
-On sequence version that cannot be written to the database, e.g. if the sequence id does not exist or processing
- pipeline submits invalid data. Rolls back the whole transaction.
-"""
-
-private const val GET_DATA_TO_REVIEW_DESCRIPTION = """
-Get processed sequence data with errors to review as a stream of NDJSON.
-This returns all sequences of the user that have the status 'REVIEW_NEEDED'.
-"""
-
-private const val GET_DATA_TO_REVIEW_SEQUENCE_VERSION_DESCRIPTION = """
-Get processed sequence data with errors to review for a single sequence version.
-The sequence version must be in status 'REVIEW_NEEDED' or 'PROCESSED'.
-"""
-
-private const val GET_SEQUENCES_OF_USER_DESCRIPTION = """
-Get a list of submitted sequence versions and their status for the given user.
-This returns the last sequence version in status SILO_READY and
-the sequence version that is not 'SILO_READY' (if it exists).
-"""
-
-private const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
-Approve processed sequence versions and set the status to 'SILO_READY'.
-This can only be done for sequences in status 'PROCESSED' that the user submitted themselves.
-"""
-
-private const val REVOKE_DESCRIPTION = """
-Revoke existing sequence. 
-Creates a new revocation version and stages it for confirmation. 
-If successfully, this returns the sequenceIds, versions and status of the revocation versions.
-If any of the given sequences do not exist, or do not have the latest version in status 'SILO_READY', 
-or the given user has no right to the sequence, this will return an error and roll back the whole transaction.
-"""
-
-private const val CONFIRM_REVOCATION_DESCRIPTION = """
-Confirm revocation of existing sequences. 
-This will set the status 'REVOKED_STAGING' of the revocation version to 
-'SILO_READY'. If any of the given sequence versions do not exist, or do not have the latest version in status 
-'REVOKED_STAGING', or the given user has no right to the sequence, this will return an error and roll back the whole 
-transaction.
-"""
-
-private const val DELETE_SEQUENCES_DESCRIPTION = """
-Delete existing sequence versions. 
-If any of the given sequences do not exist, or the user has no right to delete any of the sequences or a 
-sequence version is in status 'SILO_READY' or 'PROCESSING', i.e. not deletable, this will return an error 
-and roll back the whole transaction.
-"""
 
 @RestController
 @Validated
@@ -263,19 +169,18 @@ class SubmissionController(
         databaseService.approveProcessedData(username, body.sequenceVersions)
     }
 
-    @Operation(description = "Revise released data as a multipart/form-data")
+    @Operation(description = REVISE_DESCRIPTION)
+    @ApiResponse(responseCode = "200", description = REVISE_RESPONSE_DESCRIPTION)
     @PostMapping("/revise", consumes = ["multipart/form-data"])
     fun revise(
         @RequestParam username: String,
         @Parameter(
-            description = "Revised metadata file that contains a column 'sequenceId' that is used " +
-                "to associate the revision to the sequence that will be revised.",
+            description = REVISED_METADATA_FILE_DESCRIPTION,
         ) @RequestParam metadataFile: MultipartFile,
         @Parameter(
-            description = "Nucleotide sequences in a fasta file format. " +
-                "No changes to the schema compared to an initial submit.",
+            description = SEQUENCE_FILE_DESCRIPTION,
         ) @RequestParam sequenceFile: MultipartFile,
-    ): List<HeaderId> = databaseService.reviseData(username, generateFileDataSequence(metadataFile, sequenceFile))
+    ): List<HeaderId> = submitModel.processRevision(username, metadataFile, sequenceFile)
 
     @Operation(description = REVOKE_DESCRIPTION)
     @PostMapping("/revoke", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -309,25 +214,4 @@ class SubmissionController(
     data class SequenceVersions(
         val sequenceVersions: List<SequenceVersion>,
     )
-
-    private fun generateFileDataSequence(
-        metadataFile: MultipartFile,
-        sequenceFile: MultipartFile,
-    ): Sequence<FileData> {
-        val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
-        val sequenceMap = fastaList.associate { it.sampleName to it.sequence }
-
-        return CSVParser(
-            InputStreamReader(metadataFile.inputStream),
-            CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
-        ).asSequence().map { line ->
-            // TODO The errors do not work. Use throw
-            val customId = line["header"] ?: error("Missing header field")
-            val sequenceId = line["sequenceId"]?.toLong() ?: error("Missing sequenceId field")
-            val metadata = line.toMap().filterKeys { it != "header" }
-            val sequence = sequenceMap[customId] ?: error("Missing sequence for header $customId")
-
-            FileData(customId, sequenceId, OriginalData(metadata, mapOf("main" to sequence)))
-        }
-    }
 }

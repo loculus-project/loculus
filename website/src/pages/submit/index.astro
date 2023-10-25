@@ -9,5 +9,5 @@ const clientConfig = getRuntimeConfig().forClient;
 <BaseLayout title='Submit'>
     <h1 class='title'>Submission Page</h1>
 
-    <SubmissionForm clientConfig={clientConfig} client:only='react' />
+    <SubmissionForm clientConfig={clientConfig} client:load />
 </BaseLayout>

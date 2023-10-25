@@ -1,7 +1,6 @@
 package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.pathoplexus.backend.service.OriginalData
 import org.pathoplexus.backend.service.SequenceVersion
 import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.pathoplexus.backend.service.UnprocessedData
@@ -114,6 +113,16 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                     """{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequenceVersionsToDelete)}}""",
                 ),
         )
-}
 
-val emptyOriginalData = OriginalData(metadata = emptyMap(), unalignedNucleotideSequences = emptyMap())
+    fun reviseSequences(
+        metadataFile: MockMultipartFile,
+        sequencesFile: MockMultipartFile,
+        username: String = USER_NAME,
+    ): ResultActions =
+        mockMvc.perform(
+            multipart("/revise")
+                .file(sequencesFile)
+                .file(metadataFile)
+                .param("username", username),
+        )
+}

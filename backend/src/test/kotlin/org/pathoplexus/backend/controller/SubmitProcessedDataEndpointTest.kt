@@ -7,7 +7,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
+import org.pathoplexus.backend.service.AminoAcidSymbols
 import org.pathoplexus.backend.service.Insertion
+import org.pathoplexus.backend.service.NucleotideSymbols
 import org.pathoplexus.backend.service.Status
 import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,6 +30,31 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(sequenceId = 3),
             PreparedProcessedData.successfullyProcessed(sequenceId = 4),
+        )
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
+    }
+
+    @Test
+    fun `WHEN I submit sequences with all valid symbols THEN the sequence is in status processed`() {
+        prepareExtractedSequencesInDatabase()
+
+        val allNucleotideSymbols = NucleotideSymbols.entries.joinToString("") { it.symbol.toString() }
+        val allAminoAcidSymbols = AminoAcidSymbols.entries.joinToString("") { it.symbol.toString() }
+        val defaultData = PreparedProcessedData.successfullyProcessed().data
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(sequenceId = 3).withValues(
+                data = defaultData.withValues(
+                    unalignedNucleotideSequences = defaultData.unalignedNucleotideSequences +
+                        ("secondSegment" to allNucleotideSymbols),
+                    alignedNucleotideSequences = defaultData.alignedNucleotideSequences +
+                        ("secondSegment" to allNucleotideSymbols),
+                    alignedAminoAcidSequences =
+                    defaultData.alignedAminoAcidSequences + ("someLongGene" to allAminoAcidSymbols),
+                ),
+            ),
         )
             .andExpect(status().isNoContent)
 

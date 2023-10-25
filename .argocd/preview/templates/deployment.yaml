@@ -72,6 +72,7 @@ spec:
             - "--spring.datasource.username=postgres"
             - "--spring.datasource.password=unsecure"
             - "--backend.config.path=/repo/website/tests/config/config.json"
+            - "--backend.referenceGenome.path=/repo/website/tests/config/reference_genomes.json"
           volumeMounts:
             - name: repo-volume
               mountPath: /repo

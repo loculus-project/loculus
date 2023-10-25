@@ -122,7 +122,7 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(
                 jsonPath("$.detail")
                     .value(
-                        "Sequence versions are in not in state [${Status.PROCESSED}]: " +
+                        "Sequence versions are in not in one of the states [${Status.PROCESSED}]: " +
                             "2.1 - ${Status.PROCESSING}, 3.1 - ${Status.PROCESSING}",
                     ),
             )
