@@ -277,12 +277,16 @@ class SequenceValidator(
     ) {
         for (gene in referenceGenome.genes) {
             validateNoMissingGene(gene, submittedProcessedData)
-            validateLengthOfSequence(gene, submittedProcessedData.data.aminoAcidSequences, "aminoAcidSequences")
+            validateLengthOfSequence(
+                gene,
+                submittedProcessedData.data.alignedAminoAcidSequences,
+                "alignedAminoAcidSequences",
+            )
         }
 
         validateNoUnknownGeneInData(
-            submittedProcessedData.data.aminoAcidSequences,
-            "aminoAcidSequences",
+            submittedProcessedData.data.alignedAminoAcidSequences,
+            "alignedAminoAcidSequences",
         )
 
         validateNoUnknownGeneInData(
@@ -290,7 +294,7 @@ class SequenceValidator(
             "aminoAcidInsertions",
         )
 
-        validateNoUnknownAminoAcidSymbol(submittedProcessedData.data.aminoAcidSequences)
+        validateNoUnknownAminoAcidSymbol(submittedProcessedData.data.alignedAminoAcidSequences)
         validateNoUnknownAminoAcidSymbolInInsertion(submittedProcessedData.data.aminoAcidInsertions)
     }
 
@@ -298,7 +302,7 @@ class SequenceValidator(
         gene: ReferenceSequence,
         submittedProcessedData: SubmittedProcessedData,
     ) {
-        if (!submittedProcessedData.data.aminoAcidSequences.containsKey(gene.name)) {
+        if (!submittedProcessedData.data.alignedAminoAcidSequences.containsKey(gene.name)) {
             throw ProcessingValidationException("Missing the required gene '${gene.name}'.")
         }
     }
@@ -320,7 +324,7 @@ class SequenceValidator(
             val invalidSymbols = sequence.value.getInvalidSymbols<AminoAcidSymbols>()
             if (invalidSymbols.isNotEmpty()) {
                 throw ProcessingValidationException(
-                    "The gene '${sequence.key}' in 'aminoAcidSequences' " +
+                    "The gene '${sequence.key}' in 'alignedAminoAcidSequences' " +
                         "contains invalid symbols: $invalidSymbols.",
                 )
             }

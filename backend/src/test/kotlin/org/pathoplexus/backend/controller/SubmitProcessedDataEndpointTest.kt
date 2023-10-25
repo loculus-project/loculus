@@ -29,7 +29,7 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessed(sequenceId = 3),
             PreparedProcessedData.successfullyProcessed(sequenceId = 4),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
     }
@@ -45,7 +45,7 @@ class SubmitProcessedDataEndpointTest(
 
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(sequenceId = 3).withValues(data = dataWithoutInsertions),
-        ).andExpect(status().isOk)
+        ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
 
@@ -68,7 +68,7 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.withNullForFields(fields = listOf("dateSubmitted")),
         )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
         prepareExtractedSequencesInDatabase()
 
@@ -81,7 +81,7 @@ class SubmitProcessedDataEndpointTest(
         prepareExtractedSequencesInDatabase()
 
         submissionControllerClient.submitProcessedData(PreparedProcessedData.withErrors(firstSequence))
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.NEEDS_REVIEW)
@@ -96,7 +96,7 @@ class SubmitProcessedDataEndpointTest(
                 sequenceId = firstSequence,
                 errors = PreparedProcessedData.withErrors().errors,
             ),
-        ).andExpect(status().isOk)
+        ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.NEEDS_REVIEW)
@@ -107,7 +107,7 @@ class SubmitProcessedDataEndpointTest(
         prepareExtractedSequencesInDatabase()
 
         submissionControllerClient.submitProcessedData(PreparedProcessedData.withWarnings(firstSequence))
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
             .assertStatusIs(Status.PROCESSED)
@@ -342,18 +342,18 @@ class SubmitProcessedDataEndpointTest(
         @JvmStatic
         fun provideInvalidAminoAcidSequenceDataScenarios() = listOf(
             InvalidDataScenario(
-                name = "data with missing gene in aminoAcidSequences",
+                name = "data with missing gene in alignedAminoAcidSequences",
                 processedData = PreparedProcessedData.withMissingGeneInAminoAcidSequences(
                     gene = "someShortGene",
                 ),
                 expectedErrorMessage = "Missing the required gene 'someShortGene'.",
             ),
             InvalidDataScenario(
-                name = "data with unknown gene in aminoAcidSequences",
+                name = "data with unknown gene in alignedAminoAcidSequences",
                 processedData = PreparedProcessedData.withUnknownGeneInAminoAcidSequences(
                     gene = "someOtherGene",
                 ),
-                expectedErrorMessage = "Unknown genes in 'aminoAcidSequences': someOtherGene.",
+                expectedErrorMessage = "Unknown genes in 'alignedAminoAcidSequences': someOtherGene.",
             ),
             InvalidDataScenario(
                 name = "data with unknown gene in aminoAcidInsertions",
@@ -363,16 +363,16 @@ class SubmitProcessedDataEndpointTest(
                 expectedErrorMessage = "Unknown genes in 'aminoAcidInsertions': someOtherGene.",
             ),
             InvalidDataScenario(
-                name = "data with gene in aminoAcidSequences of wrong length",
+                name = "data with gene in alignedAminoAcidSequences of wrong length",
                 processedData = PreparedProcessedData.withAminoAcidSequenceOfWrongLength(gene = "someShortGene"),
-                expectedErrorMessage = "The length of 'someShortGene' in 'aminoAcidSequences' is 123, " +
+                expectedErrorMessage = "The length of 'someShortGene' in 'alignedAminoAcidSequences' is 123, " +
                     "but it should be 4.",
             ),
             InvalidDataScenario(
-                name = "data with gene in aminoAcidSequences with wrong symbols",
+                name = "data with gene in alignedAminoAcidSequences with wrong symbols",
                 processedData = PreparedProcessedData.withAminoAcidSequenceWithWrongSymbols(gene = "someShortGene"),
-                expectedErrorMessage = "The gene 'someShortGene' in 'aminoAcidSequences' contains invalid symbols: " +
-                    "[Ä, Ö].",
+                expectedErrorMessage = "The gene 'someShortGene' in 'alignedAminoAcidSequences' contains " +
+                    "invalid symbols: [Ä, Ö].",
             ),
             InvalidDataScenario(
                 name = "data with segment in amino acid insertions with wrong symbols",

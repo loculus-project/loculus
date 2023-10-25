@@ -121,7 +121,10 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(
                 jsonPath("$.detail")
-                    .value("Sequence versions are in not in state PROCESSED: 2.1 - PROCESSING, 3.1 - PROCESSING"),
+                    .value(
+                        "Sequence versions are in not in state [${Status.PROCESSED}]: " +
+                            "2.1 - ${Status.PROCESSING}, 3.1 - ${Status.PROCESSING}",
+                    ),
             )
 
         convenienceClient.getSequenceVersionOfUser(sequenceVersionInCorrectState).assertStatusIs(Status.PROCESSED)

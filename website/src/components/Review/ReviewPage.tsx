@@ -1,20 +1,15 @@
 import { sentenceCase, snakeCase } from 'change-case';
-import { type Result } from 'neverthrow';
 import { type Dispatch, type FC, Fragment, type SetStateAction, useMemo, useRef, useState } from 'react';
 
 import { EditableDataRow, ProcessedDataRow } from './DataRow.tsx';
 import type { Row } from './InputField.tsx';
-import { clientFetch, getClientLogger } from '../../api.ts';
-import type {
-    ClientConfig,
-    MetadataRecord,
-    ProcessingAnnotationSourceType,
-    SequenceReview,
-    UnprocessedData,
-} from '../../types.ts';
+import { getClientLogger } from '../../api.ts';
+import { backendClientHooks } from '../../services/backendHooks.ts';
+import type { ClientConfig, MetadataRecord, ProcessingAnnotationSourceType, SequenceReview } from '../../types.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type ReviewPageProps = {
     clientConfig: ClientConfig;
@@ -24,13 +19,20 @@ type ReviewPageProps = {
 
 const logger = getClientLogger('ReviewPage');
 
-export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, username }) => {
+const InnerReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, username }: ReviewPageProps) => {
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(reviewData));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(reviewData));
 
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     const dialogRef = useRef<HTMLDialogElement>(null);
+
+    const { mutate: submitReviewedSequence } = useSubmitReviewedSequence(
+        clientConfig,
+        username,
+        reviewData,
+        openErrorFeedback,
+    );
 
     const handleOpenConfirmationDialog = () => {
         if (dialogRef.current) {
@@ -39,33 +41,18 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
     };
 
     const submitReviewForSequenceVersion = async () => {
-        const result = await submitReview(reviewData, editedMetadata, editedSequences, username, clientConfig);
-        await result.match(
-            async () => {
-                location.href = `/user/${username}/sequences`;
-                await logger.info('Successfully submitted review ' + reviewData.sequenceId + '.' + reviewData.version);
+        const data = {
+            sequenceId: reviewData.sequenceId,
+            version: reviewData.version,
+            data: {
+                metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
+                unalignedNucleotideSequences: editedSequences.reduce(
+                    (prev, row) => ({ ...prev, [row.key]: row.value }),
+                    {},
+                ),
             },
-            async (error) => {
-                openErrorFeedback(`Failed to submit review with error '${JSON.stringify(error)})}'`);
-            },
-        );
-    };
-
-    const generateAndDownloadFastaFile = () => {
-        const sequenceVersion = getSequenceVersionString(reviewData);
-        const fileContent = editedSequences
-            .map((sequence) => `>${sequenceVersion}.${sequence.key}\n${sequence.value}\n\n`)
-            .join();
-
-        const blob = new Blob([fileContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `sequenceVersion${sequenceVersion}.fasta`;
-        a.click();
-
-        URL.revokeObjectURL(url);
+        };
+        submitReviewedSequence(data);
     };
 
     const processedSequenceRows = useMemo(() => extractProcessedSequences(reviewData), [reviewData]);
@@ -80,7 +67,10 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
                     Submit Review
                 </button>
 
-                <button className='btn normal-case' onClick={generateAndDownloadFastaFile}>
+                <button
+                    className='btn normal-case'
+                    onClick={() => generateAndDownloadFastaFile(editedSequences, reviewData)}
+                >
                     Download Sequences as fasta file
                 </button>
             </div>
@@ -116,7 +106,7 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
                     />
                     <ProcessedSequences
                         processedSequenceRows={processedSequenceRows}
-                        sequenceType='aminoAcidSequences'
+                        sequenceType='alignedAminoAcidSequences'
                     />
                     <ProcessedInsertions
                         processedInsertions={processedInsertions}
@@ -131,6 +121,49 @@ export const ReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, user
         </>
     );
 };
+
+export const ReviewPage = withQueryProvider(InnerReviewPage);
+
+function useSubmitReviewedSequence(
+    clientConfig: ClientConfig,
+    username: string,
+    reviewData: SequenceReview,
+    openErrorFeedback: (message: string) => void,
+) {
+    return backendClientHooks(clientConfig).useSubmitReviewedSequence(
+        { queries: { username } },
+        {
+            onSuccess: async () => {
+                await logger.info('Successfully submitted review ' + reviewData.sequenceId + '.' + reviewData.version);
+                location.href = `/user/${username}/sequences`;
+            },
+            onError: async (error) => {
+                const message = `Failed to submit review for ${getSequenceVersionString(
+                    reviewData,
+                )} with error '${JSON.stringify(error)})}'`;
+                await logger.info(message);
+                openErrorFeedback(message);
+            },
+        },
+    );
+}
+
+function generateAndDownloadFastaFile(editedSequences: Row[], reviewData: SequenceReview) {
+    const sequenceVersion = getSequenceVersionString(reviewData);
+    const fileContent = editedSequences
+        .map((sequence) => `>${sequenceVersion}.${sequence.key}\n${sequence.value}\n\n`)
+        .join();
+
+    const blob = new Blob([fileContent], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sequenceVersion${sequenceVersion}.fasta`;
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
 
 type SubtitleProps = {
     title: string;
@@ -251,7 +284,7 @@ const mapSequencesToRow = (reviewData: SequenceReview): Row[] =>
 const extractProcessedSequences = (reviewData: SequenceReview) => ({
     unalignedNucleotideSequences: reviewData.processedData.unalignedNucleotideSequences,
     alignedNucleotideSequences: reviewData.processedData.alignedNucleotideSequences,
-    aminoAcidSequences: reviewData.processedData.aminoAcidSequences,
+    alignedAminoAcidSequences: reviewData.processedData.alignedAminoAcidSequences,
 });
 
 const extractInsertions = (reviewData: SequenceReview) => ({
@@ -271,36 +304,3 @@ const mapErrorsAndWarnings = (
         .filter((warning) => warning.source.find((source) => source.name === key && source.type === type) !== undefined)
         .map((warning) => warning.message),
 });
-
-const submitReview = async (
-    reviewData: SequenceReview,
-    editedMetadata: Row[],
-    editedSequences: Row[],
-    username: string,
-    clientConfig: ClientConfig,
-): Promise<Result<undefined, string>> => {
-    const body: UnprocessedData = {
-        sequenceId: reviewData.sequenceId,
-        version: reviewData.version,
-        data: {
-            metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
-            unalignedNucleotideSequences: editedSequences.reduce(
-                (prev, row) => ({ ...prev, [row.key]: row.value }),
-                {},
-            ),
-        },
-    };
-
-    return clientFetch({
-        endpoint: `/submit-reviewed-sequence?username=${username}`,
-        backendUrl: clientConfig.backendUrl,
-        zodSchema: undefined,
-        options: {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(body),
-        },
-    });
-};

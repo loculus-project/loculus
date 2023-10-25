@@ -17,7 +17,8 @@ export const RevisionForm: FC<RevisionFormProps> = ({ clientConfig }) => {
         <div className='flex flex-col items-center'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <DataUploadForm
-                targetUrl={`${clientConfig.backendUrl}/revise`}
+                clientConfig={clientConfig}
+                action='revise'
                 onError={openErrorFeedback}
                 onSuccess={setResponseSequenceHeaders}
             />

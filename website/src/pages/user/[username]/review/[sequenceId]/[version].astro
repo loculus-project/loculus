@@ -1,18 +1,17 @@
 ---
-import { getReviewForSequenceVersion } from './getReviewData';
 import { BackButton } from '../../../../../components/Navigation/BackButton';
 import { ReviewPage } from '../../../../../components/Review/ReviewPage';
 import { getRuntimeConfig } from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
+import { BackendClient } from '../../../../../services/backendClient';
 
 const version = Astro.params.version!;
 const sequenceId = Astro.params.sequenceId!;
 
 const username = Astro.params.username!;
-
 const clientConfig = getRuntimeConfig().forClient;
 
-const reviewData = await getReviewForSequenceVersion(username, sequenceId, version);
+const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToReview(username, sequenceId, version);
 ---
 
 <BaseLayout title={`Review ${sequenceId}.${version}`}>
@@ -34,7 +33,7 @@ const reviewData = await getReviewForSequenceVersion(username, sequenceId, versi
                             Error while fetching review data for sequence version: {sequenceId}.{version}
                         </h1>
                     </div>
-                    <div>{error}</div>
+                    <div>{JSON.stringify(error)}</div>
                 </>
             ),
         )

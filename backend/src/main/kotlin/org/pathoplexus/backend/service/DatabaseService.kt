@@ -18,7 +18,6 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.QueryParameter
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.alias
@@ -112,15 +111,6 @@ class DatabaseService(
         updateStatusToProcessing(sequencesData)
 
         stream(sequencesData, outputStream)
-    }
-
-    private fun maxVersionQuery(): Expression<Long?> {
-        val subQueryTable = SequencesTable.alias("subQueryTable")
-        return wrapAsExpression(
-            subQueryTable
-                .slice(subQueryTable[SequencesTable.version].max())
-                .select { subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId },
-        )
     }
 
     private fun updateStatusToProcessing(sequences: List<UnprocessedData>) {
@@ -259,7 +249,7 @@ class DatabaseService(
     fun approveProcessedData(submitter: String, sequenceVersions: List<SequenceVersion>) {
         log.info { "approving ${sequenceVersions.size} sequences by $submitter" }
 
-        queryPreconditionValidator.validate(submitter, sequenceVersions, PROCESSED)
+        queryPreconditionValidator.validate(submitter, sequenceVersions, listOf(PROCESSED))
 
         SequencesTable.update(
             where = {
@@ -395,14 +385,6 @@ class DatabaseService(
         )
     }
 
-    fun deleteUserSequences(username: String) {
-        SequencesTable.deleteWhere { submitter eq username }
-    }
-
-    fun deleteSequences(sequenceIds: List<Long>) {
-        SequencesTable.deleteWhere { sequenceId inList sequenceIds }
-    }
-
     fun reviseData(submitter: String, dataSequence: Sequence<FileData>): List<HeaderId> {
         log.info { "revising sequences" }
 
@@ -440,7 +422,7 @@ class DatabaseService(
                 ),
             )
 
-            HeaderId(it.sequenceId, it.sequenceId.toInt(), it.customId)
+            HeaderId(it.sequenceId, it.sequenceId, it.customId)
         }.toList()
     }
 
@@ -502,18 +484,32 @@ class DatabaseService(
             }
     }
 
-    fun confirmRevocation(sequenceVersions: List<SequenceVersion>, username: String): Int {
+    fun confirmRevocation(sequenceVersions: List<SequenceVersion>, username: String) {
         log.info { "Confirming revocation for ${sequenceVersions.size} sequences" }
 
-        queryPreconditionValidator.validate(username, sequenceVersions, REVOKED_STAGING)
+        queryPreconditionValidator.validate(username, sequenceVersions, listOf(REVOKED_STAGING))
 
-        return SequencesTable.update(
+        SequencesTable.update(
             where = {
                 (Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions.toPairs()) and
                     (SequencesTable.status eq REVOKED_STAGING.name)
             },
         ) {
             it[status] = SILO_READY.name
+        }
+    }
+
+    fun deleteSequences(sequenceVersions: List<SequenceVersion>, submitter: String) {
+        log.info { "Deleting sequence versions: $sequenceVersions" }
+
+        queryPreconditionValidator.validate(
+            submitter,
+            sequenceVersions,
+            listOf(RECEIVED, PROCESSED, NEEDS_REVIEW, REVIEWED, REVOKED_STAGING),
+        )
+
+        SequencesTable.deleteWhere {
+            (Pair(sequenceId, version) inList sequenceVersions.toPairs())
         }
     }
 
@@ -757,7 +753,7 @@ data class ProcessedData(
         example = """{"gene1": "NRNR", "gene2": "NRNR"}""",
         description = "The key is the gene name, the value is the amino acid sequence",
     )
-    val aminoAcidSequences: Map<GeneName, AminoAcidSequence>,
+    val alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence>,
     @Schema(
         example = """{"gene1": ["123:RRN", "345:NNN"], "gene2": ["123:NNR", "345:RN"]}""",
         description = "The key is the gene name, the value is a list of amino acid insertions",
