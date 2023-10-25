@@ -1,0 +1,31 @@
+name: Dev server test
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+ 
+    - name: Install dependencies
+      working-directory: website
+      run: |
+        npm install
+        npm install playwright --save-dev
+    
+    - name: Test dev node server
+      working-directory: website
+      run: |
+        npm run start &
+        npx playwright install chromium
+   
+        
+        npx playwright screenshot localhost:3000 test.png
+        sleep 5
+        npx playwright screenshot localhost:3000 test.png
+      
