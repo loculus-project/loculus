@@ -37,17 +37,16 @@ module.exports = {
         extraFileExtensions: ['.astro'],
       },
       rules: {
-        // override/add rules settings here, such as:
-        // "astro/no-set-html-directive": "error"
+        '@typescript-eslint/naming-convention': 'off',
       },
     },
     {
-        // Prettier is stubborn, need to accept its rules in case of conflict
-        // See https://github.com/pathoplexus/pathoplexus/pull/283#issuecomment-1733872357
-        files: ['*'],
-        rules: {
-            'react/self-closing-comp': 'off',
-        },
+      // Prettier is stubborn, need to accept its rules in case of conflict
+      // See https://github.com/pathoplexus/pathoplexus/pull/283#issuecomment-1733872357
+      files: ['*'],
+      rules: {
+        'react/self-closing-comp': 'off',
+      },
     },
   ],
   rules: {
@@ -122,6 +121,10 @@ module.exports = {
       {
         selector: 'enumMember',
         format: ['camelCase', 'UPPER_CASE', 'PascalCase'],
+      },
+      {
+        selector: 'import',
+        format: null,
       },
       {
         selector: 'typeLike',
