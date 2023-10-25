@@ -92,7 +92,7 @@ jobs:
         run: |
           mkdir ./log
           chmod -R 777 ./log
-          docker compose up -d
+          docker compose up -d --wait
         env:
           WEBSITE_IMAGE: ghcr.io/pathoplexus/website:${{ steps.branchTag.outputs.dockerTag }}
           BACKEND_IMAGE: ghcr.io/pathoplexus/backend:${{ steps.branchTag.outputs.dockerTag }}
