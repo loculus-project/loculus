@@ -16,11 +16,17 @@ spec:
       initContainers:
         - name: init-website-{{ .Values.shortbranch }}
           image: alpine/git
+          env:
+            - name: GIT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-access-token
+                  key: token
           command:
             - /bin/sh
             - -c
             - |
-              git clone -b {{ .Values.branch }} https://{{ .Values.githubToken }}@github.com/pathoplexus/pathoplexus.git /repo
+              git clone -b {{ .Values.branch }} https://tokenauth:$GIT_TOKEN@github.com/pathoplexus/pathoplexus.git /repo
           volumeMounts:
             - name: repo-volume
               mountPath: /repo
