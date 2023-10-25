@@ -7,11 +7,11 @@ export const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLo
     <TextField
         variant='outlined'
         margin='dense'
-        label={field.filter === '' ? undefined : field.label}
-        placeholder={field.filter !== '' ? undefined : field.label}
+        label={field.filterValue === '' ? undefined : field.label}
+        placeholder={field.filterValue !== '' ? undefined : field.label}
         type={field.type}
         size='small'
-        value={field.filter}
+        value={field.filterValue}
         disabled={isLoading}
         onChange={(e) => handleFieldChange(field.name, e.target.value)}
         InputLabelProps={{

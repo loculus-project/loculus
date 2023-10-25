@@ -15,7 +15,7 @@ export const routes = {
 const buildSearchParams = (searchFilter: Filter[] = [], page: number = 1) => {
     const params = new URLSearchParams();
     searchFilter.forEach((filter) => {
-        if (filter.filter !== '') params.set(filter.name, filter.filter);
+        if (filter.filterValue !== '') params.set(filter.name, filter.filterValue);
     });
     params.set('page', page.toString());
     return params;

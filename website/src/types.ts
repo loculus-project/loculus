@@ -10,10 +10,11 @@ export type Metadata = {
     name: string;
     type: 'string' | 'date' | 'integer' | 'pango_lineage';
     autocomplete?: boolean;
+    notSearchable?: boolean;
 };
 
 export type Filter = Metadata & {
-    filter: string;
+    filterValue: string;
     label?: string;
 };
 

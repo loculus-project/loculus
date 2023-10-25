@@ -25,11 +25,19 @@ interface SearchFormProps {
 
 const clientLogger = getClientLogger('SearchForm');
 
+const defaultFilters = [
+    { name: 'isLatestVersion', value: 'true' },
+    { name: 'isRevocation', value: 'false' },
+];
+
 export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig }) => {
     const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
-        metadataSettings.map((metadata) => ({
-            ...metadata,
-            label: metadata.label ?? sentenceCase(metadata.name),
+        metadataSettings.map((filter) => ({
+            ...filter,
+            filterValue:
+                defaultFilters.find((defaultFilter) => filter.name === defaultFilter.name && filter.notSearchable)
+                    ?.value ?? '',
+            label: filter.label ?? sentenceCase(filter.name),
         })),
     );
     const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +50,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig
             if (fieldToChange === undefined) {
                 throw new Error(`Tried to change a filter that does not exist: ${metadataName}`);
             }
-            fieldToChange.filter = filter;
+            fieldToChange.filterValue = filter;
             return updatedFields;
         });
     };
@@ -62,6 +70,8 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig
     const fields = useMemo(
         () =>
             fieldValues.map((field) => {
+                if (field.notSearchable === true) return null;
+
                 const props = {
                     key: field.name,
                     field,
@@ -70,16 +80,18 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig
                     clientConfig,
                     allFields: fieldValues,
                 };
-                if (field.type === 'date') {
-                    return <DateField {...props} />;
+
+                switch (field.type) {
+                    case 'date':
+                        return <DateField {...props} />;
+                    case 'pango_lineage':
+                        return <PangoLineageField {...props} />;
+                    default:
+                        if (field.autocomplete === true) {
+                            return <AutoCompleteField {...props} />;
+                        }
+                        return <NormalTextField {...props} />;
                 }
-                if (field.type === 'pango_lineage') {
-                    return <PangoLineageField {...props} />;
-                }
-                if (field.autocomplete === true) {
-                    return <AutoCompleteField {...props} />;
-                }
-                return <NormalTextField {...props} />;
             }),
         [clientConfig, fieldValues, isLoading],
     );
