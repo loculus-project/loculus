@@ -27,7 +27,7 @@ test.describe('The search page', () => {
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
-            `${baseUrl}${routes.searchPage([{ name: 'accession', type: 'string', filter: testSequence.name }])}`,
+            `${baseUrl}${routes.searchPage([{ name: 'accession', type: 'string', filterValue: testSequence.name }])}`,
         );
         await expect(searchPage.page.getByText(testSequence.name)).toBeVisible();
         await expect(searchPage.page.getByText('2021-01-16')).toBeVisible();

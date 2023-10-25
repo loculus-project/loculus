@@ -17,9 +17,9 @@ export type SearchResponse = {
 };
 export const getData = async (metadataFilter: Filter[], offset: number, limit: number): Promise<SearchResponse> => {
     const searchFilters = metadataFilter
-        .filter((metadata) => metadata.filter !== '')
+        .filter((metadata) => metadata.filterValue !== '')
         .reduce((acc: Record<string, string>, metadata) => {
-            acc[metadata.name] = metadata.filter;
+            acc[metadata.name] = metadata.filterValue;
             return acc;
         }, {});
 
@@ -88,18 +88,18 @@ export const getMetadataSettings = async (getSearchParams: (param: string) => st
             const metadataFrom = {
                 ...metadata,
                 name: `${metadata.name}From`,
-                filter: getSearchParams(`${metadata.name}From`),
+                filterValue: getSearchParams(`${metadata.name}From`),
             };
             const metadataTo = {
                 ...metadata,
                 name: `${metadata.name}To`,
-                filter: getSearchParams(`${metadata.name}To`),
+                filterValue: getSearchParams(`${metadata.name}To`),
             };
             return [metadataFrom, metadataTo];
         } else {
-            const metadataSetting: Filter = {
+            const metadataSetting = {
                 ...metadata,
-                filter: getSearchParams(metadata.name),
+                filterValue: getSearchParams(metadata.name),
             };
             return [metadataSetting];
         }

@@ -1,7 +1,6 @@
 import type { ReviewPage } from './review.page.ts';
 import type { SequenceVersion } from '../../../src/types.ts';
-import { test, expect } from '../../e2e.fixture';
-import type { SubmitPage } from '../submit/submit.page.ts';
+import { expect, test } from '../../e2e.fixture';
 import type { UserPage } from '../user/user.page.ts';
 
 test.describe('The review page', () => {

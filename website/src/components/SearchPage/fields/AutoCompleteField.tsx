@@ -16,8 +16,8 @@ export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFiel
             }
             const filterParams = new URLSearchParams();
             allFields
-                .filter((f) => f.name !== field.name && f.filter !== '')
-                .forEach((f) => filterParams.set(f.name, f.filter));
+                .filter((f) => f.name !== field.name && f.filterValue !== '')
+                .forEach((f) => filterParams.set(f.name, f.filterValue));
             return fetchAutoCompletion(field.name, filterParams, clientConfig);
         },
     });
@@ -55,7 +55,7 @@ export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFiel
             onInputChange={(_, value) => {
                 return handleFieldChange(field.name, value);
             }}
-            value={{ option: field.filter, count: NaN }}
+            value={{ option: field.filterValue, count: NaN }}
             autoComplete
         />
     );
