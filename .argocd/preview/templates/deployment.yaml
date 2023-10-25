@@ -117,7 +117,7 @@ spec:
               mountPath: /workspace/reference_genomes.json
               subPath: website/tests/config/reference_genomes.json
       imagePullSecrets:
-        - name: regcred
+        - name: ghcr-secret
       volumes:
         - name: repo-volume
           emptyDir: {}
