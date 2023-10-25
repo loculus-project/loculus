@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 
 import { http, HttpResponse } from 'msw';
-import { setupServer } from 'msw/node';
+import { setupWorker } from 'msw/browser';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
 import type { RuntimeConfig } from '../types';
@@ -20,7 +20,7 @@ export const testConfig = {
 
 export const testuser = 'testuser';
 
-export const testServer = setupServer();
+export const testServer = setupWorker();
 
 export const mockRequest = {
     submit: (statusCode: number = 200, response: any = []) => {
@@ -32,8 +32,10 @@ export const mockRequest = {
     },
 };
 
-beforeAll(() => testServer.listen({ onUnhandledRequest: 'error' }));
+beforeAll(async () => {
+    await testServer.start();
+});
 
-afterAll(() => testServer.close());
+afterAll(() => testServer.stop());
 
 afterEach(() => testServer.resetHandlers());
