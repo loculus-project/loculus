@@ -18,11 +18,11 @@ spec:
         requeueAfterSeconds: 60
   template:
     metadata:
-      name: 'pp-{{printf "%.25s" .branch  }}-{{.number}}'
+      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" }}-{{.number}}'
     spec:
       destination:
         server: 'https://kubernetes.default.svc'
-        namespace: preview
+        namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" }}'
       project: default
       source:
         path: '.argocd/preview/'
@@ -31,17 +31,15 @@ spec:
         helm:
           parameters:
             - name: namespace
-              value: 'preview-{{.branch}}'
+              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" }}'
             - name: version
               value: '{{.branch}}'
             - name: shortbranch
-              value: '{{printf "%.25s" .branch  }}'
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}'
             - name: branch
               value: '{{.branch}}'
-            - name: githubToken
-              value: 'REPLACE ME WITH GITHUB PAT'
             - name: host
-              value: '{{printf "%.25s" .branch  }}.preview.pathoplexus.org'
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
 
       syncPolicy:
         automated:
