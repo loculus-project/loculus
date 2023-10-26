@@ -58,7 +58,7 @@ object SubmitFiles {
         name: String = "sequenceFile",
         originalFilename: String = "sequences.fasta",
         mediaType: String = TEXT_PLAIN_VALUE,
-        content: String = ">someHeader\nAC\n>someHeader2\nAC",
+        content: String = ">someHeader_main\nAC\n>someHeader2_main\nAC",
     ) = MockMultipartFile(
         name,
         originalFilename,

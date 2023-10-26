@@ -62,7 +62,7 @@ class DeleteSequencesEndpointTest(
         val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.PROCESSED}, " +
             "${Status.NEEDS_REVIEW}, ${Status.REVIEWED}, ${Status.REVOKED_STAGING}]"
         val errorString = "Sequence versions are in not in one of the states $listOfAllowedStatuses: " +
-            sequencesToDelete.map {
+            sequencesToDelete.sortedBy { it.sequenceId }.map {
                 "${it.sequenceId}.${it.version} - ${it.status}"
             }.joinToString(", ")
         deletionResult.andExpect(status().isUnprocessableEntity)
