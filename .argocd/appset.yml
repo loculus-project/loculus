@@ -22,7 +22,7 @@ spec:
     spec:
       destination:
         server: 'https://kubernetes.default.svc'
-        namespace: preview
+        namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" }}'
       project: default
       source:
         path: '.argocd/preview/'
