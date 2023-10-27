@@ -43,6 +43,10 @@ jobs:
       run: sleep 180
     - name: List running pods
       run: kubectl get pods --all-namespaces
+    - name: Info
+      run: kubectl describe pods -l app=pathoplexus -n test
+    - name: Logs
+      run: kubectl logs -l app=pathoplexus -n test -c website
     - name: Take screenshot of the site
       run: npx playwright screenshot localhost:3000 screenshot.png
     - name: Upload screenshot
