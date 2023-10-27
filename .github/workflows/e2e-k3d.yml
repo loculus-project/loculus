@@ -19,7 +19,7 @@ jobs:
     - name: Create k3d cluster
       run: |
         k3d cluster create mycluster \
-          -p "3000:3000@loadbalancer" \
+          -p "3000:80@loadbalancer" \
           -v "$(pwd):/repo" --agents 2
     
     - name: Install Helm
