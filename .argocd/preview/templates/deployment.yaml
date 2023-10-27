@@ -51,7 +51,7 @@ spec:
               subPath: website/tests/config/database_config.yaml
             - name: repo-volume
               mountPath: /preprocessing/output
-              subPath: website/tests/initialSiloData/processingOutput
+              subPath: website/tests/initialSiloData/processingOutput 
 
       containers:
         - name: website
