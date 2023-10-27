@@ -3,6 +3,7 @@ apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
   name: pp-preview
+  namespace: argocd
 spec:
   goTemplate: true
   generators:
@@ -19,6 +20,14 @@ spec:
   template:
     metadata:
       name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" }}-{{.number}}'
+      annotations:
+        argocd-image-updater.argoproj.io/image-list: 'backend=ghcr.io/pathoplexus/backend:{{.branch}} website=ghcr.io/pathoplexus/website:{{.branch}}'
+        argocd-image-updater.argoproj.io/website.update-strategy: "digest"
+        argocd-image-updater.argoproj.io/backend.update-strategy: "digest"
+        argocd-image-updater.argoproj.io/website.pull-secret: "pullsecret:argocd/ghcr-secret"
+        argocd-image-updater.argoproj.io/backend.pull-secret: "pullsecret:argocd/ghcr-secret"
+
+
     spec:
       destination:
         server: 'https://kubernetes.default.svc'
