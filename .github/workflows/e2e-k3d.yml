@@ -1,4 +1,4 @@
-name: Setup K3D cluster and deploy Helm chart
+name: Test with kubernetes (will become E2E test)
 
 on:
   push:
@@ -32,7 +32,6 @@ jobs:
 
     - name: Deploy Helm chart
       run: |
-        # Assuming the Kubernetes config is default for k3d
         helm install preview .argocd/preview --set mode=e2e --set branch=${GITHUB_REF#refs/heads/}} --set namespace=test --set dockerconfigjson=eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiYm90IiwicGFzc3dvcmQiOiJnaHBfNUM0WVZKUkpWcWRwdWJBTlFpRnNMZ0N0ZnlwVkZ5MkFYdE1nIiwiZW1haWwiOiJib3RAYm90LmNvbSIsImF1dGgiOiJZbTkwT21kb2NGODFRelJaVmtwU1NsWnhaSEIxWWtGT1VXbEdjMHhuUTNSbWVYQldSbmt5UVZoMFRXYz0ifX19
 
     - uses: actions/setup-node@v3
@@ -42,7 +41,7 @@ jobs:
       run: npx playwright install chromium --with-deps
     - name: Wait 180 seconds for the cluster to be ready
       run: sleep 180
-    - name: Take screenshot of google.com
+    - name: Take screenshot of the site
       run: npx playwright screenshot localhost:3000 screenshot.png
     - name: Upload screenshot
       uses: actions/upload-artifact@v2
