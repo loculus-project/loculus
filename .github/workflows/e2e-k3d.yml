@@ -33,7 +33,7 @@ jobs:
     - name: Deploy Helm chart
       run: |
         # Assuming the Kubernetes config is default for k3d
-        helm install preview .argocd/preview --set mode=e2e --set branch=test --set namespace=test --set dockerconfigjson=${{ secrets.GHCR_DOCKER_CONFIG }}
+        helm install preview .argocd/preview --set mode=e2e --set branch=${GITHUB_REF#refs/heads/}} --set namespace=test --set dockerconfigjson=eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiYm90IiwicGFzc3dvcmQiOiJnaHBfNUM0WVZKUkpWcWRwdWJBTlFpRnNMZ0N0ZnlwVkZ5MkFYdE1nIiwiZW1haWwiOiJib3RAYm90LmNvbSIsImF1dGgiOiJZbTkwT21kb2NGODFRelJaVmtwU1NsWnhaSEIxWWtGT1VXbEdjMHhuUTNSbWVYQldSbmt5UVZoMFRXYz0ifX19
 
     - uses: actions/setup-node@v3
     - name: Install playwright
