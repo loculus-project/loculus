@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: website-{{ .Values.shortbranch }}
+  name: pathoplexus
   namespace: {{ .Values.namespace }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: website-{{ .Values.shortbranch }}
+      app: website
   template:
     metadata:
       labels:
-        app: website-{{ .Values.shortbranch }}
+        app: website
     spec:
       initContainers:
-        - name: init-website-{{ .Values.shortbranch }}
+        - name: get-repo
           image: alpine/git
           env:
             - name: GIT_TOKEN
@@ -30,7 +30,7 @@ spec:
           volumeMounts:
             - name: repo-volume
               mountPath: /repo
-        - name: silo-preprocessing-{{ .Values.shortbranch }}
+        - name: silo-preprocessing
           image: ghcr.io/genspectrum/lapis-silo:latest
           args:
             - "--preprocessing"
@@ -52,7 +52,7 @@ spec:
               subPath: website/tests/initialSiloData/processingOutput
 
       containers:
-        - name: website-{{ .Values.shortbranch }}
+        - name: website
           image: ghcr.io/pathoplexus/website:{{ .Values.branch }}
           imagePullPolicy: Always
           resources:
@@ -68,7 +68,7 @@ spec:
             - name: repo-volume
               mountPath: /config
               subPath: website/tests/config
-        - name: backend-{{ .Values.shortbranch }}
+        - name: backend
           image: ghcr.io/pathoplexus/backend:{{ .Values.branch }}
           imagePullPolicy: Always
           ports:
@@ -82,7 +82,7 @@ spec:
           volumeMounts:
             - name: repo-volume
               mountPath: /repo
-        - name: database-{{ .Values.shortbranch }}
+        - name: database
           image: postgres:latest
           ports:
             - containerPort: 5432
@@ -93,7 +93,7 @@ spec:
               value: "unsecure"
             - name: POSTGRES_DB
               value: "pathoplexus"
-        - name: silo-{{ .Values.shortbranch }}
+        - name: silo
           image: ghcr.io/genspectrum/lapis-silo:latest
           ports:
             - containerPort: 8081
@@ -103,7 +103,7 @@ spec:
             - name: repo-volume
               mountPath: /data
               subPath: website/tests/initialSiloData/processingOutput
-        - name: lapis-{{ .Values.shortbranch }}
+        - name: lapis
           image: ghcr.io/genspectrum/lapis-v2:latest
           ports:
             - containerPort: 8080

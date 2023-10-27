@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: website-{{ .Values.shortbranch }}-service
+  name: pathoplexus-website-service
   namespace: {{ .Values.namespace }}
 spec:
   type: ClusterIP
   selector:
-    app: website-{{ .Values.shortbranch }}
+    app: pathoplexus
   ports:
     - port: 3000
       name: http-port
