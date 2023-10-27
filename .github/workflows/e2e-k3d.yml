@@ -34,16 +34,3 @@ jobs:
       run: |
         # Assuming the Kubernetes config is default for k3d
         helm install preview .argocd/preview --set mode=e2e --set branch=test --set namespace=test
-
-      - uses: actions/setup-node@v3
-      - name: Install playwright
-        run: npm install -g playwright
-      - name: Install playwright browsers
-        run: npx playwright install --with-deps
-      - name: Take screenshot of google.com
-        run: npx playwright screenshot google.com screenshot.png
-      - name: Upload screenshot
-        uses: actions/upload-artifact@v2
-        with:
-          name: screenshot
-          path: screenshot.png
