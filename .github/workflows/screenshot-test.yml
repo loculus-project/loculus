@@ -4,28 +4,15 @@ on:
   push: # or any other trigger you'd prefer
 
 jobs:
-  screenshot:
+  scrrenshot:
+    name: Run end-to-end tests
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '14'
-
-    - name: Install Dependencies
-      run: |
-        npm init -y
-        npm install puppeteer
-
-    - name: Capture screenshot
-      run: |
-        node -e "const puppeteer = require('puppeteer'); (async () => { const browser = await puppeteer.launch({ args: ['--no-sandbox'] }); const page = await browser.newPage(); await page.goto('https://google.com'); await page.screenshot({ path: 'screenshot.png' }); await browser.close(); })();"
-
-    - name: Upload screenshot as artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: screenshot
-        path: screenshot.png
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: Install dependencies
+        run: npm ci
+      - name: Install playwright browsers
+        run: npx playwright install --with-deps
+      - name: Take screenshot of google.com
+        run: npx playwright screenshot google.com
