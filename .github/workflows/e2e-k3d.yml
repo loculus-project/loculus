@@ -2,8 +2,7 @@ name: Setup K3D cluster and deploy Helm chart
 
 on:
   push:
-    branches:
-      - main
+
 
 jobs:
   setup-k3d:
