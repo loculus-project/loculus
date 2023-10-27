@@ -1,0 +1,15 @@
+{{- if eq .Values.mode "e2e" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-service
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: {{ .Release.Name }}
+{{- end }}
