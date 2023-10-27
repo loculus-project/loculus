@@ -34,7 +34,7 @@ jobs:
       run: |
         # Assuming the Kubernetes config is default for k3d
         helm install preview .argocd/preview --set mode=e2e --set branch=test --set namespace=test
-      - uses: actions/checkout@v3
+
       - uses: actions/setup-node@v3
       - name: Install playwright
         run: npm install -g playwright
