@@ -41,6 +41,8 @@ jobs:
       run: npx playwright install chromium --with-deps
     - name: Wait 180 seconds for the cluster to be ready
       run: sleep 180
+    - name: List running pods
+      run: kubectl get pods --all-namespaces
     - name: Take screenshot of the site
       run: npx playwright screenshot localhost:3000 screenshot.png
     - name: Upload screenshot
