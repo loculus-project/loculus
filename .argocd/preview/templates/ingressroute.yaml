@@ -1,3 +1,4 @@
+{{- if ne .Values.mode "e2e" }}
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -18,3 +19,5 @@ spec:
           port: 3000
   tls:
     certResolver: myresolver
+
+  {{- if ne .Values.mode "e2e" }}
