@@ -41,7 +41,7 @@ jobs:
     - name: Install playwright browsers
       run: npx playwright install --with-deps
     - name: Take screenshot of google.com
-      run: npx playwright screenshot google.com screenshot.png
+      run: npx playwright screenshot localhost:3000 screenshot.png
     - name: Upload screenshot
       uses: actions/upload-artifact@v2
       with:
