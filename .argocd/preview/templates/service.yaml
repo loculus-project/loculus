@@ -1,4 +1,3 @@
-{{- if ne .Values.mode "e2e" }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -10,5 +9,6 @@ spec:
     app: pathoplexus
   ports:
     - port: 3000
-      name: http-port
-{{- end }}
+      targetPort: 3000
+      protocol: TCP
+      name: http
