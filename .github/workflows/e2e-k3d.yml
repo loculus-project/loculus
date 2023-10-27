@@ -20,7 +20,7 @@ jobs:
       run: |
         k3d cluster create mycluster \
           -p "3000:3000@loadbalancer" \
-          -v "$(pwd):/repo" --k3s-arg "--disable=traefik@server:0"
+          -v "$(pwd):/repo"
     
     - name: Install Helm
       run: |
