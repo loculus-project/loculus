@@ -50,6 +50,7 @@ spec:
             - name: host
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
 
+
       syncPolicy:
         automated:
           selfHeal: true

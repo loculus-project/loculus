@@ -1,0 +1,37 @@
+name: Setup K3D cluster and deploy Helm chart
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  setup-k3d:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install k3d
+      run: |
+        curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+
+    - name: Create k3d cluster
+      run: |
+        k3d cluster create mycluster \
+          -p "3000:3000@loadbalancer" \
+          -v "$(pwd):/repo"
+    
+    - name: Install Helm
+      run: |
+        curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+        sudo apt-get install apt-transport-https --yes
+        echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+        sudo apt-get update
+        sudo apt-get install helm
+
+    - name: Deploy Helm chart
+      run: |
+        # Assuming the Kubernetes config is default for k3d
+        helm install preview ./argocd/preview --set mode=e2e --set branch=test --set namespace=test

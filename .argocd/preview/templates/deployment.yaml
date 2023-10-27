@@ -13,6 +13,7 @@ spec:
       labels:
         app: pathoplexus
     spec:
+{{- if ne .Values.mode "e2e" }}
       initContainers:
         - name: get-repo
           image: alpine/git
@@ -30,6 +31,7 @@ spec:
           volumeMounts:
             - name: repo-volume
               mountPath: /repo
+{{- end }}
         - name: silo-preprocessing
           image: ghcr.io/genspectrum/lapis-silo:latest
           args:
@@ -120,4 +122,10 @@ spec:
         - name: ghcr-secret
       volumes:
         - name: repo-volume
+{{- if ne .Values.mode "e2e" }}
           emptyDir: {}
+{{- end }}
+{{- if eq .Values.mode "e2e" }}
+          hostPath:
+            path: /repo
+{{- end }}
