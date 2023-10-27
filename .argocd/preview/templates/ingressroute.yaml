@@ -20,4 +20,4 @@ spec:
   tls:
     certResolver: myresolver
 
-  {{- if ne .Values.mode "e2e" }}
+  {{- end}}
