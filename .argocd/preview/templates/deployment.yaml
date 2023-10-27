@@ -13,8 +13,8 @@ spec:
       labels:
         app: pathoplexus
     spec:
-{{- if ne .Values.mode "e2e" }}
       initContainers:
+{{- if ne .Values.mode "e2e" }}
         - name: get-repo
           image: alpine/git
           env:
