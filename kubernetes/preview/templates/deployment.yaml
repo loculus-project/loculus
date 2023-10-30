@@ -70,6 +70,18 @@ spec:
             - name: repo-volume
               mountPath: /config
               subPath: website/tests/config
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
         - name: backend
           image: ghcr.io/pathoplexus/backend:{{ .Values.branch }}
           imagePullPolicy: Always
@@ -95,6 +107,18 @@ spec:
               value: "unsecure"
             - name: POSTGRES_DB
               value: "pathoplexus"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8079
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8079
+            initialDelaySeconds: 5
+            periodSeconds: 5
         - name: silo
           image: ghcr.io/genspectrum/lapis-silo:latest
           ports:
