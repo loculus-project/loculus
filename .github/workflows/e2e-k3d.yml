@@ -54,3 +54,19 @@ jobs:
       with:
         name: screenshot
         path: screenshot.png
+    - name: Save logs from all containers to file
+      run: |
+        pods=$(kubectl get pods -l app=pathoplexus -n test -o jsonpath='{.items[*].metadata.name}')
+        for pod in $pods; do
+          containers=$(kubectl get pod $pod -n test -o jsonpath='{.spec.containers[*].name}')
+          for container in $containers; do
+            echo "Logs from $pod - $container:" >> kubernetes_logs.txt
+            kubectl logs $pod -n test -c $container >> kubernetes_logs.txt
+            echo "==============================" >> kubernetes_logs.txt
+          done
+        done
+    - name: Upload Kubernetes logs
+      uses: actions/upload-artifact@v2
+      with:
+        name: kubernetes-logs
+        path: kubernetes_logs.txt
