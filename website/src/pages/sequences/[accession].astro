@@ -23,7 +23,13 @@ const genes = getReferenceGenomes().genes.map((g) => g.name);
     <div class='flex items-center'>
         <BackButton marginRight={2} client:load />
         <h1 class='title'>Sequence {accession}</h1>
-        <a href={routes.versionPage(accession)} class='text-xs ml-10'> (See previous versions)</a>
+        {
+            tableData.isOk() && (
+                <a href={routes.versionPage(accession)} class='text-xs ml-10'>
+                    (See previous versions)
+                </a>
+            )
+        }
     </div>
     {
         tableData.match(
@@ -52,7 +58,7 @@ const genes = getReferenceGenomes().genes.map((g) => g.name);
                     </div>
                 </>
             ),
-            (error) => <h1 class='subtitle'>Error: {error.detail}</h1>,
+            (error) => <ErrorBox title='Sequence not found' message={error.detail} />,
         )
     }
 </BaseLayout>

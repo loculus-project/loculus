@@ -1,9 +1,9 @@
 ---
 import { getData, getMetadataSettings } from './search';
-import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { Pagination } from '../../components/SearchPage/Pagination';
 import { SearchForm } from '../../components/SearchPage/SearchForm';
 import { Table } from '../../components/SearchPage/Table';
+import ErrorBox from '../../components/common/ErrorBox.astro';
 import { getConfig, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { pageSize } from '../../settings';
@@ -26,38 +26,26 @@ const data = await getData(metadataSettings, offset, pageSize);
 <BaseLayout title='Search'>
     <h1 class='title'>Search</h1>
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
-        {
-            data.isErr() && (
-                <ErrorFeedback
-                    message={'Error while fetching data: ' + data._unsafeUnwrapErr().detail}
-                    client:only='react'
-                />
-            )
-        }
-
         <div class='md:w-72'>
             <SearchForm metadataSettings={metadataSettings} clientConfig={clientConfig} client:only='react' />
         </div>
-
-        <div class='flex-1'>
-            {
-                data.isOk() && (
-                    <>
+        {
+            data.match(
+                (data) => (
+                    <div class='flex-1'>
                         <div class='mb-1'>
-                            Search returned {data._unsafeUnwrap().totalCount.toLocaleString()}
-                            sequence{data._unsafeUnwrap().totalCount === 1 ? '' : 's'}
+                            Search returned {data.totalCount.toLocaleString()}
+                            sequence{data.totalCount === 1 ? '' : 's'}
                         </div>
-                        <Table data={data._unsafeUnwrap().data} config={config} client:load />
+                        <Table data={data.data} config={config} client:load />
 
                         <div class='mt-4 flex justify-center'>
-                            <Pagination
-                                client:only='react'
-                                count={Math.ceil(data._unsafeUnwrap().totalCount / pageSize)}
-                            />
+                            <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)} />
                         </div>
-                    </>
-                )
-            }
-        </div>
+                    </div>
+                ),
+                (error) => <ErrorBox title='Failed searching sequences' message={error.detail} />,
+            )
+        }
     </div>
 </BaseLayout>
