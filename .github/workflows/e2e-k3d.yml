@@ -39,8 +39,27 @@ jobs:
       run: npm install -g playwright
     - name: Install playwright browsers
       run: npx playwright install chromium --with-deps
-    - name: Wait 180 seconds for the cluster to be ready
-      run: sleep 180
+    - name: Wait for the pods to be ready
+      run: |
+        end=$((SECONDS+300))
+        while true; do
+          all_pods=$(kubectl get pods -l app=pathoplexus -n test -o jsonpath='{.items[*].metadata.name}')
+          running_pods=$(kubectl get pods -l app=pathoplexus -n test -o=jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}')
+
+          if [[ "$all_pods" == "$running_pods" ]]; then
+            echo "All pods are up and running!"
+            break
+          fi
+
+          if [[ "${SECONDS}" -ge "${end}" ]]; then
+            not_running_pods=$(kubectl get pods -l app=pathoplexus -n test -o=jsonpath='{.items[?(@.status.phase!="Running")].metadata.name}')
+            echo "Error: The following pods did not start on time: $not_running_pods"
+            exit 1
+          fi
+          
+          echo "Waiting for pods to be ready..."
+          sleep 10
+        done
     - name: List running pods
       run: kubectl get pods --all-namespaces
     - name: Info
