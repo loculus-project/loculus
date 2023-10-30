@@ -12,19 +12,24 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--backend-host", type=str, default="127.0.0.1:8079",
                     help="Host address of the Pathoplexus backend")
 parser.add_argument("--watch", action="store_true", help="Watch and keep running. Fetches new data every 10 seconds.")
+parser.add_argument("--withErrors", action="store_true", help="Add errors to processed data.")
+parser.add_argument("--withWarnings", action="store_true", help="Add warnings to processed data.")
+parser.add_argument("--maxSequences", type=int, help="Max number of sequences to process.")
 
 args = parser.parse_args()
 host = "http://{}".format(args.backend_host)
 watch_mode = args.watch
+addErrors = args.withErrors
+addWarnings = args.withWarnings
 
 @dataclass
 class AnnotationSource:
-    field: str
+    name: str
     type: str
 
 @dataclass
 class ProcessingAnnotation:
-    source: AnnotationSource
+    source: List[AnnotationSource]
     message: str
 
 @dataclass
@@ -32,7 +37,7 @@ class Sequence:
     sequenceId: int
     version: int
     data: dict
-    errors: Optional[List[ProcessingAnnotation]] =field(default_factory=list)
+    errors: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
     warnings: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
 
 
@@ -51,7 +56,7 @@ def parse_ndjson(ndjson_data: str) -> List[Sequence]:
     for json_str in json_strings:
         if json_str:
             json_object = json.loads(json_str)
-            entries.append(Sequence(json_object["sequenceId"],json_object["version"], json_object["data"]))
+            entries.append(Sequence(json_object["sequenceId"], json_object["version"], json_object["data"]))
     return entries
 
 def process(unprocessed: List[Sequence]) -> List[Sequence]:
@@ -69,6 +74,40 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
             sequence.version,
             {"metadata": metadata, **mock_sequences},
         )
+
+        if addErrors:
+            updated_sequence.errors = [
+                ProcessingAnnotation(
+                    [AnnotationSource(list(metadata.keys())[0], "Metadata")],
+                    "This is a metadata error"
+                ),
+                ProcessingAnnotation(
+                    [
+                        AnnotationSource(
+                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                            "NucleotideSequence"
+                        )
+                    ],
+                    "This is a sequence error"
+                ),
+            ]
+
+        if addWarnings:
+            updated_sequence.warnings = [
+                ProcessingAnnotation(
+                    [AnnotationSource(list(metadata.keys())[0], "Metadata")],
+                    "This is a metadata warning"
+                ),
+                ProcessingAnnotation(
+                    [
+                        AnnotationSource(
+                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                            "NucleotideSequence"
+                        )
+                    ],
+                    "This is a sequence warning"
+                ),
+            ]
 
         processed.append(updated_sequence)
 
@@ -91,8 +130,13 @@ def main():
         print("Started in watch mode - waiting 10 seconds before fetching data.")
         time.sleep(10)
 
+    if args.maxSequences and args.maxSequences < 5:
+        sequences_to_fetch = args.maxSequences
+    else:
+        sequences_to_fetch = 5
+
     while True:
-        unprocessed = fetch_unprocessed_sequences(5)
+        unprocessed = fetch_unprocessed_sequences(sequences_to_fetch)
         if len(unprocessed) == 0:
             if watch_mode:
                 print("Processed {} sequences. Sleeping for 10 seconds.".format(locally_processed))
@@ -105,6 +149,9 @@ def main():
         submit_processed_sequences(processed)
         total_processed += len(processed)
         locally_processed += len(processed)
+
+        if args.maxSequences and total_processed >= args.maxSequences:
+            break
     print("Total processed sequences: {}".format(total_processed))
 
 
