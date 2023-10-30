@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 export type Log = {
     level: string;
     message: string;
@@ -12,14 +14,7 @@ export type ClientLogger = {
 
 export const getClientLogger = (instance: string = 'client'): ClientLogger => {
     const clientLogger = {
-        log: async ({ message, level, instance }: Log): Promise<Response> =>
-            fetch('/admin/logs.txt', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ level, message, instance }),
-            }),
+        log: async (log: Log): Promise<Response> => axios.post('/admin/logs.txt', log),
         error: async (message: string): Promise<Response> => clientLogger.log({ level: 'error', instance, message }),
         info: async (message: string) => clientLogger.log({ level: 'info', instance, message }),
     };
