@@ -2,8 +2,9 @@ import { noCase } from 'change-case';
 import { type FC, useMemo } from 'react';
 
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
-import type { ClientConfig, Config, SequenceType } from '../../types';
-import { isUnalignedSequence } from '../../utils/sequenceTypeHelpers.ts';
+import type { Config } from '../../types/config.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { isUnalignedSequence, type SequenceType } from '../../utils/sequenceTypeHelpers.ts';
 import { splitString } from '../../utils/splitLines';
 
 const LINE_LENGTH = 100;

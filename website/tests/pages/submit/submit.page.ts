@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import type { Locator, Page } from '@playwright/test';
 
 import { BackendClient } from '../../../src/services/backendClient.ts';
-import type { Sequence, SequenceVersion } from '../../../src/types.ts';
+import type { Sequence, SequenceVersion } from '../../../src/types/backend.ts';
 import { extractSequenceVersion } from '../../../src/utils/extractSequenceVersion.ts';
 import {
     backendUrl,

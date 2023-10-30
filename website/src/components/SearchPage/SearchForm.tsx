@@ -12,7 +12,8 @@ import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { routes } from '../../routes.ts';
-import type { ClientConfig, Filter } from '../../types';
+import type { Filter } from '../../types/config.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 

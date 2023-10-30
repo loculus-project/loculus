@@ -1,6 +1,6 @@
 import type { ActionHooks } from './SequenceTable.tsx';
 import { routes } from '../../routes.ts';
-import { type SequenceStatus, type SequenceVersion } from '../../types.ts';
+import type { SequenceStatus, SequenceVersion } from '../../types/backend.ts';
 import { extractSequenceVersion, getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 
 export type BulkSequenceAction = {

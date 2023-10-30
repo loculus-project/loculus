@@ -1,6 +1,6 @@
 import axios, { type AxiosError } from 'axios';
 
-import { type UnprocessedData } from '../../src/types.ts';
+import { type UnprocessedData } from '../../src/types/backend.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
 import { backendUrl } from '../e2e.fixture.ts';
 

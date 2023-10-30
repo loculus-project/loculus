@@ -1,5 +1,5 @@
-import type { SequenceStatus } from '../../../src/types.ts';
 import { expect, test } from '../../e2e.fixture';
+import type { SequenceStatus } from '../../../src/types/backend.ts';
 
 test.describe('The revise page', () => {
     test('should upload files and revise existing data', async ({ revisePage, submitPage, userPage }) => {

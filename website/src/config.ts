@@ -1,7 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import type { ClientConfig, Config, ReferenceGenomes, RuntimeConfig, ServerConfig, ServiceUrls } from './types';
+import type { Config } from './types/config.ts';
+import type { ReferenceGenomes } from './types/referencesGenomes.ts';
+import type { ClientConfig, RuntimeConfig, ServerConfig, ServiceUrls } from './types/runtimeConfig.ts';
 import netlifyConfig from '../netlifyConfig/config.json' assert { type: 'json' };
 import netlifyRuntimeConfig from '../netlifyConfig/runtime_config.json' assert { type: 'json' };
 

@@ -5,7 +5,7 @@ import type { AxiosError, AxiosResponse } from 'axios';
 import { type Err, err, ok } from 'neverthrow';
 
 import { type InstanceLogger } from '../logger.ts';
-import { problemDetail, type ProblemDetail } from '../types.ts';
+import { problemDetail, type ProblemDetail } from '../types/backend.ts';
 
 type ZodiosMethods<Api extends ZodiosEndpointDefinitions> = Aliases<Api>;
 

@@ -1,4 +1,5 @@
-import type { Filter, SequenceVersion } from './types.ts';
+import type { SequenceVersion } from './types/backend.ts';
+import type { Filter } from './types/config.ts';
 
 export const routes = {
     searchPage: (searchFilter: Filter[] = [], page: number = 1) =>

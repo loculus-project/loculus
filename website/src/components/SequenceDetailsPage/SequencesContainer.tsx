@@ -2,13 +2,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type FC, useState } from 'react';
 
 import { SequencesViewer } from './SequenceViewer';
-import type { ClientConfig, Config, SequenceType } from '../../types';
+import type { Config } from '../../types/config.ts';
+import type { ClientConfig } from '../../types/runtimeConfig';
 import {
     alignedSequence,
     geneSequence,
     isAlignedSequence,
     isGeneSequence,
     isUnalignedSequence,
+    type SequenceType,
     unalignedSequence,
 } from '../../utils/sequenceTypeHelpers';
 

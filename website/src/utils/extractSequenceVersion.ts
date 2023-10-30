@@ -1,4 +1,4 @@
-import type { SequenceVersion } from '../types.ts';
+import type { SequenceVersion } from '../types/backend.ts';
 
 export const extractSequenceVersion = (sequence: SequenceVersion) => ({
     sequenceId: sequence.sequenceId,

@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
-import type { HeaderId, ProblemDetail } from '../../types';
+import type { HeaderId, ProblemDetail } from '../../types/backend.ts';
 import { mockRequest, testConfig, testuser } from '../vitest.setup';
 
 vi.mock('../../api', () => ({

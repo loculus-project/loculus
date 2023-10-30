@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-import type { SequenceVersion } from '../../../src/types.ts';
+import type { SequenceVersion } from '../../../src/types/backend.ts';
 import { getSequenceVersionString } from '../../../src/utils/extractSequenceVersion.ts';
 import { baseUrl, expect, testuser } from '../../e2e.fixture';
 

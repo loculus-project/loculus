@@ -1,4 +1,5 @@
-import type { ClientConfig, Filter } from '../../../types';
+import type { Filter } from '../../../types/config.ts';
+import type { ClientConfig } from '../../../types/runtimeConfig.ts';
 
 export type FieldProps = {
     field: Filter;
