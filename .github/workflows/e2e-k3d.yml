@@ -5,7 +5,13 @@ on:
 
 
 jobs:
-  setup-k3d:
+  k3d-e2e:
+  
+    permissions:
+      packages: read
+      contents: read
+      checks: read
+
     runs-on: ubuntu-latest
 
     steps:
