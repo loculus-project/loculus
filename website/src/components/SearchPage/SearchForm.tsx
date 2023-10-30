@@ -9,7 +9,7 @@ import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField } from './fields/DateField';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
-import { getClientLogger } from '../../api';
+import { getClientLogger } from '../../clientLogger.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { routes } from '../../routes.ts';
 import type { ClientConfig, Filter } from '../../types';
