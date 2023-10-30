@@ -52,7 +52,7 @@ jobs:
 
     - name: Deploy Helm chart
       run: |
-        helm install preview kubernetes/preview --set mode=e2e --set branch=${{ github.ref_name }} --set namespace=test --set dockerconfigjson=eyJhdXRocyI6eyJnaGNyLmlvIjp7InVzZXJuYW1lIjoiYm90IiwicGFzc3dvcmQiOiJnaHBfNUM0WVZKUkpWcWRwdWJBTlFpRnNMZ0N0ZnlwVkZ5MkFYdE1nIiwiZW1haWwiOiJib3RAYm90LmNvbSIsImF1dGgiOiJZbTkwT21kb2NGODFRelJaVmtwU1NsWnhaSEIxWWtGT1VXbEdjMHhuUTNSbWVYQldSbmt5UVZoMFRXYz0ifX19
+        helm install preview kubernetes/preview --set mode=e2e --set branch=${{ github.ref_name }} --set namespace=test --set dockerconfigjson=${{ secrets.GHCR_DOCKER_CONFIG }}
 
     - uses: actions/setup-node@v3
     - name: Install playwright
