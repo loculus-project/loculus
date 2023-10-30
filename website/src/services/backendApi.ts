@@ -161,6 +161,38 @@ const confirmRevocationEndpoint = makeEndpoint({
     ],
 });
 
+const extractUnprocessedDataEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/extract-unprocessed-data',
+    alias: 'extractUnprocessedData',
+    parameters: [
+        {
+            name: 'numberOfSequences',
+            type: 'Query',
+            schema: z.number(),
+        },
+    ],
+    response: z.union([z.string(), unprocessedData]),
+});
+
+const submitProcessedDataEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/submit-processed-data',
+    alias: 'submitProcessedData',
+    parameters: [
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.string(),
+        },
+    ],
+    response: z.never(),
+    errors: [
+        { status: 'default', schema: problemDetail },
+        { status: 422, schema: problemDetail },
+    ],
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -171,4 +203,6 @@ export const backendApi = makeApi([
     approveProcessedDataEndpoint,
     deleteSequencesEndpoint,
     confirmRevocationEndpoint,
+    extractUnprocessedDataEndpoint,
+    submitProcessedDataEndpoint,
 ]);

@@ -1,8 +1,87 @@
-import axios, { type AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
-import { type UnprocessedData } from '../../src/types/backend.ts';
+import { BackendClient } from '../../src/services/backendClient.ts';
+import { type SequenceId, unprocessedData, type UnprocessedData } from '../../src/types/backend.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
-import { backendUrl } from '../e2e.fixture.ts';
+import { backendUrl, e2eLogger } from '../e2e.fixture.ts';
+
+export const fakeProcessingPipeline = {
+    submit,
+    query,
+};
+
+export type PreprocessingOptions = {
+    sequenceId: SequenceId;
+    version: number;
+    error: boolean;
+};
+async function submit(preprocessingOptions: PreprocessingOptions[]) {
+    const body = preprocessingOptions
+        .map(({ sequenceId, version, error }) => {
+            return {
+                sequenceId,
+                version,
+                errors: error
+                    ? [{ source: [{ name: 'host', type: 'Metadata' }], message: 'Not this kind of host' }]
+                    : [],
+                warnings: [{ source: [{ name: 'date', type: 'Metadata' }], message: '"There is no warning"-warning' }],
+                data: {
+                    metadata: {
+                        date: '2002-12-15',
+                        host: 'google.com',
+                        region: 'Europe',
+                        country: 'Spain',
+                        division: 'Schaffhausen',
+                    },
+                    ...sequenceData,
+                },
+            };
+        })
+        .map((data) => JSON.stringify(data))
+        .join('\n');
+
+    const response = await BackendClient.create(backendUrl, e2eLogger).call('submitProcessedData', body, {
+        headers: { 'Content-Type': 'application/x-ndjson' },
+    });
+
+    if (response.isErr()) {
+        throw handleError(response.error);
+    }
+}
+
+async function query(numberOfSequences: number): Promise<UnprocessedData[]> {
+    const response = await BackendClient.create(backendUrl, e2eLogger).call('extractUnprocessedData', undefined, {
+        queries: { numberOfSequences },
+    });
+
+    return response.match(
+        (unprocessedDataAsNdjson) => {
+            // When only getting 1 sequence, the backend returns an object instead of a string
+            if (typeof unprocessedDataAsNdjson === 'object') {
+                return [unprocessedData.parse(unprocessedDataAsNdjson)];
+            }
+
+            return unprocessedDataAsNdjson
+                .split('\n')
+                .filter((line: string) => line.length > 0)
+                .map((line: string): UnprocessedData => {
+                    return JSON.parse(line) as UnprocessedData;
+                });
+        },
+        (error) => {
+            throw handleError(error);
+        },
+    );
+}
+
+const handleError = (error: unknown): Error => {
+    const axiosError = error as AxiosError;
+    if (axiosError.response !== undefined) {
+        return new Error('Error: ' + JSON.stringify(axiosError.response.data));
+    } else {
+        return new Error('Unknown error from backend: ' + stringifyMaybeAxiosError(axiosError));
+    }
+};
 
 const sequenceData = {
     unalignedNucleotideSequences: {
@@ -32,78 +111,3 @@ const sequenceData = {
         S: ['123:NRNR'],
     },
 } as const;
-
-export const fakeProcessingPipeline = async ({
-    sequenceId,
-    version,
-    error,
-}: {
-    sequenceId: number;
-    version: number;
-    error: boolean;
-}) => {
-    const body = {
-        sequenceId,
-        version,
-        errors: error ? [{ source: [{ name: 'host', type: 'Metadata' }], message: 'Not this kind of host' }] : [],
-        warnings: [{ source: [{ name: 'date', type: 'Metadata' }], message: '"There is no warning"-warning' }],
-        data: {
-            metadata: {
-                date: '2002-12-15',
-                host: 'google.com',
-                region: 'Europe',
-                country: 'Spain',
-                division: 'Schaffhausen',
-            },
-            ...sequenceData,
-        },
-    };
-    try {
-        const response = await axios.post(`${backendUrl}/submit-processed-data`, body, {
-            headers: {
-                'Content-Type': 'application/x-ndjson',
-            },
-        });
-
-        if (!(response.status === 204)) {
-            throw new Error(JSON.stringify(response.data));
-        }
-    } catch (error) {
-        handleError(error);
-    }
-};
-
-export async function queryUnprocessedData(countOfSequences: number) {
-    try {
-        const response = await axios.post(
-            `${backendUrl}/extract-unprocessed-data?numberOfSequences=${countOfSequences}`,
-            undefined,
-            {
-                headers: {
-                    'Content-Type': 'application/x-ndjson',
-                },
-            },
-        );
-
-        if (!(response.status === 200)) {
-            throw new Error('Request failed: ' + JSON.stringify(response.data));
-        }
-
-        const unprocessedDataAsNdjson = await response.data;
-        return unprocessedDataAsNdjson
-            .split('\n')
-            .filter((line: string) => line.length > 0)
-            .map((line: string): UnprocessedData => JSON.parse(line));
-    } catch (error) {
-        handleError(error);
-    }
-}
-
-const handleError = (error: unknown) => {
-    const axiosError = error as AxiosError;
-    if (axiosError.response !== undefined) {
-        throw new Error('Error: ' + JSON.stringify(axiosError.response.data));
-    } else {
-        throw new Error('Unknown error from backend: ' + stringifyMaybeAxiosError(axiosError));
-    }
-};

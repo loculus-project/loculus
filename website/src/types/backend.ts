@@ -29,6 +29,9 @@ export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 export const metadataField = z.union([z.string(), z.number(), z.date()]);
 export type MetadataField = z.infer<typeof metadataField>;
 
+const sequenceId = z.number();
+export type SequenceId = z.infer<typeof sequenceId>;
+
 const metadataRecord = z.record(metadataField);
 export type MetadataRecord = z.infer<typeof metadataRecord>;
 
@@ -71,11 +74,15 @@ export const unprocessedData = sequenceVersion.merge(
 );
 export type UnprocessedData = z.infer<typeof unprocessedData>;
 
-export type Sequence = SequenceVersion & {
-    data: any;
-    errors?: ProcessingAnnotation[];
-    warnings?: ProcessingAnnotation[];
-};
+export const processedData = sequenceVersion.merge(
+    z.object({
+        data: z.any(),
+        errors: z.array(processingAnnotation).optional(),
+        warnings: z.array(processingAnnotation).optional(),
+    }),
+);
+
+export type ProcessedData = z.infer<typeof processedData>;
 
 export const sequenceReview = sequenceVersion.merge(
     z.object({

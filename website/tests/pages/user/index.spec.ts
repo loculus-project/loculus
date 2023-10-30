@@ -1,58 +1,61 @@
 import { expect, test, testuser } from '../../e2e.fixture';
-import { fakeProcessingPipeline, queryUnprocessedData } from '../../util/preprocessingPipeline';
+import { approveProcessedData, submitRevisedDataViaApi } from '../../util/backendCalls.ts';
+import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
+import { fakeProcessingPipeline } from '../../util/preprocessingPipeline';
 
 test.describe('The user page', () => {
-    test('should show sequences, their status and a link to reviews', async ({ submitPage, userPage }) => {
-        test.slow();
-        await submitPage.goto();
-        await submitPage.submit();
+    test('should show sequences, their status and a link to reviews', async ({ userPage }) => {
+        const [sequenceNeedsReview, sequenceProcessed, sequenceReleasable, sequenceToBeRevised] = await prepareDataToBe(
+            'processing',
+        );
 
-        const sequences = await queryUnprocessedData(submitPage.getTestSequenceCount());
-        expect(sequences.length).toBe(submitPage.getTestSequenceCount());
-        const [firstSequence, secondSequence] = sequences;
-
-        await fakeProcessingPipeline({
-            sequenceId: firstSequence.sequenceId,
-            version: firstSequence.version,
-            error: true,
-        });
-        await userPage.gotoUserSequencePage();
-        const sequenceNeedingReviewIsPresent = await userPage.verifyTableEntries([
+        await fakeProcessingPipeline.submit([
             {
-                sequenceId: firstSequence.sequenceId,
-                version: firstSequence.version,
+                ...sequenceNeedsReview,
+                error: true,
+            },
+            {
+                ...sequenceProcessed,
+                error: false,
+            },
+            {
+                ...sequenceReleasable,
+                error: false,
+            },
+            {
+                ...sequenceToBeRevised,
+                error: false,
+            },
+        ]);
+
+        await approveProcessedData(testuser, [sequenceReleasable, sequenceToBeRevised]);
+        await submitRevisedDataViaApi([sequenceToBeRevised.sequenceId]);
+
+        await userPage.gotoUserSequencePage();
+
+        const sequencesArePresent = await userPage.verifyTableEntries([
+            {
+                ...sequenceNeedsReview,
                 status: 'NEEDS_REVIEW',
                 isRevocation: false,
             },
-        ]);
-        expect(sequenceNeedingReviewIsPresent).toBe(true);
-
-        await fakeProcessingPipeline({
-            sequenceId: secondSequence.sequenceId,
-            version: secondSequence.version,
-            error: false,
-        });
-        await userPage.gotoUserSequencePage();
-        const sequenceThatIsProcessedIsPresent = await userPage.verifyTableEntries([
             {
-                sequenceId: secondSequence.sequenceId,
-                version: secondSequence.version,
+                ...sequenceProcessed,
                 status: 'PROCESSED',
                 isRevocation: false,
             },
-        ]);
-        expect(sequenceThatIsProcessedIsPresent).toBe(true);
-
-        await submitPage.approveProcessedData(testuser, [secondSequence]);
-        await userPage.gotoUserSequencePage();
-        const sequenceThatIsReleasableIsPresent = await userPage.verifyTableEntries([
             {
-                sequenceId: secondSequence.sequenceId,
-                version: secondSequence.version,
+                ...sequenceReleasable,
+                status: 'SILO_READY',
+                isRevocation: false,
+            },
+            {
+                ...sequenceToBeRevised,
                 status: 'SILO_READY',
                 isRevocation: false,
             },
         ]);
-        expect(sequenceThatIsReleasableIsPresent).toBe(true);
+
+        expect(sequencesArePresent).toBe(true);
     });
 });

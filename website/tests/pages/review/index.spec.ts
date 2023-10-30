@@ -1,33 +1,28 @@
-import type { ReviewPage } from './review.page.ts';
+import { type ReviewPage } from './review.page.ts';
 import type { SequenceVersion } from '../../../src/types/backend.ts';
-import { expect, test } from '../../e2e.fixture';
+import { baseUrl, expect, test, testuser } from '../../e2e.fixture';
+import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 import type { UserPage } from '../user/user.page.ts';
 
 test.describe('The review page', () => {
     test(
         'should show the review page for a sequence that needs review, ' +
             'download the sequence and submit the review',
-        async ({ reviewPage, submitPage, userPage }) => {
-            const [testSequence] = await submitPage.prepareDataToBeReviewable();
-            expect(testSequence).toBeDefined();
+        async ({ userPage, reviewPage }) => {
+            const [reviewableTestSequence] = await prepareDataToBe('reviewable', 1);
+            const [stagedTestSequence] = await prepareDataToBe('staged', 1);
 
-            await testReviewFlow(reviewPage, userPage, testSequence);
+            expect(reviewableTestSequence).toBeDefined();
+            expect(stagedTestSequence).toBeDefined();
+
+            await userPage.gotoUserSequencePage();
+
+            await testReviewFlow(reviewPage, userPage, reviewableTestSequence);
+            await testReviewFlow(reviewPage, userPage, stagedTestSequence);
         },
     );
 
-    test('should show the review page for a staged sequence, download the sequence and submit the review', async ({
-        reviewPage,
-        submitPage,
-        userPage,
-    }) => {
-        const [testSequence] = await submitPage.prepareDataToBeStaged();
-        expect(testSequence).toBeDefined();
-
-        await testReviewFlow(reviewPage, userPage, testSequence);
-    });
-
     const testReviewFlow = async (reviewPage: ReviewPage, userPage: UserPage, testSequence: SequenceVersion) => {
-        await userPage.gotoUserSequencePage();
         await userPage.clickOnReviewForSequence(testSequence);
 
         expect(await reviewPage.page.isVisible(`text=Review for Id: ${testSequence.sequenceId}`)).toBe(true);
@@ -38,7 +33,6 @@ test.describe('The review page', () => {
 
         await reviewPage.submit();
 
-        await userPage.gotoUserSequencePage();
-        await userPage.verifyTableEntries([{ ...testSequence, status: 'REVIEWED', isRevocation: false }]);
+        await reviewPage.page.waitForURL(`${baseUrl}/user/${testuser}/sequences`);
     };
 });

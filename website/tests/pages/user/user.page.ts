@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 
-import type { SequenceStatus, SequenceVersion } from '../../../src/types/backend.ts';
+import type { SequenceStatus } from '../../../src/types/backend.ts';
+import { type SequenceVersion } from '../../../src/types/backend.ts';
 import { getSequenceVersionString } from '../../../src/utils/extractSequenceVersion.ts';
 import { baseUrl, testuser } from '../../e2e.fixture';
 
@@ -17,12 +18,8 @@ export class UserPage {
 
     constructor(public readonly page: Page) {}
 
-    public async goto() {
-        await this.page.goto(`${baseUrl}/user/${testuser}`);
-    }
-
     public async gotoUserSequencePage() {
-        await this.page.goto(`${baseUrl}/user/${testuser}/sequences`);
+        await this.page.goto(`${baseUrl}/user/${testuser}/sequences`, { waitUntil: 'networkidle' });
         await this.page.waitForURL(`${baseUrl}/user/${testuser}/sequences`);
 
         for (const id of this.sequenceBoxNames) {
@@ -58,6 +55,7 @@ export class UserPage {
 
         await this.page.waitForURL(
             `${baseUrl}/user/${testuser}/review/${sequenceToCheck.sequenceId}/${sequenceToCheck.version}`,
+            { waitUntil: 'networkidle' },
         );
     }
 }

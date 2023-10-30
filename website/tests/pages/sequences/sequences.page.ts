@@ -12,7 +12,7 @@ export class SequencePage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/sequences/${testSequence.name}`, { waitUntil: 'load' });
+        await this.page.goto(`${baseUrl}/sequences/${testSequence.name}`, { waitUntil: 'networkidle' });
         await expect(this.page).toHaveTitle(`${testSequence.name}`);
         await expect(this.loadButton).toBeVisible();
     }

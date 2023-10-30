@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+
 import { test as base } from '@playwright/test';
 import winston from 'winston';
 
@@ -35,6 +37,11 @@ export const testuser = 'testuser';
 
 export const metadataTestFile: string = './tests/testData/metadata.tsv';
 export const sequencesTestFile: string = './tests/testData/sequences.fasta';
+
+export const testSequenceCount: number =
+    readFileSync(metadataTestFile, 'utf-8')
+        .split('\n')
+        .filter((line) => line.length !== 0).length - 1;
 
 export const test = base.extend<E2EFixture>({
     searchPage: async ({ page }, use) => {
