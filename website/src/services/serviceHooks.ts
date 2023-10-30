@@ -2,10 +2,12 @@ import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 
 import { backendApi } from './backendApi.ts';
-import { lapisApi, type LapisBaseRequest } from './lapisApi.ts';
-import type { ClientConfig, Config, SequenceType } from '../types.ts';
+import { lapisApi } from './lapisApi.ts';
+import type { Config } from '../types/config.ts';
+import type { LapisBaseRequest } from '../types/lapis.ts';
+import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
-import { isAlignedSequence, isUnalignedSequence } from '../utils/sequenceTypeHelpers.ts';
+import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
 export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('pathoplexus', new Zodios(clientConfig.backendUrl, backendApi));

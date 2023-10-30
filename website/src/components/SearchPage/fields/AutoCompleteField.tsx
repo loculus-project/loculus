@@ -4,7 +4,7 @@ import { type FC, useEffect, useMemo, useState } from 'react';
 import type { FieldProps } from './FieldProps';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import type { Filter } from '../../../types.ts';
+import type { Filter } from '../../../types/config.ts';
 
 const logger = getClientLogger('AutoCompleteField');
 

@@ -1,7 +1,7 @@
 import { capitalCase } from 'change-case';
 import type { FC } from 'react';
 
-import type { Config } from '../../types';
+import type { Config } from '../../types/config.ts';
 
 export type TableSequenceData = {
     [key: string]: string | number | null;

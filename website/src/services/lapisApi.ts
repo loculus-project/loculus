@@ -1,39 +1,14 @@
 import { makeApi, makeEndpoint } from '@zodios/core';
-import z, { type ZodTypeAny } from 'zod';
+import z from 'zod';
 
-const lapisBaseRequest = z
-    .object({
-        limit: z.number().optional(),
-        offset: z.number().optional(),
-        fields: z.array(z.string()).optional(),
-    })
-    .catchall(z.union([z.string(), z.number(), z.null(), z.array(z.string())]));
-export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
-
-const mutationsRequest = lapisBaseRequest.extend({ minProportion: z.number().optional() });
-
-const mutationProportionCount = z.object({
-    mutation: z.string(),
-    proportion: z.number(),
-    count: z.number(),
-});
-export type MutationProportionCount = z.infer<typeof mutationProportionCount>;
-
-const mutationsResponse = makeLapisResponse(z.array(mutationProportionCount));
-
-const insertionCount = z.object({
-    insertion: z.string(),
-    count: z.number(),
-});
-export type InsertionCount = z.infer<typeof insertionCount>;
-
-const insertionsResponse = makeLapisResponse(z.array(insertionCount));
-
-const details = z.record(z.union([z.string(), z.number(), z.null()]));
-export type Details = z.infer<typeof details>;
-
-const detailsResponse = makeLapisResponse(z.array(details));
-export type DetailsResponse = z.infer<typeof detailsResponse>;
+import {
+    aggregatedResponse,
+    detailsResponse,
+    insertionsResponse,
+    lapisBaseRequest,
+    mutationsRequest,
+    mutationsResponse,
+} from '../types/lapis.ts';
 
 const detailsEndpoint = makeEndpoint({
     method: 'post',
@@ -48,9 +23,6 @@ const detailsEndpoint = makeEndpoint({
     ],
     response: detailsResponse,
 });
-
-const aggregatedItem = z.object({ count: z.number() }).catchall(z.union([z.string(), z.number(), z.null()]));
-const aggregatedResponse = makeLapisResponse(z.array(aggregatedItem));
 
 const aggregatedEndpoint = makeEndpoint({
     method: 'post',
@@ -178,9 +150,3 @@ export const lapisApi = makeApi([
     unalignedNucleotideSequencesEndpoint,
     aminoAcidSequencesEndpoint,
 ]);
-
-function makeLapisResponse<T extends ZodTypeAny>(data: T) {
-    return z.object({
-        data,
-    });
-}

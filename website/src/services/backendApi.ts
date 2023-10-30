@@ -10,7 +10,7 @@ import {
     sequenceVersionsObject,
     submitFiles,
     unprocessedData,
-} from '../types.ts';
+} from '../types/backend.ts';
 
 const usernameParameters = makeParameters([
     {

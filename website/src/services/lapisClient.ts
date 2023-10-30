@@ -4,7 +4,8 @@ import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getConfig, getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
-import type { BaseType, Config } from '../types.ts';
+import type { Config } from '../types/config.ts';
+import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     constructor(

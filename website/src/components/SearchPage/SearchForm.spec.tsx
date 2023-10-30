@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
 import { routes } from '../../routes.ts';
-import type { ClientConfig, Filter } from '../../types';
+import type { Filter } from '../../types/config.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),

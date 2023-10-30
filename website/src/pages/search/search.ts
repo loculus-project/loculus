@@ -3,7 +3,8 @@ import { Result } from 'neverthrow';
 import type { TableSequenceData } from '../../components/SearchPage/Table';
 import { getConfig } from '../../config';
 import { LapisClient } from '../../services/lapisClient';
-import type { Filter, ProblemDetail } from '../../types';
+import type { ProblemDetail } from '../../types/backend.ts';
+import type { Filter } from '../../types/config.ts';
 
 export type SearchResponse = {
     data: TableSequenceData[];

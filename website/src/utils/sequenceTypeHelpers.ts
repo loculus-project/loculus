@@ -1,4 +1,7 @@
-import type { SequenceType } from '../types';
+export type SequenceType =
+    | { type: 'nucleotide'; aligned: boolean; name: 'main' }
+    | { type: 'aminoAcid'; aligned: true; name: string };
+export type BaseType = SequenceType['type'];
 
 export const unalignedSequence: SequenceType = { type: 'nucleotide', aligned: false, name: 'main' };
 export const alignedSequence: SequenceType = { type: 'nucleotide', aligned: true, name: 'main' };

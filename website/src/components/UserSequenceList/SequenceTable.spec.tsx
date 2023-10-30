@@ -8,7 +8,8 @@ import { SequenceTable } from './SequenceTable.tsx';
 import type { BulkSequenceActionName, SingleSequenceActionName } from './sequenceActions.ts';
 import { testuser } from '../../../tests/e2e.fixture.ts';
 import { routes } from '../../routes.ts';
-import type { ClientConfig, SequenceStatus } from '../../types';
+import type { SequenceStatus } from '../../types/backend.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
 
 const queryClient = new QueryClient();

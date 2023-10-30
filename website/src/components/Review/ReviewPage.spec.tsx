@@ -6,7 +6,8 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { ReviewPage } from './ReviewPage.tsx';
 import { testuser } from '../../../tests/e2e.fixture.ts';
-import type { ClientConfig, MetadataField, SequenceReview } from '../../types';
+import type { MetadataField, SequenceReview } from '../../types/backend.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
 const metadataKey = 'originalMetaDataField';

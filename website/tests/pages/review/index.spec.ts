@@ -1,5 +1,5 @@
 import type { ReviewPage } from './review.page.ts';
-import type { SequenceVersion } from '../../../src/types.ts';
+import type { SequenceVersion } from '../../../src/types/backend.ts';
 import { expect, test } from '../../e2e.fixture';
 import type { UserPage } from '../user/user.page.ts';
 
