@@ -2,7 +2,7 @@ import { Autocomplete, Box, createFilterOptions, TextField } from '@mui/material
 import { type FC, useEffect, useMemo, useState } from 'react';
 
 import type { FieldProps } from './FieldProps';
-import { getClientLogger } from '../../../api.ts';
+import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { Filter } from '../../../types.ts';
 
