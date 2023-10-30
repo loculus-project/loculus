@@ -34,7 +34,7 @@ spec:
         namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" }}'
       project: default
       source:
-        path: '.argocd/preview/'
+        path: 'kubernetes/preview/'
         repoURL: 'https://github.com/pathoplexus/pathoplexus.git'
         targetRevision: '{{.branch}}'
         helm:
