@@ -1,9 +1,17 @@
 import fs from 'fs';
 import path from 'path';
 
-import type { Config } from './types/config.ts';
-import type { ReferenceGenomes } from './types/referencesGenomes.ts';
-import type { ClientConfig, RuntimeConfig, ServerConfig, ServiceUrls } from './types/runtimeConfig.ts';
+import type { z, ZodError } from 'zod';
+
+import { config, type Config } from './types/config.ts';
+import { referenceGenomes, type ReferenceGenomes } from './types/referencesGenomes.ts';
+import {
+    type ClientConfig,
+    type RuntimeConfig,
+    type ServerConfig,
+    type ServiceUrls,
+    serviceUrls,
+} from './types/runtimeConfig.ts';
 import netlifyConfig from '../netlifyConfig/config.json' assert { type: 'json' };
 import netlifyRuntimeConfig from '../netlifyConfig/runtime_config.json' assert { type: 'json' };
 
@@ -26,8 +34,7 @@ export function getConfig(): Config {
             return _config;
         }
 
-        const configFilePath = path.join(getConfigDir(), 'config.json');
-        _config = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as Config;
+        _config = readTypedConfigFile('config.json', config);
     }
     return _config;
 }
@@ -43,8 +50,7 @@ export function getRuntimeConfig(): RuntimeConfig {
             return _runtimeConfig;
         }
 
-        const configFilePath = path.join(getConfigDir(), 'runtime_config.json');
-        const serviceConfig = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as ServiceUrls;
+        const serviceConfig = readTypedConfigFile('runtime_config.json', serviceUrls);
 
         const urlsForClient = import.meta.env.DEV
             ? serviceConfig
@@ -84,8 +90,18 @@ function makeClientConfig(serviceConfig: ServiceUrls): ClientConfig {
 
 export function getReferenceGenomes(): ReferenceGenomes {
     if (_referenceGenomes === null) {
-        const configFilePath = path.join(getConfigDir(), 'reference_genomes.json');
-        _referenceGenomes = JSON.parse(fs.readFileSync(configFilePath, 'utf8')) as ReferenceGenomes;
+        _referenceGenomes = readTypedConfigFile('reference_genomes.json', referenceGenomes);
     }
     return _referenceGenomes;
+}
+
+function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {
+    const configFilePath = path.join(getConfigDir(), fileName);
+    const json = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
+    try {
+        return schema.parse(json);
+    } catch (e) {
+        const zodError = e as ZodError;
+        throw new Error(`Type error reading ${configFilePath}: ${zodError.message}`);
+    }
 }
