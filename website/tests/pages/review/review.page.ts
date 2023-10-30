@@ -16,6 +16,7 @@ export class ReviewPage {
     public async goto(sequenceVersion: SequenceVersion) {
         await this.page.goto(
             `${baseUrl}/user/${testuser}/review/${sequenceVersion.sequenceId}/${sequenceVersion.version}`,
+            { waitUntil: 'networkidle' },
         );
     }
 
@@ -23,10 +24,12 @@ export class ReviewPage {
         await this.submitButton.click();
         expect(await this.page.isVisible('text=Do you really want to submit your review?')).toBe(true);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
+        await this.page.waitForURL(`${baseUrl}/user/${testuser}/sequences`);
     }
 
     public async downloadAndVerify(sequenceVersion: SequenceVersion) {
         const downloadPromise = this.page.waitForEvent('download');
+        expect(await this.downloadButton.isVisible()).toBeTruthy();
         await this.downloadButton.click();
         const download = await downloadPromise;
 

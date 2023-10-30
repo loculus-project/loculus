@@ -1,5 +1,4 @@
 header	date	region	country	division	host
-custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
 custom3	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens
@@ -9,3 +8,4 @@ custom6	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens
 custom7	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens
 custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens
 custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens
+custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens

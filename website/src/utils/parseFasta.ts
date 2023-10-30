@@ -28,4 +28,7 @@ export function parseFasta(fasta: string) {
     return fastaEntries;
 }
 
+export const fastaEntryToString = (fastaEntries: FastaEntry[]): string =>
+    fastaEntries.map((entry) => `>${entry.name}\n${entry.sequence}\n`).join('\n');
+
 export const fastaEntries = z.string().transform(parseFasta);
