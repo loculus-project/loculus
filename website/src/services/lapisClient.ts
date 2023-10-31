@@ -1,9 +1,12 @@
 import type { Narrow } from '@zodios/core/lib/utils.types';
+import { err, ok, Result } from 'neverthrow';
+import { z } from 'zod';
 
 import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
+import { accessionVersion, type AccessionVersion, type ProblemDetail } from '../types/backend.ts';
 import type { Schema } from '../types/config.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
@@ -14,12 +17,25 @@ export const siloVersionStatuses = {
 } as const;
 
 export type SiloVersionStatus = (typeof siloVersionStatuses)[keyof typeof siloVersionStatuses];
-export function isSiloVersionStatus(status: string | undefined): status is SiloVersionStatus {
-    if (status === undefined) {
+export function isSiloVersionStatus(status: string | undefined | null): status is SiloVersionStatus {
+    if (status === undefined || status === null) {
         return false;
     }
     return Object.values(siloVersionStatuses).includes(status as SiloVersionStatus);
 }
+
+export type SequenceEntryHistory = SequenceEntryHistoryEntry[];
+
+const sequenceEntryHistoryEntry = accessionVersion.merge(
+    z.object({
+        versionStatus: z.string().refine((status) => isSiloVersionStatus(status), {
+            message: `Invalid version status`,
+        }) as z.ZodType<SiloVersionStatus>,
+    }),
+);
+
+type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry>;
+
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     constructor(
         url: string,
@@ -46,33 +62,79 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
 
     public getSequenceEntryVersionDetails(accessionVersion: string) {
         return this.call('details', {
+            // why?
             [this.schema.primaryKey]: accessionVersion,
         });
     }
 
-    public async getLatestAccessionVersion(accession: string) {
+    public async getLatestAccessionVersion(accession: string): Promise<Result<AccessionVersion, ProblemDetail>> {
         const result = await this.call('details', {
             accession,
             versionStatus: siloVersionStatuses.latestVersion,
-            fields: ['accessionVersion'],
+            fields: ['accession', 'version'],
         });
 
-        if (result.isErr()) {
-            throw new Error(`Failed to get latest version for ${accession}: ${JSON.stringify(result.error)}`);
+        if (result.isOk()) {
+            const data = result.value.data;
+            if (data.length !== 1) {
+                const problemDetail: ProblemDetail = {
+                    type: 'about:blank',
+                    title: 'Unexpected number of results',
+                    detail: `Expected 1 result, got ${data.length}`,
+                    status: 500,
+                    instance: 'LapisClient/getLatestAccessionVersion',
+                };
+                return err(problemDetail);
+            }
+            const parsedAccessionversion = accessionVersion.safeParse(data[0]);
+            if (!parsedAccessionversion.success) {
+                const problemDetail: ProblemDetail = {
+                    type: 'about:blank',
+                    title: 'Could not parse accession version',
+                    detail: `Expected 1 result, got ${data.length}`,
+                    status: 500,
+                    instance: 'LapisClient/getLatestAccessionVersion',
+                };
+                return err(problemDetail);
+            }
+            return ok(parsedAccessionversion.data);
         }
+        return result;
+    }
 
-        // TODO(#619): Remove this once SILO is fixed
-        if (result.value.data.length === 0) {
-            return 'This should be the accessionVersion of the latest version, but the latest version is a revocation version that does not yet exist in SILO';
-        }
+    public async getAllSequenceEntryHistoryForAccession(
+        accession: string,
+    ): Promise<Result<SequenceEntryHistory, ProblemDetail>> {
+        const result = await this.call('details', {
+            accession,
+            fields: ['accession', 'version', 'versionStatus'],
+            orderBy: ['version'],
+        });
 
-        const latestVersion = result.value.data[0]?.accessionVersion?.toString();
+        const createSequenceHistoryProblemDetail = (detail: string): ProblemDetail => ({
+            type: 'about:blank',
+            title: 'Could not get sequence entry history',
+            status: 500,
+            instance: 'LapisClient/getAllSequenceEntryHistoryForAccession',
+            detail,
+        });
 
-        if (latestVersion === undefined) {
-            throw new Error(`Failed to get latest version for ${accession}: ${JSON.stringify(result)}`);
-        }
-
-        return latestVersion;
+        return result.match(
+            (data) =>
+                Result.combine(
+                    data.data.map((entry) => {
+                        const parsedHistory = sequenceEntryHistoryEntry.safeParse(entry);
+                        return parsedHistory.success
+                            ? ok(parsedHistory.data)
+                            : err(
+                                  createSequenceHistoryProblemDetail(
+                                      `Validation error for ${accession}: ${parsedHistory.error.errors}`,
+                                  ),
+                              );
+                    }),
+                ),
+            (error) => err(error),
+        );
     }
 
     public getSequenceMutations(accessionVersion: string, type: BaseType) {

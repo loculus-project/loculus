@@ -1,32 +1,25 @@
 ---
-import { getVersionStatus, type TableDataEntry } from '../../pages/[organism]/sequences/getTableData';
+import { getLatestAccessionVersion } from './getTableData';
 import { routes } from '../../routes.ts';
-import { LapisClient } from '../../services/lapisClient';
+import type { SequenceEntryHistory } from '../../services/lapisClient';
 import { siloVersionStatuses, type SiloVersionStatus } from '../../services/lapisClient.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
 
 interface Props {
-    tableData: TableDataEntry[];
-    accessionVersion: string;
+    sequenceEntryHistory: SequenceEntryHistory;
+    versionStatus: SiloVersionStatus;
     organism: string;
 }
 
-const { tableData, accessionVersion, organism } = Astro.props;
-
-const versionStatus: SiloVersionStatus = getVersionStatus(tableData);
+const { sequenceEntryHistory, versionStatus, organism } = Astro.props;
 
 // TODO(#619): Currently there are no revocation entry versions in SILO. When they are introduced, this condition has to be expanded.
 //  If versionStatus === latest version AND it is a revocation entry (isRevocation=== true) => revoked = true
 const revoked = versionStatus === siloVersionStatuses.revoked;
 
-const lapisClient = LapisClient.createForOrganism(organism);
-const [accession] = accessionVersion.split('.');
+const latestAccessionVersion = getLatestAccessionVersion(sequenceEntryHistory);
 
-const latestAccessionVersion: string | undefined =
-    versionStatus !== siloVersionStatuses.latestVersion
-        ? await lapisClient.getLatestAccessionVersion(accession)
-        : undefined;
-
-const isNotLatestVersion = versionStatus !== siloVersionStatuses.latestVersion && latestAccessionVersion !== undefined;
+const isNotLatestVersion = versionStatus !== siloVersionStatuses.latestVersion;
 ---
 
 <div class='py-3'>
@@ -34,22 +27,24 @@ const isNotLatestVersion = versionStatus !== siloVersionStatuses.latestVersion &
         isNotLatestVersion && (
             <div class='bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-3' role='alert'>
                 <p class='font-bold'>This is not the latest version of this sequence entry.</p>
-                <p>
-                    Go to the latest version:
-                    <a
-                        href={routes.sequencesDetailsPage(organism, latestAccessionVersion)}
-                        class='font-bold underline mx-3'
-                    >
-                        {latestAccessionVersion}
-                    </a>
-                </p>
+                {latestAccessionVersion !== undefined && (
+                    <p>
+                        Go to the latest version:
+                        <a
+                            href={routes.sequencesDetailsPage(organism, latestAccessionVersion)}
+                            class='font-bold underline mx-3'
+                        >
+                            {getAccessionVersionString(latestAccessionVersion)}
+                        </a>
+                    </p>
+                )}
             </div>
         )
     }
     {
         revoked && (
             <>
-                <div class='bg-red-100 border-l-4 border-red-500 text-red-700 p-3' role='alert'>
+                <div class='bg-red-100 border-l-4 border-red-500 text-red-700 p-3 ' role='alert'>
                     <p class='font-bold'>This sequence entry has been revoked!</p>
                 </div>
                 <div class='fixed top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none'>

@@ -2,9 +2,9 @@ import { err, ok } from 'neverthrow';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { getTableData } from './getTableData.ts';
-import { mockRequest, testConfig } from '../../../../vitest.setup.ts';
-import { LapisClient } from '../../../services/lapisClient.ts';
-import type { Schema } from '../../../types/config.ts';
+import { mockRequest, testConfig } from '../../../vitest.setup.ts';
+import { LapisClient } from '../../services/lapisClient.ts';
+import type { Schema } from '../../types/config.ts';
 
 const schema: Schema = {
     instanceName: 'instance name',
