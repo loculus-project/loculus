@@ -22,6 +22,9 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
+typealias SequenceId = Long
+typealias Version = Long
+
 object SequencesTable : Table("sequences") {
     val sequenceId = long("sequence_id").autoIncrement()
     val version = long("version")

@@ -8,30 +8,32 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
+import org.pathoplexus.backend.service.SequenceId
+import org.pathoplexus.backend.service.Version
 
 interface SequenceVersionInterface {
-    val sequenceId: Long
-    val version: Long
+    val sequenceId: SequenceId
+    val version: Version
 
     fun displaySequenceVersion() = "$sequenceId.$version"
 }
 
 data class SequenceVersion(
-    override val sequenceId: Long,
-    override val version: Long,
+    override val sequenceId: SequenceId,
+    override val version: Version,
 ) : SequenceVersionInterface
 
 data class HeaderId(
-    override val sequenceId: Long,
-    override val version: Long,
+    override val sequenceId: SequenceId,
+    override val version: Version,
     val customId: String,
 ) : SequenceVersionInterface
 
 fun List<SequenceVersion>.toPairs() = map { Pair(it.sequenceId, it.version) }
 
 data class SubmittedProcessedData(
-    override val sequenceId: Long,
-    override val version: Long,
+    override val sequenceId: SequenceId,
+    override val version: Version,
     val data: ProcessedData,
     @Schema(description = "The processing failed due to these errors.")
     val errors: List<PreprocessingAnnotation>? = null,
@@ -43,8 +45,8 @@ data class SubmittedProcessedData(
 ) : SequenceVersionInterface
 
 data class SequenceReview(
-    val sequenceId: Long,
-    val version: Long,
+    val sequenceId: SequenceId,
+    val version: Version,
     val status: Status,
     val processedData: ProcessedData,
     val originalData: OriginalData,
@@ -140,15 +142,15 @@ enum class PreprocessingAnnotationSourceType {
 }
 
 data class SequenceVersionStatus(
-    val sequenceId: Long,
-    val version: Long,
+    val sequenceId: SequenceId,
+    val version: Version,
     val status: Status,
     val isRevocation: Boolean = false,
 )
 
 data class RevisedData(
     val customId: String,
-    val sequenceId: Long,
+    val sequenceId: SequenceId,
     val originalData: OriginalData,
 )
 
@@ -158,8 +160,8 @@ data class SubmittedData(
 )
 
 data class UnprocessedData(
-    @Schema(example = "123") override val sequenceId: Long,
-    @Schema(example = "1") override val version: Long,
+    @Schema(example = "123") override val sequenceId: SequenceId,
+    @Schema(example = "1") override val version: Version,
     val data: OriginalData,
 ) : SequenceVersionInterface
 
@@ -208,4 +210,10 @@ enum class Status {
                 ?: throw IllegalArgumentException("Unknown status: $statusString")
         }
     }
+}
+
+enum class SiloVersionStatus {
+    REVOKED,
+    REVISED,
+    LATEST_VERSION,
 }

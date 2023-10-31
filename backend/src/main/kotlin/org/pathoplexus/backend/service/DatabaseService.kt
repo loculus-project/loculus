@@ -2,7 +2,6 @@ package org.pathoplexus.backend.service
 
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.TextNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -30,6 +29,7 @@ import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.RevisedData
 import org.pathoplexus.backend.api.SequenceReview
 import org.pathoplexus.backend.api.SequenceVersion
+import org.pathoplexus.backend.api.SequenceVersionInterface
 import org.pathoplexus.backend.api.SequenceVersionStatus
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.Status.NEEDS_REVIEW
@@ -67,6 +67,7 @@ class DatabaseService(
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val referenceGenome: ReferenceGenome,
+    private val iteratorStreamer: IteratorStreamer,
 ) {
     init {
         Database.connect(pool)
@@ -115,7 +116,7 @@ class DatabaseService(
 
         updateStatusToProcessing(sequencesData)
 
-        stream(sequencesData, outputStream)
+        iteratorStreamer.streamAsNdjson(sequencesData, outputStream)
     }
 
     private fun updateStatusToProcessing(sequences: List<UnprocessedData>) {
@@ -127,19 +128,6 @@ class DatabaseService(
             ) {
                 it[status] = PROCESSING.name
                 it[startedProcessingAt] = now
-            }
-    }
-
-    private fun <T> stream(
-        sequencesData: List<T>,
-        outputStream: OutputStream,
-    ) {
-        sequencesData
-            .forEach { sequence ->
-                val json = objectMapper.writeValueAsString(sequence)
-                outputStream.write(json.toByteArray())
-                outputStream.write('\n'.code)
-                outputStream.flush()
             }
     }
 
@@ -266,21 +254,35 @@ class DatabaseService(
         }
     }
 
-    fun streamReleasedSubmissions(outputStream: OutputStream) {
-        log.info { "streaming released submissions" }
-
-        val latestVersions = SequencesTable
-            .slice(SequencesTable.sequenceId, SequencesTable.version.max())
+    fun getLatestVersions(): Map<SequenceId, Version> {
+        val maxVersionExpression = SequencesTable.version.max()
+        return SequencesTable
+            .slice(SequencesTable.sequenceId, maxVersionExpression)
             .select(
                 where = {
                     (SequencesTable.status eq SILO_READY.name)
                 },
             )
-            .groupBy(SequencesTable.sequenceId).associate { row ->
-                row[SequencesTable.sequenceId] to row[SequencesTable.version.max()]
-            }
+            .groupBy(SequencesTable.sequenceId)
+            .associate { it[SequencesTable.sequenceId] to it[maxVersionExpression]!! }
+    }
 
-        val sequencesData = SequencesTable
+    fun getLatestRevocationVersions(): Map<SequenceId, Version> {
+        val maxVersionExpression = SequencesTable.version.max()
+        return SequencesTable
+            .slice(SequencesTable.sequenceId, maxVersionExpression)
+            .select(
+                where = {
+                    (SequencesTable.status eq SILO_READY.name) and
+                        (SequencesTable.isRevocation eq true)
+                },
+            )
+            .groupBy(SequencesTable.sequenceId)
+            .associate { it[SequencesTable.sequenceId] to it[maxVersionExpression]!! }
+    }
+
+    fun streamReleasedSubmissions(): Sequence<RawProcessedData> {
+        return SequencesTable
             .slice(
                 SequencesTable.sequenceId,
                 SequencesTable.version,
@@ -292,34 +294,19 @@ class DatabaseService(
                 where = {
                     (SequencesTable.status eq SILO_READY.name)
                 },
-                // TODO(#429): This needs clarification of how to handle revocations. Until then, revocations are filtered out.
             )
+            // TODO(#429): This needs clarification of how to handle revocations. Until then, revocations are filtered out.
             .filter { !it[SequencesTable.isRevocation] }
-            .map { row ->
-                val id = row[SequencesTable.sequenceId]
-                val version = row[SequencesTable.version]
-
-                val isLatestVersion = (latestVersions[id] == version)
-
-                val metadata = row[SequencesTable.processedData]!!.metadata +
-                    ("sequenceId" to TextNode(id.toString())) +
-                    ("version" to TextNode(version.toString())) +
-                    ("sequenceVersion" to TextNode("$id.$version")) +
-                    ("isRevocation" to TextNode(row[SequencesTable.isRevocation].toString())) +
-                    ("submitter" to TextNode(row[SequencesTable.submitter].toString())) +
-                    ("isLatestVersion" to TextNode(isLatestVersion.toString()))
-
-                ProcessedData(
-                    metadata = metadata,
-                    unalignedNucleotideSequences = row[SequencesTable.processedData]!!.unalignedNucleotideSequences,
-                    alignedNucleotideSequences = row[SequencesTable.processedData]!!.alignedNucleotideSequences,
-                    nucleotideInsertions = row[SequencesTable.processedData]!!.nucleotideInsertions,
-                    aminoAcidInsertions = row[SequencesTable.processedData]!!.aminoAcidInsertions,
-                    alignedAminoAcidSequences = row[SequencesTable.processedData]!!.alignedAminoAcidSequences,
+            .map {
+                RawProcessedData(
+                    sequenceId = it[SequencesTable.sequenceId],
+                    version = it[SequencesTable.version],
+                    isRevocation = it[SequencesTable.isRevocation],
+                    submitter = it[SequencesTable.submitter],
+                    processedData = it[SequencesTable.processedData]!!,
                 )
             }
-
-        stream(sequencesData, outputStream)
+            .asSequence()
     }
 
     fun streamReviewNeededSubmissions(submitter: String, numberOfSequences: Int, outputStream: OutputStream) {
@@ -354,7 +341,7 @@ class DatabaseService(
                 )
             }
 
-        stream(sequencesData, outputStream)
+        iteratorStreamer.streamAsNdjson(sequencesData, outputStream)
     }
 
     fun getActiveSequencesSubmittedBy(username: String): List<SequenceVersionStatus> {
@@ -718,3 +705,11 @@ class DatabaseService(
         return sequencesOwnedByUser.count() == 1L
     }
 }
+
+data class RawProcessedData(
+    override val sequenceId: SequenceId,
+    override val version: Version,
+    val isRevocation: Boolean,
+    val submitter: String,
+    val processedData: ProcessedData,
+) : SequenceVersionInterface

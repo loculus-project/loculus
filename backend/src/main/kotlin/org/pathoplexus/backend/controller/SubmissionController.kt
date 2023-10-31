@@ -14,8 +14,10 @@ import org.pathoplexus.backend.api.SequenceVersion
 import org.pathoplexus.backend.api.SequenceVersionStatus
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
+import org.pathoplexus.backend.model.ReleasedDataModel
 import org.pathoplexus.backend.model.SubmitModel
 import org.pathoplexus.backend.service.DatabaseService
+import org.pathoplexus.backend.utils.IteratorStreamer
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -37,7 +39,9 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 @Validated
 class SubmissionController(
     private val submitModel: SubmitModel,
+    private val releasedDataModel: ReleasedDataModel,
     private val databaseService: DatabaseService,
+    private val iteratorStreamer: IteratorStreamer,
 ) {
 
     @Operation(description = "Submit data for new sequences as multipart/form-data")
@@ -118,7 +122,7 @@ class SubmissionController(
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamReleasedSubmissions(outputStream)
+            iteratorStreamer.streamAsNdjson(releasedDataModel.getReleasedData(), outputStream)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
