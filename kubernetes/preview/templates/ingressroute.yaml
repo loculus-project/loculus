@@ -7,6 +7,7 @@ metadata:
   namespace: {{ .Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    link.argocd.argoproj.io/external-link: https://{{ .Values.host }}
 spec:
   entryPoints:
     - websecure
