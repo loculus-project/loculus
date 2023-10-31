@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
@@ -289,6 +290,7 @@ class DatabaseService(
                 SequencesTable.isRevocation,
                 SequencesTable.processedData,
                 SequencesTable.submitter,
+                SequencesTable.submittedAt,
             )
             .select(
                 where = {
@@ -304,6 +306,7 @@ class DatabaseService(
                     isRevocation = it[SequencesTable.isRevocation],
                     submitter = it[SequencesTable.submitter],
                     processedData = it[SequencesTable.processedData]!!,
+                    submittedAt = it[SequencesTable.submittedAt],
                 )
             }
             .asSequence()
@@ -711,5 +714,6 @@ data class RawProcessedData(
     override val version: Version,
     val isRevocation: Boolean,
     val submitter: String,
+    val submittedAt: LocalDateTime,
     val processedData: ProcessedData,
 ) : SequenceVersionInterface

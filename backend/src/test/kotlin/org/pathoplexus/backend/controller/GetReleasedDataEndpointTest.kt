@@ -2,6 +2,9 @@ package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.TextNode
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
@@ -13,12 +16,15 @@ import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
 import org.pathoplexus.backend.service.SequenceId
 import org.pathoplexus.backend.service.Version
 import org.springframework.beans.factory.annotation.Autowired
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @EndpointTest
 class GetReleasedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
 ) {
+    val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
 
     @Test
     fun `GIVEN no sequences in database THEN returns empty response`() {
@@ -43,18 +49,29 @@ class GetReleasedDataEndpointTest(
             val version = it.metadata["version"]!!.asLong()
             assertThat(version, `is`(1L))
 
-            val expectedData = defaultProcessedData.withValues(
-                metadata = defaultProcessedData.metadata + mapOf(
-                    "sequenceId" to TextNode(id),
-                    "version" to IntNode(version.toInt()),
-                    "sequenceVersion" to TextNode("$id.$version"),
-                    "isRevocation" to TextNode("false"),
-                    "submitter" to TextNode(USER_NAME),
-                    "versionStatus" to TextNode("LATEST_VERSION"),
-                ),
+            val expectedMetadata = defaultProcessedData.metadata + mapOf(
+                "sequenceId" to TextNode(id),
+                "version" to IntNode(version.toInt()),
+                "sequenceVersion" to TextNode("$id.$version"),
+                "isRevocation" to TextNode("false"),
+                "submitter" to TextNode(USER_NAME),
+                "versionStatus" to TextNode("LATEST_VERSION"),
             )
 
-            assertThat(it, `is`(expectedData))
+            assertThat(it.metadata.size, `is`(expectedMetadata.size + 1))
+            for ((key, value) in it.metadata) {
+                if (key == "submittedAt") {
+                    val dateTime = LocalDateTime.parse(value.textValue(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    assertThat(dateTime.year, `is`(currentYear))
+                } else {
+                    assertThat(value, `is`(expectedMetadata[key]))
+                }
+            }
+            assertThat(it.alignedNucleotideSequences, `is`(defaultProcessedData.alignedNucleotideSequences))
+            assertThat(it.unalignedNucleotideSequences, `is`(defaultProcessedData.unalignedNucleotideSequences))
+            assertThat(it.alignedAminoAcidSequences, `is`(defaultProcessedData.alignedAminoAcidSequences))
+            assertThat(it.nucleotideInsertions, `is`(defaultProcessedData.nucleotideInsertions))
+            assertThat(it.aminoAcidInsertions, `is`(defaultProcessedData.aminoAcidInsertions))
         }
     }
 
