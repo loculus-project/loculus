@@ -1,5 +1,8 @@
 package org.pathoplexus.backend.controller
 
+import io.swagger.v3.oas.annotations.headers.Header
+import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.validation.ConstraintViolationException
 import mu.KotlinLogging
 import org.springframework.http.HttpHeaders
@@ -40,6 +43,23 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
             HttpStatus.BAD_REQUEST,
             e.message,
         )
+    }
+
+    @ExceptionHandler(DummyUnauthorizedExceptionToMakeItAppearInSwaggerUi::class)
+    @ApiResponse(
+        responseCode = "401",
+        headers = [
+            Header(
+                name = "WWW-Authenticate",
+                description = "Error information",
+                schema = Schema(type = "string"),
+            ),
+        ],
+    )
+    fun handleUnauthorizedException(e: Exception): ResponseEntity<Void> {
+        log.warn(e) { "Caught ${e.javaClass}: ${e.message}" }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
     }
 
     @ExceptionHandler(UnprocessableEntityException::class, ProcessingValidationException::class)
@@ -124,3 +144,5 @@ class ForbiddenException(message: String) : RuntimeException(message)
 class UnprocessableEntityException(message: String) : RuntimeException(message)
 class NotFoundException(message: String) : RuntimeException(message)
 class ProcessingValidationException(message: String) : RuntimeException(message)
+
+class DummyUnauthorizedExceptionToMakeItAppearInSwaggerUi : RuntimeException()

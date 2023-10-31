@@ -1,4 +1,5 @@
 import io.mockk.mockk
+import org.pathoplexus.backend.controller.PublicJwtKeyConfig
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -11,7 +12,10 @@ import javax.sql.DataSource
 @Retention(AnnotationRetention.RUNTIME)
 @SpringBootTest
 @ActiveProfiles("test")
-@Import(TestConfig::class)
+@Import(
+    TestConfig::class,
+    PublicJwtKeyConfig::class,
+)
 annotation class SpringBootTestWithoutDatabase
 
 @TestConfiguration

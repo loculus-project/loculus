@@ -17,6 +17,17 @@ class RevokeEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
+
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            client.revokeSequenceEntries(
+                emptyList(),
+                jwt = invalidToken,
+            )
+        }
+    }
+
     @Test
     fun `GIVEN entries with 'APPROVED_FOR_RELEASE' THEN the status changes to 'AWAITING_APPROVAL_FOR_REVOCATION'`() {
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
@@ -68,7 +79,7 @@ class RevokeEndpointTest(
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
         val notSubmitter = "nonExistingUser"
-        client.revokeSequenceEntries(DefaultFiles.allAccessions.subList(0, 2), notSubmitter)
+        client.revokeSequenceEntries(DefaultFiles.allAccessions.subList(0, 2), jwt = generateJwtForUser(notSubmitter))
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(

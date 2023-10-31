@@ -23,6 +23,16 @@ class ExtractUnprocessedDataEndpointTest(
 ) {
 
     @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            client.extractUnprocessedData(
+                1,
+                jwt = invalidToken,
+            )
+        }
+    }
+
+    @Test
     fun `GIVEN no sequence entries in database THEN returns empty response`() {
         val response = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
 

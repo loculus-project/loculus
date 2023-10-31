@@ -110,7 +110,14 @@ const getSequencesOfUserEndpoint = makeEndpoint({
     method: 'get',
     path: withOrganismPathSegment('/get-sequences-of-user'),
     alias: 'getSequencesOfUser',
-    parameters: [...usernameParameters],
+    parameters: [
+        ...usernameParameters,
+        {
+            name: 'Authorization',
+            type: 'Header',
+            schema: z.string(),
+        },
+    ],
     response: z.array(sequenceEntryStatus),
 });
 

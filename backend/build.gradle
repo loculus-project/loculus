@@ -38,10 +38,16 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.4.1"
     implementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
-
+    
+    implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }
+    testImplementation("io.jsonwebtoken:jjwt-api:0.11.5")
+    testImplementation("io.jsonwebtoken:jjwt-impl:0.11.5")
+    testImplementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
     testImplementation "com.ninja-squad:springmockk:4.0.2"
     testImplementation "org.testcontainers:postgresql:1.19.2"
 }

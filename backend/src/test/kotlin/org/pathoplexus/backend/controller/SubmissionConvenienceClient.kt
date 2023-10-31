@@ -27,10 +27,10 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
     ): List<SubmissionIdMapping> {
         val submit = client.submit(
-            username,
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
             organism = organism,
+            jwt = generateJwtForUser(username),
         )
 
         return deserializeJsonResponse(submit)
@@ -128,10 +128,15 @@ class SubmissionConvenienceClient(
     }
 
     fun getSequenceEntriesOfUser(
-        userName: String = USER_NAME,
+        username: String = USER_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): List<SequenceEntryStatus> {
-        return deserializeJsonResponse(client.getSequenceEntriesOfUser(userName, organism = organism))
+        return deserializeJsonResponse(
+            client.getSequenceEntriesOfUser(
+                organism = organism,
+                jwt = generateJwtForUser(username),
+            ),
+        )
     }
 
     fun getSequenceEntriesOfUserInState(
@@ -161,15 +166,21 @@ class SubmissionConvenienceClient(
         version: Long,
         userName: String = USER_NAME,
     ): SequenceEntryReview =
-        deserializeJsonResponse(client.getSequenceEntryThatNeedsReview(accession, version, userName))
+        deserializeJsonResponse(
+            client.getSequenceEntryThatNeedsReview(
+                accession = accession,
+                version = version,
+                jwt = generateJwtForUser(userName),
+            ),
+        )
 
     fun submitDefaultReviewedData(
         userName: String = USER_NAME,
     ) {
         DefaultFiles.allAccessions.forEach { accession ->
             client.submitReviewedSequenceEntry(
-                userName,
                 UnprocessedData(accession, 1L, defaultOriginalData),
+                jwt = generateJwtForUser(userName),
             )
         }
     }

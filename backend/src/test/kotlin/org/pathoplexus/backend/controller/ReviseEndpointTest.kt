@@ -26,6 +26,18 @@ class ReviseEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
+
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            client.reviseSequenceEntries(
+                DefaultFiles.revisedMetadataFile,
+                DefaultFiles.sequencesFile,
+                jwt = invalidToken,
+            )
+        }
+    }
+
     @Test
     fun `GIVEN entries with status 'APPROVED_FOR_RELEASE' THEN there is a revised version and returns HeaderIds`() {
         convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE)
@@ -111,7 +123,7 @@ class ReviseEndpointTest(
         client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
             DefaultFiles.sequencesFile,
-            notSubmitter,
+            jwt = generateJwtForUser(notSubmitter),
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))

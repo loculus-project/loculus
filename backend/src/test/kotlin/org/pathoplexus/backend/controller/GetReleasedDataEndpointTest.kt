@@ -30,6 +30,13 @@ class GetReleasedDataEndpointTest(
     val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
 
     @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            submissionControllerClient.getReleasedData(jwt = invalidToken)
+        }
+    }
+
+    @Test
     fun `GIVEN no sequence entries in database THEN returns empty response`() {
         val response = submissionControllerClient.getReleasedData()
 

@@ -25,6 +25,17 @@ class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
+
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            submissionControllerClient.submitProcessedData(
+                PreparedProcessedData.successfullyProcessed(),
+                jwt = invalidToken,
+            )
+        }
+    }
+
     @Test
     fun `WHEN I submit successfully preprocessed data THEN the sequence entry is in status processed`() {
         prepareExtractedSequencesInDatabase()
@@ -84,7 +95,7 @@ class SubmitProcessedDataEndpointTest(
             Status.AWAITING_APPROVAL,
         )
 
-        submissionControllerClient.getSequenceEntryThatNeedsReview(accession = "3", version = 1, userName = USER_NAME)
+        submissionControllerClient.getSequenceEntryThatNeedsReview(accession = "3", version = 1)
             .andExpect(status().isOk)
             .andExpect(
                 jsonPath("\$.processedData.nucleotideInsertions")
