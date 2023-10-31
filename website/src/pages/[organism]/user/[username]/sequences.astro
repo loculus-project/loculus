@@ -8,11 +8,19 @@ import { BackendClient } from '../../../../services/backendClient';
 // eslint-disable-next-line
 const username = Astro.params.username!;
 const organism = Astro.params.organism!;
+const token = Astro.locals.session?.token;
+
+if (token === undefined || token.access_token === undefined) {
+    console.log('No token found, redirecting to login');
+    return Astro.redirect('/');
+}
 
 const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHelpers.getSequenceEntriesOfUser(
     organism,
     username,
+    token.access_token,
 );
+
 ---
 
 <BaseLayout title='Sequences'>

@@ -28,6 +28,7 @@ private val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
     .file("sequenceFile", "sequences".toByteArray())
     .file("metadataFile", "metadata".toByteArray())
     .param("username", "name")
+    .withAuth()
 
 private val validResponse = emptyList<SubmissionIdMapping>()
 
@@ -48,7 +49,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     fun `throw NOT_FOUND(404) when route is not found`() {
         every { validControllerCall() } returns validResponse
 
-        mockMvc.perform(get("/notAValidRoute"))
+        mockMvc.perform(get("/notAValidRoute").withAuth())
             .andExpect(status().isNotFound)
     }
 
@@ -91,7 +92,8 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
             post(addOrganismToPath("/approve-processed-data"))
                 .param("username", "userName")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"fieldThatDoesNotExist": null}"""),
+                .content("""{"fieldThatDoesNotExist": null}""")
+                .withAuth(),
         )
             .andExpect(status().isBadRequest)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
@@ -114,7 +116,8 @@ class ExceptionHandlerWithMockedModelTest(@Autowired val mockMvc: MockMvc) {
             multipart("/unknownOrganism/submit")
                 .file("sequenceFile", "sequences".toByteArray())
                 .file("metadataFile", "metadata".toByteArray())
-                .param("username", "name"),
+                .param("username", "name")
+                .withAuth(),
         )
             .andExpect(status().isBadRequest)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))

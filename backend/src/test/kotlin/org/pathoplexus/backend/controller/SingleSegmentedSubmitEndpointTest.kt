@@ -26,7 +26,6 @@ class SingleSegmentedSubmitEndpointTest(
     @Test
     fun `GIVEN valid input data without segment name THEN data is accepted and shows segment name 'main'`() {
         submissionControllerClient.submit(
-            "testUser",
             SubmitFiles.metadataFileWith(
                 content = """
                     submissionId	firstColumn
@@ -62,7 +61,6 @@ class SingleSegmentedSubmitEndpointTest(
         val expectedDetail = "Metadata file contains submissionIds that are not present in the sequence file: [header1]"
 
         submissionControllerClient.submit(
-            "testUser",
             SubmitFiles.metadataFileWith(
                 content = """
                     submissionId	firstColumn

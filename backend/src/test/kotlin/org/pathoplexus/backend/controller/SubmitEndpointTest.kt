@@ -17,10 +17,21 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
 class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionControllerClient) {
+
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            submissionControllerClient.submit(
+                DefaultFiles.metadataFile,
+                DefaultFiles.sequencesFile,
+                jwt = invalidToken,
+            )
+        }
+    }
+
     @Test
     fun `GIVEN valid input data THEN returns mapping of provided custom ids to generated ids`() {
         submissionControllerClient.submit(
-            "testUser",
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
         )
@@ -35,7 +46,6 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
     @Test
     fun `GIVEN fasta data with unknown segment THEN data is accepted to let the preprocessing pipeline verify it`() {
         submissionControllerClient.submit(
-            "testUser",
             SubmitFiles.metadataFileWith(
                 content = """
                     submissionId	firstColumn
@@ -64,7 +74,7 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
         expectedTitle: String,
         expectedMessage: String,
     ) {
-        submissionControllerClient.submit("testUser", metadataFile, sequencesFile)
+        submissionControllerClient.submit(metadataFile, sequencesFile)
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
             .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))

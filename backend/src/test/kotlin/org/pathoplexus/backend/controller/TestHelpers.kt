@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers
 import org.hamcrest.Matchers.`is`
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.AccessionVersionInterface
@@ -11,6 +12,7 @@ import org.pathoplexus.backend.api.SequenceEntryStatus
 import org.pathoplexus.backend.api.Status
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
@@ -46,3 +48,14 @@ fun awaitResponse(result: MvcResult): String {
 fun SequenceEntryStatus.assertStatusIs(status: Status) {
     assertThat(this.status, `is`(status))
 }
+
+fun expectUnauthorizedResponse(apiCall: (invalidToken: String) -> ResultActions): ResultActions =
+    apiCall("invalidToken")
+        .andExpect(status().isUnauthorized)
+        .andExpect(MockMvcResultMatchers.header().string("WWW-Authenticate", Matchers.containsString("Bearer")))
+        .andExpect(
+            MockMvcResultMatchers.header().string(
+                "WWW-Authenticate",
+                Matchers.containsString("Invalid JWT serialization: Missing dot delimiter"),
+            ),
+        )

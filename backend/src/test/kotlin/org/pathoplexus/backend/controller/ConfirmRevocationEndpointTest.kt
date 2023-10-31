@@ -16,6 +16,17 @@ class ConfirmRevocationEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
+
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            client.confirmRevocation(
+                emptyList(),
+                jwt = invalidToken,
+            )
+        }
+    }
+
     @Test
     fun `GIVEN sequence entries with status 'FOR_REVOCATION' THEN the status changes to 'APPROVED_FOR_RELEASE'`() {
         convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
@@ -75,7 +86,7 @@ class ConfirmRevocationEndpointTest(
                 AccessionVersion("1", 2),
                 AccessionVersion("2", 2),
             ),
-            notSubmitter,
+            jwt = generateJwtForUser(notSubmitter),
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))

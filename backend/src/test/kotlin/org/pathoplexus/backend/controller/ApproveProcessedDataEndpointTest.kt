@@ -19,6 +19,16 @@ class ApproveProcessedDataEndpointTest(
 ) {
 
     @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            client.approveProcessedSequenceEntries(
+                emptyList(),
+                jwt = invalidToken,
+            )
+        }
+    }
+
+    @Test
     fun `GIVEN sequence entries are processed WHEN I approve them THEN their status should be APPROVED_FOR_RELEASE`() {
         convenienceClient.prepareDatabaseWith(
             PreparedProcessedData.successfullyProcessed(accession = "1"),
@@ -51,7 +61,7 @@ class ApproveProcessedDataEndpointTest(
                 AccessionVersion("1", 1),
                 AccessionVersion("2", 1),
             ),
-            "other user",
+            jwt = generateJwtForUser("other user"),
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))

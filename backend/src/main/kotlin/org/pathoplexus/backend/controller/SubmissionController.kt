@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
@@ -25,6 +26,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -42,6 +44,7 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBod
 @RestController
 @RequestMapping("/{organism}")
 @Validated
+@SecurityRequirement(name = "bearerAuth")
 class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
@@ -55,9 +58,7 @@ class SubmissionController(
     fun submit(
         @PathVariable @Valid
         organism: Organism,
-        @Parameter(description = "The username of the submitter - until we implement authentication")
-        @RequestParam
-        username: String,
+        @UsernameFromJwt username: String,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
     ): List<SubmissionIdMapping> {
@@ -147,7 +148,7 @@ class SubmissionController(
     fun getReviewNeededData(
         @PathVariable @Valid
         organism: Organism,
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
         @Max(
             value = MAX_EXTRACTED_SEQUENCE_ENTRIES,
             message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
@@ -171,7 +172,7 @@ class SubmissionController(
         organism: Organism,
         @PathVariable accession: Accession,
         @PathVariable version: Long,
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
     ): SequenceEntryReview =
         databaseService.getReviewData(username, AccessionVersion(accession, version), organism)
 
@@ -181,7 +182,7 @@ class SubmissionController(
     fun submitReviewedSequence(
         @PathVariable @Valid
         organism: Organism,
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
         @RequestBody accessionVersion: UnprocessedData,
     ) = databaseService.submitReviewedSequence(username, accessionVersion, organism)
 
@@ -190,8 +191,10 @@ class SubmissionController(
     fun getUserSequenceList(
         @PathVariable @Valid
         organism: Organism,
-        @RequestParam username: String,
-    ): List<SequenceEntryStatus> = databaseService.getActiveSequencesSubmittedBy(username, organism)
+        @UsernameFromJwt username: String,
+    ): List<SequenceEntryStatus> {
+        return databaseService.getActiveSequencesSubmittedBy(username, organism)
+    }
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -199,7 +202,7 @@ class SubmissionController(
     fun approveProcessedData(
         @PathVariable @Valid
         organism: Organism,
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
         @RequestBody body: AccessionVersions,
     ) {
         databaseService.approveProcessedData(username, body.accessionVersions, organism)
@@ -211,7 +214,7 @@ class SubmissionController(
     fun revise(
         @PathVariable @Valid
         organism: Organism,
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
         @Parameter(
             description = REVISED_METADATA_FILE_DESCRIPTION,
         ) @RequestParam metadataFile: MultipartFile,
@@ -226,7 +229,7 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @RequestBody body: Accessions,
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
     ): List<SequenceEntryStatus> = databaseService.revoke(body.accessions, username, organism)
 
     @Operation(description = CONFIRM_REVOCATION_DESCRIPTION)
@@ -235,7 +238,7 @@ class SubmissionController(
     fun confirmRevocation(
         @PathVariable @Valid
         organism: Organism,
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
         @RequestBody body: AccessionVersions,
     ) = databaseService.confirmRevocation(body.accessionVersions, username, organism)
 
@@ -247,7 +250,7 @@ class SubmissionController(
     fun deleteSequence(
         @PathVariable @Valid
         organism: Organism,
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
         @RequestBody body: AccessionVersions,
     ) = databaseService.deleteSequences(body.accessionVersions, username, organism)
 
@@ -259,3 +262,8 @@ class SubmissionController(
         val accessionVersions: List<AccessionVersion>,
     )
 }
+
+@Target(AnnotationTarget.VALUE_PARAMETER)
+@Retention(AnnotationRetention.RUNTIME)
+@AuthenticationPrincipal(expression = "claims[preferred_username]")
+annotation class UsernameFromJwt

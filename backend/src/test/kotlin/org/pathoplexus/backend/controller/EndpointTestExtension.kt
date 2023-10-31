@@ -25,6 +25,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 @Import(
     SubmissionControllerClient::class,
     SubmissionConvenienceClient::class,
+    PublicJwtKeyConfig::class,
 )
 annotation class EndpointTest(
     @get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [],

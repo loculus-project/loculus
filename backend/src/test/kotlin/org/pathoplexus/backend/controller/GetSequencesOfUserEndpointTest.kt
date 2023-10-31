@@ -15,7 +15,15 @@ import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccessio
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest
-class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: SubmissionConvenienceClient) {
+class GetSequencesOfUserEndpointTest(
+    @Autowired val client: SubmissionControllerClient,
+    @Autowired val convenienceClient: SubmissionConvenienceClient,
+) {
+
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken -> client.getSequenceEntriesOfUser(jwt = invalidToken) }
+    }
 
     @Test
     fun `GIVEN some sequence entries in the database THEN only shows entries of the given user`() {

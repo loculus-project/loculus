@@ -21,6 +21,16 @@ class DeleteSequencesEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
 
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            client.deleteSequenceEntries(
+                emptyList(),
+                jwt = invalidToken,
+            )
+        }
+    }
+
     @ParameterizedTest(name = "{arguments}")
     @MethodSource("provideValidTestScenarios")
     fun `GIVEN accession versions able to delete WHEN tried to delete THEN sequences will be deleted`(
@@ -118,7 +128,7 @@ class DeleteSequencesEndpointTest(
                 AccessionVersion("1", 1),
                 AccessionVersion("2", 1),
             ),
-            notSubmitter,
+            jwt = generateJwtForUser(notSubmitter),
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))

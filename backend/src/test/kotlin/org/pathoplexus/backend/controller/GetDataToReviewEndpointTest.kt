@@ -22,10 +22,27 @@ class GetDataToReviewEndpointTest(
 ) {
 
     @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            client.getSequenceEntryThatNeedsReview(
+                firstAccession,
+                1,
+                jwt = invalidToken,
+            )
+        }
+        expectUnauthorizedResponse { invalidToken ->
+            client.getNumberOfSequenceEntriesThatNeedReview(
+                1,
+                jwt = invalidToken,
+            )
+        }
+    }
+
+    @Test
     fun `GIVEN an entry needs review WHEN I extract the sequence data THEN I get all data to review the entry`() {
         convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
 
-        client.submitProcessedData(PreparedProcessedData.withErrors())
+        convenienceClient.submitProcessedData(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
@@ -44,7 +61,7 @@ class GetDataToReviewEndpointTest(
     fun `WHEN I query data for a non-existent accession THEN refuses request with not found`() {
         val nonExistentAccession = "999"
 
-        client.getSequenceEntryThatNeedsReview(nonExistentAccession, 1, USER_NAME)
+        client.getSequenceEntryThatNeedsReview(nonExistentAccession, 1)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -58,9 +75,9 @@ class GetDataToReviewEndpointTest(
     fun `WHEN I query data for wrong organism THEN refuses request with unprocessable entity`() {
         convenienceClient.prepareDataTo(Status.HAS_ERRORS, organism = DEFAULT_ORGANISM)
 
-        client.getSequenceEntryThatNeedsReview(firstAccession, 1, USER_NAME, organism = DEFAULT_ORGANISM)
+        client.getSequenceEntryThatNeedsReview(firstAccession, 1, organism = DEFAULT_ORGANISM)
             .andExpect(status().isOk)
-        client.getSequenceEntryThatNeedsReview(firstAccession, 1, USER_NAME, organism = OTHER_ORGANISM)
+        client.getSequenceEntryThatNeedsReview(firstAccession, 1, organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -79,7 +96,7 @@ class GetDataToReviewEndpointTest(
 
         convenienceClient.prepareDataTo(Status.HAS_ERRORS)
 
-        client.getSequenceEntryThatNeedsReview("1", nonExistentAccessionVersion, USER_NAME)
+        client.getSequenceEntryThatNeedsReview("1", nonExistentAccessionVersion)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -96,7 +113,6 @@ class GetDataToReviewEndpointTest(
         client.getSequenceEntryThatNeedsReview(
             accession = firstAccession,
             version = 1,
-            userName = USER_NAME,
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -115,7 +131,7 @@ class GetDataToReviewEndpointTest(
         client.getSequenceEntryThatNeedsReview(
             accession = firstAccession,
             version = 1,
-            userName = userNameThatDoesNotHavePermissionToQuery,
+            jwt = generateJwtForUser(userNameThatDoesNotHavePermissionToQuery),
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -131,7 +147,6 @@ class GetDataToReviewEndpointTest(
         convenienceClient.prepareDataTo(Status.HAS_ERRORS)
 
         val numberOfReturnedSequenceReviews = client.getNumberOfSequenceEntriesThatNeedReview(
-            USER_NAME,
             SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
         )
             .andExpect(status().isOk)
@@ -141,8 +156,8 @@ class GetDataToReviewEndpointTest(
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
         val numberOfReturnedSequenceReviewsForAWrongUser = client.getNumberOfSequenceEntriesThatNeedReview(
-            userNameThatDoesNotHavePermissionToQuery,
             SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
+            jwt = generateJwtForUser(userNameThatDoesNotHavePermissionToQuery),
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
@@ -156,7 +171,6 @@ class GetDataToReviewEndpointTest(
         val otherOrganismData = convenienceClient.prepareDataTo(Status.HAS_ERRORS, organism = OTHER_ORGANISM)
 
         val sequencesToReview = client.getNumberOfSequenceEntriesThatNeedReview(
-            USER_NAME,
             defaultOrganismData.size + otherOrganismData.size,
             organism = OTHER_ORGANISM,
         )
@@ -176,7 +190,7 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `WHEN I want to get more than allowed number of review entries at once THEN returns Bad Request`() {
-        client.getNumberOfSequenceEntriesThatNeedReview(USER_NAME, 100_001)
+        client.getNumberOfSequenceEntriesThatNeedReview(100_001)
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("\$.detail", containsString("You can extract at max 100000 sequence entries at once.")))
     }

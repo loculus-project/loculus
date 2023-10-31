@@ -14,6 +14,17 @@ class SubmitReviewedSequenceEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
+
+    @Test
+    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
+        expectUnauthorizedResponse { invalidToken ->
+            client.submitReviewedSequenceEntry(
+                generateUnprocessedData("1"),
+                jwt = invalidToken,
+            )
+        }
+    }
+
     @Test
     fun `GIVEN a sequence entry needs review WHEN I submit reviewed data THEN the status changes to REVIEWED`() {
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
@@ -22,7 +33,7 @@ class SubmitReviewedSequenceEndpointTest(
             .assertStatusIs(Status.HAS_ERRORS)
 
         val reviewedData = generateUnprocessedData("1")
-        client.submitReviewedSequenceEntry(USER_NAME, reviewedData)
+        client.submitReviewedSequenceEntry(reviewedData)
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
@@ -38,7 +49,7 @@ class SubmitReviewedSequenceEndpointTest(
 
         val reviewedData = generateUnprocessedData("1")
 
-        client.submitReviewedSequenceEntry(USER_NAME, reviewedData)
+        client.submitReviewedSequenceEntry(reviewedData)
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
@@ -55,7 +66,7 @@ class SubmitReviewedSequenceEndpointTest(
         val reviewedDataWithNonExistingVersion = generateUnprocessedData(firstAccession, version = 2)
         val sequenceString = getAccessionVersion(reviewedDataWithNonExistingVersion)
 
-        client.submitReviewedSequenceEntry(USER_NAME, reviewedDataWithNonExistingVersion)
+        client.submitReviewedSequenceEntry(reviewedDataWithNonExistingVersion)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail")
@@ -73,7 +84,7 @@ class SubmitReviewedSequenceEndpointTest(
         val reviewedDataWithNonExistingAccession = generateUnprocessedData("2")
         val sequenceString = getAccessionVersion(reviewedDataWithNonExistingAccession)
 
-        client.submitReviewedSequenceEntry(USER_NAME, reviewedDataWithNonExistingAccession)
+        client.submitReviewedSequenceEntry(reviewedDataWithNonExistingAccession)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -95,7 +106,7 @@ class SubmitReviewedSequenceEndpointTest(
         val reviewedData = generateUnprocessedData(firstAccession)
         val sequenceString = getAccessionVersion(reviewedData)
 
-        client.submitReviewedSequenceEntry(USER_NAME, reviewedData, organism = OTHER_ORGANISM)
+        client.submitReviewedSequenceEntry(reviewedData, organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath(
@@ -120,7 +131,7 @@ class SubmitReviewedSequenceEndpointTest(
             "${reviewedDataFromWrongSubmitter.version}"
         val nonExistingUser = "whoseNameMayNotBeMentioned"
 
-        client.submitReviewedSequenceEntry(nonExistingUser, reviewedDataFromWrongSubmitter)
+        client.submitReviewedSequenceEntry(reviewedDataFromWrongSubmitter, jwt = generateJwtForUser(nonExistingUser))
             .andExpect(status().isForbidden)
             .andExpect(
                 jsonPath("\$.detail").value(
