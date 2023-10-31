@@ -69,16 +69,15 @@ class SubmissionConvenienceClient(
         )
     }
 
-    fun prepareDefaultSequencesWithReleasedRevision() {
-        prepareDefaultSequencesToSiloReady()
+    fun reviseAndProcessDefaultSequences() {
         reviseDefaultProcessedSequences()
-        extractUnprocessedData()
+        val extractedSequenceVersions = extractUnprocessedData().map { SequenceVersion(it.sequenceId, it.version) }
         submitProcessedData(
-            *DefaultFiles.allSequenceIds.map {
-                PreparedProcessedData.successfullyProcessed(sequenceId = it, version = 2)
-            }.toTypedArray(),
+            *extractedSequenceVersions
+                .map { PreparedProcessedData.successfullyProcessed(sequenceId = it.sequenceId, version = it.version) }
+                .toTypedArray(),
         )
-        approveProcessedSequences(DefaultFiles.allSequenceIds.map { SequenceVersion(it, 2) })
+        approveProcessedSequences(extractedSequenceVersions)
     }
 
     fun prepareDefaultSequencesToRevokedStaging() {
@@ -128,7 +127,7 @@ class SubmissionConvenienceClient(
         version: Long,
         userName: String = USER_NAME,
     ): SequenceReview =
-        deserializeJsonResponse<SequenceReview>(client.getSequenceThatNeedsReview(sequenceId, version, userName))
+        deserializeJsonResponse(client.getSequenceThatNeedsReview(sequenceId, version, userName))
 
     fun submitDefaultReviewedData(
         userName: String = USER_NAME,
@@ -141,23 +140,27 @@ class SubmissionConvenienceClient(
         }
     }
 
-    fun approveProcessedSequences(listOfSequencesToApprove: List<SequenceVersion>): ResultActions =
+    fun approveProcessedSequences(listOfSequencesToApprove: List<SequenceVersion>) {
         client.approveProcessedSequences(listOfSequencesToApprove)
             .andExpect(status().isNoContent)
+    }
 
-    fun reviseDefaultProcessedSequences(): ResultActions =
-        client.reviseSequences(
+    fun reviseDefaultProcessedSequences(): List<HeaderId> {
+        val result = client.reviseSequences(
             DefaultFiles.revisedMetadataFile,
             DefaultFiles.sequencesFile,
-        )
-            .andExpect(status().isOk)
+        ).andExpect(status().isOk)
+
+        return deserializeJsonResponse(result)
+    }
 
     fun revokeSequences(listOfSequencesToRevoke: List<Long>): List<SequenceVersionStatus> =
         deserializeJsonResponse(client.revokeSequences(listOfSequencesToRevoke))
 
-    fun confirmRevocation(listOfSequencesToConfirm: List<SequenceVersion>): ResultActions =
+    fun confirmRevocation(listOfSequencesToConfirm: List<SequenceVersion>) {
         client.confirmRevocation(listOfSequencesToConfirm)
             .andExpect(status().isNoContent)
+    }
 
     fun prepareDataTo(status: Status) {
         when (status) {
