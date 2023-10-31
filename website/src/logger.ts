@@ -12,9 +12,7 @@ const getLogger = (): Logger => {
             transports.push(new winston.transports.File({ filename: serverLogFile }));
         }
 
-        if (import.meta.env.DEV) {
-            transports.push(new winston.transports.Console());
-        }
+        transports.push(new winston.transports.Console());
         _logger = winston.createLogger({
             level: 'info',
             format: winston.format.combine(winston.format.timestamp(), winston.format.json()),

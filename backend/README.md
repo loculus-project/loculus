@@ -96,7 +96,7 @@ In the `backend` directory run:
 
 ## Logs
 
-The backend stores its logs in `./log/backend.log`, relative to the working directory.
+The backend writes logs to stdout and stores them logs in `./log/backend.log`, relative to the working directory.
 Details on potential problems are most likely found there.
 In the Docker container, the logs can be found in `/workspace/log/backend.log`.
 
