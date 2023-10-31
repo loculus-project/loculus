@@ -98,13 +98,13 @@ spec:
               mountPath: /repo
           livenessProbe:
             httpGet:
-              path: /
+              path: /swagger-ui/
               port: 8079
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /
+              path: /swagger-ui/
               port: 8079
             initialDelaySeconds: 5
             periodSeconds: 5
