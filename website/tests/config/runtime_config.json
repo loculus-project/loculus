@@ -1,4 +1,4 @@
 {
-    "abackendUrl": "http://localhost:8079",
+    "backendUrl": "http://localhost:8079",
     "lapisUrl": "http://localhost:8080"
 }
