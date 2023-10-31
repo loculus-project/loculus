@@ -1,8 +1,23 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes';
+
+const session = Astro.locals.session;
 ---
 
 <BaseLayout title='Login'>
+    {
+        session.isLoggedIn && (
+            <>
+                <div>
+                    <div>You are already logged in as {session.user?.name}</div>
+                </div>
+                <div>
+                    <a href='/logout'>Logout</a>
+                </div>
+            </>
+        )
+    }
+
     <a href={routes.userPage('testuser')}>Login as testuser</a>
 </BaseLayout>

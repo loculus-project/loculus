@@ -1,11 +1,11 @@
 {{- if eq .Values.mode "cd" }}
 {{- $backendHost := printf "backend.%s" .Values.host }}
 {{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{- $keycloakHost := printf "keycloak.%s" .Values.host }}
 
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  creationTimestamp: '2023-10-24T13:00:51Z'
   name: pathoplexus-website-ingressroute
   namespace: {{ .Values.namespace }}
   annotations:
@@ -27,7 +27,6 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  creationTimestamp: '2023-10-24T13:00:51Z'
   name: pathoplexus-backend-ingressroute
   namespace: {{ .Values.namespace }}
   annotations:
@@ -46,4 +45,24 @@ spec:
   tls:
     certResolver: myresolver
 ---
-{{- end }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pathoplexus-keycloak-ingressroute
+  namespace: {{ .Values.namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    link.argocd.argoproj.io/external-link: https://{{ $keycloakHost }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ $keycloakHost }}`)
+      priority: 10
+      services:
+        - name: pathoplexus-keycloak-service
+          port: 8083
+  tls:
+    certResolver: myresolver
+{{- end}}

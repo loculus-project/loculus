@@ -4,7 +4,7 @@ import type { Locator, Page } from '@playwright/test';
 import { v4 as uuid } from 'uuid';
 
 import type { Accession } from '../../../src/types/backend.ts';
-import { baseUrl, sequencesTestFile, testuser } from '../../e2e.fixture';
+import { baseUrl, sequencesTestFile, testUser } from '../../e2e.fixture';
 import { createModifiedFileContent } from '../../util/createFileContent.ts';
 
 export class RevisePage {
@@ -29,7 +29,7 @@ export class RevisePage {
         try {
             await Promise.all([
                 this.uploadSequenceData(),
-                this.setUsername(testuser),
+                this.setUsername(testUser),
                 this.uploadRevisedMetadata(accessions),
             ]);
             await this.submitButton.click();

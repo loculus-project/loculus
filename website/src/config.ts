@@ -33,18 +33,19 @@ export function getConfig(): Schema {
 
 export function getRuntimeConfig(): RuntimeConfig {
     if (_runtimeConfig === null) {
-        const serviceConfig = readTypedConfigFile('runtime_config.json', serviceUrls);
+        const runtimeConfig = readTypedConfigFile('runtime_config.json', serviceUrls);
 
         const urlsForClient = import.meta.env.DEV
-            ? serviceConfig
+            ? runtimeConfig
             : {
                   backendUrl: '/backendProxy',
                   lapisUrl: '/lapisProxy',
+                  keycloakUrl: '/keycloakProxy',
               };
 
         _runtimeConfig = {
             forClient: makeClientConfig(urlsForClient),
-            forServer: makeServerConfig(serviceConfig),
+            forServer: makeServerConfig(runtimeConfig),
         };
     }
     return _runtimeConfig;

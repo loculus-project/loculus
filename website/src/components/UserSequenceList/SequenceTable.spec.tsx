@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { SequenceEntryTable } from './SequenceEntryTable.tsx';
 import type { BulkSequenceActionName, SingleSequenceActionName } from './sequenceActions.ts';
-import { testuser } from '../../../tests/e2e.fixture.ts';
+import { testUser } from '../../../tests/e2e.fixture.ts';
 import { routes } from '../../routes.ts';
 import type { SequenceEntryStatus } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -44,7 +44,7 @@ function renderSequenceTable(
     render(
         <QueryClientProvider client={queryClient}>
             <SequenceEntryTable
-                username={testuser}
+                username={testUser}
                 sequenceEntries={sequencesWithStatus}
                 bulkActionNames={[...everyBulkActionImplemented]}
                 singleActionNames={[...everySingleActionImplemented]}
@@ -109,6 +109,6 @@ describe('SequenceTable', () => {
         expect(reviewButton).toBeDefined();
         await userEvent.click(reviewButton);
 
-        expect(window.location.href).toBe(routes.reviewPage(testuser, accessionVersionToReview));
+        expect(window.location.href).toBe(routes.reviewPage(testUser, accessionVersionToReview));
     });
 });

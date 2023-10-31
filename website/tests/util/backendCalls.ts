@@ -1,12 +1,12 @@
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
 import type { Accession, AccessionVersion } from '../../src/types/backend.ts';
-import { backendClient, testSequenceCount, testuser } from '../e2e.fixture.ts';
+import { backendClient, testSequenceCount, testUser } from '../e2e.fixture.ts';
 
 export const submitViaApi = async (numberOfSequences: number = testSequenceCount) => {
     const fileContent = createFileContent(numberOfSequences);
 
     const response = await backendClient.call('submit', {
-        username: testuser,
+        username: testUser,
         metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
         sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
     });
@@ -22,7 +22,7 @@ export const submitRevisedDataViaApi = async (accessions: Accession[]) => {
     const response = await backendClient.call(
         'revise',
         {
-            username: testuser,
+            username: testUser,
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
         },
