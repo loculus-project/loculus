@@ -1,11 +1,11 @@
-import { approveProcessedData, submitViaApi } from './backendCalls.ts';
+import { approveProcessedData, revokeReleasedData, submitRevisedDataViaApi, submitViaApi } from './backendCalls.ts';
 import { fakeProcessingPipeline, type PreprocessingOptions } from './preprocessingPipeline.ts';
 import type { AccessionVersion } from '../../src/types/backend.ts';
 import { extractAccessionVersion } from '../../src/utils/extractAccessionVersion.ts';
 import { testSequenceCount } from '../e2e.fixture.ts';
 
 export const prepareDataToBe = (
-    state: 'approvedForRelease' | 'erroneous' | 'awaitingApproval',
+    state: 'approvedForRelease' | 'erroneous' | 'awaitingApproval' | 'revoked' | 'revisedForRelease',
     token: string,
     numberOfSequenceEntries: number = testSequenceCount,
 ): Promise<AccessionVersion[]> => {
@@ -16,6 +16,10 @@ export const prepareDataToBe = (
             return prepareDataToHaveErrors(numberOfSequenceEntries, token);
         case 'awaitingApproval':
             return prepareDataToBeAwaitingApproval(numberOfSequenceEntries, token);
+        case 'revoked':
+            return prepareDataToBeRevoked(numberOfSequenceEntries, token);
+        case 'revisedForRelease':
+            return prepareDataToBeRevisedForRelease(numberOfSequenceEntries, token);
     }
 };
 
@@ -58,4 +62,35 @@ const prepareDataToBeApprovedForRelease = async (
     await approveProcessedData(sequenceEntries, token);
 
     return sequenceEntries;
+};
+
+const prepareDataToBeRevoked = async (numberOfSequenceEntries: number = testSequenceCount, token: string) => {
+    const sequenceEntries = await prepareDataToBeApprovedForRelease(numberOfSequenceEntries, token);
+
+    return revokeReleasedData(
+        sequenceEntries.map((entry) => entry.accession),
+        token,
+    );
+};
+
+const prepareDataToBeRevisedForRelease = async (numberOfSequenceEntries: number = testSequenceCount, token: string) => {
+    const sequenceEntries = await prepareDataToBeApprovedForRelease(numberOfSequenceEntries, token);
+
+    const submittedRevisionAccessionVersion = await submitRevisedDataViaApi(
+        sequenceEntries.map((entry) => entry.accession),
+        token,
+    );
+
+    await fakeProcessingPipeline.query(absurdlyManySoThatAllSequencesAreInProcessing);
+
+    const options: PreprocessingOptions[] = submittedRevisionAccessionVersion.map((sequence) => ({
+        accession: sequence.accession,
+        version: sequence.version,
+        error: false,
+    }));
+    await fakeProcessingPipeline.submit(options);
+
+    await approveProcessedData(submittedRevisionAccessionVersion, token);
+
+    return submittedRevisionAccessionVersion;
 };

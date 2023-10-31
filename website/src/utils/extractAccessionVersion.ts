@@ -5,6 +5,9 @@ export const extractAccessionVersion = (accessionVersion: AccessionVersion) => (
     version: accessionVersion.version,
 });
 
-export const getAccessionVersionString = (accessionVersion: AccessionVersion) => {
+export const getAccessionVersionString = (accessionVersion: AccessionVersion | string) => {
+    if (typeof accessionVersion === 'string') {
+        return accessionVersion;
+    }
     return `${accessionVersion.accession}.${accessionVersion.version}`;
 };

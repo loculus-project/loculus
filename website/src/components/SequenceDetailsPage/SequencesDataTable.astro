@@ -1,0 +1,43 @@
+---
+import { SequencesContainer } from './SequencesContainer';
+import { getReferenceGenomes, getRuntimeConfig, getSchema } from '../../config';
+import type { TableDataEntry } from '../../pages/[organism]/sequences/getTableData';
+
+interface Props {
+    tableData: TableDataEntry[];
+    organism: string;
+    accessionVersion: string;
+}
+
+const { tableData, organism, accessionVersion } = Astro.props;
+
+const runtimeConfig = getRuntimeConfig();
+const schema = getSchema(organism);
+
+const genes = getReferenceGenomes(organism).genes.map((g) => g.name);
+---
+
+<div class='mt-6'>
+    <table class='table-auto'>
+        <tbody>
+            {
+                tableData.map(({ label, value }) => (
+                    <tr>
+                        <td class='font-semibold pr-4 align-top w-1/4'>{label}:</td>
+                        <td class='break-normal'>{value}</td>
+                    </tr>
+                ))
+            }
+        </tbody>
+    </table>
+</div>
+<div class='mt-10'>
+    <SequencesContainer
+        client:load
+        organism={organism}
+        accessionVersion={accessionVersion}
+        schema={schema}
+        clientConfig={runtimeConfig.public}
+        genes={genes}
+    />
+</div>

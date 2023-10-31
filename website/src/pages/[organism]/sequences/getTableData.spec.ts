@@ -70,34 +70,42 @@ describe('getTableData', () => {
             ok([
                 {
                     label: 'Metadata field1',
+                    name: 'metadataField1',
                     value: 'N/A',
                 },
                 {
                     label: 'Metadata field2',
+                    name: 'metadataField2',
                     value: 'N/A',
                 },
                 {
                     label: 'Nucleotide substitutions',
+                    name: 'nucleotideSubstitutions',
                     value: '',
                 },
                 {
                     label: 'Nucleotide deletions',
+                    name: 'nucleotideDeletions',
                     value: '',
                 },
                 {
                     label: 'Nucleotide insertions',
+                    name: 'nucleotideInsertions',
                     value: '',
                 },
                 {
                     label: 'Amino acid substitutions',
+                    name: 'aminoAcidSubstitutions',
                     value: '',
                 },
                 {
                     label: 'Amino acid deletions',
+                    name: 'aminoAcidDeletions',
                     value: '',
                 },
                 {
                     label: 'Amino acid insertions',
+                    name: 'aminoAcidInsertions',
                     value: '',
                 },
             ]),
@@ -122,10 +130,12 @@ describe('getTableData', () => {
         const data = result._unsafeUnwrap();
         expect(data).toContainEqual({
             label: 'Metadata field1',
+            name: 'metadataField1',
             value: value1,
         });
         expect(data).toContainEqual({
             label: 'Metadata field2',
+            name: 'metadataField2',
             value: value2,
         });
     });
@@ -139,18 +149,22 @@ describe('getTableData', () => {
         const data = result._unsafeUnwrap();
         expect(data).toContainEqual({
             label: 'Nucleotide substitutions',
+            name: 'nucleotideSubstitutions',
             value: 'nucleotideMutation1, nucleotideMutation2',
         });
         expect(data).toContainEqual({
             label: 'Nucleotide deletions',
+            name: 'nucleotideDeletions',
             value: 'nucleotideDeletion1-, nucleotideDeletion2-',
         });
         expect(data).toContainEqual({
             label: 'Amino acid substitutions',
+            name: 'aminoAcidSubstitutions',
             value: 'aminoAcidMutation1, aminoAcidMutation2',
         });
         expect(data).toContainEqual({
             label: 'Amino acid deletions',
+            name: 'aminoAcidDeletions',
             value: 'aminoAcidDeletion1-, aminoAcidDeletion2-',
         });
     });
@@ -164,10 +178,12 @@ describe('getTableData', () => {
         const data = result._unsafeUnwrap();
         expect(data).toContainEqual({
             label: 'Nucleotide insertions',
+            name: 'nucleotideInsertions',
             value: 'nucleotideInsertion1, nucleotideInsertion2',
         });
         expect(data).toContainEqual({
             label: 'Amino acid insertions',
+            name: 'aminoAcidInsertions',
             value: 'aminoAcidInsertion1, aminoAcidInsertion2',
         });
     });

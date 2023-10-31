@@ -1,5 +1,6 @@
 import type { AccessionVersion } from './types/backend.ts';
 import type { FilterValue } from './types/config.ts';
+import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
 
 export const routes = {
     aboutPage: () => '/about',
@@ -9,7 +10,8 @@ export const routes = {
     organismStartPage: (organism: string) => `/${organism}`,
     searchPage: <Filter extends FilterValue>(organism: string, searchFilter: Filter[] = [], page: number = 1) =>
         withOrganism(organism, `/search?${buildSearchParams(searchFilter, page).toString()}`),
-    sequencesDetailsPage: (organism: string, accessionVersion: string) => `/${organism}/sequences/${accessionVersion}`,
+    sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
+        `/${organism}/sequences/${getAccessionVersionString(accessionVersion)}`,
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>

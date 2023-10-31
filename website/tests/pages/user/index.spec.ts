@@ -9,10 +9,10 @@ test.describe('The user page', () => {
     }) => {
         const { token } = await loginAsTestUser();
 
-        const sequenceEntryAwaitingApproval = (await prepareDataToBe('awaitingApproval', token, 1))[0];
-        const sequenceEntryWithErrors = (await prepareDataToBe('erroneous', token))[0];
-        const sequenceEntryReleasable = (await prepareDataToBe('approvedForRelease', token))[0];
-        const sequenceEntryToBeRevised = (await prepareDataToBe('approvedForRelease', token))[0];
+        const [sequenceEntryAwaitingApproval] = await prepareDataToBe('awaitingApproval', token);
+        const [sequenceEntryWithErrors] = await prepareDataToBe('erroneous', token);
+        const [sequenceEntryReleasable] = await prepareDataToBe('approvedForRelease', token);
+        const [sequenceEntryToBeRevised] = await prepareDataToBe('approvedForRelease', token);
         await submitRevisedDataViaApi([sequenceEntryToBeRevised.accession], token);
 
         await userPage.gotoUserSequencePage();

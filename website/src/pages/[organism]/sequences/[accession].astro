@@ -1,63 +1,50 @@
 ---
 import { getTableData } from './getTableData';
 import { BackButton } from '../../../components/Navigation/BackButton';
-import { SequencesContainer } from '../../../components/SequenceDetailsPage/SequencesContainer';
+import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.astro';
+import SequencesDataTable from '../../../components/SequenceDetailsPage/SequencesDataTable.astro';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
-import { getReferenceGenomes, getRuntimeConfig, getSchema } from '../../../config';
+import { getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { routes } from '../../../routes';
 import { LapisClient } from '../../../services/lapisClient';
 
-const accession = Astro.params.accession!;
+const accessionVersion = Astro.params.accession!;
 const organism = Astro.params.organism!;
 
 const schema = getSchema(organism);
-const runtimeConfig = getRuntimeConfig();
+const lapisClient = LapisClient.createForOrganism(organism);
 
-const tableData = await getTableData(accession, schema, LapisClient.createForOrganism(organism));
-
-const genes = getReferenceGenomes(organism).genes.map((g) => g.name);
+const tableDataResult = await getTableData(accessionVersion, schema, lapisClient);
 ---
 
-<BaseLayout title={accession}>
+<BaseLayout title={accessionVersion}>
+    {
+        tableDataResult.isOk() && (
+            <div slot='banner'>
+                <SequencesBanner
+                    tableData={tableDataResult.value}
+                    organism={organism}
+                    accessionVersion={accessionVersion}
+                />
+            </div>
+        )
+    }
     <div class='flex items-center'>
         <BackButton marginRight={2} client:load />
-        <h1 class='title'>Sequence Entry {accession}</h1>
+        <h1 class='title'>Sequence Entry Version {accessionVersion}</h1>
         {
-            tableData.isOk() && (
-                <a href={routes.versionPage(organism, accession)} class='text-xs ml-10'>
+            tableDataResult.isOk() && (
+                <a href={routes.versionPage(organism, accessionVersion)} class='text-xs ml-10'>
                     (See previous versions)
                 </a>
             )
         }
     </div>
     {
-        tableData.match(
+        tableDataResult.match(
             (tableData) => (
-                <>
-                    <div class='mt-10'>
-                        <table class='table-auto'>
-                            <tbody>
-                                {tableData.map(({ label, value }) => (
-                                    <tr>
-                                        <td class='font-semibold pr-4 align-top'>{label}:</td>
-                                        <td class='break-normal'>{value}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class='mt-10'>
-                        <SequencesContainer
-                            client:load
-                            organism={organism}
-                            accessionVersion={accession}
-                            schema={schema}
-                            clientConfig={runtimeConfig.public}
-                            genes={genes}
-                        />
-                    </div>
-                </>
+                <SequencesDataTable tableData={tableData} organism={organism} accessionVersion={accessionVersion} />
             ),
             (error) => <ErrorBox title='Sequence entry not found' message={error.detail} />,
         )

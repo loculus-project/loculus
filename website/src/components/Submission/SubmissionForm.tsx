@@ -3,6 +3,7 @@ import { type FC, useState } from 'react';
 import { ManagedErrorFeedback, useErrorFeedbackState } from './ManagedErrorFeedback';
 import type { SubmissionIdMapping } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { DataUploadForm } from '../DataUploadForm.tsx';
 
 type SubmissionFormProps = {
@@ -35,7 +36,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism,
                         <ul className='list-disc list-inside'>
                             {responseSequenceHeaders.map((header) => (
                                 <li key={header.accession}>
-                                    {header.accession}.{header.version}: {header.submissionId}
+                                    {getAccessionVersionString(header)}: {header.submissionId}
                                 </li>
                             ))}
                         </ul>
