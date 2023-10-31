@@ -2,7 +2,7 @@ import { approveProcessedData, submitViaApi } from './backendCalls.ts';
 import { fakeProcessingPipeline, type PreprocessingOptions } from './preprocessingPipeline.ts';
 import { type UnprocessedData } from '../../src/types/backend.ts';
 import { extractAccessionVersion } from '../../src/utils/extractAccessionVersion.ts';
-import { expect, testSequenceCount, testuser } from '../e2e.fixture.ts';
+import { expect, testSequenceCount, testUser } from '../e2e.fixture.ts';
 
 export const prepareDataToBe = (
     state: 'approvedForRelease' | 'erroneous' | 'awaitingApproval' | 'inProcessing',
@@ -54,7 +54,7 @@ const prepareDataToBeAwaitingApproval = async (numberOfSequences: number = testS
 const prepareDataToBeApprovedForRelease = async (numberOfSequences: number = testSequenceCount) => {
     const sequenceEntries = await prepareDataToBeAwaitingApproval(numberOfSequences);
 
-    await approveProcessedData(testuser, sequenceEntries);
+    await approveProcessedData(testUser, sequenceEntries);
 
     return sequenceEntries;
 };

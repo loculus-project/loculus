@@ -1,12 +1,13 @@
-import { expect, test, testuser } from '../../e2e.fixture';
+import { expect, test, testUser } from '../../e2e.fixture';
 
 test.describe('The submit page', () => {
-    test('should upload files and submit', async ({ submitPage }) => {
+    test('should upload files and submit', async ({ submitPage, loginAsTestUser }) => {
+        await loginAsTestUser();
         await submitPage.goto();
 
         await Promise.all([
             submitPage.uploadSequenceData(),
-            submitPage.setUsername(testuser),
+            submitPage.setUsername(testUser),
             submitPage.uploadMetadata(),
         ]);
 

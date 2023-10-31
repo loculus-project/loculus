@@ -53,3 +53,35 @@ services:
     volumes:
       - ./website/tests/initialSiloData/preprocessingOutput/:/data
       - ./log/silo:/app/logs
+
+  keycloakDB:
+    image: postgres:latest
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=unsecure
+      - POSTGRES_DB=keycloak
+    ports:
+      - "5431:5432"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    environment:
+      - DB_VENDOR=postgres
+      - DB_ADDR=keycloakDB
+      - DB_DATABASE=keycloak
+      - DB_USER=postgres
+      - DB_PORT=5431
+      - DB_PASSWORD=unsecure
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+      - KC_PROXY=edge
+      - KC_HEALTH_ENABLED=true
+    command: 
+      - "start-dev"
+      - "--import-realm"
+    ports:
+      - "8083:8080"
+    depends_on:
+      - keycloakDB
+    volumes:
+      - ./kubernetes/preview/keycloak-config.json:/opt/keycloak/data/import/keycloak-config.json

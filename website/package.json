@@ -34,6 +34,7 @@
     "http-proxy-middleware": "^2.0.6",
     "luxon": "^3.4.4",
     "neverthrow": "^6.1.0",
+    "openid-client": "^5.6.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "unplugin-icons": "^0.17.4",

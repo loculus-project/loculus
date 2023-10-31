@@ -2,7 +2,7 @@
 
 set -e
 
-end=$((SECONDS+300))
+end=$((SECONDS+480))
 while true; do
   all_pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o jsonpath='{.items[*].metadata.name}')
   running_pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o=jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}')
@@ -21,6 +21,8 @@ while true; do
     exit 1
   fi
 
-  echo "Waiting for pods to be ready..."
+  echo "Waiting for pods to be ready:"
+  echo "$(diff <(echo "$all_pods_sorted") <(echo "$running_and_succeeded_pods"))"
+  echo "Sleeping for 10 seconds..."
   sleep 10
 done

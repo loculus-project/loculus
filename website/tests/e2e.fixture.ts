@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 
-import { test as base } from '@playwright/test';
+import { type Page, test as base } from '@playwright/test';
+import { Issuer } from 'openid-client';
 import winston from 'winston';
 
 import { ReviewPage } from './pages/review/review.page';
@@ -9,6 +10,7 @@ import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
+import { clientMetadata, realmPath, TOKEN_COOKIE } from '../src/middleware.ts';
 import { BackendClient } from '../src/services/backendClient.ts';
 
 type E2EFixture = {
@@ -18,11 +20,13 @@ type E2EFixture = {
     userPage: UserPage;
     revisePage: RevisePage;
     reviewPage: ReviewPage;
+    loginAsTestUser: () => Promise<void>;
 };
 
 export const baseUrl = 'http://localhost:3000';
 export const backendUrl = 'http://localhost:8079/dummy-organism';
 export const lapisUrl = 'http://localhost:8080/dummy-organism';
+const keycloakUrl = 'http://localhost:8083';
 
 export const e2eLogger = winston.createLogger({
     level: 'info',
@@ -37,7 +41,8 @@ export const testSequence = {
     orf1a: 'QRFEINSA',
 };
 
-export const testuser = 'testuser';
+export const testUser = 'testuser';
+const testUserPassword = 'testuser';
 
 export const metadataTestFile: string = './tests/testData/metadata.tsv';
 export const sequencesTestFile: string = './tests/testData/sequences.fasta';
@@ -46,6 +51,36 @@ export const testSequenceCount: number =
     readFileSync(metadataTestFile, 'utf-8')
         .split('\n')
         .filter((line) => line.length !== 0).length - 1;
+
+async function getToken(username: string, password: string) {
+    const issuerUrl = `${keycloakUrl}${realmPath}`;
+
+    const keycloakIssuer = await Issuer.discover(issuerUrl);
+    const client = new keycloakIssuer.Client(clientMetadata);
+
+    return client.grant({
+        grant_type: 'password',
+        username,
+        password,
+        scope: 'openid',
+    });
+}
+
+export async function authorize(page: Page) {
+    const token = await getToken(testUser, testUserPassword);
+
+    await page.context().addCookies([
+        {
+            name: TOKEN_COOKIE,
+            value: JSON.stringify(token),
+            httpOnly: true,
+            sameSite: 'Lax',
+            secure: false,
+            path: '/',
+            domain: 'localhost',
+        },
+    ]);
+}
 
 export const test = base.extend<E2EFixture>({
     searchPage: async ({ page }, use) => {
@@ -71,6 +106,9 @@ export const test = base.extend<E2EFixture>({
     reviewPage: async ({ page }, use) => {
         const reviewPage = new ReviewPage(page);
         await use(reviewPage);
+    },
+    loginAsTestUser: async ({ page }, use) => {
+        await use(async () => authorize(page));
     },
 });
 

@@ -1,3 +1,4 @@
+{{- $keycloakHost := printf "keycloak.%s" .Values.host }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -15,5 +16,10 @@ data:
       {{- else }}
       "backendUrl": "http://localhost:8079/dummy-organism",
       {{- end }}
-      "lapisUrl": "http://pathoplexus-lapis-service-dummy-organism:8080"
+      "lapisUrl": "http://pathoplexus-lapis-service-dummy-organism:8080",
+      {{- if eq .Values.mode "dev" }}
+      "keycloakUrl": "http://localhost:8083"
+      {{- else }}
+      "keycloakUrl": "http://pathoplexus-keycloak-service:8083"
+      {{- end }}
     }

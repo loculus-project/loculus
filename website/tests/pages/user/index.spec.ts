@@ -1,10 +1,10 @@
-import { expect, test, testuser } from '../../e2e.fixture';
+import { expect, test, testUser } from '../../e2e.fixture';
 import { approveProcessedData, submitRevisedDataViaApi } from '../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 import { fakeProcessingPipeline } from '../../util/preprocessingPipeline';
 
 test.describe('The user page', () => {
-    test('should show sequence entries, their status and a link to reviews', async ({ userPage }) => {
+    test('should show sequence entries, their status and a link to reviews', async ({ userPage, loginAsTestUser }) => {
         const [
             sequenceEntryWithErrors,
             sequenceEntryAwaitingApproval,
@@ -31,8 +31,10 @@ test.describe('The user page', () => {
             },
         ]);
 
-        await approveProcessedData(testuser, [sequenceEntryReleasable, sequenceEntryToBeRevised]);
+        await approveProcessedData(testUser, [sequenceEntryReleasable, sequenceEntryToBeRevised]);
         await submitRevisedDataViaApi([sequenceEntryToBeRevised.accession]);
+
+        await loginAsTestUser();
 
         await userPage.gotoUserSequencePage();
 

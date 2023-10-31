@@ -2,23 +2,23 @@ import type { Page } from '@playwright/test';
 
 import type { AccessionVersion, SequenceEntryStatus } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, testuser } from '../../e2e.fixture';
+import { baseUrl, testUser } from '../../e2e.fixture';
 
 export class UserPage {
     private readonly sequenceBoxNames = [
-        `userSequences.${testuser}.receivedExpanded`,
-        `userSequences.${testuser}.processingExpanded`,
-        `userSequences.${testuser}.needsReviewExpanded`,
-        `userSequences.${testuser}.stagingExpanded`,
-        `userSequences.${testuser}.readyExpanded`,
-        `userSequences.${testuser}.revokedExpanded`,
+        `userSequences.${testUser}.receivedExpanded`,
+        `userSequences.${testUser}.processingExpanded`,
+        `userSequences.${testUser}.needsReviewExpanded`,
+        `userSequences.${testUser}.stagingExpanded`,
+        `userSequences.${testUser}.readyExpanded`,
+        `userSequences.${testUser}.revokedExpanded`,
     ] as const;
 
     constructor(public readonly page: Page) {}
 
     public async gotoUserSequencePage() {
-        await this.page.goto(`${baseUrl}/user/${testuser}/sequences`, { waitUntil: 'networkidle' });
-        await this.page.waitForURL(`${baseUrl}/user/${testuser}/sequences`);
+        await this.page.goto(`${baseUrl}/user/${testUser}/sequences`, { waitUntil: 'networkidle' });
+        await this.page.waitForURL(`${baseUrl}/user/${testUser}/sequences`);
 
         for (const id of this.sequenceBoxNames) {
             const checkbox = this.page.getByTestId(id);
@@ -51,7 +51,7 @@ export class UserPage {
         await reviewButton.click();
 
         await this.page.waitForURL(
-            `${baseUrl}/user/${testuser}/review/${accessionToCheck.accession}/${accessionToCheck.version}`,
+            `${baseUrl}/user/${testUser}/review/${accessionToCheck.accession}/${accessionToCheck.version}`,
             { waitUntil: 'networkidle' },
         );
     }

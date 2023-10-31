@@ -5,7 +5,7 @@ import { sentenceCase } from 'change-case';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { ReviewPage } from './ReviewPage.tsx';
-import { testuser } from '../../../tests/e2e.fixture.ts';
+import { testUser } from '../../../tests/e2e.fixture.ts';
 import type { MetadataField, SequenceEntryReview } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -76,7 +76,7 @@ function renderReviewPage(
 ) {
     render(
         <QueryClientProvider client={queryClient}>
-            <ReviewPage reviewData={reviewData} clientConfig={clientConfig} username={testuser} />
+            <ReviewPage reviewData={reviewData} clientConfig={clientConfig} username={testUser} />
         </QueryClientProvider>,
     );
 }

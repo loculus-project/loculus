@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pathoplexus-keycloak-database
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pathoplexus
+      component: keycloak-database
+  template:
+    metadata:
+      labels:
+        app: pathoplexus
+        component: keycloak-database
+    spec:
+      containers:
+        - name: pathoplexus-keycloak-database
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "unsecure"
+            - name: POSTGRES_DB
+              value: "keycloak"

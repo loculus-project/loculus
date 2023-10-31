@@ -1,0 +1,25 @@
+---
+import { getClientLogger } from '../clientLogger';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getKeycloakClient, TOKEN_COOKIE } from '../middleware';
+
+async function logout() {
+    const token = Astro.locals.session.token;
+
+    if (token === undefined) {
+        return;
+    }
+
+    await (await getKeycloakClient()).revoke(token.refresh_token!).catch(async () => {
+        void getClientLogger().error('Failed to revoke token');
+    });
+
+    Astro.cookies.delete(TOKEN_COOKIE);
+}
+
+await logout();
+---
+
+<BaseLayout title='Logout'>
+    <div>You have been logged out</div>
+</BaseLayout>
