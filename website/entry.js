@@ -9,24 +9,19 @@ import winston from 'winston';
 const configDir = process.env.CONFIG_DIR;
 const logDir = process.env.LOG_DIR;
 
-if (logDir === undefined) {
-    console.log('No logger configured. Set environment variable LOG_DIR to enable logging.');
-}
-
 function logProvider() {
-    if (logDir === undefined) {
-        return {
-            log: () => {},
-            debug: () => {},
-            info: () => {},
-            warn: () => {},
-            error: () => {},
-        };
+    const transports = [];
+
+    transports.push(new winston.transports.Console());
+
+    if (logDir !== undefined) {
+        transports.push(new winston.transports.File({ filename: `${logDir}/website.log` }));
     }
+
     return winston.createLogger({
         level: 'info',
         format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
-        transports: new winston.transports.File({ filename: `${logDir}/website.log` }),
+        transports,
     });
 }
 

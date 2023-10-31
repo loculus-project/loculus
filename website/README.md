@@ -74,6 +74,11 @@ To pull the latest version of the image, run:
 docker pull ghcr.io/pathoplexus/website:latest
 ```
 
+## Logging
+
+The website writes logs to stdout.
+If the environment variable LOG_DIR is set, it will also store them in `LOG_DIR/website.log`.
+
 ## Development environment
 
 ### Editor
