@@ -96,18 +96,6 @@ spec:
           volumeMounts:
             - name: repo-volume
               mountPath: /repo
-          livenessProbe:
-            httpGet:
-              path: /swagger-ui/
-              port: 8079
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /swagger-ui/
-              port: 8079
-            initialDelaySeconds: 5
-            periodSeconds: 5
         - name: database
           image: postgres:latest
           ports:
