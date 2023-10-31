@@ -15,7 +15,7 @@ spec:
           repo: pathoplexus
           tokenRef:
             key: token
-            secretName: github-token
+            secretName: github-access-token
         requeueAfterSeconds: 60
   template:
     metadata:
