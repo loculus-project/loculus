@@ -96,17 +96,6 @@ spec:
           volumeMounts:
             - name: repo-volume
               mountPath: /repo
-        - name: database
-          image: postgres:latest
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: "postgres"
-            - name: POSTGRES_PASSWORD
-              value: "unsecure"
-            - name: POSTGRES_DB
-              value: "pathoplexus"
           livenessProbe:
             httpGet:
               path: /
@@ -119,6 +108,17 @@ spec:
               port: 8079
             initialDelaySeconds: 5
             periodSeconds: 5
+        - name: database
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "unsecure"
+            - name: POSTGRES_DB
+              value: "pathoplexus"
         - name: silo
           image: ghcr.io/genspectrum/lapis-silo:latest
           ports:
