@@ -6,10 +6,10 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.api.SequenceVersion
+import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
-import org.pathoplexus.backend.service.SequenceVersion
-import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest

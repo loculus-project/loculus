@@ -5,17 +5,17 @@ import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
+import org.pathoplexus.backend.api.AminoAcidSequence
+import org.pathoplexus.backend.api.GeneName
+import org.pathoplexus.backend.api.Insertion
+import org.pathoplexus.backend.api.NucleotideSequence
+import org.pathoplexus.backend.api.PreprocessingAnnotation
+import org.pathoplexus.backend.api.PreprocessingAnnotationSource
+import org.pathoplexus.backend.api.PreprocessingAnnotationSourceType
+import org.pathoplexus.backend.api.ProcessedData
+import org.pathoplexus.backend.api.SegmentName
+import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.service.AminoAcidSequence
-import org.pathoplexus.backend.service.GeneName
-import org.pathoplexus.backend.service.Insertion
-import org.pathoplexus.backend.service.NucleotideSequence
-import org.pathoplexus.backend.service.PreprocessingAnnotation
-import org.pathoplexus.backend.service.PreprocessingAnnotationSource
-import org.pathoplexus.backend.service.PreprocessingAnnotationSourceType
-import org.pathoplexus.backend.service.ProcessedData
-import org.pathoplexus.backend.service.SegmentName
-import org.pathoplexus.backend.service.SubmittedProcessedData
 
 val defaultProcessedData = ProcessedData(
     metadata = mapOf(

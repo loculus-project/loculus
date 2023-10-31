@@ -1,6 +1,6 @@
 package org.pathoplexus.backend.controller
 
-import org.pathoplexus.backend.service.OriginalData
+import org.pathoplexus.backend.api.OriginalData
 
 val defaultOriginalData = OriginalData(
     mapOf(

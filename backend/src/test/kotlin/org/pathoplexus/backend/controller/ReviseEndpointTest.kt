@@ -7,10 +7,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.api.Status.RECEIVED
+import org.pathoplexus.backend.api.Status.SILO_READY
+import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.service.Status.RECEIVED
-import org.pathoplexus.backend.service.Status.SILO_READY
-import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile

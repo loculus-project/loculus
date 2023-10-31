@@ -5,8 +5,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
-import org.pathoplexus.backend.service.SequenceVersionStatus
-import org.pathoplexus.backend.service.Status
+import org.pathoplexus.backend.api.SequenceVersionStatus
+import org.pathoplexus.backend.api.Status
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers

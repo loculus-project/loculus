@@ -6,10 +6,10 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
+import org.pathoplexus.backend.api.Status.PROCESSING
+import org.pathoplexus.backend.api.Status.REVIEWED
+import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.service.Status.PROCESSING
-import org.pathoplexus.backend.service.Status.REVIEWED
-import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status

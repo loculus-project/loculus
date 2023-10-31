@@ -8,7 +8,7 @@ import io.mockk.every
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.pathoplexus.backend.model.HeaderId
+import org.pathoplexus.backend.api.HeaderId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.http.MediaType
