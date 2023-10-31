@@ -6,12 +6,12 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.api.Insertion
+import org.pathoplexus.backend.api.Status
+import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
 import org.pathoplexus.backend.service.AminoAcidSymbols
-import org.pathoplexus.backend.service.Insertion
 import org.pathoplexus.backend.service.NucleotideSymbols
-import org.pathoplexus.backend.service.Status
-import org.pathoplexus.backend.service.SubmittedProcessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

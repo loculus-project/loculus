@@ -2,14 +2,14 @@ package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.pathoplexus.backend.api.HeaderId
+import org.pathoplexus.backend.api.SequenceReview
+import org.pathoplexus.backend.api.SequenceVersion
+import org.pathoplexus.backend.api.SequenceVersionStatus
+import org.pathoplexus.backend.api.Status
+import org.pathoplexus.backend.api.SubmittedProcessedData
+import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.model.HeaderId
-import org.pathoplexus.backend.service.SequenceReview
-import org.pathoplexus.backend.service.SequenceVersion
-import org.pathoplexus.backend.service.SequenceVersionStatus
-import org.pathoplexus.backend.service.Status
-import org.pathoplexus.backend.service.SubmittedProcessedData
-import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

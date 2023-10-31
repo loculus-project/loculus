@@ -1,9 +1,9 @@
 package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.pathoplexus.backend.service.SequenceVersion
-import org.pathoplexus.backend.service.SubmittedProcessedData
-import org.pathoplexus.backend.service.UnprocessedData
+import org.pathoplexus.backend.api.SequenceVersion
+import org.pathoplexus.backend.api.SubmittedProcessedData
+import org.pathoplexus.backend.api.UnprocessedData
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc

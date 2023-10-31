@@ -2,13 +2,13 @@ package org.pathoplexus.backend.controller
 
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.service.SequenceVersion
-import org.pathoplexus.backend.service.Status.NEEDS_REVIEW
-import org.pathoplexus.backend.service.Status.PROCESSED
-import org.pathoplexus.backend.service.Status.PROCESSING
-import org.pathoplexus.backend.service.Status.RECEIVED
-import org.pathoplexus.backend.service.Status.REVIEWED
-import org.pathoplexus.backend.service.Status.SILO_READY
+import org.pathoplexus.backend.api.SequenceVersion
+import org.pathoplexus.backend.api.Status.NEEDS_REVIEW
+import org.pathoplexus.backend.api.Status.PROCESSED
+import org.pathoplexus.backend.api.Status.PROCESSING
+import org.pathoplexus.backend.api.Status.RECEIVED
+import org.pathoplexus.backend.api.Status.REVIEWED
+import org.pathoplexus.backend.api.Status.SILO_READY
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest

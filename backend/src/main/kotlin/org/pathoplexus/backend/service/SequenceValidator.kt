@@ -2,6 +2,8 @@ package org.pathoplexus.backend.service
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
+import org.pathoplexus.backend.api.Insertion
+import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.config.ReferenceSequence
 import org.pathoplexus.backend.controller.ProcessingValidationException

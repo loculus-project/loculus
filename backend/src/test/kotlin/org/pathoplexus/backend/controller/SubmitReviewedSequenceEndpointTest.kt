@@ -2,8 +2,8 @@ package org.pathoplexus.backend.controller
 
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
-import org.pathoplexus.backend.service.Status
-import org.pathoplexus.backend.service.UnprocessedData
+import org.pathoplexus.backend.api.Status
+import org.pathoplexus.backend.api.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status

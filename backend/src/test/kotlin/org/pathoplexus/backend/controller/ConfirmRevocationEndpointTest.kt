@@ -2,8 +2,8 @@ package org.pathoplexus.backend.controller
 
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
-import org.pathoplexus.backend.service.SequenceVersion
-import org.pathoplexus.backend.service.Status
+import org.pathoplexus.backend.api.SequenceVersion
+import org.pathoplexus.backend.api.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

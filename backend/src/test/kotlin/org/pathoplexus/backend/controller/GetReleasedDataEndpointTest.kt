@@ -1,27 +1,24 @@
 package org.pathoplexus.backend.controller
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.TextNode
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
+import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.service.ProcessedData
-import org.pathoplexus.backend.service.UnprocessedData
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest
 class GetReleasedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val submissionControllerClient: SubmissionControllerClient,
-    @Autowired val objectMapper: ObjectMapper,
 ) {
 
     @Test
     fun `GIVEN no sequences in database THEN returns empty response`() {
         val response = submissionControllerClient.getReleasedData()
 
-        val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData>()
         assertThat(responseBody, `is`(emptyList()))
     }
 
@@ -35,7 +32,7 @@ class GetReleasedDataEndpointTest(
 
         assertThat(responseBody.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
 
-        responseBody.forEach() {
+        responseBody.forEach {
             val id = it.metadata["sequenceId"]?.asLong()
             val version = it.metadata["version"]?.asLong()
             assertThat(version, `is`(1L))
@@ -65,7 +62,7 @@ class GetReleasedDataEndpointTest(
         val response = submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData>()
 
         assertThat(response.size, `is`(2 * DefaultFiles.NUMBER_OF_SEQUENCES))
-        response.forEach() {
+        response.forEach {
             if (it.metadata["version"]?.asLong() == 1L) {
                 assertThat(it.metadata["isLatestVersion"]?.asText(), `is`("false"))
             } else {

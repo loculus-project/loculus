@@ -4,9 +4,9 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
+import org.pathoplexus.backend.api.SequenceReview
+import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
-import org.pathoplexus.backend.service.SequenceReview
-import org.pathoplexus.backend.service.Status
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

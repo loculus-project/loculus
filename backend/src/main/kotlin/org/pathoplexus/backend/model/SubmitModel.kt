@@ -2,12 +2,13 @@ package org.pathoplexus.backend.model
 
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
+import org.pathoplexus.backend.api.HeaderId
+import org.pathoplexus.backend.api.OriginalData
+import org.pathoplexus.backend.api.RevisedData
+import org.pathoplexus.backend.api.SubmittedData
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.service.DatabaseService
-import org.pathoplexus.backend.service.OriginalData
-import org.pathoplexus.backend.service.RevisedData
-import org.pathoplexus.backend.service.SubmittedData
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile

@@ -10,6 +10,9 @@ import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
+import org.pathoplexus.backend.api.OriginalData
+import org.pathoplexus.backend.api.PreprocessingAnnotation
+import org.pathoplexus.backend.api.ProcessedData
 
 private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 

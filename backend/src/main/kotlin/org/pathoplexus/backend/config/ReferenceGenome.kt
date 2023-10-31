@@ -1,6 +1,6 @@
 package org.pathoplexus.backend.config
 
-import org.pathoplexus.backend.service.NucleotideSequence
+import org.pathoplexus.backend.api.NucleotideSequence
 
 data class ReferenceGenome(
     val nucleotideSequences: List<ReferenceSequence>,
