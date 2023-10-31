@@ -8,6 +8,7 @@ import { getAccessToken } from '../../../../../utils/getAccessToken';
 
 const version = Astro.params.version!;
 const accession = Astro.params.accession!;
+
 const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
 

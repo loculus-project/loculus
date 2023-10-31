@@ -16,7 +16,7 @@ import {
 
 const queryClient = new QueryClient();
 
-type Props = {
+type SequenceContainerProps = {
     organism: string;
     accessionVersion: string;
     schema: Schema;
@@ -24,7 +24,13 @@ type Props = {
     genes: string[];
 };
 
-export const SequencesContainer: FC<Props> = ({ organism, accessionVersion, schema, clientConfig, genes }) => {
+export const SequencesContainer: FC<SequenceContainerProps> = ({
+    organism,
+    accessionVersion,
+    schema,
+    clientConfig,
+    genes,
+}) => {
     const [loadSequences, setLoadSequences] = useState(false);
     const [type, setType] = useState<SequenceType>(unalignedSequence);
 

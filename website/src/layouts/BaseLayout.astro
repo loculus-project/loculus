@@ -21,18 +21,22 @@ const { title } = Astro.props;
     </head>
     <body>
         <div class='w-11/12 mx-auto'>
-            <header class='sticky z-30 top-0 bg-white h-20'>
+            <header class='sticky z-30 top-0 bg-white h-fit'>
                 <nav class='flex justify-between items-center p-4'>
                     <div class='flex justify-start'>
-                        <a href='/'><img class='h-8 mr-4' src='/favicon.svg' alt='icon' /></a>
-                        <a href='/' class='fancytitle mr-4'>Pathoplexus</a>
-                        <div class='hidden sm:flex'>
+                        <div class='flex flex-col'>
+                            <div class='flex flex-row pb-3'>
+                                <a href='/'><img class='h-8 mr-4' src='/favicon.svg' alt='icon' /></a>
+                                <a href='/' class='fancytitle mr-4'>Pathoplexus</a>
+                            </div>
                             <OrganismSelector />
                         </div>
                     </div>
                     <Navigation />
                 </nav>
                 <hr class='border-t border-gray-1000' />
+
+                <slot name='banner' />
             </header>
 
             <div class='mt-3 mb-5'>

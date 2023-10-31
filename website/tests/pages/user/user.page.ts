@@ -51,7 +51,9 @@ export class UserPage {
         const rowsWithCorrectEntries: string[][] = [];
         for (const { accession, version, status } of sequencesToCheck) {
             rowsWithCorrectEntries.push(
-                ...rows.filter((row) => row.includes(status) && row.includes(`${accession}.${version}`)),
+                ...rows.filter(
+                    (row) => row.includes(status) && row.includes(getAccessionVersionString({ accession, version })),
+                ),
             );
         }
 

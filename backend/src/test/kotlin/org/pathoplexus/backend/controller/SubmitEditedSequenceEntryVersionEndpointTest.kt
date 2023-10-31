@@ -127,7 +127,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .assertStatusIs(Status.HAS_ERRORS)
 
         val editedDataFromWrongSubmitter = generateUnprocessedData(firstAccession)
-        val sequenceString = "${editedDataFromWrongSubmitter.accession}." +
+        val accessionVersionString = "${editedDataFromWrongSubmitter.accession}." +
             "${editedDataFromWrongSubmitter.version}"
         val nonExistingUser = "whoseNameMayNotBeMentioned"
 
@@ -135,7 +135,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .andExpect(status().isForbidden)
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence entry $sequenceString is not owned by user $nonExistingUser",
+                    "Sequence entry $accessionVersionString is not owned by user $nonExistingUser",
                 ),
             )
 

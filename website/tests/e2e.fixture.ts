@@ -41,9 +41,23 @@ export const e2eLogger = winston.createLogger({
 
 export const backendClient = BackendClient.create(backendUrl, e2eLogger);
 
-export const testSequence = {
+export const testSequenceEntry = {
     name: '1.1',
+    accession: '1',
+    version: 1,
     orf1a: 'QRFEINSA',
+};
+export const revokedSequenceEntry = {
+    accession: '11',
+    version: 1,
+};
+export const deprecatedSequenceEntry = {
+    accession: '21',
+    version: 1,
+};
+export const revisedSequenceEntry = {
+    accession: '21',
+    version: 2,
 };
 
 export const testUser = 'testuser';

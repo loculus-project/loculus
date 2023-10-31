@@ -1,12 +1,23 @@
 import { sentenceCase } from 'change-case';
 import { err, Result } from 'neverthrow';
 
-import type { LapisClient } from '../../../services/lapisClient.ts';
+import {
+    type LapisClient,
+    siloVersionStatuses,
+    type SiloVersionStatus,
+    isSiloVersionStatus,
+} from '../../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
 import type { Schema } from '../../../types/config.ts';
 import type { Details, DetailsResponse, InsertionCount, MutationProportionCount } from '../../../types/lapis.ts';
 
-export async function getTableData(accessionVersion: string, schema: Schema, lapisClient: LapisClient) {
+export type TableDataEntry = { label: string; name: string; value: string | number };
+
+export async function getTableData(
+    accessionVersion: string,
+    schema: Schema,
+    lapisClient: LapisClient,
+): Promise<Result<TableDataEntry[], ProblemDetail>> {
     return Promise.all([
         lapisClient.getSequenceEntryVersionDetails(accessionVersion),
         lapisClient.getSequenceMutations(accessionVersion, 'nucleotide'),
@@ -35,6 +46,21 @@ export async function getTableData(accessionVersion: string, schema: Schema, lap
                 )
                 .map(toTableData(schema)),
         );
+}
+
+export function getVersionStatus(tableData: TableDataEntry[]): SiloVersionStatus {
+    const versionStatus = tableData.find((pred) => pred.name === 'versionStatus')?.value.toString() ?? undefined;
+
+    if (isSiloVersionStatus(versionStatus) === false) {
+        throw new Error(
+            'Invalid version status: ' +
+                JSON.stringify(versionStatus) +
+                ' not in ' +
+                JSON.stringify(Object.values(siloVersionStatuses)),
+        );
+    }
+
+    return versionStatus as SiloVersionStatus;
 }
 
 function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(accessionVersion: string) {
@@ -71,31 +97,38 @@ function toTableData(config: Schema) {
     }) => {
         const tableData = config.metadata.map((metadata) => ({
             label: sentenceCase(metadata.name),
+            name: metadata.name,
             value: details[metadata.name] ?? 'N/A',
         }));
         tableData.push(
             {
                 label: 'Nucleotide substitutions',
+                name: 'nucleotideSubstitutions',
                 value: mutationsToCommaSeparatedString(nucleotideMutations, (m) => !m.endsWith('-')),
             },
             {
                 label: 'Nucleotide deletions',
+                name: 'nucleotideDeletions',
                 value: mutationsToCommaSeparatedString(nucleotideMutations, (m) => m.endsWith('-')),
             },
             {
                 label: 'Nucleotide insertions',
+                name: 'nucleotideInsertions',
                 value: insertionsToCommaSeparatedString(nucleotideInsertions),
             },
             {
                 label: 'Amino acid substitutions',
+                name: 'aminoAcidSubstitutions',
                 value: mutationsToCommaSeparatedString(aminoAcidMutations, (m) => !m.endsWith('-')),
             },
             {
                 label: 'Amino acid deletions',
+                name: 'aminoAcidDeletions',
                 value: mutationsToCommaSeparatedString(aminoAcidMutations, (m) => m.endsWith('-')),
             },
             {
                 label: 'Amino acid insertions',
+                name: 'aminoAcidInsertions',
                 value: insertionsToCommaSeparatedString(aminoAcidInsertions),
             },
         );

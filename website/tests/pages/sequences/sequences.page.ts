@@ -1,7 +1,9 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { baseUrl, dummyOrganism, testSequence } from '../../e2e.fixture';
 import { routes } from '../../../src/routes.ts';
+import type { AccessionVersion } from '../../../src/types/backend.ts';
+import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
+import { baseUrl, dummyOrganism, testSequenceEntry } from '../../e2e.fixture';
 
 export class SequencePage {
     private readonly loadButton: Locator;
@@ -12,11 +14,11 @@ export class SequencePage {
         this.orf1aButton = this.page.getByRole('button', { name: 'ORF1a' });
     }
 
-    public async goto() {
-        await this.page.goto(`${baseUrl}${routes.sequencesDetailsPage(dummyOrganism.key, testSequence.name)}`, {
+    public async goto(accessionVersion: AccessionVersion = testSequenceEntry) {
+        await this.page.goto(`${baseUrl}${routes.sequencesDetailsPage(dummyOrganism.key, accessionVersion)}`, {
             waitUntil: 'networkidle',
         });
-        await expect(this.page).toHaveTitle(`${testSequence.name}`);
+        await expect(this.page).toHaveTitle(getAccessionVersionString(accessionVersion));
         await expect(this.loadButton).toBeVisible();
     }
 
