@@ -2,14 +2,15 @@ import { sentenceCase } from 'change-case';
 import { err, Result } from 'neverthrow';
 
 import {
-    type LapisClient,
-    siloVersionStatuses,
-    type SiloVersionStatus,
     isSiloVersionStatus,
-} from '../../../services/lapisClient.ts';
-import type { ProblemDetail } from '../../../types/backend.ts';
-import type { Schema } from '../../../types/config.ts';
-import type { Details, DetailsResponse, InsertionCount, MutationProportionCount } from '../../../types/lapis.ts';
+    type LapisClient,
+    type SequenceEntryHistory,
+    type SiloVersionStatus,
+    siloVersionStatuses,
+} from '../../services/lapisClient.ts';
+import type { AccessionVersion, ProblemDetail } from '../../types/backend.ts';
+import type { Schema } from '../../types/config.ts';
+import type { Details, DetailsResponse, InsertionCount, MutationProportionCount } from '../../types/lapis.ts';
 
 export type TableDataEntry = { label: string; name: string; value: string | number };
 
@@ -63,6 +64,13 @@ export function getVersionStatus(tableData: TableDataEntry[]): SiloVersionStatus
     return versionStatus as SiloVersionStatus;
 }
 
+export function getLatestAccessionVersion(sequenceEntryHistory: SequenceEntryHistory): AccessionVersion | undefined {
+    if (sequenceEntryHistory.length === 0) {
+        return undefined;
+    }
+    return sequenceEntryHistory.sort((a, b) => b.version - a.version)[0];
+}
+
 function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(accessionVersion: string) {
     return (result: Result<T, ProblemDetail>): Result<T, ProblemDetail> => {
         if (result.isOk()) {
@@ -94,13 +102,13 @@ function toTableData(config: Schema) {
         aminoAcidMutations: MutationProportionCount[];
         nucleotideInsertions: InsertionCount[];
         aminoAcidInsertions: InsertionCount[];
-    }) => {
-        const tableData = config.metadata.map((metadata) => ({
+    }): TableDataEntry[] => {
+        const data: TableDataEntry[] = config.metadata.map((metadata) => ({
             label: sentenceCase(metadata.name),
             name: metadata.name,
             value: details[metadata.name] ?? 'N/A',
         }));
-        tableData.push(
+        data.push(
             {
                 label: 'Nucleotide substitutions',
                 name: 'nucleotideSubstitutions',
@@ -132,7 +140,8 @@ function toTableData(config: Schema) {
                 value: insertionsToCommaSeparatedString(aminoAcidInsertions),
             },
         );
-        return tableData;
+
+        return data;
     };
 }
 

@@ -12,6 +12,8 @@ export const routes = {
         withOrganism(organism, `/search?${buildSearchParams(searchFilter, page).toString()}`),
     sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
         `/${organism}/sequences/${getAccessionVersionString(accessionVersion)}`,
+    sequencesVersionsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
+        `/${organism}/sequences/${getAccessionVersionString(accessionVersion)}/versions`,
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
