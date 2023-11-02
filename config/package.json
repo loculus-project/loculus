@@ -1,0 +1,20 @@
+{
+    "name": "config",
+    "description": "Scripts to generate config files for Pathoplexus and LAPIS",
+    "scripts": {
+        "generateConfig": "node index.js",
+        "test": "mocha",
+        "check-format": "prettier --check .",
+        "format": "prettier --write ."
+    },
+    "dependencies": {
+        "js-yaml": "^4.1.0",
+        "minimist": "^1.2.8",
+        "zod": "^3.22.4"
+    },
+    "devDependencies": {
+        "chai": "^4.3.10",
+        "mocha": "^10.2.0",
+        "prettier": "^3.0.3"
+    }
+}

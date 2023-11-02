@@ -1,0 +1,39 @@
+{
+    "schema": {
+        "instanceName": "Test",
+        "metadata": [
+            {
+                "name": "accession",
+                "type": "string"
+            },
+            {
+                "name": "date",
+                "type": "date"
+            },
+            {
+                "name": "region",
+                "type": "string"
+            },
+            {
+                "name": "country",
+                "type": "string"
+            },
+            {
+                "name": "division",
+                "type": "string"
+            },
+            {
+                "name": "age",
+                "type": "int"
+            },
+            {
+                "name": "pango_lineage",
+                "type": "pango_lineage"
+            },
+            {
+                "name": "qc_value",
+                "type": "float"
+            }
+        ]
+    }
+}

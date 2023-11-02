@@ -1,0 +1,37 @@
+schema:
+    instanceName: Test
+    metadata:
+        - name: accession
+          type: string
+        - name: date
+          type: date
+        - name: region
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: country
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: division
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: age
+          type: int
+          autocomplete: true
+        - name: pango_lineage
+          type: pango_lineage
+          autocomplete: true
+        - name: qc_value
+          type: float
+    primaryKey: accession
+    website:
+        tableColumns:
+            - country
+            - division
+            - date
+            - pango_lineage
+    silo:
+        dateToSortBy: date
+        partitionBy: pango_lineage

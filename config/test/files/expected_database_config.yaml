@@ -1,0 +1,42 @@
+schema:
+    instanceName: Test
+    opennessLevel: OPEN
+    metadata:
+        - name: accession
+          type: string
+        - name: date
+          type: date
+        - name: region
+          type: string
+          generateIndex: true
+        - name: country
+          type: string
+          generateIndex: true
+        - name: division
+          type: string
+          generateIndex: true
+        - name: age
+          type: int
+        - name: pango_lineage
+          type: pango_lineage
+        - name: qc_value
+          type: float
+        - name: sequenceId
+          type: string
+        - name: version
+          type: int
+        - name: customId
+          type: string
+        - name: sequenceVersion
+          type: string
+        - name: isRevocation
+          type: string
+        - name: submitter
+          type: string
+        - name: submittedAt
+          type: string
+        - name: versionStatus
+          type: string
+    primaryKey: accession
+    dateToSortBy: date
+    partitionBy: pango_lineage

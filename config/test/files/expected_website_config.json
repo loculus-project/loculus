@@ -1,0 +1,81 @@
+{
+    "schema": {
+        "instanceName": "Test",
+        "metadata": [
+            {
+                "name": "accession",
+                "type": "string"
+            },
+            {
+                "name": "date",
+                "type": "date"
+            },
+            {
+                "name": "region",
+                "type": "string",
+                "autocomplete": true
+            },
+            {
+                "name": "country",
+                "type": "string",
+                "autocomplete": true
+            },
+            {
+                "name": "division",
+                "type": "string",
+                "autocomplete": true
+            },
+            {
+                "name": "age",
+                "type": "int",
+                "autocomplete": true
+            },
+            {
+                "name": "pango_lineage",
+                "type": "pango_lineage",
+                "autocomplete": true
+            },
+            {
+                "name": "qc_value",
+                "type": "float"
+            },
+            {
+                "name": "sequenceId",
+                "type": "string"
+            },
+            {
+                "name": "version",
+                "type": "int",
+                "notSearchable": true
+            },
+            {
+                "name": "customId",
+                "type": "string"
+            },
+            {
+                "name": "sequenceVersion",
+                "type": "string"
+            },
+            {
+                "name": "isRevocation",
+                "type": "string",
+                "notSearchable": true
+            },
+            {
+                "name": "submitter",
+                "type": "string"
+            },
+            {
+                "name": "submittedAt",
+                "type": "string"
+            },
+            {
+                "name": "versionStatus",
+                "type": "string",
+                "notSearchable": true
+            }
+        ],
+        "tableColumns": ["country", "division", "date", "pango_lineage"],
+        "primaryKey": "accession"
+    }
+}
