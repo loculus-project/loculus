@@ -45,8 +45,8 @@ data class SubmittedProcessedData(
 ) : SequenceVersionInterface
 
 data class SequenceReview(
-    val sequenceId: SequenceId,
-    val version: Version,
+    override val sequenceId: SequenceId,
+    override val version: Version,
     val status: Status,
     val processedData: ProcessedData,
     val originalData: OriginalData,
@@ -57,7 +57,7 @@ data class SequenceReview(
         "Issues where data is not necessarily wrong, but the user might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
-)
+) : SequenceVersionInterface
 
 typealias SegmentName = String
 typealias GeneName = String
@@ -142,11 +142,11 @@ enum class PreprocessingAnnotationSourceType {
 }
 
 data class SequenceVersionStatus(
-    val sequenceId: SequenceId,
-    val version: Version,
+    override val sequenceId: SequenceId,
+    override val version: Version,
     val status: Status,
     val isRevocation: Boolean = false,
-)
+) : SequenceVersionInterface
 
 data class RevisedData(
     val customId: String,
