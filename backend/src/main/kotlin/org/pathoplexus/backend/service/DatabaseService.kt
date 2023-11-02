@@ -291,6 +291,7 @@ class DatabaseService(
                 SequencesTable.processedData,
                 SequencesTable.submitter,
                 SequencesTable.submittedAt,
+                SequencesTable.customId,
             )
             .select(
                 where = {
@@ -305,6 +306,7 @@ class DatabaseService(
                     version = it[SequencesTable.version],
                     isRevocation = it[SequencesTable.isRevocation],
                     submitter = it[SequencesTable.submitter],
+                    customId = it[SequencesTable.customId],
                     processedData = it[SequencesTable.processedData]!!,
                     submittedAt = it[SequencesTable.submittedAt],
                 )
@@ -715,5 +717,6 @@ data class RawProcessedData(
     val isRevocation: Boolean,
     val submitter: String,
     val submittedAt: LocalDateTime,
+    val customId: String,
     val processedData: ProcessedData,
 ) : SequenceVersionInterface

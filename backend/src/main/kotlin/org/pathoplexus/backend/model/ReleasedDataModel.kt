@@ -37,6 +37,7 @@ class ReleasedDataModel(private val databaseService: DatabaseService) {
         val metadata = rawProcessedData.processedData.metadata +
             ("sequenceId" to TextNode(rawProcessedData.sequenceId.toString())) +
             ("version" to LongNode(rawProcessedData.version)) +
+            ("customId" to TextNode(rawProcessedData.customId)) +
             ("sequenceVersion" to TextNode(rawProcessedData.displaySequenceVersion())) +
             ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
             ("submitter" to TextNode(rawProcessedData.submitter)) +
