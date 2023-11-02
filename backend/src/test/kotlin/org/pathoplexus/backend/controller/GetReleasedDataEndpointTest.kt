@@ -7,6 +7,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SequenceVersion
@@ -18,6 +19,8 @@ import org.pathoplexus.backend.service.Version
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
+private const val numberOfFieldsWithUnknownValue = 2
 
 @EndpointTest
 class GetReleasedDataEndpointTest(
@@ -58,13 +61,16 @@ class GetReleasedDataEndpointTest(
                 "versionStatus" to TextNode("LATEST_VERSION"),
             )
 
-            assertThat(it.metadata.size, `is`(expectedMetadata.size + 1))
+            assertThat(it.metadata.size, `is`(expectedMetadata.size + numberOfFieldsWithUnknownValue))
             for ((key, value) in it.metadata) {
-                if (key == "submittedAt") {
-                    val dateTime = LocalDateTime.parse(value.textValue(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                    assertThat(dateTime.year, `is`(currentYear))
-                } else {
-                    assertThat(value, `is`(expectedMetadata[key]))
+                when (key) {
+                    "submittedAt" -> {
+                        val dateTime = LocalDateTime.parse(value.textValue(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                        assertThat(dateTime.year, `is`(currentYear))
+                    }
+
+                    "customId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
+                    else -> assertThat(value, `is`(expectedMetadata[key]))
                 }
             }
             assertThat(it.alignedNucleotideSequences, `is`(defaultProcessedData.alignedNucleotideSequences))
