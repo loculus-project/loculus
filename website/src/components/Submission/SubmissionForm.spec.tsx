@@ -22,8 +22,8 @@ const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' 
 const sequencesFile = new File(['content'], 'sequences.fasta', { type: 'text/plain' });
 
 const testResponse: HeaderId[] = [
-    { sequenceId: 0, version: 1, customId: 'header0' },
-    { sequenceId: 1, version: 1, customId: 'header1' },
+    { sequenceId: '0', version: 1, customId: 'header0' },
+    { sequenceId: '1', version: 1, customId: 'header1' },
 ];
 
 describe('SubmitForm', () => {

@@ -21,22 +21,22 @@ class ConfirmRevocationEndpointTest(
 
         client.confirmRevocation(
             listOf(
-                SequenceVersion(1, 2),
-                SequenceVersion(2, 2),
+                SequenceVersion("1", 2),
+                SequenceVersion("2", 2),
             ),
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 1, version = 2).assertStatusIs(Status.SILO_READY)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 2, version = 2).assertStatusIs(Status.SILO_READY)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 2).assertStatusIs(Status.SILO_READY)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 2).assertStatusIs(Status.SILO_READY)
     }
 
     @Test
     fun `WHEN confirming revocation of non-existing sequenceVersions THEN throws an unprocessableEntity error`() {
         convenienceClient.prepareDefaultSequencesToRevokedStaging()
 
-        val nonExistingSequenceId = SequenceVersion(123, 2)
-        val nonExistingVersion = SequenceVersion(1, 123)
+        val nonExistingSequenceId = SequenceVersion("123", 2)
+        val nonExistingVersion = SequenceVersion("1", 123)
 
         client.confirmRevocation(listOf(nonExistingSequenceId, nonExistingVersion))
             .andExpect(status().isUnprocessableEntity)
@@ -53,8 +53,8 @@ class ConfirmRevocationEndpointTest(
         val notSubmitter = "notTheSubmitter"
         client.confirmRevocation(
             listOf(
-                SequenceVersion(1, 2),
-                SequenceVersion(2, 2),
+                SequenceVersion("1", 2),
+                SequenceVersion("2", 2),
             ),
             notSubmitter,
         )
@@ -74,8 +74,8 @@ class ConfirmRevocationEndpointTest(
 
         client.confirmRevocation(
             listOf(
-                SequenceVersion(1, 1),
-                SequenceVersion(2, 1),
+                SequenceVersion("1", 1),
+                SequenceVersion("2", 1),
             ),
         )
             .andExpect(status().isUnprocessableEntity)

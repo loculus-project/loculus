@@ -13,7 +13,7 @@ const queryClient = new QueryClient();
 const metadataKey = 'originalMetaDataField';
 const editableEntry = 'originalMetaDataValue';
 const defaultReviewData: SequenceReview = {
-    sequenceId: 1,
+    sequenceId: '1',
     version: 1,
     status: 'NEEDS_REVIEW',
     errors: [

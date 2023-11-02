@@ -144,7 +144,7 @@ class GetReleasedDataEndpointTest(
 
 private fun List<ProcessedData>.findSequenceVersionStatus(sequenceId: SequenceId, version: Version): String {
     val processedData =
-        find { it.metadata["sequenceId"]?.asLong() == sequenceId && it.metadata["version"]?.asLong() == version }
+        find { it.metadata["sequenceId"]?.asText() == sequenceId && it.metadata["version"]?.asLong() == version }
             ?: error("Could not find sequence version $sequenceId.$version")
 
     return processedData.metadata["versionStatus"]!!.asText()

@@ -3,6 +3,7 @@ package org.pathoplexus.backend.service
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.sql.Sequence
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.json.jsonb
@@ -22,11 +23,13 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
-typealias SequenceId = Long
+typealias SequenceId = String
 typealias Version = Long
 
+val idSequence = Sequence(name = "id_sequence")
+
 object SequencesTable : Table("sequences") {
-    val sequenceId = long("sequence_id").autoIncrement()
+    val sequenceId = varchar("sequence_id", 255)
     val version = long("version")
     val customId = varchar("custom_id", 255)
     val submitter = varchar("submitter", 255)

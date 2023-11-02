@@ -11,7 +11,7 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
                 queries: { username },
             }),
 
-        getDataToReview: (username: string, sequenceId: string | number, version: string | number) =>
+        getDataToReview: (username: string, sequenceId: string, version: string | number) =>
             this.call('getDataToReview', {
                 params: { sequenceId, version },
                 queries: { username },

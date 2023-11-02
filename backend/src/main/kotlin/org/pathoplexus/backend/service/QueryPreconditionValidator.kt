@@ -27,7 +27,11 @@ class QueryPreconditionValidator {
         validateUserIsAllowedToEditSequences(sequences, submitter)
     }
 
-    fun validateSequenceIds(submitter: String, sequenceIds: List<Long>, statuses: List<Status>): List<SequenceVersion> {
+    fun validateSequenceIds(
+        submitter: String,
+        sequenceIds: List<SequenceId>,
+        statuses: List<Status>,
+    ): List<SequenceVersion> {
         val maxVersionQuery = maxVersionQuery()
 
         val sequences = SequencesTable
@@ -94,7 +98,7 @@ class QueryPreconditionValidator {
         }
     }
 
-    private fun validateSequenceIdsExist(sequences: Query, sequenceIds: List<Long>) {
+    private fun validateSequenceIdsExist(sequences: Query, sequenceIds: List<SequenceId>) {
         if (sequences.count() == sequenceIds.size.toLong()) {
             return
         }
@@ -104,7 +108,8 @@ class QueryPreconditionValidator {
                 sequences.none {
                     it[SequencesTable.sequenceId] == sequenceId
                 }
-            }.joinToString(", ") { it.toString() }
+            }
+            .joinToString(", ")
 
         throw UnprocessableEntityException("SequenceIds $sequenceVersionsNotFound do not exist")
     }

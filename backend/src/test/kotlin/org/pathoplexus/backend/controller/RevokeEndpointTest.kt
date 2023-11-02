@@ -36,7 +36,7 @@ class RevokeEndpointTest(
     fun `WHEN revoking non-existing sequenceIds THEN throws an unprocessableEntity error`() {
         convenienceClient.prepareDefaultSequencesToSiloReady()
 
-        val nonExistingSequenceId = 123L
+        val nonExistingSequenceId = "123"
         client.revokeSequences(listOf(nonExistingSequenceId))
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))

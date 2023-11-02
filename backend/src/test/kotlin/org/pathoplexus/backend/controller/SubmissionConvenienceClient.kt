@@ -10,6 +10,7 @@ import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.service.SequenceId
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -112,7 +113,7 @@ class SubmissionConvenienceClient(
     ) = getSequenceVersionOfUser(sequenceVersion.sequenceId, sequenceVersion.version, userName)
 
     fun getSequenceVersionOfUser(
-        sequenceId: Long,
+        sequenceId: SequenceId,
         version: Long,
         userName: String = USER_NAME,
     ): SequenceVersionStatus {
@@ -123,7 +124,7 @@ class SubmissionConvenienceClient(
     }
 
     fun getSequenceThatNeedsReview(
-        sequenceId: Long,
+        sequenceId: SequenceId,
         version: Long,
         userName: String = USER_NAME,
     ): SequenceReview =
@@ -154,7 +155,7 @@ class SubmissionConvenienceClient(
         return deserializeJsonResponse(result)
     }
 
-    fun revokeSequences(listOfSequencesToRevoke: List<Long>): List<SequenceVersionStatus> =
+    fun revokeSequences(listOfSequencesToRevoke: List<SequenceId>): List<SequenceVersionStatus> =
         deserializeJsonResponse(client.revokeSequences(listOfSequencesToRevoke))
 
     fun confirmRevocation(listOfSequencesToConfirm: List<SequenceVersion>) {

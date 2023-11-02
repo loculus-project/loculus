@@ -1,5 +1,7 @@
+create sequence id_sequence start with 1;
+
 create table sequences (
-       sequence_id bigserial,
+       sequence_id text not null,
        version bigint not null default 1,
        custom_id text not null,
        submitter text not null,

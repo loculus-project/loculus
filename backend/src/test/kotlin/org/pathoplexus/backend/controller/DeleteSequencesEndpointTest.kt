@@ -62,9 +62,9 @@ class DeleteSequencesEndpointTest(
         val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.PROCESSED}, " +
             "${Status.NEEDS_REVIEW}, ${Status.REVIEWED}, ${Status.REVOKED_STAGING}]"
         val errorString = "Sequence versions are in not in one of the states $listOfAllowedStatuses: " +
-            sequencesToDelete.sortedBy { it.sequenceId }.map {
+            sequencesToDelete.sortedBy { it.sequenceId }.joinToString(", ") {
                 "${it.sequenceId}.${it.version} - ${it.status}"
-            }.joinToString(", ")
+            }
         deletionResult.andExpect(status().isUnprocessableEntity)
             .andExpect(
                 content().contentType(MediaType.APPLICATION_JSON_VALUE),
@@ -84,8 +84,8 @@ class DeleteSequencesEndpointTest(
     fun `WHEN deleting non-existing sequenceVersions THEN throws an unprocessableEntity error`() {
         convenienceClient.submitDefaultFiles()
 
-        val nonExistingSequenceId = SequenceVersion(123, 1)
-        val nonExistingVersion = SequenceVersion(1, 123)
+        val nonExistingSequenceId = SequenceVersion("123", 1)
+        val nonExistingVersion = SequenceVersion("1", 123)
 
         client.deleteSequences(listOf(nonExistingSequenceId, nonExistingVersion))
             .andExpect(status().isUnprocessableEntity)
@@ -102,8 +102,8 @@ class DeleteSequencesEndpointTest(
         val notSubmitter = "theOneWhoMustNotBeNamed"
         client.deleteSequences(
             listOf(
-                SequenceVersion(1, 1),
-                SequenceVersion(2, 1),
+                SequenceVersion("1", 1),
+                SequenceVersion("2", 1),
             ),
             notSubmitter,
         )

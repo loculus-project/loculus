@@ -29,18 +29,18 @@ export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 export const metadataField = z.union([z.string(), z.number(), z.date()]);
 export type MetadataField = z.infer<typeof metadataField>;
 
-const sequenceId = z.number();
-export type SequenceId = z.infer<typeof sequenceId>;
-
 const metadataRecord = z.record(metadataField);
 export type MetadataRecord = z.infer<typeof metadataRecord>;
 
+export const sequenceId = z.string();
+export type SequenceId = z.infer<typeof sequenceId>;
+
 export const sequenceIds = z.object({
-    sequenceIds: z.array(z.number()),
+    sequenceIds: z.array(sequenceId),
 });
 
 export const sequenceVersion = z.object({
-    sequenceId: z.number(),
+    sequenceId,
     version: z.number(),
 });
 export type SequenceVersion = z.infer<typeof sequenceVersion>;

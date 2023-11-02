@@ -10,6 +10,7 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
+import org.jetbrains.exposed.sql.NextVal
 import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
@@ -20,6 +21,7 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.nextLongVal
 import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.stringParam
@@ -81,6 +83,7 @@ class DatabaseService(
 
         return submittedData.map { data ->
             val insert = SequencesTable.insert {
+                it[sequenceId] = idSequence.nextLongVal() as NextVal<String>
                 it[SequencesTable.submitter] = submitter
                 it[submittedAt] = now
                 it[version] = 1
@@ -88,7 +91,7 @@ class DatabaseService(
                 it[customId] = data.customId
                 it[originalData] = data.originalData
             }
-            HeaderId(insert[SequencesTable.sequenceId], 1, data.customId)
+            HeaderId(insert[SequencesTable.sequenceId], insert[SequencesTable.version], data.customId)
         }
     }
 
@@ -453,10 +456,12 @@ class DatabaseService(
             )
         }
 
-        return revisedData.map { HeaderId(it.sequenceId, sequenceVersions[it.sequenceId]!!.version + 1, it.customId) }
+        return revisedData.map {
+            HeaderId(it.sequenceId, sequenceVersions[it.sequenceId]!!.version + 1, it.customId)
+        }
     }
 
-    fun revoke(sequenceIds: List<Long>, username: String): List<SequenceVersionStatus> {
+    fun revoke(sequenceIds: List<SequenceId>, username: String): List<SequenceVersionStatus> {
         log.info { "revoking ${sequenceIds.size} sequences" }
 
         queryPreconditionValidator.validateSequenceIds(username, sequenceIds, listOf(SILO_READY))

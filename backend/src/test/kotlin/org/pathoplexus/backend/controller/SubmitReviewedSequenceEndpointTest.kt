@@ -21,7 +21,7 @@ class SubmitReviewedSequenceEndpointTest(
             .assertStatusIs(Status.NEEDS_REVIEW)
 
         val reviewedData = UnprocessedData(
-            sequenceId = 1,
+            sequenceId = "1",
             version = 1,
             data = emptyOriginalData,
         )
@@ -40,7 +40,7 @@ class SubmitReviewedSequenceEndpointTest(
             .assertStatusIs(Status.PROCESSED)
 
         val reviewedData = UnprocessedData(
-            sequenceId = 1,
+            sequenceId = "1",
             version = 1,
             data = emptyOriginalData,
         )
@@ -61,7 +61,7 @@ class SubmitReviewedSequenceEndpointTest(
 
         val reviewedDataWithNonExistingVersion =
             UnprocessedData(
-                sequenceId = 1,
+                sequenceId = "1",
                 version = 2,
                 data = emptyOriginalData,
             )
@@ -84,7 +84,7 @@ class SubmitReviewedSequenceEndpointTest(
             .assertStatusIs(Status.NEEDS_REVIEW)
 
         val reviewedDataWithNonExistingSequenceId = UnprocessedData(
-            sequenceId = 2,
+            sequenceId = "2",
             version = 1,
             data = emptyOriginalData,
         )
@@ -112,7 +112,7 @@ class SubmitReviewedSequenceEndpointTest(
 
         val reviewedDataFromWrongSubmitter =
             UnprocessedData(
-                sequenceId = 1,
+                sequenceId = "1",
                 version = 1,
                 data = emptyOriginalData,
             )
