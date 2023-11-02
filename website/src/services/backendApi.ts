@@ -193,6 +193,13 @@ const submitProcessedDataEndpoint = makeEndpoint({
     ],
 });
 
+const getReleasedDataEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-released-data',
+    alias: 'getReleasedData',
+    response: z.string(),
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -205,4 +212,5 @@ export const backendApi = makeApi([
     confirmRevocationEndpoint,
     extractUnprocessedDataEndpoint,
     submitProcessedDataEndpoint,
+    getReleasedDataEndpoint,
 ]);

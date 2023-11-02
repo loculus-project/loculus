@@ -15,6 +15,8 @@ export default defineConfig({
         screenshot: 'only-on-failure',
     },
 
+    globalSetup: './tests/playwrightSetup.ts',
+
     projects: [
         {
             name: 'chromium',

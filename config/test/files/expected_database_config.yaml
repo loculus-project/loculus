@@ -37,6 +37,6 @@ schema:
           type: string
         - name: versionStatus
           type: string
-    primaryKey: accession
+    primaryKey: sequenceVersion
     dateToSortBy: date
     partitionBy: pango_lineage

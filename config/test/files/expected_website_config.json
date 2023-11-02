@@ -76,6 +76,6 @@
             }
         ],
         "tableColumns": ["country", "division", "date", "pango_lineage"],
-        "primaryKey": "accession"
+        "primaryKey": "sequenceVersion"
     }
 }

@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./website/tests/config/config.json:/config/config.json
+      - ./website/tests/config/website_config.json:/config/website_config.json
       - ./website/tests/config/docker_runtime_config.json:/config/runtime_config.json
       - ./website/tests/config/reference_genomes.json:/config/reference_genomes.json
       - ./log:/log
@@ -23,7 +23,7 @@ services:
       --spring.datasource.password=unsecure
     volumes:
       - ./log:/workspace/log
-      - ./website/tests/config/config.json:/workspace/config.json
+      - ./website/tests/config/backend_config.json:/workspace/backend_config.json
       - ./website/tests/config/reference_genomes.json:/workspace/reference_genomes.json
 
   database:
@@ -46,24 +46,10 @@ services:
       - ./log:/workspace/log
 
   silo:
-    image: ghcr.io/genspectrum/lapis-silo:latest
+    image: ghcr.io/genspectrum/lapis-silo:test-branch
     ports:
       - "8081:8081"
     command: --api
     volumes:
-      - ./website/tests/initialSiloData/preprocessingOutput/:/data
+      - ./website/tests/testData/siloPreprocessing/preprocessingOutput:/data
       - ./log/silo:/app/logs
-    depends_on:
-      siloPreprocessing:
-        condition: service_completed_successfully
-
-  siloPreprocessing:
-    image: ghcr.io/genspectrum/lapis-silo:latest
-    command: --preprocessing
-    volumes:
-      - ./website/tests/initialSiloData:/preprocessing/input
-      - ./website/tests/initialSiloData/preprocessingOutput:/preprocessing/output
-      - ./website/tests/config/reference_genomes.json:/preprocessing/input/reference_genomes.json
-      - ./website/tests/config/preprocessing_config.yaml:/app/preprocessing_config.yaml
-      - ./website/tests/config/database_config.yaml:/app/database_config.yaml
-      - ./log/preprocessing:/app/logs

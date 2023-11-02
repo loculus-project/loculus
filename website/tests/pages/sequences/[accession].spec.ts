@@ -8,6 +8,6 @@ test.describe('The detailed sequence page', () => {
         await sequencePage.loadSequences();
         await sequencePage.clickORF1aButton();
 
-        await expect(sequencePage.page.getByText(testSequence.orf1a)).toBeVisible();
+        await expect(sequencePage.page.getByText(testSequence.orf1a, { exact: false })).toBeVisible();
     });
 });

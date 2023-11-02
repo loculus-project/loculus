@@ -1,7 +1,7 @@
 import { backendApi } from './backendApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getRuntimeConfig } from '../config.ts';
-import { getInstanceLogger } from '../logger.ts';
+import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
 
 export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
     /** Somehow Typescript's type inference currently doesn't work properly in Astro files */
@@ -20,7 +20,7 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
 
     public static create(
         backendUrl: string = getRuntimeConfig().forServer.backendUrl,
-        logger: ReturnType<typeof getInstanceLogger> = getInstanceLogger('serverSideBackendClient'),
+        logger: InstanceLogger = getInstanceLogger('serverSideBackendClient'),
     ) {
         return new BackendClient(backendUrl, backendApi, (axiosError) => axiosError.data, logger, 'backend');
     }

@@ -9,6 +9,7 @@ import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
+import { BackendClient } from '../src/services/backendClient.ts';
 
 type E2EFixture = {
     searchPage: SearchPage;
@@ -21,6 +22,7 @@ type E2EFixture = {
 
 export const baseUrl = 'http://localhost:3000';
 export const backendUrl = 'http://localhost:8079';
+export const lapisUrl = 'http://localhost:8080';
 
 export const e2eLogger = winston.createLogger({
     level: 'info',
@@ -28,9 +30,11 @@ export const e2eLogger = winston.createLogger({
     transports: [new winston.transports.Console()],
 });
 
+export const backendClient = BackendClient.create(backendUrl, e2eLogger);
+
 export const testSequence = {
-    name: 'id_002156',
-    orf1a: 'MESLVPGFNE',
+    name: '1.1',
+    orf1a: 'QRFEINSA',
 };
 
 export const testuser = 'testuser';

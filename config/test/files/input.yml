@@ -25,7 +25,6 @@ schema:
           autocomplete: true
         - name: qc_value
           type: float
-    primaryKey: accession
     website:
         tableColumns:
             - country

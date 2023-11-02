@@ -14,6 +14,4 @@ data class SchemaConfig(
 data class SchemaInfo(
     val instanceName: String,
     val metadata: List<Metadata>,
-    val tableColumns: List<String>,
-    val primaryKey: String,
 )

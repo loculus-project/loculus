@@ -30,6 +30,9 @@ Run `npm run e2e` to execute the end-to-end tests.
 If you run Playwright for the first time, you might need to run `npx playwright install`
 and `npx playwright install-deps` first. Playwright will tell you if that's the case.
 
+You also need to generate the necessary config files:
+`npm run generateConfig`
+
 ### Running The Application
 
 Run `npm run start-server` to build and run the production version of the application.

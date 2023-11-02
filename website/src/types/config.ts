@@ -2,7 +2,7 @@ import z from 'zod';
 
 export const metadata = z.object({
     name: z.string(),
-    type: z.enum(['string', 'date', 'integer', 'pango_lineage']),
+    type: z.enum(['string', 'date', 'int', 'float', 'pango_lineage']),
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
 });

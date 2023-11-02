@@ -31,7 +31,6 @@ const inputSchema = z
             .object({
                 instanceName: z.string(),
                 metadata: z.array(siloMetadataSchema.merge(websiteMetadataSchema).strict()),
-                primaryKey: z.string(),
                 website: z
                     .object({
                         tableColumns: z.array(z.string()),
@@ -40,7 +39,7 @@ const inputSchema = z
                 silo: z
                     .object({
                         dateToSortBy: z.string(),
-                        partitionBy: z.string(),
+                        partitionBy: z.string().optional(),
                     })
                     .strict(),
             })
@@ -57,7 +56,7 @@ function generateConfig(inputConfig) {
         website: makeSchema({
             instanceName: schema.instanceName,
             metadata: makeWebsiteMetadata(schema.metadata),
-            primaryKey: schema.primaryKey,
+            primaryKey: 'sequenceVersion',
             ...schema.website,
         }),
         backend: makeSchema({
@@ -68,7 +67,7 @@ function generateConfig(inputConfig) {
             instanceName: schema.instanceName,
             opennessLevel: 'OPEN',
             metadata: makeSiloMetadata(schema.metadata),
-            primaryKey: schema.primaryKey,
+            primaryKey: 'sequenceVersion',
             ...schema.silo,
         }),
     };

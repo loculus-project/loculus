@@ -1,0 +1,32 @@
+schema:
+  instanceName: Test
+  metadata:
+    - name: date
+      type: date
+    - name: region
+      type: string
+      generateIndex: true
+      autocomplete: true
+    - name: country
+      type: string
+      generateIndex: true
+      autocomplete: true
+    - name: division
+      type: string
+      generateIndex: true
+      autocomplete: true
+    - name: host
+      type: string
+      autocomplete: true
+    - name: pango_lineage
+      type: pango_lineage
+      autocomplete: true
+  website:
+    tableColumns:
+      - country
+      - division
+      - date
+      - pango_lineage
+  silo:
+    dateToSortBy: date
+    partitionBy: pango_lineage

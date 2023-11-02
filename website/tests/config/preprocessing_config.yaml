@@ -1,3 +1,2 @@
-metadataFilename: metadata.tsv
-pangoLineageDefinitionFilename: pangolineage_alias.json
+ndjsonInputFilename: input.ndjson
 referenceGenomeFilename: reference_genomes.json

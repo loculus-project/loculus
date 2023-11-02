@@ -1,0 +1,15 @@
+version: '3'
+services:
+  siloPreprocessing:
+    image: ghcr.io/genspectrum/lapis-silo:test-branch
+    command: --preprocessing
+    volumes:
+      - ./website/tests/testData/siloPreprocessing:/preprocessing/input
+      - ./website/tests/testData/siloPreprocessing/preprocessingOutput:/preprocessing/output
+      - ./website/tests/config/reference_genomes.json:/preprocessing/input/reference_genomes.json
+      - ./website/tests/config/preprocessing_config.yaml:/app/preprocessing_config.yaml
+      - ./website/tests/config/database_config.yaml:/app/database_config.yaml
+      - ./log/preprocessing:/app/logs
+    environment:
+      SPDLOG_LEVEL: trace
+

@@ -30,8 +30,14 @@ jobs:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
 
-      - name: Install dependencies
-        run: cd website && npm i
+      - name: Install website dependencies
+        run: cd website && npm ci
+
+      - name: Install config dependencies
+        run: cd config && npm ci
+
+      - name: generate config files
+        run: cd website && npm run generateConfig
 
       - name: Get Installed Playwright Version
         id: playwright-version

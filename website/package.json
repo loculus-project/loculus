@@ -14,7 +14,8 @@
     "format": "eslint \"src/**/*.{ts,tsx,astro}\" --fix && prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
     "test": "vitest",
     "e2e": "npx playwright test",
-    "e2e:headed": "npx playwright test --headed"
+    "e2e:headed": "npx playwright test --headed",
+    "generateConfig": "npm --prefix ../config run generateConfig -- --inputFile ../website/tests/config/config.yml --outputDir ../website/tests/config"
   },
   "dependencies": {
     "@astrojs/node": "^6.0.3",
