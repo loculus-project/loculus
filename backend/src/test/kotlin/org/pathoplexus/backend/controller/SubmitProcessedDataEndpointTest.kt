@@ -28,12 +28,12 @@ class SubmitProcessedDataEndpointTest(
         prepareExtractedSequencesInDatabase()
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = 3),
-            PreparedProcessedData.successfullyProcessed(sequenceId = 4),
+            PreparedProcessedData.successfullyProcessed(sequenceId = "3"),
+            PreparedProcessedData.successfullyProcessed(sequenceId = "4"),
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(Status.PROCESSED)
     }
 
     @Test
@@ -45,7 +45,7 @@ class SubmitProcessedDataEndpointTest(
         val defaultData = PreparedProcessedData.successfullyProcessed().data
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = 3).withValues(
+            PreparedProcessedData.successfullyProcessed(sequenceId = "3").withValues(
                 data = defaultData.withValues(
                     unalignedNucleotideSequences = defaultData.unalignedNucleotideSequences +
                         ("secondSegment" to allNucleotideSymbols),
@@ -58,7 +58,7 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(Status.PROCESSED)
     }
 
     @Test
@@ -71,12 +71,12 @@ class SubmitProcessedDataEndpointTest(
         )
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = 3).withValues(data = dataWithoutInsertions),
+            PreparedProcessedData.successfullyProcessed(sequenceId = "3").withValues(data = dataWithoutInsertions),
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSED)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(Status.PROCESSED)
 
-        submissionControllerClient.getSequenceThatNeedsReview(sequenceId = 3, version = 1, userName = USER_NAME)
+        submissionControllerClient.getSequenceThatNeedsReview(sequenceId = "3", version = 1, userName = USER_NAME)
             .andExpect(status().isOk)
             .andExpect(
                 jsonPath("\$.processedData.nucleotideInsertions")
@@ -163,17 +163,17 @@ class SubmitProcessedDataEndpointTest(
     fun `WHEN I submit data for a non-existent sequence id THEN refuses update with unprocessable entity`() {
         prepareExtractedSequencesInDatabase()
 
-        val nonExistentSequenceId = 999L
+        val nonExistentSequenceId = "999"
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = 1),
+            PreparedProcessedData.successfullyProcessed(sequenceId = "1"),
             PreparedProcessedData.successfullyProcessed(sequenceId = nonExistentSequenceId),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.detail").value("Sequence version $nonExistentSequenceId.1 does not exist"))
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 1, version = 1).assertStatusIs(Status.PROCESSING)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 1).assertStatusIs(Status.PROCESSING)
     }
 
     @Test
@@ -204,7 +204,7 @@ class SubmitProcessedDataEndpointTest(
         convenienceClient.submitDefaultFiles()
         convenienceClient.extractUnprocessedData(1)
 
-        val sequenceIdNotInProcessing: Long = 2
+        val sequenceIdNotInProcessing = "2"
         convenienceClient.getSequenceVersionOfUser(sequenceId = sequenceIdNotInProcessing, version = 1)
             .assertStatusIs(Status.RECEIVED)
 

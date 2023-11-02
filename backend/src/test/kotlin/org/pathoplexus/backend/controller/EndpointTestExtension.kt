@@ -50,7 +50,7 @@ class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCal
             "-d",
             postgres.databaseName,
             "-c",
-            "truncate table sequences restart identity cascade;",
+            "truncate table sequences; alter sequence id_sequence restart with 1;",
         )
     }
 

@@ -14,7 +14,7 @@ object SubmitFiles {
         val sequencesFile = sequenceFileWith(content = getFileContent(DEFAULT_SEQUENCES_FILE_NAME))
 
         const val NUMBER_OF_SEQUENCES = 10
-        val allSequenceIds = (1L..NUMBER_OF_SEQUENCES).toList()
+        val allSequenceIds = (1L..NUMBER_OF_SEQUENCES).toList().map { it.toString() }
         val firstSequence = allSequenceIds[0]
 
         private fun getFileContent(file: String): String {

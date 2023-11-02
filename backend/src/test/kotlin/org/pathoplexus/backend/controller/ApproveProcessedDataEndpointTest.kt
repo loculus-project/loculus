@@ -19,33 +19,33 @@ class ApproveProcessedDataEndpointTest(
     @Test
     fun `GIVEN sequences are successfully processed WHEN I approve them THEN their status should be SILO_READY`() {
         convenienceClient.prepareDatabaseWith(
-            PreparedProcessedData.successfullyProcessed(sequenceId = 1),
-            PreparedProcessedData.successfullyProcessed(sequenceId = 2),
+            PreparedProcessedData.successfullyProcessed(sequenceId = "1"),
+            PreparedProcessedData.successfullyProcessed(sequenceId = "2"),
         )
 
         client.approveProcessedSequences(
             listOf(
-                SequenceVersion(1, 1),
-                SequenceVersion(2, 1),
+                SequenceVersion("1", 1),
+                SequenceVersion("2", 1),
             ),
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 1, version = 1).assertStatusIs(Status.SILO_READY)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 2, version = 1).assertStatusIs(Status.SILO_READY)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 1).assertStatusIs(Status.SILO_READY)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 1).assertStatusIs(Status.SILO_READY)
     }
 
     @Test
     fun `WHEN I approve sequences of other user THEN it should fail as forbidden`() {
         convenienceClient.prepareDatabaseWith(
-            PreparedProcessedData.successfullyProcessed(sequenceId = 1),
-            PreparedProcessedData.successfullyProcessed(sequenceId = 2),
+            PreparedProcessedData.successfullyProcessed(sequenceId = "1"),
+            PreparedProcessedData.successfullyProcessed(sequenceId = "2"),
         )
 
         client.approveProcessedSequences(
             listOf(
-                SequenceVersion(1, 1),
-                SequenceVersion(2, 1),
+                SequenceVersion("1", 1),
+                SequenceVersion("2", 1),
             ),
             "other user",
         )
@@ -61,11 +61,11 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I approve a sequence id that does not exist THEN no sequence should be approved`() {
-        val nonExistentSequenceId = 999L
+        val nonExistentSequenceId = "999"
 
-        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed(sequenceId = 1))
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed(sequenceId = "1"))
 
-        val existingSequenceVersion = SequenceVersion(1, 1)
+        val existingSequenceVersion = SequenceVersion("1", 1)
 
         client.approveProcessedSequences(
             listOf(
@@ -84,14 +84,14 @@ class ApproveProcessedDataEndpointTest(
     fun `WHEN I approve a sequence version that does not exist THEN no sequence should be approved`() {
         val nonExistentVersion = 999L
 
-        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed(sequenceId = 1))
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed(sequenceId = "1"))
 
-        val existingSequenceVersion = SequenceVersion(1, 1)
+        val existingSequenceVersion = SequenceVersion("1", 1)
 
         client.approveProcessedSequences(
             listOf(
                 existingSequenceVersion,
-                SequenceVersion(1, nonExistentVersion),
+                SequenceVersion("1", nonExistentVersion),
             ),
         )
             .andExpect(status().isUnprocessableEntity)
@@ -103,18 +103,18 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN one of the sequences is not processed WHEN I approve them THEN no sequence should be approved`() {
-        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed(sequenceId = 1))
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed(sequenceId = "1"))
 
-        val sequenceVersionInCorrectState = SequenceVersion(1, 1)
+        val sequenceVersionInCorrectState = SequenceVersion("1", 1)
 
         convenienceClient.getSequenceVersionOfUser(sequenceVersionInCorrectState).assertStatusIs(Status.PROCESSED)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 2, version = 1).assertStatusIs(Status.PROCESSING)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 1).assertStatusIs(Status.PROCESSING)
 
         client.approveProcessedSequences(
             listOf(
                 sequenceVersionInCorrectState,
-                SequenceVersion(2, 1),
-                SequenceVersion(3, 1),
+                SequenceVersion("2", 1),
+                SequenceVersion("3", 1),
             ),
         )
             .andExpect(status().isUnprocessableEntity)
@@ -128,7 +128,7 @@ class ApproveProcessedDataEndpointTest(
             )
 
         convenienceClient.getSequenceVersionOfUser(sequenceVersionInCorrectState).assertStatusIs(Status.PROCESSED)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 2, version = 1).assertStatusIs(Status.PROCESSING)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = 3, version = 1).assertStatusIs(Status.PROCESSING)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 1).assertStatusIs(Status.PROCESSING)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(Status.PROCESSING)
     }
 }

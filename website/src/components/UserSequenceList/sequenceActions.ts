@@ -93,6 +93,6 @@ const sequenceVersionsToString = (
 ) =>
     sequenceVersions
         .slice(0, maxSequencesToDisplay)
-        .sort((a, b) => a.sequenceId - b.sequenceId)
+        .sort((a, b) => (a.sequenceId > b.sequenceId ? 1 : -1))
         .map(getSequenceVersionString)
         .join(', ') + (sequenceVersions.length > maxSequencesToDisplay ? ', ...' : '');

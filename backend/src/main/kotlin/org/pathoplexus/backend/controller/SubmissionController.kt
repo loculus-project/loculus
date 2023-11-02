@@ -17,6 +17,7 @@ import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.model.ReleasedDataModel
 import org.pathoplexus.backend.model.SubmitModel
 import org.pathoplexus.backend.service.DatabaseService
+import org.pathoplexus.backend.service.SequenceId
 import org.pathoplexus.backend.utils.IteratorStreamer
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -151,7 +152,7 @@ class SubmissionController(
     @Operation(description = GET_DATA_TO_REVIEW_SEQUENCE_VERSION_DESCRIPTION)
     @GetMapping("/get-data-to-review/{sequenceId}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getSequenceThatNeedsReview(
-        @PathVariable sequenceId: Long,
+        @PathVariable sequenceId: SequenceId,
         @PathVariable version: Long,
         @RequestParam username: String,
     ): SequenceReview =
@@ -220,7 +221,7 @@ class SubmissionController(
     ) = databaseService.deleteSequences(body.sequenceVersions, username)
 
     data class SequenceIdList(
-        val sequenceIds: List<Long>,
+        val sequenceIds: List<SequenceId>,
     )
 
     data class SequenceVersions(

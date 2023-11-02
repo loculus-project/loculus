@@ -15,13 +15,13 @@ import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts'
 const queryClient = new QueryClient();
 const defaultSequencesWithStatus: readonly SequenceStatus[] = [
     {
-        sequenceId: 1,
+        sequenceId: '1',
         version: 1,
         status: 'NEEDS_REVIEW',
         isRevocation: false,
     },
     {
-        sequenceId: 2,
+        sequenceId: '2',
         version: 1,
         status: 'NEEDS_REVIEW',
         isRevocation: false,

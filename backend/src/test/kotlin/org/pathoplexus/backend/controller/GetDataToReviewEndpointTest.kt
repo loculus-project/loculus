@@ -40,7 +40,7 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `WHEN I query data for a non-existent sequence id THEN refuses request with not found`() {
-        val nonExistentSequenceId = 999L
+        val nonExistentSequenceId = "999"
 
         client.getSequenceThatNeedsReview(nonExistentSequenceId, 1, USER_NAME)
             .andExpect(status().isNotFound)
@@ -58,7 +58,7 @@ class GetDataToReviewEndpointTest(
 
         convenienceClient.prepareDefaultSequencesToNeedReview()
 
-        client.getSequenceThatNeedsReview(1, nonExistentSequenceVersion, USER_NAME)
+        client.getSequenceThatNeedsReview("1", nonExistentSequenceVersion, USER_NAME)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(

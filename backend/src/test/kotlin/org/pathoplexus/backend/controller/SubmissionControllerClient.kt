@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.pathoplexus.backend.api.SequenceVersion
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
+import org.pathoplexus.backend.service.SequenceId
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
@@ -49,7 +50,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .param("username", userName),
         )
 
-    fun getSequenceThatNeedsReview(sequenceId: Long, version: Long, userName: String): ResultActions =
+    fun getSequenceThatNeedsReview(sequenceId: SequenceId, version: Long, userName: String): ResultActions =
         mockMvc.perform(
             get("/get-data-to-review/$sequenceId/$version")
                 .param("username", userName),
@@ -82,7 +83,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}"""),
         )
 
-    fun revokeSequences(listOfSequencesToRevoke: List<Long>, userName: String = USER_NAME): ResultActions =
+    fun revokeSequences(listOfSequencesToRevoke: List<SequenceId>, userName: String = USER_NAME): ResultActions =
         mockMvc.perform(
             post("/revoke")
                 .param("username", userName)

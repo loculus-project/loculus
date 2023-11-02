@@ -10,6 +10,7 @@ import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.service.DatabaseService
+import org.pathoplexus.backend.service.SequenceId
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
@@ -144,7 +145,7 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         return metadataMap
     }
 
-    private fun sequenceIdMap(metadataMap: Map<CustomId, Map<String, String>>): Map<CustomId, Long> {
+    private fun sequenceIdMap(metadataMap: Map<CustomId, Map<String, String>>): Map<CustomId, SequenceId> {
         if (metadataMap.values.any { !it.keys.contains(SEQUENCE_ID_HEADER) }) {
             throw UnprocessableEntityException(
                 "Metadata file misses header $SEQUENCE_ID_HEADER",
@@ -163,7 +164,7 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
                         "${it.value[SEQUENCE_ID_HEADER]}",
                 )
             }
-            it.key to it.value[SEQUENCE_ID_HEADER]!!.toLong()
+            it.key to it.value[SEQUENCE_ID_HEADER]!!
         }.toMap()
     }
 
