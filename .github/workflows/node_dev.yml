@@ -1,7 +1,9 @@
 name: Dev server test
 
-on: [push]
-
+on:
+  push:
+    paths:
+      - 'website/**'
 jobs:
   test:
     runs-on: ${{ matrix.os }}
