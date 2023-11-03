@@ -130,15 +130,15 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     DefaultFiles.metadataFile,
                     SubmitFiles.sequenceFileWith(
                         content = """
-                            >sameHeader
+                            >sameHeader_main
                             AC
-                            >sameHeader
+                            >sameHeader_main
                             AC
                         """.trimIndent(),
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains duplicate headers: [sameHeader]",
+                    "Sequence file contains duplicate headers: sameHeader",
                 ),
                 Arguments.of(
                     "metadata file misses headers",
@@ -150,9 +150,9 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     ),
                     SubmitFiles.sequenceFileWith(
                         content = """
-                            >commonHeader
+                            >commonHeader_main
                             AC
-                            >notInMetadata
+                            >notInMetadata_main
                             AC
                         """.trimIndent(),
                     ),
@@ -171,13 +171,32 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     ),
                     SubmitFiles.sequenceFileWith(
                         content = """
-                            >commonHeader
+                            >commonHeader_main
                             AC
                         """.trimIndent(),
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
                     "Metadata file contains headers that are not present in the sequence file: [notInSequences]",
+                ),
+                Arguments.of(
+                    "FASTA header misses segment name",
+                    SubmitFiles.metadataFileWith(
+                        content = """
+                            header	firstColumn
+                            commonHeader	someValue
+                        """.trimIndent(),
+                    ),
+                    SubmitFiles.sequenceFileWith(
+                        content = """
+                            >commonHeader
+                            AC
+                        """.trimIndent(),
+                    ),
+                    status().isBadRequest,
+                    "Bad Request",
+                    "The FASTA header commonHeader does not contain the segment name. Please provide the segment " +
+                        "name in the format <header>_<segment name>",
                 ),
             )
         }

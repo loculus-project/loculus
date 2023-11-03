@@ -6,6 +6,7 @@ import org.pathoplexus.backend.api.HeaderId
 import org.pathoplexus.backend.api.OriginalData
 import org.pathoplexus.backend.api.RevisedData
 import org.pathoplexus.backend.api.SubmittedData
+import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.service.DatabaseService
@@ -17,10 +18,11 @@ import java.io.InputStreamReader
 private const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "header"
 private const val SEQUENCE_ID_HEADER = "sequenceId"
 
-typealias customId = String
+typealias CustomId = String
+typealias SegmentName = String
 
 @Service
-class SubmitModel(private val databaseService: DatabaseService) {
+class SubmitModel(private val databaseService: DatabaseService, private val referenceGenome: ReferenceGenome) {
     fun processSubmission(
         username: String,
         metadataFile: MultipartFile,
@@ -51,7 +53,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
         validateHeaders(metadataMap, sequenceMap)
 
         return metadataMap.map { entry ->
-            SubmittedData(entry.key, OriginalData(entry.value, mapOf("main" to sequenceMap[entry.key]!!)))
+            SubmittedData(entry.key, OriginalData(entry.value, sequenceMap[entry.key]!!))
         }
     }
 
@@ -71,14 +73,14 @@ class SubmitModel(private val databaseService: DatabaseService) {
             RevisedData(
                 entry.key,
                 sequenceIdMap[entry.key]!!,
-                OriginalData(entry.value, mapOf("main" to sequenceMap[entry.key]!!)),
+                OriginalData(entry.value, sequenceMap[entry.key]!!),
             )
         }
     }
 
     private fun validateHeaders(
-        metadataMap: Map<customId, Map<String, String>>,
-        sequenceMap: Map<customId, String>,
+        metadataMap: Map<CustomId, Map<String, String>>,
+        sequenceMap: Map<CustomId, Map<SegmentName, String>>,
     ) {
         val metadataKeysSet = metadataMap.keys.toSet()
         val sequenceKeysSet = sequenceMap.keys.toSet()
@@ -99,7 +101,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
         }
     }
 
-    private fun metadataMap(metadataFile: MultipartFile): Map<customId, Map<String, String>> {
+    private fun metadataMap(metadataFile: MultipartFile): Map<CustomId, Map<String, String>> {
         if (metadataFile.originalFilename == null || !metadataFile.originalFilename?.endsWith(".tsv")!!) {
             throw BadRequestException("Metadata file must have extension .tsv")
         }
@@ -142,7 +144,7 @@ class SubmitModel(private val databaseService: DatabaseService) {
         return metadataMap
     }
 
-    private fun sequenceIdMap(metadataMap: Map<customId, Map<String, String>>): Map<customId, Long> {
+    private fun sequenceIdMap(metadataMap: Map<CustomId, Map<String, String>>): Map<CustomId, Long> {
         if (metadataMap.values.any { !it.keys.contains(SEQUENCE_ID_HEADER) }) {
             throw UnprocessableEntityException(
                 "Metadata file misses header $SEQUENCE_ID_HEADER",
@@ -164,26 +166,37 @@ class SubmitModel(private val databaseService: DatabaseService) {
             it.key to it.value[SEQUENCE_ID_HEADER]!!.toLong()
         }.toMap()
     }
-}
 
-private fun sequenceMap(sequenceFile: MultipartFile): Map<customId, String> {
-    if (sequenceFile.originalFilename == null || !sequenceFile.originalFilename?.endsWith(".fasta")!!) {
-        throw BadRequestException("Sequence file must have extension .fasta")
+    private fun sequenceMap(sequenceFile: MultipartFile): Map<CustomId, Map<SegmentName, String>> {
+        if (sequenceFile.originalFilename == null || !sequenceFile.originalFilename?.endsWith(".fasta")!!) {
+            throw BadRequestException("Sequence file must have extension .fasta")
+        }
+
+        val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
+        val sequenceMap = mutableMapOf<CustomId, MutableMap<SegmentName, String>>()
+        fastaList.forEach {
+            val (sampleName, segmentName) = parseFastaHeader(it.sampleName)
+            val segmentMap = sequenceMap.getOrPut(sampleName) { mutableMapOf() }
+            if (segmentMap.containsKey(segmentName)) {
+                throw UnprocessableEntityException("Sequence file contains duplicate headers: ${it.sampleName}")
+            }
+            segmentMap[segmentName] = it.sequence
+        }
+        return sequenceMap
     }
 
-    val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
-    val sequenceMap = fastaList.associate {
-        it.sampleName to it.sequence
-    }
+    private fun parseFastaHeader(header: String): Pair<CustomId, SegmentName> {
+        if (referenceGenome.nucleotideSequences.size == 1) {
+            return Pair(header, "main")
+        }
 
-    if (sequenceMap.size != fastaList.size) {
-        val duplicateKeys = fastaList.map { it.sampleName }
-            .groupingBy { it }
-            .eachCount()
-            .filter { it.value > 1 }
-            .keys
-
-        throw UnprocessableEntityException("Sequence file contains duplicate headers: $duplicateKeys")
+        val lastDelimiter = header.lastIndexOf("_")
+        if (lastDelimiter == -1) {
+            throw BadRequestException(
+                "The FASTA header $header does not contain the segment name. Please provide the" +
+                    " segment name in the format <header>_<segment name>",
+            )
+        }
+        return Pair(header.substring(0, lastDelimiter), header.substring(lastDelimiter + 1))
     }
-    return sequenceMap
 }
