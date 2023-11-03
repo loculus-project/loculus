@@ -18,8 +18,8 @@ import java.io.InputStreamReader
 private const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "header"
 private const val SEQUENCE_ID_HEADER = "sequenceId"
 
-typealias customId = String
-typealias segmentName = String
+typealias CustomId = String
+typealias SegmentName = String
 
 @Service
 class SubmitModel(private val databaseService: DatabaseService, private val referenceGenome: ReferenceGenome) {
@@ -79,8 +79,8 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
     }
 
     private fun validateHeaders(
-        metadataMap: Map<customId, Map<String, String>>,
-        sequenceMap: Map<customId, Map<segmentName, String>>,
+        metadataMap: Map<CustomId, Map<String, String>>,
+        sequenceMap: Map<CustomId, Map<SegmentName, String>>,
     ) {
         val metadataKeysSet = metadataMap.keys.toSet()
         val sequenceKeysSet = sequenceMap.keys.toSet()
@@ -101,7 +101,7 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         }
     }
 
-    private fun metadataMap(metadataFile: MultipartFile): Map<customId, Map<String, String>> {
+    private fun metadataMap(metadataFile: MultipartFile): Map<CustomId, Map<String, String>> {
         if (metadataFile.originalFilename == null || !metadataFile.originalFilename?.endsWith(".tsv")!!) {
             throw BadRequestException("Metadata file must have extension .tsv")
         }
@@ -144,7 +144,7 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         return metadataMap
     }
 
-    private fun sequenceIdMap(metadataMap: Map<customId, Map<String, String>>): Map<customId, Long> {
+    private fun sequenceIdMap(metadataMap: Map<CustomId, Map<String, String>>): Map<CustomId, Long> {
         if (metadataMap.values.any { !it.keys.contains(SEQUENCE_ID_HEADER) }) {
             throw UnprocessableEntityException(
                 "Metadata file misses header $SEQUENCE_ID_HEADER",
@@ -167,13 +167,13 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         }.toMap()
     }
 
-    private fun sequenceMap(sequenceFile: MultipartFile): Map<customId, Map<segmentName, String>> {
+    private fun sequenceMap(sequenceFile: MultipartFile): Map<CustomId, Map<SegmentName, String>> {
         if (sequenceFile.originalFilename == null || !sequenceFile.originalFilename?.endsWith(".fasta")!!) {
             throw BadRequestException("Sequence file must have extension .fasta")
         }
 
         val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
-        val sequenceMap = mutableMapOf<customId, MutableMap<segmentName, String>>()
+        val sequenceMap = mutableMapOf<CustomId, MutableMap<SegmentName, String>>()
         fastaList.forEach {
             val (sampleName, segmentName) = parseFastaHeader(it.sampleName)
             val segmentMap = sequenceMap.getOrPut(sampleName) { mutableMapOf() }
@@ -185,7 +185,7 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         return sequenceMap
     }
 
-    private fun parseFastaHeader(header: String): Pair<customId, segmentName> {
+    private fun parseFastaHeader(header: String): Pair<CustomId, SegmentName> {
         if (referenceGenome.nucleotideSequences.size == 1) {
             return Pair(header, "main")
         }
