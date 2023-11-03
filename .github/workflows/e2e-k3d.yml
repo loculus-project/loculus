@@ -1,0 +1,112 @@
+name: Test with kubernetes (will become E2E test)
+
+on:
+  push:
+
+
+jobs:
+  k3d-e2e:
+  
+    permissions:
+      packages: read
+      contents: read
+      checks: read
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install k3d
+      run: |
+        curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+
+    - name: Create k3d cluster
+      run: |
+        k3d cluster create mycluster \
+          -p "3000:80@loadbalancer" \
+          -v "$(pwd):/repo" --agents 2
+    
+    - name: Install Helm
+      run: |
+        curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
+        sudo apt-get install apt-transport-https --yes
+        echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+        sudo apt-get update
+        sudo apt-get install helm
+
+    - name: Wait for Backend Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Backend Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Wait for Website Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Website Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Deploy Helm chart
+      run: |
+        helm install preview kubernetes/preview --set mode=e2e --set branch=${{ github.ref_name }} --set namespace=test --set dockerconfigjson=${{ secrets.GHCR_DOCKER_CONFIG }}
+
+    - uses: actions/setup-node@v3
+    - name: Install playwright
+      run: npm install -g playwright
+    - name: Install playwright browsers
+      run: npx playwright install chromium --with-deps
+    - name: Wait for the pods to be ready
+      run: |
+        end=$((SECONDS+300))
+        while true; do
+          all_pods=$(kubectl get pods -l app=pathoplexus -n test -o jsonpath='{.items[*].metadata.name}')
+          running_pods=$(kubectl get pods -l app=pathoplexus -n test -o=jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}')
+
+          if [[ "$all_pods" == "$running_pods" ]]; then
+            echo "All pods are up and running!"
+            break
+          fi
+
+          if [[ "${SECONDS}" -ge "${end}" ]]; then
+            not_running_pods=$(kubectl get pods -l app=pathoplexus -n test -o=jsonpath='{.items[?(@.status.phase!="Running")].metadata.name}')
+            echo "Error: The following pods did not start on time: $not_running_pods"
+            exit 1
+          fi
+          
+          echo "Waiting for pods to be ready..."
+          sleep 10
+        done
+    
+    - name: List running pods
+      run: kubectl get pods --all-namespaces
+    - name: Info
+      run: kubectl describe pods -l app=pathoplexus -n test
+    - name: Logs
+      run: kubectl logs -l app=pathoplexus -n test -c website
+    - name: Take screenshot of the site
+      run: npx playwright screenshot localhost:3000 screenshot.png
+    - name: Upload screenshot
+      uses: actions/upload-artifact@v2
+      with:
+        name: screenshot
+        path: screenshot.png
+    - name: Save logs from all containers to file
+      run: |
+        pods=$(kubectl get pods -l app=pathoplexus -n test -o jsonpath='{.items[*].metadata.name}')
+        for pod in $pods; do
+          containers=$(kubectl get pod $pod -n test -o jsonpath='{.spec.containers[*].name}')
+          for container in $containers; do
+            echo "Logs from $pod - $container:" >> kubernetes_logs.txt
+            kubectl logs $pod -n test -c $container >> kubernetes_logs.txt
+            echo "==============================" >> kubernetes_logs.txt
+          done
+        done
+    - name: Upload Kubernetes logs
+      uses: actions/upload-artifact@v2
+      with:
+        name: kubernetes-logs
+        path: kubernetes_logs.txt

@@ -15,7 +15,7 @@ spec:
           repo: pathoplexus
           tokenRef:
             key: token
-            secretName: github-token
+            secretName: github-access-token
         requeueAfterSeconds: 60
   template:
     metadata:
@@ -34,7 +34,7 @@ spec:
         namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" }}'
       project: default
       source:
-        path: '.argocd/preview/'
+        path: 'kubernetes/preview/'
         repoURL: 'https://github.com/pathoplexus/pathoplexus.git'
         targetRevision: '{{.branch}}'
         helm:
@@ -49,6 +49,7 @@ spec:
               value: '{{.branch}}'
             - name: host
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
+
 
       syncPolicy:
         automated:

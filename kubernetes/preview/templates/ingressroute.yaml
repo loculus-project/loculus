@@ -1,11 +1,13 @@
+{{- if ne .Values.mode "e2e" }}
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   creationTimestamp: '2023-10-24T13:00:51Z'
-  name: website-{{ .Values.shortbranch }}
+  name: pathoplexus-website-ingressroute
   namespace: {{ .Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    link.argocd.argoproj.io/external-link: https://{{ .Values.host }}
 spec:
   entryPoints:
     - websecure
@@ -14,7 +16,9 @@ spec:
       match: Host(`{{ .Values.host }}`)
       priority: 10
       services:
-        - name: website-{{ .Values.shortbranch }}-service
+        - name: pathoplexus-website-service
           port: 3000
   tls:
     certResolver: myresolver
+
+  {{- end}}
