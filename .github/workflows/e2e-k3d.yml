@@ -55,12 +55,27 @@ jobs:
         helm install preview kubernetes/preview --set mode=e2e --set branch=${{ github.ref_name }} --set namespace=test --set dockerconfigjson=${{ secrets.GHCR_DOCKER_CONFIG }}
 
     - uses: actions/setup-node@v3
-    - name: Install playwright
-      run: npm install -g playwright
-    - name: Install playwright browsers
-      run: npx playwright install chromium --with-deps
     - name: Install dependencies
       run: cd website && npm i
+
+    - name: Get Installed Playwright Version
+      id: playwright-version
+      run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
+
+    - name: Cache Playwright Browsers
+      uses: actions/cache@v3
+      id: playwright-cache
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+
+    - name: Install Playwright Browsers and System Dependencies
+      run: cd website && npx playwright install --with-deps
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+
+    - name: Install only System Dependencies
+      run: cd website && npx playwright install-deps
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
     - name: Wait for the pods to be ready
       run: |
         end=$((SECONDS+300))
