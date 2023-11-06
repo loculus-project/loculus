@@ -90,7 +90,7 @@ jobs:
     - name: Take screenshot of the site
       run: npx playwright screenshot localhost:3000 screenshot.png
     - name: Upload screenshot
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: screenshot
         path: screenshot.png
@@ -106,7 +106,7 @@ jobs:
           done
         done
     - name: Upload Kubernetes logs
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: kubernetes-logs
         path: kubernetes_logs.txt
