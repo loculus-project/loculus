@@ -59,6 +59,8 @@ jobs:
       run: npm install -g playwright
     - name: Install playwright browsers
       run: npx playwright install chromium --with-deps
+    - name: Install dependencies
+      run: cd website && npm i
     - name: Wait for the pods to be ready
       run: |
         end=$((SECONDS+300))
