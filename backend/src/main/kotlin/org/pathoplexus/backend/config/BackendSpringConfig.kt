@@ -17,6 +17,11 @@ import org.springframework.web.filter.CommonsRequestLoggingFilter
 import java.io.File
 import javax.sql.DataSource
 
+object BackendSpringProperty {
+    const val BACKEND_REFERENCE_GENOME_PATH = "backend.referenceGenome.path"
+    const val BACKEND_CONFIG_PATH = "backend.config.path"
+}
+
 @Configuration
 @ImportAutoConfiguration(
     value = [ExposedAutoConfiguration::class],
@@ -54,14 +59,17 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun schemaConfig(objectMapper: ObjectMapper, @Value("\${backend.config.path}") configPath: String): SchemaConfig {
+    fun schemaConfig(
+        objectMapper: ObjectMapper,
+        @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
+    ): SchemaConfig {
         return objectMapper.readValue(File(configPath))
     }
 
     @Bean
     fun referenceGenome(
         objectMapper: ObjectMapper,
-        @Value("\${backend.referenceGenome.path}") referenceGenomePath: String,
+        @Value("\${${BackendSpringProperty.BACKEND_REFERENCE_GENOME_PATH}}") referenceGenomePath: String,
     ): ReferenceGenome {
         return objectMapper.readValue(File(referenceGenomePath))
     }
