@@ -55,6 +55,13 @@ jobs:
         helm install preview kubernetes/preview --set mode=e2e --set branch=${{ github.ref_name }} --set namespace=test --set dockerconfigjson=${{ secrets.GHCR_DOCKER_CONFIG }}
 
     - uses: actions/setup-node@v3
+
+    - name: Cache .npm
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+
     - name: Install dependencies
       run: cd website && npm i
 
