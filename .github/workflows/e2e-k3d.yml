@@ -87,13 +87,8 @@ jobs:
       run: kubectl describe pods -l app=pathoplexus -n test
     - name: Logs
       run: kubectl logs -l app=pathoplexus -n test -c website
-    - name: Take screenshot of the site
-      run: npx playwright screenshot localhost:3000 screenshot.png
-    - name: Upload screenshot
-      uses: actions/upload-artifact@v2
-      with:
-        name: screenshot
-        path: screenshot.png
+    - name: Run E2E test
+      run: cd website && npm run e2e
     - name: Save logs from all containers to file
       run: |
         pods=$(kubectl get pods -l app=pathoplexus -n test -o jsonpath='{.items[*].metadata.name}')
