@@ -32,6 +32,28 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
             .andExpect(jsonPath("\$[0].version").value(1))
     }
 
+    @Test
+    fun `GIVEN fasta data with unknown segment THEN data is accepted to let the preprocessing pipeline verify it`() {
+        submissionControllerClient.submit(
+            "testUser",
+            SubmitFiles.metadataFileWith(
+                content = """
+                    header	firstColumn
+                    commonHeader	someValue
+                """.trimIndent(),
+            ),
+            SubmitFiles.sequenceFileWith(
+                content = """
+                    >commonHeader_nonExistingSegmentName
+                    AC
+                """.trimIndent(),
+            ),
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(1))
+    }
+
     @ParameterizedTest(name = "GIVEN {0} THEN throws error \"{5}\"")
     @MethodSource("badRequestForSubmit")
     fun `GIVEN invalid data THEN throws bad request`(

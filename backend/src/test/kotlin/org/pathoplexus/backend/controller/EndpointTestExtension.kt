@@ -8,6 +8,7 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
+import org.springframework.core.annotation.AliasFor
 import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.testcontainers.containers.PostgreSQLContainer
@@ -23,7 +24,9 @@ import org.testcontainers.containers.PostgreSQLContainer
     SubmissionControllerClient::class,
     SubmissionConvenienceClient::class,
 )
-annotation class EndpointTest
+annotation class EndpointTest(
+    @get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [],
+)
 
 private const val SPRING_DATASOURCE_URL = "spring.datasource.url"
 private const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
