@@ -20,5 +20,26 @@ spec:
           port: 3000
   tls:
     certResolver: myresolver
-
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  creationTimestamp: '2023-10-24T13:00:51Z'
+  name: pathoplexus-backend-ingressroute
+  namespace: {{ .Values.namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    link.argocd.argoproj.io/external-link: https://{{ .Values.backendhost }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.backendhost }}`)
+      priority: 10
+      services:
+        - name: pathoplexus-backend-service
+          port: 8079
+  tls:
+    certResolver: myresolver
   {{- end}}
