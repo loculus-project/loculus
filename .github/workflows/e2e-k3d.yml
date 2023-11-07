@@ -109,10 +109,13 @@ jobs:
         done
     
     - name: List running pods
+      if: ${{ !cancelled() }}
       run: kubectl get pods --all-namespaces
     - name: Info
+      if: ${{ !cancelled() }}
       run: kubectl describe pods -l app=pathoplexus -n test
     - name: Logs
+      if: ${{ !cancelled() }}
       run: kubectl logs -l app=pathoplexus -n test -c website
     - name: Run E2E test
       run: cd website && npm run e2e
@@ -123,6 +126,7 @@ jobs:
         path: website/playwright-report/
         retention-days: 30
     - name: Save logs from all containers to file
+      if: ${{ !cancelled() }}
       run: |
         pods=$(kubectl get pods -l app=pathoplexus -n test -o jsonpath='{.items[*].metadata.name}')
         for pod in $pods; do
@@ -134,6 +138,7 @@ jobs:
           done
         done
     - name: Upload Kubernetes logs
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v2
       with:
         name: kubernetes-logs
