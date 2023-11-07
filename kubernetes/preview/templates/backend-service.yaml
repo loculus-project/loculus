@@ -1,0 +1,32 @@
+{{- if eq .Values.mode "e2e" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: pathoplexus-backend-service
+  namespace: {{ .Values.namespace }}
+spec:
+  type: NodePort
+  selector:
+    app: pathoplexus
+  ports:
+    - port: 8079
+      targetPort: 8079
+      nodePort: 30082
+      protocol: TCP
+      name: http
+{{- else }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: pathoplexus-backend-service
+  namespace: {{ .Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: pathoplexus
+  ports:
+    - port: 8079
+      targetPort: 8079
+      protocol: TCP
+      name: http
+{{- end }}
