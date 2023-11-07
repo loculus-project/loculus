@@ -42,7 +42,7 @@ class ConfirmRevocationEndpointTest(
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail", containsString("Sequence versions 123.2, 1.123 do not exist")),
+                jsonPath("\$.detail", containsString("Sequence versions 1.123, 123.2 do not exist")),
             )
     }
 

@@ -8,6 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.api.SequenceVersion
 import org.pathoplexus.backend.api.Status
+import org.pathoplexus.backend.service.SequenceVersionComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -62,7 +63,7 @@ class DeleteSequencesEndpointTest(
         val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.PROCESSED}, " +
             "${Status.NEEDS_REVIEW}, ${Status.REVIEWED}, ${Status.REVOKED_STAGING}]"
         val errorString = "Sequence versions are in not in one of the states $listOfAllowedStatuses: " +
-            sequencesToDelete.sortedBy { it.sequenceId }.joinToString(", ") {
+            sequencesToDelete.sortedWith(SequenceVersionComparator).joinToString(", ") {
                 "${it.sequenceId}.${it.version} - ${it.status}"
             }
         deletionResult.andExpect(status().isUnprocessableEntity)
@@ -91,7 +92,7 @@ class DeleteSequencesEndpointTest(
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail", containsString("Sequence versions 123.1, 1.123 do not exist")),
+                jsonPath("\$.detail", containsString("Sequence versions 1.123, 123.1 do not exist")),
             )
     }
 

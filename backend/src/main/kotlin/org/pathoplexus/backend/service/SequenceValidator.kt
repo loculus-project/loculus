@@ -95,9 +95,10 @@ class SequenceValidator(
         data: Map<String, T>,
         known: List<String>,
     ) {
-        val unknowns = data.keys.subtract(known.toSet())
-        if (unknowns.isNotEmpty()) {
-            throw ProcessingValidationException("Unknown fields in processed data: ${unknowns.joinToString(", ")}.")
+        val unknownMetadataKeys = data.keys.subtract(known.toSet())
+        if (unknownMetadataKeys.isNotEmpty()) {
+            val unknownMetadataKeysString = unknownMetadataKeys.sorted().joinToString(", ")
+            throw ProcessingValidationException("Unknown fields in processed data: $unknownMetadataKeysString.")
         }
     }
 
@@ -262,10 +263,11 @@ class SequenceValidator(
         dataToValidate: Map<String, T>,
         sequenceGrouping: String,
     ) {
-        val unknowns = dataToValidate.keys.subtract(referenceGenome.nucleotideSequences.map { it.name }.toSet())
-        if (unknowns.isNotEmpty()) {
+        val unknownSegments = dataToValidate.keys.subtract(referenceGenome.nucleotideSequences.map { it.name }.toSet())
+        if (unknownSegments.isNotEmpty()) {
+            val unknownSegmentsString = unknownSegments.sorted().joinToString(", ")
             throw ProcessingValidationException(
-                "Unknown segments in '$sequenceGrouping': ${unknowns.joinToString(", ")}.",
+                "Unknown segments in '$sequenceGrouping': $unknownSegmentsString.",
             )
         }
     }
@@ -348,9 +350,10 @@ class SequenceValidator(
         data: Map<String, T>,
         geneGrouping: String,
     ) {
-        val unknowns = data.keys.subtract(referenceGenome.genes.map { it.name }.toSet())
-        if (unknowns.isNotEmpty()) {
-            throw ProcessingValidationException("Unknown genes in '$geneGrouping': ${unknowns.joinToString(", ")}.")
+        val unknownGenes = data.keys.subtract(referenceGenome.genes.map { it.name }.toSet())
+        if (unknownGenes.isNotEmpty()) {
+            val unknownGenesString = unknownGenes.sorted().joinToString(", ")
+            throw ProcessingValidationException("Unknown genes in '$geneGrouping': $unknownGenesString.")
         }
     }
 
