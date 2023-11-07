@@ -11,7 +11,7 @@ We do not currently support branch names containing underscores and other charac
 
 ### Secrets
 
-For preview isntances this repo contains[sealed secrets](https://sealed-secrets.netlify.app/) that allow the pathoplexus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
+For preview instances this repo contains [sealed secrets](https://sealed-secrets.netlify.app/) that allow the pathoplexus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
 
 ## E2E mode
 
