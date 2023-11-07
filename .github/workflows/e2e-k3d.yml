@@ -3,6 +3,9 @@ name: E2E test (on kubernetes)
 on:
   push:
 
+concurrency:
+  group: ci-${{ github.ref }}-e2e-k3d
+  cancel-in-progress: true
 
 jobs:
   k3d-e2e:
