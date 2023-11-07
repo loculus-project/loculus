@@ -66,7 +66,9 @@ class QueryPreconditionValidator {
                     it[SequencesTable.sequenceId] == sequenceVersion.sequenceId &&
                         it[SequencesTable.version] == sequenceVersion.version
                 }
-            }.joinToString(", ") { it.displaySequenceVersion() }
+            }
+            .sortedWith(SequenceVersionComparator)
+            .joinToString(", ") { it.displaySequenceVersion() }
 
         throw UnprocessableEntityException("Sequence versions $sequenceVersionsNotFound do not exist")
     }
@@ -75,6 +77,12 @@ class QueryPreconditionValidator {
         val sequencesNotProcessed = sequences
             .filter {
                 statuses.none { status -> it[SequencesTable.status] == status.name }
+            }
+            .sortedWith { left, right ->
+                SequenceIdComparator.compare(
+                    left[SequencesTable.sequenceId],
+                    right[SequencesTable.sequenceId],
+                )
             }
             .map { "${it[SequencesTable.sequenceId]}.${it[SequencesTable.version]} - ${it[SequencesTable.status]}" }
 
@@ -91,9 +99,11 @@ class QueryPreconditionValidator {
             .map { SequenceVersion(it[SequencesTable.sequenceId], it[SequencesTable.version]) }
 
         if (sequencesNotSubmittedByUser.isNotEmpty()) {
+            val sequenceVersionString = sequencesNotSubmittedByUser.sortedWith(SequenceVersionComparator)
+                .joinToString(", ") { it.displaySequenceVersion() }
+
             throw ForbiddenException(
-                "User '$submitter' does not have right to change the sequence versions " +
-                    sequencesNotSubmittedByUser.joinToString(", ") { it.displaySequenceVersion() },
+                "User '$submitter' does not have right to change the sequence versions $sequenceVersionString",
             )
         }
     }
@@ -103,14 +113,15 @@ class QueryPreconditionValidator {
             return
         }
 
-        val sequenceVersionsNotFound = sequenceIds
+        val sequenceIdsNotFound = sequenceIds
             .filter { sequenceId ->
                 sequences.none {
                     it[SequencesTable.sequenceId] == sequenceId
                 }
             }
+            .sortedWith(SequenceIdComparator)
             .joinToString(", ")
 
-        throw UnprocessableEntityException("SequenceIds $sequenceVersionsNotFound do not exist")
+        throw UnprocessableEntityException("SequenceIds $sequenceIdsNotFound do not exist")
     }
 }

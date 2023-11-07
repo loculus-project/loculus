@@ -137,6 +137,7 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
                 .eachCount()
                 .filter { it.value > 1 }
                 .keys
+                .sortedBy { it }
 
             throw UnprocessableEntityException(
                 "Metadata file contains duplicate ${HEADER_TO_CONNECT_METADATA_AND_SEQUENCES}s: $duplicateKeys",

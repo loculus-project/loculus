@@ -98,7 +98,7 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User '$notSubmitter' does not have right to change the sequence versions " +
-                        "1.1, 3.1, 4.1, 5.1, 2.1, 6.1, 7.1, 8.1, 9.1, 10.1",
+                        "1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1",
                 ),
             )
     }
@@ -117,7 +117,7 @@ class ReviseEndpointTest(
                 jsonPath("\$.detail").value(
                     "Sequence versions are in not in one of the states [SILO_READY]: " +
                         "1.1 - NEEDS_REVIEW, 2.1 - NEEDS_REVIEW, 3.1 - NEEDS_REVIEW, 4.1 - NEEDS_REVIEW, " +
-                        "7.1 - NEEDS_REVIEW, 5.1 - NEEDS_REVIEW, 6.1 - NEEDS_REVIEW, 8.1 - NEEDS_REVIEW, " +
+                        "5.1 - NEEDS_REVIEW, 6.1 - NEEDS_REVIEW, 7.1 - NEEDS_REVIEW, 8.1 - NEEDS_REVIEW, " +
                         "9.1 - NEEDS_REVIEW, 10.1 - NEEDS_REVIEW",
                 ),
             )

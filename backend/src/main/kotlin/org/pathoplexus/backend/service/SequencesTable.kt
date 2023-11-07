@@ -14,6 +14,7 @@ import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.api.OriginalData
 import org.pathoplexus.backend.api.PreprocessingAnnotation
 import org.pathoplexus.backend.api.ProcessedData
+import org.pathoplexus.backend.api.SequenceVersionInterface
 
 private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
@@ -25,6 +26,21 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
 
 typealias SequenceId = String
 typealias Version = Long
+
+object SequenceIdComparator : Comparator<SequenceId> {
+    override fun compare(left: SequenceId, right: SequenceId): Int {
+        return left.toInt().compareTo(right.toInt())
+    }
+}
+
+object SequenceVersionComparator : Comparator<SequenceVersionInterface> {
+    override fun compare(left: SequenceVersionInterface, right: SequenceVersionInterface): Int {
+        return when (val sequenceIdResult = left.sequenceId.toInt().compareTo(right.sequenceId.toInt())) {
+            0 -> left.version.compareTo(right.version)
+            else -> sequenceIdResult
+        }
+    }
+}
 
 val idSequence = Sequence(name = "id_sequence")
 
