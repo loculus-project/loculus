@@ -1,4 +1,4 @@
-name: Test with kubernetes (will become E2E test)
+name: E2E test (on kubernetes)
 
 on:
   push:
