@@ -1,3 +1,6 @@
+{{- $dockerTag := (eq (.Values.branch | default "main") "main") | ternary "latest" .Values.branch -}}
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -55,7 +58,7 @@ spec:
 
       containers:
         - name: website
-          image: ghcr.io/pathoplexus/website:{{ .Values.branch }}
+          image: ghcr.io/pathoplexus/website:{{ $dockerTag }}
           imagePullPolicy: Always
           resources:
             requests:
@@ -83,7 +86,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 5
         - name: backend
-          image: ghcr.io/pathoplexus/backend:{{ .Values.branch }}
+          image: ghcr.io/pathoplexus/backend:{{ $dockerTag }}
           imagePullPolicy: Always
           ports:
             - containerPort: 8079
