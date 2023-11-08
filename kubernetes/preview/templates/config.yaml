@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pathoplexus-config
+  namespace: {{ .Values.namespace }}
+data:
+  database_config.yaml: |
+    schema:
+      instanceName: PathoplexusTest
+      opennessLevel: OPEN
+      metadata:
+        - name: accession
+          type: string
+        - name: date
+          type: date
+        - name: region
+          type: string
+          generateIndex: true
+        - name: country
+          type: string
+          generateIndex: true
+        - name: pango_lineage
+          type: pango_lineage
+        - name: division
+          type: string
+          generateIndex: true
+        - name: age
+          type: int
+        - name: qc_value
+          type: float
+        - name: insertions
+          type: insertion
+        - name: aaInsertions
+          type: aaInsertion
+      features:
+        - name: sarsCoV2VariantQuery
+      primaryKey: accession
+      dateToSortBy: date
+      partitionBy: pango_lineage

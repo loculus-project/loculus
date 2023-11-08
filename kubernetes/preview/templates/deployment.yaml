@@ -49,9 +49,9 @@ spec:
             - name: repo-volume
               mountPath: /app/preprocessing_config.yaml
               subPath: website/tests/config/preprocessing_config.yaml
-            - name: repo-volume
+            - name: database-config
               mountPath: /app/database_config.yaml
-              subPath: website/tests/config/database_config.yaml
+              subPath: database_config.yaml
             - name: repo-volume
               mountPath: /preprocessing/output
               subPath: website/tests/initialSiloData/processingOutput 
@@ -137,20 +137,25 @@ spec:
           args:
             - "--silo.url=http://localhost:8081"
           volumeMounts:
-            - name: repo-volume
+            - name: database-config
               mountPath: /workspace/database_config.yaml
-              subPath: website/tests/config/database_config.yaml
+              subPath: database_config.yaml
             - name: repo-volume
               mountPath: /workspace/reference_genomes.json
               subPath: website/tests/config/reference_genomes.json
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
+        - name: database-config
+          configMap:
+            name: pathoplexus-config
+            items:
+            - key: database_config.yaml
+              path: database_config.yaml
         - name: repo-volume
-{{- if ne .Values.mode "e2e" }}
-          emptyDir: {}
-{{- end }}
 {{- if eq .Values.mode "e2e" }}
           hostPath:
             path: /repo
+{{- else }}
+          emptyDir: {}
 {{- end }}
