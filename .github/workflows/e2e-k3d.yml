@@ -139,7 +139,7 @@ jobs:
         done
     - name: Upload Kubernetes logs
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: kubernetes-logs
         path: kubernetes_logs.txt
