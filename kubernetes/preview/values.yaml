@@ -1,0 +1,2 @@
+preprocessing_config.yaml: |-
+  {{ .Files.Get "../../website/tests/config/preprocessing_config.yaml" | indent 2 }}
