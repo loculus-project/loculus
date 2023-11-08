@@ -38,7 +38,7 @@ data:
       dateToSortBy: date
       partitionBy: pango_lineage
   preprocessing_config.yaml: |
-{{ .Values.preprocessing_config.yaml | indent 4 }}
+{{ .Values.preprocessingconfigyaml | indent 4 }}
   reference_genomes.json: |
     {
         "nucleotideSequences": [
