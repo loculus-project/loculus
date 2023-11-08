@@ -2,8 +2,8 @@
 
 ## Glossary
 
-- Accession: a sequence-specific identifier that Pathoplexus assigns
-- Version: the version number of a sequence+metadata
+Extension from [docs/glossary.md](../../docs/glossary.md)
+
 - Unpreprocessed data: the data that the submitter provides
 - Preprocessed data: the data that the preprocessing pipeline provides/derives based on the unpreprocesed data
 - Revision: a new version of unpreprocessed data associated with an existing accession that is already released
@@ -24,6 +24,23 @@ If the data do not contain errors, they will be staged unless the user selected 
 The user can then edit the data and approve them.
 If the "release directly"-mode is used, the staging phase will be skipped and the data directly released.
 If the user decides to not approve a sequence entry, the entry will be (permanently) removed from the database.
+
+
+### Sequence entry statuses
+
+When submitting a sequence entry, it goes through a series of statuses:
+
+**Received**: The sequence entry was received by the backend and awaits preprocessing.
+
+**In_processing**: The sequence entry is being processed by the preprocessing pipeline.
+
+**Has_errors**: The sequence entry contains errors that prevent a release. It must be edited and resubmitted by the submitter.
+
+**Awaiting_approval**: The sequence entry was successfully processed by the preprocessing pipeline and can be released. The submitter has to approve the release.
+
+**Awaiting_approval_for_revocation**: The revocation request was received. The submitter has to approve the revocation.
+
+**Approved_for_release**: The sequence entry was approved for release. It is or will shortly be released.
 
 The following diagram shows the different statuses and their transitions. The **blue-dotted** boxes represent data. The **green-dotted** boxes represent entry creation actions. The **red-dotted** boxes represent entry deletion actions.
 
