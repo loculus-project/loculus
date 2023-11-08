@@ -159,6 +159,12 @@ spec:
             items:
             - key: preprocessing_config.yaml
               path: preprocessing_config.yaml
+        - name: reference-genomes
+          configMap:
+            name: pathoplexus-config
+            items:
+            - key: reference_genomes.json
+              path: reference_genomes.json
         - name: repo-volume
 {{- if eq .Values.mode "e2e" }}
           hostPath:
