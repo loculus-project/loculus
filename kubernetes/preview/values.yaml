@@ -1,2 +1,6 @@
-preprocessingconfigyaml: |-
+preprocessing_config_yaml: |-
   {{ .Files.Get "../../website/tests/config/preprocessing_config.yaml" | indent 2 }}
+database_config_yaml: |-
+  {{ .Files.Get "../../website/tests/config/database_config.yaml" | indent 2 }}
+reference_genomes_json: |-
+  {{ .Files.Get "../../website/tests/config/reference_genomes.json" | indent 2 }}
