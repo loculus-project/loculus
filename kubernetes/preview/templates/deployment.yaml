@@ -88,13 +88,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /swagger-ui/index.html
-              port: 3000
+              port: 8079
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
               path: /swagger-ui/index.html
-              port: 3000
+              port: 8079
           ports:
             - containerPort: 8079
           args:
