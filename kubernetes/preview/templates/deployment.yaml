@@ -1,5 +1,5 @@
 {{- $dockerTag := (eq (.Values.branch | default "main") "main") | ternary "latest" .Values.branch -}}
-{{- $dockerTag = replace $dockerTag "/" "-" -}}
+{{- $dockerTag = regexReplaceAll "/" $dockerTag "-" }}
 ---
 apiVersion: apps/v1
 kind: Deployment
