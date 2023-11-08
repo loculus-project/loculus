@@ -111,12 +111,12 @@ jobs:
     - name: List running pods
       if: ${{ !cancelled() }}
       run: kubectl get pods --all-namespaces
-    - name: Info
+    - name: Describe pods
       if: ${{ !cancelled() }}
       run: kubectl describe pods -l app=pathoplexus -n test
-    - name: Logs
+    - name: Show events
       if: ${{ !cancelled() }}
-      run: kubectl logs -l app=pathoplexus -n test -c website
+      run: kubectl get events -n test
     - name: Run E2E test
       run: cd website && npm run e2e
     - uses: actions/upload-artifact@v3
@@ -137,6 +137,7 @@ jobs:
             echo "==============================" >> kubernetes_logs.txt
           done
         done
+        cat kubernetes_logs.txt
     - name: Upload Kubernetes logs
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v3
