@@ -46,9 +46,9 @@ spec:
             - name: repo-volume
               mountPath: /preprocessing/input/reference_genomes.json
               subPath: website/tests/config/reference_genomes.json
-            - name: repo-volume
+            - name: preprocessing-config
               mountPath: /app/preprocessing_config.yaml
-              subPath: website/tests/config/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
             - name: database-config
               mountPath: /app/database_config.yaml
               subPath: database_config.yaml
@@ -152,6 +152,12 @@ spec:
             items:
             - key: database_config.yaml
               path: database_config.yaml
+        - name: preprocessing-config
+          configMap:
+            name: pathoplexus-config
+            items:
+            - key: preprocessing_config.yaml
+              path: preprocessing_config.yaml
         - name: repo-volume
 {{- if eq .Values.mode "e2e" }}
           hostPath:
