@@ -4,11 +4,18 @@ metadata:
   name: pathoplexus-website-service
   namespace: {{ .Values.namespace }}
 spec:
+  {{- if eq .Values.mode "e2e" }}
+  type: NodePort
+  {{- else }}
   type: ClusterIP
+  {{- end }}
   selector:
     app: pathoplexus
   ports:
     - port: 3000
       targetPort: 3000
+      {{- if eq .Values.mode "e2e" }}
+      nodePort: 30081
+      {{- end }}
       protocol: TCP
       name: http

@@ -1,8 +1,11 @@
-name: Test with kubernetes (will become E2E test)
+name: E2E test (on kubernetes)
 
 on:
   push:
 
+concurrency:
+  group: ci-${{ github.ref }}-e2e-k3d
+  cancel-in-progress: true
 
 jobs:
   k3d-e2e:
@@ -24,9 +27,7 @@ jobs:
 
     - name: Create k3d cluster
       run: |
-        k3d cluster create mycluster \
-          -p "3000:80@loadbalancer" \
-          -v "$(pwd):/repo" --agents 2
+        k3d cluster create mycluster -p "3000:30081@agent:0"  -p "8079:30082@agent:0" -v "$(pwd):/repo"  --agents 2 
     
     - name: Install Helm
       run: |
@@ -54,11 +55,37 @@ jobs:
       run: |
         helm install preview kubernetes/preview --set mode=e2e --set branch=${{ github.ref_name }} --set namespace=test --set dockerconfigjson=${{ secrets.GHCR_DOCKER_CONFIG }}
 
-    - uses: actions/setup-node@v3
-    - name: Install playwright
-      run: npm install -g playwright
-    - name: Install playwright browsers
-      run: npx playwright install chromium --with-deps
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Cache .npm
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+
+    - name: Install dependencies
+      run: cd website && npm i
+
+    - name: Get Installed Playwright Version
+      id: playwright-version
+      run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
+
+    - name: Cache Playwright Browsers
+      uses: actions/cache@v3
+      id: playwright-cache
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+
+    - name: Install Playwright Browsers and System Dependencies
+      run: cd website && npx playwright install --with-deps
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+
+    - name: Install only System Dependencies
+      run: cd website && npx playwright install-deps
+      if: steps.playwright-cache.outputs.cache-hit == 'true'
     - name: Wait for the pods to be ready
       run: |
         end=$((SECONDS+300))
@@ -82,19 +109,24 @@ jobs:
         done
     
     - name: List running pods
+      if: ${{ !cancelled() }}
       run: kubectl get pods --all-namespaces
     - name: Info
+      if: ${{ !cancelled() }}
       run: kubectl describe pods -l app=pathoplexus -n test
     - name: Logs
+      if: ${{ !cancelled() }}
       run: kubectl logs -l app=pathoplexus -n test -c website
-    - name: Take screenshot of the site
-      run: npx playwright screenshot localhost:3000 screenshot.png
-    - name: Upload screenshot
-      uses: actions/upload-artifact@v2
+    - name: Run E2E test
+      run: cd website && npm run e2e
+    - uses: actions/upload-artifact@v3
+      if: ${{ failure() }}
       with:
-        name: screenshot
-        path: screenshot.png
+        name: playwright-report
+        path: website/playwright-report/
+        retention-days: 30
     - name: Save logs from all containers to file
+      if: ${{ !cancelled() }}
       run: |
         pods=$(kubectl get pods -l app=pathoplexus -n test -o jsonpath='{.items[*].metadata.name}')
         for pod in $pods; do
@@ -106,7 +138,8 @@ jobs:
           done
         done
     - name: Upload Kubernetes logs
-      uses: actions/upload-artifact@v2
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v3
       with:
         name: kubernetes-logs
         path: kubernetes_logs.txt
