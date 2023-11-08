@@ -43,9 +43,9 @@ spec:
             - name: repo-volume
               mountPath: /preprocessing/input
               subPath: website/tests/initialSiloData
-            - name: repo-volume
+            - name: reference-genomes
               mountPath: /preprocessing/input/reference_genomes.json
-              subPath: website/tests/config/reference_genomes.json
+              subPath: reference_genomes.json
             - name: preprocessing-config
               mountPath: /app/preprocessing_config.yaml
               subPath: preprocessing_config.yaml
@@ -140,9 +140,10 @@ spec:
             - name: database-config
               mountPath: /workspace/database_config.yaml
               subPath: database_config.yaml
-            - name: repo-volume
+            - name: reference-genomes
               mountPath: /workspace/reference_genomes.json
-              subPath: website/tests/config/reference_genomes.json
+              subPath: reference_genomes.json
+
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
