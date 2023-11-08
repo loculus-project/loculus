@@ -85,6 +85,16 @@ spec:
         - name: backend
           image: ghcr.io/pathoplexus/backend:{{ .Values.branch }}
           imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /swagger-ui/index.html
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /swagger-ui/index.html
+              port: 3000
           ports:
             - containerPort: 8079
           args:
