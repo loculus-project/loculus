@@ -51,7 +51,7 @@ data class NotFoundView(private val url: String?) : View {
                 <title>Error 404</title>
             </head>
             <body>
-                <h1>Pathoplexus - Backend</h1>
+                <h1>$PROJECT_NAME - Backend</h1>
                 <h3>Page not found!</h3>
                 <a href="$url">Visit our swagger-ui</a>
             </body>
