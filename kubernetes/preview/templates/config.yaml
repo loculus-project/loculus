@@ -10,3 +10,5 @@ data:
 {{ .Values.preprocessing_config_yaml | indent 4 }}
   reference_genomes.json: |
 {{ .Values.reference_genomes_json | indent 4 }}
+  config.json: |
+{{ .Values.config_json | indent 4 }}

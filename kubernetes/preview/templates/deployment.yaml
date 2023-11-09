@@ -104,11 +104,11 @@ spec:
             - "--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus"
             - "--spring.datasource.username=postgres"
             - "--spring.datasource.password=unsecure"
-            - "--backend.config.path=/repo/website/tests/config/config.json"
-            - "--backend.referenceGenome.path=/repo/website/tests/config/reference_genomes.json"
+            - "--backend.config.path=/config/config.json"
+            - "--backend.referenceGenome.path=/config/reference_genomes.json"
           volumeMounts:
-            - name: repo-volume
-              mountPath: /repo
+            - name: pathoplexus-config
+              mountPath: /config
         - name: database
           image: postgres:latest
           ports:
