@@ -18,7 +18,7 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.NEEDS_REVIEW)
+            .assertStatusIs(Status.HAS_ERRORS)
 
         val reviewedData = UnprocessedData(
             sequenceId = "1",
@@ -29,7 +29,7 @@ class SubmitReviewedSequenceEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.REVIEWED)
+            .assertStatusIs(Status.RECEIVED)
     }
 
     @Test
@@ -37,7 +37,7 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.PROCESSED)
+            .assertStatusIs(Status.AWAITING_APPROVAL)
 
         val reviewedData = UnprocessedData(
             sequenceId = "1",
@@ -49,7 +49,7 @@ class SubmitReviewedSequenceEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.REVIEWED)
+            .assertStatusIs(Status.RECEIVED)
     }
 
     @Test
@@ -57,7 +57,7 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.NEEDS_REVIEW)
+            .assertStatusIs(Status.HAS_ERRORS)
 
         val reviewedDataWithNonExistingVersion =
             UnprocessedData(
@@ -81,7 +81,7 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.NEEDS_REVIEW)
+            .assertStatusIs(Status.HAS_ERRORS)
 
         val reviewedDataWithNonExistingSequenceId = UnprocessedData(
             sequenceId = "2",
@@ -95,12 +95,12 @@ class SubmitReviewedSequenceEndpointTest(
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence $sequenceString is in status PROCESSING not in PROCESSED or NEEDS_REVIEW",
+                    "Sequence $sequenceString is in status IN_PROCESSING not in AWAITING_APPROVAL or HAS_ERRORS",
                 ),
             )
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.NEEDS_REVIEW)
+            .assertStatusIs(Status.HAS_ERRORS)
     }
 
     @Test
@@ -108,7 +108,7 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.NEEDS_REVIEW)
+            .assertStatusIs(Status.HAS_ERRORS)
 
         val reviewedDataFromWrongSubmitter =
             UnprocessedData(
@@ -129,6 +129,6 @@ class SubmitReviewedSequenceEndpointTest(
             )
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.NEEDS_REVIEW)
+            .assertStatusIs(Status.HAS_ERRORS)
     }
 }

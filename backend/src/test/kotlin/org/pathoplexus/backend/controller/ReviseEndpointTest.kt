@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.pathoplexus.backend.api.Status.RECEIVED
-import org.pathoplexus.backend.api.Status.SILO_READY
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,7 +25,7 @@ class ReviseEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `GIVEN sequences with status 'SILO_READY' THEN there is a revised version and returns HeaderIds`() {
+    fun `GIVEN sequences with status 'APPROVED_FOR_RELEASE' THEN there is a revised version and returns HeaderIds`() {
         convenienceClient.prepareDefaultSequencesToSiloReady()
 
         client.reviseSequences(
@@ -42,7 +42,7 @@ class ReviseEndpointTest(
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 2)
             .assertStatusIs(RECEIVED)
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
-            .assertStatusIs(SILO_READY)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
 
         val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
         val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
@@ -104,7 +104,7 @@ class ReviseEndpointTest(
     }
 
     @Test
-    fun `WHEN submitting revised data with latest version not 'SILO_READY' THEN throws an unprocessableEntity error`() {
+    fun `WHEN submitting data with version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
         convenienceClient.prepareDefaultSequencesToNeedReview()
 
         client.reviseSequences(
@@ -115,10 +115,10 @@ class ReviseEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence versions are in not in one of the states [SILO_READY]: " +
-                        "1.1 - NEEDS_REVIEW, 2.1 - NEEDS_REVIEW, 3.1 - NEEDS_REVIEW, 4.1 - NEEDS_REVIEW, " +
-                        "5.1 - NEEDS_REVIEW, 6.1 - NEEDS_REVIEW, 7.1 - NEEDS_REVIEW, 8.1 - NEEDS_REVIEW, " +
-                        "9.1 - NEEDS_REVIEW, 10.1 - NEEDS_REVIEW",
+                    "Sequence versions are in not in one of the states [APPROVED_FOR_RELEASE]: " +
+                        "1.1 - HAS_ERRORS, 2.1 - HAS_ERRORS, 3.1 - HAS_ERRORS, 4.1 - HAS_ERRORS, " +
+                        "5.1 - HAS_ERRORS, 6.1 - HAS_ERRORS, 7.1 - HAS_ERRORS, 8.1 - HAS_ERRORS, " +
+                        "9.1 - HAS_ERRORS, 10.1 - HAS_ERRORS",
                 ),
             )
     }

@@ -166,12 +166,11 @@ class SubmissionConvenienceClient(
     fun prepareDataTo(status: Status) {
         when (status) {
             Status.RECEIVED -> submitDefaultFiles()
-            Status.PROCESSING -> prepareDefaultSequencesToProcessing()
-            Status.NEEDS_REVIEW -> prepareDefaultSequencesToNeedReview()
-            Status.REVIEWED -> prepareDefaultSequencesToReviewed()
-            Status.PROCESSED -> prepareDefaultSequencesToProcessed()
-            Status.SILO_READY -> prepareDefaultSequencesToSiloReady()
-            Status.REVOKED_STAGING -> prepareDefaultSequencesToRevokedStaging()
+            Status.IN_PROCESSING -> prepareDefaultSequencesToProcessing()
+            Status.HAS_ERRORS -> prepareDefaultSequencesToNeedReview()
+            Status.AWAITING_APPROVAL -> prepareDefaultSequencesToProcessed()
+            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequencesToSiloReady()
+            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequencesToRevokedStaging()
         }
     }
 

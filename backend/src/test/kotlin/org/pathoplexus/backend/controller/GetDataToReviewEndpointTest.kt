@@ -26,7 +26,7 @@ class GetDataToReviewEndpointTest(
         client.submitProcessedData(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.NEEDS_REVIEW)
+            .assertStatusIs(Status.HAS_ERRORS)
 
         val reviewData = convenienceClient.getSequenceThatNeedsReview(
             sequenceId = firstSequence,
@@ -81,7 +81,7 @@ class GetDataToReviewEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence version 1.1 is in not in state NEEDS_REVIEW or PROCESSED (was PROCESSING)",
+                    "Sequence version 1.1 is in not in state HAS_ERRORS or AWAITING_APPROVAL (was IN_PROCESSING)",
                 ),
             )
     }

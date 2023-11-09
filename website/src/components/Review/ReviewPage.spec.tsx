@@ -15,7 +15,7 @@ const editableEntry = 'originalMetaDataValue';
 const defaultReviewData: SequenceReview = {
     sequenceId: '1',
     version: 1,
-    status: 'NEEDS_REVIEW',
+    status: 'HAS_ERRORS',
     errors: [
         {
             source: [

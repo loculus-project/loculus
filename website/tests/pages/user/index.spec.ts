@@ -5,16 +5,16 @@ import { fakeProcessingPipeline } from '../../util/preprocessingPipeline';
 
 test.describe('The user page', () => {
     test('should show sequences, their status and a link to reviews', async ({ userPage }) => {
-        const [sequenceNeedsReview, sequenceProcessed, sequenceReleasable, sequenceToBeRevised] =
-            await prepareDataToBe('processing');
+        const [sequenceHasErrors, sequenceAwaitingApproval, sequenceReleasable, sequenceToBeRevised] =
+            await prepareDataToBe('inProcessing');
 
         await fakeProcessingPipeline.submit([
             {
-                ...sequenceNeedsReview,
+                ...sequenceHasErrors,
                 error: true,
             },
             {
-                ...sequenceProcessed,
+                ...sequenceAwaitingApproval,
                 error: false,
             },
             {
@@ -34,23 +34,23 @@ test.describe('The user page', () => {
 
         const sequencesArePresent = await userPage.verifyTableEntries([
             {
-                ...sequenceNeedsReview,
-                status: 'NEEDS_REVIEW',
+                ...sequenceHasErrors,
+                status: 'HAS_ERRORS',
                 isRevocation: false,
             },
             {
-                ...sequenceProcessed,
-                status: 'PROCESSED',
+                ...sequenceAwaitingApproval,
+                status: 'AWAITING_APPROVAL',
                 isRevocation: false,
             },
             {
                 ...sequenceReleasable,
-                status: 'SILO_READY',
+                status: 'APPROVED_FOR_RELEASE',
                 isRevocation: false,
             },
             {
                 ...sequenceToBeRevised,
-                status: 'SILO_READY',
+                status: 'APPROVED_FOR_RELEASE',
                 isRevocation: false,
             },
         ]);

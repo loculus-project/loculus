@@ -60,8 +60,8 @@ class DeleteSequencesEndpointTest(
             sequencesToDelete.map { SequenceVersion(it.sequenceId, it.version) },
         )
 
-        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.PROCESSED}, " +
-            "${Status.NEEDS_REVIEW}, ${Status.REVIEWED}, ${Status.REVOKED_STAGING}]"
+        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.AWAITING_APPROVAL}, " +
+            "${Status.HAS_ERRORS}, ${Status.AWAITING_APPROVAL_FOR_REVOCATION}]"
         val errorString = "Sequence versions are in not in one of the states $listOfAllowedStatuses: " +
             sequencesToDelete.sortedWith(SequenceVersionComparator).joinToString(", ") {
                 "${it.sequenceId}.${it.version} - ${it.status}"
@@ -126,19 +126,19 @@ class DeleteSequencesEndpointTest(
                 true,
             ),
             TestScenario(
-                Status.NEEDS_REVIEW,
+                Status.HAS_ERRORS,
                 true,
             ),
             TestScenario(
-                Status.REVIEWED,
+                Status.RECEIVED,
                 true,
             ),
             TestScenario(
-                Status.PROCESSED,
+                Status.AWAITING_APPROVAL,
                 true,
             ),
             TestScenario(
-                Status.REVOKED_STAGING,
+                Status.AWAITING_APPROVAL_FOR_REVOCATION,
                 true,
             ),
         )
@@ -146,11 +146,11 @@ class DeleteSequencesEndpointTest(
         @JvmStatic
         fun provideInvalidTestScenarios() = listOf(
             TestScenario(
-                Status.PROCESSING,
+                Status.IN_PROCESSING,
                 false,
             ),
             TestScenario(
-                Status.SILO_READY,
+                Status.APPROVED_FOR_RELEASE,
                 false,
             ),
         )

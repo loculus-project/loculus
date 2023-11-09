@@ -51,19 +51,19 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
             Scenario(
                 setupDescription = "I started processing sequences",
                 prepareDatabase = { it.prepareDefaultSequencesToProcessing() },
-                expectedStatus = Status.PROCESSING,
+                expectedStatus = Status.IN_PROCESSING,
                 expectedIsRevocation = false,
             ),
             Scenario(
                 setupDescription = "I submitted sequences that need review",
                 prepareDatabase = { it.prepareDefaultSequencesToNeedReview() },
-                expectedStatus = Status.NEEDS_REVIEW,
+                expectedStatus = Status.HAS_ERRORS,
                 expectedIsRevocation = false,
             ),
             Scenario(
                 setupDescription = "I submitted sequences that have been successfully processed",
                 prepareDatabase = { it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed()) },
-                expectedStatus = Status.PROCESSED,
+                expectedStatus = Status.AWAITING_APPROVAL,
                 expectedIsRevocation = false,
             ),
             Scenario(
@@ -72,7 +72,7 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
                     it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
                     it.approveProcessedSequences(listOf(SequenceVersion(firstSequence, 1)))
                 },
-                expectedStatus = Status.SILO_READY,
+                expectedStatus = Status.APPROVED_FOR_RELEASE,
                 expectedIsRevocation = false,
             ),
             Scenario(
@@ -82,7 +82,7 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
                     it.approveProcessedSequences(listOf(SequenceVersion(firstSequence, 1)))
                     it.revokeSequences(listOf(firstSequence))
                 },
-                expectedStatus = Status.REVOKED_STAGING,
+                expectedStatus = Status.AWAITING_APPROVAL_FOR_REVOCATION,
                 expectedIsRevocation = true,
                 expectedVersion = 2,
             ),
@@ -94,7 +94,7 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
                     it.revokeSequences(listOf(firstSequence))
                     it.confirmRevocation(listOf(SequenceVersion(firstSequence, 2)))
                 },
-                expectedStatus = Status.SILO_READY,
+                expectedStatus = Status.APPROVED_FOR_RELEASE,
                 expectedIsRevocation = true,
                 expectedVersion = 2,
             ),

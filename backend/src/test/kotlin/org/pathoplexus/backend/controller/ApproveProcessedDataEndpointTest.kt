@@ -17,7 +17,7 @@ class ApproveProcessedDataEndpointTest(
 ) {
 
     @Test
-    fun `GIVEN sequences are successfully processed WHEN I approve them THEN their status should be SILO_READY`() {
+    fun `GIVEN sequences are processed WHEN I approve them THEN their status should be APPROVED_FOR_RELEASE`() {
         convenienceClient.prepareDatabaseWith(
             PreparedProcessedData.successfullyProcessed(sequenceId = "1"),
             PreparedProcessedData.successfullyProcessed(sequenceId = "2"),
@@ -31,8 +31,12 @@ class ApproveProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 1).assertStatusIs(Status.SILO_READY)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 1).assertStatusIs(Status.SILO_READY)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 1).assertStatusIs(
+            Status.APPROVED_FOR_RELEASE,
+        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 1).assertStatusIs(
+            Status.APPROVED_FOR_RELEASE,
+        )
     }
 
     @Test
@@ -77,7 +81,7 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.detail", containsString("Sequence versions 999.1 do not exist")))
 
-        convenienceClient.getSequenceVersionOfUser(existingSequenceVersion).assertStatusIs(Status.PROCESSED)
+        convenienceClient.getSequenceVersionOfUser(existingSequenceVersion).assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
     @Test
@@ -98,7 +102,7 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.detail", containsString("Sequence versions 1.999 do not exist")))
 
-        convenienceClient.getSequenceVersionOfUser(existingSequenceVersion).assertStatusIs(Status.PROCESSED)
+        convenienceClient.getSequenceVersionOfUser(existingSequenceVersion).assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
     @Test
@@ -107,8 +111,10 @@ class ApproveProcessedDataEndpointTest(
 
         val sequenceVersionInCorrectState = SequenceVersion("1", 1)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceVersionInCorrectState).assertStatusIs(Status.PROCESSED)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 1).assertStatusIs(Status.PROCESSING)
+        convenienceClient.getSequenceVersionOfUser(sequenceVersionInCorrectState).assertStatusIs(
+            Status.AWAITING_APPROVAL,
+        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 1).assertStatusIs(Status.IN_PROCESSING)
 
         client.approveProcessedSequences(
             listOf(
@@ -122,13 +128,15 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(
                 jsonPath("$.detail")
                     .value(
-                        "Sequence versions are in not in one of the states [${Status.PROCESSED}]: " +
-                            "2.1 - ${Status.PROCESSING}, 3.1 - ${Status.PROCESSING}",
+                        "Sequence versions are in not in one of the states [${Status.AWAITING_APPROVAL}]: " +
+                            "2.1 - ${Status.IN_PROCESSING}, 3.1 - ${Status.IN_PROCESSING}",
                     ),
             )
 
-        convenienceClient.getSequenceVersionOfUser(sequenceVersionInCorrectState).assertStatusIs(Status.PROCESSED)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 1).assertStatusIs(Status.PROCESSING)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(Status.PROCESSING)
+        convenienceClient.getSequenceVersionOfUser(sequenceVersionInCorrectState).assertStatusIs(
+            Status.AWAITING_APPROVAL,
+        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 1).assertStatusIs(Status.IN_PROCESSING)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(Status.IN_PROCESSING)
     }
 }

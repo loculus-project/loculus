@@ -3,7 +3,7 @@ import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
 test.describe('The revise page', () => {
     test('should upload files and revise existing data', async ({ revisePage }) => {
-        const sequences = await prepareDataToBe('releasable');
+        const sequences = await prepareDataToBe('approvedForRelease');
 
         await revisePage.goto();
         await expect(revisePage.page.getByText('Result of Revision')).not.toBeVisible();
