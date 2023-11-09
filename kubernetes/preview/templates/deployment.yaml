@@ -52,9 +52,8 @@ spec:
             - name: pathoplexus-config
               mountPath: /app/database_config.yaml
               subPath: database_config.yaml
-            - name: repo-volume
+            - name: silo-output
               mountPath: /preprocessing/output
-              subPath: website/tests/initialSiloData/processingOutput 
 
       containers:
         - name: website
@@ -70,9 +69,8 @@ spec:
           ports:
             - containerPort: 3000
           volumeMounts:
-            - name: repo-volume
+            - name: pathoplexus-config
               mountPath: /config
-              subPath: website/tests/config
           livenessProbe:
             httpGet:
               path: /
@@ -127,9 +125,8 @@ spec:
           args:
             - "--api"
           volumeMounts:
-            - name: repo-volume
+            - name: silo-output
               mountPath: /data
-              subPath: website/tests/initialSiloData/processingOutput
         - name: lapis
           image: ghcr.io/genspectrum/lapis-v2:latest
           ports:
@@ -150,6 +147,8 @@ spec:
         - name: pathoplexus-config
           configMap:
             name: pathoplexus-config
+        - name: silo-output
+          emptyDir: {}
         - name: repo-volume
 {{- if eq .Values.mode "e2e" }}
           hostPath:

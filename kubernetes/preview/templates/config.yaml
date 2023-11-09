@@ -12,3 +12,5 @@ data:
 {{ .Values.reference_genomes_json | indent 4 }}
   config.json: |
 {{ .Values.config_json | indent 4 }}
+  runtime_config.json: |
+{{ .Values.runtime_config_json | indent 4 }}

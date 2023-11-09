@@ -1,3 +1,9 @@
+runtime_config_json: |-
+  {
+      "backendUrl": "http://localhost:8079",
+      "lapisUrl": "http://localhost:8080"
+  }
+
 config_json: |-
   {
       "schema": {
