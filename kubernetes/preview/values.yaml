@@ -1,5 +1,5 @@
 database_config_yaml: |-
-{{ .Files.Get "../../website/tests/config/database_config.yaml" | indent 2 }}
+  {{ .Files.Get "../../website/tests/config/preprocessing_config.yaml" | indent 2 }}
 preprocessing_config_yaml: |-
   metadataFilename: metadata.tsv
   pangoLineageDefinitionFilename: pangolineage_alias.json
