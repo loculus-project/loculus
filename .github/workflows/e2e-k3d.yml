@@ -28,14 +28,6 @@ jobs:
     - name: Create k3d cluster
       run: |
         k3d cluster create mycluster -p "3000:30081@agent:0"  -p "8079:30082@agent:0" -v "$(pwd):/repo"  --agents 2 
-    
-    - name: Install Helm
-      run: |
-        curl https://baltocdn.com/helm/signing.asc | sudo apt-key add -
-        sudo apt-get install apt-transport-https --yes
-        echo "deb https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
-        sudo apt-get update
-        sudo apt-get install helm
 
     - name: Wait for Backend Docker Image
       uses: lewagon/wait-on-check-action@v1.3.1
@@ -50,10 +42,11 @@ jobs:
         ref: ${{ github.ref }}
         check-name: Build Website Docker Image
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Deploy Helm chart
-      run: |
-        helm install preview kubernetes/preview --set mode=e2e --set branch=${{ github.ref_name }} --set namespace=test --set dockerconfigjson=${{ secrets.GHCR_DOCKER_CONFIG }}
+      
+    - name: Deploy with helm
+      uses: WyriHaximus/github-action-helm3@v3
+      with:
+        exec: helm install preview kubernetes/preview --set mode=e2e --set branch=${{ github.ref_name }} --set namespace=test --set dockerconfigjson=${{ secrets.GHCR_DOCKER_CONFIG }}
 
     - uses: actions/setup-node@v4
       with:
