@@ -43,18 +43,17 @@ spec:
             - name: repo-volume
               mountPath: /preprocessing/input
               subPath: website/tests/initialSiloData
-            - name: repo-volume
+            - name: pathoplexus-config
               mountPath: /preprocessing/input/reference_genomes.json
-              subPath: website/tests/config/reference_genomes.json
-            - name: repo-volume
+              subPath: reference_genomes.json
+            - name: pathoplexus-config
               mountPath: /app/preprocessing_config.yaml
-              subPath: website/tests/config/preprocessing_config.yaml
-            - name: repo-volume
+              subPath: preprocessing_config.yaml
+            - name: pathoplexus-config
               mountPath: /app/database_config.yaml
-              subPath: website/tests/config/database_config.yaml
-            - name: repo-volume
+              subPath: database_config.yaml
+            - name: silo-output
               mountPath: /preprocessing/output
-              subPath: website/tests/initialSiloData/processingOutput 
 
       containers:
         - name: website
@@ -70,9 +69,8 @@ spec:
           ports:
             - containerPort: 3000
           volumeMounts:
-            - name: repo-volume
+            - name: pathoplexus-config
               mountPath: /config
-              subPath: website/tests/config
           livenessProbe:
             httpGet:
               path: /
@@ -104,11 +102,11 @@ spec:
             - "--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus"
             - "--spring.datasource.username=postgres"
             - "--spring.datasource.password=unsecure"
-            - "--backend.config.path=/repo/website/tests/config/config.json"
-            - "--backend.referenceGenome.path=/repo/website/tests/config/reference_genomes.json"
+            - "--backend.config.path=/config/config.json"
+            - "--backend.referenceGenome.path=/config/reference_genomes.json"
           volumeMounts:
-            - name: repo-volume
-              mountPath: /repo
+            - name: pathoplexus-config
+              mountPath: /config
         - name: database
           image: postgres:latest
           ports:
@@ -127,9 +125,8 @@ spec:
           args:
             - "--api"
           volumeMounts:
-            - name: repo-volume
+            - name: silo-output
               mountPath: /data
-              subPath: website/tests/initialSiloData/processingOutput
         - name: lapis
           image: ghcr.io/genspectrum/lapis-v2:latest
           ports:
@@ -137,20 +134,25 @@ spec:
           args:
             - "--silo.url=http://localhost:8081"
           volumeMounts:
-            - name: repo-volume
+            - name: pathoplexus-config
               mountPath: /workspace/database_config.yaml
-              subPath: website/tests/config/database_config.yaml
-            - name: repo-volume
+              subPath: database_config.yaml
+            - name: pathoplexus-config
               mountPath: /workspace/reference_genomes.json
-              subPath: website/tests/config/reference_genomes.json
+              subPath: reference_genomes.json
+
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
-        - name: repo-volume
-{{- if ne .Values.mode "e2e" }}
+        - name: pathoplexus-config
+          configMap:
+            name: pathoplexus-config
+        - name: silo-output
           emptyDir: {}
-{{- end }}
+        - name: repo-volume
 {{- if eq .Values.mode "e2e" }}
           hostPath:
             path: /repo
+{{- else }}
+          emptyDir: {}
 {{- end }}

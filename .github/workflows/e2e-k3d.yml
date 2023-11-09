@@ -107,7 +107,8 @@ jobs:
           echo "Waiting for pods to be ready..."
           sleep 10
         done
-    
+    - name: Sleep for a minute
+      run: sleep 60
     - name: List running pods
       if: ${{ !cancelled() }}
       run: kubectl get pods --all-namespaces

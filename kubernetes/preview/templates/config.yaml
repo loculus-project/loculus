@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pathoplexus-config
+  namespace: {{ .Values.namespace }}
+data:
+  database_config.yaml: |
+{{ .Values.database_config_yaml | indent 4 }}
+  preprocessing_config.yaml: |
+{{ .Values.preprocessing_config_yaml | indent 4 }}
+  reference_genomes.json: |
+{{ .Values.reference_genomes_json | indent 4 }}
+  config.json: |
+{{ .Values.config_json | indent 4 }}
+  runtime_config.json: |
+{{ .Values.runtime_config_json | indent 4 }}
