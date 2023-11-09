@@ -6,7 +6,7 @@
 
     frontend -> backend: submit corrected data for existing sequenceIds
 
-    alt sequenceID exists and highest version is 'SILO_READY'
+    alt sequenceID exists and highest version is 'APPROVED_FOR_RELEASE'
         backend -> DB: insert new version in status 'RECEIVED'
     backend -> frontend: response with sequenceId + new version number
     else

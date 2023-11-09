@@ -6,8 +6,8 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
-import org.pathoplexus.backend.api.Status.PROCESSING
-import org.pathoplexus.backend.api.Status.REVIEWED
+import org.pathoplexus.backend.api.Status.IN_PROCESSING
+import org.pathoplexus.backend.api.Status.RECEIVED
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
@@ -66,7 +66,7 @@ class ExtractUnprocessedDataEndpointTest(
 
     @Test
     fun `GIVEN a sequence with status 'REVIEWED' THEN it should be returned and the status should change`() {
-        convenienceClient.prepareDataTo(REVIEWED)
+        convenienceClient.prepareDataTo(RECEIVED)
 
         val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
         val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
@@ -79,6 +79,6 @@ class ExtractUnprocessedDataEndpointTest(
         )
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
-            .assertStatusIs(PROCESSING)
+            .assertStatusIs(IN_PROCESSING)
     }
 }

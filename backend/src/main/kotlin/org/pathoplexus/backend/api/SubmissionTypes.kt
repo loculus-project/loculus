@@ -182,23 +182,20 @@ enum class Status {
     @JsonProperty("RECEIVED")
     RECEIVED,
 
-    @JsonProperty("PROCESSING")
-    PROCESSING,
+    @JsonProperty("IN_PROCESSING")
+    IN_PROCESSING,
 
-    @JsonProperty("NEEDS_REVIEW")
-    NEEDS_REVIEW,
+    @JsonProperty("HAS_ERRORS")
+    HAS_ERRORS,
 
-    @JsonProperty("REVIEWED")
-    REVIEWED,
+    @JsonProperty("AWAITING_APPROVAL")
+    AWAITING_APPROVAL,
 
-    @JsonProperty("PROCESSED")
-    PROCESSED,
+    @JsonProperty("APPROVED_FOR_RELEASE")
+    APPROVED_FOR_RELEASE,
 
-    @JsonProperty("SILO_READY")
-    SILO_READY,
-
-    @JsonProperty("REVOKED_STAGING")
-    REVOKED_STAGING,
+    @JsonProperty("AWAITING_APPROVAL_FOR_REVOCATION")
+    AWAITING_APPROVAL_FOR_REVOCATION,
 
     ;
 

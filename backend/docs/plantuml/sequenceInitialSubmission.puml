@@ -21,7 +21,7 @@
 
         processing -> backend: Query initial/reviewed sequence data
         backend -> DB: Query initial/reviewed sequence data
-        backend -> DB: Set status from 'RECEIVED'/'REVIEW_NEEDED' to 'PROCESSING'
+        backend -> DB: Set status from 'RECEIVED'/'HAS_ERRORS' to 'IN_PROCESSING'
         DB --> backend: initial/reviewed sequence data
         backend --> processing: initial/reviewed sequence data
 
@@ -36,17 +36,17 @@
 
         alt processed sequence data contain processing errors
             backend -> DB: Store processed sequence data with errors
-            backend -> DB: set status to 'REVIEW_NEEDED'
+            backend -> DB: set status to 'HAS_ERRORS'
         else
             backend -> DB: Store processed sequence data without errors
-            backend -> DB: set status to 'PROCESSED'
+            backend -> DB: set status to 'AWAITING_APPROVAL'
         end
          frontend -> backend: query processed sequence data with errors
         frontend -> frontend: address errors and adapt sequence data
 
         frontend -> backend: submit adapted sequence data
         backend -> DB: store adapted sequence data
-        backend -> DB: set status to 'REVIEWED'
+        backend -> DB: set status to 'RECEIVED'
     end loop
 
 
@@ -56,7 +56,7 @@
     backend -> frontend: processed sequence data
 
     frontend -> backend: approve processed sequence data
-    backend -> DB: set status from 'PROCESSED' to 'SILO_READY'
+    backend -> DB: set status from 'AWAITING_APPROVAL' to 'APPROVED_FOR_RELEASE'
 
 @enduml
 

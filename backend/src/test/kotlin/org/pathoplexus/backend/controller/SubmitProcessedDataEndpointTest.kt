@@ -33,7 +33,9 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(Status.PROCESSED)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(
+            Status.AWAITING_APPROVAL,
+        )
     }
 
     @Test
@@ -58,7 +60,9 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(Status.PROCESSED)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(
+            Status.AWAITING_APPROVAL,
+        )
     }
 
     @Test
@@ -74,7 +78,9 @@ class SubmitProcessedDataEndpointTest(
             PreparedProcessedData.successfullyProcessed(sequenceId = "3").withValues(data = dataWithoutInsertions),
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(Status.PROCESSED)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(
+            Status.AWAITING_APPROVAL,
+        )
 
         submissionControllerClient.getSequenceThatNeedsReview(sequenceId = "3", version = 1, userName = USER_NAME)
             .andExpect(status().isOk)
@@ -100,7 +106,7 @@ class SubmitProcessedDataEndpointTest(
         prepareExtractedSequencesInDatabase()
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.PROCESSED)
+            .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
     @Test
@@ -111,7 +117,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.NEEDS_REVIEW)
+            .assertStatusIs(Status.HAS_ERRORS)
     }
 
     @Test
@@ -126,7 +132,7 @@ class SubmitProcessedDataEndpointTest(
         ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.NEEDS_REVIEW)
+            .assertStatusIs(Status.HAS_ERRORS)
     }
 
     @Test
@@ -137,7 +143,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.PROCESSED)
+            .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
     @ParameterizedTest(name = "{arguments}")
@@ -156,7 +162,7 @@ class SubmitProcessedDataEndpointTest(
             sequenceId = invalidDataScenario.processedData.sequenceId,
             version = 1,
         )
-        assertThat(sequenceStatus.status, `is`(Status.PROCESSING))
+        assertThat(sequenceStatus.status, `is`(Status.IN_PROCESSING))
     }
 
     @Test
@@ -173,7 +179,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.detail").value("Sequence version $nonExistentSequenceId.1 does not exist"))
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 1).assertStatusIs(Status.PROCESSING)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 1).assertStatusIs(Status.IN_PROCESSING)
     }
 
     @Test
@@ -196,7 +202,7 @@ class SubmitProcessedDataEndpointTest(
             )
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.PROCESSING)
+            .assertStatusIs(Status.IN_PROCESSING)
     }
 
     @Test
@@ -216,12 +222,12 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence version $sequenceIdNotInProcessing.1 is in not in state PROCESSING (was RECEIVED)",
+                    "Sequence version $sequenceIdNotInProcessing.1 is in not in state IN_PROCESSING (was RECEIVED)",
                 ),
             )
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
-            .assertStatusIs(Status.PROCESSING)
+            .assertStatusIs(Status.IN_PROCESSING)
         convenienceClient.getSequenceVersionOfUser(sequenceId = sequenceIdNotInProcessing, version = 1)
             .assertStatusIs(Status.RECEIVED)
     }

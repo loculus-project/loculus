@@ -5,18 +5,18 @@ import { extractSequenceVersion } from '../../src/utils/extractSequenceVersion.t
 import { expect, testSequenceCount, testuser } from '../e2e.fixture.ts';
 
 export const prepareDataToBe = (
-    state: 'releasable' | 'reviewable' | 'staged' | 'processing',
+    state: 'approvedForRelease' | 'erroneous' | 'awaitingApproval' | 'inProcessing',
     numberOfSequences: number = testSequenceCount,
 ): Promise<UnprocessedData[]> => {
     switch (state) {
-        case 'processing':
+        case 'inProcessing':
             return prepareDataToBeProcessing(numberOfSequences);
-        case 'releasable':
-            return prepareDataToBeReleasable(numberOfSequences);
-        case 'reviewable':
-            return prepareDataToBeReviewable(numberOfSequences);
-        case 'staged':
-            return prepareDataToBeStaged(numberOfSequences);
+        case 'approvedForRelease':
+            return prepareDataToBeApprovedForRelease(numberOfSequences);
+        case 'erroneous':
+            return prepareDataToHaveErrors(numberOfSequences);
+        case 'awaitingApproval':
+            return prepareDataToBeAwaitingApproval(numberOfSequences);
     }
 };
 
@@ -29,7 +29,7 @@ async function prepareDataToBeProcessing(numberOfSequences: number) {
     return sequences;
 }
 
-const prepareDataToBeReviewable = async (numberOfSequences: number = testSequenceCount) => {
+const prepareDataToHaveErrors = async (numberOfSequences: number = testSequenceCount) => {
     const sequences = await prepareDataToBeProcessing(numberOfSequences);
 
     const options: PreprocessingOptions[] = sequences
@@ -40,7 +40,7 @@ const prepareDataToBeReviewable = async (numberOfSequences: number = testSequenc
     return sequences;
 };
 
-const prepareDataToBeStaged = async (numberOfSequences: number = testSequenceCount) => {
+const prepareDataToBeAwaitingApproval = async (numberOfSequences: number = testSequenceCount) => {
     const sequences = await prepareDataToBeProcessing(numberOfSequences);
 
     const options: PreprocessingOptions[] = sequences
@@ -51,8 +51,8 @@ const prepareDataToBeStaged = async (numberOfSequences: number = testSequenceCou
     return sequences;
 };
 
-const prepareDataToBeReleasable = async (numberOfSequences: number = testSequenceCount) => {
-    const sequences = await prepareDataToBeStaged(numberOfSequences);
+const prepareDataToBeApprovedForRelease = async (numberOfSequences: number = testSequenceCount) => {
+    const sequences = await prepareDataToBeAwaitingApproval(numberOfSequences);
 
     await approveProcessedData(testuser, sequences);
 

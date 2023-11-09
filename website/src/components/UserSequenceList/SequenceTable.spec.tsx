@@ -17,13 +17,13 @@ const defaultSequencesWithStatus: readonly SequenceStatus[] = [
     {
         sequenceId: '1',
         version: 1,
-        status: 'NEEDS_REVIEW',
+        status: 'HAS_ERRORS',
         isRevocation: false,
     },
     {
         sequenceId: '2',
         version: 1,
-        status: 'NEEDS_REVIEW',
+        status: 'HAS_ERRORS',
         isRevocation: false,
     },
 ] as const;

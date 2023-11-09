@@ -2,15 +2,14 @@ import z from 'zod';
 
 const sequenceStatusNames = z.union([
     z.literal('RECEIVED'),
-    z.literal('PROCESSING'),
-    z.literal('NEEDS_REVIEW'),
-    z.literal('REVIEWED'),
-    z.literal('PROCESSED'),
-    z.literal('SILO_READY'),
-    z.literal('REVOKED_STAGING'),
+    z.literal('IN_PROCESSING'),
+    z.literal('HAS_ERRORS'),
+    z.literal('AWAITING_APPROVAL'),
+    z.literal('APPROVED_FOR_RELEASE'),
+    z.literal('AWAITING_APPROVAL_FOR_REVOCATION'),
 ]);
 export type SequenceStatusNames = z.infer<typeof sequenceStatusNames>;
-const statusThatAllowsReview = z.union([z.literal('NEEDS_REVIEW'), z.literal('PROCESSED')]);
+const statusThatAllowsReview = z.union([z.literal('HAS_ERRORS'), z.literal('AWAITING_APPROVAL')]);
 
 const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;

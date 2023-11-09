@@ -5,7 +5,7 @@
 
     frontend -> backend: wants to revoke already processed sequence
 
-     alt sequenceID exists and highest version is 'SILO_READY'
+     alt sequenceID exists and highest version is 'APPROVED_FOR_RELEASE'
         backend -> DB: insert new version\nwith status 'REVISION_STAGING' \nand ' is_revocation = true'
     backend -> frontend: response with sequenceId + new version number
     else
@@ -14,9 +14,9 @@
 
     alt
         frontend -> backend: confirms revocation
-        backend -> DB: set status to 'SILO_READY'
+        backend -> DB: set status to 'APPROVED_FOR_RELEASE'
     else
         frontend -> backend: cancels revocation
-        backend -> DB: delete latest version \nof the sequence and Status \n'REVOKED_STAGING'
+        backend -> DB: delete latest version \nof the sequence and Status \n'AWAITING_APPROVAL_FOR_REVOCATION'
     end
 @enduml

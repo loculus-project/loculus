@@ -2,7 +2,7 @@ package org.pathoplexus.backend.controller
 
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.Status
-import org.pathoplexus.backend.api.Status.REVOKED_STAGING
+import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -16,7 +16,7 @@ class RevokeEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `GIVEN sequences with status 'SILO_READY' THEN the status changes to 'REVOKED_STAGING'`() {
+    fun `GIVEN sequences with 'APPROVED_FOR_RELEASE' THEN the status changes to 'AWAITING_APPROVAL_FOR_REVOCATION'`() {
         convenienceClient.prepareDefaultSequencesToSiloReady()
 
         client.revokeSequences(DefaultFiles.allSequenceIds)
@@ -25,11 +25,11 @@ class RevokeEndpointTest(
             .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].sequenceId").value(DefaultFiles.firstSequence))
             .andExpect(jsonPath("\$[0].version").value(2))
-            .andExpect(jsonPath("\$[0].status").value("REVOKED_STAGING"))
+            .andExpect(jsonPath("\$[0].status").value("AWAITING_APPROVAL_FOR_REVOCATION"))
             .andExpect(jsonPath("\$[0].isRevocation").value(true))
 
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 2)
-            .assertStatusIs(REVOKED_STAGING)
+            .assertStatusIs(AWAITING_APPROVAL_FOR_REVOCATION)
     }
 
     @Test
@@ -64,7 +64,7 @@ class RevokeEndpointTest(
     }
 
     @Test
-    fun `WHEN revoking sequences with latest version not 'SILO_READY' THEN throws an unprocessableEntity error`() {
+    fun `WHEN revoking with latest version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
         convenienceClient.prepareDefaultSequencesToNeedReview()
 
         client.revokeSequences(DefaultFiles.allSequenceIds.subList(0, 2))
@@ -72,8 +72,8 @@ class RevokeEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence versions are in not in one of the states [${Status.SILO_READY}]: " +
-                        "1.1 - ${Status.NEEDS_REVIEW}, 2.1 - ${Status.NEEDS_REVIEW}",
+                    "Sequence versions are in not in one of the states [${Status.APPROVED_FOR_RELEASE}]: " +
+                        "1.1 - ${Status.HAS_ERRORS}, 2.1 - ${Status.HAS_ERRORS}",
                 ),
             )
     }

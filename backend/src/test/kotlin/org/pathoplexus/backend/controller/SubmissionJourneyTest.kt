@@ -2,12 +2,11 @@ package org.pathoplexus.backend.controller
 
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.SequenceVersion
-import org.pathoplexus.backend.api.Status.NEEDS_REVIEW
-import org.pathoplexus.backend.api.Status.PROCESSED
-import org.pathoplexus.backend.api.Status.PROCESSING
+import org.pathoplexus.backend.api.Status.APPROVED_FOR_RELEASE
+import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL
+import org.pathoplexus.backend.api.Status.HAS_ERRORS
+import org.pathoplexus.backend.api.Status.IN_PROCESSING
 import org.pathoplexus.backend.api.Status.RECEIVED
-import org.pathoplexus.backend.api.Status.REVIEWED
-import org.pathoplexus.backend.api.Status.SILO_READY
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -16,14 +15,14 @@ class SubmissionJourneyTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `Submission scenario, from submission, over review and approval ending in status 'SILO_READY'`() {
+    fun `Submission scenario, from submission, over review and approval ending in status 'APPROVED_FOR_RELEASE'`() {
         convenienceClient.submitDefaultFiles()
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
             .assertStatusIs(RECEIVED)
 
         convenienceClient.extractUnprocessedData()
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
-            .assertStatusIs(PROCESSING)
+            .assertStatusIs(IN_PROCESSING)
 
         convenienceClient.submitProcessedData(
             *DefaultFiles.allSequenceIds.map {
@@ -31,15 +30,15 @@ class SubmissionJourneyTest(
             }.toTypedArray(),
         )
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
-            .assertStatusIs(NEEDS_REVIEW)
+            .assertStatusIs(HAS_ERRORS)
 
         convenienceClient.submitDefaultReviewedData()
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
-            .assertStatusIs(REVIEWED)
+            .assertStatusIs(RECEIVED)
 
         convenienceClient.extractUnprocessedData()
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
-            .assertStatusIs(PROCESSING)
+            .assertStatusIs(IN_PROCESSING)
 
         convenienceClient.submitProcessedData(
             *DefaultFiles.allSequenceIds.map {
@@ -47,15 +46,15 @@ class SubmissionJourneyTest(
             }.toTypedArray(),
         )
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
-            .assertStatusIs(PROCESSED)
+            .assertStatusIs(AWAITING_APPROVAL)
 
         convenienceClient.approveProcessedSequences(DefaultFiles.allSequenceIds.map { SequenceVersion(it, 1) })
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
-            .assertStatusIs(SILO_READY)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
     }
 
     @Test
-    fun `Revising scenario, from submitting revised data over processing, approving ending in status 'SILO_READY'`() {
+    fun `Revising, from submitting revised data over processing, approving ending in status 'APPROVED_FOR_RELEASE'`() {
         convenienceClient.prepareDefaultSequencesToSiloReady()
 
         convenienceClient.reviseDefaultProcessedSequences()
@@ -64,7 +63,7 @@ class SubmissionJourneyTest(
 
         convenienceClient.extractUnprocessedData()
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 2)
-            .assertStatusIs(PROCESSING)
+            .assertStatusIs(IN_PROCESSING)
 
         convenienceClient.submitProcessedData(
             *DefaultFiles.allSequenceIds.map {
@@ -72,10 +71,10 @@ class SubmissionJourneyTest(
             }.toTypedArray(),
         )
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 2)
-            .assertStatusIs(PROCESSED)
+            .assertStatusIs(AWAITING_APPROVAL)
 
         convenienceClient.approveProcessedSequences(DefaultFiles.allSequenceIds.map { SequenceVersion(it, 2) })
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 2)
-            .assertStatusIs(SILO_READY)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
     }
 }

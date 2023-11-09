@@ -16,7 +16,7 @@ class ConfirmRevocationEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `GIVEN sequences with status 'REVOKED_STAGING' THEN the status changes to 'SILO_READY'`() {
+    fun `GIVEN sequences with status 'FOR_REVOCATION' THEN the status changes to 'APPROVED_FOR_RELEASE'`() {
         convenienceClient.prepareDefaultSequencesToRevokedStaging()
 
         client.confirmRevocation(
@@ -27,8 +27,12 @@ class ConfirmRevocationEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 2).assertStatusIs(Status.SILO_READY)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 2).assertStatusIs(Status.SILO_READY)
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 2).assertStatusIs(
+            Status.APPROVED_FOR_RELEASE,
+        )
+        convenienceClient.getSequenceVersionOfUser(sequenceId = "2", version = 2).assertStatusIs(
+            Status.APPROVED_FOR_RELEASE,
+        )
     }
 
     @Test
@@ -69,7 +73,7 @@ class ConfirmRevocationEndpointTest(
     }
 
     @Test
-    fun `WHEN confirming revocation sequenceVersions with latest version not 'SILO_READY' THEN throws an error`() {
+    fun `WHEN confirming revocation with latest version not 'APPROVED_FOR_RELEASE' THEN throws an error`() {
         convenienceClient.prepareDefaultSequencesToSiloReady()
 
         client.confirmRevocation(
@@ -82,8 +86,9 @@ class ConfirmRevocationEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence versions are in not in one of the states [${Status.REVOKED_STAGING.name}]: " +
-                        "1.1 - ${Status.SILO_READY.name}, 2.1 - ${Status.SILO_READY.name}",
+                    "Sequence versions are in not in one of the states [" +
+                        "${Status.AWAITING_APPROVAL_FOR_REVOCATION.name}]: " +
+                        "1.1 - ${Status.APPROVED_FOR_RELEASE.name}, 2.1 - ${Status.APPROVED_FOR_RELEASE.name}",
                 ),
             )
     }

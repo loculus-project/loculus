@@ -9,15 +9,15 @@ test.describe('The review page', () => {
         'should show the review page for a sequence that needs review, ' +
             'download the sequence and submit the review',
         async ({ userPage, reviewPage }) => {
-            const [reviewableTestSequence] = await prepareDataToBe('reviewable', 1);
-            const [stagedTestSequence] = await prepareDataToBe('staged', 1);
+            const [erroneousTestSequence] = await prepareDataToBe('erroneous', 1);
+            const [stagedTestSequence] = await prepareDataToBe('awaitingApproval', 1);
 
-            expect(reviewableTestSequence).toBeDefined();
+            expect(erroneousTestSequence).toBeDefined();
             expect(stagedTestSequence).toBeDefined();
 
             await userPage.gotoUserSequencePage();
 
-            await testReviewFlow(reviewPage, userPage, reviewableTestSequence);
+            await testReviewFlow(reviewPage, userPage, erroneousTestSequence);
             await testReviewFlow(reviewPage, userPage, stagedTestSequence);
         },
     );
