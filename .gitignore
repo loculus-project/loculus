@@ -15,5 +15,3 @@ node_modules/
 # logs
 /log
 
-# Local Netlify folder
-.netlify

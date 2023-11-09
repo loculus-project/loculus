@@ -1,6 +1,5 @@
 *
 !src/
-!netlifyConfig/
 !public/
 !package.json
 !package-lock.json
