@@ -88,13 +88,13 @@ spec:
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
-              path: /swagger-ui/index.html
+              path: "/actuator/health/liveness"
               port: 8079
             initialDelaySeconds: 30
             periodSeconds: 10
           readinessProbe:
             httpGet:
-              path: /swagger-ui/index.html
+              path: "/actuator/health/readiness"
               port: 8079
           ports:
             - containerPort: 8079
