@@ -1,4 +1,4 @@
 apiVersion: v2
-name: pp-helm
+name: preview
 description: A Helm chart for pathoplexus
 version: 0.1.0

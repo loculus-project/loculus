@@ -1,4 +1,4 @@
-preprocessing_config_yaml: |-
+database_config_yaml: |-
   schema:
     instanceName: PathoplexusTest
     opennessLevel: OPEN
@@ -31,7 +31,7 @@ preprocessing_config_yaml: |-
     primaryKey: accession
     dateToSortBy: date
     partitionBy: pango_lineage
-database_config_yaml: |-
+preprocessing_config_yaml: |-
   metadataFilename: metadata.tsv
   pangoLineageDefinitionFilename: pangolineage_alias.json
   referenceGenomeFilename: reference_genomes.json
