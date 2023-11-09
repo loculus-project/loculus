@@ -107,8 +107,8 @@ jobs:
           echo "Waiting for pods to be ready..."
           sleep 10
         done
-    - name: Sleep for a minute
-      run: sleep 60
+    - name: Sleep for 20 secs
+      run: sleep 20
     - name: List running pods
       if: ${{ !cancelled() }}
       run: kubectl get pods --all-namespaces
@@ -138,7 +138,6 @@ jobs:
             echo "==============================" >> kubernetes_logs.txt
           done
         done
-        cat kubernetes_logs.txt
     - name: Upload Kubernetes logs
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v3
