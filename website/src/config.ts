@@ -12,8 +12,6 @@ import {
     type ServiceUrls,
     serviceUrls,
 } from './types/runtimeConfig.ts';
-import netlifyConfig from '../netlifyConfig/config.json' assert { type: 'json' };
-import netlifyRuntimeConfig from '../netlifyConfig/runtime_config.json' assert { type: 'json' };
 
 let _config: Config | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
@@ -29,11 +27,6 @@ function getConfigDir(): string {
 
 export function getConfig(): Config {
     if (_config === null) {
-        if (import.meta.env.NETLIFY === true) {
-            _config = getNetlifyConfigSoThatWeDontHaveToAccessTheFileSystemThere().config;
-            return _config;
-        }
-
         _config = readTypedConfigFile('config.json', config);
     }
     return _config;
@@ -41,15 +34,6 @@ export function getConfig(): Config {
 
 export function getRuntimeConfig(): RuntimeConfig {
     if (_runtimeConfig === null) {
-        if (import.meta.env.NETLIFY === true) {
-            const protoRuntimeConfig = getNetlifyConfigSoThatWeDontHaveToAccessTheFileSystemThere().runtimeConfig;
-            _runtimeConfig = {
-                forClient: makeClientConfig(protoRuntimeConfig),
-                forServer: makeServerConfig(protoRuntimeConfig),
-            };
-            return _runtimeConfig;
-        }
-
         const serviceConfig = readTypedConfigFile('runtime_config.json', serviceUrls);
 
         const urlsForClient = import.meta.env.DEV
@@ -65,13 +49,6 @@ export function getRuntimeConfig(): RuntimeConfig {
         };
     }
     return _runtimeConfig;
-}
-
-function getNetlifyConfigSoThatWeDontHaveToAccessTheFileSystemThere() {
-    return {
-        config: netlifyConfig as Config,
-        runtimeConfig: netlifyRuntimeConfig,
-    };
 }
 
 function makeServerConfig(serviceConfig: ServiceUrls): ServerConfig {
