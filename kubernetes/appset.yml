@@ -1,4 +1,4 @@
-# THIS FILE IS DEPLOYED MANUALLY, NEED TO FILL IN GITHUB PAT BELOW
+# This file is deployed manually, it does not get automatically deployed from the git repository: with access to our kubernetes cluster run `kubectl apply -f appset.yaml`
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
