@@ -1,6 +1,6 @@
 # Kubernetes
 
-This directory contains a Helm chart to deploy previews of Pathoplexus, and a version for E2E testing (eventually this will be the production instance as well).
+This directory contains a Helm chart to deploy previews of Pathoplexus, and a version for E2E testing (eventually this will be the production instance as well). Run all following commands from this directory.
 
 ## GitHub Integration
 ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].preview.k3s.pathoplexus.org`. Very long branch names, and some special characters, are not supported.
@@ -26,7 +26,7 @@ k3d cluster create mycluster -p "3000:30081@agent:0"  -p "8079:30082@agent:0" -v
 
 Install the chart (execute from the root of the repository):
 ```shell
-helm install preview kubernetes/preview --set mode=e2e --set branch=latest --set namespace=test --set dockerconfigjson=[mysecret]
+helm install preview preview --set mode=e2e --set branch=latest --set namespace=test --set dockerconfigjson=[mysecret]
 ```
 
 You will need to replace `[mysecret]` with a base64 encoded version of your `~/.docker/config.json` file containing credentials for ghcr.io. You can get this by running `cat ~/.docker/config.json | base64` and copying the output.
@@ -44,5 +44,5 @@ might help to see the reason.
 
 Redeploy after changing the Helm chart (execute from the root of the repository):
 ```shell
-helm upgrade preview kubernetes/preview
+helm upgrade preview preview
 ```
