@@ -49,7 +49,7 @@ spec:
             - name: pathoplexus-config
               mountPath: /app/preprocessing_config.yaml
               subPath: preprocessing_config.yaml
-            - name: pathoplexus-config
+            - name: silo-database-config
               mountPath: /app/database_config.yaml
               subPath: database_config.yaml
             - name: silo-output
@@ -134,7 +134,7 @@ spec:
           args:
             - "--silo.url=http://localhost:8081"
           volumeMounts:
-            - name: pathoplexus-config
+            - name: silo-database-config
               mountPath: /workspace/database_config.yaml
               subPath: database_config.yaml
             - name: pathoplexus-config
@@ -147,6 +147,9 @@ spec:
         - name: pathoplexus-config
           configMap:
             name: pathoplexus-config
+        - name: silo-database-config
+          configMap:
+            name: silo-database-config
         - name: silo-output
           emptyDir: {}
         - name: repo-volume

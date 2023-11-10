@@ -1,0 +1,17 @@
+{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{- $metadata := ($configFile.schema.metadata | include "pathoplexus.generateBackendMetadata" | fromYaml).fields }}
+{{- $schema := (dict
+  "schema" (dict
+    "instanceName" $configFile.schema.instanceName
+    "metadata" $metadata
+  )
+)}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pathoplexus-website-config
+  namespace: {{ .Values.namespace }}
+data:
+  backend_config.json: |
+    {{ toJson $schema }}

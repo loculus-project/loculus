@@ -4,8 +4,6 @@ metadata:
   name: pathoplexus-config
   namespace: {{ .Values.namespace }}
 data:
-  database_config.yaml: |
-{{ .Values.database_config_yaml | indent 4 }}
   preprocessing_config.yaml: |
 {{ .Values.preprocessing_config_yaml | indent 4 }}
   reference_genomes.json: |

@@ -1,0 +1,22 @@
+{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{- $commonMetadata := (include "pathoplexus.commonMetadata" . | fromYaml).fields }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: silo-database-config
+  namespace: {{ .Values.namespace }}
+data:
+  database_config.yaml: |
+    schema:
+      instanceName: {{ $configFile.schema.instanceName }}
+      metadata:
+      {{- range (concat $commonMetadata $configFile.schema.metadata) }}
+        - name: {{ .name }}
+          type: {{ .type }}
+          {{- if .generateIndex }}
+          generateIndex: {{ .generateIndex }}
+          {{- end }}
+      {{- end }}
+      primaryKey: sequenceVersion
+    {{- $configFile.schema.silo | toYaml | nindent 6 }}
