@@ -19,14 +19,30 @@ There is also an `e2e` mode intended for E2E testing not on the main Kubernetes 
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
-Create a cluster with ports exposed and the current directory mounted as `/repo`:
+Create a cluster with ports exposed and the content of this repository mounted as `/repo`:
 ```shell
-k3d cluster create mycluster -p "3000:30081@agent:0"  -p "8079:30082@agent:0" -v "$(pwd):/repo"  --agents 2 
+k3d cluster create mycluster -p "3000:30081@agent:0"  -p "8079:30082@agent:0" -v "$(pwd)/..:/repo"  --agents 2 
 ```
 
-Install the chart:
-```
+Install the chart (execute from the root of the repository):
+```shell
 helm install preview kubernetes/preview --set mode=e2e --set branch=latest --set namespace=test --set dockerconfigjson=[mysecret]
 ```
 
 You will need to replace `[mysecret]` with a base64 encoded version of your `~/.docker/config.json` file containing credentials for ghcr.io. You can get this by running `cat ~/.docker/config.json | base64` and copying the output.
+
+Check whether the service are already deployed (it might take some time to start, especially for the first time):
+```shell
+kubectl get pods -n test
+```
+
+If something goes wrong,
+```shell
+kubectl get events -n test
+```
+might help to see the reason.
+
+Redeploy after changing the Helm chart (execute from the root of the repository):
+```shell
+helm upgrade preview kubernetes/preview
+```
