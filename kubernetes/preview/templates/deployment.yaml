@@ -16,45 +16,6 @@ spec:
       labels:
         app: pathoplexus
     spec:
-      initContainers:
-{{- if ne .Values.mode "e2e" }}
-        - name: get-repo
-          image: alpine/git
-          env:
-            - name: GIT_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: github-access-token
-                  key: token
-          command:
-            - /bin/sh
-            - -c
-            - |
-              git clone -b {{ .Values.branch }} https://tokenauth:$GIT_TOKEN@github.com/pathoplexus/pathoplexus.git /repo
-          volumeMounts:
-            - name: repo-volume
-              mountPath: /repo
-{{- end }}
-        - name: silo-preprocessing
-          image: ghcr.io/genspectrum/lapis-silo:latest
-          args:
-            - "--preprocessing"
-          volumeMounts:
-            - name: repo-volume
-              mountPath: /preprocessing/input
-              subPath: website/tests/initialSiloData
-            - name: pathoplexus-config
-              mountPath: /preprocessing/input/reference_genomes.json
-              subPath: reference_genomes.json
-            - name: pathoplexus-config
-              mountPath: /app/preprocessing_config.yaml
-              subPath: preprocessing_config.yaml
-            - name: pathoplexus-config
-              mountPath: /app/database_config.yaml
-              subPath: database_config.yaml
-            - name: silo-output
-              mountPath: /preprocessing/output
-
       containers:
         - name: website
           image: ghcr.io/pathoplexus/website:{{ $dockerTag }}
@@ -69,7 +30,7 @@ spec:
           ports:
             - containerPort: 3000
           volumeMounts:
-            - name: pathoplexus-config
+            - name: pathoplexus-website-config
               mountPath: /config
           livenessProbe:
             httpGet:
@@ -102,10 +63,8 @@ spec:
             - "--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus"
             - "--spring.datasource.username=postgres"
             - "--spring.datasource.password=unsecure"
-            - "--backend.config.path=/config/config.json"
-            - "--backend.referenceGenome.path=/config/reference_genomes.json"
           volumeMounts:
-            - name: pathoplexus-config
+            - name: pathoplexus-backend-config
               mountPath: /config
         - name: database
           image: postgres:latest
@@ -134,25 +93,24 @@ spec:
           args:
             - "--silo.url=http://localhost:8081"
           volumeMounts:
-            - name: pathoplexus-config
+            - name: silo-database-config
               mountPath: /workspace/database_config.yaml
               subPath: database_config.yaml
-            - name: pathoplexus-config
+            - name: silo-database-config
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
 
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
-        - name: pathoplexus-config
+        - name: pathoplexus-website-config
           configMap:
-            name: pathoplexus-config
+            name: pathoplexus-website-config
+        - name: pathoplexus-backend-config
+          configMap:
+            name: pathoplexus-backend-config
+        - name: silo-database-config
+          configMap:
+            name: silo-database-config
         - name: silo-output
           emptyDir: {}
-        - name: repo-volume
-{{- if eq .Values.mode "e2e" }}
-          hostPath:
-            path: /repo
-{{- else }}
-          emptyDir: {}
-{{- end }}

@@ -23,8 +23,8 @@ services:
       --spring.datasource.password=unsecure
     volumes:
       - ./log:/workspace/log
-      - ./website/tests/config/backend_config.json:/workspace/backend_config.json
-      - ./website/tests/config/reference_genomes.json:/workspace/reference_genomes.json
+      - ./website/tests/config/backend_config.json:/config/backend_config.json
+      - ./website/tests/config/reference_genomes.json:/config/reference_genomes.json
 
   database:
     image: postgres:latest
