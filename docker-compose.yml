@@ -23,8 +23,8 @@ services:
       --spring.datasource.password=unsecure
     volumes:
       - ./log:/workspace/log
-      - ./website/tests/config/config.json:/workspace/config.json
-      - ./website/tests/config/reference_genomes.json:/workspace/reference_genomes.json
+      - ./website/tests/config/backend_config.json:/config/backend_config.json
+      - ./website/tests/config/reference_genomes.json:/config/reference_genomes.json
 
   database:
     image: postgres:latest
@@ -53,17 +53,3 @@ services:
     volumes:
       - ./website/tests/initialSiloData/preprocessingOutput/:/data
       - ./log/silo:/app/logs
-    depends_on:
-      siloPreprocessing:
-        condition: service_completed_successfully
-
-  siloPreprocessing:
-    image: ghcr.io/genspectrum/lapis-silo:latest
-    command: --preprocessing
-    volumes:
-      - ./website/tests/initialSiloData:/preprocessing/input
-      - ./website/tests/initialSiloData/preprocessingOutput:/preprocessing/output
-      - ./website/tests/config/reference_genomes.json:/preprocessing/input/reference_genomes.json
-      - ./website/tests/config/preprocessing_config.yaml:/app/preprocessing_config.yaml
-      - ./website/tests/config/database_config.yaml:/app/database_config.yaml
-      - ./log/preprocessing:/app/logs

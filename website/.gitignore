@@ -17,6 +17,5 @@ pnpm-debug.log*
 /playwright/.cache/
 
 log/
-tests/initialSiloData/preprocessingOutput/
 
 justfile
