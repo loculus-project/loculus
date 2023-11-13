@@ -14,6 +14,7 @@ export default defineConfig({
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
     },
+    globalSetup: './tests/playwrightSetup.ts',
 
     projects: [
         {

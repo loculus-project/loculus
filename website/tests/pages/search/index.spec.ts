@@ -1,7 +1,6 @@
 import { DateTime } from 'luxon';
 
 import { routes } from '../../../src/routes.ts';
-import { pageSize } from '../../../src/settings.ts';
 import { baseUrl, expect, test, testSequence } from '../../e2e.fixture';
 
 test.describe('The search page', () => {
@@ -23,15 +22,18 @@ test.describe('The search page', () => {
 
     test('should search for existing sequences', async ({ searchPage }) => {
         await searchPage.goto();
-        await searchPage.getEmptyAccessionField().fill(testSequence.name);
+        await searchPage.getEmptySequenceVersionField().fill(testSequence.name);
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
-            `${baseUrl}${routes.searchPage([{ name: 'accession', type: 'string', filterValue: testSequence.name }])}`,
+            `${baseUrl}${routes.searchPage([
+                { name: 'sequenceVersion', type: 'string', filterValue: testSequence.name },
+                { name: 'isRevocation', type: 'string', filterValue: 'false' },
+            ])}`,
         );
-        await expect(searchPage.page.getByText(testSequence.name)).toBeVisible();
-        await expect(searchPage.page.getByText('2021-01-16')).toBeVisible();
-        await expect(searchPage.page.getByText('B.1.221')).toBeVisible();
+        await expect(searchPage.page.getByText(testSequence.name, { exact: true })).toBeVisible();
+        await expect(searchPage.page.getByText('2002-12-15')).toBeVisible();
+        await expect(searchPage.page.getByText('B.1.1.7')).toBeVisible();
     });
 
     test('should search for existing data from one country', async ({ searchPage }) => {
@@ -40,17 +42,17 @@ test.describe('The search page', () => {
 
         const resultCount = await searchPage.page.getByText('Switzerland').count();
 
-        expect(resultCount).toBe(pageSize);
+        expect(resultCount).toBeGreaterThan(0);
     });
 
     test('should reset the search', async ({ searchPage }) => {
         await searchPage.goto();
-        await searchPage.getEmptyAccessionField().fill(testSequence.name);
+        await searchPage.getEmptySequenceVersionField().fill(testSequence.name);
 
-        await expect(searchPage.getFilledAccessionField()).toHaveValue(testSequence.name);
+        await expect(searchPage.getFilledSequenceVersionField()).toHaveValue(testSequence.name);
 
         await searchPage.clickResetButton();
 
-        await expect(searchPage.getEmptyAccessionField()).toHaveValue('');
+        await expect(searchPage.getEmptySequenceVersionField()).toHaveValue('');
     });
 });
