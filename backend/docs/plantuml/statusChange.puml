@@ -24,9 +24,9 @@
     state APPROVED_FOR_RELEASE
 
     ' actions
-    state CREATING_SUBMIT as "entry with new sequenceId\n will be created" #lightgreen;line:green;line.dotted
-    state CREATING_REVISE as "entry with existing sequenceId\n and incremented version number\n will be created" #lightgreen;line:green;line.dotted
-    state CREATING_REVOKE as "entry with existing sequenceId,\n incremented version number, \n and is_revocation=true will be created" #lightgreen;line:green;line.dotted
+    state CREATING_SUBMIT as "entry with new accession\n will be created" #lightgreen;line:green;line.dotted
+    state CREATING_REVISE as "entry with existing accession\n and incremented version number\n will be created" #lightgreen;line:green;line.dotted
+    state CREATING_REVOKE as "entry with existing accession,\n incremented version number, \n and is_revocation=true will be created" #lightgreen;line:green;line.dotted
     state DELETION as "entry will be deleted" #IndianRed;line:red;line.dotted
     state is_error <<choice>>
     state is_approved <<choice>>

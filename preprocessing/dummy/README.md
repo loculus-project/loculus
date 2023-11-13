@@ -8,7 +8,7 @@ It shows the easiest possible implementation of a preprocessing pipeline.
 Note that a real-world implementation needs to validate the data.
 
 This is also supposed to be used for local testing.
-It can be used to prepare sequences to a desired state, e.g. with processing errors or warnings.
+It can be used to prepare sequence entries to a desired state, e.g. with processing errors or warnings.
 
 ## Setup
 

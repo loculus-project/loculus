@@ -1,6 +1,6 @@
 import z from 'zod';
 
-const sequenceStatusNames = z.union([
+const sequenceEntryStatusNames = z.union([
     z.literal('RECEIVED'),
     z.literal('IN_PROCESSING'),
     z.literal('HAS_ERRORS'),
@@ -8,7 +8,7 @@ const sequenceStatusNames = z.union([
     z.literal('APPROVED_FOR_RELEASE'),
     z.literal('AWAITING_APPROVAL_FOR_REVOCATION'),
 ]);
-export type SequenceStatusNames = z.infer<typeof sequenceStatusNames>;
+export type SequenceEntryStatusNames = z.infer<typeof sequenceEntryStatusNames>;
 const statusThatAllowsReview = z.union([z.literal('HAS_ERRORS'), z.literal('AWAITING_APPROVAL')]);
 
 const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
@@ -31,39 +31,39 @@ export type MetadataField = z.infer<typeof metadataField>;
 const metadataRecord = z.record(metadataField);
 export type MetadataRecord = z.infer<typeof metadataRecord>;
 
-export const sequenceId = z.string();
-export type SequenceId = z.infer<typeof sequenceId>;
+export const accession = z.string();
+export type Accession = z.infer<typeof accession>;
 
-export const sequenceIds = z.object({
-    sequenceIds: z.array(sequenceId),
+export const accessions = z.object({
+    accessions: z.array(accession),
 });
 
-export const sequenceVersion = z.object({
-    sequenceId,
+export const accessionVersion = z.object({
+    accession,
     version: z.number(),
 });
-export type SequenceVersion = z.infer<typeof sequenceVersion>;
+export type AccessionVersion = z.infer<typeof accessionVersion>;
 
-export const sequenceVersionsObject = z.object({
-    sequenceVersions: z.array(sequenceVersion),
+export const accessionVersionsObject = z.object({
+    accessionVersions: z.array(accessionVersion),
 });
 
-export const sequenceStatus = sequenceVersion.merge(
+export const sequenceEntryStatus = accessionVersion.merge(
     z.object({
-        status: sequenceStatusNames,
+        status: sequenceEntryStatusNames,
         isRevocation: z.boolean(),
     }),
 );
-export type SequenceStatus = z.infer<typeof sequenceStatus>;
+export type SequenceEntryStatus = z.infer<typeof sequenceEntryStatus>;
 
-export const headerId = sequenceVersion.merge(
+export const submissionIdMapping = accessionVersion.merge(
     z.object({
-        customId: z.string(),
+        submissionId: z.string(),
     }),
 );
-export type HeaderId = z.infer<typeof headerId>;
+export type SubmissionIdMapping = z.infer<typeof submissionIdMapping>;
 
-export const unprocessedData = sequenceVersion.merge(
+export const unprocessedData = accessionVersion.merge(
     z.object({
         data: z.object({
             metadata: metadataRecord,
@@ -73,7 +73,7 @@ export const unprocessedData = sequenceVersion.merge(
 );
 export type UnprocessedData = z.infer<typeof unprocessedData>;
 
-export const processedData = sequenceVersion.merge(
+export const processedData = accessionVersion.merge(
     z.object({
         data: z.any(),
         errors: z.array(processingAnnotation).optional(),
@@ -83,7 +83,7 @@ export const processedData = sequenceVersion.merge(
 
 export type ProcessedData = z.infer<typeof processedData>;
 
-export const sequenceReview = sequenceVersion.merge(
+export const accessionReview = accessionVersion.merge(
     z.object({
         status: statusThatAllowsReview,
         errors: z.array(processingAnnotation).nullable(),
@@ -102,7 +102,7 @@ export const sequenceReview = sequenceVersion.merge(
         }),
     }),
 );
-export type SequenceReview = z.infer<typeof sequenceReview>;
+export type SequenceEntryReview = z.infer<typeof accessionReview>;
 
 export const submitFiles = z.object({
     username: z.string(),

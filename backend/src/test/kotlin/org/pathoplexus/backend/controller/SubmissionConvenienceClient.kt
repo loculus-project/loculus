@@ -2,15 +2,15 @@ package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import org.pathoplexus.backend.api.HeaderId
-import org.pathoplexus.backend.api.SequenceReview
-import org.pathoplexus.backend.api.SequenceVersion
-import org.pathoplexus.backend.api.SequenceVersionStatus
+import org.pathoplexus.backend.api.AccessionVersion
+import org.pathoplexus.backend.api.SequenceEntryReview
+import org.pathoplexus.backend.api.SequenceEntryStatus
 import org.pathoplexus.backend.api.Status
+import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.service.SequenceId
+import org.pathoplexus.backend.service.Accession
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -20,7 +20,7 @@ class SubmissionConvenienceClient(
     private val client: SubmissionControllerClient,
     private val objectMapper: ObjectMapper,
 ) {
-    fun submitDefaultFiles(username: String = USER_NAME): List<HeaderId> {
+    fun submitDefaultFiles(username: String = USER_NAME): List<SubmissionIdMapping> {
         val submit = client.submit(
             username,
             DefaultFiles.metadataFile,
@@ -30,7 +30,7 @@ class SubmissionConvenienceClient(
         return deserializeJsonResponse(submit)
     }
 
-    fun prepareDefaultSequencesToInProcessing() {
+    fun prepareDefaultSequenceEntriesToInProcessing() {
         submitDefaultFiles()
         extractUnprocessedData()
     }
@@ -40,48 +40,48 @@ class SubmissionConvenienceClient(
             .andExpect(status().isNoContent)
     }
 
-    fun prepareDefaultSequencesToHasErrors() {
-        prepareDefaultSequencesToInProcessing()
-        DefaultFiles.allSequenceIds.forEach { sequenceId ->
-            client.submitProcessedData(PreparedProcessedData.withErrors(sequenceId = sequenceId))
+    fun prepareDefaultSequenceEntriesToHasErrors() {
+        prepareDefaultSequenceEntriesToInProcessing()
+        DefaultFiles.allAccessions.forEach { accession ->
+            client.submitProcessedData(PreparedProcessedData.withErrors(accession = accession))
         }
     }
 
-    fun prepareDefaultSequencesToAwaitingApproval() {
-        prepareDefaultSequencesToInProcessing()
+    private fun prepareDefaultSequenceEntriesToAwaitingApproval() {
+        prepareDefaultSequenceEntriesToInProcessing()
         client.submitProcessedData(
-            *DefaultFiles.allSequenceIds.map {
-                PreparedProcessedData.successfullyProcessed(sequenceId = it)
+            *DefaultFiles.allAccessions.map {
+                PreparedProcessedData.successfullyProcessed(accession = it)
             }.toTypedArray(),
         )
     }
 
-    fun prepareDefaultSequencesToApprovedForRelease() {
-        prepareDefaultSequencesToAwaitingApproval()
+    fun prepareDefaultSequenceEntriesToApprovedForRelease() {
+        prepareDefaultSequenceEntriesToAwaitingApproval()
 
-        approveProcessedSequences(
-            DefaultFiles.allSequenceIds.map { SequenceVersion(it, 1L) },
+        approveProcessedSequenceEntries(
+            DefaultFiles.allAccessions.map { AccessionVersion(it, 1L) },
         )
     }
 
-    fun reviseAndProcessDefaultSequences() {
-        reviseDefaultProcessedSequences()
-        val extractedSequenceVersions = extractUnprocessedData().map { SequenceVersion(it.sequenceId, it.version) }
+    fun reviseAndProcessDefaultSequenceEntries() {
+        reviseDefaultProcessedSequenceEntries()
+        val extractedAccessionVersions = extractUnprocessedData().map { AccessionVersion(it.accession, it.version) }
         submitProcessedData(
-            *extractedSequenceVersions
-                .map { PreparedProcessedData.successfullyProcessed(sequenceId = it.sequenceId, version = it.version) }
+            *extractedAccessionVersions
+                .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) }
                 .toTypedArray(),
         )
-        approveProcessedSequences(extractedSequenceVersions)
+        approveProcessedSequenceEntries(extractedAccessionVersions)
     }
 
-    fun prepareDefaultSequencesToAwaitingApprovalForRevocation() {
-        prepareDefaultSequencesToApprovedForRelease()
-        revokeSequences(DefaultFiles.allSequenceIds)
+    fun prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation() {
+        prepareDefaultSequenceEntriesToApprovedForRelease()
+        revokeSequenceEntries(DefaultFiles.allAccessions)
     }
 
-    fun extractUnprocessedData(numberOfSequences: Int = DefaultFiles.NUMBER_OF_SEQUENCES) =
-        client.extractUnprocessedData(numberOfSequences)
+    fun extractUnprocessedData(numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES) =
+        client.extractUnprocessedData(numberOfSequenceEntries)
             .expectNdjsonAndGetContent<UnprocessedData>()
 
     fun prepareDatabaseWith(
@@ -92,56 +92,56 @@ class SubmissionConvenienceClient(
         client.submitProcessedData(*processedData)
     }
 
-    fun getSequencesOfUser(userName: String = USER_NAME): List<SequenceVersionStatus> {
-        return deserializeJsonResponse(client.getSequencesOfUser(userName))
+    fun getSequenceEntriesOfUser(userName: String = USER_NAME): List<SequenceEntryStatus> {
+        return deserializeJsonResponse(client.getSequenceEntriesOfUser(userName))
     }
 
-    fun getSequencesOfUserInState(
+    fun getSequenceEntriesOfUserInState(
         userName: String = USER_NAME,
         status: Status,
-    ): List<SequenceVersionStatus> = getSequencesOfUser(userName).filter { it.status == status }
+    ): List<SequenceEntryStatus> = getSequenceEntriesOfUser(userName).filter { it.status == status }
 
-    fun getSequenceVersionOfUser(
-        sequenceVersion: SequenceVersion,
+    fun getSequenceEntryOfUser(
+        accessionVersion: AccessionVersion,
         userName: String = USER_NAME,
-    ) = getSequenceVersionOfUser(sequenceVersion.sequenceId, sequenceVersion.version, userName)
+    ) = getSequenceEntryOfUser(accessionVersion.accession, accessionVersion.version, userName)
 
-    fun getSequenceVersionOfUser(
-        sequenceId: SequenceId,
+    fun getSequenceEntryOfUser(
+        accession: Accession,
         version: Long,
         userName: String = USER_NAME,
-    ): SequenceVersionStatus {
-        val sequencesOfUser = getSequencesOfUser(userName)
+    ): SequenceEntryStatus {
+        val sequencesOfUser = getSequenceEntriesOfUser(userName)
 
-        return sequencesOfUser.find { it.sequenceId == sequenceId && it.version == version }
-            ?: error("Did not find $sequenceId.$version for $userName")
+        return sequencesOfUser.find { it.accession == accession && it.version == version }
+            ?: error("Did not find $accession.$version for $userName")
     }
 
-    fun getSequenceThatNeedsReview(
-        sequenceId: SequenceId,
+    fun getSequenceEntryThatNeedsReview(
+        accession: Accession,
         version: Long,
         userName: String = USER_NAME,
-    ): SequenceReview =
-        deserializeJsonResponse(client.getSequenceThatNeedsReview(sequenceId, version, userName))
+    ): SequenceEntryReview =
+        deserializeJsonResponse(client.getSequenceEntryThatNeedsReview(accession, version, userName))
 
     fun submitDefaultReviewedData(
         userName: String = USER_NAME,
     ) {
-        DefaultFiles.allSequenceIds.forEach { sequenceId ->
-            client.submitReviewedSequence(
+        DefaultFiles.allAccessions.forEach { accession ->
+            client.submitReviewedSequenceEntry(
                 userName,
-                UnprocessedData(sequenceId, 1L, defaultOriginalData),
+                UnprocessedData(accession, 1L, defaultOriginalData),
             )
         }
     }
 
-    fun approveProcessedSequences(listOfSequencesToApprove: List<SequenceVersion>) {
-        client.approveProcessedSequences(listOfSequencesToApprove)
+    fun approveProcessedSequenceEntries(listOfSequencesToApprove: List<AccessionVersion>) {
+        client.approveProcessedSequenceEntries(listOfSequencesToApprove)
             .andExpect(status().isNoContent)
     }
 
-    fun reviseDefaultProcessedSequences(): List<HeaderId> {
-        val result = client.reviseSequences(
+    fun reviseDefaultProcessedSequenceEntries(): List<SubmissionIdMapping> {
+        val result = client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
             DefaultFiles.sequencesFile,
         ).andExpect(status().isOk)
@@ -149,10 +149,10 @@ class SubmissionConvenienceClient(
         return deserializeJsonResponse(result)
     }
 
-    fun revokeSequences(listOfSequencesToRevoke: List<SequenceId>): List<SequenceVersionStatus> =
-        deserializeJsonResponse(client.revokeSequences(listOfSequencesToRevoke))
+    fun revokeSequenceEntries(listOfSequencesToRevoke: List<Accession>): List<SequenceEntryStatus> =
+        deserializeJsonResponse(client.revokeSequenceEntries(listOfSequencesToRevoke))
 
-    fun confirmRevocation(listOfSequencesToConfirm: List<SequenceVersion>) {
+    fun confirmRevocation(listOfSequencesToConfirm: List<AccessionVersion>) {
         client.confirmRevocation(listOfSequencesToConfirm)
             .andExpect(status().isNoContent)
     }
@@ -160,11 +160,11 @@ class SubmissionConvenienceClient(
     fun prepareDataTo(status: Status) {
         when (status) {
             Status.RECEIVED -> submitDefaultFiles()
-            Status.IN_PROCESSING -> prepareDefaultSequencesToInProcessing()
-            Status.HAS_ERRORS -> prepareDefaultSequencesToHasErrors()
-            Status.AWAITING_APPROVAL -> prepareDefaultSequencesToAwaitingApproval()
-            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequencesToApprovedForRelease()
-            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequencesToAwaitingApprovalForRevocation()
+            Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing()
+            Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors()
+            Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval()
+            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease()
+            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
         }
     }
 

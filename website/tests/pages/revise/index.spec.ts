@@ -3,11 +3,11 @@ import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
 test.describe('The revise page', () => {
     test('should upload files and revise existing data', async ({ revisePage }) => {
-        const sequences = await prepareDataToBe('approvedForRelease');
+        const sequenceEntries = await prepareDataToBe('approvedForRelease');
 
         await revisePage.goto();
         await expect(revisePage.page.getByText('Result of Revision')).not.toBeVisible();
-        await revisePage.submitRevisedData(sequences.map((entry) => entry.sequenceId));
+        await revisePage.submitRevisedData(sequenceEntries.map((entry) => entry.accession));
         await expect(revisePage.page.getByText('Result of Revision')).toBeVisible();
     });
 });

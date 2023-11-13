@@ -2,24 +2,24 @@ package org.pathoplexus.backend.model
 
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
-import org.pathoplexus.backend.api.HeaderId
 import org.pathoplexus.backend.api.OriginalData
 import org.pathoplexus.backend.api.RevisedData
+import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedData
 import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
+import org.pathoplexus.backend.service.Accession
 import org.pathoplexus.backend.service.DatabaseService
-import org.pathoplexus.backend.service.SequenceId
 import org.pathoplexus.backend.utils.FastaReader
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.InputStreamReader
 
-private const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "header"
-private const val SEQUENCE_ID_HEADER = "sequenceId"
+const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "submissionId"
+private const val ACCESSION_HEADER = "accession"
 
-typealias CustomId = String
+typealias SubmissionId = String
 typealias SegmentName = String
 
 @Service
@@ -28,7 +28,7 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         username: String,
         metadataFile: MultipartFile,
         sequenceFile: MultipartFile,
-    ): List<HeaderId> {
+    ): List<SubmissionIdMapping> {
         val submittedData = processSubmittedFiles(metadataFile, sequenceFile)
 
         return databaseService.insertSubmissions(username, submittedData)
@@ -38,7 +38,7 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         username: String,
         metadataFile: MultipartFile,
         sequenceFile: MultipartFile,
-    ): List<HeaderId> {
+    ): List<SubmissionIdMapping> {
         val revisedData = processRevisedData(metadataFile, sequenceFile)
 
         return databaseService.reviseData(username, revisedData)
@@ -63,32 +63,32 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         sequenceFile: MultipartFile,
     ): List<RevisedData> {
         val metadataMap = metadataMap(metadataFile)
-        val metadataMapWithoutSequenceId =
-            metadataMap.mapValues { it.value.filterKeys { column -> column != SEQUENCE_ID_HEADER } }
+        val metadataMapWithoutAccession =
+            metadataMap.mapValues { it.value.filterKeys { column -> column != ACCESSION_HEADER } }
         val sequenceMap = sequenceMap(sequenceFile)
-        validateHeaders(metadataMapWithoutSequenceId, sequenceMap)
+        validateHeaders(metadataMapWithoutAccession, sequenceMap)
 
-        val sequenceIdMap = sequenceIdMap(metadataMap)
+        val accessionMap = accessionMap(metadataMap)
 
-        return metadataMapWithoutSequenceId.map { entry ->
+        return metadataMapWithoutAccession.map { entry ->
             RevisedData(
                 entry.key,
-                sequenceIdMap[entry.key]!!,
+                accessionMap[entry.key]!!,
                 OriginalData(entry.value, sequenceMap[entry.key]!!),
             )
         }
     }
 
     private fun validateHeaders(
-        metadataMap: Map<CustomId, Map<String, String>>,
-        sequenceMap: Map<CustomId, Map<SegmentName, String>>,
+        metadataMap: Map<SubmissionId, Map<String, String>>,
+        sequenceMap: Map<SubmissionId, Map<SegmentName, String>>,
     ) {
         val metadataKeysSet = metadataMap.keys.toSet()
         val sequenceKeysSet = sequenceMap.keys.toSet()
         val metadataKeysNotInSequences = metadataKeysSet.subtract(sequenceKeysSet)
         if (metadataKeysNotInSequences.isNotEmpty()) {
             throw UnprocessableEntityException(
-                "Metadata file contains headers that are not present in the sequence file: " +
+                "Metadata file contains submissionIds that are not present in the sequence file: " +
                     metadataKeysNotInSequences,
             )
         }
@@ -96,13 +96,13 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         val sequenceKeysNotInMetadata = sequenceKeysSet.subtract(metadataKeysSet)
         if (sequenceKeysNotInMetadata.isNotEmpty()) {
             throw UnprocessableEntityException(
-                "Sequence file contains headers that are not present in the metadata file: " +
+                "Sequence file contains submissionIds that are not present in the metadata file: " +
                     sequenceKeysNotInMetadata,
             )
         }
     }
 
-    private fun metadataMap(metadataFile: MultipartFile): Map<CustomId, Map<String, String>> {
+    private fun metadataMap(metadataFile: MultipartFile): Map<SubmissionId, Map<String, String>> {
         if (metadataFile.originalFilename == null || !metadataFile.originalFilename?.endsWith(".tsv")!!) {
             throw BadRequestException("Metadata file must have extension .tsv")
         }
@@ -146,59 +146,59 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         return metadataMap
     }
 
-    private fun sequenceIdMap(metadataMap: Map<CustomId, Map<String, String>>): Map<CustomId, SequenceId> {
-        if (metadataMap.values.any { !it.keys.contains(SEQUENCE_ID_HEADER) }) {
+    private fun accessionMap(metadataMap: Map<SubmissionId, Map<String, String>>): Map<SubmissionId, Accession> {
+        if (metadataMap.values.any { !it.keys.contains(ACCESSION_HEADER) }) {
             throw UnprocessableEntityException(
-                "Metadata file misses header $SEQUENCE_ID_HEADER",
+                "Metadata file misses header $ACCESSION_HEADER",
             )
         }
 
         return metadataMap.map {
-            if (it.value[SEQUENCE_ID_HEADER].isNullOrEmpty()) {
+            if (it.value[ACCESSION_HEADER].isNullOrEmpty()) {
                 throw UnprocessableEntityException(
-                    "A row with header '${it.key}' in metadata file contains no $SEQUENCE_ID_HEADER",
+                    "A row with header '${it.key}' in metadata file contains no $ACCESSION_HEADER",
                 )
             }
-            if (it.value[SEQUENCE_ID_HEADER]!!.toLongOrNull() == null) {
+            if (it.value[ACCESSION_HEADER]!!.toLongOrNull() == null) {
                 throw UnprocessableEntityException(
-                    "A row with header '${it.key}' in metadata file contains no valid $SEQUENCE_ID_HEADER: " +
-                        "${it.value[SEQUENCE_ID_HEADER]}",
+                    "A row with header '${it.key}' in metadata file contains no valid $ACCESSION_HEADER: " +
+                        "${it.value[ACCESSION_HEADER]}",
                 )
             }
-            it.key to it.value[SEQUENCE_ID_HEADER]!!
+            it.key to it.value[ACCESSION_HEADER]!!
         }.toMap()
     }
 
-    private fun sequenceMap(sequenceFile: MultipartFile): Map<CustomId, Map<SegmentName, String>> {
+    private fun sequenceMap(sequenceFile: MultipartFile): Map<SubmissionId, Map<SegmentName, String>> {
         if (sequenceFile.originalFilename == null || !sequenceFile.originalFilename?.endsWith(".fasta")!!) {
             throw BadRequestException("Sequence file must have extension .fasta")
         }
 
         val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
-        val sequenceMap = mutableMapOf<CustomId, MutableMap<SegmentName, String>>()
+        val sequenceMap = mutableMapOf<SubmissionId, MutableMap<SegmentName, String>>()
         fastaList.forEach {
             val (sampleName, segmentName) = parseFastaHeader(it.sampleName)
             val segmentMap = sequenceMap.getOrPut(sampleName) { mutableMapOf() }
             if (segmentMap.containsKey(segmentName)) {
-                throw UnprocessableEntityException("Sequence file contains duplicate headers: ${it.sampleName}")
+                throw UnprocessableEntityException("Sequence file contains duplicate submissionIds: ${it.sampleName}")
             }
             segmentMap[segmentName] = it.sequence
         }
         return sequenceMap
     }
 
-    private fun parseFastaHeader(header: String): Pair<CustomId, SegmentName> {
+    private fun parseFastaHeader(submissionId: String): Pair<SubmissionId, SegmentName> {
         if (referenceGenome.nucleotideSequences.size == 1) {
-            return Pair(header, "main")
+            return Pair(submissionId, "main")
         }
 
-        val lastDelimiter = header.lastIndexOf("_")
+        val lastDelimiter = submissionId.lastIndexOf("_")
         if (lastDelimiter == -1) {
             throw BadRequestException(
-                "The FASTA header $header does not contain the segment name. Please provide the" +
-                    " segment name in the format <header>_<segment name>",
+                "The FASTA header $submissionId does not contain the segment name. Please provide the" +
+                    " segment name in the format <submissionId>_<segment name>",
             )
         }
-        return Pair(header.substring(0, lastDelimiter), header.substring(lastDelimiter + 1))
+        return Pair(submissionId.substring(0, lastDelimiter), submissionId.substring(lastDelimiter + 1))
     }
 }

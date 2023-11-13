@@ -27,13 +27,12 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
-import org.pathoplexus.backend.api.HeaderId
+import org.pathoplexus.backend.api.AccessionVersion
+import org.pathoplexus.backend.api.AccessionVersionInterface
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.RevisedData
-import org.pathoplexus.backend.api.SequenceReview
-import org.pathoplexus.backend.api.SequenceVersion
-import org.pathoplexus.backend.api.SequenceVersionInterface
-import org.pathoplexus.backend.api.SequenceVersionStatus
+import org.pathoplexus.backend.api.SequenceEntryReview
+import org.pathoplexus.backend.api.SequenceEntryStatus
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL
@@ -41,6 +40,7 @@ import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.pathoplexus.backend.api.Status.HAS_ERRORS
 import org.pathoplexus.backend.api.Status.IN_PROCESSING
 import org.pathoplexus.backend.api.Status.RECEIVED
+import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedData
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
@@ -75,59 +75,62 @@ class DatabaseService(
         Database.connect(pool)
     }
 
-    fun insertSubmissions(submitter: String, submittedData: List<SubmittedData>): List<HeaderId> {
-        log.info { "submitting ${submittedData.size} new sequences by $submitter" }
+    fun insertSubmissions(submitter: String, submittedData: List<SubmittedData>): List<SubmissionIdMapping> {
+        log.info { "submitting ${submittedData.size} new sequence entries by $submitter" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         return submittedData.map { data ->
-            val insert = SequencesTable.insert {
-                it[sequenceId] = idSequence.nextLongVal() as NextVal<String>
-                it[SequencesTable.submitter] = submitter
+            val insert = SequenceEntriesTable.insert {
+                it[accession] = accessionSequence.nextLongVal() as NextVal<String>
+                it[SequenceEntriesTable.submitter] = submitter
                 it[submittedAt] = now
                 it[version] = 1
                 it[status] = RECEIVED.name
-                it[customId] = data.customId
+                it[submissionId] = data.submissionId
                 it[originalData] = data.originalData
             }
-            HeaderId(insert[SequencesTable.sequenceId], insert[SequencesTable.version], data.customId)
+            SubmissionIdMapping(
+                insert[SequenceEntriesTable.accession],
+                insert[SequenceEntriesTable.version],
+                data.submissionId,
+            )
         }
     }
 
-    fun streamUnprocessedSubmissions(numberOfSequences: Int, outputStream: OutputStream) {
-        log.info { "streaming unprocessed submissions. Requested $numberOfSequences sequences." }
+    fun streamUnprocessedSubmissions(numberOfSequenceEntries: Int, outputStream: OutputStream) {
+        log.info { "streaming unprocessed submissions. Requested $numberOfSequenceEntries sequence entries." }
         val maxVersionQuery = maxVersionQuery()
 
-        val sequencesData = SequencesTable
-            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.originalData)
+        val sequenceEntryData = SequenceEntriesTable
+            .slice(SequenceEntriesTable.accession, SequenceEntriesTable.version, SequenceEntriesTable.originalData)
             .select(
                 where = {
-                    (SequencesTable.status eq RECEIVED.name)
-                        .and((SequencesTable.version eq maxVersionQuery))
+                    (SequenceEntriesTable.status eq RECEIVED.name)
+                        .and((SequenceEntriesTable.version eq maxVersionQuery))
                 },
             )
-            .limit(numberOfSequences)
+            .limit(numberOfSequenceEntries)
             .map {
                 UnprocessedData(
-                    it[SequencesTable.sequenceId],
-                    it[SequencesTable.version],
-                    it[SequencesTable.originalData]!!,
+                    it[SequenceEntriesTable.accession],
+                    it[SequenceEntriesTable.version],
+                    it[SequenceEntriesTable.originalData]!!,
                 )
             }
 
-        log.info { "streaming ${sequencesData.size} of $numberOfSequences requested unprocessed submissions" }
+        log.info { "streaming ${sequenceEntryData.size} of $numberOfSequenceEntries requested unprocessed submissions" }
 
-        updateStatusToProcessing(sequencesData)
+        updateStatusToProcessing(sequenceEntryData)
 
-        iteratorStreamer.streamAsNdjson(sequencesData, outputStream)
+        iteratorStreamer.streamAsNdjson(sequenceEntryData, outputStream)
     }
 
-    private fun updateStatusToProcessing(sequences: List<UnprocessedData>) {
-        val sequenceVersions = sequences.map { it.sequenceId to it.version }
+    private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        SequencesTable
+        SequenceEntriesTable
             .update(
-                where = { Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions },
+                where = { accessionVersionIsIn(sequenceEntries) },
             ) {
                 it[status] = IN_PROCESSING.name
                 it[startedProcessingAt] = now
@@ -171,11 +174,11 @@ class DatabaseService(
             else -> HAS_ERRORS
         }
 
-        return SequencesTable.update(
+        return SequenceEntriesTable.update(
             where = {
-                (SequencesTable.sequenceId eq submittedProcessedDataWithAllKeysForInsertions.sequenceId) and
-                    (SequencesTable.version eq submittedProcessedDataWithAllKeysForInsertions.version) and
-                    (SequencesTable.status eq IN_PROCESSING.name)
+                (SequenceEntriesTable.accession eq submittedProcessedDataWithAllKeysForInsertions.accession) and
+                    (SequenceEntriesTable.version eq submittedProcessedDataWithAllKeysForInsertions.version) and
+                    (SequenceEntriesTable.status eq IN_PROCESSING.name)
             },
         ) {
             it[status] = newStatus.name
@@ -214,103 +217,102 @@ class DatabaseService(
     }
 
     private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData): String {
-        val selectedSequences = SequencesTable
+        val selectedSequenceEntries = SequenceEntriesTable
             .slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.status,
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version,
+                SequenceEntriesTable.status,
             )
             .select(
                 where = {
-                    (SequencesTable.sequenceId eq submittedProcessedData.sequenceId) and
-                        (SequencesTable.version eq submittedProcessedData.version)
+                    (SequenceEntriesTable.accession eq submittedProcessedData.accession) and
+                        (SequenceEntriesTable.version eq submittedProcessedData.version)
                 },
             )
 
-        val sequenceVersion = submittedProcessedData.displaySequenceVersion()
-        if (selectedSequences.count() == 0L) {
-            throw UnprocessableEntityException("Sequence version $sequenceVersion does not exist")
+        val accessionVersion = submittedProcessedData.displayAccessionVersion()
+        if (selectedSequenceEntries.count() == 0L) {
+            throw UnprocessableEntityException("Accession version $accessionVersion does not exist")
         }
 
-        val selectedSequence = selectedSequences.first()
-        if (selectedSequence[SequencesTable.status] != IN_PROCESSING.name) {
+        val selectedSequence = selectedSequenceEntries.first()
+        if (selectedSequence[SequenceEntriesTable.status] != IN_PROCESSING.name) {
             throw UnprocessableEntityException(
-                "Sequence version $sequenceVersion is in not in state $IN_PROCESSING " +
-                    "(was ${selectedSequence[SequencesTable.status]})",
+                "Accession version $accessionVersion is in not in state $IN_PROCESSING " +
+                    "(was ${selectedSequence[SequenceEntriesTable.status]})",
             )
         }
-        throw RuntimeException("Update processed data: Unexpected error for sequence version $sequenceVersion")
+        throw RuntimeException("Update processed data: Unexpected error for accession versions $accessionVersion")
     }
 
-    fun approveProcessedData(submitter: String, sequenceVersions: List<SequenceVersion>) {
-        log.info { "approving ${sequenceVersions.size} sequences by $submitter" }
+    fun approveProcessedData(submitter: String, accessionVersions: List<AccessionVersion>) {
+        log.info { "approving ${accessionVersions.size} sequences by $submitter" }
 
-        queryPreconditionValidator.validateSequenceVersions(submitter, sequenceVersions, listOf(AWAITING_APPROVAL))
+        queryPreconditionValidator.validateAccessionVersions(submitter, accessionVersions, listOf(AWAITING_APPROVAL))
 
-        SequencesTable.update(
+        SequenceEntriesTable.update(
             where = {
-                (Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions.toPairs()) and
-                    (SequencesTable.status eq AWAITING_APPROVAL.name)
+                accessionVersionIsIn(accessionVersions) and (SequenceEntriesTable.status eq AWAITING_APPROVAL.name)
             },
         ) {
             it[status] = APPROVED_FOR_RELEASE.name
         }
     }
 
-    fun getLatestVersions(): Map<SequenceId, Version> {
-        val maxVersionExpression = SequencesTable.version.max()
-        return SequencesTable
-            .slice(SequencesTable.sequenceId, maxVersionExpression)
+    fun getLatestVersions(): Map<Accession, Version> {
+        val maxVersionExpression = SequenceEntriesTable.version.max()
+        return SequenceEntriesTable
+            .slice(SequenceEntriesTable.accession, maxVersionExpression)
             .select(
                 where = {
-                    (SequencesTable.status eq APPROVED_FOR_RELEASE.name)
+                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name)
                 },
             )
-            .groupBy(SequencesTable.sequenceId)
-            .associate { it[SequencesTable.sequenceId] to it[maxVersionExpression]!! }
+            .groupBy(SequenceEntriesTable.accession)
+            .associate { it[SequenceEntriesTable.accession] to it[maxVersionExpression]!! }
     }
 
-    fun getLatestRevocationVersions(): Map<SequenceId, Version> {
-        val maxVersionExpression = SequencesTable.version.max()
-        return SequencesTable
-            .slice(SequencesTable.sequenceId, maxVersionExpression)
+    fun getLatestRevocationVersions(): Map<Accession, Version> {
+        val maxVersionExpression = SequenceEntriesTable.version.max()
+        return SequenceEntriesTable
+            .slice(SequenceEntriesTable.accession, maxVersionExpression)
             .select(
                 where = {
-                    (SequencesTable.status eq APPROVED_FOR_RELEASE.name) and
-                        (SequencesTable.isRevocation eq true)
+                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
+                        (SequenceEntriesTable.isRevocation eq true)
                 },
             )
-            .groupBy(SequencesTable.sequenceId)
-            .associate { it[SequencesTable.sequenceId] to it[maxVersionExpression]!! }
+            .groupBy(SequenceEntriesTable.accession)
+            .associate { it[SequenceEntriesTable.accession] to it[maxVersionExpression]!! }
     }
 
     fun streamReleasedSubmissions(): Sequence<RawProcessedData> {
-        return SequencesTable
+        return SequenceEntriesTable
             .slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.isRevocation,
-                SequencesTable.processedData,
-                SequencesTable.submitter,
-                SequencesTable.submittedAt,
-                SequencesTable.customId,
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version,
+                SequenceEntriesTable.isRevocation,
+                SequenceEntriesTable.processedData,
+                SequenceEntriesTable.submitter,
+                SequenceEntriesTable.submittedAt,
+                SequenceEntriesTable.submissionId,
             )
             .select(
                 where = {
-                    (SequencesTable.status eq APPROVED_FOR_RELEASE.name)
+                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name)
                 },
             )
             // TODO(#429): This needs clarification of how to handle revocations. Until then, revocations are filtered out.
-            .filter { !it[SequencesTable.isRevocation] }
+            .filter { !it[SequenceEntriesTable.isRevocation] }
             .map {
                 RawProcessedData(
-                    sequenceId = it[SequencesTable.sequenceId],
-                    version = it[SequencesTable.version],
-                    isRevocation = it[SequencesTable.isRevocation],
-                    submitter = it[SequencesTable.submitter],
-                    customId = it[SequencesTable.customId],
-                    processedData = it[SequencesTable.processedData]!!,
-                    submittedAt = it[SequencesTable.submittedAt],
+                    accession = it[SequenceEntriesTable.accession],
+                    version = it[SequenceEntriesTable.version],
+                    isRevocation = it[SequenceEntriesTable.isRevocation],
+                    submitter = it[SequenceEntriesTable.submitter],
+                    submissionId = it[SequenceEntriesTable.submissionId],
+                    processedData = it[SequenceEntriesTable.processedData]!!,
+                    submittedAt = it[SequenceEntriesTable.submittedAt],
                 )
             }
             .asSequence()
@@ -320,252 +322,252 @@ class DatabaseService(
         log.info { "streaming $numberOfSequences submissions that need review by $submitter" }
         val maxVersionQuery = maxVersionQuery()
 
-        val sequencesData = SequencesTable
+        val sequencesData = SequenceEntriesTable
             .slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.status,
-                SequencesTable.processedData,
-                SequencesTable.originalData,
-                SequencesTable.errors,
-                SequencesTable.warnings,
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version,
+                SequenceEntriesTable.status,
+                SequenceEntriesTable.processedData,
+                SequenceEntriesTable.originalData,
+                SequenceEntriesTable.errors,
+                SequenceEntriesTable.warnings,
             )
             .select(
                 where = {
-                    (SequencesTable.status eq HAS_ERRORS.name) and
-                        (SequencesTable.version eq maxVersionQuery) and
-                        (SequencesTable.submitter eq submitter)
+                    (SequenceEntriesTable.status eq HAS_ERRORS.name) and
+                        (SequenceEntriesTable.version eq maxVersionQuery) and
+                        (SequenceEntriesTable.submitter eq submitter)
                 },
             ).limit(numberOfSequences).map { row ->
-                SequenceReview(
-                    row[SequencesTable.sequenceId],
-                    row[SequencesTable.version],
-                    Status.fromString(row[SequencesTable.status]),
-                    row[SequencesTable.processedData]!!,
-                    row[SequencesTable.originalData]!!,
-                    row[SequencesTable.errors],
-                    row[SequencesTable.warnings],
+                SequenceEntryReview(
+                    row[SequenceEntriesTable.accession],
+                    row[SequenceEntriesTable.version],
+                    Status.fromString(row[SequenceEntriesTable.status]),
+                    row[SequenceEntriesTable.processedData]!!,
+                    row[SequenceEntriesTable.originalData]!!,
+                    row[SequenceEntriesTable.errors],
+                    row[SequenceEntriesTable.warnings],
                 )
             }
 
         iteratorStreamer.streamAsNdjson(sequencesData, outputStream)
     }
 
-    fun getActiveSequencesSubmittedBy(username: String): List<SequenceVersionStatus> {
-        log.info { "getting active sequences submitted by $username" }
+    fun getActiveSequencesSubmittedBy(username: String): List<SequenceEntryStatus> {
+        log.info { "getting active sequence entries submitted by $username" }
 
-        val subTableSequenceStatus = SequencesTable
+        val subTableSequenceStatus = SequenceEntriesTable
             .slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.status,
-                SequencesTable.isRevocation,
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version,
+                SequenceEntriesTable.status,
+                SequenceEntriesTable.isRevocation,
             )
 
-        val releasedSequences = subTableSequenceStatus
+        val releasedSequenceEntries = subTableSequenceStatus
             .select(
                 where = {
-                    (SequencesTable.status eq APPROVED_FOR_RELEASE.name) and
-                        (SequencesTable.submitter eq username) and
-                        (SequencesTable.version eq maxReleasedVersionQuery())
+                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
+                        (SequenceEntriesTable.submitter eq username) and
+                        (SequenceEntriesTable.version eq maxReleasedVersionQuery())
                 },
             ).map { row ->
-                SequenceVersionStatus(
-                    row[SequencesTable.sequenceId],
-                    row[SequencesTable.version],
+                SequenceEntryStatus(
+                    row[SequenceEntriesTable.accession],
+                    row[SequenceEntriesTable.version],
                     APPROVED_FOR_RELEASE,
-                    row[SequencesTable.isRevocation],
+                    row[SequenceEntriesTable.isRevocation],
                 )
             }
 
         val maxVersionQuery = maxVersionQuery()
-        val unreleasedSequences = subTableSequenceStatus.select(
+        val unreleasedSequenceEntries = subTableSequenceStatus.select(
             where = {
-                (SequencesTable.status neq APPROVED_FOR_RELEASE.name) and
-                    (SequencesTable.submitter eq username) and
-                    (SequencesTable.version eq maxVersionQuery)
+                (SequenceEntriesTable.status neq APPROVED_FOR_RELEASE.name) and
+                    (SequenceEntriesTable.submitter eq username) and
+                    (SequenceEntriesTable.version eq maxVersionQuery)
             },
         ).map { row ->
-            SequenceVersionStatus(
-                row[SequencesTable.sequenceId],
-                row[SequencesTable.version],
-                Status.fromString(row[SequencesTable.status]),
-                row[SequencesTable.isRevocation],
+            SequenceEntryStatus(
+                row[SequenceEntriesTable.accession],
+                row[SequenceEntriesTable.version],
+                Status.fromString(row[SequenceEntriesTable.status]),
+                row[SequenceEntriesTable.isRevocation],
             )
         }
 
-        return releasedSequences + unreleasedSequences
+        return releasedSequenceEntries + unreleasedSequenceEntries
     }
 
     private fun maxReleasedVersionQuery(): Expression<Long?> {
-        val subQueryTable = SequencesTable.alias("subQueryTable")
+        val subQueryTable = SequenceEntriesTable.alias("subQueryTable")
         return wrapAsExpression(
             subQueryTable
-                .slice(subQueryTable[SequencesTable.version].max())
+                .slice(subQueryTable[SequenceEntriesTable.version].max())
                 .select {
-                    (subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId) and
-                        (subQueryTable[SequencesTable.status] eq APPROVED_FOR_RELEASE.name)
+                    (subQueryTable[SequenceEntriesTable.accession] eq SequenceEntriesTable.accession) and
+                        (subQueryTable[SequenceEntriesTable.status] eq APPROVED_FOR_RELEASE.name)
                 },
         )
     }
 
-    fun reviseData(submitter: String, revisedData: List<RevisedData>): List<HeaderId> {
-        log.info { "revising sequences" }
+    fun reviseData(submitter: String, revisedData: List<RevisedData>): List<SubmissionIdMapping> {
+        log.info { "revising sequence entries" }
 
         val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val sequenceVersions =
-            queryPreconditionValidator.validateSequenceIds(
+        val accessionVersions =
+            queryPreconditionValidator.validateAccessions(
                 submitter,
-                revisedData.map { it.sequenceId },
+                revisedData.map { it.accession },
                 listOf(APPROVED_FOR_RELEASE),
-            ).associateBy { it.sequenceId }
+            ).associateBy { it.accession }
 
         revisedData.map { data ->
-            SequencesTable.insert(
-                SequencesTable.slice(
-                    SequencesTable.sequenceId,
-                    SequencesTable.version.plus(1),
-                    SequencesTable.customId,
-                    SequencesTable.submitter,
+            SequenceEntriesTable.insert(
+                SequenceEntriesTable.slice(
+                    SequenceEntriesTable.accession,
+                    SequenceEntriesTable.version.plus(1),
+                    SequenceEntriesTable.submissionId,
+                    SequenceEntriesTable.submitter,
                     dateTimeParam(now),
                     stringParam(RECEIVED.name),
                     booleanParam(false),
-                    QueryParameter(data.originalData, SequencesTable.originalData.columnType),
+                    QueryParameter(data.originalData, SequenceEntriesTable.originalData.columnType),
                 ).select(
                     where = {
-                        (SequencesTable.sequenceId eq data.sequenceId) and
-                            (SequencesTable.version eq maxVersionQuery) and
-                            (SequencesTable.status eq APPROVED_FOR_RELEASE.name) and
-                            (SequencesTable.submitter eq submitter)
+                        (SequenceEntriesTable.accession eq data.accession) and
+                            (SequenceEntriesTable.version eq maxVersionQuery) and
+                            (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
+                            (SequenceEntriesTable.submitter eq submitter)
                     },
                 ),
                 columns = listOf(
-                    SequencesTable.sequenceId,
-                    SequencesTable.version,
-                    SequencesTable.customId,
-                    SequencesTable.submitter,
-                    SequencesTable.submittedAt,
-                    SequencesTable.status,
-                    SequencesTable.isRevocation,
-                    SequencesTable.originalData,
+                    SequenceEntriesTable.accession,
+                    SequenceEntriesTable.version,
+                    SequenceEntriesTable.submissionId,
+                    SequenceEntriesTable.submitter,
+                    SequenceEntriesTable.submittedAt,
+                    SequenceEntriesTable.status,
+                    SequenceEntriesTable.isRevocation,
+                    SequenceEntriesTable.originalData,
                 ),
             )
         }
 
         return revisedData.map {
-            HeaderId(it.sequenceId, sequenceVersions[it.sequenceId]!!.version + 1, it.customId)
+            SubmissionIdMapping(it.accession, accessionVersions[it.accession]!!.version + 1, it.submissionId)
         }
     }
 
-    fun revoke(sequenceIds: List<SequenceId>, username: String): List<SequenceVersionStatus> {
-        log.info { "revoking ${sequenceIds.size} sequences" }
+    fun revoke(accessions: List<Accession>, username: String): List<SequenceEntryStatus> {
+        log.info { "revoking ${accessions.size} sequences" }
 
-        queryPreconditionValidator.validateSequenceIds(username, sequenceIds, listOf(APPROVED_FOR_RELEASE))
+        queryPreconditionValidator.validateAccessions(username, accessions, listOf(APPROVED_FOR_RELEASE))
 
         val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        SequencesTable.insert(
-            SequencesTable.slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version.plus(1),
-                SequencesTable.customId,
-                SequencesTable.submitter,
+        SequenceEntriesTable.insert(
+            SequenceEntriesTable.slice(
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version.plus(1),
+                SequenceEntriesTable.submissionId,
+                SequenceEntriesTable.submitter,
                 dateTimeParam(now),
                 stringParam(AWAITING_APPROVAL_FOR_REVOCATION.name),
                 booleanParam(true),
             ).select(
                 where = {
-                    (SequencesTable.sequenceId inList sequenceIds) and
-                        (SequencesTable.version eq maxVersionQuery) and
-                        (SequencesTable.status eq APPROVED_FOR_RELEASE.name)
+                    (SequenceEntriesTable.accession inList accessions) and
+                        (SequenceEntriesTable.version eq maxVersionQuery) and
+                        (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name)
                 },
             ),
             columns = listOf(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.customId,
-                SequencesTable.submitter,
-                SequencesTable.submittedAt,
-                SequencesTable.status,
-                SequencesTable.isRevocation,
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version,
+                SequenceEntriesTable.submissionId,
+                SequenceEntriesTable.submitter,
+                SequenceEntriesTable.submittedAt,
+                SequenceEntriesTable.status,
+                SequenceEntriesTable.isRevocation,
             ),
         )
 
-        return SequencesTable
+        return SequenceEntriesTable
             .slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.status,
-                SequencesTable.isRevocation,
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version,
+                SequenceEntriesTable.status,
+                SequenceEntriesTable.isRevocation,
             )
             .select(
                 where = {
-                    (SequencesTable.sequenceId inList sequenceIds) and
-                        (SequencesTable.version eq maxVersionQuery) and
-                        (SequencesTable.status eq AWAITING_APPROVAL_FOR_REVOCATION.name)
+                    (SequenceEntriesTable.accession inList accessions) and
+                        (SequenceEntriesTable.version eq maxVersionQuery) and
+                        (SequenceEntriesTable.status eq AWAITING_APPROVAL_FOR_REVOCATION.name)
                 },
             ).map {
-                SequenceVersionStatus(
-                    it[SequencesTable.sequenceId],
-                    it[SequencesTable.version],
+                SequenceEntryStatus(
+                    it[SequenceEntriesTable.accession],
+                    it[SequenceEntriesTable.version],
                     AWAITING_APPROVAL_FOR_REVOCATION,
-                    it[SequencesTable.isRevocation],
+                    it[SequenceEntriesTable.isRevocation],
                 )
             }
     }
 
-    fun confirmRevocation(sequenceVersions: List<SequenceVersion>, username: String) {
-        log.info { "Confirming revocation for ${sequenceVersions.size} sequences" }
+    fun confirmRevocation(accessionVersions: List<AccessionVersion>, username: String) {
+        log.info { "Confirming revocation for ${accessionVersions.size} sequence entries" }
 
-        queryPreconditionValidator.validateSequenceVersions(
+        queryPreconditionValidator.validateAccessionVersions(
             username,
-            sequenceVersions,
+            accessionVersions,
             listOf(AWAITING_APPROVAL_FOR_REVOCATION),
         )
 
-        SequencesTable.update(
+        SequenceEntriesTable.update(
             where = {
-                (Pair(SequencesTable.sequenceId, SequencesTable.version) inList sequenceVersions.toPairs()) and
-                    (SequencesTable.status eq AWAITING_APPROVAL_FOR_REVOCATION.name)
+                accessionVersionIsIn(accessionVersions) and
+                    (SequenceEntriesTable.status eq AWAITING_APPROVAL_FOR_REVOCATION.name)
             },
         ) {
             it[status] = APPROVED_FOR_RELEASE.name
         }
     }
 
-    fun deleteSequences(sequenceVersions: List<SequenceVersion>, submitter: String) {
-        log.info { "Deleting sequence versions: $sequenceVersions" }
+    fun deleteSequences(accessionVersions: List<AccessionVersion>, submitter: String) {
+        log.info { "Deleting accession versions: $accessionVersions" }
 
-        queryPreconditionValidator.validateSequenceVersions(
+        queryPreconditionValidator.validateAccessionVersions(
             submitter,
-            sequenceVersions,
+            accessionVersions,
             listOf(RECEIVED, AWAITING_APPROVAL, HAS_ERRORS, AWAITING_APPROVAL_FOR_REVOCATION),
         )
 
-        SequencesTable.deleteWhere {
-            (Pair(sequenceId, version) inList sequenceVersions.toPairs())
+        SequenceEntriesTable.deleteWhere {
+            accessionVersionIsIn(accessionVersions)
         }
     }
 
-    fun submitReviewedSequence(submitter: String, reviewedSequenceVersion: UnprocessedData) {
-        log.info { "reviewed sequence submitted $reviewedSequenceVersion" }
+    fun submitReviewedSequence(submitter: String, reviewedAccessionVersion: UnprocessedData) {
+        log.info { "reviewed sequence entry submitted $reviewedAccessionVersion" }
 
-        val sequencesReviewed = SequencesTable.update(
+        val sequencesReviewed = SequenceEntriesTable.update(
             where = {
-                (SequencesTable.sequenceId eq reviewedSequenceVersion.sequenceId) and
-                    (SequencesTable.version eq reviewedSequenceVersion.version) and
-                    (SequencesTable.submitter eq submitter) and
+                (SequenceEntriesTable.accession eq reviewedAccessionVersion.accession) and
+                    (SequenceEntriesTable.version eq reviewedAccessionVersion.version) and
+                    (SequenceEntriesTable.submitter eq submitter) and
                     (
-                        (SequencesTable.status eq AWAITING_APPROVAL.name) or
-                            (SequencesTable.status eq HAS_ERRORS.name)
+                        (SequenceEntriesTable.status eq AWAITING_APPROVAL.name) or
+                            (SequenceEntriesTable.status eq HAS_ERRORS.name)
                         )
             },
         ) {
             it[status] = RECEIVED.name
-            it[originalData] = reviewedSequenceVersion.data
+            it[originalData] = reviewedAccessionVersion.data
             it[errors] = null
             it[warnings] = null
             it[startedProcessingAt] = null
@@ -574,156 +576,161 @@ class DatabaseService(
         }
 
         if (sequencesReviewed != 1) {
-            handleReviewedSubmissionError(reviewedSequenceVersion, submitter)
+            handleReviewedSubmissionError(reviewedAccessionVersion, submitter)
         }
     }
 
-    private fun handleReviewedSubmissionError(reviewedSequenceVersion: UnprocessedData, submitter: String) {
-        val selectedSequences = SequencesTable
+    private fun handleReviewedSubmissionError(reviewedAccessionVersion: UnprocessedData, submitter: String) {
+        val selectedSequences = SequenceEntriesTable
             .slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.status,
-                SequencesTable.submitter,
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version,
+                SequenceEntriesTable.status,
+                SequenceEntriesTable.submitter,
             )
             .select(
                 where = {
-                    (SequencesTable.sequenceId eq reviewedSequenceVersion.sequenceId) and
-                        (SequencesTable.version eq reviewedSequenceVersion.version)
+                    (SequenceEntriesTable.accession eq reviewedAccessionVersion.accession) and
+                        (SequenceEntriesTable.version eq reviewedAccessionVersion.version)
                 },
             )
 
-        val sequenceVersionString = reviewedSequenceVersion.displaySequenceVersion()
+        val accessionVersionString = reviewedAccessionVersion.displayAccessionVersion()
 
         if (selectedSequences.count().toInt() == 0) {
-            throw UnprocessableEntityException("Sequence $sequenceVersionString does not exist")
+            throw UnprocessableEntityException("Sequence entry $accessionVersionString does not exist")
         }
 
         val hasCorrectStatus = selectedSequences.all {
-            (it[SequencesTable.status] == AWAITING_APPROVAL.name) ||
-                (it[SequencesTable.status] == HAS_ERRORS.name)
+            (it[SequenceEntriesTable.status] == AWAITING_APPROVAL.name) ||
+                (it[SequenceEntriesTable.status] == HAS_ERRORS.name)
         }
         if (!hasCorrectStatus) {
+            val status = selectedSequences.first()[SequenceEntriesTable.status]
             throw UnprocessableEntityException(
-                "Sequence $sequenceVersionString is in status ${selectedSequences.first()[SequencesTable.status]} " +
-                    "not in $AWAITING_APPROVAL or $HAS_ERRORS",
+                "Sequence entry $accessionVersionString is in status $status, not in $AWAITING_APPROVAL or $HAS_ERRORS",
             )
         }
 
-        if (selectedSequences.any { it[SequencesTable.submitter] != submitter }) {
+        if (selectedSequences.any { it[SequenceEntriesTable.submitter] != submitter }) {
             throw ForbiddenException(
-                "Sequence $sequenceVersionString is not owned by user $submitter",
+                "Sequence entry $accessionVersionString is not owned by user $submitter",
             )
         }
         throw Exception("SequenceReview: Unknown error")
     }
 
-    fun getReviewData(submitter: String, sequenceVersion: SequenceVersion): SequenceReview {
-        log.info { "Getting Sequence ${sequenceVersion.displaySequenceVersion()} that needs review by $submitter" }
+    fun getReviewData(submitter: String, accessionVersion: AccessionVersion): SequenceEntryReview {
+        log.info {
+            "Getting sequence entry ${accessionVersion.displayAccessionVersion()} that needs review by $submitter"
+        }
 
-        val selectedSequences = SequencesTable
+        val selectedSequenceEntries = SequenceEntriesTable
             .slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.processedData,
-                SequencesTable.originalData,
-                SequencesTable.errors,
-                SequencesTable.warnings,
-                SequencesTable.status,
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version,
+                SequenceEntriesTable.processedData,
+                SequenceEntriesTable.originalData,
+                SequenceEntriesTable.errors,
+                SequenceEntriesTable.warnings,
+                SequenceEntriesTable.status,
             )
             .select(
                 where = {
                     (
-                        (SequencesTable.status eq HAS_ERRORS.name)
-                            or (SequencesTable.status eq AWAITING_APPROVAL.name)
+                        (SequenceEntriesTable.status eq HAS_ERRORS.name)
+                            or (SequenceEntriesTable.status eq AWAITING_APPROVAL.name)
                         ) and
-                        (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
-                        (SequencesTable.version eq sequenceVersion.version) and
-                        (SequencesTable.submitter eq submitter)
+                        (SequenceEntriesTable.accession eq accessionVersion.accession) and
+                        (SequenceEntriesTable.version eq accessionVersion.version) and
+                        (SequenceEntriesTable.submitter eq submitter)
                 },
             )
 
-        if (selectedSequences.count().toInt() != 1) {
-            handleGetReviewDataError(submitter, sequenceVersion)
+        if (selectedSequenceEntries.count().toInt() != 1) {
+            handleGetReviewDataError(submitter, accessionVersion)
         }
 
-        return selectedSequences.first().let {
-            SequenceReview(
-                it[SequencesTable.sequenceId],
-                it[SequencesTable.version],
-                Status.fromString(it[SequencesTable.status]),
-                it[SequencesTable.processedData]!!,
-                it[SequencesTable.originalData]!!,
-                it[SequencesTable.errors],
-                it[SequencesTable.warnings],
+        return selectedSequenceEntries.first().let {
+            SequenceEntryReview(
+                it[SequenceEntriesTable.accession],
+                it[SequenceEntriesTable.version],
+                Status.fromString(it[SequenceEntriesTable.status]),
+                it[SequenceEntriesTable.processedData]!!,
+                it[SequenceEntriesTable.originalData]!!,
+                it[SequenceEntriesTable.errors],
+                it[SequenceEntriesTable.warnings],
             )
         }
     }
 
-    private fun handleGetReviewDataError(submitter: String, sequenceVersion: SequenceVersion): Nothing {
-        val selectedSequences = SequencesTable
+    private fun handleGetReviewDataError(submitter: String, accessionVersion: AccessionVersion): Nothing {
+        val selectedSequences = SequenceEntriesTable
             .slice(
-                SequencesTable.sequenceId,
-                SequencesTable.version,
-                SequencesTable.status,
+                SequenceEntriesTable.accession,
+                SequenceEntriesTable.version,
+                SequenceEntriesTable.status,
             )
             .select(
                 where = {
-                    (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
-                        (SequencesTable.version eq sequenceVersion.version)
+                    (SequenceEntriesTable.accession eq accessionVersion.accession) and
+                        (SequenceEntriesTable.version eq accessionVersion.version)
                 },
             )
 
         if (selectedSequences.count().toInt() == 0) {
-            throw NotFoundException("Sequence version ${sequenceVersion.displaySequenceVersion()} does not exist")
+            throw NotFoundException("Accession version ${accessionVersion.displayAccessionVersion()} does not exist")
         }
 
         val selectedSequence = selectedSequences.first()
 
         val hasCorrectStatus =
-            (selectedSequence[SequencesTable.status] == AWAITING_APPROVAL.name) ||
-                (selectedSequence[SequencesTable.status] == HAS_ERRORS.name)
+            (selectedSequence[SequenceEntriesTable.status] == AWAITING_APPROVAL.name) ||
+                (selectedSequence[SequenceEntriesTable.status] == HAS_ERRORS.name)
 
         if (!hasCorrectStatus) {
             throw UnprocessableEntityException(
-                "Sequence version ${sequenceVersion.displaySequenceVersion()} is in not in state " +
+                "Accession version ${accessionVersion.displayAccessionVersion()} is in not in state " +
                     "${HAS_ERRORS.name} or ${AWAITING_APPROVAL.name} " +
-                    "(was ${selectedSequence[SequencesTable.status]})",
+                    "(was ${selectedSequence[SequenceEntriesTable.status]})",
             )
         }
 
-        if (!hasPermissionToChange(submitter, sequenceVersion)) {
+        if (!hasPermissionToChange(submitter, accessionVersion)) {
             throw ForbiddenException(
-                "Sequence ${sequenceVersion.displaySequenceVersion()} is not owned by user $submitter",
+                "Sequence entry ${accessionVersion.displayAccessionVersion()} is not owned by user $submitter",
             )
         }
 
         throw RuntimeException(
-            "Get review data: Unexpected error for sequence version ${sequenceVersion.displaySequenceVersion()}",
+            "Get review data: Unexpected error for accession version ${accessionVersion.displayAccessionVersion()}",
         )
     }
 
-    private fun hasPermissionToChange(user: String, sequenceVersion: SequenceVersion): Boolean {
-        val sequencesOwnedByUser = SequencesTable
-            .slice(SequencesTable.sequenceId, SequencesTable.version, SequencesTable.submitter)
+    private fun hasPermissionToChange(user: String, accessionVersion: AccessionVersion): Boolean {
+        val sequencesOwnedByUser = SequenceEntriesTable
+            .slice(SequenceEntriesTable.accession, SequenceEntriesTable.version, SequenceEntriesTable.submitter)
             .select(
                 where = {
-                    (SequencesTable.sequenceId eq sequenceVersion.sequenceId) and
-                        (SequencesTable.version eq sequenceVersion.version) and
-                        (SequencesTable.submitter eq user)
+                    (SequenceEntriesTable.accession eq accessionVersion.accession) and
+                        (SequenceEntriesTable.version eq accessionVersion.version) and
+                        (SequenceEntriesTable.submitter eq user)
                 },
             )
 
         return sequencesOwnedByUser.count() == 1L
     }
+
+    private fun accessionVersionIsIn(accessionVersions: List<AccessionVersionInterface>) =
+        Pair(SequenceEntriesTable.accession, SequenceEntriesTable.version) inList accessionVersions.toPairs()
 }
 
 data class RawProcessedData(
-    override val sequenceId: SequenceId,
+    override val accession: Accession,
     override val version: Version,
     val isRevocation: Boolean,
     val submitter: String,
     val submittedAt: LocalDateTime,
-    val customId: String,
+    val submissionId: String,
     val processedData: ProcessedData,
-) : SequenceVersionInterface
+) : AccessionVersionInterface

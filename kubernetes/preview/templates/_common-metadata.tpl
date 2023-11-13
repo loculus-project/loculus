@@ -1,14 +1,14 @@
 {{/* Get common metadata fields */}}
 {{- define "pathoplexus.commonMetadata" }}
 fields:
-  - name: sequenceId
+  - name: accession
     type: string
   - name: version
     type: int
     notSearchable: true
-  - name: customId
+  - name: submissionId
     type: string
-  - name: sequenceVersion
+  - name: accessionVersion
     type: string
   - name: isRevocation
     type: string
@@ -31,7 +31,7 @@ instances:
     schema:
       {{- with $instance.schema }}
       instanceName: {{ .instanceName }}
-      primaryKey: sequenceVersion
+      primaryKey: accessionVersion
       metadata:
         {{ $metadata := concat $commonMetadata .metadata
             | include "pathoplexus.generateWebsiteMetadata"

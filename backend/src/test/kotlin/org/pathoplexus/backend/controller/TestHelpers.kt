@@ -5,18 +5,19 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
-import org.pathoplexus.backend.api.SequenceVersionStatus
+import org.pathoplexus.backend.api.SequenceEntryStatus
 import org.pathoplexus.backend.api.Status
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
 val jacksonObjectMapper: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
 inline fun <reified T> ResultActions.expectNdjsonAndGetContent(): List<T> {
-    andExpect(MockMvcResultMatchers.status().isOk)
-    andExpect(MockMvcResultMatchers.content().contentType("application/x-ndjson"))
+    andExpect(status().isOk)
+    andExpect(content().contentType("application/x-ndjson"))
 
     val content = awaitResponse(andReturn())
 
@@ -30,6 +31,6 @@ fun awaitResponse(result: MvcResult): String {
     return result.response.contentAsString
 }
 
-fun SequenceVersionStatus.assertStatusIs(status: Status) {
+fun SequenceEntryStatus.assertStatusIs(status: Status) {
     assertThat(this.status, `is`(status))
 }

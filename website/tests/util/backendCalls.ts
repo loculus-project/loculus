@@ -1,5 +1,5 @@
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
-import type { SequenceId, SequenceVersion } from '../../src/types/backend.ts';
+import type { Accession, AccessionVersion } from '../../src/types/backend.ts';
 import { backendClient, testSequenceCount, testuser } from '../e2e.fixture.ts';
 
 export const submitViaApi = async (numberOfSequences: number = testSequenceCount) => {
@@ -16,8 +16,8 @@ export const submitViaApi = async (numberOfSequences: number = testSequenceCount
     }
 };
 
-export const submitRevisedDataViaApi = async (sequenceIds: SequenceId[]) => {
-    const fileContent = createModifiedFileContent(sequenceIds);
+export const submitRevisedDataViaApi = async (accessions: Accession[]) => {
+    const fileContent = createModifiedFileContent(accessions);
 
     const response = await backendClient.call(
         'revise',
@@ -35,9 +35,9 @@ export const submitRevisedDataViaApi = async (sequenceIds: SequenceId[]) => {
     }
 };
 
-export const approveProcessedData = async (username: string, sequenceVersions: SequenceVersion[]): Promise<void> => {
+export const approveProcessedData = async (username: string, accessionVersions: AccessionVersion[]): Promise<void> => {
     const body = {
-        sequenceVersions,
+        accessionVersions,
     };
 
     const response = await backendClient.call('approveProcessedData', body, {

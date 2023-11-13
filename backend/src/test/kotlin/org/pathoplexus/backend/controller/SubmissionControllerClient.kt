@@ -1,10 +1,10 @@
 package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.pathoplexus.backend.api.SequenceVersion
+import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
-import org.pathoplexus.backend.service.SequenceId
+import org.pathoplexus.backend.service.Accession
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.test.web.servlet.MockMvc
@@ -25,10 +25,10 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .param("username", username),
         )
 
-    fun extractUnprocessedData(numberOfSequences: Int): ResultActions =
+    fun extractUnprocessedData(numberOfSequenceEntries: Int): ResultActions =
         mockMvc.perform(
             post("/extract-unprocessed-data")
-                .param("numberOfSequences", numberOfSequences.toString()),
+                .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
         )
 
     fun submitProcessedData(vararg submittedProcessedData: SubmittedProcessedData): ResultActions {
@@ -44,26 +44,26 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .content(submittedProcessedData),
         )
 
-    fun getSequencesOfUser(userName: String): ResultActions =
+    fun getSequenceEntriesOfUser(userName: String): ResultActions =
         mockMvc.perform(
             get("/get-sequences-of-user")
                 .param("username", userName),
         )
 
-    fun getSequenceThatNeedsReview(sequenceId: SequenceId, version: Long, userName: String): ResultActions =
+    fun getSequenceEntryThatNeedsReview(accession: Accession, version: Long, userName: String): ResultActions =
         mockMvc.perform(
-            get("/get-data-to-review/$sequenceId/$version")
+            get("/get-data-to-review/$accession/$version")
                 .param("username", userName),
         )
 
-    fun getNumberOfSequencesThatNeedReview(userName: String, numberOfSequences: Int): ResultActions =
+    fun getNumberOfSequenceEntriesThatNeedReview(userName: String, numberOfSequences: Int): ResultActions =
         mockMvc.perform(
             get("/get-data-to-review")
                 .param("username", userName)
-                .param("numberOfSequences", numberOfSequences.toString()),
+                .param("numberOfSequenceEntries", numberOfSequences.toString()),
         )
 
-    fun submitReviewedSequence(userName: String, reviewedData: UnprocessedData): ResultActions {
+    fun submitReviewedSequenceEntry(userName: String, reviewedData: UnprocessedData): ResultActions {
         return mockMvc.perform(
             post("/submit-reviewed-sequence")
                 .param("username", userName)
@@ -72,34 +72,37 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         )
     }
 
-    fun approveProcessedSequences(
-        listOfSequencesToApprove: List<SequenceVersion>,
+    fun approveProcessedSequenceEntries(
+        listOfSequencesToApprove: List<AccessionVersion>,
         userName: String = USER_NAME,
     ): ResultActions =
         mockMvc.perform(
             post("/approve-processed-data")
                 .param("username", userName)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}"""),
+                .content("""{"accessionVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}"""),
         )
 
-    fun revokeSequences(listOfSequencesToRevoke: List<SequenceId>, userName: String = USER_NAME): ResultActions =
+    fun revokeSequenceEntries(
+        listOfSequenceEntriesToRevoke: List<Accession>,
+        userName: String = USER_NAME,
+    ): ResultActions =
         mockMvc.perform(
             post("/revoke")
                 .param("username", userName)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
+                .content("""{"accessions":$listOfSequenceEntriesToRevoke}"""),
         )
 
     fun confirmRevocation(
-        listOfSequencesToConfirm: List<SequenceVersion>,
+        listOfSequencesToConfirm: List<AccessionVersion>,
         userName: String = USER_NAME,
     ): ResultActions =
         mockMvc.perform(
             post("/confirm-revocation")
                 .param("username", userName)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToConfirm)}}"""),
+                .content("""{"accessionVersions":${objectMapper.writeValueAsString(listOfSequencesToConfirm)}}"""),
         )
 
     fun getReleasedData(): ResultActions =
@@ -107,8 +110,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             get("/get-released-data"),
         )
 
-    fun deleteSequences(
-        listOfSequenceVersionsToDelete: List<SequenceVersion>,
+    fun deleteSequenceEntries(
+        listOfAccessionVersionsToDelete: List<AccessionVersion>,
         userName: String = USER_NAME,
     ): ResultActions =
         mockMvc.perform(
@@ -116,11 +119,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .param("username", userName)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
-                    """{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequenceVersionsToDelete)}}""",
+                    """{"accessionVersions":${objectMapper.writeValueAsString(listOfAccessionVersionsToDelete)}}""",
                 ),
         )
 
-    fun reviseSequences(
+    fun reviseSequenceEntries(
         metadataFile: MockMultipartFile,
         sequencesFile: MockMultipartFile,
         username: String = USER_NAME,

@@ -6,14 +6,14 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { ReviewPage } from './ReviewPage.tsx';
 import { testuser } from '../../../tests/e2e.fixture.ts';
-import type { MetadataField, SequenceReview } from '../../types/backend.ts';
+import type { MetadataField, SequenceEntryReview } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
 const metadataKey = 'originalMetaDataField';
 const editableEntry = 'originalMetaDataValue';
-const defaultReviewData: SequenceReview = {
-    sequenceId: '1',
+const defaultReviewData: SequenceEntryReview = {
+    accession: '1',
     version: 1,
     status: 'HAS_ERRORS',
     errors: [
@@ -70,7 +70,10 @@ const defaultReviewData: SequenceReview = {
 
 const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 
-function renderReviewPage(reviewData: SequenceReview = defaultReviewData, clientConfig: ClientConfig = dummyConfig) {
+function renderReviewPage(
+    reviewData: SequenceEntryReview = defaultReviewData,
+    clientConfig: ClientConfig = dummyConfig,
+) {
     render(
         <QueryClientProvider client={queryClient}>
             <ReviewPage reviewData={reviewData} clientConfig={clientConfig} username={testuser} />

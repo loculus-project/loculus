@@ -13,9 +13,9 @@ import {
 } from './sequenceActions.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import type { SequenceStatus } from '../../types/backend.ts';
+import type { SequenceEntryStatus } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
@@ -24,19 +24,19 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 type SequenceTableProps = {
     username: string;
     clientConfig: ClientConfig;
-    sequences: SequenceStatus[];
+    sequenceEntries: SequenceEntryStatus[];
     bulkActionNames: BulkSequenceActionName[];
     singleActionNames: SingleSequenceActionName[];
 };
 
-const InnerSequenceTable: FC<SequenceTableProps> = ({
+const InnerSequenceEntryTable: FC<SequenceTableProps> = ({
     username,
     clientConfig,
-    sequences,
+    sequenceEntries,
     bulkActionNames,
     singleActionNames,
 }) => {
-    const [selectedSequenceRowIds, setSelectedSequenceRowIds] = useState<number[]>([]);
+    const [selectedSequenceEntryRowIds, setSelectedSequenceEntryRowIds] = useState<number[]>([]);
 
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
@@ -47,16 +47,16 @@ const InnerSequenceTable: FC<SequenceTableProps> = ({
     const actionHooks = useActionHooks(clientConfig, username, openErrorFeedback);
 
     const handleOpenConfirmationDialog = (action: BulkSequenceAction) => {
-        setDialogText(action.confirmationDialog?.message(getSelectedSequences) ?? '');
+        setDialogText(action.confirmationDialog?.message(getSelectedSequenceEntries) ?? '');
         setDialogAction(action);
         if (dialogRef.current) {
             dialogRef.current.showModal();
         }
     };
 
-    const getSelectedSequences = useMemo(() => {
-        return selectedSequenceRowIds.map((sequenceIndex) => sequences[sequenceIndex]);
-    }, [selectedSequenceRowIds, sequences]);
+    const getSelectedSequenceEntries = useMemo(() => {
+        return selectedSequenceEntryRowIds.map((sequenceIndex) => sequenceEntries[sequenceIndex]);
+    }, [selectedSequenceEntryRowIds, sequenceEntries]);
 
     const singleActions = singleActionNames.map((name) => singleSequenceActions[name]);
     const bulkActions = bulkActionNames.map((name) => bulkSequenceActions[name]);
@@ -69,12 +69,12 @@ const InnerSequenceTable: FC<SequenceTableProps> = ({
         }
     };
 
-    const handleSingleAction = async (sequenceStatus: SequenceStatus, action: SingleSequenceAction) => {
-        await action.actionOnSequence(sequenceStatus, username);
+    const handleSingleAction = async (sequenceStatus: SequenceEntryStatus, action: SingleSequenceAction) => {
+        await action.actionOnSequenceEntry(sequenceStatus, username);
     };
 
     const executeBulkAction = async (action: BulkSequenceAction) => {
-        await action.actionOnSequences(getSelectedSequences, actionHooks);
+        await action.actionOnSequenceEntries(getSelectedSequenceEntries, actionHooks);
     };
 
     return (
@@ -88,16 +88,16 @@ const InnerSequenceTable: FC<SequenceTableProps> = ({
             </dialog>
             <DisplayBulkActions
                 bulkActions={bulkActions}
-                setSelectedSequenceRowIds={setSelectedSequenceRowIds}
-                sequences={sequences}
-                selectedSequenceRowIds={selectedSequenceRowIds}
+                setSelectedSequenceEntryRowIds={setSelectedSequenceEntryRowIds}
+                sequenceEntries={sequenceEntries}
+                selectedSequenceEntryRowIds={selectedSequenceEntryRowIds}
                 handleBulkAction={handleBulkAction}
             />
             <DisplayTable
-                selectedSequenceRowIds={selectedSequenceRowIds}
-                sequences={sequences}
+                selectedSequenceEntryRowIds={selectedSequenceEntryRowIds}
+                sequenceEntries={sequenceEntries}
                 bulkActions={bulkActions}
-                setSelectedSequenceRowIds={setSelectedSequenceRowIds}
+                setSelectedSequenceEntryRowIds={setSelectedSequenceEntryRowIds}
                 singleActions={singleActions}
                 handleSingleAction={handleSingleAction}
             />
@@ -105,19 +105,19 @@ const InnerSequenceTable: FC<SequenceTableProps> = ({
     );
 };
 
-export const SequenceTable = withQueryProvider(InnerSequenceTable);
+export const SequenceEntryTable = withQueryProvider(InnerSequenceEntryTable);
 
 const DisplayTable: FC<{
-    selectedSequenceRowIds: number[];
-    setSelectedSequenceRowIds: Dispatch<SetStateAction<number[]>>;
-    sequences: SequenceStatus[];
+    selectedSequenceEntryRowIds: number[];
+    setSelectedSequenceEntryRowIds: Dispatch<SetStateAction<number[]>>;
+    sequenceEntries: SequenceEntryStatus[];
     bulkActions: BulkSequenceAction[];
     singleActions: SingleSequenceAction[];
-    handleSingleAction: (sequenceStatus: SequenceStatus, action: SingleSequenceAction) => void;
+    handleSingleAction: (sequenceStatus: SequenceEntryStatus, action: SingleSequenceAction) => void;
 }> = ({
-    selectedSequenceRowIds,
-    setSelectedSequenceRowIds,
-    sequences,
+    selectedSequenceEntryRowIds,
+    setSelectedSequenceEntryRowIds,
+    sequenceEntries,
     bulkActions,
     singleActions,
     handleSingleAction,
@@ -142,12 +142,12 @@ const DisplayTable: FC<{
         setIsSelecting(false);
 
         if (selectionStart !== null && selectionEnd !== null) {
-            const startIsSelected = selectedSequenceRowIds.includes(selectionEnd);
+            const startIsSelected = selectedSequenceEntryRowIds.includes(selectionEnd);
 
             const start = Math.min(selectionStart, selectionEnd);
             const end = Math.max(selectionStart, selectionEnd);
 
-            setSelectedSequenceRowIds((prevSelected) => {
+            setSelectedSequenceEntryRowIds((prevSelected) => {
                 const newSelected = new Set(prevSelected);
 
                 for (let id = start; id <= end; id++) {
@@ -164,7 +164,7 @@ const DisplayTable: FC<{
             setSelectionStart(null);
             setSelectionEnd(null);
         }
-    }, [selectionStart, selectionEnd, selectedSequenceRowIds, setSelectedSequenceRowIds]);
+    }, [selectionStart, selectionEnd, selectedSequenceEntryRowIds, setSelectedSequenceEntryRowIds]);
 
     useEffect(() => {
         document.addEventListener('mouseup', handleMouseUp);
@@ -175,7 +175,7 @@ const DisplayTable: FC<{
 
     return (
         <div className='w-full overflow-x-auto'>
-            {sequences.length !== 0 ? (
+            {sequenceEntries.length !== 0 ? (
                 <table className='table '>
                     <thead>
                         <tr>
@@ -188,7 +188,7 @@ const DisplayTable: FC<{
                         </tr>
                     </thead>
                     <tbody>
-                        {sequences.map((sequence, index) => (
+                        {sequenceEntries.map((sequence, index) => (
                             <tr
                                 key={index}
                                 onMouseDown={bulkActions.length > 0 ? () => handleMouseDown(index) : undefined}
@@ -209,21 +209,21 @@ const DisplayTable: FC<{
                                     <td>
                                         <input
                                             type='checkbox'
-                                            checked={selectedSequenceRowIds.includes(index)}
+                                            checked={selectedSequenceEntryRowIds.includes(index)}
                                             onChange={(event) => {
                                                 event.preventDefault();
                                             }}
                                         />
                                     </td>
                                 ) : null}
-                                <td>{getSequenceVersionString(sequence)}</td>
+                                <td>{getAccessionVersionString(sequence)}</td>
                                 <td> {sequence.status} </td>
                                 {singleActions.map((action, index) => (
                                     <td key={index}>
                                         <button
                                             className='btn btn-xs normal-case btn-ghost'
                                             onClick={() => handleSingleAction(sequence, action)}
-                                            data-testid={`${getSequenceVersionString(sequence)}.${action.name}`}
+                                            data-testid={`${getAccessionVersionString(sequence)}.${action.name}`}
                                         >
                                             {sentenceCase(action.name)}
                                         </button>
@@ -243,34 +243,40 @@ const DisplayTable: FC<{
 const DisplayBulkActions: FC<{
     bulkActions: BulkSequenceAction[];
     handleBulkAction: (action: BulkSequenceAction) => void;
-    selectedSequenceRowIds: number[];
-    setSelectedSequenceRowIds: Dispatch<SetStateAction<number[]>>;
-    sequences: SequenceStatus[];
-}> = ({ bulkActions, handleBulkAction, selectedSequenceRowIds, setSelectedSequenceRowIds, sequences }) => {
+    selectedSequenceEntryRowIds: number[];
+    setSelectedSequenceEntryRowIds: Dispatch<SetStateAction<number[]>>;
+    sequenceEntries: SequenceEntryStatus[];
+}> = ({
+    bulkActions,
+    handleBulkAction,
+    selectedSequenceEntryRowIds,
+    setSelectedSequenceEntryRowIds,
+    sequenceEntries,
+}) => {
     return (
         bulkActions.length > 0 && (
             <div className='flex flex-wrap justify-between items-end'>
                 <div className='mb-3'>
                     <div className='pb-3'>
-                        Selected {selectedSequenceRowIds.length} of {sequences.length}
+                        Selected {selectedSequenceEntryRowIds.length} of {sequenceEntries.length}
                     </div>
                     <button
-                        disabled={selectedSequenceRowIds.length === sequences.length}
+                        disabled={selectedSequenceEntryRowIds.length === sequenceEntries.length}
                         className='btn btn-xs btn-ghost mr-3 normal-case'
                         onClick={(event) => {
                             event.preventDefault();
-                            setSelectedSequenceRowIds(sequences.map((_, index) => index));
+                            setSelectedSequenceEntryRowIds(sequenceEntries.map((_, index) => index));
                         }}
                     >
                         Select all
                     </button>
 
                     <button
-                        disabled={selectedSequenceRowIds.length === 0}
+                        disabled={selectedSequenceEntryRowIds.length === 0}
                         className='btn btn-xs btn-ghost mr-2 normal-case'
                         onClick={(event) => {
                             event.preventDefault();
-                            setSelectedSequenceRowIds([]);
+                            setSelectedSequenceEntryRowIds([]);
                         }}
                     >
                         Clear all
@@ -282,7 +288,7 @@ const DisplayBulkActions: FC<{
                             <button
                                 className='btn btn-active btn-sm normal-case'
                                 onClick={() => handleBulkAction(action)}
-                                disabled={selectedSequenceRowIds.length === 0}
+                                disabled={selectedSequenceEntryRowIds.length === 0}
                             >
                                 {sentenceCase(action.name)}
                             </button>
@@ -299,11 +305,11 @@ export type ActionHooks = ReturnType<typeof useActionHooks>;
 function useActionHooks(clientConfig: ClientConfig, username: string, openErrorFeedback: (message: string) => void) {
     const hooks = backendClientHooks(clientConfig);
 
-    const useDeleteSequences = hooks.useDeleteSequences(
+    const useDeleteSequenceEntries = hooks.useDeleteSequences(
         { queries: { username } },
         {
             onSuccess: () => window.location.reload(),
-            onError: (error) => openErrorFeedback(deleteSequencesErrorMessage(error)),
+            onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
         },
     );
     const useApproveProcessedData = hooks.useApproveProcessedData(
@@ -313,11 +319,11 @@ function useActionHooks(clientConfig: ClientConfig, username: string, openErrorF
             onError: (error) => openErrorFeedback(approveProcessedDataErrorMessage(error)),
         },
     );
-    const useRevokeSequences = hooks.useRevokeSequences(
+    const useRevokeSequenceEntries = hooks.useRevokeSequences(
         { queries: { username } },
         {
             onSuccess: () => window.location.reload(),
-            onError: (error) => openErrorFeedback(getRevokeSequencesErrorMessage(error)),
+            onError: (error) => openErrorFeedback(getRevokeSequenceEntriesErrorMessage(error)),
         },
     );
     const useConfirmRevocation = hooks.useConfirmRevocation(
@@ -329,32 +335,32 @@ function useActionHooks(clientConfig: ClientConfig, username: string, openErrorF
     );
 
     return {
-        deleteSequences: useDeleteSequences.mutate,
+        deleteSequenceEntries: useDeleteSequenceEntries.mutate,
         approveProcessedData: useApproveProcessedData.mutate,
-        revokeSequences: useRevokeSequences.mutate,
+        revokeSequenceEntries: useRevokeSequenceEntries.mutate,
         confirmRevocation: useConfirmRevocation.mutate,
     };
 }
 
-function deleteSequencesErrorMessage(error: unknown | AxiosError) {
+function deleteSequenceEntriesErrorMessage(error: unknown | AxiosError) {
     if (isErrorFromAlias(backendApi, 'deleteSequences', error)) {
-        return 'Failed to delete sequences: ' + error.response.data.detail;
+        return 'Failed to delete sequence entries: ' + error.response.data.detail;
     }
-    return 'Failed to delete sequences: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to delete sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
 function approveProcessedDataErrorMessage(error: unknown | AxiosError) {
     if (isErrorFromAlias(backendApi, 'approveProcessedData', error)) {
-        return 'Failed to approve processed sequences: ' + error.response.data.detail;
+        return 'Failed to approve processed sequence entries: ' + error.response.data.detail;
     }
-    return 'Failed to approve processed sequences: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to approve processed sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
-function getRevokeSequencesErrorMessage(error: unknown | AxiosError) {
+function getRevokeSequenceEntriesErrorMessage(error: unknown | AxiosError) {
     if (isErrorFromAlias(backendApi, 'revokeSequences', error)) {
-        return 'Failed to revoke sequences: ' + error.response.data.detail;
+        return 'Failed to revoke sequence entries: ' + error.response.data.detail;
     }
-    return 'Failed to revoke sequences: ' + stringifyMaybeAxiosError(error);
+    return 'Failed to revoke sequence entries: ' + stringifyMaybeAxiosError(error);
 }
 
 function getConfirmRevocationErrorMessage(error: unknown | AxiosError) {

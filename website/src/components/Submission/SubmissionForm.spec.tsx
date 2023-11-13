@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
-import type { HeaderId, ProblemDetail } from '../../types/backend.ts';
+import type { SubmissionIdMapping, ProblemDetail } from '../../types/backend.ts';
 import { mockRequest, testConfig, testuser } from '../vitest.setup';
 
 vi.mock('../../api', () => ({
@@ -21,9 +21,9 @@ function renderSubmissionForm() {
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
 const sequencesFile = new File(['content'], 'sequences.fasta', { type: 'text/plain' });
 
-const testResponse: HeaderId[] = [
-    { sequenceId: '0', version: 1, customId: 'header0' },
-    { sequenceId: '1', version: 1, customId: 'header1' },
+const testResponse: SubmissionIdMapping[] = [
+    { accession: '0', version: 1, submissionId: 'header0' },
+    { accession: '1', version: 1, submissionId: 'header1' },
 ];
 
 describe('SubmitForm', () => {

@@ -6,9 +6,9 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.pathoplexus.backend.api.SequenceVersion
+import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.Status
-import org.pathoplexus.backend.service.SequenceVersionComparator
+import org.pathoplexus.backend.service.AccessionVersionComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -23,22 +23,22 @@ class DeleteSequencesEndpointTest(
 
     @ParameterizedTest(name = "{arguments}")
     @MethodSource("provideValidTestScenarios")
-    fun `GIVEN sequences able to delete WHEN tried to delete THEN sequences will be deleted`(
+    fun `GIVEN accession versions able to delete WHEN tried to delete THEN sequences will be deleted`(
         testScenario: TestScenario,
     ) {
         convenienceClient.prepareDataTo(testScenario.statusAfterPreparation)
 
-        val sequencesToDelete = convenienceClient.getSequencesOfUserInState(
+        val accessionVersionsToDelete = convenienceClient.getSequenceEntriesOfUserInState(
             status = testScenario.statusAfterPreparation,
         )
 
-        val deletionResult = client.deleteSequences(
-            sequencesToDelete.map { SequenceVersion(it.sequenceId, it.version) },
+        val deletionResult = client.deleteSequenceEntries(
+            accessionVersionsToDelete.map { AccessionVersion(it.accession, it.version) },
         )
 
         deletionResult.andExpect(status().isNoContent)
         assertThat(
-            convenienceClient.getSequencesOfUserInState(
+            convenienceClient.getSequenceEntriesOfUserInState(
                 status = testScenario.statusAfterPreparation,
             ).size,
             `is`(0),
@@ -47,24 +47,24 @@ class DeleteSequencesEndpointTest(
 
     @ParameterizedTest(name = "{arguments}")
     @MethodSource("provideInvalidTestScenarios")
-    fun `GIVEN sequences unable to delete WHEN tried to delete THEN unprocessable entity error is thrown`(
+    fun `GIVEN accession versions unable to delete WHEN tried to delete THEN unprocessable entity error is thrown`(
         testScenario: TestScenario,
     ) {
         convenienceClient.prepareDataTo(testScenario.statusAfterPreparation)
 
-        val sequencesToDelete = convenienceClient.getSequencesOfUserInState(
+        val accessionVersionsToDelete = convenienceClient.getSequenceEntriesOfUserInState(
             status = testScenario.statusAfterPreparation,
         )
 
-        val deletionResult = client.deleteSequences(
-            sequencesToDelete.map { SequenceVersion(it.sequenceId, it.version) },
+        val deletionResult = client.deleteSequenceEntries(
+            accessionVersionsToDelete.map { AccessionVersion(it.accession, it.version) },
         )
 
         val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.AWAITING_APPROVAL}, " +
             "${Status.HAS_ERRORS}, ${Status.AWAITING_APPROVAL_FOR_REVOCATION}]"
-        val errorString = "Sequence versions are in not in one of the states $listOfAllowedStatuses: " +
-            sequencesToDelete.sortedWith(SequenceVersionComparator).joinToString(", ") {
-                "${it.sequenceId}.${it.version} - ${it.status}"
+        val errorString = "Accession versions are in not in one of the states $listOfAllowedStatuses: " +
+            accessionVersionsToDelete.sortedWith(AccessionVersionComparator).joinToString(", ") {
+                "${it.accession}.${it.version} - ${it.status}"
             }
         deletionResult.andExpect(status().isUnprocessableEntity)
             .andExpect(
@@ -74,7 +74,7 @@ class DeleteSequencesEndpointTest(
                 jsonPath("\$.detail", containsString(errorString)),
             )
         assertThat(
-            convenienceClient.getSequencesOfUserInState(
+            convenienceClient.getSequenceEntriesOfUserInState(
                 status = testScenario.statusAfterPreparation,
             ).size,
             `is`(SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES),
@@ -82,29 +82,29 @@ class DeleteSequencesEndpointTest(
     }
 
     @Test
-    fun `WHEN deleting non-existing sequenceVersions THEN throws an unprocessableEntity error`() {
+    fun `WHEN deleting non-existing accessionVersions THEN throws an unprocessableEntity error`() {
         convenienceClient.submitDefaultFiles()
 
-        val nonExistingSequenceId = SequenceVersion("123", 1)
-        val nonExistingVersion = SequenceVersion("1", 123)
+        val nonExistingAccession = AccessionVersion("123", 1)
+        val nonExistingVersion = AccessionVersion("1", 123)
 
-        client.deleteSequences(listOf(nonExistingSequenceId, nonExistingVersion))
+        client.deleteSequenceEntries(listOf(nonExistingAccession, nonExistingVersion))
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail", containsString("Sequence versions 1.123, 123.1 do not exist")),
+                jsonPath("\$.detail", containsString("Accession versions 1.123, 123.1 do not exist")),
             )
     }
 
     @Test
-    fun `WHEN deleting sequence versions not from the submitter THEN throws forbidden error`() {
+    fun `WHEN deleting accession versions not from the submitter THEN throws forbidden error`() {
         convenienceClient.submitDefaultFiles()
 
         val notSubmitter = "theOneWhoMustNotBeNamed"
-        client.deleteSequences(
+        client.deleteSequenceEntries(
             listOf(
-                SequenceVersion("1", 1),
-                SequenceVersion("2", 1),
+                AccessionVersion("1", 1),
+                AccessionVersion("2", 1),
             ),
             notSubmitter,
         )
@@ -112,7 +112,7 @@ class DeleteSequencesEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User '$notSubmitter' does not have right to change the sequence versions " +
+                    "User '$notSubmitter' does not have right to change the accession versions " +
                         "1.1, 2.1",
                 ),
             )

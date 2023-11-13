@@ -5,7 +5,7 @@ import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
-import type { HeaderId } from '../types/backend.ts';
+import type { SubmissionIdMapping } from '../types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from '../types/lapis.ts';
 import type { RuntimeConfig } from '../types/runtimeConfig.ts';
 
@@ -25,7 +25,7 @@ export const testuser = 'testuser';
 const testServer = setupServer();
 
 const backendRequestMocks = {
-    submit: (statusCode: number = 200, response: HeaderId[] | any = []) => {
+    submit: (statusCode: number = 200, response: SubmissionIdMapping[] | any = []) => {
         testServer.use(
             rest.post(`${testConfig.forServer.backendUrl}/submit`, (_, res, ctx) => {
                 return res(ctx.status(statusCode), ctx.json(response));

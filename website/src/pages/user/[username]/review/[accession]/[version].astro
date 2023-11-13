@@ -6,19 +6,19 @@ import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../../../../services/backendClient';
 
 const version = Astro.params.version!;
-const sequenceId = Astro.params.sequenceId!;
+const accession = Astro.params.accession!;
 
 const username = Astro.params.username!;
 const clientConfig = getRuntimeConfig().forClient;
 
-const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToReview(username, sequenceId, version);
+const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToReview(username, accession, version);
 ---
 
-<BaseLayout title={`Review ${sequenceId}.${version}`}>
+<BaseLayout title={`Review ${accession}.${version}`}>
     <div class='flex items-center mb-4'>
         <BackButton marginRight={2} client:load />
         <h1 class='title'>
-            Review for Id: {sequenceId}.{version}
+            Review for Id: {accession}.{version}
         </h1>
     </div>
     {
@@ -30,7 +30,7 @@ const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToRe
                 <>
                     <div class='flex items-center'>
                         <h1 class='subtitle'>
-                            Error while fetching review data for sequence version: {sequenceId}.{version}
+                            Error while fetching review data for accession version: {accession}.{version}
                         </h1>
                     </div>
                     <div>{JSON.stringify(error)}</div>

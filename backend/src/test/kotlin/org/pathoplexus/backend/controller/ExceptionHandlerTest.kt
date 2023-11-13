@@ -8,7 +8,7 @@ import io.mockk.every
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.pathoplexus.backend.api.HeaderId
+import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.http.MediaType
@@ -41,7 +41,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
         .file("metadataFile", "metadata".toByteArray())
         .param("username", "name")
 
-    private val validResponse = emptyList<HeaderId>()
+    private val validResponse = emptyList<SubmissionIdMapping>()
 
     @Test
     fun `throw NOT_FOUND(404) when route is not found`() {
@@ -95,6 +95,6 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(status().isBadRequest)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Bad Request"))
-            .andExpect(jsonPath("$.detail", containsString("failed for JSON property sequenceVersions")))
+            .andExpect(jsonPath("$.detail", containsString("failed for JSON property accessionVersions")))
     }
 }

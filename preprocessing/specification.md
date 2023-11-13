@@ -28,7 +28,7 @@ In following, we list a series of tasks that the preprocessing pipeline would us
 - **Backend:** The backend server is developed by the Pathoplexus team. The same backend software is used across Pathoplexus and pathogen instances. To support different pathogens and metadata fields, it can be configured through a configuration file.
 - **Preprocessing pipeline:** The preprocessing pipeline takes unpreprocessed data and generates preprocessed data. The Pathoplexus team provides reference implementations but Pathoplexus can be used with other implementations as long as they follow the specification detailed in this document.
 - **LAPIS and SILO:** the data querying engine and API used by Pathoplexus.
-- **Sequence entry:** a single entry consisting of a sequence (or set of segmented sequences) from a single sample and the corresponding sample metadata
+- **Sequence entry:** A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated metadata. It is the main entity of the Pathoplexus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own accession. Changes to sequence entries are versioned, meaning that a sequence entry can have multiple versions.
 - **Unpreprocessed data:** sequence entries as provided by the submitters
 - **Preprocessed data:** sequence entries after being processed by the preprocessing pipeline. The preprocessed data must be consistent with the pathogen instance schema and will be passed to LAPIS and SILO.
 - **Nucleotide sequence segment:** A nucleotide sequence consists of one or multiple segments. If there is only a single segment (e.g., as in SARS-CoV-2), the segment name should be `main`.
@@ -39,7 +39,7 @@ In following, we list a series of tasks that the preprocessing pipeline would us
 2. The preprocessing pipeline performs its tasks on the data.
 3. The preprocessing pipeline sends the backend the preprocessed data along with a list of errors and warnings.
 
-Sequences without an error will be released. Sequences with an error will not be released and require fixing by the submitter. Sequences without an error but with a warning will be released. The warning will be shown to the submitter (and maybe also to other users).
+Sequence entry versions without an error will be released. Sequence entry versions with an error will not be released and require fixing by the submitter. Sequence entry versions without an error but with a warning will be released. The warning will be shown to the submitter (and maybe also to other users).
 
 ## Technical specification
 
@@ -47,24 +47,24 @@ Also see the Swagger UI available in the backend at `<backendUrl>/swagger-ui/ind
 
 ### Pulling unpreprocessed data
 
-To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequences` (integer). This returns a response in [NDJSON](http://ndjson.org/) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
+To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequenceEntries` (integer). This returns a response in [NDJSON](http://ndjson.org/) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
 
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 
 ```
-{"sequenceId": 1, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}}
-{"sequenceId": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}}
+{"accession": 1, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}}
+{"accession": 2, "version": 1, "data": {"metadata": {...}, "unalignedNucleotideSequences": {...}}}
 ```
 
 The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter.
 
-The primary key is `[sequenceId,version]`. The preprocessing pipeline must be able to handle getting the same sequence twice with different versions.
+The primary key is `[accession,version]`. The preprocessing pipeline must be able to handle getting the same sequence entry twice with different versions.
 
 One JSON object has the following fields:
 
 ```js
 {
-    sequenceId: integer,
+    accession: integer,
     version: integer,
     data: {
         metadata: Record<string, string>,
@@ -77,11 +77,11 @@ One JSON object has the following fields:
 
 To send back the preprocessed data, the preprocessing pipeline sends a POST request to the backend's `/submit-processed-data` endpoint with NDJSON in the request body.
 
-In the NDJSON, each row contains a sequence entry and a list of errors and a list of warnings represented as a JSON object. One JSON object has the following fields:
+In the NDJSON, each row contains a sequence entry version and a list of errors and a list of warnings represented as a JSON object. One JSON object has the following fields:
 
 ```js
 {
-    sequenceId,
+    accession,
     version,
     errors,
     warnings,

@@ -3,7 +3,7 @@ import { unlinkSync, writeFileSync } from 'fs';
 import type { Locator, Page } from '@playwright/test';
 import { v4 as uuid } from 'uuid';
 
-import type { SequenceId } from '../../../src/types/backend.ts';
+import type { Accession } from '../../../src/types/backend.ts';
 import { baseUrl, sequencesTestFile, testuser } from '../../e2e.fixture';
 import { createModifiedFileContent } from '../../util/createFileContent.ts';
 
@@ -25,12 +25,12 @@ export class RevisePage {
         await this.page.getByPlaceholder('Sequences File:').setInputFiles(file);
     }
 
-    public async submitRevisedData(sequenceIds: SequenceId[]) {
+    public async submitRevisedData(accessions: Accession[]) {
         try {
             await Promise.all([
                 this.uploadSequenceData(),
                 this.setUsername(testuser),
-                this.uploadRevisedMetadata(sequenceIds),
+                this.uploadRevisedMetadata(accessions),
             ]);
             await this.submitButton.click();
             await this.page.waitForSelector('text=Result of Revision');
@@ -43,8 +43,8 @@ export class RevisePage {
         await this.userField.fill(username);
     }
 
-    private async uploadRevisedMetadata(sequenceIds: SequenceId[]) {
-        writeFileSync(this.temporaryMetadataFile, createModifiedFileContent(sequenceIds).metadataContent);
+    private async uploadRevisedMetadata(accessions: Accession[]) {
+        writeFileSync(this.temporaryMetadataFile, createModifiedFileContent(accessions).metadataContent);
         await this.page.getByPlaceholder('Metadata File:').setInputFiles(this.temporaryMetadataFile);
     }
 }

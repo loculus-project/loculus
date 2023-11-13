@@ -31,7 +31,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         return new LapisClient(lapisUrl, lapisApi, logger, schema);
     }
 
-    public getSequenceDetails(primaryKey: string) {
+    public getSequenceEntryVersionDetails(primaryKey: string) {
         return this.call('details', {
             [this.schema.primaryKey]: primaryKey,
         });

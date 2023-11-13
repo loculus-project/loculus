@@ -1,58 +1,58 @@
-import type { ActionHooks } from './SequenceTable.tsx';
+import type { ActionHooks } from './SequenceEntryTable.tsx';
 import { routes } from '../../routes.ts';
-import type { SequenceStatus, SequenceVersion } from '../../types/backend.ts';
-import { extractSequenceVersion, getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
+import type { SequenceEntryStatus, AccessionVersion } from '../../types/backend.ts';
+import { extractAccessionVersion, getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 
 export type BulkSequenceAction = {
     name: string;
-    actionOnSequences: (selectedSequences: SequenceStatus[], actionHooks: ActionHooks) => Promise<void>;
+    actionOnSequenceEntries: (selectedSequences: SequenceEntryStatus[], actionHooks: ActionHooks) => Promise<void>;
     confirmationDialog?: {
-        message: (selectedSequences: SequenceVersion[]) => string;
+        message: (selectedSequences: AccessionVersion[]) => string;
     };
 };
 
 const deleteAction: BulkSequenceAction = {
     name: 'delete',
-    actionOnSequences: async (selectedSequences, actionHooks) =>
-        actionHooks.deleteSequences({ sequenceVersions: selectedSequences.map(extractSequenceVersion) }),
+    actionOnSequenceEntries: async (selectedSequences, actionHooks) =>
+        actionHooks.deleteSequenceEntries({ accessionVersions: selectedSequences.map(extractAccessionVersion) }),
     confirmationDialog: {
         message: (selectedSequences) =>
-            `Are you sure you want to delete the selected sequence ${pluralizeWord(
+            `Are you sure you want to delete the selected sequence entry ${pluralizeWord(
                 'version',
                 selectedSequences.length,
-            )} ${sequenceVersionsToString(selectedSequences)}?`,
+            )} ${accessionVersionsToString(selectedSequences)}?`,
     },
 };
 
 const approveAction: BulkSequenceAction = {
     name: 'approve',
-    actionOnSequences: async (selectedSequences, actionHooks) =>
-        actionHooks.approveProcessedData({ sequenceVersions: selectedSequences.map(extractSequenceVersion) }),
+    actionOnSequenceEntries: async (selectedSequences, actionHooks) =>
+        actionHooks.approveProcessedData({ accessionVersions: selectedSequences.map(extractAccessionVersion) }),
     confirmationDialog: {
         message: (selectedSequences) =>
-            `Are you sure you want to approve the selected sequence ${pluralizeWord(
+            `Are you sure you want to approve the selected sequence entry ${pluralizeWord(
                 'version',
                 selectedSequences.length,
-            )} ${sequenceVersionsToString(selectedSequences)}?`,
+            )} ${accessionVersionsToString(selectedSequences)}?`,
     },
 };
 
 const confirmRevocationAction: BulkSequenceAction = {
     name: 'confirmRevocation',
-    actionOnSequences: async (selectedSequences, actionHooks) =>
-        actionHooks.confirmRevocation({ sequenceVersions: selectedSequences.map(extractSequenceVersion) }),
+    actionOnSequenceEntries: async (selectedSequences, actionHooks) =>
+        actionHooks.confirmRevocation({ accessionVersions: selectedSequences.map(extractAccessionVersion) }),
 };
 
 const revokeAction: BulkSequenceAction = {
     name: 'revoke',
-    actionOnSequences: async (selectedSequences, actionHooks) =>
-        actionHooks.revokeSequences({ sequenceIds: selectedSequences.map((sequence) => sequence.sequenceId) }),
+    actionOnSequenceEntries: async (selectedSequences, actionHooks) =>
+        actionHooks.revokeSequenceEntries({ accessions: selectedSequences.map((sequence) => sequence.accession) }),
     confirmationDialog: {
         message: (selectedSequences) =>
-            `Are you sure you want to revoke the selected sequence ${pluralizeWord(
+            `Are you sure you want to revoke the selected sequence entry ${pluralizeWord(
                 'version',
                 selectedSequences.length,
-            )} ${sequenceVersionsToString(selectedSequences)}?`,
+            )} ${accessionVersionsToString(selectedSequences)}?`,
     },
 };
 
@@ -68,14 +68,14 @@ export type BulkSequenceActionName = keyof typeof bulkSequenceActions;
 export type SingleSequenceAction = {
     name: string;
     tableHeader: string;
-    actionOnSequence: (selectedSequence: SequenceStatus, username: string) => Promise<void>;
+    actionOnSequenceEntry: (selectedSequence: SequenceEntryStatus, username: string) => Promise<void>;
 };
 export type SingleSequenceActionName = keyof typeof singleSequenceActions;
 
 const reviewAction: SingleSequenceAction = {
     name: 'review',
     tableHeader: 'Link to Review',
-    actionOnSequence: async (selectedSequence: SequenceStatus, username: string) => {
+    actionOnSequenceEntry: async (selectedSequence: SequenceEntryStatus, username: string) => {
         window.location.href = routes.reviewPage(username, selectedSequence);
     },
 };
@@ -87,12 +87,12 @@ const pluralizeWord = (word: string, count: number) => (count === 1 ? word : `${
 
 const maxSequencesToDisplayInConfirmationDialog = 10;
 
-const sequenceVersionsToString = (
-    sequenceVersions: SequenceVersion[],
+const accessionVersionsToString = (
+    accessionVersions: AccessionVersion[],
     maxSequencesToDisplay: number = maxSequencesToDisplayInConfirmationDialog,
 ) =>
-    sequenceVersions
+    accessionVersions
         .slice(0, maxSequencesToDisplay)
-        .sort((a, b) => (a.sequenceId > b.sequenceId ? 1 : -1))
-        .map(getSequenceVersionString)
-        .join(', ') + (sequenceVersions.length > maxSequencesToDisplay ? ', ...' : '');
+        .sort((a, b) => (a.accession > b.accession ? 1 : -1))
+        .map(getAccessionVersionString)
+        .join(', ') + (accessionVersions.length > maxSequencesToDisplay ? ', ...' : '');

@@ -2,7 +2,7 @@ import type { Locator, Page } from '@playwright/test';
 
 import { baseUrl } from '../../e2e.fixture';
 
-const SEQUENCE_VERSION = 'Sequence version';
+const ACCESSION_VERSION = 'Accession version';
 
 export class SearchPage {
     public readonly searchButton: Locator;
@@ -28,12 +28,12 @@ export class SearchPage {
     }
 
     // Note: This only gets a locator when the field is empty
-    public getEmptySequenceVersionField() {
-        return this.page.getByPlaceholder(SEQUENCE_VERSION, { exact: true });
+    public getEmptyAccessionVersionField() {
+        return this.page.getByPlaceholder(ACCESSION_VERSION, { exact: true });
     }
 
-    public getFilledSequenceVersionField() {
-        return this.page.getByLabel(SEQUENCE_VERSION, { exact: true });
+    public getFilledAccessionVersionField() {
+        return this.page.getByLabel(ACCESSION_VERSION, { exact: true });
     }
 
     public async searchFor(params: { [key: string]: string }) {

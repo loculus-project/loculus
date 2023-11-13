@@ -4,52 +4,56 @@ import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 import { fakeProcessingPipeline } from '../../util/preprocessingPipeline';
 
 test.describe('The user page', () => {
-    test('should show sequences, their status and a link to reviews', async ({ userPage }) => {
-        const [sequenceHasErrors, sequenceAwaitingApproval, sequenceReleasable, sequenceToBeRevised] =
-            await prepareDataToBe('inProcessing');
+    test('should show sequence entries, their status and a link to reviews', async ({ userPage }) => {
+        const [
+            sequenceEntryWithErrors,
+            sequenceEntryAwaitingApproval,
+            sequenceEntryReleasable,
+            sequenceEntryToBeRevised,
+        ] = await prepareDataToBe('inProcessing');
 
         await fakeProcessingPipeline.submit([
             {
-                ...sequenceHasErrors,
+                ...sequenceEntryWithErrors,
                 error: true,
             },
             {
-                ...sequenceAwaitingApproval,
+                ...sequenceEntryAwaitingApproval,
                 error: false,
             },
             {
-                ...sequenceReleasable,
+                ...sequenceEntryReleasable,
                 error: false,
             },
             {
-                ...sequenceToBeRevised,
+                ...sequenceEntryToBeRevised,
                 error: false,
             },
         ]);
 
-        await approveProcessedData(testuser, [sequenceReleasable, sequenceToBeRevised]);
-        await submitRevisedDataViaApi([sequenceToBeRevised.sequenceId]);
+        await approveProcessedData(testuser, [sequenceEntryReleasable, sequenceEntryToBeRevised]);
+        await submitRevisedDataViaApi([sequenceEntryToBeRevised.accession]);
 
         await userPage.gotoUserSequencePage();
 
         const sequencesArePresent = await userPage.verifyTableEntries([
             {
-                ...sequenceHasErrors,
+                ...sequenceEntryWithErrors,
                 status: 'HAS_ERRORS',
                 isRevocation: false,
             },
             {
-                ...sequenceAwaitingApproval,
+                ...sequenceEntryAwaitingApproval,
                 status: 'AWAITING_APPROVAL',
                 isRevocation: false,
             },
             {
-                ...sequenceReleasable,
+                ...sequenceEntryReleasable,
                 status: 'APPROVED_FOR_RELEASE',
                 isRevocation: false,
             },
             {
-                ...sequenceToBeRevised,
+                ...sequenceEntryToBeRevised,
                 status: 'APPROVED_FOR_RELEASE',
                 isRevocation: false,
             },

@@ -16,7 +16,7 @@ import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SegmentName
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.service.SequenceId
+import org.pathoplexus.backend.service.Accession
 
 val defaultProcessedData = ProcessedData(
     metadata = mapOf(
@@ -59,7 +59,7 @@ val defaultProcessedData = ProcessedData(
 )
 
 private val defaultSuccessfulSubmittedData = SubmittedProcessedData(
-    sequenceId = "1",
+    accession = "1",
     version = 1,
     data = defaultProcessedData,
     errors = null,
@@ -68,41 +68,41 @@ private val defaultSuccessfulSubmittedData = SubmittedProcessedData(
 
 object PreparedProcessedData {
     fun successfullyProcessed(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         version: Long = defaultSuccessfulSubmittedData.version,
     ) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             version = version,
         )
 
-    fun withNullForFields(sequenceId: SequenceId = DefaultFiles.firstSequence, fields: List<String>) =
+    fun withNullForFields(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 metadata = defaultProcessedData.metadata + fields.map { it to NullNode.instance },
             ),
         )
 
-    fun withUnknownMetadataField(sequenceId: SequenceId = DefaultFiles.firstSequence, fields: List<String>) =
+    fun withUnknownMetadataField(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 metadata = defaultProcessedData.metadata + fields.map { it to TextNode("value for $it") },
             ),
         )
 
-    fun withMissingRequiredField(sequenceId: SequenceId = DefaultFiles.firstSequence, fields: List<String>) =
+    fun withMissingRequiredField(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 metadata = defaultProcessedData.metadata.filterKeys { !fields.contains(it) },
             ),
         )
 
-    fun withWrongTypeForFields(sequenceId: SequenceId = DefaultFiles.firstSequence) =
+    fun withWrongTypeForFields(accession: Accession = DefaultFiles.firstAccession) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 metadata = defaultProcessedData.metadata + mapOf(
                     "region" to IntNode(5),
@@ -111,9 +111,9 @@ object PreparedProcessedData {
             ),
         )
 
-    fun withWrongDateFormat(sequenceId: SequenceId = DefaultFiles.firstSequence) =
+    fun withWrongDateFormat(accession: Accession = DefaultFiles.firstAccession) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 metadata = defaultProcessedData.metadata + mapOf(
                     "date" to TextNode("1.2.2021"),
@@ -121,9 +121,9 @@ object PreparedProcessedData {
             ),
         )
 
-    fun withWrongPangoLineageFormat(sequenceId: SequenceId = DefaultFiles.firstSequence) =
+    fun withWrongPangoLineageFormat(accession: Accession = DefaultFiles.firstAccession) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 metadata = defaultProcessedData.metadata + mapOf(
                     "pangoLineage" to TextNode("A.5.invalid"),
@@ -132,55 +132,55 @@ object PreparedProcessedData {
         )
 
     fun withMissingSegmentInUnalignedNucleotideSequences(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
     ) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences - segment,
             ),
         )
 
     fun withMissingSegmentInAlignedNucleotideSequences(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
     ) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences - segment,
             ),
         )
 
     fun withUnknownSegmentInAlignedNucleotideSequences(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
     ) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences + (segment to "NNNN"),
             ),
         )
 
     fun withUnknownSegmentInUnalignedNucleotideSequences(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
     ) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences + (segment to "NNNN"),
             ),
         )
 
     fun withUnknownSegmentInNucleotideInsertions(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
     ) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 nucleotideInsertions = defaultProcessedData.nucleotideInsertions + (
                     segment to listOf(
@@ -194,7 +194,7 @@ object PreparedProcessedData {
         )
 
     fun withAlignedNucleotideSequenceOfWrongLength(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
         length: Int = 123,
     ): SubmittedProcessedData {
@@ -202,78 +202,78 @@ object PreparedProcessedData {
         alignedNucleotideSequences[segment] = "A".repeat(length)
 
         return defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(alignedNucleotideSequences = alignedNucleotideSequences),
         )
     }
 
     fun withAlignedNucleotideSequenceWithWrongSymbols(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
     ): SubmittedProcessedData {
         val alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences.toMutableMap()
         alignedNucleotideSequences[segment] = "ÄÖ" + alignedNucleotideSequences[segment]!!.substring(2)
 
         return defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(alignedNucleotideSequences = alignedNucleotideSequences),
         )
     }
 
     fun withUnalignedNucleotideSequenceWithWrongSymbols(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
     ): SubmittedProcessedData {
         val unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences.toMutableMap()
         unalignedNucleotideSequences[segment] = "ÄÖ" + unalignedNucleotideSequences[segment]!!.substring(2)
 
         return defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(unalignedNucleotideSequences = unalignedNucleotideSequences),
         )
     }
 
     fun withNucleotideInsertionsWithWrongSymbols(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
     ): SubmittedProcessedData {
         val nucleotideInsertions = defaultProcessedData.nucleotideInsertions.toMutableMap()
         nucleotideInsertions[segment] = listOf(Insertion(123, "ÄÖ"))
 
         return defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(nucleotideInsertions = nucleotideInsertions),
         )
     }
 
     fun withMissingGeneInAminoAcidSequences(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         gene: GeneName,
     ) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 alignedAminoAcidSequences = defaultProcessedData.alignedAminoAcidSequences - gene,
             ),
         )
 
     fun withUnknownGeneInAminoAcidSequences(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         gene: GeneName,
     ) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 alignedAminoAcidSequences = defaultProcessedData.alignedAminoAcidSequences + (gene to "RNRNRN"),
             ),
         )
 
     fun withUnknownGeneInAminoAcidInsertions(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         gene: GeneName,
     ) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(
                 aminoAcidInsertions = defaultProcessedData.aminoAcidInsertions + (
                     gene to listOf(
@@ -287,7 +287,7 @@ object PreparedProcessedData {
         )
 
     fun withAminoAcidSequenceOfWrongLength(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         gene: SegmentName,
         length: Int = 123,
     ): SubmittedProcessedData {
@@ -295,40 +295,40 @@ object PreparedProcessedData {
         aminoAcidSequences[gene] = "A".repeat(length)
 
         return defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(alignedAminoAcidSequences = aminoAcidSequences),
         )
     }
 
     fun withAminoAcidSequenceWithWrongSymbols(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         gene: SegmentName,
     ): SubmittedProcessedData {
         val aminoAcidSequence = defaultProcessedData.alignedAminoAcidSequences.toMutableMap()
         aminoAcidSequence[gene] = "ÄÖ" + aminoAcidSequence[gene]!!.substring(2)
 
         return defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(alignedAminoAcidSequences = aminoAcidSequence),
         )
     }
 
     fun withAminoAcidInsertionsWithWrongSymbols(
-        sequenceId: SequenceId = DefaultFiles.firstSequence,
+        accession: Accession = DefaultFiles.firstAccession,
         gene: SegmentName,
     ): SubmittedProcessedData {
         val aminoAcidInsertions = defaultProcessedData.aminoAcidInsertions.toMutableMap()
         aminoAcidInsertions[gene] = listOf(Insertion(123, "ÄÖ"))
 
         return defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             data = defaultProcessedData.withValues(aminoAcidInsertions = aminoAcidInsertions),
         )
     }
 
-    fun withErrors(sequenceId: SequenceId = DefaultFiles.firstSequence) =
+    fun withErrors(accession: Accession = DefaultFiles.firstAccession) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             errors = listOf(
                 PreprocessingAnnotation(
                     source = listOf(
@@ -351,9 +351,9 @@ object PreparedProcessedData {
             ),
         )
 
-    fun withWarnings(sequenceId: SequenceId = DefaultFiles.firstSequence) =
+    fun withWarnings(accession: Accession = DefaultFiles.firstAccession) =
         defaultSuccessfulSubmittedData.withValues(
-            sequenceId = sequenceId,
+            accession = accession,
             warnings = listOf(
                 PreprocessingAnnotation(
                     source = listOf(
@@ -378,13 +378,13 @@ object PreparedProcessedData {
 }
 
 fun SubmittedProcessedData.withValues(
-    sequenceId: SequenceId? = null,
+    accession: Accession? = null,
     version: Long? = null,
     data: ProcessedData? = null,
     errors: List<PreprocessingAnnotation>? = null,
     warnings: List<PreprocessingAnnotation>? = null,
 ) = SubmittedProcessedData(
-    sequenceId = sequenceId ?: this.sequenceId,
+    accession = accession ?: this.accession,
     version = version ?: this.version,
     data = data ?: this.data,
     errors = errors ?: this.errors,

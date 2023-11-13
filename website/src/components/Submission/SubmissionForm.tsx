@@ -1,7 +1,7 @@
 import { type FC, useState } from 'react';
 
 import { ManagedErrorFeedback, useErrorFeedbackState } from './ManagedErrorFeedback';
-import type { HeaderId } from '../../types/backend.ts';
+import type { SubmissionIdMapping } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { DataUploadForm } from '../DataUploadForm.tsx';
 
@@ -10,7 +10,7 @@ type SubmissionFormProps = {
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({ clientConfig }) => {
-    const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<HeaderId[] | null>(null);
+    const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<SubmissionIdMapping[] | null>(null);
 
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
@@ -30,8 +30,8 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ clientConfig }) => {
                         <h2 className='text-lg font-bold'>Response Sequence Headers</h2>
                         <ul className='list-disc list-inside'>
                             {responseSequenceHeaders.map((header) => (
-                                <li key={header.sequenceId}>
-                                    {header.sequenceId}.{header.version}: {header.customId}
+                                <li key={header.accession}>
+                                    {header.accession}.{header.version}: {header.submissionId}
                                 </li>
                             ))}
                         </ul>

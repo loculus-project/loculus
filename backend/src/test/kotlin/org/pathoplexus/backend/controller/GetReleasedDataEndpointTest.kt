@@ -9,12 +9,12 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Test
+import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.ProcessedData
-import org.pathoplexus.backend.api.SequenceVersion
 import org.pathoplexus.backend.api.SiloVersionStatus
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
-import org.pathoplexus.backend.service.SequenceId
+import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
+import org.pathoplexus.backend.service.Accession
 import org.pathoplexus.backend.service.Version
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
@@ -30,7 +30,7 @@ class GetReleasedDataEndpointTest(
     val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
 
     @Test
-    fun `GIVEN no sequences in database THEN returns empty response`() {
+    fun `GIVEN no sequence entries in database THEN returns empty response`() {
         val response = submissionControllerClient.getReleasedData()
 
         val responseBody = response.expectNdjsonAndGetContent<ProcessedData>()
@@ -39,7 +39,7 @@ class GetReleasedDataEndpointTest(
 
     @Test
     fun `GIVEN released data exists THEN returns it with additional metadata fields`() {
-        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
         val response = submissionControllerClient.getReleasedData()
 
@@ -48,14 +48,14 @@ class GetReleasedDataEndpointTest(
         assertThat(responseBody.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
 
         responseBody.forEach {
-            val id = it.metadata["sequenceId"]!!.asText()
+            val id = it.metadata["accession"]!!.asText()
             val version = it.metadata["version"]!!.asLong()
             assertThat(version, `is`(1L))
 
             val expectedMetadata = defaultProcessedData.metadata + mapOf(
-                "sequenceId" to TextNode(id),
+                "accession" to TextNode(id),
                 "version" to IntNode(version.toInt()),
-                "sequenceVersion" to TextNode("$id.$version"),
+                "accessionVersion" to TextNode("$id.$version"),
                 "isRevocation" to TextNode("false"),
                 "submitter" to TextNode(USER_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
@@ -69,7 +69,7 @@ class GetReleasedDataEndpointTest(
                         assertThat(dateTime.year, `is`(currentYear))
                     }
 
-                    "customId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
+                    "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
                     else -> assertThat(value, `is`(expectedMetadata[key]))
                 }
             }
@@ -98,39 +98,39 @@ class GetReleasedDataEndpointTest(
 //        assertThat(response.size, `is`(5 * DefaultFiles.NUMBER_OF_SEQUENCES))
         assertThat(response.size, `is`(4 * DefaultFiles.NUMBER_OF_SEQUENCES))
         assertThat(
-            response.findSequenceVersionStatus(firstSequence, revokedVersion1),
+            response.findAccessionVersionStatus(firstAccession, revokedVersion1),
             `is`(SiloVersionStatus.REVOKED.name),
         )
         assertThat(
-            response.findSequenceVersionStatus(firstSequence, revokedVersion2),
+            response.findAccessionVersionStatus(firstAccession, revokedVersion2),
             `is`(SiloVersionStatus.REVOKED.name),
         )
         // TODO(#429): reactivate this check
 //        assertThat(
-//            response.findSequenceVersionStatus(firstSequence, revocationVersion3),
+//            response.findAccessionVersionStatus(firstSequence, revocationVersion3),
 //            `is`(SiloVersionStatus.REVISED.name),
 //        )
         assertThat(
-            response.findSequenceVersionStatus(firstSequence, revisedVersion4),
+            response.findAccessionVersionStatus(firstAccession, revisedVersion4),
             `is`(SiloVersionStatus.REVISED.name),
         )
         assertThat(
-            response.findSequenceVersionStatus(firstSequence, latestVersion5),
+            response.findAccessionVersionStatus(firstAccession, latestVersion5),
             `is`(SiloVersionStatus.LATEST_VERSION.name),
         )
     }
 
     private fun prepareRevokedAndRevocationAndRevisedVersions(): PreparedVersions {
-        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
-        convenienceClient.reviseAndProcessDefaultSequences()
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        convenienceClient.reviseAndProcessDefaultSequenceEntries()
 
-        convenienceClient.revokeSequences(DefaultFiles.allSequenceIds)
+        convenienceClient.revokeSequenceEntries(DefaultFiles.allAccessions)
         convenienceClient.confirmRevocation(
-            DefaultFiles.allSequenceIds.map { SequenceVersion(sequenceId = it, version = 3L) },
+            DefaultFiles.allAccessions.map { AccessionVersion(accession = it, version = 3L) },
         )
 
-        convenienceClient.reviseAndProcessDefaultSequences()
-        convenienceClient.reviseAndProcessDefaultSequences()
+        convenienceClient.reviseAndProcessDefaultSequenceEntries()
+        convenienceClient.reviseAndProcessDefaultSequenceEntries()
 
         return PreparedVersions(
             revokedVersion1 = 1L,
@@ -142,10 +142,10 @@ class GetReleasedDataEndpointTest(
     }
 }
 
-private fun List<ProcessedData>.findSequenceVersionStatus(sequenceId: SequenceId, version: Version): String {
+private fun List<ProcessedData>.findAccessionVersionStatus(accession: Accession, version: Version): String {
     val processedData =
-        find { it.metadata["sequenceId"]?.asText() == sequenceId && it.metadata["version"]?.asLong() == version }
-            ?: error("Could not find sequence version $sequenceId.$version")
+        find { it.metadata["accession"]?.asText() == accession && it.metadata["version"]?.asLong() == version }
+            ?: error("Could not find accession version $accession.$version")
 
     return processedData.metadata["versionStatus"]!!.asText()
 }

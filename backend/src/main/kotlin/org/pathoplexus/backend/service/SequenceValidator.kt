@@ -346,8 +346,8 @@ class SequenceValidator(
         }
     }
 
-    private fun <T> validateNoUnknownGeneInData(
-        data: Map<String, T>,
+    private fun validateNoUnknownGeneInData(
+        data: Map<String, *>,
         geneGrouping: String,
     ) {
         val unknownGenes = data.keys.subtract(referenceGenome.genes.map { it.name }.toSet())

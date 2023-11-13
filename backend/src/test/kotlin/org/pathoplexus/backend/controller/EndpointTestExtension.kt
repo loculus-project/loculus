@@ -5,6 +5,8 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.pathoplexus.backend.service.ACCESSION_SEQUENCE_NAME
+import org.pathoplexus.backend.service.TABLE_NAME
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
@@ -53,7 +55,7 @@ class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCal
             "-d",
             postgres.databaseName,
             "-c",
-            "truncate table sequences; alter sequence id_sequence restart with 1;",
+            "truncate table $TABLE_NAME; alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;",
         )
     }
 

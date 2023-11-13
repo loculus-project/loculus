@@ -16,6 +16,7 @@ data class Schema(
 
 data class Metadata(
     val name: String,
+    // TODO(#538) make this an enum
     val type: String,
     val required: Boolean = false,
 )

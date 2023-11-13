@@ -8,18 +8,19 @@ import { BackendClient } from '../../../services/backendClient';
 // eslint-disable-next-line
 const username = Astro.params.username!;
 
-const userSequencesResponse = await BackendClient.create().astroFileTypeHelpers.getSequencesOfUser(username);
+const userSequenceEntriesResponse =
+    await BackendClient.create().astroFileTypeHelpers.getSequenceEntriesOfUser(username);
 ---
 
 <BaseLayout title='Sequences'>
     <>
         <div class='flex items-center'>
             <BackButton marginRight={2} client:load />
-            <h1 class='subtitle'>{`Submitted sequences of user ${username}`}</h1>
+            <h1 class='subtitle'>{`Submitted sequence entries of user ${username}`}</h1>
         </div>
         {
-            userSequencesResponse.match(
-                (sequences) => <UserSequences sequences={sequences} username={username} />,
+            userSequenceEntriesResponse.match(
+                (sequenceEntries) => <UserSequences sequenceEntries={sequenceEntries} username={username} />,
                 (error) => (
                     <ErrorFeedback
                         message={'Error while fetching user sequences: ' + JSON.stringify(error)}

@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SiloVersionStatus
+import org.pathoplexus.backend.service.Accession
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.RawProcessedData
-import org.pathoplexus.backend.service.SequenceId
 import org.pathoplexus.backend.service.Version
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -29,16 +29,16 @@ class ReleasedDataModel(private val databaseService: DatabaseService) {
 
     private fun computeAdditionalMetadataFields(
         rawProcessedData: RawProcessedData,
-        latestVersions: Map<SequenceId, Version>,
-        latestRevocationVersions: Map<SequenceId, Version>,
+        latestVersions: Map<Accession, Version>,
+        latestRevocationVersions: Map<Accession, Version>,
     ): ProcessedData {
         val siloVersionStatus = computeSiloVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val metadata = rawProcessedData.processedData.metadata +
-            ("sequenceId" to TextNode(rawProcessedData.sequenceId.toString())) +
+            ("accession" to TextNode(rawProcessedData.accession)) +
             ("version" to LongNode(rawProcessedData.version)) +
-            ("customId" to TextNode(rawProcessedData.customId)) +
-            ("sequenceVersion" to TextNode(rawProcessedData.displaySequenceVersion())) +
+            (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)) +
+            ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
             ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
             ("submitter" to TextNode(rawProcessedData.submitter)) +
             ("submittedAt" to TextNode(rawProcessedData.submittedAt.toString())) +
@@ -56,15 +56,15 @@ class ReleasedDataModel(private val databaseService: DatabaseService) {
 
     private fun computeSiloVersionStatus(
         rawProcessedData: RawProcessedData,
-        latestVersions: Map<SequenceId, Version>,
-        latestRevocationVersions: Map<SequenceId, Version>,
+        latestVersions: Map<Accession, Version>,
+        latestRevocationVersions: Map<Accession, Version>,
     ): SiloVersionStatus {
-        val isLatestVersion = (latestVersions[rawProcessedData.sequenceId] == rawProcessedData.version)
+        val isLatestVersion = (latestVersions[rawProcessedData.accession] == rawProcessedData.version)
         if (isLatestVersion) {
             return SiloVersionStatus.LATEST_VERSION
         }
 
-        latestRevocationVersions[rawProcessedData.sequenceId]?.let {
+        latestRevocationVersions[rawProcessedData.accession]?.let {
             if (it > rawProcessedData.version) {
                 return SiloVersionStatus.REVOKED
             }
