@@ -21,7 +21,7 @@ Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
 Create a cluster with ports exposed and the content of this repository mounted as `/repo`:
 ```shell
-k3d cluster create mycluster -p "3000:30081@agent:0"  -p "8079:30082@agent:0" -v "$(pwd)/..:/repo"  --agents 2 
+k3d cluster create mycluster -p "8080:30080@agent:0" -p "3000:30081@agent:0" -p "8079:30082@agent:0" -v "$(pwd)/..:/repo"  --agents 2 
 ```
 
 Install the chart:
