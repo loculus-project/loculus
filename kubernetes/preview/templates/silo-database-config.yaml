@@ -22,10 +22,16 @@ data:
       primaryKey: sequenceVersion
     {{- $configFile.schema.silo | toYaml | nindent 6 }}
 
-  preprocessing_config_yaml: |-
-    metadataFilename: metadata.tsv
+  preprocessing_config.yaml: |
+    ndjsonInputFilename: data.ndjson
     pangoLineageDefinitionFilename: pangolineage_alias.json
     referenceGenomeFilename: reference_genomes.json
 
-  reference_genomes.json: |-
+  reference_genomes.json: |
     {{ .Files.Get "reference_genomes.json" | fromJson | toJson }}
+
+  silo_import_job.sh: |
+    {{ range .Files.Lines "silo_import_job.sh" }}
+    {{ . }}{{ end }}
+
+  pangolineage_alias.json: "{}"

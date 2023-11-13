@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: silo-import-cronjob
+  namespace: {{ .Values.namespace }}
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: silo-preprocessing
+              image: ghcr.io/genspectrum/lapis-silo:test-branch
+              imagePullPolicy: IfNotPresent
+              command:
+                - sh
+                - /silo_import_job.sh
+              env:
+                - name: BACKEND_HOST
+                  {{- if eq .Values.mode "dev" }}
+                  value: "host.k3d.internal"
+                  {{- else }}
+                  value: "pathoplexus-backend-service"
+                  {{- end }}
+              volumeMounts:
+                - name: silo-shared-data
+                  mountPath: /preprocessing/input
+                  subPath: website/tests/initialSiloData
+                - name: silo-database-config
+                  mountPath: /preprocessing/input/reference_genomes.json
+                  subPath: reference_genomes.json
+                - name: silo-database-config
+                  mountPath: /preprocessing/input/pangolineage_alias.json
+                  subPath: pangolineage_alias.json
+                - name: silo-database-config
+                  mountPath: /app/preprocessing_config.yaml
+                  subPath: preprocessing_config.yaml
+                - name: silo-database-config
+                  mountPath: /app/database_config.yaml
+                  subPath: database_config.yaml
+                - name: silo-shared-data
+                  mountPath: /preprocessing/output
+                - name: silo-database-config
+                  mountPath: /silo_import_job.sh
+                  subPath: silo_import_job.sh
+          volumes:
+            - name: silo-database-config
+              configMap:
+                name: silo-database-config
+            - name: silo-shared-data
+              persistentVolumeClaim:
+                claimName: silo-shared-data
+          restartPolicy: OnFailure
