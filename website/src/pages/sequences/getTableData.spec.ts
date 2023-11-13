@@ -26,7 +26,7 @@ const dummyError = {
     },
 };
 
-const sequenceVersion = 'accession';
+const accessionVersion = 'accession';
 
 const lapisClient = LapisClient.create(testConfig.forServer.lapisUrl, schema);
 
@@ -42,7 +42,7 @@ describe('getTableData', () => {
     test('should return an error when getSequenceDetails fails', async () => {
         mockRequest.lapis.details(500, dummyError);
 
-        const result = await getTableData(sequenceVersion, schema, lapisClient);
+        const result = await getTableData(accessionVersion, schema, lapisClient);
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
@@ -50,7 +50,7 @@ describe('getTableData', () => {
     test('should return an error when getSequenceMutations fails', async () => {
         mockRequest.lapis.nucleotideMutations(500, dummyError);
 
-        const result = await getTableData(sequenceVersion, schema, lapisClient);
+        const result = await getTableData(accessionVersion, schema, lapisClient);
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
@@ -58,13 +58,13 @@ describe('getTableData', () => {
     test('should return an error when getSequenceInsertions fails', async () => {
         mockRequest.lapis.nucleotideInsertions(500, dummyError);
 
-        const result = await getTableData(sequenceVersion, schema, lapisClient);
+        const result = await getTableData(accessionVersion, schema, lapisClient);
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
 
     test('should return default values when there is no data', async () => {
-        const result = await getTableData(sequenceVersion, schema, lapisClient);
+        const result = await getTableData(accessionVersion, schema, lapisClient);
 
         expect(result).toStrictEqual(
             ok([

@@ -1,7 +1,7 @@
 import type { AxiosError } from 'axios';
 
 import { BackendClient } from '../../src/services/backendClient.ts';
-import { type SequenceId, unprocessedData, type UnprocessedData } from '../../src/types/backend.ts';
+import { type Accession, unprocessedData, type UnprocessedData } from '../../src/types/backend.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
 import { backendUrl, e2eLogger, testSequence } from '../e2e.fixture.ts';
 
@@ -11,15 +11,16 @@ export const fakeProcessingPipeline = {
 };
 
 export type PreprocessingOptions = {
-    sequenceId: SequenceId;
+    accession: Accession;
     version: number;
     error: boolean;
 };
+
 async function submit(preprocessingOptions: PreprocessingOptions[]) {
     const body = preprocessingOptions
-        .map(({ sequenceId, version, error }) => {
+        .map(({ accession, version, error }) => {
             return {
-                sequenceId,
+                accession,
                 version,
                 errors: error
                     ? [{ source: [{ name: 'host', type: 'Metadata' }], message: 'Not this kind of host' }]
@@ -50,9 +51,9 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
     }
 }
 
-async function query(numberOfSequences: number): Promise<UnprocessedData[]> {
+async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]> {
     const response = await BackendClient.create(backendUrl, e2eLogger).call('extractUnprocessedData', undefined, {
-        queries: { numberOfSequences },
+        queries: { numberOfSequenceEntries },
     });
 
     return response.match(

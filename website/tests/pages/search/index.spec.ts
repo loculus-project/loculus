@@ -20,14 +20,14 @@ test.describe('The search page', () => {
         await expect(searchPage.page.getByText('No data')).toBeVisible();
     });
 
-    test('should search for existing sequences', async ({ searchPage }) => {
+    test('should search for existing sequence entries', async ({ searchPage }) => {
         await searchPage.goto();
-        await searchPage.getEmptySequenceVersionField().fill(testSequence.name);
+        await searchPage.getEmptyAccessionVersionField().fill(testSequence.name);
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
             `${baseUrl}${routes.searchPage([
-                { name: 'sequenceVersion', type: 'string', filterValue: testSequence.name },
+                { name: 'accessionVersion', type: 'string', filterValue: testSequence.name },
                 { name: 'isRevocation', type: 'string', filterValue: 'false' },
             ])}`,
         );
@@ -47,12 +47,12 @@ test.describe('The search page', () => {
 
     test('should reset the search', async ({ searchPage }) => {
         await searchPage.goto();
-        await searchPage.getEmptySequenceVersionField().fill(testSequence.name);
+        await searchPage.getEmptyAccessionVersionField().fill(testSequence.name);
 
-        await expect(searchPage.getFilledSequenceVersionField()).toHaveValue(testSequence.name);
+        await expect(searchPage.getFilledAccessionVersionField()).toHaveValue(testSequence.name);
 
         await searchPage.clickResetButton();
 
-        await expect(searchPage.getEmptySequenceVersionField()).toHaveValue('');
+        await expect(searchPage.getEmptyAccessionVersionField()).toHaveValue('');
     });
 });

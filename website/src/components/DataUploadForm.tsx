@@ -6,7 +6,7 @@ import { type ChangeEvent, type FormEvent, useState } from 'react';
 import { withQueryProvider } from './common/withQueryProvider.tsx';
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
-import type { HeaderId } from '../types/backend.ts';
+import type { SubmissionIdMapping } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 
 type Action = 'submit' | 'revise';
@@ -14,7 +14,7 @@ type Action = 'submit' | 'revise';
 type DataUploadFormProps = {
     clientConfig: ClientConfig;
     action: Action;
-    onSuccess: (value: HeaderId[]) => void;
+    onSuccess: (value: SubmissionIdMapping[]) => void;
     onError: (message: string) => void;
 };
 
@@ -117,7 +117,7 @@ export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
 
 function useSubmitFiles(
     clientConfig: ClientConfig,
-    onSuccess: (value: HeaderId[]) => void,
+    onSuccess: (value: SubmissionIdMapping[]) => void,
     onError: (message: string) => void,
 ) {
     const hooks = backendClientHooks(clientConfig);
@@ -153,13 +153,13 @@ function handleError(onError: (message: string) => void, action: Action) {
 function getExampleData() {
     return {
         metadataFileContent: `
-header	date	region	country	division	host
+submissionId	date	region	country	division	host
 custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
 custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
 custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
 custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`,
         revisedMetadataFileContent: `
-sequenceId	header	date	region	country	division	host
+accession	submissionId	date	region	country	division	host
 1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
 2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
 3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens

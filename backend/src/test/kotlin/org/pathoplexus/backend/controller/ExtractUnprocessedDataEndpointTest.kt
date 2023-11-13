@@ -21,7 +21,7 @@ class ExtractUnprocessedDataEndpointTest(
 ) {
 
     @Test
-    fun `GIVEN no sequences in database THEN returns empty response`() {
+    fun `GIVEN no sequence entries in database THEN returns empty response`() {
         val response = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
 
         val responseBody = response.expectNdjsonAndGetContent<UnprocessedData>()
@@ -29,7 +29,7 @@ class ExtractUnprocessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN extracting unprocessed data THEN only previously not extracted sequences are returned`() {
+    fun `WHEN extracting unprocessed data THEN only previously not extracted sequence entries are returned`() {
         convenienceClient.submitDefaultFiles()
 
         val result7 = client.extractUnprocessedData(7)
@@ -38,14 +38,14 @@ class ExtractUnprocessedDataEndpointTest(
         assertThat(
             responseBody7,
             hasItem(
-                UnprocessedData(DefaultFiles.firstSequence, 1, defaultOriginalData),
+                UnprocessedData(DefaultFiles.firstAccession, 1, defaultOriginalData),
             ),
         )
 
         val result3 = client.extractUnprocessedData(5)
         val responseBody3 = result3.expectNdjsonAndGetContent<UnprocessedData>()
         assertThat(responseBody3, hasSize(3))
-        assertThat(responseBody3[0].sequenceId, `is`("8"))
+        assertThat(responseBody3[0].accession, `is`("8"))
 
         val result0 = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
         val responseBody0 = result0.expectNdjsonAndGetContent<UnprocessedData>()
@@ -53,19 +53,19 @@ class ExtractUnprocessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I want to extract more than allowed number of sequences at once THEN returns Bad Request`() {
+    fun `WHEN I want to extract more than allowed number of sequence entries at once THEN returns Bad Request`() {
         client.extractUnprocessedData(100_001)
             .andExpect(status().isBadRequest)
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                    containsString("You can extract at max 100000 sequences at once."),
+                    containsString("You can extract at max 100000 sequence entries at once."),
                 ),
             )
     }
 
     @Test
-    fun `GIVEN a sequence with status 'REVIEWED' THEN it should be returned and the status should change`() {
+    fun `GIVEN a sequence entry with status 'REVIEWED' THEN it should be returned and the status should change`() {
         convenienceClient.prepareDataTo(RECEIVED)
 
         val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
@@ -74,11 +74,11 @@ class ExtractUnprocessedDataEndpointTest(
         assertThat(
             responseBody,
             hasItem(
-                UnprocessedData(DefaultFiles.firstSequence, 1, defaultOriginalData),
+                UnprocessedData(DefaultFiles.firstAccession, 1, defaultOriginalData),
             ),
         )
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
             .assertStatusIs(IN_PROCESSING)
     }
 }

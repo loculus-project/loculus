@@ -22,7 +22,7 @@ const genes = getReferenceGenomes().genes.map((g) => g.name);
 <BaseLayout title={accession}>
     <div class='flex items-center'>
         <BackButton marginRight={2} client:load />
-        <h1 class='title'>Sequence {accession}</h1>
+        <h1 class='title'>Sequence Entry {accession}</h1>
         {
             tableData.isOk() && (
                 <a href={routes.versionPage(accession)} class='text-xs ml-10'>
@@ -50,7 +50,7 @@ const genes = getReferenceGenomes().genes.map((g) => g.name);
                     <div class='mt-10'>
                         <SequencesContainer
                             client:load
-                            sequenceVersion={accession}
+                            accessionVersion={accession}
                             schema={schema}
                             clientConfig={runtimeConfig.forClient}
                             genes={genes}
@@ -58,7 +58,7 @@ const genes = getReferenceGenomes().genes.map((g) => g.name);
                     </div>
                 </>
             ),
-            (error) => <ErrorBox title='Sequence not found' message={error.detail} />,
+            (error) => <ErrorBox title='Sequence entry not found' message={error.detail} />,
         )
     }
 </BaseLayout>

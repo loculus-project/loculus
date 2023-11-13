@@ -1,31 +1,31 @@
 import { type ReviewPage } from './review.page.ts';
-import type { SequenceVersion } from '../../../src/types/backend.ts';
+import type { AccessionVersion } from '../../../src/types/backend.ts';
 import { baseUrl, expect, test, testuser } from '../../e2e.fixture';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 import type { UserPage } from '../user/user.page.ts';
 
 test.describe('The review page', () => {
     test(
-        'should show the review page for a sequence that needs review, ' +
+        'should show the review page for a sequence entry that needs review, ' +
             'download the sequence and submit the review',
         async ({ userPage, reviewPage }) => {
-            const [erroneousTestSequence] = await prepareDataToBe('erroneous', 1);
-            const [stagedTestSequence] = await prepareDataToBe('awaitingApproval', 1);
+            const [erroneousTestSequenceEntry] = await prepareDataToBe('erroneous', 1);
+            const [stagedTestSequenceEntry] = await prepareDataToBe('awaitingApproval', 1);
 
-            expect(erroneousTestSequence).toBeDefined();
-            expect(stagedTestSequence).toBeDefined();
+            expect(erroneousTestSequenceEntry).toBeDefined();
+            expect(stagedTestSequenceEntry).toBeDefined();
 
             await userPage.gotoUserSequencePage();
 
-            await testReviewFlow(reviewPage, userPage, erroneousTestSequence);
-            await testReviewFlow(reviewPage, userPage, stagedTestSequence);
+            await testReviewFlow(reviewPage, userPage, erroneousTestSequenceEntry);
+            await testReviewFlow(reviewPage, userPage, stagedTestSequenceEntry);
         },
     );
 
-    const testReviewFlow = async (reviewPage: ReviewPage, userPage: UserPage, testSequence: SequenceVersion) => {
-        await userPage.clickOnReviewForSequence(testSequence);
+    const testReviewFlow = async (reviewPage: ReviewPage, userPage: UserPage, testSequence: AccessionVersion) => {
+        await userPage.clickOnReviewForSequenceEntry(testSequence);
 
-        expect(await reviewPage.page.isVisible(`text=Review for Id: ${testSequence.sequenceId}`)).toBe(true);
+        expect(await reviewPage.page.isVisible(`text=Review for Id: ${testSequence.accession}`)).toBe(true);
         expect(await reviewPage.page.isVisible(`text=Original Data`)).toBe(true);
         expect(await reviewPage.page.isVisible(`text=Processed Data`)).toBe(true);
 

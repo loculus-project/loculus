@@ -4,16 +4,16 @@
     database "Database" as DB
 
 
-    frontend -> backend: submit corrected data for existing sequenceIds
+    frontend -> backend: submit corrected data for existing accessions
 
-    alt sequenceID exists and highest version is 'APPROVED_FOR_RELEASE'
+    alt accession exists and highest version is 'APPROVED_FOR_RELEASE'
         backend -> DB: insert new version in status 'RECEIVED'
-    backend -> frontend: response with sequenceId + new version number
+    backend -> frontend: response with accession + new version number
     else
         backend -> frontend: response with error message
     end
 
     note right of frontend
-        At this point the same flow applies as if this was an inital submission
+        At this point the same flow applies as if this was an initial submission
     end note
 @enduml

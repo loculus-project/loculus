@@ -18,7 +18,7 @@ export default async function globalSetupForPlaywright() {
 
     e2eLogger.info('preparing data in backend.');
     const data = await prepareDataToBe('approvedForRelease');
-    e2eLogger.info('done preparing data in backend: ' + data.map((sequence) => sequence.sequenceId).join(', '));
+    e2eLogger.info('done preparing data in backend: ' + data.map((sequence) => sequence.accession).join(', '));
 
     for (const _ of Array(12)) {
         e2eLogger.info('waiting for sequences in LAPIS...');

@@ -1,29 +1,29 @@
 ---
+import { SequenceEntryTable } from './SequenceEntryTable';
 import { SequenceStatusBox } from './SequenceStatusBox';
-import { SequenceTable } from './SequenceTable';
 import { getRuntimeConfig } from '../../config';
-import type { SequenceStatus } from '../../types/backend';
+import type { SequenceEntryStatus } from '../../types/backend';
 
 interface Props {
-    sequences: SequenceStatus[];
+    sequenceEntries: SequenceEntryStatus[];
     username: string;
 }
 
-const { sequences, username } = Astro.props;
+const { sequenceEntries, username } = Astro.props;
 const clientConfig = getRuntimeConfig().forClient;
 
-const statusArray = sequences.reduce(
+const statusArray = sequenceEntries.reduce(
     (acc, item) => {
         acc[item.status].push(item);
         return acc;
     },
     {
-        RECEIVED: [] as SequenceStatus[],
-        IN_PROCESSING: [] as SequenceStatus[],
-        HAS_ERRORS: [] as SequenceStatus[],
-        AWAITING_APPROVAL: [] as SequenceStatus[],
-        APPROVED_FOR_RELEASE: [] as SequenceStatus[],
-        AWAITING_APPROVAL_FOR_REVOCATION: [] as SequenceStatus[],
+        RECEIVED: [] as SequenceEntryStatus[],
+        IN_PROCESSING: [] as SequenceEntryStatus[],
+        HAS_ERRORS: [] as SequenceEntryStatus[],
+        AWAITING_APPROVAL: [] as SequenceEntryStatus[],
+        APPROVED_FOR_RELEASE: [] as SequenceEntryStatus[],
+        AWAITING_APPROVAL_FOR_REVOCATION: [] as SequenceEntryStatus[],
     },
 );
 
@@ -37,9 +37,9 @@ const keyPrefix = `userSequences.${username}`;
         localStorageKey={`${keyPrefix}.receivedExpanded`}
         client:only='react'
     >
-        <SequenceTable
+        <SequenceEntryTable
             username={username}
-            sequences={statusArray.RECEIVED}
+            sequenceEntries={statusArray.RECEIVED}
             bulkActionNames={['delete']}
             singleActionNames={[]}
             clientConfig={clientConfig}
@@ -53,9 +53,9 @@ const keyPrefix = `userSequences.${username}`;
         localStorageKey={`${keyPrefix}.processingExpanded`}
         client:only='react'
     >
-        <SequenceTable
+        <SequenceEntryTable
             username={username}
-            sequences={statusArray.IN_PROCESSING}
+            sequenceEntries={statusArray.IN_PROCESSING}
             bulkActionNames={[]}
             singleActionNames={[]}
             clientConfig={clientConfig}
@@ -69,9 +69,9 @@ const keyPrefix = `userSequences.${username}`;
         localStorageKey={`${keyPrefix}.needsReviewExpanded`}
         client:only='react'
     >
-        <SequenceTable
+        <SequenceEntryTable
             username={username}
-            sequences={statusArray.HAS_ERRORS}
+            sequenceEntries={statusArray.HAS_ERRORS}
             bulkActionNames={['delete']}
             singleActionNames={['review']}
             clientConfig={clientConfig}
@@ -85,9 +85,9 @@ const keyPrefix = `userSequences.${username}`;
         localStorageKey={`${keyPrefix}.stagingExpanded`}
         client:only='react'
     >
-        <SequenceTable
+        <SequenceEntryTable
             username={username}
-            sequences={statusArray.AWAITING_APPROVAL}
+            sequenceEntries={statusArray.AWAITING_APPROVAL}
             bulkActionNames={['approve', 'delete']}
             singleActionNames={['review']}
             clientConfig={clientConfig}
@@ -101,9 +101,9 @@ const keyPrefix = `userSequences.${username}`;
         localStorageKey={`${keyPrefix}.readyExpanded`}
         client:only='react'
     >
-        <SequenceTable
+        <SequenceEntryTable
             username={username}
-            sequences={statusArray.APPROVED_FOR_RELEASE}
+            sequenceEntries={statusArray.APPROVED_FOR_RELEASE}
             bulkActionNames={['revoke']}
             singleActionNames={[]}
             clientConfig={clientConfig}
@@ -117,9 +117,9 @@ const keyPrefix = `userSequences.${username}`;
         localStorageKey={`${keyPrefix}.revokedExpanded`}
         client:only='react'
     >
-        <SequenceTable
+        <SequenceEntryTable
             username={username}
-            sequences={statusArray.AWAITING_APPROVAL_FOR_REVOCATION}
+            sequenceEntries={statusArray.AWAITING_APPROVAL_FOR_REVOCATION}
             bulkActionNames={['confirmRevocation', 'delete']}
             singleActionNames={[]}
             clientConfig={clientConfig}

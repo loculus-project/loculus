@@ -1,4 +1,4 @@
-import type { SequenceVersion } from './types/backend.ts';
+import type { AccessionVersion } from './types/backend.ts';
 import type { Filter } from './types/config.ts';
 
 export const routes = {
@@ -6,8 +6,8 @@ export const routes = {
         `/search?${buildSearchParams(searchFilter, page).toString()}`,
     submitPage: () => `/submit`,
     revisePage: () => `/revise`,
-    reviewPage: (username: string, sequenceVersion: SequenceVersion) =>
-        `/user/${username}/review/${sequenceVersion.sequenceId}/${sequenceVersion.version}`,
+    reviewPage: (username: string, accessionVersion: AccessionVersion) =>
+        `/user/${username}/review/${accessionVersion.accession}/${accessionVersion.version}`,
     userPage: (username: string) => `/user/${username}`,
     userSequencesPage: (username: string) => `/user/${username}/sequences`,
     versionPage: (accession: string) => `/sequences/${accession}/versions`,

@@ -4,29 +4,29 @@ import userEvent from '@testing-library/user-event';
 import { sentenceCase } from 'change-case';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { SequenceTable } from './SequenceTable.tsx';
+import { SequenceEntryTable } from './SequenceEntryTable.tsx';
 import type { BulkSequenceActionName, SingleSequenceActionName } from './sequenceActions.ts';
 import { testuser } from '../../../tests/e2e.fixture.ts';
 import { routes } from '../../routes.ts';
-import type { SequenceStatus } from '../../types/backend.ts';
+import type { SequenceEntryStatus } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 
 const queryClient = new QueryClient();
-const defaultSequencesWithStatus: readonly SequenceStatus[] = [
+const defaultSequenceEntryStatuses: readonly SequenceEntryStatus[] = [
     {
-        sequenceId: '1',
+        accession: '1',
         version: 1,
         status: 'HAS_ERRORS',
         isRevocation: false,
     },
     {
-        sequenceId: '2',
+        accession: '2',
         version: 1,
         status: 'HAS_ERRORS',
         isRevocation: false,
     },
-] as const;
+];
 
 const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 const everyBulkActionImplemented: readonly BulkSequenceActionName[] = [
@@ -34,18 +34,18 @@ const everyBulkActionImplemented: readonly BulkSequenceActionName[] = [
     'approve',
     'revoke',
     'confirmRevocation',
-] as const;
-const everySingleActionImplemented: readonly SingleSequenceActionName[] = ['review'] as const;
+];
+const everySingleActionImplemented: readonly SingleSequenceActionName[] = ['review'];
 
 function renderSequenceTable(
-    sequencesWithStatus: SequenceStatus[] = [...defaultSequencesWithStatus],
+    sequencesWithStatus: SequenceEntryStatus[] = [...defaultSequenceEntryStatuses],
     clientConfig: ClientConfig = dummyConfig,
 ) {
     render(
         <QueryClientProvider client={queryClient}>
-            <SequenceTable
+            <SequenceEntryTable
                 username={testuser}
-                sequences={sequencesWithStatus}
+                sequenceEntries={sequencesWithStatus}
                 bulkActionNames={[...everyBulkActionImplemented]}
                 singleActionNames={[...everySingleActionImplemented]}
                 clientConfig={clientConfig}
@@ -71,17 +71,17 @@ describe('SequenceTable', () => {
         });
     });
 
-    test('should render each row with the sequence version and a single action', async () => {
+    test('should render each row with the accession version and a single action', async () => {
         renderSequenceTable();
 
         everySingleActionImplemented.forEach((action) => {
             expect(screen.getAllByRole('button', { name: sentenceCase(action) }).length).toBe(
-                defaultSequencesWithStatus.length,
+                defaultSequenceEntryStatuses.length,
             );
         });
 
-        defaultSequencesWithStatus.map(getSequenceVersionString).forEach((sequenceVersion) => {
-            expect(screen.getByText(sequenceVersion)).toBeInTheDocument();
+        defaultSequenceEntryStatuses.map(getAccessionVersionString).forEach((accessionVersion) => {
+            expect(screen.getByText(accessionVersion)).toBeInTheDocument();
         });
     });
 
@@ -91,7 +91,7 @@ describe('SequenceTable', () => {
         const deleteButton = screen.getByRole('button', { name: sentenceCase('delete') });
         expect(deleteButton).toBeDisabled();
 
-        const clickableRow = screen.getByText(getSequenceVersionString(defaultSequencesWithStatus[0]));
+        const clickableRow = screen.getByText(getAccessionVersionString(defaultSequenceEntryStatuses[0]));
         await userEvent.click(clickableRow);
 
         expect(deleteButton).not.toBeDisabled();
@@ -103,12 +103,12 @@ describe('SequenceTable', () => {
     test('should navigate to review page when single action "review" is clicked', async () => {
         renderSequenceTable();
 
-        const sequenceVersionToReview = defaultSequencesWithStatus[0];
+        const accessionVersionToReview = defaultSequenceEntryStatuses[0];
 
         const reviewButton = screen.getAllByRole('button', { name: sentenceCase(everySingleActionImplemented[0]) })[0];
         expect(reviewButton).toBeDefined();
         await userEvent.click(reviewButton);
 
-        expect(window.location.href).toBe(routes.reviewPage(testuser, sequenceVersionToReview));
+        expect(window.location.href).toBe(routes.reviewPage(testuser, accessionVersionToReview));
     });
 });

@@ -6,16 +6,16 @@ import type { Row } from './InputField.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceReview } from '../../types/backend.ts';
+import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryReview } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type ReviewPageProps = {
     clientConfig: ClientConfig;
-    reviewData: SequenceReview;
+    reviewData: SequenceEntryReview;
     username: string;
 };
 
@@ -42,9 +42,9 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, userna
         }
     };
 
-    const submitReviewForSequenceVersion = async () => {
+    const submitReviewForAccessionVersion = async () => {
         const data = {
-            sequenceId: reviewData.sequenceId,
+            accession: reviewData.accession,
             version: reviewData.version,
             data: {
                 metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
@@ -80,7 +80,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, userna
             <dialog ref={dialogRef} className='modal'>
                 <ConfirmationDialog
                     dialogText='Do you really want to submit your review?'
-                    onConfirmation={submitReviewForSequenceVersion}
+                    onConfirmation={submitReviewForAccessionVersion}
                 />
             </dialog>
 
@@ -88,7 +88,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, userna
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
                     <EditableOriginalData
-                        editedMetadata={editedMetadata.filter(({ key }) => key !== 'sequenceId')}
+                        editedMetadata={editedMetadata.filter(({ key }) => key !== 'accession')}
                         setEditedMetadata={setEditedMetadata}
                     />
                     <EditableOriginalSequences
@@ -129,18 +129,18 @@ export const ReviewPage = withQueryProvider(InnerReviewPage);
 function useSubmitReviewedSequence(
     clientConfig: ClientConfig,
     username: string,
-    reviewData: SequenceReview,
+    reviewData: SequenceEntryReview,
     openErrorFeedback: (message: string) => void,
 ) {
     return backendClientHooks(clientConfig).useSubmitReviewedSequence(
         { queries: { username } },
         {
             onSuccess: async () => {
-                await logger.info('Successfully submitted review ' + getSequenceVersionString(reviewData));
+                await logger.info('Successfully submitted review ' + getAccessionVersionString(reviewData));
                 location.href = routes.userSequencesPage(username);
             },
             onError: async (error) => {
-                const message = `Failed to submit review for ${getSequenceVersionString(
+                const message = `Failed to submit review for ${getAccessionVersionString(
                     reviewData,
                 )} with error '${JSON.stringify(error)})}'`;
                 await logger.info(message);
@@ -150,10 +150,10 @@ function useSubmitReviewedSequence(
     );
 }
 
-function generateAndDownloadFastaFile(editedSequences: Row[], reviewData: SequenceReview) {
-    const sequenceVersion = getSequenceVersionString(reviewData);
+function generateAndDownloadFastaFile(editedSequences: Row[], reviewData: SequenceEntryReview) {
+    const accessionVersion = getAccessionVersionString(reviewData);
     const fileContent = editedSequences
-        .map((sequence) => `>${sequenceVersion}.${sequence.key}\n${sequence.value}\n\n`)
+        .map((sequence) => `>${accessionVersion}.${sequence.key}\n${sequence.value}\n\n`)
         .join();
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
@@ -161,7 +161,7 @@ function generateAndDownloadFastaFile(editedSequences: Row[], reviewData: Sequen
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sequenceVersion${sequenceVersion}.fasta`;
+    a.download = `accessionVersion${accessionVersion}.fasta`;
     a.click();
 
     URL.revokeObjectURL(url);
@@ -267,7 +267,7 @@ const ProcessedInsertions: FC<ProcessedInsertionsProps> = ({ processedInsertions
     </>
 );
 
-const mapMetadataToRow = (reviewData: SequenceReview): Row[] =>
+const mapMetadataToRow = (reviewData: SequenceEntryReview): Row[] =>
     Object.entries(reviewData.originalData.metadata).map(([key, value]) => ({
         key,
         initialValue: value.toString(),
@@ -275,7 +275,7 @@ const mapMetadataToRow = (reviewData: SequenceReview): Row[] =>
         ...mapErrorsAndWarnings(reviewData, key, 'Metadata'),
     }));
 
-const mapSequencesToRow = (reviewData: SequenceReview): Row[] =>
+const mapSequencesToRow = (reviewData: SequenceEntryReview): Row[] =>
     Object.entries(reviewData.originalData.unalignedNucleotideSequences).map(([key, value]) => ({
         key,
         initialValue: value.toString(),
@@ -283,19 +283,19 @@ const mapSequencesToRow = (reviewData: SequenceReview): Row[] =>
         ...mapErrorsAndWarnings(reviewData, key, 'NucleotideSequence'),
     }));
 
-const extractProcessedSequences = (reviewData: SequenceReview) => ({
+const extractProcessedSequences = (reviewData: SequenceEntryReview) => ({
     unalignedNucleotideSequences: reviewData.processedData.unalignedNucleotideSequences,
     alignedNucleotideSequences: reviewData.processedData.alignedNucleotideSequences,
     alignedAminoAcidSequences: reviewData.processedData.alignedAminoAcidSequences,
 });
 
-const extractInsertions = (reviewData: SequenceReview) => ({
+const extractInsertions = (reviewData: SequenceEntryReview) => ({
     nucleotideInsertions: reviewData.processedData.nucleotideInsertions,
     aminoAcidInsertions: reviewData.processedData.aminoAcidInsertions,
 });
 
 const mapErrorsAndWarnings = (
-    reviewData: SequenceReview,
+    reviewData: SequenceEntryReview,
     key: string,
     type: ProcessingAnnotationSourceType,
 ): { errors: string[]; warnings: string[] } => ({

@@ -1,5 +1,5 @@
 {{- $dockerTag := (eq (.Values.branch | default "main") "main") | ternary "latest" .Values.branch -}}
-{{- $dockerTag = regexReplaceAll "/" $dockerTag "-" }}
+  {{- $dockerTag = regexReplaceAll "/" $dockerTag "-" }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -19,6 +19,7 @@ spec:
         component: website-and-backend
     spec:
       containers:
+        {{- if ne .Values.mode "dev" }}
         - name: website
           image: ghcr.io/pathoplexus/website:{{ $dockerTag }}
           imagePullPolicy: Always
@@ -68,6 +69,7 @@ spec:
           volumeMounts:
             - name: pathoplexus-backend-config
               mountPath: /config
+        {{- end }}
         - name: database
           image: postgres:latest
           ports:

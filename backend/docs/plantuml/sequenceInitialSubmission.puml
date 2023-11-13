@@ -6,7 +6,7 @@
 
     frontend -> backend: submit initial sequence data
     alt Sequence and Metadata Files are valid
-        backend -> frontend: response with sequenceIds
+        backend -> frontend: response with accessions
         backend -> DB: Store initial sequence data
         backend -> DB: set status to 'RECEIVED'
     else Sequence and Metadata Files are invalid

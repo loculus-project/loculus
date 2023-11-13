@@ -3,7 +3,7 @@ package org.pathoplexus.backend.controller
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.UnprocessedData
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
+import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -14,41 +14,41 @@ class SubmitReviewedSequenceEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `GIVEN a sequence needs review WHEN I submit a reviewed sequence THEN the status changes to REVIEWED`() {
+    fun `GIVEN a sequence entry needs review WHEN I submit reviewed data THEN the status changes to REVIEWED`() {
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
         val reviewedData = UnprocessedData(
-            sequenceId = "1",
+            accession = "1",
             version = 1,
             data = emptyOriginalData,
         )
-        client.submitReviewedSequence(USER_NAME, reviewedData)
+        client.submitReviewedSequenceEntry(USER_NAME, reviewedData)
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.RECEIVED)
     }
 
     @Test
-    fun `GIVEN a sequence is processed WHEN I submit a review to that sequence THEN the status changes to REVIEWED`() {
+    fun `GIVEN a sequence entry is processed WHEN I submit a review THEN the status changes to REVIEWED`() {
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
 
         val reviewedData = UnprocessedData(
-            sequenceId = "1",
+            accession = "1",
             version = 1,
             data = emptyOriginalData,
         )
 
-        client.submitReviewedSequence(USER_NAME, reviewedData)
+        client.submitReviewedSequenceEntry(USER_NAME, reviewedData)
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.RECEIVED)
     }
 
@@ -56,79 +56,79 @@ class SubmitReviewedSequenceEndpointTest(
     fun `WHEN a version does not exist THEN it returns an unprocessable entity error`() {
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
         val reviewedDataWithNonExistingVersion =
             UnprocessedData(
-                sequenceId = "1",
+                accession = "1",
                 version = 2,
                 data = emptyOriginalData,
             )
-        val sequenceString = "${reviewedDataWithNonExistingVersion.sequenceId}." +
+        val sequenceString = "${reviewedDataWithNonExistingVersion.accession}." +
             "${reviewedDataWithNonExistingVersion.version}"
 
-        client.submitReviewedSequence(USER_NAME, reviewedDataWithNonExistingVersion)
+        client.submitReviewedSequenceEntry(USER_NAME, reviewedDataWithNonExistingVersion)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail")
-                    .value("Sequence $sequenceString does not exist"),
+                    .value("Sequence entry $sequenceString does not exist"),
             )
     }
 
     @Test
-    fun `WHEN a sequenceId does not exist THEN it returns an unprocessable entity error`() {
+    fun `WHEN an accession does not exist THEN it returns an unprocessable entity error`() {
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedDataWithNonExistingSequenceId = UnprocessedData(
-            sequenceId = "2",
+        val reviewedDataWithNonExistingAccession = UnprocessedData(
+            accession = "2",
             version = 1,
             data = emptyOriginalData,
         )
-        val sequenceString = "${reviewedDataWithNonExistingSequenceId.sequenceId}." +
-            "${reviewedDataWithNonExistingSequenceId.version}"
+        val sequenceString = "${reviewedDataWithNonExistingAccession.accession}." +
+            "${reviewedDataWithNonExistingAccession.version}"
 
-        client.submitReviewedSequence(USER_NAME, reviewedDataWithNonExistingSequenceId)
+        client.submitReviewedSequenceEntry(USER_NAME, reviewedDataWithNonExistingAccession)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence $sequenceString is in status IN_PROCESSING not in AWAITING_APPROVAL or HAS_ERRORS",
+                    "Sequence entry $sequenceString is in status IN_PROCESSING, not in AWAITING_APPROVAL or HAS_ERRORS",
                 ),
             )
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
     @Test
-    fun `WHEN a sequenceId does not belong to a user THEN it returns an forbidden error`() {
+    fun `WHEN a sequence entry does not belong to a user THEN it returns an forbidden error`() {
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
         val reviewedDataFromWrongSubmitter =
             UnprocessedData(
-                sequenceId = "1",
+                accession = "1",
                 version = 1,
                 data = emptyOriginalData,
             )
-        val sequenceString = "${reviewedDataFromWrongSubmitter.sequenceId}." +
+        val sequenceString = "${reviewedDataFromWrongSubmitter.accession}." +
             "${reviewedDataFromWrongSubmitter.version}"
         val nonExistingUser = "whoseNameMayNotBeMentioned"
 
-        client.submitReviewedSequence(nonExistingUser, reviewedDataFromWrongSubmitter)
+        client.submitReviewedSequenceEntry(nonExistingUser, reviewedDataFromWrongSubmitter)
             .andExpect(status().isForbidden)
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence $sequenceString is not owned by user $nonExistingUser",
+                    "Sequence entry $sequenceString is not owned by user $nonExistingUser",
                 ),
             )
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 }

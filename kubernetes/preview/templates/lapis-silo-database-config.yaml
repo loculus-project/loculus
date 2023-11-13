@@ -24,7 +24,7 @@ data:
           generateIndex: {{ .generateIndex }}
           {{- end }}
       {{- end }}
-      primaryKey: sequenceVersion
+      primaryKey: accessionVersion
       {{- .silo | toYaml | nindent 6 }}
   {{- end }}
 

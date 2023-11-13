@@ -1,7 +1,7 @@
 import { approveProcessedData, submitViaApi } from './backendCalls.ts';
 import { fakeProcessingPipeline, type PreprocessingOptions } from './preprocessingPipeline.ts';
 import { type UnprocessedData } from '../../src/types/backend.ts';
-import { extractSequenceVersion } from '../../src/utils/extractSequenceVersion.ts';
+import { extractAccessionVersion } from '../../src/utils/extractAccessionVersion.ts';
 import { expect, testSequenceCount, testuser } from '../e2e.fixture.ts';
 
 export const prepareDataToBe = (
@@ -23,38 +23,38 @@ export const prepareDataToBe = (
 async function prepareDataToBeProcessing(numberOfSequences: number) {
     await submitViaApi(numberOfSequences);
 
-    const sequences = await fakeProcessingPipeline.query(numberOfSequences);
-    expect(sequences.length).toBe(numberOfSequences);
+    const sequenceEntries = await fakeProcessingPipeline.query(numberOfSequences);
+    expect(sequenceEntries.length).toBe(numberOfSequences);
 
-    return sequences;
+    return sequenceEntries;
 }
 
 const prepareDataToHaveErrors = async (numberOfSequences: number = testSequenceCount) => {
-    const sequences = await prepareDataToBeProcessing(numberOfSequences);
+    const sequenceEntries = await prepareDataToBeProcessing(numberOfSequences);
 
-    const options: PreprocessingOptions[] = sequences
-        .map(extractSequenceVersion)
+    const options: PreprocessingOptions[] = sequenceEntries
+        .map(extractAccessionVersion)
         .map((sequence) => ({ ...sequence, error: true }));
     await fakeProcessingPipeline.submit(options);
 
-    return sequences;
+    return sequenceEntries;
 };
 
 const prepareDataToBeAwaitingApproval = async (numberOfSequences: number = testSequenceCount) => {
-    const sequences = await prepareDataToBeProcessing(numberOfSequences);
+    const sequenceEntries = await prepareDataToBeProcessing(numberOfSequences);
 
-    const options: PreprocessingOptions[] = sequences
-        .map(extractSequenceVersion)
+    const options: PreprocessingOptions[] = sequenceEntries
+        .map(extractAccessionVersion)
         .map((sequence) => ({ ...sequence, error: false }));
     await fakeProcessingPipeline.submit(options);
 
-    return sequences;
+    return sequenceEntries;
 };
 
 const prepareDataToBeApprovedForRelease = async (numberOfSequences: number = testSequenceCount) => {
-    const sequences = await prepareDataToBeAwaitingApproval(numberOfSequences);
+    const sequenceEntries = await prepareDataToBeAwaitingApproval(numberOfSequences);
 
-    await approveProcessedData(testuser, sequences);
+    await approveProcessedData(testuser, sequenceEntries);
 
-    return sequences;
+    return sequenceEntries;
 };

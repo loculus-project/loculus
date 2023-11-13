@@ -14,7 +14,7 @@ parser.add_argument("--backend-host", type=str, default="127.0.0.1:8079",
 parser.add_argument("--watch", action="store_true", help="Watch and keep running. Fetches new data every 10 seconds.")
 parser.add_argument("--withErrors", action="store_true", help="Add errors to processed data.")
 parser.add_argument("--withWarnings", action="store_true", help="Add warnings to processed data.")
-parser.add_argument("--maxSequences", type=int, help="Max number of sequences to process.")
+parser.add_argument("--maxSequences", type=int, help="Max number of sequence entry versions to process.")
 
 args = parser.parse_args()
 host = "http://{}".format(args.backend_host)
@@ -34,7 +34,7 @@ class ProcessingAnnotation:
 
 @dataclass
 class Sequence:
-    sequenceId: int
+    accession: int
     version: int
     data: dict
     errors: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
@@ -56,7 +56,7 @@ def parse_ndjson(ndjson_data: str) -> List[Sequence]:
     for json_str in json_strings:
         if json_str:
             json_object = json.loads(json_str)
-            entries.append(Sequence(json_object["sequenceId"], json_object["version"], json_object["data"]))
+            entries.append(Sequence(json_object["accession"], json_object["version"], json_object["data"]))
     return entries
 
 def process(unprocessed: List[Sequence]) -> List[Sequence]:
@@ -70,7 +70,7 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
         metadata["pango_lineage"] = random.choice(possible_lineages)
 
         updated_sequence = Sequence(
-            sequence.sequenceId,
+            sequence.accession,
             sequence.version,
             {"metadata": metadata, **mock_sequences},
         )

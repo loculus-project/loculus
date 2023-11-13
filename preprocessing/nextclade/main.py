@@ -36,7 +36,7 @@ GENES = [
 ]
 
 
-IdVersion = str
+AccessionVersion = str
 
 
 @dataclass
@@ -47,7 +47,7 @@ class UnprocessedData:
 
 @dataclass
 class UnprocessedEntry:
-    idVersion: IdVersion  # {sequenceId}.{version}
+    accessionVersion: AccessionVersion  # {accession}.{version}
     data: UnprocessedData
 
 
@@ -75,7 +75,7 @@ class ProcessingAnnotation:
 
 @dataclass
 class ProcessedEntry:
-    sequenceId: int
+    accession: int
     version: int
     data: ProcessedData
     errors: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
@@ -112,7 +112,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
             ],
         )
         entry = UnprocessedEntry(
-            idVersion=f"{json_object['sequenceId']}.{json_object['version']}",
+            accessionVersion=f"{json_object['accession']}.{json_object['version']}",
             data=unprocessed_data,
         )
         entries.append(entry)
@@ -121,13 +121,13 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 
 def run_nextclade(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str
-) -> Mapping[IdVersion, NextcladeResult]:
+) -> Mapping[AccessionVersion, NextcladeResult]:
     with tempfile.TemporaryDirectory() as result_dir:
         # TODO: Generalize for multiple segments (flu)
         input_file = result_dir + "/input.fasta"
         with open(input_file, "w") as f:
             for sequence in unprocessed:
-                f.write(f">{sequence.idVersion}\n")
+                f.write(f">{sequence.accessionVersion}\n")
                 f.write(f"{sequence.data.unalignedNucleotideSequences['main']}\n")
         command = (
             "nextclade run "
@@ -139,7 +139,7 @@ def run_nextclade(
         if exit_code != 0:
             raise Exception("nextclade failed with exit code {}".format(exit_code))
         processed = {
-            unprocessed_sequence.idVersion: {
+            unprocessed_sequence.accessionVersion: {
                 "unalignedNuc": unprocessed_sequence.data.unalignedNucleotideSequences,
                 "alignedNuc": "",
                 "alignedTranslations": {},
@@ -185,11 +185,11 @@ def run_nextclade(
         return processed
 
 
-def id_from_str(id_str: IdVersion) -> int:
+def id_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[0])
 
 
-def version_from_str(id_str: IdVersion) -> int:
+def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
 
 
@@ -199,7 +199,7 @@ def process(
     nextclade_results = run_nextclade(unprocessed, dataset_dir)
     processed = [
         ProcessedEntry(
-            sequenceId=id_from_str(sequence_id),
+            accession=id_from_str(sequence_id),
             version=version_from_str(sequence_id),
             data=ProcessedData(
                 metadata=nextclade_results[sequence_id]["metadata"],

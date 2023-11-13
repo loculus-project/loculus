@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
-import type { SequenceVersion } from '../../../src/types/backend.ts';
-import { getSequenceVersionString } from '../../../src/utils/extractSequenceVersion.ts';
+import type { AccessionVersion } from '../../../src/types/backend.ts';
+import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl, expect, testuser } from '../../e2e.fixture';
 
 export class ReviewPage {
@@ -13,9 +13,9 @@ export class ReviewPage {
         this.downloadButton = this.page.getByRole('button', { name: 'Download', exact: false });
     }
 
-    public async goto(sequenceVersion: SequenceVersion) {
+    public async goto(accessionVersion: AccessionVersion) {
         await this.page.goto(
-            `${baseUrl}/user/${testuser}/review/${sequenceVersion.sequenceId}/${sequenceVersion.version}`,
+            `${baseUrl}/user/${testuser}/review/${accessionVersion.accession}/${accessionVersion.version}`,
             { waitUntil: 'networkidle' },
         );
     }
@@ -27,13 +27,13 @@ export class ReviewPage {
         await this.page.waitForURL(`${baseUrl}/user/${testuser}/sequences`);
     }
 
-    public async downloadAndVerify(sequenceVersion: SequenceVersion) {
+    public async downloadAndVerify(accessionVersion: AccessionVersion) {
         const downloadPromise = this.page.waitForEvent('download');
         expect(await this.downloadButton.isVisible()).toBeTruthy();
         await this.downloadButton.click();
         const download = await downloadPromise;
 
-        expect(download.suggestedFilename()).toContain('sequenceVersion');
+        expect(download.suggestedFilename()).toContain('accessionVersion');
         const downloadStream = await download.createReadStream();
         expect(downloadStream).toBeDefined();
 
@@ -46,7 +46,7 @@ export class ReviewPage {
             downloadStream!.on('end', resolve);
         });
 
-        expect(downloadData.toString()).toContain(`>${getSequenceVersionString(sequenceVersion)}.main
+        expect(downloadData.toString()).toContain(`>${getAccessionVersionString(accessionVersion)}.main
 ACTG`);
     }
 }

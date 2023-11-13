@@ -25,23 +25,23 @@ class ReviseEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `GIVEN sequences with status 'APPROVED_FOR_RELEASE' THEN there is a revised version and returns HeaderIds`() {
-        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
+    fun `GIVEN entries with status 'APPROVED_FOR_RELEASE' THEN there is a revised version and returns HeaderIds`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
-        client.reviseSequences(
+        client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
             DefaultFiles.sequencesFile,
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
-            .andExpect(jsonPath("\$[0].customId").value("custom0"))
-            .andExpect(jsonPath("\$[0].sequenceId").value(DefaultFiles.firstSequence))
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[0].accession").value(DefaultFiles.firstAccession))
             .andExpect(jsonPath("\$[0].version").value(2))
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 2)
+        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 2)
             .assertStatusIs(RECEIVED)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
             .assertStatusIs(APPROVED_FOR_RELEASE)
 
         val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
@@ -52,7 +52,7 @@ class ReviseEndpointTest(
             responseBody,
             hasItem(
                 UnprocessedData(
-                    sequenceId = DefaultFiles.firstSequence,
+                    accession = DefaultFiles.firstAccession,
                     version = 2,
                     data = defaultOriginalData,
                 ),
@@ -61,14 +61,14 @@ class ReviseEndpointTest(
     }
 
     @Test
-    fun `WHEN submitting revised data with non-existing sequenceIds THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
+    fun `WHEN submitting revised data with non-existing accessions THEN throws an unprocessableEntity error`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
-        client.reviseSequences(
+        client.reviseSequenceEntries(
             SubmitFiles.revisedMetadataFileWith(
                 content =
                 """
-                 sequenceId	header	firstColumn
+                 accession	submissionId	firstColumn
                     123	someHeader	someValue
                     1	someHeader2	someOtherValue
                 """.trimIndent(),
@@ -78,17 +78,17 @@ class ReviseEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "SequenceIds 123 do not exist",
+                    "Accessions 123 do not exist",
                 ),
             )
     }
 
     @Test
     fun `WHEN submitting revised data not from the submitter THEN throws forbidden error`() {
-        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
         val notSubmitter = "notTheSubmitter"
-        client.reviseSequences(
+        client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
             DefaultFiles.sequencesFile,
             notSubmitter,
@@ -97,7 +97,7 @@ class ReviseEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User '$notSubmitter' does not have right to change the sequence versions " +
+                    "User '$notSubmitter' does not have right to change the accession versions " +
                         "1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1",
                 ),
             )
@@ -105,9 +105,9 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting data with version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequencesToHasErrors()
+        convenienceClient.prepareDefaultSequenceEntriesToHasErrors()
 
-        client.reviseSequences(
+        client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
             DefaultFiles.sequencesFile,
         )
@@ -115,7 +115,7 @@ class ReviseEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence versions are in not in one of the states [APPROVED_FOR_RELEASE]: " +
+                    "Accession versions are in not in one of the states [APPROVED_FOR_RELEASE]: " +
                         "1.1 - HAS_ERRORS, 2.1 - HAS_ERRORS, 3.1 - HAS_ERRORS, 4.1 - HAS_ERRORS, " +
                         "5.1 - HAS_ERRORS, 6.1 - HAS_ERRORS, 7.1 - HAS_ERRORS, 8.1 - HAS_ERRORS, " +
                         "9.1 - HAS_ERRORS, 10.1 - HAS_ERRORS",
@@ -133,7 +133,7 @@ class ReviseEndpointTest(
         expectedTitle: String,
         expectedMessage: String,
     ) {
-        client.reviseSequences(metadataFile, sequencesFile)
+        client.reviseSequenceEntries(metadataFile, sequencesFile)
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
             .andExpect(jsonPath("\$.detail", Matchers.containsString(expectedMessage)))
@@ -179,7 +179,7 @@ class ReviseEndpointTest(
                     "metadata file where one row has a blank header",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            sequenceId	header	firstColumn
+                            accession	submissionId	firstColumn
                             1		someValueButNoHeader
                             2	someHeader2	someValue2
                         """.trimIndent(),
@@ -187,26 +187,26 @@ class ReviseEndpointTest(
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "A row in metadata file contains no header",
+                    "A row in metadata file contains no submissionId",
                 ),
                 Arguments.of(
                     "metadata file with no header",
                     SubmitFiles.revisedMetadataFileWith(
                         content = """
-                            sequenceId	firstColumn
+                            accession	firstColumn
                             1	someValue
                         """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "The metadata file does not contain the header 'header'",
+                    "The metadata file does not contain the header 'submissionId'",
                 ),
                 Arguments.of(
                     "duplicate headers in metadata file",
                     SubmitFiles.revisedMetadataFileWith(
                         content = """
-                            sequenceId	header	firstColumn
+                            accession	submissionId	firstColumn
                             1	sameHeader	someValue
                             2	sameHeader	someValue2
                         """.trimIndent(),
@@ -214,7 +214,7 @@ class ReviseEndpointTest(
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains duplicate headers: [sameHeader]",
+                    "Metadata file contains duplicate submissionIds: [sameHeader]",
                 ),
                 Arguments.of(
                     "duplicate headers in sequence file",
@@ -229,13 +229,13 @@ class ReviseEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains duplicate headers: sameHeader_main",
+                    "Sequence file contains duplicate submissionIds: sameHeader_main",
                 ),
                 Arguments.of(
                     "metadata file misses headers",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            sequenceId	header	firstColumn
+                            accession	submissionId	firstColumn
                             1	commonHeader	someValue
                         """.trimIndent(),
                     ),
@@ -249,13 +249,13 @@ class ReviseEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains headers that are not present in the metadata file: [notInMetadata]",
+                    "Sequence file contains submissionIds that are not present in the metadata file: [notInMetadata]",
                 ),
                 Arguments.of(
-                    "sequence file misses headers",
+                    "sequence file misses submissionIds",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            sequenceId	header	firstColumn
+                            accession	submissionId	firstColumn
                             1	commonHeader	someValue
                             2	notInSequences	someValue
                         """.trimIndent(),
@@ -268,13 +268,13 @@ class ReviseEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains headers that are not present in the sequence file: [notInSequences]",
+                    "Metadata file contains submissionIds that are not present in the sequence file: [notInSequences]",
                 ),
                 Arguments.of(
-                    "metadata file misses sequenceId header",
+                    "metadata file misses accession header",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            header	firstColumn
+                            submissionId	firstColumn
                             someHeader	someValue
                             someHeader2	someValue
                         """.trimIndent(),
@@ -282,13 +282,13 @@ class ReviseEndpointTest(
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file misses header sequenceId",
+                    "Metadata file misses header accession",
                 ),
                 Arguments.of(
-                    "metadata file with one row with missing sequenceId",
+                    "metadata file with one row with missing accession",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            sequenceId	header	firstColumn
+                            accession	submissionId	firstColumn
                             	someHeader	someValue
                             2	someHeader2	someValue
                         """.trimIndent(),
@@ -296,14 +296,14 @@ class ReviseEndpointTest(
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "A row with header 'someHeader' in metadata file contains no sequenceId",
+                    "A row with header 'someHeader' in metadata file contains no accession",
                 ),
 
                 Arguments.of(
-                    "metadata file with one row with sequenceId which is not a number",
+                    "metadata file with one row with accession which is not a number",
                     SubmitFiles.metadataFileWith(
                         content = """
-                            sequenceId	header	firstColumn
+                            accession	submissionId	firstColumn
                             abc	someHeader	someValue
                             2	someHeader2	someValue
                         """.trimIndent(),
@@ -311,7 +311,7 @@ class ReviseEndpointTest(
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "A row with header 'someHeader' in metadata file contains no valid sequenceId: abc",
+                    "A row with header 'someHeader' in metadata file contains no valid accession: abc",
                 ),
             )
         }

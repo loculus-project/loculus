@@ -9,7 +9,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.api.Insertion
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmittedProcessedData
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
+import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
 import org.pathoplexus.backend.service.AminoAcidSymbols
 import org.pathoplexus.backend.service.NucleotideSymbols
 import org.springframework.beans.factory.annotation.Autowired
@@ -24,22 +24,22 @@ class SubmitProcessedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `WHEN I submit successfully preprocessed data THEN the sequence is in status processed`() {
+    fun `WHEN I submit successfully preprocessed data THEN the sequence entry is in status processed`() {
         prepareExtractedSequencesInDatabase()
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = "3"),
-            PreparedProcessedData.successfullyProcessed(sequenceId = "4"),
+            PreparedProcessedData.successfullyProcessed(accession = "3"),
+            PreparedProcessedData.successfullyProcessed(accession = "4"),
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntryOfUser(accession = "3", version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
     }
 
     @Test
-    fun `WHEN I submit sequences with all valid symbols THEN the sequence is in status processed`() {
+    fun `WHEN I submit with all valid symbols THEN the sequence entry is in status processed`() {
         prepareExtractedSequencesInDatabase()
 
         val allNucleotideSymbols = NucleotideSymbols.entries.joinToString("") { it.symbol.toString() }
@@ -47,7 +47,7 @@ class SubmitProcessedDataEndpointTest(
         val defaultData = PreparedProcessedData.successfullyProcessed().data
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = "3").withValues(
+            PreparedProcessedData.successfullyProcessed(accession = "3").withValues(
                 data = defaultData.withValues(
                     unalignedNucleotideSequences = defaultData.unalignedNucleotideSequences +
                         ("secondSegment" to allNucleotideSymbols),
@@ -60,7 +60,7 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntryOfUser(accession = "3", version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
     }
@@ -75,14 +75,14 @@ class SubmitProcessedDataEndpointTest(
         )
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = "3").withValues(data = dataWithoutInsertions),
+            PreparedProcessedData.successfullyProcessed(accession = "3").withValues(data = dataWithoutInsertions),
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "3", version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntryOfUser(accession = "3", version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
 
-        submissionControllerClient.getSequenceThatNeedsReview(sequenceId = "3", version = 1, userName = USER_NAME)
+        submissionControllerClient.getSequenceEntryThatNeedsReview(accession = "3", version = 1, userName = USER_NAME)
             .andExpect(status().isOk)
             .andExpect(
                 jsonPath("\$.processedData.nucleotideInsertions")
@@ -95,7 +95,7 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I submit null for a non-required field THEN the sequence is in status processed`() {
+    fun `WHEN I submit null for a non-required field THEN the sequence entry is in status processed`() {
         prepareExtractedSequencesInDatabase()
 
         submissionControllerClient.submitProcessedData(
@@ -105,44 +105,44 @@ class SubmitProcessedDataEndpointTest(
 
         prepareExtractedSequencesInDatabase()
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
     @Test
-    fun `WHEN I submit data with errors THEN the sequence is in status needs review`() {
+    fun `WHEN I submit data with errors THEN the sequence entry is in status needs review`() {
         prepareExtractedSequencesInDatabase()
 
-        submissionControllerClient.submitProcessedData(PreparedProcessedData.withErrors(firstSequence))
+        submissionControllerClient.submitProcessedData(PreparedProcessedData.withErrors(firstAccession))
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
     @Test
-    fun `GIVEN I submitted invalid data and errors THEN the sequence is in status needs review`() {
+    fun `GIVEN I submitted invalid data and errors THEN the sequence entry is in status needs review`() {
         convenienceClient.submitDefaultFiles()
         convenienceClient.extractUnprocessedData(1)
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.withWrongDateFormat().withValues(
-                sequenceId = firstSequence,
+                accession = firstAccession,
                 errors = PreparedProcessedData.withErrors().errors,
             ),
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
     @Test
-    fun `WHEN I submit data with warnings THEN the sequence is in status processed`() {
+    fun `WHEN I submit data with warnings THEN the sequence entry is in status processed`() {
         prepareExtractedSequencesInDatabase()
 
-        submissionControllerClient.submitProcessedData(PreparedProcessedData.withWarnings(firstSequence))
+        submissionControllerClient.submitProcessedData(PreparedProcessedData.withWarnings(firstAccession))
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
@@ -158,77 +158,77 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.detail").value(invalidDataScenario.expectedErrorMessage))
 
-        val sequenceStatus = convenienceClient.getSequenceVersionOfUser(
-            sequenceId = invalidDataScenario.processedData.sequenceId,
+        val sequenceStatus = convenienceClient.getSequenceEntryOfUser(
+            accession = invalidDataScenario.processedData.accession,
             version = 1,
         )
         assertThat(sequenceStatus.status, `is`(Status.IN_PROCESSING))
     }
 
     @Test
-    fun `WHEN I submit data for a non-existent sequence id THEN refuses update with unprocessable entity`() {
+    fun `WHEN I submit data for a non-existent accession THEN refuses update with unprocessable entity`() {
         prepareExtractedSequencesInDatabase()
 
-        val nonExistentSequenceId = "999"
+        val nonExistentAccesion = "999"
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = "1"),
-            PreparedProcessedData.successfullyProcessed(sequenceId = nonExistentSequenceId),
+            PreparedProcessedData.successfullyProcessed(accession = "1"),
+            PreparedProcessedData.successfullyProcessed(accession = nonExistentAccesion),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Sequence version $nonExistentSequenceId.1 does not exist"))
+            .andExpect(jsonPath("\$.detail").value("Accession version $nonExistentAccesion.1 does not exist"))
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = "1", version = 1).assertStatusIs(Status.IN_PROCESSING)
+        convenienceClient.getSequenceEntryOfUser(accession = "1", version = 1).assertStatusIs(Status.IN_PROCESSING)
     }
 
     @Test
-    fun `WHEN I submit data for a non-existent sequence version THEN refuses update with unprocessable entity`() {
+    fun `WHEN I submit data for a non-existent accession version THEN refuses update with unprocessable entity`() {
         prepareExtractedSequencesInDatabase()
 
         val nonExistentVersion = 999L
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = firstSequence),
-            PreparedProcessedData.successfullyProcessed(sequenceId = firstSequence)
+            PreparedProcessedData.successfullyProcessed(accession = firstAccession),
+            PreparedProcessedData.successfullyProcessed(accession = firstAccession)
                 .withValues(version = nonExistentVersion),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence version $firstSequence.$nonExistentVersion does not exist",
+                    "Accession version $firstAccession.$nonExistentVersion does not exist",
                 ),
             )
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.IN_PROCESSING)
     }
 
     @Test
-    fun `WHEN I submit data for a sequence that is not in processing THEN refuses update with unprocessable entity`() {
+    fun `WHEN I submit data for an entry that is not in processing THEN refuses update with unprocessable entity`() {
         convenienceClient.submitDefaultFiles()
         convenienceClient.extractUnprocessedData(1)
 
-        val sequenceIdNotInProcessing = "2"
-        convenienceClient.getSequenceVersionOfUser(sequenceId = sequenceIdNotInProcessing, version = 1)
+        val accessionNotInProcessing = "2"
+        convenienceClient.getSequenceEntryOfUser(accession = accessionNotInProcessing, version = 1)
             .assertStatusIs(Status.RECEIVED)
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(sequenceId = firstSequence),
-            PreparedProcessedData.successfullyProcessed(sequenceId = sequenceIdNotInProcessing),
+            PreparedProcessedData.successfullyProcessed(accession = firstAccession),
+            PreparedProcessedData.successfullyProcessed(accession = accessionNotInProcessing),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence version $sequenceIdNotInProcessing.1 is in not in state IN_PROCESSING (was RECEIVED)",
+                    "Accession version $accessionNotInProcessing.1 is in not in state IN_PROCESSING (was RECEIVED)",
                 ),
             )
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = firstSequence, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.IN_PROCESSING)
-        convenienceClient.getSequenceVersionOfUser(sequenceId = sequenceIdNotInProcessing, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessionNotInProcessing, version = 1)
             .assertStatusIs(Status.RECEIVED)
     }
 
@@ -240,7 +240,7 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedDataRaw(
             """
                 {
-                    "sequenceId": 1,
+                    "accession": 1,
                     "version": 1,
                     "data": {
                         "noMetadata": null,

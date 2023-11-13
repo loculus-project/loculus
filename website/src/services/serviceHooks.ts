@@ -18,10 +18,10 @@ export function lapisClientHooks(clientConfig: ClientConfig) {
     return {
         zodiosHooks,
         utilityHooks: {
-            useGetSequence(sequenceVersion: string, sequenceType: SequenceType, schema: Schema) {
+            useGetSequence(accessionVersion: string, sequenceType: SequenceType, schema: Schema) {
                 const { data, error, isLoading } = getSequenceHook(
                     zodiosHooks,
-                    { [schema.primaryKey]: sequenceVersion },
+                    { [schema.primaryKey]: accessionVersion },
                     sequenceType,
                 );
 

@@ -14,8 +14,8 @@ object SubmitFiles {
         val sequencesFile = sequenceFileWith(content = getFileContent(DEFAULT_SEQUENCES_FILE_NAME))
 
         const val NUMBER_OF_SEQUENCES = 10
-        val allSequenceIds = (1L..NUMBER_OF_SEQUENCES).toList().map { it.toString() }
-        val firstSequence = allSequenceIds[0]
+        val allAccessions = (1L..NUMBER_OF_SEQUENCES).toList().map { it.toString() }
+        val firstAccession = allAccessions[0]
 
         private fun getFileContent(file: String): String {
             return String(
@@ -30,7 +30,7 @@ object SubmitFiles {
         name: String = "metadataFile",
         originalFilename: String = "metadata.tsv",
         mediaType: String = TEXT_PLAIN_VALUE,
-        content: String = "header\tfirstColumn\nsomeHeader\tsomeValue\nsomeHeader2\tsomeValue2",
+        content: String = "submissionId\tfirstColumn\nsomeHeader\tsomeValue\nsomeHeader2\tsomeValue2",
     ): MockMultipartFile {
         return MockMultipartFile(
             name,
@@ -44,7 +44,7 @@ object SubmitFiles {
         name: String = "metadataFile",
         originalFilename: String = "metadata.tsv",
         mediaType: String = TEXT_PLAIN_VALUE,
-        content: String = "sequenceId\theader\tfirstColumn\n1\tsomeHeader\tsomeValue\nsomeHeader2\tsomeValue2",
+        content: String = "accession\tsubmissionId\tfirstColumn\n1\tsomeHeader\tsomeValue\nsomeHeader2\tsomeValue2",
     ): MockMultipartFile {
         return MockMultipartFile(
             name,

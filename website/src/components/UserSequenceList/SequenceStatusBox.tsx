@@ -1,11 +1,11 @@
-import { type FC, useEffect, useState } from 'react';
+import { type FC, type PropsWithChildren, useEffect, useState } from 'react';
 
-type Props = {
+type Props = PropsWithChildren<{
     count: number;
     description: string;
     localStorageKey: string;
-    children: React.ReactNode;
-};
+}>;
+
 export const SequenceStatusBox: FC<Props> = ({ count, description, localStorageKey, children }) => {
     const [isChecked, setIsChecked] = useState(localStorage.getItem(localStorageKey) === 'true');
 
@@ -25,7 +25,7 @@ export const SequenceStatusBox: FC<Props> = ({ count, description, localStorageK
         <div className='collapse bg-base-200'>
             <input type='checkbox' checked={isChecked} onChange={handleCheckboxChange} data-testid={localStorageKey} />
             <div className='collapse-title text-xl font-medium'>
-                {count} sequence{count === 1 ? '' : 's'} {description}
+                {count} sequence {count === 1 ? 'entry' : 'entries'} {description}
             </div>
             <div className='collapse-content'>{children}</div>
         </div>

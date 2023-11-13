@@ -6,16 +6,16 @@ import type { ProblemDetail } from '../../types/backend.ts';
 import type { Schema } from '../../types/config.ts';
 import type { Details, DetailsResponse, InsertionCount, MutationProportionCount } from '../../types/lapis.ts';
 
-export async function getTableData(sequenceVersion: string, schema: Schema, lapisClient: LapisClient) {
+export async function getTableData(accessionVersion: string, schema: Schema, lapisClient: LapisClient) {
     return Promise.all([
-        lapisClient.getSequenceDetails(sequenceVersion),
-        lapisClient.getSequenceMutations(sequenceVersion, 'nucleotide'),
-        lapisClient.getSequenceMutations(sequenceVersion, 'aminoAcid'),
-        lapisClient.getSequenceInsertions(sequenceVersion, 'nucleotide'),
-        lapisClient.getSequenceInsertions(sequenceVersion, 'aminoAcid'),
+        lapisClient.getSequenceEntryVersionDetails(accessionVersion),
+        lapisClient.getSequenceMutations(accessionVersion, 'nucleotide'),
+        lapisClient.getSequenceMutations(accessionVersion, 'aminoAcid'),
+        lapisClient.getSequenceInsertions(accessionVersion, 'nucleotide'),
+        lapisClient.getSequenceInsertions(accessionVersion, 'aminoAcid'),
     ])
         .then((results) => Result.combine(results))
-        .then(validateDetailsAreNotEmpty(sequenceVersion))
+        .then(validateDetailsAreNotEmpty(accessionVersion))
         .then((result) =>
             result
                 .map(
@@ -37,7 +37,7 @@ export async function getTableData(sequenceVersion: string, schema: Schema, lapi
         );
 }
 
-function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(sequenceVersion: string) {
+function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(accessionVersion: string) {
     return (result: Result<T, ProblemDetail>): Result<T, ProblemDetail> => {
         if (result.isOk()) {
             const detailsResult = result.value[0];
@@ -46,8 +46,8 @@ function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(seque
                     type: 'about:blank',
                     title: 'Not Found',
                     status: 0,
-                    detail: 'No data found for sequence version ' + sequenceVersion,
-                    instance: '/sequences/' + sequenceVersion,
+                    detail: 'No data found for accession version ' + accessionVersion,
+                    instance: '/sequences/' + accessionVersion,
                 });
             }
         }

@@ -6,71 +6,71 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.pathoplexus.backend.api.SequenceVersion
+import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstSequence
+import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest
 class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: SubmissionConvenienceClient) {
 
     @Test
-    fun `GIVEN some sequences in the database THEN only shows sequences of the given user`() {
+    fun `GIVEN some sequence entries in the database THEN only shows entries of the given user`() {
         convenienceClient.submitDefaultFiles(USER_NAME)
 
-        val sequencesOfUser = convenienceClient.getSequencesOfUser(USER_NAME)
+        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(USER_NAME)
         assertThat(sequencesOfUser, hasSize(DefaultFiles.NUMBER_OF_SEQUENCES))
 
-        val sequencesOfOtherUser = convenienceClient.getSequencesOfUser("otherUser")
+        val sequencesOfOtherUser = convenienceClient.getSequenceEntriesOfUser("otherUser")
         assertThat(sequencesOfOtherUser, `is`(emptyList()))
     }
 
     @ParameterizedTest(name = "{arguments}")
     @MethodSource("provideStatusScenarios")
-    fun `GIVEN database in prepared state THEN returns sequence in expected status`(scenario: Scenario) {
+    fun `GIVEN database in prepared state THEN returns sequence entries in expected status`(scenario: Scenario) {
         scenario.prepareDatabase(convenienceClient)
 
-        val sequencesOfUser = convenienceClient.getSequencesOfUser()
+        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser()
 
-        val sequenceVersionStatus =
-            sequencesOfUser.find { it.sequenceId == firstSequence && it.version == scenario.expectedVersion }
-        assertThat(sequenceVersionStatus?.status, `is`(scenario.expectedStatus))
-        assertThat(sequenceVersionStatus?.isRevocation, `is`(scenario.expectedIsRevocation))
+        val accessionVersionStatus =
+            sequencesOfUser.find { it.accession == firstAccession && it.version == scenario.expectedVersion }
+        assertThat(accessionVersionStatus?.status, `is`(scenario.expectedStatus))
+        assertThat(accessionVersionStatus?.isRevocation, `is`(scenario.expectedIsRevocation))
     }
 
     companion object {
         @JvmStatic
         fun provideStatusScenarios() = listOf(
             Scenario(
-                setupDescription = "I submitted sequences",
+                setupDescription = "I submitted sequence entries",
                 prepareDatabase = { it.submitDefaultFiles() },
                 expectedStatus = Status.RECEIVED,
                 expectedIsRevocation = false,
             ),
             Scenario(
-                setupDescription = "I started processing sequences",
-                prepareDatabase = { it.prepareDefaultSequencesToInProcessing() },
+                setupDescription = "I started processing sequence entries",
+                prepareDatabase = { it.prepareDefaultSequenceEntriesToInProcessing() },
                 expectedStatus = Status.IN_PROCESSING,
                 expectedIsRevocation = false,
             ),
             Scenario(
-                setupDescription = "I submitted sequences that need review",
-                prepareDatabase = { it.prepareDefaultSequencesToHasErrors() },
+                setupDescription = "I submitted sequence entries that need review",
+                prepareDatabase = { it.prepareDefaultSequenceEntriesToHasErrors() },
                 expectedStatus = Status.HAS_ERRORS,
                 expectedIsRevocation = false,
             ),
             Scenario(
-                setupDescription = "I submitted sequences that have been successfully processed",
+                setupDescription = "I submitted sequence entries that have been successfully processed",
                 prepareDatabase = { it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed()) },
                 expectedStatus = Status.AWAITING_APPROVAL,
                 expectedIsRevocation = false,
             ),
             Scenario(
-                setupDescription = "I submitted, processed and approved sequences",
+                setupDescription = "I submitted, processed and approved sequence entries",
                 prepareDatabase = {
                     it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequences(listOf(SequenceVersion(firstSequence, 1)))
+                    it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
                 },
                 expectedStatus = Status.APPROVED_FOR_RELEASE,
                 expectedIsRevocation = false,
@@ -79,8 +79,8 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
                 setupDescription = "I submitted a revocation",
                 prepareDatabase = {
                     it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequences(listOf(SequenceVersion(firstSequence, 1)))
-                    it.revokeSequences(listOf(firstSequence))
+                    it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
+                    it.revokeSequenceEntries(listOf(firstAccession))
                 },
                 expectedStatus = Status.AWAITING_APPROVAL_FOR_REVOCATION,
                 expectedIsRevocation = true,
@@ -90,9 +90,9 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
                 setupDescription = "I approved a revocation",
                 prepareDatabase = {
                     it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequences(listOf(SequenceVersion(firstSequence, 1)))
-                    it.revokeSequences(listOf(firstSequence))
-                    it.confirmRevocation(listOf(SequenceVersion(firstSequence, 2)))
+                    it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
+                    it.revokeSequenceEntries(listOf(firstAccession))
+                    it.confirmRevocation(listOf(AccessionVersion(firstAccession, 2)))
                 },
                 expectedStatus = Status.APPROVED_FOR_RELEASE,
                 expectedIsRevocation = true,

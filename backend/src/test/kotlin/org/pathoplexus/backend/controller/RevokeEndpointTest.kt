@@ -16,48 +16,48 @@ class RevokeEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `GIVEN sequences with 'APPROVED_FOR_RELEASE' THEN the status changes to 'AWAITING_APPROVAL_FOR_REVOCATION'`() {
-        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
+    fun `GIVEN entries with 'APPROVED_FOR_RELEASE' THEN the status changes to 'AWAITING_APPROVAL_FOR_REVOCATION'`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
-        client.revokeSequences(DefaultFiles.allSequenceIds)
+        client.revokeSequenceEntries(DefaultFiles.allAccessions)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
-            .andExpect(jsonPath("\$[0].sequenceId").value(DefaultFiles.firstSequence))
+            .andExpect(jsonPath("\$[0].accession").value(DefaultFiles.firstAccession))
             .andExpect(jsonPath("\$[0].version").value(2))
             .andExpect(jsonPath("\$[0].status").value("AWAITING_APPROVAL_FOR_REVOCATION"))
             .andExpect(jsonPath("\$[0].isRevocation").value(true))
 
-        convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 2)
+        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 2)
             .assertStatusIs(AWAITING_APPROVAL_FOR_REVOCATION)
     }
 
     @Test
-    fun `WHEN revoking non-existing sequenceIds THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
+    fun `WHEN revoking non-existing accessions THEN throws an unprocessableEntity error`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
-        val nonExistingSequenceId = "123"
-        client.revokeSequences(listOf(nonExistingSequenceId))
+        val nonExistingAccession = "123"
+        client.revokeSequenceEntries(listOf(nonExistingAccession))
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "SequenceIds $nonExistingSequenceId do not exist",
+                    "Accessions $nonExistingAccession do not exist",
                 ),
             )
     }
 
     @Test
-    fun `WHEN revoking sequences not from the submitter THEN throws forbidden error`() {
-        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
+    fun `WHEN revoking sequence entries not from the submitter THEN throws forbidden error`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
         val notSubmitter = "nonExistingUser"
-        client.revokeSequences(DefaultFiles.allSequenceIds.subList(0, 2), notSubmitter)
+        client.revokeSequenceEntries(DefaultFiles.allAccessions.subList(0, 2), notSubmitter)
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User '$notSubmitter' does not have right to change the sequence versions " +
+                    "User '$notSubmitter' does not have right to change the accession versions " +
                         "1.1, 2.1",
                 ),
             )
@@ -65,14 +65,14 @@ class RevokeEndpointTest(
 
     @Test
     fun `WHEN revoking with latest version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequencesToHasErrors()
+        convenienceClient.prepareDefaultSequenceEntriesToHasErrors()
 
-        client.revokeSequences(DefaultFiles.allSequenceIds.subList(0, 2))
+        client.revokeSequenceEntries(DefaultFiles.allAccessions.subList(0, 2))
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence versions are in not in one of the states [${Status.APPROVED_FOR_RELEASE}]: " +
+                    "Accession versions are in not in one of the states [${Status.APPROVED_FOR_RELEASE}]: " +
                         "1.1 - ${Status.HAS_ERRORS}, 2.1 - ${Status.HAS_ERRORS}",
                 ),
             )

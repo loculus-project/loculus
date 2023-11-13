@@ -11,10 +11,10 @@ import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
+import org.pathoplexus.backend.api.AccessionVersionInterface
 import org.pathoplexus.backend.api.OriginalData
 import org.pathoplexus.backend.api.PreprocessingAnnotation
 import org.pathoplexus.backend.api.ProcessedData
-import org.pathoplexus.backend.api.SequenceVersionInterface
 
 private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
@@ -24,30 +24,34 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
-typealias SequenceId = String
+typealias Accession = String
 typealias Version = Long
 
-object SequenceIdComparator : Comparator<SequenceId> {
-    override fun compare(left: SequenceId, right: SequenceId): Int {
+object AccessionComparator : Comparator<Accession> {
+    override fun compare(left: Accession, right: Accession): Int {
         return left.toInt().compareTo(right.toInt())
     }
 }
 
-object SequenceVersionComparator : Comparator<SequenceVersionInterface> {
-    override fun compare(left: SequenceVersionInterface, right: SequenceVersionInterface): Int {
-        return when (val sequenceIdResult = left.sequenceId.toInt().compareTo(right.sequenceId.toInt())) {
+object AccessionVersionComparator : Comparator<AccessionVersionInterface> {
+    override fun compare(left: AccessionVersionInterface, right: AccessionVersionInterface): Int {
+        return when (val accessionResult = left.accession.toInt().compareTo(right.accession.toInt())) {
             0 -> left.version.compareTo(right.version)
-            else -> sequenceIdResult
+            else -> accessionResult
         }
     }
 }
 
-val idSequence = Sequence(name = "id_sequence")
+const val ACCESSION_SEQUENCE_NAME = "accession_sequence"
 
-object SequencesTable : Table("sequences") {
-    val sequenceId = varchar("sequence_id", 255)
+val accessionSequence = Sequence(ACCESSION_SEQUENCE_NAME)
+
+const val TABLE_NAME = "sequence_entries"
+
+object SequenceEntriesTable : Table(TABLE_NAME) {
+    val accession = varchar("accession", 255)
     val version = long("version")
-    val customId = varchar("custom_id", 255)
+    val submissionId = varchar("submission_id", 255)
     val submitter = varchar("submitter", 255)
     val submittedAt = datetime("submitted_at")
     val startedProcessingAt = datetime("started_processing_at").nullable()
@@ -60,14 +64,14 @@ object SequencesTable : Table("sequences") {
     val errors = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warnings = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
 
-    override val primaryKey = PrimaryKey(sequenceId, version)
+    override val primaryKey = PrimaryKey(accession, version)
 }
 
 fun maxVersionQuery(): Expression<Long?> {
-    val subQueryTable = SequencesTable.alias("subQueryTable")
+    val subQueryTable = SequenceEntriesTable.alias("subQueryTable")
     return wrapAsExpression(
         subQueryTable
-            .slice(subQueryTable[SequencesTable.version].max())
-            .select { subQueryTable[SequencesTable.sequenceId] eq SequencesTable.sequenceId },
+            .slice(subQueryTable[SequenceEntriesTable.version].max())
+            .select { subQueryTable[SequenceEntriesTable.accession] eq SequenceEntriesTable.accession },
     )
 }

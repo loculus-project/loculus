@@ -17,13 +17,13 @@ import {
 const queryClient = new QueryClient();
 
 type Props = {
-    sequenceVersion: string;
+    accessionVersion: string;
     schema: Schema;
     clientConfig: ClientConfig;
     genes: string[];
 };
 
-export const SequencesContainer: FC<Props> = ({ sequenceVersion, schema, clientConfig, genes }) => {
+export const SequencesContainer: FC<Props> = ({ accessionVersion, schema, clientConfig, genes }) => {
     const [loadSequences, setLoadSequences] = useState(false);
     const [type, setType] = useState<SequenceType>(unalignedSequence);
 
@@ -61,7 +61,7 @@ export const SequencesContainer: FC<Props> = ({ sequenceVersion, schema, clientC
 
                     <div className='border p-4 max-w-[1000px]'>
                         <SequencesViewer
-                            sequenceVersion={sequenceVersion}
+                            accessionVersion={accessionVersion}
                             schema={schema}
                             clientConfig={clientConfig}
                             sequenceType={type}

@@ -1,6 +1,6 @@
 import { type FC, useState } from 'react';
 
-import type { HeaderId } from '../../types/backend.ts';
+import type { SubmissionIdMapping } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { DataUploadForm } from '../DataUploadForm.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback';
@@ -10,7 +10,7 @@ type RevisionFormProps = {
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({ clientConfig }) => {
-    const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<HeaderId[] | null>(null);
+    const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<SubmissionIdMapping[] | null>(null);
 
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
@@ -30,8 +30,8 @@ export const RevisionForm: FC<RevisionFormProps> = ({ clientConfig }) => {
                         <h2 className='text-lg font-bold'>Result of Revision</h2>
                         <ul className='list-disc list-inside'>
                             {responseSequenceHeaders.map((header) => (
-                                <li key={header.sequenceId}>
-                                    Sequence {header.sequenceId} successful revised; new version is {header.version}
+                                <li key={header.accession}>
+                                    Sequence {header.accession} successful revised; new version is {header.version}
                                 </li>
                             ))}
                         </ul>

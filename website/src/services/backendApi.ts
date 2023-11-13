@@ -2,12 +2,12 @@ import { makeApi, makeEndpoint, makeParameters } from '@zodios/core';
 import z from 'zod';
 
 import {
-    headerId,
+    submissionIdMapping,
     problemDetail,
-    sequenceIds,
-    sequenceReview,
-    sequenceStatus,
-    sequenceVersionsObject,
+    accessions,
+    accessionReview,
+    sequenceEntryStatus,
+    accessionVersionsObject,
     submitFiles,
     unprocessedData,
 } from '../types/backend.ts';
@@ -32,7 +32,7 @@ const submitEndpoint = makeEndpoint({
             schema: submitFiles,
         },
     ],
-    response: z.array(headerId),
+    response: z.array(submissionIdMapping),
     errors: [
         { status: 'default', schema: problemDetail },
         { status: 400, schema: problemDetail },
@@ -52,7 +52,7 @@ const reviseEndpoint = makeEndpoint({
             schema: submitFiles,
         },
     ],
-    response: z.array(headerId),
+    response: z.array(submissionIdMapping),
     errors: [
         { status: 'default', schema: problemDetail },
         { status: 400, schema: problemDetail },
@@ -62,10 +62,10 @@ const reviseEndpoint = makeEndpoint({
 
 const getDataToReviewEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-data-to-review/:sequenceId/:version',
+    path: '/get-data-to-review/:accession/:version',
     alias: 'getDataToReview',
     parameters: usernameParameters,
-    response: sequenceReview,
+    response: accessionReview,
 });
 
 const revokeSequencesEndpoint = makeEndpoint({
@@ -75,12 +75,12 @@ const revokeSequencesEndpoint = makeEndpoint({
     parameters: [
         ...usernameParameters,
         {
-            name: 'sequenceIds',
+            name: 'accessions',
             type: 'Body',
-            schema: sequenceIds,
+            schema: accessions,
         },
     ],
-    response: z.array(sequenceStatus),
+    response: z.array(sequenceEntryStatus),
     errors: [
         { status: 'default', schema: problemDetail },
         { status: 422, schema: problemDetail },
@@ -107,7 +107,7 @@ const getSequencesOfUserEndpoint = makeEndpoint({
     path: '/get-sequences-of-user',
     alias: 'getSequencesOfUser',
     parameters: usernameParameters,
-    response: z.array(sequenceStatus),
+    response: z.array(sequenceEntryStatus),
 });
 
 const approveProcessedDataEndpoint = makeEndpoint({
@@ -119,7 +119,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: sequenceVersionsObject,
+            schema: accessionVersionsObject,
         },
     ],
     response: z.never(),
@@ -133,9 +133,9 @@ const deleteSequencesEndpoint = makeEndpoint({
     parameters: [
         ...usernameParameters,
         {
-            name: 'sequenceVersions',
+            name: 'accessionVersions',
             type: 'Body',
-            schema: sequenceVersionsObject,
+            schema: accessionVersionsObject,
         },
     ],
     response: z.never(),
@@ -149,9 +149,9 @@ const confirmRevocationEndpoint = makeEndpoint({
     parameters: [
         ...usernameParameters,
         {
-            name: 'sequenceVersions',
+            name: 'accessionVersions',
             type: 'Body',
-            schema: sequenceVersionsObject,
+            schema: accessionVersionsObject,
         },
     ],
     response: z.never(),
@@ -167,7 +167,7 @@ const extractUnprocessedDataEndpoint = makeEndpoint({
     alias: 'extractUnprocessedData',
     parameters: [
         {
-            name: 'numberOfSequences',
+            name: 'numberOfSequenceEntries',
             type: 'Query',
             schema: z.number(),
         },

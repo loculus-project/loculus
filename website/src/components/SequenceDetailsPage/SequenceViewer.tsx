@@ -10,15 +10,15 @@ import { splitString } from '../../utils/splitLines';
 const LINE_LENGTH = 100;
 
 type Props = {
-    sequenceVersion: string;
+    accessionVersion: string;
     schema: Schema;
     clientConfig: ClientConfig;
     sequenceType: SequenceType;
 };
 
-export const SequencesViewer: FC<Props> = ({ sequenceVersion, schema, clientConfig, sequenceType }) => {
+export const SequencesViewer: FC<Props> = ({ accessionVersion, schema, clientConfig, sequenceType }) => {
     const { data, error, isLoading } = lapisClientHooks(clientConfig).utilityHooks.useGetSequence(
-        sequenceVersion,
+        accessionVersion,
         sequenceType,
         schema,
     );

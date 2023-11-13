@@ -8,31 +8,31 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
-import org.pathoplexus.backend.service.SequenceId
+import org.pathoplexus.backend.service.Accession
 import org.pathoplexus.backend.service.Version
 
-interface SequenceVersionInterface {
-    val sequenceId: SequenceId
+interface AccessionVersionInterface {
+    val accession: Accession
     val version: Version
 
-    fun displaySequenceVersion() = "$sequenceId.$version"
+    fun displayAccessionVersion() = "$accession.$version"
 }
 
-data class SequenceVersion(
-    override val sequenceId: SequenceId,
+data class AccessionVersion(
+    override val accession: Accession,
     override val version: Version,
-) : SequenceVersionInterface
+) : AccessionVersionInterface
 
-data class HeaderId(
-    override val sequenceId: SequenceId,
+data class SubmissionIdMapping(
+    override val accession: Accession,
     override val version: Version,
-    val customId: String,
-) : SequenceVersionInterface
+    val submissionId: String,
+) : AccessionVersionInterface
 
-fun List<SequenceVersion>.toPairs() = map { Pair(it.sequenceId, it.version) }
+fun <T : AccessionVersionInterface> List<T>.toPairs() = map { Pair(it.accession, it.version) }
 
 data class SubmittedProcessedData(
-    override val sequenceId: SequenceId,
+    override val accession: Accession,
     override val version: Version,
     val data: ProcessedData,
     @Schema(description = "The processing failed due to these errors.")
@@ -42,10 +42,10 @@ data class SubmittedProcessedData(
         "Issues where data is not necessarily wrong, but the submitter might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
-) : SequenceVersionInterface
+) : AccessionVersionInterface
 
-data class SequenceReview(
-    override val sequenceId: SequenceId,
+data class SequenceEntryReview(
+    override val accession: Accession,
     override val version: Version,
     val status: Status,
     val processedData: ProcessedData,
@@ -57,7 +57,7 @@ data class SequenceReview(
         "Issues where data is not necessarily wrong, but the user might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
-) : SequenceVersionInterface
+) : AccessionVersionInterface
 
 typealias SegmentName = String
 typealias GeneName = String
@@ -141,29 +141,29 @@ enum class PreprocessingAnnotationSourceType {
     NucleotideSequence,
 }
 
-data class SequenceVersionStatus(
-    override val sequenceId: SequenceId,
+data class SequenceEntryStatus(
+    override val accession: Accession,
     override val version: Version,
     val status: Status,
     val isRevocation: Boolean = false,
-) : SequenceVersionInterface
+) : AccessionVersionInterface
 
 data class RevisedData(
-    val customId: String,
-    val sequenceId: SequenceId,
+    val submissionId: String,
+    val accession: Accession,
     val originalData: OriginalData,
 )
 
 data class SubmittedData(
-    val customId: String,
+    val submissionId: String,
     val originalData: OriginalData,
 )
 
 data class UnprocessedData(
-    @Schema(example = "123") override val sequenceId: SequenceId,
+    @Schema(example = "123") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
     val data: OriginalData,
-) : SequenceVersionInterface
+) : AccessionVersionInterface
 
 data class OriginalData(
     @Schema(

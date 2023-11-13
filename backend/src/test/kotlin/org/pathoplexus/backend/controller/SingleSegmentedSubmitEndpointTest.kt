@@ -29,7 +29,7 @@ class SingleSegmentedSubmitEndpointTest(
             "testUser",
             SubmitFiles.metadataFileWith(
                 content = """
-                    header	firstColumn
+                    submissionId	firstColumn
                     header1	someValue
                     header2	someValue
                 """.trimIndent(),
@@ -46,8 +46,8 @@ class SingleSegmentedSubmitEndpointTest(
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(2))
-            .andExpect(jsonPath("\$[0].customId").value("header1"))
-            .andExpect(jsonPath("\$[0].sequenceId").value(DefaultFiles.firstSequence))
+            .andExpect(jsonPath("\$[0].submissionId").value("header1"))
+            .andExpect(jsonPath("\$[0].accession").value(DefaultFiles.firstAccession))
             .andExpect(jsonPath("\$[0].version").value(1))
 
         val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData()[0]
@@ -59,13 +59,13 @@ class SingleSegmentedSubmitEndpointTest(
 
     @Test
     fun `GIVEN input data with explicit default segment name THEN data is rejected`() {
-        val expectedDetail = "Metadata file contains headers that are not present in the sequence file: [header1]"
+        val expectedDetail = "Metadata file contains submissionIds that are not present in the sequence file: [header1]"
 
         submissionControllerClient.submit(
             "testUser",
             SubmitFiles.metadataFileWith(
                 content = """
-                    header	firstColumn
+                    submissionId	firstColumn
                     header1	someValue
                 """.trimIndent(),
             ),
