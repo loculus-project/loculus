@@ -78,13 +78,13 @@ spec:
             - name: POSTGRES_DB
               value: "pathoplexus"
         - name: silo
-          image: ghcr.io/genspectrum/lapis-silo:latest
+          image: ghcr.io/genspectrum/lapis-silo:test-branch
           ports:
             - containerPort: 8081
           args:
             - "--api"
           volumeMounts:
-            - name: silo-output
+            - name: silo-shared-data
               mountPath: /data
         - name: lapis
           image: ghcr.io/genspectrum/lapis-v2:latest
@@ -112,5 +112,6 @@ spec:
         - name: silo-database-config
           configMap:
             name: silo-database-config
-        - name: silo-output
-          emptyDir: {}
+        - name: silo-shared-data
+          persistentVolumeClaim:
+            claimName: silo-shared-data
