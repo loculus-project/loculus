@@ -42,4 +42,25 @@ spec:
           port: 8079
   tls:
     certResolver: myresolver
-  {{- end}}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: pathoplexus-lapis-ingressroute
+  namespace: {{ .Values.namespace }}
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    link.argocd.argoproj.io/external-link: https://{{ .Values.lapishost }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`{{ .Values.lapishost }}`)
+      priority: 10
+      services:
+        - name: pathoplexus-lapis-service
+          port: 8080
+  tls:
+    certResolver: myresolver
+{{- end}}

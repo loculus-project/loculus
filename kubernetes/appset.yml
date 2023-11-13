@@ -51,7 +51,8 @@ spec:
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
             - name: backendhost
               value: 'backend.{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
-
+            - name: lapishost
+              value: 'lapis.{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
 
       syncPolicy:
         automated:
