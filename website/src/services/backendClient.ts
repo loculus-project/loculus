@@ -20,7 +20,7 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
 
     public static create(
         backendUrl: string = getRuntimeConfig().forServer.backendUrl,
-        logger: ReturnType<typeof getInstanceLogger> = getInstanceLogger('serverSideBackendClient'),
+        logger = getInstanceLogger('serverSideBackendClient'),
     ) {
         return new BackendClient(backendUrl, backendApi, (axiosError) => axiosError.data, logger, 'backend');
     }

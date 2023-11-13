@@ -23,8 +23,12 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         );
     }
 
-    public static create(lapisUrl: string = getRuntimeConfig().forServer.lapisUrl, config: Config = getConfig()) {
-        return new LapisClient(lapisUrl, lapisApi, getInstanceLogger('lapisClient'), config);
+    public static create(
+        lapisUrl: string = getRuntimeConfig().forServer.lapisUrl,
+        config: Config = getConfig(),
+        logger: InstanceLogger = getInstanceLogger('lapisClient'),
+    ) {
+        return new LapisClient(lapisUrl, lapisApi, logger, config);
     }
 
     public getSequenceDetails(primaryKey: string) {

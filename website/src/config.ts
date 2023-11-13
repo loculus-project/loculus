@@ -27,7 +27,7 @@ function getConfigDir(): string {
 
 export function getConfig(): Config {
     if (_config === null) {
-        _config = readTypedConfigFile('config.json', config);
+        _config = readTypedConfigFile('website_config.json', config);
     }
     return _config;
 }

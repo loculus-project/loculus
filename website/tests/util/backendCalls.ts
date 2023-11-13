@@ -1,12 +1,11 @@
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
-import { BackendClient } from '../../src/services/backendClient.ts';
 import type { SequenceId, SequenceVersion } from '../../src/types/backend.ts';
-import { backendUrl, e2eLogger, testSequenceCount, testuser } from '../e2e.fixture.ts';
+import { backendClient, testSequenceCount, testuser } from '../e2e.fixture.ts';
 
 export const submitViaApi = async (numberOfSequences: number = testSequenceCount) => {
     const fileContent = createFileContent(numberOfSequences);
 
-    const response = await backendCalls.call('submit', {
+    const response = await backendClient.call('submit', {
         username: testuser,
         metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
         sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
@@ -20,7 +19,7 @@ export const submitViaApi = async (numberOfSequences: number = testSequenceCount
 export const submitRevisedDataViaApi = async (sequenceIds: SequenceId[]) => {
     const fileContent = createModifiedFileContent(sequenceIds);
 
-    const response = await backendCalls.call(
+    const response = await backendClient.call(
         'revise',
         {
             username: testuser,
@@ -41,7 +40,7 @@ export const approveProcessedData = async (username: string, sequenceVersions: S
         sequenceVersions,
     };
 
-    const response = await backendCalls.call('approveProcessedData', body, {
+    const response = await backendClient.call('approveProcessedData', body, {
         queries: { username },
         headers: { 'Content-Type': 'application/json' },
     });
@@ -50,5 +49,3 @@ export const approveProcessedData = async (username: string, sequenceVersions: S
         throw new Error(`Unexpected error while approving: ${JSON.stringify(response.error)}`);
     }
 };
-
-const backendCalls = BackendClient.create(backendUrl, e2eLogger);
