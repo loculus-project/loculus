@@ -55,7 +55,7 @@ class SubmissionJourneyTest(
 
     @Test
     fun `Revising, from submitting revised data over processing, approving ending in status 'APPROVED_FOR_RELEASE'`() {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
 
         convenienceClient.reviseDefaultProcessedSequences()
         convenienceClient.getSequenceVersionOfUser(sequenceId = DefaultFiles.firstSequence, version = 2)

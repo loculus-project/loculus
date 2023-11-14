@@ -21,7 +21,7 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `GIVEN a sequence needs review WHEN I extract the sequence data THEN I get all data to review the sequence`() {
-        convenienceClient.prepareDefaultSequencesToProcessing()
+        convenienceClient.prepareDefaultSequencesToInProcessing()
 
         client.submitProcessedData(PreparedProcessedData.withErrors())
 
@@ -56,7 +56,7 @@ class GetDataToReviewEndpointTest(
     fun `WHEN I query data for a non-existent sequence version THEN refuses request with not found`() {
         val nonExistentSequenceVersion = 999L
 
-        convenienceClient.prepareDefaultSequencesToNeedReview()
+        convenienceClient.prepareDefaultSequencesToHasErrors()
 
         client.getSequenceThatNeedsReview("1", nonExistentSequenceVersion, USER_NAME)
             .andExpect(status().isNotFound)
@@ -70,7 +70,7 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `WHEN I query data for a sequence that has a wrong state THEN refuses request with unprocessable entity`() {
-        convenienceClient.prepareDefaultSequencesToProcessing()
+        convenienceClient.prepareDefaultSequencesToInProcessing()
 
         client.getSequenceThatNeedsReview(
             sequenceId = firstSequence,
@@ -88,7 +88,7 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `WHEN I try to get data for a sequence that I do not own THEN refuses request with forbidden entity`() {
-        convenienceClient.prepareDefaultSequencesToNeedReview()
+        convenienceClient.prepareDefaultSequencesToHasErrors()
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
         client.getSequenceThatNeedsReview(
@@ -107,7 +107,7 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `WHEN I try to get batch data for a sequence to review THEN I get the expected count back`() {
-        convenienceClient.prepareDefaultSequencesToNeedReview()
+        convenienceClient.prepareDefaultSequencesToHasErrors()
 
         val numberOfReturnedSequenceReviews = client.getNumberOfSequencesThatNeedReview(
             USER_NAME,

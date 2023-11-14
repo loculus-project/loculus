@@ -26,7 +26,7 @@ class ReviseEndpointTest(
 ) {
     @Test
     fun `GIVEN sequences with status 'APPROVED_FOR_RELEASE' THEN there is a revised version and returns HeaderIds`() {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
 
         client.reviseSequences(
             DefaultFiles.revisedMetadataFile,
@@ -62,7 +62,7 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting revised data with non-existing sequenceIds THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
 
         client.reviseSequences(
             SubmitFiles.revisedMetadataFileWith(
@@ -85,7 +85,7 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting revised data not from the submitter THEN throws forbidden error`() {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
 
         val notSubmitter = "notTheSubmitter"
         client.reviseSequences(
@@ -105,7 +105,7 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting data with version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequencesToNeedReview()
+        convenienceClient.prepareDefaultSequencesToHasErrors()
 
         client.reviseSequences(
             DefaultFiles.revisedMetadataFile,

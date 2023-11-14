@@ -17,7 +17,7 @@ class ConfirmRevocationEndpointTest(
 ) {
     @Test
     fun `GIVEN sequences with status 'FOR_REVOCATION' THEN the status changes to 'APPROVED_FOR_RELEASE'`() {
-        convenienceClient.prepareDefaultSequencesToRevokedStaging()
+        convenienceClient.prepareDefaultSequencesToAwaitingApprovalForRevocation()
 
         client.confirmRevocation(
             listOf(
@@ -37,7 +37,7 @@ class ConfirmRevocationEndpointTest(
 
     @Test
     fun `WHEN confirming revocation of non-existing sequenceVersions THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequencesToRevokedStaging()
+        convenienceClient.prepareDefaultSequencesToAwaitingApprovalForRevocation()
 
         val nonExistingSequenceId = SequenceVersion("123", 2)
         val nonExistingVersion = SequenceVersion("1", 123)
@@ -52,7 +52,7 @@ class ConfirmRevocationEndpointTest(
 
     @Test
     fun `WHEN confirming revocation for sequenceVersions not from the submitter THEN throws forbidden error`() {
-        convenienceClient.prepareDefaultSequencesToRevokedStaging()
+        convenienceClient.prepareDefaultSequencesToAwaitingApprovalForRevocation()
 
         val notSubmitter = "notTheSubmitter"
         client.confirmRevocation(
@@ -74,7 +74,7 @@ class ConfirmRevocationEndpointTest(
 
     @Test
     fun `WHEN confirming revocation with latest version not 'APPROVED_FOR_RELEASE' THEN throws an error`() {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
 
         client.confirmRevocation(
             listOf(

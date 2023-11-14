@@ -17,7 +17,7 @@ class RevokeEndpointTest(
 ) {
     @Test
     fun `GIVEN sequences with 'APPROVED_FOR_RELEASE' THEN the status changes to 'AWAITING_APPROVAL_FOR_REVOCATION'`() {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
 
         client.revokeSequences(DefaultFiles.allSequenceIds)
             .andExpect(status().isOk)
@@ -34,7 +34,7 @@ class RevokeEndpointTest(
 
     @Test
     fun `WHEN revoking non-existing sequenceIds THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
 
         val nonExistingSequenceId = "123"
         client.revokeSequences(listOf(nonExistingSequenceId))
@@ -49,7 +49,7 @@ class RevokeEndpointTest(
 
     @Test
     fun `WHEN revoking sequences not from the submitter THEN throws forbidden error`() {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
 
         val notSubmitter = "nonExistingUser"
         client.revokeSequences(DefaultFiles.allSequenceIds.subList(0, 2), notSubmitter)
@@ -65,7 +65,7 @@ class RevokeEndpointTest(
 
     @Test
     fun `WHEN revoking with latest version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequencesToNeedReview()
+        convenienceClient.prepareDefaultSequencesToHasErrors()
 
         client.revokeSequences(DefaultFiles.allSequenceIds.subList(0, 2))
             .andExpect(status().isUnprocessableEntity)

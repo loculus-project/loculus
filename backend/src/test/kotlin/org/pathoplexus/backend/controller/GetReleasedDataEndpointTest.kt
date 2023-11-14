@@ -39,7 +39,7 @@ class GetReleasedDataEndpointTest(
 
     @Test
     fun `GIVEN released data exists THEN returns it with additional metadata fields`() {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
 
         val response = submissionControllerClient.getReleasedData()
 
@@ -121,7 +121,7 @@ class GetReleasedDataEndpointTest(
     }
 
     private fun prepareRevokedAndRevocationAndRevisedVersions(): PreparedVersions {
-        convenienceClient.prepareDefaultSequencesToSiloReady()
+        convenienceClient.prepareDefaultSequencesToApprovedForRelease()
         convenienceClient.reviseAndProcessDefaultSequences()
 
         convenienceClient.revokeSequences(DefaultFiles.allSequenceIds)

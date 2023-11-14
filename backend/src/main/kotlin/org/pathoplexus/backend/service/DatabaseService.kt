@@ -362,13 +362,12 @@ class DatabaseService(
                 SequencesTable.isRevocation,
             )
 
-        val maxVersionWithSiloReadyQuery = maxVersionWithSiloReadyQuery()
-        val sequencesStatusSiloReady = subTableSequenceStatus
+        val releasedSequences = subTableSequenceStatus
             .select(
                 where = {
                     (SequencesTable.status eq APPROVED_FOR_RELEASE.name) and
                         (SequencesTable.submitter eq username) and
-                        (SequencesTable.version eq maxVersionWithSiloReadyQuery)
+                        (SequencesTable.version eq maxReleasedVersionQuery())
                 },
             ).map { row ->
                 SequenceVersionStatus(
@@ -380,7 +379,7 @@ class DatabaseService(
             }
 
         val maxVersionQuery = maxVersionQuery()
-        val sequencesStatusNotSiloReady = subTableSequenceStatus.select(
+        val unreleasedSequences = subTableSequenceStatus.select(
             where = {
                 (SequencesTable.status neq APPROVED_FOR_RELEASE.name) and
                     (SequencesTable.submitter eq username) and
@@ -395,10 +394,10 @@ class DatabaseService(
             )
         }
 
-        return sequencesStatusSiloReady + sequencesStatusNotSiloReady
+        return releasedSequences + unreleasedSequences
     }
 
-    private fun maxVersionWithSiloReadyQuery(): Expression<Long?> {
+    private fun maxReleasedVersionQuery(): Expression<Long?> {
         val subQueryTable = SequencesTable.alias("subQueryTable")
         return wrapAsExpression(
             subQueryTable
