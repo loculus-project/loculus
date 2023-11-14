@@ -1,4 +1,4 @@
-{{- if ne .Values.mode "e2e" }}
+{{- if eq .Values.mode "cd" }}
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -63,4 +63,4 @@ spec:
           port: 8080
   tls:
     certResolver: myresolver
-{{- end}}
+{{- end }}

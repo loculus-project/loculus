@@ -4,17 +4,13 @@ metadata:
   name: pathoplexus-lapis-service
   namespace: {{ .Values.namespace }}
 spec:
-  {{- if eq .Values.mode "e2e" }}
-  type: NodePort
-  {{- else }}
-  type: ClusterIP
-  {{- end }}
+  {{- template "pathoplexus.serviceType"}}
   selector:
     app: pathoplexus
   ports:
     - port: 8080
       targetPort: 8080
-      {{- if eq .Values.mode "e2e" }}
+      {{- if ne .Values.mode "cd" }}
       nodePort: 30080
       {{- end }}
       protocol: TCP

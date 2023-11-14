@@ -1,17 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: pathoplexus-backend-service
+  name: pathoplexus-database-service
   namespace: {{ .Values.namespace }}
 spec:
   {{- template "pathoplexus.serviceType"}}
   selector:
     app: pathoplexus
   ports:
-    - port: 8079
-      targetPort: 8079
+    - port: 5432
+      targetPort: 5432
       {{- if ne .Values.mode "cd" }}
-      nodePort: 30082
+      nodePort: 30432
       {{- end }}
       protocol: TCP
       name: http

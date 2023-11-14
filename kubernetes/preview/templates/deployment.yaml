@@ -17,7 +17,7 @@ spec:
         app: pathoplexus
     spec:
       initContainers:
-{{- if ne .Values.mode "e2e" }}
+{{- if eq .Values.mode "cd" }}
         - name: get-repo
           image: alpine/git
           env:
@@ -150,7 +150,7 @@ spec:
         - name: silo-output
           emptyDir: {}
         - name: repo-volume
-{{- if eq .Values.mode "e2e" }}
+{{- if ne .Values.mode "cd" }}
           hostPath:
             path: /repo
 {{- else }}
