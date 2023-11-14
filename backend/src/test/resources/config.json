@@ -114,8 +114,6 @@
                 "name": "qc",
                 "type": "double"
             }
-        ],
-        "tableColumns": ["strain", "country", "date", "pangoLineage"],
-        "primaryKey": "genbankAccession"
+        ]
     }
 }

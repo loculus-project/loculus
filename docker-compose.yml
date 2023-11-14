@@ -6,7 +6,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./website/tests/config/config.json:/config/config.json
+      - ./website/tests/config/website_config.json:/config/website_config.json
       - ./website/tests/config/docker_runtime_config.json:/config/runtime_config.json
       - ./website/tests/config/reference_genomes.json:/config/reference_genomes.json
       - ./log:/log
