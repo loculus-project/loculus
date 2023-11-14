@@ -120,16 +120,7 @@ jobs:
 
     - name: Save logs from all containers to file
       if: ${{ !cancelled() }}
-      run: |
-        pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o jsonpath='{.items[*].metadata.name}')
-        for pod in $pods; do
-          containers=$(kubectl get pod $pod -n pathoplexus -o jsonpath='{.spec.containers[*].name}')
-          for container in $containers; do
-            echo "Logs from $pod - $container:" >> kubernetes_logs.txt
-            kubectl logs $pod -n pathoplexus -c $container >> kubernetes_logs.txt
-            echo "==============================" >> kubernetes_logs.txt
-          done
-        done
+      run: ./.github/scripts/collect_kubernetes_logs.sh
     - name: Upload Kubernetes logs
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v3
