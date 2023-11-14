@@ -67,7 +67,7 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
     processed = []
     for sequence in unprocessed:
         metadata = sequence.data.get("metadata", {})
-        metadata["pangoLineage"] = random.choice(possible_lineages)
+        metadata["pango_lineage"] = random.choice(possible_lineages)
 
         updated_sequence = Sequence(
             sequence.sequenceId,

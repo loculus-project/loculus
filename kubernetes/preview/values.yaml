@@ -1,3 +1,5 @@
+mode: cd
+
 runtime_config_json: |-
   {
       "backendUrl": "http://localhost:8079",
