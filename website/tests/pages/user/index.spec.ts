@@ -5,9 +5,8 @@ import { fakeProcessingPipeline } from '../../util/preprocessingPipeline';
 
 test.describe('The user page', () => {
     test('should show sequences, their status and a link to reviews', async ({ userPage }) => {
-        const [sequenceNeedsReview, sequenceProcessed, sequenceReleasable, sequenceToBeRevised] = await prepareDataToBe(
-            'processing',
-        );
+        const [sequenceNeedsReview, sequenceProcessed, sequenceReleasable, sequenceToBeRevised] =
+            await prepareDataToBe('processing');
 
         await fakeProcessingPipeline.submit([
             {
