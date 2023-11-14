@@ -15,7 +15,7 @@ While the documentation is still a work in progress, a look at the [`.github/wor
 
 - [`backend.yml`](/.github/workflows/backend.yml) runs the backend tests and builds the backend docker image
 - [`website.yml`](/.github/workflows/website.yml) runs the website tests and builds the website docker image
-- [`e2e.yml`](/.github/workflows/e2e.yml) runs the end-to-end tests
+- [`e2e-k3d.yml`](/.github/workflows/e2e-k3d.yml) runs the end-to-end tests
 
 ## Setting up docker
 

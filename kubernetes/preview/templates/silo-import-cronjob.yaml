@@ -9,6 +9,9 @@ spec:
   jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            app: pathoplexus
         spec:
           containers:
             - name: silo-preprocessing

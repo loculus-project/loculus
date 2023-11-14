@@ -102,15 +102,6 @@ jobs:
         done
     - name: Sleep for 20 secs
       run: sleep 20
-    - name: List running pods
-      if: ${{ !cancelled() }}
-      run: kubectl get pods --all-namespaces
-    - name: Describe pods
-      if: ${{ !cancelled() }}
-      run: kubectl describe pods -l app=pathoplexus -n pathoplexus
-    - name: Show events
-      if: ${{ !cancelled() }}
-      run: kubectl get events -n pathoplexus
     - name: Run E2E test
       run: cd website && npm run e2e
     - uses: actions/upload-artifact@v3
@@ -119,6 +110,14 @@ jobs:
         name: playwright-report
         path: website/playwright-report/
         retention-days: 30
+
+    - name: List running pods
+      run: kubectl get pods --all-namespaces
+    - name: Describe pods
+      run: kubectl describe pods -l app=pathoplexus -n pathoplexus
+    - name: Show events
+      run: kubectl get events -n pathoplexus
+
     - name: Save logs from all containers to file
       if: ${{ !cancelled() }}
       run: |
