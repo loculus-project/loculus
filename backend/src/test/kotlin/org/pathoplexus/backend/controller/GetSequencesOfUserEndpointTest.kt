@@ -50,13 +50,13 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
             ),
             Scenario(
                 setupDescription = "I started processing sequences",
-                prepareDatabase = { it.prepareDefaultSequencesToProcessing() },
+                prepareDatabase = { it.prepareDefaultSequencesToInProcessing() },
                 expectedStatus = Status.IN_PROCESSING,
                 expectedIsRevocation = false,
             ),
             Scenario(
                 setupDescription = "I submitted sequences that need review",
-                prepareDatabase = { it.prepareDefaultSequencesToNeedReview() },
+                prepareDatabase = { it.prepareDefaultSequencesToHasErrors() },
                 expectedStatus = Status.HAS_ERRORS,
                 expectedIsRevocation = false,
             ),

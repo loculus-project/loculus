@@ -89,7 +89,7 @@ In following, the changes of the databases are shown given a series of example e
 | ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | --------------- |---------------| ------------- | -------------- | ------ | -------- |
 | 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE      | false         | d1            | ...            | []     | []       |
 | 1           | 2        | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE      | false         | d3            | ...            | []     | []       |
-| 1           | 3        | usre1     | t9           |                       |                        |             | AWAITING_APPROVAL_FOR_REVOCATION | true          |               |                |        |          |
+| 1           | 3        | user1     | t9           |                       |                        |             | AWAITING_APPROVAL_FOR_REVOCATION | true          |               |                |        |          |
 
 **Event 8:** The user rejects the revocation of sequence 1.
 
@@ -104,7 +104,7 @@ In following, the changes of the databases are shown given a series of example e
 | ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | --------------- |---------------| ------------- | -------------- | ------ | -------- |
 | 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE      | false         | d1            | ...            | []     | []       |
 | 1           | 2        | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE      | false         | d3            | ...            | []     | []       |
-| 1           | 3        | usre1     | t10           |                       |                        |             | AWAITING_APPROVAL_FOR_REVOCATION | true          |               |                |        |          |
+| 1           | 3        | user1     | t10           |                       |                        |             | AWAITING_APPROVAL_FOR_REVOCATION | true          |               |                |        |          |
 
 **Event 10:** The user approves the revocation.
 
@@ -112,7 +112,7 @@ In following, the changes of the databases are shown given a series of example e
 | ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | ---------- |---------------| ------------- | -------------- | ------ | -------- |
 | 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 | 1           | 2        | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
-| 1           | 3        | usre1     | t10          |                       |                        | t11         | APPROVED_FOR_RELEASE | true          |               |                |        |          |
+| 1           | 3        | user1     | t10          |                       |                        | t11         | APPROVED_FOR_RELEASE | true          |               |                |        |          |
 
 ## Sequence diagrams
 

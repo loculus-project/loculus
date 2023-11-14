@@ -30,7 +30,7 @@ class SubmissionConvenienceClient(
         return deserializeJsonResponse(submit)
     }
 
-    fun prepareDefaultSequencesToProcessing() {
+    fun prepareDefaultSequencesToInProcessing() {
         submitDefaultFiles()
         extractUnprocessedData()
     }
@@ -40,21 +40,15 @@ class SubmissionConvenienceClient(
             .andExpect(status().isNoContent)
     }
 
-    fun prepareDefaultSequencesToNeedReview() {
-        prepareDefaultSequencesToProcessing()
+    fun prepareDefaultSequencesToHasErrors() {
+        prepareDefaultSequencesToInProcessing()
         DefaultFiles.allSequenceIds.forEach { sequenceId ->
             client.submitProcessedData(PreparedProcessedData.withErrors(sequenceId = sequenceId))
         }
     }
 
-    fun prepareDefaultSequencesToReviewed() {
-        prepareDefaultSequencesToNeedReview()
-
-        submitDefaultReviewedData()
-    }
-
-    fun prepareDefaultSequencesToProcessed() {
-        prepareDefaultSequencesToProcessing()
+    fun prepareDefaultSequencesToAwaitingApproval() {
+        prepareDefaultSequencesToInProcessing()
         client.submitProcessedData(
             *DefaultFiles.allSequenceIds.map {
                 PreparedProcessedData.successfullyProcessed(sequenceId = it)
@@ -62,8 +56,8 @@ class SubmissionConvenienceClient(
         )
     }
 
-    fun prepareDefaultSequencesToSiloReady() {
-        prepareDefaultSequencesToProcessed()
+    fun prepareDefaultSequencesToApprovedForRelease() {
+        prepareDefaultSequencesToAwaitingApproval()
 
         approveProcessedSequences(
             DefaultFiles.allSequenceIds.map { SequenceVersion(it, 1L) },
@@ -81,8 +75,8 @@ class SubmissionConvenienceClient(
         approveProcessedSequences(extractedSequenceVersions)
     }
 
-    fun prepareDefaultSequencesToRevokedStaging() {
-        prepareDefaultSequencesToSiloReady()
+    fun prepareDefaultSequencesToAwaitingApprovalForRevocation() {
+        prepareDefaultSequencesToApprovedForRelease()
         revokeSequences(DefaultFiles.allSequenceIds)
     }
 
@@ -166,11 +160,11 @@ class SubmissionConvenienceClient(
     fun prepareDataTo(status: Status) {
         when (status) {
             Status.RECEIVED -> submitDefaultFiles()
-            Status.IN_PROCESSING -> prepareDefaultSequencesToProcessing()
-            Status.HAS_ERRORS -> prepareDefaultSequencesToNeedReview()
-            Status.AWAITING_APPROVAL -> prepareDefaultSequencesToProcessed()
-            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequencesToSiloReady()
-            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequencesToRevokedStaging()
+            Status.IN_PROCESSING -> prepareDefaultSequencesToInProcessing()
+            Status.HAS_ERRORS -> prepareDefaultSequencesToHasErrors()
+            Status.AWAITING_APPROVAL -> prepareDefaultSequencesToAwaitingApproval()
+            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequencesToApprovedForRelease()
+            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequencesToAwaitingApprovalForRevocation()
         }
     }
 
