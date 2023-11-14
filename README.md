@@ -9,7 +9,7 @@ Detailed documentation is available in each folder's README. This file contains 
 - Sequence and metadata processing pipeline is in [`preprocessing`](/preprocessing) folder, see [`preprocessing/specification.md`](/preprocessing/specification.md) 
 - Deployment code is in `kubernetes`, see [`kubernetes/README.md`](/kubernetes/README.md)
 
-## Github Actions
+## GitHub Actions
 
 While the documentation is still a work in progress, a look at the [`.github/workflows`](/.github/workflows) folder might be helpful:
 
