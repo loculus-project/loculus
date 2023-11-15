@@ -27,12 +27,12 @@ Check the README of the backend and the website for more information on how to d
 
 Check whether the services are already deployed (it might take some time to start, especially for the first time):
 ```shell
-kubectl get pods -n test
+kubectl get pods -n pathoplexus
 ```
 
 If something goes wrong,
 ```shell
-kubectl get events -n test
+kubectl get events -n pathoplexus
 ```
 might help to see the reason.
 
