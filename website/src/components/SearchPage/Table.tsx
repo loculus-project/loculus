@@ -1,19 +1,19 @@
 import { capitalCase } from 'change-case';
 import type { FC } from 'react';
 
-import type { Config } from '../../types/config.ts';
+import type { Schema } from '../../types/config.ts';
 
 export type TableSequenceData = {
     [key: string]: string | number | null;
 };
 
 type TableProps = {
-    config: Config;
+    schema: Schema;
     data: TableSequenceData[];
 };
 
-export const Table: FC<TableProps> = ({ data, config }) => {
-    const primaryKey = config.schema.primaryKey;
+export const Table: FC<TableProps> = ({ data, schema }) => {
+    const primaryKey = schema.primaryKey;
     const rows = data.map((entry, index) => ({
         id: index,
         ...entry,
@@ -23,7 +23,7 @@ export const Table: FC<TableProps> = ({ data, config }) => {
         field: primaryKey,
         headerName: capitalCase(primaryKey),
     };
-    const columns = config.schema.tableColumns.map((field) => ({
+    const columns = schema.tableColumns.map((field) => ({
         field,
         headerName: capitalCase(field),
     }));

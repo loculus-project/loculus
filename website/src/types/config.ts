@@ -1,5 +1,7 @@
 import z from 'zod';
 
+import { referenceGenomes } from './referencesGenomes.ts';
+
 export const metadata = z.object({
     name: z.string(),
     type: z.enum(['string', 'date', 'int', 'float', 'pango_lineage']),
@@ -13,12 +15,21 @@ export type Filter = Metadata & {
     label?: string;
 };
 
-export const config = z.object({
-    schema: z.object({
-        instanceName: z.string(),
-        metadata: z.array(metadata),
-        tableColumns: z.array(z.string()),
-        primaryKey: z.string(),
-    }),
+const schema = z.object({
+    instanceName: z.string(),
+    metadata: z.array(metadata),
+    tableColumns: z.array(z.string()),
+    primaryKey: z.string(),
 });
-export type Config = z.infer<typeof config>;
+export type Schema = z.infer<typeof schema>;
+
+export const instanceConfig = z.object({
+    schema,
+    referenceGenomes,
+});
+export type InstanceConfig = z.infer<typeof instanceConfig>;
+
+export const websiteConfig = z.object({
+    instances: z.record(instanceConfig),
+});
+export type WebsiteConfig = z.infer<typeof websiteConfig>;

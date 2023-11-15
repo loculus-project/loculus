@@ -4,7 +4,7 @@ import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getConfig, getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
-import type { Config } from '../types/config.ts';
+import type { Schema } from '../types/config.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
@@ -12,7 +12,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         backendUrl: string,
         api: Narrow<typeof lapisApi>,
         logger: InstanceLogger,
-        private readonly config: Config,
+        private readonly schema: Schema,
     ) {
         super(
             backendUrl,
@@ -25,29 +25,29 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
 
     public static create(
         lapisUrl: string = getRuntimeConfig().forServer.lapisUrl,
-        config: Config = getConfig(),
+        schema: Schema = getConfig(),
         logger: InstanceLogger = getInstanceLogger('lapisClient'),
     ) {
-        return new LapisClient(lapisUrl, lapisApi, logger, config);
+        return new LapisClient(lapisUrl, lapisApi, logger, schema);
     }
 
     public getSequenceDetails(primaryKey: string) {
         return this.call('details', {
-            [this.config.schema.primaryKey]: primaryKey,
+            [this.schema.primaryKey]: primaryKey,
         });
     }
 
     public getSequenceMutations(primaryKey: string, type: BaseType) {
         const endpoint = type === 'nucleotide' ? 'nucleotideMutations' : 'aminoAcidMutations';
         return this.call(endpoint, {
-            [this.config.schema.primaryKey]: primaryKey,
+            [this.schema.primaryKey]: primaryKey,
         });
     }
 
     public getSequenceInsertions(primaryKey: string, type: BaseType) {
         const endpoint = type === 'nucleotide' ? 'nucleotideInsertions' : 'aminoAcidInsertions';
         return this.call(endpoint, {
-            [this.config.schema.primaryKey]: primaryKey,
+            [this.schema.primaryKey]: primaryKey,
         });
     }
 }

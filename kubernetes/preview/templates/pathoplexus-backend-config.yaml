@@ -1,11 +1,3 @@
-{{- $configFile := .Files.Get "config.yml" | fromYaml }}
-{{- $metadata := ($configFile.schema.metadata | include "pathoplexus.generateBackendMetadata" | fromYaml).fields }}
-{{- $schema := (dict
-  "schema" (dict
-    "instanceName" $configFile.schema.instanceName
-    "metadata" $metadata
-  )
-)}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -14,7 +6,4 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   backend_config.json: |
-    {{ toJson $schema }}
-
-  reference_genomes.json: |-
-    {{ .Files.Get "reference_genomes.json" | fromJson | toJson }}
+    {{ .Files.Get "config.yml" | fromYaml | include "pathoplexus.generateBackendConfig" | fromYaml | toJson }}

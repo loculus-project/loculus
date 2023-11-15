@@ -8,7 +8,7 @@ import { getConfig, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { pageSize } from '../../settings';
 
-const config = getConfig();
+const schema = getConfig();
 const clientConfig = getRuntimeConfig().forClient;
 const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
@@ -37,7 +37,7 @@ const data = await getData(metadataSettings, offset, pageSize);
                             Search returned {data.totalCount.toLocaleString()}
                             sequence{data.totalCount === 1 ? '' : 's'}
                         </div>
-                        <Table data={data.data} config={config} client:load />
+                        <Table data={data.data} schema={schema} client:load />
 
                         <div class='mt-4 flex justify-center'>
                             <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)} />

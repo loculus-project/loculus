@@ -1,13 +1,3 @@
-{{- $configFile := .Files.Get "config.yml" | fromYaml }}
-{{- $commonMetadata := (include "pathoplexus.commonMetadata" . | fromYaml).fields }}
-{{- $metadata := (concat $commonMetadata $configFile.schema.metadata | include "pathoplexus.generateWebsiteMetadata" | fromYaml).fields }}
-{{- $schema := (dict
-  "schema" (merge (dict
-    "instanceName" $configFile.schema.instanceName
-    "primaryKey" "sequenceVersion"
-    "metadata" $metadata
-  ) $configFile.schema.website)
-)}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -16,7 +6,7 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   website_config.json: |
-    {{ toJson $schema }}
+    {{ .Files.Get "config.yml" | fromYaml | include "pathoplexus.generateWebsiteConfig" | fromYaml | toJson }}
 
   runtime_config.json: |
     {
@@ -27,6 +17,3 @@ data:
       {{- end }}
       "lapisUrl": "http://localhost:8080"
     }
-
-  reference_genomes.json: |-
-    {{ .Files.Get "reference_genomes.json" | fromJson | toJson }}

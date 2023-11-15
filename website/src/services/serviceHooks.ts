@@ -3,7 +3,7 @@ import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
-import type { Config } from '../types/config.ts';
+import type { Schema } from '../types/config.ts';
 import type { LapisBaseRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
@@ -18,10 +18,10 @@ export function lapisClientHooks(clientConfig: ClientConfig) {
     return {
         zodiosHooks,
         utilityHooks: {
-            useGetSequence(sequenceVersion: string, sequenceType: SequenceType, config: Config) {
+            useGetSequence(sequenceVersion: string, sequenceType: SequenceType, schema: Schema) {
                 const { data, error, isLoading } = getSequenceHook(
                     zodiosHooks,
-                    { [config.schema.primaryKey]: sequenceVersion },
+                    { [schema.primaryKey]: sequenceVersion },
                     sequenceType,
                 );
 

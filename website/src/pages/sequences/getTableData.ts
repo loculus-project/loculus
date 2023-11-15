@@ -3,10 +3,10 @@ import { err, Result } from 'neverthrow';
 
 import type { LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Config } from '../../types/config.ts';
+import type { Schema } from '../../types/config.ts';
 import type { Details, DetailsResponse, InsertionCount, MutationProportionCount } from '../../types/lapis.ts';
 
-export async function getTableData(sequenceVersion: string, config: Config, lapisClient: LapisClient) {
+export async function getTableData(sequenceVersion: string, schema: Schema, lapisClient: LapisClient) {
     return Promise.all([
         lapisClient.getSequenceDetails(sequenceVersion),
         lapisClient.getSequenceMutations(sequenceVersion, 'nucleotide'),
@@ -33,7 +33,7 @@ export async function getTableData(sequenceVersion: string, config: Config, lapi
                         aminoAcidInsertions: aminoAcidInsertions.data,
                     }),
                 )
-                .map(toTableData(config)),
+                .map(toTableData(schema)),
         );
 }
 
@@ -55,7 +55,7 @@ function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(seque
     };
 }
 
-function toTableData(config: Config) {
+function toTableData(config: Schema) {
     return ({
         details,
         nucleotideMutations,
@@ -69,7 +69,7 @@ function toTableData(config: Config) {
         nucleotideInsertions: InsertionCount[];
         aminoAcidInsertions: InsertionCount[];
     }) => {
-        const tableData = config.schema.metadata.map((metadata) => ({
+        const tableData = config.metadata.map((metadata) => ({
             label: sentenceCase(metadata.name),
             value: details[metadata.name] ?? 'N/A',
         }));

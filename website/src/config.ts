@@ -3,8 +3,8 @@ import path from 'path';
 
 import type { z, ZodError } from 'zod';
 
-import { config, type Config } from './types/config.ts';
-import { referenceGenomes, type ReferenceGenomes } from './types/referencesGenomes.ts';
+import { type Schema, type WebsiteConfig, websiteConfig } from './types/config.ts';
+import { type ReferenceGenomes } from './types/referencesGenomes.ts';
 import {
     type ClientConfig,
     type RuntimeConfig,
@@ -13,9 +13,8 @@ import {
     serviceUrls,
 } from './types/runtimeConfig.ts';
 
-let _config: Config | null = null;
+let _config: WebsiteConfig | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
-let _referenceGenomes: ReferenceGenomes | null = null;
 
 function getConfigDir(): string {
     const configDir = import.meta.env.CONFIG_DIR;
@@ -25,11 +24,11 @@ function getConfigDir(): string {
     return configDir;
 }
 
-export function getConfig(): Config {
+export function getConfig(): Schema {
     if (_config === null) {
-        _config = readTypedConfigFile('website_config.json', config);
+        _config = readTypedConfigFile('website_config.json', websiteConfig);
     }
-    return _config;
+    return Object.values(_config.instances)[0].schema;
 }
 
 export function getRuntimeConfig(): RuntimeConfig {
@@ -66,10 +65,10 @@ function makeClientConfig(serviceConfig: ServiceUrls): ClientConfig {
 }
 
 export function getReferenceGenomes(): ReferenceGenomes {
-    if (_referenceGenomes === null) {
-        _referenceGenomes = readTypedConfigFile('reference_genomes.json', referenceGenomes);
+    if (_config === null) {
+        _config = readTypedConfigFile('website_config.json', websiteConfig);
     }
-    return _referenceGenomes;
+    return Object.values(_config.instances)[0].referenceGenomes;
 }
 
 function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {

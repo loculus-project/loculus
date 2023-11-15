@@ -5,9 +5,7 @@ import { prepareDataToBe } from './util/prepareDataToBe.ts';
 export default async function globalSetupForPlaywright() {
     const lapisClient = LapisClient.create(
         lapisUrl,
-        {
-            schema: { metadata: [], instanceName: 'Test', primaryKey: 'doesNotMatter', tableColumns: [] },
-        },
+        { metadata: [], instanceName: 'Test', primaryKey: 'doesNotMatter', tableColumns: [] },
         e2eLogger,
     );
 

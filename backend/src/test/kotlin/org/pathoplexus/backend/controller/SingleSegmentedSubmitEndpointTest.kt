@@ -12,12 +12,12 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-const val SINGLE_SEGMENTED_REFERENCE_GENOME = "src/test/resources/single_segmented_reference_genomes.json"
+const val SINGLE_SEGMENTED_REFERENCE_GENOME = "src/test/resources/backend_config_single_segment.json"
 
 private const val DEFAULT_SEQUENCE_NAME = "main"
 
 @EndpointTest(
-    properties = ["${BackendSpringProperty.BACKEND_REFERENCE_GENOME_PATH}=$SINGLE_SEGMENTED_REFERENCE_GENOME"],
+    properties = ["${BackendSpringProperty.BACKEND_CONFIG_PATH}=$SINGLE_SEGMENTED_REFERENCE_GENOME"],
 )
 class SingleSegmentedSubmitEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
