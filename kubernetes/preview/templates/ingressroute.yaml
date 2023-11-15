@@ -1,4 +1,7 @@
 {{- if eq .Values.mode "cd" }}
+{{- $backendHost := printf "backend.%s" .Values.host }}
+{{- $lapisHost := printf "lapis.%s" .Values.host }}
+
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
@@ -29,13 +32,13 @@ metadata:
   namespace: {{ .Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    link.argocd.argoproj.io/external-link: https://{{ .Values.backendhost }}
+    link.argocd.argoproj.io/external-link: https://{{ $backendHost }}
 spec:
   entryPoints:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`{{ .Values.backendhost }}`)
+      match: Host(`{{ $backendHost }}`)
       priority: 10
       services:
         - name: pathoplexus-backend-service
@@ -50,13 +53,13 @@ metadata:
   namespace: {{ .Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    link.argocd.argoproj.io/external-link: https://{{ .Values.lapishost }}
+    link.argocd.argoproj.io/external-link: https://{{ $lapisHost }}
 spec:
   entryPoints:
     - websecure
   routes:
     - kind: Rule
-      match: Host(`{{ .Values.lapishost }}`)
+      match: Host(`{{ $lapisHost }}`)
       priority: 10
       services:
         - name: pathoplexus-lapis-service

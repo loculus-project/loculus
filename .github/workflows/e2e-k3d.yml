@@ -83,8 +83,8 @@ jobs:
       run: |
         end=$((SECONDS+300))
         while true; do
-          all_pods=$(kubectl get pods -l app=pathoplexus -n test -o jsonpath='{.items[*].metadata.name}')
-          running_pods=$(kubectl get pods -l app=pathoplexus -n test -o=jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}')
+          all_pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o jsonpath='{.items[*].metadata.name}')
+          running_pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o=jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}')
 
           if [[ "$all_pods" == "$running_pods" ]]; then
             echo "All pods are up and running!"
@@ -92,7 +92,7 @@ jobs:
           fi
 
           if [[ "${SECONDS}" -ge "${end}" ]]; then
-            not_running_pods=$(kubectl get pods -l app=pathoplexus -n test -o=jsonpath='{.items[?(@.status.phase!="Running")].metadata.name}')
+            not_running_pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o=jsonpath='{.items[?(@.status.phase!="Running")].metadata.name}')
             echo "Error: The following pods did not start on time: $not_running_pods"
             exit 1
           fi
@@ -107,10 +107,10 @@ jobs:
       run: kubectl get pods --all-namespaces
     - name: Describe pods
       if: ${{ !cancelled() }}
-      run: kubectl describe pods -l app=pathoplexus -n test
+      run: kubectl describe pods -l app=pathoplexus -n pathoplexus
     - name: Show events
       if: ${{ !cancelled() }}
-      run: kubectl get events -n test
+      run: kubectl get events -n pathoplexus
     - name: Run E2E test
       run: cd website && npm run e2e
     - uses: actions/upload-artifact@v3
@@ -122,12 +122,12 @@ jobs:
     - name: Save logs from all containers to file
       if: ${{ !cancelled() }}
       run: |
-        pods=$(kubectl get pods -l app=pathoplexus -n test -o jsonpath='{.items[*].metadata.name}')
+        pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o jsonpath='{.items[*].metadata.name}')
         for pod in $pods; do
-          containers=$(kubectl get pod $pod -n test -o jsonpath='{.spec.containers[*].name}')
+          containers=$(kubectl get pod $pod -n pathoplexus -o jsonpath='{.spec.containers[*].name}')
           for container in $containers; do
             echo "Logs from $pod - $container:" >> kubernetes_logs.txt
-            kubectl logs $pod -n test -c $container >> kubernetes_logs.txt
+            kubectl logs $pod -n pathoplexus -c $container >> kubernetes_logs.txt
             echo "==============================" >> kubernetes_logs.txt
           done
         done

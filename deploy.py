@@ -94,7 +94,6 @@ def handle_helm():
         'helm', 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
         '--set', f"mode={mode}",
         '--set', f"branch={branch}",
-        '--set', 'namespace=test',
         '--set', f"dockerconfigjson={docker_config_json}",
     ], check=True)
 

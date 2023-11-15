@@ -17,6 +17,10 @@ spec:
             key: token
             secretName: github-access-token
         requeueAfterSeconds: 60
+    - list:
+        elements:
+          - branch: main
+            number: 1
   template:
     metadata:
       name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" }}-{{.number}}'
@@ -41,19 +45,12 @@ spec:
           parameters:
             - name: namespace
               value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" }}'
-            - name: version
-              value: '{{.branch}}'
             - name: shortbranch
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}'
             - name: branch
               value: '{{.branch}}'
             - name: host
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
-            - name: backendhost
-              value: 'backend.{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
-            - name: lapishost
-              value: 'lapis.{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
-
       syncPolicy:
         automated:
           selfHeal: true
