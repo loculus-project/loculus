@@ -17,6 +17,24 @@ spec:
             key: token
             secretName: github-access-token
         requeueAfterSeconds: 60
+    - list:
+        elements:
+          - cluster: https://kubernetes.default.svc
+            name: pp-main
+            url: https://github.com/pathoplexus/pathoplexus.git
+            path: kubernetes/preview/
+            targetRevision: main
+            helmParameters:
+              - name: namespace
+                value: 'preview-main'
+              - name: version
+                value: 'main'
+              - name: shortbranch
+                value: 'main'
+              - name: branch
+                value: 'main'
+              - name: host
+                value: 'main.preview.k3s.pathoplexus.org'
   template:
     metadata:
       name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" }}-{{.number}}'
@@ -49,24 +67,7 @@ spec:
               value: '{{.branch}}'
             - name: host
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
-    - list:
-        elements:
-          - cluster: https://kubernetes.default.svc
-            name: pp-main
-            url: https://github.com/pathoplexus/pathoplexus.git
-            path: kubernetes/preview/
-            targetRevision: main
-            helmParameters:
-              - name: namespace
-                value: 'preview-main'
-              - name: version
-                value: 'main'
-              - name: shortbranch
-                value: 'main'
-              - name: branch
-                value: 'main'
-              - name: host
-                value: 'main.preview.k3s.pathoplexus.org'
+
 
       syncPolicy:
         automated:
