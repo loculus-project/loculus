@@ -1,4 +1,5 @@
 mode: cd
+namespace: pathoplexus
 
 runtime_config_json: |-
   {
