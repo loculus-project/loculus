@@ -19,22 +19,8 @@ spec:
         requeueAfterSeconds: 60
     - list:
         elements:
-          - cluster: https://kubernetes.default.svc
-            name: pp-main
-            url: https://github.com/pathoplexus/pathoplexus.git
-            path: kubernetes/preview/
-            targetRevision: main
-            helmParameters:
-              - name: namespace
-                value: 'preview-main'
-              - name: version
-                value: 'main'
-              - name: shortbranch
-                value: 'main'
-              - name: branch
-                value: 'main'
-              - name: host
-                value: 'main.preview.k3s.pathoplexus.org'
+          - branch: main
+            number: 1
   template:
     metadata:
       name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" }}-{{.number}}'
@@ -59,16 +45,16 @@ spec:
           parameters:
             - name: namespace
               value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" }}'
-            - name: version
-              value: '{{.branch}}'
             - name: shortbranch
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}'
             - name: branch
               value: '{{.branch}}'
             - name: host
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
-
-
+            - name: lapishost # TODO: remove when other branches rebased before closing https://github.com/pathoplexus/pathoplexus/issues/480
+              value: 'lapis.{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
+            - name: backendhost # TODO: remove when other branches rebased before closing https://github.com/pathoplexus/pathoplexus/issues/480
+              value: 'backend.{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
       syncPolicy:
         automated:
           selfHeal: true
