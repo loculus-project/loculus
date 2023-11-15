@@ -16,13 +16,14 @@ Create a cluster that doesn't expose the ports of the backend and the website:
 ```shell
 ../deploy.py cluster --dev
 ```
-This is useful if you want to start the backend and the website locally and connect them to the cluster.
-Check the README of the backend and the website for more information on how to start them locally.
 
 Install the chart with `mode=dev` to deploy the services and link them to the local backend and website:
 ```shell
 ../deploy.py helm --dev
 ```
+
+Start the website and the backend locally. 
+Check the README of the backend and the website for more information on how to do that.
 
 Check whether the services are already deployed (it might take some time to start, especially for the first time):
 ```shell

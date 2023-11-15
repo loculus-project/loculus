@@ -5,11 +5,11 @@ import subprocess
 from pathlib import Path
 
 script_path = Path(__file__).resolve()
-root_dir = script_path.parent
+ROOT_DIR = script_path.parent
 
 CLUSTER_NAME = 'testCluster'
 HELM_RELEASE_NAME = 'preview'
-HELM_CHART_DIR = root_dir / 'kubernetes' / 'preview'
+HELM_CHART_DIR = ROOT_DIR / 'kubernetes' / 'preview'
 
 WEBSITE_PORT_MAPPING = '-p 3000:30081@agent:0'
 BACKEND_PORT_MAPPING = '-p 8079:30082@agent:0'
@@ -59,7 +59,8 @@ def handle_cluster():
     if cluster_exists(CLUSTER_NAME):
         print(f"Cluster '{CLUSTER_NAME}' already exists.")
     else:
-        subprocess.run(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 2", shell=True)
+        subprocess.run(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} -v {ROOT_DIR}:/repo --agents 2",
+                       shell=True)
 
 
 def remove_port(port_mapping):
