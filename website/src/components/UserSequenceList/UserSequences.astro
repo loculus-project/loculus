@@ -80,22 +80,6 @@ const keyPrefix = `userSequences.${username}`;
     </SequenceStatusBox>
 
     <SequenceStatusBox
-        count={statusArray.RECEIVED.length}
-        description='reviewed'
-        localStorageKey={`${keyPrefix}.reviewedExpanded`}
-        client:only='react'
-    >
-        <SequenceTable
-            username={username}
-            sequences={statusArray.RECEIVED}
-            bulkActionNames={['delete']}
-            singleActionNames={[]}
-            clientConfig={clientConfig}
-            client:load
-        />
-    </SequenceStatusBox>
-
-    <SequenceStatusBox
         count={statusArray.AWAITING_APPROVAL.length}
         description='processed'
         localStorageKey={`${keyPrefix}.stagingExpanded`}

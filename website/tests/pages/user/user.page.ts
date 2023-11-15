@@ -10,7 +10,6 @@ export class UserPage {
         `userSequences.${testuser}.receivedExpanded`,
         `userSequences.${testuser}.processingExpanded`,
         `userSequences.${testuser}.needsReviewExpanded`,
-        `userSequences.${testuser}.reviewedExpanded`,
         `userSequences.${testuser}.stagingExpanded`,
         `userSequences.${testuser}.readyExpanded`,
         `userSequences.${testuser}.revokedExpanded`,
