@@ -84,7 +84,7 @@ spec:
           args:
             - "--api"
           volumeMounts:
-            - name: silo-shared-data
+            - name: lapis-silo-shared-data
               mountPath: /data
         - name: lapis
           image: ghcr.io/genspectrum/lapis-v2:latest
@@ -93,10 +93,10 @@ spec:
           args:
             - "--silo.url=http://localhost:8081"
           volumeMounts:
-            - name: silo-database-config
+            - name: lapis-silo-database-config
               mountPath: /workspace/database_config.yaml
               subPath: database_config.yaml
-            - name: silo-database-config
+            - name: lapis-silo-database-config
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
 
@@ -109,9 +109,9 @@ spec:
         - name: pathoplexus-backend-config
           configMap:
             name: pathoplexus-backend-config
-        - name: silo-database-config
+        - name: lapis-silo-database-config
           configMap:
-            name: silo-database-config
-        - name: silo-shared-data
+            name: lapis-silo-database-config
+        - name: lapis-silo-shared-data
           persistentVolumeClaim:
-            claimName: silo-shared-data
+            claimName: lapis-silo-shared-data

@@ -4,18 +4,16 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { getTableData } from './getTableData';
 import { mockRequest, testConfig } from '../../components/vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
-import type { Config } from '../../types/config.ts';
+import type { Schema } from '../../types/config.ts';
 
-const config: Config = {
-    schema: {
-        instanceName: 'instance name',
-        metadata: [
-            { name: 'metadataField1', type: 'string' },
-            { name: 'metadataField2', type: 'string' },
-        ],
-        tableColumns: [],
-        primaryKey: 'primary key',
-    },
+const schema: Schema = {
+    instanceName: 'instance name',
+    metadata: [
+        { name: 'metadataField1', type: 'string' },
+        { name: 'metadataField2', type: 'string' },
+    ],
+    tableColumns: [],
+    primaryKey: 'primary key',
 };
 
 const dummyError = {
@@ -30,7 +28,7 @@ const dummyError = {
 
 const sequenceVersion = 'accession';
 
-const lapisClient = LapisClient.create(testConfig.forServer.lapisUrl, config);
+const lapisClient = LapisClient.create(testConfig.forServer.lapisUrl, schema);
 
 describe('getTableData', () => {
     beforeEach(() => {
@@ -44,7 +42,7 @@ describe('getTableData', () => {
     test('should return an error when getSequenceDetails fails', async () => {
         mockRequest.lapis.details(500, dummyError);
 
-        const result = await getTableData(sequenceVersion, config, lapisClient);
+        const result = await getTableData(sequenceVersion, schema, lapisClient);
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
@@ -52,7 +50,7 @@ describe('getTableData', () => {
     test('should return an error when getSequenceMutations fails', async () => {
         mockRequest.lapis.nucleotideMutations(500, dummyError);
 
-        const result = await getTableData(sequenceVersion, config, lapisClient);
+        const result = await getTableData(sequenceVersion, schema, lapisClient);
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
@@ -60,13 +58,13 @@ describe('getTableData', () => {
     test('should return an error when getSequenceInsertions fails', async () => {
         mockRequest.lapis.nucleotideInsertions(500, dummyError);
 
-        const result = await getTableData(sequenceVersion, config, lapisClient);
+        const result = await getTableData(sequenceVersion, schema, lapisClient);
 
         expect(result).toStrictEqual(err(dummyError.error));
     });
 
     test('should return default values when there is no data', async () => {
-        const result = await getTableData(sequenceVersion, config, lapisClient);
+        const result = await getTableData(sequenceVersion, schema, lapisClient);
 
         expect(result).toStrictEqual(
             ok([
@@ -119,7 +117,7 @@ describe('getTableData', () => {
             ],
         });
 
-        const result = await getTableData('accession', config, lapisClient);
+        const result = await getTableData('accession', schema, lapisClient);
 
         const data = result._unsafeUnwrap();
         expect(data).toContainEqual({
@@ -136,7 +134,7 @@ describe('getTableData', () => {
         mockRequest.lapis.nucleotideMutations(200, { data: nucleotideMutations });
         mockRequest.lapis.aminoAcidMutations(200, { data: aminoAcidMutations });
 
-        const result = await getTableData('accession', config, lapisClient);
+        const result = await getTableData('accession', schema, lapisClient);
 
         const data = result._unsafeUnwrap();
         expect(data).toContainEqual({
@@ -161,7 +159,7 @@ describe('getTableData', () => {
         mockRequest.lapis.nucleotideInsertions(200, { data: nucleotideInsertions });
         mockRequest.lapis.aminoAcidInsertions(200, { data: aminoAcidInsertions });
 
-        const result = await getTableData('accession', config, lapisClient);
+        const result = await getTableData('accession', schema, lapisClient);
 
         const data = result._unsafeUnwrap();
         expect(data).toContainEqual({

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: silo-shared-data
+  name: lapis-silo-shared-data
   namespace: {{ .Values.namespace }}
 spec:
   accessModes:

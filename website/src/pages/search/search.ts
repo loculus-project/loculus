@@ -28,7 +28,7 @@ export const getData = async (
 
     const aggregateResult = await lapisClient.call('aggregated', searchFilters);
     const detailsResult = await lapisClient.call('details', {
-        fields: [...config.schema.tableColumns, config.schema.primaryKey],
+        fields: [...config.tableColumns, config.primaryKey],
         limit,
         offset,
         ...searchFilters,
@@ -44,7 +44,7 @@ export const getData = async (
 
 export const getMetadataSettings = async (getSearchParams: (param: string) => string): Promise<Filter[]> => {
     const config = getConfig();
-    return config.schema.metadata.flatMap((metadata) => {
+    return config.metadata.flatMap((metadata) => {
         if (metadata.type === 'date') {
             const metadataFrom = {
                 ...metadata,

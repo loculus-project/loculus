@@ -8,13 +8,13 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes';
 import { LapisClient } from '../../services/lapisClient';
 
-const config = getConfig();
+const schema = getConfig();
 const runtimeConfig = getRuntimeConfig();
 // accession is never undefined, but ESLint doesn't know that
 // eslint-disable-next-line
 const accession = Astro.params.accession!;
 
-const tableData = await getTableData(accession, config, LapisClient.create());
+const tableData = await getTableData(accession, schema, LapisClient.create());
 
 const genes = getReferenceGenomes().genes.map((g) => g.name);
 ---
@@ -51,7 +51,7 @@ const genes = getReferenceGenomes().genes.map((g) => g.name);
                         <SequencesContainer
                             client:load
                             sequenceVersion={accession}
-                            config={config}
+                            schema={schema}
                             clientConfig={runtimeConfig.forClient}
                             genes={genes}
                         />

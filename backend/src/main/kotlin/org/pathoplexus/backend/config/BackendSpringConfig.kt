@@ -6,7 +6,6 @@ import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.spring.autoconfigure.ExposedAutoConfiguration
 import org.jetbrains.exposed.sql.DatabaseConfig
 import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
-import org.pathoplexus.backend.model.SchemaConfig
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
@@ -18,7 +17,6 @@ import java.io.File
 import javax.sql.DataSource
 
 object BackendSpringProperty {
-    const val BACKEND_REFERENCE_GENOME_PATH = "backend.referenceGenome.path"
     const val BACKEND_CONFIG_PATH = "backend.config.path"
 }
 
@@ -59,18 +57,16 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun schemaConfig(
+    fun backendConfig(
         objectMapper: ObjectMapper,
         @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
-    ): SchemaConfig {
+    ): BackendConfig {
         return objectMapper.readValue(File(configPath))
     }
 
     @Bean
-    fun referenceGenome(
-        objectMapper: ObjectMapper,
-        @Value("\${${BackendSpringProperty.BACKEND_REFERENCE_GENOME_PATH}}") referenceGenomePath: String,
-    ): ReferenceGenome {
-        return objectMapper.readValue(File(referenceGenomePath))
-    }
+    fun schema(backendConfig: BackendConfig) = backendConfig.instances.values.first().schema
+
+    @Bean
+    fun referenceGenome(backendConfig: BackendConfig) = backendConfig.instances.values.first().referenceGenomes
 }

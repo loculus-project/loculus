@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
 import org.pathoplexus.backend.api.Insertion
 import org.pathoplexus.backend.api.SubmittedProcessedData
+import org.pathoplexus.backend.config.Metadata
 import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.config.ReferenceSequence
+import org.pathoplexus.backend.config.Schema
 import org.pathoplexus.backend.controller.ProcessingValidationException
-import org.pathoplexus.backend.model.Metadata
-import org.pathoplexus.backend.model.SchemaConfig
 import org.springframework.stereotype.Component
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -71,7 +71,7 @@ enum class NucleotideSymbols(override val symbol: Char) : Symbol {
 
 @Component
 class SequenceValidator(
-    private val schemaConfig: SchemaConfig,
+    private val schema: Schema,
     private val referenceGenome: ReferenceGenome,
 ) {
     fun validateSequence(submittedProcessedData: SubmittedProcessedData) {
@@ -83,7 +83,7 @@ class SequenceValidator(
     private fun validateMetadata(
         submittedProcessedData: SubmittedProcessedData,
     ) {
-        val metadataFields = schemaConfig.schema.metadata
+        val metadataFields = schema.metadata
         validateNoUnknownInMetaData(submittedProcessedData.data.metadata, metadataFields.map { it.name })
 
         for (metadata in metadataFields) {
