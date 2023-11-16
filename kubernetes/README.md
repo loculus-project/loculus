@@ -10,7 +10,17 @@ The Helm variable `mode` reflects those purposes:
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
-## Partial deployment for local development
+## Setup for local development
+
+### TLDR
+
+```shell
+../deploy.py cluster --dev
+../deploy.py helm --dev
+```
+Start the [backend](/backend/README.md) and the [website](/website/README.md) locally.
+
+### Details
 
 Create a cluster that doesn't expose the ports of the backend and the website:
 ```shell
