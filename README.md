@@ -7,7 +7,8 @@ Detailed documentation is available in each folder's README. This file contains 
 - Backend code is in `backend`, see [`backend/README.md`](/backend/README.md)
 - Frontend code is in `website`, see [`website/README.md`](/website/README.md)
 - Sequence and metadata processing pipeline is in [`preprocessing`](/preprocessing) folder, see [`preprocessing/specification.md`](/preprocessing/specification.md) 
-- Deployment code is in `kubernetes`, see [`kubernetes/README.md`](/kubernetes/README.md)
+- Deployment code is in `kubernetes`, see [`kubernetes/README.md`](/kubernetes/README.md).
+  Check this for local development setup instructions.
 
 ## GitHub Actions
 
