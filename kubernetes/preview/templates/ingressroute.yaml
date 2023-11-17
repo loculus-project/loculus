@@ -1,6 +1,7 @@
 {{- if eq .Values.mode "cd" }}
 {{- $backendHost := printf "backend.%s" .Values.host }}
 {{- $lapisHost := printf "lapis.%s" .Values.host }}
+{{- $configFile := .Files.Get "config.yml" | fromYaml }}
 
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -58,12 +59,14 @@ spec:
   entryPoints:
     - websecure
   routes:
+    {{- range $key, $_ := $configFile.instances }}
     - kind: Rule
-      match: Host(`{{ $lapisHost }}`)
+      match: "Host(`{{ $lapisHost }}`) && PathPrefix(`/{{ $key }}`)"
       priority: 10
       services:
-        - name: pathoplexus-lapis-service
+        - name: pathoplexus-lapis-service-{{ $key }}
           port: 8080
+    {{- end }}
   tls:
     certResolver: myresolver
 {{- end }}

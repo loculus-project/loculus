@@ -1,8 +1,14 @@
+{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{ $namespace := .Values.namespace }}
+{{ $mode := .Values.mode }}
+
+{{- range $key, $_ := $configFile.instances }}
+---
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: lapis-silo-import-cronjob
-  namespace: {{ .Values.namespace }}
+  name: lapis-silo-import-cronjob-{{ $key }}
+  namespace: {{ $namespace }}
 spec:
   schedule: "* * * * *"
   concurrencyPolicy: Forbid
@@ -12,6 +18,7 @@ spec:
         metadata:
           labels:
             app: pathoplexus
+            component: silo-import-cronjob-{{ $key }}
         spec:
           containers:
             - name: silo-preprocessing
@@ -22,7 +29,7 @@ spec:
                 - /silo_import_job.sh
               env:
                 - name: BACKEND_HOST
-                  {{- if eq .Values.mode "dev" }}
+                  {{- if eq $mode "dev" }}
                   value: "host.k3d.internal"
                   {{- else }}
                   value: "pathoplexus-backend-service"
@@ -48,8 +55,9 @@ spec:
           volumes:
             - name: lapis-silo-database-config
               configMap:
-                name: lapis-silo-database-config
+                name: lapis-silo-database-config-{{ $key }}
             - name: lapis-silo-shared-data
               persistentVolumeClaim:
-                claimName: lapis-silo-shared-data
+                claimName: lapis-silo-shared-data-{{ $key }}
           restartPolicy: OnFailure
+{{- end }}

@@ -15,5 +15,5 @@ data:
       {{- else }}
       "backendUrl": "http://localhost:8079",
       {{- end }}
-      "lapisUrl": "http://localhost:8080"
+      "lapisUrl": "http://pathoplexus-lapis-service-dummy:8080"
     }

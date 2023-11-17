@@ -1,3 +1,7 @@
+#!/bin/bash
+
+set -e
+
 pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o jsonpath='{.items[*].metadata.name}' || true)
 for pod in $pods; do
   containers=$(kubectl get pod "$pod" -n pathoplexus -o jsonpath='{.spec.containers[*].name}' || true)

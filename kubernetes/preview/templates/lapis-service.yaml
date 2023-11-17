@@ -1,17 +1,21 @@
+{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{ $namespace := .Values.namespace }}
+
+{{- range $key, $_ := $configFile.instances }}
+---
 apiVersion: v1
 kind: Service
 metadata:
-  name: pathoplexus-lapis-service
-  namespace: {{ .Values.namespace }}
+  name: pathoplexus-lapis-service-{{ $key }}
+  namespace: {{ $namespace }}
 spec:
-  {{- template "pathoplexus.serviceType"}}
+  type: ClusterIP
   selector:
     app: pathoplexus
+    component: lapis-silo-{{ $key }}
   ports:
     - port: 8080
       targetPort: 8080
-      {{- if ne .Values.mode "cd" }}
-      nodePort: 30080
-      {{- end }}
       protocol: TCP
       name: http
+{{- end }}

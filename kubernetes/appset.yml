@@ -23,7 +23,7 @@ spec:
             number: 1
   template:
     metadata:
-      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" }}-{{.number}}'
+      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}-{{.number}}'
       annotations:
         argocd-image-updater.argoproj.io/image-list: 'backend=ghcr.io/pathoplexus/backend:{{.branch}} website=ghcr.io/pathoplexus/website:{{.branch}}'
         argocd-image-updater.argoproj.io/website.update-strategy: "digest"
@@ -35,7 +35,7 @@ spec:
     spec:
       destination:
         server: 'https://kubernetes.default.svc'
-        namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" }}'
+        namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}'
       project: default
       source:
         path: 'kubernetes/preview/'
@@ -44,13 +44,13 @@ spec:
         helm:
           parameters:
             - name: namespace
-              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" }}'
+              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}'
             - name: shortbranch
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}'
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}'
             - name: branch
               value: '{{.branch}}'
             - name: host
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" }}.preview.k3s.pathoplexus.org'
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}.preview.k3s.pathoplexus.org'
       syncPolicy:
         automated:
           selfHeal: true
