@@ -90,6 +90,7 @@ def handle_helm():
 
     docker_config_json = get_docker_config_json()
 
+    subprocess.run(['helm', 'dependency', 'update', HELM_CHART_DIR], check=True)
     subprocess.run([
         'helm', 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
         '--set', f"mode={mode}",

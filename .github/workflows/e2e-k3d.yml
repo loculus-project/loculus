@@ -80,26 +80,7 @@ jobs:
       run: cd website && npx playwright install-deps
       if: steps.playwright-cache.outputs.cache-hit == 'true'
     - name: Wait for the pods to be ready
-      run: |
-        end=$((SECONDS+300))
-        while true; do
-          all_pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o jsonpath='{.items[*].metadata.name}')
-          running_pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o=jsonpath='{.items[?(@.status.phase=="Running")].metadata.name}')
-
-          if [[ "$all_pods" == "$running_pods" ]]; then
-            echo "All pods are up and running!"
-            break
-          fi
-
-          if [[ "${SECONDS}" -ge "${end}" ]]; then
-            not_running_pods=$(kubectl get pods -l app=pathoplexus -n pathoplexus -o=jsonpath='{.items[?(@.status.phase!="Running")].metadata.name}')
-            echo "Error: The following pods did not start on time: $not_running_pods"
-            exit 1
-          fi
-          
-          echo "Waiting for pods to be ready..."
-          sleep 10
-        done
+      run: ./.github/scripts/wait_for_pods_to_be_ready.sh
     - name: Sleep for 20 secs
       run: sleep 20
     - name: Run E2E test
@@ -112,10 +93,13 @@ jobs:
         retention-days: 30
 
     - name: List running pods
+      if: ${{ !cancelled() }}
       run: kubectl get pods --all-namespaces
     - name: Describe pods
+      if: ${{ !cancelled() }}
       run: kubectl describe pods -l app=pathoplexus -n pathoplexus
     - name: Show events
+      if: ${{ !cancelled() }}
       run: kubectl get events -n pathoplexus
 
     - name: Save logs from all containers to file

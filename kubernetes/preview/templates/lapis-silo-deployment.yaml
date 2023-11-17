@@ -1,0 +1,54 @@
+{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{ $namespace := .Values.namespace }}
+
+{{- range $key, $_ := $configFile.instances }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pathoplexus-lapis-silo-{{ $key }}
+  namespace: {{ $namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pathoplexus
+      component: lapis-silo-{{ $key }}
+  template:
+    metadata:
+      labels:
+        app: pathoplexus
+        component: lapis-silo-{{ $key }}
+    spec:
+      containers:
+        - name: silo
+          image: ghcr.io/genspectrum/lapis-silo:test-branch
+          ports:
+            - containerPort: 8081
+          args:
+            - "--api"
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
+        - name: lapis
+          image: ghcr.io/genspectrum/lapis-v2:latest
+          ports:
+            - containerPort: 8080
+          args:
+            - "--silo.url=http://localhost:8081"
+          volumeMounts:
+            - name: lapis-silo-database-config
+              mountPath: /workspace/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-database-config
+              mountPath: /workspace/reference_genomes.json
+              subPath: reference_genomes.json
+
+      volumes:
+        - name: lapis-silo-database-config
+          configMap:
+            name: lapis-silo-database-config-{{ $key }}
+        - name: lapis-silo-shared-data
+          persistentVolumeClaim:
+            claimName: lapis-silo-shared-data-{{ $key }}
+{{- end }}

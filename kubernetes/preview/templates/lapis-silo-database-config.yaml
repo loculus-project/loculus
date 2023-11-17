@@ -1,13 +1,17 @@
 {{- $configFile := .Files.Get "config.yml" | fromYaml }}
 {{- $commonMetadata := (include "pathoplexus.commonMetadata" . | fromYaml).fields }}
+{{- $namespace := .Values.namespace }}
+{{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
+
+{{- range $key, $instance := $configFile.instances }}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: lapis-silo-database-config
-  namespace: {{ .Values.namespace }}
+  name: lapis-silo-database-config-{{ $key }}
+  namespace: {{ $namespace }}
 data:
-  {{- with $configFile.instances.dummy.schema }}
+  {{- with $instance.schema }}
   database_config.yaml: |
     schema:
       instanceName: {{ .instanceName }}
@@ -30,10 +34,11 @@ data:
     referenceGenomeFilename: reference_genomes.json
 
   reference_genomes.json: |
-    {{ $configFile.instances.dummy.referenceGenomes | toJson }}
+    {{ $instance.referenceGenomes | toJson }}
 
   silo_import_job.sh: |
-    {{ range .Files.Lines "silo_import_job.sh" }}
+    {{ range $importScriptLines }}
     {{ . }}{{ end }}
 
   pangolineage_alias.json: "{}"
+{{- end }}
