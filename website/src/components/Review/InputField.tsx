@@ -1,6 +1,5 @@
+import { Icon } from '@iconify/react';
 import { type FC, useState } from 'react';
-
-import UndoTwoToneIcon from '~icons/ic/twotone-undo';
 
 export type KeyValuePair = {
     value: string;
@@ -42,7 +41,7 @@ export const InputField: FC<InputFieldProps> = ({ row, onChange, colorClassName 
                         className='tooltip tooltip-info whitespace-pre-line'
                         data-tip={'Revert to: ' + row.initialValue}
                     >
-                        <UndoTwoToneIcon color='action' />
+                        <Icon icon='ic:twotone-undo' color='action' />
                     </div>
                 )}
             </button>

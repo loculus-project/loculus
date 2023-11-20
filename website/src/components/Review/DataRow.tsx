@@ -1,9 +1,8 @@
+import { Icon } from '@iconify/react';
 import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
 
 import { InputField, type KeyValuePair, type Row } from './InputField.tsx';
-import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
-import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
 
 type EditableRowProps = {
     row: Row;
@@ -34,7 +33,7 @@ const ErrorAndWarningIcons: FC<ErrorAndWarningIconsProps> = ({ row }) => {
         <>
             {row.errors.length > 0 ? (
                 <div className='tooltip tooltip-error whitespace-pre-line text-error' data-tip={row.errors.join('\n')}>
-                    <DangerousTwoToneIcon />
+                    <Icon icon='ic:twotone-dangerous' />
                 </div>
             ) : null}
             {row.warnings.length > 0 ? (
@@ -42,7 +41,7 @@ const ErrorAndWarningIcons: FC<ErrorAndWarningIconsProps> = ({ row }) => {
                     className='tooltip tooltip-warning whitespace-pre-line text-warning'
                     data-tip={row.warnings.join('\n')}
                 >
-                    <WarningAmberIcon />
+                    <Icon icon='ic:baseline-warning-amber' />
                 </div>
             ) : null}
         </>
