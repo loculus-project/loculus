@@ -9,6 +9,7 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.SubmissionIdMapping
+import org.pathoplexus.backend.model.SubmitModel
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.http.MediaType
@@ -21,6 +22,15 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
+private val validRoute = addOrganismToPath("submit")
+
+private val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
+    .file("sequenceFile", "sequences".toByteArray())
+    .file("metadataFile", "metadata".toByteArray())
+    .param("username", "name")
+
+private val validResponse = emptyList<SubmissionIdMapping>()
+
 @SpringBootTestWithoutDatabase
 @AutoConfigureMockMvc
 class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
@@ -32,16 +42,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
         MockKAnnotations.init(this)
     }
 
-    private val validRoute = "/submit"
-    private fun MockKMatcherScope.validControllerCall() =
-        submissionController.submit(any(), any(), any())
-
-    val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
-        .file("sequenceFile", "sequences".toByteArray())
-        .file("metadataFile", "metadata".toByteArray())
-        .param("username", "name")
-
-    private val validResponse = emptyList<SubmissionIdMapping>()
+    private fun MockKMatcherScope.validControllerCall() = submissionController.submit(any(), any(), any(), any())
 
     @Test
     fun `throw NOT_FOUND(404) when route is not found`() {
@@ -87,7 +88,7 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     @Test
     fun `WHEN I submit a request with invalid schema THEN it should return a descriptive error message`() {
         mockMvc.perform(
-            post("/approve-processed-data")
+            post(addOrganismToPath("/approve-processed-data"))
                 .param("username", "userName")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""{"fieldThatDoesNotExist": null}"""),
@@ -96,5 +97,28 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Bad Request"))
             .andExpect(jsonPath("$.detail", containsString("failed for JSON property accessionVersions")))
+    }
+}
+
+@SpringBootTestWithoutDatabase
+@AutoConfigureMockMvc
+class ExceptionHandlerWithMockedModelTest(@Autowired val mockMvc: MockMvc) {
+    @MockkBean
+    lateinit var submitModel: SubmitModel
+
+    @Test
+    fun `WHEN I submit a request with invalid organism THEN it should return a descriptive error message`() {
+        every { submitModel.processSubmission(any(), any(), any(), any()) } returns validResponse
+
+        mockMvc.perform(
+            multipart("/unknownOrganism/submit")
+                .file("sequenceFile", "sequences".toByteArray())
+                .file("metadataFile", "metadata".toByteArray())
+                .param("username", "name"),
+        )
+            .andExpect(status().isBadRequest)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.title").value("Bad Request"))
+            .andExpect(jsonPath("$.detail", containsString("Invalid organism: unknownOrganism")))
     }
 }

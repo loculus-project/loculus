@@ -1,5 +1,6 @@
 package org.pathoplexus.backend.controller
 
+import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert
 import org.hamcrest.Matchers
@@ -8,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.api.Status.APPROVED_FOR_RELEASE
+import org.pathoplexus.backend.api.Status.HAS_ERRORS
 import org.pathoplexus.backend.api.Status.RECEIVED
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
@@ -26,7 +28,7 @@ class ReviseEndpointTest(
 ) {
     @Test
     fun `GIVEN entries with status 'APPROVED_FOR_RELEASE' THEN there is a revised version and returns HeaderIds`() {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE)
 
         client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
@@ -62,7 +64,7 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting revised data with non-existing accessions THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE)
 
         client.reviseSequenceEntries(
             SubmitFiles.revisedMetadataFileWith(
@@ -84,8 +86,26 @@ class ReviseEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting revised data for wrong organism THEN throws an unprocessableEntity error`() {
+        convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE, organism = DEFAULT_ORGANISM)
+
+        client.reviseSequenceEntries(
+            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.sequencesFile,
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    containsString("accession versions are not of organism otherOrganism:"),
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN submitting revised data not from the submitter THEN throws forbidden error`() {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE)
 
         val notSubmitter = "notTheSubmitter"
         client.reviseSequenceEntries(
@@ -105,7 +125,7 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting data with version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequenceEntriesToHasErrors()
+        convenienceClient.prepareDataTo(HAS_ERRORS)
 
         client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,

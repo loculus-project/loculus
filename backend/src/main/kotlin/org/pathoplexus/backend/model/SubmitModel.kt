@@ -2,6 +2,7 @@ package org.pathoplexus.backend.model
 
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
+import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.OriginalData
 import org.pathoplexus.backend.api.RevisedData
 import org.pathoplexus.backend.api.SubmissionIdMapping
@@ -28,20 +29,22 @@ class SubmitModel(private val databaseService: DatabaseService, private val refe
         username: String,
         metadataFile: MultipartFile,
         sequenceFile: MultipartFile,
+        organism: Organism,
     ): List<SubmissionIdMapping> {
         val submittedData = processSubmittedFiles(metadataFile, sequenceFile)
 
-        return databaseService.insertSubmissions(username, submittedData)
+        return databaseService.insertSubmissions(username, submittedData, organism)
     }
 
     fun processRevision(
         username: String,
         metadataFile: MultipartFile,
         sequenceFile: MultipartFile,
+        organism: Organism,
     ): List<SubmissionIdMapping> {
         val revisedData = processRevisedData(metadataFile, sequenceFile)
 
-        return databaseService.reviseData(username, revisedData)
+        return databaseService.reviseData(username, revisedData, organism)
     }
 
     private fun processSubmittedFiles(

@@ -76,6 +76,27 @@ object PreparedProcessedData {
             version = version,
         )
 
+    fun successfullyProcessedOtherOrganismData(
+        accession: Accession = DefaultFiles.firstAccession,
+        version: Long = defaultSuccessfulSubmittedData.version,
+    ) =
+        defaultSuccessfulSubmittedData.withValues(
+            accession = accession,
+            version = version,
+            data = ProcessedData(
+                metadata = mapOf(
+                    "date" to TextNode("2022-12-24"),
+                    "specialOtherField" to TextNode("some value"),
+                    "pangoLineage" to TextNode("B.1.1.7"),
+                ),
+                alignedNucleotideSequences = mapOf("main" to "ATCG"),
+                alignedAminoAcidSequences = mapOf("gene" to "MADS"),
+                unalignedNucleotideSequences = mapOf("main" to "ATCG"),
+                nucleotideInsertions = mapOf("main" to listOf(Insertion(123, "ACTG"))),
+                aminoAcidInsertions = mapOf("gene" to listOf(Insertion(123, "MADS"))),
+            ),
+        )
+
     fun withNullForFields(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =
         defaultSuccessfulSubmittedData.withValues(
             accession = accession,

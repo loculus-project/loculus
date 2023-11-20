@@ -4,6 +4,7 @@ import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.pathoplexus.backend.api.AccessionVersion
+import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.toPairs
 import org.pathoplexus.backend.controller.ForbiddenException
@@ -17,6 +18,7 @@ class QueryPreconditionValidator {
         submitter: String,
         accessionVersions: List<AccessionVersion>,
         statuses: List<Status>,
+        organism: Organism,
     ) {
         val sequenceEntries = SequenceEntriesTable
             .slice(
@@ -24,6 +26,7 @@ class QueryPreconditionValidator {
                 SequenceEntriesTable.version,
                 SequenceEntriesTable.submitter,
                 SequenceEntriesTable.status,
+                SequenceEntriesTable.organism,
             )
             .select(
                 where = {
@@ -37,12 +40,14 @@ class QueryPreconditionValidator {
         validateAccessionVersionsExist(sequenceEntries, accessionVersions)
         validateSequenceEntriesAreInStates(sequenceEntries, statuses)
         validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter)
+        validateOrganism(sequenceEntries, organism)
     }
 
     fun validateAccessions(
         submitter: String,
         accessions: List<Accession>,
         statuses: List<Status>,
+        organism: Organism,
     ): List<AccessionVersion> {
         val maxVersionQuery = maxVersionQuery()
 
@@ -52,6 +57,7 @@ class QueryPreconditionValidator {
                 SequenceEntriesTable.version,
                 SequenceEntriesTable.submitter,
                 SequenceEntriesTable.status,
+                SequenceEntriesTable.organism,
             )
             .select(
                 where = {
@@ -63,6 +69,7 @@ class QueryPreconditionValidator {
         validateAccessionsExist(sequenceEntries, accessions)
         validateSequenceEntriesAreInStates(sequenceEntries, statuses)
         validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter)
+        validateOrganism(sequenceEntries, organism)
 
         return sequenceEntries.map {
             AccessionVersion(
@@ -144,5 +151,29 @@ class QueryPreconditionValidator {
             .joinToString(", ")
 
         throw UnprocessableEntityException("Accessions $accessionsNotFound do not exist")
+    }
+
+    private fun validateOrganism(sequenceEntryVersions: Query, organism: Organism) {
+        val accessionVersionsByOtherOrganisms =
+            sequenceEntryVersions.filter { it[SequenceEntriesTable.organism] != organism.name }
+                .groupBy(
+                    { it[SequenceEntriesTable.organism] },
+                    { AccessionVersion(it[SequenceEntriesTable.accession], it[SequenceEntriesTable.version]) },
+                )
+
+        if (accessionVersionsByOtherOrganisms.isEmpty()) {
+            return
+        }
+
+        val accessionVersionsOfOtherOrganism = accessionVersionsByOtherOrganisms
+            .map { (organism, accessionVersions) ->
+                val accessionVersionsString = accessionVersions.sortedWith(AccessionVersionComparator)
+                    .joinToString(", ") { it.displayAccessionVersion() }
+                "organism $organism: $accessionVersionsString"
+            }
+            .joinToString(" - ")
+        throw UnprocessableEntityException(
+            "The following accession versions are not of organism ${organism.name}: $accessionVersionsOfOtherOrganism",
+        )
     }
 }

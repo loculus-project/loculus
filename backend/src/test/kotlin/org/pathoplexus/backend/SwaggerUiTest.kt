@@ -33,7 +33,7 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
             .andExpect(status().isOk)
             .andExpect(content().contentType("application/json"))
             .andExpect(jsonPath("\$.openapi").exists())
-            .andExpect(jsonPath("\$.paths./submit").exists())
+            .andExpect(jsonPath("\$.paths./{organism}/submit").exists())
     }
 
     @Test
@@ -46,6 +46,6 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
         val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
         val yaml = objectMapper.readTree(result.response.contentAsString)
         assertTrue(yaml.has("openapi"))
-        assertTrue(yaml.get("paths").has("/submit"))
+        assertTrue(yaml.get("paths").has("/{organism}/submit"))
     }
 }

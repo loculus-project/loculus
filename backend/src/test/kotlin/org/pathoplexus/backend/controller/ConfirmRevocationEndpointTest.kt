@@ -3,7 +3,8 @@ package org.pathoplexus.backend.controller
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.AccessionVersion
-import org.pathoplexus.backend.api.Status
+import org.pathoplexus.backend.api.Status.APPROVED_FOR_RELEASE
+import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -28,9 +29,9 @@ class ConfirmRevocationEndpointTest(
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntryOfUser(accession = "1", version = 2)
-            .assertStatusIs(Status.APPROVED_FOR_RELEASE)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
         convenienceClient.getSequenceEntryOfUser(accession = "2", version = 2)
-            .assertStatusIs(Status.APPROVED_FOR_RELEASE)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
     }
 
     @Test
@@ -45,6 +46,22 @@ class ConfirmRevocationEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail", containsString("Accession versions 1.123, 123.2 do not exist")),
+            )
+    }
+
+    @Test
+    fun `WHEN confirming revocation of other organism THEN throws an unprocessableEntity error`() {
+        val revokedAccessionVersion =
+            convenienceClient.prepareDataTo(AWAITING_APPROVAL_FOR_REVOCATION, organism = DEFAULT_ORGANISM)[0]
+
+        client.confirmRevocation(
+            listOf(revokedAccessionVersion.toAccessionVersion()),
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail", containsString("accession versions are not of organism $OTHER_ORGANISM:")),
             )
     }
 
@@ -85,8 +102,8 @@ class ConfirmRevocationEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession versions are in not in one of the states [" +
-                        "${Status.AWAITING_APPROVAL_FOR_REVOCATION.name}]: " +
-                        "1.1 - ${Status.APPROVED_FOR_RELEASE.name}, 2.1 - ${Status.APPROVED_FOR_RELEASE.name}",
+                        "${AWAITING_APPROVAL_FOR_REVOCATION.name}]: " +
+                        "1.1 - ${APPROVED_FOR_RELEASE.name}, 2.1 - ${APPROVED_FOR_RELEASE.name}",
                 ),
             )
     }

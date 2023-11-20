@@ -3,6 +3,8 @@ package org.pathoplexus.backend.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.pathoplexus.backend.api.AccessionVersion
+import org.pathoplexus.backend.api.AccessionVersionInterface
+import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SequenceEntryReview
 import org.pathoplexus.backend.api.SequenceEntryStatus
 import org.pathoplexus.backend.api.Status
@@ -20,48 +22,76 @@ class SubmissionConvenienceClient(
     private val client: SubmissionControllerClient,
     private val objectMapper: ObjectMapper,
 ) {
-    fun submitDefaultFiles(username: String = USER_NAME): List<SubmissionIdMapping> {
+    fun submitDefaultFiles(
+        username: String = USER_NAME,
+        organism: String = DEFAULT_ORGANISM,
+    ): List<SubmissionIdMapping> {
         val submit = client.submit(
             username,
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
+            organism = organism,
         )
 
         return deserializeJsonResponse(submit)
     }
 
-    fun prepareDefaultSequenceEntriesToInProcessing() {
-        submitDefaultFiles()
-        extractUnprocessedData()
+    fun prepareDefaultSequenceEntriesToInProcessing(
+        organism: String = DEFAULT_ORGANISM,
+    ): List<AccessionVersionInterface> {
+        submitDefaultFiles(organism = organism)
+        return extractUnprocessedData(organism = organism).getAccessionVersions()
     }
 
-    fun submitProcessedData(vararg submittedProcessedData: SubmittedProcessedData) {
-        client.submitProcessedData(*submittedProcessedData)
+    fun submitProcessedData(
+        vararg submittedProcessedData: SubmittedProcessedData,
+        organism: String = DEFAULT_ORGANISM,
+    ) {
+        client.submitProcessedData(*submittedProcessedData, organism = organism)
             .andExpect(status().isNoContent)
     }
 
-    fun prepareDefaultSequenceEntriesToHasErrors() {
-        prepareDefaultSequenceEntriesToInProcessing()
-        DefaultFiles.allAccessions.forEach { accession ->
-            client.submitProcessedData(PreparedProcessedData.withErrors(accession = accession))
-        }
-    }
-
-    private fun prepareDefaultSequenceEntriesToAwaitingApproval() {
-        prepareDefaultSequenceEntriesToInProcessing()
-        client.submitProcessedData(
-            *DefaultFiles.allAccessions.map {
-                PreparedProcessedData.successfullyProcessed(accession = it)
+    fun prepareDefaultSequenceEntriesToHasErrors(organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
+        val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(organism = organism)
+        submitProcessedData(
+            *accessionVersions.map {
+                PreparedProcessedData.withErrors(accession = it.accession)
             }.toTypedArray(),
+            organism = organism,
         )
+        return accessionVersions
     }
 
-    fun prepareDefaultSequenceEntriesToApprovedForRelease() {
-        prepareDefaultSequenceEntriesToAwaitingApproval()
+    private fun prepareDefaultSequenceEntriesToAwaitingApproval(
+        organism: String = DEFAULT_ORGANISM,
+    ): List<AccessionVersionInterface> {
+        val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(organism = organism)
+        submitProcessedData(
+            *accessionVersions.map {
+                when (organism) {
+                    DEFAULT_ORGANISM -> PreparedProcessedData.successfullyProcessed(accession = it.accession)
+                    OTHER_ORGANISM -> PreparedProcessedData.successfullyProcessedOtherOrganismData(
+                        accession = it.accession,
+                    )
+
+                    else -> throw Exception("Test issue: There is no mapping of processed data for organism $organism")
+                }
+            }.toTypedArray(),
+            organism = organism,
+        )
+        return accessionVersions
+    }
+
+    fun prepareDefaultSequenceEntriesToApprovedForRelease(
+        organism: String = DEFAULT_ORGANISM,
+    ): List<AccessionVersionInterface> {
+        val accessionVersions = prepareDefaultSequenceEntriesToAwaitingApproval(organism = organism)
 
         approveProcessedSequenceEntries(
-            DefaultFiles.allAccessions.map { AccessionVersion(it, 1L) },
+            accessionVersions.map { AccessionVersion(it.accession, it.version) },
+            organism = organism,
         )
+        return accessionVersions
     }
 
     fun reviseAndProcessDefaultSequenceEntries() {
@@ -75,13 +105,18 @@ class SubmissionConvenienceClient(
         approveProcessedSequenceEntries(extractedAccessionVersions)
     }
 
-    fun prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation() {
-        prepareDefaultSequenceEntriesToApprovedForRelease()
-        revokeSequenceEntries(DefaultFiles.allAccessions)
+    fun prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation(
+        organism: String = DEFAULT_ORGANISM,
+    ): List<SequenceEntryStatus> {
+        val accessionVersions = prepareDefaultSequenceEntriesToApprovedForRelease(organism = organism)
+        return revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism)
     }
 
-    fun extractUnprocessedData(numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES) =
-        client.extractUnprocessedData(numberOfSequenceEntries)
+    fun extractUnprocessedData(
+        numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
+        organism: String = DEFAULT_ORGANISM,
+    ) =
+        client.extractUnprocessedData(numberOfSequenceEntries, organism)
             .expectNdjsonAndGetContent<UnprocessedData>()
 
     fun prepareDatabaseWith(
@@ -92,8 +127,11 @@ class SubmissionConvenienceClient(
         client.submitProcessedData(*processedData)
     }
 
-    fun getSequenceEntriesOfUser(userName: String = USER_NAME): List<SequenceEntryStatus> {
-        return deserializeJsonResponse(client.getSequenceEntriesOfUser(userName))
+    fun getSequenceEntriesOfUser(
+        userName: String = USER_NAME,
+        organism: String = DEFAULT_ORGANISM,
+    ): List<SequenceEntryStatus> {
+        return deserializeJsonResponse(client.getSequenceEntriesOfUser(userName, organism = organism))
     }
 
     fun getSequenceEntriesOfUserInState(
@@ -110,8 +148,9 @@ class SubmissionConvenienceClient(
         accession: Accession,
         version: Long,
         userName: String = USER_NAME,
+        organism: String = DEFAULT_ORGANISM,
     ): SequenceEntryStatus {
-        val sequencesOfUser = getSequenceEntriesOfUser(userName)
+        val sequencesOfUser = getSequenceEntriesOfUser(userName, organism = organism)
 
         return sequencesOfUser.find { it.accession == accession && it.version == version }
             ?: error("Did not find $accession.$version for $userName")
@@ -135,38 +174,50 @@ class SubmissionConvenienceClient(
         }
     }
 
-    fun approveProcessedSequenceEntries(listOfSequencesToApprove: List<AccessionVersion>) {
-        client.approveProcessedSequenceEntries(listOfSequencesToApprove)
+    fun approveProcessedSequenceEntries(
+        listOfSequencesToApprove: List<AccessionVersion>,
+        organism: String = DEFAULT_ORGANISM,
+    ) {
+        client.approveProcessedSequenceEntries(listOfSequencesToApprove, organism = organism)
             .andExpect(status().isNoContent)
     }
 
-    fun reviseDefaultProcessedSequenceEntries(): List<SubmissionIdMapping> {
+    fun reviseDefaultProcessedSequenceEntries(organism: String = DEFAULT_ORGANISM): List<SubmissionIdMapping> {
         val result = client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
             DefaultFiles.sequencesFile,
+            organism = organism,
         ).andExpect(status().isOk)
 
         return deserializeJsonResponse(result)
     }
 
-    fun revokeSequenceEntries(listOfSequencesToRevoke: List<Accession>): List<SequenceEntryStatus> =
-        deserializeJsonResponse(client.revokeSequenceEntries(listOfSequencesToRevoke))
+    fun revokeSequenceEntries(
+        listOfSequencesToRevoke: List<Accession>,
+        organism: String = DEFAULT_ORGANISM,
+    ): List<SequenceEntryStatus> =
+        deserializeJsonResponse(client.revokeSequenceEntries(listOfSequencesToRevoke, organism = organism))
 
     fun confirmRevocation(listOfSequencesToConfirm: List<AccessionVersion>) {
         client.confirmRevocation(listOfSequencesToConfirm)
             .andExpect(status().isNoContent)
     }
 
-    fun prepareDataTo(status: Status) {
-        when (status) {
-            Status.RECEIVED -> submitDefaultFiles()
-            Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing()
-            Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors()
-            Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval()
-            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease()
-            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
+    fun prepareDataTo(status: Status, organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
+        return when (status) {
+            Status.RECEIVED -> submitDefaultFiles(organism = organism)
+            Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing(organism = organism)
+            Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(organism = organism)
+            Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(organism = organism)
+            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(organism = organism)
+            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation(
+                organism = organism,
+            )
         }
     }
+
+    fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
+        client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData>()
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =

@@ -1,6 +1,8 @@
 package org.pathoplexus.backend.controller
 
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
@@ -24,6 +26,22 @@ class GetSequencesOfUserEndpointTest(@Autowired val convenienceClient: Submissio
 
         val sequencesOfOtherUser = convenienceClient.getSequenceEntriesOfUser("otherUser")
         assertThat(sequencesOfOtherUser, `is`(emptyList()))
+    }
+
+    @Test
+    fun `GIVEN some sequence entries in the database THEN only shows entries of the requested organism`() {
+        val defaultOrganismData = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
+        val otherOrganismData = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)
+
+        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(USER_NAME, organism = OTHER_ORGANISM)
+        assertThat(
+            sequencesOfUser.getAccessionVersions(),
+            containsInAnyOrder(*otherOrganismData.getAccessionVersions().toTypedArray()),
+        )
+        assertThat(
+            sequencesOfUser.getAccessionVersions().intersect(defaultOrganismData.getAccessionVersions().toSet()),
+            `is`(empty()),
+        )
     }
 
     @ParameterizedTest(name = "{arguments}")

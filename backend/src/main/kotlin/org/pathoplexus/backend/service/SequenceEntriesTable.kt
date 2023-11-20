@@ -51,6 +51,7 @@ const val TABLE_NAME = "sequence_entries"
 object SequenceEntriesTable : Table(TABLE_NAME) {
     val accession = varchar("accession", 255)
     val version = long("version")
+    val organism = varchar("organism", 255)
     val submissionId = varchar("submission_id", 255)
     val submitter = varchar("submitter", 255)
     val submittedAt = datetime("submitted_at")

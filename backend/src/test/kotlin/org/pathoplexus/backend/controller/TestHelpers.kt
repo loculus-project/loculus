@@ -5,6 +5,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.`is`
+import org.pathoplexus.backend.api.AccessionVersion
+import org.pathoplexus.backend.api.AccessionVersionInterface
 import org.pathoplexus.backend.api.SequenceEntryStatus
 import org.pathoplexus.backend.api.Status
 import org.springframework.test.web.servlet.MvcResult
@@ -12,6 +14,16 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.shaded.org.awaitility.Awaitility.await
+
+const val DEFAULT_ORGANISM = "dummyOrganism"
+const val OTHER_ORGANISM = "otherOrganism"
+
+fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.accession, this.version)
+
+fun List<AccessionVersionInterface>.getAccessionVersions() = map { it.toAccessionVersion() }
+
+fun addOrganismToPath(path: String, organism: String = DEFAULT_ORGANISM) =
+    "/$organism/${path.trimStart('/')}"
 
 val jacksonObjectMapper: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 

@@ -12,7 +12,7 @@ data_dir="$base_data_dir/$current_timestamp"
 mkdir -p "$data_dir"
 echo  "created $data_dir"
 
-released_data_endpoint="http://$BACKEND_HOST:8079/get-released-data"
+released_data_endpoint="$BACKEND_BASE_URL/get-released-data"
 echo "calling $released_data_endpoint"
 curl -o "$data_dir/data.ndjson" --fail-with-body "$released_data_endpoint"
 

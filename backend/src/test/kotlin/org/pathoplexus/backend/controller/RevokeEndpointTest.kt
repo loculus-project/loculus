@@ -1,9 +1,11 @@
 package org.pathoplexus.backend.controller
 
+import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -43,6 +45,20 @@ class RevokeEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accessions $nonExistingAccession do not exist",
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN revoking sequence entry of other organism THEN throws an unprocessableEntity error`() {
+        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = DEFAULT_ORGANISM)
+
+        client.revokeSequenceEntries(listOf(firstAccession), organism = OTHER_ORGANISM)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    containsString("accession versions are not of organism $OTHER_ORGANISM:"),
                 ),
             )
     }

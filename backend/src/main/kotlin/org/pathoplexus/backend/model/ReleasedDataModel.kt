@@ -3,6 +3,7 @@ package org.pathoplexus.backend.model
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.TextNode
 import mu.KotlinLogging
+import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SiloVersionStatus
 import org.pathoplexus.backend.service.Accession
@@ -17,13 +18,13 @@ private val log = KotlinLogging.logger { }
 @Service
 class ReleasedDataModel(private val databaseService: DatabaseService) {
     @Transactional(readOnly = true)
-    fun getReleasedData(): Sequence<ProcessedData> {
+    fun getReleasedData(organism: Organism): Sequence<ProcessedData> {
         log.info { "fetching released submissions" }
 
-        val latestVersions = databaseService.getLatestVersions()
-        val latestRevocationVersions = databaseService.getLatestRevocationVersions()
+        val latestVersions = databaseService.getLatestVersions(organism)
+        val latestRevocationVersions = databaseService.getLatestRevocationVersions(organism)
 
-        return databaseService.streamReleasedSubmissions()
+        return databaseService.streamReleasedSubmissions(organism)
             .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions) }
     }
 
