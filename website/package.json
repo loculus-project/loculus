@@ -19,7 +19,6 @@
   "dependencies": {
     "@astrojs/node": "^6.0.3",
     "@emotion/react": "^11.11.1",
-    "@esbuild/darwin-arm64": "^0.19.6",
     "@mui/material": "^5.14.17",
     "@mui/x-date-pickers": "^6.18.1",
     "@svgr/core": "^8.1.0",
