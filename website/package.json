@@ -19,7 +19,6 @@
   "dependencies": {
     "@astrojs/node": "^6.0.3",
     "@emotion/react": "^11.11.1",
-    "@iconify/json": "^2.2.141",
     "@mui/material": "^5.14.17",
     "@mui/x-date-pickers": "^6.18.1",
     "@svgr/core": "^8.1.0",
@@ -46,6 +45,7 @@
     "@astrojs/react": "^3.0.4",
     "@astrojs/tailwind": "^5.0.2",
     "@emotion/styled": "^11.11.0",
+    "@iconify/json": "^2.2.141",
     "@playwright/test": "^1.39.0",
     "@tanstack/eslint-plugin-query": "^5.8.3",
     "@testing-library/dom": "^9.3.1",
