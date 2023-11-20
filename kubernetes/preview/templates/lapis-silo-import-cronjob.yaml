@@ -28,11 +28,11 @@ spec:
                 - sh
                 - /silo_import_job.sh
               env:
-                - name: BACKEND_HOST
+                - name: BACKEND_BASE_URL
                   {{- if eq $mode "dev" }}
-                  value: "host.k3d.internal"
+                  value: "http://host.k3d.internal:8079/{{ $key }}"
                   {{- else }}
-                  value: "pathoplexus-backend-service"
+                  value: "http://pathoplexus-backend-service:8079/{{ $key }}"
                   {{- end }}
               volumeMounts:
                 - name: lapis-silo-database-config

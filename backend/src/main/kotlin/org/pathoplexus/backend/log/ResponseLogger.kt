@@ -18,6 +18,6 @@ class ResponseLogger : OncePerRequestFilter() {
     ) {
         filterChain.doFilter(request, response)
 
-        log.info { "Responding with status ${response.status}" }
+        log.info { "${request.requestURL} - Responding with status ${response.status}" }
     }
 }

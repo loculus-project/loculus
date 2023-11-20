@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.NextVal
 import org.jetbrains.exposed.sql.QueryParameter
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.alias
@@ -29,6 +30,7 @@ import org.jetbrains.exposed.sql.update
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.AccessionVersionInterface
+import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.RevisedData
 import org.pathoplexus.backend.api.SequenceEntryReview
@@ -49,6 +51,7 @@ import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.NotFoundException
+import org.pathoplexus.backend.controller.ProcessingValidationException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.utils.IteratorStreamer
 import org.springframework.stereotype.Service
@@ -64,7 +67,7 @@ private val log = KotlinLogging.logger { }
 @Service
 @Transactional
 class DatabaseService(
-    private val sequenceValidator: SequenceValidator,
+    private val sequenceValidatorFactory: SequenceValidatorFactory,
     private val queryPreconditionValidator: QueryPreconditionValidator,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
@@ -75,7 +78,11 @@ class DatabaseService(
         Database.connect(pool)
     }
 
-    fun insertSubmissions(submitter: String, submittedData: List<SubmittedData>): List<SubmissionIdMapping> {
+    fun insertSubmissions(
+        submitter: String,
+        submittedData: List<SubmittedData>,
+        submittedOrganism: Organism,
+    ): List<SubmissionIdMapping> {
         log.info { "submitting ${submittedData.size} new sequence entries by $submitter" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -89,6 +96,7 @@ class DatabaseService(
                 it[status] = RECEIVED.name
                 it[submissionId] = data.submissionId
                 it[originalData] = data.originalData
+                it[organism] = submittedOrganism.name
             }
             SubmissionIdMapping(
                 insert[SequenceEntriesTable.accession],
@@ -98,7 +106,7 @@ class DatabaseService(
         }
     }
 
-    fun streamUnprocessedSubmissions(numberOfSequenceEntries: Int, outputStream: OutputStream) {
+    fun streamUnprocessedSubmissions(numberOfSequenceEntries: Int, outputStream: OutputStream, organism: Organism) {
         log.info { "streaming unprocessed submissions. Requested $numberOfSequenceEntries sequence entries." }
         val maxVersionQuery = maxVersionQuery()
 
@@ -107,7 +115,8 @@ class DatabaseService(
             .select(
                 where = {
                     (SequenceEntriesTable.status eq RECEIVED.name)
-                        .and((SequenceEntriesTable.version eq maxVersionQuery))
+                        .and(SequenceEntriesTable.version eq maxVersionQuery)
+                        .and(organismIs(organism))
                 },
             )
             .limit(numberOfSequenceEntries)
@@ -137,7 +146,7 @@ class DatabaseService(
             }
     }
 
-    fun updateProcessedData(inputStream: InputStream) {
+    fun updateProcessedData(inputStream: InputStream, organism: Organism) {
         log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
@@ -148,22 +157,28 @@ class DatabaseService(
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
 
-            val numInserted = insertProcessedDataWithStatus(submittedProcessedData)
+            val numInserted = insertProcessedDataWithStatus(submittedProcessedData, organism)
             if (numInserted != 1) {
-                throwInsertFailedException(submittedProcessedData)
+                throwInsertFailedException(submittedProcessedData, organism)
             }
         }
     }
 
     private fun insertProcessedDataWithStatus(
         submittedProcessedData: SubmittedProcessedData,
+        organism: Organism,
     ): Int {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val submittedErrors = submittedProcessedData.errors.orEmpty()
 
         if (submittedErrors.isEmpty()) {
-            sequenceValidator.validateSequence(submittedProcessedData)
+            try {
+                sequenceValidatorFactory.create(organism).validateSequence(submittedProcessedData)
+            } catch (validationException: ProcessingValidationException) {
+                throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
+                throw validationException
+            }
         }
 
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
@@ -178,7 +193,8 @@ class DatabaseService(
             where = {
                 (SequenceEntriesTable.accession eq submittedProcessedDataWithAllKeysForInsertions.accession) and
                     (SequenceEntriesTable.version eq submittedProcessedDataWithAllKeysForInsertions.version) and
-                    (SequenceEntriesTable.status eq IN_PROCESSING.name)
+                    (SequenceEntriesTable.status eq IN_PROCESSING.name) and
+                    organismIs(organism)
             },
         ) {
             it[status] = newStatus.name
@@ -186,6 +202,26 @@ class DatabaseService(
             it[errors] = submittedErrors
             it[warnings] = submittedWarnings
             it[finishedProcessingAt] = now
+        }
+    }
+
+    private fun throwIfIsSubmissionForWrongOrganism(
+        submittedProcessedData: SubmittedProcessedData,
+        organism: Organism,
+    ) {
+        val resultRow = SequenceEntriesTable.slice(SequenceEntriesTable.organism)
+            .select(
+                where = {
+                    (SequenceEntriesTable.accession eq submittedProcessedData.accession) and
+                        (SequenceEntriesTable.version eq submittedProcessedData.version)
+                },
+            ).firstOrNull() ?: return
+
+        if (resultRow[SequenceEntriesTable.organism] != organism.name) {
+            throw UnprocessableEntityException(
+                "Accession version ${submittedProcessedData.displayAccessionVersion()} is for organism " +
+                    "${resultRow[SequenceEntriesTable.organism]}, but submitted data is for organism ${organism.name}",
+            )
         }
     }
 
@@ -216,7 +252,7 @@ class DatabaseService(
         )
     }
 
-    private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData): String {
+    private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData, organism: Organism): String {
         val selectedSequenceEntries = SequenceEntriesTable
             .slice(
                 SequenceEntriesTable.accession,
@@ -242,13 +278,19 @@ class DatabaseService(
                     "(was ${selectedSequence[SequenceEntriesTable.status]})",
             )
         }
+
         throw RuntimeException("Update processed data: Unexpected error for accession versions $accessionVersion")
     }
 
-    fun approveProcessedData(submitter: String, accessionVersions: List<AccessionVersion>) {
+    fun approveProcessedData(submitter: String, accessionVersions: List<AccessionVersion>, organism: Organism) {
         log.info { "approving ${accessionVersions.size} sequences by $submitter" }
 
-        queryPreconditionValidator.validateAccessionVersions(submitter, accessionVersions, listOf(AWAITING_APPROVAL))
+        queryPreconditionValidator.validateAccessionVersions(
+            submitter,
+            accessionVersions,
+            listOf(AWAITING_APPROVAL),
+            organism,
+        )
 
         SequenceEntriesTable.update(
             where = {
@@ -259,34 +301,36 @@ class DatabaseService(
         }
     }
 
-    fun getLatestVersions(): Map<Accession, Version> {
-        val maxVersionExpression = SequenceEntriesTable.version.max()
-        return SequenceEntriesTable
-            .slice(SequenceEntriesTable.accession, maxVersionExpression)
-            .select(
-                where = {
-                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name)
-                },
-            )
-            .groupBy(SequenceEntriesTable.accession)
-            .associate { it[SequenceEntriesTable.accession] to it[maxVersionExpression]!! }
-    }
-
-    fun getLatestRevocationVersions(): Map<Accession, Version> {
+    fun getLatestVersions(organism: Organism): Map<Accession, Version> {
         val maxVersionExpression = SequenceEntriesTable.version.max()
         return SequenceEntriesTable
             .slice(SequenceEntriesTable.accession, maxVersionExpression)
             .select(
                 where = {
                     (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
-                        (SequenceEntriesTable.isRevocation eq true)
+                        organismIs(organism)
                 },
             )
             .groupBy(SequenceEntriesTable.accession)
             .associate { it[SequenceEntriesTable.accession] to it[maxVersionExpression]!! }
     }
 
-    fun streamReleasedSubmissions(): Sequence<RawProcessedData> {
+    fun getLatestRevocationVersions(organism: Organism): Map<Accession, Version> {
+        val maxVersionExpression = SequenceEntriesTable.version.max()
+        return SequenceEntriesTable
+            .slice(SequenceEntriesTable.accession, maxVersionExpression)
+            .select(
+                where = {
+                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
+                        (SequenceEntriesTable.isRevocation eq true) and
+                        organismIs(organism)
+                },
+            )
+            .groupBy(SequenceEntriesTable.accession)
+            .associate { it[SequenceEntriesTable.accession] to it[maxVersionExpression]!! }
+    }
+
+    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> {
         return SequenceEntriesTable
             .slice(
                 SequenceEntriesTable.accession,
@@ -299,7 +343,8 @@ class DatabaseService(
             )
             .select(
                 where = {
-                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name)
+                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
+                        organismIs(organism)
                 },
             )
             // TODO(#429): This needs clarification of how to handle revocations. Until then, revocations are filtered out.
@@ -318,7 +363,12 @@ class DatabaseService(
             .asSequence()
     }
 
-    fun streamReviewNeededSubmissions(submitter: String, numberOfSequences: Int, outputStream: OutputStream) {
+    fun streamReviewNeededSubmissions(
+        submitter: String,
+        numberOfSequences: Int,
+        outputStream: OutputStream,
+        organism: Organism,
+    ) {
         log.info { "streaming $numberOfSequences submissions that need review by $submitter" }
         val maxVersionQuery = maxVersionQuery()
 
@@ -336,7 +386,8 @@ class DatabaseService(
                 where = {
                     (SequenceEntriesTable.status eq HAS_ERRORS.name) and
                         (SequenceEntriesTable.version eq maxVersionQuery) and
-                        (SequenceEntriesTable.submitter eq submitter)
+                        (SequenceEntriesTable.submitter eq submitter) and
+                        organismIs(organism)
                 },
             ).limit(numberOfSequences).map { row ->
                 SequenceEntryReview(
@@ -353,7 +404,7 @@ class DatabaseService(
         iteratorStreamer.streamAsNdjson(sequencesData, outputStream)
     }
 
-    fun getActiveSequencesSubmittedBy(username: String): List<SequenceEntryStatus> {
+    fun getActiveSequencesSubmittedBy(username: String, organism: Organism): List<SequenceEntryStatus> {
         log.info { "getting active sequence entries submitted by $username" }
 
         val subTableSequenceStatus = SequenceEntriesTable
@@ -362,6 +413,7 @@ class DatabaseService(
                 SequenceEntriesTable.version,
                 SequenceEntriesTable.status,
                 SequenceEntriesTable.isRevocation,
+                SequenceEntriesTable.organism,
             )
 
         val releasedSequenceEntries = subTableSequenceStatus
@@ -369,7 +421,8 @@ class DatabaseService(
                 where = {
                     (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
                         (SequenceEntriesTable.submitter eq username) and
-                        (SequenceEntriesTable.version eq maxReleasedVersionQuery())
+                        (SequenceEntriesTable.version eq maxReleasedVersionQuery()) and
+                        organismIs(organism)
                 },
             ).map { row ->
                 SequenceEntryStatus(
@@ -385,7 +438,8 @@ class DatabaseService(
             where = {
                 (SequenceEntriesTable.status neq APPROVED_FOR_RELEASE.name) and
                     (SequenceEntriesTable.submitter eq username) and
-                    (SequenceEntriesTable.version eq maxVersionQuery)
+                    (SequenceEntriesTable.version eq maxVersionQuery) and
+                    organismIs(organism)
             },
         ).map { row ->
             SequenceEntryStatus(
@@ -411,7 +465,7 @@ class DatabaseService(
         )
     }
 
-    fun reviseData(submitter: String, revisedData: List<RevisedData>): List<SubmissionIdMapping> {
+    fun reviseData(submitter: String, revisedData: List<RevisedData>, organism: Organism): List<SubmissionIdMapping> {
         log.info { "revising sequence entries" }
 
         val maxVersionQuery = maxVersionQuery()
@@ -422,6 +476,7 @@ class DatabaseService(
                 submitter,
                 revisedData.map { it.accession },
                 listOf(APPROVED_FOR_RELEASE),
+                organism,
             ).associateBy { it.accession }
 
         revisedData.map { data ->
@@ -435,6 +490,7 @@ class DatabaseService(
                     stringParam(RECEIVED.name),
                     booleanParam(false),
                     QueryParameter(data.originalData, SequenceEntriesTable.originalData.columnType),
+                    SequenceEntriesTable.organism,
                 ).select(
                     where = {
                         (SequenceEntriesTable.accession eq data.accession) and
@@ -452,6 +508,7 @@ class DatabaseService(
                     SequenceEntriesTable.status,
                     SequenceEntriesTable.isRevocation,
                     SequenceEntriesTable.originalData,
+                    SequenceEntriesTable.organism,
                 ),
             )
         }
@@ -461,10 +518,15 @@ class DatabaseService(
         }
     }
 
-    fun revoke(accessions: List<Accession>, username: String): List<SequenceEntryStatus> {
+    fun revoke(accessions: List<Accession>, username: String, organism: Organism): List<SequenceEntryStatus> {
         log.info { "revoking ${accessions.size} sequences" }
 
-        queryPreconditionValidator.validateAccessions(username, accessions, listOf(APPROVED_FOR_RELEASE))
+        queryPreconditionValidator.validateAccessions(
+            username,
+            accessions,
+            listOf(APPROVED_FOR_RELEASE),
+            organism,
+        )
 
         val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
@@ -478,6 +540,7 @@ class DatabaseService(
                 dateTimeParam(now),
                 stringParam(AWAITING_APPROVAL_FOR_REVOCATION.name),
                 booleanParam(true),
+                SequenceEntriesTable.organism,
             ).select(
                 where = {
                     (SequenceEntriesTable.accession inList accessions) and
@@ -493,6 +556,7 @@ class DatabaseService(
                 SequenceEntriesTable.submittedAt,
                 SequenceEntriesTable.status,
                 SequenceEntriesTable.isRevocation,
+                SequenceEntriesTable.organism,
             ),
         )
 
@@ -519,13 +583,14 @@ class DatabaseService(
             }
     }
 
-    fun confirmRevocation(accessionVersions: List<AccessionVersion>, username: String) {
+    fun confirmRevocation(accessionVersions: List<AccessionVersion>, username: String, organism: Organism) {
         log.info { "Confirming revocation for ${accessionVersions.size} sequence entries" }
 
         queryPreconditionValidator.validateAccessionVersions(
             username,
             accessionVersions,
             listOf(AWAITING_APPROVAL_FOR_REVOCATION),
+            organism,
         )
 
         SequenceEntriesTable.update(
@@ -538,13 +603,14 @@ class DatabaseService(
         }
     }
 
-    fun deleteSequences(accessionVersions: List<AccessionVersion>, submitter: String) {
+    fun deleteSequences(accessionVersions: List<AccessionVersion>, submitter: String, organism: Organism) {
         log.info { "Deleting accession versions: $accessionVersions" }
 
         queryPreconditionValidator.validateAccessionVersions(
             submitter,
             accessionVersions,
             listOf(RECEIVED, AWAITING_APPROVAL, HAS_ERRORS, AWAITING_APPROVAL_FOR_REVOCATION),
+            organism,
         )
 
         SequenceEntriesTable.deleteWhere {
@@ -552,18 +618,18 @@ class DatabaseService(
         }
     }
 
-    fun submitReviewedSequence(submitter: String, reviewedAccessionVersion: UnprocessedData) {
+    fun submitReviewedSequence(submitter: String, reviewedAccessionVersion: UnprocessedData, organism: Organism) {
         log.info { "reviewed sequence entry submitted $reviewedAccessionVersion" }
 
+        val statusIsAwaitingApprovalOrHasErrors = (SequenceEntriesTable.status eq AWAITING_APPROVAL.name) or
+            (SequenceEntriesTable.status eq HAS_ERRORS.name)
         val sequencesReviewed = SequenceEntriesTable.update(
             where = {
                 (SequenceEntriesTable.accession eq reviewedAccessionVersion.accession) and
                     (SequenceEntriesTable.version eq reviewedAccessionVersion.version) and
                     (SequenceEntriesTable.submitter eq submitter) and
-                    (
-                        (SequenceEntriesTable.status eq AWAITING_APPROVAL.name) or
-                            (SequenceEntriesTable.status eq HAS_ERRORS.name)
-                        )
+                    statusIsAwaitingApprovalOrHasErrors and
+                    organismIs(organism)
             },
         ) {
             it[status] = RECEIVED.name
@@ -576,17 +642,22 @@ class DatabaseService(
         }
 
         if (sequencesReviewed != 1) {
-            handleReviewedSubmissionError(reviewedAccessionVersion, submitter)
+            handleReviewedSubmissionError(reviewedAccessionVersion, submitter, organism)
         }
     }
 
-    private fun handleReviewedSubmissionError(reviewedAccessionVersion: UnprocessedData, submitter: String) {
+    private fun handleReviewedSubmissionError(
+        reviewedAccessionVersion: UnprocessedData,
+        submitter: String,
+        organism: Organism,
+    ) {
         val selectedSequences = SequenceEntriesTable
             .slice(
                 SequenceEntriesTable.accession,
                 SequenceEntriesTable.version,
                 SequenceEntriesTable.status,
                 SequenceEntriesTable.submitter,
+                SequenceEntriesTable.organism,
             )
             .select(
                 where = {
@@ -601,26 +672,35 @@ class DatabaseService(
             throw UnprocessableEntityException("Sequence entry $accessionVersionString does not exist")
         }
 
-        val hasCorrectStatus = selectedSequences.all {
-            (it[SequenceEntriesTable.status] == AWAITING_APPROVAL.name) ||
-                (it[SequenceEntriesTable.status] == HAS_ERRORS.name)
-        }
+        val queriedSequence = selectedSequences.first()
+
+        val hasCorrectStatus = queriedSequence[SequenceEntriesTable.status] == AWAITING_APPROVAL.name ||
+            queriedSequence[SequenceEntriesTable.status] == HAS_ERRORS.name
         if (!hasCorrectStatus) {
-            val status = selectedSequences.first()[SequenceEntriesTable.status]
+            val status = queriedSequence[SequenceEntriesTable.status]
             throw UnprocessableEntityException(
                 "Sequence entry $accessionVersionString is in status $status, not in $AWAITING_APPROVAL or $HAS_ERRORS",
             )
         }
 
-        if (selectedSequences.any { it[SequenceEntriesTable.submitter] != submitter }) {
+        if (queriedSequence[SequenceEntriesTable.submitter] != submitter) {
             throw ForbiddenException(
                 "Sequence entry $accessionVersionString is not owned by user $submitter",
             )
         }
+
+        if (queriedSequence[SequenceEntriesTable.organism] != organism.name) {
+            throw UnprocessableEntityException(
+                "Sequence entry $accessionVersionString is for organism " +
+                    "${queriedSequence[SequenceEntriesTable.organism]}, but submitted data is for organism " +
+                    organism.name,
+            )
+        }
+
         throw Exception("SequenceReview: Unknown error")
     }
 
-    fun getReviewData(submitter: String, accessionVersion: AccessionVersion): SequenceEntryReview {
+    fun getReviewData(submitter: String, accessionVersion: AccessionVersion, organism: Organism): SequenceEntryReview {
         log.info {
             "Getting sequence entry ${accessionVersion.displayAccessionVersion()} that needs review by $submitter"
         }
@@ -643,12 +723,13 @@ class DatabaseService(
                         ) and
                         (SequenceEntriesTable.accession eq accessionVersion.accession) and
                         (SequenceEntriesTable.version eq accessionVersion.version) and
-                        (SequenceEntriesTable.submitter eq submitter)
+                        (SequenceEntriesTable.submitter eq submitter) and
+                        organismIs(organism)
                 },
             )
 
         if (selectedSequenceEntries.count().toInt() != 1) {
-            handleGetReviewDataError(submitter, accessionVersion)
+            handleGetReviewDataError(submitter, accessionVersion, organism)
         }
 
         return selectedSequenceEntries.first().let {
@@ -664,12 +745,17 @@ class DatabaseService(
         }
     }
 
-    private fun handleGetReviewDataError(submitter: String, accessionVersion: AccessionVersion): Nothing {
+    private fun handleGetReviewDataError(
+        submitter: String,
+        accessionVersion: AccessionVersion,
+        organism: Organism,
+    ): Nothing {
         val selectedSequences = SequenceEntriesTable
             .slice(
                 SequenceEntriesTable.accession,
                 SequenceEntriesTable.version,
                 SequenceEntriesTable.status,
+                SequenceEntriesTable.organism,
             )
             .select(
                 where = {
@@ -702,6 +788,14 @@ class DatabaseService(
             )
         }
 
+        if (selectedSequence[SequenceEntriesTable.organism] != organism.name) {
+            throw UnprocessableEntityException(
+                "Accession version ${accessionVersion.displayAccessionVersion()} is for organism " +
+                    selectedSequence[SequenceEntriesTable.organism] +
+                    ", but requested data for organism ${organism.name}",
+            )
+        }
+
         throw RuntimeException(
             "Get review data: Unexpected error for accession version ${accessionVersion.displayAccessionVersion()}",
         )
@@ -723,6 +817,9 @@ class DatabaseService(
 
     private fun accessionVersionIsIn(accessionVersions: List<AccessionVersionInterface>) =
         Pair(SequenceEntriesTable.accession, SequenceEntriesTable.version) inList accessionVersions.toPairs()
+
+    private fun organismIs(organism: Organism) =
+        SequenceEntriesTable.organism eq organism.name
 }
 
 data class RawProcessedData(

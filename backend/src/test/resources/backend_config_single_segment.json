@@ -1,6 +1,6 @@
 {
     "instances": {
-        "dummy": {
+        "dummyOrganism": {
             "referenceGenomes": {
                 "nucleotideSequences": [
                     {

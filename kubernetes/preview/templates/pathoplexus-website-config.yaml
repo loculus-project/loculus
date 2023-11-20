@@ -11,9 +11,9 @@ data:
   runtime_config.json: |
     {
       {{- if eq .Values.mode "dev" }}
-      "backendUrl": "http://host.k3d.internal:8079",
+      "backendUrl": "http://host.k3d.internal:8079/dummy-organism",
       {{- else }}
-      "backendUrl": "http://localhost:8079",
+      "backendUrl": "http://localhost:8079/dummy-organism",
       {{- end }}
-      "lapisUrl": "http://pathoplexus-lapis-service-dummy:8080"
+      "lapisUrl": "http://pathoplexus-lapis-service-dummy-organism:8080"
     }

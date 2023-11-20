@@ -1,4 +1,4 @@
 {
-    "backendUrl": "http://localhost:8079",
-    "lapisUrl": "http://localhost:8080/dummy"
+    "backendUrl": "http://localhost:8079/dummy-organism",
+    "lapisUrl": "http://localhost:8080/dummy-organism"
 }

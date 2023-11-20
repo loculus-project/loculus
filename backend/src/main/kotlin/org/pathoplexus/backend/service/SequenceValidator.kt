@@ -3,7 +3,9 @@ package org.pathoplexus.backend.service
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
 import org.pathoplexus.backend.api.Insertion
+import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.SubmittedProcessedData
+import org.pathoplexus.backend.config.BackendConfig
 import org.pathoplexus.backend.config.Metadata
 import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.config.ReferenceSequence
@@ -70,6 +72,13 @@ enum class NucleotideSymbols(override val symbol: Char) : Symbol {
 }
 
 @Component
+class SequenceValidatorFactory(private val backendConfig: BackendConfig) {
+    fun create(organism: Organism): SequenceValidator {
+        val instanceConfig = backendConfig.instances[organism.name]!!
+        return SequenceValidator(instanceConfig.schema, instanceConfig.referenceGenomes)
+    }
+}
+
 class SequenceValidator(
     private val schema: Schema,
     private val referenceGenome: ReferenceGenome,

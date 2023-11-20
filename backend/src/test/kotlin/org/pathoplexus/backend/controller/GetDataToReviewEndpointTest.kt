@@ -3,6 +3,8 @@ package org.pathoplexus.backend.controller
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.empty
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.SequenceEntryReview
 import org.pathoplexus.backend.api.Status
@@ -53,10 +55,29 @@ class GetDataToReviewEndpointTest(
     }
 
     @Test
+    fun `WHEN I query data for wrong organism THEN refuses request with unprocessable entity`() {
+        convenienceClient.prepareDataTo(Status.HAS_ERRORS, organism = DEFAULT_ORGANISM)
+
+        client.getSequenceEntryThatNeedsReview(firstAccession, 1, USER_NAME, organism = DEFAULT_ORGANISM)
+            .andExpect(status().isOk)
+        client.getSequenceEntryThatNeedsReview(firstAccession, 1, USER_NAME, organism = OTHER_ORGANISM)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(containsString("1.1 is for organism dummyOrganism")),
+            )
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    containsString("requested data for organism otherOrganism"),
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN I query data for a non-existent accession version THEN refuses request with not found`() {
         val nonExistentAccessionVersion = 999L
 
-        convenienceClient.prepareDefaultSequenceEntriesToHasErrors()
+        convenienceClient.prepareDataTo(Status.HAS_ERRORS)
 
         client.getSequenceEntryThatNeedsReview("1", nonExistentAccessionVersion, USER_NAME)
             .andExpect(status().isNotFound)
@@ -70,7 +91,7 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `WHEN I query a sequence entry that has a wrong state THEN refuses request with unprocessable entity`() {
-        convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        convenienceClient.prepareDataTo(Status.IN_PROCESSING)
 
         client.getSequenceEntryThatNeedsReview(
             accession = firstAccession,
@@ -88,7 +109,7 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `WHEN I try to get data for a sequence entry that I do not own THEN refuses request with forbidden entity`() {
-        convenienceClient.prepareDefaultSequenceEntriesToHasErrors()
+        convenienceClient.prepareDataTo(Status.HAS_ERRORS)
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
         client.getSequenceEntryThatNeedsReview(
@@ -107,7 +128,7 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `WHEN I try to get batch data for sequence entries to review THEN I get the expected count back`() {
-        convenienceClient.prepareDefaultSequenceEntriesToHasErrors()
+        convenienceClient.prepareDataTo(Status.HAS_ERRORS)
 
         val numberOfReturnedSequenceReviews = client.getNumberOfSequenceEntriesThatNeedReview(
             USER_NAME,
@@ -130,8 +151,32 @@ class GetDataToReviewEndpointTest(
     }
 
     @Test
+    fun `GIVEN sequence entries for different organisms THEN only returns data for requested organism`() {
+        val defaultOrganismData = convenienceClient.prepareDataTo(Status.HAS_ERRORS, organism = DEFAULT_ORGANISM)
+        val otherOrganismData = convenienceClient.prepareDataTo(Status.HAS_ERRORS, organism = OTHER_ORGANISM)
+
+        val sequencesToReview = client.getNumberOfSequenceEntriesThatNeedReview(
+            USER_NAME,
+            defaultOrganismData.size + otherOrganismData.size,
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
+            .expectNdjsonAndGetContent<SequenceEntryReview>()
+
+        assertThat(
+            sequencesToReview.getAccessionVersions(),
+            containsInAnyOrder(*otherOrganismData.getAccessionVersions().toTypedArray()),
+        )
+        assertThat(
+            sequencesToReview.getAccessionVersions().intersect(defaultOrganismData.getAccessionVersions().toSet()),
+            `is`(empty()),
+        )
+    }
+
+    @Test
     fun `WHEN I want to get more than allowed number of review entries at once THEN returns Bad Request`() {
-        client.extractUnprocessedData(100_001)
+        client.getNumberOfSequenceEntriesThatNeedReview(USER_NAME, 100_001)
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("\$.detail", containsString("You can extract at max 100000 sequence entries at once.")))
     }

@@ -9,7 +9,9 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.api.Insertion
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmittedProcessedData
+import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
+import org.pathoplexus.backend.service.Accession
 import org.pathoplexus.backend.service.AminoAcidSymbols
 import org.pathoplexus.backend.service.NucleotideSymbols
 import org.springframework.beans.factory.annotation.Autowired
@@ -207,15 +209,14 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit data for an entry that is not in processing THEN refuses update with unprocessable entity`() {
-        convenienceClient.submitDefaultFiles()
-        convenienceClient.extractUnprocessedData(1)
+        val accession = prepareUnprocessedSequenceEntry()
 
         val accessionNotInProcessing = "2"
         convenienceClient.getSequenceEntryOfUser(accession = accessionNotInProcessing, version = 1)
             .assertStatusIs(Status.RECEIVED)
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = firstAccession),
+            PreparedProcessedData.successfullyProcessed(accession = accession),
             PreparedProcessedData.successfullyProcessed(accession = accessionNotInProcessing),
         )
             .andExpect(status().isUnprocessableEntity)
@@ -234,13 +235,12 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit a JSON entry with a missing field THEN returns bad request`() {
-        convenienceClient.submitDefaultFiles()
-        convenienceClient.extractUnprocessedData(1)
+        val accession = prepareUnprocessedSequenceEntry()
 
         submissionControllerClient.submitProcessedDataRaw(
             """
                 {
-                    "accession": 1,
+                    "accession": $accession,
                     "version": 1,
                     "data": {
                         "noMetadata": null,
@@ -257,9 +257,55 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(jsonPath("\$.detail").value(containsString("failed for JSON property metadata")))
     }
 
-    private fun prepareExtractedSequencesInDatabase() {
-        convenienceClient.submitDefaultFiles()
-        convenienceClient.extractUnprocessedData()
+    @Test
+    fun `WHEN I submit an entry with the wrong organism THEN refuses update with unprocessable entity`() {
+        val accession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accession),
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(containsString("1.1 is for organism dummyOrganism")),
+            )
+            .andExpect(
+                jsonPath("\$.detail").value(containsString("submitted data is for organism otherOrganism")),
+            )
+    }
+
+    @Test
+    fun `WHEN I submit an entry organism THEN requires the schema of the given organism`() {
+        val defaultOrganismAccession = prepareUnprocessedSequenceEntry(DEFAULT_ORGANISM)
+        val otherOrganismAccession = prepareUnprocessedSequenceEntry(OTHER_ORGANISM)
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = defaultOrganismAccession),
+            organism = DEFAULT_ORGANISM,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath("\$.detail").value("Unknown fields in processed data: specialOtherField."),
+            )
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = otherOrganismAccession),
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isNoContent)
+    }
+
+    private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM): Accession {
+        return prepareExtractedSequencesInDatabase(1, organism = organism)[0].accession
+    }
+
+    private fun prepareExtractedSequencesInDatabase(
+        numberOfSequenceEntries: Int = SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
+        organism: String = DEFAULT_ORGANISM,
+    ): List<UnprocessedData> {
+        convenienceClient.submitDefaultFiles(organism = organism)
+        return convenienceClient.extractUnprocessedData(numberOfSequenceEntries, organism = organism)
     }
 
     companion object {

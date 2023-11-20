@@ -4,6 +4,8 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.Status.IN_PROCESSING
@@ -80,5 +82,38 @@ class ExtractUnprocessedDataEndpointTest(
 
         convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
             .assertStatusIs(IN_PROCESSING)
+    }
+
+    @Test
+    fun `GIVEN sequence entries for multiple organisms THEN it should only return entries for that organism`() {
+        val defaultOrganismEntries = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
+        val otherOrganismEntries = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)
+
+        val result = client.extractUnprocessedData(
+            defaultOrganismEntries.size + otherOrganismEntries.size,
+            organism = OTHER_ORGANISM,
+        )
+        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
+        assertThat(responseBody, hasSize(otherOrganismEntries.size))
+
+        convenienceClient.getSequenceEntryOfUser(
+            accession = defaultOrganismEntries.first().accession,
+            version = 1,
+            organism = DEFAULT_ORGANISM,
+        ).assertStatusIs(RECEIVED)
+        convenienceClient.getSequenceEntryOfUser(
+            accession = otherOrganismEntries.first().accession,
+            version = 1,
+            organism = OTHER_ORGANISM,
+        ).assertStatusIs(IN_PROCESSING)
+
+        assertThat(
+            responseBody.getAccessionVersions(),
+            containsInAnyOrder(*otherOrganismEntries.getAccessionVersions().toTypedArray()),
+        )
+        assertThat(
+            defaultOrganismEntries.getAccessionVersions().intersect(responseBody.getAccessionVersions().toSet()),
+            `is`(empty()),
+        )
     }
 }

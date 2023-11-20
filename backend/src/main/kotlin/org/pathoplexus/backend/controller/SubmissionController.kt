@@ -6,8 +6,10 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.servlet.http.HttpServletRequest
+import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import org.pathoplexus.backend.api.AccessionVersion
+import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SequenceEntryReview
 import org.pathoplexus.backend.api.SequenceEntryStatus
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -37,6 +40,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @RestController
+@RequestMapping("/{organism}")
 @Validated
 class SubmissionController(
     private val submitModel: SubmitModel,
@@ -49,13 +53,15 @@ class SubmissionController(
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
+        @PathVariable @Valid
+        organism: Organism,
         @Parameter(description = "The username of the submitter - until we implement authentication")
         @RequestParam
         username: String,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
     ): List<SubmissionIdMapping> {
-        return submitModel.processSubmission(username, metadataFile, sequenceFile)
+        return submitModel.processSubmission(username, metadataFile, sequenceFile, organism)
     }
 
     @Operation(description = EXTRACT_UNPROCESSED_DATA_DESCRIPTION)
@@ -70,6 +76,8 @@ class SubmissionController(
     )
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun extractUnprocessedData(
+        @PathVariable @Valid
+        organism: Organism,
         @RequestParam
         @Max(
             value = MAX_EXTRACTED_SEQUENCE_ENTRIES,
@@ -81,7 +89,7 @@ class SubmissionController(
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, outputStream)
+            databaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, outputStream, organism)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -103,8 +111,10 @@ class SubmissionController(
     @ApiResponse(responseCode = "422", description = SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION)
     @PostMapping("/submit-processed-data", consumes = [MediaType.APPLICATION_NDJSON_VALUE])
     fun submitProcessedData(
+        @PathVariable @Valid
+        organism: Organism,
         request: HttpServletRequest,
-    ) = databaseService.updateProcessedData(request.inputStream)
+    ) = databaseService.updateProcessedData(request.inputStream, organism)
 
     @Operation(description = GET_RELEASED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)
@@ -118,12 +128,15 @@ class SubmissionController(
         ],
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
-    fun getReleasedData(): ResponseEntity<StreamingResponseBody> {
+    fun getReleasedData(
+        @PathVariable @Valid
+        organism: Organism,
+    ): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            iteratorStreamer.streamAsNdjson(releasedDataModel.getReleasedData(), outputStream)
+            iteratorStreamer.streamAsNdjson(releasedDataModel.getReleasedData(organism), outputStream)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -132,6 +145,8 @@ class SubmissionController(
     @Operation(description = GET_DATA_TO_REVIEW_DESCRIPTION)
     @GetMapping("/get-data-to-review", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReviewNeededData(
+        @PathVariable @Valid
+        organism: Organism,
         @RequestParam username: String,
         @Max(
             value = MAX_EXTRACTED_SEQUENCE_ENTRIES,
@@ -143,7 +158,7 @@ class SubmissionController(
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamReviewNeededSubmissions(username, numberOfSequenceEntries, outputStream)
+            databaseService.streamReviewNeededSubmissions(username, numberOfSequenceEntries, outputStream, organism)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -152,40 +167,50 @@ class SubmissionController(
     @Operation(description = GET_DATA_TO_REVIEW_SEQUENCE_VERSION_DESCRIPTION)
     @GetMapping("/get-data-to-review/{accession}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getSequenceThatNeedsReview(
+        @PathVariable @Valid
+        organism: Organism,
         @PathVariable accession: Accession,
         @PathVariable version: Long,
         @RequestParam username: String,
     ): SequenceEntryReview =
-        databaseService.getReviewData(username, AccessionVersion(accession, version))
+        databaseService.getReviewData(username, AccessionVersion(accession, version), organism)
 
     @Operation(description = SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/submit-reviewed-sequence", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun submitReviewedSequence(
+        @PathVariable @Valid
+        organism: Organism,
         @RequestParam username: String,
         @RequestBody accessionVersion: UnprocessedData,
-    ) = databaseService.submitReviewedSequence(username, accessionVersion)
+    ) = databaseService.submitReviewedSequence(username, accessionVersion, organism)
 
     @Operation(description = GET_SEQUENCES_OF_USER_DESCRIPTION)
     @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserSequenceList(
+        @PathVariable @Valid
+        organism: Organism,
         @RequestParam username: String,
-    ): List<SequenceEntryStatus> = databaseService.getActiveSequencesSubmittedBy(username)
+    ): List<SequenceEntryStatus> = databaseService.getActiveSequencesSubmittedBy(username, organism)
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/approve-processed-data", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun approveProcessedData(
+        @PathVariable @Valid
+        organism: Organism,
         @RequestParam username: String,
         @RequestBody body: AccessionVersions,
     ) {
-        databaseService.approveProcessedData(username, body.accessionVersions)
+        databaseService.approveProcessedData(username, body.accessionVersions, organism)
     }
 
     @Operation(description = REVISE_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = REVISE_RESPONSE_DESCRIPTION)
     @PostMapping("/revise", consumes = ["multipart/form-data"])
     fun revise(
+        @PathVariable @Valid
+        organism: Organism,
         @RequestParam username: String,
         @Parameter(
             description = REVISED_METADATA_FILE_DESCRIPTION,
@@ -193,22 +218,26 @@ class SubmissionController(
         @Parameter(
             description = SEQUENCE_FILE_DESCRIPTION,
         ) @RequestParam sequenceFile: MultipartFile,
-    ): List<SubmissionIdMapping> = submitModel.processRevision(username, metadataFile, sequenceFile)
+    ): List<SubmissionIdMapping> = submitModel.processRevision(username, metadataFile, sequenceFile, organism)
 
     @Operation(description = REVOKE_DESCRIPTION)
     @PostMapping("/revoke", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun revoke(
+        @PathVariable @Valid
+        organism: Organism,
         @RequestBody body: Accessions,
         @RequestParam username: String,
-    ): List<SequenceEntryStatus> = databaseService.revoke(body.accessions, username)
+    ): List<SequenceEntryStatus> = databaseService.revoke(body.accessions, username, organism)
 
     @Operation(description = CONFIRM_REVOCATION_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PostMapping("/confirm-revocation")
     fun confirmRevocation(
+        @PathVariable @Valid
+        organism: Organism,
         @RequestParam username: String,
         @RequestBody body: AccessionVersions,
-    ) = databaseService.confirmRevocation(body.accessionVersions, username)
+    ) = databaseService.confirmRevocation(body.accessionVersions, username, organism)
 
     @Operation(description = DELETE_SEQUENCES_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -216,9 +245,11 @@ class SubmissionController(
         "/delete-sequences",
     )
     fun deleteSequence(
+        @PathVariable @Valid
+        organism: Organism,
         @RequestParam username: String,
         @RequestBody body: AccessionVersions,
-    ) = databaseService.deleteSequences(body.accessionVersions, username)
+    ) = databaseService.deleteSequences(body.accessionVersions, username, organism)
 
     data class Accessions(
         val accessions: List<Accession>,

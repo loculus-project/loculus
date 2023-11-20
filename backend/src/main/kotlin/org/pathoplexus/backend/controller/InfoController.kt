@@ -1,5 +1,6 @@
 package org.pathoplexus.backend.controller
 
+import io.swagger.v3.oas.annotations.Hidden
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.RequestMapping
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController
 
 const val PROJECT_NAME = "Pathoplexus"
 
+@Hidden
 @RestController
 class InfoController {
 

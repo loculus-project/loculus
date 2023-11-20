@@ -97,6 +97,18 @@ class DeleteSequencesEndpointTest(
     }
 
     @Test
+    fun `WHEN deleting sequence entry of wrong organism THEN throws an unprocessableEntity error`() {
+        val accessionVersion = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)[0]
+
+        client.deleteSequenceEntries(listOf(accessionVersion.toAccessionVersion()), organism = OTHER_ORGANISM)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail", containsString("accession versions are not of organism $OTHER_ORGANISM:")),
+            )
+    }
+
+    @Test
     fun `WHEN deleting accession versions not from the submitter THEN throws forbidden error`() {
         convenienceClient.submitDefaultFiles()
 

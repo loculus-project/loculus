@@ -1,5 +1,6 @@
 package org.pathoplexus.backend.controller
 
+import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.UnprocessedData
@@ -20,11 +21,7 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedData = UnprocessedData(
-            accession = "1",
-            version = 1,
-            data = emptyOriginalData,
-        )
+        val reviewedData = generateUnprocessedData("1")
         client.submitReviewedSequenceEntry(USER_NAME, reviewedData)
             .andExpect(status().isNoContent)
 
@@ -39,11 +36,7 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
 
-        val reviewedData = UnprocessedData(
-            accession = "1",
-            version = 1,
-            data = emptyOriginalData,
-        )
+        val reviewedData = generateUnprocessedData("1")
 
         client.submitReviewedSequenceEntry(USER_NAME, reviewedData)
             .andExpect(status().isNoContent)
@@ -59,14 +52,8 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedDataWithNonExistingVersion =
-            UnprocessedData(
-                accession = "1",
-                version = 2,
-                data = emptyOriginalData,
-            )
-        val sequenceString = "${reviewedDataWithNonExistingVersion.accession}." +
-            "${reviewedDataWithNonExistingVersion.version}"
+        val reviewedDataWithNonExistingVersion = generateUnprocessedData(firstAccession, version = 2)
+        val sequenceString = getAccessionVersion(reviewedDataWithNonExistingVersion)
 
         client.submitReviewedSequenceEntry(USER_NAME, reviewedDataWithNonExistingVersion)
             .andExpect(status().isUnprocessableEntity)
@@ -83,13 +70,8 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedDataWithNonExistingAccession = UnprocessedData(
-            accession = "2",
-            version = 1,
-            data = emptyOriginalData,
-        )
-        val sequenceString = "${reviewedDataWithNonExistingAccession.accession}." +
-            "${reviewedDataWithNonExistingAccession.version}"
+        val reviewedDataWithNonExistingAccession = generateUnprocessedData("2")
+        val sequenceString = getAccessionVersion(reviewedDataWithNonExistingAccession)
 
         client.submitReviewedSequenceEntry(USER_NAME, reviewedDataWithNonExistingAccession)
             .andExpect(status().isUnprocessableEntity)
@@ -104,18 +86,36 @@ class SubmitReviewedSequenceEndpointTest(
     }
 
     @Test
+    fun `WHEN submitting data for wrong organism THEN it returns an unprocessable entity error`() {
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
+
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
+            .assertStatusIs(Status.HAS_ERRORS)
+
+        val reviewedData = generateUnprocessedData(firstAccession)
+        val sequenceString = getAccessionVersion(reviewedData)
+
+        client.submitReviewedSequenceEntry(USER_NAME, reviewedData, organism = OTHER_ORGANISM)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString("Sequence entry $sequenceString is for organism $DEFAULT_ORGANISM"),
+                ),
+            )
+
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
+            .assertStatusIs(Status.HAS_ERRORS)
+    }
+
+    @Test
     fun `WHEN a sequence entry does not belong to a user THEN it returns an forbidden error`() {
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedDataFromWrongSubmitter =
-            UnprocessedData(
-                accession = "1",
-                version = 1,
-                data = emptyOriginalData,
-            )
+        val reviewedDataFromWrongSubmitter = generateUnprocessedData(firstAccession)
         val sequenceString = "${reviewedDataFromWrongSubmitter.accession}." +
             "${reviewedDataFromWrongSubmitter.version}"
         val nonExistingUser = "whoseNameMayNotBeMentioned"
@@ -131,4 +131,13 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
+
+    private fun generateUnprocessedData(accession: String, version: Long = 1) = UnprocessedData(
+        accession = accession,
+        version = version,
+        data = emptyOriginalData,
+    )
+
+    private fun getAccessionVersion(unprocessedData: UnprocessedData) =
+        "${unprocessedData.accession}.${unprocessedData.version}"
 }

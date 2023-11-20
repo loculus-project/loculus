@@ -1,4 +1,4 @@
 {
-    "backendUrl": "http://backend:8079",
+    "backendUrl": "http://backend:8079/dummy-organism",
     "lapisUrl": "http://lapis:8080"
 }

@@ -3,6 +3,7 @@ create sequence accession_sequence start with 1;
 create table sequence_entries (
        accession text not null,
        version bigint not null default 1,
+       organism text not null,
        submission_id text not null,
        submitter text not null,
        submitted_at timestamp not null,

@@ -1,6 +1,6 @@
 {
     "instances": {
-        "dummy": {
+        "dummyOrganism": {
             "referenceGenomes": {
                 "nucleotideSequences": [
                     {
@@ -74,6 +74,43 @@
                     {
                         "name": "qc",
                         "type": "double"
+                    }
+                ]
+            }
+        },
+        "otherOrganism": {
+            "referenceGenomes": {
+                "nucleotideSequences": [
+                    {
+                        "name": "main",
+                        "sequence": "ATCG"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "gene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
+            "schema": {
+                "instanceName": "Test",
+                "metadata": [
+                    {
+                        "name": "date",
+                        "type": "date",
+                        "required": true
+                    },
+                    {
+                        "name": "specialOtherField",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "pangoLineage",
+                        "type": "pango_lineage",
+                        "autocomplete": true
                     }
                 ]
             }
