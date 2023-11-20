@@ -29,44 +29,46 @@ export const SequencesContainer: FC<Props> = ({ sequenceVersion, schema, clientC
 
     return (
         <QueryClientProvider client={queryClient}>
-            <div className='tabs -mb-px'>
-                <button
-                    className={`tab tab-lifted ${isUnalignedSequence(type) ? 'tab-active' : ''}`}
-                    onClick={() => setType(unalignedSequence)}
-                >
-                    Sequence
+            {!loadSequences ? (
+                <button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
+                    Load sequences
                 </button>
-                <button
-                    className={`tab tab-lifted ${isAlignedSequence(type) ? 'tab-active' : ''}`}
-                    onClick={() => setType(alignedSequence)}
-                >
-                    Aligned
-                </button>
-                {genes.map((gene) => (
-                    <button
-                        key={gene}
-                        className={`tab tab-lifted ${isGeneSequence(gene, type) ? 'tab-active' : ''}`}
-                        onClick={() => setType(geneSequence(gene))}
-                    >
-                        {gene}
-                    </button>
-                ))}
-            </div>
-            <div className='border p-4 max-w-[1000px]'>
-                {!loadSequences && (
-                    <button className='btn btn-sm m-4' onClick={() => setLoadSequences(true)}>
-                        Load sequences
-                    </button>
-                )}
-                {loadSequences && (
-                    <SequencesViewer
-                        sequenceVersion={sequenceVersion}
-                        schema={schema}
-                        clientConfig={clientConfig}
-                        sequenceType={type}
-                    />
-                )}
-            </div>
+            ) : (
+                <>
+                    <div className='tabs -mb-px tabs-lifted flex flex-wrap'>
+                        <button
+                            className={`tab  ${isUnalignedSequence(type) ? 'tab-active' : ''}`}
+                            onClick={() => setType(unalignedSequence)}
+                        >
+                            Sequence
+                        </button>
+                        <button
+                            className={`tab ${isAlignedSequence(type) ? 'tab-active' : ''}`}
+                            onClick={() => setType(alignedSequence)}
+                        >
+                            Aligned
+                        </button>
+                        {genes.map((gene) => (
+                            <button
+                                key={gene}
+                                className={`tab ${isGeneSequence(gene, type) ? 'tab-active' : ''}`}
+                                onClick={() => setType(geneSequence(gene))}
+                            >
+                                {gene}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className='border p-4 max-w-[1000px]'>
+                        <SequencesViewer
+                            sequenceVersion={sequenceVersion}
+                            schema={schema}
+                            clientConfig={clientConfig}
+                            sequenceType={type}
+                        />
+                    </div>
+                </>
+            )}
         </QueryClientProvider>
     );
 };
