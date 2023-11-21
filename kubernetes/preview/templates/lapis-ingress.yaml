@@ -1,35 +1,48 @@
+{{- $lapisHost := printf "lapis.%s" .Values.host }}
+{{- $mode := .Values.mode }}
 {{- $configFile := .Files.Get "config.yml" | fromYaml }}
-{{ $namespace := .Values.namespace }}
-
+{{- $namespace := .Values.namespace }}
 {{- range $key, $_ := $configFile.instances }}
+
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
 metadata:
-  name: lapis-ingress-{{ $key }}
+  name: lapis-ingressroute-{{ $key }}
   namespace: {{ $namespace }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
-    nginx.ingress.kubernetes.io/configuration-snippet: proxy_set_header X-Forwarded-Prefix "/{{ $key }}";
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+{{- if eq $mode "cd" }}
+    link.argocd.argoproj.io/external-link: https://{{ $lapisHost }}
+{{- end }}
 spec:
-  ingressClassName: lapis-ingress-class
-  rules:
-    - http:
-        paths:
-          - path: /{{ $key }}(/|$)(.*)
-            pathType: ImplementationSpecific
-            backend:
-              service:
-                name: pathoplexus-lapis-service-{{ $key }}
-                port:
-                  number: 8080
+  entryPoints:
+    {{- if eq $mode "cd" }}
+    - websecure
+    {{- else }}
+    - web
+    {{- end }}
+  routes:
+  - match: Path(`/{{ $key }}`, `/{{ $key }}/{path:.*}`) {{- if eq $mode "cd" }} && Host(`{{ $lapisHost }}`){{- end }}
+    kind: Rule
+    services:
+    - name: pathoplexus-lapis-service-{{ $key }}
+      port: 8080
+    middlewares:
+    - name: strip-{{ $key }}-prefix
+{{- if eq $mode "cd" }}
+  tls:
+    certResolver: myresolver
 {{- end }}
 
 ---
-apiVersion: networking.k8s.io/v1
-kind: IngressClass
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
 metadata:
-  name: lapis-ingress-class
-  namespace: {{ .Values.namespace}}
+  name: strip-{{ $key }}-prefix
+  namespace: {{ $namespace }}
 spec:
-  controller: k8s.io/ingress-nginx
+  stripPrefix:
+    prefixes:
+      - /{{ $key }}
+{{- end }}
