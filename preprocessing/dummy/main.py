@@ -43,7 +43,7 @@ class Sequence:
 
 def fetch_unprocessed_sequences(n: int) -> List[Sequence]:
     url = host + "/extract-unprocessed-data"
-    params = {"numberOfSequences": n}
+    params = {"numberOfSequenceEntries": n}
     response = requests.post(url, data=params)
     if not response.ok:
         raise Exception("Fetching unprocessed data failed. Status code: {}".format(response.status_code), response.text)
