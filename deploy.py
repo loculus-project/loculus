@@ -3,6 +3,7 @@
 import argparse
 import subprocess
 from pathlib import Path
+import time
 
 script_path = Path(__file__).resolve()
 ROOT_DIR = script_path.parent
@@ -13,7 +14,7 @@ HELM_CHART_DIR = ROOT_DIR / 'kubernetes' / 'preview'
 
 WEBSITE_PORT_MAPPING = '-p 3000:30081@agent:0'
 BACKEND_PORT_MAPPING = '-p 8079:30082@agent:0'
-LAPIS_PORT_MAPPING = '-p 8080:30080@agent:0'
+LAPIS_PORT_MAPPING = '-p 8080:80@loadbalancer'
 DATABASE_PORT_MAPPING = '-p 5432:30432@agent:0'
 
 PORTS = [WEBSITE_PORT_MAPPING, BACKEND_PORT_MAPPING, LAPIS_PORT_MAPPING, DATABASE_PORT_MAPPING]
@@ -59,8 +60,28 @@ def handle_cluster():
     if cluster_exists(CLUSTER_NAME):
         print(f"Cluster '{CLUSTER_NAME}' already exists.")
     else:
-        subprocess.run(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} -v {ROOT_DIR}:/repo --agents 2",
-                       shell=True)
+        subprocess.run(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 2",
+                       shell=True, check=True)
+
+    while not is_traefik_running():
+        print("Waiting for Traefik to start...")
+        time.sleep(5)
+    print("Traefik is running.")
+
+
+def is_traefik_running(namespace='kube-system', label='app.kubernetes.io/name=traefik'):
+    try:
+        result = subprocess.run(['kubectl', 'get', 'pods', '-n', namespace, '-l', label],
+                                capture_output=True, text=True)
+        if result.returncode != 0:
+            print(f"Error executing kubectl: {result.stderr}")
+            return False
+
+        if 'Running' in result.stdout:
+            return True
+    except subprocess.SubprocessError as e:
+        print(f"Error checking Traefik status: {e}")
+    return False
 
 
 def remove_port(port_mapping):
@@ -90,7 +111,6 @@ def handle_helm():
 
     docker_config_json = get_docker_config_json()
 
-    subprocess.run(['helm', 'dependency', 'update', HELM_CHART_DIR], check=True)
     subprocess.run([
         'helm', 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
         '--set', f"mode={mode}",

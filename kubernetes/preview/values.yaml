@@ -1,18 +1,2 @@
 mode: cd
 namespace: pathoplexus
-
-ingress-nginx:
-  controller:
-    extraArgs:
-      http-port: "8080"
-    containerPort:
-      http: 8080
-    allowSnippetAnnotations: true
-    service:
-      type: NodePort
-      ports:
-        http: 8080
-      targetPorts:
-        http: 8080
-      nodePorts:
-        http: 30080

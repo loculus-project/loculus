@@ -1,6 +1,5 @@
 {{- if eq .Values.mode "cd" }}
 {{- $backendHost := printf "backend.%s" .Values.host }}
-{{- $lapisHost := printf "lapis.%s" .Values.host }}
 {{- $configFile := .Files.Get "config.yml" | fromYaml }}
 
 apiVersion: traefik.containo.us/v1alpha1
@@ -47,26 +46,4 @@ spec:
   tls:
     certResolver: myresolver
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: pathoplexus-lapis-ingressroute
-  namespace: {{ .Values.namespace }}
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    link.argocd.argoproj.io/external-link: https://{{ $lapisHost }}
-spec:
-  entryPoints:
-    - websecure
-  routes:
-    {{- range $key, $_ := $configFile.instances }}
-    - kind: Rule
-      match: "Host(`{{ $lapisHost }}`) && PathPrefix(`/{{ $key }}`)"
-      priority: 10
-      services:
-        - name: pathoplexus-lapis-service-{{ $key }}
-          port: 8080
-    {{- end }}
-  tls:
-    certResolver: myresolver
 {{- end }}
