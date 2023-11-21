@@ -11,7 +11,8 @@
 
 ## Initial submission
 
-To submit new sequences, the user calls the `/submit` endpoint and sends unpreprocessed data.
+To submit new sequences, the user calls the `/submit` endpoint and sends unpreprocessed data. 
+Data may be compressed using zstd, gzip, bzip2, xz, lzma or zip.
 For each sequence, Pathoplexus creates a new row in the "sequenceEntries" table.
 It generates a new accession. The version number of the sequence entries is 1.
 

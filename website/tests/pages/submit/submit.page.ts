@@ -1,7 +1,14 @@
 import type { Locator, Page } from '@playwright/test';
 
-import { baseUrl, dummyOrganism, expect, metadataTestFile, sequencesTestFile } from '../../e2e.fixture';
 import { routes } from '../../../src/routes.ts';
+import {
+    baseUrl,
+    compressedMetadataTestFile,
+    compressedSequencesTestFile,
+    dummyOrganism,
+    metadataTestFile,
+    sequencesTestFile,
+} from '../../e2e.fixture';
 
 export class SubmitPage {
     public readonly submitButton: Locator;
@@ -16,10 +23,15 @@ export class SubmitPage {
 
     public async uploadMetadata() {
         await this.page.getByPlaceholder('Metadata File:').setInputFiles(metadataTestFile);
-        expect(this.page.getByText('metadata.tsv'));
+    }
+    public async uploadCompressedMetadata() {
+        await this.page.getByPlaceholder('Metadata File:').setInputFiles(compressedMetadataTestFile);
     }
 
     public async uploadSequenceData() {
         await this.page.getByPlaceholder('Sequences File:').setInputFiles(sequencesTestFile);
+    }
+    public async uploadCompressedSequenceData() {
+        await this.page.getByPlaceholder('Sequences File:').setInputFiles(compressedSequencesTestFile);
     }
 }

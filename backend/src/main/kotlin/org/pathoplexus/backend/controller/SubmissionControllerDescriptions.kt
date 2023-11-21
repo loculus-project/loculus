@@ -9,13 +9,15 @@ You can use this response to associate the user provided submissionId with the s
 """
 
 const val METADATA_FILE_DESCRIPTION = """    
-A TSV (tab separated values) file containing the metadata of the submitted sequence entries.
+A TSV (tab separated values) file containing the metadata of the submitted sequence entries. 
+The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common extensions).
 It must contain the column names.
 The field 'submissionId' is required and must be unique within the provided dataset.
 It is used to associate metadata to the sequences in the sequences fasta file.
 """
 const val SEQUENCE_FILE_DESCRIPTION = """
 A fasta file containing the unaligned nucleotide sequences of the submitted sequences.
+The file may be compressed with zstd, xz, zip, gzip, lzma, bzip2 (with common extensions).
 If the underlying organism has a single segment,
 the headers of the fasta file must match the 'submissionId' field in the metadata file.
 If the underlying organism has multiple segments,

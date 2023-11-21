@@ -50,7 +50,9 @@ export const testUser = 'testuser';
 export const testUserPassword = 'testuser';
 
 export const metadataTestFile: string = './tests/testData/metadata.tsv';
+export const compressedMetadataTestFile: string = './tests/testData/metadata.tsv.zst';
 export const sequencesTestFile: string = './tests/testData/sequences.fasta';
+export const compressedSequencesTestFile: string = './tests/testData/sequences.fasta.zst';
 
 export const testSequenceCount: number =
     readFileSync(metadataTestFile, 'utf-8')

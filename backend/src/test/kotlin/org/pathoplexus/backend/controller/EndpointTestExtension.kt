@@ -5,8 +5,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.pathoplexus.backend.service.ACCESSION_SEQUENCE_NAME
-import org.pathoplexus.backend.service.TABLE_NAME
+import org.pathoplexus.backend.service.SEQUENCE_ENTRIES_TABLE_NAME
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
@@ -35,6 +34,8 @@ private const val SPRING_DATASOURCE_URL = "spring.datasource.url"
 private const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
 private const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
 
+const val ACCESSION_SEQUENCE_NAME = "accession_sequence"
+
 class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCallback {
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
@@ -56,7 +57,7 @@ class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCal
             "-d",
             postgres.databaseName,
             "-c",
-            "truncate table $TABLE_NAME; alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;",
+            "truncate table $SEQUENCE_ENTRIES_TABLE_NAME; alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;",
         )
     }
 

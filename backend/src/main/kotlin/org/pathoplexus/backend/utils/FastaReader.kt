@@ -3,7 +3,8 @@ package org.pathoplexus.backend.utils
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.util.NoSuchElementException
+
+data class FastaEntry(val sampleName: String, val sequence: String)
 
 class FastaReader(inputStream: InputStream) : Iterator<FastaEntry>, Iterable<FastaEntry>, AutoCloseable {
     private val reader: BufferedReader
@@ -59,5 +60,11 @@ class FastaReader(inputStream: InputStream) : Iterator<FastaEntry>, Iterable<Fas
 
     override fun iterator(): Iterator<FastaEntry> {
         return this
+    }
+
+    fun asSequence(): Sequence<FastaEntry> = sequence {
+        while (hasNext()) {
+            yield(next())
+        }
     }
 }

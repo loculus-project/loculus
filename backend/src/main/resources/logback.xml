@@ -12,7 +12,7 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
-    <logger name="Exposed" level="debug" />
+    <logger name="Exposed" level="warn" />
 
     <logger name="org.springframework.web.filter.CommonsRequestLoggingFilter" level="debug" additivity="false">
         <appender-ref ref="RollingFile"/>

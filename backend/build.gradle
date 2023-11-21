@@ -42,10 +42,14 @@ dependencies {
     implementation "org.jetbrains.exposed:exposed-kotlin-datetime:$exposedVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-datetime:0.5.0"
     implementation "org.hibernate.validator:hibernate-validator:8.0.1.Final"
-    
+
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
-    
+
+    implementation 'org.apache.commons:commons-compress:1.25.0'
+    implementation 'com.github.luben:zstd-jni:1.5.2-4'
+    implementation 'org.tukaani:xz:1.8'
+
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }

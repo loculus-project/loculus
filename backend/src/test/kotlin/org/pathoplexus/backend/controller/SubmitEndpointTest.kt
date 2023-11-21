@@ -7,6 +7,8 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.pathoplexus.backend.model.SubmitModel
+import org.pathoplexus.backend.service.CompressionAlgorithm
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.mock.web.MockMultipartFile
@@ -29,8 +31,13 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
         }
     }
 
-    @Test
-    fun `GIVEN valid input data THEN returns mapping of provided custom ids to generated ids`() {
+    @ParameterizedTest(name = "GIVEN {0} THEN data is accepted and submitted")
+    @MethodSource("compressionForSubmit")
+    fun `GIVEN valid input data THEN returns mapping of provided custom ids to generated ids`(
+        title: String,
+        metadataFile: MockMultipartFile,
+        sequencesFile: MockMultipartFile,
+    ) {
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
@@ -82,6 +89,34 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
 
     companion object {
         @JvmStatic
+        fun compressionForSubmit(): List<Arguments> {
+            return listOf(
+                Arguments.of(
+                    "uncompressed files",
+                    DefaultFiles.metadataFile,
+                    DefaultFiles.sequencesFile,
+                ),
+                Arguments.of(
+                    "ZSTD compressed metadata file",
+                    DefaultFiles.metadataFiles[CompressionAlgorithm.ZSTD],
+                    DefaultFiles.sequencesFile,
+                ),
+                Arguments.of(
+                    "ZSTD compressed sequences file",
+                    DefaultFiles.metadataFile,
+                    DefaultFiles.sequencesFiles[CompressionAlgorithm.ZSTD],
+                ),
+            ) +
+                CompressionAlgorithm.entries.map { compression ->
+                    Arguments.of(
+                        "${compression.name} compressed metadata file and sequences file",
+                        DefaultFiles.metadataFiles[compression],
+                        DefaultFiles.sequencesFiles[compression],
+                    )
+                }
+        }
+
+        @JvmStatic
         fun badRequestForSubmit(): List<Arguments> {
             return listOf(
                 Arguments.of(
@@ -106,7 +141,10 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     DefaultFiles.sequencesFile,
                     status().isBadRequest,
                     "Bad Request",
-                    "Metadata file must have extension .tsv",
+                    "${SubmitModel.AcceptedFileTypes.metadataFile.displayName} has wrong extension. Must be " +
+                        ".${SubmitModel.AcceptedFileTypes.metadataFile.validExtensions} for uncompressed " +
+                        "submissions or .${SubmitModel.AcceptedFileTypes.metadataFile.getCompressedExtensions()} " +
+                        "for compressed submissions",
                 ),
                 Arguments.of(
                     "wrong extension for sequences file",
@@ -114,7 +152,10 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     SubmitFiles.sequenceFileWith(originalFilename = "sequences.wrongExtension"),
                     status().isBadRequest,
                     "Bad Request",
-                    "Sequence file must have extension .fasta",
+                    "${SubmitModel.AcceptedFileTypes.sequenceFile.displayName} has wrong extension. Must be " +
+                        ".${SubmitModel.AcceptedFileTypes.sequenceFile.validExtensions} for uncompressed " +
+                        "submissions or .${SubmitModel.AcceptedFileTypes.sequenceFile.getCompressedExtensions()} " +
+                        "for compressed submissions",
                 ),
                 Arguments.of(
                     "metadata file where one row has a blank header",
@@ -155,7 +196,7 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains duplicate submissionIds: [sameHeader]",
+                    "Metadata file contains at least one duplicate submissionId",
                 ),
                 Arguments.of(
                     "duplicate headers in sequence file",
@@ -170,7 +211,7 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains duplicate submissionIds: sameHeader",
+                    "Sequence file contains at least one duplicate submissionId",
                 ),
                 Arguments.of(
                     "metadata file misses headers",
@@ -190,7 +231,7 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains submissionIds that are not present in the metadata file: [notInMetadata]",
+                    "Sequence file contains 1 submissionIds that are not present in the metadata file: notInMetadata",
                 ),
                 Arguments.of(
                     "sequence file misses headers",
@@ -209,7 +250,7 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains submissionIds that are not present in the sequence file: [notInSequences]",
+                    "Metadata file contains 1 submissionIds that are not present in the sequence file: notInSequences",
                 ),
                 Arguments.of(
                     "FASTA header misses segment name",

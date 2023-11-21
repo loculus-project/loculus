@@ -58,7 +58,7 @@ class SingleSegmentedSubmitEndpointTest(
 
     @Test
     fun `GIVEN input data with explicit default segment name THEN data is rejected`() {
-        val expectedDetail = "Metadata file contains submissionIds that are not present in the sequence file: [header1]"
+        val expectedDetail = "Metadata file contains 1 submissionIds that are not present in the sequence file: header1"
 
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(

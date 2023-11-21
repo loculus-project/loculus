@@ -20,3 +20,22 @@ create table sequence_entries (
 
 create index on sequence_entries (submitter);
 create index on sequence_entries (status);
+
+
+create table metadata_upload_aux_table (
+    upload_id text not null,
+    organism text not null,
+    submission_id text not null,
+    submitter text not null,
+    uploaded_at timestamp not null,
+    metadata jsonb not null,
+    primary key (upload_id,submission_id)
+);
+
+create table sequence_upload_aux_table (
+    upload_id text not null,
+    submission_id text not null,
+    segment_name text not null,
+    compressed_sequence_data text not null,
+    primary key (upload_id,submission_id,segment_name)
+);

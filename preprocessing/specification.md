@@ -14,7 +14,7 @@ In following, we list a series of tasks that the preprocessing pipeline would us
 
 **Validation:** The preprocessing pipeline checks the input data and emits errors or warnings. As mentioned above, the only constraint is that the output of the preprocessing pipeline conforms to the right (technical) format. Otherwise, a pipeline may be generous (e.g., allow every value in the "country" field) or be more restrictive (e.g., only allow a fixed set of values in the "country" field).
 
-**Alignment and translations:** The submitter only provides unaligned nucleotide sequences. To allow searching by nucleotide and amino acid mutations, the preprocessing pipeline must perform the alignment and compute the translations to amino acid sequences.
+**Alignment and translations:** The submitter only provides unaligned nucleotide sequences. To allow searching by nucleotide and amino acid mutations, the preprocessing pipeline must perform the alignment and compute the translations to amino acid sequences. 
 
 **Annotation:** The preprocessing pipeline can add annotations such as clade/lineage classifications.
 
@@ -31,7 +31,7 @@ In following, we list a series of tasks that the preprocessing pipeline would us
 - **Sequence entry:** A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated metadata. It is the main entity of the Pathoplexus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own accession. Changes to sequence entries are versioned, meaning that a sequence entry can have multiple versions.
 - **Unpreprocessed data:** sequence entries as provided by the submitters
 - **Preprocessed data:** sequence entries after being processed by the preprocessing pipeline. The preprocessed data must be consistent with the organism instance schema and will be passed to LAPIS and SILO.
-- **Nucleotide sequence segment:** A nucleotide sequence consists of one or multiple segments. If there is only a single segment (e.g., as in SARS-CoV-2), the segment name should be `main`.
+- **Nucleotide sequence segment:** A nucleotide sequence consists of one or multiple segments. If there is only a single segment (e.g., as in SARS-CoV-2), the segment name should be `main`. For multi-segmented sequences, the segment names must match the corresponding reference genomes.
 
 ## Workflow overview
 

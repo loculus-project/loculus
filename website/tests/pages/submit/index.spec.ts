@@ -11,4 +11,15 @@ test.describe('The submit page', () => {
         await submitPage.submitButton.click();
         await expect(submitPage.page.getByText('Response Sequence Headers')).toBeVisible();
     });
+
+    test('should upload compressed files and submit', async ({ submitPage, loginAsTestUser }) => {
+        await loginAsTestUser();
+        await submitPage.goto();
+
+        await Promise.all([submitPage.uploadCompressedSequenceData(), submitPage.uploadCompressedMetadata()]);
+
+        await expect(submitPage.page.getByText('Response Sequence Headers')).not.toBeVisible();
+        await submitPage.submitButton.click();
+        await expect(submitPage.page.getByText('Response Sequence Headers')).toBeVisible();
+    });
 });
