@@ -6,7 +6,6 @@ import org.jetbrains.exposed.sql.select
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.Status
-import org.pathoplexus.backend.api.toPairs
 import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.springframework.stereotype.Component
@@ -28,14 +27,7 @@ class QueryPreconditionValidator {
                 SequenceEntriesTable.status,
                 SequenceEntriesTable.organism,
             )
-            .select(
-                where = {
-                    Pair(
-                        SequenceEntriesTable.accession,
-                        SequenceEntriesTable.version,
-                    ) inList accessionVersions.toPairs()
-                },
-            )
+            .select(where = { accessionVersionIsIn(accessionVersions) })
 
         validateAccessionVersionsExist(sequenceEntries, accessionVersions)
         validateSequenceEntriesAreInStates(sequenceEntries, statuses)
@@ -49,8 +41,6 @@ class QueryPreconditionValidator {
         statuses: List<Status>,
         organism: Organism,
     ): List<AccessionVersion> {
-        val maxVersionQuery = maxVersionQuery()
-
         val sequenceEntries = SequenceEntriesTable
             .slice(
                 SequenceEntriesTable.accession,
@@ -60,10 +50,7 @@ class QueryPreconditionValidator {
                 SequenceEntriesTable.organism,
             )
             .select(
-                where = {
-                    (SequenceEntriesTable.accession inList accessions)
-                        .and((SequenceEntriesTable.version eq maxVersionQuery))
-                },
+                where = { (SequenceEntriesTable.accession inList accessions) and isMaxVersion },
             )
 
         validateAccessionsExist(sequenceEntries, accessions)

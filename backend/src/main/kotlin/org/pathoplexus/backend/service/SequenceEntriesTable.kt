@@ -4,17 +4,23 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.Sequence
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.api.AccessionVersionInterface
+import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.OriginalData
 import org.pathoplexus.backend.api.PreprocessingAnnotation
 import org.pathoplexus.backend.api.ProcessedData
+import org.pathoplexus.backend.api.Status
+import org.pathoplexus.backend.api.toPairs
 
 private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
@@ -68,7 +74,9 @@ object SequenceEntriesTable : Table(TABLE_NAME) {
     override val primaryKey = PrimaryKey(accession, version)
 }
 
-fun maxVersionQuery(): Expression<Long?> {
+val isMaxVersion = SequenceEntriesTable.version eq maxVersionQuery()
+
+private fun maxVersionQuery(): Expression<Long?> {
     val subQueryTable = SequenceEntriesTable.alias("subQueryTable")
     return wrapAsExpression(
         subQueryTable
@@ -76,3 +84,32 @@ fun maxVersionQuery(): Expression<Long?> {
             .select { subQueryTable[SequenceEntriesTable.accession] eq SequenceEntriesTable.accession },
     )
 }
+
+val isMaxReleasedVersion = SequenceEntriesTable.version eq maxReleasedVersionQuery()
+
+private fun maxReleasedVersionQuery(): Expression<Long?> {
+    val subQueryTable = SequenceEntriesTable.alias("subQueryTable")
+    return wrapAsExpression(
+        subQueryTable
+            .slice(subQueryTable[SequenceEntriesTable.version].max())
+            .select {
+                (subQueryTable[SequenceEntriesTable.accession] eq SequenceEntriesTable.accession) and
+                    (subQueryTable[SequenceEntriesTable.status] eq Status.APPROVED_FOR_RELEASE.name)
+            },
+    )
+}
+
+fun accessionVersionIsIn(accessionVersions: List<AccessionVersionInterface>) =
+    Pair(SequenceEntriesTable.accession, SequenceEntriesTable.version) inList accessionVersions.toPairs()
+
+fun organismIs(organism: Organism) = SequenceEntriesTable.organism eq organism.name
+
+fun statusIs(status: Status) = SequenceEntriesTable.status eq status.name
+
+fun statusIsOneOf(vararg status: Status) = SequenceEntriesTable.status inList status.map { it.name }
+
+fun accessionVersionEquals(accessionVersion: AccessionVersionInterface) =
+    (SequenceEntriesTable.accession eq accessionVersion.accession) and
+        (SequenceEntriesTable.version eq accessionVersion.version)
+
+fun submitterIs(submitter: String) = SequenceEntriesTable.submitter eq submitter
