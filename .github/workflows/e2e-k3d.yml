@@ -110,4 +110,4 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: kubernetes-logs
-        path: kubernetes_logs.txt
+        path: kubernetes_logs/
