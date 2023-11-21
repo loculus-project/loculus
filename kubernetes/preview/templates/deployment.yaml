@@ -81,6 +81,10 @@ spec:
               value: "unsecure"
             - name: POSTGRES_DB
               value: "pathoplexus"
+        - name: preprocessing
+          image: ghcr.io/pathoplexus/preprocessing-dummy:{{ $dockerTag }}
+          imagePullPolicy: Always
+          args: ["--watch"]
 
       imagePullSecrets:
         - name: ghcr-secret
