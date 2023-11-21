@@ -87,7 +87,7 @@ NextcladeResult = Mapping[str, str]
 
 def fetch_unprocessed_sequences(n: int) -> Sequence[UnprocessedEntry]:
     url = host + "/extract-unprocessed-data"
-    params = {"numberOfSequences": n}
+    params = {"numberOfSequenceEntries": n}
     response = requests.post(url, data=params)
     if not response.ok:
         raise Exception(
