@@ -9,13 +9,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.NextVal
 import org.jetbrains.exposed.sql.QueryParameter
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
-import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
@@ -23,11 +19,9 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.nextLongVal
-import org.jetbrains.exposed.sql.or
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
-import org.jetbrains.exposed.sql.wrapAsExpression
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.AccessionVersionInterface
 import org.pathoplexus.backend.api.Organism
@@ -46,7 +40,6 @@ import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedData
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
-import org.pathoplexus.backend.api.toPairs
 import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.ForbiddenException
@@ -108,16 +101,11 @@ class DatabaseService(
 
     fun streamUnprocessedSubmissions(numberOfSequenceEntries: Int, outputStream: OutputStream, organism: Organism) {
         log.info { "streaming unprocessed submissions. Requested $numberOfSequenceEntries sequence entries." }
-        val maxVersionQuery = maxVersionQuery()
 
         val sequenceEntryData = SequenceEntriesTable
             .slice(SequenceEntriesTable.accession, SequenceEntriesTable.version, SequenceEntriesTable.originalData)
             .select(
-                where = {
-                    (SequenceEntriesTable.status eq RECEIVED.name)
-                        .and(SequenceEntriesTable.version eq maxVersionQuery)
-                        .and(organismIs(organism))
-                },
+                where = { statusIs(RECEIVED) and isMaxVersion and organismIs(organism) },
             )
             .limit(numberOfSequenceEntries)
             .map {
@@ -159,7 +147,7 @@ class DatabaseService(
 
             val numInserted = insertProcessedDataWithStatus(submittedProcessedData, organism)
             if (numInserted != 1) {
-                throwInsertFailedException(submittedProcessedData, organism)
+                throwInsertFailedException(submittedProcessedData)
             }
         }
     }
@@ -191,9 +179,8 @@ class DatabaseService(
 
         return SequenceEntriesTable.update(
             where = {
-                (SequenceEntriesTable.accession eq submittedProcessedDataWithAllKeysForInsertions.accession) and
-                    (SequenceEntriesTable.version eq submittedProcessedDataWithAllKeysForInsertions.version) and
-                    (SequenceEntriesTable.status eq IN_PROCESSING.name) and
+                accessionVersionEquals(submittedProcessedDataWithAllKeysForInsertions) and
+                    statusIs(IN_PROCESSING) and
                     organismIs(organism)
             },
         ) {
@@ -210,12 +197,8 @@ class DatabaseService(
         organism: Organism,
     ) {
         val resultRow = SequenceEntriesTable.slice(SequenceEntriesTable.organism)
-            .select(
-                where = {
-                    (SequenceEntriesTable.accession eq submittedProcessedData.accession) and
-                        (SequenceEntriesTable.version eq submittedProcessedData.version)
-                },
-            ).firstOrNull() ?: return
+            .select(where = { accessionVersionEquals(submittedProcessedData) })
+            .firstOrNull() ?: return
 
         if (resultRow[SequenceEntriesTable.organism] != organism.name) {
             throw UnprocessableEntityException(
@@ -252,19 +235,14 @@ class DatabaseService(
         )
     }
 
-    private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData, organism: Organism): String {
+    private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData): String {
         val selectedSequenceEntries = SequenceEntriesTable
             .slice(
                 SequenceEntriesTable.accession,
                 SequenceEntriesTable.version,
                 SequenceEntriesTable.status,
             )
-            .select(
-                where = {
-                    (SequenceEntriesTable.accession eq submittedProcessedData.accession) and
-                        (SequenceEntriesTable.version eq submittedProcessedData.version)
-                },
-            )
+            .select(where = { accessionVersionEquals(submittedProcessedData) })
 
         val accessionVersion = submittedProcessedData.displayAccessionVersion()
         if (selectedSequenceEntries.count() == 0L) {
@@ -294,7 +272,7 @@ class DatabaseService(
 
         SequenceEntriesTable.update(
             where = {
-                accessionVersionIsIn(accessionVersions) and (SequenceEntriesTable.status eq AWAITING_APPROVAL.name)
+                accessionVersionIsIn(accessionVersions) and statusIs(AWAITING_APPROVAL)
             },
         ) {
             it[status] = APPROVED_FOR_RELEASE.name
@@ -306,10 +284,7 @@ class DatabaseService(
         return SequenceEntriesTable
             .slice(SequenceEntriesTable.accession, maxVersionExpression)
             .select(
-                where = {
-                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
-                        organismIs(organism)
-                },
+                where = { statusIs(APPROVED_FOR_RELEASE) and organismIs(organism) },
             )
             .groupBy(SequenceEntriesTable.accession)
             .associate { it[SequenceEntriesTable.accession] to it[maxVersionExpression]!! }
@@ -321,7 +296,7 @@ class DatabaseService(
             .slice(SequenceEntriesTable.accession, maxVersionExpression)
             .select(
                 where = {
-                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
+                    statusIs(APPROVED_FOR_RELEASE) and
                         (SequenceEntriesTable.isRevocation eq true) and
                         organismIs(organism)
                 },
@@ -342,10 +317,7 @@ class DatabaseService(
                 SequenceEntriesTable.submissionId,
             )
             .select(
-                where = {
-                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
-                        organismIs(organism)
-                },
+                where = { statusIs(APPROVED_FOR_RELEASE) and organismIs(organism) },
             )
             // TODO(#429): This needs clarification of how to handle revocations. Until then, revocations are filtered out.
             .filter { !it[SequenceEntriesTable.isRevocation] }
@@ -370,8 +342,6 @@ class DatabaseService(
         organism: Organism,
     ) {
         log.info { "streaming $numberOfSequences submissions that need review by $submitter" }
-        val maxVersionQuery = maxVersionQuery()
-
         val sequencesData = SequenceEntriesTable
             .slice(
                 SequenceEntriesTable.accession,
@@ -384,9 +354,9 @@ class DatabaseService(
             )
             .select(
                 where = {
-                    (SequenceEntriesTable.status eq HAS_ERRORS.name) and
-                        (SequenceEntriesTable.version eq maxVersionQuery) and
-                        (SequenceEntriesTable.submitter eq submitter) and
+                    statusIs(HAS_ERRORS) and
+                        isMaxVersion and
+                        submitterIs(submitter) and
                         organismIs(organism)
                 },
             ).limit(numberOfSequences).map { row ->
@@ -419,9 +389,9 @@ class DatabaseService(
         val releasedSequenceEntries = subTableSequenceStatus
             .select(
                 where = {
-                    (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
-                        (SequenceEntriesTable.submitter eq username) and
-                        (SequenceEntriesTable.version eq maxReleasedVersionQuery()) and
+                    statusIs(APPROVED_FOR_RELEASE) and
+                        submitterIs(username) and
+                        isMaxReleasedVersion and
                         organismIs(organism)
                 },
             ).map { row ->
@@ -433,12 +403,11 @@ class DatabaseService(
                 )
             }
 
-        val maxVersionQuery = maxVersionQuery()
         val unreleasedSequenceEntries = subTableSequenceStatus.select(
             where = {
                 (SequenceEntriesTable.status neq APPROVED_FOR_RELEASE.name) and
-                    (SequenceEntriesTable.submitter eq username) and
-                    (SequenceEntriesTable.version eq maxVersionQuery) and
+                    submitterIs(username) and
+                    isMaxVersion and
                     organismIs(organism)
             },
         ).map { row ->
@@ -453,22 +422,9 @@ class DatabaseService(
         return releasedSequenceEntries + unreleasedSequenceEntries
     }
 
-    private fun maxReleasedVersionQuery(): Expression<Long?> {
-        val subQueryTable = SequenceEntriesTable.alias("subQueryTable")
-        return wrapAsExpression(
-            subQueryTable
-                .slice(subQueryTable[SequenceEntriesTable.version].max())
-                .select {
-                    (subQueryTable[SequenceEntriesTable.accession] eq SequenceEntriesTable.accession) and
-                        (subQueryTable[SequenceEntriesTable.status] eq APPROVED_FOR_RELEASE.name)
-                },
-        )
-    }
-
     fun reviseData(submitter: String, revisedData: List<RevisedData>, organism: Organism): List<SubmissionIdMapping> {
         log.info { "revising sequence entries" }
 
-        val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val accessionVersions =
@@ -494,9 +450,9 @@ class DatabaseService(
                 ).select(
                     where = {
                         (SequenceEntriesTable.accession eq data.accession) and
-                            (SequenceEntriesTable.version eq maxVersionQuery) and
-                            (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name) and
-                            (SequenceEntriesTable.submitter eq submitter)
+                            isMaxVersion and
+                            statusIs(APPROVED_FOR_RELEASE) and
+                            submitterIs(submitter)
                     },
                 ),
                 columns = listOf(
@@ -528,7 +484,6 @@ class DatabaseService(
             organism,
         )
 
-        val maxVersionQuery = maxVersionQuery()
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         SequenceEntriesTable.insert(
@@ -544,8 +499,8 @@ class DatabaseService(
             ).select(
                 where = {
                     (SequenceEntriesTable.accession inList accessions) and
-                        (SequenceEntriesTable.version eq maxVersionQuery) and
-                        (SequenceEntriesTable.status eq APPROVED_FOR_RELEASE.name)
+                        isMaxVersion and
+                        statusIs(APPROVED_FOR_RELEASE)
                 },
             ),
             columns = listOf(
@@ -564,14 +519,13 @@ class DatabaseService(
             .slice(
                 SequenceEntriesTable.accession,
                 SequenceEntriesTable.version,
-                SequenceEntriesTable.status,
                 SequenceEntriesTable.isRevocation,
             )
             .select(
                 where = {
                     (SequenceEntriesTable.accession inList accessions) and
-                        (SequenceEntriesTable.version eq maxVersionQuery) and
-                        (SequenceEntriesTable.status eq AWAITING_APPROVAL_FOR_REVOCATION.name)
+                        isMaxVersion and
+                        statusIs(AWAITING_APPROVAL_FOR_REVOCATION)
                 },
             ).map {
                 SequenceEntryStatus(
@@ -595,8 +549,7 @@ class DatabaseService(
 
         SequenceEntriesTable.update(
             where = {
-                accessionVersionIsIn(accessionVersions) and
-                    (SequenceEntriesTable.status eq AWAITING_APPROVAL_FOR_REVOCATION.name)
+                accessionVersionIsIn(accessionVersions) and statusIs(AWAITING_APPROVAL_FOR_REVOCATION)
             },
         ) {
             it[status] = APPROVED_FOR_RELEASE.name
@@ -621,14 +574,11 @@ class DatabaseService(
     fun submitReviewedSequence(submitter: String, reviewedAccessionVersion: UnprocessedData, organism: Organism) {
         log.info { "reviewed sequence entry submitted $reviewedAccessionVersion" }
 
-        val statusIsAwaitingApprovalOrHasErrors = (SequenceEntriesTable.status eq AWAITING_APPROVAL.name) or
-            (SequenceEntriesTable.status eq HAS_ERRORS.name)
         val sequencesReviewed = SequenceEntriesTable.update(
             where = {
-                (SequenceEntriesTable.accession eq reviewedAccessionVersion.accession) and
-                    (SequenceEntriesTable.version eq reviewedAccessionVersion.version) and
-                    (SequenceEntriesTable.submitter eq submitter) and
-                    statusIsAwaitingApprovalOrHasErrors and
+                accessionVersionEquals(reviewedAccessionVersion) and
+                    submitterIs(submitter) and
+                    statusIsOneOf(AWAITING_APPROVAL, HAS_ERRORS) and
                     organismIs(organism)
             },
         ) {
@@ -659,12 +609,7 @@ class DatabaseService(
                 SequenceEntriesTable.submitter,
                 SequenceEntriesTable.organism,
             )
-            .select(
-                where = {
-                    (SequenceEntriesTable.accession eq reviewedAccessionVersion.accession) and
-                        (SequenceEntriesTable.version eq reviewedAccessionVersion.version)
-                },
-            )
+            .select(where = { accessionVersionEquals(reviewedAccessionVersion) })
 
         val accessionVersionString = reviewedAccessionVersion.displayAccessionVersion()
 
@@ -717,13 +662,9 @@ class DatabaseService(
             )
             .select(
                 where = {
-                    (
-                        (SequenceEntriesTable.status eq HAS_ERRORS.name)
-                            or (SequenceEntriesTable.status eq AWAITING_APPROVAL.name)
-                        ) and
-                        (SequenceEntriesTable.accession eq accessionVersion.accession) and
-                        (SequenceEntriesTable.version eq accessionVersion.version) and
-                        (SequenceEntriesTable.submitter eq submitter) and
+                    statusIsOneOf(HAS_ERRORS, AWAITING_APPROVAL) and
+                        accessionVersionEquals(accessionVersion) and
+                        submitterIs(submitter) and
                         organismIs(organism)
                 },
             )
@@ -757,12 +698,7 @@ class DatabaseService(
                 SequenceEntriesTable.status,
                 SequenceEntriesTable.organism,
             )
-            .select(
-                where = {
-                    (SequenceEntriesTable.accession eq accessionVersion.accession) and
-                        (SequenceEntriesTable.version eq accessionVersion.version)
-                },
-            )
+            .select(where = { accessionVersionEquals(accessionVersion) })
 
         if (selectedSequences.count().toInt() == 0) {
             throw NotFoundException("Accession version ${accessionVersion.displayAccessionVersion()} does not exist")
@@ -805,21 +741,11 @@ class DatabaseService(
         val sequencesOwnedByUser = SequenceEntriesTable
             .slice(SequenceEntriesTable.accession, SequenceEntriesTable.version, SequenceEntriesTable.submitter)
             .select(
-                where = {
-                    (SequenceEntriesTable.accession eq accessionVersion.accession) and
-                        (SequenceEntriesTable.version eq accessionVersion.version) and
-                        (SequenceEntriesTable.submitter eq user)
-                },
+                where = { accessionVersionEquals(accessionVersion) and submitterIs(user) },
             )
 
         return sequencesOwnedByUser.count() == 1L
     }
-
-    private fun accessionVersionIsIn(accessionVersions: List<AccessionVersionInterface>) =
-        Pair(SequenceEntriesTable.accession, SequenceEntriesTable.version) inList accessionVersions.toPairs()
-
-    private fun organismIs(organism: Organism) =
-        SequenceEntriesTable.organism eq organism.name
 }
 
 data class RawProcessedData(
