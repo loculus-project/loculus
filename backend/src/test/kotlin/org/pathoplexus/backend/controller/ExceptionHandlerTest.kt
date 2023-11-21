@@ -110,7 +110,7 @@ class ExceptionHandlerWithMockedModelTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `WHEN I submit a request with invalid organism THEN it should return a descriptive error message`() {
-        every { submitModel.processSubmission(any(), any(), any(), any()) } returns validResponse
+        every { submitModel.processSubmission(any(), any(), any(), any(), any()) } returns validResponse
 
         mockMvc.perform(
             multipart("/unknownOrganism/submit")

@@ -12,9 +12,9 @@ import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
-import org.pathoplexus.backend.service.Accession
 import org.pathoplexus.backend.service.AminoAcidSymbols
 import org.pathoplexus.backend.service.NucleotideSymbols
+import org.pathoplexus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

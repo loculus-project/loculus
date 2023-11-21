@@ -20,7 +20,6 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-
 @EndpointTest
 class ReviseEndpointTest(
     @Autowired val client: SubmissionControllerClient,
@@ -246,7 +245,7 @@ class ReviseEndpointTest(
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains duplicate submissionIds: [sameHeader]",
+                    "Metadata file contains duplicate submissionIds",
                 ),
                 Arguments.of(
                     "duplicate headers in sequence file",
@@ -261,7 +260,7 @@ class ReviseEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains duplicate submissionIds: sameHeader_main",
+                    "Sequence file contains duplicate submissionIds",
                 ),
                 Arguments.of(
                     "metadata file misses headers",
@@ -281,7 +280,7 @@ class ReviseEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Sequence file contains submissionIds that are not present in the metadata file: [notInMetadata]",
+                    "Sequence file contains 1 submissionIds that are not present in the metadata file: notInMetadata",
                 ),
                 Arguments.of(
                     "sequence file misses submissionIds",
@@ -300,7 +299,7 @@ class ReviseEndpointTest(
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
-                    "Metadata file contains submissionIds that are not present in the sequence file: [notInSequences]",
+                    "Metadata file contains 1 submissionIds that are not present in the sequence file: notInSequences",
                 ),
                 Arguments.of(
                     "metadata file misses accession header",

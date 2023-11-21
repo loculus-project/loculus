@@ -8,10 +8,15 @@ import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
+import org.pathoplexus.backend.utils.Accession
+import org.pathoplexus.backend.utils.AccessionComparator
+import org.pathoplexus.backend.utils.AccessionVersionComparator
 import org.springframework.stereotype.Component
 
 @Component
-class QueryPreconditionValidator {
+class QueryPreconditionValidator(
+    private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
+) {
 
     fun validateAccessionVersions(
         submitter: String,
@@ -19,20 +24,22 @@ class QueryPreconditionValidator {
         statuses: List<Status>,
         organism: Organism,
     ) {
-        val sequenceEntries = SequenceEntriesTable
-            .slice(
-                SequenceEntriesTable.accession,
-                SequenceEntriesTable.version,
-                SequenceEntriesTable.submitter,
-                SequenceEntriesTable.status,
-                SequenceEntriesTable.organism,
-            )
-            .select(where = { accessionVersionIsIn(accessionVersions) })
+        sequenceEntriesTableProvider.get(organism).let { table ->
+            val sequenceEntries = table
+                .slice(
+                    table.accessionColumn,
+                    table.versionColumn,
+                    table.submitterColumn,
+                    table.statusColumn,
+                    table.organismColumn,
+                )
+                .select(where = { table.accessionVersionIsIn(accessionVersions) })
 
-        validateAccessionVersionsExist(sequenceEntries, accessionVersions)
-        validateSequenceEntriesAreInStates(sequenceEntries, statuses)
-        validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter)
-        validateOrganism(sequenceEntries, organism)
+            validateAccessionVersionsExist(sequenceEntries, accessionVersions, table)
+            validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
+            validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
+            validateOrganism(sequenceEntries, organism, table)
+        }
     }
 
     fun validateAccessions(
@@ -41,32 +48,38 @@ class QueryPreconditionValidator {
         statuses: List<Status>,
         organism: Organism,
     ): List<AccessionVersion> {
-        val sequenceEntries = SequenceEntriesTable
-            .slice(
-                SequenceEntriesTable.accession,
-                SequenceEntriesTable.version,
-                SequenceEntriesTable.submitter,
-                SequenceEntriesTable.status,
-                SequenceEntriesTable.organism,
-            )
-            .select(
-                where = { (SequenceEntriesTable.accession inList accessions) and isMaxVersion },
-            )
+        sequenceEntriesTableProvider.get(organism).let { table ->
+            val sequenceEntries = table
+                .slice(
+                    table.accessionColumn,
+                    table.versionColumn,
+                    table.submitterColumn,
+                    table.statusColumn,
+                    table.organismColumn,
+                )
+                .select(
+                    where = { (table.accessionColumn inList accessions) and table.isMaxVersion },
+                )
 
-        validateAccessionsExist(sequenceEntries, accessions)
-        validateSequenceEntriesAreInStates(sequenceEntries, statuses)
-        validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter)
-        validateOrganism(sequenceEntries, organism)
+            validateAccessionsExist(sequenceEntries, accessions, table)
+            validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
+            validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
+            validateOrganism(sequenceEntries, organism, table)
 
-        return sequenceEntries.map {
-            AccessionVersion(
-                it[SequenceEntriesTable.accession],
-                it[SequenceEntriesTable.version],
-            )
+            return sequenceEntries.map {
+                AccessionVersion(
+                    it[table.accessionColumn],
+                    it[table.versionColumn],
+                )
+            }
         }
     }
 
-    private fun validateAccessionVersionsExist(sequenceEntries: Query, accessionVersions: List<AccessionVersion>) {
+    private fun validateAccessionVersionsExist(
+        sequenceEntries: Query,
+        accessionVersions: List<AccessionVersion>,
+        table: SequenceEntriesDataTable,
+    ) {
         if (sequenceEntries.count() == accessionVersions.size.toLong()) {
             return
         }
@@ -74,8 +87,8 @@ class QueryPreconditionValidator {
         val accessionVersionsNotFound = accessionVersions
             .filter { accessionVersion ->
                 sequenceEntries.none {
-                    it[SequenceEntriesTable.accession] == accessionVersion.accession &&
-                        it[SequenceEntriesTable.version] == accessionVersion.version
+                    it[table.accessionColumn] == accessionVersion.accession &&
+                        it[table.versionColumn] == accessionVersion.version
                 }
             }
             .sortedWith(AccessionVersionComparator)
@@ -84,20 +97,24 @@ class QueryPreconditionValidator {
         throw UnprocessableEntityException("Accession versions $accessionVersionsNotFound do not exist")
     }
 
-    private fun validateSequenceEntriesAreInStates(sequenceEntries: Query, statuses: List<Status>) {
+    private fun validateSequenceEntriesAreInStates(
+        sequenceEntries: Query,
+        statuses: List<Status>,
+        table: SequenceEntriesDataTable,
+    ) {
         val sequenceEntriesNotInStatuses = sequenceEntries
             .filter {
-                statuses.none { status -> it[SequenceEntriesTable.status] == status.name }
+                statuses.none { status -> it[table.statusColumn] == status.name }
             }
             .sortedWith { left, right ->
                 AccessionComparator.compare(
-                    left[SequenceEntriesTable.accession],
-                    right[SequenceEntriesTable.accession],
+                    left[table.accessionColumn],
+                    right[table.accessionColumn],
                 )
             }
             .map {
-                "${it[SequenceEntriesTable.accession]}.${it[SequenceEntriesTable.version]} - " +
-                    it[SequenceEntriesTable.status]
+                "${it[table.accessionColumn]}.${it[table.versionColumn]} - " +
+                    it[table.statusColumn]
             }
 
         if (sequenceEntriesNotInStatuses.isNotEmpty()) {
@@ -108,10 +125,14 @@ class QueryPreconditionValidator {
         }
     }
 
-    private fun validateUserIsAllowedToEditSequenceEntries(sequenceEntries: Query, submitter: String) {
+    private fun validateUserIsAllowedToEditSequenceEntries(
+        sequenceEntries: Query,
+        submitter: String,
+        table: SequenceEntriesDataTable,
+    ) {
         val sequenceEntriesNotSubmittedByUser = sequenceEntries
-            .filter { it[SequenceEntriesTable.submitter] != submitter }
-            .map { AccessionVersion(it[SequenceEntriesTable.accession], it[SequenceEntriesTable.version]) }
+            .filter { it[table.submitterColumn] != submitter }
+            .map { AccessionVersion(it[table.accessionColumn], it[table.versionColumn]) }
 
         if (sequenceEntriesNotSubmittedByUser.isNotEmpty()) {
             val accessionVersionString = sequenceEntriesNotSubmittedByUser.sortedWith(AccessionVersionComparator)
@@ -123,7 +144,11 @@ class QueryPreconditionValidator {
         }
     }
 
-    private fun validateAccessionsExist(sequenceEntries: Query, accessions: List<Accession>) {
+    private fun validateAccessionsExist(
+        sequenceEntries: Query,
+        accessions: List<Accession>,
+        table: SequenceEntriesDataTable,
+    ) {
         if (sequenceEntries.count() == accessions.size.toLong()) {
             return
         }
@@ -131,7 +156,7 @@ class QueryPreconditionValidator {
         val accessionsNotFound = accessions
             .filter { accession ->
                 sequenceEntries.none {
-                    it[SequenceEntriesTable.accession] == accession
+                    it[table.accessionColumn] == accession
                 }
             }
             .sortedWith(AccessionComparator)
@@ -140,12 +165,17 @@ class QueryPreconditionValidator {
         throw UnprocessableEntityException("Accessions $accessionsNotFound do not exist")
     }
 
-    private fun validateOrganism(sequenceEntryVersions: Query, organism: Organism) {
+    private fun validateOrganism(sequenceEntryVersions: Query, organism: Organism, table: SequenceEntriesDataTable) {
         val accessionVersionsByOtherOrganisms =
-            sequenceEntryVersions.filter { it[SequenceEntriesTable.organism] != organism.name }
+            sequenceEntryVersions.filter { it[table.organismColumn] != organism.name }
                 .groupBy(
-                    { it[SequenceEntriesTable.organism] },
-                    { AccessionVersion(it[SequenceEntriesTable.accession], it[SequenceEntriesTable.version]) },
+                    { it[table.organismColumn] },
+                    {
+                        AccessionVersion(
+                            it[table.accessionColumn],
+                            it[table.versionColumn],
+                        )
+                    },
                 )
 
         if (accessionVersionsByOtherOrganisms.isEmpty()) {

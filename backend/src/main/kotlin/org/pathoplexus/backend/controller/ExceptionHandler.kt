@@ -62,7 +62,11 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
     }
 
-    @ExceptionHandler(UnprocessableEntityException::class, ProcessingValidationException::class)
+    @ExceptionHandler(
+        UnprocessableEntityException::class,
+        ProcessingValidationException::class,
+        DuplicateKeyException::class,
+    )
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     fun handleUnprocessableEntityException(e: Exception): ResponseEntity<ProblemDetail> {
         log.warn(e) { "Caught unprocessable entity exception: ${e.message}" }
@@ -144,5 +148,6 @@ class ForbiddenException(message: String) : RuntimeException(message)
 class UnprocessableEntityException(message: String) : RuntimeException(message)
 class NotFoundException(message: String) : RuntimeException(message)
 class ProcessingValidationException(message: String) : RuntimeException(message)
+class DuplicateKeyException(message: String) : RuntimeException(message)
 
 class DummyUnauthorizedExceptionToMakeItAppearInSwaggerUi : RuntimeException()

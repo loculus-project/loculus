@@ -8,8 +8,8 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
-import org.pathoplexus.backend.service.Accession
-import org.pathoplexus.backend.service.Version
+import org.pathoplexus.backend.utils.Accession
+import org.pathoplexus.backend.utils.Version
 
 interface AccessionVersionInterface {
     val accession: Accession
@@ -154,11 +154,6 @@ data class RevisedData(
     val originalData: OriginalData,
 )
 
-data class SubmittedData(
-    val submissionId: String,
-    val originalData: OriginalData,
-)
-
 data class UnprocessedData(
     @Schema(example = "123") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
@@ -175,7 +170,7 @@ data class OriginalData(
         example = "{\"segment1\": \"ACTG\", \"segment2\": \"GTCA\"}",
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
-    val unalignedNucleotideSequences: Map<String, String>,
+    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
 )
 
 enum class Status {

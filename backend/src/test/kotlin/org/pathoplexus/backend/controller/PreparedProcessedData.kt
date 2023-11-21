@@ -16,7 +16,7 @@ import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SegmentName
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.service.Accession
+import org.pathoplexus.backend.utils.Accession
 
 val defaultProcessedData = ProcessedData(
     metadata = mapOf(

@@ -8,7 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.Status
-import org.pathoplexus.backend.service.AccessionVersionComparator
+import org.pathoplexus.backend.utils.AccessionVersionComparator
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

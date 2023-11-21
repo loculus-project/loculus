@@ -11,6 +11,10 @@ data class ReferenceGenome(
             throw IllegalArgumentException("If there is only one nucleotide sequence, it must be named 'main'")
         }
     }
+
+    fun getNucleotideSegmentReference(segmentName: String): NucleotideSequence? = nucleotideSequences.find {
+        it.name == segmentName
+    }?.sequence
 }
 
 data class ReferenceSequence(

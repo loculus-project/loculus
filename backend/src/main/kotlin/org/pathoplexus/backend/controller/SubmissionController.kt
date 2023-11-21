@@ -19,8 +19,8 @@ import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.model.ReleasedDataModel
 import org.pathoplexus.backend.model.SubmitModel
-import org.pathoplexus.backend.service.Accession
 import org.pathoplexus.backend.service.DatabaseService
+import org.pathoplexus.backend.utils.Accession
 import org.pathoplexus.backend.utils.IteratorStreamer
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
@@ -39,6 +39,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
+import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 @RestController
@@ -61,9 +62,13 @@ class SubmissionController(
         @UsernameFromJwt username: String,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
-    ): List<SubmissionIdMapping> {
-        return submitModel.processSubmission(username, metadataFile, sequenceFile, organism)
-    }
+    ): List<SubmissionIdMapping> = submitModel.processSubmission(
+        UUID.randomUUID().toString(),
+        metadataFile,
+        sequenceFile,
+        username,
+        organism,
+    )
 
     @Operation(description = EXTRACT_UNPROCESSED_DATA_DESCRIPTION)
     @ApiResponse(
