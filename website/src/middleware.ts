@@ -127,7 +127,9 @@ export function parseToken(tokenValue: string | undefined) {
 }
 
 async function getUserInfo(token: TokenSet) {
-    return ResultAsync.fromSafePromise((await getKeycloakClient()).userinfo(token.access_token!));
+    return ResultAsync.fromPromise((await getKeycloakClient()).userinfo(token.access_token!), (error) => {
+        return error;
+    });
 }
 
 async function getTokenFromParams(context: APIContext) {

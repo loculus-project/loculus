@@ -1,6 +1,6 @@
 ---
-import { getClientLogger } from '../clientLogger';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { getInstanceLogger } from '../logger';
 import { getKeycloakClient, TOKEN_COOKIE } from '../middleware';
 
 async function logout() {
@@ -10,8 +10,8 @@ async function logout() {
         return;
     }
 
-    await (await getKeycloakClient()).revoke(token.refresh_token!).catch(async () => {
-        void getClientLogger().error('Failed to revoke token');
+    await (await getKeycloakClient()).revoke(token.refresh_token!).catch(async (err) => {
+        getInstanceLogger('logout page').error(`Failed to revoke token. Error ${err}`);
     });
 
     Astro.cookies.delete(TOKEN_COOKIE);

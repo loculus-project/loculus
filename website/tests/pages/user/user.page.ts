@@ -30,6 +30,16 @@ export class UserPage {
         await this.page.waitForSelector('text=REVOKE');
     }
 
+    public async goToUserPage() {
+        await this.page.goto(`${baseUrl}/user`, { waitUntil: 'networkidle' });
+        await this.page.waitForURL(`${baseUrl}/user`);
+    }
+
+    public async logout() {
+        await this.page.click('text=Logout');
+        await this.page.waitForURL(`${baseUrl}/logout`);
+    }
+
     public async verifyTableEntries(sequencesToCheck: SequenceEntryStatus[]) {
         const rows = (await this.page.locator('tr').allTextContents()).map((row) =>
             row.split(/\s+/).filter((entry) => entry !== ''),

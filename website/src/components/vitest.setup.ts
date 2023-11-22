@@ -13,14 +13,16 @@ export const testConfig = {
     forClient: {
         backendUrl: 'http://backend.dummy',
         lapisUrl: 'http://lapis.dummy',
+        keycloakUrl: 'http://keycloak.dummy',
     },
     forServer: {
         backendUrl: 'http://backend.dummy',
         lapisUrl: 'http://lapis.dummy',
+        keycloakUrl: 'http://keycloak.dummy',
     },
 } as RuntimeConfig;
 
-export const testuser = 'testuser';
+export const testUser = 'testuser';
 
 const testServer = setupServer();
 
