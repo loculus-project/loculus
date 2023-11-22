@@ -1,10 +1,11 @@
 # Kubernetes setup
 
-This directory contains a Helm chart to deploy Pathoplexus instances for several purposes. 
+This directory contains a Helm chart to deploy Pathoplexus instances for several purposes.
 The Helm variable `mode` reflects those purposes:
-* `cd`: Deploying a full instance on Argo CD
-* `e2e`: Deploying a full instance locally in the CI pipeline for e2e tests
-* `dev`: deploying a full or partial instance locally for development
+
+- `cd`: Deploying a full instance on Argo CD
+- `e2e`: Deploying a full instance locally in the CI pipeline for e2e tests
+- `dev`: deploying a full or partial instance locally for development
 
 ## Prerequisites
 
@@ -18,45 +19,54 @@ Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 ../deploy.py cluster --dev
 ../deploy.py helm --dev
 ```
+
 Start the [backend](/backend/README.md) and the [website](/website/README.md) locally.
 
 ### Details
 
 Create a cluster that doesn't expose the ports of the backend and the website:
+
 ```shell
 ../deploy.py cluster --dev
 ```
 
 Install the chart with `mode=dev` to deploy the services and link them to the local backend and website:
+
 ```shell
 ../deploy.py helm --dev
 ```
 
-Start the website and the backend locally. 
+Start the website and the backend locally.
 Check the README of the backend and the website for more information on how to do that.
 
 Check whether the services are already deployed (it might take some time to start, especially for the first time):
+
 ```shell
 kubectl get pods -n pathoplexus
 ```
 
 If something goes wrong,
+
 ```shell
 kubectl get events -n pathoplexus
 ```
+
 might help to see the reason.
 
 Redeploy after changing the Helm chart:
+
 ```shell
 ../deploy.py upgrade
 ```
 
 You can also delete the cluster with:
+
 ```shell
 ../deploy.py cluster --delete
 ```
 
 ## Argo CD
+
 ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].preview.k3s.pathoplexus.org`. Very long branch names, and some special characters, are not supported.
 
 The preview is intended to simulate the full backend and associated containers. It may be necessary to update this directory when changes are made to how containers need to be deployed.
@@ -70,14 +80,73 @@ For preview instances this repo contains [sealed secrets](https://sealed-secrets
 ## Full deployment for E2E testing
 
 There is an `e2e` mode intended for E2E testing in GitHub Actions.
-It can also be used locally on x64 systems.
+It can also be used locally.
 
 Create a cluster with ports for all services exposed:
+
 ```shell
 ../deploy.py cluster
 ```
 
 Install the chart to deploy the services:
+
 ```shell
 ../deploy.py helm --branch [your_branch] --dockerconfigjson [base64 encoded ~/.docker/config.json]
 ```
+
+## Tips
+
+### How to get dockerconfigjson if ~/.docker/config.json doesn't work
+
+Your `~/.docker/config.json` may not contain the necessary credentials for the GitHub container registry. E.g. `cat ~/.docker/config.json` may return:
+
+```json
+{
+  "auths": {
+    "ghcr.io": {}
+  },
+  "credsStore": "desktop",
+  "currentContext": "colima"
+}
+```
+
+This won't work for the `--dockerconfigjson` argument. Instead, you can use the following command to get the necessary credentials:
+
+```shell
+$ kubectl create secret docker-registry ghcr \
+--docker-server="https://ghcr.io" \
+--docker-username=YOURUSERNAME \
+--docker-password=ghp_XXXXXXXX \
+-o jsonpath="{.data.\.dockerconfigjson}" \
+--dry-run=client
+
+eyXXXXXX%
+```
+
+This will return a base64 encoded string similar to the one you can see above that starts with `ey` that you can use as `--dockerconfigjson` argument. Make sure not to copy the trailing `%` character that is added by `zsh`.
+
+### How to set up locally on ARM64 macOS (M1, M2, etc.)
+
+Using Docker desktop as your container runtime won't work on ARM64 macOS. Instead, you will need to use `colima` to run an AMD64 VM which will host AMD64 docker containers.
+
+This will be quite slow due to QEMU emulation but it will work nonetheless.
+
+First, install `colima`:
+
+```shell
+brew install colima
+```
+
+Then, start an AMD64 VM:
+
+```shell
+colima start --cpu 5 --memory 10 --runtime docker -p amd64 --arch x86_64
+```
+
+Colima automatically configures docker to use the VM as its runtime. You can check this with:
+
+```shell
+docker info
+```
+
+Then follow the instructions above to set up the cluster and deploy the Helm chart.
