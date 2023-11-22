@@ -1,6 +1,6 @@
 {{- $lapisHost := printf "lapis.%s" .Values.host }}
 {{- $mode := .Values.mode }}
-{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{- $namespace := .Values.namespace }}
 {{- range $key, $_ := $configFile.instances }}
 
