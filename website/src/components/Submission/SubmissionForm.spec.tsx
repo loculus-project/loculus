@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
 import type { SubmissionIdMapping, ProblemDetail } from '../../types/backend.ts';
-import { mockRequest, testConfig, testuser } from '../vitest.setup';
+import { mockRequest, testConfig, testUser } from '../vitest.setup';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -32,7 +32,7 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
 
-        await userEvent.type(getByPlaceholderText('Username:'), testuser);
+        await userEvent.type(getByPlaceholderText('Username:'), testUser);
         await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequences File:/i), sequencesFile);
 
@@ -50,7 +50,7 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
 
-        await userEvent.type(getByPlaceholderText('Username:'), testuser);
+        await userEvent.type(getByPlaceholderText('Username:'), testUser);
         await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
 
         const submitButton = getByText('Submit');
@@ -86,7 +86,7 @@ describe('SubmitForm', () => {
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
         const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
 
-        await userEvent.type(getByPlaceholderText('Username:'), testuser);
+        await userEvent.type(getByPlaceholderText('Username:'), testUser);
         await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequences File:/i), sequencesFile);
 

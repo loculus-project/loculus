@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 
 import { type Page, test as base } from '@playwright/test';
+import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
 
@@ -52,22 +53,47 @@ export const testSequenceCount: number =
         .split('\n')
         .filter((line) => line.length !== 0).length - 1;
 
+const testUserTokens: Record<string, TokenSet> = {};
+
 async function getToken(username: string, password: string) {
     const issuerUrl = `${keycloakUrl}${realmPath}`;
-
     const keycloakIssuer = await Issuer.discover(issuerUrl);
     const client = new keycloakIssuer.Client(clientMetadata);
 
-    return client.grant({
+    if (username in testUserTokens) {
+        const accessToken = testUserTokens[username].access_token;
+        if (accessToken !== undefined) {
+            const userInfo = await ResultAsync.fromPromise(client.userinfo(accessToken), (error) => {
+                return error;
+            });
+
+            if (userInfo.isOk()) {
+                return testUserTokens[username];
+            }
+        }
+    }
+
+    const token = client.grant({
         grant_type: 'password',
         username,
         password,
         scope: 'openid',
     });
+
+    testUserTokens[username] = await token;
+
+    return token;
 }
 
-export async function authorize(page: Page) {
-    const token = await getToken(testUser, testUserPassword);
+export async function authorize(
+    page: Page,
+    parallelIndex = test.info().parallelIndex,
+    browser = page.context().browser(),
+) {
+    const username = `${testUser}_${parallelIndex}_${browser?.browserType().name()}`;
+    const password = `${testUserPassword}_${parallelIndex}_${browser?.browserType().name()}`;
+
+    const token = await getToken(username, password);
 
     await page.context().addCookies([
         {

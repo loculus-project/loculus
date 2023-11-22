@@ -11,6 +11,33 @@ data:
       "realm": "pathoplexusRealm",
       "enabled": true,
       "users": [
+        {{- $browsers := list "firefox" "webkit" "chromium"}}
+        {{- range $_, $browser := $browsers }}
+          {{- range $index, $_ := until 20}}
+              {
+                  "username": "testuser_{{$index}}_{{$browser}}",
+                  "enabled": true,
+                  "email": "testuser_{{$index}}_{{$browser}}@keycloak.org",
+                  "firstName": "Test",
+                  "lastName": "User",
+                  "credentials": [
+                    {
+                      "type": "password",
+                      "value": "testuser_{{$index}}_{{$browser}}"
+                    }
+                  ],
+                  "realmRoles": [
+                    "user",
+                    "offline_access"
+                  ],
+                  "clientRoles": {
+                    "account": [
+                      "manage-account"
+                    ]
+                  }
+                },      
+          {{ end }}
+        {{ end }}
         {
             "username": "testuser",
             "enabled": true,
