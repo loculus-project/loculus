@@ -39,27 +39,43 @@ spec:
             httpGet:
               path: /
               port: 3000
-            initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: /
               port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /
+              port: 3000
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 20
         - name: backend
           image: ghcr.io/pathoplexus/backend:{{ $dockerTag }}
-          imagePullPolicy: Always
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"
               port: 8079
-            initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
           readinessProbe:
             httpGet:
               path: "/actuator/health/readiness"
               port: 8079
+            periodSeconds: 10
+            failureThreshold: 20
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet:
+              path: "/actuator/health/readiness"
+              port: 8079
+            periodSeconds: 10
+            failureThreshold: 30
+            timeoutSeconds: 5
           ports:
             - containerPort: 8079
           args:
