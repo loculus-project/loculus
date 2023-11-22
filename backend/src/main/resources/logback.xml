@@ -2,7 +2,7 @@
 
     <property name="LOG_FILE" value="backend"/>
     <property name="LOG_DIR" value="log"/>
-    <property name="PATTERN" value="%date %level [%thread] %class: %message%n"/>
+    <property name="PATTERN" value="%date %level [%thread] [%X{organism}] - %class: %message%n"/>
 
     <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/${LOG_FILE}.log</file>
