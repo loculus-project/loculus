@@ -6,4 +6,4 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   backend_config.json: |
-    {{ .Files.Get "config.yml" | fromYaml | include "pathoplexus.generateBackendConfig" | fromYaml | toJson }}
+    {{ .Files.Get "config.yaml" | fromYaml | include "pathoplexus.generateBackendConfig" | fromYaml | toJson }}

@@ -1,4 +1,4 @@
-{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{ $namespace := .Values.namespace }}
 {{ $mode := .Values.mode }}
 

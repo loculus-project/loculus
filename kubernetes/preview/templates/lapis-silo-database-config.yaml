@@ -1,4 +1,4 @@
-{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{- $commonMetadata := (include "pathoplexus.commonMetadata" . | fromYaml).fields }}
 {{- $namespace := .Values.namespace }}
 {{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
