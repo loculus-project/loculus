@@ -10,7 +10,7 @@ import { routes } from '../../routes.ts';
 import type { SequenceEntryStatus } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { testUser } from '../vitest.setup.ts';
+import { testOrganism, testUser } from '../vitest.setup.ts';
 
 const queryClient = new QueryClient();
 const defaultSequenceEntryStatuses: readonly SequenceEntryStatus[] = [
@@ -44,6 +44,7 @@ function renderSequenceTable(
     render(
         <QueryClientProvider client={queryClient}>
             <SequenceEntryTable
+                organism={testOrganism}
                 username={testUser}
                 sequenceEntries={sequencesWithStatus}
                 bulkActionNames={[...everyBulkActionImplemented]}
@@ -109,6 +110,6 @@ describe('SequenceTable', () => {
         expect(reviewButton).toBeDefined();
         await userEvent.click(reviewButton);
 
-        expect(window.location.href).toBe(routes.reviewPage(testUser, accessionVersionToReview));
+        expect(window.location.href).toBe(routes.reviewPage(testOrganism, testUser, accessionVersionToReview));
     });
 });

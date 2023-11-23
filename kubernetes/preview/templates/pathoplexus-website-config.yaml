@@ -12,9 +12,9 @@ data:
   runtime_config.json: |
     {
       {{- if .Values.disableBackend }}
-      "backendUrl": "http://host.k3d.internal:8079/dummy-organism",
+      "backendUrl": "http://host.k3d.internal:8079",
       {{- else }}
-      "backendUrl": "http://localhost:8079/dummy-organism",
+      "backendUrl": "http://localhost:8079",
       {{- end }}
       "lapisUrl": "http://pathoplexus-lapis-service-dummy-organism:8080",
       "keycloakUrl": "http://pathoplexus-keycloak-service:8083"

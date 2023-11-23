@@ -1,10 +1,10 @@
 import { sentenceCase } from 'change-case';
 import { err, Result } from 'neverthrow';
 
-import type { LapisClient } from '../../services/lapisClient.ts';
-import type { ProblemDetail } from '../../types/backend.ts';
-import type { Schema } from '../../types/config.ts';
-import type { Details, DetailsResponse, InsertionCount, MutationProportionCount } from '../../types/lapis.ts';
+import type { LapisClient } from '../../../services/lapisClient.ts';
+import type { ProblemDetail } from '../../../types/backend.ts';
+import type { Schema } from '../../../types/config.ts';
+import type { Details, DetailsResponse, InsertionCount, MutationProportionCount } from '../../../types/lapis.ts';
 
 export async function getTableData(accessionVersion: string, schema: Schema, lapisClient: LapisClient) {
     return Promise.all([

@@ -1,14 +1,37 @@
 ---
 import { SandwichMenu } from './SandwichMenu.tsx';
+import { getConfiguredOrganisms } from '../../config';
 import { navigationItems } from '../../routes';
+
+let organism = Astro.params.organism;
+
+const organisms = getConfiguredOrganisms();
+
+if (organism !== undefined && !organisms.includes(organism)) {
+    organism = undefined;
+}
+
+const label = organism === undefined ? 'Choose Organism' : `Organism ${organism}`;
 ---
 
 <div class='flex justify-end'>
+    <div class='dropdown dropdown-hover'>
+        <label tabindex='0' class='btn m-1'>{label}</label>
+        <ul tabindex='0' class='dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52'>
+            {
+                organisms.map((organism) => (
+                    <li>
+                        <a href={`/${organism}`}>{organism}</a>
+                    </li>
+                ))
+            }
+        </ul>
+    </div>
     <div class='subtitle hidden sm:flex sm:z-6 gap-4'>
-        {navigationItems.top.map(({ text, path }) => <a href={path}>{text}</a>)}
+        {navigationItems.top(organism).map(({ text, path }) => <a href={path}>{text}</a>)}
     </div>
 
     <div class='sm:hidden fixed z-0'>
-        <SandwichMenu top={16} right={28} client:load />
+        <SandwichMenu top={16} right={28} organism={organism} client:load />
     </div>
 </div>

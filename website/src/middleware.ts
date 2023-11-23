@@ -3,26 +3,11 @@ import { defineMiddleware } from 'astro/middleware';
 import { ResultAsync } from 'neverthrow';
 import { type BaseClient, Issuer, type TokenSet } from 'openid-client';
 
-import { getRuntimeConfig } from './config.ts';
+import { getConfiguredOrganisms, getRuntimeConfig } from './config.ts';
 import { getInstanceLogger } from './logger.ts';
+import { isPublicRoute } from './utils/isPublicRoute.ts';
 
 export const TOKEN_COOKIE = 'token';
-export const PUBLIC_ROUTES = [
-    new RegExp('^$'),
-    new RegExp('^/$'),
-    new RegExp('^/about$'),
-    new RegExp('^/api_documentation$'),
-    new RegExp('^/governance$'),
-    new RegExp('^/search$'),
-    new RegExp('^/sequences(?:/.*)?$'),
-    new RegExp('^/status$'),
-    new RegExp('^/logout$'),
-    new RegExp('^/admin/logs.txt$'),
-];
-
-export function isPublicRoute(pathname: string) {
-    return PUBLIC_ROUTES.some((route) => route.test(pathname));
-}
 
 export const clientMetadata = {
     client_id: 'test-cli',
@@ -55,7 +40,7 @@ export async function getKeycloakClient() {
 export const onRequest = defineMiddleware(async (context, next) => {
     let token = await getTokenFromCookie(context);
 
-    if (isPublicRoute(context.url.pathname)) {
+    if (isPublicRoute(context.url.pathname, getConfiguredOrganisms())) {
         if (token === undefined) {
             context.locals.session = {
                 isLoggedIn: false,

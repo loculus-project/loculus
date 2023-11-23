@@ -1,0 +1,15 @@
+---
+import { SubmissionForm } from '../../../components/Submission/SubmissionForm';
+import { getRuntimeConfig } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const organism = Astro.params.organism!;
+
+const clientConfig = getRuntimeConfig().forClient;
+---
+
+<BaseLayout title='Submit'>
+    <h1 class='title'>Submission Page</h1>
+
+    <SubmissionForm organism={organism} clientConfig={clientConfig} client:load />
+</BaseLayout>

@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 
 import { routes } from '../../../src/routes.ts';
-import { baseUrl, expect, test, testSequence } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, expect, test, testSequence } from '../../e2e.fixture';
 
 test.describe('The search page', () => {
     test('should show the search form with button and a table', async ({ searchPage }) => {
@@ -26,7 +26,7 @@ test.describe('The search page', () => {
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
-            `${baseUrl}${routes.searchPage([
+            `${baseUrl}${routes.searchPage(dummyOrganism, [
                 { name: 'accessionVersion', type: 'string', filterValue: testSequence.name },
                 { name: 'isRevocation', type: 'string', filterValue: 'false' },
             ])}`,

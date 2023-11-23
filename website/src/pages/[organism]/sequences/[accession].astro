@@ -1,18 +1,19 @@
 ---
 import { getTableData } from './getTableData';
-import { BackButton } from '../../components/Navigation/BackButton';
-import { SequencesContainer } from '../../components/SequenceDetailsPage/SequencesContainer';
-import ErrorBox from '../../components/common/ErrorBox.astro';
-import { getConfig, getReferenceGenomes, getRuntimeConfig } from '../../config';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { routes } from '../../routes';
-import { LapisClient } from '../../services/lapisClient';
+import { BackButton } from '../../../components/Navigation/BackButton';
+import { SequencesContainer } from '../../../components/SequenceDetailsPage/SequencesContainer';
+import ErrorBox from '../../../components/common/ErrorBox.astro';
+import { getConfig, getReferenceGenomes, getRuntimeConfig } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { routes } from '../../../routes';
+import { LapisClient } from '../../../services/lapisClient';
 
 const schema = getConfig();
 const runtimeConfig = getRuntimeConfig();
 // accession is never undefined, but ESLint doesn't know that
 // eslint-disable-next-line
 const accession = Astro.params.accession!;
+const organism = Astro.params.organism!;
 
 const tableData = await getTableData(accession, schema, LapisClient.create());
 
@@ -25,7 +26,7 @@ const genes = getReferenceGenomes().genes.map((g) => g.name);
         <h1 class='title'>Sequence Entry {accession}</h1>
         {
             tableData.isOk() && (
-                <a href={routes.versionPage(accession)} class='text-xs ml-10'>
+                <a href={routes.versionPage(organism, accession)} class='text-xs ml-10'>
                     (See previous versions)
                 </a>
             )
