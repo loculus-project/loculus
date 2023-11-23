@@ -36,7 +36,7 @@ const serviceConfig = JSON.parse(serviceConfigString);
 if (serviceConfig.backendUrl === undefined) {
     throw new Error('Runtime config does not contain backendUrl, was: ' + serviceConfigString);
 }
-if (serviceConfig.lapisUrl === undefined) {
+if (serviceConfig.lapisUrls === undefined) {
     throw new Error('Runtime config does not contain lapisUrl, was: ' + serviceConfigString);
 }
 
@@ -49,14 +49,16 @@ const backendProxy = createProxyMiddleware('/backendProxy/**', {
     logProvider,
 });
 
-const lapisProxy = createProxyMiddleware('/lapisProxy/**', {
-    target: serviceConfig.lapisUrl,
-    changeOrigin: true,
-    pathRewrite: {
-        '^/lapisProxy/': '/',
-    },
-    logProvider,
-});
+const lapisProxies = Object.entries(serviceConfig.lapisUrls).map(([organism, url]) =>
+    createProxyMiddleware(`/lapisProxy/${organism}/**`, {
+        target: url,
+        changeOrigin: true,
+        pathRewrite: {
+            [`/lapisProxy/${organism}/`]: `/${organism}/`,
+        },
+        logProvider,
+    }),
+);
 
 const app = express();
 
@@ -75,6 +77,6 @@ if (logger !== undefined) {
 }
 
 app.use(ssrHandler);
-app.use(base, express.static('dist/client/'), backendProxy, lapisProxy);
+app.use(base, express.static('dist/client/'), backendProxy, lapisProxies);
 
 app.listen(3000);
