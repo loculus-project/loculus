@@ -1,4 +1,5 @@
 {{- $keycloakHost := printf "keycloak.%s" .Values.host }}
+{{- $config := .Files.Get "config.yaml" | fromYaml }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -16,6 +17,6 @@ data:
       {{- else }}
       "backendUrl": "http://localhost:8079",
       {{- end }}
-      "lapisUrl": "http://pathoplexus-lapis-service-dummy-organism:8080",
+      "lapisUrls": {{- include "pathoplexus.generateLapisUrls" $config | fromYaml | toJson }},
       "keycloakUrl": "http://pathoplexus-keycloak-service:8083"
     }

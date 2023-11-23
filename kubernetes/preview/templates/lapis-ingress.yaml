@@ -26,7 +26,7 @@ spec:
   - match: Path(`/{{ $key }}`, `/{{ $key }}/{path:.*}`) {{- if eq $environment "server" }} && Host(`{{ $lapisHost }}`){{- end }}
     kind: Rule
     services:
-    - name: pathoplexus-lapis-service-{{ $key }}
+    - name: {{ template "pathoplexus.lapisServiceName" $key }}
       port: 8080
     middlewares:
     - name: strip-{{ $key }}-prefix

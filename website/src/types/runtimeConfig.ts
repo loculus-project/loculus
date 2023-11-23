@@ -7,7 +7,7 @@ export type RuntimeConfig = {
 
 export const serviceUrls = z.object({
     backendUrl: z.string(),
-    lapisUrl: z.string(),
+    lapisUrls: z.record(z.string(), z.string()),
     keycloakUrl: z.string(),
 });
 export type ServiceUrls = z.infer<typeof serviceUrls>;

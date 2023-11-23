@@ -1,6 +1,7 @@
 import { noCase } from 'change-case';
 import { type FC, useMemo } from 'react';
 
+import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { Schema } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -10,18 +11,17 @@ import { splitString } from '../../utils/splitLines';
 const LINE_LENGTH = 100;
 
 type Props = {
+    organism: string;
     accessionVersion: string;
     schema: Schema;
     clientConfig: ClientConfig;
     sequenceType: SequenceType;
 };
 
-export const SequencesViewer: FC<Props> = ({ accessionVersion, schema, clientConfig, sequenceType }) => {
-    const { data, error, isLoading } = lapisClientHooks(clientConfig).utilityHooks.useGetSequence(
-        accessionVersion,
-        sequenceType,
-        schema,
-    );
+export const SequencesViewer: FC<Props> = ({ organism, accessionVersion, schema, clientConfig, sequenceType }) => {
+    const { data, error, isLoading } = lapisClientHooks(
+        getLapisUrl(clientConfig, organism),
+    ).utilityHooks.useGetSequence(accessionVersion, sequenceType, schema);
 
     const lines = useMemo(() => (data !== undefined ? splitString(data.sequence, LINE_LENGTH) : undefined), [data]);
 
