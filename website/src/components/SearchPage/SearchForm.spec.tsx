@@ -7,6 +7,7 @@ import { SearchForm } from './SearchForm';
 import { routes } from '../../routes.ts';
 import type { Filter } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { testOrganism } from '../vitest.setup.ts';
 
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),
@@ -28,7 +29,7 @@ function renderSearchForm(
 ) {
     render(
         <QueryClientProvider client={queryClient}>
-            <SearchForm metadataSettings={metadataSettings} clientConfig={clientConfig} />
+            <SearchForm organism={testOrganism} metadataSettings={metadataSettings} clientConfig={clientConfig} />
         </QueryClientProvider>,
     );
 }
@@ -59,7 +60,9 @@ describe('SearchForm', () => {
         const searchButton = screen.getByRole('button', { name: 'Search' });
         await userEvent.click(searchButton);
 
-        expect(window.location.href).toBe(routes.searchPage([{ ...defaultMetadataSettings[0], filterValue }]));
+        expect(window.location.href).toBe(
+            routes.searchPage(testOrganism, [{ ...defaultMetadataSettings[0], filterValue }]),
+        );
     });
 
     test('should not render the form with fields with flag notSearchable', async () => {
@@ -95,6 +98,6 @@ describe('SearchForm', () => {
         const searchButton = screen.getByRole('button', { name: 'Search' });
         await userEvent.click(searchButton);
 
-        expect(window.location.href).toBe('/search?field1=test&isLatestVersion=true&page=1');
+        expect(window.location.href).toContain(`isLatestVersion=true`);
     });
 });

@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios';
 import { BackendClient } from '../../src/services/backendClient.ts';
 import { type Accession, unprocessedData, type UnprocessedData } from '../../src/types/backend.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
-import { backendUrl, e2eLogger, testSequence } from '../e2e.fixture.ts';
+import { backendUrl, dummyOrganism, e2eLogger, testSequence } from '../e2e.fixture.ts';
 
 export const fakeProcessingPipeline = {
     submit,
@@ -43,6 +43,7 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
         .join('\n');
 
     const response = await BackendClient.create(backendUrl, e2eLogger).call('submitProcessedData', body, {
+        params: { organism: dummyOrganism },
         headers: { 'Content-Type': 'application/x-ndjson' },
     });
 
@@ -53,6 +54,7 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
 
 async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]> {
     const response = await BackendClient.create(backendUrl, e2eLogger).call('extractUnprocessedData', undefined, {
+        params: { organism: dummyOrganism },
         queries: { numberOfSequenceEntries },
     });
 

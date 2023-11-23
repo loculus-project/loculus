@@ -1,7 +1,9 @@
 ---
-import { RevisionForm } from '../../components/Revision/RevisionForm';
-import { getRuntimeConfig } from '../../config';
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import { RevisionForm } from '../../../components/Revision/RevisionForm';
+import { getRuntimeConfig } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const organism = Astro.params.organism!;
 
 const clientConfig = getRuntimeConfig().forClient;
 ---
@@ -13,5 +15,5 @@ const clientConfig = getRuntimeConfig().forClient;
     that should be revised needs to be already released. If the latter does not hold, delete the accession version or submit
     a review.
 
-    <RevisionForm clientConfig={clientConfig} client:only='react' />
+    <RevisionForm organism={organism} clientConfig={clientConfig} client:only='react' />
 </BaseLayout>

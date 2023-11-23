@@ -3,25 +3,36 @@ import { defineMiddleware } from 'astro/middleware';
 import { ResultAsync } from 'neverthrow';
 import { type BaseClient, Issuer, type TokenSet } from 'openid-client';
 
-import { getRuntimeConfig } from './config.ts';
+import { getConfiguredOrganisms, getRuntimeConfig } from './config.ts';
 import { getInstanceLogger } from './logger.ts';
 
 export const TOKEN_COOKIE = 'token';
-export const PUBLIC_ROUTES = [
-    new RegExp('^$'),
-    new RegExp('^/$'),
-    new RegExp('^/about$'),
-    new RegExp('^/api_documentation$'),
-    new RegExp('^/governance$'),
-    new RegExp('^/search$'),
-    new RegExp('^/sequences(?:/.*)?$'),
-    new RegExp('^/status$'),
-    new RegExp('^/logout$'),
-    new RegExp('^/admin/logs.txt$'),
-];
+
+let _publicRoutes: RegExp[] | undefined = undefined;
+function getPublicRoutes() {
+    if (_publicRoutes === undefined) {
+        const organismSpecificRoutes = getConfiguredOrganisms().flatMap((organism) => [
+            new RegExp(`^/${organism}/sequences(?:/.*)?$`),
+            new RegExp(`^/${organism}/search$`),
+            new RegExp(`^/${organism}/?$`),
+        ]);
+
+        _publicRoutes = [
+            new RegExp('^/?$'),
+            new RegExp('^/about$'),
+            new RegExp('^/api_documentation$'),
+            new RegExp('^/governance$'),
+            new RegExp('^/status$'),
+            new RegExp('^/logout$'),
+            new RegExp('^/admin/logs.txt$'),
+            ...organismSpecificRoutes,
+        ];
+    }
+    return _publicRoutes;
+}
 
 export function isPublicRoute(pathname: string) {
-    return PUBLIC_ROUTES.some((route) => route.test(pathname));
+    return getPublicRoutes().some((route) => route.test(pathname));
 }
 
 export const clientMetadata = {

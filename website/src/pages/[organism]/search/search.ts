@@ -1,10 +1,10 @@
 import { Result } from 'neverthrow';
 
-import type { TableSequenceData } from '../../components/SearchPage/Table';
-import { getConfig } from '../../config';
-import { LapisClient } from '../../services/lapisClient';
-import type { ProblemDetail } from '../../types/backend.ts';
-import type { Filter } from '../../types/config.ts';
+import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
+import { getConfig } from '../../../config.ts';
+import { LapisClient } from '../../../services/lapisClient.ts';
+import type { ProblemDetail } from '../../../types/backend.ts';
+import type { Filter } from '../../../types/config.ts';
 
 export type SearchResponse = {
     data: TableSequenceData[];

@@ -24,8 +24,10 @@ type E2EFixture = {
     loginAsTestUser: () => Promise<void>;
 };
 
+export const dummyOrganism = 'dummy-organism';
+
 export const baseUrl = 'http://localhost:3000';
-export const backendUrl = 'http://localhost:8079/dummy-organism';
+export const backendUrl = 'http://localhost:8079';
 export const lapisUrl = 'http://localhost:8080/dummy-organism';
 const keycloakUrl = 'http://localhost:8083';
 

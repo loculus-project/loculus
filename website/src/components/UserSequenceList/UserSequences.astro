@@ -9,6 +9,8 @@ interface Props {
     username: string;
 }
 
+const organism = Astro.params.organism!;
+
 const { sequenceEntries, username } = Astro.props;
 const clientConfig = getRuntimeConfig().forClient;
 
@@ -38,6 +40,7 @@ const keyPrefix = `userSequences.${username}`;
         client:only='react'
     >
         <SequenceEntryTable
+            organism={organism}
             username={username}
             sequenceEntries={statusArray.RECEIVED}
             bulkActionNames={['delete']}
@@ -54,6 +57,7 @@ const keyPrefix = `userSequences.${username}`;
         client:only='react'
     >
         <SequenceEntryTable
+            organism={organism}
             username={username}
             sequenceEntries={statusArray.IN_PROCESSING}
             bulkActionNames={[]}
@@ -70,6 +74,7 @@ const keyPrefix = `userSequences.${username}`;
         client:only='react'
     >
         <SequenceEntryTable
+            organism={organism}
             username={username}
             sequenceEntries={statusArray.HAS_ERRORS}
             bulkActionNames={['delete']}
@@ -86,6 +91,7 @@ const keyPrefix = `userSequences.${username}`;
         client:only='react'
     >
         <SequenceEntryTable
+            organism={organism}
             username={username}
             sequenceEntries={statusArray.AWAITING_APPROVAL}
             bulkActionNames={['approve', 'delete']}
@@ -102,6 +108,7 @@ const keyPrefix = `userSequences.${username}`;
         client:only='react'
     >
         <SequenceEntryTable
+            organism={organism}
             username={username}
             sequenceEntries={statusArray.APPROVED_FOR_RELEASE}
             bulkActionNames={['revoke']}
@@ -118,6 +125,7 @@ const keyPrefix = `userSequences.${username}`;
         client:only='react'
     >
         <SequenceEntryTable
+            organism={organism}
             username={username}
             sequenceEntries={statusArray.AWAITING_APPROVAL_FOR_REVOCATION}
             bulkActionNames={['confirmRevocation', 'delete']}

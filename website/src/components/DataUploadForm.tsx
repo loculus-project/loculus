@@ -12,18 +12,19 @@ import type { ClientConfig } from '../types/runtimeConfig.ts';
 type Action = 'submit' | 'revise';
 
 type DataUploadFormProps = {
+    organism: string;
     clientConfig: ClientConfig;
     action: Action;
     onSuccess: (value: SubmissionIdMapping[]) => void;
     onError: (message: string) => void;
 };
 
-const InnerDataUploadForm = ({ clientConfig, action, onSuccess, onError }: DataUploadFormProps) => {
+const InnerDataUploadForm = ({ organism, clientConfig, action, onSuccess, onError }: DataUploadFormProps) => {
     const [username, setUsername] = useState('');
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
 
-    const { submit, revise, isLoading } = useSubmitFiles(clientConfig, onSuccess, onError);
+    const { submit, revise, isLoading } = useSubmitFiles(organism, clientConfig, onSuccess, onError);
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData();
@@ -116,13 +117,14 @@ const InnerDataUploadForm = ({ clientConfig, action, onSuccess, onError }: DataU
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
 
 function useSubmitFiles(
+    organism: string,
     clientConfig: ClientConfig,
     onSuccess: (value: SubmissionIdMapping[]) => void,
     onError: (message: string) => void,
 ) {
     const hooks = backendClientHooks(clientConfig);
-    const submit = hooks.useSubmit({}, { onSuccess, onError: handleError(onError, 'submit') });
-    const revise = hooks.useRevise({}, { onSuccess, onError: handleError(onError, 'revise') });
+    const submit = hooks.useSubmit({ params: { organism } }, { onSuccess, onError: handleError(onError, 'submit') });
+    const revise = hooks.useRevise({ params: { organism } }, { onSuccess, onError: handleError(onError, 'revise') });
 
     return {
         submit: submit.mutate,

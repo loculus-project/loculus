@@ -1,6 +1,6 @@
 import type { ActionHooks } from './SequenceEntryTable.tsx';
 import { routes } from '../../routes.ts';
-import type { SequenceEntryStatus, AccessionVersion } from '../../types/backend.ts';
+import type { AccessionVersion, SequenceEntryStatus } from '../../types/backend.ts';
 import { extractAccessionVersion, getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 
 export type BulkSequenceAction = {
@@ -68,15 +68,15 @@ export type BulkSequenceActionName = keyof typeof bulkSequenceActions;
 export type SingleSequenceAction = {
     name: string;
     tableHeader: string;
-    actionOnSequenceEntry: (selectedSequence: SequenceEntryStatus, username: string) => Promise<void>;
+    actionOnSequenceEntry: (organism: string, selectedSequence: SequenceEntryStatus, username: string) => Promise<void>;
 };
 export type SingleSequenceActionName = keyof typeof singleSequenceActions;
 
 const reviewAction: SingleSequenceAction = {
     name: 'review',
     tableHeader: 'Link to Review',
-    actionOnSequenceEntry: async (selectedSequence: SequenceEntryStatus, username: string) => {
-        window.location.href = routes.reviewPage(username, selectedSequence);
+    actionOnSequenceEntry: async (organism, selectedSequence, username) => {
+        window.location.href = routes.reviewPage(organism, username, selectedSequence);
     },
 };
 export const singleSequenceActions = {

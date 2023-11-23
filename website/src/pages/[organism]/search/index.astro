@@ -1,12 +1,14 @@
 ---
 import { getData, getMetadataSettings } from './search';
-import { Pagination } from '../../components/SearchPage/Pagination';
-import { SearchForm } from '../../components/SearchPage/SearchForm';
-import { Table } from '../../components/SearchPage/Table';
-import ErrorBox from '../../components/common/ErrorBox.astro';
-import { getConfig, getRuntimeConfig } from '../../config';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { pageSize } from '../../settings';
+import { Pagination } from '../../../components/SearchPage/Pagination';
+import { SearchForm } from '../../../components/SearchPage/SearchForm';
+import { Table } from '../../../components/SearchPage/Table';
+import ErrorBox from '../../../components/common/ErrorBox.astro';
+import { getConfig, getRuntimeConfig } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { pageSize } from '../../../settings';
+
+const organism = Astro.params.organism!;
 
 const schema = getConfig();
 const clientConfig = getRuntimeConfig().forClient;
@@ -27,7 +29,12 @@ const data = await getData(metadataSettings, offset, pageSize);
     <h1 class='title'>Search</h1>
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         <div class='md:w-72'>
-            <SearchForm metadataSettings={metadataSettings} clientConfig={clientConfig} client:only='react' />
+            <SearchForm
+                organism={organism}
+                metadataSettings={metadataSettings}
+                clientConfig={clientConfig}
+                client:only='react'
+            />
         </div>
         {
             data.match(
