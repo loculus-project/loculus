@@ -7,10 +7,11 @@ import { SearchForm } from './SearchForm';
 import { routes } from '../../routes.ts';
 import type { Filter } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { testOrganism } from '../vitest.setup.ts';
+import { testConfig, testOrganism } from '../vitest.setup.ts';
 
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),
+    getLapisUrl: vi.fn().mockReturnValue('lapis.dummy.url'),
 }));
 
 const queryClient = new QueryClient();
@@ -21,11 +22,9 @@ const defaultMetadataSettings = [
     { name: 'field3', type: 'pango_lineage' as const, label: 'Field 3', autocomplete: true, filterValue: '' },
 ];
 
-const dummyConfig = { backendUrl: 'dummy', lapisUrl: 'dummy' } as ClientConfig;
-
 function renderSearchForm(
     metadataSettings: Filter[] = [...defaultMetadataSettings],
-    clientConfig: ClientConfig = dummyConfig,
+    clientConfig: ClientConfig = testConfig.forClient,
 ) {
     render(
         <QueryClientProvider client={queryClient}>

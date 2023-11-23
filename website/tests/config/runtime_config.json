@@ -1,5 +1,8 @@
 {
     "backendUrl": "http://localhost:8079",
-    "lapisUrl": "http://localhost:8080/dummy-organism",
+    "lapisUrls": {
+        "dummy-organism": "http://localhost:8080/dummy-organism",
+        "dummy-organism-2": "http://localhost:8080/dummy-organism-2"
+    },
     "keycloakUrl": "http://localhost:8083"
 }

@@ -20,13 +20,13 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
     public readonly zodios: ZodiosInstance<Api>;
 
     protected constructor(
-        backendUrl: string,
+        url: string,
         api: Narrow<Api>,
         private readonly tryToExtractProblemDetail: (error: AxiosResponse) => ProblemDetail | undefined,
         private readonly logger: InstanceLogger,
         private readonly serviceName: string,
     ) {
-        this.zodios = new Zodios(backendUrl, api);
+        this.zodios = new Zodios(url, api);
     }
 
     public call<Method extends ZodiosMethods<Api>>(method: Method, ...args: ZodiosMethod<Api, Method>['parameters']) {

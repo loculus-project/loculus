@@ -13,8 +13,8 @@ export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('pathoplexus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
-export function lapisClientHooks(clientConfig: ClientConfig) {
-    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(clientConfig.lapisUrl, lapisApi, { transform: false }));
+export function lapisClientHooks(lapisUrl: string) {
+    const zodiosHooks = new ZodiosHooks('lapis', new Zodios(lapisUrl, lapisApi, { transform: false }));
     return {
         zodiosHooks,
         utilityHooks: {

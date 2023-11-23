@@ -15,7 +15,7 @@ const runtimeConfig = getRuntimeConfig();
 const accession = Astro.params.accession!;
 const organism = Astro.params.organism!;
 
-const tableData = await getTableData(accession, schema, LapisClient.create());
+const tableData = await getTableData(accession, schema, LapisClient.createForOrganism(organism));
 
 const genes = getReferenceGenomes().genes.map((g) => g.name);
 ---
@@ -51,6 +51,7 @@ const genes = getReferenceGenomes().genes.map((g) => g.name);
                     <div class='mt-10'>
                         <SequencesContainer
                             client:load
+                            organism={organism}
                             accessionVersion={accession}
                             schema={schema}
                             clientConfig={runtimeConfig.forClient}

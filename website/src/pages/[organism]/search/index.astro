@@ -22,7 +22,7 @@ const pageParam = Astro.url.searchParams.get('page');
 const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
 
-const data = await getData(metadataSettings, offset, pageSize);
+const data = await getData(organism, metadataSettings, offset, pageSize);
 ---
 
 <BaseLayout title='Search'>
