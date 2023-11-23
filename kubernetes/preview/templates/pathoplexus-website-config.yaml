@@ -7,6 +7,8 @@ metadata:
   name: pathoplexus-website-config
   namespace: {{ .Values.namespace }}
 data:
+  website_config.json: |
+    {{ .Files.Get "config.yaml" | fromYaml | include "pathoplexus.generateWebsiteConfig" | fromYaml | toJson }}
 
   runtime_config.json: |
     {
