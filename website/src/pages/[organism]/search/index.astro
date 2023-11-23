@@ -4,19 +4,19 @@ import { Pagination } from '../../../components/SearchPage/Pagination';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
 import { Table } from '../../../components/SearchPage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
-import { getConfig, getRuntimeConfig } from '../../../config';
+import { getSchema, getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { pageSize } from '../../../settings';
 
 const organism = Astro.params.organism!;
 
-const schema = getConfig();
+const schema = getSchema(organism);
 const clientConfig = getRuntimeConfig().forClient;
 const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
 };
 
-const metadataSettings = await getMetadataSettings(getSearchParams);
+const metadataSettings = await getMetadataSettings(getSearchParams, organism);
 
 const pageParam = Astro.url.searchParams.get('page');
 const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;

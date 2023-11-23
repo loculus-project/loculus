@@ -3,21 +3,20 @@ import { getTableData } from './getTableData';
 import { BackButton } from '../../../components/Navigation/BackButton';
 import { SequencesContainer } from '../../../components/SequenceDetailsPage/SequencesContainer';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
-import { getConfig, getReferenceGenomes, getRuntimeConfig } from '../../../config';
+import { getReferenceGenomes, getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { routes } from '../../../routes';
 import { LapisClient } from '../../../services/lapisClient';
 
-const schema = getConfig();
-const runtimeConfig = getRuntimeConfig();
-// accession is never undefined, but ESLint doesn't know that
-// eslint-disable-next-line
 const accession = Astro.params.accession!;
 const organism = Astro.params.organism!;
 
+const schema = getSchema(organism);
+const runtimeConfig = getRuntimeConfig();
+
 const tableData = await getTableData(accession, schema, LapisClient.createForOrganism(organism));
 
-const genes = getReferenceGenomes().genes.map((g) => g.name);
+const genes = getReferenceGenomes(organism).genes.map((g) => g.name);
 ---
 
 <BaseLayout title={accession}>

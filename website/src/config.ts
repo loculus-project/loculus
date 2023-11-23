@@ -3,7 +3,7 @@ import path from 'path';
 
 import type { z, ZodError } from 'zod';
 
-import { type Schema, type WebsiteConfig, websiteConfig } from './types/config.ts';
+import { type InstanceConfig, type Schema, type WebsiteConfig, websiteConfig } from './types/config.ts';
 import { type ReferenceGenomes } from './types/referencesGenomes.ts';
 import {
     type ClientConfig,
@@ -35,11 +35,16 @@ export function getConfiguredOrganisms() {
     return Object.keys(getWebsiteConfig().instances);
 }
 
-export function getConfig(): Schema {
-    if (_config === null) {
-        _config = readTypedConfigFile('website_config.json', websiteConfig);
+function getConfig(organism: string): InstanceConfig {
+    const websiteConfig = getWebsiteConfig();
+    if (!(organism in websiteConfig.instances)) {
+        throw new Error(`No configuration for organism ${organism}`);
     }
-    return Object.values(_config.instances)[0].schema;
+    return websiteConfig.instances[organism];
+}
+
+export function getSchema(organism: string): Schema {
+    return getConfig(organism).schema;
 }
 
 export function getRuntimeConfig(): RuntimeConfig {
@@ -89,11 +94,8 @@ function makeClientConfig(serviceConfig: ServiceUrls): ClientConfig {
     };
 }
 
-export function getReferenceGenomes(): ReferenceGenomes {
-    if (_config === null) {
-        _config = readTypedConfigFile('website_config.json', websiteConfig);
-    }
-    return Object.values(_config.instances)[0].referenceGenomes;
+export function getReferenceGenomes(organism: string): ReferenceGenomes {
+    return getConfig(organism).referenceGenomes;
 }
 
 function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {
