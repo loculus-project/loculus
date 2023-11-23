@@ -1,7 +1,22 @@
 ---
+import { getConfiguredOrganisms, getSchema } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { routes } from '../routes';
+
+const organisms = getConfiguredOrganisms().map((organism) => ({
+    organism,
+    name: getSchema(organism).instanceName,
+}));
 ---
 
 <BaseLayout title='Home'>
     <h1 class='title'>Pathoplexus</h1>
+    <h2 class='font-bold'>Explore the data</h2>
+    {
+        organisms.map(({ organism, name }) => (
+            <p>
+                <a href={routes.organismStartPage(organism)}>{name}</a>
+            </p>
+        ))
+    }
 </BaseLayout>
