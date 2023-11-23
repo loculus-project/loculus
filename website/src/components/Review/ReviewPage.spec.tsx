@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { ReviewPage } from './ReviewPage.tsx';
 import type { MetadataField, SequenceEntryReview } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { testUser } from '../vitest.setup.ts';
+import { testOrganism, testUser } from '../vitest.setup.ts';
 
 const queryClient = new QueryClient();
 const metadataKey = 'originalMetaDataField';
@@ -76,7 +76,12 @@ function renderReviewPage(
 ) {
     render(
         <QueryClientProvider client={queryClient}>
-            <ReviewPage reviewData={reviewData} clientConfig={clientConfig} username={testUser} />
+            <ReviewPage
+                organism={testOrganism}
+                reviewData={reviewData}
+                clientConfig={clientConfig}
+                username={testUser}
+            />
         </QueryClientProvider>,
     );
 }

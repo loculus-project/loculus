@@ -2,12 +2,12 @@ import { makeApi, makeEndpoint, makeParameters } from '@zodios/core';
 import z from 'zod';
 
 import {
-    submissionIdMapping,
-    problemDetail,
-    accessions,
     accessionReview,
-    sequenceEntryStatus,
+    accessions,
     accessionVersionsObject,
+    problemDetail,
+    sequenceEntryStatus,
+    submissionIdMapping,
     submitFiles,
     unprocessedData,
 } from '../types/backend.ts';
@@ -20,9 +20,13 @@ const usernameParameters = makeParameters([
     },
 ]);
 
+function withOrganismPathSegment<Path extends `/${string}`>(path: Path) {
+    return `/:organism${path}` as const;
+}
+
 const submitEndpoint = makeEndpoint({
     method: 'post',
-    path: '/submit',
+    path: withOrganismPathSegment('/submit'),
     alias: 'submit',
     requestFormat: 'form-data',
     parameters: [
@@ -42,7 +46,7 @@ const submitEndpoint = makeEndpoint({
 
 const reviseEndpoint = makeEndpoint({
     method: 'post',
-    path: '/revise',
+    path: withOrganismPathSegment('/revise'),
     alias: 'revise',
     requestFormat: 'form-data',
     parameters: [
@@ -62,15 +66,15 @@ const reviseEndpoint = makeEndpoint({
 
 const getDataToReviewEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-data-to-review/:accession/:version',
+    path: withOrganismPathSegment('/get-data-to-review/:accession/:version'),
     alias: 'getDataToReview',
-    parameters: usernameParameters,
+    parameters: [...usernameParameters],
     response: accessionReview,
 });
 
 const revokeSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: '/revoke',
+    path: withOrganismPathSegment('/revoke'),
     alias: 'revokeSequences',
     parameters: [
         ...usernameParameters,
@@ -89,7 +93,7 @@ const revokeSequencesEndpoint = makeEndpoint({
 
 const submitReviewedSequenceEndpoint = makeEndpoint({
     method: 'post',
-    path: '/submit-reviewed-sequence',
+    path: withOrganismPathSegment('/submit-reviewed-sequence'),
     alias: 'submitReviewedSequence',
     parameters: [
         ...usernameParameters,
@@ -104,15 +108,15 @@ const submitReviewedSequenceEndpoint = makeEndpoint({
 
 const getSequencesOfUserEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-sequences-of-user',
+    path: withOrganismPathSegment('/get-sequences-of-user'),
     alias: 'getSequencesOfUser',
-    parameters: usernameParameters,
+    parameters: [...usernameParameters],
     response: z.array(sequenceEntryStatus),
 });
 
 const approveProcessedDataEndpoint = makeEndpoint({
     method: 'post',
-    path: '/approve-processed-data',
+    path: withOrganismPathSegment('/approve-processed-data'),
     alias: 'approveProcessedData',
     parameters: [
         ...usernameParameters,
@@ -128,7 +132,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
 
 const deleteSequencesEndpoint = makeEndpoint({
     method: 'delete',
-    path: '/delete-sequences',
+    path: withOrganismPathSegment('/delete-sequences'),
     alias: 'deleteSequences',
     parameters: [
         ...usernameParameters,
@@ -144,7 +148,7 @@ const deleteSequencesEndpoint = makeEndpoint({
 
 const confirmRevocationEndpoint = makeEndpoint({
     method: 'post',
-    path: '/confirm-revocation',
+    path: withOrganismPathSegment('/confirm-revocation'),
     alias: 'confirmRevocation',
     parameters: [
         ...usernameParameters,
@@ -163,7 +167,7 @@ const confirmRevocationEndpoint = makeEndpoint({
 
 const extractUnprocessedDataEndpoint = makeEndpoint({
     method: 'post',
-    path: '/extract-unprocessed-data',
+    path: withOrganismPathSegment('/extract-unprocessed-data'),
     alias: 'extractUnprocessedData',
     parameters: [
         {
@@ -177,7 +181,7 @@ const extractUnprocessedDataEndpoint = makeEndpoint({
 
 const submitProcessedDataEndpoint = makeEndpoint({
     method: 'post',
-    path: '/submit-processed-data',
+    path: withOrganismPathSegment('/submit-processed-data'),
     alias: 'submitProcessedData',
     parameters: [
         {

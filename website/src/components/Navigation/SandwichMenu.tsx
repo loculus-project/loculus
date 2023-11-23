@@ -1,11 +1,17 @@
 import type { FC } from 'react';
 
 import { useOffCanvas } from '../../hooks/useOffCanvas';
+import { navigationItems } from '../../routes.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
-import { navigationItems } from '../../routes.ts';
 
-export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right }) => {
+type SandwichMenuProps = {
+    top: number;
+    right: number;
+    organism: string | undefined;
+};
+
+export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, top, right }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
@@ -31,7 +37,7 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                             <a href='/'>Pathoplexus</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            {navigationItems.top.map(({ text, path }) => (
+                            {navigationItems.top(organism).map(({ text, path }) => (
                                 <OffCanvasNavItem key={path} text={text} path={path} />
                             ))}
                         </div>

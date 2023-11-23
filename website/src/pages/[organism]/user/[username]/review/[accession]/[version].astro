@@ -1,17 +1,23 @@
 ---
-import { BackButton } from '../../../../../components/Navigation/BackButton';
-import { ReviewPage } from '../../../../../components/Review/ReviewPage';
-import { getRuntimeConfig } from '../../../../../config';
-import BaseLayout from '../../../../../layouts/BaseLayout.astro';
-import { BackendClient } from '../../../../../services/backendClient';
+import { BackButton } from '../../../../../../components/Navigation/BackButton';
+import { ReviewPage } from '../../../../../../components/Review/ReviewPage';
+import { getRuntimeConfig } from '../../../../../../config';
+import BaseLayout from '../../../../../../layouts/BaseLayout.astro';
+import { BackendClient } from '../../../../../../services/backendClient';
 
 const version = Astro.params.version!;
 const accession = Astro.params.accession!;
+const organism = Astro.params.organism!;
 
 const username = Astro.params.username!;
 const clientConfig = getRuntimeConfig().forClient;
 
-const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToReview(username, accession, version);
+const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToReview(
+    organism,
+    username,
+    accession,
+    version,
+);
 ---
 
 <BaseLayout title={`Review ${accession}.${version}`}>
@@ -24,7 +30,13 @@ const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToRe
     {
         reviewData.match(
             (reviewData) => (
-                <ReviewPage username={username} reviewData={reviewData} clientConfig={clientConfig} client:load />
+                <ReviewPage
+                    organism={organism}
+                    username={username}
+                    reviewData={reviewData}
+                    clientConfig={clientConfig}
+                    client:load
+                />
             ),
             (error) => (
                 <>

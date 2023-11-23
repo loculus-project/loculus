@@ -14,6 +14,7 @@ import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/Manag
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type ReviewPageProps = {
+    organism: string;
     clientConfig: ClientConfig;
     reviewData: SequenceEntryReview;
     username: string;
@@ -21,7 +22,7 @@ type ReviewPageProps = {
 
 const logger = getClientLogger('ReviewPage');
 
-const InnerReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, username }: ReviewPageProps) => {
+const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConfig, username }: ReviewPageProps) => {
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(reviewData));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(reviewData));
 
@@ -30,6 +31,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, userna
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     const { mutate: submitReviewedSequence } = useSubmitReviewedSequence(
+        organism,
         clientConfig,
         username,
         reviewData,
@@ -127,17 +129,18 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ reviewData, clientConfig, userna
 export const ReviewPage = withQueryProvider(InnerReviewPage);
 
 function useSubmitReviewedSequence(
+    organism: string,
     clientConfig: ClientConfig,
     username: string,
     reviewData: SequenceEntryReview,
     openErrorFeedback: (message: string) => void,
 ) {
     return backendClientHooks(clientConfig).useSubmitReviewedSequence(
-        { queries: { username } },
+        { queries: { username }, params: { organism } },
         {
             onSuccess: async () => {
                 await logger.info('Successfully submitted review ' + getAccessionVersionString(reviewData));
-                location.href = routes.userSequencesPage(username);
+                location.href = routes.userSequencesPage(organism, username);
             },
             onError: async (error) => {
                 const message = `Failed to submit review for ${getAccessionVersionString(

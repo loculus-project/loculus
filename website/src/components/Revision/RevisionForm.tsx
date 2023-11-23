@@ -6,10 +6,11 @@ import { DataUploadForm } from '../DataUploadForm.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback';
 
 type RevisionFormProps = {
+    organism: string;
     clientConfig: ClientConfig;
 };
 
-export const RevisionForm: FC<RevisionFormProps> = ({ clientConfig }) => {
+export const RevisionForm: FC<RevisionFormProps> = ({ organism, clientConfig }) => {
     const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<SubmissionIdMapping[] | null>(null);
 
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
@@ -18,6 +19,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({ clientConfig }) => {
         <div className='flex flex-col items-center'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <DataUploadForm
+                organism={organism}
                 clientConfig={clientConfig}
                 action='revise'
                 onError={openErrorFeedback}

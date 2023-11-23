@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes';
 
 const session = Astro.locals.session;
+const organism: string | undefined = Astro.params.organism;
 ---
 
 <BaseLayout title='Login'>
@@ -19,5 +20,5 @@ const session = Astro.locals.session;
         )
     }
 
-    <a href={routes.userPage('testuser')}>Login as testuser</a>
+    <a href={routes.userPage(organism, 'testuser')}>Login as testuser</a>
 </BaseLayout>

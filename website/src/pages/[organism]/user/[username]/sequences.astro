@@ -1,15 +1,18 @@
 ---
-import { ErrorFeedback } from '../../../components/ErrorFeedback';
-import { BackButton } from '../../../components/Navigation/BackButton';
-import UserSequences from '../../../components/UserSequenceList/UserSequences.astro';
-import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { BackendClient } from '../../../services/backendClient';
+import { ErrorFeedback } from '../../../../components/ErrorFeedback';
+import { BackButton } from '../../../../components/Navigation/BackButton';
+import UserSequences from '../../../../components/UserSequenceList/UserSequences.astro';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { BackendClient } from '../../../../services/backendClient';
 
 // eslint-disable-next-line
 const username = Astro.params.username!;
+const organism = Astro.params.organism!;
 
-const userSequenceEntriesResponse =
-    await BackendClient.create().astroFileTypeHelpers.getSequenceEntriesOfUser(username);
+const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHelpers.getSequenceEntriesOfUser(
+    organism,
+    username,
+);
 ---
 
 <BaseLayout title='Sequences'>

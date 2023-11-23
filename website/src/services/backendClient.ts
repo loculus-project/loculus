@@ -6,14 +6,15 @@ import { getInstanceLogger } from '../logger.ts';
 export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
     /** Somehow Typescript's type inference currently doesn't work properly in Astro files */
     public readonly astroFileTypeHelpers = {
-        getSequenceEntriesOfUser: (username: string) =>
+        getSequenceEntriesOfUser: (organism: string, username: string) =>
             this.call('getSequencesOfUser', {
+                params: { organism },
                 queries: { username },
             }),
 
-        getDataToReview: (username: string, accession: string, version: string | number) =>
+        getDataToReview: (organism: string, username: string, accession: string, version: string | number) =>
             this.call('getDataToReview', {
-                params: { accession, version },
+                params: { accession, version, organism },
                 queries: { username },
             }),
     };

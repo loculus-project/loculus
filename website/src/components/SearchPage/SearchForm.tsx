@@ -20,6 +20,7 @@ import { SandwichIcon } from '../SandwichIcon';
 const queryClient = new QueryClient();
 
 interface SearchFormProps {
+    organism: string;
     metadataSettings: Filter[];
     clientConfig: ClientConfig;
 }
@@ -31,7 +32,7 @@ const defaultFilters = [
     { name: 'isRevocation', value: 'false' },
 ];
 
-export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig }) => {
+export const SearchForm: FC<SearchFormProps> = ({ organism, metadataSettings, clientConfig }) => {
     const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
         metadataSettings.map((filter) => ({
             ...filter,
@@ -59,13 +60,13 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig
     const handleSearch: FormEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();
         setIsLoading(true);
-        location.href = routes.searchPage(fieldValues);
+        location.href = routes.searchPage(organism, fieldValues);
     };
 
     const resetSearch = async () => {
         setIsLoading(true);
         await clientLogger.info('reset_search');
-        location.href = routes.searchPage([]);
+        location.href = routes.searchPage(organism, []);
     };
 
     const fields = useMemo(

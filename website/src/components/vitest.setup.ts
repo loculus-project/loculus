@@ -22,6 +22,7 @@ export const testConfig = {
     },
 } as RuntimeConfig;
 
+export const testOrganism = 'testOrganism';
 export const testUser = 'testuser';
 
 const testServer = setupServer();
@@ -29,7 +30,7 @@ const testServer = setupServer();
 const backendRequestMocks = {
     submit: (statusCode: number = 200, response: SubmissionIdMapping[] | any = []) => {
         testServer.use(
-            rest.post(`${testConfig.forServer.backendUrl}/submit`, (_, res, ctx) => {
+            rest.post(`${testConfig.forServer.backendUrl}/${testOrganism}/submit`, (_, res, ctx) => {
                 return res(ctx.status(statusCode), ctx.json(response));
             }),
         );

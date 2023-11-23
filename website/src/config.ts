@@ -24,6 +24,17 @@ function getConfigDir(): string {
     return configDir;
 }
 
+function getWebsiteConfig(): WebsiteConfig {
+    if (_config === null) {
+        _config = readTypedConfigFile('website_config.json', websiteConfig);
+    }
+    return _config;
+}
+
+export function getConfiguredOrganisms() {
+    return Object.keys(getWebsiteConfig().instances);
+}
+
 export function getConfig(): Schema {
     if (_config === null) {
         _config = readTypedConfigFile('website_config.json', websiteConfig);

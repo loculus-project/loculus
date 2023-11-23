@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
-import type { SubmissionIdMapping, ProblemDetail } from '../../types/backend.ts';
-import { mockRequest, testConfig, testUser } from '../vitest.setup';
+import type { ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
+import { mockRequest, testConfig, testOrganism, testUser } from '../vitest.setup';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -15,7 +15,7 @@ vi.mock('../../api', () => ({
 }));
 
 function renderSubmissionForm() {
-    return render(<SubmissionForm clientConfig={testConfig.forClient} />);
+    return render(<SubmissionForm organism={testOrganism} clientConfig={testConfig.forClient} />);
 }
 
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
