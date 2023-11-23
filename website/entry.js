@@ -54,7 +54,7 @@ const lapisProxies = Object.entries(serviceConfig.lapisUrls).map(([organism, url
         target: url,
         changeOrigin: true,
         pathRewrite: {
-            [`/lapisProxy/${organism}/`]: `/${organism}/`,
+            [`/lapisProxy/${organism}/`]: '/',
         },
         logProvider,
     }),
