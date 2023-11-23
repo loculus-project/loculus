@@ -5,7 +5,7 @@ import { AutoCompleteField } from './AutoCompleteField';
 import type { FieldProps } from './FieldProps';
 import { NormalTextField } from './NormalTextField';
 
-export const PangoLineageField: FC<FieldProps> = ({ field, allFields, handleFieldChange, isLoading, clientConfig }) => {
+export const PangoLineageField: FC<FieldProps> = ({ field, allFields, handleFieldChange, isLoading, lapisUrl }) => {
     const filter = field.filterValue;
     const [includeSubLineages, setIncludeSubLineages] = useState(filter.length > 0 ? filter.endsWith('*') : true);
 
@@ -32,7 +32,7 @@ export const PangoLineageField: FC<FieldProps> = ({ field, allFields, handleFiel
         allFields,
         handleFieldChange: handleTextFieldChange,
         isLoading,
-        clientConfig,
+        lapisUrl,
     };
 
     return (

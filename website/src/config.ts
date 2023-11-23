@@ -50,7 +50,13 @@ export function getRuntimeConfig(): RuntimeConfig {
             ? runtimeConfig
             : {
                   backendUrl: '/backendProxy',
-                  lapisUrl: '/lapisProxy',
+                  lapisUrls: Object.keys(runtimeConfig.lapisUrls).reduce(
+                      (acc, organism) => ({
+                          ...acc,
+                          [organism]: `/lapisProxy/${organism}`,
+                      }),
+                      {},
+                  ),
                   keycloakUrl: '/keycloakProxy',
               };
 
@@ -60,6 +66,13 @@ export function getRuntimeConfig(): RuntimeConfig {
         };
     }
     return _runtimeConfig;
+}
+
+export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): string {
+    if (!(organism in serviceConfig.lapisUrls)) {
+        throw new Error(`No lapis url configured for organism ${organism}`);
+    }
+    return serviceConfig.lapisUrls[organism];
 }
 
 function makeServerConfig(serviceConfig: ServiceUrls): ServerConfig {

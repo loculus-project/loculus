@@ -10,6 +10,7 @@ import { DateField } from './fields/DateField';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
+import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { routes } from '../../routes.ts';
 import type { Filter } from '../../types/config.ts';
@@ -69,6 +70,8 @@ export const SearchForm: FC<SearchFormProps> = ({ organism, metadataSettings, cl
         location.href = routes.searchPage(organism, []);
     };
 
+    const lapisUrl = getLapisUrl(clientConfig, organism);
+
     const fields = useMemo(
         () =>
             fieldValues.map((field) => {
@@ -79,7 +82,7 @@ export const SearchForm: FC<SearchFormProps> = ({ organism, metadataSettings, cl
                     field,
                     handleFieldChange,
                     isLoading,
-                    clientConfig,
+                    lapisUrl,
                     allFields: fieldValues,
                 };
 
@@ -95,7 +98,7 @@ export const SearchForm: FC<SearchFormProps> = ({ organism, metadataSettings, cl
                         return <NormalTextField {...props} />;
                 }
             }),
-        [clientConfig, fieldValues, isLoading],
+        [lapisUrl, fieldValues, isLoading],
     );
 
     return (

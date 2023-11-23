@@ -8,7 +8,7 @@ import type { Filter } from '../../../types/config.ts';
 
 const logger = getClientLogger('AutoCompleteField');
 
-export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFieldChange, isLoading, clientConfig }) => {
+export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFieldChange, isLoading, lapisUrl }) => {
     const [open, setOpen] = useState(false);
 
     const {
@@ -16,7 +16,7 @@ export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFiel
         isLoading: isOptionListLoading,
         error,
         mutate,
-    } = lapisClientHooks(clientConfig).zodiosHooks.useAggregated({}, {});
+    } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
 
     useEffect(() => {
         if (error) {

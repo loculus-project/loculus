@@ -11,6 +11,7 @@ export type SearchResponse = {
     totalCount: number;
 };
 export const getData = async (
+    organism: string,
     metadataFilter: Filter[],
     offset: number,
     limit: number,
@@ -24,7 +25,7 @@ export const getData = async (
 
     const config = getConfig();
 
-    const lapisClient = LapisClient.create();
+    const lapisClient = LapisClient.createForOrganism(organism);
 
     const aggregateResult = await lapisClient.call('aggregated', searchFilters);
     const detailsResult = await lapisClient.call('details', {

@@ -11,7 +11,14 @@ const clientConfig = getRuntimeConfig().forClient;
         Click here for the API documentation of the backend server.
     </a>
     <br />
-    <a href={clientConfig.lapisUrl + '/swagger-ui/index.html'}>
-        Click here for the API documentation of the query engine LAPIS.
-    </a>
+    {
+        Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+            <>
+                <a class='mt-8' href={url + '/swagger-ui/index.html'}>
+                    Click here for the API documentation of the query engine LAPIS for the organism {organism}.
+                </a>
+                <br />
+            </>
+        ))
+    }
 </BaseLayout>

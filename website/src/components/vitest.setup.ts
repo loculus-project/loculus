@@ -11,13 +11,19 @@ import type { RuntimeConfig } from '../types/runtimeConfig.ts';
 
 export const testConfig = {
     forClient: {
+        discriminator: 'client',
         backendUrl: 'http://backend.dummy',
-        lapisUrl: 'http://lapis.dummy',
+        lapisUrls: {
+            dummy: 'http://lapis.dummy',
+        },
         keycloakUrl: 'http://keycloak.dummy',
     },
     forServer: {
+        discriminator: 'server',
         backendUrl: 'http://backend.dummy',
-        lapisUrl: 'http://lapis.dummy',
+        lapisUrls: {
+            dummy: 'http://lapis.dummy',
+        },
         keycloakUrl: 'http://keycloak.dummy',
     },
 } as RuntimeConfig;
@@ -40,35 +46,35 @@ const backendRequestMocks = {
 const lapisRequestMocks = {
     details: (statusCode: number = 200, response: DetailsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.forServer.lapisUrl}/details`, (_, res, ctx) => {
+            rest.post(`${testConfig.forServer.lapisUrls.dummy}/details`, (_, res, ctx) => {
                 return res(ctx.status(statusCode), ctx.json(response));
             }),
         );
     },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.forServer.lapisUrl}/nucleotideMutations`, (_, res, ctx) => {
+            rest.post(`${testConfig.forServer.lapisUrls.dummy}/nucleotideMutations`, (_, res, ctx) => {
                 return res(ctx.status(statusCode), ctx.json(response));
             }),
         );
     },
     aminoAcidMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.forServer.lapisUrl}/aminoAcidMutations`, (_, res, ctx) => {
+            rest.post(`${testConfig.forServer.lapisUrls.dummy}/aminoAcidMutations`, (_, res, ctx) => {
                 return res(ctx.status(statusCode), ctx.json(response));
             }),
         );
     },
     nucleotideInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.forServer.lapisUrl}/nucleotideInsertions`, (_, res, ctx) => {
+            rest.post(`${testConfig.forServer.lapisUrls.dummy}/nucleotideInsertions`, (_, res, ctx) => {
                 return res(ctx.status(statusCode), ctx.json(response));
             }),
         );
     },
     aminoAcidInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.forServer.lapisUrl}/aminoAcidInsertions`, (_, res, ctx) => {
+            rest.post(`${testConfig.forServer.lapisUrls.dummy}/aminoAcidInsertions`, (_, res, ctx) => {
                 return res(ctx.status(statusCode), ctx.json(response));
             }),
         );
