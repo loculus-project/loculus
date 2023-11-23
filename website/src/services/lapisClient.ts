@@ -2,7 +2,7 @@ import type { Narrow } from '@zodios/core/lib/utils.types';
 
 import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
-import { getConfig, getLapisUrl, getRuntimeConfig } from '../config.ts';
+import { getLapisUrl, getRuntimeConfig, getSchema } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
 import type { Schema } from '../types/config.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
@@ -24,14 +24,10 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     }
 
     public static createForOrganism(organism: string) {
-        return this.create(getLapisUrl(getRuntimeConfig().forServer, organism));
+        return this.create(getLapisUrl(getRuntimeConfig().forServer, organism), getSchema(organism));
     }
 
-    public static create(
-        lapisUrl: string,
-        schema: Schema = getConfig(),
-        logger: InstanceLogger = getInstanceLogger('lapisClient'),
-    ) {
+    public static create(lapisUrl: string, schema: Schema, logger: InstanceLogger = getInstanceLogger('lapisClient')) {
         return new LapisClient(lapisUrl, lapisApi, logger, schema);
     }
 

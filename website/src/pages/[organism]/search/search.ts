@@ -1,7 +1,7 @@
 import { Result } from 'neverthrow';
 
 import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
-import { getConfig } from '../../../config.ts';
+import { getSchema } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
 import type { Filter } from '../../../types/config.ts';
@@ -23,7 +23,7 @@ export const getData = async (
             return acc;
         }, {});
 
-    const config = getConfig();
+    const config = getSchema(organism);
 
     const lapisClient = LapisClient.createForOrganism(organism);
 
@@ -43,9 +43,12 @@ export const getData = async (
     });
 };
 
-export const getMetadataSettings = async (getSearchParams: (param: string) => string): Promise<Filter[]> => {
-    const config = getConfig();
-    return config.metadata.flatMap((metadata) => {
+export const getMetadataSettings = async (
+    getSearchParams: (param: string) => string,
+    organism: string,
+): Promise<Filter[]> => {
+    const schema = getSchema(organism);
+    return schema.metadata.flatMap((metadata) => {
         if (metadata.type === 'date') {
             const metadataFrom = {
                 ...metadata,
