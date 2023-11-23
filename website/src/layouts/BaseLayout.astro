@@ -1,6 +1,7 @@
 ---
 import '../styles/base.scss';
-import { Navigation } from '../components/Navigation/Navigation';
+import Navigation from '../components/Navigation/Navigation.astro';
+import { navigationItems } from '../routes';
 
 const { title } = Astro.props;
 ---
@@ -21,7 +22,7 @@ const { title } = Astro.props;
                         <a href='/'><img class='h-8 mr-4' src='/favicon.svg' /></a>
                         <a href='/' class='fancytitle'>Pathoplexus</a>
                     </div>
-                    <Navigation client:load />
+                    <Navigation />
                 </nav>
                 <hr class='border-t border-gray-1000' />
             </header>
@@ -33,10 +34,13 @@ const { title } = Astro.props;
             <hr class='border-t border-gray-1000' />
             <footer class='hidden sm:flex sm:z-6 sm:z-6 flex justify-between items-center h-20'>
                 <div class='flex gap-5'>
-                    <a href='/about' class='text-gray-600'>About</a>
-                    <a href='/governance' class='text-gray-600'>Governance</a>
-                    <a href='/status' class='text-gray-600'>Status</a>
-                    <a href='/api_documentation' class='text-gray-600'>Api documentation</a>
+                    {
+                        navigationItems.bottom.map(({ text, path }) => (
+                            <a href={path} class='text-gray-600'>
+                                {text}
+                            </a>
+                        ))
+                    }
                 </div>
 
                 <a href='https://github.com/pathoplexus' class='h-full py-6'>

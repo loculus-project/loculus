@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
+import { navigationItems } from '../../routes.ts';
 
 export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
@@ -30,10 +31,9 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                             <a href='/'>Pathoplexus</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            <OffCanvasNavItem text='Search' url='/search' />
-                            <OffCanvasNavItem text='Submit' url='/submit' />
-                            <OffCanvasNavItem text='Revise' url='/revise' />
-                            <OffCanvasNavItem text='User' url='/user' />
+                            {navigationItems.top.map(({ text, path }) => (
+                                <OffCanvasNavItem key={path} text={text} path={path} />
+                            ))}
                         </div>
                     </div>
 
@@ -45,10 +45,9 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                         </div>
 
                         <div className='font-light divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            <OffCanvasNavItem text='About' url='/about' type='small' />
-                            <OffCanvasNavItem text='Api documentation' url='/api_documentation' type='small' />
-                            <OffCanvasNavItem text='Governance' url='/governance' type='small' />
-                            <OffCanvasNavItem text='Status' url='/status' type='small' />
+                            {navigationItems.bottom.map(({ text, path }) => (
+                                <OffCanvasNavItem key={path} text={text} path={path} type='small' />
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -59,21 +58,20 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
 
 type OffCanvasNavItemProps = {
     text: string;
-    url?: string;
+    path: string;
     type?: 'small';
 };
 
-const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, url, type }) => {
+const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, path, type }) => {
     const height = type === 'small' ? 'py-1' : 'py-3';
 
-    let inner = (
-        <div className={` flex items-center`}>
-            <div className={`pl-4 ${height} `}>{text}</div>
+    return (
+        <div>
+            <a href={path}>
+                <div className={` flex items-center`}>
+                    <div className={`pl-4 ${height} `}>{text}</div>
+                </div>
+            </a>
         </div>
     );
-    if (url !== undefined) {
-        inner = <a href={url}>{inner}</a>;
-    }
-
-    return <div>{inner}</div>;
 };
