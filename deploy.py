@@ -117,7 +117,6 @@ def handle_helm():
     if args.dev:
         parameters += ['--set', f"disableBackend=true"]
         parameters += ['--set', f"disableWebsite=true"]
-        parameters += ['--set', f"disableKeycloak=true"]
 
 
     subprocess.run(parameters, check=True)
