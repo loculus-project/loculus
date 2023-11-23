@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+
 import { isPublicRoute } from './isPublicRoute';
 import { testOrganism } from '../components/vitest.setup.ts';
 

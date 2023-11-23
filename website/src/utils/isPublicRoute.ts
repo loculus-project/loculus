@@ -1,6 +1,4 @@
-import { getConfiguredOrganisms } from '../config.ts';
-
-let publicRoutesCache: Record<string, RegExp[]> = {};
+const publicRoutesCache: Record<string, RegExp[]> = {};
 
 function getPublicRoutes(configuredOrganisms: string[]) {
     const cacheKey = configuredOrganisms.join('');
