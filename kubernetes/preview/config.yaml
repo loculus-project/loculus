@@ -1,7 +1,7 @@
 instances:
   dummy-organism:
     schema:
-      instanceName: Test
+      instanceName: "Test Dummy Organism"
       metadata:
         - name: date
           type: date
@@ -65,7 +65,7 @@ instances:
 
   dummy-organism-2:
     schema:
-      instanceName: Test
+      instanceName: "Other Test Dummy Organism"
       metadata:
         - name: date
           type: date

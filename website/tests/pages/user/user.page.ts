@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import type { AccessionVersion, SequenceEntryStatus } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, testUser } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, testUser } from '../../e2e.fixture';
 
 export class UserPage {
     private readonly sequenceBoxNames = [
@@ -17,8 +17,8 @@ export class UserPage {
     constructor(public readonly page: Page) {}
 
     public async gotoUserSequencePage() {
-        await this.page.goto(`${baseUrl}/user/${testUser}/sequences`, { waitUntil: 'networkidle' });
-        await this.page.waitForURL(`${baseUrl}/user/${testUser}/sequences`);
+        await this.page.goto(`${baseUrl}/${dummyOrganism}/user/${testUser}/sequences`, { waitUntil: 'networkidle' });
+        await this.page.waitForURL(`${baseUrl}/${dummyOrganism}/user/${testUser}/sequences`);
 
         for (const id of this.sequenceBoxNames) {
             const checkbox = this.page.getByTestId(id);
@@ -31,8 +31,8 @@ export class UserPage {
     }
 
     public async goToUserPage() {
-        await this.page.goto(`${baseUrl}/user`, { waitUntil: 'networkidle' });
-        await this.page.waitForURL(`${baseUrl}/user`);
+        await this.page.goto(`${baseUrl}/${dummyOrganism}/user`, { waitUntil: 'networkidle' });
+        await this.page.waitForURL(`${baseUrl}/${dummyOrganism}/user`);
     }
 
     public async logout() {
@@ -61,7 +61,7 @@ export class UserPage {
         await reviewButton.click();
 
         await this.page.waitForURL(
-            `${baseUrl}/user/${testUser}/review/${accessionToCheck.accession}/${accessionToCheck.version}`,
+            `${baseUrl}/${dummyOrganism}/user/${testUser}/review/${accessionToCheck.accession}/${accessionToCheck.version}`,
             { waitUntil: 'networkidle' },
         );
     }

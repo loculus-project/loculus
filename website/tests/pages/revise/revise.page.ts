@@ -4,7 +4,7 @@ import type { Locator, Page } from '@playwright/test';
 import { v4 as uuid } from 'uuid';
 
 import type { Accession } from '../../../src/types/backend.ts';
-import { baseUrl, sequencesTestFile, testUser } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, sequencesTestFile, testUser } from '../../e2e.fixture';
 import { createModifiedFileContent } from '../../util/createFileContent.ts';
 
 export class RevisePage {
@@ -18,7 +18,7 @@ export class RevisePage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/revise`, { waitUntil: 'networkidle' });
+        await this.page.goto(`${baseUrl}/${dummyOrganism}/revise`, { waitUntil: 'networkidle' });
     }
 
     public async uploadSequenceData(file: string = sequencesTestFile) {

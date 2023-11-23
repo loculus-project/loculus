@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 
-import { baseUrl } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 
 const ACCESSION_VERSION = 'Accession version';
 
@@ -16,7 +16,7 @@ export class SearchPage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/search`);
+        await this.page.goto(`${baseUrl}/${dummyOrganism}/search`);
     }
 
     public async clickSearchButton() {
@@ -37,6 +37,6 @@ export class SearchPage {
     }
 
     public async searchFor(params: { [key: string]: string }) {
-        await this.page.goto(`${baseUrl}/search?${new URLSearchParams(params)}`);
+        await this.page.goto(`${baseUrl}/${dummyOrganism}/search?${new URLSearchParams(params)}`);
     }
 }
