@@ -67,7 +67,7 @@ For preview instances this repo contains [sealed secrets](https://sealed-secrets
 
 ## Full deployment for E2E testing
 
-There is an `e2e` environment intended for E2E testing in GitHub Actions.
+There is a `local` environment intended for E2E testing in GitHub Actions.
 It can also be used locally on x64 systems.
 
 Create a cluster with ports for all services exposed:
