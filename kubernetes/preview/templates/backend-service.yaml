@@ -11,7 +11,7 @@ spec:
   ports:
     - port: 8079
       targetPort: 8079
-      {{- if ne .Values.mode "cd" }}
+      {{- if ne .Values.environment "server" }}
       nodePort: 30082
       {{- end }}
       protocol: TCP

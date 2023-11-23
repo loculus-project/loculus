@@ -100,11 +100,6 @@ def handle_helm():
         subprocess.run(['helm', 'uninstall', HELM_RELEASE_NAME], check=True)
         return
 
-    if args.dev:
-        mode = 'dev'
-    else:
-        mode = 'e2e'
-
     if args.branch:
         branch = args.branch
     else:
@@ -112,12 +107,20 @@ def handle_helm():
 
     docker_config_json = get_docker_config_json()
 
-    subprocess.run([
+    parameters = [
         'helm', 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
-        '--set', f"mode={mode}",
+        '--set', f"environment=local",
         '--set', f"branch={branch}",
         '--set', f"dockerconfigjson={docker_config_json}",
-    ], check=True)
+    ]
+
+    if args.dev:
+        parameters += ['--set', f"disableBackend=true"]
+        parameters += ['--set', f"disableWebsite=true"]
+        parameters += ['--set', f"disableKeycloak=true"]
+
+
+    subprocess.run(parameters, check=True)
 
 
 def get_docker_config_json():

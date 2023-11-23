@@ -1,2 +1,5 @@
-mode: cd
+environment: server
 namespace: pathoplexus
+disableWebsite: false
+disableBackend: false
+disableKeycloak: false

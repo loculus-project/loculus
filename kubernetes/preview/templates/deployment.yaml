@@ -19,7 +19,7 @@ spec:
         component: website-and-backend
     spec:
       containers:
-        {{- if ne .Values.mode "dev" }}
+        {{- if not .Values.disableWebsite }}
         - name: website
           image: ghcr.io/pathoplexus/website:{{ $dockerTag }}
           imagePullPolicy: Always
