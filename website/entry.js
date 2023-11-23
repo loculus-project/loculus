@@ -47,6 +47,7 @@ const backendProxy = createProxyMiddleware('/backendProxy/**', {
         '^/backendProxy/': '/',
     },
     logProvider,
+    onProxyReq: setProxyHeaders('/backendProxy'),
 });
 
 const lapisProxy = createProxyMiddleware('/lapisProxy/**', {
@@ -56,7 +57,19 @@ const lapisProxy = createProxyMiddleware('/lapisProxy/**', {
         '^/lapisProxy/': '/',
     },
     logProvider,
+    onProxyReq: setProxyHeaders('/lapisProxy'),
 });
+
+function setProxyHeaders(prefix) {
+    return (proxyReq, req) => {
+        logProvider().info(`host ${req.headers.host} ip ${req.ip} port ${req.connection.localPort}`);
+        proxyReq.setHeader('Host', req.headers.host);
+        proxyReq.setHeader('X-Real-IP', req.ip);
+        proxyReq.setHeader('X-Forwarded-Port', req.connection.localPort);
+        proxyReq.setHeader('X-Forwarded-Proto', req.protocol);
+        proxyReq.setHeader('X-Forwarded-Prefix', prefix);
+    };
+}
 
 const app = express();
 
