@@ -60,6 +60,7 @@ function withOrganism(organism: string, path: `/${string}`) {
 export const routes = {
     searchPage: (organism: string, searchFilter: Filter[] = [], page: number = 1) =>
         withOrganism(organism, `/search?${buildSearchParams(searchFilter, page).toString()}`),
+    sequencesDetailsPage: (organism: string, accessionVersion: string) => `/${organism}/sequences/${accessionVersion}`,
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     reviewPage: (organism: string, username: string, accessionVersion: AccessionVersion) =>

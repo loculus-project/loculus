@@ -44,7 +44,7 @@ const data = await getData(metadataSettings, offset, pageSize);
                             Search returned {data.totalCount.toLocaleString()}
                             sequence{data.totalCount === 1 ? '' : 's'}
                         </div>
-                        <Table data={data.data} schema={schema} client:load />
+                        <Table organism={organism} data={data.data} schema={schema} client:load />
 
                         <div class='mt-4 flex justify-center'>
                             <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)} />

@@ -8,7 +8,7 @@ import { getInstanceLogger } from './logger.ts';
 
 export const TOKEN_COOKIE = 'token';
 
-let _publicRoutes: RegExp[] | undefined = undefined;
+let _publicRoutes: RegExp[] | undefined;
 function getPublicRoutes() {
     if (_publicRoutes === undefined) {
         const organismSpecificRoutes = getConfiguredOrganisms().flatMap((organism) => [
