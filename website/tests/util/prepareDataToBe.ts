@@ -43,9 +43,7 @@ const prepareDataToHaveErrors = async (numberOfSequences: number = testSequenceC
 const prepareDataToBeAwaitingApproval = async (numberOfSequences: number = testSequenceCount) => {
     const sequenceEntries = await prepareDataToBeProcessing(numberOfSequences);
 
-    const options: PreprocessingOptions[] = sequenceEntries
-        .map(extractAccessionVersion)
-        .map((sequence) => ({ ...sequence, error: false }));
+    const options: PreprocessingOptions[] = sequenceEntries.map((sequence) => ({ ...sequence, error: false }));
     await fakeProcessingPipeline.submit(options);
 
     return sequenceEntries;

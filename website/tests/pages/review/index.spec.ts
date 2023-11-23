@@ -1,6 +1,6 @@
 import { type ReviewPage } from './review.page.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
-import { baseUrl, expect, test, testUser } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, expect, test, testUser } from '../../e2e.fixture';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 import type { UserPage } from '../user/user.page.ts';
 
@@ -34,6 +34,6 @@ test.describe('The review page', () => {
 
         await reviewPage.submit();
 
-        await reviewPage.page.waitForURL(`${baseUrl}/user/${testUser}/sequences`);
+        await reviewPage.page.waitForURL(`${baseUrl}/${dummyOrganism}/user/${testUser}/sequences`);
     };
 });

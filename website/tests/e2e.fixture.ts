@@ -13,6 +13,7 @@ import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
 import { clientMetadata, realmPath, TOKEN_COOKIE } from '../src/middleware.ts';
 import { BackendClient } from '../src/services/backendClient.ts';
+import { NavigationFixture } from './pages/navigation.fixture.ts';
 
 type E2EFixture = {
     searchPage: SearchPage;
@@ -21,6 +22,7 @@ type E2EFixture = {
     userPage: UserPage;
     revisePage: RevisePage;
     reviewPage: ReviewPage;
+    navigationFixture: NavigationFixture;
     loginAsTestUser: () => Promise<void>;
 };
 
@@ -134,6 +136,9 @@ export const test = base.extend<E2EFixture>({
     reviewPage: async ({ page }, use) => {
         const reviewPage = new ReviewPage(page);
         await use(reviewPage);
+    },
+    navigationFixture: async ({ page }, use) => {
+        await use(new NavigationFixture(page));
     },
     loginAsTestUser: async ({ page }, use) => {
         await use(async () => authorize(page));

@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { baseUrl, testSequence } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, testSequence } from '../../e2e.fixture';
 
 export class SequencePage {
     private readonly loadButton: Locator;
@@ -12,7 +12,9 @@ export class SequencePage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/sequences/${testSequence.name}`, { waitUntil: 'networkidle' });
+        await this.page.goto(`${baseUrl}/${dummyOrganism}/sequences/${testSequence.name}`, {
+            waitUntil: 'networkidle',
+        });
         await expect(this.page).toHaveTitle(`${testSequence.name}`);
         await expect(this.loadButton).toBeVisible();
     }
