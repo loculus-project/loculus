@@ -11,7 +11,7 @@ data:
 
   runtime_config.json: |
     {
-      {{- if Values.disableBackend }}
+      {{- if .Values.disableBackend }}
       "backendUrl": "http://host.k3d.internal:8079/dummy-organism",
       {{- else }}
       "backendUrl": "http://localhost:8079/dummy-organism",
