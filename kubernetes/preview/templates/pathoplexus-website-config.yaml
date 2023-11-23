@@ -17,7 +17,7 @@ data:
       "backendUrl": "http://localhost:8079/dummy-organism",
       {{- end }}
       "lapisUrl": "http://pathoplexus-lapis-service-dummy-organism:8080",
-      {{- if Values.disableKeycloak }}
+      {{- if .Values.disableKeycloak }}
       "keycloakUrl": "http://localhost:8083"
       {{- else }}
       "keycloakUrl": "http://pathoplexus-keycloak-service:8083"
