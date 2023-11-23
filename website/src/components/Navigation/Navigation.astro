@@ -1,7 +1,7 @@
 ---
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { getConfiguredOrganisms } from '../../config';
-import { navigationItems } from '../../routes';
+import { navigationItems, routes } from '../../routes';
 
 let organism = Astro.params.organism;
 
@@ -21,7 +21,7 @@ const label = organism === undefined ? 'Choose Organism' : `Organism ${organism}
             {
                 organisms.map((organism) => (
                     <li>
-                        <a href={`/${organism}`}>{organism}</a>
+                        <a href={routes.organismStartPage(organism)}>{organism}</a>
                     </li>
                 ))
             }
