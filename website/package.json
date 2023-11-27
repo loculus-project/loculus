@@ -20,7 +20,7 @@
     "@astrojs/node": "^6.0.3",
     "@emotion/react": "^11.11.1",
     "@mui/material": "^5.14.17",
-    "@mui/x-date-pickers": "^6.18.1",
+    "@mui/x-date-pickers": "^6.18.2",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@tanstack/react-query": "^4.36.1",
