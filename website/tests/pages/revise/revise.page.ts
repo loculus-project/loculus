@@ -6,6 +6,7 @@ import { v4 as uuid } from 'uuid';
 import type { Accession } from '../../../src/types/backend.ts';
 import { baseUrl, dummyOrganism, sequencesTestFile, testUser } from '../../e2e.fixture';
 import { createModifiedFileContent } from '../../util/createFileContent.ts';
+import { routes } from '../../../src/routes.ts';
 
 export class RevisePage {
     public readonly userField: Locator;
@@ -18,7 +19,7 @@ export class RevisePage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/${dummyOrganism.key}/revise`, { waitUntil: 'networkidle' });
+        await this.page.goto(`${baseUrl}${routes.revisePage(dummyOrganism.key)}`, { waitUntil: 'networkidle' });
     }
 
     public async uploadSequenceData(file: string = sequencesTestFile) {

@@ -6,7 +6,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 const { organism } = cleanOrganism(Astro.params.organism);
 ---
 
-<BaseLayout title={organism!.key}>
+<BaseLayout title={organism!.displayName}>
     <div class='flex items-center'>
         <BackButton marginRight={2} client:load />
         <h1 class='title'>Organism {organism?.displayName}</h1>

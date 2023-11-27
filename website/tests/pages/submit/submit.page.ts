@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { baseUrl, dummyOrganism, expect, metadataTestFile, sequencesTestFile } from '../../e2e.fixture';
+import { routes } from '../../../src/routes.ts';
 
 export class SubmitPage {
     public readonly userField: Locator;
@@ -12,7 +13,7 @@ export class SubmitPage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/${dummyOrganism.key}/submit`, { waitUntil: 'networkidle' });
+        await this.page.goto(`${baseUrl}${routes.submitPage(dummyOrganism.key)}`, { waitUntil: 'networkidle' });
     }
 
     public async uploadMetadata() {

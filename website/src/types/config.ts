@@ -15,6 +15,8 @@ export type Filter = Metadata & {
     label?: string;
 };
 
+export type FilterValue = Pick<Filter, 'name' | 'filterValue'>;
+
 const schema = z.object({
     instanceName: z.string(),
     metadata: z.array(metadata),

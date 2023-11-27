@@ -15,7 +15,7 @@ export class ReviewPage {
     }
 
     public async goto(accessionVersion: AccessionVersion) {
-        await this.page.goto(`${baseUrl}/${routes.reviewPage(dummyOrganism.key, testUser, accessionVersion)}`, {
+        await this.page.goto(`${baseUrl}${routes.reviewPage(dummyOrganism.key, testUser, accessionVersion)}`, {
             waitUntil: 'networkidle',
         });
     }
@@ -24,7 +24,7 @@ export class ReviewPage {
         await this.submitButton.click();
         expect(await this.page.isVisible('text=Do you really want to submit your review?')).toBe(true);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
-        await this.page.waitForURL(`${baseUrl}/${routes.userSequencesPage(dummyOrganism.key, testUser)}`);
+        await this.page.waitForURL(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key, testUser)}`);
     }
 
     public async downloadAndVerify(accessionVersion: AccessionVersion) {
