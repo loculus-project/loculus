@@ -1,6 +1,6 @@
-{{- if eq .Values.mode "cd" }}
+{{- if eq .Values.environment "server" }}
 {{- $backendHost := printf "backend.%s" .Values.host }}
-{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{- $keycloakHost := printf "keycloak.%s" .Values.host }}
 
 apiVersion: traefik.containo.us/v1alpha1

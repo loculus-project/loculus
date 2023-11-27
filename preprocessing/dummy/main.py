@@ -9,7 +9,7 @@ from typing import Optional
 from dataclasses import dataclass, field
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--backend-host", type=str, default="127.0.0.1:8079",
+parser.add_argument("--backend-host", type=str, default="http://127.0.0.1:8079",
                     help="Host address of the Pathoplexus backend")
 parser.add_argument("--watch", action="store_true", help="Watch and keep running. Fetches new data every 10 seconds.")
 parser.add_argument("--withErrors", action="store_true", help="Add errors to processed data.")
@@ -17,7 +17,7 @@ parser.add_argument("--withWarnings", action="store_true", help="Add warnings to
 parser.add_argument("--maxSequences", type=int, help="Max number of sequence entry versions to process.")
 
 args = parser.parse_args()
-host = "http://{}".format(args.backend_host)
+host = args.backend_host
 watch_mode = args.watch
 addErrors = args.withErrors
 addWarnings = args.withWarnings

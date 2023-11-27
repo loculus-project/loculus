@@ -1,4 +1,4 @@
-{{- $configFile := .Files.Get "config.yml" | fromYaml }}
+{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{ $namespace := .Values.namespace }}
 
 {{- range $key, $_ := $configFile.instances }}
@@ -16,6 +16,8 @@ spec:
       component: lapis-silo-{{ $key }}
   template:
     metadata:
+      annotations:
+        argocd.argoproj.io/sync-options: Replace=true
       labels:
         app: pathoplexus
         component: lapis-silo-{{ $key }}

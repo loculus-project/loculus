@@ -85,7 +85,7 @@ data:
         }
       ],
       "attributes": {
-        {{- if eq .Values.mode "cd" }}
+        {{- if eq .Values.environment "server" }}
         "frontendUrl": "https://{{ $keycloakHost}}"
         {{- else }}
         "frontendUrl": "http://localhost:8083"

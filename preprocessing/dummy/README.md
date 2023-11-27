@@ -35,7 +35,7 @@ docker build -t pathoplexus-dummy-preprocessing .
 Run on Mac and Windows:
 
 ```bash
-docker run --rm pathoplexus-dummy-preprocessing --backend-host host.docker.internal
+docker run --rm pathoplexus-dummy-preprocessing --backend-host http://host.docker.internal
 ```
 
 Run on Linux:

@@ -14,12 +14,14 @@ spec:
       component: website-and-backend
   template:
     metadata:
+      annotations:
+        argocd.argoproj.io/sync-options: Replace=true
       labels:
         app: pathoplexus
         component: website-and-backend
     spec:
       containers:
-        {{- if ne .Values.mode "dev" }}
+        {{- if not .Values.disableWebsite }}
         - name: website
           image: ghcr.io/pathoplexus/website:{{ $dockerTag }}
           imagePullPolicy: Always
@@ -47,6 +49,8 @@ spec:
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
+        {{- end }}
+        {{- if not .Values.disableBackend }}
         - name: backend
           image: ghcr.io/pathoplexus/backend:{{ $dockerTag }}
           imagePullPolicy: Always
