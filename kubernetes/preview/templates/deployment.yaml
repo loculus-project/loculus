@@ -6,6 +6,8 @@ kind: Deployment
 metadata:
   name: pathoplexus
   namespace: {{ .Values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
 spec:
   replicas: 1
   selector:
@@ -14,8 +16,6 @@ spec:
       component: website-and-backend
   template:
     metadata:
-      annotations:
-        argocd.argoproj.io/sync-options: Replace=true
       labels:
         app: pathoplexus
         component: website-and-backend
