@@ -109,7 +109,7 @@ def handle_helm():
 
     parameters = [
         'helm', 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
-        '--set', f"environment=local",
+        '--set', "environment=local",
         '--set', f"branch={branch}",
         '--set', f"dockerconfigjson={docker_config_json}",
     ]
