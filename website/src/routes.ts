@@ -66,6 +66,10 @@ export const routes = {
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     reviewPage: (organism: string, username: string, accessionVersion: AccessionVersion) =>
         withOrganism(organism, `/user/${username}/review/${accessionVersion.accession}/${accessionVersion.version}`),
+    userOverviewPage: (organism?: string | undefined) => {
+        const userPagePath = `/user` as const;
+        return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
+    },
     userPage: (organism: string | undefined, username: string) => {
         const userPagePath = `/user/${username}` as const;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
