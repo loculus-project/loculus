@@ -11,6 +11,7 @@ function getPublicRoutes(configuredOrganisms: string[]) {
 
         publicRoutesCache[cacheKey] = [
             new RegExp('^/?$'),
+            new RegExp('^/404$'),
             new RegExp('^/about$'),
             new RegExp('^/api_documentation$'),
             new RegExp('^/governance$'),

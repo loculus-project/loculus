@@ -43,7 +43,7 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
         .join('\n');
 
     const response = await BackendClient.create(backendUrl, e2eLogger).call('submitProcessedData', body, {
-        params: { organism: dummyOrganism },
+        params: { organism: dummyOrganism.key },
         headers: { 'Content-Type': 'application/x-ndjson' },
     });
 
@@ -54,7 +54,7 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
 
 async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]> {
     const response = await BackendClient.create(backendUrl, e2eLogger).call('extractUnprocessedData', undefined, {
-        params: { organism: dummyOrganism },
+        params: { organism: dummyOrganism.key },
         queries: { numberOfSequenceEntries },
     });
 

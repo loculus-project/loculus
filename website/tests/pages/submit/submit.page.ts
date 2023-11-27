@@ -12,7 +12,7 @@ export class SubmitPage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/${dummyOrganism}/submit`, { waitUntil: 'networkidle' });
+        await this.page.goto(`${baseUrl}/${dummyOrganism.key}/submit`, { waitUntil: 'networkidle' });
     }
 
     public async uploadMetadata() {

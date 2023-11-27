@@ -16,7 +16,7 @@ export class SearchPage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/${dummyOrganism}/search`);
+        await this.page.goto(`${baseUrl}/${dummyOrganism.key}/search`);
     }
 
     public async clickSearchButton() {
@@ -37,6 +37,6 @@ export class SearchPage {
     }
 
     public async searchFor(params: { [key: string]: string }) {
-        await this.page.goto(`${baseUrl}/${dummyOrganism}/search?${new URLSearchParams(params)}`);
+        await this.page.goto(`${baseUrl}/${dummyOrganism.key}/search?${new URLSearchParams(params)}`);
     }
 }

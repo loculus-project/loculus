@@ -34,6 +34,6 @@ test.describe('The review page', () => {
 
         await reviewPage.submit();
 
-        await reviewPage.page.waitForURL(`${baseUrl}/${dummyOrganism}/user/${testUser}/sequences`);
+        await reviewPage.page.waitForURL(`${baseUrl}/${dummyOrganism.key}/user/${testUser}/sequences`);
     };
 });

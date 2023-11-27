@@ -13,7 +13,7 @@ export const submitViaApi = async (numberOfSequences: number = testSequenceCount
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
         },
         {
-            params: { organism: dummyOrganism },
+            params: { organism: dummyOrganism.key },
         },
     );
 
@@ -33,7 +33,7 @@ export const submitRevisedDataViaApi = async (accessions: Accession[]) => {
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
         },
         {
-            params: { organism: dummyOrganism },
+            params: { organism: dummyOrganism.key },
             headers: { 'Content-Type': 'multipart/form-data' },
         },
     );
@@ -48,7 +48,7 @@ export const approveProcessedData = async (username: string, accessionVersions: 
     };
 
     const response = await backendClient.call('approveProcessedData', body, {
-        params: { organism: dummyOrganism },
+        params: { organism: dummyOrganism.key },
         queries: { username },
         headers: { 'Content-Type': 'application/json' },
     });
