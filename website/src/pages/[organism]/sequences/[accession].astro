@@ -53,7 +53,7 @@ const genes = getReferenceGenomes(organism).genes.map((g) => g.name);
                             organism={organism}
                             accessionVersion={accession}
                             schema={schema}
-                            clientConfig={runtimeConfig.forClient}
+                            clientConfig={runtimeConfig.public}
                             genes={genes}
                         />
                     </div>

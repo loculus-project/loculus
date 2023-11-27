@@ -12,7 +12,7 @@ interface Props {
 const organism = Astro.params.organism!;
 
 const { sequenceEntries, username } = Astro.props;
-const clientConfig = getRuntimeConfig().forClient;
+const clientConfig = getRuntimeConfig().public;
 
 const statusArray = sequenceEntries.reduce(
     (acc, item) => {

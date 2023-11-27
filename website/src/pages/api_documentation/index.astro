@@ -2,7 +2,7 @@
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
-const clientConfig = getRuntimeConfig().forClient;
+const clientConfig = getRuntimeConfig().public;
 ---
 
 <BaseLayout title='Api Docs'>

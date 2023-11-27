@@ -24,7 +24,7 @@ const logger = getInstanceLogger('LoginMiddleware');
 
 export async function getKeycloakClient() {
     if (_keycloakClient === undefined) {
-        const originForClient = getRuntimeConfig().forServer.keycloakUrl;
+        const originForClient = getRuntimeConfig().serverSide.keycloakUrl;
 
         const issuerUrl = `${originForClient}${realmPath}`;
 

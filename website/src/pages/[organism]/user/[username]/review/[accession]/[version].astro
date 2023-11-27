@@ -10,7 +10,7 @@ const accession = Astro.params.accession!;
 const organism = Astro.params.organism!;
 
 const username = Astro.params.username!;
-const clientConfig = getRuntimeConfig().forClient;
+const clientConfig = getRuntimeConfig().public;
 
 const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToReview(
     organism,

@@ -24,7 +24,7 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     }
 
     public static createForOrganism(organism: string) {
-        return this.create(getLapisUrl(getRuntimeConfig().forServer, organism), getSchema(organism));
+        return this.create(getLapisUrl(getRuntimeConfig().serverSide, organism), getSchema(organism));
     }
 
     public static create(lapisUrl: string, schema: Schema, logger: InstanceLogger = getInstanceLogger('lapisClient')) {

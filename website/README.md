@@ -32,16 +32,7 @@ and `npx playwright install-deps` first. Playwright will tell you if that's the 
 
 ### Running The Application
 
-Run `npm run start-server` to build and run the production version of the application.
-The build artifacts will be stored in the `dist/` directory.
-We use an express server to
-* serve static files,
-* run the server-side rendering routes of Astro,
-* proxy requests to the backend and
-* proxy requests to LAPIS.
-
-The proxy is used to avoid CORS issues and to only configure backend URLs for server-side code,
-since accessibility might differ for server-side and for client-side code.
+Run `npm run start-server` to build and run the application with the Astro dev server.
 
 #### Configuration
 

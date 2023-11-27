@@ -11,7 +11,7 @@ import { pageSize } from '../../../settings';
 const organism = Astro.params.organism!;
 
 const schema = getSchema(organism);
-const clientConfig = getRuntimeConfig().forClient;
+const clientConfig = getRuntimeConfig().public;
 const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
 };

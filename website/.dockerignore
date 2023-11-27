@@ -7,4 +7,3 @@
 !tailwind.config.cjs
 !tsconfig.json
 !.env.docker
-!entry.js
