@@ -14,7 +14,7 @@ const getLogger = (): Logger => {
 
         transports.push(new winston.transports.Console());
         _logger = winston.createLogger({
-            level: 'info',
+            level: import.meta.env.LOG_LEVEL ?? 'info',
             format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
             transports,
         });
@@ -26,7 +26,8 @@ export type InstanceLogger = ReturnType<typeof getInstanceLogger>;
 
 export const getInstanceLogger = (instance: string) => {
     return {
-        info: (message: string) => getLogger().info(message, { instance }),
         error: (message: string) => getLogger().error(message, { instance }),
+        info: (message: string) => getLogger().info(message, { instance }),
+        debug: (message: string) => getLogger().debug(message, { instance }),
     };
 };
