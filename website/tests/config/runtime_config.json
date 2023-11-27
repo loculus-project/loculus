@@ -1,8 +1,17 @@
 {
-    "backendUrl": "http://localhost:8079",
-    "lapisUrls": {
-        "dummy-organism": "http://localhost:8080/dummy-organism",
-        "dummy-organism-2": "http://localhost:8080/dummy-organism-2"
+    "public": {
+        "backendUrl": "http://localhost:8079",
+        "lapisUrls": {
+            "dummy-organism": "http://localhost:8080/dummy-organism",
+            "dummy-organism-2": "http://localhost:8080/dummy-organism-2"
+        }
     },
-    "keycloakUrl": "http://localhost:8083"
+    "serverSide": {
+        "backendUrl": "http://localhost:8079",
+        "lapisUrls": {
+            "dummy-organism": "http://localhost:8080/dummy-organism",
+            "dummy-organism-2": "http://localhost:8080/dummy-organism-2"
+        },
+        "keycloakUrl": "http://localhost:8083"
+    }
 }

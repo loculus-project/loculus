@@ -5,7 +5,7 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 const organism = Astro.params.organism!;
 
-const clientConfig = getRuntimeConfig().forClient;
+const clientConfig = getRuntimeConfig().public;
 ---
 
 <BaseLayout title='Submit'>

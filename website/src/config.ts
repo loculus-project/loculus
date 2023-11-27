@@ -5,13 +5,7 @@ import type { z, ZodError } from 'zod';
 
 import { type InstanceConfig, type Schema, type WebsiteConfig, websiteConfig } from './types/config.ts';
 import { type ReferenceGenomes } from './types/referencesGenomes.ts';
-import {
-    type ClientConfig,
-    type RuntimeConfig,
-    type ServerConfig,
-    type ServiceUrls,
-    serviceUrls,
-} from './types/runtimeConfig.ts';
+import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
 let _config: WebsiteConfig | null = null;
 let _runtimeConfig: RuntimeConfig | null = null;
@@ -57,26 +51,7 @@ export function getSchema(organism: string): Schema {
 
 export function getRuntimeConfig(): RuntimeConfig {
     if (_runtimeConfig === null) {
-        const runtimeConfig = readTypedConfigFile('runtime_config.json', serviceUrls);
-
-        const urlsForClient = import.meta.env.DEV
-            ? runtimeConfig
-            : {
-                  backendUrl: '/backendProxy',
-                  lapisUrls: Object.keys(runtimeConfig.lapisUrls).reduce(
-                      (acc, organism) => ({
-                          ...acc,
-                          [organism]: `/lapisProxy/${organism}`,
-                      }),
-                      {},
-                  ),
-                  keycloakUrl: '/keycloakProxy',
-              };
-
-        _runtimeConfig = {
-            forClient: makeClientConfig(urlsForClient),
-            forServer: makeServerConfig(runtimeConfig),
-        };
+        _runtimeConfig = readTypedConfigFile('runtime_config.json', runtimeConfig);
     }
     return _runtimeConfig;
 }
@@ -86,20 +61,6 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
         throw new Error(`No lapis url configured for organism ${organism}`);
     }
     return serviceConfig.lapisUrls[organism];
-}
-
-function makeServerConfig(serviceConfig: ServiceUrls): ServerConfig {
-    return {
-        discriminator: 'server',
-        ...serviceConfig,
-    };
-}
-
-function makeClientConfig(serviceConfig: ServiceUrls): ClientConfig {
-    return {
-        discriminator: 'client',
-        ...serviceConfig,
-    };
 }
 
 export function getReferenceGenomes(organism: string): ReferenceGenomes {

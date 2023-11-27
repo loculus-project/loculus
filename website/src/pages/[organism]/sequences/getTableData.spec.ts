@@ -28,7 +28,7 @@ const dummyError = {
 
 const accessionVersion = 'accession';
 
-const lapisClient = LapisClient.create(testConfig.forServer.lapisUrls.dummy, schema);
+const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls.dummy, schema);
 
 describe('getTableData', () => {
     beforeEach(() => {

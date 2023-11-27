@@ -24,7 +24,7 @@ const defaultMetadataSettings = [
 
 function renderSearchForm(
     metadataSettings: Filter[] = [...defaultMetadataSettings],
-    clientConfig: ClientConfig = testConfig.forClient,
+    clientConfig: ClientConfig = testConfig.public,
 ) {
     render(
         <QueryClientProvider client={queryClient}>

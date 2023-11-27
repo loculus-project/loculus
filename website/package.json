@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "start-server": "astro build && node ./entry.js",
+    "start-server": "astro build && astro preview --port 3000",
     "check-types": "astro check && tsc --noEmit",
     "build": "astro build",
     "preview": "astro preview",
@@ -29,9 +29,6 @@
     "astro": "^3.5.3",
     "axios": "^1.6.1",
     "change-case": "^5.1.2",
-    "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "http-proxy-middleware": "^2.0.6",
     "luxon": "^3.4.4",
     "neverthrow": "^6.1.0",
     "openid-client": "^5.6.1",

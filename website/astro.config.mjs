@@ -9,7 +9,7 @@ export default defineConfig({
     output: 'server',
     integrations: [tailwind(), react()],
     adapter: node({
-        mode: 'middleware',
+        mode: 'standalone',
     }),
     server: {
         port: 3000,
@@ -19,9 +19,6 @@ export default defineConfig({
         optimizeDeps: {
             exclude: ['fsevents'],
         },
-        plugins: [
-            Icons({ compiler: 'jsx', jsx: 'react' }),
-          ],
-        
+        plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
     },
 });
