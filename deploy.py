@@ -34,6 +34,8 @@ helm_parser.add_argument('--dev', action='store_true',
 helm_parser.add_argument('--branch', help='Set the branch to deploy with the Helm chart')
 helm_parser.add_argument('--dockerconfigjson', help='Base64 encoded dockerconfigjson secret for pulling the images')
 helm_parser.add_argument('--uninstall', action='store_true', help='Uninstall installation')
+helm_parser.add_argument('--enablePreprocessing', action='store_true',
+                         help='Include deployment of preprocessing pipelines')
 
 upgrade_parser = subparsers.add_parser('upgrade', help='Upgrade helm installation')
 
@@ -118,6 +120,8 @@ def handle_helm():
         parameters += ['--set', "disableBackend=true"]
         parameters += ['--set', "disableWebsite=true"]
 
+    if not args.enablePreprocessing:
+        parameters += ['--set', "disablePreprocessing=true"]
 
     subprocess.run(parameters, check=True)
 
