@@ -14,6 +14,8 @@ spec:
       component: website-and-backend
   template:
     metadata:
+      annotations:
+        argocd.argoproj.io/sync-options: Replace=true
       labels:
         app: pathoplexus
         component: website-and-backend

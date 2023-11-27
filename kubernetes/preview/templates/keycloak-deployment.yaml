@@ -11,6 +11,8 @@ spec:
       component: keycloak
   template:
     metadata:
+      annotations:
+        argocd.argoproj.io/sync-options: Replace=true
       labels:
         app: pathoplexus
         component: keycloak
