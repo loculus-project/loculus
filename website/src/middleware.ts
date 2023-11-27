@@ -4,6 +4,7 @@ import { ResultAsync } from 'neverthrow';
 import { type BaseClient, Issuer, type TokenSet } from 'openid-client';
 
 import { getRuntimeConfig } from './config.ts';
+import { getInstanceLogger } from './logger.ts';
 
 export const TOKEN_COOKIE = 'token';
 export const PUBLIC_ROUTES = [
@@ -34,12 +35,15 @@ export const realmPath = '/realms/pathoplexusRealm';
 
 let _keycloakClient: BaseClient | undefined;
 
+const logger = getInstanceLogger('LoginMiddleware');
+
 export async function getKeycloakClient() {
     if (_keycloakClient === undefined) {
         const originForClient = getRuntimeConfig().forServer.keycloakUrl;
 
         const issuerUrl = `${originForClient}${realmPath}`;
 
+        logger.info(`Getting keycloak client for issuer url: ${issuerUrl}`);
         const keycloakIssuer = await Issuer.discover(issuerUrl);
 
         _keycloakClient = new keycloakIssuer.Client(clientMetadata);
@@ -90,6 +94,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     const userInfo = await getUserInfo(token);
 
     if (userInfo.isErr()) {
+        logger.error(`Error getting user info: ${userInfo.error}`);
         return redirectToAuth(context);
     }
 
@@ -136,12 +141,18 @@ async function getTokenFromParams(context: APIContext) {
     const client = await getKeycloakClient();
 
     const params = client.callbackParams(context.url.toString());
+    logger.debug(`Keycloak callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
+        const redirectUri = removeTokenCodeFromSearchParams(context.url);
+        logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
         return client
-            .callback(removeTokenCodeFromSearchParams(context.url), params, {
+            .callback(redirectUri, params, {
                 response_type: 'code',
             })
-            .catch(() => undefined);
+            .catch((error) => {
+                logger.error(`Keycloak callback error: ${error}`);
+                return undefined;
+            });
     }
     return undefined;
 }
@@ -172,6 +183,7 @@ function removeTokenCodeFromSearchParams(url: URL) {
 
     newUrl.searchParams.delete('code');
     newUrl.searchParams.delete('session_state');
+    newUrl.searchParams.delete('iss');
 
     return newUrl.toString();
 }
