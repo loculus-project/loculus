@@ -1,17 +1,19 @@
 import type { FC } from 'react';
 
+import type { Organism } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { navigationItems } from '../../routes.ts';
+import { navigationItems, routes } from '../../routes.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 
 type SandwichMenuProps = {
     top: number;
     right: number;
-    organism: string | undefined;
+    organism: Organism | undefined;
+    knownOrganisms: Organism[];
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, top, right }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, knownOrganisms }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
@@ -37,8 +39,22 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, top, right }) =>
                             <a href='/'>Pathoplexus</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            {navigationItems.top(organism).map(({ text, path }) => (
-                                <OffCanvasNavItem key={path} text={text} path={path} />
+                            <OffCanvasNavItem
+                                key='organism-selector'
+                                text={organism?.displayName ?? 'Select organism'}
+                                level={1}
+                                path={organism === undefined ? false : routes.organismStartPage(organism.key)}
+                            />
+                            {knownOrganisms.map((organism) => (
+                                <OffCanvasNavItem
+                                    key={organism.key}
+                                    text={organism.displayName}
+                                    level={2}
+                                    path={routes.organismStartPage(organism.key)}
+                                />
+                            ))}
+                            {navigationItems.top(organism?.key).map(({ text, path }) => (
+                                <OffCanvasNavItem key={path} text={text} level={1} path={path} />
                             ))}
                         </div>
                     </div>
@@ -52,7 +68,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, top, right }) =>
 
                         <div className='font-light divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
                             {navigationItems.bottom.map(({ text, path }) => (
-                                <OffCanvasNavItem key={path} text={text} path={path} type='small' />
+                                <OffCanvasNavItem key={path} text={text} level={1} path={path} type='small' />
                             ))}
                         </div>
                     </div>
@@ -64,20 +80,19 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ organism, top, right }) =>
 
 type OffCanvasNavItemProps = {
     text: string;
-    path: string;
+    path: string | false;
+    level: 1 | 2;
     type?: 'small';
 };
 
-const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, path, type }) => {
+const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type }) => {
     const height = type === 'small' ? 'py-1' : 'py-3';
 
     return (
         <div>
-            <a href={path}>
-                <div className={` flex items-center`}>
-                    <div className={`pl-4 ${height} `}>{text}</div>
-                </div>
-            </a>
+            <div className='flex items-center'>
+                <div className={`pl-${4 * level} ${height}`}>{path === false ? text : <a href={path}> {text}</a>}</div>
+            </div>
         </div>
     );
 };

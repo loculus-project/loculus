@@ -20,5 +20,5 @@ const organism: string | undefined = Astro.params.organism;
         )
     }
 
-    <a href={routes.userPage(organism, 'testuser')}>Login as testuser</a>
+    {organism !== undefined && <a href={routes.userPage(organism, 'testuser')}>Login as testuser</a>}
 </BaseLayout>

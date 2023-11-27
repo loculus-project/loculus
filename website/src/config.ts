@@ -31,8 +31,16 @@ function getWebsiteConfig(): WebsiteConfig {
     return _config;
 }
 
+export type Organism = {
+    key: string;
+    displayName: string;
+};
+
 export function getConfiguredOrganisms() {
-    return Object.keys(getWebsiteConfig().instances);
+    return Object.entries(getWebsiteConfig().instances).map(([key, instance]) => ({
+        key,
+        displayName: instance.schema.instanceName,
+    }));
 }
 
 function getConfig(organism: string): InstanceConfig {
