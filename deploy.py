@@ -115,8 +115,8 @@ def handle_helm():
     ]
 
     if args.dev:
-        parameters += ['--set', f"disableBackend=true"]
-        parameters += ['--set', f"disableWebsite=true"]
+        parameters += ['--set', "disableBackend=true"]
+        parameters += ['--set', "disableWebsite=true"]
 
 
     subprocess.run(parameters, check=True)
