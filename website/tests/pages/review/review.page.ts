@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl, dummyOrganism, expect, testUser } from '../../e2e.fixture';
+import { routes } from '../../../src/routes.ts';
 
 export class ReviewPage {
     private readonly submitButton;
@@ -14,17 +15,16 @@ export class ReviewPage {
     }
 
     public async goto(accessionVersion: AccessionVersion) {
-        await this.page.goto(
-            `${baseUrl}/${dummyOrganism}/user/${testUser}/review/${accessionVersion.accession}/${accessionVersion.version}`,
-            { waitUntil: 'networkidle' },
-        );
+        await this.page.goto(`${baseUrl}/${routes.reviewPage(dummyOrganism.key, testUser, accessionVersion)}`, {
+            waitUntil: 'networkidle',
+        });
     }
 
     public async submit() {
         await this.submitButton.click();
         expect(await this.page.isVisible('text=Do you really want to submit your review?')).toBe(true);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
-        await this.page.waitForURL(`${baseUrl}/${dummyOrganism}/user/${testUser}/sequences`);
+        await this.page.waitForURL(`${baseUrl}/${routes.userSequencesPage(dummyOrganism.key, testUser)}`);
     }
 
     public async downloadAndVerify(accessionVersion: AccessionVersion) {

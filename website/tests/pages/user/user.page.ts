@@ -3,6 +3,7 @@ import type { Page } from '@playwright/test';
 import type { AccessionVersion, SequenceEntryStatus } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl, dummyOrganism, testUser } from '../../e2e.fixture';
+import { routes } from '../../../src/routes.ts';
 
 export class UserPage {
     private readonly sequenceBoxNames = [
@@ -60,9 +61,8 @@ export class UserPage {
         const reviewButton = this.page.getByTestId(testIdOfButton);
         await reviewButton.click();
 
-        await this.page.waitForURL(
-            `${baseUrl}/${dummyOrganism}/user/${testUser}/review/${accessionToCheck.accession}/${accessionToCheck.version}`,
-            { waitUntil: 'networkidle' },
-        );
+        await this.page.waitForURL(`${baseUrl}/${routes.reviewPage(dummyOrganism.key, testUser, accessionToCheck)}`, {
+            waitUntil: 'networkidle',
+        });
     }
 }

@@ -26,7 +26,7 @@ test.describe('The search page', () => {
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
-            `${baseUrl}${routes.searchPage(dummyOrganism, [
+            `${baseUrl}${routes.searchPage(dummyOrganism.key, [
                 { name: 'accessionVersion', type: 'string', filterValue: testSequence.name },
                 { name: 'isRevocation', type: 'string', filterValue: 'false' },
             ])}`,
