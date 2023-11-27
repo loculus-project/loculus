@@ -15,6 +15,7 @@ spec:
       app: pathoplexus
       component: website-and-backend
   template:
+    metadata:
       labels:
         app: pathoplexus
         component: website-and-backend
