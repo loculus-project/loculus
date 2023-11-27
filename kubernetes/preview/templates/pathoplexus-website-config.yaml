@@ -11,15 +11,11 @@ data:
 
   runtime_config.json: |
     {
-      {{- if eq .Values.mode "dev" }}
+      {{- if .Values.disableBackend }}
       "backendUrl": "http://host.k3d.internal:8079/dummy-organism",
       {{- else }}
       "backendUrl": "http://localhost:8079/dummy-organism",
       {{- end }}
       "lapisUrl": "http://pathoplexus-lapis-service-dummy-organism:8080",
-      {{- if eq .Values.mode "dev" }}
-      "keycloakUrl": "http://localhost:8083"
-      {{- else }}
       "keycloakUrl": "http://pathoplexus-keycloak-service:8083"
-      {{- end }}
     }

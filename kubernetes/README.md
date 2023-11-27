@@ -1,11 +1,9 @@
 # Kubernetes setup
 
 This directory contains a Helm chart to deploy Pathoplexus instances for several purposes. 
-The Helm variable `mode` reflects those purposes:
-* `cd`: Deploying a full instance on Argo CD
-* `e2e`: Deploying a full instance locally in the CI pipeline for e2e tests
-* `dev`: deploying a full or partial instance locally for development
-
+The Helm variable `environment` reflects those purposes:
+* `local`: Running locally with ports
+* `server`: Running on a server with domain name
 ## Prerequisites
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
@@ -27,7 +25,7 @@ Create a cluster that doesn't expose the ports of the backend and the website:
 ../deploy.py cluster --dev
 ```
 
-Install the chart with `mode=dev` to deploy the services and link them to the local backend and website:
+Install the chart with some port forwarding disabled to link to local manual runs of the backend and website:
 ```shell
 ../deploy.py helm --dev
 ```
@@ -69,7 +67,7 @@ For preview instances this repo contains [sealed secrets](https://sealed-secrets
 
 ## Full deployment for E2E testing
 
-There is an `e2e` mode intended for E2E testing in GitHub Actions.
+There is a `local` environment intended for E2E testing in GitHub Actions.
 It can also be used locally on x64 systems.
 
 Create a cluster with ports for all services exposed:

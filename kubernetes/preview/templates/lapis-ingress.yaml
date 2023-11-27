@@ -1,5 +1,5 @@
 {{- $lapisHost := printf "lapis.%s" .Values.host }}
-{{- $mode := .Values.mode }}
+{{- $environment := .Values.environment }}
 {{- $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{- $namespace := .Values.namespace }}
 {{- range $key, $_ := $configFile.instances }}
@@ -12,25 +12,25 @@ metadata:
   namespace: {{ $namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-{{- if eq $mode "cd" }}
+{{- if eq $environment "server" }}
     link.argocd.argoproj.io/external-link: https://{{ $lapisHost }}
 {{- end }}
 spec:
   entryPoints:
-    {{- if eq $mode "cd" }}
+    {{- if eq $environment "server" }}
     - websecure
     {{- else }}
     - web
     {{- end }}
   routes:
-  - match: Path(`/{{ $key }}`, `/{{ $key }}/{path:.*}`) {{- if eq $mode "cd" }} && Host(`{{ $lapisHost }}`){{- end }}
+  - match: Path(`/{{ $key }}`, `/{{ $key }}/{path:.*}`) {{- if eq $environment "server" }} && Host(`{{ $lapisHost }}`){{- end }}
     kind: Rule
     services:
     - name: pathoplexus-lapis-service-{{ $key }}
       port: 8080
     middlewares:
     - name: strip-{{ $key }}-prefix
-{{- if eq $mode "cd" }}
+{{- if eq $environment "server" }}
   tls:
     certResolver: myresolver
 {{- end }}
