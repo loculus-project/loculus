@@ -15,7 +15,7 @@ test.describe('The search page', () => {
         const tomorrow = DateTime.now().plus({ days: 1 }).toISODate()!;
 
         await searchPage.goto();
-        await searchPage.searchFor({ dateFrom: tomorrow });
+        await searchPage.searchFor([{ name: 'dateFrom', filterValue: tomorrow }]);
 
         await expect(searchPage.page.getByText('No data')).toBeVisible();
     });
@@ -38,7 +38,7 @@ test.describe('The search page', () => {
 
     test('should search for existing data from one country', async ({ searchPage }) => {
         await searchPage.goto();
-        await searchPage.searchFor({ country: 'Switzerland' });
+        await searchPage.searchFor([{ name: 'country', filterValue: 'Switzerland' }]);
 
         const resultCount = await searchPage.page.getByText('Switzerland').count();
 

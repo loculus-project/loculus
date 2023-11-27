@@ -1,6 +1,8 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { baseUrl, dummyOrganism } from '../../e2e.fixture';
+import { routes } from '../../../src/routes.ts';
+import type { FilterValue } from '../../../src/types/config.ts';
 
 const ACCESSION_VERSION = 'Accession version';
 
@@ -16,7 +18,7 @@ export class SearchPage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/${dummyOrganism.key}/search`);
+        await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key)}`);
     }
 
     public async clickSearchButton() {
@@ -36,7 +38,7 @@ export class SearchPage {
         return this.page.getByLabel(ACCESSION_VERSION, { exact: true });
     }
 
-    public async searchFor(params: { [key: string]: string }) {
-        await this.page.goto(`${baseUrl}/${dummyOrganism.key}/search?${new URLSearchParams(params)}`);
+    public async searchFor(params: FilterValue[]) {
+        await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key, params)}`);
     }
 }

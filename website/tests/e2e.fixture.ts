@@ -12,8 +12,8 @@ import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
 import { clientMetadata, realmPath, TOKEN_COOKIE } from '../src/middleware/authMiddleware';
-import { BackendClient } from '../src/services/backendClient.ts';
-import { NavigationFixture } from './pages/navigation.fixture.ts';
+import { BackendClient } from '../src/services/backendClient';
+import { NavigationFixture } from './pages/navigation.fixture';
 
 type E2EFixture = {
     searchPage: SearchPage;

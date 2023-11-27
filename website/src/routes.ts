@@ -1,71 +1,23 @@
 import type { AccessionVersion } from './types/backend.ts';
-import type { Filter } from './types/config.ts';
-
-export const navigationItems = {
-    top: topNavigationItems,
-    bottom: [
-        {
-            text: 'About',
-            path: '/about',
-        },
-        {
-            text: 'Api documentation',
-            path: '/api_documentation',
-        },
-        {
-            text: 'Governance',
-            path: '/governance',
-        },
-        {
-            text: 'Status',
-            path: '/status',
-        },
-    ],
-};
-
-function topNavigationItems(organism: string | undefined) {
-    if (organism === undefined) {
-        return [
-            {
-                text: 'User',
-                path: '/user',
-            },
-        ];
-    }
-
-    return [
-        {
-            text: 'Search',
-            path: withOrganism(organism, '/search'),
-        },
-        {
-            text: 'Submit',
-            path: withOrganism(organism, '/submit'),
-        },
-        {
-            text: 'Revise',
-            path: withOrganism(organism, '/revise'),
-        },
-        {
-            text: 'User',
-            path: withOrganism(organism, '/user'),
-        },
-    ];
-}
-
-function withOrganism(organism: string, path: `/${string}`) {
-    return `/${organism}${path}`;
-}
+import type { FilterValue } from './types/config.ts';
 
 export const routes = {
+    aboutPage: () => '/about',
+    apiDocumentationPage: () => '/api_documentation',
+    governancePage: () => '/governance',
+    statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
-    searchPage: (organism: string, searchFilter: Filter[] = [], page: number = 1) =>
+    searchPage: <Filter extends FilterValue>(organism: string, searchFilter: Filter[] = [], page: number = 1) =>
         withOrganism(organism, `/search?${buildSearchParams(searchFilter, page).toString()}`),
     sequencesDetailsPage: (organism: string, accessionVersion: string) => `/${organism}/sequences/${accessionVersion}`,
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     reviewPage: (organism: string, username: string, accessionVersion: AccessionVersion) =>
         withOrganism(organism, `/user/${username}/review/${accessionVersion.accession}/${accessionVersion.version}`),
+    userOverviewPage: (organism?: string | undefined) => {
+        const userPagePath = `/user` as const;
+        return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
+    },
     userPage: (organism: string | undefined, username: string) => {
         const userPagePath = `/user/${username}` as const;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
@@ -75,7 +27,7 @@ export const routes = {
     unknownOrganismPage: (organism: string) => `/404?unknownOrganism=${organism}`,
 };
 
-const buildSearchParams = (searchFilter: Filter[] = [], page: number = 1) => {
+const buildSearchParams = <Filter extends FilterValue>(searchFilter: Filter[] = [], page: number = 1) => {
     const params = new URLSearchParams();
     searchFilter.forEach((filter) => {
         if (filter.filterValue !== '') {
@@ -85,3 +37,59 @@ const buildSearchParams = (searchFilter: Filter[] = [], page: number = 1) => {
     params.set('page', page.toString());
     return params;
 };
+
+export const navigationItems = {
+    top: topNavigationItems,
+    bottom: [
+        {
+            text: 'About',
+            path: routes.aboutPage(),
+        },
+        {
+            text: 'Api documentation',
+            path: routes.apiDocumentationPage(),
+        },
+        {
+            text: 'Governance',
+            path: routes.governancePage(),
+        },
+        {
+            text: 'Status',
+            path: routes.statusPage(),
+        },
+    ],
+};
+
+function topNavigationItems(organism: string | undefined) {
+    if (organism === undefined) {
+        return [
+            {
+                text: 'User',
+                path: routes.userOverviewPage(),
+            },
+        ];
+    }
+
+    return [
+        {
+            text: 'Search',
+            path: routes.searchPage(organism),
+        },
+        {
+            text: 'Submit',
+            path: routes.submitPage(organism),
+        },
+        {
+            text: 'Revise',
+            path: routes.revisePage(organism),
+        },
+        {
+            text: 'User',
+            path: routes.userOverviewPage(organism),
+        },
+    ];
+}
+
+function withOrganism(organism: string, path: `/${string}`) {
+    return `/${organism}${path}`;
+}
