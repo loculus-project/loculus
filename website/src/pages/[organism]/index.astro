@@ -1,8 +1,13 @@
 ---
+import { BackButton } from '../../components/Navigation/BackButton';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+
 const organism = Astro.params.organism;
 ---
 
 <BaseLayout title={organism}>
-    Hello {organism}
+    <div class='flex items-center'>
+        <BackButton marginRight={2} client:load />
+        <h1 class='title'>Organism {organism}</h1>
+    </div>
 </BaseLayout>

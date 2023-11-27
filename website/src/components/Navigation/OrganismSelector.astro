@@ -1,0 +1,25 @@
+---
+import { cleanOrganism } from './cleanOrganism';
+import { routes } from '../../routes';
+import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
+
+const { knownOrganisms, organism } = cleanOrganism(Astro.params.organism);
+
+const label = organism === undefined ? 'Choose Organism' : organism.displayName;
+---
+
+<div class='dropdown dropdown-hover'>
+    <label tabindex='0' class='btn btn-sm m-1 py-2'>
+        {label}
+        <Arrow />
+    </label>
+    <ul tabindex='0' class='dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52'>
+        {
+            knownOrganisms.map((knownOrganism) => (
+                <li>
+                    <a href={routes.organismStartPage(knownOrganism.key)}>{knownOrganism.displayName}</a>
+                </li>
+            ))
+        }
+    </ul>
+</div>

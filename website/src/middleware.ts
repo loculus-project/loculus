@@ -40,7 +40,11 @@ export async function getKeycloakClient() {
 export const onRequest = defineMiddleware(async (context, next) => {
     let token = await getTokenFromCookie(context);
 
-    if (isPublicRoute(context.url.pathname, getConfiguredOrganisms())) {
+    const urlIsPublicRoute = isPublicRoute(
+        context.url.pathname,
+        getConfiguredOrganisms().map((it) => it.key),
+    );
+    if (urlIsPublicRoute) {
         if (token === undefined) {
             context.locals.session = {
                 isLoggedIn: false,
