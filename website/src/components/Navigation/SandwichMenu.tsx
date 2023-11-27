@@ -39,12 +39,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, know
                             <a href='/'>Pathoplexus</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            <OffCanvasNavItem
-                                key='organism-selector'
-                                text={organism?.displayName ?? 'Select organism'}
-                                level={1}
-                                path={organism === undefined ? false : routes.organismStartPage(organism.key)}
-                            />
+                            <OffCanvasNavItem key='organism-selector' text={'Select organism'} level={1} path={false} />
                             {knownOrganisms.map((organism) => (
                                 <OffCanvasNavItem
                                     key={organism.key}
@@ -91,7 +86,7 @@ const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type }
     return (
         <div>
             <div className='flex items-center'>
-                <div className={`pl-${4 * level} ${height}`}>{path === false ? text : <a href={path}> {text}</a>}</div>
+                <div className={`ml-${4 * level} ${height}`}>{path === false ? text : <a href={path}> {text}</a>}</div>
             </div>
         </div>
     );
