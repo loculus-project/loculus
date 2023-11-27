@@ -47,6 +47,8 @@ spec:
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
+        {{- end }}
+        {{- if not .Values.disableBackend }}
         - name: backend
           image: ghcr.io/pathoplexus/backend:{{ $dockerTag }}
           imagePullPolicy: Always
