@@ -1,5 +1,4 @@
-{{- $dockerTag := (eq (.Values.branch | default "main") "main") | ternary "latest" .Values.branch -}}
-  {{- $dockerTag = regexReplaceAll "/" $dockerTag "-" }}
+{{- $dockerTag := include "pathoplexus.dockerTag" .Values.branch }}
 ---
 apiVersion: apps/v1
 kind: Deployment
