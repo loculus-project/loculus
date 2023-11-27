@@ -2,10 +2,10 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 plugins {
-    id 'org.springframework.boot' version '3.1.5'
+    id 'org.springframework.boot' version '3.2.0'
     id 'io.spring.dependency-management' version '1.1.4'
-    id 'org.jetbrains.kotlin.jvm' version '1.9.20'
-    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.20'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.21'
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.21'
     id 'org.jlleitschuh.gradle.ktlint' version '11.6.1'
     id 'org.springdoc.openapi-gradle-plugin' version '1.8.0'
 }
@@ -28,7 +28,7 @@ dependencies {
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"
     implementation "org.jetbrains.kotlin:kotlin-reflect"
     implementation "io.github.microutils:kotlin-logging-jvm:3.0.5"
-    implementation "org.postgresql:postgresql:42.6.0"
+    implementation "org.postgresql:postgresql:42.7.0"
     implementation "org.apache.commons:commons-csv:1.10.0"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0"
     implementation "org.flywaydb:flyway-core"
@@ -43,7 +43,7 @@ dependencies {
         exclude group: "org.mockito"
     }
     testImplementation "com.ninja-squad:springmockk:4.0.2"
-    testImplementation "org.testcontainers:postgresql:1.19.2"
+    testImplementation "org.testcontainers:postgresql:1.19.3"
 }
 
 tasks.named('test') {
