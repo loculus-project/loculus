@@ -4,6 +4,10 @@ import Navigation from '../components/Navigation/Navigation.astro';
 import OrganismSelector from '../components/Navigation/OrganismSelector.astro';
 import { navigationItems } from '../routes';
 
+interface Props {
+    title: string;
+}
+
 const { title } = Astro.props;
 ---
 

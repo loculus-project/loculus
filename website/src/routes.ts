@@ -72,12 +72,15 @@ export const routes = {
     },
     userSequencesPage: (organism: string, username: string) => withOrganism(organism, `/user/${username}/sequences`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/sequences/${accession}/versions`),
+    unknownOrganismPage: (organism: string) => `/404?unknownOrganism=${organism}`,
 };
 
 const buildSearchParams = (searchFilter: Filter[] = [], page: number = 1) => {
     const params = new URLSearchParams();
     searchFilter.forEach((filter) => {
-        if (filter.filterValue !== '') params.set(filter.name, filter.filterValue);
+        if (filter.filterValue !== '') {
+            params.set(filter.name, filter.filterValue);
+        }
     });
     params.set('page', page.toString());
     return params;

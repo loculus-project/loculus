@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getInstanceLogger } from '../logger';
-import { getKeycloakClient, TOKEN_COOKIE } from '../middleware';
+import { getKeycloakClient, TOKEN_COOKIE } from '../middleware/authMiddleware';
 
 async function logout() {
     const token = Astro.locals.session.token;

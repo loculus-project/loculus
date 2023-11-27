@@ -11,7 +11,7 @@ import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
-import { clientMetadata, realmPath, TOKEN_COOKIE } from '../src/middleware.ts';
+import { clientMetadata, realmPath, TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient.ts';
 import { NavigationFixture } from './pages/navigation.fixture.ts';
 
@@ -26,7 +26,7 @@ type E2EFixture = {
     loginAsTestUser: () => Promise<void>;
 };
 
-export const dummyOrganism = 'dummy-organism';
+export const dummyOrganism = { key: 'dummy-organism', displayName: 'Test Dummy Organism' };
 
 export const baseUrl = 'http://localhost:3000';
 export const backendUrl = 'http://localhost:8079';

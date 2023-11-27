@@ -18,7 +18,7 @@ export class RevisePage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/${dummyOrganism}/revise`, { waitUntil: 'networkidle' });
+        await this.page.goto(`${baseUrl}/${dummyOrganism.key}/revise`, { waitUntil: 'networkidle' });
     }
 
     public async uploadSequenceData(file: string = sequencesTestFile) {
