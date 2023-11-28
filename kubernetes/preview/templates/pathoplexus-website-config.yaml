@@ -1,4 +1,4 @@
-{{- $keycloakHost := printf "keycloak.%s" .Values.host }}
+{{- $keycloakHost := printf "authentication.%s" .Values.host }}
 {{- $config := .Files.Get "config.yaml" | fromYaml }}
 {{- $lapisHost := (
   eq .Values.environment "server" | ternary
