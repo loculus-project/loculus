@@ -24,7 +24,7 @@ export const testConfig = {
         lapisUrls: {
             dummy: 'http://lapis.dummy',
         },
-        keycloakUrl: 'http://authnetication.dummy',
+        keycloakUrl: 'http://authentication.dummy',
     },
 } as RuntimeConfig;
 
