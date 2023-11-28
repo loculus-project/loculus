@@ -56,7 +56,7 @@ tasks.named('test') {
 }
 
 tasks.named('bootBuildImage') {
-    environment["BP_JVM_VERSION"] = "20"
+    environment["BP_JVM_VERSION"] = "21"
     // https://paketo.io/docs/howto/configuration/
     environment["BPE_SPRING_PROFILES_ACTIVE"] = "docker"
 }
