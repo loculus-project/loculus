@@ -1,40 +1,16 @@
-import { expect, test, testUser } from '../../e2e.fixture';
-import { approveProcessedData, submitRevisedDataViaApi } from '../../util/backendCalls.ts';
+import { expect, test } from '../../e2e.fixture';
+import { submitRevisedDataViaApi } from '../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
-import { fakeProcessingPipeline } from '../../util/preprocessingPipeline';
 
 test.describe('The user page', () => {
     test('should show sequence entries, their status and a link to reviews', async ({ userPage, loginAsTestUser }) => {
-        const [
-            sequenceEntryWithErrors,
-            sequenceEntryAwaitingApproval,
-            sequenceEntryReleasable,
-            sequenceEntryToBeRevised,
-        ] = await prepareDataToBe('inProcessing');
+        const { token } = await loginAsTestUser();
 
-        await fakeProcessingPipeline.submit([
-            {
-                ...sequenceEntryWithErrors,
-                error: true,
-            },
-            {
-                ...sequenceEntryAwaitingApproval,
-                error: false,
-            },
-            {
-                ...sequenceEntryReleasable,
-                error: false,
-            },
-            {
-                ...sequenceEntryToBeRevised,
-                error: false,
-            },
-        ]);
-
-        await approveProcessedData(testUser, [sequenceEntryReleasable, sequenceEntryToBeRevised]);
-        await submitRevisedDataViaApi([sequenceEntryToBeRevised.accession]);
-
-        await loginAsTestUser();
+        const sequenceEntryAwaitingApproval = (await prepareDataToBe('awaitingApproval', token, 1))[0];
+        const sequenceEntryWithErrors = (await prepareDataToBe('erroneous', token))[0];
+        const sequenceEntryReleasable = (await prepareDataToBe('approvedForRelease', token))[0];
+        const sequenceEntryToBeRevised = (await prepareDataToBe('approvedForRelease', token))[0];
+        await submitRevisedDataViaApi([sequenceEntryToBeRevised.accession], token);
 
         await userPage.gotoUserSequencePage();
 

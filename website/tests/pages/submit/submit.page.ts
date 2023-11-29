@@ -4,12 +4,10 @@ import { baseUrl, dummyOrganism, expect, metadataTestFile, sequencesTestFile } f
 import { routes } from '../../../src/routes.ts';
 
 export class SubmitPage {
-    public readonly userField: Locator;
     public readonly submitButton: Locator;
 
     constructor(public readonly page: Page) {
         this.submitButton = page.getByRole('button', { name: 'Submit' });
-        this.userField = page.getByPlaceholder('Username');
     }
 
     public async goto() {
@@ -23,9 +21,5 @@ export class SubmitPage {
 
     public async uploadSequenceData() {
         await this.page.getByPlaceholder('Sequences File:').setInputFiles(sequencesTestFile);
-    }
-
-    public async setUsername(username: string) {
-        await this.userField.fill(username);
     }
 }

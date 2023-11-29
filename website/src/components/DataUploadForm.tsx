@@ -4,14 +4,18 @@ import type { AxiosError } from 'axios';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 
 import { withQueryProvider } from './common/withQueryProvider.tsx';
+import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
+import { getClientLogger } from '../clientLogger.ts';
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import type { SubmissionIdMapping } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
+import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
 type Action = 'submit' | 'revise';
 
 type DataUploadFormProps = {
+    accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
     action: Action;
@@ -19,12 +23,20 @@ type DataUploadFormProps = {
     onError: (message: string) => void;
 };
 
-const InnerDataUploadForm = ({ organism, clientConfig, action, onSuccess, onError }: DataUploadFormProps) => {
-    const [username, setUsername] = useState('');
+const logger = getClientLogger('DataUploadForm');
+
+const InnerDataUploadForm = ({
+    accessToken,
+    organism,
+    clientConfig,
+    action,
+    onSuccess,
+    onError,
+}: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
 
-    const { submit, revise, isLoading } = useSubmitFiles(organism, clientConfig, onSuccess, onError);
+    const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData();
@@ -34,7 +46,6 @@ const InnerDataUploadForm = ({ organism, clientConfig, action, onSuccess, onErro
         const metadataFile = createTempFile(exampleMetadataContent, 'text/tab-separated-values', 'metadata.tsv');
         const sequenceFile = createTempFile(sequenceFileContent, 'application/octet-stream', 'sequences.fasta');
 
-        setUsername('testuser');
         setMetadataFile(metadataFile);
         setSequenceFile(sequenceFile);
     };
@@ -49,31 +60,16 @@ const InnerDataUploadForm = ({ organism, clientConfig, action, onSuccess, onErro
 
         switch (action) {
             case 'submit':
-                submit({ username, metadataFile, sequenceFile });
+                submit({ metadataFile, sequenceFile });
                 break;
             case 'revise':
-                revise({ username, metadataFile, sequenceFile });
+                revise({ metadataFile, sequenceFile });
                 break;
         }
     };
 
     return (
         <form onSubmit={handleSubmit} className='p-6 space-y-6 max-w-md w-full'>
-            <TextField
-                variant='outlined'
-                margin='dense'
-                size='small'
-                required
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                disabled={false}
-                InputLabelProps={{
-                    shrink: true,
-                }}
-                label={username === '' ? undefined : 'Username:'}
-                placeholder={username !== '' ? undefined : 'Username:'}
-            />
-
             <TextField
                 variant='outlined'
                 margin='dense'
@@ -117,14 +113,21 @@ const InnerDataUploadForm = ({ organism, clientConfig, action, onSuccess, onErro
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
 
 function useSubmitFiles(
+    accessToken: string,
     organism: string,
     clientConfig: ClientConfig,
     onSuccess: (value: SubmissionIdMapping[]) => void,
     onError: (message: string) => void,
 ) {
     const hooks = backendClientHooks(clientConfig);
-    const submit = hooks.useSubmit({ params: { organism } }, { onSuccess, onError: handleError(onError, 'submit') });
-    const revise = hooks.useRevise({ params: { organism } }, { onSuccess, onError: handleError(onError, 'revise') });
+    const submit = hooks.useSubmit(
+        { params: { organism }, headers: createAuthorizationHeader(accessToken) },
+        { onSuccess, onError: handleError(onError, 'submit') },
+    );
+    const revise = hooks.useRevise(
+        { params: { organism }, headers: createAuthorizationHeader(accessToken) },
+        { onSuccess, onError: handleError(onError, 'revise') },
+    );
 
     return {
         submit: submit.mutate,
@@ -135,6 +138,7 @@ function useSubmitFiles(
 
 function handleError(onError: (message: string) => void, action: Action) {
     return (error: unknown | AxiosError) => {
+        void logger.error(`Received error from backend: ${stringifyMaybeAxiosError(error)}`);
         if (isErrorFromAlias(backendApi, action, error)) {
             switch (error.response.status) {
                 case 400:
@@ -148,7 +152,7 @@ function handleError(onError: (message: string) => void, action: Action) {
                     return;
             }
         }
-        onError('Received unexpected message from backend: ' + (error?.toString() ?? JSON.stringify(error)));
+        onError('Received unexpected message from backend: ' + stringifyMaybeAxiosError(error));
     };
 }
 

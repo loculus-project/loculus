@@ -1,5 +1,5 @@
 import { LapisClient } from '../src/services/lapisClient.ts';
-import { e2eLogger, lapisUrl } from './e2e.fixture.ts';
+import { e2eLogger, getToken, lapisUrl, testUser, testUserPassword } from './e2e.fixture.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
 
 export default async function globalSetupForPlaywright() {
@@ -17,7 +17,10 @@ export default async function globalSetupForPlaywright() {
     }
 
     e2eLogger.info('preparing data in backend.');
-    const data = await prepareDataToBe('approvedForRelease');
+    const data = await prepareDataToBe(
+        'approvedForRelease',
+        (await getToken(testUser, testUserPassword)).access_token!,
+    );
     e2eLogger.info('done preparing data in backend: ' + data.map((sequence) => sequence.accession).join(', '));
 
     for (const _ of Array(12)) {

@@ -6,11 +6,12 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { DataUploadForm } from '../DataUploadForm.tsx';
 
 type SubmissionFormProps = {
+    accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
 };
 
-export const SubmissionForm: FC<SubmissionFormProps> = ({ organism, clientConfig }) => {
+export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism, clientConfig }) => {
     const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<SubmissionIdMapping[] | null>(null);
 
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
@@ -19,6 +20,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ organism, clientConfig
         <div className='flex flex-col items-center'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <DataUploadForm
+                accessToken={accessToken}
                 organism={organism}
                 clientConfig={clientConfig}
                 action='submit'

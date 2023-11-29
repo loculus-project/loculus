@@ -8,6 +8,7 @@ import { routes } from '../../routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryReview } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
@@ -17,12 +18,12 @@ type ReviewPageProps = {
     organism: string;
     clientConfig: ClientConfig;
     reviewData: SequenceEntryReview;
-    username: string;
+    accessToken: string;
 };
 
 const logger = getClientLogger('ReviewPage');
 
-const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConfig, username }: ReviewPageProps) => {
+const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConfig, accessToken }: ReviewPageProps) => {
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(reviewData));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(reviewData));
 
@@ -33,7 +34,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConf
     const { mutate: submitReviewedSequence } = useSubmitReviewedSequence(
         organism,
         clientConfig,
-        username,
+        accessToken,
         reviewData,
         openErrorFeedback,
     );
@@ -131,16 +132,16 @@ export const ReviewPage = withQueryProvider(InnerReviewPage);
 function useSubmitReviewedSequence(
     organism: string,
     clientConfig: ClientConfig,
-    username: string,
+    accessToken: string,
     reviewData: SequenceEntryReview,
     openErrorFeedback: (message: string) => void,
 ) {
     return backendClientHooks(clientConfig).useSubmitReviewedSequence(
-        { queries: { username }, params: { organism } },
+        { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onSuccess: async () => {
                 await logger.info('Successfully submitted review ' + getAccessionVersionString(reviewData));
-                location.href = routes.userSequencesPage(organism, username);
+                location.href = routes.userSequencesPage(organism);
             },
             onError: async (error) => {
                 const message = `Failed to submit review for ${getAccessionVersionString(

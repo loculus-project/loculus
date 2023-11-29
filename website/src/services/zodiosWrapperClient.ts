@@ -44,6 +44,17 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
     }
 
     private async createProblemDetail(error: AxiosError, method: string): Promise<ProblemDetail> {
+        if (error.response?.status === 401) {
+            const message = error.response.headers['www-authenticate'] ?? 'Not authorized';
+            return {
+                type: 'about:blank',
+                title: 'Not authorized',
+                status: 401,
+                detail: message,
+                instance: method,
+            };
+        }
+
         const message = error.message;
         if (error.response !== undefined) {
             let problemDetailResponse;

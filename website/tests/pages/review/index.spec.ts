@@ -1,21 +1,23 @@
 import { type ReviewPage } from './review.page.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
-import { baseUrl, dummyOrganism, expect, test, testUser } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 import type { UserPage } from '../user/user.page.ts';
+import { routes } from '../../../src/routes.ts';
 
 test.describe('The review page', () => {
     test(
         'should show the review page for a sequence entry that needs review, ' +
             'download the sequence and submit the review',
         async ({ userPage, reviewPage, loginAsTestUser }) => {
-            const [erroneousTestSequenceEntry] = await prepareDataToBe('erroneous', 1);
-            const [stagedTestSequenceEntry] = await prepareDataToBe('awaitingApproval', 1);
+            const { token } = await loginAsTestUser();
+
+            const [erroneousTestSequenceEntry] = await prepareDataToBe('erroneous', token, 1);
+            const [stagedTestSequenceEntry] = await prepareDataToBe('awaitingApproval', token, 1);
 
             expect(erroneousTestSequenceEntry).toBeDefined();
             expect(stagedTestSequenceEntry).toBeDefined();
 
-            await loginAsTestUser();
             await userPage.gotoUserSequencePage();
 
             await testReviewFlow(reviewPage, userPage, erroneousTestSequenceEntry);
@@ -34,6 +36,6 @@ test.describe('The review page', () => {
 
         await reviewPage.submit();
 
-        await reviewPage.page.waitForURL(`${baseUrl}/${dummyOrganism.key}/user/${testUser}/sequences`);
+        await reviewPage.page.waitForURL(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key)}`);
     };
 });

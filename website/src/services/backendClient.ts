@@ -2,21 +2,21 @@ import { backendApi } from './backendApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
+import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
 export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
     /** Somehow Typescript's type inference currently doesn't work properly in Astro files */
     public readonly astroFileTypeHelpers = {
-        getSequenceEntriesOfUser: (organism: string, username: string,token: string) =>
+        getSequenceEntriesOfUser: (organism: string, token: string) =>
             this.call('getSequencesOfUser', {
                 params: { organism },
-                queries: { username },
-                headers: { Authorization: `Bearer ${token}` },
+                headers: createAuthorizationHeader(token),
             }),
 
-        getDataToReview: (organism: string, username: string, accession: string, version: string | number) =>
+        getDataToReview: (organism: string, token: string, accession: string, version: string | number) =>
             this.call('getDataToReview', {
                 params: { accession, version, organism },
-                queries: { username },
+                headers: createAuthorizationHeader(token),
             }),
     };
 

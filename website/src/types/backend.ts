@@ -105,7 +105,6 @@ export const accessionReview = accessionVersion.merge(
 export type SequenceEntryReview = z.infer<typeof accessionReview>;
 
 export const submitFiles = z.object({
-    username: z.string(),
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File),
 });

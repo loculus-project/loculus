@@ -12,17 +12,13 @@ export const routes = {
     sequencesDetailsPage: (organism: string, accessionVersion: string) => `/${organism}/sequences/${accessionVersion}`,
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
-    reviewPage: (organism: string, username: string, accessionVersion: AccessionVersion) =>
-        withOrganism(organism, `/user/${username}/review/${accessionVersion.accession}/${accessionVersion.version}`),
+    reviewPage: (organism: string, accessionVersion: AccessionVersion) =>
+        withOrganism(organism, `/user/review/${accessionVersion.accession}/${accessionVersion.version}`),
     userOverviewPage: (organism?: string | undefined) => {
         const userPagePath = `/user` as const;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
-    userPage: (organism: string | undefined, username: string) => {
-        const userPagePath = `/user/${username}` as const;
-        return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
-    },
-    userSequencesPage: (organism: string, username: string) => withOrganism(organism, `/user/${username}/sequences`),
+    userSequencesPage: (organism: string) => withOrganism(organism, `/user/sequences`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/sequences/${accession}/versions`),
     unknownOrganismPage: (organism: string) => `/404?unknownOrganism=${organism}`,
 };

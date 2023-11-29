@@ -1,4 +1,4 @@
-import { makeApi, makeEndpoint, makeParameters } from '@zodios/core';
+import { makeApi, makeEndpoint, makeErrors, makeParameters } from '@zodios/core';
 import z from 'zod';
 
 import {
@@ -12,11 +12,11 @@ import {
     unprocessedData,
 } from '../types/backend.ts';
 
-const usernameParameters = makeParameters([
+const [authorizationHeader] = makeParameters([
     {
-        name: 'username',
-        type: 'Query',
-        schema: z.string(),
+        name: 'Authorization',
+        type: 'Header',
+        schema: z.string().includes('Bearer ', { position: 0 }),
     },
 ]);
 
@@ -24,12 +24,20 @@ function withOrganismPathSegment<Path extends `/${string}`>(path: Path) {
     return `/:organism${path}` as const;
 }
 
+const notAuthorizedError = makeErrors([
+    {
+        status: 401,
+        schema: z.never(),
+    },
+])[0];
+
 const submitEndpoint = makeEndpoint({
     method: 'post',
     path: withOrganismPathSegment('/submit'),
     alias: 'submit',
     requestFormat: 'form-data',
     parameters: [
+        authorizationHeader,
         {
             name: 'data',
             type: 'Body',
@@ -41,6 +49,7 @@ const submitEndpoint = makeEndpoint({
         { status: 'default', schema: problemDetail },
         { status: 400, schema: problemDetail },
         { status: 422, schema: problemDetail },
+        notAuthorizedError,
     ],
 });
 
@@ -50,6 +59,7 @@ const reviseEndpoint = makeEndpoint({
     alias: 'revise',
     requestFormat: 'form-data',
     parameters: [
+        authorizationHeader,
         {
             name: 'data',
             type: 'Body',
@@ -61,6 +71,7 @@ const reviseEndpoint = makeEndpoint({
         { status: 'default', schema: problemDetail },
         { status: 400, schema: problemDetail },
         { status: 422, schema: problemDetail },
+        notAuthorizedError,
     ],
 });
 
@@ -68,8 +79,9 @@ const getDataToReviewEndpoint = makeEndpoint({
     method: 'get',
     path: withOrganismPathSegment('/get-data-to-review/:accession/:version'),
     alias: 'getDataToReview',
-    parameters: [...usernameParameters],
+    parameters: [authorizationHeader],
     response: accessionReview,
+    errors: [notAuthorizedError],
 });
 
 const revokeSequencesEndpoint = makeEndpoint({
@@ -77,7 +89,7 @@ const revokeSequencesEndpoint = makeEndpoint({
     path: withOrganismPathSegment('/revoke'),
     alias: 'revokeSequences',
     parameters: [
-        ...usernameParameters,
+        authorizationHeader,
         {
             name: 'accessions',
             type: 'Body',
@@ -85,10 +97,7 @@ const revokeSequencesEndpoint = makeEndpoint({
         },
     ],
     response: z.array(sequenceEntryStatus),
-    errors: [
-        { status: 'default', schema: problemDetail },
-        { status: 422, schema: problemDetail },
-    ],
+    errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
 });
 
 const submitReviewedSequenceEndpoint = makeEndpoint({
@@ -96,7 +105,7 @@ const submitReviewedSequenceEndpoint = makeEndpoint({
     path: withOrganismPathSegment('/submit-reviewed-sequence'),
     alias: 'submitReviewedSequence',
     parameters: [
-        ...usernameParameters,
+        authorizationHeader,
         {
             name: 'data',
             type: 'Body',
@@ -104,21 +113,16 @@ const submitReviewedSequenceEndpoint = makeEndpoint({
         },
     ],
     response: z.never(),
+    errors: [notAuthorizedError],
 });
 
 const getSequencesOfUserEndpoint = makeEndpoint({
     method: 'get',
     path: withOrganismPathSegment('/get-sequences-of-user'),
     alias: 'getSequencesOfUser',
-    parameters: [
-        ...usernameParameters,
-        {
-            name: 'Authorization',
-            type: 'Header',
-            schema: z.string(),
-        },
-    ],
+    parameters: [authorizationHeader],
     response: z.array(sequenceEntryStatus),
+    errors: [notAuthorizedError],
 });
 
 const approveProcessedDataEndpoint = makeEndpoint({
@@ -126,7 +130,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
     path: withOrganismPathSegment('/approve-processed-data'),
     alias: 'approveProcessedData',
     parameters: [
-        ...usernameParameters,
+        authorizationHeader,
         {
             name: 'data',
             type: 'Body',
@@ -134,7 +138,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
         },
     ],
     response: z.never(),
-    errors: [{ status: 'default', schema: problemDetail }],
+    errors: [{ status: 'default', schema: problemDetail }, notAuthorizedError],
 });
 
 const deleteSequencesEndpoint = makeEndpoint({
@@ -142,7 +146,7 @@ const deleteSequencesEndpoint = makeEndpoint({
     path: withOrganismPathSegment('/delete-sequences'),
     alias: 'deleteSequences',
     parameters: [
-        ...usernameParameters,
+        authorizationHeader,
         {
             name: 'accessionVersions',
             type: 'Body',
@@ -150,7 +154,7 @@ const deleteSequencesEndpoint = makeEndpoint({
         },
     ],
     response: z.never(),
-    errors: [{ status: 'default', schema: problemDetail }],
+    errors: [{ status: 'default', schema: problemDetail }, notAuthorizedError],
 });
 
 const confirmRevocationEndpoint = makeEndpoint({
@@ -158,7 +162,7 @@ const confirmRevocationEndpoint = makeEndpoint({
     path: withOrganismPathSegment('/confirm-revocation'),
     alias: 'confirmRevocation',
     parameters: [
-        ...usernameParameters,
+        authorizationHeader,
         {
             name: 'accessionVersions',
             type: 'Body',
@@ -166,10 +170,7 @@ const confirmRevocationEndpoint = makeEndpoint({
         },
     ],
     response: z.never(),
-    errors: [
-        { status: 'default', schema: problemDetail },
-        { status: 422, schema: problemDetail },
-    ],
+    errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
 });
 
 const extractUnprocessedDataEndpoint = makeEndpoint({
@@ -177,6 +178,7 @@ const extractUnprocessedDataEndpoint = makeEndpoint({
     path: withOrganismPathSegment('/extract-unprocessed-data'),
     alias: 'extractUnprocessedData',
     parameters: [
+        authorizationHeader,
         {
             name: 'numberOfSequenceEntries',
             type: 'Query',
@@ -184,6 +186,7 @@ const extractUnprocessedDataEndpoint = makeEndpoint({
         },
     ],
     response: z.union([z.string(), unprocessedData]),
+    errors: [notAuthorizedError],
 });
 
 const submitProcessedDataEndpoint = makeEndpoint({
@@ -191,6 +194,7 @@ const submitProcessedDataEndpoint = makeEndpoint({
     path: withOrganismPathSegment('/submit-processed-data'),
     alias: 'submitProcessedData',
     parameters: [
+        authorizationHeader,
         {
             name: 'data',
             type: 'Body',
@@ -198,10 +202,7 @@ const submitProcessedDataEndpoint = makeEndpoint({
         },
     ],
     response: z.never(),
-    errors: [
-        { status: 'default', schema: problemDetail },
-        { status: 422, schema: problemDetail },
-    ],
+    errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
 });
 
 export const backendApi = makeApi([

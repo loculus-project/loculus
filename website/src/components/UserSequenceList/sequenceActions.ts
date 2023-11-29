@@ -68,15 +68,15 @@ export type BulkSequenceActionName = keyof typeof bulkSequenceActions;
 export type SingleSequenceAction = {
     name: string;
     tableHeader: string;
-    actionOnSequenceEntry: (organism: string, selectedSequence: SequenceEntryStatus, username: string) => Promise<void>;
+    actionOnSequenceEntry: (organism: string, selectedSequence: SequenceEntryStatus) => Promise<void>;
 };
 export type SingleSequenceActionName = keyof typeof singleSequenceActions;
 
 const reviewAction: SingleSequenceAction = {
     name: 'review',
     tableHeader: 'Link to Review',
-    actionOnSequenceEntry: async (organism, selectedSequence, username) => {
-        window.location.href = routes.reviewPage(organism, username, selectedSequence);
+    actionOnSequenceEntry: async (organism, selectedSequence) => {
+        window.location.href = routes.reviewPage(organism, selectedSequence);
     },
 };
 export const singleSequenceActions = {

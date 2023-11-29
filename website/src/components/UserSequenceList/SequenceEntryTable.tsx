@@ -15,6 +15,7 @@ import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import type { SequenceEntryStatus } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -23,7 +24,7 @@ import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type SequenceTableProps = {
     organism: string;
-    username: string;
+    accessToken: string;
     clientConfig: ClientConfig;
     sequenceEntries: SequenceEntryStatus[];
     bulkActionNames: BulkSequenceActionName[];
@@ -32,7 +33,7 @@ type SequenceTableProps = {
 
 const InnerSequenceEntryTable: FC<SequenceTableProps> = ({
     organism,
-    username,
+    accessToken,
     clientConfig,
     sequenceEntries,
     bulkActionNames,
@@ -46,7 +47,7 @@ const InnerSequenceEntryTable: FC<SequenceTableProps> = ({
     const [dialogText, setDialogText] = useState('');
     const [dialogAction, setDialogAction] = useState<BulkSequenceAction>();
 
-    const actionHooks = useActionHooks(organism, clientConfig, username, openErrorFeedback);
+    const actionHooks = useActionHooks(organism, clientConfig, accessToken, openErrorFeedback);
 
     const handleOpenConfirmationDialog = (action: BulkSequenceAction) => {
         setDialogText(action.confirmationDialog?.message(getSelectedSequenceEntries) ?? '');
@@ -72,7 +73,7 @@ const InnerSequenceEntryTable: FC<SequenceTableProps> = ({
     };
 
     const handleSingleAction = async (sequenceStatus: SequenceEntryStatus, action: SingleSequenceAction) => {
-        await action.actionOnSequenceEntry(organism, sequenceStatus, username);
+        await action.actionOnSequenceEntry(organism, sequenceStatus);
     };
 
     const executeBulkAction = async (action: BulkSequenceAction) => {
@@ -307,34 +308,34 @@ export type ActionHooks = ReturnType<typeof useActionHooks>;
 function useActionHooks(
     organism: string,
     clientConfig: ClientConfig,
-    username: string,
+    accessToken: string,
     openErrorFeedback: (message: string) => void,
 ) {
     const hooks = backendClientHooks(clientConfig);
 
     const useDeleteSequenceEntries = hooks.useDeleteSequences(
-        { queries: { username }, params: { organism } },
+        { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onSuccess: () => window.location.reload(),
             onError: (error) => openErrorFeedback(deleteSequenceEntriesErrorMessage(error)),
         },
     );
     const useApproveProcessedData = hooks.useApproveProcessedData(
-        { queries: { username }, params: { organism } },
+        { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onSuccess: () => window.location.reload(),
             onError: (error) => openErrorFeedback(approveProcessedDataErrorMessage(error)),
         },
     );
     const useRevokeSequenceEntries = hooks.useRevokeSequences(
-        { queries: { username }, params: { organism } },
+        { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onSuccess: () => window.location.reload(),
             onError: (error) => openErrorFeedback(getRevokeSequenceEntriesErrorMessage(error)),
         },
     );
     const useConfirmRevocation = hooks.useConfirmRevocation(
-        { queries: { username }, params: { organism } },
+        { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onSuccess: () => window.location.reload(),
             onError: (error) => openErrorFeedback(getConfirmRevocationErrorMessage(error)),
