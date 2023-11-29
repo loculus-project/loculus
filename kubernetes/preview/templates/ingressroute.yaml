@@ -1,7 +1,7 @@
 {{- if eq .Values.environment "server" }}
 {{- $backendHost := printf "backend.%s" .Values.host }}
 {{- $configFile := .Files.Get "config.yaml" | fromYaml }}
-{{- $keycloakHost := printf "keycloak.%s" .Values.host }}
+{{- $keycloakHost := printf "authentication.%s" .Values.host }}
 
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute

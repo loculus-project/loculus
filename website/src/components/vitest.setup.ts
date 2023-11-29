@@ -16,7 +16,7 @@ export const testConfig = {
         lapisUrls: {
             dummy: 'http://lapis.dummy',
         },
-        keycloakUrl: 'http://keycloak.dummy',
+        keycloakUrl: 'http://authentication.dummy',
     },
     serverSide: {
         discriminator: 'server',
@@ -24,7 +24,7 @@ export const testConfig = {
         lapisUrls: {
             dummy: 'http://lapis.dummy',
         },
-        keycloakUrl: 'http://keycloak.dummy',
+        keycloakUrl: 'http://authentication.dummy',
     },
 } as RuntimeConfig;
 
