@@ -29,11 +29,11 @@ class ReviseEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse { invalidToken ->
+        expectUnauthorizedResponse(isModifyingRequest = true) {
             client.reviseSequenceEntries(
                 DefaultFiles.revisedMetadataFile,
                 DefaultFiles.sequencesFile,
-                jwt = invalidToken,
+                jwt = it,
             )
         }
     }

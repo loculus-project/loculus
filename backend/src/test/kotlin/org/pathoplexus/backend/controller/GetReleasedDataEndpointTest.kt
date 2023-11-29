@@ -8,6 +8,7 @@ import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.matchesPattern
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.ProcessedData
@@ -17,6 +18,7 @@ import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccessio
 import org.pathoplexus.backend.service.Accession
 import org.pathoplexus.backend.service.Version
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -30,10 +32,17 @@ class GetReleasedDataEndpointTest(
     val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
 
     @Test
+    @Disabled("TODO(#607) reactivate")
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse { invalidToken ->
-            submissionControllerClient.getReleasedData(jwt = invalidToken)
+        expectUnauthorizedResponse {
+            submissionControllerClient.getReleasedData(jwt = it)
         }
+    }
+
+    // TODO(#607): delete
+    @Test
+    fun `GIVEN no access token THEN access is allowed`() {
+        submissionControllerClient.getReleasedData(jwt = null).andExpect(status().isOk)
     }
 
     @Test

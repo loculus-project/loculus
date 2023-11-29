@@ -20,11 +20,11 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse { invalidToken ->
+        expectUnauthorizedResponse(isModifyingRequest = true) { jwt ->
             submissionControllerClient.submit(
                 DefaultFiles.metadataFile,
                 DefaultFiles.sequencesFile,
-                jwt = invalidToken,
+                jwt = jwt,
             )
         }
     }
