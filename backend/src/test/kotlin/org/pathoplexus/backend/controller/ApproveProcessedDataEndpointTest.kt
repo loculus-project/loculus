@@ -20,10 +20,10 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse { invalidToken ->
+        expectUnauthorizedResponse(isModifyingRequest = true) {
             client.approveProcessedSequenceEntries(
                 emptyList(),
-                jwt = invalidToken,
+                jwt = it,
             )
         }
     }

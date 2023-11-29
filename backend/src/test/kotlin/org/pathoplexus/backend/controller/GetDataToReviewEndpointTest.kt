@@ -23,17 +23,17 @@ class GetDataToReviewEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse { invalidToken ->
+        expectUnauthorizedResponse {
             client.getSequenceEntryThatNeedsReview(
                 firstAccession,
                 1,
-                jwt = invalidToken,
+                jwt = it,
             )
         }
-        expectUnauthorizedResponse { invalidToken ->
+        expectUnauthorizedResponse {
             client.getNumberOfSequenceEntriesThatNeedReview(
                 1,
-                jwt = invalidToken,
+                jwt = it,
             )
         }
     }

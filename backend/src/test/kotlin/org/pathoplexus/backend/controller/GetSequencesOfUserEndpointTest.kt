@@ -22,7 +22,7 @@ class GetSequencesOfUserEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse { invalidToken -> client.getSequenceEntriesOfUser(jwt = invalidToken) }
+        expectUnauthorizedResponse { client.getSequenceEntriesOfUser(jwt = it) }
     }
 
     @Test

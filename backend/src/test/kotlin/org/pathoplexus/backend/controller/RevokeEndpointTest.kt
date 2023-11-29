@@ -20,10 +20,10 @@ class RevokeEndpointTest(
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse { invalidToken ->
+        expectUnauthorizedResponse(isModifyingRequest = true) {
             client.revokeSequenceEntries(
                 emptyList(),
-                jwt = invalidToken,
+                jwt = it,
             )
         }
     }

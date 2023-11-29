@@ -20,5 +20,8 @@ fun generateJwtForUser(username: String): String = Jwts.builder()
     .claim("preferred_username", username)
     .compact()
 
-fun MockHttpServletRequestBuilder.withAuth(bearerToken: String = jwtForDefaultUser): MockHttpServletRequestBuilder =
-    this.header("Authorization", "Bearer $bearerToken")
+fun MockHttpServletRequestBuilder.withAuth(bearerToken: String? = jwtForDefaultUser): MockHttpServletRequestBuilder =
+    when (bearerToken) {
+        null -> this
+        else -> this.header("Authorization", "Bearer $bearerToken")
+    }
