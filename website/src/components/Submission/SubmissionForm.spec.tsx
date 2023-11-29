@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
 import type { ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
-import { mockRequest, testConfig, testOrganism, testUser } from '../vitest.setup';
+import { mockRequest, testAccessToken, testConfig, testOrganism } from '../vitest.setup';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -15,7 +15,9 @@ vi.mock('../../api', () => ({
 }));
 
 function renderSubmissionForm() {
-    return render(<SubmissionForm organism={testOrganism} clientConfig={testConfig.public} />);
+    return render(
+        <SubmissionForm accessToken={testAccessToken} organism={testOrganism} clientConfig={testConfig.public} />,
+    );
 }
 
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
@@ -30,9 +32,8 @@ describe('SubmitForm', () => {
     test('should handle file upload and server response', async () => {
         mockRequest.backend.submit(200, testResponse);
 
-        const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
+        const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.type(getByPlaceholderText('Username:'), testUser);
         await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequences File:/i), sequencesFile);
 
@@ -48,9 +49,8 @@ describe('SubmitForm', () => {
     test('should answer with feedback that a file is missing', async () => {
         mockRequest.backend.submit(200, testResponse);
 
-        const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
+        const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.type(getByPlaceholderText('Username:'), testUser);
         await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
 
         const submitButton = getByText('Submit');
@@ -84,9 +84,8 @@ describe('SubmitForm', () => {
     });
 
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
-        const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
+        const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.type(getByPlaceholderText('Username:'), testUser);
         await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequences File:/i), sequencesFile);
 

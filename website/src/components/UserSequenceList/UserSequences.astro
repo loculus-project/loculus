@@ -3,15 +3,16 @@ import { SequenceEntryTable } from './SequenceEntryTable';
 import { SequenceStatusBox } from './SequenceStatusBox';
 import { getRuntimeConfig } from '../../config';
 import type { SequenceEntryStatus } from '../../types/backend';
+import { getAccessToken } from '../../utils/getAccessToken';
 
 interface Props {
     sequenceEntries: SequenceEntryStatus[];
-    username: string;
 }
 
 const organism = Astro.params.organism!;
+const accessToken = getAccessToken(Astro.locals.session)!;
 
-const { sequenceEntries, username } = Astro.props;
+const { sequenceEntries } = Astro.props;
 const clientConfig = getRuntimeConfig().public;
 
 const statusArray = sequenceEntries.reduce(
@@ -28,20 +29,18 @@ const statusArray = sequenceEntries.reduce(
         AWAITING_APPROVAL_FOR_REVOCATION: [] as SequenceEntryStatus[],
     },
 );
-
-const keyPrefix = `userSequences.${username}`;
 ---
 
 <div class='flex flex-col gap-2 mt-5'>
     <SequenceStatusBox
         count={statusArray.RECEIVED.length}
         description='received'
-        localStorageKey={`${keyPrefix}.receivedExpanded`}
+        localStorageKey='userSequences.receivedExpanded'
         client:only='react'
     >
         <SequenceEntryTable
             organism={organism}
-            username={username}
+            accessToken={accessToken}
             sequenceEntries={statusArray.RECEIVED}
             bulkActionNames={['delete']}
             singleActionNames={[]}
@@ -53,12 +52,12 @@ const keyPrefix = `userSequences.${username}`;
     <SequenceStatusBox
         count={statusArray.IN_PROCESSING.length}
         description='in processing'
-        localStorageKey={`${keyPrefix}.processingExpanded`}
+        localStorageKey='userSequences.processingExpanded'
         client:only='react'
     >
         <SequenceEntryTable
             organism={organism}
-            username={username}
+            accessToken={accessToken}
             sequenceEntries={statusArray.IN_PROCESSING}
             bulkActionNames={[]}
             singleActionNames={[]}
@@ -70,12 +69,12 @@ const keyPrefix = `userSequences.${username}`;
     <SequenceStatusBox
         count={statusArray.HAS_ERRORS.length}
         description={`need${statusArray.HAS_ERRORS.length === 1 ? 's' : ''} review`}
-        localStorageKey={`${keyPrefix}.needsReviewExpanded`}
+        localStorageKey='userSequences.needsReviewExpanded'
         client:only='react'
     >
         <SequenceEntryTable
             organism={organism}
-            username={username}
+            accessToken={accessToken}
             sequenceEntries={statusArray.HAS_ERRORS}
             bulkActionNames={['delete']}
             singleActionNames={['review']}
@@ -87,12 +86,12 @@ const keyPrefix = `userSequences.${username}`;
     <SequenceStatusBox
         count={statusArray.AWAITING_APPROVAL.length}
         description='processed'
-        localStorageKey={`${keyPrefix}.stagingExpanded`}
+        localStorageKey='userSequences.stagingExpanded'
         client:only='react'
     >
         <SequenceEntryTable
             organism={organism}
-            username={username}
+            accessToken={accessToken}
             sequenceEntries={statusArray.AWAITING_APPROVAL}
             bulkActionNames={['approve', 'delete']}
             singleActionNames={['review']}
@@ -104,12 +103,12 @@ const keyPrefix = `userSequences.${username}`;
     <SequenceStatusBox
         count={statusArray.APPROVED_FOR_RELEASE.length}
         description='ready for SILO import'
-        localStorageKey={`${keyPrefix}.readyExpanded`}
+        localStorageKey='userSequences.readyExpanded'
         client:only='react'
     >
         <SequenceEntryTable
             organism={organism}
-            username={username}
+            accessToken={accessToken}
             sequenceEntries={statusArray.APPROVED_FOR_RELEASE}
             bulkActionNames={['revoke']}
             singleActionNames={[]}
@@ -121,12 +120,12 @@ const keyPrefix = `userSequences.${username}`;
     <SequenceStatusBox
         count={statusArray.AWAITING_APPROVAL_FOR_REVOCATION.length}
         description='staged for revocation'
-        localStorageKey={`${keyPrefix}.revokedExpanded`}
+        localStorageKey='userSequences.revokedExpanded'
         client:only='react'
     >
         <SequenceEntryTable
             organism={organism}
-            username={username}
+            accessToken={accessToken}
             sequenceEntries={statusArray.AWAITING_APPROVAL_FOR_REVOCATION}
             bulkActionNames={['confirmRevocation', 'delete']}
             singleActionNames={[]}

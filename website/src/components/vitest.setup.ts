@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
 import type { SubmissionIdMapping } from '../types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from '../types/lapis.ts';
@@ -29,7 +29,7 @@ export const testConfig = {
 } as RuntimeConfig;
 
 export const testOrganism = 'testOrganism';
-export const testUser = 'testuser';
+export const testAccessToken = 'someTestToken';
 
 const testServer = setupServer();
 
@@ -87,6 +87,10 @@ export const mockRequest = {
 };
 
 beforeAll(() => testServer.listen({ onUnhandledRequest: 'error' }));
+
+beforeEach(() => {
+    testServer.use(rest.post('http://localhost:3000/admin/logs.txt', (_, res, ctx) => res(ctx.status(200))));
+});
 
 afterAll(() => testServer.close());
 

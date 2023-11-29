@@ -1,24 +1,26 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes';
+import { BackButton } from '../Navigation/BackButton';
 
 const session = Astro.locals.session;
 const organism: string | undefined = Astro.params.organism;
 ---
 
 <BaseLayout title='Login'>
+    <div class='flex items-center'>
+        <BackButton marginRight={2} client:load />
+        <h1 class='title'>User {session.user?.name}</h1>
+    </div>
+    <div>
+        <a href='/logout'>Logout</a>
+    </div>
+
     {
-        session.isLoggedIn && (
-            <>
-                <div>
-                    <div>You are already logged in as {session.user?.name}</div>
-                </div>
-                <div>
-                    <a href='/logout'>Logout</a>
-                </div>
-            </>
+        organism !== undefined && (
+            <div>
+                <a href={routes.userSequencesPage(organism)}>Sequence Overview</a>
+            </div>
         )
     }
-
-    {organism !== undefined && <a href={routes.userPage(organism, 'testuser')}>Login as testuser</a>}
 </BaseLayout>

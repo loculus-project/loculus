@@ -23,7 +23,7 @@ type E2EFixture = {
     revisePage: RevisePage;
     reviewPage: ReviewPage;
     navigationFixture: NavigationFixture;
-    loginAsTestUser: () => Promise<void>;
+    loginAsTestUser: () => Promise<{ username: string; token: string }>;
 };
 
 export const dummyOrganism = { key: 'dummy-organism', displayName: 'Test Dummy Organism' };
@@ -47,7 +47,7 @@ export const testSequence = {
 };
 
 export const testUser = 'testuser';
-const testUserPassword = 'testuser';
+export const testUserPassword = 'testuser';
 
 export const metadataTestFile: string = './tests/testData/metadata.tsv';
 export const sequencesTestFile: string = './tests/testData/sequences.fasta';
@@ -59,7 +59,7 @@ export const testSequenceCount: number =
 
 const testUserTokens: Record<string, TokenSet> = {};
 
-async function getToken(username: string, password: string) {
+export async function getToken(username: string, password: string) {
     const issuerUrl = `${keycloakUrl}${realmPath}`;
     const keycloakIssuer = await Issuer.discover(issuerUrl);
     const client = new keycloakIssuer.Client(clientMetadata);
@@ -110,6 +110,11 @@ export async function authorize(
             domain: 'localhost',
         },
     ]);
+
+    return {
+        username,
+        token: token.access_token!,
+    };
 }
 
 export const test = base.extend<E2EFixture>({

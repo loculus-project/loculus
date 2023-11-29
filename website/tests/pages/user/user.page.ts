@@ -2,26 +2,26 @@ import type { Page } from '@playwright/test';
 
 import type { AccessionVersion, SequenceEntryStatus } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, dummyOrganism, testUser } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 import { routes } from '../../../src/routes.ts';
 
 export class UserPage {
     private readonly sequenceBoxNames = [
-        `userSequences.${testUser}.receivedExpanded`,
-        `userSequences.${testUser}.processingExpanded`,
-        `userSequences.${testUser}.needsReviewExpanded`,
-        `userSequences.${testUser}.stagingExpanded`,
-        `userSequences.${testUser}.readyExpanded`,
-        `userSequences.${testUser}.revokedExpanded`,
+        `userSequences.receivedExpanded`,
+        `userSequences.processingExpanded`,
+        `userSequences.needsReviewExpanded`,
+        `userSequences.stagingExpanded`,
+        `userSequences.readyExpanded`,
+        `userSequences.revokedExpanded`,
     ] as const;
 
     constructor(public readonly page: Page) {}
 
     public async gotoUserSequencePage() {
-        await this.page.goto(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key, testUser)}`, {
+        await this.page.goto(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key)}`, {
             waitUntil: 'networkidle',
         });
-        await this.page.waitForURL(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key, testUser)}`);
+        await this.page.waitForURL(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key)}`);
 
         for (const id of this.sequenceBoxNames) {
             const checkbox = this.page.getByTestId(id);
@@ -63,7 +63,7 @@ export class UserPage {
         const reviewButton = this.page.getByTestId(testIdOfButton);
         await reviewButton.click();
 
-        await this.page.waitForURL(`${baseUrl}${routes.reviewPage(dummyOrganism.key, testUser, accessionToCheck)}`, {
+        await this.page.waitForURL(`${baseUrl}${routes.reviewPage(dummyOrganism.key, accessionToCheck)}`, {
             waitUntil: 'networkidle',
         });
     }

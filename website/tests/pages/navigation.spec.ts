@@ -13,7 +13,6 @@ const organismNavigationItems = [
     { link: 'Submit', title: 'Submit' },
     { link: 'Revise', title: 'Revise' },
     { link: 'User', title: 'Login' },
-    { link: 'Login as testuser', title: 'testuser' },
     { link: 'Sequence Overview', title: 'Sequences' },
 ];
 
