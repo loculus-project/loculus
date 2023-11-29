@@ -10,8 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check-format": "eslint \"src/**/*.{ts,tsx,astro}\" && prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
-    "format": "eslint \"src/**/*.{ts,tsx,astro}\" --fix && prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
+    "check-format": "eslint \"src/**/*.{ts,tsx,astro}\" && prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,jsx,json,astro}\"",
+    "format": "eslint \"src/**/*.{ts,tsx,astro}\" --fix && prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,jsx,json,astro}\"",
     "test": "vitest",
     "e2e": "npx playwright test",
     "e2e:headed": "npx playwright test --headed"
@@ -36,7 +36,9 @@
     "react-dom": "^18.2.0",
     "unplugin-icons": "^0.17.4",
     "winston": "^3.11.0",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "react-spinners": "^0.13.8",
+    "react-tooltip": "^5.21.5"
   },
   "devDependencies": {
     "@astrojs/check": "^0.3.1",
