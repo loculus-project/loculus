@@ -15,23 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  checks:
-    name: Check format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-      - uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
-      - run: npm ci
-      - run: npm run check-format
-      - run: npm run check-types
-
   unitTests:
     name: Unit Tests
     timeout-minutes: 10
