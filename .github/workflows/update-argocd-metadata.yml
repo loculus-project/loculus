@@ -1,0 +1,58 @@
+name: CI Workflow
+
+on:
+  push:
+    #branches:
+    #  - main
+
+jobs:
+  build-and-update-config:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Main Repository
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.ref }}
+
+    - name: Wait for Backend Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Backend Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Wait for Website Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Website Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update config.json in argocd_metadata
+      if: github.ref == 'refs/heads/main'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Fetching the current content of config.json from the repository
+        curl -H "Authorization: token $GITHUB_TOKEN" \
+             -H "Accept: application/vnd.github.v3+json" \
+             "https://api.github.com/repos/pathoplexus/argocd_metadata/contents/config.json" \
+             -o config.json
+
+        # Extracting the SHA of the current config.json for update purposes
+        CONFIG_SHA=$(jq -r '.sha' config.json)
+
+        # Updating the file with the new SHA
+        NEW_CONTENT=$(jq '.head_short_sha_7 = "'$(echo $GITHUB_SHA | cut -c1-7)'"' config.json | base64)
+
+        # Preparing the payload for updating the file in the repository
+        PAYLOAD=$(jq -n --arg content "$NEW_CONTENT" \
+                        --arg sha "$CONFIG_SHA" \
+                        '{message: "Update head_short_sha_7", content: $content, sha: $sha}')
+
+        # Pushing the updated content back to the repository
+        curl -X PUT -H "Authorization: token $GITHUB_TOKEN" \
+             -H "Accept: application/vnd.github.v3+json" \
+             -d "$PAYLOAD" \
+             "https://api.github.com/repos/pathoplexus/argocd_metadata/contents/config.json"

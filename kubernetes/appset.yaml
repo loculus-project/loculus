@@ -17,10 +17,11 @@ spec:
             key: token
             secretName: github-access-token
         requeueAfterSeconds: 60
-    - list:
-        elements:
-          - branch: main
-            number: 1
+    - git:
+        repoURL: https://github.com/pathoplexus/argocd_metadata.git
+        revision: HEAD
+        files:
+        - path: "config.json"
   template:
     metadata:
       name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}-{{.number}}'
