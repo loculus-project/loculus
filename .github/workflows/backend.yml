@@ -73,7 +73,7 @@ jobs:
           USER: ${{ github.actor }}
           TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          arguments: bootBuildImage --imageName=${{ steps.dockerMetadata.outputs.tags }}
+          arguments: bootBuildImage --imageName=${{ steps.dockerMetadata.outputs.tags[0] }}
           build-root-directory: ./backend
 
       - name: Push Docker Image For Branch
