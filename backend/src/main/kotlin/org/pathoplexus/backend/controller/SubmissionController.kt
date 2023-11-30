@@ -12,8 +12,8 @@ import jakarta.validation.constraints.Max
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.ProcessedData
-import org.pathoplexus.backend.api.SequenceEntryReview
 import org.pathoplexus.backend.api.SequenceEntryStatus
+import org.pathoplexus.backend.api.SequenceEntryVersionToEdit
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
@@ -143,9 +143,9 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Operation(description = GET_DATA_TO_REVIEW_DESCRIPTION)
-    @GetMapping("/get-data-to-review", produces = [MediaType.APPLICATION_NDJSON_VALUE])
-    fun getReviewNeededData(
+    @Operation(description = GET_DATA_TO_EDIT_DESCRIPTION)
+    @GetMapping("/get-data-to-edit", produces = [MediaType.APPLICATION_NDJSON_VALUE])
+    fun getDataToEdit(
         @PathVariable @Valid
         organism: Organism,
         @UsernameFromJwt username: String,
@@ -159,32 +159,32 @@ class SubmissionController(
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
         val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamReviewNeededSubmissions(username, numberOfSequenceEntries, outputStream, organism)
+            databaseService.streamDataToEdit(username, numberOfSequenceEntries, outputStream, organism)
         }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Operation(description = GET_DATA_TO_REVIEW_SEQUENCE_VERSION_DESCRIPTION)
-    @GetMapping("/get-data-to-review/{accession}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getSequenceThatNeedsReview(
+    @Operation(description = GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION)
+    @GetMapping("/get-data-to-edit/{accession}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getSequenceEntryVersionToEdit(
         @PathVariable @Valid
         organism: Organism,
         @PathVariable accession: Accession,
         @PathVariable version: Long,
         @UsernameFromJwt username: String,
-    ): SequenceEntryReview =
-        databaseService.getReviewData(username, AccessionVersion(accession, version), organism)
+    ): SequenceEntryVersionToEdit =
+        databaseService.getSequenceEntryVersionToEdit(username, AccessionVersion(accession, version), organism)
 
-    @Operation(description = SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION)
+    @Operation(description = SUBMIT_EDITED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PostMapping("/submit-reviewed-sequence", consumes = [MediaType.APPLICATION_JSON_VALUE])
-    fun submitReviewedSequence(
+    @PostMapping("/submit-edited-data", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun submitEditedData(
         @PathVariable @Valid
         organism: Organism,
         @UsernameFromJwt username: String,
         @RequestBody accessionVersion: UnprocessedData,
-    ) = databaseService.submitReviewedSequence(username, accessionVersion, organism)
+    ) = databaseService.submitEditedData(username, accessionVersion, organism)
 
     @Operation(description = GET_SEQUENCES_OF_USER_DESCRIPTION)
     @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -245,14 +245,14 @@ class SubmissionController(
     @Operation(description = DELETE_SEQUENCES_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping(
-        "/delete-sequences",
+        "/delete-sequence-entry-versions",
     )
     fun deleteSequence(
         @PathVariable @Valid
         organism: Organism,
         @UsernameFromJwt username: String,
         @RequestBody body: AccessionVersions,
-    ) = databaseService.deleteSequences(body.accessionVersions, username, organism)
+    ) = databaseService.deleteSequenceEntryVersions(body.accessionVersions, username, organism)
 
     data class Accessions(
         val accessions: List<Accession>,

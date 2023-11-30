@@ -85,24 +85,6 @@ class ExtractUnprocessedDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN a sequence entry with status 'REVIEWED' THEN it should be returned and the status should change`() {
-        convenienceClient.prepareDataTo(RECEIVED)
-
-        val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
-        val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
-        assertThat(responseBody, hasSize(10))
-        assertThat(
-            responseBody,
-            hasItem(
-                UnprocessedData(DefaultFiles.firstAccession, 1, defaultOriginalData),
-            ),
-        )
-
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
-            .assertStatusIs(IN_PROCESSING)
-    }
-
-    @Test
     fun `GIVEN sequence entries for multiple organisms THEN it should only return entries for that organism`() {
         val defaultOrganismEntries = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
         val otherOrganismEntries = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)

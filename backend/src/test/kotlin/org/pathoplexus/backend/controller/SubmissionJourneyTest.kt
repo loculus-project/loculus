@@ -21,7 +21,7 @@ class SubmissionJourneyTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
     @Test
-    fun `Submission scenario, from submission, over review and approval ending in status 'APPROVED_FOR_RELEASE'`() {
+    fun `Submission scenario, from submission, over edit and approval ending in status 'APPROVED_FOR_RELEASE'`() {
         convenienceClient.submitDefaultFiles()
         convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
             .assertStatusIs(RECEIVED)
@@ -38,7 +38,7 @@ class SubmissionJourneyTest(
         convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
             .assertStatusIs(HAS_ERRORS)
 
-        convenienceClient.submitDefaultReviewedData()
+        convenienceClient.submitDefaultEditedData()
         convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
             .assertStatusIs(RECEIVED)
 

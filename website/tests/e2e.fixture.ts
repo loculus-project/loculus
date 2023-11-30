@@ -5,7 +5,8 @@ import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
 
-import { ReviewPage } from './pages/review/review.page';
+import { EditPage } from './pages/edit/edit.page';
+import { NavigationFixture } from './pages/navigation.fixture';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
@@ -13,7 +14,6 @@ import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
 import { clientMetadata, realmPath, TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
-import { NavigationFixture } from './pages/navigation.fixture';
 
 type E2EFixture = {
     searchPage: SearchPage;
@@ -21,7 +21,7 @@ type E2EFixture = {
     submitPage: SubmitPage;
     userPage: UserPage;
     revisePage: RevisePage;
-    reviewPage: ReviewPage;
+    editPage: EditPage;
     navigationFixture: NavigationFixture;
     loginAsTestUser: () => Promise<{ username: string; token: string }>;
 };
@@ -138,9 +138,9 @@ export const test = base.extend<E2EFixture>({
         const revisePage = new RevisePage(page);
         await use(revisePage);
     },
-    reviewPage: async ({ page }, use) => {
-        const reviewPage = new ReviewPage(page);
-        await use(reviewPage);
+    editPage: async ({ page }, use) => {
+        const editPage = new EditPage(page);
+        await use(editPage);
     },
     navigationFixture: async ({ page }, use) => {
         await use(new NavigationFixture(page));

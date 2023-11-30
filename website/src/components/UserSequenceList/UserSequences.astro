@@ -68,7 +68,7 @@ const statusArray = sequenceEntries.reduce(
 
     <SequenceStatusBox
         count={statusArray.HAS_ERRORS.length}
-        description={`need${statusArray.HAS_ERRORS.length === 1 ? 's' : ''} review`}
+        description={`${statusArray.HAS_ERRORS.length === 1 ? 'has' : 'have'} errors`}
         localStorageKey='userSequences.needsReviewExpanded'
         client:only='react'
     >
@@ -77,7 +77,7 @@ const statusArray = sequenceEntries.reduce(
             accessToken={accessToken}
             sequenceEntries={statusArray.HAS_ERRORS}
             bulkActionNames={['delete']}
-            singleActionNames={['review']}
+            singleActionNames={['edit']}
             clientConfig={clientConfig}
             client:load
         />
@@ -94,7 +94,7 @@ const statusArray = sequenceEntries.reduce(
             accessToken={accessToken}
             sequenceEntries={statusArray.AWAITING_APPROVAL}
             bulkActionNames={['approve', 'delete']}
-            singleActionNames={['review']}
+            singleActionNames={['edit']}
             clientConfig={clientConfig}
             client:load
         />

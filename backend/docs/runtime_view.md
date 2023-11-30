@@ -15,12 +15,12 @@ To submit new sequences, the user calls the `/submit` endpoint and sends unprepr
 For each sequence, Pathoplexus creates a new row in the "sequenceEntries" table.
 It generates a new accession. The version number of the sequence entries is 1.
 
-### Preprocessing & Review
-The data will be processed by a preprocessing pipeline (see [preprocessing pipeline specification](../../preprocessing/specification.md)). If the data contain errors, the user has to review the errors and edit the data (sequence data can be downloaded as _fasta_ file to ease reviewing).
+### Preprocessing & Editing
+The data will be processed by a preprocessing pipeline (see [preprocessing pipeline specification](../../preprocessing/specification.md)). If the data contain errors, the user has to review the errors and edit the data (sequence data can be downloaded as _fasta_ file to ease editing).
 
-The reviewed data will be preprocessed again.
+The edited data will be preprocessed again.
 If the data do not contain errors, they will be staged unless the user selected the "release directly"-mode.
-The user can then review the data and approve them.
+The user can then edit the data and approve them.
 If the "release directly"-mode is used, the staging phase will be skipped and the data directly released.
 If the user decides to not approve a sequence entry, the entry will be (permanently) removed from the database.
 

@@ -30,10 +30,10 @@ Sequence data as input for the preprocessing pipeline.
 The schema is to be understood per line of the NDJSON stream.
 """
 
-const val SUBMIT_REVIEWED_SEQUENCE_DESCRIPTION = """
-Submit a review for an accession version that corrects errors found by the preprocessing pipeline 
+const val SUBMIT_EDITED_DATA_DESCRIPTION = """
+Submit edited data for an accession version that corrects errors found by the preprocessing pipeline 
 or the user themselves. This will set the status of the accession version to
-'REVIEWED' and it will be processed by the next pipeline run.
+'RECEIVED' and it will be processed by the next pipeline run.
 """
 const val MAX_EXTRACTED_SEQUENCE_ENTRIES = 100_000L
 
@@ -44,7 +44,7 @@ returned by the processing pipeline, so that it can technically be used for rele
  will roll back all previously inserted data. It is the responsibility of the processing pipeline to ensure that the 
  content of the data is correct. If the pipeline is unable to provide valid data, it should submit the data with errors.
  In this case, no validation will be performed and the status of the accession version will be set to 'HAS_ERRORS'.
- The user can then review the data and submit a corrected version.
+ The user can then edit the data and submit a corrected version.
 """
 
 const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
@@ -52,13 +52,13 @@ On accession version that cannot be written to the database, e.g. if the accessi
  pipeline submits invalid data. Rolls back the whole transaction.
 """
 
-const val GET_DATA_TO_REVIEW_DESCRIPTION = """
-Get processed sequence data with errors to review as a stream of NDJSON.
+const val GET_DATA_TO_EDIT_DESCRIPTION = """
+Get processed sequence data with errors to edit as a stream of NDJSON.
 This returns all sequence entries of the user that have the status 'HAS_ERRORS'.
 """
 
-const val GET_DATA_TO_REVIEW_SEQUENCE_VERSION_DESCRIPTION = """
-Get processed sequence data with errors to review for a single accession version.
+const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
+Get processed sequence data with errors to edit for a single accession version.
 The accession version must be in status 'HAS_ERRORS' or 'AWAITING_APPROVAL'.
 """
 

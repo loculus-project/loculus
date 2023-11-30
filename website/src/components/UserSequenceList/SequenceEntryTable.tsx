@@ -183,7 +183,7 @@ const DisplayTable: FC<{
                     <thead>
                         <tr>
                             {bulkActions.length > 0 && <td></td>}
-                            <td>ID.Version</td>
+                            <td>Accession.Version</td>
                             <td>Current Status</td>
                             {singleActions.map((action, index) => (
                                 <td key={index}>{action.tableHeader}</td>

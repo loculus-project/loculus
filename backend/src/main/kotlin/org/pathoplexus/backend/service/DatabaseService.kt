@@ -27,8 +27,8 @@ import org.pathoplexus.backend.api.AccessionVersionInterface
 import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.RevisedData
-import org.pathoplexus.backend.api.SequenceEntryReview
 import org.pathoplexus.backend.api.SequenceEntryStatus
+import org.pathoplexus.backend.api.SequenceEntryVersionToEdit
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL
@@ -116,7 +116,9 @@ class DatabaseService(
                 )
             }
 
-        log.info { "streaming ${sequenceEntryData.size} of $numberOfSequenceEntries requested unprocessed submissions" }
+        log.info {
+            "streaming ${sequenceEntryData.size} of $numberOfSequenceEntries requested unprocessed submissions"
+        }
 
         updateStatusToProcessing(sequenceEntryData)
 
@@ -335,13 +337,13 @@ class DatabaseService(
             .asSequence()
     }
 
-    fun streamReviewNeededSubmissions(
+    fun streamDataToEdit(
         submitter: String,
-        numberOfSequences: Int,
+        numberOfSequenceEntries: Int,
         outputStream: OutputStream,
         organism: Organism,
     ) {
-        log.info { "streaming $numberOfSequences submissions that need review by $submitter" }
+        log.info { "streaming $numberOfSequenceEntries submissions that need edit by $submitter" }
         val sequencesData = SequenceEntriesTable
             .slice(
                 SequenceEntriesTable.accession,
@@ -359,8 +361,8 @@ class DatabaseService(
                         submitterIs(submitter) and
                         organismIs(organism)
                 },
-            ).limit(numberOfSequences).map { row ->
-                SequenceEntryReview(
+            ).limit(numberOfSequenceEntries).map { row ->
+                SequenceEntryVersionToEdit(
                     row[SequenceEntriesTable.accession],
                     row[SequenceEntriesTable.version],
                     Status.fromString(row[SequenceEntriesTable.status]),
@@ -556,7 +558,7 @@ class DatabaseService(
         }
     }
 
-    fun deleteSequences(accessionVersions: List<AccessionVersion>, submitter: String, organism: Organism) {
+    fun deleteSequenceEntryVersions(accessionVersions: List<AccessionVersion>, submitter: String, organism: Organism) {
         log.info { "Deleting accession versions: $accessionVersions" }
 
         queryPreconditionValidator.validateAccessionVersions(
@@ -571,19 +573,19 @@ class DatabaseService(
         }
     }
 
-    fun submitReviewedSequence(submitter: String, reviewedAccessionVersion: UnprocessedData, organism: Organism) {
-        log.info { "reviewed sequence entry submitted $reviewedAccessionVersion" }
+    fun submitEditedData(submitter: String, editedAccessionVersion: UnprocessedData, organism: Organism) {
+        log.info { "edited sequence entry submitted $editedAccessionVersion" }
 
-        val sequencesReviewed = SequenceEntriesTable.update(
+        val sequencesEdited = SequenceEntriesTable.update(
             where = {
-                accessionVersionEquals(reviewedAccessionVersion) and
+                accessionVersionEquals(editedAccessionVersion) and
                     submitterIs(submitter) and
                     statusIsOneOf(AWAITING_APPROVAL, HAS_ERRORS) and
                     organismIs(organism)
             },
         ) {
             it[status] = RECEIVED.name
-            it[originalData] = reviewedAccessionVersion.data
+            it[originalData] = editedAccessionVersion.data
             it[errors] = null
             it[warnings] = null
             it[startedProcessingAt] = null
@@ -591,13 +593,13 @@ class DatabaseService(
             it[processedData] = null
         }
 
-        if (sequencesReviewed != 1) {
-            handleReviewedSubmissionError(reviewedAccessionVersion, submitter, organism)
+        if (sequencesEdited != 1) {
+            handleEditedSubmissionError(editedAccessionVersion, submitter, organism)
         }
     }
 
-    private fun handleReviewedSubmissionError(
-        reviewedAccessionVersion: UnprocessedData,
+    private fun handleEditedSubmissionError(
+        editedAccessionVersion: UnprocessedData,
         submitter: String,
         organism: Organism,
     ) {
@@ -609,9 +611,9 @@ class DatabaseService(
                 SequenceEntriesTable.submitter,
                 SequenceEntriesTable.organism,
             )
-            .select(where = { accessionVersionEquals(reviewedAccessionVersion) })
+            .select(where = { accessionVersionEquals(editedAccessionVersion) })
 
-        val accessionVersionString = reviewedAccessionVersion.displayAccessionVersion()
+        val accessionVersionString = editedAccessionVersion.displayAccessionVersion()
 
         if (selectedSequences.count().toInt() == 0) {
             throw UnprocessableEntityException("Sequence entry $accessionVersionString does not exist")
@@ -642,12 +644,16 @@ class DatabaseService(
             )
         }
 
-        throw Exception("SequenceReview: Unknown error")
+        throw Exception("SequenceEdit: Unknown error")
     }
 
-    fun getReviewData(submitter: String, accessionVersion: AccessionVersion, organism: Organism): SequenceEntryReview {
+    fun getSequenceEntryVersionToEdit(
+        submitter: String,
+        accessionVersion: AccessionVersion,
+        organism: Organism,
+    ): SequenceEntryVersionToEdit {
         log.info {
-            "Getting sequence entry ${accessionVersion.displayAccessionVersion()} that needs review by $submitter"
+            "Getting sequence entry ${accessionVersion.displayAccessionVersion()} by $submitter to edit"
         }
 
         val selectedSequenceEntries = SequenceEntriesTable
@@ -670,11 +676,11 @@ class DatabaseService(
             )
 
         if (selectedSequenceEntries.count().toInt() != 1) {
-            handleGetReviewDataError(submitter, accessionVersion, organism)
+            handleGetSequenceEntryVersionWithErrorsDataError(submitter, accessionVersion, organism)
         }
 
         return selectedSequenceEntries.first().let {
-            SequenceEntryReview(
+            SequenceEntryVersionToEdit(
                 it[SequenceEntriesTable.accession],
                 it[SequenceEntriesTable.version],
                 Status.fromString(it[SequenceEntriesTable.status]),
@@ -686,7 +692,7 @@ class DatabaseService(
         }
     }
 
-    private fun handleGetReviewDataError(
+    private fun handleGetSequenceEntryVersionWithErrorsDataError(
         submitter: String,
         accessionVersion: AccessionVersion,
         organism: Organism,
@@ -733,7 +739,7 @@ class DatabaseService(
         }
 
         throw RuntimeException(
-            "Get review data: Unexpected error for accession version ${accessionVersion.displayAccessionVersion()}",
+            "Get edited data: Unexpected error for accession version ${accessionVersion.displayAccessionVersion()}",
         )
     }
 

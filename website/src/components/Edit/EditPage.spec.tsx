@@ -4,15 +4,15 @@ import userEvent from '@testing-library/user-event';
 import { sentenceCase } from 'change-case';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { ReviewPage } from './ReviewPage.tsx';
-import type { MetadataField, SequenceEntryReview } from '../../types/backend.ts';
+import { EditPage } from './EditPage.tsx';
+import type { MetadataField, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { testAccessToken, testOrganism } from '../vitest.setup.ts';
 
 const queryClient = new QueryClient();
 const metadataKey = 'originalMetaDataField';
 const editableEntry = 'originalMetaDataValue';
-const defaultReviewData: SequenceEntryReview = {
+const defaultReviewData: SequenceEntryToEdit = {
     accession: '1',
     version: 1,
     status: 'HAS_ERRORS',
@@ -70,15 +70,12 @@ const defaultReviewData: SequenceEntryReview = {
 
 const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 
-function renderReviewPage(
-    reviewData: SequenceEntryReview = defaultReviewData,
-    clientConfig: ClientConfig = dummyConfig,
-) {
+function renderEditPage(editedData: SequenceEntryToEdit = defaultReviewData, clientConfig: ClientConfig = dummyConfig) {
     render(
         <QueryClientProvider client={queryClient}>
-            <ReviewPage
+            <EditPage
                 organism={testOrganism}
-                reviewData={reviewData}
+                dataToEdit={editedData}
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
             />
@@ -86,7 +83,7 @@ function renderReviewPage(
     );
 }
 
-describe('ReviewPage', () => {
+describe('EditPage', () => {
     beforeEach(() => {
         Object.defineProperty(window, 'location', {
             value: {
@@ -96,9 +93,9 @@ describe('ReviewPage', () => {
     });
 
     test('should render the form with submit button', async () => {
-        renderReviewPage();
+        renderEditPage();
 
-        const submitButton = screen.getByRole('button', { name: /Submit Review/i });
+        const submitButton = screen.getByRole('button', { name: /Submit/i });
         expect(submitButton).toBeInTheDocument();
 
         // jsdom cannot do HTMLDialogElements: https://github.com/testing-library/react-testing-library/issues/1106
@@ -106,7 +103,7 @@ describe('ReviewPage', () => {
     });
 
     test('should show original data and processed data', async () => {
-        renderReviewPage();
+        renderEditPage();
 
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
         expectTextInSequenceData.original(defaultReviewData.originalData.metadata);
@@ -132,14 +129,14 @@ describe('ReviewPage', () => {
     });
 
     test('should show error and warning tooltips', async () => {
-        renderReviewPage();
+        renderEditPage();
 
         expect(document.querySelector('.tooltip[data-tip="errorMessage"]')).toBeTruthy();
         expect(document.querySelector('.tooltip[data-tip="warningMessage"]')).toBeTruthy();
     });
 
     test('should edit, show errors and undo input', async () => {
-        renderReviewPage();
+        renderEditPage();
 
         await userEvent.click(screen.getByDisplayValue(editableEntry));
 

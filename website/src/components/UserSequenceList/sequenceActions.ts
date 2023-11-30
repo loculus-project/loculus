@@ -72,15 +72,15 @@ export type SingleSequenceAction = {
 };
 export type SingleSequenceActionName = keyof typeof singleSequenceActions;
 
-const reviewAction: SingleSequenceAction = {
-    name: 'review',
-    tableHeader: 'Link to Review',
+const editAction: SingleSequenceAction = {
+    name: 'edit',
+    tableHeader: 'Link to Edit Page',
     actionOnSequenceEntry: async (organism, selectedSequence) => {
-        window.location.href = routes.reviewPage(organism, selectedSequence);
+        window.location.href = routes.editPage(organism, selectedSequence);
     },
 };
 export const singleSequenceActions = {
-    review: reviewAction,
+    edit: editAction,
 } as const;
 
 const pluralizeWord = (word: string, count: number) => (count === 1 ? word : `${word}s`);

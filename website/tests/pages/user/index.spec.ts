@@ -3,7 +3,10 @@ import { submitRevisedDataViaApi } from '../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
 test.describe('The user page', () => {
-    test('should show sequence entries, their status and a link to reviews', async ({ userPage, loginAsTestUser }) => {
+    test('should show sequence entries, their status and a link to the editPage', async ({
+        userPage,
+        loginAsTestUser,
+    }) => {
         const { token } = await loginAsTestUser();
 
         const sequenceEntryAwaitingApproval = (await prepareDataToBe('awaitingApproval', token, 1))[0];

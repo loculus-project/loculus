@@ -108,7 +108,7 @@ class SubmitProcessedDataEndpointTest(
             Status.AWAITING_APPROVAL,
         )
 
-        submissionControllerClient.getSequenceEntryThatNeedsReview(accession = "3", version = 1)
+        submissionControllerClient.getSequenceEntryThatHasErrors(accession = "3", version = 1)
             .andExpect(status().isOk)
             .andExpect(
                 jsonPath("\$.processedData.nucleotideInsertions")
@@ -136,7 +136,7 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I submit data with errors THEN the sequence entry is in status needs review`() {
+    fun `WHEN I submit data with errors THEN the sequence entry is in status has errors`() {
         prepareExtractedSequencesInDatabase()
 
         submissionControllerClient.submitProcessedData(PreparedProcessedData.withErrors(firstAccession))
@@ -147,7 +147,7 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN I submitted invalid data and errors THEN the sequence entry is in status needs review`() {
+    fun `GIVEN I submitted invalid data and errors THEN the sequence entry is in status has errors`() {
         convenienceClient.submitDefaultFiles()
         convenienceClient.extractUnprocessedData(1)
         submissionControllerClient.submitProcessedData(

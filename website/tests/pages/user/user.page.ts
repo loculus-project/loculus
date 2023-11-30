@@ -1,9 +1,9 @@
 import type { Page } from '@playwright/test';
 
+import { routes } from '../../../src/routes.ts';
 import type { AccessionVersion, SequenceEntryStatus } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl, dummyOrganism } from '../../e2e.fixture';
-import { routes } from '../../../src/routes.ts';
 
 export class UserPage {
     private readonly sequenceBoxNames = [
@@ -58,12 +58,12 @@ export class UserPage {
         return rowsWithCorrectEntries.length === sequencesToCheck.length;
     }
 
-    public async clickOnReviewForSequenceEntry(accessionToCheck: AccessionVersion) {
-        const testIdOfButton = `${getAccessionVersionString(accessionToCheck)}.review`;
-        const reviewButton = this.page.getByTestId(testIdOfButton);
-        await reviewButton.click();
+    public async clickOnEditForSequenceEntry(accessionToCheck: AccessionVersion) {
+        const testIdOfButton = `${getAccessionVersionString(accessionToCheck)}.edit`;
+        const editButton = this.page.getByTestId(testIdOfButton);
+        await editButton.click();
 
-        await this.page.waitForURL(`${baseUrl}${routes.reviewPage(dummyOrganism.key, accessionToCheck)}`, {
+        await this.page.waitForURL(`${baseUrl}${routes.editPage(dummyOrganism.key, accessionToCheck)}`, {
             waitUntil: 'networkidle',
         });
     }

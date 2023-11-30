@@ -5,8 +5,8 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.AccessionVersionInterface
 import org.pathoplexus.backend.api.ProcessedData
-import org.pathoplexus.backend.api.SequenceEntryReview
 import org.pathoplexus.backend.api.SequenceEntryStatus
+import org.pathoplexus.backend.api.SequenceEntryVersionToEdit
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedProcessedData
@@ -161,24 +161,24 @@ class SubmissionConvenienceClient(
             ?: error("Did not find $accession.$version for $userName")
     }
 
-    fun getSequenceEntryThatNeedsReview(
+    fun getSequenceEntryThatHasErrors(
         accession: Accession,
         version: Long,
         userName: String = USER_NAME,
-    ): SequenceEntryReview =
+    ): SequenceEntryVersionToEdit =
         deserializeJsonResponse(
-            client.getSequenceEntryThatNeedsReview(
+            client.getSequenceEntryThatHasErrors(
                 accession = accession,
                 version = version,
                 jwt = generateJwtForUser(userName),
             ),
         )
 
-    fun submitDefaultReviewedData(
+    fun submitDefaultEditedData(
         userName: String = USER_NAME,
     ) {
         DefaultFiles.allAccessions.forEach { accession ->
-            client.submitReviewedSequenceEntry(
+            client.submitEditedSequenceEntryVersion(
                 UnprocessedData(accession, 1L, defaultOriginalData),
                 jwt = generateJwtForUser(userName),
             )

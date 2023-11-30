@@ -1,10 +1,10 @@
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
 import type { Accession, AccessionVersion } from '../../src/types/backend.ts';
-import { backendClient, dummyOrganism, testSequenceCount } from '../e2e.fixture.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
+import { backendClient, dummyOrganism, testSequenceCount } from '../e2e.fixture.ts';
 
-export const submitViaApi = async (numberOfSequences: number = testSequenceCount, token: string) => {
-    const fileContent = createFileContent(numberOfSequences);
+export const submitViaApi = async (numberOfSequenceEntries: number = testSequenceCount, token: string) => {
+    const fileContent = createFileContent(numberOfSequenceEntries);
 
     const response = await backendClient.call(
         'submit',
@@ -50,7 +50,7 @@ export const approveProcessedData = async (accessionVersions: AccessionVersion[]
 
     const response = await backendClient.call('approveProcessedData', body, {
         params: { organism: dummyOrganism.key },
-        headers: createAuthorizationHeader(token!),
+        headers: createAuthorizationHeader(token),
     });
 
     if (response.isErr()) {

@@ -7,30 +7,30 @@ import { testSequenceCount } from '../e2e.fixture.ts';
 export const prepareDataToBe = (
     state: 'approvedForRelease' | 'erroneous' | 'awaitingApproval',
     token: string,
-    numberOfSequences: number = testSequenceCount,
+    numberOfSequenceEntries: number = testSequenceCount,
 ): Promise<AccessionVersion[]> => {
     switch (state) {
         case 'approvedForRelease':
-            return prepareDataToBeApprovedForRelease(numberOfSequences, token);
+            return prepareDataToBeApprovedForRelease(numberOfSequenceEntries, token);
         case 'erroneous':
-            return prepareDataToHaveErrors(numberOfSequences, token);
+            return prepareDataToHaveErrors(numberOfSequenceEntries, token);
         case 'awaitingApproval':
-            return prepareDataToBeAwaitingApproval(numberOfSequences, token);
+            return prepareDataToBeAwaitingApproval(numberOfSequenceEntries, token);
     }
 };
 
 const absurdlyManySoThatAllSequencesAreInProcessing = 10_000;
 
-async function prepareDataToBeProcessing(numberOfSequences: number, token: string) {
-    const submittedSequences = await submitViaApi(numberOfSequences, token);
+async function prepareDataToBeProcessing(numberOfSequenceEntries: number, token: string) {
+    const submittedSequences = await submitViaApi(numberOfSequenceEntries, token);
 
     await fakeProcessingPipeline.query(absurdlyManySoThatAllSequencesAreInProcessing);
 
     return submittedSequences;
 }
 
-const prepareDataToHaveErrors = async (numberOfSequences: number = testSequenceCount, token: string) => {
-    const sequenceEntries = await prepareDataToBeProcessing(numberOfSequences, token);
+const prepareDataToHaveErrors = async (numberOfSequenceEntries: number = testSequenceCount, token: string) => {
+    const sequenceEntries = await prepareDataToBeProcessing(numberOfSequenceEntries, token);
 
     const options: PreprocessingOptions[] = sequenceEntries
         .map(extractAccessionVersion)
@@ -40,8 +40,8 @@ const prepareDataToHaveErrors = async (numberOfSequences: number = testSequenceC
     return sequenceEntries;
 };
 
-const prepareDataToBeAwaitingApproval = async (numberOfSequences: number = testSequenceCount, token: string) => {
-    const sequenceEntries = await prepareDataToBeProcessing(numberOfSequences, token);
+const prepareDataToBeAwaitingApproval = async (numberOfSequenceEntries: number = testSequenceCount, token: string) => {
+    const sequenceEntries = await prepareDataToBeProcessing(numberOfSequenceEntries, token);
 
     const options: PreprocessingOptions[] = sequenceEntries.map((sequence) => ({ ...sequence, error: false }));
     await fakeProcessingPipeline.submit(options);
@@ -49,8 +49,11 @@ const prepareDataToBeAwaitingApproval = async (numberOfSequences: number = testS
     return sequenceEntries;
 };
 
-const prepareDataToBeApprovedForRelease = async (numberOfSequences: number = testSequenceCount, token: string) => {
-    const sequenceEntries = await prepareDataToBeAwaitingApproval(numberOfSequences, token);
+const prepareDataToBeApprovedForRelease = async (
+    numberOfSequenceEntries: number = testSequenceCount,
+    token: string,
+) => {
+    const sequenceEntries = await prepareDataToBeAwaitingApproval(numberOfSequenceEntries, token);
 
     await approveProcessedData(sequenceEntries, token);
 
