@@ -18,6 +18,10 @@ jobs:
       uses: actions/checkout@v3
       with:
         ref: ${{ github.ref }}
+    - name: Get SHA - length 7
+      id: get_sha
+      run: |
+        echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
 
     # - name: Wait for Backend Docker Image
     #   uses: lewagon/wait-on-check-action@v1.3.1
@@ -44,7 +48,9 @@ jobs:
         # Assuming config.json is in the root directory of the repository
         # Perform necessary modifications here. Example:
         echo '{
-          "new_key": "new_value"
+          "branch" : "main",
+          "number" : 999,
+          "head_short_sha_7": "${{ steps.get_sha.outputs.sha }}"
         }' > config.json
 
     - name: Commit and Push Changes
