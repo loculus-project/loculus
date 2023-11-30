@@ -1,4 +1,4 @@
-{{- $dockerTag := include "pathoplexus.dockerTag" (dict "branch" .Values.branch "sha" .Values.sha) }}
+{{- $dockerTag := printf "commit-%s" .Values.sha }}
 ---
 apiVersion: apps/v1
 kind: Deployment

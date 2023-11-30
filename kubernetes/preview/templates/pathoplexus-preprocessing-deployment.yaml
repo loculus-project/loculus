@@ -1,4 +1,4 @@
-{{- $dockerTag := "commit-" + .Values.sha }}
+{{ $dockerTag := "commit-" + .Values.sha }}
 {{ $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{ $namespace := .Values.namespace }}
 {{ $backendHost := .Values.disableBackend | ternary
