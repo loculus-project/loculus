@@ -19,19 +19,19 @@ jobs:
       with:
         ref: ${{ github.ref }}
 
-    - name: Wait for Backend Docker Image
-      uses: lewagon/wait-on-check-action@v1.3.1
-      with:
-        ref: ${{ github.ref }}
-        check-name: Build Backend Docker Image
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+    # - name: Wait for Backend Docker Image
+    #   uses: lewagon/wait-on-check-action@v1.3.1
+    #   with:
+    #     ref: ${{ github.ref }}
+    #     check-name: Build Backend Docker Image
+    #     repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Wait for Website Docker Image
-      uses: lewagon/wait-on-check-action@v1.3.1
-      with:
-        ref: ${{ github.ref }}
-        check-name: Build Website Docker Image
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+    # - name: Wait for Website Docker Image
+    #   uses: lewagon/wait-on-check-action@v1.3.1
+    #   with:
+    #     ref: ${{ github.ref }}
+    #     check-name: Build Website Docker Image
+    #     repo-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Checkout External Repository
       uses: actions/checkout@v3
