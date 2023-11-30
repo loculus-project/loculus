@@ -10,7 +10,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class SubmitReviewedSequenceEndpointTest(
+class SubmitEditedSequenceEntryVersionEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
@@ -18,7 +18,7 @@ class SubmitReviewedSequenceEndpointTest(
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
-            client.submitReviewedSequenceEntry(
+            client.submitEditedSequenceEntryVersion(
                 generateUnprocessedData("1"),
                 jwt = it,
             )
@@ -26,14 +26,14 @@ class SubmitReviewedSequenceEndpointTest(
     }
 
     @Test
-    fun `GIVEN a sequence entry needs review WHEN I submit reviewed data THEN the status changes to REVIEWED`() {
+    fun `GIVEN a sequence entry has errors WHEN I submit edited data THEN the status changes to RECEIVED`() {
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedData = generateUnprocessedData("1")
-        client.submitReviewedSequenceEntry(reviewedData)
+        val editedData = generateUnprocessedData("1")
+        client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
@@ -41,15 +41,15 @@ class SubmitReviewedSequenceEndpointTest(
     }
 
     @Test
-    fun `GIVEN a sequence entry is processed WHEN I submit a review THEN the status changes to REVIEWED`() {
+    fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN the status changes to RECEIVED`() {
         convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
 
-        val reviewedData = generateUnprocessedData("1")
+        val editedData = generateUnprocessedData("1")
 
-        client.submitReviewedSequenceEntry(reviewedData)
+        client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
@@ -63,10 +63,10 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedDataWithNonExistingVersion = generateUnprocessedData(firstAccession, version = 2)
-        val sequenceString = getAccessionVersion(reviewedDataWithNonExistingVersion)
+        val editedDataWithNonExistingVersion = generateUnprocessedData(firstAccession, version = 2)
+        val sequenceString = getAccessionVersion(editedDataWithNonExistingVersion)
 
-        client.submitReviewedSequenceEntry(reviewedDataWithNonExistingVersion)
+        client.submitEditedSequenceEntryVersion(editedDataWithNonExistingVersion)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail")
@@ -81,10 +81,10 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedDataWithNonExistingAccession = generateUnprocessedData("2")
-        val sequenceString = getAccessionVersion(reviewedDataWithNonExistingAccession)
+        val editedDataWithNonExistingAccession = generateUnprocessedData("2")
+        val sequenceString = getAccessionVersion(editedDataWithNonExistingAccession)
 
-        client.submitReviewedSequenceEntry(reviewedDataWithNonExistingAccession)
+        client.submitEditedSequenceEntryVersion(editedDataWithNonExistingAccession)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail").value(
@@ -103,10 +103,10 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedData = generateUnprocessedData(firstAccession)
-        val sequenceString = getAccessionVersion(reviewedData)
+        val editedData = generateUnprocessedData(firstAccession)
+        val sequenceString = getAccessionVersion(editedData)
 
-        client.submitReviewedSequenceEntry(reviewedData, organism = OTHER_ORGANISM)
+        client.submitEditedSequenceEntryVersion(editedData, organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath(
@@ -126,12 +126,12 @@ class SubmitReviewedSequenceEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val reviewedDataFromWrongSubmitter = generateUnprocessedData(firstAccession)
-        val sequenceString = "${reviewedDataFromWrongSubmitter.accession}." +
-            "${reviewedDataFromWrongSubmitter.version}"
+        val editedDataFromWrongSubmitter = generateUnprocessedData(firstAccession)
+        val sequenceString = "${editedDataFromWrongSubmitter.accession}." +
+            "${editedDataFromWrongSubmitter.version}"
         val nonExistingUser = "whoseNameMayNotBeMentioned"
 
-        client.submitReviewedSequenceEntry(reviewedDataFromWrongSubmitter, jwt = generateJwtForUser(nonExistingUser))
+        client.submitEditedSequenceEntryVersion(editedDataFromWrongSubmitter, jwt = generateJwtForUser(nonExistingUser))
             .andExpect(status().isForbidden)
             .andExpect(
                 jsonPath("\$.detail").value(

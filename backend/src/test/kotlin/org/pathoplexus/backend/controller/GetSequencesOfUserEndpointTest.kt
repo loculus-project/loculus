@@ -81,7 +81,7 @@ class GetSequencesOfUserEndpointTest(
                 expectedIsRevocation = false,
             ),
             Scenario(
-                setupDescription = "I submitted sequence entries that need review",
+                setupDescription = "I submitted sequence entries that have errors",
                 prepareDatabase = { it.prepareDefaultSequenceEntriesToHasErrors() },
                 expectedStatus = Status.HAS_ERRORS,
                 expectedIsRevocation = false,

@@ -1,28 +1,28 @@
 import type { Page } from '@playwright/test';
 
+import { routes } from '../../../src/routes.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl, dummyOrganism, expect } from '../../e2e.fixture';
-import { routes } from '../../../src/routes.ts';
 
-export class ReviewPage {
+export class EditPage {
     private readonly submitButton;
     private readonly downloadButton;
 
     constructor(public readonly page: Page) {
-        this.submitButton = this.page.getByRole('button', { name: 'Submit review' });
+        this.submitButton = this.page.getByRole('button', { name: 'Submit' });
         this.downloadButton = this.page.getByRole('button', { name: 'Download', exact: false });
     }
 
     public async goto(accessionVersion: AccessionVersion) {
-        await this.page.goto(`${baseUrl}${routes.reviewPage(dummyOrganism.key, accessionVersion)}`, {
+        await this.page.goto(`${baseUrl}${routes.editPage(dummyOrganism.key, accessionVersion)}`, {
             waitUntil: 'networkidle',
         });
     }
 
     public async submit() {
         await this.submitButton.click();
-        expect(await this.page.isVisible('text=Do you really want to submit your review?')).toBe(true);
+        expect(await this.page.isVisible('text=Do you really want to submit?')).toBe(true);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
         await this.page.waitForURL(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key)}`);
     }
@@ -38,12 +38,12 @@ export class ReviewPage {
         expect(downloadStream).toBeDefined();
 
         let downloadData = Buffer.from([]);
-        downloadStream!.on('data', (chunk) => {
+        downloadStream.on('data', (chunk) => {
             downloadData = Buffer.concat([downloadData, chunk]);
         });
 
         await new Promise<void>((resolve) => {
-            downloadStream!.on('end', resolve);
+            downloadStream.on('end', resolve);
         });
 
         expect(downloadData.toString()).toContain(`>${getAccessionVersionString(accessionVersion)}.main

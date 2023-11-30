@@ -13,8 +13,8 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
                 headers: createAuthorizationHeader(token),
             }),
 
-        getDataToReview: (organism: string, token: string, accession: string, version: string | number) =>
-            this.call('getDataToReview', {
+        getDataToEdit: (organism: string, token: string, accession: string, version: string | number) =>
+            this.call('getDataToEdit', {
                 params: { accession, version, organism },
                 headers: createAuthorizationHeader(token),
             }),

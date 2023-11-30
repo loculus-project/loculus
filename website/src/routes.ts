@@ -12,8 +12,8 @@ export const routes = {
     sequencesDetailsPage: (organism: string, accessionVersion: string) => `/${organism}/sequences/${accessionVersion}`,
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
-    reviewPage: (organism: string, accessionVersion: AccessionVersion) =>
-        withOrganism(organism, `/user/review/${accessionVersion.accession}/${accessionVersion.version}`),
+    editPage: (organism: string, accessionVersion: AccessionVersion) =>
+        withOrganism(organism, `/user/edit/${accessionVersion.accession}/${accessionVersion.version}`),
     userOverviewPage: (organism?: string | undefined) => {
         const userPagePath = `/user` as const;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);

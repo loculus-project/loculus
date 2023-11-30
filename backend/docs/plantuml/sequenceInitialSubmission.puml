@@ -19,11 +19,11 @@
 
     loop until no processing errors
 
-        processing -> backend: Query initial/reviewed sequence data
-        backend -> DB: Query initial/reviewed sequence data
+        processing -> backend: Query initial/edited sequence data
+        backend -> DB: Query initial/edited sequence data
         backend -> DB: Set status from 'RECEIVED'/'HAS_ERRORS' to 'IN_PROCESSING'
-        DB --> backend: initial/reviewed sequence data
-        backend --> processing: initial/reviewed sequence data
+        DB --> backend: initial/edited sequence data
+        backend --> processing: initial/edited sequence data
 
         processing -> backend: submit processed sequence data
         alt validation errors occur
@@ -42,10 +42,10 @@
             backend -> DB: set status to 'AWAITING_APPROVAL'
         end
          frontend -> backend: query processed sequence data with errors
-        frontend -> frontend: address errors and adapt sequence data
+        frontend -> frontend: address errors and edit sequence data
 
-        frontend -> backend: submit adapted sequence data
-        backend -> DB: store adapted sequence data
+        frontend -> backend: submit edited sequence data
+        backend -> DB: store edited sequence data
         backend -> DB: set status to 'RECEIVED'
     end loop
 

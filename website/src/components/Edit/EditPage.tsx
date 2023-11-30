@@ -6,7 +6,7 @@ import type { Row } from './InputField.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryReview } from '../../types/backend.ts';
+import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
@@ -14,28 +14,28 @@ import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
-type ReviewPageProps = {
+type EditPageProps = {
     organism: string;
     clientConfig: ClientConfig;
-    reviewData: SequenceEntryReview;
+    dataToEdit: SequenceEntryToEdit;
     accessToken: string;
 };
 
-const logger = getClientLogger('ReviewPage');
+const logger = getClientLogger('EditPage');
 
-const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConfig, accessToken }: ReviewPageProps) => {
-    const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(reviewData));
-    const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(reviewData));
+const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, accessToken }: EditPageProps) => {
+    const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
+    const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
 
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     const dialogRef = useRef<HTMLDialogElement>(null);
 
-    const { mutate: submitReviewedSequence } = useSubmitReviewedSequence(
+    const { mutate: submitEditedSequence } = useSubmitEditedSequence(
         organism,
         clientConfig,
         accessToken,
-        reviewData,
+        dataToEdit,
         openErrorFeedback,
     );
 
@@ -45,10 +45,10 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConf
         }
     };
 
-    const submitReviewForAccessionVersion = async () => {
+    const submitEditedDataForAccessionVersion = async () => {
         const data = {
-            accession: reviewData.accession,
-            version: reviewData.version,
+            accession: dataToEdit.accession,
+            version: dataToEdit.version,
             data: {
                 metadata: editedMetadata.reduce((prev, row) => ({ ...prev, [row.key]: row.value }), {}),
                 unalignedNucleotideSequences: editedSequences.reduce(
@@ -57,11 +57,11 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConf
                 ),
             },
         };
-        submitReviewedSequence(data);
+        submitEditedSequence(data);
     };
 
-    const processedSequenceRows = useMemo(() => extractProcessedSequences(reviewData), [reviewData]);
-    const processedInsertions = useMemo(() => extractInsertions(reviewData), [reviewData]);
+    const processedSequenceRows = useMemo(() => extractProcessedSequences(dataToEdit), [dataToEdit]);
+    const processedInsertions = useMemo(() => extractInsertions(dataToEdit), [dataToEdit]);
 
     return (
         <>
@@ -69,12 +69,12 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConf
 
             <div className='flex items-center gap-4'>
                 <button className='btn normal-case' onClick={handleOpenConfirmationDialog}>
-                    Submit Review
+                    Submit
                 </button>
 
                 <button
                     className='btn normal-case'
-                    onClick={() => generateAndDownloadFastaFile(editedSequences, reviewData)}
+                    onClick={() => generateAndDownloadFastaFile(editedSequences, dataToEdit)}
                 >
                     Download Sequences as fasta file
                 </button>
@@ -82,8 +82,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConf
 
             <dialog ref={dialogRef} className='modal'>
                 <ConfirmationDialog
-                    dialogText='Do you really want to submit your review?'
-                    onConfirmation={submitReviewForAccessionVersion}
+                    dialogText='Do you really want to submit?'
+                    onConfirmation={submitEditedDataForAccessionVersion}
                 />
             </dialog>
 
@@ -100,7 +100,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConf
                     />
 
                     <Subtitle title='Processed Data' bold />
-                    <ProcessedMetadata processedMetadata={reviewData.processedData.metadata} />
+                    <ProcessedMetadata processedMetadata={dataToEdit.processedData.metadata} />
                     <ProcessedSequences
                         processedSequenceRows={processedSequenceRows}
                         sequenceType='unalignedNucleotideSequences'
@@ -127,24 +127,24 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ organism, reviewData, clientConf
     );
 };
 
-export const ReviewPage = withQueryProvider(InnerReviewPage);
+export const EditPage = withQueryProvider(InnerEditPage);
 
-function useSubmitReviewedSequence(
+function useSubmitEditedSequence(
     organism: string,
     clientConfig: ClientConfig,
     accessToken: string,
-    reviewData: SequenceEntryReview,
+    reviewData: SequenceEntryToEdit,
     openErrorFeedback: (message: string) => void,
 ) {
     return backendClientHooks(clientConfig).useSubmitReviewedSequence(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onSuccess: async () => {
-                await logger.info('Successfully submitted review ' + getAccessionVersionString(reviewData));
+                await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));
                 location.href = routes.userSequencesPage(organism);
             },
             onError: async (error) => {
-                const message = `Failed to submit review for ${getAccessionVersionString(
+                const message = `Failed to submit edited data for ${getAccessionVersionString(
                     reviewData,
                 )} with error '${JSON.stringify(error)})}'`;
                 await logger.info(message);
@@ -154,8 +154,8 @@ function useSubmitReviewedSequence(
     );
 }
 
-function generateAndDownloadFastaFile(editedSequences: Row[], reviewData: SequenceEntryReview) {
-    const accessionVersion = getAccessionVersionString(reviewData);
+function generateAndDownloadFastaFile(editedSequences: Row[], editedData: SequenceEntryToEdit) {
+    const accessionVersion = getAccessionVersionString(editedData);
     const fileContent = editedSequences
         .map((sequence) => `>${accessionVersion}.${sequence.key}\n${sequence.value}\n\n`)
         .join();
@@ -271,42 +271,42 @@ const ProcessedInsertions: FC<ProcessedInsertionsProps> = ({ processedInsertions
     </>
 );
 
-const mapMetadataToRow = (reviewData: SequenceEntryReview): Row[] =>
-    Object.entries(reviewData.originalData.metadata).map(([key, value]) => ({
+const mapMetadataToRow = (editedData: SequenceEntryToEdit): Row[] =>
+    Object.entries(editedData.originalData.metadata).map(([key, value]) => ({
         key,
         initialValue: value.toString(),
         value: value.toString(),
-        ...mapErrorsAndWarnings(reviewData, key, 'Metadata'),
+        ...mapErrorsAndWarnings(editedData, key, 'Metadata'),
     }));
 
-const mapSequencesToRow = (reviewData: SequenceEntryReview): Row[] =>
-    Object.entries(reviewData.originalData.unalignedNucleotideSequences).map(([key, value]) => ({
+const mapSequencesToRow = (editedData: SequenceEntryToEdit): Row[] =>
+    Object.entries(editedData.originalData.unalignedNucleotideSequences).map(([key, value]) => ({
         key,
         initialValue: value.toString(),
         value: value.toString(),
-        ...mapErrorsAndWarnings(reviewData, key, 'NucleotideSequence'),
+        ...mapErrorsAndWarnings(editedData, key, 'NucleotideSequence'),
     }));
 
-const extractProcessedSequences = (reviewData: SequenceEntryReview) => ({
-    unalignedNucleotideSequences: reviewData.processedData.unalignedNucleotideSequences,
-    alignedNucleotideSequences: reviewData.processedData.alignedNucleotideSequences,
-    alignedAminoAcidSequences: reviewData.processedData.alignedAminoAcidSequences,
+const extractProcessedSequences = (editedData: SequenceEntryToEdit) => ({
+    unalignedNucleotideSequences: editedData.processedData.unalignedNucleotideSequences,
+    alignedNucleotideSequences: editedData.processedData.alignedNucleotideSequences,
+    alignedAminoAcidSequences: editedData.processedData.alignedAminoAcidSequences,
 });
 
-const extractInsertions = (reviewData: SequenceEntryReview) => ({
-    nucleotideInsertions: reviewData.processedData.nucleotideInsertions,
-    aminoAcidInsertions: reviewData.processedData.aminoAcidInsertions,
+const extractInsertions = (editedData: SequenceEntryToEdit) => ({
+    nucleotideInsertions: editedData.processedData.nucleotideInsertions,
+    aminoAcidInsertions: editedData.processedData.aminoAcidInsertions,
 });
 
 const mapErrorsAndWarnings = (
-    reviewData: SequenceEntryReview,
+    editedData: SequenceEntryToEdit,
     key: string,
     type: ProcessingAnnotationSourceType,
 ): { errors: string[]; warnings: string[] } => ({
-    errors: (reviewData.errors ?? [])
+    errors: (editedData.errors ?? [])
         .filter((error) => error.source.find((source) => source.name === key && source.type === type) !== undefined)
         .map((error) => error.message),
-    warnings: (reviewData.warnings ?? [])
+    warnings: (editedData.warnings ?? [])
         .filter((warning) => warning.source.find((source) => source.name === key && source.type === type) !== undefined)
         .map((warning) => warning.message),
 });

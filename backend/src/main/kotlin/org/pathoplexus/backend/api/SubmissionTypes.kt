@@ -44,7 +44,7 @@ data class SubmittedProcessedData(
     val warnings: List<PreprocessingAnnotation>? = null,
 ) : AccessionVersionInterface
 
-data class SequenceEntryReview(
+data class SequenceEntryVersionToEdit(
     override val accession: Accession,
     override val version: Version,
     val status: Status,

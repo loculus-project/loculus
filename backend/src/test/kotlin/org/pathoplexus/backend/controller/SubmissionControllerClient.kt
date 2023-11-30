@@ -72,38 +72,38 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .withAuth(jwt),
         )
 
-    fun getSequenceEntryThatNeedsReview(
+    fun getSequenceEntryThatHasErrors(
         accession: Accession,
         version: Long,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions =
         mockMvc.perform(
-            get(addOrganismToPath("/get-data-to-review/$accession/$version", organism = organism))
+            get(addOrganismToPath("/get-data-to-edit/$accession/$version", organism = organism))
                 .withAuth(jwt),
         )
 
-    fun getNumberOfSequenceEntriesThatNeedReview(
-        numberOfSequences: Int,
+    fun getNumberOfSequenceEntriesThatHaveErrors(
+        numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions =
         mockMvc.perform(
-            get(addOrganismToPath("/get-data-to-review", organism = organism))
+            get(addOrganismToPath("/get-data-to-edit", organism = organism))
                 .withAuth(jwt)
-                .param("numberOfSequenceEntries", numberOfSequences.toString()),
+                .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
         )
 
-    fun submitReviewedSequenceEntry(
-        reviewedData: UnprocessedData,
+    fun submitEditedSequenceEntryVersion(
+        editedData: UnprocessedData,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions {
         return mockMvc.perform(
-            post(addOrganismToPath("/submit-reviewed-sequence", organism = organism))
+            post(addOrganismToPath("/submit-edited-data", organism = organism))
                 .withAuth(jwt)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(reviewedData)),
+                .content(objectMapper.writeValueAsString(editedData)),
         )
     }
 
@@ -155,7 +155,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         jwt: String? = jwtForDefaultUser,
     ): ResultActions =
         mockMvc.perform(
-            delete(addOrganismToPath("/delete-sequences", organism = organism))
+            delete(addOrganismToPath("/delete-sequence-entry-versions", organism = organism))
                 .withAuth(jwt)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(

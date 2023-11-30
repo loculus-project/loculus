@@ -2,7 +2,7 @@ import { makeApi, makeEndpoint, makeErrors, makeParameters } from '@zodios/core'
 import z from 'zod';
 
 import {
-    accessionReview,
+    sequenceEntryToEdit,
     accessions,
     accessionVersionsObject,
     problemDetail,
@@ -75,12 +75,12 @@ const reviseEndpoint = makeEndpoint({
     ],
 });
 
-const getDataToReviewEndpoint = makeEndpoint({
+const getDataToEditEndpoint = makeEndpoint({
     method: 'get',
-    path: withOrganismPathSegment('/get-data-to-review/:accession/:version'),
-    alias: 'getDataToReview',
+    path: withOrganismPathSegment('/get-data-to-edit/:accession/:version'),
+    alias: 'getDataToEdit',
     parameters: [authorizationHeader],
-    response: accessionReview,
+    response: sequenceEntryToEdit,
     errors: [notAuthorizedError],
 });
 
@@ -102,7 +102,7 @@ const revokeSequencesEndpoint = makeEndpoint({
 
 const submitReviewedSequenceEndpoint = makeEndpoint({
     method: 'post',
-    path: withOrganismPathSegment('/submit-reviewed-sequence'),
+    path: withOrganismPathSegment('/submit-edited-data'),
     alias: 'submitReviewedSequence',
     parameters: [
         authorizationHeader,
@@ -143,7 +143,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
 
 const deleteSequencesEndpoint = makeEndpoint({
     method: 'delete',
-    path: withOrganismPathSegment('/delete-sequences'),
+    path: withOrganismPathSegment('/delete-sequence-entry-versions'),
     alias: 'deleteSequences',
     parameters: [
         authorizationHeader,
@@ -208,7 +208,7 @@ const submitProcessedDataEndpoint = makeEndpoint({
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
-    getDataToReviewEndpoint,
+    getDataToEditEndpoint,
     revokeSequencesEndpoint,
     submitReviewedSequenceEndpoint,
     getSequencesOfUserEndpoint,

@@ -9,7 +9,7 @@ const sequenceEntryStatusNames = z.union([
     z.literal('AWAITING_APPROVAL_FOR_REVOCATION'),
 ]);
 export type SequenceEntryStatusNames = z.infer<typeof sequenceEntryStatusNames>;
-const statusThatAllowsReview = z.union([z.literal('HAS_ERRORS'), z.literal('AWAITING_APPROVAL')]);
+const statusThatAllowsEditing = z.union([z.literal('HAS_ERRORS'), z.literal('AWAITING_APPROVAL')]);
 
 const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
 export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
@@ -83,9 +83,9 @@ export const processedData = accessionVersion.merge(
 
 export type ProcessedData = z.infer<typeof processedData>;
 
-export const accessionReview = accessionVersion.merge(
+export const sequenceEntryToEdit = accessionVersion.merge(
     z.object({
-        status: statusThatAllowsReview,
+        status: statusThatAllowsEditing,
         errors: z.array(processingAnnotation).nullable(),
         warnings: z.array(processingAnnotation).nullable(),
         originalData: z.object({
@@ -102,7 +102,7 @@ export const accessionReview = accessionVersion.merge(
         }),
     }),
 );
-export type SequenceEntryReview = z.infer<typeof accessionReview>;
+export type SequenceEntryToEdit = z.infer<typeof sequenceEntryToEdit>;
 
 export const submitFiles = z.object({
     metadataFile: z.instanceof(File),

@@ -1,6 +1,6 @@
 ---
+import { EditPage } from '../../../../../components/Edit/EditPage';
 import { BackButton } from '../../../../../components/Navigation/BackButton';
-import { ReviewPage } from '../../../../../components/Review/ReviewPage';
 import { getRuntimeConfig } from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../../../../services/backendClient';
@@ -13,7 +13,7 @@ const accessToken = getAccessToken(Astro.locals.session)!;
 
 const clientConfig = getRuntimeConfig().public;
 
-const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToReview(
+const dataToEdit = await BackendClient.create().astroFileTypeHelpers.getDataToEdit(
     organism,
     accessToken,
     accession,
@@ -21,20 +21,20 @@ const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToRe
 );
 ---
 
-<BaseLayout title={`Review ${accession}.${version}`}>
+<BaseLayout title={`Edit ${accession}.${version}`}>
     <div class='flex items-center mb-4'>
         <BackButton marginRight={2} client:load />
         <h1 class='title'>
-            Review for Id: {accession}.{version}
+            Edit Id: {accession}.{version}
         </h1>
     </div>
     {
-        reviewData.match(
-            (reviewData) => (
-                <ReviewPage
+        dataToEdit.match(
+            (dataToEdit) => (
+                <EditPage
                     organism={organism}
                     accessToken={accessToken}
-                    reviewData={reviewData}
+                    dataToEdit={dataToEdit}
                     clientConfig={clientConfig}
                     client:load
                 />
@@ -43,7 +43,7 @@ const reviewData = await BackendClient.create().astroFileTypeHelpers.getDataToRe
                 <>
                     <div class='flex items-center'>
                         <h1 class='subtitle'>
-                            Error while fetching review data for accession version: {accession}.{version}
+                            Error while fetching edited data for accession version: {accession}.{version}
                         </h1>
                     </div>
                     <div>{JSON.stringify(error)}</div>

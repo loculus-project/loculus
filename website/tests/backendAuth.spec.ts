@@ -10,7 +10,7 @@ const tokenSignedWithDifferentKey =
 
 test.describe('The backend', () => {
     test('should reject a call with a token that was not signed by Keycloak', async () => {
-        const response = await backendClient.call('getDataToReview', {
+        const response = await backendClient.call('getDataToEdit', {
             params: {
                 accession: '1',
                 version: 1,

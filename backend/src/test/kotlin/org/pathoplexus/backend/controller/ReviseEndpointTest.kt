@@ -156,7 +156,7 @@ class ReviseEndpointTest(
     }
 
     @ParameterizedTest(name = "GIVEN {0} THEN throws error \"{5}\"")
-    @MethodSource("badRequestForReview")
+    @MethodSource("badRequestForRevision")
     fun `GIVEN invalid data THEN throws bad request`(
         title: String,
         metadataFile: MockMultipartFile,
@@ -173,7 +173,7 @@ class ReviseEndpointTest(
 
     companion object {
         @JvmStatic
-        fun badRequestForReview(): List<Arguments> {
+        fun badRequestForRevision(): List<Arguments> {
             return listOf(
                 Arguments.of(
                     "metadata file with wrong submitted filename",

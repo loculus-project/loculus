@@ -35,7 +35,7 @@ const everyBulkActionImplemented: readonly BulkSequenceActionName[] = [
     'revoke',
     'confirmRevocation',
 ];
-const everySingleActionImplemented: readonly SingleSequenceActionName[] = ['review'];
+const everySingleActionImplemented: readonly SingleSequenceActionName[] = ['edit'];
 
 function renderSequenceTable(
     sequencesWithStatus: SequenceEntryStatus[] = [...defaultSequenceEntryStatuses],
@@ -101,15 +101,15 @@ describe('SequenceTable', () => {
         // await userEvent.click(deleteButton);
     });
 
-    test('should navigate to review page when single action "review" is clicked', async () => {
+    test('should navigate to edit page when single action "edit" is clicked', async () => {
         renderSequenceTable();
 
-        const accessionVersionToReview = defaultSequenceEntryStatuses[0];
+        const accessionVersionToEdit = defaultSequenceEntryStatuses[0];
 
-        const reviewButton = screen.getAllByRole('button', { name: sentenceCase(everySingleActionImplemented[0]) })[0];
-        expect(reviewButton).toBeDefined();
-        await userEvent.click(reviewButton);
+        const editButton = screen.getAllByRole('button', { name: sentenceCase(everySingleActionImplemented[0]) })[0];
+        expect(editButton).toBeDefined();
+        await userEvent.click(editButton);
 
-        expect(window.location.href).toBe(routes.reviewPage(testOrganism, accessionVersionToReview));
+        expect(window.location.href).toBe(routes.editPage(testOrganism, accessionVersionToEdit));
     });
 });

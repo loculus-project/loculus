@@ -14,7 +14,7 @@ link STAGING to RECEIVED--><path d="M464.4,353.82 C480.06,370.35 504.34,393.96 5
 link is_error to STAGING--><path d="M633.69,711.05 C606.09,695.67 507.74,636.73 468,557 C435.3,491.4 439.43,401.45 443.83,358.81 " fill="none" id="is_error-&gt;STAGING" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="444.4,353.61,439.4467,362.1226,443.8572,358.5805,447.3994,362.991,444.4,353.61" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="160" x="469" y="538.0669">preprocessing successful</text><!--MD5=[02300ae8e7ad78918d225c7341b59a84]
 link STAGING to is_approved--><path d="M419.42,353.68 C379.19,381.66 306.21,432.42 278.79,451.49 " fill="none" id="STAGING-&gt;is_approved" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="274.51,454.47,284.1809,452.6061,278.6122,451.6113,279.607,446.0426,274.51,454.47" style="stroke: #A80036; stroke-width: 1.0;"/><!--MD5=[607b734eed5ff8ea7f2e3b44565a9d4b]
 link is_approved to APPROVED_FOR_RELEASE--><path d="M257.36,461.65 C231.78,463.8 166.34,472.84 131,510 C112.53,529.42 105.78,560.2 103.34,581.66 " fill="none" id="is_approved-&gt;APPROVED_FOR_RELEASE" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="102.81,586.9,107.6906,578.3455,103.3103,581.9251,99.7307,577.5449,102.81,586.9" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="91" x="155" y="523.0669">user approves</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="141" x="132" y="538.1997">or automatic approval</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="128" x="140.5" y="553.3325">via 'release_directly'</text><!--MD5=[b50ba5a3ffd1889cac4ccf6b9cd683b6]
-link is_approved to DELETION--><path d="M270.44,470.07 C276.36,492.08 291.65,548.92 300.47,581.71 " fill="none" id="is_approved-&gt;DELETION" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="301.82,586.75,303.3427,577.0196,300.5201,581.9219,295.6178,579.0994,301.82,586.75" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="75" x="295" y="538.0669">user rejects</text><!--MD5=[5eb432e3c91b11b50aac5828dd96be1b]
+link is_approved to DELETION--><path d="M270.44,470.07 C276.36,492.08 291.65,548.92 300.47,581.71 " fill="none" id="is_approved-&gt;DELETION" style="stroke: #A80036; stroke-width: 1.0;"/><polygon fill="#A80036" points="301.82,586.75,303.3427,577.0196,300.5201,581.9219,295.6178,579.0994,301.82,586.75" style="stroke: #A80036; stroke-width: 1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacingAndGlyphs" textLength="75" x="295" y="538.0669">user rejects</text><!--MD5=[9b6d2d40f98ca1b5b4f3c2750b033e69]
 @startuml
     hide empty description
 
@@ -70,7 +70,7 @@ PlantUML version 1.2020.02(Sun Mar 01 11:22:07 CET 2020)
 (GPL source distribution)
 Java Runtime: OpenJDK Runtime Environment
 JVM: OpenJDK 64-Bit Server VM
-Java Version: 20.0.2+9-78
+Java Version: 21.0.1+12-LTS
 Operating System: Linux
 Default Encoding: UTF-8
 Language: de
