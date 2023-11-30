@@ -41,7 +41,7 @@ spec:
             - name: shortbranch
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}'
             - name: sha
-              value: '{{.head_sha}}'
+              value: '{{.head_short_sha_7}}'
             - name: branch
               value: '{{.branch}}'
             - name: host
