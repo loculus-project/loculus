@@ -6,7 +6,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 ### Prerequisites
 
-* Java 20 installed on your system
+* Java 21 installed on your system
 * A running PostgreSQL database (e.g. via a local [Kubernetes deployment](../kubernetes/README.md))])
 
 ### Starting the backend
