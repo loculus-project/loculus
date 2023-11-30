@@ -71,9 +71,7 @@ jobs:
         run: |
           FIRST_TAG=$(echo "${{ steps.dockerMetadata.outputs.tags }}" | head -n 1)
           echo "::set-output name=firstTag::$FIRST_TAG"
-      - name: Extract second Tag
-        id: extractTag
-        run: |
+
           SECOND_TAG=$(echo "${{ steps.dockerMetadata.outputs.tags }}" | head -n 2 | tail -n 1)
           echo "::set-output name=secondTag::$SECOND_TAG"
       - name: Build Docker Image For Branch
