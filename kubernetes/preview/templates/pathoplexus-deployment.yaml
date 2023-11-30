@@ -22,7 +22,7 @@ spec:
       containers:
         {{- if not .Values.disableWebsite }}
         - name: website
-          image: ghcr.io/pathoplexus/website:{{ $dockerTag }}
+          image: "ghcr.io/pathoplexus/website:{{ $dockerTag }}"
           imagePullPolicy: Always
           resources:
             requests:
@@ -51,7 +51,7 @@ spec:
         {{- end }}
         {{- if not .Values.disableBackend }}
         - name: backend
-          image: ghcr.io/pathoplexus/backend:{{ $dockerTag }}
+          image: "ghcr.io/pathoplexus/backend:{{ $dockerTag }}"
           imagePullPolicy: Always
           livenessProbe:
             httpGet:
@@ -69,6 +69,7 @@ spec:
             - "--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus"
             - "--spring.datasource.username=postgres"
             - "--spring.datasource.password=unsecure"
+            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://pathoplexus-keycloak-service:8083/realms/pathoplexusRealm/protocol/openid-connect/certs"
           volumeMounts:
             - name: pathoplexus-backend-config
               mountPath: /config

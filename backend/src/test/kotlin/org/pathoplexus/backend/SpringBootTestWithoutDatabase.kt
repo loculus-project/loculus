@@ -1,3 +1,5 @@
+package org.pathoplexus.backend
+
 import io.mockk.mockk
 import org.pathoplexus.backend.controller.PublicJwtKeyConfig
 import org.springframework.boot.test.context.SpringBootTest

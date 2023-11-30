@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="BackendApplicationKt" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
     <module name="backend.main" />
-    <option name="PROGRAM_PARAMETERS" value="--spring.datasource.url=jdbc:postgresql://0.0.0.0:5432/pathoplexus --spring.datasource.username=postgres --spring.datasource.password=unsecure --backend.config.path=website/tests/config/backend_config.json" />
+    <option name="PROGRAM_PARAMETERS" value="--spring.datasource.url=jdbc:postgresql://0.0.0.0:5432/pathoplexus --spring.datasource.username=postgres --spring.datasource.password=unsecure --backend.config.path=website/tests/config/backend_config.json --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/pathoplexusRealm/protocol/openid-connect/certs" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="org.pathoplexus.backend.BackendApplicationKt" />
     <method v="2">
       <option name="Make" enabled="true" />

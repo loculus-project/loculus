@@ -3,6 +3,8 @@ package org.pathoplexus.backend.config
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
+import org.springframework.beans.factory.InitializingBean
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
@@ -19,6 +21,7 @@ import org.springframework.security.web.access.AccessDeniedHandler
 import org.springframework.security.web.access.AccessDeniedHandlerImpl
 import org.springframework.security.web.access.DelegatingAccessDeniedHandler
 import org.springframework.security.web.csrf.CsrfException
+import org.springframework.stereotype.Component
 
 private val log = KotlinLogging.logger { }
 
@@ -48,6 +51,7 @@ class SecurityConfig {
                     "/error/**",
                     "/actuator/**",
                     "/api-docs**",
+                    "/api-docs/**",
                     "/swagger-ui/**",
                 ).permitAll()
                 // TODO(#607): Remove when we have authentication for services
@@ -89,5 +93,20 @@ class LoggingAccessDeniedHandler(private val accessDeniedHandler: AccessDeniedHa
     ) {
         log.warn { "${request.method} ${request.requestURI}: $accessDeniedException" }
         accessDeniedHandler.handle(request, response, accessDeniedException)
+    }
+}
+
+private const val AUTH_URL_PROPERTY = "spring.security.oauth2.resourceserver.jwt.jwk-set-uri"
+
+@Component
+class AuthUrlIsPresentGuard(@Value("\${$AUTH_URL_PROPERTY:#{null}}") private val authUrlProperty: String?) :
+    InitializingBean {
+
+    override fun afterPropertiesSet() {
+        if (authUrlProperty == null) {
+            throw IllegalStateException(
+                "Missing required property '$AUTH_URL_PROPERTY'. Please set it when starting the application.",
+            )
+        }
     }
 }
