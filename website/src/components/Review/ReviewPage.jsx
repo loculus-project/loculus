@@ -419,4 +419,4 @@ const ReviewPage = () => {
     );
 };
 
-export default ReviewPage;
+export default {ReviewPage};
