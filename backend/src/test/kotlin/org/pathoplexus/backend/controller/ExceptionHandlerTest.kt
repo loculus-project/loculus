@@ -1,6 +1,5 @@
 package org.pathoplexus.backend.controller
 
-import SpringBootTestWithoutDatabase
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.MockKAnnotations
 import io.mockk.MockKMatcherScope
@@ -8,6 +7,7 @@ import io.mockk.every
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.pathoplexus.backend.SpringBootTestWithoutDatabase
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.model.SubmitModel
 import org.springframework.beans.factory.annotation.Autowired
