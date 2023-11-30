@@ -229,7 +229,7 @@ const ReviewCard = ({ data }) => {
     );
 };
 
-const ReviewPage = () => {
+export const ReviewPage = () => {
     const [testData, setTestData] = useState([]);
     console.log(testData);
     useEffect(() => {
@@ -419,4 +419,4 @@ const ReviewPage = () => {
     );
 };
 
-export default {ReviewPage};
+
