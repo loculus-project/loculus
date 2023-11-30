@@ -64,8 +64,8 @@ jobs:
           images: ${{ env.DOCKER_IMAGE_NAME }}
           tags: |
             type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
-            type=sha,prefix=commit-
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,prefix=commit-
 
       - name: Build Docker Image For Branch
         uses: gradle/gradle-build-action@v2
