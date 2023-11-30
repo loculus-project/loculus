@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 20
+      - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '20'
+          java-version: '21'
           distribution: 'adopt'
       - name: Execute Tests
         uses: gradle/gradle-build-action@v2
@@ -44,10 +44,10 @@ jobs:
       checks: read
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 20
+      - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '20'
+          java-version: '21'
           distribution: 'adopt'
 
       - name: Login to GitHub Container Registry
