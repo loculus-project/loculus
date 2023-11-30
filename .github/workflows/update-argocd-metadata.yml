@@ -2,8 +2,8 @@ name: Update argocd_metadata
 
 on:
   push:
-    #branches:
-    #  - main
+    branches:
+     - main
 
 jobs:
   update:
@@ -23,19 +23,19 @@ jobs:
       run: |
         echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
 
-    # - name: Wait for Backend Docker Image
-    #   uses: lewagon/wait-on-check-action@v1.3.1
-    #   with:
-    #     ref: ${{ github.ref }}
-    #     check-name: Build Backend Docker Image
-    #     repo-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Wait for Backend Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Backend Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-    # - name: Wait for Website Docker Image
-    #   uses: lewagon/wait-on-check-action@v1.3.1
-    #   with:
-    #     ref: ${{ github.ref }}
-    #     check-name: Build Website Docker Image
-    #     repo-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Wait for Website Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Website Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Checkout External Repository
       uses: actions/checkout@v3
@@ -55,8 +55,8 @@ jobs:
 
     - name: Commit and Push Changes
       run: |
-        git config --global user.name 'Your Name'
-        git config --global user.email 'your-email@example.com'
+        git config --global user.name 'Pathoplexus bot'
+        git config --global user.email 'bot@pathoplexus.org'
         git add config.json
         git commit -m "Update config.json"
         git push
