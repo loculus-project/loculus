@@ -1,8 +1,8 @@
 {{- define "pathoplexus.dockerTag" }}
-{{- if .Values.sha }}
+{{- if .sha }}
 {{- print "commit-sha" }}
 {{- else }}
-{{- $dockerTag := (eq (. | default "main") "main") | ternary "latest" . -}}
+{{- $dockerTag := (eq (.branch | default "main") "main") | ternary "latest" .branch -}}
 {{- regexReplaceAll "/" $dockerTag "-" }}
 {{- end }}
 {{- end }}
