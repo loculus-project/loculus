@@ -1,4 +1,4 @@
-{{- $dockerTag := printf "commit-%s" .Values.sha }}
+{{- $dockerTag := include "pathoplexus.dockerTag" (dict "branch" .Values.branch "sha" .Values.sha) }}
 {{ $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{ $namespace := .Values.namespace }}
 {{ $backendHost := .Values.disableBackend | ternary
