@@ -1,4 +1,4 @@
-name: CI Workflow
+name: Update argocd_metadata
 
 on:
   push:
@@ -6,7 +6,11 @@ on:
     #  - main
 
 jobs:
-  build-and-update-config:
+  update:
+    permissions:
+      packages: read
+      contents: read
+      checks: read
     runs-on: ubuntu-latest
 
     steps:
