@@ -45,8 +45,6 @@ jobs:
 
     - name: Modify config.json
       run: |
-        # Assuming config.json is in the root directory of the repository
-        # Perform necessary modifications here. Example:
         echo '{
           "branch" : "main",
           "number" : 999,
