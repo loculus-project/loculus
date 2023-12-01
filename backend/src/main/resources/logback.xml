@@ -1,31 +1,12 @@
 <configuration>
 
-    <property name="LOG_FILE" value="backend"/>
-    <property name="LOG_DIR" value="log"/>
     <property name="PATTERN" value="%date %level [%thread] [%X{organism}] - %class: %message%n"/>
-
-    <appender name="RollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_DIR}/${LOG_FILE}.log</file>
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>${PATTERN}</Pattern>
-        </encoder>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/archived/${LOG_FILE}-%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
-            <maxFileSize>10GB</maxFileSize>
-            <maxHistory>0</maxHistory>
-        </rollingPolicy>
-    </appender>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
             <Pattern>${PATTERN}</Pattern>
         </layout>
     </appender>
-
-    <root level="info">
-        <appender-ref ref="RollingFile"/>
-    </root>
 
     <root level="info">
         <appender-ref ref="STDOUT"/>
