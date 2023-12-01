@@ -1,0 +1,60 @@
+name: Update argocd_metadata
+
+on:
+  push:
+    branches:
+     - main
+
+jobs:
+  update:
+    permissions:
+      packages: read
+      contents: read
+      checks: read
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Main Repository
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.ref }}
+    - name: Get SHA - length 7
+      id: get_sha
+      run: |
+        echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+
+    - name: Wait for Backend Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Backend Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Wait for Website Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.1
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Website Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Checkout External Repository
+      uses: actions/checkout@v3
+      with:
+        repository: 'pathoplexus/argocd_metadata' # Replace with the correct repository path
+        token: ${{ secrets.ARGOCD_METADATA_PAT }} # Personal Access Token with appropriate permissions
+
+    - name: Modify config.json
+      run: |
+        echo '{
+          "branch" : "main",
+          "number" : 999,
+          "head_short_sha_7": "${{ steps.get_sha.outputs.sha }}"
+        }' > config.json
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name 'Pathoplexus bot'
+        git config --global user.email 'bot@pathoplexus.org'
+        git add config.json
+        git commit -m "Update config.json"
+        git push

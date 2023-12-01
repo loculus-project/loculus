@@ -65,17 +65,27 @@ jobs:
           tags: |
             type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,prefix=commit-
+      - name: Extract Docker Tags
+        id: extractTag
+        run: |
+          FIRST_TAG=$(echo "${{ steps.dockerMetadata.outputs.tags }}" | head -n 1)
+          echo "::set-output name=firstTag::$FIRST_TAG"
 
+          SECOND_TAG=$(echo "${{ steps.dockerMetadata.outputs.tags }}" | head -n 2 | tail -n 1)
+          echo "::set-output name=secondTag::$SECOND_TAG"
       - name: Build Docker Image For Branch
         uses: gradle/gradle-build-action@v2
         env:
           USER: ${{ github.actor }}
           TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
-          arguments: bootBuildImage --imageName=${{ steps.dockerMetadata.outputs.tags }}
+          arguments: bootBuildImage --imageName=${{steps.extractTag.outputs.firstTag }}
           build-root-directory: ./backend
 
-      - name: Push Docker Image For Branch
-        run: docker push ${{ steps.dockerMetadata.outputs.tags }}
-
-
+      - name: Tag With SHA tag
+        run: docker tag ${{ steps.extractTag.outputs.firstTag  }} ${{ steps.extractTag.outputs.secondTag  }}
+      - name: Push 1st Docker Image
+        run: docker push ${{ steps.extractTag.outputs.firstTag  }}
+      - name: Push 2nd Docker Image
+        run: docker push ${{ steps.extractTag.outputs.secondTag  }}

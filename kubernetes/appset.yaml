@@ -17,20 +17,14 @@ spec:
             key: token
             secretName: github-access-token
         requeueAfterSeconds: 60
-    - list:
-        elements:
-          - branch: main
-            number: 1
+    - git:
+        repoURL: https://github.com/pathoplexus/argocd_metadata.git
+        revision: HEAD
+        files:
+        - path: "config.json"
   template:
     metadata:
       name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}-{{.number}}'
-      annotations:
-        argocd-image-updater.argoproj.io/image-list: 'backend=ghcr.io/pathoplexus/backend:{{.branch}} website=ghcr.io/pathoplexus/website:{{.branch}}'
-        argocd-image-updater.argoproj.io/website.update-strategy: "digest"
-        argocd-image-updater.argoproj.io/backend.update-strategy: "digest"
-        argocd-image-updater.argoproj.io/website.pull-secret: "pullsecret:argocd/ghcr-secret"
-        argocd-image-updater.argoproj.io/backend.pull-secret: "pullsecret:argocd/ghcr-secret"
-
 
     spec:
       destination:
@@ -47,6 +41,8 @@ spec:
               value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}'
             - name: shortbranch
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}'
+            - name: sha
+              value: '{{.head_short_sha_7}}'
             - name: branch
               value: '{{.branch}}'
             - name: host
