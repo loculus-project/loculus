@@ -16,19 +16,19 @@ vi.mock('../../config', () => ({
 
 const queryClient = new QueryClient();
 
-const defaultMetadataSettings = [
+const defaultSearchFormFilters = [
     { name: 'field1', type: 'string' as const, label: 'Field 1', autocomplete: false, filterValue: '' },
     { name: 'field2', type: 'date' as const, autocomplete: false, filterValue: '' },
     { name: 'field3', type: 'pango_lineage' as const, label: 'Field 3', autocomplete: true, filterValue: '' },
 ];
 
 function renderSearchForm(
-    metadataSettings: Filter[] = [...defaultMetadataSettings],
+    searchFormFilters: Filter[] = [...defaultSearchFormFilters],
     clientConfig: ClientConfig = testConfig.public,
 ) {
     render(
         <QueryClientProvider client={queryClient}>
-            <SearchForm organism={testOrganism} metadataSettings={metadataSettings} clientConfig={clientConfig} />
+            <SearchForm organism={testOrganism} filters={searchFormFilters} clientConfig={clientConfig} />
         </QueryClientProvider>,
     );
 }
@@ -60,13 +60,13 @@ describe('SearchForm', () => {
         await userEvent.click(searchButton);
 
         expect(window.location.href).toBe(
-            routes.searchPage(testOrganism, [{ ...defaultMetadataSettings[0], filterValue }]),
+            routes.searchPage(testOrganism, [{ ...defaultSearchFormFilters[0], filterValue }]),
         );
     });
 
     test('should not render the form with fields with flag notSearchable', async () => {
         renderSearchForm([
-            ...defaultMetadataSettings,
+            ...defaultSearchFormFilters,
             {
                 name: 'NotSearchable',
                 type: 'string' as const,
@@ -78,25 +78,5 @@ describe('SearchForm', () => {
 
         expect(screen.getByPlaceholderText('Field 1')).toBeDefined();
         expect(screen.queryByPlaceholderText('NotSearchable')).not.toBeInTheDocument();
-    });
-
-    test('should add default values for isLatestVersion fields to search', async () => {
-        renderSearchForm([
-            ...defaultMetadataSettings,
-            {
-                name: 'isLatestVersion',
-                type: 'string' as const,
-                autocomplete: false,
-                filterValue: '',
-                notSearchable: true,
-            },
-        ]);
-
-        await userEvent.type(screen.getByPlaceholderText('Field 1'), 'test');
-
-        const searchButton = screen.getByRole('button', { name: 'Search' });
-        await userEvent.click(searchButton);
-
-        expect(window.location.href).toContain(`isLatestVersion=true`);
     });
 });

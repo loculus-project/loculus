@@ -3,6 +3,7 @@ import { Result } from 'neverthrow';
 import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
 import { getSchema } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
+import { hiddenDefaultSearchFilters } from '../../../settings.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
 import type { Filter } from '../../../types/config.ts';
 
@@ -10,13 +11,23 @@ export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
 };
+
+function addHiddenFilters(searchFormFilter: Filter[], hiddenFilters: Filter[]) {
+    const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
+    const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
+    return [...searchFormFilter, ...hiddenFiltersToAdd];
+}
+
 export const getData = async (
     organism: string,
-    metadataFilter: Filter[],
+    searchFormFilter: Filter[],
     offset: number,
     limit: number,
+    hiddenDefaultFilters: Filter[] = hiddenDefaultSearchFilters,
 ): Promise<Result<SearchResponse, ProblemDetail>> => {
-    const searchFilters = metadataFilter
+    const filters = addHiddenFilters(searchFormFilter, hiddenDefaultFilters);
+
+    const searchFilters = filters
         .filter((metadata) => metadata.filterValue !== '')
         .reduce((acc: Record<string, string>, metadata) => {
             acc[metadata.name] = metadata.filterValue;
@@ -43,12 +54,12 @@ export const getData = async (
     });
 };
 
-export const getMetadataSettings = async (
-    getSearchParams: (param: string) => string,
-    organism: string,
-): Promise<Filter[]> => {
+export const getSearchFormFilters = (getSearchParams: (param: string) => string, organism: string): Filter[] => {
     const schema = getSchema(organism);
     return schema.metadata.flatMap((metadata) => {
+        if (metadata.notSearchable === true) {
+            return [];
+        }
         if (metadata.type === 'date') {
             const metadataFrom = {
                 ...metadata,

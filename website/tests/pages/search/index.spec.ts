@@ -28,7 +28,6 @@ test.describe('The search page', () => {
         await searchPage.page.waitForURL(
             `${baseUrl}${routes.searchPage(dummyOrganism.key, [
                 { name: 'accessionVersion', type: 'string', filterValue: testSequence.name },
-                { name: 'isRevocation', type: 'string', filterValue: 'false' },
             ])}`,
         );
         await expect(searchPage.page.getByText(testSequence.name, { exact: true })).toBeVisible();

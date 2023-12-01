@@ -1,5 +1,5 @@
 ---
-import { getData, getMetadataSettings } from './search';
+import { getData, getSearchFormFilters } from './search';
 import { Pagination } from '../../../components/SearchPage/Pagination';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
 import { Table } from '../../../components/SearchPage/Table';
@@ -16,13 +16,13 @@ const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
 };
 
-const metadataSettings = await getMetadataSettings(getSearchParams, organism);
+const searchFormFilter = getSearchFormFilters(getSearchParams, organism);
 
 const pageParam = Astro.url.searchParams.get('page');
 const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
 
-const data = await getData(organism, metadataSettings, offset, pageSize);
+const data = await getData(organism, searchFormFilter, offset, pageSize);
 ---
 
 <BaseLayout title='Search'>
@@ -31,7 +31,7 @@ const data = await getData(organism, metadataSettings, offset, pageSize);
         <div class='md:w-72'>
             <SearchForm
                 organism={organism}
-                metadataSettings={metadataSettings}
+                filters={searchFormFilter}
                 clientConfig={clientConfig}
                 client:only='react'
             />
