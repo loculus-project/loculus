@@ -10,6 +10,7 @@ data:
     {
       "realm": "pathoplexusRealm",
       "enabled": true,
+      "registrationAllowed": true,
       "users": [
         {{- $browsers := list "firefox" "webkit" "chromium"}}
         {{- range $_, $browser := $browsers }}
