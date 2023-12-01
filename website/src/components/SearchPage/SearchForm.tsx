@@ -22,24 +22,17 @@ const queryClient = new QueryClient();
 
 interface SearchFormProps {
     organism: string;
-    metadataSettings: Filter[];
+    filters: Filter[];
     clientConfig: ClientConfig;
 }
 
 const clientLogger = getClientLogger('SearchForm');
 
-const defaultFilters = [
-    { name: 'isLatestVersion', value: 'true' },
-    { name: 'isRevocation', value: 'false' },
-];
-
-export const SearchForm: FC<SearchFormProps> = ({ organism, metadataSettings, clientConfig }) => {
+export const SearchForm: FC<SearchFormProps> = ({ organism, filters, clientConfig }) => {
     const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
-        metadataSettings.map((filter) => ({
+        filters.map((filter) => ({
             ...filter,
-            filterValue:
-                defaultFilters.find((defaultFilter) => filter.name === defaultFilter.name && filter.notSearchable)
-                    ?.value ?? '',
+            filterValue: '',
             label: filter.label ?? sentenceCase(filter.name),
         })),
     );
