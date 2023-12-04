@@ -22,7 +22,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 The backend is configured via
 [Spring properties](https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.external-config)
-that need to be passed on startup, e.g. via command line argument (also see docker-compose.yml).
+that need to be passed on startup, e.g. via command line argument.
 You need to set:
 * the database URL, username and password:
 ```
