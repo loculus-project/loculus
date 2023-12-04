@@ -48,23 +48,6 @@ specified in the `CONFIG_DIR` environment variable:
 
 Check our tests and examples for working config files.
 
-## Start from docker-compose
-
-Make sure you are authenticated for the private pathoplexus docker registry (see [here](../README.md) for a step-by-step guide).
-
-We have a [docker-compose config](../docker-compose.yml) to start the website. For flexibility the docker image name is read from the environment.
-To use the `:latest` image, you can just run (from the repository root):
-
-```bash
-BACKEND_IMAGE=doesNotMatterHere WEBSITE_IMAGE=ghcr.io/pathoplexus/website:latest docker compose up website
-```
-
-To pull the latest version of the image, run:
-
-```bash
-docker pull ghcr.io/pathoplexus/website:latest
-```
-
 ## Logging
 
 The website writes logs to stdout.
