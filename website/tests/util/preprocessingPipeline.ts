@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios';
 import { BackendClient } from '../../src/services/backendClient.ts';
 import { type Accession, unprocessedData, type UnprocessedData } from '../../src/types/backend.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
-import { backendUrl, dummyOrganism, e2eLogger, testSequenceEntry } from '../e2e.fixture.ts';
+import { backendUrl, dummyOrganism, e2eLogger, getToken, testSequenceEntry } from '../e2e.fixture.ts';
 
 export const fakeProcessingPipeline = {
     submit,
@@ -42,9 +42,11 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
         .map((data) => JSON.stringify(data))
         .join('\n');
 
+    const jwt = await getJwtTokenForPreprocessingPipeline();
+
     const response = await BackendClient.create(backendUrl, e2eLogger).call('submitProcessedData', body, {
         params: { organism: dummyOrganism.key },
-        headers: { 'Content-Type': 'application/x-ndjson' },
+        headers: { 'Content-Type': 'application/x-ndjson', 'Authorization': `Bearer ${jwt}` },
     });
 
     if (response.isErr()) {
@@ -52,10 +54,22 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
     }
 }
 
+async function getJwtTokenForPreprocessingPipeline(
+    username: string = 'dummy_prerocessing_pipeline',
+    password: string = 'dummy_prerocessing_pipeline',
+): Promise<string> {
+    const token = await getToken(username, password);
+
+    return token.access_token ?? '';
+}
+
 async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]> {
+    const jwt = await getJwtTokenForPreprocessingPipeline();
+
     const response = await BackendClient.create(backendUrl, e2eLogger).call('extractUnprocessedData', undefined, {
         params: { organism: dummyOrganism.key },
         queries: { numberOfSequenceEntries },
+        headers: { Authorization: `Bearer ${jwt}` },
     });
 
     return response.match(

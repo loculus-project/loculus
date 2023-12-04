@@ -15,55 +15,77 @@ data:
         {{- $browsers := list "firefox" "webkit" "chromium"}}
         {{- range $_, $browser := $browsers }}
           {{- range $index, $_ := until 20}}
-              {
-                  "username": "testuser_{{$index}}_{{$browser}}",
-                  "enabled": true,
-                  "email": "testuser_{{$index}}_{{$browser}}@keycloak.org",
-                  "firstName": "Test",
-                  "lastName": "User",
-                  "credentials": [
-                    {
-                      "type": "password",
-                      "value": "testuser_{{$index}}_{{$browser}}"
-                    }
-                  ],
-                  "realmRoles": [
-                    "user",
-                    "offline_access"
-                  ],
-                  "clientRoles": {
-                    "account": [
-                      "manage-account"
-                    ]
-                  }
-                },      
+        {
+          "username": "testuser_{{$index}}_{{$browser}}",
+          "enabled": true,
+          "email": "testuser_{{$index}}_{{$browser}}@keycloak.org",
+          "firstName": "Test",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "testuser_{{$index}}_{{$browser}}"
+            }
+          ],
+          "realmRoles": [
+            "user",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
           {{ end }}
         {{ end }}
         {
-            "username": "testuser",
-            "enabled": true,
-            "email": "testuser@keycloak.org",
-            "firstName": "Test",
-            "lastName": "User",
-            "credentials": [
-              {
-                "type": "password",
-                "value": "testuser"
-              }
-            ],
-            "realmRoles": [
-              "user",
-              "offline_access"
-            ],
-            "clientRoles": {
-              "account": [
-                "manage-account"
-              ]
+          "username": "testuser",
+          "enabled": true,
+          "email": "testuser@keycloak.org",
+          "firstName": "Test",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "testuser"
             }
+          ],
+          "realmRoles": [
+            "user",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
           }
+        },
+        {
+          "username": "dummy_prerocessing_pipeline",
+          "enabled": true,
+          "email": "dummy_prerocessing_pipeline@keycloak.org",
+          "firstName": "Dummy",
+          "lastName": "Preprocessing",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "dummy_prerocessing_pipeline"
+            }
+          ],
+          "realmRoles": [
+            "preprocessing_pipeline",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        }
       ],
       "roles": {
-        "realm" : [
+        "realm": [
           {
             "name": "user",
             "description": "User privileges"
@@ -71,6 +93,10 @@ data:
           {
             "name": "admin",
             "description": "Administrator privileges"
+          },
+          {
+            "name": "preprocessing_pipeline",
+            "description": "Preprocessing pipeline privileges"
           }
         ]
       },

@@ -32,7 +32,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
-        jwt: String? = jwtForDefaultUser,
+        jwt: String? = jwtForProcessingPipeline,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
             .withAuth(jwt)
@@ -42,7 +42,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
         organism: String = DEFAULT_ORGANISM,
-        jwt: String? = jwtForDefaultUser,
+        jwt: String? = jwtForProcessingPipeline,
     ): ResultActions {
         val stringContent = submittedProcessedData.joinToString("\n") { objectMapper.writeValueAsString(it) }
 
@@ -52,7 +52,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     fun submitProcessedDataRaw(
         submittedProcessedData: String,
         organism: String = DEFAULT_ORGANISM,
-        jwt: String? = jwtForDefaultUser,
+        jwt: String? = jwtForProcessingPipeline,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/submit-processed-data", organism = organism))
             .contentType(MediaType.APPLICATION_NDJSON_VALUE)
