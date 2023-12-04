@@ -131,7 +131,7 @@ class GetDataToEditEndpointTest(
         client.getSequenceEntryThatHasErrors(
             accession = firstAccession,
             version = 1,
-            jwt = generateJwtForUser(userNameThatDoesNotHavePermissionToQuery),
+            jwt = generateJwtFor(userNameThatDoesNotHavePermissionToQuery),
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -157,7 +157,7 @@ class GetDataToEditEndpointTest(
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
         val numberOfEditedSequenceEntryVersionsForAWrongUser = client.getNumberOfSequenceEntriesThatHaveErrors(
             SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
-            jwt = generateJwtForUser(userNameThatDoesNotHavePermissionToQuery),
+            jwt = generateJwtFor(userNameThatDoesNotHavePermissionToQuery),
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))

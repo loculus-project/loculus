@@ -128,7 +128,7 @@ class DeleteSequencesEndpointTest(
                 AccessionVersion("1", 1),
                 AccessionVersion("2", 1),
             ),
-            jwt = generateJwtForUser(notSubmitter),
+            jwt = generateJwtFor(notSubmitter),
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))

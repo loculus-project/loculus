@@ -1,33 +1,24 @@
 package org.pathoplexus.backend.controller
 
 import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
-import io.jsonwebtoken.security.Keys
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import java.security.KeyPair
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.*
+import java.util.Date
 
-val keyPair: KeyPair = Keys.keyPairFor(SignatureAlgorithm.RS256)
+val keyPair: KeyPair = Jwts.SIG.RS256.keyPair().build()
 
-val jwtForDefaultUser = generateJwtForUser(USER_NAME)
+val jwtForDefaultUser = generateJwtFor(USER_NAME)
+val jwtForProcessingPipeline = generateJwtFor("preprocessing_pipeline", listOf("preprocessing_pipeline"))
+val jwtForGetReleasedData = generateJwtFor("silo_import_job", listOf("get_released_data"))
 
-fun generateJwtForUser(username: String): String = Jwts.builder()
-    .setExpiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
-    .setIssuedAt(Date.from(Instant.now()))
-    .signWith(keyPair.private, SignatureAlgorithm.RS256)
+fun generateJwtFor(username: String, roles: List<String> = emptyList()): String = Jwts.builder()
+    .expiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
+    .issuedAt(Date.from(Instant.now()))
+    .signWith(keyPair.private, Jwts.SIG.RS256)
     .claim("preferred_username", username)
-    .compact()
-
-val jwtForProcessingPipeline = generateJwtForPreprocessingPipeline()
-
-fun generateJwtForPreprocessingPipeline(): String = Jwts.builder()
-    .setExpiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
-    .setIssuedAt(Date.from(Instant.now()))
-    .signWith(keyPair.private, SignatureAlgorithm.RS256)
-    .claim("preferred_username", "preprocessing_pipeline")
-    .claim("realm_access", mapOf("roles" to listOf("preprocessing_pipeline")))
+    .claim("realm_access", mapOf("roles" to roles))
     .compact()
 
 fun MockHttpServletRequestBuilder.withAuth(bearerToken: String? = jwtForDefaultUser): MockHttpServletRequestBuilder =

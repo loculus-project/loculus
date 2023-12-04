@@ -82,6 +82,28 @@ data:
               "manage-account"
             ]
           }
+        },
+        {
+          "username": "silo_import_job",
+          "enabled": true,
+          "email": "silo_import_job@keycloak.org",
+          "firstName": "SILO",
+          "lastName": "ImportJob",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "silo_import_job"
+            }
+          ],
+          "realmRoles": [
+            "get_released_data",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
         }
       ],
       "roles": {
@@ -97,6 +119,10 @@ data:
           {
             "name": "preprocessing_pipeline",
             "description": "Preprocessing pipeline privileges"
+          },
+          {
+            "name": "get_released_data",
+            "description": "Privileges for getting released data"
           }
         ]
       },

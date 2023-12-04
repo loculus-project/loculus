@@ -39,7 +39,7 @@ class SecurityConfig {
         BearerTokenAccessDeniedHandler(),
     )
 
-    private val temporarilyAuthDisabledEndpoints = arrayOf(
+    private val endpointsForGettingReleasedData = arrayOf(
         "/*/get-released-data",
     )
 
@@ -64,37 +64,21 @@ class SecurityConfig {
                     "/api-docs/**",
                     "/swagger-ui/**",
                 ).permitAll()
-                // TODO(#607): Remove when we have authentication for services
-                auth.requestMatchers(*temporarilyAuthDisabledEndpoints).permitAll()
                 auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
                 auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority("preprocessing_pipeline")
+                auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority("get_released_data")
                 auth.anyRequest().authenticated()
             }
-            // TODO(#607): Remove when we have authentication for services
-            .csrf { it.ignoringRequestMatchers(*temporarilyAuthDisabledEndpoints) }
             .oauth2ResourceServer { oauth2 ->
                 oauth2.jwt { jwt ->
                     jwt.jwtAuthenticationConverter(keycloakAuthoritiesConverter)
                 }
-                    .authenticationEntryPoint(LoggingAuthenticationEntryPoint(BearerTokenAuthenticationEntryPoint()))
+                    .authenticationEntryPoint(
+                        LoggingAuthenticationEntryPoint(BearerTokenAuthenticationEntryPoint()),
+                    )
                     .accessDeniedHandler(LoggingAccessDeniedHandler(defaultAccessDeniedHandler))
             }
             .build()
-    }
-}
-
-@Component
-class KeycloakAuthoritiesConverter :
-    Converter<Jwt, List<SimpleGrantedAuthority>> {
-    override fun convert(jwt: Jwt): List<SimpleGrantedAuthority> {
-        val defaultRealmAccess = mapOf<String, List<String>>()
-        val realmAccess = jwt.claims.getOrDefault("realm_access", defaultRealmAccess) as Map<String, List<String>>
-        val roles = realmAccess.getOrDefault("roles", listOf())
-        return roles.stream().map { role: String? ->
-            SimpleGrantedAuthority(
-                role,
-            )
-        }.toList()
     }
 }
 
@@ -109,6 +93,37 @@ class KeycloakAuthenticationConverter(
             authoritiesConverter.convert(jwt),
             jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME),
         )
+    }
+}
+
+@Component
+class KeycloakAuthoritiesConverter :
+    Converter<Jwt, List<SimpleGrantedAuthority>> {
+    override fun convert(jwt: Jwt): List<SimpleGrantedAuthority> {
+        val roles = getRoles(jwt)
+        return roles.map { role: String -> SimpleGrantedAuthority(role) }
+    }
+}
+
+fun getRoles(jwt: Jwt): List<String> {
+    val defaultRealmAccess = mapOf<String, List<String>>()
+    val realmAccess = when (jwt.claims["realm_access"]) {
+        null -> defaultRealmAccess
+        is Map<*, *> -> jwt.claims["realm_access"] as Map<*, *>
+        else -> {
+            log.debug { "Ignoring value of realm_access in jwt because type was not Map<*,*>" }
+            defaultRealmAccess
+        }
+    }
+
+    val defaultRoles = emptyList<String>()
+    return when (realmAccess["roles"]) {
+        null -> defaultRoles
+        is List<*> -> (realmAccess["roles"] as List<*>).filterIsInstance<String>()
+        else -> {
+            log.debug { "Ignoring value of roles in jwt because type was not List<*>" }
+            emptyList()
+        }
     }
 }
 

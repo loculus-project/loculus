@@ -1,6 +1,9 @@
 {{- $configFile := .Files.Get "config.yaml" | fromYaml }}
-{{ $namespace := .Values.namespace }}
-{{ $disableBackend := .Values.disableBackend }}
+{{- $namespace := .Values.namespace }}
+{{- $disableBackend := .Values.disableBackend }}
+
+{{- $keycloakTokenUrl := "http://pathoplexus-keycloak-service:8083/realms/pathoplexusRealm/protocol/openid-connect/token" }}
+
 
 {{- range $key, $_ := $configFile.instances }}
 ---
@@ -34,6 +37,14 @@ spec:
                   {{- else }}
                   value: "http://pathoplexus-backend-service:8079/{{ $key }}"
                   {{- end }}
+                - name: KEYCLOAK_TOKEN_URL
+                  value: "{{ $keycloakTokenUrl }}"
+                - name: KEYCLOAK_CLIENT_ID
+                  value: "test-cli"
+                - name: IMPORT_JOB_USER
+                  value: "silo_import_job"
+                - name: IMPORT_JOB_USER_PASSWORD
+                  value: "silo_import_job"
               volumeMounts:
                 - name: lapis-silo-database-config
                   mountPath: /preprocessing/input/reference_genomes.json

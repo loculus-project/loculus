@@ -79,7 +79,7 @@ class RevokeEndpointTest(
         convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
 
         val notSubmitter = "nonExistingUser"
-        client.revokeSequenceEntries(DefaultFiles.allAccessions.subList(0, 2), jwt = generateJwtForUser(notSubmitter))
+        client.revokeSequenceEntries(DefaultFiles.allAccessions.subList(0, 2), jwt = generateJwtFor(notSubmitter))
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(

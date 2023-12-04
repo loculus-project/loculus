@@ -122,7 +122,7 @@ class ReviseEndpointTest(
         client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
             DefaultFiles.sequencesFile,
-            jwt = generateJwtForUser(notSubmitter),
+            jwt = generateJwtFor(notSubmitter),
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
