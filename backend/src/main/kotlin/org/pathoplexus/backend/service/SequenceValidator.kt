@@ -133,7 +133,7 @@ class SequenceValidator(
         }
     }
 
-    fun validateType(fieldValue: JsonNode, metadata: Metadata) {
+    private fun validateType(fieldValue: JsonNode, metadata: Metadata) {
         if (fieldValue.isNull) {
             return
         }
@@ -178,7 +178,7 @@ class SequenceValidator(
         }
     }
 
-    fun isValidDate(dateStringCandidate: String): Boolean {
+    private fun isValidDate(dateStringCandidate: String): Boolean {
         val formatter = DateTimeFormatter.ofPattern(DATE_FORMAT)
         return try {
             LocalDate.parse(dateStringCandidate, formatter)
@@ -188,7 +188,7 @@ class SequenceValidator(
         }
     }
 
-    fun isValidPangoLineage(pangoLineageCandidate: String): Boolean {
+    private fun isValidPangoLineage(pangoLineageCandidate: String): Boolean {
         return pangoLineageCandidate.matches(pangoLineageRegex)
     }
 
