@@ -72,8 +72,8 @@ fun expectUnauthorizedResponse(isModifyingRequest: Boolean = false, apiCall: (jw
         )
 }
 
-fun expectForbiddenResponse(apiCall: (jwt: String?) -> ResultActions) {
-    apiCall(null)
+fun expectForbiddenResponse(apiCall: () -> ResultActions) {
+    apiCall()
         .andExpect(status().isForbidden)
         .andExpect(MockMvcResultMatchers.header().string("WWW-Authenticate", Matchers.containsString("Bearer")))
 }

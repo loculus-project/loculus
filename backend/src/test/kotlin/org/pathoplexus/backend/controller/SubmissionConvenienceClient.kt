@@ -30,7 +30,7 @@ class SubmissionConvenienceClient(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
             organism = organism,
-            jwt = generateJwtForUser(username),
+            jwt = generateJwtFor(username),
         )
 
         return deserializeJsonResponse(submit)
@@ -131,7 +131,7 @@ class SubmissionConvenienceClient(
         return deserializeJsonResponse(
             client.getSequenceEntriesOfUser(
                 organism = organism,
-                jwt = generateJwtForUser(username),
+                jwt = generateJwtFor(username),
             ),
         )
     }
@@ -162,7 +162,7 @@ class SubmissionConvenienceClient(
         client.getSequenceEntryThatHasErrors(
             accession = accession,
             version = version,
-            jwt = generateJwtForUser(userName),
+            jwt = generateJwtFor(userName),
         ),
     )
 
@@ -170,7 +170,7 @@ class SubmissionConvenienceClient(
         DefaultFiles.allAccessions.forEach { accession ->
             client.submitEditedSequenceEntryVersion(
                 UnprocessedData(accession, 1L, defaultOriginalData),
-                jwt = generateJwtForUser(userName),
+                jwt = generateJwtFor(userName),
             )
         }
     }

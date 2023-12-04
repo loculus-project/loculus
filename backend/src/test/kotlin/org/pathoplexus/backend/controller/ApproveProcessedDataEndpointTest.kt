@@ -61,7 +61,7 @@ class ApproveProcessedDataEndpointTest(
                 AccessionVersion("1", 1),
                 AccessionVersion("2", 1),
             ),
-            jwt = generateJwtForUser("other user"),
+            jwt = generateJwtFor("other user"),
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))

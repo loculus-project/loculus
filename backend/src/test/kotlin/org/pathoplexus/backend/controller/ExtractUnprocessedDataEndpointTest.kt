@@ -33,7 +33,7 @@ class ExtractUnprocessedDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN authorization token with THEN returns 403 Forbidden`() {
+    fun `GIVEN authorization token with wrong role THEN returns 403 Forbidden`() {
         expectForbiddenResponse {
             client.extractUnprocessedData(
                 1,

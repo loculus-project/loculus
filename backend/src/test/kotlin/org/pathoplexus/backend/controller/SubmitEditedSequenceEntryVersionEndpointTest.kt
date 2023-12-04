@@ -131,7 +131,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             "${editedDataFromWrongSubmitter.version}"
         val nonExistingUser = "whoseNameMayNotBeMentioned"
 
-        client.submitEditedSequenceEntryVersion(editedDataFromWrongSubmitter, jwt = generateJwtForUser(nonExistingUser))
+        client.submitEditedSequenceEntryVersion(editedDataFromWrongSubmitter, jwt = generateJwtFor(nonExistingUser))
             .andExpect(status().isForbidden)
             .andExpect(
                 jsonPath("\$.detail").value(

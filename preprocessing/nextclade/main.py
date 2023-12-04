@@ -17,8 +17,20 @@ parser.add_argument(
     default="127.0.0.1",
     help="Host address of the Pathoplexus backend",
 )
+parser.add_argument("--keycloak-host", type=str, default="http://172.0.0.1:8083", help="Host address of Keycloak")
+parser.add_argument("--keycloak-user", type=str, default="dummy_prerocessing_pipeline",
+                    help="Keycloak user to use for authentication")
+parser.add_argument("--keycloak-password", type=str, default="dummy_prerocessing_pipeline",
+                    help="Keycloak password to use for authentication")
+parser.add_argument("--keycloak-token-path", type=str, default="/realms/pathoplexusRealm/protocol/openid-connect/token",
+                    help="Path to Keycloak token endpoint")
+
 args = parser.parse_args()
 host = "http://{}:8079".format(args.backend_host)
+keycloakHost = args.keycloak_host
+keycloakUser = args.keycloak_user
+keycloakPassword = args.keycloak_password
+keycloakTokenPath = args.keycloak_token_path
 
 GENES = [
     "ORF1a",
@@ -34,7 +46,6 @@ GENES = [
     "N",
     "ORF9b",
 ]
-
 
 AccessionVersion = str
 
@@ -88,7 +99,8 @@ NextcladeResult = Mapping[str, str]
 def fetch_unprocessed_sequences(n: int) -> Sequence[UnprocessedEntry]:
     url = host + "/extract-unprocessed-data"
     params = {"numberOfSequenceEntries": n}
-    response = requests.post(url, data=params)
+    headers = {'Authorization': 'Bearer ' + get_jwt()}
+    response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         raise Exception(
             "Fetching unprocessed data failed. Status code: {}".format(
@@ -120,7 +132,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 
 
 def run_nextclade(
-    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str
+        unprocessed: Sequence[UnprocessedEntry], dataset_dir: str
 ) -> Mapping[AccessionVersion, NextcladeResult]:
     with tempfile.TemporaryDirectory() as result_dir:
         # TODO: Generalize for multiple segments (flu)
@@ -130,10 +142,10 @@ def run_nextclade(
                 f.write(f">{sequence.accessionVersion}\n")
                 f.write(f"{sequence.data.unalignedNucleotideSequences['main']}\n")
         command = (
-            "nextclade run "
-            + f"--output-all {result_dir} "
-            + f"--input-dataset {dataset_dir} "
-            + f"-- {input_file}"
+                "nextclade run "
+                + f"--output-all {result_dir} "
+                + f"--input-dataset {dataset_dir} "
+                + f"-- {input_file}"
         )
         exit_code = os.system(command)
         if exit_code != 0:
@@ -157,7 +169,7 @@ def run_nextclade(
         for gene in GENES:
             try:
                 with open(
-                    result_dir + f"/nextclade_gene_{gene}.translation.fasta", "r"
+                        result_dir + f"/nextclade_gene_{gene}.translation.fasta", "r"
                 ) as alignedTranslations:
                     aligned_translation = SeqIO.parse(alignedTranslations, "fasta")
                     for aligned_sequence in aligned_translation:
@@ -194,7 +206,7 @@ def version_from_str(id_str: AccessionVersion) -> int:
 
 
 def process(
-    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str
+        unprocessed: Sequence[UnprocessedEntry], dataset_dir: str
 ) -> Sequence[ProcessedEntry]:
     nextclade_results = run_nextclade(unprocessed, dataset_dir)
     processed = [
@@ -226,7 +238,7 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry]):
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = "\n".join(json_strings)
     url = host + "/submit-processed-data"
-    headers = {"Content-Type": "application/x-ndjson"}
+    headers = {'Content-Type': 'application/x-ndjson', 'Authorization': 'Bearer ' + get_jwt()}
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:
         raise Exception(
@@ -237,14 +249,28 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry]):
     print(response.text)
 
 
+def get_jwt():
+    url = keycloakHost + keycloakTokenPath
+    data = {
+        "client_id": "test-cli",
+        "username": keycloakUser,
+        "password": keycloakPassword,
+        "grant_type": "password"
+    }
+    response = requests.post(url, data=data)
+    if not response.ok:
+        raise Exception("Fetching JWT failed. Status code: {}".format(response.status_code), response.text)
+    return response.json()["access_token"]
+
+
 def main():
     # Make tempdir for Nextclade dataset
     with tempfile.TemporaryDirectory() as dataset_dir:
         # Download Nextclade dataset
         dataset_download_command = (
-            "nextclade dataset get "
-            + "--name sars-cov-2 "
-            + f"--output-dir {dataset_dir}"
+                "nextclade dataset get "
+                + "--name sars-cov-2 "
+                + f"--output-dir {dataset_dir}"
         )
         print(f"Downloading Nextclade dataset: {dataset_download_command}")
         if os.system(dataset_download_command) != 0:
