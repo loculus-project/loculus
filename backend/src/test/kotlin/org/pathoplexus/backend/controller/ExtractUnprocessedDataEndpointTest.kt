@@ -7,7 +7,6 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.hasSize
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.Status.IN_PROCESSING
 import org.pathoplexus.backend.api.Status.RECEIVED
@@ -24,20 +23,23 @@ class ExtractUnprocessedDataEndpointTest(
 ) {
 
     @Test
-    @Disabled("TODO(#607) reactivate")
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse {
+        expectUnauthorizedResponse(isModifyingRequest = true) {
             client.extractUnprocessedData(
                 1,
-                jwt = "",
+                jwt = it,
             )
         }
     }
 
-    // TODO(#607): delete
     @Test
-    fun `GIVEN no access token THEN access is allowed`() {
-        client.extractUnprocessedData(1, jwt = null).andExpect(status().isOk)
+    fun `GIVEN authorization token with THEN returns 403 Forbidden`() {
+        expectForbiddenResponse {
+            client.extractUnprocessedData(
+                1,
+                jwt = jwtForDefaultUser,
+            )
+        }
     }
 
     @Test

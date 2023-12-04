@@ -5,6 +5,7 @@
     "http://host.k3d.internal:8079"
     "http://pathoplexus-backend-service:8079"
 }}
+{{- $keycloakHost := printf "authentication.%s" .Values.host }}
 
 {{- if not .Values.disablePreprocessing }}
 ---
@@ -35,6 +36,11 @@ spec:
           args:
             - "--watch"
             - "--backend-host={{ $backendHost }}/{{ $key }}"
+            {{- if eq .Values.environment "server" }}
+            - "--keycloak-host=https://{{ $keycloakHost}}"
+            {{- else }}
+            - "--keycloak-host=http://localhost:8083"
+            {{- end }}
         {{- end }}
       imagePullSecrets:
         - name: ghcr-secret

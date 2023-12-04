@@ -3,7 +3,6 @@ package org.pathoplexus.backend.controller
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.`is`
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -28,7 +27,6 @@ class SubmitProcessedDataEndpointTest(
 ) {
 
     @Test
-    @Disabled("TODO(#607) reactivate")
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
             submissionControllerClient.submitProcessedData(
@@ -38,15 +36,14 @@ class SubmitProcessedDataEndpointTest(
         }
     }
 
-    // TODO(#607): delete
     @Test
-    fun `GIVEN no access token THEN access is allowed`() {
-        submissionControllerClient
-            .submitProcessedData(
+    fun `GIVEN authorization token with THEN returns 403 Forbidden`() {
+        expectForbiddenResponse {
+            submissionControllerClient.submitProcessedData(
                 PreparedProcessedData.successfullyProcessed(),
-                jwt = null,
+                jwt = jwtForDefaultUser,
             )
-            .andExpect(status().isUnprocessableEntity)
+        }
     }
 
     @Test

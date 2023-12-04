@@ -10,27 +10,40 @@ from dataclasses import dataclass, field
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--backend-host", type=str, default="http://127.0.0.1:8079",
-                    help="Host address of the Pathoplexus backend")
+                    help="Host address of the pathoplexus backend")
 parser.add_argument("--watch", action="store_true", help="Watch and keep running. Fetches new data every 10 seconds.")
 parser.add_argument("--withErrors", action="store_true", help="Add errors to processed data.")
 parser.add_argument("--withWarnings", action="store_true", help="Add warnings to processed data.")
 parser.add_argument("--maxSequences", type=int, help="Max number of sequence entry versions to process.")
+parser.add_argument("--keycloak-host", type=str, default="http://172.0.0.1:8083", help="Host address of Keycloak")
+parser.add_argument("--keycloak-user", type=str, default="dummy_prerocessing_pipeline",
+                    help="Keycloak user to use for authentication")
+parser.add_argument("--keycloak-password", type=str, default="dummy_prerocessing_pipeline",
+                    help="Keycloak password to use for authentication")
+parser.add_argument("--keycloak-token-path", type=str, default="/realms/pathoplexusRealm/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
 
 args = parser.parse_args()
-host = args.backend_host
+backendHost = args.backend_host
 watch_mode = args.watch
 addErrors = args.withErrors
 addWarnings = args.withWarnings
+keycloakHost = args.keycloak_host
+keycloakUser = args.keycloak_user
+keycloakPassword = args.keycloak_password
+keycloakTokenPath = args.keycloak_token_path
+
 
 @dataclass
 class AnnotationSource:
     name: str
     type: str
 
+
 @dataclass
 class ProcessingAnnotation:
     source: List[AnnotationSource]
     message: str
+
 
 @dataclass
 class Sequence:
@@ -42,9 +55,10 @@ class Sequence:
 
 
 def fetch_unprocessed_sequences(n: int) -> List[Sequence]:
-    url = host + "/extract-unprocessed-data"
+    url = backendHost + "/extract-unprocessed-data"
     params = {"numberOfSequenceEntries": n}
-    response = requests.post(url, data=params)
+    headers = {'Authorization': 'Bearer ' + get_jwt()}
+    response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         raise Exception("Fetching unprocessed data failed. Status code: {}".format(response.status_code), response.text)
     return parse_ndjson(response.text)
@@ -58,6 +72,7 @@ def parse_ndjson(ndjson_data: str) -> List[Sequence]:
             json_object = json.loads(json_str)
             entries.append(Sequence(json_object["accession"], json_object["version"], json_object["data"]))
     return entries
+
 
 def process(unprocessed: List[Sequence]) -> List[Sequence]:
     with open("mock-sequences.json", "r") as f:
@@ -113,14 +128,30 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
 
     return processed
 
+
 def submit_processed_sequences(processed: List[Sequence]):
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = '\n'.join(json_strings)
-    url = host + "/submit-processed-data"
-    headers = {'Content-Type': 'application/x-ndjson'}
+    url = backendHost + "/submit-processed-data"
+    headers = {'Content-Type': 'application/x-ndjson', 'Authorization': 'Bearer ' + get_jwt()}
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:
         raise Exception("Submitting processed data failed. Status code: {}".format(response.status_code), response.text)
+
+
+def get_jwt():
+    url = keycloakHost + keycloakTokenPath
+    data = {
+        "client_id": "test-cli",
+        "username": keycloakUser,
+        "password": keycloakPassword,
+        "grant_type": "password"
+    }
+    response = requests.post(url, data=data)
+    if not response.ok:
+        raise Exception("Fetching JWT failed. Status code: {}".format(response.status_code), response.text)
+    return response.json()["access_token"]
+
 
 def main():
     total_processed = 0
