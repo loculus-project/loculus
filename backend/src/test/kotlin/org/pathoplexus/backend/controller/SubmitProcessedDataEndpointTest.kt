@@ -334,10 +334,9 @@ class SubmitProcessedDataEndpointTest(
 
     companion object {
         @JvmStatic
-        fun provideInvalidDataScenarios() =
-            provideInvalidMetadataScenarios() +
-                provideInvalidNucleotideSequenceDataScenarios() +
-                provideInvalidAminoAcidSequenceDataScenarios()
+        fun provideInvalidDataScenarios() = provideInvalidMetadataScenarios() +
+            provideInvalidNucleotideSequenceDataScenarios() +
+            provideInvalidAminoAcidSequenceDataScenarios()
 
         @JvmStatic
         fun provideInvalidMetadataScenarios() = listOf(

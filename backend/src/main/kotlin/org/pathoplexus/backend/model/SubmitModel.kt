@@ -182,12 +182,7 @@ class SubmitModel(
         }
     }
 
-    private fun uploadSequences(
-        uploadId: String,
-        sequenceStream: InputStream,
-        batchSize: Int,
-        organism: Organism,
-    ) {
+    private fun uploadSequences(uploadId: String, sequenceStream: InputStream, batchSize: Int, organism: Organism) {
         log.info {
             "intermediate storing uploaded sequence data with UploadId $uploadId"
         }
@@ -238,10 +233,7 @@ class SubmitModel(
     }
 
     // TODO(#604): adapt revisions to the new flow
-    private fun processRevisedData(
-        metadataFile: MultipartFile,
-        sequenceFile: MultipartFile,
-    ): List<RevisedData> {
+    private fun processRevisedData(metadataFile: MultipartFile, sequenceFile: MultipartFile): List<RevisedData> {
         if (metadataFile.originalFilename == null || !metadataFile.originalFilename?.endsWith(".tsv")!!) {
             throw BadRequestException("Metadata file must have extension .tsv")
         }
@@ -263,10 +255,7 @@ class SubmitModel(
         }
     }
 
-    private fun validateHeaders(
-        metadataMap: Map<SubmissionId, Any>,
-        sequenceMap: Map<SubmissionId, Any>,
-    ) {
+    private fun validateHeaders(metadataMap: Map<SubmissionId, Any>, sequenceMap: Map<SubmissionId, Any>) {
         val metadataKeysSet = metadataMap.keys.toSet()
         val sequenceKeysSet = sequenceMap.keys.toSet()
         validateSubmissionIdSets(metadataKeysSet, sequenceKeysSet)

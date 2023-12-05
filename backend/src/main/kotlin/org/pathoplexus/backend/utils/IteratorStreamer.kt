@@ -12,10 +12,7 @@ class IteratorStreamer(private val objectMapper: ObjectMapper) {
     fun <T> streamAsNdjson(iterable: Iterable<T>, outputStream: OutputStream) =
         streamAsNdjson(iterable.iterator(), outputStream)
 
-    fun <T> streamAsNdjson(
-        iterator: Iterator<T>,
-        outputStream: OutputStream,
-    ) {
+    fun <T> streamAsNdjson(iterator: Iterator<T>, outputStream: OutputStream) {
         iterator.forEach {
             val json = objectMapper.writeValueAsString(it)
             outputStream.write(json.toByteArray())

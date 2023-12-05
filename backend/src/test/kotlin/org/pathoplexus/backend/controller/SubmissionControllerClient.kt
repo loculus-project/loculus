@@ -22,24 +22,22 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         sequencesFile: MockMultipartFile,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            multipart(addOrganismToPath("/submit", organism = organism))
-                .file(sequencesFile)
-                .file(metadataFile)
-                .withAuth(jwt),
-        )
+    ): ResultActions = mockMvc.perform(
+        multipart(addOrganismToPath("/submit", organism = organism))
+            .file(sequencesFile)
+            .file(metadataFile)
+            .withAuth(jwt),
+    )
 
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
-                .withAuth(jwt)
-                .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
-        )
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
+            .withAuth(jwt)
+            .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
+    )
 
     fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
@@ -55,44 +53,40 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         submittedProcessedData: String,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            post(addOrganismToPath("/submit-processed-data", organism = organism))
-                .contentType(MediaType.APPLICATION_NDJSON_VALUE)
-                .withAuth(jwt)
-                .content(submittedProcessedData),
-        )
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/submit-processed-data", organism = organism))
+            .contentType(MediaType.APPLICATION_NDJSON_VALUE)
+            .withAuth(jwt)
+            .content(submittedProcessedData),
+    )
 
     fun getSequenceEntriesOfUser(
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            get(addOrganismToPath("/get-sequences-of-user", organism = organism))
-                .withAuth(jwt),
-        )
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/get-sequences-of-user", organism = organism))
+            .withAuth(jwt),
+    )
 
     fun getSequenceEntryThatHasErrors(
         accession: Accession,
         version: Long,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            get(addOrganismToPath("/get-data-to-edit/$accession/$version", organism = organism))
-                .withAuth(jwt),
-        )
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/get-data-to-edit/$accession/$version", organism = organism))
+            .withAuth(jwt),
+    )
 
     fun getNumberOfSequenceEntriesThatHaveErrors(
         numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            get(addOrganismToPath("/get-data-to-edit", organism = organism))
-                .withAuth(jwt)
-                .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
-        )
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/get-data-to-edit", organism = organism))
+            .withAuth(jwt)
+            .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
+    )
 
     fun submitEditedSequenceEntryVersion(
         editedData: UnprocessedData,
@@ -111,37 +105,34 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         listOfSequencesToApprove: List<AccessionVersion>,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            post(addOrganismToPath("/approve-processed-data", organism = organism))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"accessionVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}""")
-                .withAuth(jwt),
-        )
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/approve-processed-data", organism = organism))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"accessionVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}""")
+            .withAuth(jwt),
+    )
 
     fun revokeSequenceEntries(
         listOfSequenceEntriesToRevoke: List<Accession>,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            post(addOrganismToPath("/revoke", organism = organism))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"accessions":$listOfSequenceEntriesToRevoke}""")
-                .withAuth(jwt),
-        )
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/revoke", organism = organism))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"accessions":$listOfSequenceEntriesToRevoke}""")
+            .withAuth(jwt),
+    )
 
     fun confirmRevocation(
         listOfSequencesToConfirm: List<AccessionVersion>,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            post(addOrganismToPath("/confirm-revocation", organism = organism))
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"accessionVersions":${objectMapper.writeValueAsString(listOfSequencesToConfirm)}}""")
-                .withAuth(jwt),
-        )
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/confirm-revocation", organism = organism))
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""{"accessionVersions":${objectMapper.writeValueAsString(listOfSequencesToConfirm)}}""")
+            .withAuth(jwt),
+    )
 
     fun getReleasedData(organism: String = DEFAULT_ORGANISM, jwt: String? = jwtForDefaultUser): ResultActions =
         mockMvc.perform(
@@ -153,26 +144,24 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         listOfAccessionVersionsToDelete: List<AccessionVersion>,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            delete(addOrganismToPath("/delete-sequence-entry-versions", organism = organism))
-                .withAuth(jwt)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(
-                    """{"accessionVersions":${objectMapper.writeValueAsString(listOfAccessionVersionsToDelete)}}""",
-                ),
-        )
+    ): ResultActions = mockMvc.perform(
+        delete(addOrganismToPath("/delete-sequence-entry-versions", organism = organism))
+            .withAuth(jwt)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(
+                """{"accessionVersions":${objectMapper.writeValueAsString(listOfAccessionVersionsToDelete)}}""",
+            ),
+    )
 
     fun reviseSequenceEntries(
         metadataFile: MockMultipartFile,
         sequencesFile: MockMultipartFile,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions =
-        mockMvc.perform(
-            multipart(addOrganismToPath("/revise", organism = organism))
-                .file(sequencesFile)
-                .file(metadataFile)
-                .withAuth(jwt),
-        )
+    ): ResultActions = mockMvc.perform(
+        multipart(addOrganismToPath("/revise", organism = organism))
+            .file(sequencesFile)
+            .file(metadataFile)
+            .withAuth(jwt),
+    )
 }
