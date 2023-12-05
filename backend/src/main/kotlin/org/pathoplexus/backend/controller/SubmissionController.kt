@@ -20,6 +20,7 @@ import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.model.ReleasedDataModel
 import org.pathoplexus.backend.model.SubmitModel
 import org.pathoplexus.backend.service.DatabaseService
+import org.pathoplexus.backend.service.UploadType
 import org.pathoplexus.backend.utils.Accession
 import org.pathoplexus.backend.utils.IteratorStreamer
 import org.springframework.http.HttpHeaders
@@ -62,12 +63,13 @@ class SubmissionController(
         @UsernameFromJwt username: String,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
-    ): List<SubmissionIdMapping> = submitModel.processSubmission(
+    ): List<SubmissionIdMapping> = submitModel.processSubmissions(
         UUID.randomUUID().toString(),
         metadataFile,
         sequenceFile,
         username,
         organism,
+        UploadType.ORIGINAL,
     )
 
     @Operation(description = EXTRACT_UNPROCESSED_DATA_DESCRIPTION)
@@ -226,7 +228,14 @@ class SubmissionController(
         @Parameter(
             description = SEQUENCE_FILE_DESCRIPTION,
         ) @RequestParam sequenceFile: MultipartFile,
-    ): List<SubmissionIdMapping> = submitModel.processRevision(username, metadataFile, sequenceFile, organism)
+    ): List<SubmissionIdMapping> = submitModel.processSubmissions(
+        UUID.randomUUID().toString(),
+        metadataFile,
+        sequenceFile,
+        username,
+        organism,
+        UploadType.REVISION,
+    )
 
     @Operation(description = REVOKE_DESCRIPTION)
     @PostMapping("/revoke", produces = [MediaType.APPLICATION_JSON_VALUE])

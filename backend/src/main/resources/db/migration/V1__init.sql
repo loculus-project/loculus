@@ -23,6 +23,8 @@ create index on sequence_entries (status);
 
 
 create table metadata_upload_aux_table (
+    accession text,
+    version bigint,
     upload_id text not null,
     organism text not null,
     submission_id text not null,

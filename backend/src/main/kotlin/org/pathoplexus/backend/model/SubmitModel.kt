@@ -6,12 +6,8 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.CompressorStreamFactory
-import org.apache.commons.csv.CSVFormat
-import org.apache.commons.csv.CSVParser
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.pathoplexus.backend.api.Organism
-import org.pathoplexus.backend.api.OriginalData
-import org.pathoplexus.backend.api.RevisedData
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.DuplicateKeyException
@@ -19,24 +15,23 @@ import org.pathoplexus.backend.controller.UnprocessableEntityException
 import org.pathoplexus.backend.service.CompressionAlgorithm
 import org.pathoplexus.backend.service.DatabaseService
 import org.pathoplexus.backend.service.UploadDatabaseService
-import org.pathoplexus.backend.utils.Accession
+import org.pathoplexus.backend.service.UploadType
 import org.pathoplexus.backend.utils.FastaReader
 import org.pathoplexus.backend.utils.ParseFastaHeader
 import org.pathoplexus.backend.utils.metadataEntryStreamAsSequence
+import org.pathoplexus.backend.utils.revisionEntryStreamAsSequence
 import org.springframework.stereotype.Service
 import org.springframework.web.multipart.MultipartFile
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.InputStream
-import java.io.InputStreamReader
 
 const val HEADER_TO_CONNECT_METADATA_AND_SEQUENCES = "submissionId"
-private const val ACCESSION_HEADER = "accession"
+const val ACCESSION_HEADER = "accession"
 private val log = KotlinLogging.logger { }
 
 typealias SubmissionId = String
 typealias SegmentName = String
-typealias MetadataMap = Map<SubmissionId, Map<String, String>>
 
 const val UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE = "23505"
 
@@ -64,24 +59,38 @@ class SubmitModel(
             }
     }
 
-    fun processSubmission(
+    fun processSubmissions(
         uploadId: String,
         metadataFile: MultipartFile,
         sequenceFile: MultipartFile,
         submitter: String,
         organism: Organism,
+        uploadType: UploadType,
         batchSize: Int = 1000,
     ): List<SubmissionIdMapping> {
         return try {
-            log.info { "Processing submission with uploadId $uploadId" }
-            uploadData(submitter, uploadId, metadataFile, sequenceFile, batchSize, organism)
+            log.info { "Processing submission of type ${uploadType.name} with uploadId $uploadId" }
+            uploadData(
+                submitter,
+                uploadId,
+                metadataFile,
+                sequenceFile,
+                batchSize,
+                organism,
+                uploadType,
+            )
 
             log.info { "Validating submission with uploadId $uploadId" }
             val (metadataSubmissionIds, sequencesSubmissionIds) = uploadDatabaseService.getUploadSubmissionIds(uploadId)
             validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
 
+            if (uploadType == UploadType.REVISION) {
+                log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
+                uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(uploadId, organism, submitter)
+            }
+
             log.info { "Persisting submission with uploadId $uploadId" }
-            uploadDatabaseService.mapAndCopy(uploadId)
+            uploadDatabaseService.mapAndCopy(uploadId, uploadType)
         } finally {
             uploadDatabaseService.deleteUploadData(uploadId)
         }
@@ -94,11 +103,17 @@ class SubmitModel(
         sequenceMultipartFile: MultipartFile,
         batchSize: Int,
         organism: Organism,
+        uploadType: UploadType,
     ) {
         val metadataTempFileToDelete = MaybeFile()
-        val metadataStream = getStreamFromFile(metadataMultipartFile, uploadId, metadataFile, metadataTempFileToDelete)
+        val metadataStream = getStreamFromFile(
+            metadataMultipartFile,
+            uploadId,
+            metadataFile,
+            metadataTempFileToDelete,
+        )
         try {
-            uploadMetadata(submitter, uploadId, metadataStream, batchSize, organism)
+            uploadMetadata(submitter, uploadId, metadataStream, batchSize, organism, uploadType)
         } finally {
             metadataTempFileToDelete.delete()
         }
@@ -157,20 +172,36 @@ class SubmitModel(
         metadataStream: InputStream,
         batchSize: Int,
         organism: Organism,
+        uploadType: UploadType,
     ) {
         log.info {
-            "intermediate storing uploaded metadata from $submitter with UploadId $uploadId"
+            "intermediate storing uploaded metadata of type ${uploadType.name} from $submitter with UploadId $uploadId"
         }
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         try {
-            metadataEntryStreamAsSequence(metadataStream).chunked(batchSize).forEach { batch ->
-                uploadDatabaseService.batchInsertMetadataInAuxTable(
-                    submitter,
-                    uploadId,
-                    organism,
-                    batch,
-                    now,
-                )
+            when (uploadType) {
+                UploadType.ORIGINAL -> metadataEntryStreamAsSequence(metadataStream)
+                    .chunked(batchSize)
+                    .forEach { batch ->
+                        uploadDatabaseService.batchInsertMetadataInAuxTable(
+                            submitter,
+                            uploadId,
+                            organism,
+                            batch,
+                            now,
+                        )
+                    }
+                UploadType.REVISION -> revisionEntryStreamAsSequence(
+                    metadataStream,
+                ).chunked(batchSize).forEach { batch ->
+                    uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(
+                        submitter,
+                        uploadId,
+                        organism,
+                        batch,
+                        now,
+                    )
+                }
             }
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
@@ -221,46 +252,6 @@ class SubmitModel(
         )
     }
 
-    fun processRevision(
-        username: String,
-        metadataFile: MultipartFile,
-        sequenceFile: MultipartFile,
-        organism: Organism,
-    ): List<SubmissionIdMapping> {
-        val revisedData = processRevisedData(metadataFile, sequenceFile)
-
-        return databaseService.reviseData(username, revisedData, organism)
-    }
-
-    // TODO(#604): adapt revisions to the new flow
-    private fun processRevisedData(metadataFile: MultipartFile, sequenceFile: MultipartFile): List<RevisedData> {
-        if (metadataFile.originalFilename == null || !metadataFile.originalFilename?.endsWith(".tsv")!!) {
-            throw BadRequestException("Metadata file must have extension .tsv")
-        }
-
-        val metadataMap = createMetadataMap(metadataFile.inputStream)
-        val metadataMapWithoutAccession =
-            metadataMap.mapValues { it.value.filterKeys { column -> column != ACCESSION_HEADER } }
-        val sequenceMap = sequenceMap(sequenceFile)
-        validateHeaders(metadataMapWithoutAccession, sequenceMap)
-
-        val accessionMap = accessionMap(metadataMap)
-
-        return metadataMapWithoutAccession.map { entry ->
-            RevisedData(
-                entry.key,
-                accessionMap[entry.key]!!,
-                OriginalData(entry.value, sequenceMap[entry.key]!!),
-            )
-        }
-    }
-
-    private fun validateHeaders(metadataMap: Map<SubmissionId, Any>, sequenceMap: Map<SubmissionId, Any>) {
-        val metadataKeysSet = metadataMap.keys.toSet()
-        val sequenceKeysSet = sequenceMap.keys.toSet()
-        validateSubmissionIdSets(metadataKeysSet, sequenceKeysSet)
-    }
-
     private fun validateSubmissionIdSets(metadataKeysSet: Set<SubmissionId>, sequenceKeysSet: Set<SubmissionId>) {
         val metadataKeysNotInSequences = metadataKeysSet.subtract(sequenceKeysSet)
         if (metadataKeysNotInSequences.isNotEmpty()) {
@@ -277,87 +268,5 @@ class SubmitModel(
                     "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10),
             )
         }
-    }
-
-    private fun createMetadataMap(metadataInputStream: InputStream): MetadataMap {
-        val csvParser = CSVParser(
-            InputStreamReader(metadataInputStream),
-            CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
-        )
-
-        if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
-            throw UnprocessableEntityException(
-                "The metadata file does not contain the header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES'",
-            )
-        }
-
-        val metadataList = csvParser.map { it.toMap() }
-
-        val metadataMap = metadataList.associate {
-            if (it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES].isNullOrEmpty()) {
-                throw UnprocessableEntityException(
-                    "A row in metadata file contains no $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES: $it",
-                )
-            }
-            it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]!! to it.filterKeys { column ->
-                column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
-            }
-        }
-
-        if (metadataMap.size != metadataList.size) {
-            val duplicateKeys = metadataList.map { it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES] }
-                .groupingBy { it }
-                .eachCount()
-                .filter { it.value > 1 }
-                .keys
-                .sortedBy { it }
-                .joinToString(limit = 10)
-
-            throw UnprocessableEntityException(
-                "Metadata file contains duplicate ${HEADER_TO_CONNECT_METADATA_AND_SEQUENCES}s: $duplicateKeys",
-            )
-        }
-        return metadataMap
-    }
-
-    private fun accessionMap(metadataMap: Map<SubmissionId, Map<String, String>>): Map<SubmissionId, Accession> {
-        if (metadataMap.values.any { !it.keys.contains(ACCESSION_HEADER) }) {
-            throw UnprocessableEntityException(
-                "Metadata file misses header $ACCESSION_HEADER",
-            )
-        }
-
-        return metadataMap.map {
-            if (it.value[ACCESSION_HEADER].isNullOrEmpty()) {
-                throw UnprocessableEntityException(
-                    "A row with header '${it.key}' in metadata file contains no $ACCESSION_HEADER",
-                )
-            }
-            if (it.value[ACCESSION_HEADER]!!.toLongOrNull() == null) {
-                throw UnprocessableEntityException(
-                    "A row with header '${it.key}' in metadata file contains no valid $ACCESSION_HEADER: " +
-                        "${it.value[ACCESSION_HEADER]}",
-                )
-            }
-            it.key to it.value[ACCESSION_HEADER]!!
-        }.toMap()
-    }
-
-    private fun sequenceMap(sequenceFile: MultipartFile): Map<SubmissionId, Map<SegmentName, String>> {
-        if (sequenceFile.originalFilename == null || !sequenceFile.originalFilename?.endsWith(".fasta")!!) {
-            throw BadRequestException("Sequence file must have extension .fasta")
-        }
-
-        val fastaList = FastaReader(sequenceFile.bytes.inputStream()).toList()
-        val sequenceMap = mutableMapOf<SubmissionId, MutableMap<SegmentName, String>>()
-        fastaList.forEach {
-            val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName)
-            val segmentMap = sequenceMap.getOrPut(submissionId) { mutableMapOf() }
-            if (segmentMap.containsKey(segmentName)) {
-                throw UnprocessableEntityException("Sequence file contains duplicate submissionIds: ${it.sampleName}")
-            }
-            segmentMap[segmentName] = it.sequence
-        }
-        return sequenceMap
     }
 }
