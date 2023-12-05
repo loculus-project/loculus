@@ -70,32 +70,30 @@ object PreparedProcessedData {
     fun successfullyProcessed(
         accession: Accession = DefaultFiles.firstAccession,
         version: Long = defaultSuccessfulSubmittedData.version,
-    ) =
-        defaultSuccessfulSubmittedData.withValues(
-            accession = accession,
-            version = version,
-        )
+    ) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        version = version,
+    )
 
     fun successfullyProcessedOtherOrganismData(
         accession: Accession = DefaultFiles.firstAccession,
         version: Long = defaultSuccessfulSubmittedData.version,
-    ) =
-        defaultSuccessfulSubmittedData.withValues(
-            accession = accession,
-            version = version,
-            data = ProcessedData(
-                metadata = mapOf(
-                    "date" to TextNode("2022-12-24"),
-                    "specialOtherField" to TextNode("some value"),
-                    "pangoLineage" to TextNode("B.1.1.7"),
-                ),
-                alignedNucleotideSequences = mapOf("main" to "ATCG"),
-                alignedAminoAcidSequences = mapOf("gene" to "MADS"),
-                unalignedNucleotideSequences = mapOf("main" to "ATCG"),
-                nucleotideInsertions = mapOf("main" to listOf(Insertion(123, "ACTG"))),
-                aminoAcidInsertions = mapOf("gene" to listOf(Insertion(123, "MADS"))),
+    ) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        version = version,
+        data = ProcessedData(
+            metadata = mapOf(
+                "date" to TextNode("2022-12-24"),
+                "specialOtherField" to TextNode("some value"),
+                "pangoLineage" to TextNode("B.1.1.7"),
             ),
-        )
+            alignedNucleotideSequences = mapOf("main" to "ATCG"),
+            alignedAminoAcidSequences = mapOf("gene" to "MADS"),
+            unalignedNucleotideSequences = mapOf("main" to "ATCG"),
+            nucleotideInsertions = mapOf("main" to listOf(Insertion(123, "ACTG"))),
+            aminoAcidInsertions = mapOf("gene" to listOf(Insertion(123, "MADS"))),
+        ),
+    )
 
     fun withNullForFields(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =
         defaultSuccessfulSubmittedData.withValues(
@@ -155,64 +153,59 @@ object PreparedProcessedData {
     fun withMissingSegmentInUnalignedNucleotideSequences(
         accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
-    ) =
-        defaultSuccessfulSubmittedData.withValues(
-            accession = accession,
-            data = defaultProcessedData.withValues(
-                unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences - segment,
-            ),
-        )
+    ) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        data = defaultProcessedData.withValues(
+            unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences - segment,
+        ),
+    )
 
     fun withMissingSegmentInAlignedNucleotideSequences(
         accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
-    ) =
-        defaultSuccessfulSubmittedData.withValues(
-            accession = accession,
-            data = defaultProcessedData.withValues(
-                alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences - segment,
-            ),
-        )
+    ) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        data = defaultProcessedData.withValues(
+            alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences - segment,
+        ),
+    )
 
     fun withUnknownSegmentInAlignedNucleotideSequences(
         accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
-    ) =
-        defaultSuccessfulSubmittedData.withValues(
-            accession = accession,
-            data = defaultProcessedData.withValues(
-                alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences + (segment to "NNNN"),
-            ),
-        )
+    ) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        data = defaultProcessedData.withValues(
+            alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences + (segment to "NNNN"),
+        ),
+    )
 
     fun withUnknownSegmentInUnalignedNucleotideSequences(
         accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
-    ) =
-        defaultSuccessfulSubmittedData.withValues(
-            accession = accession,
-            data = defaultProcessedData.withValues(
-                unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences + (segment to "NNNN"),
-            ),
-        )
+    ) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        data = defaultProcessedData.withValues(
+            unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences + (segment to "NNNN"),
+        ),
+    )
 
     fun withUnknownSegmentInNucleotideInsertions(
         accession: Accession = DefaultFiles.firstAccession,
         segment: SegmentName,
-    ) =
-        defaultSuccessfulSubmittedData.withValues(
-            accession = accession,
-            data = defaultProcessedData.withValues(
-                nucleotideInsertions = defaultProcessedData.nucleotideInsertions + (
-                    segment to listOf(
-                        Insertion(
-                            123,
-                            "ACTG",
-                        ),
-                    )
+    ) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        data = defaultProcessedData.withValues(
+            nucleotideInsertions = defaultProcessedData.nucleotideInsertions + (
+                segment to listOf(
+                    Insertion(
+                        123,
+                        "ACTG",
                     ),
-            ),
-        )
+                )
+                ),
+        ),
+    )
 
     fun withAlignedNucleotideSequenceOfWrongLength(
         accession: Accession = DefaultFiles.firstAccession,
@@ -267,10 +260,7 @@ object PreparedProcessedData {
         )
     }
 
-    fun withMissingGeneInAminoAcidSequences(
-        accession: Accession = DefaultFiles.firstAccession,
-        gene: GeneName,
-    ) =
+    fun withMissingGeneInAminoAcidSequences(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
         defaultSuccessfulSubmittedData.withValues(
             accession = accession,
             data = defaultProcessedData.withValues(
@@ -278,10 +268,7 @@ object PreparedProcessedData {
             ),
         )
 
-    fun withUnknownGeneInAminoAcidSequences(
-        accession: Accession = DefaultFiles.firstAccession,
-        gene: GeneName,
-    ) =
+    fun withUnknownGeneInAminoAcidSequences(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
         defaultSuccessfulSubmittedData.withValues(
             accession = accession,
             data = defaultProcessedData.withValues(
@@ -289,10 +276,7 @@ object PreparedProcessedData {
             ),
         )
 
-    fun withUnknownGeneInAminoAcidInsertions(
-        accession: Accession = DefaultFiles.firstAccession,
-        gene: GeneName,
-    ) =
+    fun withUnknownGeneInAminoAcidInsertions(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
         defaultSuccessfulSubmittedData.withValues(
             accession = accession,
             data = defaultProcessedData.withValues(
@@ -347,55 +331,53 @@ object PreparedProcessedData {
         )
     }
 
-    fun withErrors(accession: Accession = DefaultFiles.firstAccession) =
-        defaultSuccessfulSubmittedData.withValues(
-            accession = accession,
-            errors = listOf(
-                PreprocessingAnnotation(
-                    source = listOf(
-                        PreprocessingAnnotationSource(
-                            PreprocessingAnnotationSourceType.Metadata,
-                            "host",
-                        ),
+    fun withErrors(accession: Accession = DefaultFiles.firstAccession) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        errors = listOf(
+            PreprocessingAnnotation(
+                source = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.Metadata,
+                        "host",
                     ),
-                    "Not this kind of host",
                 ),
-                PreprocessingAnnotation(
-                    source = listOf(
-                        PreprocessingAnnotationSource(
-                            PreprocessingAnnotationSourceType.NucleotideSequence,
-                            "main",
-                        ),
-                    ),
-                    "dummy nucleotide sequence error",
-                ),
+                "Not this kind of host",
             ),
-        )
+            PreprocessingAnnotation(
+                source = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.NucleotideSequence,
+                        "main",
+                    ),
+                ),
+                "dummy nucleotide sequence error",
+            ),
+        ),
+    )
 
-    fun withWarnings(accession: Accession = DefaultFiles.firstAccession) =
-        defaultSuccessfulSubmittedData.withValues(
-            accession = accession,
-            warnings = listOf(
-                PreprocessingAnnotation(
-                    source = listOf(
-                        PreprocessingAnnotationSource(
-                            PreprocessingAnnotationSourceType.Metadata,
-                            "host",
-                        ),
+    fun withWarnings(accession: Accession = DefaultFiles.firstAccession) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        warnings = listOf(
+            PreprocessingAnnotation(
+                source = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.Metadata,
+                        "host",
                     ),
-                    "Not this kind of host",
                 ),
-                PreprocessingAnnotation(
-                    source = listOf(
-                        PreprocessingAnnotationSource(
-                            PreprocessingAnnotationSourceType.NucleotideSequence,
-                            "main",
-                        ),
-                    ),
-                    "dummy nucleotide sequence error",
-                ),
+                "Not this kind of host",
             ),
-        )
+            PreprocessingAnnotation(
+                source = listOf(
+                    PreprocessingAnnotationSource(
+                        PreprocessingAnnotationSourceType.NucleotideSequence,
+                        "main",
+                    ),
+                ),
+                "dummy nucleotide sequence error",
+            ),
+        ),
+    )
 }
 
 fun SubmittedProcessedData.withValues(

@@ -89,9 +89,7 @@ class SequenceValidator(
         validateAminoAcidSequences(submittedProcessedData)
     }
 
-    private fun validateMetadata(
-        submittedProcessedData: SubmittedProcessedData,
-    ) {
+    private fun validateMetadata(submittedProcessedData: SubmittedProcessedData) {
         val metadataFields = schema.metadata
         validateNoUnknownInMetaData(submittedProcessedData.data.metadata, metadataFields.map { it.name })
 
@@ -100,10 +98,7 @@ class SequenceValidator(
         }
     }
 
-    private fun <T> validateNoUnknownInMetaData(
-        data: Map<String, T>,
-        known: List<String>,
-    ) {
+    private fun <T> validateNoUnknownInMetaData(data: Map<String, T>, known: List<String>) {
         val unknownMetadataKeys = data.keys.subtract(known.toSet())
         if (unknownMetadataKeys.isNotEmpty()) {
             val unknownMetadataKeysString = unknownMetadataKeys.sorted().joinToString(", ")
@@ -111,10 +106,7 @@ class SequenceValidator(
         }
     }
 
-    private fun validateKnownMetadataField(
-        metadata: Metadata,
-        submittedProcessedData: SubmittedProcessedData,
-    ) {
+    private fun validateKnownMetadataField(metadata: Metadata, submittedProcessedData: SubmittedProcessedData) {
         val fieldName = metadata.name
         val fieldValue = submittedProcessedData.data.metadata[fieldName]
 
@@ -192,9 +184,7 @@ class SequenceValidator(
         return pangoLineageCandidate.matches(pangoLineageRegex)
     }
 
-    private fun validateNucleotideSequences(
-        submittedProcessedData: SubmittedProcessedData,
-    ) {
+    private fun validateNucleotideSequences(submittedProcessedData: SubmittedProcessedData) {
         for (segment in referenceGenome.nucleotideSequences) {
             validateNoMissingSegment(
                 segment,
@@ -268,10 +258,7 @@ class SequenceValidator(
         }
     }
 
-    private fun <T> validateNoUnknownSegment(
-        dataToValidate: Map<String, T>,
-        sequenceGrouping: String,
-    ) {
+    private fun <T> validateNoUnknownSegment(dataToValidate: Map<String, T>, sequenceGrouping: String) {
         val unknownSegments = dataToValidate.keys.subtract(referenceGenome.nucleotideSequences.map { it.name }.toSet())
         if (unknownSegments.isNotEmpty()) {
             val unknownSegmentsString = unknownSegments.sorted().joinToString(", ")
@@ -281,10 +268,7 @@ class SequenceValidator(
         }
     }
 
-    private fun validateNoUnknownNucleotideSymbol(
-        dataToValidate: Map<String, String>,
-        sequenceGrouping: String,
-    ) {
+    private fun validateNoUnknownNucleotideSymbol(dataToValidate: Map<String, String>, sequenceGrouping: String) {
         for (sequence in dataToValidate) {
             val invalidSymbols = sequence.value.getInvalidSymbols<NucleotideSymbols>()
             if (invalidSymbols.isNotEmpty()) {
@@ -296,9 +280,7 @@ class SequenceValidator(
         }
     }
 
-    private fun validateNoUnknownNucleotideSymbolInInsertion(
-        dataToValidate: Map<String, List<Insertion>>,
-    ) {
+    private fun validateNoUnknownNucleotideSymbolInInsertion(dataToValidate: Map<String, List<Insertion>>) {
         for (sequence in dataToValidate) {
             for (insertion in sequence.value) {
                 val invalidSymbols = insertion.sequence.getInvalidSymbols<NucleotideSymbols>()
@@ -320,9 +302,7 @@ class SequenceValidator(
         where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         enumValues<ValidSymbols>().any { it.symbol == this }
 
-    private fun validateAminoAcidSequences(
-        submittedProcessedData: SubmittedProcessedData,
-    ) {
+    private fun validateAminoAcidSequences(submittedProcessedData: SubmittedProcessedData) {
         for (gene in referenceGenome.genes) {
             validateNoMissingGene(gene, submittedProcessedData)
             validateLengthOfSequence(
@@ -346,19 +326,13 @@ class SequenceValidator(
         validateNoUnknownAminoAcidSymbolInInsertion(submittedProcessedData.data.aminoAcidInsertions)
     }
 
-    private fun validateNoMissingGene(
-        gene: ReferenceSequence,
-        submittedProcessedData: SubmittedProcessedData,
-    ) {
+    private fun validateNoMissingGene(gene: ReferenceSequence, submittedProcessedData: SubmittedProcessedData) {
         if (!submittedProcessedData.data.alignedAminoAcidSequences.containsKey(gene.name)) {
             throw ProcessingValidationException("Missing the required gene '${gene.name}'.")
         }
     }
 
-    private fun validateNoUnknownGeneInData(
-        data: Map<String, *>,
-        geneGrouping: String,
-    ) {
+    private fun validateNoUnknownGeneInData(data: Map<String, *>, geneGrouping: String) {
         val unknownGenes = data.keys.subtract(referenceGenome.genes.map { it.name }.toSet())
         if (unknownGenes.isNotEmpty()) {
             val unknownGenesString = unknownGenes.sorted().joinToString(", ")
@@ -366,9 +340,7 @@ class SequenceValidator(
         }
     }
 
-    private fun validateNoUnknownAminoAcidSymbol(
-        dataToValidate: Map<String, String>,
-    ) {
+    private fun validateNoUnknownAminoAcidSymbol(dataToValidate: Map<String, String>) {
         for (sequence in dataToValidate) {
             val invalidSymbols = sequence.value.getInvalidSymbols<AminoAcidSymbols>()
             if (invalidSymbols.isNotEmpty()) {
@@ -380,9 +352,7 @@ class SequenceValidator(
         }
     }
 
-    private fun validateNoUnknownAminoAcidSymbolInInsertion(
-        dataToValidate: Map<String, List<Insertion>>,
-    ) {
+    private fun validateNoUnknownAminoAcidSymbolInInsertion(dataToValidate: Map<String, List<Insertion>>) {
         for (sequence in dataToValidate) {
             for (insertion in sequence.value) {
                 val invalidSymbols = insertion.sequence.getInvalidSymbols<AminoAcidSymbols>()

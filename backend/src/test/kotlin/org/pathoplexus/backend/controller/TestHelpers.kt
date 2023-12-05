@@ -24,8 +24,7 @@ fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.acces
 
 fun List<AccessionVersionInterface>.getAccessionVersions() = map { it.toAccessionVersion() }
 
-fun addOrganismToPath(path: String, organism: String = DEFAULT_ORGANISM) =
-    "/$organism/${path.trimStart('/')}"
+fun addOrganismToPath(path: String, organism: String = DEFAULT_ORGANISM) = "/$organism/${path.trimStart('/')}"
 
 val jacksonObjectMapper: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 

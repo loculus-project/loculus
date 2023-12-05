@@ -189,9 +189,7 @@ class DatabaseService(
         }
     }
 
-    private fun addMissingKeysForInsertions(
-        submittedProcessedData: SubmittedProcessedData,
-    ): SubmittedProcessedData {
+    private fun addMissingKeysForInsertions(submittedProcessedData: SubmittedProcessedData): SubmittedProcessedData {
         val nucleotideInsertions = referenceGenome.nucleotideSequences.associate {
             if (it.name in submittedProcessedData.data.nucleotideInsertions.keys) {
                 it.name to submittedProcessedData.data.nucleotideInsertions[it.name]!!

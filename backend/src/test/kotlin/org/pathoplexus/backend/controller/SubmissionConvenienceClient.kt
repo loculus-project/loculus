@@ -115,13 +115,10 @@ class SubmissionConvenienceClient(
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
         organism: String = DEFAULT_ORGANISM,
-    ) =
-        client.extractUnprocessedData(numberOfSequenceEntries, organism)
-            .expectNdjsonAndGetContent<UnprocessedData>()
+    ) = client.extractUnprocessedData(numberOfSequenceEntries, organism)
+        .expectNdjsonAndGetContent<UnprocessedData>()
 
-    fun prepareDatabaseWith(
-        vararg processedData: SubmittedProcessedData,
-    ) {
+    fun prepareDatabaseWith(vararg processedData: SubmittedProcessedData) {
         submitDefaultFiles()
         extractUnprocessedData()
         client.submitProcessedData(*processedData)
@@ -139,15 +136,11 @@ class SubmissionConvenienceClient(
         )
     }
 
-    fun getSequenceEntriesOfUserInState(
-        userName: String = USER_NAME,
-        status: Status,
-    ): List<SequenceEntryStatus> = getSequenceEntriesOfUser(userName).filter { it.status == status }
+    fun getSequenceEntriesOfUserInState(userName: String = USER_NAME, status: Status): List<SequenceEntryStatus> =
+        getSequenceEntriesOfUser(userName).filter { it.status == status }
 
-    fun getSequenceEntryOfUser(
-        accessionVersion: AccessionVersion,
-        userName: String = USER_NAME,
-    ) = getSequenceEntryOfUser(accessionVersion.accession, accessionVersion.version, userName)
+    fun getSequenceEntryOfUser(accessionVersion: AccessionVersion, userName: String = USER_NAME) =
+        getSequenceEntryOfUser(accessionVersion.accession, accessionVersion.version, userName)
 
     fun getSequenceEntryOfUser(
         accession: Accession,
@@ -165,18 +158,15 @@ class SubmissionConvenienceClient(
         accession: Accession,
         version: Long,
         userName: String = USER_NAME,
-    ): SequenceEntryVersionToEdit =
-        deserializeJsonResponse(
-            client.getSequenceEntryThatHasErrors(
-                accession = accession,
-                version = version,
-                jwt = generateJwtForUser(userName),
-            ),
-        )
+    ): SequenceEntryVersionToEdit = deserializeJsonResponse(
+        client.getSequenceEntryThatHasErrors(
+            accession = accession,
+            version = version,
+            jwt = generateJwtForUser(userName),
+        ),
+    )
 
-    fun submitDefaultEditedData(
-        userName: String = USER_NAME,
-    ) {
+    fun submitDefaultEditedData(userName: String = USER_NAME) {
         DefaultFiles.allAccessions.forEach { accession ->
             client.submitEditedSequenceEntryVersion(
                 UnprocessedData(accession, 1L, defaultOriginalData),

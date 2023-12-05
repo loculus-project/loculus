@@ -154,10 +154,9 @@ class SubmissionJourneyTest(
         )
     }
 
-    private fun getAccessionVersionsOfProcessedData(processedData: List<ProcessedData>) =
-        processedData
-            .map { it.metadata }
-            .map { it["accessionVersion"]!!.asText() }
+    private fun getAccessionVersionsOfProcessedData(processedData: List<ProcessedData>) = processedData
+        .map { it.metadata }
+        .map { it["accessionVersion"]!!.asText() }
 
     private fun getAccessionVersions(sequenceEntryVersions: List<AccessionVersionInterface>) =
         sequenceEntryVersions.map { it.displayAccessionVersion() }

@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-private const val numberOfFieldsWithUnknownValue = 2
+private const val NUMBER_OF_FIELDS_WITH_UNKNOWN_VALUE = 2
 
 @EndpointTest
 class GetReleasedDataEndpointTest(
@@ -77,7 +77,7 @@ class GetReleasedDataEndpointTest(
                 "versionStatus" to TextNode("LATEST_VERSION"),
             )
 
-            assertThat(it.metadata.size, `is`(expectedMetadata.size + numberOfFieldsWithUnknownValue))
+            assertThat(it.metadata.size, `is`(expectedMetadata.size + NUMBER_OF_FIELDS_WITH_UNKNOWN_VALUE))
             for ((key, value) in it.metadata) {
                 when (key) {
                     "submittedAt" -> {
