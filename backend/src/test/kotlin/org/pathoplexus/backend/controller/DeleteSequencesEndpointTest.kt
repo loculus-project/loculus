@@ -20,7 +20,6 @@ class DeleteSequencesEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
-
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
@@ -38,13 +37,15 @@ class DeleteSequencesEndpointTest(
     ) {
         convenienceClient.prepareDataTo(testScenario.statusAfterPreparation)
 
-        val accessionVersionsToDelete = convenienceClient.getSequenceEntriesOfUserInState(
-            status = testScenario.statusAfterPreparation,
-        )
+        val accessionVersionsToDelete =
+            convenienceClient.getSequenceEntriesOfUserInState(
+                status = testScenario.statusAfterPreparation,
+            )
 
-        val deletionResult = client.deleteSequenceEntries(
-            accessionVersionsToDelete.map { AccessionVersion(it.accession, it.version) },
-        )
+        val deletionResult =
+            client.deleteSequenceEntries(
+                accessionVersionsToDelete.map { AccessionVersion(it.accession, it.version) },
+            )
 
         deletionResult.andExpect(status().isNoContent)
         assertThat(
@@ -62,20 +63,24 @@ class DeleteSequencesEndpointTest(
     ) {
         convenienceClient.prepareDataTo(testScenario.statusAfterPreparation)
 
-        val accessionVersionsToDelete = convenienceClient.getSequenceEntriesOfUserInState(
-            status = testScenario.statusAfterPreparation,
-        )
+        val accessionVersionsToDelete =
+            convenienceClient.getSequenceEntriesOfUserInState(
+                status = testScenario.statusAfterPreparation,
+            )
 
-        val deletionResult = client.deleteSequenceEntries(
-            accessionVersionsToDelete.map { AccessionVersion(it.accession, it.version) },
-        )
+        val deletionResult =
+            client.deleteSequenceEntries(
+                accessionVersionsToDelete.map { AccessionVersion(it.accession, it.version) },
+            )
 
-        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.AWAITING_APPROVAL}, " +
-            "${Status.HAS_ERRORS}, ${Status.AWAITING_APPROVAL_FOR_REVOCATION}]"
-        val errorString = "Accession versions are in not in one of the states $listOfAllowedStatuses: " +
-            accessionVersionsToDelete.sortedWith(AccessionVersionComparator).joinToString(", ") {
-                "${it.accession}.${it.version} - ${it.status}"
-            }
+        val listOfAllowedStatuses =
+            "[${Status.RECEIVED}, ${Status.AWAITING_APPROVAL}, " +
+                "${Status.HAS_ERRORS}, ${Status.AWAITING_APPROVAL_FOR_REVOCATION}]"
+        val errorString =
+            "Accession versions are in not in one of the states $listOfAllowedStatuses: " +
+                accessionVersionsToDelete.sortedWith(AccessionVersionComparator).joinToString(", ") {
+                    "${it.accession}.${it.version} - ${it.status}"
+                }
         deletionResult.andExpect(status().isUnprocessableEntity)
             .andExpect(
                 content().contentType(MediaType.APPLICATION_JSON_VALUE),
@@ -142,40 +147,42 @@ class DeleteSequencesEndpointTest(
 
     companion object {
         @JvmStatic
-        fun provideValidTestScenarios() = listOf(
-            TestScenario(
-                Status.RECEIVED,
-                true,
-            ),
-            TestScenario(
-                Status.HAS_ERRORS,
-                true,
-            ),
-            TestScenario(
-                Status.RECEIVED,
-                true,
-            ),
-            TestScenario(
-                Status.AWAITING_APPROVAL,
-                true,
-            ),
-            TestScenario(
-                Status.AWAITING_APPROVAL_FOR_REVOCATION,
-                true,
-            ),
-        )
+        fun provideValidTestScenarios() =
+            listOf(
+                TestScenario(
+                    Status.RECEIVED,
+                    true,
+                ),
+                TestScenario(
+                    Status.HAS_ERRORS,
+                    true,
+                ),
+                TestScenario(
+                    Status.RECEIVED,
+                    true,
+                ),
+                TestScenario(
+                    Status.AWAITING_APPROVAL,
+                    true,
+                ),
+                TestScenario(
+                    Status.AWAITING_APPROVAL_FOR_REVOCATION,
+                    true,
+                ),
+            )
 
         @JvmStatic
-        fun provideInvalidTestScenarios() = listOf(
-            TestScenario(
-                Status.IN_PROCESSING,
-                false,
-            ),
-            TestScenario(
-                Status.APPROVED_FOR_RELEASE,
-                false,
-            ),
-        )
+        fun provideInvalidTestScenarios() =
+            listOf(
+                TestScenario(
+                    Status.IN_PROCESSING,
+                    false,
+                ),
+                TestScenario(
+                    Status.APPROVED_FOR_RELEASE,
+                    false,
+                ),
+            )
     }
 }
 
@@ -184,11 +191,12 @@ data class TestScenario(
     val expectedToSucceed: Boolean,
 ) {
     override fun toString(): String {
-        val resultString = if (expectedToSucceed) {
-            "sequences are deleted"
-        } else {
-            "the deletion operation fails"
-        }
+        val resultString =
+            if (expectedToSucceed) {
+                "sequences are deleted"
+            } else {
+                "the deletion operation fails"
+            }
         return "GIVEN own sequences in $statusAfterPreparation status THEN $resultString"
     }
 }

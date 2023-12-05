@@ -22,7 +22,6 @@ class ExtractUnprocessedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val client: SubmissionControllerClient,
 ) {
-
     @Test
     @Disabled("TODO(#607) reactivate")
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
@@ -89,10 +88,11 @@ class ExtractUnprocessedDataEndpointTest(
         val defaultOrganismEntries = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
         val otherOrganismEntries = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)
 
-        val result = client.extractUnprocessedData(
-            defaultOrganismEntries.size + otherOrganismEntries.size,
-            organism = OTHER_ORGANISM,
-        )
+        val result =
+            client.extractUnprocessedData(
+                defaultOrganismEntries.size + otherOrganismEntries.size,
+                organism = OTHER_ORGANISM,
+            )
         val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
         assertThat(responseBody, hasSize(otherOrganismEntries.size))
 

@@ -39,7 +39,7 @@ data class SubmittedProcessedData(
     val errors: List<PreprocessingAnnotation>? = null,
     @Schema(
         description =
-        "Issues where data is not necessarily wrong, but the submitter might want to look into those warnings.",
+            "Issues where data is not necessarily wrong, but the submitter might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
 ) : AccessionVersionInterface
@@ -54,7 +54,7 @@ data class SequenceEntryVersionToEdit(
     val errors: List<PreprocessingAnnotation>? = null,
     @Schema(
         description =
-        "Issues where data is not necessarily wrong, but the user might want to look into those warnings.",
+            "Issues where data is not necessarily wrong, but the user might want to look into those warnings.",
     )
     val warnings: List<PreprocessingAnnotation>? = null,
 ) : AccessionVersionInterface
@@ -121,7 +121,10 @@ data class Insertion(
 }
 
 class InsertionDeserializer : JsonDeserializer<Insertion>() {
-    override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Insertion {
+    override fun deserialize(
+        p: JsonParser,
+        ctxt: DeserializationContext,
+    ): Insertion {
         return Insertion.fromString(p.valueAsString)
     }
 }

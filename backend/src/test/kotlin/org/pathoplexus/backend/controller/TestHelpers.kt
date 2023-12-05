@@ -24,8 +24,10 @@ fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.acces
 
 fun List<AccessionVersionInterface>.getAccessionVersions() = map { it.toAccessionVersion() }
 
-fun addOrganismToPath(path: String, organism: String = DEFAULT_ORGANISM) =
-    "/$organism/${path.trimStart('/')}"
+fun addOrganismToPath(
+    path: String,
+    organism: String = DEFAULT_ORGANISM,
+) = "/$organism/${path.trimStart('/')}"
 
 val jacksonObjectMapper: ObjectMapper = jacksonObjectMapper().findAndRegisterModules()
 
@@ -49,7 +51,10 @@ fun SequenceEntryStatus.assertStatusIs(status: Status) {
     assertThat(this.status, `is`(status))
 }
 
-fun expectUnauthorizedResponse(isModifyingRequest: Boolean = false, apiCall: (jwt: String?) -> ResultActions) {
+fun expectUnauthorizedResponse(
+    isModifyingRequest: Boolean = false,
+    apiCall: (jwt: String?) -> ResultActions,
+) {
     val response = apiCall(null)
 
     // Spring handles non-modifying requests differently than modifying requests

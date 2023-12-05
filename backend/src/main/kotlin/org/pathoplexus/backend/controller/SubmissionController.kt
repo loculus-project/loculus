@@ -52,7 +52,6 @@ class SubmissionController(
     private val databaseService: DatabaseService,
     private val iteratorStreamer: IteratorStreamer,
 ) {
-
     @Operation(description = "Submit data for new sequence entries as multipart/form-data")
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
@@ -94,23 +93,25 @@ class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
-        val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, outputStream, organism)
-        }
+        val streamBody =
+            StreamingResponseBody { outputStream ->
+                databaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, outputStream, organism)
+            }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
     @Operation(
         description = SUBMIT_PROCESSED_DATA_DESCRIPTION,
-        requestBody = SwaggerRequestBody(
-            content = [
-                Content(
-                    mediaType = MediaType.APPLICATION_NDJSON_VALUE,
-                    schema = Schema(implementation = SubmittedProcessedData::class),
-                ),
-            ],
-        ),
+        requestBody =
+            SwaggerRequestBody(
+                content = [
+                    Content(
+                        mediaType = MediaType.APPLICATION_NDJSON_VALUE,
+                        schema = Schema(implementation = SubmittedProcessedData::class),
+                    ),
+                ],
+            ),
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "400", description = "On invalid NDJSON line. Rolls back the whole transaction.")
@@ -141,9 +142,10 @@ class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
-        val streamBody = StreamingResponseBody { outputStream ->
-            iteratorStreamer.streamAsNdjson(releasedDataModel.getReleasedData(organism), outputStream)
-        }
+        val streamBody =
+            StreamingResponseBody { outputStream ->
+                iteratorStreamer.streamAsNdjson(releasedDataModel.getReleasedData(organism), outputStream)
+            }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
@@ -163,9 +165,10 @@ class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
-        val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamDataToEdit(username, numberOfSequenceEntries, outputStream, organism)
-        }
+        val streamBody =
+            StreamingResponseBody { outputStream ->
+                databaseService.streamDataToEdit(username, numberOfSequenceEntries, outputStream, organism)
+            }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }

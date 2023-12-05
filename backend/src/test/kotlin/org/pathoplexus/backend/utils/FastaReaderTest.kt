@@ -3,10 +3,10 @@ package org.pathoplexus.backend.utils
 import org.junit.jupiter.api.Test
 
 class FastaReaderTest {
-
     @Test
     fun `non-empty fasta`() {
-        val fasta = """
+        val fasta =
+            """
             >seq1
             AAA
             TTT
@@ -16,7 +16,7 @@ class FastaReaderTest {
             
             >seq3
             CCCGGG
-        """.trimIndent()
+            """.trimIndent()
         val parsed = FastaReader(fasta.byteInputStream()).toList()
         assert(parsed.size == 3)
         assert(parsed[0].sampleName.equals("seq1"))
@@ -29,8 +29,9 @@ class FastaReaderTest {
 
     @Test
     fun `empty fasta`() {
-        val fasta = """
-        """.trimIndent()
+        val fasta =
+            """
+            """.trimIndent()
         val parsed = FastaReader(fasta.byteInputStream()).toList()
         assert(parsed.isEmpty())
     }

@@ -26,7 +26,6 @@ object BackendSpringProperty {
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
 )
 class BackendSpringConfig {
-
     @Bean
     fun logFilter(): CommonsRequestLoggingFilter {
         val filter = CommonsRequestLoggingFilter()
@@ -39,18 +38,20 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun databaseConfig() = DatabaseConfig {
-        useNestedTransactions = true
-        sqlLogger = Slf4jSqlDebugLogger
-    }
+    fun databaseConfig() =
+        DatabaseConfig {
+            useNestedTransactions = true
+            sqlLogger = Slf4jSqlDebugLogger
+        }
 
     @Bean
     @Profile("!test")
     fun getFlyway(dataSource: DataSource): Flyway {
-        val configuration = Flyway.configure()
-            .baselineOnMigrate(true)
-            .dataSource(dataSource)
-            .validateMigrationNaming(true)
+        val configuration =
+            Flyway.configure()
+                .baselineOnMigrate(true)
+                .dataSource(dataSource)
+                .validateMigrationNaming(true)
         val flyway = Flyway(configuration)
         flyway.migrate()
         return flyway

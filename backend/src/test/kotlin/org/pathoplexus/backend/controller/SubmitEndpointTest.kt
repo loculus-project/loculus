@@ -18,8 +18,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionControllerClient) {
-
+class SubmitEndpointTest(
+    @Autowired val submissionControllerClient: SubmissionControllerClient,
+) {
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) { jwt ->
@@ -54,16 +55,18 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
     fun `GIVEN fasta data with unknown segment THEN data is accepted to let the preprocessing pipeline verify it`() {
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
-                content = """
+                content =
+                    """
                     submissionId	firstColumn
                     commonHeader	someValue
-                """.trimIndent(),
+                    """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(
-                content = """
+                content =
+                    """
                     >commonHeader_nonExistingSegmentName
                     AC
-                """.trimIndent(),
+                    """.trimIndent(),
             ),
         )
             .andExpect(status().isOk)
@@ -160,11 +163,12 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                 Arguments.of(
                     "metadata file where one row has a blank header",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             submissionId	firstColumn
                             	someValueButNoHeader
                             someHeader2	someValue2
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
@@ -174,10 +178,11 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                 Arguments.of(
                     "metadata file with no header",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             firstColumn
                             someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
@@ -187,11 +192,12 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                 Arguments.of(
                     "duplicate headers in metadata file",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             submissionId	firstColumn
                             sameHeader	someValue
                             sameHeader	someValue2
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     DefaultFiles.sequencesFile,
                     status().isUnprocessableEntity,
@@ -202,12 +208,13 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                     "duplicate headers in sequence file",
                     DefaultFiles.metadataFile,
                     SubmitFiles.sequenceFileWith(
-                        content = """
+                        content =
+                            """
                             >sameHeader_main
                             AC
                             >sameHeader_main
                             AC
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
@@ -216,18 +223,20 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                 Arguments.of(
                     "metadata file misses headers",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             submissionId	firstColumn
                             commonHeader	someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(
-                        content = """
+                        content =
+                            """
                             >commonHeader_main
                             AC
                             >notInMetadata_main
                             AC
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
@@ -236,17 +245,19 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                 Arguments.of(
                     "sequence file misses headers",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             submissionId	firstColumn
                             commonHeader	someValue
                             notInSequences	someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(
-                        content = """
+                        content =
+                            """
                             >commonHeader_main
                             AC
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
@@ -255,16 +266,18 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                 Arguments.of(
                     "FASTA header misses segment name",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             submissionId	firstColumn
                             commonHeader	someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(
-                        content = """
+                        content =
+                            """
                             >commonHeader
                             AC
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     status().isBadRequest,
                     "Bad Request",

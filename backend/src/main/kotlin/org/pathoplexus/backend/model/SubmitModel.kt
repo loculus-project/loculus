@@ -291,10 +291,11 @@ class SubmitModel(
     }
 
     private fun createMetadataMap(metadataInputStream: InputStream): MetadataMap {
-        val csvParser = CSVParser(
-            InputStreamReader(metadataInputStream),
-            CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
-        )
+        val csvParser =
+            CSVParser(
+                InputStreamReader(metadataInputStream),
+                CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
+            )
 
         if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
             throw UnprocessableEntityException(
@@ -304,24 +305,27 @@ class SubmitModel(
 
         val metadataList = csvParser.map { it.toMap() }
 
-        val metadataMap = metadataList.associate {
-            if (it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES].isNullOrEmpty()) {
-                throw UnprocessableEntityException(
-                    "A row in metadata file contains no $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES: $it",
-                )
+        val metadataMap =
+            metadataList.associate {
+                if (it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES].isNullOrEmpty()) {
+                    throw UnprocessableEntityException(
+                        "A row in metadata file contains no $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES: $it",
+                    )
+                }
+                it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]!! to
+                    it.filterKeys { column ->
+                        column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
+                    }
             }
-            it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]!! to it.filterKeys { column ->
-                column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
-            }
-        }
 
         if (metadataMap.size != metadataList.size) {
-            val duplicateKeys = metadataList.map { it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES] }
-                .groupingBy { it }
-                .eachCount()
-                .filter { it.value > 1 }
-                .keys
-                .sortedBy { it }
+            val duplicateKeys =
+                metadataList.map { it[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES] }
+                    .groupingBy { it }
+                    .eachCount()
+                    .filter { it.value > 1 }
+                    .keys
+                    .sortedBy { it }
                 .joinToString(limit = 10)
 
             throw UnprocessableEntityException(

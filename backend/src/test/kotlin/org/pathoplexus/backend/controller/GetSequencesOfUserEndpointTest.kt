@@ -19,7 +19,6 @@ class GetSequencesOfUserEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
-
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse { client.getSequenceEntriesOfUser(jwt = it) }
@@ -67,64 +66,65 @@ class GetSequencesOfUserEndpointTest(
 
     companion object {
         @JvmStatic
-        fun provideStatusScenarios() = listOf(
-            Scenario(
-                setupDescription = "I submitted sequence entries",
-                prepareDatabase = { it.submitDefaultFiles() },
-                expectedStatus = Status.RECEIVED,
-                expectedIsRevocation = false,
-            ),
-            Scenario(
-                setupDescription = "I started processing sequence entries",
-                prepareDatabase = { it.prepareDefaultSequenceEntriesToInProcessing() },
-                expectedStatus = Status.IN_PROCESSING,
-                expectedIsRevocation = false,
-            ),
-            Scenario(
-                setupDescription = "I submitted sequence entries that have errors",
-                prepareDatabase = { it.prepareDefaultSequenceEntriesToHasErrors() },
-                expectedStatus = Status.HAS_ERRORS,
-                expectedIsRevocation = false,
-            ),
-            Scenario(
-                setupDescription = "I submitted sequence entries that have been successfully processed",
-                prepareDatabase = { it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed()) },
-                expectedStatus = Status.AWAITING_APPROVAL,
-                expectedIsRevocation = false,
-            ),
-            Scenario(
-                setupDescription = "I submitted, processed and approved sequence entries",
-                prepareDatabase = {
-                    it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
-                },
-                expectedStatus = Status.APPROVED_FOR_RELEASE,
-                expectedIsRevocation = false,
-            ),
-            Scenario(
-                setupDescription = "I submitted a revocation",
-                prepareDatabase = {
-                    it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
-                    it.revokeSequenceEntries(listOf(firstAccession))
-                },
-                expectedStatus = Status.AWAITING_APPROVAL_FOR_REVOCATION,
-                expectedIsRevocation = true,
-                expectedVersion = 2,
-            ),
-            Scenario(
-                setupDescription = "I approved a revocation",
-                prepareDatabase = {
-                    it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
-                    it.revokeSequenceEntries(listOf(firstAccession))
-                    it.confirmRevocation(listOf(AccessionVersion(firstAccession, 2)))
-                },
-                expectedStatus = Status.APPROVED_FOR_RELEASE,
-                expectedIsRevocation = true,
-                expectedVersion = 2,
-            ),
-        )
+        fun provideStatusScenarios() =
+            listOf(
+                Scenario(
+                    setupDescription = "I submitted sequence entries",
+                    prepareDatabase = { it.submitDefaultFiles() },
+                    expectedStatus = Status.RECEIVED,
+                    expectedIsRevocation = false,
+                ),
+                Scenario(
+                    setupDescription = "I started processing sequence entries",
+                    prepareDatabase = { it.prepareDefaultSequenceEntriesToInProcessing() },
+                    expectedStatus = Status.IN_PROCESSING,
+                    expectedIsRevocation = false,
+                ),
+                Scenario(
+                    setupDescription = "I submitted sequence entries that have errors",
+                    prepareDatabase = { it.prepareDefaultSequenceEntriesToHasErrors() },
+                    expectedStatus = Status.HAS_ERRORS,
+                    expectedIsRevocation = false,
+                ),
+                Scenario(
+                    setupDescription = "I submitted sequence entries that have been successfully processed",
+                    prepareDatabase = { it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed()) },
+                    expectedStatus = Status.AWAITING_APPROVAL,
+                    expectedIsRevocation = false,
+                ),
+                Scenario(
+                    setupDescription = "I submitted, processed and approved sequence entries",
+                    prepareDatabase = {
+                        it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
+                        it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
+                    },
+                    expectedStatus = Status.APPROVED_FOR_RELEASE,
+                    expectedIsRevocation = false,
+                ),
+                Scenario(
+                    setupDescription = "I submitted a revocation",
+                    prepareDatabase = {
+                        it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
+                        it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
+                        it.revokeSequenceEntries(listOf(firstAccession))
+                    },
+                    expectedStatus = Status.AWAITING_APPROVAL_FOR_REVOCATION,
+                    expectedIsRevocation = true,
+                    expectedVersion = 2,
+                ),
+                Scenario(
+                    setupDescription = "I approved a revocation",
+                    prepareDatabase = {
+                        it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
+                        it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
+                        it.revokeSequenceEntries(listOf(firstAccession))
+                        it.confirmRevocation(listOf(AccessionVersion(firstAccession, 2)))
+                    },
+                    expectedStatus = Status.APPROVED_FOR_RELEASE,
+                    expectedIsRevocation = true,
+                    expectedVersion = 2,
+                ),
+            )
     }
 
     data class Scenario(
@@ -135,10 +135,11 @@ class GetSequencesOfUserEndpointTest(
         val expectedIsRevocation: Boolean,
     ) {
         override fun toString(): String {
-            val maybeRevocationSequence = when {
-                expectedIsRevocation -> "revocation sequence"
-                else -> "sequence"
-            }
+            val maybeRevocationSequence =
+                when {
+                    expectedIsRevocation -> "revocation sequence"
+                    else -> "sequence"
+                }
 
             return "GIVEN $setupDescription THEN shows $maybeRevocationSequence in status ${expectedStatus.name}"
         }

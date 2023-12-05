@@ -22,7 +22,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-private const val numberOfFieldsWithUnknownValue = 2
+private const val NUMBER_OF_FIELDS_WITH_UNKNOWN_VALUE = 2
 
 @EndpointTest
 class GetReleasedDataEndpointTest(
@@ -68,16 +68,18 @@ class GetReleasedDataEndpointTest(
             val version = it.metadata["version"]!!.asLong()
             assertThat(version, `is`(1L))
 
-            val expectedMetadata = defaultProcessedData.metadata + mapOf(
-                "accession" to TextNode(id),
-                "version" to IntNode(version.toInt()),
-                "accessionVersion" to TextNode("$id.$version"),
-                "isRevocation" to TextNode("false"),
-                "submitter" to TextNode(USER_NAME),
-                "versionStatus" to TextNode("LATEST_VERSION"),
-            )
+            val expectedMetadata =
+                defaultProcessedData.metadata +
+                    mapOf(
+                        "accession" to TextNode(id),
+                        "version" to IntNode(version.toInt()),
+                        "accessionVersion" to TextNode("$id.$version"),
+                        "isRevocation" to TextNode("false"),
+                        "submitter" to TextNode(USER_NAME),
+                        "versionStatus" to TextNode("LATEST_VERSION"),
+                    )
 
-            assertThat(it.metadata.size, `is`(expectedMetadata.size + numberOfFieldsWithUnknownValue))
+            assertThat(it.metadata.size, `is`(expectedMetadata.size + NUMBER_OF_FIELDS_WITH_UNKNOWN_VALUE))
             for ((key, value) in it.metadata) {
                 when (key) {
                     "submittedAt" -> {
@@ -158,7 +160,10 @@ class GetReleasedDataEndpointTest(
     }
 }
 
-private fun List<ProcessedData>.findAccessionVersionStatus(accession: Accession, version: Version): String {
+private fun List<ProcessedData>.findAccessionVersionStatus(
+    accession: Accession,
+    version: Version,
+): String {
     val processedData =
         find { it.metadata["accession"]?.asText() == accession && it.metadata["version"]?.asLong() == version }
             ?: error("Could not find accession version $accession.$version")

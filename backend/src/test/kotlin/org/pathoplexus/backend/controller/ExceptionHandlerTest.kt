@@ -24,17 +24,20 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 private val validRoute = addOrganismToPath("submit")
 
-private val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
-    .file("sequenceFile", "sequences".toByteArray())
-    .file("metadataFile", "metadata".toByteArray())
-    .param("username", "name")
-    .withAuth()
+private val validRequest: MockHttpServletRequestBuilder =
+    multipart(validRoute)
+        .file("sequenceFile", "sequences".toByteArray())
+        .file("metadataFile", "metadata".toByteArray())
+        .param("username", "name")
+        .withAuth()
 
 private val validResponse = emptyList<SubmissionIdMapping>()
 
 @SpringBootTestWithoutDatabase
 @AutoConfigureMockMvc
-class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
+class ExceptionHandlerTest(
+    @Autowired val mockMvc: MockMvc,
+) {
     @MockkBean
     lateinit var submissionController: SubmissionController
 
@@ -104,7 +107,9 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
 
 @SpringBootTestWithoutDatabase
 @AutoConfigureMockMvc
-class ExceptionHandlerWithMockedModelTest(@Autowired val mockMvc: MockMvc) {
+class ExceptionHandlerWithMockedModelTest(
+    @Autowired val mockMvc: MockMvc,
+) {
     @MockkBean
     lateinit var submitModel: SubmitModel
 

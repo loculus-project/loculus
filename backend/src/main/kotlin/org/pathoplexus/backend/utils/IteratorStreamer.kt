@@ -6,11 +6,15 @@ import java.io.OutputStream
 
 @Service
 class IteratorStreamer(private val objectMapper: ObjectMapper) {
-    fun <T> streamAsNdjson(sequence: Sequence<T>, outputStream: OutputStream) =
-        streamAsNdjson(sequence.iterator(), outputStream)
+    fun <T> streamAsNdjson(
+        sequence: Sequence<T>,
+        outputStream: OutputStream,
+    ) = streamAsNdjson(sequence.iterator(), outputStream)
 
-    fun <T> streamAsNdjson(iterable: Iterable<T>, outputStream: OutputStream) =
-        streamAsNdjson(iterable.iterator(), outputStream)
+    fun <T> streamAsNdjson(
+        iterable: Iterable<T>,
+        outputStream: OutputStream,
+    ) = streamAsNdjson(iterable.iterator(), outputStream)
 
     fun <T> streamAsNdjson(
         iterator: Iterator<T>,

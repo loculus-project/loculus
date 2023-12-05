@@ -25,7 +25,6 @@ class ReviseEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
-
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
@@ -80,11 +79,11 @@ class ReviseEndpointTest(
         client.reviseSequenceEntries(
             SubmitFiles.revisedMetadataFileWith(
                 content =
-                """
-                 accession	submissionId	firstColumn
-                    123	someHeader	someValue
-                    1	someHeader2	someOtherValue
-                """.trimIndent(),
+                    """
+                    accession	submissionId	firstColumn
+                       123	someHeader	someValue
+                       1	someHeader2	someOtherValue
+                    """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(),
         ).andExpect(status().isUnprocessableEntity)
@@ -209,11 +208,12 @@ class ReviseEndpointTest(
                 Arguments.of(
                     "metadata file where one row has a blank header",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             accession	submissionId	firstColumn
                             1		someValueButNoHeader
                             2	someHeader2	someValue2
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
@@ -223,10 +223,11 @@ class ReviseEndpointTest(
                 Arguments.of(
                     "metadata file with no header",
                     SubmitFiles.revisedMetadataFileWith(
-                        content = """
+                        content =
+                            """
                             accession	firstColumn
                             1	someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
@@ -236,11 +237,12 @@ class ReviseEndpointTest(
                 Arguments.of(
                     "duplicate headers in metadata file",
                     SubmitFiles.revisedMetadataFileWith(
-                        content = """
+                        content =
+                            """
                             accession	submissionId	firstColumn
                             1	sameHeader	someValue
                             2	sameHeader	someValue2
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
@@ -251,12 +253,13 @@ class ReviseEndpointTest(
                     "duplicate headers in sequence file",
                     SubmitFiles.revisedMetadataFileWith(),
                     SubmitFiles.sequenceFileWith(
-                        content = """
+                        content =
+                            """
                             >sameHeader_main
                             AC
                             >sameHeader_main
                             AC
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
@@ -265,18 +268,20 @@ class ReviseEndpointTest(
                 Arguments.of(
                     "metadata file misses headers",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             accession	submissionId	firstColumn
                             1	commonHeader	someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(
-                        content = """
+                        content =
+                            """
                             >commonHeader_main
                             AC
                             >notInMetadata_main
                             AC
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
@@ -285,17 +290,19 @@ class ReviseEndpointTest(
                 Arguments.of(
                     "sequence file misses submissionIds",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             accession	submissionId	firstColumn
                             1	commonHeader	someValue
                             2	notInSequences	someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(
-                        content = """
+                        content =
+                            """
                             >commonHeader_main
                             AC
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
@@ -304,11 +311,12 @@ class ReviseEndpointTest(
                 Arguments.of(
                     "metadata file misses accession header",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             submissionId	firstColumn
                             someHeader	someValue
                             someHeader2	someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
@@ -318,26 +326,27 @@ class ReviseEndpointTest(
                 Arguments.of(
                     "metadata file with one row with missing accession",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             accession	submissionId	firstColumn
                             	someHeader	someValue
                             2	someHeader2	someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,
                     "Unprocessable Entity",
                     "A row with header 'someHeader' in metadata file contains no accession",
                 ),
-
                 Arguments.of(
                     "metadata file with one row with accession which is not a number",
                     SubmitFiles.metadataFileWith(
-                        content = """
+                        content =
+                            """
                             accession	submissionId	firstColumn
                             abc	someHeader	someValue
                             2	someHeader2	someValue
-                        """.trimIndent(),
+                            """.trimIndent(),
                     ),
                     SubmitFiles.sequenceFileWith(),
                     status().isUnprocessableEntity,

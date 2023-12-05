@@ -14,7 +14,6 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
-
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
@@ -127,8 +126,9 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .assertStatusIs(Status.HAS_ERRORS)
 
         val editedDataFromWrongSubmitter = generateUnprocessedData(firstAccession)
-        val sequenceString = "${editedDataFromWrongSubmitter.accession}." +
-            "${editedDataFromWrongSubmitter.version}"
+        val sequenceString =
+            "${editedDataFromWrongSubmitter.accession}." +
+                "${editedDataFromWrongSubmitter.version}"
         val nonExistingUser = "whoseNameMayNotBeMentioned"
 
         client.submitEditedSequenceEntryVersion(editedDataFromWrongSubmitter, jwt = generateJwtForUser(nonExistingUser))
@@ -143,7 +143,10 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
-    private fun generateUnprocessedData(accession: String, version: Long = 1) = UnprocessedData(
+    private fun generateUnprocessedData(
+        accession: String,
+        version: Long = 1,
+    ) = UnprocessedData(
         accession = accession,
         version = version,
         data = emptyOriginalData,

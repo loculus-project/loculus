@@ -16,8 +16,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @SpringBootTestWithoutDatabase
 @AutoConfigureMockMvc
-class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
-
+class SwaggerUiTest(
+    @Autowired val mockMvc: MockMvc,
+) {
     @Test
     fun `Swagger UI endpoint is reachable`() {
         mockMvc.perform(get("/swagger-ui/index.html"))
@@ -37,10 +38,11 @@ class SwaggerUiTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `YAML API docs are available`() {
-        val result = mockMvc.perform(get("/api-docs.yaml"))
-            .andExpect(status().isOk)
-            .andExpect(content().contentType("application/vnd.oai.openapi"))
-            .andReturn()
+        val result =
+            mockMvc.perform(get("/api-docs.yaml"))
+                .andExpect(status().isOk)
+                .andExpect(content().contentType("application/vnd.oai.openapi"))
+                .andReturn()
 
         val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
         val yaml = objectMapper.readTree(result.response.contentAsString)

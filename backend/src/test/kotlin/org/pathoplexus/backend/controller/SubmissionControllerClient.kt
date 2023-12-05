@@ -143,7 +143,10 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .withAuth(jwt),
         )
 
-    fun getReleasedData(organism: String = DEFAULT_ORGANISM, jwt: String? = jwtForDefaultUser): ResultActions =
+    fun getReleasedData(
+        organism: String = DEFAULT_ORGANISM,
+        jwt: String? = jwtForDefaultUser,
+    ): ResultActions =
         mockMvc.perform(
             get(addOrganismToPath("/get-released-data", organism = organism))
                 .withAuth(jwt),

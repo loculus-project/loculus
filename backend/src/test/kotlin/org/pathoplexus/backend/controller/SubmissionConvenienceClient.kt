@@ -26,12 +26,13 @@ class SubmissionConvenienceClient(
         username: String = USER_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): List<SubmissionIdMapping> {
-        val submit = client.submit(
-            DefaultFiles.metadataFile,
-            DefaultFiles.sequencesFile,
-            organism = organism,
-            jwt = generateJwtForUser(username),
-        )
+        val submit =
+            client.submit(
+                DefaultFiles.metadataFile,
+                DefaultFiles.sequencesFile,
+                organism = organism,
+                jwt = generateJwtForUser(username),
+            )
 
         return deserializeJsonResponse(submit)
     }
@@ -70,9 +71,10 @@ class SubmissionConvenienceClient(
             *accessionVersions.map {
                 when (organism) {
                     DEFAULT_ORGANISM -> PreparedProcessedData.successfullyProcessed(accession = it.accession)
-                    OTHER_ORGANISM -> PreparedProcessedData.successfullyProcessedOtherOrganismData(
-                        accession = it.accession,
-                    )
+                    OTHER_ORGANISM ->
+                        PreparedProcessedData.successfullyProcessedOtherOrganismData(
+                            accession = it.accession,
+                        )
 
                     else -> throw Exception("Test issue: There is no mapping of processed data for organism $organism")
                 }
@@ -115,13 +117,10 @@ class SubmissionConvenienceClient(
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
         organism: String = DEFAULT_ORGANISM,
-    ) =
-        client.extractUnprocessedData(numberOfSequenceEntries, organism)
-            .expectNdjsonAndGetContent<UnprocessedData>()
+    ) = client.extractUnprocessedData(numberOfSequenceEntries, organism)
+        .expectNdjsonAndGetContent<UnprocessedData>()
 
-    fun prepareDatabaseWith(
-        vararg processedData: SubmittedProcessedData,
-    ) {
+    fun prepareDatabaseWith(vararg processedData: SubmittedProcessedData) {
         submitDefaultFiles()
         extractUnprocessedData()
         client.submitProcessedData(*processedData)
@@ -174,9 +173,7 @@ class SubmissionConvenienceClient(
             ),
         )
 
-    fun submitDefaultEditedData(
-        userName: String = USER_NAME,
-    ) {
+    fun submitDefaultEditedData(userName: String = USER_NAME) {
         DefaultFiles.allAccessions.forEach { accession ->
             client.submitEditedSequenceEntryVersion(
                 UnprocessedData(accession, 1L, defaultOriginalData),
@@ -194,11 +191,12 @@ class SubmissionConvenienceClient(
     }
 
     fun reviseDefaultProcessedSequenceEntries(organism: String = DEFAULT_ORGANISM): List<SubmissionIdMapping> {
-        val result = client.reviseSequenceEntries(
-            DefaultFiles.revisedMetadataFile,
-            DefaultFiles.sequencesFile,
-            organism = organism,
-        ).andExpect(status().isOk)
+        val result =
+            client.reviseSequenceEntries(
+                DefaultFiles.revisedMetadataFile,
+                DefaultFiles.sequencesFile,
+                organism = organism,
+            ).andExpect(status().isOk)
 
         return deserializeJsonResponse(result)
     }
@@ -214,16 +212,20 @@ class SubmissionConvenienceClient(
             .andExpect(status().isNoContent)
     }
 
-    fun prepareDataTo(status: Status, organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
+    fun prepareDataTo(
+        status: Status,
+        organism: String = DEFAULT_ORGANISM,
+    ): List<AccessionVersionInterface> {
         return when (status) {
             Status.RECEIVED -> submitDefaultFiles(organism = organism)
             Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing(organism = organism)
             Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(organism = organism)
             Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(organism = organism)
             Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(organism = organism)
-            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation(
-                organism = organism,
-            )
+            Status.AWAITING_APPROVAL_FOR_REVOCATION ->
+                prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation(
+                    organism = organism,
+                )
         }
     }
 

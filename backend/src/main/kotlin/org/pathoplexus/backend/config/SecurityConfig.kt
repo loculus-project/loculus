@@ -28,18 +28,19 @@ private val log = KotlinLogging.logger { }
 @Configuration
 @EnableWebSecurity
 class SecurityConfig {
-
     // This is the preconfigured default that we want to wrap in a logger
-    private val defaultAccessDeniedHandler = DelegatingAccessDeniedHandler(
-        linkedMapOf(CsrfException::class.java to AccessDeniedHandlerImpl()),
-        BearerTokenAccessDeniedHandler(),
-    )
+    private val defaultAccessDeniedHandler =
+        DelegatingAccessDeniedHandler(
+            linkedMapOf(CsrfException::class.java to AccessDeniedHandlerImpl()),
+            BearerTokenAccessDeniedHandler(),
+        )
 
-    private val temporarilyAuthDisabledEndpoints = arrayOf(
-        "/*/extract-unprocessed-data",
-        "/*/submit-processed-data",
-        "/*/get-released-data",
-    )
+    private val temporarilyAuthDisabledEndpoints =
+        arrayOf(
+            "/*/extract-unprocessed-data",
+            "/*/submit-processed-data",
+            "/*/get-released-data",
+        )
 
     @Bean
     fun securityFilterChain(httpSecurity: HttpSecurity): SecurityFilterChain {
@@ -72,7 +73,6 @@ class SecurityConfig {
 
 class LoggingAuthenticationEntryPoint(private val entryPoint: AuthenticationEntryPoint) :
     AuthenticationEntryPoint by entryPoint {
-
     override fun commence(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -85,7 +85,6 @@ class LoggingAuthenticationEntryPoint(private val entryPoint: AuthenticationEntr
 
 class LoggingAccessDeniedHandler(private val accessDeniedHandler: AccessDeniedHandler) :
     AccessDeniedHandler by accessDeniedHandler {
-
     override fun handle(
         request: HttpServletRequest,
         response: HttpServletResponse,
@@ -99,9 +98,10 @@ class LoggingAccessDeniedHandler(private val accessDeniedHandler: AccessDeniedHa
 private const val AUTH_URL_PROPERTY = "spring.security.oauth2.resourceserver.jwt.jwk-set-uri"
 
 @Component
-class AuthUrlIsPresentGuard(@Value("\${$AUTH_URL_PROPERTY:#{null}}") private val authUrlProperty: String?) :
+class AuthUrlIsPresentGuard(
+    @Value("\${$AUTH_URL_PROPERTY:#{null}}") private val authUrlProperty: String?,
+) :
     InitializingBean {
-
     override fun afterPropertiesSet() {
         if (authUrlProperty == null) {
             throw IllegalStateException(

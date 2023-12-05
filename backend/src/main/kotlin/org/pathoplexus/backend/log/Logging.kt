@@ -14,16 +14,21 @@ private val log = KotlinLogging.logger {}
 
 @Component
 class OrganismMdcInterceptor : HandlerInterceptor {
-    override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
-        val organism = try {
-            when (val pathVariables = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE)) {
-                is Map<*, *> -> pathVariables["organism"] as? String
-                else -> return true
+    override fun preHandle(
+        request: HttpServletRequest,
+        response: HttpServletResponse,
+        handler: Any,
+    ): Boolean {
+        val organism =
+            try {
+                when (val pathVariables = request.getAttribute(HandlerMapping.URI_TEMPLATE_VARIABLES_ATTRIBUTE)) {
+                    is Map<*, *> -> pathVariables["organism"] as? String
+                    else -> return true
+                }
+            } catch (e: Exception) {
+                log.warn(e) { "Failed to extract organism from request: $e" }
+                return true
             }
-        } catch (e: Exception) {
-            log.warn(e) { "Failed to extract organism from request: $e" }
-            return true
-        }
 
         if (organism != null) {
             MDC.put("organism", organism)

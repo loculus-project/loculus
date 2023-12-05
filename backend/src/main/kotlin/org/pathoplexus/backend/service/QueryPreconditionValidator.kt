@@ -17,15 +17,14 @@ import org.springframework.stereotype.Component
 class QueryPreconditionValidator(
     private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
 ) {
-
     fun validateAccessionVersions(
         submitter: String,
         accessionVersions: List<AccessionVersion>,
         statuses: List<Status>,
         organism: Organism,
     ) {
-        sequenceEntriesTableProvider.get(organism).let { table ->
-            val sequenceEntries = table
+        sequenceEntriesTableProvider.get(organism).let { table ->val sequenceEntries =
+            table
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
@@ -48,8 +47,8 @@ class QueryPreconditionValidator(
         statuses: List<Status>,
         organism: Organism,
     ): List<AccessionVersion> {
-        sequenceEntriesTableProvider.get(organism).let { table ->
-            val sequenceEntries = table
+        sequenceEntriesTableProvider.get(organism).let { table ->val sequenceEntries =
+            table
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
@@ -84,15 +83,16 @@ class QueryPreconditionValidator(
             return
         }
 
-        val accessionVersionsNotFound = accessionVersions
-            .filter { accessionVersion ->
-                sequenceEntries.none {
-                    it[table.accessionColumn] == accessionVersion.accession &&
-                        it[table.versionColumn] == accessionVersion.version
+        val accessionVersionsNotFound =
+            accessionVersions
+                .filter { accessionVersion ->
+                    sequenceEntries.none {
+                        it[table.accessionColumn] == accessionVersion.accession &&
+                            it[table.versionColumn] == accessionVersion.version
+                    }
                 }
-            }
-            .sortedWith(AccessionVersionComparator)
-            .joinToString(", ") { it.displayAccessionVersion() }
+                .sortedWith(AccessionVersionComparator)
+                .joinToString(", ") { it.displayAccessionVersion() }
 
         throw UnprocessableEntityException("Accession versions $accessionVersionsNotFound do not exist")
     }
@@ -135,8 +135,9 @@ class QueryPreconditionValidator(
             .map { AccessionVersion(it[table.accessionColumn], it[table.versionColumn]) }
 
         if (sequenceEntriesNotSubmittedByUser.isNotEmpty()) {
-            val accessionVersionString = sequenceEntriesNotSubmittedByUser.sortedWith(AccessionVersionComparator)
-                .joinToString(", ") { it.displayAccessionVersion() }
+            val accessionVersionString =
+                sequenceEntriesNotSubmittedByUser.sortedWith(AccessionVersionComparator)
+                    .joinToString(", ") { it.displayAccessionVersion() }
 
             throw ForbiddenException(
                 "User '$submitter' does not have right to change the accession versions $accessionVersionString",
@@ -153,14 +154,15 @@ class QueryPreconditionValidator(
             return
         }
 
-        val accessionsNotFound = accessions
-            .filter { accession ->
-                sequenceEntries.none {
-                    it[table.accessionColumn] == accession
+        val accessionsNotFound =
+            accessions
+                .filter { accession ->
+                    sequenceEntries.none {
+                        it[table.accessionColumn] == accession
+                    }
                 }
-            }
-            .sortedWith(AccessionComparator)
-            .joinToString(", ")
+                .sortedWith(AccessionComparator)
+                .joinToString(", ")
 
         throw UnprocessableEntityException("Accessions $accessionsNotFound do not exist")
     }
@@ -182,13 +184,15 @@ class QueryPreconditionValidator(
             return
         }
 
-        val accessionVersionsOfOtherOrganism = accessionVersionsByOtherOrganisms
-            .map { (organism, accessionVersions) ->
-                val accessionVersionsString = accessionVersions.sortedWith(AccessionVersionComparator)
-                    .joinToString(", ") { it.displayAccessionVersion() }
-                "organism $organism: $accessionVersionsString"
-            }
-            .joinToString(" - ")
+        val accessionVersionsOfOtherOrganism =
+            accessionVersionsByOtherOrganisms
+                .map { (organism, accessionVersions) ->
+                    val accessionVersionsString =
+                        accessionVersions.sortedWith(AccessionVersionComparator)
+                            .joinToString(", ") { it.displayAccessionVersion() }
+                    "organism $organism: $accessionVersionsString"
+                }
+                .joinToString(" - ")
         throw UnprocessableEntityException(
             "The following accession versions are not of organism ${organism.name}: $accessionVersionsOfOtherOrganism",
         )

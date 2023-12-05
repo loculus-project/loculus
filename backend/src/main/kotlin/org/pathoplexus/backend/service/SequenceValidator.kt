@@ -89,9 +89,7 @@ class SequenceValidator(
         validateAminoAcidSequences(submittedProcessedData)
     }
 
-    private fun validateMetadata(
-        submittedProcessedData: SubmittedProcessedData,
-    ) {
+    private fun validateMetadata(submittedProcessedData: SubmittedProcessedData) {
         val metadataFields = schema.metadata
         validateNoUnknownInMetaData(submittedProcessedData.data.metadata, metadataFields.map { it.name })
 
@@ -133,7 +131,10 @@ class SequenceValidator(
         }
     }
 
-    private fun validateType(fieldValue: JsonNode, metadata: Metadata) {
+    private fun validateType(
+        fieldValue: JsonNode,
+        metadata: Metadata,
+    ) {
         if (fieldValue.isNull) {
             return
         }
@@ -161,14 +162,15 @@ class SequenceValidator(
             }
         }
 
-        val isOfCorrectPrimitiveType = when (metadata.type) {
-            "string" -> fieldValue.isTextual
-            "integer" -> fieldValue.isInt
-            "float" -> fieldValue.isFloat
-            "double" -> fieldValue.isDouble
-            "number" -> fieldValue.isNumber
-            else -> false
-        }
+        val isOfCorrectPrimitiveType =
+            when (metadata.type) {
+                "string" -> fieldValue.isTextual
+                "integer" -> fieldValue.isInt
+                "float" -> fieldValue.isFloat
+                "double" -> fieldValue.isDouble
+                "number" -> fieldValue.isNumber
+                else -> false
+            }
 
         if (!isOfCorrectPrimitiveType) {
             throw ProcessingValidationException(
@@ -192,9 +194,7 @@ class SequenceValidator(
         return pangoLineageCandidate.matches(pangoLineageRegex)
     }
 
-    private fun validateNucleotideSequences(
-        submittedProcessedData: SubmittedProcessedData,
-    ) {
+    private fun validateNucleotideSequences(submittedProcessedData: SubmittedProcessedData) {
         for (segment in referenceGenome.nucleotideSequences) {
             validateNoMissingSegment(
                 segment,
@@ -296,9 +296,7 @@ class SequenceValidator(
         }
     }
 
-    private fun validateNoUnknownNucleotideSymbolInInsertion(
-        dataToValidate: Map<String, List<Insertion>>,
-    ) {
+    private fun validateNoUnknownNucleotideSymbolInInsertion(dataToValidate: Map<String, List<Insertion>>) {
         for (sequence in dataToValidate) {
             for (insertion in sequence.value) {
                 val invalidSymbols = insertion.sequence.getInvalidSymbols<NucleotideSymbols>()
@@ -320,9 +318,7 @@ class SequenceValidator(
         where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         enumValues<ValidSymbols>().any { it.symbol == this }
 
-    private fun validateAminoAcidSequences(
-        submittedProcessedData: SubmittedProcessedData,
-    ) {
+    private fun validateAminoAcidSequences(submittedProcessedData: SubmittedProcessedData) {
         for (gene in referenceGenome.genes) {
             validateNoMissingGene(gene, submittedProcessedData)
             validateLengthOfSequence(
@@ -366,9 +362,7 @@ class SequenceValidator(
         }
     }
 
-    private fun validateNoUnknownAminoAcidSymbol(
-        dataToValidate: Map<String, String>,
-    ) {
+    private fun validateNoUnknownAminoAcidSymbol(dataToValidate: Map<String, String>) {
         for (sequence in dataToValidate) {
             val invalidSymbols = sequence.value.getInvalidSymbols<AminoAcidSymbols>()
             if (invalidSymbols.isNotEmpty()) {
@@ -380,9 +374,7 @@ class SequenceValidator(
         }
     }
 
-    private fun validateNoUnknownAminoAcidSymbolInInsertion(
-        dataToValidate: Map<String, List<Insertion>>,
-    ) {
+    private fun validateNoUnknownAminoAcidSymbolInInsertion(dataToValidate: Map<String, List<Insertion>>) {
         for (sequence in dataToValidate) {
             for (insertion in sequence.value) {
                 val invalidSymbols = insertion.sequence.getInvalidSymbols<AminoAcidSymbols>()

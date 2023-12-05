@@ -26,7 +26,6 @@ class SubmitProcessedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
-
     @Test
     @Disabled("TODO(#607) reactivate")
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
@@ -74,14 +73,17 @@ class SubmitProcessedDataEndpointTest(
 
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = "3").withValues(
-                data = defaultData.withValues(
-                    unalignedNucleotideSequences = defaultData.unalignedNucleotideSequences +
-                        ("secondSegment" to allNucleotideSymbols),
-                    alignedNucleotideSequences = defaultData.alignedNucleotideSequences +
-                        ("secondSegment" to allNucleotideSymbols),
-                    alignedAminoAcidSequences =
-                    defaultData.alignedAminoAcidSequences + ("someLongGene" to allAminoAcidSymbols),
-                ),
+                data =
+                    defaultData.withValues(
+                        unalignedNucleotideSequences =
+                            defaultData.unalignedNucleotideSequences +
+                                ("secondSegment" to allNucleotideSymbols),
+                        alignedNucleotideSequences =
+                            defaultData.alignedNucleotideSequences +
+                                ("secondSegment" to allNucleotideSymbols),
+                        alignedAminoAcidSequences =
+                            defaultData.alignedAminoAcidSequences + ("someLongGene" to allAminoAcidSymbols),
+                    ),
             ),
         )
             .andExpect(status().isNoContent)
@@ -95,10 +97,11 @@ class SubmitProcessedDataEndpointTest(
     fun `WHEN I submit preprocessed data without insertions THEN the missing keys of the reference will be added`() {
         prepareExtractedSequencesInDatabase()
 
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed().data.withValues(
-            nucleotideInsertions = mapOf("main" to listOf(Insertion(1, "A"))),
-            aminoAcidInsertions = emptyMap(),
-        )
+        val dataWithoutInsertions =
+            PreparedProcessedData.successfullyProcessed().data.withValues(
+                nucleotideInsertions = mapOf("main" to listOf(Insertion(1, "A"))),
+                aminoAcidInsertions = emptyMap(),
+            )
 
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = "3").withValues(data = dataWithoutInsertions),
@@ -112,7 +115,12 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isOk)
             .andExpect(
                 jsonPath("\$.processedData.nucleotideInsertions")
-                    .value(mapOf("main" to listOf(Insertion(1, "A").toString()), "secondSegment" to emptyList())),
+                    .value(
+                        mapOf(
+                            "main" to listOf(Insertion(1, "A").toString()),
+                            "secondSegment" to emptyList(),
+                        ),
+                    ),
             )
             .andExpect(
                 jsonPath("\$.processedData.aminoAcidInsertions")
@@ -184,10 +192,11 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.detail").value(invalidDataScenario.expectedErrorMessage))
 
-        val sequenceStatus = convenienceClient.getSequenceEntryOfUser(
-            accession = invalidDataScenario.processedData.accession,
-            version = 1,
-        )
+        val sequenceStatus =
+            convenienceClient.getSequenceEntryOfUser(
+                accession = invalidDataScenario.processedData.accession,
+                version = 1,
+            )
         assertThat(sequenceStatus.status, `is`(Status.IN_PROCESSING))
     }
 
@@ -195,15 +204,15 @@ class SubmitProcessedDataEndpointTest(
     fun `WHEN I submit data for a non-existent accession THEN refuses update with unprocessable entity`() {
         prepareExtractedSequencesInDatabase()
 
-        val nonExistentAccesion = "999"
+        val nonExistentAccession = "999"
 
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = "1"),
-            PreparedProcessedData.successfullyProcessed(accession = nonExistentAccesion),
+            PreparedProcessedData.successfullyProcessed(accession = nonExistentAccession),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Accession version $nonExistentAccesion.1 does not exist"))
+            .andExpect(jsonPath("\$.detail").value("Accession version $nonExistentAccession.1 does not exist"))
 
         convenienceClient.getSequenceEntryOfUser(accession = "1", version = 1).assertStatusIs(Status.IN_PROCESSING)
     }
@@ -340,150 +349,182 @@ class SubmitProcessedDataEndpointTest(
                 provideInvalidAminoAcidSequenceDataScenarios()
 
         @JvmStatic
-        fun provideInvalidMetadataScenarios() = listOf(
-            InvalidDataScenario(
-                name = "data with unknown metadata fields",
-                processedData = PreparedProcessedData.withUnknownMetadataField(
-                    fields = listOf(
-                        "unknown field 1",
-                        "unknown field 2",
-                    ),
+        fun provideInvalidMetadataScenarios() =
+            listOf(
+                InvalidDataScenario(
+                    name = "data with unknown metadata fields",
+                    processedData =
+                        PreparedProcessedData.withUnknownMetadataField(
+                            fields =
+                                listOf(
+                                    "unknown field 1",
+                                    "unknown field 2",
+                                ),
+                        ),
+                    expectedErrorMessage = "Unknown fields in processed data: unknown field 1, unknown field 2.",
                 ),
-                expectedErrorMessage = "Unknown fields in processed data: unknown field 1, unknown field 2.",
-            ),
-            InvalidDataScenario(
-                name = "data with missing required fields",
-                processedData = PreparedProcessedData.withMissingRequiredField(fields = listOf("date", "region")),
-                expectedErrorMessage = "Missing the required field 'date'.",
-            ),
-            InvalidDataScenario(
-                name = "data with wrong type for fields",
-                processedData = PreparedProcessedData.withWrongTypeForFields(),
-                expectedErrorMessage = "Expected type 'string' for field 'region', found value '5'.",
-            ),
-            InvalidDataScenario(
-                name = "data with wrong date format",
-                processedData = PreparedProcessedData.withWrongDateFormat(),
-                expectedErrorMessage =
-                "Expected type 'date' in format 'yyyy-MM-dd' for field 'date', found value '\"1.2.2021\"'.",
-            ),
-            InvalidDataScenario(
-                name = "data with wrong pango lineage format",
-                processedData = PreparedProcessedData.withWrongPangoLineageFormat(),
-                expectedErrorMessage =
-                "Expected type 'pango_lineage' for field 'pangoLineage', found value '\"A.5.invalid\"'. " +
-                    "A pango lineage must be of the form [a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}, e.g. 'XBB' or 'BA.1.5'.",
-            ),
-            InvalidDataScenario(
-                name = "data with explicit null for required field",
-                processedData = PreparedProcessedData.withNullForFields(fields = listOf("date")),
-                expectedErrorMessage = "Field 'date' is null, but a value is required.",
-            ),
-        )
+                InvalidDataScenario(
+                    name = "data with missing required fields",
+                    processedData = PreparedProcessedData.withMissingRequiredField(fields = listOf("date", "region")),
+                    expectedErrorMessage = "Missing the required field 'date'.",
+                ),
+                InvalidDataScenario(
+                    name = "data with wrong type for fields",
+                    processedData = PreparedProcessedData.withWrongTypeForFields(),
+                    expectedErrorMessage = "Expected type 'string' for field 'region', found value '5'.",
+                ),
+                InvalidDataScenario(
+                    name = "data with wrong date format",
+                    processedData = PreparedProcessedData.withWrongDateFormat(),
+                    expectedErrorMessage =
+                        "Expected type 'date' in format 'yyyy-MM-dd' for field 'date', found value '\"1.2.2021\"'.",
+                ),
+                InvalidDataScenario(
+                    name = "data with wrong pango lineage format",
+                    processedData = PreparedProcessedData.withWrongPangoLineageFormat(),
+                    expectedErrorMessage =
+                        "Expected type 'pango_lineage' for field 'pangoLineage', found value " +
+                            "'\"A.5.invalid\"'. A pango lineage must be of the form [a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}," +
+                            " e.g. 'XBB' or 'BA.1.5'.",
+                ),
+                InvalidDataScenario(
+                    name = "data with explicit null for required field",
+                    processedData = PreparedProcessedData.withNullForFields(fields = listOf("date")),
+                    expectedErrorMessage = "Field 'date' is null, but a value is required.",
+                ),
+            )
 
         @JvmStatic
-        fun provideInvalidNucleotideSequenceDataScenarios() = listOf(
-            InvalidDataScenario(
-                name = "data with missing segment in unaligned nucleotide sequences",
-                processedData = PreparedProcessedData.withMissingSegmentInUnalignedNucleotideSequences(
-                    segment = "main",
+        fun provideInvalidNucleotideSequenceDataScenarios() =
+            listOf(
+                InvalidDataScenario(
+                    name = "data with missing segment in unaligned nucleotide sequences",
+                    processedData =
+                        PreparedProcessedData.withMissingSegmentInUnalignedNucleotideSequences(
+                            segment = "main",
+                        ),
+                    expectedErrorMessage = "Missing the required segment 'main' in 'unalignedNucleotideSequences'.",
                 ),
-                expectedErrorMessage = "Missing the required segment 'main' in 'unalignedNucleotideSequences'.",
-            ),
-            InvalidDataScenario(
-                name = "data with missing segment in aligned nucleotide sequences",
-                processedData = PreparedProcessedData.withMissingSegmentInAlignedNucleotideSequences(segment = "main"),
-                expectedErrorMessage = "Missing the required segment 'main' in 'alignedNucleotideSequences'.",
-            ),
-            InvalidDataScenario(
-                name = "data with unknown segment in alignedNucleotideSequences",
-                processedData = PreparedProcessedData.withUnknownSegmentInAlignedNucleotideSequences(
-                    segment = "someOtherSegment",
+                InvalidDataScenario(
+                    name = "data with missing segment in aligned nucleotide sequences",
+                    processedData =
+                        PreparedProcessedData.withMissingSegmentInAlignedNucleotideSequences(
+                            segment = "main",
+                        ),
+                    expectedErrorMessage = "Missing the required segment 'main' in 'alignedNucleotideSequences'.",
                 ),
-                expectedErrorMessage = "Unknown segments in 'alignedNucleotideSequences': someOtherSegment.",
-            ),
-            InvalidDataScenario(
-                name = "data with unknown segment in unalignedNucleotideSequences",
-                processedData = PreparedProcessedData.withUnknownSegmentInUnalignedNucleotideSequences(
-                    segment = "someOtherSegment",
+                InvalidDataScenario(
+                    name = "data with unknown segment in alignedNucleotideSequences",
+                    processedData =
+                        PreparedProcessedData.withUnknownSegmentInAlignedNucleotideSequences(
+                            segment = "someOtherSegment",
+                        ),
+                    expectedErrorMessage = "Unknown segments in 'alignedNucleotideSequences': someOtherSegment.",
                 ),
-                expectedErrorMessage = "Unknown segments in 'unalignedNucleotideSequences': someOtherSegment.",
-            ),
-            InvalidDataScenario(
-                name = "data with unknown segment in nucleotideInsertions",
-                processedData = PreparedProcessedData.withUnknownSegmentInNucleotideInsertions(
-                    segment = "someOtherSegment",
+                InvalidDataScenario(
+                    name = "data with unknown segment in unalignedNucleotideSequences",
+                    processedData =
+                        PreparedProcessedData.withUnknownSegmentInUnalignedNucleotideSequences(
+                            segment = "someOtherSegment",
+                        ),
+                    expectedErrorMessage = "Unknown segments in 'unalignedNucleotideSequences': someOtherSegment.",
                 ),
-                expectedErrorMessage = "Unknown segments in 'nucleotideInsertions': someOtherSegment.",
-            ),
-            InvalidDataScenario(
-                name = "data with segment in aligned nucleotide sequences of wrong length",
-                processedData = PreparedProcessedData.withAlignedNucleotideSequenceOfWrongLength(segment = "main"),
-                expectedErrorMessage = "The length of 'main' in 'alignedNucleotideSequences' is 123, " +
-                    "but it should be 49.",
-            ),
-            InvalidDataScenario(
-                name = "data with segment in aligned nucleotide sequences with wrong symbols",
-                processedData = PreparedProcessedData.withAlignedNucleotideSequenceWithWrongSymbols(segment = "main"),
-                expectedErrorMessage = "The sequence of segment 'main' in 'alignedNucleotideSequences' contains " +
-                    "invalid symbols: [Ä, Ö].",
-            ),
-            InvalidDataScenario(
-                name = "data with segment in unaligned nucleotide sequences with wrong symbols",
-                processedData = PreparedProcessedData.withUnalignedNucleotideSequenceWithWrongSymbols(segment = "main"),
-                expectedErrorMessage = "The sequence of segment 'main' in 'unalignedNucleotideSequences' contains " +
-                    "invalid symbols: [Ä, Ö].",
-            ),
-            InvalidDataScenario(
-                name = "data with segment in nucleotide insertions with wrong symbols",
-                processedData = PreparedProcessedData.withNucleotideInsertionsWithWrongSymbols(segment = "main"),
-                expectedErrorMessage = "The insertion 123:ÄÖ of segment 'main' in 'nucleotideInsertions' contains " +
-                    "invalid symbols: [Ä, Ö].",
-            ),
-        )
+                InvalidDataScenario(
+                    name = "data with unknown segment in nucleotideInsertions",
+                    processedData =
+                        PreparedProcessedData.withUnknownSegmentInNucleotideInsertions(
+                            segment = "someOtherSegment",
+                        ),
+                    expectedErrorMessage = "Unknown segments in 'nucleotideInsertions': someOtherSegment.",
+                ),
+                InvalidDataScenario(
+                    name = "data with segment in aligned nucleotide sequences of wrong length",
+                    processedData = PreparedProcessedData.withAlignedNucleotideSequenceOfWrongLength(segment = "main"),
+                    expectedErrorMessage =
+                        "The length of 'main' in 'alignedNucleotideSequences' is 123, " +
+                            "but it should be 49.",
+                ),
+                InvalidDataScenario(
+                    name = "data with segment in aligned nucleotide sequences with wrong symbols",
+                    processedData =
+                        PreparedProcessedData.withAlignedNucleotideSequenceWithWrongSymbols(
+                            segment = "main",
+                        ),
+                    expectedErrorMessage =
+                        "The sequence of segment 'main' in 'alignedNucleotideSequences' contains " +
+                            "invalid symbols: [Ä, Ö].",
+                ),
+                InvalidDataScenario(
+                    name = "data with segment in unaligned nucleotide sequences with wrong symbols",
+                    processedData =
+                        PreparedProcessedData.withUnalignedNucleotideSequenceWithWrongSymbols(
+                            segment = "main",
+                        ),
+                    expectedErrorMessage =
+                        "The sequence of segment 'main' in 'unalignedNucleotideSequences' contains " +
+                            "invalid symbols: [Ä, Ö].",
+                ),
+                InvalidDataScenario(
+                    name = "data with segment in nucleotide insertions with wrong symbols",
+                    processedData = PreparedProcessedData.withNucleotideInsertionsWithWrongSymbols(segment = "main"),
+                    expectedErrorMessage =
+                        "The insertion 123:ÄÖ of segment 'main' in 'nucleotideInsertions' contains " +
+                            "invalid symbols: [Ä, Ö].",
+                ),
+            )
 
         @JvmStatic
-        fun provideInvalidAminoAcidSequenceDataScenarios() = listOf(
-            InvalidDataScenario(
-                name = "data with missing gene in alignedAminoAcidSequences",
-                processedData = PreparedProcessedData.withMissingGeneInAminoAcidSequences(
-                    gene = "someShortGene",
+        fun provideInvalidAminoAcidSequenceDataScenarios() =
+            listOf(
+                InvalidDataScenario(
+                    name = "data with missing gene in alignedAminoAcidSequences",
+                    processedData =
+                        PreparedProcessedData.withMissingGeneInAminoAcidSequences(
+                            gene = "someShortGene",
+                        ),
+                    expectedErrorMessage = "Missing the required gene 'someShortGene'.",
                 ),
-                expectedErrorMessage = "Missing the required gene 'someShortGene'.",
-            ),
-            InvalidDataScenario(
-                name = "data with unknown gene in alignedAminoAcidSequences",
-                processedData = PreparedProcessedData.withUnknownGeneInAminoAcidSequences(
-                    gene = "someOtherGene",
+                InvalidDataScenario(
+                    name = "data with unknown gene in alignedAminoAcidSequences",
+                    processedData =
+                        PreparedProcessedData.withUnknownGeneInAminoAcidSequences(
+                            gene = "someOtherGene",
+                        ),
+                    expectedErrorMessage = "Unknown genes in 'alignedAminoAcidSequences': someOtherGene.",
                 ),
-                expectedErrorMessage = "Unknown genes in 'alignedAminoAcidSequences': someOtherGene.",
-            ),
-            InvalidDataScenario(
-                name = "data with unknown gene in aminoAcidInsertions",
-                processedData = PreparedProcessedData.withUnknownGeneInAminoAcidInsertions(
-                    gene = "someOtherGene",
+                InvalidDataScenario(
+                    name = "data with unknown gene in aminoAcidInsertions",
+                    processedData =
+                        PreparedProcessedData.withUnknownGeneInAminoAcidInsertions(
+                            gene = "someOtherGene",
+                        ),
+                    expectedErrorMessage = "Unknown genes in 'aminoAcidInsertions': someOtherGene.",
                 ),
-                expectedErrorMessage = "Unknown genes in 'aminoAcidInsertions': someOtherGene.",
-            ),
-            InvalidDataScenario(
-                name = "data with gene in alignedAminoAcidSequences of wrong length",
-                processedData = PreparedProcessedData.withAminoAcidSequenceOfWrongLength(gene = "someShortGene"),
-                expectedErrorMessage = "The length of 'someShortGene' in 'alignedAminoAcidSequences' is 123, " +
-                    "but it should be 4.",
-            ),
-            InvalidDataScenario(
-                name = "data with gene in alignedAminoAcidSequences with wrong symbols",
-                processedData = PreparedProcessedData.withAminoAcidSequenceWithWrongSymbols(gene = "someShortGene"),
-                expectedErrorMessage = "The gene 'someShortGene' in 'alignedAminoAcidSequences' contains " +
-                    "invalid symbols: [Ä, Ö].",
-            ),
-            InvalidDataScenario(
-                name = "data with segment in amino acid insertions with wrong symbols",
-                processedData = PreparedProcessedData.withAminoAcidInsertionsWithWrongSymbols(gene = "someShortGene"),
-                expectedErrorMessage = "An insertion of gene 'someShortGene' in 'aminoAcidInsertions' contains " +
-                    "invalid symbols: [Ä, Ö].",
-            ),
-        )
+                InvalidDataScenario(
+                    name = "data with gene in alignedAminoAcidSequences of wrong length",
+                    processedData = PreparedProcessedData.withAminoAcidSequenceOfWrongLength(gene = "someShortGene"),
+                    expectedErrorMessage =
+                        "The length of 'someShortGene' in 'alignedAminoAcidSequences' is 123, " +
+                            "but it should be 4.",
+                ),
+                InvalidDataScenario(
+                    name = "data with gene in alignedAminoAcidSequences with wrong symbols",
+                    processedData = PreparedProcessedData.withAminoAcidSequenceWithWrongSymbols(gene = "someShortGene"),
+                    expectedErrorMessage =
+                        "The gene 'someShortGene' in 'alignedAminoAcidSequences' contains " +
+                            "invalid symbols: [Ä, Ö].",
+                ),
+                InvalidDataScenario(
+                    name = "data with segment in amino acid insertions with wrong symbols",
+                    processedData =
+                        PreparedProcessedData.withAminoAcidInsertionsWithWrongSymbols(
+                            gene = "someShortGene",
+                        ),
+                    expectedErrorMessage =
+                        "An insertion of gene 'someShortGene' in 'aminoAcidInsertions' contains " +
+                            "invalid symbols: [Ä, Ö].",
+                ),
+            )
     }
 }
 

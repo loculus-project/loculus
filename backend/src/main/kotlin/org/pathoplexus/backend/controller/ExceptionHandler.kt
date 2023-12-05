@@ -22,7 +22,6 @@ private val log = KotlinLogging.logger {}
 
 @ControllerAdvice
 class ExceptionHandler : ResponseEntityExceptionHandler() {
-
     @ExceptionHandler(Throwable::class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     fun handleUnexpectedException(e: Throwable): ResponseEntity<ProblemDetail> {
@@ -99,7 +98,10 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
-    private fun responseEntity(httpStatus: HttpStatus, detail: String?): ResponseEntity<ProblemDetail> {
+    private fun responseEntity(
+        httpStatus: HttpStatus,
+        detail: String?,
+    ): ResponseEntity<ProblemDetail> {
         return responseEntity(httpStatus, httpStatus.reasonPhrase, detail)
     }
 
@@ -144,9 +146,13 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
 }
 
 class BadRequestException(message: String, override val cause: Throwable? = null) : RuntimeException(message)
+
 class ForbiddenException(message: String) : RuntimeException(message)
+
 class UnprocessableEntityException(message: String) : RuntimeException(message)
+
 class NotFoundException(message: String) : RuntimeException(message)
+
 class ProcessingValidationException(message: String) : RuntimeException(message)
 class DuplicateKeyException(message: String) : RuntimeException(message)
 

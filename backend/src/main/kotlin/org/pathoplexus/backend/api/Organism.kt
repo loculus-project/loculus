@@ -25,7 +25,10 @@ annotation class ValidOrganism(
 )
 
 class OrganismValidator(private val backendConfig: BackendConfig) : ConstraintValidator<ValidOrganism, Organism> {
-    override fun isValid(value: Organism, context: ConstraintValidatorContext): Boolean {
+    override fun isValid(
+        value: Organism,
+        context: ConstraintValidatorContext,
+    ): Boolean {
         val keys = backendConfig.instances.keys
         if (keys.contains(value.name)) {
             return true

@@ -20,7 +20,6 @@ class GetDataToEditEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
-
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse {
@@ -47,10 +46,11 @@ class GetDataToEditEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val editedData = convenienceClient.getSequenceEntryThatHasErrors(
-            accession = firstAccession,
-            version = 1,
-        )
+        val editedData =
+            convenienceClient.getSequenceEntryThatHasErrors(
+                accession = firstAccession,
+                version = 1,
+            )
 
         assertThat(editedData.accession, `is`(firstAccession))
         assertThat(editedData.version, `is`(1))
@@ -146,22 +146,24 @@ class GetDataToEditEndpointTest(
     fun `WHEN I try to get batch data for sequence entries to edit THEN I get the expected count back`() {
         convenienceClient.prepareDataTo(Status.HAS_ERRORS)
 
-        val numberOfEditedSequenceEntries = client.getNumberOfSequenceEntriesThatHaveErrors(
-            SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
-        )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
-            .expectNdjsonAndGetContent<SequenceEntryVersionToEdit>().size
+        val numberOfEditedSequenceEntries =
+            client.getNumberOfSequenceEntriesThatHaveErrors(
+                SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
+            )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
+                .expectNdjsonAndGetContent<SequenceEntryVersionToEdit>().size
         assertThat(numberOfEditedSequenceEntries, `is`(SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES))
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
-        val numberOfEditedSequenceEntryVersionsForAWrongUser = client.getNumberOfSequenceEntriesThatHaveErrors(
-            SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
-            jwt = generateJwtForUser(userNameThatDoesNotHavePermissionToQuery),
-        )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
-            .expectNdjsonAndGetContent<SequenceEntryVersionToEdit>().size
+        val numberOfEditedSequenceEntryVersionsForAWrongUser =
+            client.getNumberOfSequenceEntriesThatHaveErrors(
+                SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
+                jwt = generateJwtForUser(userNameThatDoesNotHavePermissionToQuery),
+            )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
+                .expectNdjsonAndGetContent<SequenceEntryVersionToEdit>().size
         assertThat(numberOfEditedSequenceEntryVersionsForAWrongUser, `is`(0))
     }
 
@@ -170,13 +172,14 @@ class GetDataToEditEndpointTest(
         val defaultOrganismData = convenienceClient.prepareDataTo(Status.HAS_ERRORS, organism = DEFAULT_ORGANISM)
         val otherOrganismData = convenienceClient.prepareDataTo(Status.HAS_ERRORS, organism = OTHER_ORGANISM)
 
-        val sequencesToEdit = client.getNumberOfSequenceEntriesThatHaveErrors(
-            defaultOrganismData.size + otherOrganismData.size,
-            organism = OTHER_ORGANISM,
-        )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
-            .expectNdjsonAndGetContent<SequenceEntryVersionToEdit>()
+        val sequencesToEdit =
+            client.getNumberOfSequenceEntriesThatHaveErrors(
+                defaultOrganismData.size + otherOrganismData.size,
+                organism = OTHER_ORGANISM,
+            )
+                .andExpect(status().isOk)
+                .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
+                .expectNdjsonAndGetContent<SequenceEntryVersionToEdit>()
 
         assertThat(
             sequencesToEdit.getAccessionVersions(),

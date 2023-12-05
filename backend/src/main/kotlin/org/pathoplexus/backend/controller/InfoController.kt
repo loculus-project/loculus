@@ -11,9 +11,9 @@ const val PROJECT_NAME = "Pathoplexus"
 @Hidden
 @RestController
 class InfoController {
-
     @RequestMapping("/", produces = [MediaType.TEXT_HTML_VALUE])
-    fun htmlInfo(request: HttpServletRequest) = """
+    fun htmlInfo(request: HttpServletRequest) =
+        """
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -25,7 +25,7 @@ class InfoController {
             <a href="${request.requestURL}swagger-ui/index.html">Visit our swagger-ui</a>
         </body>
         </html>
-    """.trimIndent()
+        """.trimIndent()
 
     @RequestMapping("/", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun jsonInfo() = Info()

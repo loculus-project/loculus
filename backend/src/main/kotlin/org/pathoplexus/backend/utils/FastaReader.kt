@@ -47,11 +47,12 @@ class FastaReader(inputStream: InputStream) : Iterator<FastaEntry>, Iterable<Fas
             }
             nextLine = reader.readLine()
         }
-        nextEntry = if (sampleName == null) {
-            null
-        } else {
-            FastaEntry(sampleName, sequence.toString())
-        }
+        nextEntry =
+            if (sampleName == null) {
+                null
+            } else {
+                FastaEntry(sampleName, sequence.toString())
+            }
     }
 
     override fun close() {

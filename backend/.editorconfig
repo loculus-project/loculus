@@ -6,7 +6,7 @@ insert_final_newline = true
 end_of_line = crlf
 
 [*.{kt,kts}]
-ktlint_code_style = official
+ktlint_code_style = ktlint_official
 trailing-comma-on-call-site = true
 trailing-comma-on-declaration-site = true
 ij_kotlin_allow_trailing_comma_on_call_site = true

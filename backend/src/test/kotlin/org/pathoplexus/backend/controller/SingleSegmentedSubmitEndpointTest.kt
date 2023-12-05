@@ -27,19 +27,21 @@ class SingleSegmentedSubmitEndpointTest(
     fun `GIVEN valid input data without segment name THEN data is accepted and shows segment name 'main'`() {
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
-                content = """
+                content =
+                    """
                     submissionId	firstColumn
                     header1	someValue
                     header2	someValue
-                """.trimIndent(),
+                    """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(
-                content = """
+                content =
+                    """
                     >header1
                     AC
                     >header2
                     GT
-                """.trimIndent(),
+                    """.trimIndent(),
             ),
         )
             .andExpect(status().isOk)
@@ -49,9 +51,10 @@ class SingleSegmentedSubmitEndpointTest(
             .andExpect(jsonPath("\$[0].accession").value(DefaultFiles.firstAccession))
             .andExpect(jsonPath("\$[0].version").value(1))
 
-        val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData()[0]
-            .data
-            .unalignedNucleotideSequences
+        val unalignedNucleotideSequences =
+            convenienceClient.extractUnprocessedData()[0]
+                .data
+                .unalignedNucleotideSequences
 
         assertThat(unalignedNucleotideSequences, hasEntry(DEFAULT_SEQUENCE_NAME, "AC"))
     }
@@ -62,16 +65,18 @@ class SingleSegmentedSubmitEndpointTest(
 
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
-                content = """
+                content =
+                    """
                     submissionId	firstColumn
                     header1	someValue
-                """.trimIndent(),
+                    """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(
-                content = """
+                content =
+                    """
                     >header1_$DEFAULT_SEQUENCE_NAME
                     AC
-                """.trimIndent(),
+                    """.trimIndent(),
             ),
         )
             .andExpect(status().isUnprocessableEntity)

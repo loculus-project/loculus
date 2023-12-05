@@ -35,15 +35,16 @@ class ReleasedDataModel(private val databaseService: DatabaseService) {
     ): ProcessedData {
         val siloVersionStatus = computeSiloVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
-        val metadata = rawProcessedData.processedData.metadata +
-            ("accession" to TextNode(rawProcessedData.accession)) +
-            ("version" to LongNode(rawProcessedData.version)) +
-            (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)) +
-            ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
-            ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
-            ("submitter" to TextNode(rawProcessedData.submitter)) +
-            ("submittedAt" to TextNode(rawProcessedData.submittedAt.toString())) +
-            ("versionStatus" to TextNode(siloVersionStatus.name))
+        val metadata =
+            rawProcessedData.processedData.metadata +
+                ("accession" to TextNode(rawProcessedData.accession)) +
+                ("version" to LongNode(rawProcessedData.version)) +
+                (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)) +
+                ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
+                ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
+                ("submitter" to TextNode(rawProcessedData.submitter)) +
+                ("submittedAt" to TextNode(rawProcessedData.submittedAt.toString())) +
+                ("versionStatus" to TextNode(siloVersionStatus.name))
 
         return ProcessedData(
             metadata = metadata,
