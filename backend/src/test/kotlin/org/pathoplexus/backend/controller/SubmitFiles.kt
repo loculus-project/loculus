@@ -69,7 +69,7 @@ object SubmitFiles {
         name: String = "metadataFile",
         originalFilename: String = "metadata.tsv",
         mediaType: String = TEXT_PLAIN_VALUE,
-        content: String = "accession\tsubmissionId\tfirstColumn\n1\tsomeHeader\tsomeValue\nsomeHeader2\tsomeValue2",
+        content: String = "accession\tsubmissionId\tfirstColumn\n1\tsomeHeader\tsomeValue\n2\tsomeHeader2\tsomeValue2",
     ): MockMultipartFile {
         return MockMultipartFile(
             name,

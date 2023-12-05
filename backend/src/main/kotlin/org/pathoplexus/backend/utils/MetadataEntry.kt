@@ -3,6 +3,7 @@ package org.pathoplexus.backend.utils
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import org.pathoplexus.backend.controller.UnprocessableEntityException
+import org.pathoplexus.backend.model.ACCESSION_HEADER
 import org.pathoplexus.backend.model.HEADER_TO_CONNECT_METADATA_AND_SEQUENCES
 import org.pathoplexus.backend.model.SubmissionId
 import java.io.InputStream
@@ -36,6 +37,68 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
         }
 
         MetadataEntry(submissionId, metadata)
+    }.onEach { entry ->
+        if (entry.metadata.isEmpty()) {
+            throw UnprocessableEntityException(
+                "A row in metadata file contains no metadata columns: $entry",
+            )
+        }
+    }
+}
+
+data class RevisionEntry(
+    val submissionId: SubmissionId,
+    val accession: Accession,
+    val metadata: Map<String, String>,
+)
+
+fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
+    val csvParser = CSVParser(
+        InputStreamReader(metadataInputStream),
+        CSVFormat.TDF.builder().setHeader().setSkipHeaderRecord(true).build(),
+    )
+
+    if (!csvParser.headerNames.contains(HEADER_TO_CONNECT_METADATA_AND_SEQUENCES)) {
+        throw UnprocessableEntityException(
+            "The revised metadata file does not contain the header '$HEADER_TO_CONNECT_METADATA_AND_SEQUENCES'",
+        )
+    }
+
+    if (!csvParser.headerNames.contains(ACCESSION_HEADER)) {
+        throw UnprocessableEntityException(
+            "The revised metadata file does not contain the header '$ACCESSION_HEADER'",
+        )
+    }
+
+    return csvParser.asSequence().map { record ->
+        val submissionId = record[HEADER_TO_CONNECT_METADATA_AND_SEQUENCES]
+
+        if (submissionId.isNullOrEmpty()) {
+            throw UnprocessableEntityException(
+                "A row in metadata file contains no $HEADER_TO_CONNECT_METADATA_AND_SEQUENCES: $record",
+            )
+        }
+
+        val accession = record[ACCESSION_HEADER]
+
+        if (accession.isNullOrEmpty()) {
+            throw UnprocessableEntityException(
+                "A row in metadata file contains no $ACCESSION_HEADER: $record",
+            )
+        }
+
+        if (accession.toLongOrNull() == null) {
+            throw UnprocessableEntityException(
+                "A row in metadata file contains no valid $ACCESSION_HEADER: $accession",
+            )
+        }
+
+        val metadata = record.toMap().filterKeys { column ->
+            column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES &&
+                column != ACCESSION_HEADER
+        }
+
+        RevisionEntry(submissionId, accession, metadata)
     }.onEach { entry ->
         if (entry.metadata.isEmpty()) {
             throw UnprocessableEntityException(
