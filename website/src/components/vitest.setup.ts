@@ -1,7 +1,8 @@
 // Extend Jest "expect" functionality with Testing Library assertions.
 import '@testing-library/jest-dom';
 
-import { rest } from 'msw';
+import { HttpStatusCode } from 'axios';
+import { http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
@@ -36,8 +37,10 @@ const testServer = setupServer();
 const backendRequestMocks = {
     submit: (statusCode: number = 200, response: SubmissionIdMapping[] | any = []) => {
         testServer.use(
-            rest.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/submit`, (_, res, ctx) => {
-                return res(ctx.status(statusCode), ctx.json(response));
+            http.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/submit`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
             }),
         );
     },
@@ -46,36 +49,46 @@ const backendRequestMocks = {
 const lapisRequestMocks = {
     details: (statusCode: number = 200, response: DetailsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.serverSide.lapisUrls.dummy}/details`, (_, res, ctx) => {
-                return res(ctx.status(statusCode), ctx.json(response));
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/details`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
             }),
         );
     },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.serverSide.lapisUrls.dummy}/nucleotideMutations`, (_, res, ctx) => {
-                return res(ctx.status(statusCode), ctx.json(response));
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/nucleotideMutations`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
             }),
         );
     },
     aminoAcidMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.serverSide.lapisUrls.dummy}/aminoAcidMutations`, (_, res, ctx) => {
-                return res(ctx.status(statusCode), ctx.json(response));
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/aminoAcidMutations`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
             }),
         );
     },
     nucleotideInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.serverSide.lapisUrls.dummy}/nucleotideInsertions`, (_, res, ctx) => {
-                return res(ctx.status(statusCode), ctx.json(response));
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/nucleotideInsertions`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
             }),
         );
     },
     aminoAcidInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            rest.post(`${testConfig.serverSide.lapisUrls.dummy}/aminoAcidInsertions`, (_, res, ctx) => {
-                return res(ctx.status(statusCode), ctx.json(response));
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/aminoAcidInsertions`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
             }),
         );
     },
@@ -89,7 +102,13 @@ export const mockRequest = {
 beforeAll(() => testServer.listen({ onUnhandledRequest: 'error' }));
 
 beforeEach(() => {
-    testServer.use(rest.post('http://localhost:3000/admin/logs.txt', (_, res, ctx) => res(ctx.status(200))));
+    testServer.use(
+        http.post('http://localhost:3000/admin/logs.txt', () => {
+            return new Response(undefined, {
+                status: HttpStatusCode.Ok,
+            });
+        }),
+    );
 });
 
 afterAll(() => testServer.close());
