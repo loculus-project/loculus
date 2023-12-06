@@ -15,7 +15,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 ```bash
 ../generate_local_test_config.sh
-./gradlew bootRun --args='--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus --spring.datasource.username=postgres --spring.datasource.password=unsecure --backend.config.path=../website/tests/config/backend_config.json --backend.referenceGenome.path=../website/tests/config/reference_genomes.json'
+./gradlew bootRun --args='--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus --spring.datasource.username=postgres --spring.datasource.password=unsecure --backend.config.path=../website/tests/config/backend_config.json --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/pathoplexusRealm/protocol/openid-connect/certs'
 ```
 
 #### Details
@@ -33,10 +33,6 @@ You need to set:
 * the path to the config file (use `../generate_local_test_config.sh` to generate this file):
 ```
 --backend.config.path=../website/tests/config/backend_config.json
-```
-* the path to the reference genome file:
-```
---backend.referenceGenome.path=../website/tests/config/reference_genomes.json
 ```
 * the url to fetch the public key for JWT verification 
   (corresponding to the `jwks_uri` value in the `/.well-known/openid-configuration` endpoint of the Keycloak server):
