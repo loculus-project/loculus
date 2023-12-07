@@ -12,7 +12,13 @@ import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
-import { clientMetadata, realmPath, TOKEN_COOKIE } from '../src/middleware/authMiddleware';
+import {
+    ACCESS_TOKEN_COOKIE,
+    clientMetadata,
+    realmPath,
+    REFRESH_TOKEN_COOKIE,
+    type TokenCookie,
+} from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
 
 type E2EFixture = {
@@ -73,7 +79,7 @@ export const testSequenceCount: number =
         .split('\n')
         .filter((line) => line.length !== 0).length - 1;
 
-const testUserTokens: Record<string, TokenSet> = {};
+const testUserTokens: Record<string, TokenCookie> = {};
 
 export async function getToken(username: string, password: string) {
     const issuerUrl = `${keycloakUrl}${realmPath}`;
@@ -81,26 +87,35 @@ export async function getToken(username: string, password: string) {
     const client = new keycloakIssuer.Client(clientMetadata);
 
     if (username in testUserTokens) {
-        const accessToken = testUserTokens[username].access_token;
-        if (accessToken !== undefined) {
-            const userInfo = await ResultAsync.fromPromise(client.userinfo(accessToken), (error) => {
-                return error;
-            });
+        const accessToken = testUserTokens[username].accessToken;
 
-            if (userInfo.isOk()) {
-                return testUserTokens[username];
-            }
+        const userInfo = await ResultAsync.fromPromise(client.userinfo(accessToken), (error) => {
+            return error;
+        });
+
+        if (userInfo.isOk()) {
+            return testUserTokens[username];
         }
     }
 
-    const token = client.grant({
+    // eslint-disable-next-line
+    const { access_token, refresh_token } = await client.grant({
         grant_type: 'password',
         username,
         password,
         scope: 'openid',
     });
 
-    testUserTokens[username] = await token;
+    if (access_token === undefined || refresh_token === undefined) {
+        throw new Error('Failed to get token');
+    }
+
+    const token: TokenCookie = {
+        accessToken: access_token,
+        refreshToken: refresh_token,
+    };
+
+    testUserTokens[username] = token;
 
     return token;
 }
@@ -117,8 +132,17 @@ export async function authorize(
 
     await page.context().addCookies([
         {
-            name: TOKEN_COOKIE,
-            value: JSON.stringify(token),
+            name: ACCESS_TOKEN_COOKIE,
+            value: token.accessToken,
+            httpOnly: true,
+            sameSite: 'Lax',
+            secure: false,
+            path: '/',
+            domain: 'localhost',
+        },
+        {
+            name: REFRESH_TOKEN_COOKIE,
+            value: token.refreshToken,
             httpOnly: true,
             sameSite: 'Lax',
             secure: false,
@@ -129,7 +153,7 @@ export async function authorize(
 
     return {
         username,
-        token: token.access_token!,
+        token: token.accessToken,
     };
 }
 

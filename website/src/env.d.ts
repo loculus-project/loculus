@@ -1,13 +1,8 @@
 /// <reference types="astro/client" />
 
-type TokenSet = {
-    access_token?: string;
-    expires_at?: number;
-    id_token?: string;
-    refresh_token?: string;
-    token_type?: string;
-    session_state?: string;
-    scope?: string;
+type TokenCookie = {
+    accessToken: string;
+    refreshToken: string;
 };
 
 type Session = {
@@ -15,7 +10,7 @@ type Session = {
     user?: {
         name?: string;
     };
-    token?: TokenSet;
+    token?: TokenCookie;
 };
 
 declare namespace App {
