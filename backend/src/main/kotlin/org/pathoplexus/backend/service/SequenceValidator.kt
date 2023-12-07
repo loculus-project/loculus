@@ -7,6 +7,7 @@ import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.config.BackendConfig
 import org.pathoplexus.backend.config.Metadata
+import org.pathoplexus.backend.config.MetadataType
 import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.config.ReferenceSequence
 import org.pathoplexus.backend.config.Schema
@@ -131,7 +132,7 @@ class SequenceValidator(
         }
 
         when (metadata.type) {
-            "date" -> {
+            MetadataType.DATE -> {
                 if (!isValidDate(fieldValue.asText())) {
                     throw ProcessingValidationException(
                         "Expected type 'date' in format '$DATE_FORMAT' for field '${metadata.name}', " +
@@ -141,7 +142,7 @@ class SequenceValidator(
                 return
             }
 
-            "pango_lineage" -> {
+            MetadataType.PANGO_LINEAGE -> {
                 if (!isValidPangoLineage(fieldValue.asText())) {
                     throw ProcessingValidationException(
                         "Expected type 'pango_lineage' for field '${metadata.name}', " +
@@ -151,14 +152,16 @@ class SequenceValidator(
                 }
                 return
             }
+
+            else -> {}
         }
 
         val isOfCorrectPrimitiveType = when (metadata.type) {
-            "string" -> fieldValue.isTextual
-            "integer" -> fieldValue.isInt
-            "float" -> fieldValue.isFloat
-            "double" -> fieldValue.isDouble
-            "number" -> fieldValue.isNumber
+            MetadataType.STRING -> fieldValue.isTextual
+            MetadataType.INTEGER -> fieldValue.isInt
+            MetadataType.FLOAT -> fieldValue.isFloat
+            MetadataType.DOUBLE -> fieldValue.isDouble
+            MetadataType.NUMBER -> fieldValue.isNumber
             else -> false
         }
 

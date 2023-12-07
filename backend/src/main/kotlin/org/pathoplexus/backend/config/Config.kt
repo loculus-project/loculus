@@ -1,5 +1,7 @@
 package org.pathoplexus.backend.config
 
+import com.fasterxml.jackson.annotation.JsonProperty
+import org.apache.commons.lang3.StringUtils.lowerCase
 import org.pathoplexus.backend.api.Organism
 
 data class BackendConfig(
@@ -20,9 +22,35 @@ data class Schema(
     val metadata: List<Metadata>,
 )
 
+enum class MetadataType {
+    @JsonProperty("string")
+    STRING,
+
+    @JsonProperty("integer")
+    INTEGER,
+
+    @JsonProperty("float")
+    FLOAT,
+
+    @JsonProperty("double")
+    DOUBLE,
+
+    @JsonProperty("number")
+    NUMBER,
+
+    @JsonProperty("date")
+    DATE,
+
+    @JsonProperty("pango_lineage")
+    PANGO_LINEAGE,
+
+    ;
+
+    override fun toString(): String = lowerCase(name)
+}
+
 data class Metadata(
     val name: String,
-    // TODO(#538) make this an enum
-    val type: String,
+    val type: MetadataType,
     val required: Boolean = false,
 )
