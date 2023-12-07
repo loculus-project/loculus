@@ -93,8 +93,7 @@ class UploadDatabaseService(
             this[sequenceSubmissionIdColumn] = submissionId
             this[segmentNameColumn] = segmentName
             this[sequenceUploadIdColumn] = uploadId
-            // this can be handled better; creating named sequences in the first place; it is possible to de-compress when serializing. Issue now, segment name is not known.
-            this[compressedSequenceDataColumn] = compressor.compressUnalignedNucleotideSequence(
+            this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
                 it.sequence,
                 segmentName,
                 submittedOrganism,
