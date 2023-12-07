@@ -32,7 +32,7 @@ export default async function globalSetupForPlaywright() {
     e2eLogger.info('No sequences found in LAPIS. Generate data for tests.');
 
     e2eLogger.info(`logging in as '${testUser}'.`);
-    const token = (await getToken(testUser, testUserPassword)).access_token!;
+    const token = (await getToken(testUser, testUserPassword)).accessToken;
 
     e2eLogger.info('preparing data in backend.');
     const data = await prepareDataToBe('approvedForRelease', token);

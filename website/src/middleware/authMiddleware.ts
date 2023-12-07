@@ -1,13 +1,24 @@
 import type { APIContext } from 'astro';
 import { defineMiddleware } from 'astro/middleware';
-import { ResultAsync } from 'neverthrow';
+import jsonwebtoken from 'jsonwebtoken';
+import JwksRsa from 'jwks-rsa';
+import { err, ok, ResultAsync } from 'neverthrow';
 import { type BaseClient, Issuer, type TokenSet } from 'openid-client';
 
 import { getConfiguredOrganisms, getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { isPublicRoute } from '../utils/isPublicRoute.ts';
 
-export const TOKEN_COOKIE = 'token';
+const { decode, verify } = jsonwebtoken;
+
+export const ACCESS_TOKEN_COOKIE = 'access_token';
+export const REFRESH_TOKEN_COOKIE = 'refresh_token';
+
+enum TokenVerificationError {
+    EXPIRED,
+    REQUEST_ERROR,
+    INVALID_TOKEN,
+}
 
 export const clientMetadata = {
     client_id: 'test-cli',
@@ -21,6 +32,11 @@ export const realmPath = '/realms/pathoplexusRealm';
 let _keycloakClient: BaseClient | undefined;
 
 const logger = getInstanceLogger('LoginMiddleware');
+
+export type TokenCookie = {
+    accessToken: string;
+    refreshToken: string;
+};
 
 export async function getKeycloakClient() {
     if (_keycloakClient === undefined) {
@@ -74,8 +90,10 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     if (token === undefined) {
         token = await getTokenFromParams(context);
         if (token !== undefined) {
+            logger.debug(`Token found in params, setting cookie`);
             setCookie(context, token);
         } else {
+            logger.debug(`No token found, redirecting to auth`);
             return redirectToAuth(context);
         }
     }
@@ -84,6 +102,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
     if (userInfo.isErr()) {
         logger.error(`Error getting user info: ${userInfo.error}`);
+        deleteCookie(context);
         return redirectToAuth(context);
     }
 
@@ -97,31 +116,81 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 });
 
 async function getTokenFromCookie(context: APIContext) {
-    const tokenCookie = context.cookies.get(TOKEN_COOKIE)?.value;
+    const accessToken = context.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+    const refreshToken = context.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
-    let token = parseToken(tokenCookie);
-    if (token === undefined) {
+    if (accessToken === undefined || refreshToken === undefined) {
+        return undefined;
+    }
+    const tokenCookie = {
+        accessToken,
+        refreshToken,
+    };
+
+    const verifiedTokenResult = await verifyToken(tokenCookie.accessToken);
+    if (verifiedTokenResult.isErr() && verifiedTokenResult.error.type === TokenVerificationError.EXPIRED) {
+        return refreshTokenViaKeycloak(tokenCookie);
+    }
+    if (verifiedTokenResult.isErr()) {
+        logger.error(`Error verifying token: ${verifiedTokenResult.error.message}`);
         return undefined;
     }
 
-    if (hasExpired(token)) {
-        token = await refreshToken(token);
-    }
-
-    return token;
+    return tokenCookie;
 }
 
-export function parseToken(tokenValue: string | undefined) {
-    if (tokenValue === undefined) {
-        return undefined;
+async function verifyToken(accessToken: string) {
+    const tokenHeader = decode(accessToken, { complete: true })?.header;
+    const kid = tokenHeader?.kid;
+    if (kid === undefined) {
+        return err({
+            type: TokenVerificationError.INVALID_TOKEN,
+            message: 'Token does not contain kid',
+        });
     }
 
-    const token: TokenSet | undefined = JSON.parse(tokenValue);
-    return token;
+    const keycloakClient = await getKeycloakClient();
+
+    if (keycloakClient.issuer.metadata.jwks_uri === undefined) {
+        return err({
+            type: TokenVerificationError.REQUEST_ERROR,
+            message: `Keycloak client does not contain jwks_uri: ${JSON.stringify(
+                keycloakClient.issuer.metadata.jwks_uri,
+            )}`,
+        });
+    }
+
+    const jwksClient = new JwksRsa.JwksClient({
+        jwksUri: keycloakClient.issuer.metadata.jwks_uri,
+    });
+
+    try {
+        const signingKey = await jwksClient.getSigningKey(kid);
+        return ok(verify(accessToken, signingKey.getPublicKey()));
+    } catch (error) {
+        switch ((error as Error).name) {
+            case 'TokenExpiredError':
+                return err({
+                    type: TokenVerificationError.EXPIRED,
+                    message: (error as Error).message,
+                });
+
+            case 'JsonWebTokenError':
+                return err({
+                    type: TokenVerificationError.INVALID_TOKEN,
+                    message: (error as Error).message,
+                });
+            default:
+                return err({
+                    type: TokenVerificationError.REQUEST_ERROR,
+                    message: (error as Error).message,
+                });
+        }
+    }
 }
 
-async function getUserInfo(token: TokenSet) {
-    return ResultAsync.fromPromise((await getKeycloakClient()).userinfo(token.access_token!), (error) => {
+async function getUserInfo(token: TokenCookie) {
+    return ResultAsync.fromPromise((await getKeycloakClient()).userinfo(token.accessToken), (error) => {
         return error;
     });
 }
@@ -134,7 +203,7 @@ async function getTokenFromParams(context: APIContext) {
     if (params.code !== undefined) {
         const redirectUri = removeTokenCodeFromSearchParams(context.url);
         logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
-        return client
+        const tokenSet = await client
             .callback(redirectUri, params, {
                 response_type: 'code',
             })
@@ -142,12 +211,23 @@ async function getTokenFromParams(context: APIContext) {
                 logger.error(`Keycloak callback error: ${error}`);
                 return undefined;
             });
+        return extractTokenCookieFromTokenSet(tokenSet);
     }
     return undefined;
 }
 
-function setCookie(context: APIContext, token: TokenSet) {
-    context.cookies.set(TOKEN_COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: false });
+function setCookie(context: APIContext, token: TokenCookie) {
+    context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, { httpOnly: true, sameSite: 'lax', secure: false });
+    context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, { httpOnly: true, sameSite: 'lax', secure: false });
+}
+
+function deleteCookie(context: APIContext) {
+    try {
+        context.cookies.delete(ACCESS_TOKEN_COOKIE);
+        context.cookies.delete(REFRESH_TOKEN_COOKIE);
+    } catch {
+        logger.error(`Error deleting cookie`);
+    }
 }
 
 const redirectToAuth = async (context: APIContext) => {
@@ -163,10 +243,6 @@ const redirectToAuth = async (context: APIContext) => {
     return Response.redirect(authUrl);
 };
 
-function hasExpired(token: TokenSet) {
-    return typeof token.expires_at === 'number' && token.expires_at < Math.floor(Date.now() / 1000);
-}
-
 function removeTokenCodeFromSearchParams(url: URL) {
     const newUrl = new URL(url.toString());
 
@@ -177,6 +253,18 @@ function removeTokenCodeFromSearchParams(url: URL) {
     return newUrl.toString();
 }
 
-async function refreshToken(token: TokenSet) {
-    return (await getKeycloakClient()).refresh(token.refresh_token!).catch(() => undefined);
+async function refreshTokenViaKeycloak(token: TokenCookie) {
+    const refreshedTokenSet = await (await getKeycloakClient()).refresh(token.refreshToken).catch(() => undefined);
+    return extractTokenCookieFromTokenSet(refreshedTokenSet);
+}
+
+function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined) {
+    if (tokenSet === undefined || tokenSet.access_token === undefined || tokenSet.refresh_token === undefined) {
+        return undefined;
+    }
+
+    return {
+        accessToken: tokenSet.access_token,
+        refreshToken: tokenSet.refresh_token,
+    };
 }

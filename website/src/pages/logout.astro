@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { getInstanceLogger } from '../logger';
-import { getKeycloakClient, TOKEN_COOKIE } from '../middleware/authMiddleware';
+import { ACCESS_TOKEN_COOKIE, getKeycloakClient, REFRESH_TOKEN_COOKIE } from '../middleware/authMiddleware';
 
 async function logout() {
     const token = Astro.locals.session.token;
@@ -10,11 +10,12 @@ async function logout() {
         return;
     }
 
-    await (await getKeycloakClient()).revoke(token.refresh_token!).catch(async (err) => {
+    await (await getKeycloakClient()).revoke(token.refreshToken).catch(async (err) => {
         getInstanceLogger('logout page').error(`Failed to revoke token. Error ${err}`);
     });
 
-    Astro.cookies.delete(TOKEN_COOKIE);
+    Astro.cookies.delete(ACCESS_TOKEN_COOKIE);
+    Astro.cookies.delete(REFRESH_TOKEN_COOKIE);
 }
 
 await logout();

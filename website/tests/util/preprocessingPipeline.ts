@@ -60,7 +60,7 @@ async function getJwtTokenForPreprocessingPipeline(
 ): Promise<string> {
     const token = await getToken(username, password);
 
-    return token.access_token ?? '';
+    return token.accessToken;
 }
 
 async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]> {
