@@ -1,5 +1,6 @@
 package org.pathoplexus.backend.config
 
+import org.pathoplexus.backend.api.AminoAcidSequence
 import org.pathoplexus.backend.api.NucleotideSequence
 
 data class ReferenceGenome(
@@ -15,9 +16,13 @@ data class ReferenceGenome(
     fun getNucleotideSegmentReference(segmentName: String): NucleotideSequence? = nucleotideSequences.find {
         it.name == segmentName
     }?.sequence
+
+    fun getAminoAcidGeneReference(gene: String): AminoAcidSequence? = genes.find {
+        it.name == gene
+    }?.sequence
 }
 
 data class ReferenceSequence(
     val name: String,
-    val sequence: NucleotideSequence,
+    val sequence: String,
 )
