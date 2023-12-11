@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
+import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { routes } from '../../routes.ts';
 import type { Filter } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { testConfig, testOrganism } from '../vitest.setup.ts';
 
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),

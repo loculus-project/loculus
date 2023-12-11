@@ -6,9 +6,9 @@ import { http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
-import type { SubmissionIdMapping } from '../types/backend.ts';
-import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from '../types/lapis.ts';
-import type { RuntimeConfig } from '../types/runtimeConfig.ts';
+import type { SubmissionIdMapping } from './src/types/backend.ts';
+import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
+import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
 
 export const testConfig = {
     public: {

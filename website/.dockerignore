@@ -1,5 +1,6 @@
 *
 !src/
+src/**/*.spec.ts*
 !public/
 !package.json
 !package-lock.json

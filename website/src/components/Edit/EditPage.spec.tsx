@@ -5,9 +5,9 @@ import { sentenceCase } from 'change-case';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
+import { testAccessToken, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataField, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { testAccessToken, testOrganism } from '../vitest.setup.ts';
 
 const queryClient = new QueryClient();
 const metadataKey = 'originalMetaDataField';

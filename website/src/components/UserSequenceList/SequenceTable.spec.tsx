@@ -6,11 +6,11 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { SequenceEntryTable } from './SequenceEntryTable.tsx';
 import type { BulkSequenceActionName, SingleSequenceActionName } from './sequenceActions.ts';
+import { testAccessToken, testOrganism } from '../../../vitest.setup.ts';
 import { routes } from '../../routes.ts';
 import type { SequenceEntryStatus } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { testAccessToken, testOrganism } from '../vitest.setup.ts';
 
 const queryClient = new QueryClient();
 const defaultSequenceEntryStatuses: readonly SequenceEntryStatus[] = [

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { isPublicRoute } from './isPublicRoute';
-import { testOrganism } from '../components/vitest.setup.ts';
+import { testOrganism } from '../../vitest.setup.ts';
 
 const otherOrganism = 'otherOrganism';
 const configuredOrganisms = [testOrganism, otherOrganism];
