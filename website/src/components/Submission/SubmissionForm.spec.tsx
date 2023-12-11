@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
+import { mockRequest, testAccessToken, testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
-import { mockRequest, testAccessToken, testConfig, testOrganism } from '../vitest.setup';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
