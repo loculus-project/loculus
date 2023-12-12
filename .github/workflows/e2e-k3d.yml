@@ -29,10 +29,10 @@ jobs:
       run: |
         ./deploy.py cluster
 
-    - name: Test helm templateability
+    - name: Test helm template
       uses: WyriHaximus/github-action-helm3@v3
       with:
-        exec: helm template does-not-matter ./kubenetes/preview > defaultTemplate.yaml
+        exec: helm template does-not-matter ./kubernetes/preview > defaultTemplate.yaml
 
     - name: Upload default helm template
       uses: actions/upload-artifact@v3
