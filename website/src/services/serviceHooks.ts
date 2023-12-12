@@ -61,5 +61,5 @@ function getSequenceHook(
         return hooks.useAlignedNucleotideSequences(request);
     }
 
-    return hooks.useAminoAcidSequences(request, { params: { gene: sequenceType.name } });
+    return hooks.useAlignedAminoAcidSequences(request, { params: { gene: sequenceType.name } });
 }

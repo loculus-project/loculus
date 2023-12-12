@@ -260,7 +260,7 @@ object PreparedProcessedData {
         )
     }
 
-    fun withMissingGeneInAminoAcidSequences(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
+    fun withMissingGeneInAlignedAminoAcidSequences(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
         defaultSuccessfulSubmittedData.withValues(
             accession = accession,
             data = defaultProcessedData.withValues(
@@ -268,7 +268,7 @@ object PreparedProcessedData {
             ),
         )
 
-    fun withUnknownGeneInAminoAcidSequences(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
+    fun withUnknownGeneInAlignedAminoAcidSequences(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
         defaultSuccessfulSubmittedData.withValues(
             accession = accession,
             data = defaultProcessedData.withValues(
@@ -296,12 +296,12 @@ object PreparedProcessedData {
         gene: SegmentName,
         length: Int = 123,
     ): SubmittedProcessedData {
-        val aminoAcidSequences = defaultProcessedData.alignedAminoAcidSequences.toMutableMap()
-        aminoAcidSequences[gene] = "A".repeat(length)
+        val alignedAminoAcidSequences = defaultProcessedData.alignedAminoAcidSequences.toMutableMap()
+        alignedAminoAcidSequences[gene] = "A".repeat(length)
 
         return defaultSuccessfulSubmittedData.withValues(
             accession = accession,
-            data = defaultProcessedData.withValues(alignedAminoAcidSequences = aminoAcidSequences),
+            data = defaultProcessedData.withValues(alignedAminoAcidSequences = alignedAminoAcidSequences),
         )
     }
 
