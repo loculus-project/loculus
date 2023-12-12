@@ -124,10 +124,10 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
     response: z.string(),
 });
 
-const aminoAcidSequencesEndpoint = makeEndpoint({
+const alignedAminoAcidSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: '/aminoAcidSequences/:gene',
-    alias: 'aminoAcidSequences',
+    path: '/alignedAminoAcidSequences/:gene',
+    alias: 'alignedAminoAcidSequences',
     immutable: true,
     parameters: [
         {
@@ -148,5 +148,5 @@ export const lapisApi = makeApi([
     aminoAcidInsertionsEndpoint,
     alignedNucleotideSequencesEndpoint,
     unalignedNucleotideSequencesEndpoint,
-    aminoAcidSequencesEndpoint,
+    alignedAminoAcidSequencesEndpoint,
 ]);

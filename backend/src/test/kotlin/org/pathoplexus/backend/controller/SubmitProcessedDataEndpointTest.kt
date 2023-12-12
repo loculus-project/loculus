@@ -445,14 +445,14 @@ class SubmitProcessedDataEndpointTest(
         fun provideInvalidAminoAcidSequenceDataScenarios() = listOf(
             InvalidDataScenario(
                 name = "data with missing gene in alignedAminoAcidSequences",
-                processedData = PreparedProcessedData.withMissingGeneInAminoAcidSequences(
+                processedData = PreparedProcessedData.withMissingGeneInAlignedAminoAcidSequences(
                     gene = "someShortGene",
                 ),
                 expectedErrorMessage = "Missing the required gene 'someShortGene'.",
             ),
             InvalidDataScenario(
                 name = "data with unknown gene in alignedAminoAcidSequences",
-                processedData = PreparedProcessedData.withUnknownGeneInAminoAcidSequences(
+                processedData = PreparedProcessedData.withUnknownGeneInAlignedAminoAcidSequences(
                     gene = "someOtherGene",
                 ),
                 expectedErrorMessage = "Unknown genes in 'alignedAminoAcidSequences': someOtherGene.",
