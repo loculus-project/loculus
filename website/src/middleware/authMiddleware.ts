@@ -76,7 +76,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         if (token !== undefined) {
             setCookie(context, token);
         } else {
-            logger.debug('No token found in cookie or params');
+            logger.error('No token found in cookie or params');
             return redirectToAuth(context);
         }
     }
@@ -85,6 +85,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
     if (userInfo.isErr()) {
         logger.error(`Error getting user info: ${userInfo.error}`);
+        context.cookies.delete(TOKEN_COOKIE);
         return redirectToAuth(context);
     }
 
@@ -152,8 +153,6 @@ function setCookie(context: APIContext, token: TokenSet) {
 }
 
 const redirectToAuth = async (context: APIContext) => {
-    context.cookies.delete(TOKEN_COOKIE);
-
     const currentUrl = context.url;
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
