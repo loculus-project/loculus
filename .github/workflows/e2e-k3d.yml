@@ -42,6 +42,17 @@ jobs:
         ref: ${{ github.ref }}
         check-name: Build Website Docker Image
         repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Test helm templateability
+      uses: WyriHaximus/github-action-helm3@v3
+      with:
+        exec: helm template > basicTemplate.yaml
+
+    - name: Upload basic template to GH
+      uses: actions/upload-artifact@v3
+      with:
+        name: basic-template
+        path: basicTemplate.yaml
       
     - name: Deploy with helm
       uses: WyriHaximus/github-action-helm3@v3
