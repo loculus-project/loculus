@@ -13,7 +13,7 @@ metadata:
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 {{- if eq $environment "server" }}
-    link.argocd.argoproj.io/external-link: https://{{ $lapisHost }}
+    link.argocd.argoproj.io/external-link: https://{{ $lapisHost }}/{{ $key }}/swagger-ui/index.html
 {{- end }}
 spec:
   entryPoints:
