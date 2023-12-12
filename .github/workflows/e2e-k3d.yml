@@ -29,6 +29,18 @@ jobs:
       run: |
         ./deploy.py cluster
 
+    - name: Test helm templateability
+      uses: WyriHaximus/github-action-helm3@v3
+      with:
+        exec: helm template does-not-matter ./kubenetes/preview > defaultTemplate.yaml
+
+    - name: Upload default helm template
+      uses: actions/upload-artifact@v3
+      with:
+        name: default-helm-template
+        path: defaultTemplate.yaml
+      
+
     - name: Wait for Backend Docker Image
       uses: lewagon/wait-on-check-action@v1.3.1
       with:
@@ -43,17 +55,6 @@ jobs:
         check-name: Build Website Docker Image
         repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Test helm templateability
-      uses: WyriHaximus/github-action-helm3@v3
-      with:
-        exec: helm template > basicTemplate.yaml
-
-    - name: Upload basic template to GH
-      uses: actions/upload-artifact@v3
-      with:
-        name: basic-template
-        path: basicTemplate.yaml
-      
     - name: Deploy with helm
       uses: WyriHaximus/github-action-helm3@v3
       with:
