@@ -1,5 +1,4 @@
 {{- $configFile := .Files.Get "config.yaml" | fromYaml }}
-{{ $namespace := .Values.namespace }}
 
 {{- range $key, $_ := $configFile.instances }}
 ---
@@ -7,7 +6,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pathoplexus-lapis-silo-{{ $key }}
-  namespace: {{ $namespace }}
+  namespace: {{ $.Values.namespace }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:

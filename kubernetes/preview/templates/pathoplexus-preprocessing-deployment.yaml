@@ -1,6 +1,5 @@
 {{- $dockerTag := include "pathoplexus.dockerTag" .Values }}
 {{ $configFile := .Files.Get "config.yaml" | fromYaml }}
-{{ $namespace := .Values.namespace }}
 {{ $backendHost := .Values.disableBackend | ternary
     "http://host.k3d.internal:8079"
     "http://pathoplexus-backend-service:8079"
@@ -36,7 +35,7 @@ spec:
           args:
             - "--watch"
             - "--backend-host={{ $backendHost }}/{{ $key }}"
-            {{- if eq .Values.environment "server" }}
+            {{- if eq $.Values.environment "server" }}
             - "--keycloak-host=https://{{ $keycloakHost}}"
             {{- else }}
             - "--keycloak-host=http://localhost:8083"

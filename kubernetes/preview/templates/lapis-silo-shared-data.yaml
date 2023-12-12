@@ -1,5 +1,4 @@
 {{- $configFile := .Files.Get "config.yaml" | fromYaml }}
-{{ $namespace := .Values.namespace }}
 
 {{- range $key, $_ := $configFile.instances }}
 ---
@@ -7,7 +6,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: lapis-silo-shared-data-{{ $key }}
-  namespace: {{ $namespace }}
+  namespace: {{ $.Values.namespace }}
 spec:
   accessModes:
     - ReadWriteOnce
