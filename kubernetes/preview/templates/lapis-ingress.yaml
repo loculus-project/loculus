@@ -10,9 +10,6 @@ metadata:
   namespace: {{ $.Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-{{- if eq $.Values.environment "server" }}
-    link.argocd.argoproj.io/external-link: https://{{ $lapisHost }}
-{{- end }}
 spec:
   entryPoints:
     {{- if eq $.Values.environment "server" }}
