@@ -1,7 +1,5 @@
 {{- $lapisHost := printf "lapis.%s" .Values.host }}
-{{- $environment := .Values.environment }}
 {{- $configFile := .Files.Get "config.yaml" | fromYaml }}
-{{- $namespace := .Values.namespace }}
 {{- range $key, $_ := $configFile.instances }}
 
 ---
@@ -9,28 +7,28 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: lapis-ingressroute-{{ $key }}
-  namespace: {{ $namespace }}
+  namespace: {{ $.Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
-{{- if eq $environment "server" }}
+{{- if eq $.Values.environment "server" }}
     link.argocd.argoproj.io/external-link: https://{{ $lapisHost }}
 {{- end }}
 spec:
   entryPoints:
-    {{- if eq $environment "server" }}
+    {{- if eq $.Values.environment "server" }}
     - websecure
     {{- else }}
     - web
     {{- end }}
   routes:
-  - match: Path(`/{{ $key }}`, `/{{ $key }}/{path:.*}`) {{- if eq $environment "server" }} && Host(`{{ $lapisHost }}`){{- end }}
+  - match: Path(`/{{ $key }}`, `/{{ $key }}/{path:.*}`) {{- if eq $.Values.environment "server" }} && Host(`{{ $lapisHost }}`){{- end }}
     kind: Rule
     services:
     - name: {{ template "pathoplexus.lapisServiceName" $key }}
       port: 8080
     middlewares:
     - name: strip-{{ $key }}-prefix
-{{- if eq $environment "server" }}
+{{- if eq $.Values.environment "server" }}
   tls:
     certResolver: myresolver
 {{- end }}
@@ -40,7 +38,7 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: strip-{{ $key }}-prefix
-  namespace: {{ $namespace }}
+  namespace: {{ $.Values.namespace }}
 spec:
   stripPrefix:
     prefixes:
