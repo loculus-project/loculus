@@ -17,7 +17,7 @@
     "e2e:headed": "npx playwright test --headed"
   },
   "dependencies": {
-    "@astrojs/node": "^6.1.0",
+    "@astrojs/node": "^7.0.1",
     "@emotion/react": "^11.11.1",
     "@mui/material": "^5.14.20",
     "@mui/x-date-pickers": "^6.18.4",
@@ -26,9 +26,10 @@
     "@tanstack/react-query": "^4.36.1",
     "@zodios/core": "^10.9.6",
     "@zodios/react": "^10.4.5",
-    "astro": "^3.6.2",
+    "astro": "^4.0.4",
     "axios": "^1.6.2",
     "change-case": "^5.3.0",
+    "cookie": "^0.5.0",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.1.0",
     "lodash": "^4.17.21",
