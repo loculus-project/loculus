@@ -1,6 +1,5 @@
 {{- $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{- $commonMetadata := (include "pathoplexus.commonMetadata" . | fromYaml).fields }}
-{{- $namespace := .Values.namespace }}
 {{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
 
 {{- range $key, $instance := $configFile.instances }}
@@ -9,7 +8,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: lapis-silo-database-config-{{ $key }}
-  namespace: {{ $namespace }}
+  namespace: {{ $.Values.namespace }}
 data:
   {{- with $instance.schema }}
   database_config.yaml: |

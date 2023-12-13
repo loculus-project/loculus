@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service
 @Service
 class SequenceEntriesTableProvider(private val compressionService: CompressionService) {
 
-    private val cachedTables: MutableMap<Organism?, SequenceEntriesDataTable> = mutableMapOf()
+    private val cachedTables: MutableMap<Organism, SequenceEntriesDataTable> = mutableMapOf()
 
     fun get(organism: Organism): SequenceEntriesDataTable {
         return cachedTables.getOrPut(organism) {
@@ -43,6 +43,7 @@ class SequenceEntriesDataTable(
     SEQUENCE_ENTRIES_TABLE_NAME,
 ) {
     val originalDataColumn = serializeOriginalData(compressionService, organism).nullable()
+    val processedDataColumn = serializeProcessedData(compressionService, organism).nullable()
 
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
@@ -54,7 +55,6 @@ class SequenceEntriesDataTable(
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
     val statusColumn = varchar("status", 255)
     val isRevocationColumn = bool("is_revocation").default(false)
-    val processedDataColumn = jacksonSerializableJsonb<ProcessedData>("processed_data").nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
     val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
 
@@ -118,6 +118,27 @@ class SequenceEntriesDataTable(
         { string ->
             compressionService.decompressSequencesInOriginalData(
                 jacksonObjectMapper.readValue(string) as OriginalData,
+                organism,
+            )
+        },
+    )
+
+    private fun serializeProcessedData(
+        compressionService: CompressionService,
+        organism: Organism,
+    ): Column<ProcessedData> = jsonb(
+        "processed_data",
+        { processedData ->
+            jacksonObjectMapper.writeValueAsString(
+                compressionService.compressSequencesInProcessedData(
+                    processedData,
+                    organism,
+                ),
+            )
+        },
+        { string ->
+            compressionService.decompressSequencesInProcessedData(
+                jacksonObjectMapper.readValue(string) as ProcessedData,
                 organism,
             )
         },

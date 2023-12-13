@@ -4,15 +4,18 @@ import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.VarCharColumnType
+import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.update
 import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.model.SubmissionId
+import org.pathoplexus.backend.service.MetadataUploadAuxTable.accessionColumn
 import org.pathoplexus.backend.service.MetadataUploadAuxTable.metadataColumn
 import org.pathoplexus.backend.service.MetadataUploadAuxTable.organismColumn
 import org.pathoplexus.backend.service.MetadataUploadAuxTable.submissionIdColumn
@@ -26,16 +29,23 @@ import org.pathoplexus.backend.service.SequenceUploadAuxTable.sequenceUploadIdCo
 import org.pathoplexus.backend.utils.FastaEntry
 import org.pathoplexus.backend.utils.MetadataEntry
 import org.pathoplexus.backend.utils.ParseFastaHeader
+import org.pathoplexus.backend.utils.RevisionEntry
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger { }
+
+enum class UploadType {
+    ORIGINAL,
+    REVISION,
+}
 
 @Service
 @Transactional
 class UploadDatabaseService(
     private val parseFastaHeader: ParseFastaHeader,
     private val compressor: CompressionService,
+    private val queryPreconditionValidator: QueryPreconditionValidator,
 ) {
 
     fun batchInsertMetadataInAuxTable(
@@ -55,6 +65,24 @@ class UploadDatabaseService(
         }
     }
 
+    fun batchInsertRevisedMetadataInAuxTable(
+        submitter: String,
+        uploadId: String,
+        submittedOrganism: Organism,
+        uploadedRevisedMetadataBatch: List<RevisionEntry>,
+        uploadedAt: LocalDateTime,
+    ) {
+        MetadataUploadAuxTable.batchInsert(uploadedRevisedMetadataBatch) {
+            this[accessionColumn] = it.accession
+            this[submitterColumn] = submitter
+            this[uploadedAtColumn] = uploadedAt
+            this[submissionIdColumn] = it.submissionId
+            this[metadataColumn] = it.metadata
+            this[organismColumn] = submittedOrganism.name
+            this[uploadIdColumn] = uploadId
+        }
+    }
+
     fun batchInsertSequencesInAuxTable(
         uploadId: String,
         submittedOrganism: Organism,
@@ -65,8 +93,7 @@ class UploadDatabaseService(
             this[sequenceSubmissionIdColumn] = submissionId
             this[segmentNameColumn] = segmentName
             this[sequenceUploadIdColumn] = uploadId
-            // this can be handled better; creating named sequences in the first place; it is possible to de-compress when serializing. Issue now, segment name is not known.
-            this[compressedSequenceDataColumn] = compressor.compressUnalignedNucleotideSequence(
+            this[compressedSequenceDataColumn] = compressor.compressNucleotideSequence(
                 it.sequence,
                 segmentName,
                 submittedOrganism,
@@ -86,64 +113,26 @@ class UploadDatabaseService(
             },
     )
 
-    fun mapAndCopy(uploadId: String): List<SubmissionIdMapping> {
-        log.debug { "mapping and copying sequences with UploadId $uploadId" }
+    fun mapAndCopy(uploadId: String, uploadType: UploadType): List<SubmissionIdMapping> = transaction {
+        log.debug { "mapping and copying sequences with UploadId $uploadId and uploadType: $uploadType" }
 
-        val sql =
-            """
-            INSERT INTO sequence_entries (
-                accession,
-                organism,
-                submission_id,
-                submitter,
-                submitted_at,
-                original_data,
-                status
-            )
-            SELECT
-                nextval('accession_sequence'),
-                m.organism,
-                m.submission_id,
-                m.submitter,
-                m.uploaded_at,
-                jsonb_build_object(
-                    'metadata', m.metadata,
-                    'unalignedNucleotideSequences', jsonb_object_agg(s.segment_name, s.compressed_sequence_data)
-                ),
-                '${Status.RECEIVED.name}' 
-            FROM
-                metadata_upload_aux_table m
-            JOIN
-                sequence_upload_aux_table s ON m.upload_id = s.upload_id AND m.submission_id = s.submission_id
-            WHERE m.upload_id = ?
-            GROUP BY
-                m.upload_id,
-                m.organism,
-                m.submission_id,
-                m.submitter,
-                m.uploaded_at
-            RETURNING accession, version, submission_id;
-          """
-
-        return transaction {
-            exec(
-                sql,
-                listOf(
-                    Pair(VarCharColumnType(), uploadId),
-                ),
-                explicitStatementType = StatementType.SELECT,
-            ) { rs ->
-                val result = mutableListOf<SubmissionIdMapping>()
-                while (rs.next()) {
-                    result += SubmissionIdMapping(
-                        rs.getString("accession"),
-                        rs.getLong("version"),
-                        rs.getString("submission_id"),
-                    )
-                }
-                result.toList()
-            } ?: emptyList()
-        }
+        exec(
+            generateMapAndCopyStatement(uploadType),
+            listOf(
+                Pair(VarCharColumnType(), uploadId),
+            ),
+            explicitStatementType = StatementType.SELECT,
+        ) { rs ->
+            val result = mutableListOf<SubmissionIdMapping>()
+            while (rs.next()) {
+                result += SubmissionIdMapping(
+                    rs.getString("accession"),
+                    rs.getLong("version"),
+                    rs.getString("submission_id"),
+                )
+            }
+            result.toList()
+        } ?: emptyList()
     }
 
     fun deleteUploadData(uploadId: String) {
@@ -151,5 +140,90 @@ class UploadDatabaseService(
 
         MetadataUploadAuxTable.deleteWhere { uploadIdColumn eq uploadId }
         SequenceUploadAuxTable.deleteWhere { sequenceUploadIdColumn eq uploadId }
+    }
+
+    fun associateRevisedDataWithExistingSequenceEntries(uploadId: String, organism: Organism, username: String) {
+        log.debug { "associating revised data with existing sequence entries with UploadId $uploadId" }
+
+        val accessions =
+            MetadataUploadAuxTable
+                .slice(accessionColumn)
+                .select { uploadIdColumn eq uploadId }
+                .map { it[accessionColumn]!! }
+
+        val existingAccessionVersions = queryPreconditionValidator.validateAccessions(
+            username,
+            accessions,
+            listOf(Status.APPROVED_FOR_RELEASE),
+            organism,
+        )
+
+        existingAccessionVersions.forEach { (accession, maxVersion) ->
+
+            MetadataUploadAuxTable.update(
+                {
+                    (accessionColumn eq accession) and (uploadIdColumn eq uploadId)
+                },
+            ) {
+                it[versionColumn] = maxVersion + 1
+            }
+        }
+    }
+
+    private fun generateMapAndCopyStatement(uploadType: UploadType): String {
+        val commonColumns = StringBuilder().apply {
+            append("accession,")
+            if (uploadType == UploadType.REVISION) {
+                append("version,")
+            }
+            append(
+                """
+                    organism,
+                    submission_id,
+                    submitter,
+                    submitted_at,
+                    original_data,
+                    status
+                """,
+            )
+        }.toString()
+
+        val specificColumns = if (uploadType == UploadType.ORIGINAL) {
+            "nextval('accession_sequence'),"
+        } else {
+            """
+            m.accession,
+            m.version,
+            """.trimIndent()
+        }
+
+        return """
+        INSERT INTO sequence_entries (
+        $commonColumns
+        )
+        SELECT
+            $specificColumns
+            m.organism,
+            m.submission_id,
+            m.submitter,
+            m.uploaded_at,
+            jsonb_build_object(
+                'metadata', m.metadata,
+                'unalignedNucleotideSequences', jsonb_object_agg(s.segment_name, s.compressed_sequence_data)
+            ),
+            '${Status.RECEIVED.name}' 
+        FROM
+            metadata_upload_aux_table m
+        JOIN
+            sequence_upload_aux_table s ON m.upload_id = s.upload_id AND m.submission_id = s.submission_id
+        WHERE m.upload_id = ?
+        GROUP BY
+            m.upload_id,
+            m.organism,
+            m.submission_id,
+            m.submitter,
+            m.uploaded_at
+        RETURNING accession, version, submission_id;
+        """.trimIndent()
     }
 }

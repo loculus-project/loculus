@@ -3,6 +3,7 @@ package org.pathoplexus.backend.service
 import com.github.luben.zstd.Zstd
 import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.OriginalData
+import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.config.BackendConfig
 import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
@@ -21,29 +22,38 @@ enum class CompressionAlgorithm(val extension: String) {
 @Service
 class CompressionService(private val backendConfig: BackendConfig) {
 
-    fun compressUnalignedNucleotideSequence(
-        uncompressedSequence: String,
-        segmentName: String,
-        organism: Organism,
-    ): String = compress(
-        uncompressedSequence,
-        getDictionaryForNucleotideSequenceSegments(segmentName, organism),
-    )
+    fun compressNucleotideSequence(uncompressedSequence: String, segmentName: String, organism: Organism): String =
+        compress(
+            uncompressedSequence,
+            getDictionaryForNucleotideSequenceSegment(segmentName, organism),
+        )
 
-    private fun decompressUnalignedNucleotideSequence(
+    private fun decompressNucleotideSequence(
         compressedSequence: String,
         segmentName: String,
         organism: Organism,
     ): String = decompress(
         compressedSequence,
-        getDictionaryForNucleotideSequenceSegments(segmentName, organism),
+        getDictionaryForNucleotideSequenceSegment(segmentName, organism),
     )
+
+    private fun compressAminoAcidSequence(uncompressedSequence: String, gene: String, organism: Organism): String =
+        compress(
+            uncompressedSequence,
+            getDictionaryForAminoAcidSequence(gene, organism),
+        )
+
+    private fun decompressAminoAcidSequence(compressedSequence: String, gene: String, organism: Organism): String =
+        decompress(
+            compressedSequence,
+            getDictionaryForAminoAcidSequence(gene, organism),
+        )
 
     fun decompressSequencesInOriginalData(originalData: OriginalData, organism: Organism) = OriginalData(
         originalData.metadata,
         originalData
             .unalignedNucleotideSequences.mapValues {
-                decompressUnalignedNucleotideSequence(
+                decompressNucleotideSequence(
                     it.value,
                     it.key,
                     organism,
@@ -55,12 +65,69 @@ class CompressionService(private val backendConfig: BackendConfig) {
         originalData.metadata,
         originalData
             .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
-                compressUnalignedNucleotideSequence(
+                compressNucleotideSequence(
                     sequenceData,
                     segmentName,
                     organism,
                 )
             },
+    )
+
+    fun decompressSequencesInProcessedData(processedData: ProcessedData, organism: Organism) = ProcessedData(
+        processedData.metadata,
+        processedData
+            .unalignedNucleotideSequences.mapValues {
+                decompressNucleotideSequence(
+                    it.value,
+                    it.key,
+                    organism,
+                )
+            },
+        processedData.alignedNucleotideSequences.mapValues {
+            decompressNucleotideSequence(
+                it.value,
+                it.key,
+                organism,
+            )
+        },
+        processedData.nucleotideInsertions,
+        processedData.alignedAminoAcidSequences.mapValues {
+            decompressAminoAcidSequence(
+                it.value,
+                it.key,
+                organism,
+            )
+        },
+        processedData.aminoAcidInsertions,
+    )
+
+    fun compressSequencesInProcessedData(processedData: ProcessedData, organism: Organism) = ProcessedData(
+        processedData.metadata,
+        processedData
+            .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
+                compressNucleotideSequence(
+                    sequenceData,
+                    segmentName,
+                    organism,
+                )
+            },
+        processedData.alignedNucleotideSequences.mapValues {
+            compressNucleotideSequence(
+                it.value,
+                it.key,
+                organism,
+            )
+        },
+        processedData.nucleotideInsertions,
+        processedData.alignedAminoAcidSequences.mapValues {
+            compressAminoAcidSequence(
+                it.value,
+                it.key,
+                organism,
+            )
+        },
+        processedData.aminoAcidInsertions,
+
     )
 
     private fun compress(seq: String, dictionary: ByteArray?): String {
@@ -96,11 +163,18 @@ class CompressionService(private val backendConfig: BackendConfig) {
         return String(decompressedBuffer, 0, decompressionReturnCode.toInt(), StandardCharsets.UTF_8)
     }
 
-    private fun getDictionaryForNucleotideSequenceSegments(segmentName: String, organism: Organism): ByteArray? =
+    private fun getDictionaryForNucleotideSequenceSegment(segmentName: String, organism: Organism): ByteArray? =
         backendConfig
             .getInstanceConfig(organism)
             .referenceGenomes
             .getNucleotideSegmentReference(
                 segmentName,
             )?.toByteArray()
+
+    private fun getDictionaryForAminoAcidSequence(geneName: String, organism: Organism): ByteArray? = backendConfig
+        .getInstanceConfig(organism)
+        .referenceGenomes
+        .getAminoAcidGeneReference(
+            geneName,
+        )?.toByteArray()
 }
