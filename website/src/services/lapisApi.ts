@@ -10,9 +10,13 @@ import {
     mutationsResponse,
 } from '../types/lapis.ts';
 
+function withSample<Path extends `/${string}`>(path: Path) {
+    return `/sample${path}` as const;
+}
+
 const detailsEndpoint = makeEndpoint({
     method: 'post',
-    path: '/details',
+    path: withSample('/details'),
     alias: 'details',
     parameters: [
         {
@@ -26,7 +30,7 @@ const detailsEndpoint = makeEndpoint({
 
 const aggregatedEndpoint = makeEndpoint({
     method: 'post',
-    path: '/aggregated',
+    path: withSample('/aggregated'),
     alias: 'aggregated',
     parameters: [
         {
@@ -40,7 +44,7 @@ const aggregatedEndpoint = makeEndpoint({
 
 const nucleotideMutationsEndpoint = makeEndpoint({
     method: 'post',
-    path: '/nucleotideMutations',
+    path: withSample('/nucleotideMutations'),
     alias: 'nucleotideMutations',
     parameters: [
         {
@@ -54,7 +58,7 @@ const nucleotideMutationsEndpoint = makeEndpoint({
 
 const aminoAcidMutationsEndpoint = makeEndpoint({
     method: 'post',
-    path: '/aminoAcidMutations',
+    path: withSample('/aminoAcidMutations'),
     alias: 'aminoAcidMutations',
     parameters: [
         {
@@ -68,7 +72,7 @@ const aminoAcidMutationsEndpoint = makeEndpoint({
 
 const nucleotideInsertionsEndpoint = makeEndpoint({
     method: 'post',
-    path: '/nucleotideInsertions',
+    path: withSample('/nucleotideInsertions'),
     alias: 'nucleotideInsertions',
     parameters: [
         {
@@ -82,7 +86,7 @@ const nucleotideInsertionsEndpoint = makeEndpoint({
 
 const aminoAcidInsertionsEndpoint = makeEndpoint({
     method: 'post',
-    path: '/aminoAcidInsertions',
+    path: withSample('/aminoAcidInsertions'),
     alias: 'aminoAcidInsertions',
     parameters: [
         {
@@ -96,7 +100,7 @@ const aminoAcidInsertionsEndpoint = makeEndpoint({
 
 const alignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: '/alignedNucleotideSequences',
+    path: withSample('/alignedNucleotideSequences'),
     alias: 'alignedNucleotideSequences',
     immutable: true,
     parameters: [
@@ -111,7 +115,7 @@ const alignedNucleotideSequencesEndpoint = makeEndpoint({
 
 const unalignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: '/unalignedNucleotideSequences',
+    path: withSample('/unalignedNucleotideSequences'),
     alias: 'unalignedNucleotideSequences',
     immutable: true,
     parameters: [
@@ -126,7 +130,7 @@ const unalignedNucleotideSequencesEndpoint = makeEndpoint({
 
 const alignedAminoAcidSequencesEndpoint = makeEndpoint({
     method: 'post',
-    path: '/alignedAminoAcidSequences/:gene',
+    path: withSample('/alignedAminoAcidSequences/:gene'),
     alias: 'alignedAminoAcidSequences',
     immutable: true,
     parameters: [

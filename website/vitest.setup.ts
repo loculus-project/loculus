@@ -49,7 +49,7 @@ const backendRequestMocks = {
 const lapisRequestMocks = {
     details: (statusCode: number = 200, response: DetailsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls.dummy}/details`, () => {
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/sample/details`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -58,7 +58,7 @@ const lapisRequestMocks = {
     },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls.dummy}/nucleotideMutations`, () => {
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/sample/nucleotideMutations`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -67,7 +67,7 @@ const lapisRequestMocks = {
     },
     aminoAcidMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls.dummy}/aminoAcidMutations`, () => {
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/sample/aminoAcidMutations`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -76,7 +76,7 @@ const lapisRequestMocks = {
     },
     nucleotideInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls.dummy}/nucleotideInsertions`, () => {
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/sample/nucleotideInsertions`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -85,7 +85,7 @@ const lapisRequestMocks = {
     },
     aminoAcidInsertions: (statusCode: number = 200, response: InsertionsResponse | LapisError) => {
         testServer.use(
-            http.post(`${testConfig.serverSide.lapisUrls.dummy}/aminoAcidInsertions`, () => {
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/sample/aminoAcidInsertions`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
