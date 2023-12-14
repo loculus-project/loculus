@@ -1,8 +1,7 @@
 ---
 import { getLatestAccessionVersion } from './getTableData';
 import { routes } from '../../routes.ts';
-import type { SequenceEntryHistory } from '../../services/lapisClient';
-import { siloVersionStatuses, type SiloVersionStatus } from '../../services/lapisClient.ts';
+import { type SequenceEntryHistory, type SiloVersionStatus, siloVersionStatuses } from '../../types/lapis';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
 
 interface Props {
