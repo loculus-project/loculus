@@ -1,6 +1,6 @@
 import z, { type ZodTypeAny } from 'zod';
 
-import type { ProblemDetail } from './backend.ts';
+import { accessionVersion, type ProblemDetail } from './backend.ts';
 
 export const lapisBaseRequest = z
     .object({
@@ -50,3 +50,27 @@ function makeLapisResponse<T extends ZodTypeAny>(data: T) {
 export type LapisError = {
     error: ProblemDetail;
 };
+
+export const siloVersionStatuses = {
+    revoked: 'REVOKED',
+    revised: 'REVISED',
+    latestVersion: 'LATEST_VERSION',
+} as const;
+
+export const siloVersionStatusSchema = z.enum([
+    siloVersionStatuses.revoked,
+    siloVersionStatuses.revised,
+    siloVersionStatuses.latestVersion,
+]);
+
+export type SiloVersionStatus = z.infer<typeof siloVersionStatusSchema>;
+
+export const sequenceEntryHistory = z.array(
+    accessionVersion.merge(
+        z.object({
+            versionStatus: siloVersionStatusSchema,
+        }),
+    ),
+);
+
+export type SequenceEntryHistory = z.infer<typeof sequenceEntryHistory>;

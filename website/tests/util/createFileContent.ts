@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import type { Accession } from '../../src/types/backend.ts';
 import { fastaEntryToString, parseFasta } from '../../src/utils/parseFasta.ts';
 import { metadataTestFile, sequencesTestFile, testSequenceCount } from '../e2e.fixture.ts';
+import { ACCESSION_FIELD } from '../../src/settings.ts';
 
 type FileContent = {
     metadataContent: string;
@@ -41,7 +42,7 @@ export const createModifiedFileContent = (accessions: Accession[]): FileContent 
         throw new Error(`ReviseTestPage: expected max ${metadataRows.length - 1} accessions, got ${accessions.length}`);
     }
 
-    metadataRows[0].push('accession');
+    metadataRows[0].push(ACCESSION_FIELD);
     for (let i = 1; i < metadataRows.length && i - 1 < accessions.length; i++) {
         metadataRows[i].push(accessions[i - 1].toString());
     }

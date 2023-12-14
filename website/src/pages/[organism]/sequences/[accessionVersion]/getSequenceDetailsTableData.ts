@@ -7,8 +7,9 @@ import {
 } from '../../../../components/SequenceDetailsPage/getTableData.ts';
 import { getSchema } from '../../../../config.ts';
 import { routes } from '../../../../routes.ts';
-import { LapisClient, type SequenceEntryHistory, type SiloVersionStatus } from '../../../../services/lapisClient.ts';
+import { LapisClient } from '../../../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../../../types/backend.ts';
+import type { SequenceEntryHistory, SiloVersionStatus } from '../../../../types/lapis.ts';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion.ts';
 
 export enum SequenceDetailsTableResultType {

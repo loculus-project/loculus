@@ -6,6 +6,7 @@ import type { Row } from './InputField.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
+import { ACCESSION_FIELD } from '../../settings.ts';
 import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -91,7 +92,7 @@ const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, 
                 <tbody className='w-full'>
                     <Subtitle title='Original Data' bold />
                     <EditableOriginalData
-                        editedMetadata={editedMetadata.filter(({ key }) => key !== 'accession')}
+                        editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
                         setEditedMetadata={setEditedMetadata}
                     />
                     <EditableOriginalSequences

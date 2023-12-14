@@ -1,16 +1,19 @@
 import { sentenceCase } from 'change-case';
 import { err, Result } from 'neverthrow';
 
-import {
-    isSiloVersionStatus,
-    type LapisClient,
-    type SequenceEntryHistory,
-    type SiloVersionStatus,
-    siloVersionStatuses,
-} from '../../services/lapisClient.ts';
+import { type LapisClient } from '../../services/lapisClient.ts';
+import { VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { AccessionVersion, ProblemDetail } from '../../types/backend.ts';
 import type { Schema } from '../../types/config.ts';
-import type { Details, DetailsResponse, InsertionCount, MutationProportionCount } from '../../types/lapis.ts';
+import {
+    type Details,
+    type DetailsResponse,
+    type InsertionCount,
+    type MutationProportionCount,
+    type SequenceEntryHistory,
+    type SiloVersionStatus,
+    siloVersionStatusSchema,
+} from '../../types/lapis.ts';
 
 export type TableDataEntry = { label: string; name: string; value: string | number };
 
@@ -50,18 +53,15 @@ export async function getTableData(
 }
 
 export function getVersionStatus(tableData: TableDataEntry[]): SiloVersionStatus {
-    const versionStatus = tableData.find((pred) => pred.name === 'versionStatus')?.value.toString() ?? undefined;
+    const versionStatus = tableData.find((pred) => pred.name === VERSION_STATUS_FIELD)?.value.toString() ?? undefined;
 
-    if (isSiloVersionStatus(versionStatus) === false) {
-        throw new Error(
-            'Invalid version status: ' +
-                JSON.stringify(versionStatus) +
-                ' not in ' +
-                JSON.stringify(Object.values(siloVersionStatuses)),
-        );
+    const parsedStatus = siloVersionStatusSchema.safeParse(versionStatus);
+
+    if (parsedStatus.success) {
+        return parsedStatus.data;
     }
 
-    return versionStatus as SiloVersionStatus;
+    throw new Error('Invalid version status: ' + JSON.stringify(versionStatus) + ': ' + parsedStatus.error.toString());
 }
 
 export function getLatestAccessionVersion(sequenceEntryHistory: SequenceEntryHistory): AccessionVersion | undefined {

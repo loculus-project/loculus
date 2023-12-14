@@ -3,7 +3,9 @@ import sortBy from 'lodash/sortBy.js';
 
 import { e2eLogger, getToken, lapisUrl, testUser, testUserPassword } from './e2e.fixture.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
-import { LapisClient, siloVersionStatuses } from '../src/services/lapisClient.ts';
+import { LapisClient } from '../src/services/lapisClient.ts';
+import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD } from '../src/settings.ts';
+import { siloVersionStatuses } from '../src/types/lapis.ts';
 
 enum LapisStateBeforeTests {
     NoSequencesInLapis = 'NoSequencesInLapis',
@@ -73,7 +75,7 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
         return LapisStateBeforeTests.NoSequencesInLapis;
     }
 
-    const fields = ['accession', 'version', 'versionStatus', 'isRevocation'];
+    const fields = [ACCESSION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD, IS_REVOCATION_FIELD];
     const [
         shouldBeLatestVersionResult,
         // When SILO can process revocation_entries, we expect two versions.
@@ -85,12 +87,14 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
         lapisClient.call('details', { accession: '21', fields }),
     ]);
 
-    const shouldBeLatestVersionAndNotRevoked = sortBy(shouldBeLatestVersionResult._unsafeUnwrap().data, ['version']);
+    const shouldBeLatestVersionAndNotRevoked = sortBy(shouldBeLatestVersionResult._unsafeUnwrap().data, [
+        VERSION_FIELD,
+    ]);
     const shouldBeTwoVersionsAndOneRevoked = sortBy(shouldBeTwoVersionsAndOneRevokedResult._unsafeUnwrap().data, [
-        'version',
+        VERSION_FIELD,
     ]);
     const shouldBeTwoVersionsAndOneRevised = sortBy(shouldBeTwoVersionsAndOneRevisedResult._unsafeUnwrap().data, [
-        'version',
+        VERSION_FIELD,
     ]);
 
     const expectedLatestVersion = [
