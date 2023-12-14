@@ -209,7 +209,7 @@ async function getTokenFromParams(context: APIContext) {
             })
             .catch((error) => {
                 logger.error(`Keycloak callback error: ${error}`);
-                return undefined;
+                return redirectToAuth();
             });
         return extractTokenCookieFromTokenSet(tokenSet);
     }
