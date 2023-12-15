@@ -1,4 +1,4 @@
-# pathoplexus
+# pathoplexus 
 
 Detailed documentation is available in each folder's README. This file contains a high-level overview of the project and shared documentation that is best kept in one place.
 
