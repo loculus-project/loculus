@@ -14,8 +14,8 @@ async function logout() {
         getInstanceLogger('logout page').error(`Failed to revoke token. Error ${err}`);
     });
 
-    Astro.cookies.delete(ACCESS_TOKEN_COOKIE);
-    Astro.cookies.delete(REFRESH_TOKEN_COOKIE);
+    Astro.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
+    Astro.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
 }
 
 await logout();
