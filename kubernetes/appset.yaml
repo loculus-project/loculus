@@ -24,7 +24,7 @@ spec:
         - path: "config.json"
   template:
     metadata:
-      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}-{{.number}}'
+      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower }}-{{.number}}'
 
     spec:
       destination:
@@ -46,7 +46,7 @@ spec:
             - name: branch
               value: '{{.branch}}'
             - name: host
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}.preview.k3s.pathoplexus.org'
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}.preview.k3s.pathoplexus.org'
       syncPolicy:
         automated:
           selfHeal: true
