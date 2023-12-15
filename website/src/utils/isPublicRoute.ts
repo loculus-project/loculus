@@ -17,6 +17,7 @@ function getPublicRoutes(configuredOrganisms: string[]) {
             new RegExp('^/governance$'),
             new RegExp('^/status$'),
             new RegExp('^/logout$'),
+            new RegExp('^/logout_callback$'),
             new RegExp('^/admin/logs.txt$'),
             ...organismSpecificRoutes,
         ];

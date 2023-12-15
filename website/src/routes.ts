@@ -25,6 +25,8 @@ export const routes = {
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/sequences`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/sequences/${accession}/versions`),
     unknownOrganismPage: (organism: string) => `/404?unknownOrganism=${organism}`,
+    logout: () => '/logout',
+    logoutCallback: () => '/logout_callback',
 };
 
 const buildSearchParams = <Filter extends FilterValue>(searchFilter: Filter[] = [], page: number = 1) => {
