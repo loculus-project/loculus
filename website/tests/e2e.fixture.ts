@@ -12,13 +12,7 @@ import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
-import {
-    ACCESS_TOKEN_COOKIE,
-    clientMetadata,
-    realmPath,
-    REFRESH_TOKEN_COOKIE,
-    type TokenCookie,
-} from '../src/middleware/authMiddleware';
+import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
 
 type E2EFixture = {
