@@ -33,11 +33,6 @@ let _keycloakClient: BaseClient | undefined;
 
 const logger = getInstanceLogger('LoginMiddleware');
 
-export type TokenCookie = {
-    accessToken: string;
-    refreshToken: string;
-};
-
 export async function getKeycloakClient() {
     if (_keycloakClient === undefined) {
         const originForClient = getRuntimeConfig().serverSide.keycloakUrl;
@@ -216,15 +211,25 @@ async function getTokenFromParams(context: APIContext) {
     return undefined;
 }
 
-function setCookie(context: APIContext, token: TokenCookie) {
-    context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, { httpOnly: true, sameSite: 'lax', secure: false });
-    context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, { httpOnly: true, sameSite: 'lax', secure: false });
+export function setCookie(context: APIContext, token: TokenCookie) {
+    context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: false,
+        path: '/',
+    });
+    context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: false,
+        path: '/',
+    });
 }
 
 function deleteCookie(context: APIContext) {
     try {
-        context.cookies.delete(ACCESS_TOKEN_COOKIE);
-        context.cookies.delete(REFRESH_TOKEN_COOKIE);
+        context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
+        context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
     } catch {
         logger.error(`Error deleting cookie`);
     }
