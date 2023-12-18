@@ -23,7 +23,7 @@ spec:
         spec:
           containers:
             - name: silo-preprocessing
-              image: ghcr.io/genspectrum/lapis-silo:test-branch
+              image: ghcr.io/genspectrum/lapis-silo:latest
               imagePullPolicy: IfNotPresent
               command:
                 - sh
