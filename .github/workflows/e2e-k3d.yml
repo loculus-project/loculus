@@ -35,7 +35,7 @@ jobs:
         exec: helm template does-not-matter ./kubernetes/preview > defaultTemplate.yaml
 
     - name: Upload default helm template
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: default-helm-template
         path: defaultTemplate.yaml
@@ -97,7 +97,7 @@ jobs:
       run: sleep 20
     - name: Run E2E test
       run: cd website && npm run e2e
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: ${{ failure() }}
       with:
         name: playwright-report
@@ -119,7 +119,7 @@ jobs:
       run: ./.github/scripts/collect_kubernetes_logs.sh
     - name: Upload Kubernetes logs
       if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: kubernetes-logs
         path: kubernetes_logs/
