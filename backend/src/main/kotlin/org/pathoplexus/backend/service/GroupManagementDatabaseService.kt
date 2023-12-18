@@ -58,4 +58,32 @@ class GroupManagementDatabaseService {
             .select { UserGroupsTable.userNameColumn eq username }
             .map { Group(it[UserGroupsTable.groupNameColumn]) }
     }
+
+    fun addUserToGroup(groupMember: String, groupName: String, usernameToAdd: String) {
+        val users = UserGroupsTable
+            .select { UserGroupsTable.groupNameColumn eq groupName }
+            .map { User(it[UserGroupsTable.userNameColumn]) }
+
+        if (users.isEmpty()) {
+            throw NotFoundException("Group does not exist.")
+        }
+
+        if (users.none { it.name == groupMember }) {
+            throw ForbiddenException("User $groupMember is not a member of the group and cannot add other users.")
+        }
+
+        try {
+            UserGroupsTable.insert {
+                it[userNameColumn] = usernameToAdd
+                it[groupNameColumn] = groupName
+            }
+        } catch (e: ExposedSQLException) {
+            if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
+                throw BadRequestException(
+                    "User $usernameToAdd is already member of the group.",
+                )
+            }
+            throw e
+        }
+    }
 }

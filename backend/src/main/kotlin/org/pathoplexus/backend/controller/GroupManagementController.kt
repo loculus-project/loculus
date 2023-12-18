@@ -43,4 +43,17 @@ class GroupManagementController(
     fun getGroupsOfUser(@UsernameFromJwt username: String): List<Group> {
         return groupManagementDatabaseService.getGroupsOfUser(username)
     }
+
+    @Operation(description = "Add user to a group.")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PostMapping("/groups/{groupName}/users/{usernameToAdd}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun addUserToGroup(
+        @UsernameFromJwt groupMember: String,
+        @Parameter(
+            description = "The group name the user should be added to.",
+        ) @PathVariable groupName: String,
+        @Parameter(
+            description = "The user name that should be added to the group.",
+        ) @PathVariable usernameToAdd: String,
+    ) = groupManagementDatabaseService.addUserToGroup(groupMember, groupName, usernameToAdd)
 }
