@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
         - name: silo
-          image: ghcr.io/genspectrum/lapis-silo:test-branch
+          image: ghcr.io/genspectrum/lapis-silo:latest
           ports:
             - containerPort: 8081
           args:
