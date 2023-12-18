@@ -3,6 +3,7 @@ package org.pathoplexus.backend.service
 import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
+import org.pathoplexus.backend.api.Group
 import org.pathoplexus.backend.api.GroupDetails
 import org.pathoplexus.backend.api.User
 import org.pathoplexus.backend.controller.BadRequestException
@@ -50,5 +51,11 @@ class GroupManagementDatabaseService {
             it[userNameColumn] = username
             it[groupNameColumn] = groupName
         }
+    }
+
+    fun getGroupsOfUser(username: String): List<Group> {
+        return UserGroupsTable
+            .select { UserGroupsTable.userNameColumn eq username }
+            .map { Group(it[UserGroupsTable.groupNameColumn]) }
     }
 }

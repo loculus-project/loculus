@@ -3,6 +3,7 @@ package org.pathoplexus.backend.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
+import org.pathoplexus.backend.api.Group
 import org.pathoplexus.backend.api.GroupDetails
 import org.pathoplexus.backend.service.GroupManagementDatabaseService
 import org.springframework.http.HttpStatus
@@ -34,5 +35,12 @@ class GroupManagementController(
     @GetMapping("/groups/{groupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUsersOfGroup(@UsernameFromJwt username: String, @PathVariable groupName: String): GroupDetails {
         return groupManagementDatabaseService.getDetailsOfGroup(groupName, username)
+    }
+
+    @Operation(description = "Get all groups the user is a member of.")
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getGroupsOfUser(@UsernameFromJwt username: String): List<Group> {
+        return groupManagementDatabaseService.getGroupsOfUser(username)
     }
 }
