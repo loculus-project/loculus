@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
@@ -10,7 +10,13 @@ import org.pathoplexus.backend.api.Insertion
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
+import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.OTHER_ORGANISM
+import org.pathoplexus.backend.controller.assertStatusIs
+import org.pathoplexus.backend.controller.expectForbiddenResponse
+import org.pathoplexus.backend.controller.expectUnauthorizedResponse
+import org.pathoplexus.backend.controller.jwtForDefaultUser
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.pathoplexus.backend.service.AminoAcidSymbols
 import org.pathoplexus.backend.service.NucleotideSymbols
 import org.pathoplexus.backend.utils.Accession

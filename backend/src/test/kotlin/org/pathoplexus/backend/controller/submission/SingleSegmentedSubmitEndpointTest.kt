@@ -1,11 +1,11 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.config.BackendSpringProperty
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content

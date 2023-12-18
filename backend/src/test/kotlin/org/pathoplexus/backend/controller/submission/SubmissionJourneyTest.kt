@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
@@ -13,7 +13,10 @@ import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL
 import org.pathoplexus.backend.api.Status.HAS_ERRORS
 import org.pathoplexus.backend.api.Status.IN_PROCESSING
 import org.pathoplexus.backend.api.Status.RECEIVED
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.OTHER_ORGANISM
+import org.pathoplexus.backend.controller.assertStatusIs
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest

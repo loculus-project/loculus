@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.DoubleNode
@@ -15,7 +15,7 @@ import org.pathoplexus.backend.api.PreprocessingAnnotationSourceType
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SegmentName
 import org.pathoplexus.backend.api.SubmittedProcessedData
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.utils.Accession
 
 val defaultProcessedData = ProcessedData(

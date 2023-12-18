@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.TextNode
@@ -12,8 +12,12 @@ import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SiloVersionStatus
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
+import org.pathoplexus.backend.controller.expectForbiddenResponse
+import org.pathoplexus.backend.controller.expectNdjsonAndGetContent
+import org.pathoplexus.backend.controller.expectUnauthorizedResponse
+import org.pathoplexus.backend.controller.jwtForDefaultUser
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.pathoplexus.backend.utils.Accession
 import org.pathoplexus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Autowired
@@ -73,7 +77,7 @@ class GetReleasedDataEndpointTest(
                 "version" to IntNode(version.toInt()),
                 "accessionVersion" to TextNode("$id.$version"),
                 "isRevocation" to TextNode("false"),
-                "submitter" to TextNode(USER_NAME),
+                "submitter" to TextNode(DEFAULT_USER_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
             )
 

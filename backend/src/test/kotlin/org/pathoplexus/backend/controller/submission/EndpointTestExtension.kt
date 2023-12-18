@@ -1,11 +1,15 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.pathoplexus.backend.controller.PublicJwtKeyConfig
+import org.pathoplexus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.pathoplexus.backend.service.GROUPS_TABLE_NAME
 import org.pathoplexus.backend.service.SEQUENCE_ENTRIES_TABLE_NAME
+import org.pathoplexus.backend.service.USER_GROUPS_TABLE_NAME
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import
@@ -24,6 +28,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 @Import(
     SubmissionControllerClient::class,
     SubmissionConvenienceClient::class,
+    GroupManagementControllerClient::class,
     PublicJwtKeyConfig::class,
 )
 annotation class EndpointTest(
@@ -57,7 +62,10 @@ class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCal
             "-d",
             postgres.databaseName,
             "-c",
-            "truncate table $SEQUENCE_ENTRIES_TABLE_NAME; alter sequence $ACCESSION_SEQUENCE_NAME restart with 1;",
+            "truncate table $SEQUENCE_ENTRIES_TABLE_NAME; " +
+                "alter sequence $ACCESSION_SEQUENCE_NAME restart with 1; " +
+                "truncate table $GROUPS_TABLE_NAME cascade;",
+            "truncate tabel $USER_GROUPS_TABLE_NAME cascade;",
         )
     }
 
