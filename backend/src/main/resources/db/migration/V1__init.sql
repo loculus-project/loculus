@@ -21,7 +21,6 @@ create table sequence_entries (
 create index on sequence_entries (submitter);
 create index on sequence_entries (status);
 
-
 create table metadata_upload_aux_table (
     accession text,
     version bigint,
@@ -41,3 +40,16 @@ create table sequence_upload_aux_table (
     compressed_sequence_data text not null,
     primary key (upload_id,submission_id,segment_name)
 );
+
+
+create table groups_table (
+     group_name varchar(255) primary key
+);
+
+create table user_groups_table (
+     user_name text not null,
+     group_name text not null,
+     primary key (user_name, group_name),
+     foreign key (group_name) references groups_table(group_name)
+);
+
