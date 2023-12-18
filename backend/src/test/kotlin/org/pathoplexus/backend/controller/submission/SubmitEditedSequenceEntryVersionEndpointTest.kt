@@ -1,10 +1,15 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.UnprocessedData
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
+import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.OTHER_ORGANISM
+import org.pathoplexus.backend.controller.assertStatusIs
+import org.pathoplexus.backend.controller.expectUnauthorizedResponse
+import org.pathoplexus.backend.controller.generateJwtFor
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status

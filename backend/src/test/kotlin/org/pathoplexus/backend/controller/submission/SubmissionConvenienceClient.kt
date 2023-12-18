@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -11,7 +11,12 @@ import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.OTHER_ORGANISM
+import org.pathoplexus.backend.controller.expectNdjsonAndGetContent
+import org.pathoplexus.backend.controller.generateJwtFor
+import org.pathoplexus.backend.controller.getAccessionVersions
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.utils.Accession
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -23,7 +28,7 @@ class SubmissionConvenienceClient(
     private val objectMapper: ObjectMapper,
 ) {
     fun submitDefaultFiles(
-        username: String = USER_NAME,
+        username: String = DEFAULT_USER_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): List<SubmissionIdMapping> {
         val submit = client.submit(
@@ -125,7 +130,7 @@ class SubmissionConvenienceClient(
     }
 
     fun getSequenceEntriesOfUser(
-        username: String = USER_NAME,
+        username: String = DEFAULT_USER_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): List<SequenceEntryStatus> {
         return deserializeJsonResponse(
@@ -136,16 +141,18 @@ class SubmissionConvenienceClient(
         )
     }
 
-    fun getSequenceEntriesOfUserInState(userName: String = USER_NAME, status: Status): List<SequenceEntryStatus> =
-        getSequenceEntriesOfUser(userName).filter { it.status == status }
+    fun getSequenceEntriesOfUserInState(
+        userName: String = DEFAULT_USER_NAME,
+        status: Status,
+    ): List<SequenceEntryStatus> = getSequenceEntriesOfUser(userName).filter { it.status == status }
 
-    fun getSequenceEntryOfUser(accessionVersion: AccessionVersion, userName: String = USER_NAME) =
+    fun getSequenceEntryOfUser(accessionVersion: AccessionVersion, userName: String = DEFAULT_USER_NAME) =
         getSequenceEntryOfUser(accessionVersion.accession, accessionVersion.version, userName)
 
     fun getSequenceEntryOfUser(
         accession: Accession,
         version: Long,
-        userName: String = USER_NAME,
+        userName: String = DEFAULT_USER_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): SequenceEntryStatus {
         val sequencesOfUser = getSequenceEntriesOfUser(userName, organism = organism)
@@ -157,7 +164,7 @@ class SubmissionConvenienceClient(
     fun getSequenceEntryThatHasErrors(
         accession: Accession,
         version: Long,
-        userName: String = USER_NAME,
+        userName: String = DEFAULT_USER_NAME,
     ): SequenceEntryVersionToEdit = deserializeJsonResponse(
         client.getSequenceEntryThatHasErrors(
             accession = accession,
@@ -166,7 +173,7 @@ class SubmissionConvenienceClient(
         ),
     )
 
-    fun submitDefaultEditedData(userName: String = USER_NAME) {
+    fun submitDefaultEditedData(userName: String = DEFAULT_USER_NAME) {
         DefaultFiles.allAccessions.forEach { accession ->
             client.submitEditedSequenceEntryVersion(
                 UnprocessedData(accession, 1L, defaultOriginalData),

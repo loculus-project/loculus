@@ -1,8 +1,14 @@
 package org.pathoplexus.backend.service
 
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
+import org.pathoplexus.backend.api.GroupDetails
+import org.pathoplexus.backend.api.User
 import org.pathoplexus.backend.controller.BadRequestException
+import org.pathoplexus.backend.controller.ForbiddenException
+import org.pathoplexus.backend.controller.NotFoundException
+import org.pathoplexus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -10,21 +16,39 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class GroupManagementDatabaseService {
 
-    fun createNewGroup(groupName: String, username: String) {
-        val groupEntity = GroupsTable.select { GroupsTable.groupNameColumn eq groupName }
-            .singleOrNull()
+    fun getDetailsOfGroup(groupName: String, username: String): GroupDetails {
+        val users = UserGroupsTable
+            .select { UserGroupsTable.groupNameColumn eq groupName }
+            .map { User(it[UserGroupsTable.userNameColumn]) }
 
-        if (groupEntity != null) {
-            throw BadRequestException("Group already exists")
+        if (users.isEmpty()) {
+            throw NotFoundException("Group does not exist")
         }
 
-        GroupsTable.insert {
-            it[GroupsTable.groupNameColumn] = groupName
+        if (users.none { it.name == username }) {
+            throw ForbiddenException("Group does not contain user")
+        }
+
+        return GroupDetails(groupName, users)
+    }
+
+    fun createNewGroup(groupName: String, username: String) {
+        try {
+            GroupsTable.insert {
+                it[groupNameColumn] = groupName
+            }
+        } catch (e: ExposedSQLException) {
+            if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
+                throw BadRequestException(
+                    "Group name already exists. Please choose a different name.",
+                )
+            }
+            throw e
         }
 
         UserGroupsTable.insert {
-            it[UserGroupsTable.userNameColumn] = username
-            it[UserGroupsTable.groupNameColumn] = groupName
+            it[userNameColumn] = username
+            it[groupNameColumn] = groupName
         }
     }
 }

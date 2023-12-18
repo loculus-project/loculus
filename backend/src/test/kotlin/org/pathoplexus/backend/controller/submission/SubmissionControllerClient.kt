@@ -1,9 +1,15 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
+import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.addOrganismToPath
+import org.pathoplexus.backend.controller.jwtForDefaultUser
+import org.pathoplexus.backend.controller.jwtForGetReleasedData
+import org.pathoplexus.backend.controller.jwtForProcessingPipeline
+import org.pathoplexus.backend.controller.withAuth
 import org.pathoplexus.backend.utils.Accession
 import org.springframework.http.MediaType
 import org.springframework.mock.web.MockMultipartFile
@@ -14,7 +20,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
-const val USER_NAME = "testUser"
+const val DEFAULT_USER_NAME = "testUser"
 
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun submit(

@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.controller
+package org.pathoplexus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
@@ -10,8 +10,12 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.Status
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
-import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles.firstAccession
+import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.OTHER_ORGANISM
+import org.pathoplexus.backend.controller.expectUnauthorizedResponse
+import org.pathoplexus.backend.controller.getAccessionVersions
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest
@@ -27,9 +31,9 @@ class GetSequencesOfUserEndpointTest(
 
     @Test
     fun `GIVEN some sequence entries in the database THEN only shows entries of the given user`() {
-        convenienceClient.submitDefaultFiles(USER_NAME)
+        convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME)
 
-        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(USER_NAME)
+        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(DEFAULT_USER_NAME)
         assertThat(sequencesOfUser, hasSize(DefaultFiles.NUMBER_OF_SEQUENCES))
 
         val sequencesOfOtherUser = convenienceClient.getSequenceEntriesOfUser("otherUser")
@@ -41,7 +45,7 @@ class GetSequencesOfUserEndpointTest(
         val defaultOrganismData = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
         val otherOrganismData = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)
 
-        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(USER_NAME, organism = OTHER_ORGANISM)
+        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(DEFAULT_USER_NAME, organism = OTHER_ORGANISM)
         assertThat(
             sequencesOfUser.getAccessionVersions(),
             containsInAnyOrder(*otherOrganismData.getAccessionVersions().toTypedArray()),

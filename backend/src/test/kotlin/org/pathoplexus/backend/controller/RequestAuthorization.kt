@@ -1,6 +1,7 @@
 package org.pathoplexus.backend.controller
 
 import io.jsonwebtoken.Jwts
+import org.pathoplexus.backend.controller.submission.DEFAULT_USER_NAME
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import java.security.KeyPair
 import java.time.Instant
@@ -9,7 +10,7 @@ import java.util.Date
 
 val keyPair: KeyPair = Jwts.SIG.RS256.keyPair().build()
 
-val jwtForDefaultUser = generateJwtFor(USER_NAME)
+val jwtForDefaultUser = generateJwtFor(DEFAULT_USER_NAME)
 val jwtForProcessingPipeline = generateJwtFor("preprocessing_pipeline", listOf("preprocessing_pipeline"))
 val jwtForGetReleasedData = generateJwtFor("silo_import_job", listOf("get_released_data"))
 
