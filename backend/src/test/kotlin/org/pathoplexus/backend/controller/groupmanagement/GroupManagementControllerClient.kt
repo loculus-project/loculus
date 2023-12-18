@@ -24,4 +24,13 @@ class GroupManagementControllerClient(private val mockMvc: MockMvc) {
         get("/groups")
             .withAuth(jwt),
     )
+
+    fun addUserToGroup(
+        usernameToAdd: String,
+        groupName: String = DEFAULT_GROUP_NAME,
+        jwt: String? = jwtForDefaultUser,
+    ): ResultActions = mockMvc.perform(
+        post("/groups/$groupName/users/$usernameToAdd")
+            .withAuth(jwt),
+    )
 }
