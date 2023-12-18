@@ -24,12 +24,12 @@ spec:
         - path: "config.json"
   template:
     metadata:
-      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}-{{.number}}'
+      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower }}-{{.number}}'
 
     spec:
       destination:
         server: 'https://kubernetes.default.svc'
-        namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}'
+        namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}'
       project: default
       source:
         path: 'kubernetes/preview/'
@@ -38,15 +38,15 @@ spec:
         helm:
           parameters:
             - name: namespace
-              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}'
+              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower }}'
             - name: shortbranch
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}'
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}'
             - name: sha
               value: '{{.head_short_sha_7}}'
             - name: branch
               value: '{{.branch}}'
             - name: host
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" }}.preview.k3s.pathoplexus.org'
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}.preview.k3s.pathoplexus.org'
       syncPolicy:
         automated:
           selfHeal: true
