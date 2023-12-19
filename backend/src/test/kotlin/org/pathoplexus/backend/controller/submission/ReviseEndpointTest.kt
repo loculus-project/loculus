@@ -170,9 +170,12 @@ class ReviseEndpointTest(
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail").value(
-                    "User $notSubmitter is not a member of the group " +
-                        "$DEFAULT_GROUP_NAME. Action not allowed.",
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "User $notSubmitter is not a member of the group " +
+                            "$DEFAULT_GROUP_NAME. Action not allowed.",
+                    ),
                 ),
             )
     }

@@ -71,16 +71,6 @@ export const unprocessedData = accessionVersion.merge(
 );
 export type UnprocessedData = z.infer<typeof unprocessedData>;
 
-export const processedData = accessionVersion.merge(
-    z.object({
-        data: z.any(),
-        errors: z.array(processingAnnotation).optional(),
-        warnings: z.array(processingAnnotation).optional(),
-    }),
-);
-
-export type ProcessedData = z.infer<typeof processedData>;
-
 export const sequenceEntryToEdit = accessionVersion.merge(
     z.object({
         status: statusThatAllowsEditing,
@@ -102,11 +92,16 @@ export const sequenceEntryToEdit = accessionVersion.merge(
 );
 export type SequenceEntryToEdit = z.infer<typeof sequenceEntryToEdit>;
 
-export const submitFiles = z.object({
+export const uploadFiles = z.object({
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File),
-    groupName: z.string(),
 });
+
+export const submitFiles = uploadFiles.merge(
+    z.object({
+        groupName: z.string(),
+    }),
+);
 
 export const problemDetail = z.object({
     type: z.string(),

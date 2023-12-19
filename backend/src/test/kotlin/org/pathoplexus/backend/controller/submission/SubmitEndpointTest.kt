@@ -11,7 +11,8 @@ import org.pathoplexus.backend.controller.expectUnauthorizedResponse
 import org.pathoplexus.backend.controller.generateJwtFor
 import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
-import org.pathoplexus.backend.model.SubmitModel
+import org.pathoplexus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
+import org.pathoplexus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
 import org.pathoplexus.backend.service.submission.CompressionAlgorithm
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
@@ -181,9 +182,10 @@ class SubmitEndpointTest(
                     DefaultFiles.sequencesFile,
                     status().isBadRequest,
                     "Bad Request",
-                    "${SubmitModel.AcceptedFileTypes.metadataFile.displayName} has wrong extension. Must be " +
-                        ".${SubmitModel.AcceptedFileTypes.metadataFile.validExtensions} for uncompressed " +
-                        "submissions or .${SubmitModel.AcceptedFileTypes.metadataFile.getCompressedExtensions()} " +
+                    "${metadataFileTypes.displayName} has wrong extension. Must be " +
+                        ".${metadataFileTypes.validExtensions} for uncompressed " +
+                        "submissions or " +
+                        ".${metadataFileTypes.getCompressedExtensions()} " +
                         "for compressed submissions",
                 ),
                 Arguments.of(
@@ -192,9 +194,10 @@ class SubmitEndpointTest(
                     SubmitFiles.sequenceFileWith(originalFilename = "sequences.wrongExtension"),
                     status().isBadRequest,
                     "Bad Request",
-                    "${SubmitModel.AcceptedFileTypes.sequenceFile.displayName} has wrong extension. Must be " +
-                        ".${SubmitModel.AcceptedFileTypes.sequenceFile.validExtensions} for uncompressed " +
-                        "submissions or .${SubmitModel.AcceptedFileTypes.sequenceFile.getCompressedExtensions()} " +
+                    "${sequenceFileTypes.displayName} has wrong extension. Must be " +
+                        ".${sequenceFileTypes.validExtensions} for uncompressed " +
+                        "submissions or " +
+                        ".${sequenceFileTypes.getCompressedExtensions()} " +
                         "for compressed submissions",
                 ),
                 Arguments.of(

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -23,19 +24,24 @@ class GroupManagementController(
 
     @Operation(description = "Create a new Group. The user creating the group will be added to the group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PostMapping("/groups/{newGroupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createNewGroup(
         @UsernameFromJwt username: String,
         @Parameter(
             description = "The name of the newly created group",
-        ) @PathVariable newGroupName: String,
-    ) = groupManagementDatabaseService.createNewGroup(newGroupName, username)
+        ) @RequestBody group: GroupName,
+    ) = groupManagementDatabaseService.createNewGroup(group.groupName, username)
 
     @Operation(description = "Get details of a group that the user is a member of.")
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping("/groups/{detailsOfGroupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getUsersOfGroup(@UsernameFromJwt username: String, @PathVariable detailsOfGroupName: String): GroupDetails {
-        return groupManagementDatabaseService.getDetailsOfGroup(detailsOfGroupName, username)
+    @GetMapping("/groups/{groupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getUsersOfGroup(
+        @UsernameFromJwt username: String,
+        @Parameter(
+            description = "The name of the group to get details of.",
+        ) @PathVariable groupName: String,
+    ): GroupDetails {
+        return groupManagementDatabaseService.getDetailsOfGroup(groupName, username)
     }
 
     @Operation(description = "Get all groups the user is a member of.")
@@ -54,7 +60,7 @@ class GroupManagementController(
 
     @Operation(description = "Add user to a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PostMapping("/groups/{groupName}/users/{usernameToAdd}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping("/groups/{groupName}/users", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun addUserToGroup(
         @UsernameFromJwt groupMember: String,
         @Parameter(
@@ -62,12 +68,12 @@ class GroupManagementController(
         ) @PathVariable groupName: String,
         @Parameter(
             description = "The user name that should be added to the group.",
-        ) @PathVariable usernameToAdd: String,
-    ) = groupManagementDatabaseService.addUserToGroup(groupMember, groupName, usernameToAdd)
+        ) @RequestBody usernameToAdd: Username,
+    ) = groupManagementDatabaseService.addUserToGroup(groupMember, groupName, usernameToAdd.username)
 
     @Operation(description = "Remove user from a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @DeleteMapping("/groups/{groupName}/users/{usernameToRemove}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @DeleteMapping("/groups/{groupName}/users", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun removeUserFromGroup(
         @UsernameFromJwt groupMember: String,
         @Parameter(
@@ -75,6 +81,14 @@ class GroupManagementController(
         ) @PathVariable groupName: String,
         @Parameter(
             description = "The user name that should be removed from the group.",
-        ) @PathVariable usernameToRemove: String,
-    ) = groupManagementDatabaseService.removeUserFromGroup(groupMember, groupName, usernameToRemove)
+        ) @RequestBody usernameToRemove: Username,
+    ) = groupManagementDatabaseService.removeUserFromGroup(groupMember, groupName, usernameToRemove.username)
+
+    data class GroupName(
+        val groupName: String,
+    )
+
+    data class Username(
+        val username: String,
+    )
 }

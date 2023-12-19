@@ -3,7 +3,6 @@ package org.pathoplexus.backend.controller.submission
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.empty
-import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -15,7 +14,6 @@ import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.OTHER_ORGANISM
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse
 import org.pathoplexus.backend.controller.getAccessionVersions
-import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 
@@ -30,16 +28,30 @@ class GetSequencesOfUserEndpointTest(
         expectUnauthorizedResponse { client.getSequenceEntriesOfUser(jwt = it) }
     }
 
-    @Test
-    fun `GIVEN some sequence entries in the database THEN only shows entries of the given user`() {
-        convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME)
+    // TODO(#702): the endpoint currently returns only the sequences of the user, not the group,
+    //  so these tests wont work yet. If sequences are returned per group activate the following tests
 
-        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(DEFAULT_USER_NAME)
-        assertThat(sequencesOfUser, hasSize(DefaultFiles.NUMBER_OF_SEQUENCES))
-
-        val sequencesOfOtherUser = convenienceClient.getSequenceEntriesOfUser("otherUser")
-        assertThat(sequencesOfOtherUser, `is`(emptyList()))
-    }
+    // @Test
+    // fun `GIVEN data submitted from a group member THEN another group member sees the data`() {
+    //     convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME)
+//
+    //     val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(DEFAULT_USER_NAME)
+    //     assertThat(sequencesOfUser, hasSize(DefaultFiles.NUMBER_OF_SEQUENCES))
+//
+    //     val sequencesOfAlternativeUser = convenienceClient.getSequenceEntriesOfUser(ALTERNATIVE_DEFAULT_USER_NAME)
+    //     assertThat(sequencesOfAlternativeUser, hasSize(DefaultFiles.NUMBER_OF_SEQUENCES))
+    // }
+//
+    // @Test
+    // fun `GIVEN data submitted to a group WHEN querying another group THEN only shows entries of the given group`() {
+    //     convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME, DEFAULT_GROUP_NAME)
+//
+    //     val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(
+    //         DEFAULT_USER_NAME,
+    //         ALTERNATIVE_DEFAULT_GROUP_NAME,
+    //     )
+    //     assertThat(sequencesOfUser, hasSize(0))
+    // }
 
     @Test
     fun `GIVEN some sequence entries in the database THEN only shows entries of the requested organism`() {

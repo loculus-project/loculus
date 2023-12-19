@@ -71,29 +71,35 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
 
     fun getSequenceEntriesOfUser(
         organism: String = DEFAULT_ORGANISM,
+        groupName: String = DEFAULT_GROUP_NAME,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-sequences-of-user", organism = organism))
-            .withAuth(jwt),
+            .withAuth(jwt)
+            .param("groupName", groupName),
     )
 
     fun getSequenceEntryThatHasErrors(
         accession: Accession,
         version: Long,
         organism: String = DEFAULT_ORGANISM,
+        groupName: String = DEFAULT_GROUP_NAME,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-data-to-edit/$accession/$version", organism = organism))
-            .withAuth(jwt),
+            .withAuth(jwt)
+            .param("groupName", groupName),
     )
 
     fun getNumberOfSequenceEntriesThatHaveErrors(
         numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
+        groupName: String = DEFAULT_GROUP_NAME,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         get(addOrganismToPath("/get-data-to-edit", organism = organism))
             .withAuth(jwt)
+            .param("groupName", groupName)
             .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
     )
 
@@ -166,13 +172,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         metadataFile: MockMultipartFile,
         sequencesFile: MockMultipartFile,
         organism: String = DEFAULT_ORGANISM,
-        groupName: String = DEFAULT_GROUP_NAME,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/revise", organism = organism))
             .file(sequencesFile)
             .file(metadataFile)
-            .param("groupName", groupName)
             .withAuth(jwt),
     )
 }

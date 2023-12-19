@@ -34,7 +34,7 @@ create table metadata_upload_aux_table (
     organism text not null,
     submission_id text not null,
     submitter text not null,
-    group_name text not null,
+    group_name text,
     uploaded_at timestamp not null,
     metadata jsonb not null,
     primary key (upload_id,submission_id)

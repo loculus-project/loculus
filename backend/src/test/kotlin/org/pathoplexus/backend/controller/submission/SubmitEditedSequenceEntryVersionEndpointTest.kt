@@ -4,7 +4,6 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.UnprocessedData
-import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
 import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.OTHER_ORGANISM
 import org.pathoplexus.backend.controller.assertStatusIs
@@ -76,7 +75,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail")
-                    .value("Sequence entry $sequenceString does not exist"),
+                    .value("Accession versions $sequenceString do not exist"),
             )
     }
 
@@ -94,7 +93,8 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Sequence entry $sequenceString is in status IN_PROCESSING, not in AWAITING_APPROVAL or HAS_ERRORS",
+                    "Accession versions are in not in one of the states " +
+                        "[AWAITING_APPROVAL, HAS_ERRORS]: $sequenceString - IN_PROCESSING",
                 ),
             )
 
@@ -110,14 +110,13 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .assertStatusIs(Status.HAS_ERRORS)
 
         val editedData = generateUnprocessedData(firstAccession)
-        val sequenceString = getAccessionVersion(editedData)
 
         client.submitEditedSequenceEntryVersion(editedData, organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                    containsString("Sequence entry $sequenceString is for organism $DEFAULT_ORGANISM"),
+                    containsString("The following accession versions are not of organism"),
                 ),
             )
 
@@ -140,9 +139,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         client.submitEditedSequenceEntryVersion(editedDataFromWrongSubmitter, jwt = generateJwtFor(nonExistingUser))
             .andExpect(status().isForbidden)
             .andExpect(
-                jsonPath("\$.detail").value(
-                    "Sequence entry $accessionVersionString is not owned by user $nonExistingUser",
-                ),
+                jsonPath("\$.detail", containsString("is not a member of the group")),
             )
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)

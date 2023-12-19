@@ -18,6 +18,7 @@ import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.stringParam
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.AccessionVersionInterface
@@ -36,15 +37,15 @@ import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.config.ReferenceGenome
 import org.pathoplexus.backend.controller.BadRequestException
-import org.pathoplexus.backend.controller.ForbiddenException
-import org.pathoplexus.backend.controller.NotFoundException
 import org.pathoplexus.backend.controller.ProcessingValidationException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
+import org.pathoplexus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.pathoplexus.backend.utils.Accession
 import org.pathoplexus.backend.utils.IteratorStreamer
 import org.pathoplexus.backend.utils.Version
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -58,6 +59,7 @@ private val log = KotlinLogging.logger { }
 class DatabaseService(
     private val sequenceValidatorFactory: SequenceValidatorFactory,
     private val submissionPreconditionValidator: SubmissionPreconditionValidator,
+    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val referenceGenome: ReferenceGenome,
@@ -322,42 +324,48 @@ class DatabaseService(
 
     fun streamDataToEdit(
         submitter: String,
+        groupName: String,
         numberOfSequenceEntries: Int,
-        outputStream: OutputStream,
         organism: Organism,
-    ) {
+    ): StreamingResponseBody {
         log.info { "streaming $numberOfSequenceEntries submissions that need edit by $submitter" }
-        val sequencesData = sequenceEntriesTableProvider.get(organism).let { table ->
-            table.slice(
-                table.accessionColumn,
-                table.versionColumn,
-                table.statusColumn,
-                table.processedDataColumn,
-                table.originalDataColumn,
-                table.errorsColumn,
-                table.warningsColumn,
-            )
-                .select(
-                    where = {
-                        table.statusIs(HAS_ERRORS) and
-                            table.isMaxVersion and
-                            table.submitterIs(submitter) and
-                            table.organismIs(organism)
-                    },
-                ).limit(numberOfSequenceEntries).map { row ->
-                    SequenceEntryVersionToEdit(
-                        row[table.accessionColumn],
-                        row[table.versionColumn],
-                        Status.fromString(row[table.statusColumn]),
-                        row[table.processedDataColumn]!!,
-                        row[table.originalDataColumn]!!,
-                        row[table.errorsColumn],
-                        row[table.warningsColumn],
-                    )
-                }
-        }
 
-        iteratorStreamer.streamAsNdjson(sequencesData, outputStream)
+        groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, submitter)
+
+        return StreamingResponseBody { outputStream ->
+            val sequencesData = transaction {
+                sequenceEntriesTableProvider.get(organism).let { table ->
+                    table.slice(
+                        table.accessionColumn,
+                        table.versionColumn,
+                        table.statusColumn,
+                        table.processedDataColumn,
+                        table.originalDataColumn,
+                        table.errorsColumn,
+                        table.warningsColumn,
+                    )
+                        .select(
+                            where = {
+                                table.statusIs(HAS_ERRORS) and
+                                    table.isMaxVersion and
+                                    table.groupIs(groupName) and
+                                    table.organismIs(organism)
+                            },
+                        ).limit(numberOfSequenceEntries).map { row ->
+                            SequenceEntryVersionToEdit(
+                                row[table.accessionColumn],
+                                row[table.versionColumn],
+                                Status.fromString(row[table.statusColumn]),
+                                row[table.processedDataColumn]!!,
+                                row[table.originalDataColumn]!!,
+                                row[table.errorsColumn],
+                                row[table.warningsColumn],
+                            )
+                        }
+                }
+            }
+            iteratorStreamer.streamAsNdjson(sequencesData, outputStream)
+        }
     }
 
     fun getActiveSequencesSubmittedBy(username: String, organism: Organism): List<SequenceEntryStatus> {
@@ -377,7 +385,7 @@ class DatabaseService(
                 .select(
                     where = {
                         table.statusIs(APPROVED_FOR_RELEASE) and
-                            table.submitterIs(username) and
+                            (table.submitterColumn eq username) and
                             table.isMaxReleasedVersion and
                             table.organismIs(organism)
                     },
@@ -393,7 +401,7 @@ class DatabaseService(
             val unreleasedSequenceEntries = subTableSequenceStatus.select(
                 where = {
                     (table.statusColumn neq APPROVED_FOR_RELEASE.name) and
-                        table.submitterIs(username) and
+                        (table.submitterColumn eq username) and
                         table.isMaxVersion and
                         table.organismIs(organism)
                 },
@@ -436,8 +444,7 @@ class DatabaseService(
                 ).select(
                     where = {
                         (table.accessionColumn inList accessions) and
-                            table.isMaxVersion and
-                            table.statusIs(APPROVED_FOR_RELEASE)
+                            table.isMaxVersion
                     },
                 ),
                 columns = listOf(
@@ -517,13 +524,17 @@ class DatabaseService(
     fun submitEditedData(submitter: String, editedAccessionVersion: UnprocessedData, organism: Organism) {
         log.info { "edited sequence entry submitted $editedAccessionVersion" }
 
+        submissionPreconditionValidator.validateAccessionVersions(
+            submitter,
+            listOf(editedAccessionVersion),
+            listOf(AWAITING_APPROVAL, HAS_ERRORS),
+            organism,
+        )
+
         sequenceEntriesTableProvider.get(organism).let { table ->
-            val sequencesEdited = table.update(
+            table.update(
                 where = {
-                    table.accessionVersionEquals(editedAccessionVersion) and
-                        table.submitterIs(submitter) and
-                        table.statusIsOneOf(AWAITING_APPROVAL, HAS_ERRORS) and
-                        table.organismIs(organism)
+                    table.accessionVersionEquals(editedAccessionVersion)
                 },
             ) {
                 it[statusColumn] = RECEIVED.name
@@ -534,62 +545,6 @@ class DatabaseService(
                 it[finishedProcessingAtColumn] = null
                 it[processedDataColumn] = null
             }
-
-            if (sequencesEdited != 1) {
-                handleEditedSubmissionError(editedAccessionVersion, submitter, organism)
-            }
-        }
-    }
-
-    private fun handleEditedSubmissionError(
-        editedAccessionVersion: UnprocessedData,
-        submitter: String,
-        organism: Organism,
-    ) {
-        sequenceEntriesTableProvider.get(organism).let { table ->
-            val selectedSequences = table
-                .slice(
-                    table.accessionColumn,
-                    table.versionColumn,
-                    table.statusColumn,
-                    table.submitterColumn,
-                    table.organismColumn,
-                )
-                .select(where = { table.accessionVersionEquals(editedAccessionVersion) })
-
-            val accessionVersionString = editedAccessionVersion.displayAccessionVersion()
-
-            if (selectedSequences.count().toInt() == 0) {
-                throw UnprocessableEntityException("Sequence entry $accessionVersionString does not exist")
-            }
-
-            val queriedSequence = selectedSequences.first()
-
-            val hasCorrectStatus = queriedSequence[table.statusColumn] == AWAITING_APPROVAL.name ||
-                queriedSequence[table.statusColumn] == HAS_ERRORS.name
-            if (!hasCorrectStatus) {
-                val status = queriedSequence[table.statusColumn]
-                throw UnprocessableEntityException(
-                    "Sequence entry $accessionVersionString is in status $status, " +
-                        "not in $AWAITING_APPROVAL or $HAS_ERRORS",
-                )
-            }
-
-            if (queriedSequence[table.submitterColumn] != submitter) {
-                throw ForbiddenException(
-                    "Sequence entry $accessionVersionString is not owned by user $submitter",
-                )
-            }
-
-            if (queriedSequence[table.organismColumn] != organism.name) {
-                throw UnprocessableEntityException(
-                    "Sequence entry $accessionVersionString is for organism " +
-                        "${queriedSequence[table.organismColumn]}, but submitted data is for organism " +
-                        organism.name,
-                )
-            }
-
-            throw Exception("SequenceEdit: Unknown error")
         }
     }
 
@@ -602,8 +557,14 @@ class DatabaseService(
             "Getting sequence entry ${accessionVersion.displayAccessionVersion()} by $submitter to edit"
         }
 
-        val dataTable = sequenceEntriesTableProvider.get(organism)
-        dataTable.let { table ->
+        submissionPreconditionValidator.validateAccessionVersions(
+            submitter,
+            listOf(accessionVersion),
+            listOf(HAS_ERRORS, AWAITING_APPROVAL),
+            organism,
+        )
+
+        sequenceEntriesTableProvider.get(organism).let { table ->
             val selectedSequenceEntries = table.slice(
                 table.accessionColumn,
                 table.versionColumn,
@@ -615,16 +576,9 @@ class DatabaseService(
             )
                 .select(
                     where = {
-                        table.statusIsOneOf(HAS_ERRORS, AWAITING_APPROVAL) and
-                            table.accessionVersionEquals(accessionVersion) and
-                            table.submitterIs(submitter) and
-                            table.organismIs(organism)
+                        table.accessionVersionEquals(accessionVersion)
                     },
                 )
-
-            if (selectedSequenceEntries.count().toInt() != 1) {
-                handleGetSequenceEntryVersionWithErrorsDataError(submitter, accessionVersion, organism)
-            }
 
             return selectedSequenceEntries.first().let {
                 SequenceEntryVersionToEdit(
@@ -638,75 +592,6 @@ class DatabaseService(
                 )
             }
         }
-    }
-
-    private fun handleGetSequenceEntryVersionWithErrorsDataError(
-        submitter: String,
-        accessionVersion: AccessionVersion,
-        organism: Organism,
-    ): Nothing {
-        sequenceEntriesTableProvider.get(organism).let { table ->
-            val selectedSequences = table
-                .slice(
-                    table.accessionColumn,
-                    table.versionColumn,
-                    table.statusColumn,
-                    table.organismColumn,
-                )
-                .select(where = { table.accessionVersionEquals(accessionVersion) })
-
-            if (selectedSequences.count().toInt() == 0) {
-                throw NotFoundException(
-                    "Accession version ${accessionVersion.displayAccessionVersion()} does not exist",
-                )
-            }
-
-            val selectedSequence = selectedSequences.first()
-
-            val hasCorrectStatus =
-                (selectedSequence[table.statusColumn] == AWAITING_APPROVAL.name) ||
-                    (selectedSequence[table.statusColumn] == HAS_ERRORS.name)
-
-            if (!hasCorrectStatus) {
-                throw UnprocessableEntityException(
-                    "Accession version ${accessionVersion.displayAccessionVersion()} is in not in state " +
-                        "${HAS_ERRORS.name} or ${AWAITING_APPROVAL.name} " +
-                        "(was ${selectedSequence[table.statusColumn]})",
-                )
-            }
-
-            if (!hasPermissionToChange(submitter, accessionVersion, table)) {
-                throw ForbiddenException(
-                    "Sequence entry ${accessionVersion.displayAccessionVersion()} is not owned by user $submitter",
-                )
-            }
-
-            if (selectedSequence[table.organismColumn] != organism.name) {
-                throw UnprocessableEntityException(
-                    "Accession version ${accessionVersion.displayAccessionVersion()} is for organism " +
-                        selectedSequence[table.organismColumn] +
-                        ", but requested data for organism ${organism.name}",
-                )
-            }
-
-            throw RuntimeException(
-                "Get edited data: Unexpected error for accession version ${accessionVersion.displayAccessionVersion()}",
-            )
-        }
-    }
-
-    private fun hasPermissionToChange(
-        user: String,
-        accessionVersion: AccessionVersion,
-        table: SequenceEntriesDataTable,
-    ): Boolean {
-        val sequencesOwnedByUser = table
-            .slice(table.accessionColumn, table.versionColumn, table.submitterColumn)
-            .select(
-                where = { table.accessionVersionEquals(accessionVersion) and table.submitterIs(user) },
-            )
-
-        return sequencesOwnedByUser.count() == 1L
     }
 }
 

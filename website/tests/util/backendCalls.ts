@@ -34,7 +34,6 @@ export const submitRevisedDataViaApi = async (accessions: Accession[], token: st
         {
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
-            groupName: DEFAULT_GROUP_NAME,
         },
         {
             params: { organism: dummyOrganism.key },
@@ -96,10 +95,13 @@ export const revokeReleasedData = async (accessions: Accession[], token: string)
 };
 
 export const createGroup = async (newGroupName: string = DEFAULT_GROUP_NAME, token: string) => {
-    const response = await backendClient.call('createGroup', undefined, {
-        params: { newGroupName },
-        headers: createAuthorizationHeader(token),
-    });
+    const response = await backendClient.call(
+        'createGroup',
+        { groupName: newGroupName },
+        {
+            headers: createAuthorizationHeader(token),
+        },
+    );
 
     if (response.isOk()) {
         return;
@@ -108,10 +110,14 @@ export const createGroup = async (newGroupName: string = DEFAULT_GROUP_NAME, tok
 };
 
 export const addUserToGroup = async (groupName: string = DEFAULT_GROUP_NAME, usernameToAdd: string, token: string) => {
-    const response = await backendClient.call('addUserToGroup', undefined, {
-        params: { groupName, usernameToAdd },
-        headers: createAuthorizationHeader(token),
-    });
+    const response = await backendClient.call(
+        'addUserToGroup',
+        { username: usernameToAdd },
+        {
+            params: { groupName },
+            headers: createAuthorizationHeader(token),
+        },
+    );
 
     if (response.isOk()) {
         return;

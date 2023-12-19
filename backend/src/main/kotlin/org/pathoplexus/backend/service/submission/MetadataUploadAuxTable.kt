@@ -13,7 +13,7 @@ object MetadataUploadAuxTable : Table(METADATA_UPLOAD_TABLE_NAME) {
     val organismColumn = varchar("organism", 255)
     val submissionIdColumn = varchar("submission_id", 255)
     val submitterColumn = varchar("submitter", 255)
-    val groupNameColumn = varchar("group_name", 255)
+    val groupNameColumn = varchar("group_name", 255).nullable()
     val uploadedAtColumn = datetime("uploaded_at")
     val metadataColumn =
         jacksonSerializableJsonb<Map<String, String>>("metadata").nullable()

@@ -70,11 +70,11 @@ class GetDataToEditEndpointTest(
         val nonExistentAccession = "999"
 
         client.getSequenceEntryThatHasErrors(nonExistentAccession, 1)
-            .andExpect(status().isNotFound)
+            .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Accession version $nonExistentAccession.1 does not exist",
+                    "Accession versions $nonExistentAccession.1 do not exist",
                 ),
             )
     }
@@ -89,11 +89,10 @@ class GetDataToEditEndpointTest(
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail").value(containsString("1.1 is for organism dummyOrganism")),
-            )
-            .andExpect(
                 jsonPath("\$.detail").value(
-                    containsString("requested data for organism otherOrganism"),
+                    containsString(
+                        "The following accession versions are not of organism $OTHER_ORGANISM:",
+                    ),
                 ),
             )
     }
@@ -105,11 +104,11 @@ class GetDataToEditEndpointTest(
         convenienceClient.prepareDataTo(Status.HAS_ERRORS)
 
         client.getSequenceEntryThatHasErrors("1", nonExistentAccessionVersion)
-            .andExpect(status().isNotFound)
+            .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Accession version 1.$nonExistentAccessionVersion does not exist",
+                    "Accession versions 1.$nonExistentAccessionVersion do not exist",
                 ),
             )
     }
@@ -126,7 +125,8 @@ class GetDataToEditEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Accession version 1.1 is in not in state HAS_ERRORS or AWAITING_APPROVAL (was IN_PROCESSING)",
+                    "Accession versions are in not in one of the states " +
+                        "[HAS_ERRORS, AWAITING_APPROVAL]: 1.1 - IN_PROCESSING",
                 ),
             )
     }
@@ -144,9 +144,7 @@ class GetDataToEditEndpointTest(
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail").value(
-                    "Sequence entry 1.1 is not owned by user $userNameThatDoesNotHavePermissionToQuery",
-                ),
+                jsonPath("\$.detail", containsString("is not a member of the group")),
             )
     }
 
@@ -163,14 +161,15 @@ class GetDataToEditEndpointTest(
         assertThat(numberOfEditedSequenceEntries, `is`(SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES))
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
-        val numberOfEditedSequenceEntryVersionsForAWrongUser = client.getNumberOfSequenceEntriesThatHaveErrors(
+        client.getNumberOfSequenceEntriesThatHaveErrors(
             SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
             jwt = generateJwtFor(userNameThatDoesNotHavePermissionToQuery),
         )
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
-            .expectNdjsonAndGetContent<SequenceEntryVersionToEdit>().size
-        assertThat(numberOfEditedSequenceEntryVersionsForAWrongUser, `is`(0))
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail", containsString("is not a member of the group")),
+            )
     }
 
     @Test
