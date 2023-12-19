@@ -42,12 +42,12 @@ class RevokeEndpointTest(
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
-            .andExpect(jsonPath("\$[0].accession").value(DefaultFiles.firstAccession))
+            .andExpect(jsonPath("\$[0].accession").value(firstAccession))
             .andExpect(jsonPath("\$[0].version").value(2))
             .andExpect(jsonPath("\$[0].status").value("AWAITING_APPROVAL_FOR_REVOCATION"))
             .andExpect(jsonPath("\$[0].isRevocation").value(true))
 
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 2)
+        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 2)
             .assertStatusIs(AWAITING_APPROVAL_FOR_REVOCATION)
     }
 

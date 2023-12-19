@@ -2,6 +2,7 @@ import isEqual from 'lodash/isEqual.js';
 import sortBy from 'lodash/sortBy.js';
 
 import { e2eLogger, getToken, lapisUrl, testUser, testUserPassword } from './e2e.fixture.ts';
+import { addUserToGroup, createGroup } from './util/backendCalls.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
 import { LapisClient } from '../src/services/lapisClient.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD } from '../src/settings.ts';
@@ -11,6 +12,8 @@ enum LapisStateBeforeTests {
     NoSequencesInLapis = 'NoSequencesInLapis',
     CorrectSequencesInLapis = 'CorrectSequencesInLapis',
 }
+
+export const DEFAULT_GROUP_NAME = 'testGroup';
 
 export default async function globalSetupForPlaywright() {
     const secondsToWait = 10;
@@ -35,6 +38,9 @@ export default async function globalSetupForPlaywright() {
 
     e2eLogger.info(`logging in as '${testUser}'.`);
     const token = (await getToken(testUser, testUserPassword)).accessToken;
+
+    await createTestGroupIfNotExistent(token);
+    await addTestuserToTestGroupIfNotExistent(token);
 
     e2eLogger.info('preparing data in backend.');
     const data = await prepareDataToBe('approvedForRelease', token);
@@ -154,4 +160,28 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
         );
     }
     return LapisStateBeforeTests.CorrectSequencesInLapis;
+}
+
+async function addTestuserToTestGroupIfNotExistent(token: string) {
+    for (const browser of ['firefox', 'webkit', 'chromium']) {
+        for (let i = 0; i < 20; i++) {
+            try {
+                await addUserToGroup(DEFAULT_GROUP_NAME, `testuser_${i}_${browser}`, token);
+            } catch (error) {
+                if (!(error as Error).message.includes(' is already member of the group')) {
+                    throw error;
+                }
+            }
+        }
+    }
+}
+
+async function createTestGroupIfNotExistent(token: string) {
+    try {
+        await createGroup(DEFAULT_GROUP_NAME, token);
+    } catch (error) {
+        if (!(error as Error).message.includes('Group name already exists')) {
+            throw error;
+        }
+    }
 }

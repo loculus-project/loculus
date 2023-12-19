@@ -23,6 +23,10 @@ the headers of the fasta file must match the 'submissionId' field in the metadat
 If the underlying organism has multiple segments,
 the headers of the fasta file must be of the form '>[submissionId]_[segmentName]'.
 """
+const val GROUP_DESCRIPTION = """
+A group is a set of users that share access to the same sequence entries.
+The group name must exist and the submitting user must be member of the group.
+"""
 const val EXTRACT_UNPROCESSED_DATA_DESCRIPTION = """
 Extract unprocessed accession versions. This is supposed to be used as input for the preprocessing pipeline.
 Returns a stream of NDJSON and sets the status of each accession version to 'IN_PROCESSING'.

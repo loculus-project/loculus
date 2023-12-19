@@ -5,6 +5,7 @@ import org.hamcrest.CoreMatchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.controller.DEFAULT_GROUP_NAME
 import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse
 import org.pathoplexus.backend.controller.generateJwtFor
@@ -16,12 +17,22 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-const val DEFAULT_GROUP_NAME = "testGroup"
+const val NEW_GROUP = "newGroup"
 
 @EndpointTest
 class GroupManagementControllerTest(
     @Autowired private val client: GroupManagementControllerClient,
 ) {
+
+    @Test
+    fun `GIVEN database preparation WHEN getting groups details THEN I get the default group with the default user`() {
+        client.getDetailsOfGroup(DEFAULT_GROUP_NAME)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.groupName", `is`(DEFAULT_GROUP_NAME)))
+            .andExpect(jsonPath("\$.users.size()", `is`(1)))
+            .andExpect(jsonPath("\$.users[0].name", `is`(DEFAULT_USER_NAME)))
+    }
 
     @ParameterizedTest
     @MethodSource("authorizationTestCases")
@@ -54,7 +65,7 @@ class GroupManagementControllerTest(
         client.getDetailsOfGroup()
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Group $DEFAULT_GROUP_NAME does not exist."))
+            .andExpect(jsonPath("\$.detail").value("Group $NEW_GROUP does not exist."))
     }
 
     @Test
@@ -65,7 +76,7 @@ class GroupManagementControllerTest(
         client.getGroupsOfUser()
             .andExpect(status().isOk())
             .andExpect { jsonPath("\$.size()", `is`(1)) }
-            .andExpect { jsonPath("\$[0].groupName", `is`(DEFAULT_GROUP_NAME)) }
+            .andExpect { jsonPath("\$[0].groupName", `is`(NEW_GROUP)) }
     }
 
     @Test
@@ -96,7 +107,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is not a member of the group $DEFAULT_GROUP_NAME. Action not allowed.",
+                    "User $DEFAULT_USER_NAME is not a member of the group $NEW_GROUP. Action not allowed.",
                 ),
             )
     }
@@ -108,7 +119,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group $DEFAULT_GROUP_NAME does not exist.",
+                    "Group $NEW_GROUP does not exist.",
                 ),
             )
     }
@@ -123,7 +134,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is already member of the group $DEFAULT_GROUP_NAME.",
+                    "User $DEFAULT_USER_NAME is already member of the group $NEW_GROUP.",
                 ),
             )
     }
@@ -156,7 +167,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group $DEFAULT_GROUP_NAME " +
+                    "Group $NEW_GROUP " +
                         "does not exist.",
                 ),
             )
@@ -174,7 +185,7 @@ class GroupManagementControllerTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is not a member of the group " +
-                        "$DEFAULT_GROUP_NAME. Action not allowed.",
+                        "$NEW_GROUP. Action not allowed.",
                 ),
             )
             .andReturn()

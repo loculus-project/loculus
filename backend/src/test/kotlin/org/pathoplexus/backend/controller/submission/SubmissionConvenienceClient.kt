@@ -11,6 +11,7 @@ import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
+import org.pathoplexus.backend.controller.DEFAULT_GROUP_NAME
 import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
 import org.pathoplexus.backend.controller.OTHER_ORGANISM
 import org.pathoplexus.backend.controller.expectNdjsonAndGetContent
@@ -29,12 +30,14 @@ class SubmissionConvenienceClient(
 ) {
     fun submitDefaultFiles(
         username: String = DEFAULT_USER_NAME,
+        groupName: String = DEFAULT_GROUP_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): List<SubmissionIdMapping> {
         val submit = client.submit(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
             organism = organism,
+            groupName = groupName,
             jwt = generateJwtFor(username),
         )
 

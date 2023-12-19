@@ -8,7 +8,6 @@ const sequenceEntryStatusNames = z.union([
     z.literal('APPROVED_FOR_RELEASE'),
     z.literal('AWAITING_APPROVAL_FOR_REVOCATION'),
 ]);
-export type SequenceEntryStatusNames = z.infer<typeof sequenceEntryStatusNames>;
 const statusThatAllowsEditing = z.union([z.literal('HAS_ERRORS'), z.literal('AWAITING_APPROVAL')]);
 
 const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
@@ -23,7 +22,6 @@ const processingAnnotation = z.object({
     ),
     message: z.string(),
 });
-export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 
 export const metadataField = z.union([z.string(), z.number(), z.date()]);
 export type MetadataField = z.infer<typeof metadataField>;
@@ -107,6 +105,7 @@ export type SequenceEntryToEdit = z.infer<typeof sequenceEntryToEdit>;
 export const submitFiles = z.object({
     metadataFile: z.instanceof(File),
     sequenceFile: z.instanceof(File),
+    groupName: z.string(),
 });
 
 export const problemDetail = z.object({

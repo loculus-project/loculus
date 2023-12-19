@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.pathoplexus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.pathoplexus.backend.controller.submission.DEFAULT_USER_NAME
 import org.pathoplexus.backend.controller.submission.SubmissionControllerClient
 import org.pathoplexus.backend.controller.submission.SubmissionConvenienceClient
 import org.pathoplexus.backend.service.groupmanagement.GROUPS_TABLE_NAME
@@ -41,6 +42,7 @@ private const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
 private const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
 
 const val ACCESSION_SEQUENCE_NAME = "accession_sequence"
+const val DEFAULT_GROUP_NAME = "testGroup"
 
 class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCallback {
     companion object {
@@ -65,8 +67,11 @@ class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCal
             "-c",
             "truncate table $SEQUENCE_ENTRIES_TABLE_NAME; " +
                 "alter sequence $ACCESSION_SEQUENCE_NAME restart with 1; " +
-                "truncate table $GROUPS_TABLE_NAME cascade;",
-            "truncate tabel $USER_GROUPS_TABLE_NAME cascade;",
+                "truncate table $GROUPS_TABLE_NAME cascade; " +
+                "insert into $GROUPS_TABLE_NAME (group_name) values ('$DEFAULT_GROUP_NAME');" +
+                "insert into $USER_GROUPS_TABLE_NAME (group_name, user_name) " +
+                "values ('$DEFAULT_GROUP_NAME', '$DEFAULT_USER_NAME');",
+
         )
     }
 

@@ -205,6 +205,24 @@ const submitProcessedDataEndpoint = makeEndpoint({
     errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
 });
 
+const createGroupEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/groups/:newGroupName',
+    alias: 'createGroup',
+    parameters: [authorizationHeader],
+    response: z.never(),
+    errors: [notAuthorizedError],
+});
+
+const addUserToGroupEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/groups/:groupName/users/:usernameToAdd',
+    alias: 'addUserToGroup',
+    parameters: [authorizationHeader],
+    response: z.never(),
+    errors: [notAuthorizedError],
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -217,4 +235,6 @@ export const backendApi = makeApi([
     confirmRevocationEndpoint,
     extractUnprocessedDataEndpoint,
     submitProcessedDataEndpoint,
+    createGroupEndpoint,
+    addUserToGroupEndpoint,
 ]);

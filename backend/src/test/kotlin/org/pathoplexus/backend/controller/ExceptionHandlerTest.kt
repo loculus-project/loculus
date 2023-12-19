@@ -27,7 +27,7 @@ private val validRoute = addOrganismToPath("submit")
 private val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
     .file("sequenceFile", "sequences".toByteArray())
     .file("metadataFile", "metadata".toByteArray())
-    .param("username", "name")
+    .param("groupName", "groupName")
     .withAuth()
 
 private val validResponse = emptyList<SubmissionIdMapping>()
@@ -43,7 +43,13 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
         MockKAnnotations.init(this)
     }
 
-    private fun MockKMatcherScope.validControllerCall() = submissionController.submit(any(), any(), any(), any())
+    private fun MockKMatcherScope.validControllerCall() = submissionController.submit(
+        any(),
+        any(),
+        any(),
+        any(),
+        any(),
+    )
 
     @Test
     fun `throw NOT_FOUND(404) when route is not found`() {
@@ -110,13 +116,13 @@ class ExceptionHandlerWithMockedModelTest(@Autowired val mockMvc: MockMvc) {
 
     @Test
     fun `WHEN I submit a request with invalid organism THEN it should return a descriptive error message`() {
-        every { submitModel.processSubmissions(any(), any(), any(), any(), any(), any()) } returns validResponse
+        every { submitModel.processSubmissions(any(), any(), any(), any(), any(), any(), any()) } returns validResponse
 
         mockMvc.perform(
             multipart("/unknownOrganism/submit")
                 .file("sequenceFile", "sequences".toByteArray())
                 .file("metadataFile", "metadata".toByteArray())
-                .param("username", "name")
+                .param("groupName", "groupName")
                 .withAuth(),
         )
             .andExpect(status().isBadRequest)

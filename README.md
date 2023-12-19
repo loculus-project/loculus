@@ -43,6 +43,7 @@ For testing we added multiple users to the realm. The users are:
 - `admin` with password `admin` (login under `your-exposed-keycloak-url/admin/master/console/`)
 - `testuser` with password `testuser` (login under `your-exposed-keycloak-url/realms/pathoplexusRealm/account/`)
 - and more testusers, for each browser in the e2e test following the pattern: `testuser_[processId]_[browser]` with password `testuser_[processId]_[browser]` 
+- These testusers will be added to the `testGroup` in the setup for e2e tests. If you change the number of browsers in the e2e test, you need to adapt `website/tests/playwrightSetup.ts` accordingly. 
 
 ## Contributing to Pathoplexus
 

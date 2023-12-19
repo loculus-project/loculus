@@ -2,6 +2,7 @@ import { createFileContent, createModifiedFileContent } from './createFileConten
 import type { Accession, AccessionVersion } from '../../src/types/backend.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
 import { backendClient, dummyOrganism, testSequenceCount } from '../e2e.fixture.ts';
+import { DEFAULT_GROUP_NAME } from '../playwrightSetup.ts';
 
 export const submitViaApi = async (numberOfSequenceEntries: number = testSequenceCount, token: string) => {
     const fileContent = createFileContent(numberOfSequenceEntries);
@@ -11,6 +12,7 @@ export const submitViaApi = async (numberOfSequenceEntries: number = testSequenc
         {
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
+            groupName: DEFAULT_GROUP_NAME,
         },
         {
             params: { organism: dummyOrganism.key },
@@ -32,6 +34,7 @@ export const submitRevisedDataViaApi = async (accessions: Accession[], token: st
         {
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
+            groupName: DEFAULT_GROUP_NAME,
         },
         {
             params: { organism: dummyOrganism.key },
@@ -90,4 +93,28 @@ export const revokeReleasedData = async (accessions: Accession[], token: string)
     }
 
     return accessionVersions;
+};
+
+export const createGroup = async (newGroupName: string = DEFAULT_GROUP_NAME, token: string) => {
+    const response = await backendClient.call('createGroup', undefined, {
+        params: { newGroupName },
+        headers: createAuthorizationHeader(token),
+    });
+
+    if (response.isOk()) {
+        return;
+    }
+    throw new Error(JSON.stringify(response.error));
+};
+
+export const addUserToGroup = async (groupName: string = DEFAULT_GROUP_NAME, usernameToAdd: string, token: string) => {
+    const response = await backendClient.call('addUserToGroup', undefined, {
+        params: { groupName, usernameToAdd },
+        headers: createAuthorizationHeader(token),
+    });
+
+    if (response.isOk()) {
+        return;
+    }
+    throw new Error(JSON.stringify(response.error));
 };

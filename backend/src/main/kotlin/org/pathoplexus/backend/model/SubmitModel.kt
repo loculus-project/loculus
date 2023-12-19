@@ -12,12 +12,11 @@ import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.DuplicateKeyException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
+import org.pathoplexus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.pathoplexus.backend.service.submission.CompressionAlgorithm
-import org.pathoplexus.backend.service.submission.DatabaseService
 import org.pathoplexus.backend.service.submission.UploadDatabaseService
 import org.pathoplexus.backend.service.submission.UploadType
 import org.pathoplexus.backend.utils.FastaReader
-import org.pathoplexus.backend.utils.ParseFastaHeader
 import org.pathoplexus.backend.utils.metadataEntryStreamAsSequence
 import org.pathoplexus.backend.utils.revisionEntryStreamAsSequence
 import org.springframework.stereotype.Service
@@ -37,9 +36,8 @@ const val UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE = "23505"
 
 @Service
 class SubmitModel(
-    private val databaseService: DatabaseService,
     private val uploadDatabaseService: UploadDatabaseService,
-    private val parseFastaHeader: ParseFastaHeader,
+    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
 ) {
 
     companion object AcceptedFileTypes {
@@ -64,14 +62,18 @@ class SubmitModel(
         metadataFile: MultipartFile,
         sequenceFile: MultipartFile,
         submitter: String,
+        groupName: String,
         organism: Organism,
         uploadType: UploadType,
         batchSize: Int = 1000,
     ): List<SubmissionIdMapping> {
         return try {
-            log.info { "Processing submission of type ${uploadType.name} with uploadId $uploadId" }
+            groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, submitter)
+
+            log.debug { "Processing submission of type ${uploadType.name} with uploadId $uploadId" }
             uploadData(
                 submitter,
+                groupName,
                 uploadId,
                 metadataFile,
                 sequenceFile,
@@ -80,7 +82,7 @@ class SubmitModel(
                 uploadType,
             )
 
-            log.info { "Validating submission with uploadId $uploadId" }
+            log.debug { "Validating submission with uploadId $uploadId" }
             val (metadataSubmissionIds, sequencesSubmissionIds) = uploadDatabaseService.getUploadSubmissionIds(uploadId)
             validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
 
@@ -89,7 +91,7 @@ class SubmitModel(
                 uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(uploadId, organism, submitter)
             }
 
-            log.info { "Persisting submission with uploadId $uploadId" }
+            log.debug { "Persisting submission with uploadId $uploadId" }
             uploadDatabaseService.mapAndCopy(uploadId, uploadType)
         } finally {
             uploadDatabaseService.deleteUploadData(uploadId)
@@ -98,6 +100,7 @@ class SubmitModel(
 
     private fun uploadData(
         submitter: String,
+        groupName: String,
         uploadId: String,
         metadataMultipartFile: MultipartFile,
         sequenceMultipartFile: MultipartFile,
@@ -113,7 +116,7 @@ class SubmitModel(
             metadataTempFileToDelete,
         )
         try {
-            uploadMetadata(submitter, uploadId, metadataStream, batchSize, organism, uploadType)
+            uploadMetadata(submitter, groupName, uploadId, metadataStream, batchSize, organism, uploadType)
         } finally {
             metadataTempFileToDelete.delete()
         }
@@ -168,6 +171,7 @@ class SubmitModel(
 
     private fun uploadMetadata(
         submitter: String,
+        groupName: String,
         uploadId: String,
         metadataStream: InputStream,
         batchSize: Int,
@@ -175,7 +179,8 @@ class SubmitModel(
         uploadType: UploadType,
     ) {
         log.info {
-            "intermediate storing uploaded metadata of type ${uploadType.name} from $submitter with UploadId $uploadId"
+            "intermediate storing uploaded metadata of type ${uploadType.name} " +
+                "from $submitter on behalf of $groupName with UploadId $uploadId"
         }
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         try {
@@ -185,6 +190,7 @@ class SubmitModel(
                     .forEach { batch ->
                         uploadDatabaseService.batchInsertMetadataInAuxTable(
                             submitter,
+                            groupName,
                             uploadId,
                             organism,
                             batch,
@@ -196,6 +202,7 @@ class SubmitModel(
                 ).chunked(batchSize).forEach { batch ->
                     uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(
                         submitter,
+                        groupName,
                         uploadId,
                         organism,
                         batch,
