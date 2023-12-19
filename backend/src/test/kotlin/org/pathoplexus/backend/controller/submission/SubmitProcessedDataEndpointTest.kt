@@ -11,14 +11,15 @@ import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.OTHER_ORGANISM
 import org.pathoplexus.backend.controller.assertStatusIs
 import org.pathoplexus.backend.controller.expectForbiddenResponse
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse
 import org.pathoplexus.backend.controller.jwtForDefaultUser
 import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
-import org.pathoplexus.backend.service.AminoAcidSymbols
-import org.pathoplexus.backend.service.NucleotideSymbols
+import org.pathoplexus.backend.service.submission.AminoAcidSymbols
+import org.pathoplexus.backend.service.submission.NucleotideSymbols
 import org.pathoplexus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType

@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.service
+package org.pathoplexus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
@@ -14,7 +14,7 @@ import org.pathoplexus.backend.utils.AccessionVersionComparator
 import org.springframework.stereotype.Component
 
 @Component
-class QueryPreconditionValidator(
+class SubmissionPreconditionValidator(
     private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
 ) {
 

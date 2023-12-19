@@ -13,6 +13,7 @@ import org.pathoplexus.backend.api.Status.HAS_ERRORS
 import org.pathoplexus.backend.api.Status.RECEIVED
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.OTHER_ORGANISM
 import org.pathoplexus.backend.controller.assertStatusIs
 import org.pathoplexus.backend.controller.expectNdjsonAndGetContent

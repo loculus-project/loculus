@@ -1,15 +1,16 @@
-package org.pathoplexus.backend.controller.submission
+package org.pathoplexus.backend.controller
 
 import org.junit.jupiter.api.extension.AfterAllCallback
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
-import org.pathoplexus.backend.controller.PublicJwtKeyConfig
 import org.pathoplexus.backend.controller.groupmanagement.GroupManagementControllerClient
-import org.pathoplexus.backend.service.GROUPS_TABLE_NAME
-import org.pathoplexus.backend.service.SEQUENCE_ENTRIES_TABLE_NAME
-import org.pathoplexus.backend.service.USER_GROUPS_TABLE_NAME
+import org.pathoplexus.backend.controller.submission.SubmissionControllerClient
+import org.pathoplexus.backend.controller.submission.SubmissionConvenienceClient
+import org.pathoplexus.backend.service.groupmanagement.GROUPS_TABLE_NAME
+import org.pathoplexus.backend.service.groupmanagement.USER_GROUPS_TABLE_NAME
+import org.pathoplexus.backend.service.submission.SEQUENCE_ENTRIES_TABLE_NAME
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.annotation.Import

@@ -12,10 +12,10 @@ import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.controller.BadRequestException
 import org.pathoplexus.backend.controller.DuplicateKeyException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
-import org.pathoplexus.backend.service.CompressionAlgorithm
-import org.pathoplexus.backend.service.DatabaseService
-import org.pathoplexus.backend.service.UploadDatabaseService
-import org.pathoplexus.backend.service.UploadType
+import org.pathoplexus.backend.service.submission.CompressionAlgorithm
+import org.pathoplexus.backend.service.submission.DatabaseService
+import org.pathoplexus.backend.service.submission.UploadDatabaseService
+import org.pathoplexus.backend.service.submission.UploadType
 import org.pathoplexus.backend.utils.FastaReader
 import org.pathoplexus.backend.utils.ParseFastaHeader
 import org.pathoplexus.backend.utils.metadataEntryStreamAsSequence

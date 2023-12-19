@@ -1,7 +1,8 @@
-package org.pathoplexus.backend.service
+package org.pathoplexus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.pathoplexus.backend.service.jacksonSerializableJsonb
 
 const val METADATA_UPLOAD_TABLE_NAME = "metadata_upload_aux_table"
 

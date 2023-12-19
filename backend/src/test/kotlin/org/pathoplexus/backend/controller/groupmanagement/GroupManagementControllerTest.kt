@@ -5,10 +5,10 @@ import org.hamcrest.CoreMatchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse
 import org.pathoplexus.backend.controller.generateJwtFor
 import org.pathoplexus.backend.controller.submission.DEFAULT_USER_NAME
-import org.pathoplexus.backend.controller.submission.EndpointTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -39,7 +39,7 @@ class GroupManagementControllerTest(
     }
 
     @Test
-    fun `GIVEN a group is created WHEN I query the details THEN expect that the creator is the only member`() {
+    fun `GIVEN a group is created WHEN the details are queried THEN expect that the creator is the only member`() {
         client.createNewGroup()
             .andExpect(status().isNoContent)
 
@@ -54,11 +54,11 @@ class GroupManagementControllerTest(
         client.getDetailsOfGroup()
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Group does not exist"))
+            .andExpect(jsonPath("\$.detail").value("Group $DEFAULT_GROUP_NAME does not exist."))
     }
 
     @Test
-    fun `GIVEN a group is created WHEN I query the groups of the user THEN expect that the group is returned`() {
+    fun `GIVEN a group is created WHEN groups of the user are queried THEN expect that the group is returned`() {
         client.createNewGroup()
             .andExpect(status().isNoContent)
 
@@ -69,7 +69,7 @@ class GroupManagementControllerTest(
     }
 
     @Test
-    fun `GIVEN a group is created WHEN I try to add another user THEN expect user is in group`() {
+    fun `GIVEN a group is created WHEN another user is added THEN expect user is in group`() {
         val otherUser = "otherUser"
 
         client.createNewGroup()
@@ -87,7 +87,7 @@ class GroupManagementControllerTest(
     }
 
     @Test
-    fun `GIVEN I try to add an user to a group I am not a member of THEN the action is forbidden`() {
+    fun `GIVEN a non-member tries to remove another user THEN the action is forbidden`() {
         client.createNewGroup(jwt = generateJwtFor("otherUser"))
             .andExpect(status().isNoContent)
 
@@ -96,25 +96,25 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is not a member of the group and cannot add other users.",
+                    "User $DEFAULT_USER_NAME is not a member of the group $DEFAULT_GROUP_NAME. Action not allowed.",
                 ),
             )
     }
 
     @Test
-    fun `GIVEN I try to add an user to a group that does not exist THEN to find no group`() {
+    fun `GIVEN a non-exisiting group WHEN a user is added THEN expect to find no group`() {
         client.addUserToGroup(DEFAULT_USER_NAME)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group does not exist.",
+                    "Group $DEFAULT_GROUP_NAME does not exist.",
                 ),
             )
     }
 
     @Test
-    fun `GIVEN I created a group WHEN I try to add members to the group THEN this is a bad request`() {
+    fun `GIVEN a group is created WHEN a member adds themselves THEN this is a bad request`() {
         client.createNewGroup()
             .andExpect(status().isNoContent)
 
@@ -123,9 +123,61 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is already member of the group.",
+                    "User $DEFAULT_USER_NAME is already member of the group $DEFAULT_GROUP_NAME.",
                 ),
             )
+    }
+
+    @Test
+    fun `GIVEN a group member WHEN the member is removed by another member THEN the user is not a group member`() {
+        val otherUser = "otherUser"
+
+        client.createNewGroup()
+            .andExpect(status().isNoContent)
+
+        client.addUserToGroup(otherUser)
+            .andExpect(status().isNoContent)
+
+        client.removeUserFromGroup(otherUser)
+            .andExpect(status().isNoContent)
+
+        client.getDetailsOfGroup()
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.users.size()", `is`(1)))
+            .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
+            .andReturn()
+    }
+
+    @Test
+    fun `GIVEN a non-existing group WHEN a user is removed THEN expect that the group is not found`() {
+        client.removeUserFromGroup(DEFAULT_USER_NAME)
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "Group $DEFAULT_GROUP_NAME " +
+                        "does not exist.",
+                ),
+            )
+            .andReturn()
+    }
+
+    @Test
+    fun `GIVEN a group is created WHEN a member should be removed by a non-member THEN expect this is forbidden`() {
+        client.createNewGroup(jwt = generateJwtFor("otherUser"))
+            .andExpect(status().isNoContent)
+
+        client.removeUserFromGroup(DEFAULT_USER_NAME)
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "User $DEFAULT_USER_NAME is not a member of the group " +
+                        "$DEFAULT_GROUP_NAME. Action not allowed.",
+                ),
+            )
+            .andReturn()
     }
 
     companion object {
@@ -139,6 +191,8 @@ class GroupManagementControllerTest(
             Scenario({ jwt, client -> client.createNewGroup(jwt = jwt) }, true),
             Scenario({ jwt, client -> client.getDetailsOfGroup(jwt = jwt) }, false),
             Scenario({ jwt, client -> client.getGroupsOfUser(jwt = jwt) }, false),
+            Scenario({ jwt, client -> client.addUserToGroup(DEFAULT_USER_NAME, jwt = jwt) }, true),
+            Scenario({ jwt, client -> client.removeUserFromGroup(DEFAULT_USER_NAME, jwt = jwt) }, true),
         )
     }
 }

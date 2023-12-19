@@ -6,8 +6,8 @@ import mu.KotlinLogging
 import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SiloVersionStatus
-import org.pathoplexus.backend.service.DatabaseService
-import org.pathoplexus.backend.service.RawProcessedData
+import org.pathoplexus.backend.service.submission.DatabaseService
+import org.pathoplexus.backend.service.submission.RawProcessedData
 import org.pathoplexus.backend.utils.Accession
 import org.pathoplexus.backend.utils.Version
 import org.springframework.stereotype.Service

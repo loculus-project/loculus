@@ -1,34 +1,30 @@
-package org.pathoplexus.backend.service
+package org.pathoplexus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.pathoplexus.backend.api.Group
 import org.pathoplexus.backend.api.GroupDetails
-import org.pathoplexus.backend.api.User
 import org.pathoplexus.backend.controller.BadRequestException
-import org.pathoplexus.backend.controller.ForbiddenException
-import org.pathoplexus.backend.controller.NotFoundException
 import org.pathoplexus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional
-class GroupManagementDatabaseService {
+class GroupManagementDatabaseService(
+    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
+) {
 
     fun getDetailsOfGroup(groupName: String, username: String): GroupDetails {
-        val users = UserGroupsTable
-            .select { UserGroupsTable.groupNameColumn eq groupName }
-            .map { User(it[UserGroupsTable.userNameColumn]) }
-
-        if (users.isEmpty()) {
-            throw NotFoundException("Group does not exist")
-        }
-
-        if (users.none { it.name == username }) {
-            throw ForbiddenException("Group does not contain user")
-        }
+        val users = groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(
+            groupName,
+            username,
+        )
 
         return GroupDetails(groupName, users)
     }
@@ -60,17 +56,7 @@ class GroupManagementDatabaseService {
     }
 
     fun addUserToGroup(groupMember: String, groupName: String, usernameToAdd: String) {
-        val users = UserGroupsTable
-            .select { UserGroupsTable.groupNameColumn eq groupName }
-            .map { User(it[UserGroupsTable.userNameColumn]) }
-
-        if (users.isEmpty()) {
-            throw NotFoundException("Group does not exist.")
-        }
-
-        if (users.none { it.name == groupMember }) {
-            throw ForbiddenException("User $groupMember is not a member of the group and cannot add other users.")
-        }
+        groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, groupMember)
 
         try {
             UserGroupsTable.insert {
@@ -80,10 +66,25 @@ class GroupManagementDatabaseService {
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                 throw BadRequestException(
-                    "User $usernameToAdd is already member of the group.",
+                    "User $usernameToAdd is already member of the group $groupName.",
                 )
             }
             throw e
         }
+    }
+
+    fun removeUserFromGroup(groupMember: String, groupName: String, usernameToRemove: String) {
+        groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, groupMember)
+
+        UserGroupsTable.deleteWhere {
+            (userNameColumn eq usernameToRemove) and
+                (groupNameColumn eq groupName)
+        }
+    }
+
+    fun getAllGroups(): List<Group> {
+        return GroupsTable
+            .selectAll()
+            .map { Group(it[GroupsTable.groupNameColumn]) }
     }
 }
