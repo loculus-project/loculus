@@ -18,9 +18,9 @@ import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.model.ReleasedDataModel
+import org.pathoplexus.backend.model.SubmissionParams
 import org.pathoplexus.backend.model.SubmitModel
 import org.pathoplexus.backend.service.submission.DatabaseService
-import org.pathoplexus.backend.service.submission.UploadType
 import org.pathoplexus.backend.utils.Accession
 import org.pathoplexus.backend.utils.IteratorStreamer
 import org.springframework.http.HttpHeaders
@@ -64,15 +64,39 @@ class SubmissionController(
         @Parameter(description = GROUP_DESCRIPTION) @RequestParam groupName: String,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
-    ): List<SubmissionIdMapping> = submitModel.processSubmissions(
-        UUID.randomUUID().toString(),
-        metadataFile,
-        sequenceFile,
-        username,
-        groupName,
-        organism,
-        UploadType.ORIGINAL,
-    )
+    ): List<SubmissionIdMapping> {
+        val params = SubmissionParams.OriginalSubmissionParams(
+            organism,
+            username,
+            metadataFile,
+            sequenceFile,
+            groupName,
+        )
+        return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
+    }
+
+    @Operation(description = REVISE_DESCRIPTION)
+    @ApiResponse(responseCode = "200", description = REVISE_RESPONSE_DESCRIPTION)
+    @PostMapping("/revise", consumes = ["multipart/form-data"])
+    fun revise(
+        @PathVariable @Valid
+        organism: Organism,
+        @UsernameFromJwt username: String,
+        @Parameter(
+            description = REVISED_METADATA_FILE_DESCRIPTION,
+        ) @RequestParam metadataFile: MultipartFile,
+        @Parameter(
+            description = SEQUENCE_FILE_DESCRIPTION,
+        ) @RequestParam sequenceFile: MultipartFile,
+    ): List<SubmissionIdMapping> {
+        val params = SubmissionParams.RevisionSubmissionParams(
+            organism,
+            username,
+            metadataFile,
+            sequenceFile,
+        )
+        return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
+    }
 
     @Operation(description = EXTRACT_UNPROCESSED_DATA_DESCRIPTION)
     @ApiResponse(
@@ -158,6 +182,9 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @UsernameFromJwt username: String,
+        @Parameter(
+            description = GROUP_DESCRIPTION,
+        ) @RequestParam groupName: String,
         @Max(
             value = MAX_EXTRACTED_SEQUENCE_ENTRIES,
             message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
@@ -167,9 +194,7 @@ class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
-        val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamDataToEdit(username, numberOfSequenceEntries, outputStream, organism)
-        }
+        val streamBody = databaseService.streamDataToEdit(username, groupName, numberOfSequenceEntries, organism)
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
@@ -182,8 +207,11 @@ class SubmissionController(
         @PathVariable accession: Accession,
         @PathVariable version: Long,
         @UsernameFromJwt username: String,
-    ): SequenceEntryVersionToEdit =
-        databaseService.getSequenceEntryVersionToEdit(username, AccessionVersion(accession, version), organism)
+    ): SequenceEntryVersionToEdit = databaseService.getSequenceEntryVersionToEdit(
+        username,
+        AccessionVersion(accession, version),
+        organism,
+    )
 
     @Operation(description = SUBMIT_EDITED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -216,32 +244,6 @@ class SubmissionController(
     ) {
         databaseService.approveProcessedData(username, body.accessionVersions, organism)
     }
-
-    @Operation(description = REVISE_DESCRIPTION)
-    @ApiResponse(responseCode = "200", description = REVISE_RESPONSE_DESCRIPTION)
-    @PostMapping("/revise", consumes = ["multipart/form-data"])
-    fun revise(
-        @PathVariable @Valid
-        organism: Organism,
-        @UsernameFromJwt username: String,
-        @Parameter(
-            description = GROUP_DESCRIPTION,
-        ) @RequestParam groupName: String,
-        @Parameter(
-            description = REVISED_METADATA_FILE_DESCRIPTION,
-        ) @RequestParam metadataFile: MultipartFile,
-        @Parameter(
-            description = SEQUENCE_FILE_DESCRIPTION,
-        ) @RequestParam sequenceFile: MultipartFile,
-    ): List<SubmissionIdMapping> = submitModel.processSubmissions(
-        UUID.randomUUID().toString(),
-        metadataFile,
-        sequenceFile,
-        username,
-        groupName,
-        organism,
-        UploadType.REVISION,
-    )
 
     @Operation(description = REVOKE_DESCRIPTION)
     @PostMapping("/revoke", produces = [MediaType.APPLICATION_JSON_VALUE])

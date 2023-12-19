@@ -103,7 +103,7 @@ class SequenceEntriesDataTable(
         (accessionColumn eq accessionVersion.accession) and
             (versionColumn eq accessionVersion.version)
 
-    fun submitterIs(submitter: String) = submitterColumn eq submitter
+    fun groupIs(group: String) = groupNameColumn eq group
 
     private fun serializeOriginalData(
         compressionService: CompressionService,

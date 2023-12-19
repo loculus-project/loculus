@@ -4,23 +4,27 @@ import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
 import org.pathoplexus.backend.api.AccessionVersion
+import org.pathoplexus.backend.api.AccessionVersionInterface
 import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.controller.ForbiddenException
 import org.pathoplexus.backend.controller.UnprocessableEntityException
+import org.pathoplexus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.pathoplexus.backend.utils.Accession
 import org.pathoplexus.backend.utils.AccessionComparator
 import org.pathoplexus.backend.utils.AccessionVersionComparator
+import org.pathoplexus.backend.utils.Version
 import org.springframework.stereotype.Component
 
 @Component
 class SubmissionPreconditionValidator(
     private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
+    private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
 ) {
 
     fun validateAccessionVersions(
         submitter: String,
-        accessionVersions: List<AccessionVersion>,
+        accessionVersions: List<AccessionVersionInterface>,
         statuses: List<Status>,
         organism: Organism,
     ) {
@@ -30,6 +34,7 @@ class SubmissionPreconditionValidator(
                     table.accessionColumn,
                     table.versionColumn,
                     table.submitterColumn,
+                    table.groupNameColumn,
                     table.statusColumn,
                     table.organismColumn,
                 )
@@ -47,13 +52,14 @@ class SubmissionPreconditionValidator(
         accessions: List<Accession>,
         statuses: List<Status>,
         organism: Organism,
-    ): List<AccessionVersion> {
+    ): List<AccessionVersionGroup> {
         sequenceEntriesTableProvider.get(organism).let { table ->
             val sequenceEntries = table
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
                     table.submitterColumn,
+                    table.groupNameColumn,
                     table.statusColumn,
                     table.organismColumn,
                 )
@@ -67,9 +73,10 @@ class SubmissionPreconditionValidator(
             validateOrganism(sequenceEntries, organism, table)
 
             return sequenceEntries.map {
-                AccessionVersion(
+                AccessionVersionGroup(
                     it[table.accessionColumn],
                     it[table.versionColumn],
+                    it[table.groupNameColumn],
                 )
             }
         }
@@ -77,7 +84,7 @@ class SubmissionPreconditionValidator(
 
     private fun validateAccessionVersionsExist(
         sequenceEntries: Query,
-        accessionVersions: List<AccessionVersion>,
+        accessionVersions: List<AccessionVersionInterface>,
         table: SequenceEntriesDataTable,
     ) {
         if (sequenceEntries.count() == accessionVersions.size.toLong()) {
@@ -130,17 +137,23 @@ class SubmissionPreconditionValidator(
         submitter: String,
         table: SequenceEntriesDataTable,
     ) {
-        val sequenceEntriesNotSubmittedByUser = sequenceEntries
-            .filter { it[table.submitterColumn] != submitter }
-            .map { AccessionVersion(it[table.accessionColumn], it[table.versionColumn]) }
+        val groupsOfSequenceEntries = sequenceEntries
+            .groupBy({
+                it[table.groupNameColumn]
+            }, {
+                AccessionVersion(it[table.accessionColumn], it[table.versionColumn])
+            })
 
-        if (sequenceEntriesNotSubmittedByUser.isNotEmpty()) {
-            val accessionVersionString = sequenceEntriesNotSubmittedByUser.sortedWith(AccessionVersionComparator)
-                .joinToString(", ") { it.displayAccessionVersion() }
-
-            throw ForbiddenException(
-                "User '$submitter' does not have right to change the accession versions $accessionVersionString",
-            )
+        groupsOfSequenceEntries.forEach { (groupName, accessionList) ->
+            try {
+                groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, submitter)
+            } catch (error: ForbiddenException) {
+                throw ForbiddenException(
+                    error.message + " Affected AccessionVersions: " + accessionList.map {
+                        it.displayAccessionVersion()
+                    },
+                )
+            }
         }
     }
 
@@ -193,4 +206,10 @@ class SubmissionPreconditionValidator(
             "The following accession versions are not of organism ${organism.name}: $accessionVersionsOfOtherOrganism",
         )
     }
+
+    data class AccessionVersionGroup(
+        override val accession: Accession,
+        override val version: Version,
+        val groupName: String,
+    ) : AccessionVersionInterface
 }

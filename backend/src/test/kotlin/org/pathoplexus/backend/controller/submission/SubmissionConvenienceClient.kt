@@ -134,11 +134,13 @@ class SubmissionConvenienceClient(
 
     fun getSequenceEntriesOfUser(
         username: String = DEFAULT_USER_NAME,
+        groupName: String = DEFAULT_GROUP_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): List<SequenceEntryStatus> {
         return deserializeJsonResponse(
             client.getSequenceEntriesOfUser(
                 organism = organism,
+                groupName = groupName,
                 jwt = generateJwtFor(username),
             ),
         )
@@ -156,9 +158,10 @@ class SubmissionConvenienceClient(
         accession: Accession,
         version: Long,
         userName: String = DEFAULT_USER_NAME,
+        groupName: String = DEFAULT_GROUP_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): SequenceEntryStatus {
-        val sequencesOfUser = getSequenceEntriesOfUser(userName, organism = organism)
+        val sequencesOfUser = getSequenceEntriesOfUser(userName, groupName, organism = organism)
 
         return sequencesOfUser.find { it.accession == accession && it.version == version }
             ?: error("Did not find $accession.$version for $userName")

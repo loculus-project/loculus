@@ -15,6 +15,7 @@ import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.model.SubmissionId
+import org.pathoplexus.backend.model.UploadType
 import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
 import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.groupNameColumn
 import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
@@ -36,11 +37,6 @@ import org.springframework.transaction.annotation.Transactional
 
 private val log = KotlinLogging.logger { }
 
-enum class UploadType {
-    ORIGINAL,
-    REVISION,
-}
-
 @Service
 @Transactional
 class UploadDatabaseService(
@@ -50,15 +46,15 @@ class UploadDatabaseService(
 ) {
 
     fun batchInsertMetadataInAuxTable(
-        submitter: String,
-        groupName: String,
         uploadId: String,
+        username: String,
+        groupName: String,
         submittedOrganism: Organism,
         uploadedMetadataBatch: List<MetadataEntry>,
         uploadedAt: LocalDateTime,
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedMetadataBatch) {
-            this[submitterColumn] = submitter
+            this[submitterColumn] = username
             this[groupNameColumn] = groupName
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
@@ -69,9 +65,8 @@ class UploadDatabaseService(
     }
 
     fun batchInsertRevisedMetadataInAuxTable(
-        submitter: String,
-        groupName: String,
         uploadId: String,
+        submitter: String,
         submittedOrganism: Organism,
         uploadedRevisedMetadataBatch: List<RevisionEntry>,
         uploadedAt: LocalDateTime,
@@ -79,7 +74,6 @@ class UploadDatabaseService(
         MetadataUploadAuxTable.batchInsert(uploadedRevisedMetadataBatch) {
             this[accessionColumn] = it.accession
             this[submitterColumn] = submitter
-            this[groupNameColumn] = groupName
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
             this[metadataColumn] = it.metadata
@@ -148,7 +142,7 @@ class UploadDatabaseService(
     }
 
     fun associateRevisedDataWithExistingSequenceEntries(uploadId: String, organism: Organism, username: String) {
-        log.debug { "associating revised data with existing sequence entries with UploadId $uploadId" }
+        log.info { "associating revised data with existing sequence entries with UploadId $uploadId" }
 
         val accessions =
             MetadataUploadAuxTable
@@ -163,14 +157,15 @@ class UploadDatabaseService(
             organism,
         )
 
-        existingAccessionVersions.forEach { (accession, maxVersion) ->
+        existingAccessionVersions.forEach { (accession, oldMaxVersion, groupName) ->
 
             MetadataUploadAuxTable.update(
                 {
                     (accessionColumn eq accession) and (uploadIdColumn eq uploadId)
                 },
             ) {
-                it[versionColumn] = maxVersion + 1
+                it[versionColumn] = oldMaxVersion + 1
+                it[groupNameColumn] = groupName
             }
         }
     }

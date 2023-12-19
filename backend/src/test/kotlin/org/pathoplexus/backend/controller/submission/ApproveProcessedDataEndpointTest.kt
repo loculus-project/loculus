@@ -57,7 +57,7 @@ class ApproveProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I approve sequence entries of other user THEN it should fail as forbidden`() {
+    fun `WHEN I approve sequence entries as non-group member THEN it should fail as forbidden`() {
         convenienceClient.prepareDatabaseWith(
             PreparedProcessedData.successfullyProcessed(accession = "1"),
             PreparedProcessedData.successfullyProcessed(accession = "2"),
@@ -75,7 +75,13 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(
                 jsonPath(
                     "$.detail",
-                    containsString("does not have right to change the accession versions 1.1, 2.1"),
+                    containsString("is not a member of the group"),
+                ),
+            )
+            .andExpect(
+                jsonPath(
+                    "$.detail",
+                    containsString("Affected AccessionVersions: [2.1, 1.1]"),
                 ),
             )
     }

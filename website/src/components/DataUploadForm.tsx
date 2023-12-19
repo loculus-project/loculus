@@ -64,7 +64,7 @@ const InnerDataUploadForm = ({
                 submit({ metadataFile, sequenceFile, groupName: 'testGroup' });
                 break;
             case 'revise':
-                revise({ metadataFile, sequenceFile, groupName: 'testGroup' });
+                revise({ metadataFile, sequenceFile });
                 break;
         }
     };

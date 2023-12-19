@@ -139,10 +139,7 @@ class DeleteSequencesEndpointTest(
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail").value(
-                    "User '$notSubmitter' does not have right to change the accession versions " +
-                        "1.1, 2.1",
-                ),
+                jsonPath("\$.detail", containsString("is not a member of the group")),
             )
     }
 

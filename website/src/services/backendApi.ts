@@ -10,6 +10,7 @@ import {
     submissionIdMapping,
     submitFiles,
     unprocessedData,
+    uploadFiles,
 } from '../types/backend.ts';
 
 const [authorizationHeader] = makeParameters([
@@ -63,7 +64,7 @@ const reviseEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: submitFiles,
+            schema: uploadFiles,
         },
     ],
     response: z.array(submissionIdMapping),
@@ -207,18 +208,36 @@ const submitProcessedDataEndpoint = makeEndpoint({
 
 const createGroupEndpoint = makeEndpoint({
     method: 'post',
-    path: '/groups/:newGroupName',
+    path: '/groups',
     alias: 'createGroup',
-    parameters: [authorizationHeader],
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                groupName: z.string(),
+            }),
+        },
+    ],
     response: z.never(),
     errors: [notAuthorizedError],
 });
 
 const addUserToGroupEndpoint = makeEndpoint({
     method: 'post',
-    path: '/groups/:groupName/users/:usernameToAdd',
+    path: '/groups/:groupName/users',
     alias: 'addUserToGroup',
-    parameters: [authorizationHeader],
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                username: z.string(),
+            }),
+        },
+    ],
     response: z.never(),
     errors: [notAuthorizedError],
 });

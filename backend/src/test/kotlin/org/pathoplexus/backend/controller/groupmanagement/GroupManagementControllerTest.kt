@@ -5,6 +5,8 @@ import org.hamcrest.CoreMatchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
+import org.pathoplexus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.pathoplexus.backend.controller.DEFAULT_GROUP_NAME
 import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse
@@ -30,8 +32,16 @@ class GroupManagementControllerTest(
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.groupName", `is`(DEFAULT_GROUP_NAME)))
+            .andExpect(jsonPath("\$.users.size()", `is`(2)))
+            .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
+            .andExpect(jsonPath("\$.users[*].name", hasItem(ALTERNATIVE_DEFAULT_USER_NAME)))
+
+        client.getDetailsOfGroup(ALTERNATIVE_DEFAULT_GROUP_NAME)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.groupName", `is`(ALTERNATIVE_DEFAULT_GROUP_NAME)))
             .andExpect(jsonPath("\$.users.size()", `is`(1)))
-            .andExpect(jsonPath("\$.users[0].name", `is`(DEFAULT_USER_NAME)))
+            .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
     }
 
     @ParameterizedTest
