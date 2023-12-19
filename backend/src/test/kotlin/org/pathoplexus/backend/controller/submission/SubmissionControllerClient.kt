@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
+import org.pathoplexus.backend.controller.DEFAULT_GROUP_NAME
 import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
 import org.pathoplexus.backend.controller.addOrganismToPath
 import org.pathoplexus.backend.controller.jwtForDefaultUser
@@ -27,11 +28,13 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         metadataFile: MockMultipartFile,
         sequencesFile: MockMultipartFile,
         organism: String = DEFAULT_ORGANISM,
+        groupName: String = DEFAULT_GROUP_NAME,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/submit", organism = organism))
             .file(sequencesFile)
             .file(metadataFile)
+            .param("groupName", groupName)
             .withAuth(jwt),
     )
 
@@ -163,11 +166,13 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         metadataFile: MockMultipartFile,
         sequencesFile: MockMultipartFile,
         organism: String = DEFAULT_ORGANISM,
+        groupName: String = DEFAULT_GROUP_NAME,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/revise", organism = organism))
             .file(sequencesFile)
             .file(metadataFile)
+            .param("groupName", groupName)
             .withAuth(jwt),
     )
 }

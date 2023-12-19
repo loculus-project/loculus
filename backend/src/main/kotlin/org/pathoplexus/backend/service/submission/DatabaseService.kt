@@ -9,7 +9,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.QueryParameter
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.booleanParam
@@ -24,7 +23,6 @@ import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.AccessionVersionInterface
 import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.ProcessedData
-import org.pathoplexus.backend.api.RevisedData
 import org.pathoplexus.backend.api.SequenceEntryStatus
 import org.pathoplexus.backend.api.SequenceEntryVersionToEdit
 import org.pathoplexus.backend.api.Status
@@ -34,7 +32,6 @@ import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.pathoplexus.backend.api.Status.HAS_ERRORS
 import org.pathoplexus.backend.api.Status.IN_PROCESSING
 import org.pathoplexus.backend.api.Status.RECEIVED
-import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.config.ReferenceGenome
@@ -413,60 +410,6 @@ class DatabaseService(
         }
     }
 
-    fun reviseData(submitter: String, revisedData: List<RevisedData>, organism: Organism): List<SubmissionIdMapping> {
-        log.info { "revising sequence entries" }
-
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        val accessionVersions =
-            submissionPreconditionValidator.validateAccessions(
-                submitter,
-                revisedData.map { it.accession },
-                listOf(APPROVED_FOR_RELEASE),
-                organism,
-            ).associateBy { it.accession }
-
-        revisedData.map { data ->
-            sequenceEntriesTableProvider.get(organism).let { table ->
-                table.insert(
-                    table.slice(
-                        table.accessionColumn,
-                        table.versionColumn.plus(1),
-                        table.submissionIdColumn,
-                        table.submitterColumn,
-                        dateTimeParam(now),
-                        stringParam(RECEIVED.name),
-                        booleanParam(false),
-                        QueryParameter(data.originalData, table.originalDataColumn.columnType),
-                        table.organismColumn,
-                    ).select(
-                        where = {
-                            (table.accessionColumn eq data.accession) and
-                                table.isMaxVersion and
-                                table.statusIs(APPROVED_FOR_RELEASE) and
-                                table.submitterIs(submitter)
-                        },
-                    ),
-                    columns = listOf(
-                        table.accessionColumn,
-                        table.versionColumn,
-                        table.submissionIdColumn,
-                        table.submitterColumn,
-                        table.submittedAtColumn,
-                        table.statusColumn,
-                        table.isRevocationColumn,
-                        table.originalDataColumn,
-                        table.organismColumn,
-                    ),
-                )
-            }
-        }
-
-        return revisedData.map {
-            SubmissionIdMapping(it.accession, accessionVersions[it.accession]!!.version + 1, it.submissionId)
-        }
-    }
-
     fun revoke(accessions: List<Accession>, username: String, organism: Organism): List<SequenceEntryStatus> {
         log.info { "revoking ${accessions.size} sequences" }
 
@@ -485,6 +428,7 @@ class DatabaseService(
                     table.versionColumn.plus(1),
                     table.submissionIdColumn,
                     table.submitterColumn,
+                    table.groupNameColumn,
                     dateTimeParam(now),
                     stringParam(AWAITING_APPROVAL_FOR_REVOCATION.name),
                     booleanParam(true),
@@ -501,6 +445,7 @@ class DatabaseService(
                     table.versionColumn,
                     table.submissionIdColumn,
                     table.submitterColumn,
+                    table.groupNameColumn,
                     table.submittedAtColumn,
                     table.statusColumn,
                     table.isRevocationColumn,
@@ -527,7 +472,7 @@ class DatabaseService(
                         AWAITING_APPROVAL_FOR_REVOCATION,
                         it[table.isRevocationColumn],
                     )
-                }
+                }.sortedBy { it.accession }
         }
     }
 

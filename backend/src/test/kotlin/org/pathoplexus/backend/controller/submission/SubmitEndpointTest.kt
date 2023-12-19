@@ -5,8 +5,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.controller.DEFAULT_GROUP_NAME
 import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse
+import org.pathoplexus.backend.controller.generateJwtFor
 import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.pathoplexus.backend.model.SubmitModel
@@ -20,7 +22,9 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionControllerClient) {
+class SubmitEndpointTest(
+    @Autowired val submissionControllerClient: SubmissionControllerClient,
+) {
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
@@ -31,6 +35,40 @@ class SubmitEndpointTest(@Autowired val submissionControllerClient: SubmissionCo
                 jwt = jwt,
             )
         }
+    }
+
+    @Test
+    fun `WHEN submitting on behalf of a non-existing group THEN expect that the group is not found`() {
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFile,
+            groupName = "nonExistingGroup",
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.detail", containsString("Group nonExistingGroup does not exist")))
+    }
+
+    @Test
+    fun `WHEN submitting on behalf of a group that the user is not a member of THEN expect it is forbidden`() {
+        val otherUser = "otherUser"
+
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFile,
+            jwt = generateJwtFor(otherUser),
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "User $otherUser is not a member of the group " +
+                            "$DEFAULT_GROUP_NAME. Action not allowed.",
+                    ),
+                ),
+            )
     }
 
     @ParameterizedTest(name = "GIVEN {0} THEN data is accepted and submitted")

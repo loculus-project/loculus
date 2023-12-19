@@ -4,12 +4,12 @@ import type { AxiosError } from 'axios';
 import { type ChangeEvent, type FormEvent, useState } from 'react';
 
 import { withQueryProvider } from './common/withQueryProvider.tsx';
-import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
 import { getClientLogger } from '../clientLogger.ts';
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import type { SubmissionIdMapping } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
+import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
 type Action = 'submit' | 'revise';
@@ -60,10 +60,11 @@ const InnerDataUploadForm = ({
 
         switch (action) {
             case 'submit':
-                submit({ metadataFile, sequenceFile });
+                // TODO(672): Allow user to specify group name. For now, use default group name from tests.
+                submit({ metadataFile, sequenceFile, groupName: 'testGroup' });
                 break;
             case 'revise':
-                revise({ metadataFile, sequenceFile });
+                revise({ metadataFile, sequenceFile, groupName: 'testGroup' });
                 break;
         }
     };

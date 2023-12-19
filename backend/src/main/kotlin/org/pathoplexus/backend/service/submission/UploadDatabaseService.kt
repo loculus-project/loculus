@@ -16,6 +16,7 @@ import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.model.SubmissionId
 import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
+import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.groupNameColumn
 import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
 import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.organismColumn
 import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.submissionIdColumn
@@ -50,6 +51,7 @@ class UploadDatabaseService(
 
     fun batchInsertMetadataInAuxTable(
         submitter: String,
+        groupName: String,
         uploadId: String,
         submittedOrganism: Organism,
         uploadedMetadataBatch: List<MetadataEntry>,
@@ -57,6 +59,7 @@ class UploadDatabaseService(
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedMetadataBatch) {
             this[submitterColumn] = submitter
+            this[groupNameColumn] = groupName
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
             this[metadataColumn] = it.metadata
@@ -67,6 +70,7 @@ class UploadDatabaseService(
 
     fun batchInsertRevisedMetadataInAuxTable(
         submitter: String,
+        groupName: String,
         uploadId: String,
         submittedOrganism: Organism,
         uploadedRevisedMetadataBatch: List<RevisionEntry>,
@@ -75,6 +79,7 @@ class UploadDatabaseService(
         MetadataUploadAuxTable.batchInsert(uploadedRevisedMetadataBatch) {
             this[accessionColumn] = it.accession
             this[submitterColumn] = submitter
+            this[groupNameColumn] = groupName
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
             this[metadataColumn] = it.metadata
@@ -181,6 +186,7 @@ class UploadDatabaseService(
                     organism,
                     submission_id,
                     submitter,
+                    group_name,
                     submitted_at,
                     original_data,
                     status
@@ -206,6 +212,7 @@ class UploadDatabaseService(
             m.organism,
             m.submission_id,
             m.submitter,
+            m.group_name,
             m.uploaded_at,
             jsonb_build_object(
                 'metadata', m.metadata,
@@ -222,6 +229,7 @@ class UploadDatabaseService(
             m.organism,
             m.submission_id,
             m.submitter,
+            m.group_name,
             m.uploaded_at
         RETURNING accession, version, submission_id;
         """.trimIndent()

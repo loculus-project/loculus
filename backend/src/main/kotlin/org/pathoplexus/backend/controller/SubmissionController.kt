@@ -61,6 +61,7 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @UsernameFromJwt username: String,
+        @Parameter(description = GROUP_DESCRIPTION) @RequestParam groupName: String,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
     ): List<SubmissionIdMapping> = submitModel.processSubmissions(
@@ -68,6 +69,7 @@ class SubmissionController(
         metadataFile,
         sequenceFile,
         username,
+        groupName,
         organism,
         UploadType.ORIGINAL,
     )
@@ -223,6 +225,9 @@ class SubmissionController(
         organism: Organism,
         @UsernameFromJwt username: String,
         @Parameter(
+            description = GROUP_DESCRIPTION,
+        ) @RequestParam groupName: String,
+        @Parameter(
             description = REVISED_METADATA_FILE_DESCRIPTION,
         ) @RequestParam metadataFile: MultipartFile,
         @Parameter(
@@ -233,6 +238,7 @@ class SubmissionController(
         metadataFile,
         sequenceFile,
         username,
+        groupName,
         organism,
         UploadType.REVISION,
     )

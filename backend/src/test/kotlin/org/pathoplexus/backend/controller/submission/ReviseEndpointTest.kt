@@ -2,8 +2,8 @@ package org.pathoplexus.backend.controller.submission
 
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
-import org.hamcrest.MatcherAssert
-import org.hamcrest.Matchers
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -12,6 +12,7 @@ import org.pathoplexus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.pathoplexus.backend.api.Status.HAS_ERRORS
 import org.pathoplexus.backend.api.Status.RECEIVED
 import org.pathoplexus.backend.api.UnprocessedData
+import org.pathoplexus.backend.controller.DEFAULT_GROUP_NAME
 import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
 import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.OTHER_ORGANISM
@@ -27,6 +28,7 @@ import org.springframework.test.web.servlet.ResultMatcher
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+
 @EndpointTest
 class ReviseEndpointTest(
     @Autowired val client: SubmissionControllerClient,
@@ -42,6 +44,40 @@ class ReviseEndpointTest(
                 jwt = it,
             )
         }
+    }
+
+    @Test
+    fun `WHEN submitting on behalf of a non-existing group THEN expect that the group is not found`() {
+        client.submit(
+            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.sequencesFile,
+            groupName = "nonExistingGroup",
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.detail", containsString("Group nonExistingGroup does not exist")))
+    }
+
+    @Test
+    fun `WHEN submitting on behalf of a group that the user is not a member of THEN expect it is forbidden`() {
+        val otherUser = "otherUser"
+
+        client.submit(
+            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.sequencesFile,
+            jwt = generateJwtFor(otherUser),
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "User $otherUser is not a member of the group " +
+                            "$DEFAULT_GROUP_NAME. Action not allowed.",
+                    ),
+                ),
+            )
     }
 
     @Test
@@ -66,9 +102,9 @@ class ReviseEndpointTest(
 
         val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
         val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
-        MatcherAssert.assertThat(responseBody, Matchers.hasSize(10))
+        assertThat(responseBody, hasSize(10))
 
-        MatcherAssert.assertThat(
+        assertThat(
             responseBody,
             hasItem(
                 UnprocessedData(
@@ -135,8 +171,8 @@ class ReviseEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User '$notSubmitter' does not have right to change the accession versions " +
-                        "1.1, 2.1, 3.1, 4.1, 5.1, 6.1, 7.1, 8.1, 9.1, 10.1",
+                    "User $notSubmitter is not a member of the group " +
+                        "$DEFAULT_GROUP_NAME. Action not allowed.",
                 ),
             )
     }
@@ -174,7 +210,7 @@ class ReviseEndpointTest(
         client.reviseSequenceEntries(metadataFile, sequencesFile)
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
-            .andExpect(jsonPath("\$.detail", Matchers.containsString(expectedMessage)))
+            .andExpect(jsonPath("\$.detail", containsString(expectedMessage)))
     }
 
     companion object {

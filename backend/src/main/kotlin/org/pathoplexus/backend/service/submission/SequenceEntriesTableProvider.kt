@@ -52,6 +52,7 @@ class SequenceEntriesDataTable(
     val organismColumn = varchar("organism", 255)
     val submissionIdColumn = varchar("submission_id", 255)
     val submitterColumn = varchar("submitter", 255)
+    val groupNameColumn = varchar("group_name", 255)
     val submittedAtColumn = datetime("submitted_at")
     val startedProcessingAtColumn = datetime("started_processing_at").nullable()
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()

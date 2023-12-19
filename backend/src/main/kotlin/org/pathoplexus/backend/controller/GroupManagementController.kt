@@ -23,19 +23,19 @@ class GroupManagementController(
 
     @Operation(description = "Create a new Group. The user creating the group will be added to the group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PostMapping("/groups/{groupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PostMapping("/groups/{newGroupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createNewGroup(
         @UsernameFromJwt username: String,
         @Parameter(
-            description = "A new group name",
-        ) @PathVariable groupName: String,
-    ) = groupManagementDatabaseService.createNewGroup(groupName, username)
+            description = "The name of the newly created group",
+        ) @PathVariable newGroupName: String,
+    ) = groupManagementDatabaseService.createNewGroup(newGroupName, username)
 
     @Operation(description = "Get details of a group that the user is a member of.")
     @ResponseStatus(HttpStatus.OK)
-    @GetMapping("/groups/{groupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getUsersOfGroup(@UsernameFromJwt username: String, @PathVariable groupName: String): GroupDetails {
-        return groupManagementDatabaseService.getDetailsOfGroup(groupName, username)
+    @GetMapping("/groups/{detailsOfGroupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getUsersOfGroup(@UsernameFromJwt username: String, @PathVariable detailsOfGroupName: String): GroupDetails {
+        return groupManagementDatabaseService.getDetailsOfGroup(detailsOfGroupName, username)
     }
 
     @Operation(description = "Get all groups the user is a member of.")
