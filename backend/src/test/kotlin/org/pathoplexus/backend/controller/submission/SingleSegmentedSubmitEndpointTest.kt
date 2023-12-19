@@ -5,6 +5,7 @@ import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
 import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.config.BackendSpringProperty
+import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE

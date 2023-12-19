@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.service
+package org.pathoplexus.backend.service.submission
 
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
@@ -15,17 +15,17 @@ import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.SubmissionIdMapping
 import org.pathoplexus.backend.model.SubmissionId
-import org.pathoplexus.backend.service.MetadataUploadAuxTable.accessionColumn
-import org.pathoplexus.backend.service.MetadataUploadAuxTable.metadataColumn
-import org.pathoplexus.backend.service.MetadataUploadAuxTable.organismColumn
-import org.pathoplexus.backend.service.MetadataUploadAuxTable.submissionIdColumn
-import org.pathoplexus.backend.service.MetadataUploadAuxTable.submitterColumn
-import org.pathoplexus.backend.service.MetadataUploadAuxTable.uploadIdColumn
-import org.pathoplexus.backend.service.MetadataUploadAuxTable.uploadedAtColumn
-import org.pathoplexus.backend.service.SequenceUploadAuxTable.compressedSequenceDataColumn
-import org.pathoplexus.backend.service.SequenceUploadAuxTable.segmentNameColumn
-import org.pathoplexus.backend.service.SequenceUploadAuxTable.sequenceSubmissionIdColumn
-import org.pathoplexus.backend.service.SequenceUploadAuxTable.sequenceUploadIdColumn
+import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
+import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
+import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.organismColumn
+import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.submissionIdColumn
+import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.submitterColumn
+import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.uploadIdColumn
+import org.pathoplexus.backend.service.submission.MetadataUploadAuxTable.uploadedAtColumn
+import org.pathoplexus.backend.service.submission.SequenceUploadAuxTable.compressedSequenceDataColumn
+import org.pathoplexus.backend.service.submission.SequenceUploadAuxTable.segmentNameColumn
+import org.pathoplexus.backend.service.submission.SequenceUploadAuxTable.sequenceSubmissionIdColumn
+import org.pathoplexus.backend.service.submission.SequenceUploadAuxTable.sequenceUploadIdColumn
 import org.pathoplexus.backend.utils.FastaEntry
 import org.pathoplexus.backend.utils.MetadataEntry
 import org.pathoplexus.backend.utils.ParseFastaHeader
@@ -45,7 +45,7 @@ enum class UploadType {
 class UploadDatabaseService(
     private val parseFastaHeader: ParseFastaHeader,
     private val compressor: CompressionService,
-    private val queryPreconditionValidator: QueryPreconditionValidator,
+    private val submissionPreconditionValidator: SubmissionPreconditionValidator,
 ) {
 
     fun batchInsertMetadataInAuxTable(
@@ -151,7 +151,7 @@ class UploadDatabaseService(
                 .select { uploadIdColumn eq uploadId }
                 .map { it[accessionColumn]!! }
 
-        val existingAccessionVersions = queryPreconditionValidator.validateAccessions(
+        val existingAccessionVersions = submissionPreconditionValidator.validateAccessions(
             username,
             accessions,
             listOf(Status.APPROVED_FOR_RELEASE),

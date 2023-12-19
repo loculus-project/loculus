@@ -5,11 +5,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
+import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse
 import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.pathoplexus.backend.model.SubmitModel
-import org.pathoplexus.backend.service.CompressionAlgorithm
+import org.pathoplexus.backend.service.submission.CompressionAlgorithm
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.mock.web.MockMultipartFile

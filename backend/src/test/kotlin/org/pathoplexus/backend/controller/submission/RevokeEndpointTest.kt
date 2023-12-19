@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.OTHER_ORGANISM
 import org.pathoplexus.backend.controller.assertStatusIs
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse

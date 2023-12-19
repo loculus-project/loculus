@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.service
+package org.pathoplexus.backend.service.submission
 
 import com.github.luben.zstd.Zstd
 import org.pathoplexus.backend.api.Organism

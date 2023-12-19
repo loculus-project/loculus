@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.service
+package org.pathoplexus.backend.service.submission
 
 import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -60,7 +60,7 @@ private val log = KotlinLogging.logger { }
 @Transactional
 class DatabaseService(
     private val sequenceValidatorFactory: SequenceValidatorFactory,
-    private val queryPreconditionValidator: QueryPreconditionValidator,
+    private val submissionPreconditionValidator: SubmissionPreconditionValidator,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val referenceGenome: ReferenceGenome,
@@ -244,7 +244,7 @@ class DatabaseService(
     fun approveProcessedData(submitter: String, accessionVersions: List<AccessionVersion>, organism: Organism) {
         log.info { "approving ${accessionVersions.size} sequences by $submitter" }
 
-        queryPreconditionValidator.validateAccessionVersions(
+        submissionPreconditionValidator.validateAccessionVersions(
             submitter,
             accessionVersions,
             listOf(AWAITING_APPROVAL),
@@ -419,7 +419,7 @@ class DatabaseService(
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val accessionVersions =
-            queryPreconditionValidator.validateAccessions(
+            submissionPreconditionValidator.validateAccessions(
                 submitter,
                 revisedData.map { it.accession },
                 listOf(APPROVED_FOR_RELEASE),
@@ -470,7 +470,7 @@ class DatabaseService(
     fun revoke(accessions: List<Accession>, username: String, organism: Organism): List<SequenceEntryStatus> {
         log.info { "revoking ${accessions.size} sequences" }
 
-        queryPreconditionValidator.validateAccessions(
+        submissionPreconditionValidator.validateAccessions(
             username,
             accessions,
             listOf(APPROVED_FOR_RELEASE),
@@ -534,7 +534,7 @@ class DatabaseService(
     fun confirmRevocation(accessionVersions: List<AccessionVersion>, username: String, organism: Organism) {
         log.info { "Confirming revocation for ${accessionVersions.size} sequence entries" }
 
-        queryPreconditionValidator.validateAccessionVersions(
+        submissionPreconditionValidator.validateAccessionVersions(
             username,
             accessionVersions,
             listOf(AWAITING_APPROVAL_FOR_REVOCATION),
@@ -557,7 +557,7 @@ class DatabaseService(
     fun deleteSequenceEntryVersions(accessionVersions: List<AccessionVersion>, submitter: String, organism: Organism) {
         log.info { "Deleting accession versions: $accessionVersions" }
 
-        queryPreconditionValidator.validateAccessionVersions(
+        submissionPreconditionValidator.validateAccessionVersions(
             submitter,
             accessionVersions,
             listOf(RECEIVED, AWAITING_APPROVAL, HAS_ERRORS, AWAITING_APPROVAL_FOR_REVOCATION),

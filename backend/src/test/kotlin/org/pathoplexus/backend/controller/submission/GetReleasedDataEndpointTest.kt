@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.SiloVersionStatus
+import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.expectForbiddenResponse
 import org.pathoplexus.backend.controller.expectNdjsonAndGetContent
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse

@@ -4,7 +4,7 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
-import org.pathoplexus.backend.service.CompressionAlgorithm
+import org.pathoplexus.backend.service.submission.CompressionAlgorithm
 import org.springframework.http.MediaType.TEXT_PLAIN_VALUE
 import org.springframework.mock.web.MockMultipartFile
 import org.tukaani.xz.LZMA2Options

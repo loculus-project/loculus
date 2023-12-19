@@ -6,6 +6,7 @@ import org.pathoplexus.backend.SpringBootTestWithoutDatabase
 import org.pathoplexus.backend.api.Organism
 import org.pathoplexus.backend.api.OriginalData
 import org.pathoplexus.backend.config.BackendConfig
+import org.pathoplexus.backend.service.submission.CompressionService
 import org.springframework.beans.factory.annotation.Autowired
 
 @SpringBootTestWithoutDatabase

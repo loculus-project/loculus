@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.service
+package org.pathoplexus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.sql.Table
 

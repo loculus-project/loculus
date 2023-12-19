@@ -19,8 +19,8 @@ import org.pathoplexus.backend.api.SubmittedProcessedData
 import org.pathoplexus.backend.api.UnprocessedData
 import org.pathoplexus.backend.model.ReleasedDataModel
 import org.pathoplexus.backend.model.SubmitModel
-import org.pathoplexus.backend.service.DatabaseService
-import org.pathoplexus.backend.service.UploadType
+import org.pathoplexus.backend.service.submission.DatabaseService
+import org.pathoplexus.backend.service.submission.UploadType
 import org.pathoplexus.backend.utils.Accession
 import org.pathoplexus.backend.utils.IteratorStreamer
 import org.springframework.http.HttpHeaders

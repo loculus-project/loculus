@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.service
+package org.pathoplexus.backend.service.submission
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode

@@ -11,6 +11,7 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.pathoplexus.backend.api.AccessionVersion
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.controller.DEFAULT_ORGANISM
+import org.pathoplexus.backend.controller.EndpointTest
 import org.pathoplexus.backend.controller.OTHER_ORGANISM
 import org.pathoplexus.backend.controller.expectUnauthorizedResponse
 import org.pathoplexus.backend.controller.getAccessionVersions

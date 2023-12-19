@@ -1,4 +1,4 @@
-package org.pathoplexus.backend.service
+package org.pathoplexus.backend.service.submission
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.Column
@@ -20,6 +20,8 @@ import org.pathoplexus.backend.api.PreprocessingAnnotation
 import org.pathoplexus.backend.api.ProcessedData
 import org.pathoplexus.backend.api.Status
 import org.pathoplexus.backend.api.toPairs
+import org.pathoplexus.backend.service.jacksonObjectMapper
+import org.pathoplexus.backend.service.jacksonSerializableJsonb
 import org.springframework.stereotype.Service
 
 @Service
