@@ -4,8 +4,9 @@ import { type FC, type SyntheticEvent, useState } from 'react';
 
 type ErrorFeedbackProps = {
     message: string;
+    onClose?: () => void;
 };
-export const ErrorFeedback: FC<ErrorFeedbackProps> = ({ message }) => {
+export const ErrorFeedback: FC<ErrorFeedbackProps> = ({ message, onClose }) => {
     const [open, setOpen] = useState(true);
 
     const handleClose = (_?: SyntheticEvent | Event, reason?: string) => {
@@ -13,6 +14,7 @@ export const ErrorFeedback: FC<ErrorFeedbackProps> = ({ message }) => {
             return;
         }
         setOpen(false);
+        onClose?.();
     };
 
     const action = (

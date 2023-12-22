@@ -56,7 +56,7 @@ class GroupManagementControllerTest(
     fun `GIVEN an existing group WHEN creating a group with same name THEN this is a bad request`() {
         client.createNewGroup().andExpect(status().isNoContent)
 
-        client.createNewGroup().andExpect(status().isBadRequest)
+        client.createNewGroup().andExpect(status().isConflict)
     }
 
     @Test
@@ -140,7 +140,7 @@ class GroupManagementControllerTest(
             .andExpect(status().isNoContent)
 
         client.addUserToGroup(DEFAULT_USER_NAME)
-            .andExpect(status().isBadRequest)
+            .andExpect(status().isConflict)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(

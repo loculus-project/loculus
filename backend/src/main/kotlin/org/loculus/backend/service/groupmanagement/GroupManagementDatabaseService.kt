@@ -9,7 +9,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.Group
 import org.loculus.backend.api.GroupDetails
-import org.loculus.backend.controller.BadRequestException
+import org.loculus.backend.controller.ConflictException
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -36,7 +36,7 @@ class GroupManagementDatabaseService(
             }
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
-                throw BadRequestException(
+                throw ConflictException(
                     "Group name already exists. Please choose a different name.",
                 )
             }
@@ -65,7 +65,7 @@ class GroupManagementDatabaseService(
             }
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
-                throw BadRequestException(
+                throw ConflictException(
                     "User $usernameToAdd is already member of the group $groupName.",
                 )
             }

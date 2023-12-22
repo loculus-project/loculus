@@ -31,6 +31,7 @@ const testResponse: SubmissionIdMapping[] = [
 describe('SubmitForm', () => {
     test('should handle file upload and server response', async () => {
         mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
 
         const { getByLabelText, getByText } = renderSubmissionForm();
 
@@ -48,6 +49,7 @@ describe('SubmitForm', () => {
 
     test('should answer with feedback that a file is missing', async () => {
         mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser();
 
         const { getByLabelText, getByText } = renderSubmissionForm();
 
@@ -57,14 +59,34 @@ describe('SubmitForm', () => {
         await userEvent.click(submitButton);
 
         await waitFor(() => {
-            expect(
-                getByText((text) => text.includes('Please select both a metadata and sequences file')),
-            ).toBeInTheDocument();
+            expect(getByText((text) => text.includes('Please select a sequences file'))).toBeInTheDocument();
         });
+    });
+
+    test('should select a group if there is more than one', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser(200, [{ groupName: 'Group1' }, { groupName: 'Group2' }]);
+
+        const { getByRole } = renderSubmissionForm();
+
+        await waitFor(() => {
+            expect(getByRole('option', { name: 'Group2' })).toBeInTheDocument();
+            expect(getByRole('option', { name: 'Group1' })).toBeInTheDocument();
+        });
+    });
+
+    test('should forbid submitting when there is no group', async () => {
+        mockRequest.backend.submit(200, testResponse);
+        mockRequest.backend.getGroupsOfUser(200, []);
+
+        const { getByText } = renderSubmissionForm();
+
+        await waitFor(() => expect(getByText((text) => text.includes('No group found.'))).toBeInTheDocument());
     });
 
     test('should unexpected error with proper error message', async () => {
         mockRequest.backend.submit(500, 'a weird, unexpected test error');
+        mockRequest.backend.getGroupsOfUser();
 
         await submitAndExpectErrorMessageContains('Received unexpected message from backend');
     });
@@ -78,6 +100,7 @@ describe('SubmitForm', () => {
             type: 'dummy type',
         };
         mockRequest.backend.submit(422, problemDetail);
+        mockRequest.backend.getGroupsOfUser();
 
         const expectedErrorMessage = `The submitted file content was invalid: ${problemDetail.detail}`;
         await submitAndExpectErrorMessageContains(expectedErrorMessage);

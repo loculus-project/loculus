@@ -1,10 +1,11 @@
 import { CircularProgress, TextField } from '@mui/material';
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
-import { type ChangeEvent, type FormEvent, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
 
 import { withQueryProvider } from './common/withQueryProvider.tsx';
 import { getClientLogger } from '../clientLogger.ts';
+import { useGroupManagementClient } from '../hooks/useGroupOperations.ts';
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import type { SubmissionIdMapping } from '../types/backend.ts';
@@ -36,7 +37,22 @@ const InnerDataUploadForm = ({
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
 
+    const { zodiosHooks } = useGroupManagementClient(clientConfig);
+    const groupsOfUser = zodiosHooks.useGetGroupsOfUser({
+        headers: createAuthorizationHeader(accessToken),
+    });
+
+    if (groupsOfUser.error) {
+        onError(`Failed to query Groups: ${stringifyMaybeAxiosError(groupsOfUser.error)}`);
+    }
+
+    const noGroup = useMemo(
+        () => groupsOfUser.data === undefined || groupsOfUser.data.length === 0,
+        [groupsOfUser.data],
+    );
+
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
+    const [selectedGroup, setSelectedGroup] = useState<string | undefined>(undefined);
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData();
@@ -53,15 +69,23 @@ const InnerDataUploadForm = ({
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
 
-        if (!metadataFile || !sequenceFile) {
-            onError('Please select both a metadata and sequences file');
+        if (!metadataFile) {
+            onError('Please select metadata file');
+            return;
+        }
+        if (!sequenceFile) {
+            onError('Please select a sequences file');
             return;
         }
 
         switch (action) {
             case 'submit':
-                // TODO(672): Allow user to specify group name. For now, use default group name from tests.
-                submit({ metadataFile, sequenceFile, groupName: 'testGroup' });
+                const groupName = selectedGroup ?? groupsOfUser.data?.[0].groupName;
+                if (groupName === undefined) {
+                    onError('Please select a group');
+                    return;
+                }
+                submit({ metadataFile, sequenceFile, groupName });
                 break;
             case 'revise':
                 revise({ metadataFile, sequenceFile });
@@ -71,6 +95,33 @@ const InnerDataUploadForm = ({
 
     return (
         <form onSubmit={handleSubmit} className='p-6 space-y-6 max-w-md w-full'>
+            {action === 'submit' &&
+                (noGroup ? (
+                    groupsOfUser.isLoading ? (
+                        <p className='text-gray-500'>Loading groups...</p>
+                    ) : (
+                        <p className='text-red-500'>No group found. Please join or create a group.</p>
+                    )
+                ) : (
+                    <div className='flex flex-col gap-3 w-fit'>
+                        <span className='text-gray-700'>Submitting for:</span>
+                        <select
+                            id='groupDropdown'
+                            name='groupDropdown'
+                            value={selectedGroup}
+                            onChange={(event) => setSelectedGroup(event.target.value)}
+                            disabled={false}
+                            className='p-2 border rounded-md'
+                        >
+                            {groupsOfUser.data!.map((group) => (
+                                <option key={group.groupName} value={group.groupName}>
+                                    {group.groupName}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                ))}
+
             <TextField
                 variant='outlined'
                 margin='dense'
@@ -98,12 +149,17 @@ const InnerDataUploadForm = ({
                     shrink: true,
                 }}
             />
+
             <div className='flex gap-4'>
                 <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
                     Load Example Data
                 </button>
 
-                <button className='px-4 py-2 btn normal-case w-1/5' disabled={isLoading} type='submit'>
+                <button
+                    className='px-4 py-2 btn normal-case w-1/5'
+                    disabled={isLoading || (action === 'submit' && noGroup)}
+                    type='submit'
+                >
                     {isLoading ? <CircularProgress size={20} color='primary' /> : 'Submit'}
                 </button>
             </div>

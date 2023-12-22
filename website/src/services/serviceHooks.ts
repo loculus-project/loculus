@@ -2,6 +2,7 @@ import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 
 import { backendApi } from './backendApi.ts';
+import { groupManagementApi } from './groupManagementApi.ts';
 import { lapisApi } from './lapisApi.ts';
 import type { Schema } from '../types/config.ts';
 import type { LapisBaseRequest } from '../types/lapis.ts';
@@ -11,6 +12,10 @@ import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../ut
 
 export function backendClientHooks(clientConfig: ClientConfig) {
     return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
+}
+
+export function groupManagementClientHooks(clientConfig: ClientConfig) {
+    return new ZodiosHooks('pathoplexus', new Zodios(clientConfig.backendUrl, groupManagementApi));
 }
 
 export function lapisClientHooks(lapisUrl: string) {
