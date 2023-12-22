@@ -18,6 +18,10 @@ import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.utils.Accession
 
+const val MAIN_SEGMENT = "main"
+const val SOME_LONG_GENE = "someLongGene"
+const val SOME_SHORT_GENE = "someShortGene"
+
 val defaultProcessedData = ProcessedData(
     metadata = mapOf(
         "date" to TextNode("2002-12-15"),
@@ -27,27 +31,30 @@ val defaultProcessedData = ProcessedData(
         "age" to IntNode(42),
         "qc" to DoubleNode(0.9),
         "pangoLineage" to TextNode("XBB.1.5"),
+        "division" to NullNode.instance,
+        "dateSubmitted" to NullNode.instance,
+        "sex" to NullNode.instance,
     ),
     unalignedNucleotideSequences = mapOf(
-        "main" to "NNACTGNN",
+        MAIN_SEGMENT to "NNACTGNN",
     ),
     alignedNucleotideSequences = mapOf(
-        "main" to "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT",
+        MAIN_SEGMENT to "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT",
     ),
     nucleotideInsertions = mapOf(
-        "main" to listOf(
+        MAIN_SEGMENT to listOf(
             Insertion(123, "ACTG"),
         ),
     ),
     alignedAminoAcidSequences = mapOf(
-        "someLongGene" to "ACDEFGHIKLMNPQRSTVWYBZX-*",
-        "someShortGene" to "MADS",
+        SOME_LONG_GENE to "ACDEFGHIKLMNPQRSTVWYBZX-*",
+        SOME_SHORT_GENE to "MADS",
     ),
     aminoAcidInsertions = mapOf(
-        "someLongGene" to listOf(
+        SOME_LONG_GENE to listOf(
             Insertion(123, "RNRNRN"),
         ),
-        "someShortGene" to listOf(
+        SOME_SHORT_GENE to listOf(
             Insertion(123, "RN"),
         ),
     ),
@@ -76,19 +83,16 @@ val defaultProcessedDataMultiSegmented = ProcessedData(
         "notOnlySegment" to listOf(
             Insertion(123, "ACTG"),
         ),
-        "secondSegment" to listOf(
-            Insertion(1, "ACTG"),
-        ),
     ),
     alignedAminoAcidSequences = mapOf(
-        "someLongGene" to "ACDEFGHIKLMNPQRSTVWYBZX-*",
-        "someShortGene" to "MADS",
+        SOME_LONG_GENE to "ACDEFGHIKLMNPQRSTVWYBZX-*",
+        SOME_SHORT_GENE to "MADS",
     ),
     aminoAcidInsertions = mapOf(
-        "someLongGene" to listOf(
+        SOME_LONG_GENE to listOf(
             Insertion(123, "RNRNRN"),
         ),
-        "someShortGene" to listOf(
+        SOME_SHORT_GENE to listOf(
             Insertion(123, "RN"),
         ),
     ),
@@ -134,6 +138,18 @@ object PreparedProcessedData {
                 metadata = defaultProcessedData.metadata + fields.map { it to NullNode.instance },
             ),
         )
+
+    fun withMissingMetadataFields(
+        accession: Accession = DefaultFiles.firstAccession,
+        version: Long = defaultSuccessfulSubmittedData.version,
+        absentFields: List<String>,
+    ) = defaultSuccessfulSubmittedData.withValues(
+        accession = accession,
+        version = version,
+        data = defaultProcessedData.withValues(
+            metadata = defaultProcessedData.metadata.filterKeys { !absentFields.contains(it) },
+        ),
+    )
 
     fun withUnknownMetadataField(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =
         defaultSuccessfulSubmittedData.withValues(
@@ -379,7 +395,7 @@ object PreparedProcessedData {
                 source = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.NucleotideSequence,
-                        "main",
+                        MAIN_SEGMENT,
                     ),
                 ),
                 "dummy nucleotide sequence error",
@@ -403,7 +419,7 @@ object PreparedProcessedData {
                 source = listOf(
                     PreprocessingAnnotationSource(
                         PreprocessingAnnotationSourceType.NucleotideSequence,
-                        "main",
+                        MAIN_SEGMENT,
                     ),
                 ),
                 "dummy nucleotide sequence error",
@@ -428,10 +444,10 @@ fun SubmittedProcessedData.withValues(
 
 fun ProcessedData.withValues(
     metadata: Map<String, JsonNode>? = null,
-    unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>? = null,
-    alignedNucleotideSequences: Map<SegmentName, NucleotideSequence>? = null,
+    unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>? = null,
+    alignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>? = null,
     nucleotideInsertions: Map<SegmentName, List<Insertion>>? = null,
-    alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence>? = null,
+    alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence?>? = null,
     aminoAcidInsertions: Map<GeneName, List<Insertion>>? = null,
 ) = ProcessedData(
     metadata = metadata ?: this.metadata,

@@ -64,23 +64,24 @@ typealias SegmentName = String
 typealias GeneName = String
 typealias NucleotideSequence = String
 typealias AminoAcidSequence = String
+typealias MetadataMap = Map<String, JsonNode>
 
 data class ProcessedData(
     @Schema(
         example = """{"date": "2020-01-01", "country": "Germany", "age": 42, "qc": 0.95}""",
         description = "Key value pairs of metadata, correctly typed",
     )
-    val metadata: Map<String, JsonNode>,
+    val metadata: MetadataMap,
     @Schema(
         example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
-    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
+    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>,
     @Schema(
         example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
         description = "The key is the segment name, the value is the aligned nucleotide sequence",
     )
-    val alignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
+    val alignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>,
     @Schema(
         example = """{"segment1": ["123:GTCA", "345:AAAA"], "segment2": ["123:GTCA", "345:AAAA"]}""",
         description = "The key is the segment name, the value is a list of nucleotide insertions",
@@ -90,7 +91,7 @@ data class ProcessedData(
         example = """{"gene1": "NRNR", "gene2": "NRNR"}""",
         description = "The key is the gene name, the value is the amino acid sequence",
     )
-    val alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence>,
+    val alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence?>,
     @Schema(
         example = """{"gene1": ["123:RRN", "345:NNN"], "gene2": ["123:NNR", "345:RN"]}""",
         description = "The key is the gene name, the value is a list of amino acid insertions",

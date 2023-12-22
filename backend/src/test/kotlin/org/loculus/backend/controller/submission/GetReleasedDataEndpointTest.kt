@@ -1,6 +1,8 @@
 package org.loculus.backend.controller.submission
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.IntNode
+import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -83,21 +85,14 @@ class GetReleasedDataEndpointTest(
             )
 
             assertThat(
+                "${it.metadata}",
                 it.metadata.size,
                 `is`(expectedMetadata.size + ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE.size),
             )
             for ((key, value) in it.metadata) {
                 when (key) {
-                    "submittedAt" -> {
-                        val dateTime = LocalDateTime.parse(value.textValue(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                        assertThat(dateTime.year, `is`(currentYear))
-                    }
-
-                    "releasedAt" -> {
-                        val dateTime = LocalDateTime.parse(value.textValue(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                        assertThat(dateTime.year, `is`(currentYear))
-                    }
-
+                    "submittedAt" -> expectIsDateWithCurrentYear(value)
+                    "releasedAt" -> expectIsDateWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
                     else -> assertThat(value, `is`(expectedMetadata[key]))
                 }
@@ -115,17 +110,14 @@ class GetReleasedDataEndpointTest(
         val (
             revokedVersion1,
             revokedVersion2,
-            _,
-//            revocationVersion3,
+            revocationVersion3,
             revisedVersion4,
             latestVersion5,
         ) = prepareRevokedAndRevocationAndRevisedVersions()
 
         val response = submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData>()
 
-        // TODO(#429): this should show 50 sequences when including revocation versions
-//        assertThat(response.size, `is`(5 * DefaultFiles.NUMBER_OF_SEQUENCES))
-        assertThat(response.size, `is`(4 * DefaultFiles.NUMBER_OF_SEQUENCES))
+        assertThat(response.size, `is`(5 * DefaultFiles.NUMBER_OF_SEQUENCES))
         assertThat(
             response.findAccessionVersionStatus(firstAccession, revokedVersion1),
             `is`(SiloVersionStatus.REVOKED.name),
@@ -134,11 +126,10 @@ class GetReleasedDataEndpointTest(
             response.findAccessionVersionStatus(firstAccession, revokedVersion2),
             `is`(SiloVersionStatus.REVOKED.name),
         )
-        // TODO(#429): reactivate this check
-//        assertThat(
-//            response.findAccessionVersionStatus(firstSequence, revocationVersion3),
-//            `is`(SiloVersionStatus.REVISED.name),
-//        )
+        assertThat(
+            response.findAccessionVersionStatus(firstAccession, revocationVersion3),
+            `is`(SiloVersionStatus.REVISED.name),
+        )
         assertThat(
             response.findAccessionVersionStatus(firstAccession, revisedVersion4),
             `is`(SiloVersionStatus.REVISED.name),
@@ -147,6 +138,74 @@ class GetReleasedDataEndpointTest(
             response.findAccessionVersionStatus(firstAccession, latestVersion5),
             `is`(SiloVersionStatus.LATEST_VERSION.name),
         )
+    }
+
+    @Test
+    fun `GIVEN preprocessing pipeline submitted with missing metadata fields THEN fields are filled with null`() {
+        val absentFields = listOf("dateSubmitted", "division", "host", "age", "sex", "qc")
+
+        val accessVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        convenienceClient.submitProcessedData(
+            accessVersions.map {
+                PreparedProcessedData.withMissingMetadataFields(
+                    accession = it.accession,
+                    version = it.version,
+                    absentFields = absentFields,
+                )
+            },
+        )
+        convenienceClient.approveProcessedSequenceEntries(accessVersions)
+
+        val firstSequenceEntry =
+            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData>()[0]
+
+        for (absentField in absentFields) {
+            assertThat(firstSequenceEntry.metadata[absentField], `is`(NullNode.instance))
+        }
+    }
+
+    @Test
+    fun `GIVEN revocation version THEN all data is present but mostly null`() {
+        convenienceClient.prepareRevokedSequenceEntries()
+
+        val revocationEntry = submissionControllerClient.getReleasedData()
+            .expectNdjsonAndGetContent<ProcessedData>()
+            .find { it.metadata["isRevocation"]!!.asBoolean() }!!
+
+        for ((key, value) in revocationEntry.metadata) {
+            when (key) {
+                "isRevocation" -> assertThat(value, `is`(TextNode("true")))
+                "versionStatus" -> assertThat(value, `is`(TextNode("LATEST_VERSION")))
+                "submittedAt" -> expectIsDateWithCurrentYear(value)
+                "releasedAt" -> expectIsDateWithCurrentYear(value)
+                "submitter" -> assertThat(value, `is`(TextNode(DEFAULT_USER_NAME)))
+                "accession", "version", "accessionVersion", "submissionId" -> {}
+                else -> assertThat("value for $key", value, `is`(NullNode.instance))
+            }
+        }
+
+        val expectedNucleotideSequences = mapOf(
+            MAIN_SEGMENT to null,
+        )
+        assertThat(revocationEntry.alignedNucleotideSequences, `is`(expectedNucleotideSequences))
+        assertThat(revocationEntry.unalignedNucleotideSequences, `is`(expectedNucleotideSequences))
+
+        val expectedAminoAcidSequences = mapOf(
+            SOME_LONG_GENE to null,
+            SOME_SHORT_GENE to null,
+        )
+        assertThat(revocationEntry.alignedAminoAcidSequences, `is`(expectedAminoAcidSequences))
+
+        val expectedNucleotideInsertions = mapOf(
+            MAIN_SEGMENT to emptyList<String>(),
+        )
+        assertThat(revocationEntry.nucleotideInsertions, `is`(expectedNucleotideInsertions))
+
+        val expectedAminoAcidInsertions = mapOf(
+            SOME_LONG_GENE to emptyList<String>(),
+            SOME_SHORT_GENE to emptyList(),
+        )
+        assertThat(revocationEntry.aminoAcidInsertions, `is`(expectedAminoAcidInsertions))
     }
 
     private fun prepareRevokedAndRevocationAndRevisedVersions(): PreparedVersions {
@@ -168,6 +227,11 @@ class GetReleasedDataEndpointTest(
             revisedVersion4 = 4L,
             latestVersion5 = 5L,
         )
+    }
+
+    private fun expectIsDateWithCurrentYear(value: JsonNode) {
+        val dateTime = LocalDateTime.parse(value.textValue(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        assertThat(dateTime.year, `is`(currentYear))
     }
 }
 

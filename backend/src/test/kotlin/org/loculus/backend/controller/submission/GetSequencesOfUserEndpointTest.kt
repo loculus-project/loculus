@@ -105,14 +105,18 @@ class GetSequencesOfUserEndpointTest(
             ),
             Scenario(
                 setupDescription = "I submitted sequence entries that have been successfully processed",
-                prepareDatabase = { it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed()) },
+                prepareDatabase = {
+                    it.prepareDatabaseWithProcessedData(
+                        PreparedProcessedData.successfullyProcessed(),
+                    )
+                },
                 expectedStatus = Status.AWAITING_APPROVAL,
                 expectedIsRevocation = false,
             ),
             Scenario(
                 setupDescription = "I submitted, processed and approved sequence entries",
                 prepareDatabase = {
-                    it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
+                    it.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed())
                     it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
                 },
                 expectedStatus = Status.APPROVED_FOR_RELEASE,
@@ -121,7 +125,7 @@ class GetSequencesOfUserEndpointTest(
             Scenario(
                 setupDescription = "I submitted a revocation",
                 prepareDatabase = {
-                    it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
+                    it.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed())
                     it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
                     it.revokeSequenceEntries(listOf(firstAccession))
                 },
@@ -132,7 +136,7 @@ class GetSequencesOfUserEndpointTest(
             Scenario(
                 setupDescription = "I approved a revocation",
                 prepareDatabase = {
-                    it.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
+                    it.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed())
                     it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
                     it.revokeSequenceEntries(listOf(firstAccession))
                     it.confirmRevocation(listOf(AccessionVersion(firstAccession, 2)))

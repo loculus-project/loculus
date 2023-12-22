@@ -37,7 +37,7 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN sequence entries are processed WHEN I approve them THEN their status should be APPROVED_FOR_RELEASE`() {
-        convenienceClient.prepareDatabaseWith(
+        convenienceClient.prepareDatabaseWithProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = "1"),
             PreparedProcessedData.successfullyProcessed(accession = "2"),
         )
@@ -58,7 +58,7 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I approve sequence entries as non-group member THEN it should fail as forbidden`() {
-        convenienceClient.prepareDatabaseWith(
+        convenienceClient.prepareDatabaseWithProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = "1"),
             PreparedProcessedData.successfullyProcessed(accession = "2"),
         )
@@ -90,7 +90,7 @@ class ApproveProcessedDataEndpointTest(
     fun `WHEN I approve a sequence entry that does not exist THEN no accession should be approved`() {
         val nonExistentAccession = "999"
 
-        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed(accession = "1"))
+        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed(accession = "1"))
 
         val existingAccessionVersion = AccessionVersion("1", 1)
 
@@ -111,7 +111,7 @@ class ApproveProcessedDataEndpointTest(
     fun `WHEN I approve a sequence entry that does not exist THEN no sequence should be approved`() {
         val nonExistentVersion = 999L
 
-        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed(accession = "1"))
+        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed(accession = "1"))
 
         val existingAccessionVersion = AccessionVersion("1", 1)
 
@@ -130,7 +130,7 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN one of the entries is not processed WHEN I approve them THEN no sequence should be approved`() {
-        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed(accession = "1"))
+        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed(accession = "1"))
 
         val accessionVersionInCorrectState = AccessionVersion("1", 1)
 

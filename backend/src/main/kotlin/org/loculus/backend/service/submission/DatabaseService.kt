@@ -35,11 +35,11 @@ import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.jsonbParam
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Service
@@ -59,8 +59,8 @@ class DatabaseService(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
-    private val backendConfig: BackendConfig,
     private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
+    private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
 ) {
 
     init {
@@ -131,43 +131,35 @@ class DatabaseService(
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val submittedErrors = submittedProcessedData.errors.orEmpty()
-
-        if (submittedErrors.isEmpty()) {
-            try {
-                sequenceValidatorFactory.create(organism).validateSequence(submittedProcessedData)
-            } catch (validationException: ProcessingValidationException) {
-                throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
-                throw validationException
-            }
-        }
-
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
-        val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenomes
-        val submittedProcessedDataWithAllKeysForInsertions = addMissingKeysForInsertions(
-            submittedProcessedData,
-            referenceGenome,
-        )
 
-        val newStatus = when {
-            submittedErrors.isEmpty() -> AWAITING_APPROVAL
-            else -> HAS_ERRORS
+        val (newStatus, processedData) = when {
+            submittedErrors.isEmpty() -> AWAITING_APPROVAL to validateProcessedData(submittedProcessedData, organism)
+            else -> HAS_ERRORS to submittedProcessedData.data
         }
 
         return sequenceEntriesTableProvider.get(organism).let { table ->
             table.update(
                 where = {
-                    table.accessionVersionEquals(submittedProcessedDataWithAllKeysForInsertions) and
+                    table.accessionVersionEquals(submittedProcessedData) and
                         table.statusIs(IN_PROCESSING) and
                         table.organismIs(organism)
                 },
             ) {
                 it[statusColumn] = newStatus.name
-                it[processedDataColumn] = submittedProcessedDataWithAllKeysForInsertions.data
+                it[processedDataColumn] = processedData
                 it[errorsColumn] = submittedErrors
                 it[warningsColumn] = submittedWarnings
                 it[finishedProcessingAtColumn] = now
             }
         }
+    }
+
+    private fun validateProcessedData(submittedProcessedData: SubmittedProcessedData, organism: Organism) = try {
+        sequenceValidatorFactory.create(organism).validateSequence(submittedProcessedData.data)
+    } catch (validationException: ProcessingValidationException) {
+        throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
+        throw validationException
     }
 
     private fun throwIfIsSubmissionForWrongOrganism(
@@ -186,34 +178,6 @@ class DatabaseService(
                 )
             }
         }
-    }
-
-    private fun addMissingKeysForInsertions(
-        submittedProcessedData: SubmittedProcessedData,
-        referenceGenome: ReferenceGenome,
-    ): SubmittedProcessedData {
-        val nucleotideInsertions = referenceGenome.nucleotideSequences.associate {
-            if (it.name in submittedProcessedData.data.nucleotideInsertions.keys) {
-                it.name to submittedProcessedData.data.nucleotideInsertions[it.name]!!
-            } else {
-                (it.name to emptyList())
-            }
-        }
-
-        val aminoAcidInsertions = referenceGenome.genes.associate {
-            if (it.name in submittedProcessedData.data.aminoAcidInsertions.keys) {
-                it.name to submittedProcessedData.data.aminoAcidInsertions[it.name]!!
-            } else {
-                (it.name to emptyList())
-            }
-        }
-
-        return submittedProcessedData.copy(
-            data = submittedProcessedData.data.copy(
-                nucleotideInsertions = nucleotideInsertions,
-                aminoAcidInsertions = aminoAcidInsertions,
-            ),
-        )
     }
 
     private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData, organism: Organism): String {
@@ -312,8 +276,6 @@ class DatabaseService(
                 .select(
                     where = { table.statusIs(APPROVED_FOR_RELEASE) and table.organismIs(organism) },
                 )
-                // TODO(#429): This needs clarification of how to handle revocations. Until then, revocations are filtered out.
-                .filter { !it[table.isRevocationColumn] }
                 .map {
                     RawProcessedData(
                         accession = it[table.accessionColumn],
@@ -447,6 +409,7 @@ class DatabaseService(
                     stringParam(AWAITING_APPROVAL_FOR_REVOCATION.name),
                     booleanParam(true),
                     table.organismColumn,
+                    jsonbParam(emptyProcessedDataProvider.provide(organism)),
                 ).select(
                     where = {
                         (table.accessionColumn inList accessions) and
@@ -463,6 +426,7 @@ class DatabaseService(
                     table.statusColumn,
                     table.isRevocationColumn,
                     table.organismColumn,
+                    table.processedDataColumn,
                 ),
             )
 
@@ -499,6 +463,8 @@ class DatabaseService(
             organism,
         )
 
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
         sequenceEntriesTableProvider.get(organism).let { table ->
             table.update(
                 where = {
@@ -508,6 +474,7 @@ class DatabaseService(
                 },
             ) {
                 it[statusColumn] = APPROVED_FOR_RELEASE.name
+                it[releasedAtColumn] = now
             }
         }
     }

@@ -34,7 +34,15 @@ inline fun <reified T> ResultActions.expectNdjsonAndGetContent(): List<T> {
 
     val content = awaitResponse(andReturn())
 
-    return content.lines().filter { it.isNotEmpty() }.map { jacksonObjectMapper.readValue(it) }
+    return content.lines()
+        .filter { it.isNotEmpty() }
+        .map {
+            try {
+                jacksonObjectMapper.readValue(it)
+            } catch (exception: Exception) {
+                throw RuntimeException("Failed to parse line: $it", exception)
+            }
+        }
 }
 
 fun awaitResponse(result: MvcResult): String {

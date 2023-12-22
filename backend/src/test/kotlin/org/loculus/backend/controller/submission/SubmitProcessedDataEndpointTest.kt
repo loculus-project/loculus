@@ -87,10 +87,10 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = "3").withValues(
                 data = defaultData.withValues(
-                    unalignedNucleotideSequences = mapOf("main" to nucleotideSequenceOfDesiredLength),
-                    alignedNucleotideSequences = mapOf("main" to nucleotideSequenceOfDesiredLength),
+                    unalignedNucleotideSequences = mapOf(MAIN_SEGMENT to nucleotideSequenceOfDesiredLength),
+                    alignedNucleotideSequences = mapOf(MAIN_SEGMENT to nucleotideSequenceOfDesiredLength),
                     alignedAminoAcidSequences =
-                    defaultData.alignedAminoAcidSequences + ("someLongGene" to allAminoAcidSymbols),
+                    defaultData.alignedAminoAcidSequences + (SOME_LONG_GENE to allAminoAcidSymbols),
                 ),
             ),
         )
@@ -173,12 +173,12 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isOk)
             .andExpect(
-                jsonPath("\$.processedData.nucleotideInsertions.main[0]")
+                jsonPath("\$.processedData.nucleotideInsertions.$MAIN_SEGMENT[0]")
                     .value(Insertion(1, "A").toString()),
             )
             .andExpect(
                 jsonPath("\$.processedData.aminoAcidInsertions")
-                    .value(mapOf("someShortGene" to emptyList<String>(), "someLongGene" to emptyList())),
+                    .value(mapOf(SOME_SHORT_GENE to emptyList<String>(), SOME_LONG_GENE to emptyList())),
             )
     }
 
@@ -508,7 +508,7 @@ class SubmitProcessedDataEndpointTest(
             InvalidDataScenario(
                 name = "data with missing gene in alignedAminoAcidSequences",
                 processedData = PreparedProcessedData.withMissingGeneInAlignedAminoAcidSequences(
-                    gene = "someShortGene",
+                    gene = SOME_SHORT_GENE,
                 ),
                 expectedErrorMessage = "Missing the required gene 'someShortGene'.",
             ),
@@ -528,19 +528,19 @@ class SubmitProcessedDataEndpointTest(
             ),
             InvalidDataScenario(
                 name = "data with gene in alignedAminoAcidSequences of wrong length",
-                processedData = PreparedProcessedData.withAminoAcidSequenceOfWrongLength(gene = "someShortGene"),
+                processedData = PreparedProcessedData.withAminoAcidSequenceOfWrongLength(gene = SOME_SHORT_GENE),
                 expectedErrorMessage = "The length of 'someShortGene' in 'alignedAminoAcidSequences' is 123, " +
                     "but it should be 4.",
             ),
             InvalidDataScenario(
                 name = "data with gene in alignedAminoAcidSequences with wrong symbols",
-                processedData = PreparedProcessedData.withAminoAcidSequenceWithWrongSymbols(gene = "someShortGene"),
+                processedData = PreparedProcessedData.withAminoAcidSequenceWithWrongSymbols(gene = SOME_SHORT_GENE),
                 expectedErrorMessage = "The gene 'someShortGene' in 'alignedAminoAcidSequences' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),
             InvalidDataScenario(
                 name = "data with segment in amino acid insertions with wrong symbols",
-                processedData = PreparedProcessedData.withAminoAcidInsertionsWithWrongSymbols(gene = "someShortGene"),
+                processedData = PreparedProcessedData.withAminoAcidInsertionsWithWrongSymbols(gene = SOME_SHORT_GENE),
                 expectedErrorMessage = "An insertion of gene 'someShortGene' in 'aminoAcidInsertions' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),
