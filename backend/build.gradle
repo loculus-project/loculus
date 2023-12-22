@@ -53,11 +53,12 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }
-    testImplementation("io.jsonwebtoken:jjwt-api:0.12.3")
-    testImplementation("io.jsonwebtoken:jjwt-impl:0.12.3")
-    testImplementation("io.jsonwebtoken:jjwt-jackson:0.12.3")
+    testImplementation "io.jsonwebtoken:jjwt-api:0.12.3"
+    testImplementation "io.jsonwebtoken:jjwt-impl:0.12.3"
+    testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.3"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
     testImplementation "org.testcontainers:postgresql:1.19.3"
+    testImplementation "org.junit.platform:junit-platform-launcher:1.10.0"
 }
 
 tasks.named('test') {
