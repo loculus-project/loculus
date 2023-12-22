@@ -107,12 +107,20 @@ provided dataset. It is used to associate metadata to the sequences in the seque
 Additionally, the column 'accession' is required and must match the accession of the original sequence entry.
 """
 
+const val SUBMIT_DESCRIPTION = """
+Submit new data as multipart/form-data.
+The user submits data on behalf of a group that they must be a member of.
+"""
+
 const val REVISE_DESCRIPTION = """
-Submit revised data for new accession versions as multipart/form-data.
-If any of the given sequence entries do not exist (identified by the column 'accession' in the metadata file),
- or the user has no right to revise any of the sequence entries, or the last accession version is not in status 
- 'APPROVED_FOR_RELEASE',  i.e. not revisable, or if the provided files contain unspecified content, this will return an error and 
- roll back the whole transaction.
+Submit revised data for new accession versions as multipart/form-data. The following rules apply:
+ - Given sequence entries must exist (identified by the column 'accession' in the metadata file) 
+ - The user has the right to revise all of the sequence entries (the user is part of the group for that a sequence 
+entry was initially submitted)
+ - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. revisable
+ - The provided files contain only specified content
+ 
+If any of above does not apply, this will return an error and roll back the whole transaction.
 """
 
 const val DELETE_SEQUENCES_DESCRIPTION = """
