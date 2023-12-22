@@ -91,6 +91,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({ groupName, clientConfig, accessTok
                                     onClick={() => handleOpenConfirmationDialog(user)}
                                     className='px-2 py-1 bg-red-500 text-white rounded'
                                     title='Remove user from group'
+                                    aria-label={`Remove User ${user.name}`}
                                 >
                                     <DeleteIcon className='w-4 h-4' />
                                 </button>

@@ -1,9 +1,9 @@
 ---
-import { BackButton } from '../../../../components/Navigation/BackButton';
-import { GroupPage } from '../../../../components/User/GroupPage';
-import { getRuntimeConfig } from '../../../../config';
-import BaseLayout from '../../../../layouts/BaseLayout.astro';
-import { getAccessToken } from '../../../../utils/getAccessToken';
+import { BackButton } from '../../../components/Navigation/BackButton';
+import { GroupPage } from '../../../components/User/GroupPage';
+import { getRuntimeConfig } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getAccessToken } from '../../../utils/getAccessToken';
 
 const accessToken = getAccessToken(Astro.locals.session)!;
 const groupName = Astro.params.groupName!;
