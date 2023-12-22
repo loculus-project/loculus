@@ -57,7 +57,7 @@ class SubmissionController(
     private val iteratorStreamer: IteratorStreamer,
 ) {
 
-    @Operation(description = "Submit data for new sequence entries as multipart/form-data")
+    @Operation(description = SUBMIT_DESCRIPTION)
     @ApiResponse(responseCode = "200", description = SUBMIT_RESPONSE_DESCRIPTION)
     @PostMapping("/submit", consumes = ["multipart/form-data"])
     fun submit(
