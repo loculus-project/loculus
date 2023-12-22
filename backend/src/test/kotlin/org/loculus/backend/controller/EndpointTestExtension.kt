@@ -1,10 +1,12 @@
 package org.loculus.backend.controller
 
-import org.junit.jupiter.api.extension.AfterAllCallback
-import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.platform.engine.support.descriptor.ClassSource
+import org.junit.platform.engine.support.descriptor.MethodSource
+import org.junit.platform.launcher.TestExecutionListener
+import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.submission.DEFAULT_USER_NAME
 import org.loculus.backend.controller.submission.SubmissionControllerClient
@@ -48,17 +50,48 @@ const val DEFAULT_GROUP_NAME = "testGroup"
 const val ALTERNATIVE_DEFAULT_GROUP_NAME = "testGroup2"
 const val ALTERNATIVE_DEFAULT_USER_NAME = "testUser2"
 
-class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCallback {
+class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
+        private var isStarted = false
     }
 
-    override fun beforeAll(context: ExtensionContext) {
-        postgres.start()
+    override fun testPlanExecutionStarted(testPlan: TestPlan) {
+        if (!isStarted) {
+            isAnnotatedWithEndpointTest(testPlan) {
+                postgres.start()
+                isStarted = true
+            }
+        }
 
         System.setProperty(SPRING_DATASOURCE_URL, postgres.jdbcUrl)
         System.setProperty(SPRING_DATASOURCE_USERNAME, postgres.username)
         System.setProperty(SPRING_DATASOURCE_PASSWORD, postgres.password)
+    }
+
+    private fun isAnnotatedWithEndpointTest(testPlan: TestPlan, callback: () -> Unit) {
+        for (root in testPlan.roots) {
+            testPlan.getChildren(root).forEach { testIdentifier ->
+                testIdentifier.source.ifPresent { testSource ->
+                    when (testSource) {
+                        is MethodSource -> {
+                            val testClass = Class.forName(testSource.className)
+                            val method = testClass.getMethod(testSource.methodName)
+                            if (method.isAnnotationPresent(EndpointTest::class.java)) {
+                                callback()
+                            }
+                        }
+
+                        is ClassSource -> {
+                            val testClass = Class.forName(testSource.className)
+                            if (testClass.isAnnotationPresent(EndpointTest::class.java)) {
+                                callback()
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     override fun beforeEach(context: ExtensionContext) {
@@ -79,7 +112,7 @@ class EndpointTestExtension : BeforeEachCallback, AfterAllCallback, BeforeAllCal
         )
     }
 
-    override fun afterAll(context: ExtensionContext) {
+    override fun testPlanExecutionFinished(testPlan: TestPlan) {
         postgres.stop()
 
         System.clearProperty(SPRING_DATASOURCE_URL)
