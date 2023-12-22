@@ -1,36 +1,18 @@
-import { makeApi, makeEndpoint, makeErrors, makeParameters } from '@zodios/core';
+import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
+import { authorizationHeader, notAuthorizedError, withOrganismPathSegment } from './commonApiTypes.ts';
 import {
-    sequenceEntryToEdit,
     accessions,
     accessionVersionsObject,
     problemDetail,
     sequenceEntryStatus,
+    sequenceEntryToEdit,
     submissionIdMapping,
     submitFiles,
     unprocessedData,
     uploadFiles,
 } from '../types/backend.ts';
-
-const [authorizationHeader] = makeParameters([
-    {
-        name: 'Authorization',
-        type: 'Header',
-        schema: z.string().includes('Bearer ', { position: 0 }),
-    },
-]);
-
-function withOrganismPathSegment<Path extends `/${string}`>(path: Path) {
-    return `/:organism${path}` as const;
-}
-
-const notAuthorizedError = makeErrors([
-    {
-        status: 401,
-        schema: z.never(),
-    },
-])[0];
 
 const submitEndpoint = makeEndpoint({
     method: 'post',
@@ -206,42 +188,6 @@ const submitProcessedDataEndpoint = makeEndpoint({
     errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
 });
 
-const createGroupEndpoint = makeEndpoint({
-    method: 'post',
-    path: '/groups',
-    alias: 'createGroup',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'data',
-            type: 'Body',
-            schema: z.object({
-                groupName: z.string(),
-            }),
-        },
-    ],
-    response: z.never(),
-    errors: [notAuthorizedError],
-});
-
-const addUserToGroupEndpoint = makeEndpoint({
-    method: 'post',
-    path: '/groups/:groupName/users',
-    alias: 'addUserToGroup',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'data',
-            type: 'Body',
-            schema: z.object({
-                username: z.string(),
-            }),
-        },
-    ],
-    response: z.never(),
-    errors: [notAuthorizedError],
-});
-
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -254,6 +200,4 @@ export const backendApi = makeApi([
     confirmRevocationEndpoint,
     extractUnprocessedDataEndpoint,
     submitProcessedDataEndpoint,
-    createGroupEndpoint,
-    addUserToGroupEndpoint,
 ]);

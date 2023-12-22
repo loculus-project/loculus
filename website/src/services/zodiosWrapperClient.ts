@@ -29,7 +29,7 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
         this.zodios = new Zodios(url, api);
     }
 
-    public call<Method extends ZodiosMethods<Api>>(
+    public async call<Method extends ZodiosMethods<Api>>(
         method: Method,
         ...args: ZodiosMethod<Api, Method>['parameters']
     ): Promise<Result<Awaited<ZodiosMethod<Api, Method>['response']>, ProblemDetail>> {
@@ -42,11 +42,11 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
         return zodiosResponse.then(
             (response) => ok(response),
             async (error: AxiosError): Promise<Err<never, ProblemDetail>> =>
-                err(await this.createProblemDetail(error, method)),
+                err(this.createProblemDetail(error, method)),
         );
     }
 
-    private async createProblemDetail(error: AxiosError, method: string): Promise<ProblemDetail> {
+    private createProblemDetail(error: AxiosError, method: string): ProblemDetail {
         if (error.response?.status === 401) {
             const message = error.response.headers['www-authenticate'] ?? 'Not authorized';
             return {

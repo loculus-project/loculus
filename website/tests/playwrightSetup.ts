@@ -1,9 +1,11 @@
+import { isErrorFromAlias } from '@zodios/core';
 import isEqual from 'lodash/isEqual.js';
 import sortBy from 'lodash/sortBy.js';
 
 import { e2eLogger, getToken, lapisUrl, testUser, testUserPassword } from './e2e.fixture.ts';
 import { addUserToGroup, createGroup } from './util/backendCalls.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
+import { groupManagementApi } from '../src/services/groupManagementApi.ts';
 import { LapisClient } from '../src/services/lapisClient.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD } from '../src/settings.ts';
 import { siloVersionStatuses } from '../src/types/lapis.ts';
@@ -18,6 +20,12 @@ export const DEFAULT_GROUP_NAME = 'testGroup';
 export default async function globalSetupForPlaywright() {
     const secondsToWait = 10;
     const maxNumberOfRetries = 12;
+
+    e2eLogger.info(`logging in as '${testUser}' + playwright users. Setup testGroups.`);
+    const token = (await getToken(testUser, testUserPassword)).accessToken;
+
+    await createTestGroupIfNotExistent(token);
+    await addTestuserToTestGroupIfNotExistent(token);
 
     const lapisClient = LapisClient.create(
         lapisUrl,
@@ -35,12 +43,6 @@ export default async function globalSetupForPlaywright() {
     }
 
     e2eLogger.info('No sequences found in LAPIS. Generate data for tests.');
-
-    e2eLogger.info(`logging in as '${testUser}'.`);
-    const token = (await getToken(testUser, testUserPassword)).accessToken;
-
-    await createTestGroupIfNotExistent(token);
-    await addTestuserToTestGroupIfNotExistent(token);
 
     e2eLogger.info('preparing data in backend.');
     const data = await prepareDataToBe('approvedForRelease', token);
@@ -76,8 +78,9 @@ function waitSeconds(seconds: number) {
 }
 
 async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBeforeTests> {
-    const numberOfSequencesInLapis = (await lapisClient.call('aggregated', {}))._unsafeUnwrap().data[0].count;
-    if (numberOfSequencesInLapis === 0) {
+    const numberOfSequencesInLapisResult = await lapisClient.call('aggregated', {});
+
+    if (numberOfSequencesInLapisResult._unsafeUnwrap().data[0].count === 0) {
         return LapisStateBeforeTests.NoSequencesInLapis;
     }
 
@@ -168,7 +171,9 @@ async function addTestuserToTestGroupIfNotExistent(token: string) {
             try {
                 await addUserToGroup(DEFAULT_GROUP_NAME, `testuser_${i}_${browser}`, token);
             } catch (error) {
-                if (!(error as Error).message.includes(' is already member of the group')) {
+                const groupDoesAlreadyExist =
+                    isErrorFromAlias(groupManagementApi, 'addUserToGroup', error) && error.response.status === 409;
+                if (!groupDoesAlreadyExist) {
                     throw error;
                 }
             }
@@ -180,7 +185,9 @@ async function createTestGroupIfNotExistent(token: string) {
     try {
         await createGroup(DEFAULT_GROUP_NAME, token);
     } catch (error) {
-        if (!(error as Error).message.includes('Group name already exists')) {
+        const groupDoesAlreadyExist =
+            isErrorFromAlias(groupManagementApi, 'createGroup', error) && error.response.status === 409;
+        if (!groupDoesAlreadyExist) {
             throw error;
         }
     }

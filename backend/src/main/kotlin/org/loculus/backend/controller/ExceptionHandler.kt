@@ -77,6 +77,17 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         )
     }
 
+    @ExceptionHandler(ConflictException::class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    fun handleConflictException(e: Exception): ResponseEntity<ProblemDetail> {
+        log.warn(e) { "Caught conflict exception: ${e.message}" }
+
+        return responseEntity(
+            HttpStatus.CONFLICT,
+            e.message,
+        )
+    }
+
     @ExceptionHandler(NotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handleNotFoundException(e: NotFoundException): ResponseEntity<ProblemDetail> {
@@ -149,5 +160,5 @@ class UnprocessableEntityException(message: String) : RuntimeException(message)
 class NotFoundException(message: String) : RuntimeException(message)
 class ProcessingValidationException(message: String) : RuntimeException(message)
 class DuplicateKeyException(message: String) : RuntimeException(message)
-
+class ConflictException(message: String) : RuntimeException(message)
 class DummyUnauthorizedExceptionToMakeItAppearInSwaggerUi : RuntimeException()

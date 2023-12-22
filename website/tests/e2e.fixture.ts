@@ -14,6 +14,7 @@ import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';
 import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
+import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
 
 type E2EFixture = {
     searchPage: SearchPage;
@@ -40,6 +41,7 @@ export const e2eLogger = winston.createLogger({
 });
 
 export const backendClient = BackendClient.create(backendUrl, e2eLogger);
+export const groupManagementClient = GroupManagementClient.create(backendUrl, e2eLogger);
 
 export const testSequenceEntry = {
     name: '1.1',

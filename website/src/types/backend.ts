@@ -111,3 +111,17 @@ export const problemDetail = z.object({
     instance: z.string().optional(),
 });
 export type ProblemDetail = z.infer<typeof problemDetail>;
+
+export const group = z.object({
+    groupName: z.string(),
+});
+export type Group = z.infer<typeof group>;
+
+export const groupDetails = z.object({
+    groupName: z.string(),
+    users: z.array(
+        z.object({
+            name: z.string(),
+        }),
+    ),
+});

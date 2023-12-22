@@ -1,11 +1,18 @@
 ---
 import { GroupManager } from './GroupManager';
+import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getKeycloakClient } from '../../middleware/authMiddleware';
 import { routes } from '../../routes';
+import { getAccessToken } from '../../utils/getAccessToken';
 import { BackButton } from '../Navigation/BackButton';
 
 const session = Astro.locals.session;
+
+const accessToken = getAccessToken(Astro.locals.session)!;
+
+const clientConfig = getRuntimeConfig().public;
+
 const organism: string | undefined = Astro.params.organism;
 
 const logoutUrl = new URL(Astro.request.url);
@@ -33,5 +40,14 @@ const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
         )
     }
 
-    <GroupManager initialGroups={[]} client:load />
+    {
+        session.user?.username !== undefined && (
+            <GroupManager
+                accessToken={accessToken}
+                clientConfig={clientConfig}
+                username={session.user.username}
+                client:load
+            />
+        )
+    }
 </BaseLayout>
