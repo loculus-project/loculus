@@ -22,9 +22,9 @@ export const routes = {
         const userPagePath = `/user` as const;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
-    groupOverviewPage: (organism?: string | undefined) => {
-        const groupPagePath = `/group` as const;
-        return organism === undefined ? groupPagePath : withOrganism(organism, groupPagePath);
+    groupOverviewPage: (groupName: string) => {
+        const groupPagePath = `/group/${groupName}` as const;
+        return groupPagePath;
     },
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/sequences`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/sequences/${accession}/versions`),
@@ -91,10 +91,6 @@ function topNavigationItems(organism: string | undefined) {
         {
             text: 'User',
             path: routes.userOverviewPage(organism),
-        },
-        {
-            text: 'Group',
-            path: routes.groupOverviewPage(organism),
         },
     ];
 }

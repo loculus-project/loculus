@@ -1,6 +1,7 @@
 import { type FC, type FormEvent, useRef, useState } from 'react';
 
 import { useGroupManagerHooks } from '../../hooks/useGroupOperations.ts';
+import { routes } from '../../routes.ts';
 import type { Group } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -82,11 +83,14 @@ const InnerGroupManager: FC<GroupManagerProps> = ({ clientConfig, accessToken, u
                 {!groupsOfUser.isLoading &&
                     groupsOfUser.data?.map((group) => (
                         <li key={group.groupName} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
-                            <span className='text-lg'>{group.groupName}</span>
+                            <a className='text-lg' href={routes.groupOverviewPage(group.groupName)}>
+                                {group.groupName}
+                            </a>
                             <button
                                 onClick={() => handleOpenConfirmationDialog(group)}
                                 className='px-2 py-1 bg-red-500 text-white rounded'
                                 title='Leave group'
+                                aria-label={`Leave group ${group.groupName}`}
                             >
                                 <LeaveIcon className='w-4 h-4' />
                             </button>

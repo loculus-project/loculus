@@ -1,45 +1,23 @@
+import { v4 } from 'uuid';
+
 import { expect, test } from '../../e2e.fixture';
-import { submitRevisedDataViaApi } from '../../util/backendCalls.ts';
-import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
+import { DEFAULT_GROUP_NAME } from '../../playwrightSetup.ts';
 
 test.describe('The user page', () => {
-    test('should show sequence entries, their status and a link to the editPage', async ({
-        userPage,
+    test('should see the groups the user is member of, create a group and leave it afterwards', async ({
+        groupPage,
         loginAsTestUser,
     }) => {
-        const { token } = await loginAsTestUser();
+        await loginAsTestUser();
 
-        const [sequenceEntryAwaitingApproval] = await prepareDataToBe('awaitingApproval', token);
-        const [sequenceEntryWithErrors] = await prepareDataToBe('erroneous', token);
-        const [sequenceEntryReleasable] = await prepareDataToBe('approvedForRelease', token);
-        const [sequenceEntryToBeRevised] = await prepareDataToBe('approvedForRelease', token);
-        await submitRevisedDataViaApi([sequenceEntryToBeRevised.accession], token);
+        await groupPage.goToUserPage();
+        await groupPage.verifyGroupIsPresent(DEFAULT_GROUP_NAME);
 
-        await userPage.gotoUserSequencePage();
+        const uniqueGroupName = v4();
+        await groupPage.createGroup(uniqueGroupName);
+        const linkToNewGroup = await groupPage.verifyGroupIsPresent(uniqueGroupName);
 
-        const sequencesArePresent = await userPage.verifyTableEntries([
-            {
-                ...sequenceEntryWithErrors,
-                status: 'HAS_ERRORS',
-                isRevocation: false,
-            },
-            {
-                ...sequenceEntryAwaitingApproval,
-                status: 'AWAITING_APPROVAL',
-                isRevocation: false,
-            },
-            {
-                ...sequenceEntryReleasable,
-                status: 'APPROVED_FOR_RELEASE',
-                isRevocation: false,
-            },
-            {
-                ...sequenceEntryToBeRevised,
-                status: 'APPROVED_FOR_RELEASE',
-                isRevocation: false,
-            },
-        ]);
-
-        expect(sequencesArePresent).toBe(true);
+        await groupPage.leaveGroup(uniqueGroupName);
+        await expect(linkToNewGroup).not.toBeVisible();
     });
 });
