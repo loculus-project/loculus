@@ -18,7 +18,6 @@ import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.stringParam
-import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
@@ -41,15 +40,12 @@ import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.utils.Accession
-import org.loculus.backend.utils.IteratorStreamer
 import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.io.OutputStream
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger { }
@@ -63,7 +59,6 @@ class DatabaseService(
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val referenceGenome: ReferenceGenome,
-    private val iteratorStreamer: IteratorStreamer,
     private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
 ) {
 
@@ -71,7 +66,7 @@ class DatabaseService(
         Database.connect(pool)
     }
 
-    fun streamUnprocessedSubmissions(numberOfSequenceEntries: Int, outputStream: OutputStream, organism: Organism) {
+    fun streamUnprocessedSubmissions(numberOfSequenceEntries: Int, organism: Organism): Sequence<UnprocessedData> {
         log.info { "streaming unprocessed submissions. Requested $numberOfSequenceEntries sequence entries." }
 
         sequenceEntriesTableProvider.get(organism).let { table ->
@@ -95,7 +90,7 @@ class DatabaseService(
 
             updateStatusToProcessing(sequenceEntryData, table)
 
-            iteratorStreamer.streamAsNdjson(sequenceEntryData, outputStream)
+            return sequenceEntryData.asSequence()
         }
     }
 
@@ -327,44 +322,42 @@ class DatabaseService(
         groupName: String,
         numberOfSequenceEntries: Int,
         organism: Organism,
-    ): StreamingResponseBody {
+    ): Sequence<SequenceEntryVersionToEdit> {
         log.info { "streaming $numberOfSequenceEntries submissions that need edit by $submitter" }
 
         groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, submitter)
 
-        return StreamingResponseBody { outputStream ->
-            val sequencesData = transaction {
-                sequenceEntriesTableProvider.get(organism).let { table ->
-                    table.slice(
-                        table.accessionColumn,
-                        table.versionColumn,
-                        table.statusColumn,
-                        table.processedDataColumn,
-                        table.originalDataColumn,
-                        table.errorsColumn,
-                        table.warningsColumn,
+        sequenceEntriesTableProvider.get(organism).let { table ->
+            return table.slice(
+                table.accessionColumn,
+                table.versionColumn,
+                table.statusColumn,
+                table.processedDataColumn,
+                table.originalDataColumn,
+                table.errorsColumn,
+                table.warningsColumn,
+            )
+                .select(
+                    where = {
+                        table.statusIs(HAS_ERRORS) and
+                            table.isMaxVersion and
+                            table.groupIs(groupName) and
+                            table.organismIs(organism)
+                    },
+                )
+                .limit(numberOfSequenceEntries)
+                .map { row ->
+                    SequenceEntryVersionToEdit(
+                        row[table.accessionColumn],
+                        row[table.versionColumn],
+                        Status.fromString(row[table.statusColumn]),
+                        row[table.processedDataColumn]!!,
+                        row[table.originalDataColumn]!!,
+                        row[table.errorsColumn],
+                        row[table.warningsColumn],
                     )
-                        .select(
-                            where = {
-                                table.statusIs(HAS_ERRORS) and
-                                    table.isMaxVersion and
-                                    table.groupIs(groupName) and
-                                    table.organismIs(organism)
-                            },
-                        ).limit(numberOfSequenceEntries).map { row ->
-                            SequenceEntryVersionToEdit(
-                                row[table.accessionColumn],
-                                row[table.versionColumn],
-                                Status.fromString(row[table.statusColumn]),
-                                row[table.processedDataColumn]!!,
-                                row[table.originalDataColumn]!!,
-                                row[table.errorsColumn],
-                                row[table.warningsColumn],
-                            )
-                        }
                 }
-            }
-            iteratorStreamer.streamAsNdjson(sequencesData, outputStream)
+                .asSequence()
         }
     }
 

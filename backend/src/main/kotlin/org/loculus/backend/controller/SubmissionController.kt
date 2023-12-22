@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
+import mu.KotlinLogging
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
@@ -42,6 +43,8 @@ import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
 import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
+
+private val log = KotlinLogging.logger { }
 
 @RestController
 @RequestMapping("/{organism}")
@@ -122,10 +125,7 @@ class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
-        val streamBody = StreamingResponseBody { outputStream ->
-            databaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, outputStream, organism)
-        }
-
+        val streamBody = stream { databaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism) }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
@@ -169,9 +169,7 @@ class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
-        val streamBody = StreamingResponseBody { outputStream ->
-            iteratorStreamer.streamAsNdjson(releasedDataModel.getReleasedData(organism), outputStream)
-        }
+        val streamBody = stream { releasedDataModel.getReleasedData(organism) }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
@@ -194,7 +192,8 @@ class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
-        val streamBody = databaseService.streamDataToEdit(username, groupName, numberOfSequenceEntries, organism)
+        val entries = databaseService.streamDataToEdit(username, groupName, numberOfSequenceEntries, organism)
+        val streamBody = stream { entries }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
@@ -275,6 +274,17 @@ class SubmissionController(
         @UsernameFromJwt username: String,
         @RequestBody body: AccessionVersions,
     ) = databaseService.deleteSequenceEntryVersions(body.accessionVersions, username, organism)
+
+    private fun <T> stream(sequenceProvider: () -> Sequence<T>) = StreamingResponseBody { outputStream ->
+        try {
+            iteratorStreamer.streamAsNdjson(sequenceProvider(), outputStream)
+        } catch (e: Exception) {
+            log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
+            outputStream.write(
+                "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
+            )
+        }
+    }
 
     data class Accessions(
         val accessions: List<Accession>,
