@@ -35,9 +35,9 @@ class SubmissionJourneyTest(
             .assertStatusIs(IN_PROCESSING)
 
         convenienceClient.submitProcessedData(
-            *DefaultFiles.allAccessions.map {
+            DefaultFiles.allAccessions.map {
                 PreparedProcessedData.withErrors(accession = it)
-            }.toTypedArray(),
+            },
         )
         convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
             .assertStatusIs(HAS_ERRORS)
@@ -51,9 +51,9 @@ class SubmissionJourneyTest(
             .assertStatusIs(IN_PROCESSING)
 
         convenienceClient.submitProcessedData(
-            *DefaultFiles.allAccessions.map {
+            DefaultFiles.allAccessions.map {
                 PreparedProcessedData.successfullyProcessed(accession = it)
-            }.toTypedArray(),
+            },
         )
         convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
             .assertStatusIs(AWAITING_APPROVAL)
@@ -76,9 +76,9 @@ class SubmissionJourneyTest(
             .assertStatusIs(IN_PROCESSING)
 
         convenienceClient.submitProcessedData(
-            *DefaultFiles.allAccessions.map {
+            DefaultFiles.allAccessions.map {
                 PreparedProcessedData.successfullyProcessed(accession = it, version = 2)
-            }.toTypedArray(),
+            },
         )
         convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 2)
             .assertStatusIs(AWAITING_APPROVAL)
@@ -97,18 +97,18 @@ class SubmissionJourneyTest(
         convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM)
 
         convenienceClient.submitProcessedData(
-            *defaultOrganismData.map {
+            defaultOrganismData.map {
                 PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version)
-            }.toTypedArray(),
+            },
             organism = DEFAULT_ORGANISM,
         )
         convenienceClient.submitProcessedData(
-            *otherOrganismData.map {
+            otherOrganismData.map {
                 PreparedProcessedData.successfullyProcessedOtherOrganismData(
                     accession = it.accession,
                     version = it.version,
                 )
-            }.toTypedArray(),
+            },
             organism = OTHER_ORGANISM,
         )
 

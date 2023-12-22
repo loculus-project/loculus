@@ -1,5 +1,6 @@
 package org.loculus.backend.controller
 
+import mu.KotlinLogging
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -50,6 +51,8 @@ const val DEFAULT_GROUP_NAME = "testGroup"
 const val ALTERNATIVE_DEFAULT_GROUP_NAME = "testGroup2"
 const val ALTERNATIVE_DEFAULT_USER_NAME = "testUser2"
 
+private val log = KotlinLogging.logger { }
+
 class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
@@ -62,6 +65,10 @@ class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
                 postgres.start()
                 isStarted = true
             }
+        }
+
+        log.info {
+            "Started Postgres container: ${postgres.jdbcUrl}, user ${postgres.username}, pw ${postgres.password}"
         }
 
         System.setProperty(SPRING_DATASOURCE_URL, postgres.jdbcUrl)

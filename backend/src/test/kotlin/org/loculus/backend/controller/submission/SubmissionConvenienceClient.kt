@@ -64,6 +64,13 @@ class SubmissionConvenienceClient(
     }
 
     fun submitProcessedData(
+        submittedProcessedData: List<SubmittedProcessedData>,
+        organism: String = DEFAULT_ORGANISM,
+    ) {
+        submitProcessedData(*submittedProcessedData.toTypedArray(), organism = organism)
+    }
+
+    fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
         organism: String = DEFAULT_ORGANISM,
     ) {
@@ -74,9 +81,9 @@ class SubmissionConvenienceClient(
     fun prepareDefaultSequenceEntriesToHasErrors(organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
         val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(organism = organism)
         submitProcessedData(
-            *accessionVersions.map {
+            accessionVersions.map {
                 PreparedProcessedData.withErrors(accession = it.accession)
-            }.toTypedArray(),
+            },
             organism = organism,
         )
         return accessionVersions
@@ -118,9 +125,8 @@ class SubmissionConvenienceClient(
         reviseDefaultProcessedSequenceEntries()
         val extractedAccessionVersions = extractUnprocessedData().map { AccessionVersion(it.accession, it.version) }
         submitProcessedData(
-            *extractedAccessionVersions
-                .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) }
-                .toTypedArray(),
+            extractedAccessionVersions
+                .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) },
         )
         approveProcessedSequenceEntries(extractedAccessionVersions)
     }
@@ -132,13 +138,19 @@ class SubmissionConvenienceClient(
         return revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism)
     }
 
+    fun prepareRevokedSequenceEntries(organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
+        val accessionVersions = prepareDataTo(Status.AWAITING_APPROVAL_FOR_REVOCATION, organism = organism)
+        confirmRevocation(accessionVersions, organism = organism)
+        return accessionVersions
+    }
+
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
         organism: String = DEFAULT_ORGANISM,
     ) = client.extractUnprocessedData(numberOfSequenceEntries, organism)
         .expectNdjsonAndGetContent<UnprocessedData>()
 
-    fun prepareDatabaseWith(vararg processedData: SubmittedProcessedData) {
+    fun prepareDatabaseWithProcessedData(vararg processedData: SubmittedProcessedData) {
         submitDefaultFiles()
         extractUnprocessedData()
         client.submitProcessedData(*processedData)
@@ -201,10 +213,18 @@ class SubmissionConvenienceClient(
     }
 
     fun approveProcessedSequenceEntries(
-        listOfSequencesToApprove: List<AccessionVersion>,
+        listOfSequencesToApprove: List<AccessionVersionInterface>,
         organism: String = DEFAULT_ORGANISM,
     ) {
-        client.approveProcessedSequenceEntries(listOfSequencesToApprove, organism = organism)
+        client.approveProcessedSequenceEntries(
+            listOfSequencesToApprove.map {
+                AccessionVersion(
+                    it.accession,
+                    it.version,
+                )
+            },
+            organism = organism,
+        )
             .andExpect(status().isNoContent)
     }
 
@@ -224,8 +244,11 @@ class SubmissionConvenienceClient(
     ): List<SequenceEntryStatus> =
         deserializeJsonResponse(client.revokeSequenceEntries(listOfSequencesToRevoke, organism = organism))
 
-    fun confirmRevocation(listOfSequencesToConfirm: List<AccessionVersion>) {
-        client.confirmRevocation(listOfSequencesToConfirm)
+    fun confirmRevocation(
+        listOfSequencesToConfirm: List<AccessionVersionInterface>,
+        organism: String = DEFAULT_ORGANISM,
+    ) {
+        client.confirmRevocation(listOfSequencesToConfirm.map { AccessionVersion(it.accession, it.version) }, organism)
             .andExpect(status().isNoContent)
     }
 
