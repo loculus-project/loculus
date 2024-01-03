@@ -5,6 +5,6 @@ test.describe('The landing page', () => {
         await page.goto(baseUrl);
 
         await expect(page).toHaveTitle('Home');
-        await expect(page.locator('h1')).toContainText('Pathoplexus');
+        await expect(page.locator('h1')).toContainText('Loculus');
     });
 });

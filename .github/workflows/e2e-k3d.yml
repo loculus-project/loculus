@@ -109,10 +109,10 @@ jobs:
       run: kubectl get pods --all-namespaces
     - name: Describe pods
       if: ${{ !cancelled() }}
-      run: kubectl describe pods -l app=pathoplexus -n pathoplexus
+      run: kubectl describe pods -l app=loculus -n loculus
     - name: Show events
       if: ${{ !cancelled() }}
-      run: kubectl get events -n pathoplexus
+      run: kubectl get events -n loculus
 
     - name: Save logs from all containers to file
       if: ${{ !cancelled() }}

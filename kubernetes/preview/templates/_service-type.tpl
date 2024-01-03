@@ -1,5 +1,5 @@
 {{/* on cd we expose the services via ingress */}}
-{{- define "pathoplexus.serviceType"}}
+{{- define "loculus.serviceType"}}
   {{- if eq .Values.environment "server" }}
   type: ClusterIP
   {{- else }}

@@ -1,4 +1,4 @@
-# pathoplexus
+# loculus
 
 Detailed documentation is available in each folder's README. This file contains a high-level overview of the project and shared documentation that is best kept in one place.
 
@@ -38,15 +38,15 @@ export DOCKER_DEFAULT_PLATFORM=linux/amd64
 ```
 
 ## Authorization
-We use keycloak for authorization. The keycloak instance is deployed in the `pathoplexus` namespace and exposed to the outside either under `localhost:8083` or `authentication.[your-argo-cd-path]`. The keycloak instance is configured with a realm called `pathoplexusRealm` and a client called `test-cli`. The realm is configured to use the exposed url of keycloak as a [frontend url](https://www.keycloak.org/server/hostname).
+We use keycloak for authorization. The keycloak instance is deployed in the `loculus` namespace and exposed to the outside either under `localhost:8083` or `authentication.[your-argo-cd-path]`. The keycloak instance is configured with a realm called `loculusRealm` and a client called `test-cli`. The realm is configured to use the exposed url of keycloak as a [frontend url](https://www.keycloak.org/server/hostname).
 For testing we added multiple users to the realm. The users are:
 - `admin` with password `admin` (login under `your-exposed-keycloak-url/admin/master/console/`)
-- `testuser` with password `testuser` (login under `your-exposed-keycloak-url/realms/pathoplexusRealm/account/`)
+- `testuser` with password `testuser` (login under `your-exposed-keycloak-url/realms/loculusRealm/account/`)
 - and more testusers, for each browser in the e2e test following the pattern: `testuser_[processId]_[browser]` with password `testuser_[processId]_[browser]` 
 - These testusers will be added to the `testGroup` in the setup for e2e tests. If you change the number of browsers in the e2e test, you need to adapt `website/tests/playwrightSetup.ts` accordingly. 
 
-## Contributing to Pathoplexus
+## Contributing to Loculus
 
 Contributions are very welcome!
-Please see [`CONTRIBUTING.md`](https://github.com/pathoplexus/pathoplexus/blob/main/CONTRIBUTING.md)
+Please see [`CONTRIBUTING.md`](https://github.com/pathoplexus/loculus/blob/main/CONTRIBUTING.md)
 for more information or ping us in case you need help.

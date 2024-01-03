@@ -40,8 +40,8 @@ jobs:
     - name: Checkout External Repository
       uses: actions/checkout@v4
       with:
-        repository: 'pathoplexus/argocd_metadata' # Replace with the correct repository path
-        token: ${{ secrets.ARGOCD_METADATA_PAT }} # Personal Access Token with appropriate permissions
+        repository: 'loculus/argocd_metadata'
+        token: ${{ secrets.ARGOCD_METADATA_PAT }}
 
     - name: Modify config.json
       run: |
@@ -53,8 +53,8 @@ jobs:
 
     - name: Commit and Push Changes
       run: |
-        git config --global user.name 'Pathoplexus bot'
-        git config --global user.email 'bot@pathoplexus.org'
+        git config --global user.name 'Loculus bot'
+        git config --global user.email 'bot@loculus.org'
         git add config.json
         git commit -m "Update config.json"
         git push

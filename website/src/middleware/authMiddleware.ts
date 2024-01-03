@@ -27,7 +27,7 @@ export const clientMetadata = {
     public: true,
 };
 
-export const realmPath = '/realms/pathoplexusRealm';
+export const realmPath = '/realms/loculusRealm';
 
 let _keycloakClient: BaseClient | undefined;
 

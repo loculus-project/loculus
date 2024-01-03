@@ -1,0 +1,97 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus
+  namespace: {{ .Values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: website-and-backend
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: website-and-backend
+    spec:
+      containers:
+        {{- if not .Values.disableWebsite }}
+        - name: website
+          image: "ghcr.io/pathoplexus/website:{{ $dockerTag }}"
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "1300Mi"
+              cpu: "100m"
+            limits:
+              memory: "2000Mi"
+              cpu: "1000m"
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: loculus-website-config
+              mountPath: /config
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+        {{- end }}
+        {{- if not .Values.disableBackend }}
+        - name: backend
+          image: "ghcr.io/pathoplexus/backend:{{ $dockerTag }}"
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: "/actuator/health/liveness"
+              port: 8079
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: "/actuator/health/readiness"
+              port: 8079
+          ports:
+            - containerPort: 8079
+          args:
+            - "--spring.datasource.url=jdbc:postgresql://localhost:5432/loculus"
+            - "--spring.datasource.username=postgres"
+            - "--spring.datasource.password=unsecure"
+            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/certs"
+          volumeMounts:
+            - name: loculus-backend-config
+              mountPath: /config
+        {{- end }}
+        - name: database
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "unsecure"
+            - name: POSTGRES_DB
+              value: "loculus"
+
+      imagePullSecrets:
+        - name: ghcr-secret
+      volumes:
+        - name: loculus-website-config
+          configMap:
+            name: loculus-website-config
+        - name: loculus-backend-config
+          configMap:
+            name: loculus-backend-config

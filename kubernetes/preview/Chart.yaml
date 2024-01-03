@@ -1,4 +1,4 @@
 apiVersion: v2
-name: pathoplexus
-description: A Helm chart for pathoplexus
+name: loculus
+description: A Helm chart for loculus
 version: 0.1.0

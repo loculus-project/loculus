@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pathoplexus-keycloak-database
+  name: loculus-keycloak-database
   namespace: {{ .Values.namespace }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
@@ -9,16 +9,16 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pathoplexus
+      app: loculus
       component: keycloak-database
   template:
     metadata:
       labels:
-        app: pathoplexus
+        app: loculus
         component: keycloak-database
     spec:
       containers:
-        - name: pathoplexus-keycloak-database
+        - name: loculus-keycloak-database
           image: postgres:latest
           ports:
             - containerPort: 5432

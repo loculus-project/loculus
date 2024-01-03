@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: pathoplexus-keycloak-service
+  name: loculus-keycloak-service
   namespace: {{ .Values.namespace }}
 spec:
-  {{- template "pathoplexus.serviceType"}}
+  {{- template "loculus.serviceType"}}
   selector:
-    app: pathoplexus
+    app: loculus
     component: keycloak
   ports:
     - port: 8083

@@ -1,6 +1,6 @@
 # Glossary
 
-**Sequence entry**: A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated metadata. It is the main entity of the Pathoplexus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own accession. Changes to sequence entries are versioned, meaning that a sequence entry can have multiple versions.
+**Sequence entry**: A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated metadata. It is the main entity of the Loculus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own accession. Changes to sequence entries are versioned, meaning that a sequence entry can have multiple versions.
 
 **Accession**: An accession is the unique identifier of a sequence entry. The `accession` itself does not contain the version number. The field that concatenates the accession and the version (`<accession>.<version>`) is called `accessionVer` or `accessionVersion` (TODO: await result from PHA4GE poll).
 

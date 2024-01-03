@@ -29,19 +29,19 @@ python main.py
 Build the image:
 
 ```bash
-docker build -t pathoplexus-dummy-preprocessing .
+docker build -t loculus-dummy-preprocessing .
 ```
 
 Run on Mac and Windows:
 
 ```bash
-docker run --rm pathoplexus-dummy-preprocessing --backend-host http://host.docker.internal
+docker run --rm loculus-dummy-preprocessing --backend-host http://host.docker.internal
 ```
 
 Run on Linux:
 
 ```bash
-docker run --rm --network host pathoplexus-dummy-preprocessing
+docker run --rm --network host loculus-dummy-preprocessing
 ```
 
 Run with `--help` to see available options.

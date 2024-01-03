@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: pathoplexus-keycloak-database-service
+  name: loculus-keycloak-database-service
   namespace: {{ .Values.namespace }}
 spec:
   type: ClusterIP
   selector:
-    app: pathoplexus
+    app: loculus
     component: keycloak-database
   ports:
     - port: 5432

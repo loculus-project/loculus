@@ -1,9 +1,0 @@
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: pathoplexus-backend-config
-  namespace: {{ .Values.namespace }}
-data:
-  backend_config.json: |
-    {{ .Files.Get "config.yaml" | fromYaml | include "pathoplexus.generateBackendConfig" | fromYaml | toJson }}

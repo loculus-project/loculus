@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: pathoplexus-website-service
+  name: loculus-website-service
   namespace: {{ .Values.namespace }}
 spec:
-  {{- template "pathoplexus.serviceType"}}
+  {{- template "loculus.serviceType"}}
   selector:
-    app: pathoplexus
+    app: loculus
     component: website-and-backend
   ports:
     - port: 3000

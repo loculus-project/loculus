@@ -66,7 +66,7 @@ export const GroupManager: FC<GroupsProps> = ({ initialGroups }) => {
                     placeholder='Enter new group name'
                     className='p-2 border border-gray-300 rounded mr-2'
                 />
-                <button onClick={handleCreateGroup} className='px-4 py-2 pathoplexusGreen text-white rounded'>
+                <button onClick={handleCreateGroup} className='px-4 py-2 loculusGreen text-white rounded'>
                     Create Group
                 </button>
             </div>

@@ -1,6 +1,6 @@
 # Kubernetes setup
 
-This directory contains a Helm chart to deploy Pathoplexus instances for several purposes. 
+This directory contains a Helm chart to deploy Loculus instances for several purposes. 
 The Helm variable `environment` reflects those purposes:
 * `local`: Running locally with ports
 * `server`: Running on a server with domain name
@@ -40,13 +40,13 @@ Check the README of the backend and the website for more information on how to d
 Check whether the services are already deployed (it might take some time to start, especially for the first time):
 
 ```shell
-kubectl get pods -n pathoplexus
+kubectl get pods -n loculus
 ```
 
 If something goes wrong,
 
 ```shell
-kubectl get events -n pathoplexus
+kubectl get events -n loculus
 ```
 
 might help to see the reason.
@@ -65,7 +65,7 @@ You can also delete the cluster with:
 
 ## Argo CD
 
-ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].preview.k3s.pathoplexus.org`. Very long branch names, and some special characters, are not supported.
+ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].preview.k3s.loculus.org`. Very long branch names, and some special characters, are not supported.
 
 The preview is intended to simulate the full backend and associated containers. It may be necessary to update this directory when changes are made to how containers need to be deployed.
 
@@ -73,7 +73,7 @@ We do not currently support branch names containing underscores and other charac
 
 ### Secrets
 
-For preview instances this repo contains [sealed secrets](https://sealed-secrets.netlify.app/) that allow the pathoplexus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
+For preview instances this repo contains [sealed secrets](https://sealed-secrets.netlify.app/) that allow the loculus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
 
 ## Full deployment for E2E testing
 
@@ -128,7 +128,7 @@ This will return a base64 encoded string similar to the one you can see above th
 
 Using Docker desktop as your container runtime won't work on ARM64 macOS. Instead, you will need to use `colima` to run an AMD64 VM which will host AMD64 docker containers.
 
-This will be quite slow due to QEMU emulation but it will work nonetheless (you may need to [adjust timeouts](https://github.com/pathoplexus/pathoplexus/pull/583).
+This will be quite slow due to QEMU emulation but it will work nonetheless (you may need to [adjust timeouts](https://github.com/pathoplexus/loculus/pull/583).
 
 First, install `colima`:
 

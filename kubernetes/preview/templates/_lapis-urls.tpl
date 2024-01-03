@@ -1,12 +1,12 @@
 {{/* generates internal LAPIS urls from given config object */}}
-{{ define "pathoplexus.generateInternalLapisUrls"}}
+{{ define "loculus.generateInternalLapisUrls"}}
 {{ range $key, $_ := .instances }}
-"{{ $key -}}": "http://{{ template "pathoplexus.lapisServiceName" $key }}:8080"
+"{{ $key -}}": "http://{{ template "loculus.lapisServiceName" $key }}:8080"
 {{ end }}
 {{ end }}
 
 {{/* generates external LAPIS urls from { config, host } */}}
-{{ define "pathoplexus.generateExternalLapisUrls"}}
+{{ define "loculus.generateExternalLapisUrls"}}
 {{ $host := .host }}
 {{ range $key, $_ := .config.instances }}
 "{{ $key -}}": "{{ $host }}/{{ $key }}"
@@ -14,6 +14,6 @@
 {{ end }}
 
 {{/* generates the LAPIS service name for a given organism key */}}
-{{- define "pathoplexus.lapisServiceName"}}
-{{- printf "pathoplexus-lapis-service-%s" . }}
+{{- define "loculus.lapisServiceName"}}
+{{- printf "loculus-lapis-service-%s" . }}
 {{- end }}

@@ -5,12 +5,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ template "pathoplexus.lapisServiceName" $key }}
+  name: {{ template "loculus.lapisServiceName" $key }}
   namespace: {{ $.Values.namespace }}
 spec:
   type: ClusterIP
   selector:
-    app: pathoplexus
+    app: loculus
     component: lapis-silo-{{ $key }}
   ports:
     - port: 8080

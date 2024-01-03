@@ -1,4 +1,4 @@
-# Pathoplexus Backend
+# Loculus Backend
 
 ## Setup
 
@@ -15,7 +15,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 ```bash
 ../generate_local_test_config.sh
-./gradlew bootRun --args='--spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus --spring.datasource.username=postgres --spring.datasource.password=unsecure --backend.config.path=../website/tests/config/backend_config.json --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/pathoplexusRealm/protocol/openid-connect/certs'
+./gradlew bootRun --args='--spring.datasource.url=jdbc:postgresql://localhost:5432/loculus --spring.datasource.username=postgres --spring.datasource.password=unsecure --backend.config.path=../website/tests/config/backend_config.json --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculusRealm/protocol/openid-connect/certs'
 ```
 
 #### Details
@@ -26,7 +26,7 @@ that need to be passed on startup, e.g. via command line argument.
 You need to set:
 * the database URL, username and password:
 ```
---spring.datasource.url=jdbc:postgresql://localhost:5432/pathoplexus
+--spring.datasource.url=jdbc:postgresql://localhost:5432/loculus
 --spring.datasource.username=postgres
 --spring.datasource.password=unsecure
 ```
@@ -37,7 +37,7 @@ You need to set:
 * the url to fetch the public key for JWT verification 
   (corresponding to the `jwks_uri` value in the `/.well-known/openid-configuration` endpoint of the Keycloak server):
 ```
---spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/pathoplexusRealm/protocol/openid-connect/certs
+--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculusRealm/protocol/openid-connect/certs
 ```
 
 We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)
