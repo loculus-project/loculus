@@ -10,7 +10,7 @@ ROOT_DIR = script_path.parent
 
 CLUSTER_NAME = 'testCluster'
 HELM_RELEASE_NAME = 'preview'
-HELM_CHART_DIR = ROOT_DIR / 'kubernetes' / 'preview'
+HELM_CHART_DIR = ROOT_DIR / 'kubernetes' / 'loculus'
 
 WEBSITE_PORT_MAPPING = '-p 3000:30081@agent:0'
 BACKEND_PORT_MAPPING = '-p 8079:30082@agent:0'
