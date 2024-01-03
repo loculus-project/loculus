@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--backend-host", type=str, default="http://127.0.0.1:8079",
-                    help="Host address of the pathoplexus backend")
+                    help="Host address of the loculus backend")
 parser.add_argument("--watch", action="store_true", help="Watch and keep running. Fetches new data every 10 seconds.")
 parser.add_argument("--withErrors", action="store_true", help="Add errors to processed data.")
 parser.add_argument("--withWarnings", action="store_true", help="Add warnings to processed data.")
@@ -20,7 +20,7 @@ parser.add_argument("--keycloak-user", type=str, default="dummy_prerocessing_pip
                     help="Keycloak user to use for authentication")
 parser.add_argument("--keycloak-password", type=str, default="dummy_prerocessing_pipeline",
                     help="Keycloak password to use for authentication")
-parser.add_argument("--keycloak-token-path", type=str, default="/realms/pathoplexusRealm/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
+parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculusRealm/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
 
 args = parser.parse_args()
 backendHost = args.backend_host

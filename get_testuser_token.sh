@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 set -eu
 
-KEYCLOAK_TOKEN_URL="http://localhost:8083/realms/pathoplexusRealm/protocol/openid-connect/token"
+KEYCLOAK_TOKEN_URL="http://localhost:8083/realms/loculusRealm/protocol/openid-connect/token"
 KEYCLOAK_CLIENT_ID="test-cli"
 
 echo "Retrieving JWT from $KEYCLOAK_TOKEN_URL"

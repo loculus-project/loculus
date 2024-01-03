@@ -1,4 +1,4 @@
-name: pathoplexus-nextclade
+name: loculus-nextclade
 channels:
   - conda-forge
   - bioconda

@@ -2,13 +2,13 @@
 
 ## Introduction
 
-The preprocessing pipeline prepares the data uploaded by the submitters for release. It is a separate program and communicates with the core Pathoplexus backend server through an HTTP interface that we specify in this document. The pipeline can have organism-specific logic and different pipelines can be used for different Pathoplexus instances.
+The preprocessing pipeline prepares the data uploaded by the submitters for release. It is a separate program and communicates with the core Loculus backend server through an HTTP interface that we specify in this document. The pipeline can have organism-specific logic and different pipelines can be used for different Loculus instances.
 
 **Note:** The requirements levels (must, should, can, etc.) in this document currently ARE NOT consistent with [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
 ### Tasks
 
-In following, we list a series of tasks that the preprocessing pipeline would usually perform. Hereby, the developers of a preprocessing pipeline has much flexibility in deciding how and to which extent the pipeline does the tasks. The only rule is that the output of the pipeline has to conform to the format expected by the Pathoplexus backend. For example, a preprocessing pipeline can be very "generous and intelligent" and accept a wide range of values for a date (e.g., it may map "Christmas 2020" to "2020-12-25") or be very restrictive and throw an error for any value that does not follow the ISO-8601 format.
+In following, we list a series of tasks that the preprocessing pipeline would usually perform. Hereby, the developers of a preprocessing pipeline has much flexibility in deciding how and to which extent the pipeline does the tasks. The only rule is that the output of the pipeline has to conform to the format expected by the Loculus backend. For example, a preprocessing pipeline can be very "generous and intelligent" and accept a wide range of values for a date (e.g., it may map "Christmas 2020" to "2020-12-25") or be very restrictive and throw an error for any value that does not follow the ISO-8601 format.
 
 **Parsing:** The preprocessing pipeline receives the input data as strings and transforms them into the right format. For example, assuming there is a field `age` of type `integer`, given an input `{"age": "2"}` the preprocessing pipeline should transform it to `{"age": 2}` (simple type conversion). In another case, assuming there is a field `sequencingDate` of type `date`, the preprocessing pipeline might transform `{"sequencingDate": "30 August 2023"}` to the expected format of `{"sequencingDate": "2023-08-30"}`.
 
@@ -22,13 +22,13 @@ In following, we list a series of tasks that the preprocessing pipeline would us
 
 ### Glossary
 
-- **Pathoplexus instance:** one Pathoplexus installation consisting of potentially multiple organism instances
+- **Loculus instance:** one Loculus installation consisting of potentially multiple organism instances
 - **Organism instance:** one organism-specific instance with a fixed set of possible metadata and a fixed reference genome
 - **Organism instance schema:** the definition of the accepted metadata fields and information about the reference genome (names of the segments and genes/peptides). Each organism instance has a schema.
-- **Backend:** The backend server is developed by the Pathoplexus team. The same backend software is used across Pathoplexus and organism instances. To support different organisms and metadata fields, it can be configured through a configuration file.
-- **Preprocessing pipeline:** The preprocessing pipeline takes unpreprocessed data and generates preprocessed data. The Pathoplexus team provides reference implementations but Pathoplexus can be used with other implementations as long as they follow the specification detailed in this document.
-- **LAPIS and SILO:** the data querying engine and API used by Pathoplexus.
-- **Sequence entry:** A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated metadata. It is the main entity of the Pathoplexus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own accession. Changes to sequence entries are versioned, meaning that a sequence entry can have multiple versions.
+- **Backend:** The backend server is developed by the Loculus team. The same backend software is used across Loculus and organism instances. To support different organisms and metadata fields, it can be configured through a configuration file.
+- **Preprocessing pipeline:** The preprocessing pipeline takes unpreprocessed data and generates preprocessed data. The Loculus team provides reference implementations but Loculus can be used with other implementations as long as they follow the specification detailed in this document.
+- **LAPIS and SILO:** the data querying engine and API used by Loculus.
+- **Sequence entry:** A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated metadata. It is the main entity of the Loculus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own accession. Changes to sequence entries are versioned, meaning that a sequence entry can have multiple versions.
 - **Unpreprocessed data:** sequence entries as provided by the submitters
 - **Preprocessed data:** sequence entries after being processed by the preprocessing pipeline. The preprocessed data must be consistent with the organism instance schema and will be passed to LAPIS and SILO.
 - **Nucleotide sequence segment:** A nucleotide sequence consists of one or multiple segments. If there is only a single segment (e.g., as in SARS-CoV-2), the segment name should be `main`. For multi-segmented sequences, the segment names must match the corresponding reference genomes.

@@ -61,7 +61,7 @@ export const GroupPage: FC<GroupPageProps> = ({ users }) => {
                     placeholder='Enter new user name'
                     className='p-2 border border-gray-300 rounded mr-2'
                 />
-                <button onClick={handleAddUser} className='px-4 py-2 pathoplexusGreen text-white rounded'>
+                <button onClick={handleAddUser} className='px-4 py-2 loculusGreen text-white rounded'>
                     Add User
                 </button>
             </div>

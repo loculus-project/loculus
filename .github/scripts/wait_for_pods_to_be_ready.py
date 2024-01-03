@@ -27,7 +27,7 @@ def main():
 
 
 def get_pods():
-    cmd = ['kubectl', 'get', 'pods', '-l', 'app=pathoplexus', '-n', 'pathoplexus', '-o', 'json']
+    cmd = ['kubectl', 'get', 'pods', '-l', 'app=loculus', '-n', 'loculus', '-o', 'json']
     result = subprocess.run(cmd, capture_output=True, text=True)
     return json.loads(result.stdout)['items']
 

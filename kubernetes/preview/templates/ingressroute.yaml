@@ -6,7 +6,7 @@
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: pathoplexus-website-ingressroute
+  name: loculus-website-ingressroute
   namespace: {{ .Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -19,7 +19,7 @@ spec:
       match: Host(`{{ .Values.host }}`)
       priority: 10
       services:
-        - name: pathoplexus-website-service
+        - name: loculus-website-service
           port: 3000
   tls:
     certResolver: myresolver
@@ -27,7 +27,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: pathoplexus-backend-ingressroute
+  name: loculus-backend-ingressroute
   namespace: {{ .Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -39,7 +39,7 @@ spec:
       match: Host(`{{ $backendHost }}`)
       priority: 10
       services:
-        - name: pathoplexus-backend-service
+        - name: loculus-backend-service
           port: 8079
   tls:
     certResolver: myresolver
@@ -47,7 +47,7 @@ spec:
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
-  name: pathoplexus-keycloak-ingressroute
+  name: loculus-keycloak-ingressroute
   namespace: {{ .Values.namespace }}
   annotations:
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
@@ -59,7 +59,7 @@ spec:
       match: Host(`{{ $keycloakHost }}`)
       priority: 10
       services:
-        - name: pathoplexus-keycloak-service
+        - name: loculus-keycloak-service
           port: 8083
   tls:
     certResolver: myresolver

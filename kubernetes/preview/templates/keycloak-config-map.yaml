@@ -8,7 +8,7 @@ metadata:
 data:
   keycloak-config.json: |
     {
-      "realm": "pathoplexusRealm",
+      "realm": "loculusRealm",
       "enabled": true,
       "registrationAllowed": true,
       "users": [

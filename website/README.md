@@ -1,4 +1,4 @@
-# Pathoplexus
+# Loculus
 
 This website uses [Astro](https://astro.build/) for static site generation and
 [React](https://react.dev/) for dynamic components.

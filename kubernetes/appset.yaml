@@ -9,10 +9,10 @@ spec:
   generators:
     - pullRequest:
         github:
-          owner: pathoplexus
+          owner: loculus
           labels:
             - preview
-          repo: pathoplexus
+          repo: loculus
           tokenRef:
             key: token
             secretName: github-access-token
@@ -33,7 +33,7 @@ spec:
       project: default
       source:
         path: 'kubernetes/preview/'
-        repoURL: 'https://github.com/pathoplexus/pathoplexus.git'
+        repoURL: 'https://github.com/pathoplexus/loculus.git'
         targetRevision: '{{.branch}}'
         helm:
           parameters:
@@ -46,7 +46,7 @@ spec:
             - name: branch
               value: '{{.branch}}'
             - name: host
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}.preview.k3s.pathoplexus.org'
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}.preview.k3s.loculus.org'
       syncPolicy:
         automated:
           selfHeal: true

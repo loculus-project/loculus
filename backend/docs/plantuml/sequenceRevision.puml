@@ -1,6 +1,6 @@
 @startuml
-    participant "Pathoplexus Frontend / User" as frontend #LightCyan
-    participant "Pathoplexus Backend" as backend #Orange
+    participant "Loculus Frontend / User" as frontend #LightCyan
+    participant "Loculus Backend" as backend #Orange
     database "Database" as DB
 
 

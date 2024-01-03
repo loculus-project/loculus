@@ -1,6 +1,6 @@
 {{- $configFile := .Files.Get "config.yaml" | fromYaml }}
 
-{{- $keycloakTokenUrl := "http://pathoplexus-keycloak-service:8083/realms/pathoplexusRealm/protocol/openid-connect/token" }}
+{{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/token" }}
 
 
 {{- range $key, $_ := $configFile.instances }}
@@ -18,7 +18,7 @@ spec:
       template:
         metadata:
           labels:
-            app: pathoplexus
+            app: loculus
             component: silo-import-cronjob-{{ $key }}
         spec:
           containers:
@@ -33,7 +33,7 @@ spec:
                   {{- if $.Values.disableBackend }}
                   value: "http://host.k3d.internal:8079/{{ $key }}"
                   {{- else }}
-                  value: "http://pathoplexus-backend-service:8079/{{ $key }}"
+                  value: "http://loculus-backend-service:8079/{{ $key }}"
                   {{- end }}
                 - name: KEYCLOAK_TOKEN_URL
                   value: "{{ $keycloakTokenUrl }}"

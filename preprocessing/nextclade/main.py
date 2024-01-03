@@ -15,14 +15,14 @@ parser.add_argument(
     "--backend-host",
     type=str,
     default="127.0.0.1",
-    help="Host address of the Pathoplexus backend",
+    help="Host address of the Loculus backend",
 )
 parser.add_argument("--keycloak-host", type=str, default="http://172.0.0.1:8083", help="Host address of Keycloak")
 parser.add_argument("--keycloak-user", type=str, default="dummy_prerocessing_pipeline",
                     help="Keycloak user to use for authentication")
 parser.add_argument("--keycloak-password", type=str, default="dummy_prerocessing_pipeline",
                     help="Keycloak password to use for authentication")
-parser.add_argument("--keycloak-token-path", type=str, default="/realms/pathoplexusRealm/protocol/openid-connect/token",
+parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculusRealm/protocol/openid-connect/token",
                     help="Path to Keycloak token endpoint")
 
 args = parser.parse_args()

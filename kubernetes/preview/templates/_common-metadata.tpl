@@ -1,5 +1,5 @@
 {{/* Get common metadata fields */}}
-{{- define "pathoplexus.commonMetadata" }}
+{{- define "loculus.commonMetadata" }}
 fields:
   - name: accession
     type: string
@@ -23,8 +23,8 @@ fields:
 {{- end}}
 
 {{/* Generate website config from passed config object */}}
-{{- define "pathoplexus.generateWebsiteConfig" }}
-{{- $commonMetadata := (include "pathoplexus.commonMetadata" . | fromYaml).fields }}
+{{- define "loculus.generateWebsiteConfig" }}
+{{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 instances:
   {{- range $key, $instance := .instances }}
   {{ $key }}:
@@ -34,7 +34,7 @@ instances:
       primaryKey: accessionVersion
       metadata:
         {{ $metadata := concat $commonMetadata .metadata
-            | include "pathoplexus.generateWebsiteMetadata"
+            | include "loculus.generateWebsiteMetadata"
             | fromYaml
          }}
         {{ $metadata.fields | toYaml | nindent 8 }}
@@ -46,7 +46,7 @@ instances:
 {{- end }}
 
 {{/* Generate website metadata from passed metadata array */}}
-{{- define "pathoplexus.generateWebsiteMetadata" }}
+{{- define "loculus.generateWebsiteMetadata" }}
 fields:
 {{- range . }}
   - name: {{ .name }}
@@ -61,7 +61,7 @@ fields:
 {{- end}}
 
 {{/* Generate backend config from passed config object */}}
-{{- define "pathoplexus.generateBackendConfig" }}
+{{- define "loculus.generateBackendConfig" }}
 instances:
   {{- range $key, $instance := .instances }}
   {{ $key }}:
@@ -69,7 +69,7 @@ instances:
       {{- with $instance.schema }}
       instanceName: {{ .instanceName }}
       metadata:
-        {{ $metadata := include "pathoplexus.generateWebsiteMetadata" .metadata | fromYaml }}
+        {{ $metadata := include "loculus.generateWebsiteMetadata" .metadata | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:
@@ -78,7 +78,7 @@ instances:
 {{- end }}
 
 {{/* Generate backend metadata from passed metadata array */}}
-{{- define "pathoplexus.generateBackendMetadata" }}
+{{- define "loculus.generateBackendMetadata" }}
 fields:
 {{- range . }}
   - name: {{ .name }}

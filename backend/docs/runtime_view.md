@@ -13,7 +13,7 @@ Extension from [docs/glossary.md](../../docs/glossary.md)
 
 To submit new sequences, the user calls the `/submit` endpoint and sends unpreprocessed data. 
 Data may be compressed using zstd, gzip, bzip2, xz, lzma or zip.
-For each sequence, Pathoplexus creates a new row in the "sequenceEntries" table.
+For each sequence, Loculus creates a new row in the "sequenceEntries" table.
 It generates a new accession. The version number of the sequence entries is 1.
 
 ### Preprocessing & Editing
@@ -50,7 +50,7 @@ The following diagram shows the different statuses and their transitions. The **
 
 To revise a sequence entery that has been released (i.e., the status is APPROVED_FOR_RELEASE),
 the user calls the `/revise` endpoint and sends accessions and unpreprocessed data.
-For each revised sequence entery, Pathoplexus creates a new row in the "sequencEntries" table.
+For each revised sequence entery, Loculus creates a new row in the "sequencEntries" table.
 It does not change any existing rows and does not create new accessions.
 The new rows have an incremented version number.
 
@@ -60,7 +60,7 @@ The new entry will be treated the same way as a new submission and undergoes the
 
 To revoke a sequence entery that has been released (i.e., the status is APPROVED_FOR_RELEASE),
 the user calls the `/revoke` endpoint and sends accessions.
-For each revoked sequence entry, Pathoplexus creates a new row in the "sequenceEntris" table.
+For each revoked sequence entry, Loculus creates a new row in the "sequenceEntris" table.
 The unpreprocessed data are empty. The "revoked" flag is set to true.
 The new rows have an incremented version number  (see diagram in the "Initial submission" section).
 

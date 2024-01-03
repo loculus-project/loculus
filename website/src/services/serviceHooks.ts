@@ -10,7 +10,7 @@ import { fastaEntries } from '../utils/parseFasta.ts';
 import { isAlignedSequence, isUnalignedSequence, type SequenceType } from '../utils/sequenceTypeHelpers.ts';
 
 export function backendClientHooks(clientConfig: ClientConfig) {
-    return new ZodiosHooks('pathoplexus', new Zodios(clientConfig.backendUrl, backendApi));
+    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, backendApi));
 }
 
 export function lapisClientHooks(lapisUrl: string) {

@@ -1,4 +1,4 @@
-# Contributing to Pathoplexus
+# Contributing to Loculus
 
 Contributions are very welcome! Just fork the repository, develop in a branch and submit a pull request.
 
@@ -17,7 +17,7 @@ We value clean code, here are some guidelines on what we consider clean code:
   Every piece of the code should at least be tested in the happy path.
 * Develop code with testability in mind.
 
-Keep in mind that Pathoplexus is designed to be run and maintained by anyone. 
+Keep in mind that Loculus is designed to be run and maintained by anyone. 
 This means that the code that we develop needs to be suitably general and configurable.
 
 ### OpenAPI docs

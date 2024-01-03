@@ -1,5 +1,5 @@
 {{- $configFile := .Files.Get "config.yaml" | fromYaml }}
-{{- $commonMetadata := (include "pathoplexus.commonMetadata" . | fromYaml).fields }}
+{{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 {{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
 
 {{- range $key, $instance := $configFile.instances }}

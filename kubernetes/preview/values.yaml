@@ -1,5 +1,5 @@
 environment: server
-namespace: pathoplexus
+namespace: loculus
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false

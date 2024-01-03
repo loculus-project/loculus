@@ -5,7 +5,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pathoplexus-lapis-silo-{{ $key }}
+  name: loculus-lapis-silo-{{ $key }}
   namespace: {{ $.Values.namespace }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
@@ -13,12 +13,12 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: pathoplexus
+      app: loculus
       component: lapis-silo-{{ $key }}
   template:
     metadata:
       labels:
-        app: pathoplexus
+        app: loculus
         component: lapis-silo-{{ $key }}
     spec:
       containers:

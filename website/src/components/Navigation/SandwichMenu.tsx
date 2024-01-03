@@ -36,7 +36,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, know
                 <div className='font-bold m-5 flex flex-col justify-between min-h-screen flex-grow'>
                     <div>
                         <div className='h-10'>
-                            <a href='/'>Pathoplexus</a>
+                            <a href='/'>Loculus</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
                             <OffCanvasNavItem key='organism-selector' text='Select organism' level={1} path={false} />
