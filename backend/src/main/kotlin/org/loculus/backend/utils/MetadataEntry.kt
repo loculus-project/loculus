@@ -11,6 +11,13 @@ import java.io.InputStreamReader
 
 data class MetadataEntry(val submissionId: SubmissionId, val metadata: Map<String, String>)
 
+/**
+ * Reads an input stream of a metadata file and returns a sequence of MetadataEntry objects.
+ *
+ * @throws UnprocessableEntityException If the metadata file does not contain a column for the submissionId,
+ * if a row in the metadata file does not contain a submissionId, or if a row in the metadata file does not contain
+ * any metadata.
+ */
 fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<MetadataEntry> {
     val csvParser = CSVParser(
         InputStreamReader(metadataInputStream),

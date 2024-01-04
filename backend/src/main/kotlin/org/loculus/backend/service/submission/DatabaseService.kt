@@ -128,6 +128,9 @@ class DatabaseService(
         }
     }
 
+    /**
+     * @return The number of rows inserted into the database. If it is not 1, something probably went wrong.
+     */
     private fun insertProcessedDataWithStatus(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,

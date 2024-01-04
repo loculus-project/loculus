@@ -87,6 +87,17 @@ class SubmitModel(
             }
     }
 
+    /**
+     * This function
+     *
+     * 1. reads the submitted files (MultipartFile) and decompresses them if needed
+     * 2. uploads the data to temporary storage tables MetadataUploadAuxTable and SequenceUploadAuxTable
+     * 3. validates that the metadata and sequences files contain the same entries
+     * 4. copies data to the sequence_entries table
+     * 5. deletes data from the temporary storage tables
+     *
+     * It also validates the group memberships.
+     */
     fun processSubmissions(
         uploadId: String,
         submissionParams: SubmissionParams,
@@ -122,6 +133,10 @@ class SubmitModel(
         }
     }
 
+    /**
+     * Uploads data to temporary storage tables MetadataUploadAuxTable and SequenceUploadAuxTable.
+     * In case of an original submission, it validates the group membership of the submitting user.
+     */
     private fun uploadData(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(
@@ -164,6 +179,10 @@ class SubmitModel(
         }
     }
 
+    /**
+     * Retrieves an InputStream from the given MultipartFile and decompresses if the file is compressed. It might
+     * create a temporary file: if it does, it stores a reference to the file in maybeFileToDelete.
+     */
     private fun getStreamFromFile(
         file: MultipartFile,
         uploadId: String,
@@ -191,6 +210,11 @@ class SubmitModel(
             )
     }
 
+    /**
+     * Uploads metadata to the MetadataUploadAuxTable.
+     *
+     * @throws DuplicateKeyException If there is a duplicated submissionId
+     */
     private fun uploadMetadata(
         uploadId: String,
         submissionParams: SubmissionParams,
@@ -242,6 +266,11 @@ class SubmitModel(
         }
     }
 
+    /**
+     * Uploads sequences to the SequenceUploadAuxTable.
+     *
+     * @throws DuplicateKeyException If there is a duplicated submissionId
+     */
     private fun uploadSequences(uploadId: String, sequenceStream: InputStream, batchSize: Int, organism: Organism) {
         log.info {
             "intermediate storing uploaded sequence data with UploadId $uploadId"
@@ -281,6 +310,10 @@ class SubmitModel(
         )
     }
 
+    /**
+     * Validates that the submissionIds in the metadataKeysSet are present in the sequenceKeysSet,
+     * and vice versa. If any submissionIds are missing, an UnprocessableEntityException is thrown.
+     */
     private fun validateSubmissionIdSets(metadataKeysSet: Set<SubmissionId>, sequenceKeysSet: Set<SubmissionId>) {
         val metadataKeysNotInSequences = metadataKeysSet.subtract(sequenceKeysSet)
         if (metadataKeysNotInSequences.isNotEmpty()) {

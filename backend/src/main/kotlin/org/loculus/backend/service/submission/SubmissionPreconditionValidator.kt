@@ -47,6 +47,14 @@ class SubmissionPreconditionValidator(
         }
     }
 
+    /**
+     * This function fetches entries with the `accessions` from the database and validates that
+     *
+     * - all `accessions` exist
+     * - the entries have one of the specified `statuses`
+     * - the `submitter` is authorized to edit the entries
+     * - the entries belong to the specified `organism`
+     */
     fun validateAccessions(
         submitter: String,
         accessions: List<Accession>,
@@ -104,7 +112,12 @@ class SubmissionPreconditionValidator(
         throw UnprocessableEntityException("Accession versions $accessionVersionsNotFound do not exist")
     }
 
-    private fun validateSequenceEntriesAreInStates(
+    /**
+     * Validates that the given sequence entries have one of the specified statuses.
+     *
+     * @throws UnprocessableEntityException If any of the sequence entries does not have one of the specified statuses.
+     */
+    private fun validateSequenceEntriesHaveSpecifiedStatuses(
         sequenceEntries: Query,
         statuses: List<Status>,
         table: SequenceEntriesDataTable,
