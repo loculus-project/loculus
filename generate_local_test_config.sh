@@ -3,7 +3,7 @@
 set -e
 
 root="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-helmChart="$root"/kubernetes/preview
+helmChart="$root"/kubernetes/loculus
 
 backend_config="$root"/website/tests/config/backend_config.json
 helm template name-does-not-matter "$helmChart" --show-only templates/loculus-backend-config.yaml | \

@@ -9,7 +9,7 @@ spec:
   generators:
     - pullRequest:
         github:
-          owner: loculus
+          owner: pathoplexus
           labels:
             - preview
           repo: loculus
@@ -32,7 +32,7 @@ spec:
         namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}'
       project: default
       source:
-        path: 'kubernetes/preview/'
+        path: 'kubernetes/loculus/'
         repoURL: 'https://github.com/pathoplexus/loculus.git'
         targetRevision: '{{.branch}}'
         helm:

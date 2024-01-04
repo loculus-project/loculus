@@ -9,7 +9,7 @@ Detailed documentation is available in each folder's README. This file contains 
 - Sequence and metadata processing pipeline is in [`preprocessing`](/preprocessing) folder, see [`preprocessing/specification.md`](/preprocessing/specification.md) 
 - Deployment code is in `kubernetes`, see [`kubernetes/README.md`](/kubernetes/README.md).
   Check this for local development setup instructions.
-- Authorization is performed by our own keycloak instance. see config in [`keycloak-image`](kubernetes/preview/templates/keycloak-deployment.yaml) and [`realm-config`](kubernetes/preview/templates/keycloak-config-map.yaml)
+- Authorization is performed by our own keycloak instance. see config in [`keycloak-image`](kubernetes/loculus/templates/keycloak-deployment.yaml) and [`realm-config`](kubernetes/loculus/templates/keycloak-config-map.yaml)
 
 ## GitHub Actions
 
