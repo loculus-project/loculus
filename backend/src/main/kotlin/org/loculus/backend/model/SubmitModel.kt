@@ -118,7 +118,7 @@ class SubmitModel(
             validateSubmissionIdSets(metadataSubmissionIds.toSet(), sequencesSubmissionIds.toSet())
 
             if (submissionParams is SubmissionParams.RevisionSubmissionParams) {
-                log.info { "Associating uploaded sequence data with existing sequence entries with uploadId $uploadId" }
+                log.info { "Associating revised sequence data with existing sequence entries with uploadId $uploadId" }
                 uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(
                     uploadId,
                     submissionParams.organism,

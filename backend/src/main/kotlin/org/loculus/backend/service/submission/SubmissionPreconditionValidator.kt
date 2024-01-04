@@ -41,7 +41,7 @@ class SubmissionPreconditionValidator(
                 .select(where = { table.accessionVersionIsIn(accessionVersions) })
 
             validateAccessionVersionsExist(sequenceEntries, accessionVersions, table)
-            validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
+            validateSequenceEntriesHaveSpecifiedStatuses(sequenceEntries, statuses, table)
             validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
             validateOrganism(sequenceEntries, organism, table)
         }
@@ -76,7 +76,7 @@ class SubmissionPreconditionValidator(
                 )
 
             validateAccessionsExist(sequenceEntries, accessions, table)
-            validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
+            validateSequenceEntriesHaveSpecifiedStatuses(sequenceEntries, statuses, table)
             validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
             validateOrganism(sequenceEntries, organism, table)
 

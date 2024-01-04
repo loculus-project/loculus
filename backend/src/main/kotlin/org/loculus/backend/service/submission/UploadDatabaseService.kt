@@ -145,8 +145,6 @@ class UploadDatabaseService(
      * Updates the MetadataUploadAuxTable and fills in the version and group name. It also performs several validations.
      */
     fun associateRevisedDataWithExistingSequenceEntries(uploadId: String, organism: Organism, username: String) {
-        log.info { "associating revised data with existing sequence entries with UploadId $uploadId" }
-
         val accessions =
             MetadataUploadAuxTable
                 .slice(accessionColumn)
