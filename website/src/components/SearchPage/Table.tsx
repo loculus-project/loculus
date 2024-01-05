@@ -1,40 +1,34 @@
 import { capitalCase } from 'change-case';
 import type { FC } from 'react';
 
-import type { Config } from '../../types';
+import { routes } from '../../routes.ts';
+import type { Schema } from '../../types/config.ts';
 
 export type TableSequenceData = {
-    [key: string]: string;
+    [key: string]: string | number | null;
 };
 
 type TableProps = {
-    config: Config;
+    organism: string;
+    schema: Schema;
     data: TableSequenceData[];
 };
 
-export const Table: FC<TableProps> = ({ data, config }) => {
-    const primaryKey = config.schema.primaryKey;
-    const rows = data.map((entry, index) => ({
-        id: index,
-        ...entry,
-        [primaryKey]: { label: entry[primaryKey], url: `/sequences/${entry[primaryKey]}` },
-    }));
-    const primaryKeyColumn = {
-        field: primaryKey,
-        headerName: capitalCase(primaryKey),
-    };
-    const columns = config.schema.tableColumns.map((field) => ({
+export const Table: FC<TableProps> = ({ organism, data, schema }) => {
+    const primaryKey = schema.primaryKey;
+
+    const columns = schema.tableColumns.map((field) => ({
         field,
         headerName: capitalCase(field),
     }));
 
     return (
         <div className='w-full overflow-x-auto'>
-            {rows.length !== 0 ? (
+            {data.length !== 0 ? (
                 <table className='table'>
                     <thead>
                         <tr>
-                            <th>{primaryKeyColumn.headerName}</th>
+                            <th>{capitalCase(primaryKey)}</th>
                             {columns.map((c) => (
                                 <th key={c.field}>{c.headerName}</th>
                             ))}
@@ -44,8 +38,8 @@ export const Table: FC<TableProps> = ({ data, config }) => {
                         {data.map((row, index) => (
                             <tr key={index}>
                                 <td>
-                                    <a href={`/sequences/${row[primaryKeyColumn.field]}`}>
-                                        {row[primaryKeyColumn.field]}
+                                    <a href={routes.sequencesDetailsPage(organism, row[primaryKey] as string)}>
+                                        {row[primaryKey]}
                                     </a>
                                 </td>
                                 {columns.map((c) => (

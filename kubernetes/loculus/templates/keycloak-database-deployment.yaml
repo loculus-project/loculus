@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-keycloak-database
+  namespace: {{ .Values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: keycloak-database
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: keycloak-database
+    spec:
+      containers:
+        - name: loculus-keycloak-database
+          image: postgres:latest
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "postgres"
+            - name: POSTGRES_PASSWORD
+              value: "unsecure"
+            - name: POSTGRES_DB
+              value: "keycloak"

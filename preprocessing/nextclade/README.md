@@ -20,7 +20,7 @@ This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It re
 2. Install environment:
 
     ```bash
-    mamba env create -n pathoplexus-nextclade -f environment.yml
+    mamba env create -n loculus-nextclade -f environment.yml
     ```
 
 3. Start backend (see [backend README](../backend/README.md))
@@ -37,7 +37,7 @@ This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It re
 5. Run pipeline
 
     ```bash
-    mamba activate pathoplexus-nextclade
+    mamba activate loculus-nextclade
     python main.py
     ```
 

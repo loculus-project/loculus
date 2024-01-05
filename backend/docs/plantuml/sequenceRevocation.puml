@@ -1,22 +1,22 @@
 @startuml
-    participant "Pathoplexus Frontend / User" as frontend #LightCyan
-    participant "Pathoplexus Backend" as backend #Orange
+    participant "Loculus Frontend / User" as frontend #LightCyan
+    participant "Loculus Backend" as backend #Orange
     database "Database" as DB
 
     frontend -> backend: wants to revoke already processed sequence
 
-     alt sequenceID exists and highest version is 'SILO_READY'
+     alt accession exists and highest version is 'APPROVED_FOR_RELEASE'
         backend -> DB: insert new version\nwith status 'REVISION_STAGING' \nand ' is_revocation = true'
-    backend -> frontend: response with sequenceId + new version number
+    backend -> frontend: response with accession + new version number
     else
         backend -> frontend: response with error message
     end
 
     alt
         frontend -> backend: confirms revocation
-        backend -> DB: set status to 'SILO_READY'
+        backend -> DB: set status to 'APPROVED_FOR_RELEASE'
     else
         frontend -> backend: cancels revocation
-        backend -> DB: delete latest version \nof the sequence and Status \n'REVOKED_STAGING'
+        backend -> DB: delete latest version \nof the sequence and Status \n'AWAITING_APPROVAL_FOR_REVOCATION'
     end
 @enduml

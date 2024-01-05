@@ -1,0 +1,9 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-backend-config
+  namespace: {{ .Values.namespace }}
+data:
+  backend_config.json: |
+    {{ .Files.Get "config.yaml" | fromYaml | include "loculus.generateBackendConfig" | fromYaml | toJson }}

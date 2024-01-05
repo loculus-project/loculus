@@ -1,27 +1,15 @@
 import { expect, test } from '../../e2e.fixture';
+import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
 test.describe('The revise page', () => {
-    test('should upload files and revise existing data', async ({ revisePage, submitPage, userPage }) => {
-        const sequences = await submitPage.prepareDataToBeReleasable();
+    test('should upload files and revise existing data', async ({ revisePage, loginAsTestUser }) => {
+        const { token } = await loginAsTestUser();
+
+        const sequenceEntries = await prepareDataToBe('approvedForRelease', token);
 
         await revisePage.goto();
         await expect(revisePage.page.getByText('Result of Revision')).not.toBeVisible();
-        await revisePage.submitRevisedData(sequences.map((entry) => entry.sequenceId));
+        await revisePage.submitRevisedData(sequenceEntries.map((entry) => entry.accession));
         await expect(revisePage.page.getByText('Result of Revision')).toBeVisible();
-
-        await userPage.gotoUserSequencePage();
-        const sequencesToExpect = await userPage.verifyTableEntries([
-            ...sequences.map((sequence) => ({
-                sequenceId: sequence.sequenceId,
-                version: sequence.version + 1,
-                status: 'RECEIVED',
-            })),
-            ...sequences.map((sequence) => ({
-                sequenceId: sequence.sequenceId,
-                version: sequence.version,
-                status: 'SILO_READY',
-            })),
-        ]);
-        expect(sequencesToExpect).toBe(true);
     });
 });

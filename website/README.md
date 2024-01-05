@@ -1,4 +1,4 @@
-# Pathoplexus
+# Loculus
 
 This website uses [Astro](https://astro.build/) for static site generation and
 [React](https://react.dev/) for dynamic components.
@@ -13,9 +13,9 @@ cp .env.example .env
 
 ### Local Development
 
-Install packages: `npm install`
-
-Run `npm run start` to start a local development server with hot reloading.
+* Install packages: `npm install`
+* Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh`
+* Run `npm run start` to start a local development server with hot reloading.
 
 ### Unit Tests
 
@@ -30,18 +30,11 @@ Run `npm run e2e` to execute the end-to-end tests.
 If you run Playwright for the first time, you might need to run `npx playwright install`
 and `npx playwright install-deps` first. Playwright will tell you if that's the case.
 
+(!) Note: The e2e tests require a running LAPIS instance with test data. This will be prepared automatically, when the LAPIS instance is empty and otherwise skipped. Some e2e tests assume, this prepared data was the first data to be released. If you run the e2e tests for the first time on a LAPIS instance with existing data that is _NOT_ the prepared data, tests will fail ,and you need to delete the data first. 
+
 ### Running The Application
 
-Run `npm run start-server` to build and run the production version of the application.
-The build artifacts will be stored in the `dist/` directory.
-We use an express server to
-* serve static files,
-* run the server-side rendering routes of Astro,
-* proxy requests to the backend and
-* proxy requests to LAPIS.
-
-The proxy is used to avoid CORS issues and to only configure backend URLs for server-side code,
-since accessibility might differ for server-side and for client-side code.
+Run `npm run start-server` to build and run the application with the Astro dev server.
 
 #### Configuration
 
@@ -51,28 +44,16 @@ See `.env.docker` for the required variables.
 
 Furthermore, the website requires config files that need to be present at runtime in the directory
 specified in the `CONFIG_DIR` environment variable:
-* `config.json`: Contains configuration on the underlying pathogen. It's similar to the database config file that LAPIS uses.
+* `config.json`: Contains configuration on the underlying organism. It's similar to the database config file that LAPIS uses.
 * `reference_genomes.json`: Defines names for segments of the genome and amino acids. It's equal to the file that LAPIS uses.
 * `runtime_config.json`: Contains configuration that specific for a deployed instance of the website.
 
 Check our tests and examples for working config files.
 
-## Start from docker-compose
+## Logging
 
-Make sure you are authenticated for the private pathoplexus docker registry (see [here](../README.md) for a step-by-step guide).
-
-We have a [docker-compose config](../docker-compose.yml) to start the website. For flexibility the docker image name is read from the environment.
-To use the `:latest` image, you can just run (from the repository root):
-
-```bash
-BACKEND_IMAGE=doesNotMatterHere WEBSITE_IMAGE=ghcr.io/pathoplexus/website:latest docker compose up website
-```
-
-To pull the latest version of the image, run:
-
-```bash
-docker pull ghcr.io/pathoplexus/website:latest
-```
+The website writes logs to stdout.
+If the environment variable LOG_DIR is set, it will also store them in `LOG_DIR/website.log`.
 
 ## Development environment
 

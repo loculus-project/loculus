@@ -1,12 +1,12 @@
 @startuml
-    participant "Pathoplexus Frontend / User" as frontend #LightCyan
+    participant "Loculus Frontend / User" as frontend #LightCyan
     participant "(Pre-)Processing Pipeline" as processing #LightGreen
-    participant "Pathoplexus Backend" as backend #Orange
+    participant "Loculus Backend" as backend #Orange
     database "Database" as DB
 
     frontend -> backend: submit initial sequence data
     alt Sequence and Metadata Files are valid
-        backend -> frontend: response with sequenceIds
+        backend -> frontend: response with accessions
         backend -> DB: Store initial sequence data
         backend -> DB: set status to 'RECEIVED'
     else Sequence and Metadata Files are invalid
@@ -19,11 +19,11 @@
 
     loop until no processing errors
 
-        processing -> backend: Query initial/reviewed sequence data
-        backend -> DB: Query initial/reviewed sequence data
-        backend -> DB: Set status from 'RECEIVED'/'REVIEW_NEEDED' to 'PROCESSING'
-        DB --> backend: initial/reviewed sequence data
-        backend --> processing: initial/reviewed sequence data
+        processing -> backend: Query initial/edited sequence data
+        backend -> DB: Query initial/edited sequence data
+        backend -> DB: Set status from 'RECEIVED'/'HAS_ERRORS' to 'IN_PROCESSING'
+        DB --> backend: initial/edited sequence data
+        backend --> processing: initial/edited sequence data
 
         processing -> backend: submit processed sequence data
         alt validation errors occur
@@ -36,17 +36,17 @@
 
         alt processed sequence data contain processing errors
             backend -> DB: Store processed sequence data with errors
-            backend -> DB: set status to 'REVIEW_NEEDED'
+            backend -> DB: set status to 'HAS_ERRORS'
         else
             backend -> DB: Store processed sequence data without errors
-            backend -> DB: set status to 'PROCESSED'
+            backend -> DB: set status to 'AWAITING_APPROVAL'
         end
          frontend -> backend: query processed sequence data with errors
-        frontend -> frontend: address errors and adapt sequence data
+        frontend -> frontend: address errors and edit sequence data
 
-        frontend -> backend: submit adapted sequence data
-        backend -> DB: store adapted sequence data
-        backend -> DB: set status to 'REVIEWED'
+        frontend -> backend: submit edited sequence data
+        backend -> DB: store edited sequence data
+        backend -> DB: set status to 'RECEIVED'
     end loop
 
 
@@ -56,7 +56,7 @@
     backend -> frontend: processed sequence data
 
     frontend -> backend: approve processed sequence data
-    backend -> DB: set status from 'PROCESSED' to 'SILO_READY'
+    backend -> DB: set status from 'AWAITING_APPROVAL' to 'APPROVED_FOR_RELEASE'
 
 @enduml
 

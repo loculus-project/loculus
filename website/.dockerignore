@@ -1,6 +1,6 @@
 *
 !src/
-!netlifyConfig/
+src/**/*.spec.ts*
 !public/
 !package.json
 !package-lock.json
@@ -8,4 +8,3 @@
 !tailwind.config.cjs
 !tsconfig.json
 !.env.docker
-!entry.js

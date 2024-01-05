@@ -1,8 +1,10 @@
 import type { Locator, Page } from '@playwright/test';
 
-import { baseUrl } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism } from '../../e2e.fixture';
+import { routes } from '../../../src/routes.ts';
+import type { FilterValue } from '../../../src/types/config.ts';
 
-const ACCESSION = 'Accession';
+const ACCESSION_VERSION = 'Accession version';
 
 export class SearchPage {
     public readonly searchButton: Locator;
@@ -16,7 +18,7 @@ export class SearchPage {
     }
 
     public async goto() {
-        await this.page.goto(`${baseUrl}/search`);
+        await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key)}`);
     }
 
     public async clickSearchButton() {
@@ -28,15 +30,15 @@ export class SearchPage {
     }
 
     // Note: This only gets a locator when the field is empty
-    public getEmptyAccessionField() {
-        return this.page.getByPlaceholder(ACCESSION, { exact: true });
+    public getEmptyAccessionVersionField() {
+        return this.page.getByPlaceholder(ACCESSION_VERSION, { exact: true });
     }
 
-    public getFilledAccessionField() {
-        return this.page.getByLabel(ACCESSION, { exact: true });
+    public getFilledAccessionVersionField() {
+        return this.page.getByLabel(ACCESSION_VERSION, { exact: true });
     }
 
-    public async searchFor(params: { [key: string]: string }) {
-        await this.page.goto(`${baseUrl}/search?${new URLSearchParams(params)}`);
+    public async searchFor(params: FilterValue[]) {
+        await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key, params)}`);
     }
 }

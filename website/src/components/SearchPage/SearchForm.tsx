@@ -9,26 +9,31 @@ import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField } from './fields/DateField';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
-import { getClientLogger } from '../../api';
+import { getClientLogger } from '../../clientLogger.ts';
+import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import type { ClientConfig, Filter } from '../../types';
+import { routes } from '../../routes.ts';
+import type { Filter } from '../../types/config.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 
 const queryClient = new QueryClient();
 
 interface SearchFormProps {
-    metadataSettings: Filter[];
+    organism: string;
+    filters: Filter[];
     clientConfig: ClientConfig;
 }
 
 const clientLogger = getClientLogger('SearchForm');
 
-export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig }) => {
+export const SearchForm: FC<SearchFormProps> = ({ organism, filters, clientConfig }) => {
     const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
-        metadataSettings.map((metadata) => ({
-            ...metadata,
-            label: metadata.label ?? sentenceCase(metadata.name),
+        filters.map((filter) => ({
+            ...filter,
+            filterValue: '',
+            label: filter.label ?? sentenceCase(filter.name),
         })),
     );
     const [isLoading, setIsLoading] = useState(false);
@@ -41,7 +46,7 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig
             if (fieldToChange === undefined) {
                 throw new Error(`Tried to change a filter that does not exist: ${metadataName}`);
             }
-            fieldToChange.filter = filter;
+            fieldToChange.filterValue = filter;
             return updatedFields;
         });
     };
@@ -49,38 +54,44 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig
     const handleSearch: FormEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();
         setIsLoading(true);
-        location.href = buildQueryUrl(fieldValues);
+        location.href = routes.searchPage(organism, fieldValues);
     };
 
     const resetSearch = async () => {
         setIsLoading(true);
         await clientLogger.info('reset_search');
-        location.href = buildQueryUrl([]);
+        location.href = routes.searchPage(organism, []);
     };
+
+    const lapisUrl = getLapisUrl(clientConfig, organism);
 
     const fields = useMemo(
         () =>
             fieldValues.map((field) => {
+                if (field.notSearchable === true) return null;
+
                 const props = {
                     key: field.name,
                     field,
                     handleFieldChange,
                     isLoading,
-                    clientConfig,
+                    lapisUrl,
                     allFields: fieldValues,
                 };
-                if (field.type === 'date') {
-                    return <DateField {...props} />;
+
+                switch (field.type) {
+                    case 'date':
+                        return <DateField {...props} />;
+                    case 'pango_lineage':
+                        return <PangoLineageField {...props} />;
+                    default:
+                        if (field.autocomplete === true) {
+                            return <AutoCompleteField {...props} />;
+                        }
+                        return <NormalTextField {...props} />;
                 }
-                if (field.type === 'pango_lineage') {
-                    return <PangoLineageField {...props} />;
-                }
-                if (field.autocomplete === true) {
-                    return <AutoCompleteField {...props} />;
-                }
-                return <NormalTextField {...props} />;
             }),
-        [clientConfig, fieldValues, isLoading],
+        [lapisUrl, fieldValues, isLoading],
     );
 
     return (
@@ -126,12 +137,6 @@ export const SearchForm: FC<SearchFormProps> = ({ metadataSettings, clientConfig
         </QueryClientProvider>
     );
 };
-
-function buildQueryUrl(fieldValues: Filter[]) {
-    const params = new URLSearchParams();
-    fieldValues.filter((field) => field.filter !== '').forEach((field) => params.set(field.name, field.filter));
-    return `search${params.size !== 0 ? `?${params.toString()}` : ''}`;
-}
 
 const SearchButton: FC<{ isLoading: boolean }> = ({ isLoading }) => (
     <button className='btn normal-case w-full' type='submit' disabled={isLoading}>

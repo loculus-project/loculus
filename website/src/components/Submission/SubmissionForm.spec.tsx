@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
-import type { HeaderId } from '../../types';
-import { mockRequest, testConfig, testuser } from '../vitest.setup';
+import { mockRequest, testAccessToken, testConfig, testOrganism } from '../../../vitest.setup.ts';
+import type { ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -15,24 +15,25 @@ vi.mock('../../api', () => ({
 }));
 
 function renderSubmissionForm() {
-    return render(<SubmissionForm clientConfig={testConfig.forClient} />);
+    return render(
+        <SubmissionForm accessToken={testAccessToken} organism={testOrganism} clientConfig={testConfig.public} />,
+    );
 }
 
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
 const sequencesFile = new File(['content'], 'sequences.fasta', { type: 'text/plain' });
 
-const testResponse: HeaderId[] = [
-    { sequenceId: 0, version: 1, customId: 'header0' },
-    { sequenceId: 1, version: 1, customId: 'header1' },
+const testResponse: SubmissionIdMapping[] = [
+    { accession: '0', version: 1, submissionId: 'header0' },
+    { accession: '1', version: 1, submissionId: 'header1' },
 ];
 
 describe('SubmitForm', () => {
     test('should handle file upload and server response', async () => {
-        mockRequest.submit(200, testResponse);
+        mockRequest.backend.submit(200, testResponse);
 
-        const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
+        const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.type(getByPlaceholderText('Username:'), testuser);
         await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequences File:/i), sequencesFile);
 
@@ -46,11 +47,10 @@ describe('SubmitForm', () => {
     });
 
     test('should answer with feedback that a file is missing', async () => {
-        mockRequest.submit(200, testResponse);
+        mockRequest.backend.submit(200, testResponse);
 
-        const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
+        const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.type(getByPlaceholderText('Username:'), testuser);
         await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
 
         const submitButton = getByText('Submit');
@@ -63,19 +63,37 @@ describe('SubmitForm', () => {
         });
     });
 
-    test('should answer with feedback that the backend respond with an internal server error', async () => {
-        mockRequest.submit(500);
+    test('should unexpected error with proper error message', async () => {
+        mockRequest.backend.submit(500, 'a weird, unexpected test error');
 
-        const { getByLabelText, getByText, getByPlaceholderText } = renderSubmissionForm();
+        await submitAndExpectErrorMessageContains('Received unexpected message from backend');
+    });
 
-        await userEvent.type(getByPlaceholderText('Username:'), testuser);
+    test('should handle unprocessable entity error with proper error message', async () => {
+        const problemDetail: ProblemDetail = {
+            title: 'Dummy unprocessable entity',
+            detail: 'dummy error message',
+            instance: 'dummy instance',
+            status: 422,
+            type: 'dummy type',
+        };
+        mockRequest.backend.submit(422, problemDetail);
+
+        const expectedErrorMessage = `The submitted file content was invalid: ${problemDetail.detail}`;
+        await submitAndExpectErrorMessageContains(expectedErrorMessage);
+    });
+
+    async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
+        const { getByLabelText, getByText } = renderSubmissionForm();
+
         await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequences File:/i), sequencesFile);
 
         const submitButton = getByText('Submit');
         await userEvent.click(submitButton);
+
         await waitFor(() => {
-            expect(getByText((text) => text.includes('Upload failed with status code 500'))).toBeInTheDocument();
+            expect(getByText((text) => text.includes(receivedUnexpectedMessageFromBackend))).toBeInTheDocument();
         });
-    });
+    }
 });

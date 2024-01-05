@@ -1,0 +1,148 @@
+{{- $keycloakHost := printf "authentication.%s" .Values.host }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: keycloak-config
+  namespace: {{ .Values.namespace }}
+data:
+  keycloak-config.json: |
+    {
+      "realm": "loculusRealm",
+      "enabled": true,
+      "registrationAllowed": true,
+      "users": [
+        {{- $browsers := list "firefox" "webkit" "chromium"}}
+        {{- range $_, $browser := $browsers }}
+          {{- range $index, $_ := until 20}}
+        {
+          "username": "testuser_{{$index}}_{{$browser}}",
+          "enabled": true,
+          "email": "testuser_{{$index}}_{{$browser}}@keycloak.org",
+          "firstName": "Test",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "testuser_{{$index}}_{{$browser}}"
+            }
+          ],
+          "realmRoles": [
+            "user",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+          {{ end }}
+        {{ end }}
+        {
+          "username": "testuser",
+          "enabled": true,
+          "email": "testuser@keycloak.org",
+          "firstName": "Test",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "testuser"
+            }
+          ],
+          "realmRoles": [
+            "user",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        {
+          "username": "dummy_prerocessing_pipeline",
+          "enabled": true,
+          "email": "dummy_prerocessing_pipeline@keycloak.org",
+          "firstName": "Dummy",
+          "lastName": "Preprocessing",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "dummy_prerocessing_pipeline"
+            }
+          ],
+          "realmRoles": [
+            "preprocessing_pipeline",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        {
+          "username": "silo_import_job",
+          "enabled": true,
+          "email": "silo_import_job@keycloak.org",
+          "firstName": "SILO",
+          "lastName": "ImportJob",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "silo_import_job"
+            }
+          ],
+          "realmRoles": [
+            "get_released_data",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        }
+      ],
+      "roles": {
+        "realm": [
+          {
+            "name": "user",
+            "description": "User privileges"
+          },
+          {
+            "name": "admin",
+            "description": "Administrator privileges"
+          },
+          {
+            "name": "preprocessing_pipeline",
+            "description": "Preprocessing pipeline privileges"
+          },
+          {
+            "name": "get_released_data",
+            "description": "Privileges for getting released data"
+          }
+        ]
+      },
+      "clients": [
+        {
+          "clientId": "test-cli",
+          "enabled": true,
+          "publicClient": true,
+          "directAccessGrantsEnabled": true,
+          "redirectUris": [
+            "*"
+          ]
+        }
+      ],
+      "attributes": {
+        {{- if eq .Values.environment "server" }}
+        "frontendUrl": "https://{{ $keycloakHost}}"
+        {{- else }}
+        "frontendUrl": "http://localhost:8083"
+        {{- end }}
+      }
+    }
+

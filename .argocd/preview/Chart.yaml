@@ -1,4 +1,0 @@
-apiVersion: v2
-name: pp-preview
-description: A Helm chart for pathoplexus previews
-version: 0.1.0

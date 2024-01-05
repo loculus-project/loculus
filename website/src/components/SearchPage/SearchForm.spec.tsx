@@ -1,30 +1,34 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, test, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
-import type { ClientConfig, Filter } from '../../types';
+import { testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { routes } from '../../routes.ts';
+import type { Filter } from '../../types/config.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),
+    getLapisUrl: vi.fn().mockReturnValue('lapis.dummy.url'),
 }));
 
 const queryClient = new QueryClient();
 
-const defaultMetadataSettings: [Filter, Filter, Filter] = [
-    { name: 'field1', type: 'string', label: 'Field 1', autocomplete: false, filter: '' },
-    { name: 'field2', type: 'date', autocomplete: false, filter: '' },
-    { name: 'field3', type: 'pango_lineage', label: 'Field 3', autocomplete: true, filter: '' },
+const defaultSearchFormFilters = [
+    { name: 'field1', type: 'string' as const, label: 'Field 1', autocomplete: false, filterValue: '' },
+    { name: 'field2', type: 'date' as const, autocomplete: false, filterValue: '' },
+    { name: 'field3', type: 'pango_lineage' as const, label: 'Field 3', autocomplete: true, filterValue: '' },
 ];
-const dummyConfig = {} as ClientConfig;
+
 function renderSearchForm(
-    metadataSettings: Filter[] = defaultMetadataSettings,
-    clientConfig: ClientConfig = dummyConfig,
+    searchFormFilters: Filter[] = [...defaultSearchFormFilters],
+    clientConfig: ClientConfig = testConfig.public,
 ) {
     render(
         <QueryClientProvider client={queryClient}>
-            <SearchForm metadataSettings={metadataSettings} clientConfig={clientConfig} />
+            <SearchForm organism={testOrganism} filters={searchFormFilters} clientConfig={clientConfig} />
         </QueryClientProvider>,
     );
 }
@@ -38,7 +42,7 @@ describe('SearchForm', () => {
         });
     });
 
-    test('should render the form with all fields', async () => {
+    test('should render the form with all fields that are searchable', async () => {
         renderSearchForm();
 
         expect(screen.getByPlaceholderText('Field 1')).toBeDefined();
@@ -49,11 +53,30 @@ describe('SearchForm', () => {
     test('should redirect according to filters', async () => {
         renderSearchForm();
 
-        await userEvent.type(screen.getByPlaceholderText('Field 1'), 'test');
+        const filterValue = 'test';
+        await userEvent.type(screen.getByPlaceholderText('Field 1'), filterValue);
 
         const searchButton = screen.getByRole('button', { name: 'Search' });
         await userEvent.click(searchButton);
 
-        expect(window.location.href).toBe('search?field1=test');
+        expect(window.location.href).toBe(
+            routes.searchPage(testOrganism, [{ ...defaultSearchFormFilters[0], filterValue }]),
+        );
+    });
+
+    test('should not render the form with fields with flag notSearchable', async () => {
+        renderSearchForm([
+            ...defaultSearchFormFilters,
+            {
+                name: 'NotSearchable',
+                type: 'string' as const,
+                autocomplete: false,
+                filterValue: '',
+                notSearchable: true,
+            },
+        ]);
+
+        expect(screen.getByPlaceholderText('Field 1')).toBeDefined();
+        expect(screen.queryByPlaceholderText('NotSearchable')).not.toBeInTheDocument();
     });
 });

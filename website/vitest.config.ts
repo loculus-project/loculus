@@ -1,15 +1,19 @@
-/// <reference types="vitest" />
-/// <reference types="vite/client" />
-
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import Icons from 'unplugin-icons/vite';
+import { defineConfig as defineViteConfig, mergeConfig } from 'vite';
+import { defineConfig as defineVitestConfig } from 'vitest/config';
 
-export default defineConfig({
-    plugins: [react()],
+const viteConfig = defineViteConfig({
+    plugins: [react(), Icons({ compiler: 'jsx', jsx: 'react' })],
+});
+
+const vitestConfig = defineVitestConfig({
     test: {
         globals: true,
         environment: 'jsdom',
-        setupFiles: ['./src/components/vitest.setup.ts'],
+        setupFiles: ['./vitest.setup.ts'],
         include: ['./src/**/*.spec.ts', './src/**/*.spec.tsx'],
     },
 });
+
+export default mergeConfig(viteConfig, vitestConfig);

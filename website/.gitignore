@@ -17,6 +17,7 @@ pnpm-debug.log*
 /playwright/.cache/
 
 log/
-tests/initialSiloData/preprocessingOutput/
 
 justfile
+/tests/config/backend_config.json
+/tests/config/website_config.json

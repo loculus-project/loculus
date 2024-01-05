@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-keycloak
+  namespace: {{ .Values.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: keycloak
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak
+          env:
+            - name: DB_VENDOR
+              value: "postgres"
+            - name: DB_ADDR
+              value: "loculus-keycloak-database-service"
+            - name: DB_DATABASE
+              value: "keycloak"
+            - name: DB_USER
+              value: "postgres"
+            - name: DB_PASSWORD
+              value: "unsecure"
+            - name: KEYCLOAK_ADMIN
+              value: "admin"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "admin"
+            - name: KC_PROXY
+              value: "edge"
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+          args:
+            - "start-dev"
+            - "--import-realm"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: config-volume
+              mountPath: /opt/keycloak/data/import/
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
+      volumes:
+        - name: config-volume
+          configMap:
+            name: keycloak-config

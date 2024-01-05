@@ -1,0 +1,119 @@
+{
+    "instances": {
+        "dummyOrganism": {
+            "referenceGenomes": {
+                "nucleotideSequences": [
+                    {
+                        "name": "main",
+                        "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+                    },
+                    {
+                        "name": "secondSegment",
+                        "sequence": "AAAAAAAAAAAAAAAA"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
+            "schema": {
+                "instanceName": "Test",
+                "metadata": [
+                    {
+                        "name": "date",
+                        "type": "date",
+                        "required": true
+                    },
+                    {
+                        "name": "dateSubmitted",
+                        "type": "date"
+                    },
+                    {
+                        "name": "region",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "country",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "division",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "host",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "age",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "sex",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "pangoLineage",
+                        "type": "pango_lineage",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "qc",
+                        "type": "double"
+                    }
+                ]
+            }
+        },
+        "otherOrganism": {
+            "referenceGenomes": {
+                "nucleotideSequences": [
+                    {
+                        "name": "main",
+                        "sequence": "ATCG"
+                    }
+                ],
+                "genes": [
+                    {
+                        "name": "gene",
+                        "sequence": "MADS"
+                    }
+                ]
+            },
+            "schema": {
+                "instanceName": "Test",
+                "metadata": [
+                    {
+                        "name": "date",
+                        "type": "date",
+                        "required": true
+                    },
+                    {
+                        "name": "specialOtherField",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "pangoLineage",
+                        "type": "pango_lineage",
+                        "autocomplete": true
+                    }
+                ]
+            }
+        }
+    }
+}

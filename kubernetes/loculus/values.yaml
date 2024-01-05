@@ -1,0 +1,5 @@
+environment: server
+namespace: loculus
+disableWebsite: false
+disableBackend: false
+disablePreprocessing: false

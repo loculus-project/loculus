@@ -1,15 +1,20 @@
 import { type FC, useState } from 'react';
 
-import type { ClientConfig, HeaderId } from '../../types';
+import { ManagedErrorFeedback, useErrorFeedbackState } from './ManagedErrorFeedback';
+import type { SubmissionIdMapping } from '../../types/backend.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { DataUploadForm } from '../DataUploadForm.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
 type SubmissionFormProps = {
+    accessToken: string;
+    organism: string;
     clientConfig: ClientConfig;
 };
 
-export const SubmissionForm: FC<SubmissionFormProps> = ({ clientConfig }) => {
-    const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<HeaderId[] | null>(null);
+export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism, clientConfig }) => {
+    const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<SubmissionIdMapping[] | null>(null);
 
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
@@ -17,7 +22,10 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ clientConfig }) => {
         <div className='flex flex-col items-center'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <DataUploadForm
-                targetUrl={`${clientConfig.backendUrl}/submit`}
+                accessToken={accessToken}
+                organism={organism}
+                clientConfig={clientConfig}
+                action='submit'
                 onError={openErrorFeedback}
                 onSuccess={setResponseSequenceHeaders}
             />
@@ -28,8 +36,8 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ clientConfig }) => {
                         <h2 className='text-lg font-bold'>Response Sequence Headers</h2>
                         <ul className='list-disc list-inside'>
                             {responseSequenceHeaders.map((header) => (
-                                <li key={header.sequenceId}>
-                                    {header.sequenceId}.{header.version}: {header.customId}
+                                <li key={header.accession}>
+                                    {getAccessionVersionString(header)}: {header.submissionId}
                                 </li>
                             ))}
                         </ul>

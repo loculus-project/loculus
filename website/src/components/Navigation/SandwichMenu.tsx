@@ -1,10 +1,19 @@
 import type { FC } from 'react';
 
+import type { Organism } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
+import { navigationItems, routes } from '../../routes.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 
-export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right }) => {
+type SandwichMenuProps = {
+    top: number;
+    right: number;
+    organism: Organism | undefined;
+    knownOrganisms: Organism[];
+};
+
+export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, knownOrganisms }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
@@ -27,14 +36,21 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                 <div className='font-bold m-5 flex flex-col justify-between min-h-screen flex-grow'>
                     <div>
                         <div className='h-10'>
-                            <a href='/'>Pathoplexus</a>
+                            <a href='/'>Loculus</a>
                         </div>
                         <div className='flex-grow divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            <OffCanvasNavItem text='Search' url='/search' />
-                            <OffCanvasNavItem text='Submit' url='/submit' />
-                            <OffCanvasNavItem text='Revise' url='/revise' />
-                            <OffCanvasNavItem text='Datasets' url='/datasets' />
-                            <OffCanvasNavItem text='User' url='/user' />
+                            <OffCanvasNavItem key='organism-selector' text='Select organism' level={1} path={false} />
+                            {knownOrganisms.map((organism) => (
+                                <OffCanvasNavItem
+                                    key={organism.key}
+                                    text={organism.displayName}
+                                    level={2}
+                                    path={routes.organismStartPage(organism.key)}
+                                />
+                            ))}
+                            {navigationItems.top(organism?.key).map(({ text, path }) => (
+                                <OffCanvasNavItem key={path} text={text} level={1} path={path} />
+                            ))}
                         </div>
                     </div>
 
@@ -46,10 +62,9 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
                         </div>
 
                         <div className='font-light divide-y-2 divide-gray-300 divide-solid border-t-2 border-b-2 border-gray-300 border-solid '>
-                            <OffCanvasNavItem text='About' url='/about' type='small' />
-                            <OffCanvasNavItem text='Api documentation' url='/api_documentation' type='small' />
-                            <OffCanvasNavItem text='Governance' url='/governance' type='small' />
-                            <OffCanvasNavItem text='Status' url='/status' type='small' />
+                            {navigationItems.bottom.map(({ text, path }) => (
+                                <OffCanvasNavItem key={path} text={text} level={1} path={path} type='small' />
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -60,21 +75,19 @@ export const SandwichMenu: FC<{ top: number; right: number }> = ({ top, right })
 
 type OffCanvasNavItemProps = {
     text: string;
-    url?: string;
+    path: string | false;
+    level: 1 | 2;
     type?: 'small';
 };
 
-const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, url, type }) => {
+const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type }) => {
     const height = type === 'small' ? 'py-1' : 'py-3';
 
-    let inner = (
-        <div className={` flex items-center`}>
-            <div className={`pl-4 ${height} `}>{text}</div>
+    return (
+        <div>
+            <div className='flex items-center'>
+                <div className={`ml-${4 * level} ${height}`}>{path === false ? text : <a href={path}> {text}</a>}</div>
+            </div>
         </div>
     );
-    if (url !== undefined) {
-        inner = <a href={url}>{inner}</a>;
-    }
-
-    return <div>{inner}</div>;
 };

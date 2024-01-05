@@ -1,4 +1,4 @@
-import { AccountCircle as AccountCircleIcon } from '@mui/icons-material';
+import { AccountCircleIcon } from '~icons/ic/baseline-account-circle';
 import type { FC } from 'react';
 
 type Props = {

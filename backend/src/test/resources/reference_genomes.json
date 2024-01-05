@@ -6,13 +6,13 @@
     },
     {
       "name": "secondSegment",
-      "sequence": "ATAG"
+      "sequence": "AAAAAAAAAAAAAAAA"
     }
   ],
   "genes": [
     {
       "name": "someLongGene",
-      "sequence": "MYSFVSEETGTLIVNSVLLFL"
+      "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
     },
     {
       "name": "someShortGene",

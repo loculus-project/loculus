@@ -1,0 +1,11 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../middleware/authMiddleware';
+
+Astro.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
+Astro.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
+---
+
+<BaseLayout title='Logout'>
+    <div>You have been logged out</div>
+</BaseLayout>

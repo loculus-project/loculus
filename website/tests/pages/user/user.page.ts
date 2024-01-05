@@ -1,32 +1,27 @@
 import type { Page } from '@playwright/test';
 
-import { baseUrl, testuser } from '../../e2e.fixture';
-
-interface SequenceVersionWithStatus {
-    sequenceId: number;
-    version: number;
-    status: string;
-}
+import { routes } from '../../../src/routes.ts';
+import type { AccessionVersion, SequenceEntryStatus } from '../../../src/types/backend.ts';
+import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
+import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 
 export class UserPage {
     private readonly sequenceBoxNames = [
-        `userSequences.${testuser}.receivedExpanded`,
-        `userSequences.${testuser}.processingExpanded`,
-        `userSequences.${testuser}.needsReviewExpanded`,
-        `userSequences.${testuser}.reviewedExpanded`,
-        `userSequences.${testuser}.stagingExpanded`,
-        `userSequences.${testuser}.readyExpanded`,
-        `userSequences.${testuser}.revokedExpanded`,
+        `userSequences.receivedExpanded`,
+        `userSequences.processingExpanded`,
+        `userSequences.needsReviewExpanded`,
+        `userSequences.stagingExpanded`,
+        `userSequences.readyExpanded`,
+        `userSequences.revokedExpanded`,
     ] as const;
 
     constructor(public readonly page: Page) {}
 
-    public async goto() {
-        await this.page.goto(`${baseUrl}/user/${testuser}`);
-    }
-
     public async gotoUserSequencePage() {
-        await this.page.goto(`${baseUrl}/user/${testuser}/sequences`);
+        await this.page.goto(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key)}`, {
+            waitUntil: 'networkidle',
+        });
+        await this.page.waitForURL(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key)}`);
 
         for (const id of this.sequenceBoxNames) {
             const checkbox = this.page.getByTestId(id);
@@ -38,19 +33,40 @@ export class UserPage {
         await this.page.waitForSelector('text=REVOKE');
     }
 
-    public async verifyTableEntries(sequencesToCheck: SequenceVersionWithStatus[]) {
+    public async goToUserPage() {
+        await this.page.goto(`${baseUrl}${routes.userOverviewPage()}`, { waitUntil: 'networkidle' });
+        await this.page.waitForURL(`${baseUrl}${routes.userOverviewPage()}`);
+    }
+
+    public async logout() {
+        await this.page.click('text=Logout');
+        await this.page.waitForURL(`${baseUrl}/logout`);
+    }
+
+    public async verifyTableEntries(sequencesToCheck: SequenceEntryStatus[]) {
         const rows = (await this.page.locator('tr').allTextContents()).map((row) =>
             row.split(/\s+/).filter((entry) => entry !== ''),
         );
 
         const rowsWithCorrectEntries: string[][] = [];
-        for (const sequenceVersionWithStatus of sequencesToCheck) {
-            const { sequenceId, version, status } = sequenceVersionWithStatus;
+        for (const { accession, version, status } of sequencesToCheck) {
             rowsWithCorrectEntries.push(
-                ...rows.filter((row) => row.includes(status) && row.includes(`${sequenceId}.${version}`)),
+                ...rows.filter(
+                    (row) => row.includes(status) && row.includes(getAccessionVersionString({ accession, version })),
+                ),
             );
         }
 
         return rowsWithCorrectEntries.length === sequencesToCheck.length;
+    }
+
+    public async clickOnEditForSequenceEntry(accessionToCheck: AccessionVersion) {
+        const testIdOfButton = `${getAccessionVersionString(accessionToCheck)}.edit`;
+        const editButton = this.page.getByTestId(testIdOfButton);
+        await editButton.click();
+
+        await this.page.waitForURL(`${baseUrl}${routes.editPage(dummyOrganism.key, accessionToCheck)}`, {
+            waitUntil: 'networkidle',
+        });
     }
 }

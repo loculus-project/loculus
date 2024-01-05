@@ -2,21 +2,45 @@
 
 ## Glossary
 
-- Sequence ID: a sequence-specific identifier that Pathoplexus assigns
-- Version: the version number of a sequence+metadata
+Extension from [docs/glossary.md](../../docs/glossary.md)
+
 - Unpreprocessed data: the data that the submitter provides
 - Preprocessed data: the data that the preprocessing pipeline provides/derives based on the unpreprocesed data
-- Revision: a new version of unpreprocessed data associated with an existing sequence ID that is already released
-- Revocation: a new version that is associated with an existing sequence ID that is already released and that is marked as revocation. Data are empty.
+- Revision: a new version of unpreprocessed data associated with an existing accession that is already released
+- Revocation: a new version that is associated with an existing accession that is already released and that is marked as revocation. Data are empty.
 
 ## Initial submission
 
-To submit new sequences, the user calls the `/submit` endpoint and sends unpreprocessed data. For each sequence, Pathoplexus creates a new row in the "sequences" table. It generates a new sequence ID. The version number of the sequences is 1.
+To submit new sequences, the user calls the `/submit` endpoint and sends unpreprocessed data. 
+Data may be compressed using zstd, gzip, bzip2, xz, lzma or zip.
+For each sequence, Loculus creates a new row in the "sequenceEntries" table.
+It generates a new accession. The version number of the sequence entries is 1.
 
-### Preprocessing & Review
-The data will be processed by a preprocessing pipeline (see [preprocessing pipeline specification](../../preprocessing/specification.md)). If the data contain errors, the user has to review the errors and edit the data (sequence data can be downloaded as _fasta_ file to ease reviewing).
+### Preprocessing & Editing
+The data will be processed by a preprocessing pipeline (see [preprocessing pipeline specification](../../preprocessing/specification.md)). If the data contain errors, the user has to review the errors and edit the data (sequence data can be downloaded as _fasta_ file to ease editing).
 
-The reviewed data will be preprocessed again. If the data do not contain errors, they will be staged unless the user selected the "release directly"-mode. The user can then review the data and approve them. If the "release directly"-mode is used, the staging phase will be skipped and the data directly released. If the user decides to not approve a sequence, the entry will be (permanently) removed from the database.
+The edited data will be preprocessed again.
+If the data do not contain errors, they will be staged unless the user selected the "release directly"-mode.
+The user can then edit the data and approve them.
+If the "release directly"-mode is used, the staging phase will be skipped and the data directly released.
+If the user decides to not approve a sequence entry, the entry will be (permanently) removed from the database.
+
+
+### Sequence entry statuses
+
+When submitting a sequence entry, it goes through a series of statuses:
+
+**Received**: The sequence entry was received by the backend and awaits preprocessing.
+
+**In_processing**: The sequence entry is being processed by the preprocessing pipeline.
+
+**Has_errors**: The sequence entry contains errors that prevent a release. It must be edited and resubmitted by the submitter.
+
+**Awaiting_approval**: The sequence entry was successfully processed by the preprocessing pipeline and can be released. The submitter has to approve the release.
+
+**Awaiting_approval_for_revocation**: The revocation request was received. The submitter has to approve the revocation.
+
+**Approved_for_release**: The sequence entry was approved for release. It is or will shortly be released.
 
 The following diagram shows the different statuses and their transitions. The **blue-dotted** boxes represent data. The **green-dotted** boxes represent entry creation actions. The **red-dotted** boxes represent entry deletion actions.
 
@@ -24,14 +48,21 @@ The following diagram shows the different statuses and their transitions. The **
 
 ## Revision
 
-To revise a sequence that has been released (i.e., the status is SILO_READY), the user calls the `/revise` endpoint and sends sequence IDs and unpreprocessed data. For each revised sequence, Pathoplexus creates a new row in the "sequences" table. It does not change any existing rows and does not create new sequence IDs. The new rows have an incremented version number.
+To revise a sequence entery that has been released (i.e., the status is APPROVED_FOR_RELEASE),
+the user calls the `/revise` endpoint and sends accessions and unpreprocessed data.
+For each revised sequence entery, Loculus creates a new row in the "sequencEntries" table.
+It does not change any existing rows and does not create new accessions.
+The new rows have an incremented version number.
 
 The new entry will be treated the same way as a new submission and undergoes the same status transitions (see diagram in the "Initial submission" section).
 
 ## Revocation
 
-To revoke a sequence that has been released (i.e., the status is SILO_READY), the user calls the `/revoke` endpoint and sends sequence IDs. For each revoked sequence, Pathoplexus creates a new row in the "sequences" table. The unpreprocessed data are empty. The "revoked" flag is set to true. The new rows have an incremented version number  (see diagram in the "Initial submission" section).
-
+To revoke a sequence entery that has been released (i.e., the status is APPROVED_FOR_RELEASE),
+the user calls the `/revoke` endpoint and sends accessions.
+For each revoked sequence entry, Loculus creates a new row in the "sequenceEntris" table.
+The unpreprocessed data are empty. The "revoked" flag is set to true.
+The new rows have an incremented version number  (see diagram in the "Initial submission" section).
 
 ## Example flow
 
@@ -40,79 +71,79 @@ In following, the changes of the databases are shown given a series of example e
 
 **Event 1:** The user submits `[{data: d1}, {data: d2}]`.
 
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status   | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- |---------|-----------| ------------ |-----------------------| ---------------------- | ----------- | -------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1       | user1     | t1           |                       |                        |             | RECEIVED | false         | d1            |                |        |          |
-| 2           | 1       | user1     | t1           |                       |                        |             | RECEIVED | false         | d2            |                |        |          |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status   | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|----------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           |                       |                        |             | RECEIVED | false         | d1            |                |        |          |
+| 2         | 1       | user1     | t1           |                       |                        |             | RECEIVED | false         | d2            |                |        |          |
 
 
-**Event 2:** The preprocessing pipeline processes the two sequences and found no errors.
+**Event 2:** The preprocessing pipeline processes the two sequence entries and found no errors.
 
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status  | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- | -------- |-----------| ------------ | --------------------- | ---------------------- | ----------- | ------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1        | user1     | t1           | t2                    | t3                     |             | STAGING | false         | d1            | ...            | []     | []       |
-| 2           | 1        | user1     | t1           | t2                    | t3                     |             | STAGING | false         | d2            | ...            | []     | []       |
-
-
-**Event 3:** The user approves sequence 1 and rejects sequence 2.
-
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status     | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | ---------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | SILO_READY | false         | d1            | ...            | []     | []       |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status  | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|---------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           | t2                    | t3                     |             | STAGING | false         | d1            | ...            | []     | []       |
+| 2         | 1       | user1     | t1           | t2                    | t3                     |             | STAGING | false         | d2            | ...            | []     | []       |
 
 
-**Event 4:** The user revises: `[{sequenceId: 1, data: d3}]`
+**Event 3:** The user approves accession 1 and rejects accession 2.
+
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|----------------------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
 
 
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status     | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | ---------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | SILO_READY | false         | d1            | ...            | []     | []       |
-| 1           | 2        | user1     | t5           |                       |                        |             | RECEIVED   | false         | d3            |                |        |          |
+**Event 4:** The user revises: `[{accession: 1, data: d3}]`
 
-**Event 5:** The preprocessing pipeline process the sequence and found no errors.
 
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status     | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | ---------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | SILO_READY | false         | d1            | ...            | []     | []       |
-| 1           | 2        | user1     | t5           | t6                    | t7                     |             | STAGING    | false         | d3            | ...            | []     | []       |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|----------------------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
+| 1         | 2       | user1     | t5           |                       |                        |             | RECEIVED             | false         | d3            |                |        |          |
+
+**Event 5:** The preprocessing pipeline process the sequence entries and found no errors.
+
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|----------------------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
+| 1         | 2       | user1     | t5           | t6                    | t7                     |             | STAGING              | false         | d3            | ...            | []     | []       |
 
 **Event 6:** The user approves the revision.
 
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status     | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | ---------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | SILO_READY | false         | d1            | ...            | []     | []       |
-| 1           | 2        | user1     | t5           | t6                    | t7                     | t8          | SILO_READY | false         | d3            | ...            | []     | []       |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|----------------------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
+| 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
 
-**Event 7:** The user revokes sequence 1.
+**Event 7:** The user revokes accession 1.
 
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status          | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | --------------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | SILO_READY      | false         | d1            | ...            | []     | []       |
-| 1           | 2        | user1     | t5           | t6                    | t7                     | t8          | SILO_READY      | false         | d3            | ...            | []     | []       |
-| 1           | 3        | usre1     | t9           |                       |                        |             | STAGING_REVOKED | true          |               |                |        |          |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status                           | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|----------------------------------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE             | false         | d1            | ...            | []     | []       |
+| 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE             | false         | d3            | ...            | []     | []       |
+| 1         | 3       | user1     | t9           |                       |                        |             | AWAITING_APPROVAL_FOR_REVOCATION | true          |               |                |        |          |
 
-**Event 8:** The user rejects the revocation of sequence 1.
+**Event 8:** The user rejects the revocation of accession 1.
 
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status     | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | ---------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | SILO_READY | false         | d1            | ...            | []     | []       |
-| 1           | 2        | user1     | t5           | t6                    | t7                     | t8          | SILO_READY | false         | d3            | ...            | []     | []       |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|----------------------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
+| 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
 
-**Event 9:** The user revokes sequence 1 again.
+**Event 9:** The user revokes accession 1 again.
 
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status          | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | --------------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | SILO_READY      | false         | d1            | ...            | []     | []       |
-| 1           | 2        | user1     | t5           | t6                    | t7                     | t8          | SILO_READY      | false         | d3            | ...            | []     | []       |
-| 1           | 3        | usre1     | t10           |                       |                        |             | STAGING_REVOKED | true          |               |                |        |          |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status                           | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|----------------------------------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE             | false         | d1            | ...            | []     | []       |
+| 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE             | false         | d3            | ...            | []     | []       |
+| 1         | 3       | user1     | t10          |                       |                        |             | AWAITING_APPROVAL_FOR_REVOCATION | true          |               |                |        |          |
 
 **Event 10:** The user approves the revocation.
 
-| sequence_id | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status     | is_revocation | original_data | processed_data | errors | warnings |
-| ----------- | -------- | --------- | ------------ | --------------------- | ---------------------- | ----------- | ---------- |---------------| ------------- | -------------- | ------ | -------- |
-| 1           | 1        | user1     | t1           | t2                    | t3                     | t4          | SILO_READY | false         | d1            | ...            | []     | []       |
-| 1           | 2        | user1     | t5           | t6                    | t7                     | t8          | SILO_READY | false         | d3            | ...            | []     | []       |
-| 1           | 3        | usre1     | t10          |                       |                        | t11         | SILO_READY | true          |               |                |        |          |
+| accession | version | submitter | submitted_at | started_processing_at | finished_processing_at | approved_at | status               | is_revocation | original_data | processed_data | errors | warnings |
+|-----------|---------|-----------|--------------|-----------------------|------------------------|-------------|----------------------|---------------|---------------|----------------|--------|----------|
+| 1         | 1       | user1     | t1           | t2                    | t3                     | t4          | APPROVED_FOR_RELEASE | false         | d1            | ...            | []     | []       |
+| 1         | 2       | user1     | t5           | t6                    | t7                     | t8          | APPROVED_FOR_RELEASE | false         | d3            | ...            | []     | []       |
+| 1         | 3       | user1     | t10          |                       |                        | t11         | APPROVED_FOR_RELEASE | true          |               |                |        |          |
 
 ## Sequence diagrams
 

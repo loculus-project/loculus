@@ -1,7 +1,7 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>%date %level [%thread] %class: %message%n</Pattern>
+            <Pattern>%date %level [%thread] [%X{organism}] - %class: %message%n</Pattern>
         </layout>
     </appender>
 
@@ -11,7 +11,7 @@
 
     <logger name="Exposed" level="debug" />
 
-    <logger name="org.pathoplexus" level="debug" />
+    <logger name="org.loculus" level="debug" />
     <logger name="org.testcontainers" level="warn" />
     <logger name="ch.qos.logback" level="warn" />
 </configuration>

@@ -1,0 +1,20 @@
+{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
+
+{{- range $key, $_ := $configFile.instances }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "loculus.lapisServiceName" $key }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  type: ClusterIP
+  selector:
+    app: loculus
+    component: lapis-silo-{{ $key }}
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+      name: http
+{{- end }}

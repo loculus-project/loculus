@@ -3,39 +3,62 @@ import dataclasses
 import json
 import random
 import requests
+import time
 from typing import List
 from typing import Optional
 from dataclasses import dataclass, field
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--backend-host", type=str, default="127.0.0.1",
-                    help="Host address of the Pathoplexus backend")
+parser.add_argument("--backend-host", type=str, default="http://127.0.0.1:8079",
+                    help="Host address of the loculus backend")
+parser.add_argument("--watch", action="store_true", help="Watch and keep running. Fetches new data every 10 seconds.")
+parser.add_argument("--withErrors", action="store_true", help="Add errors to processed data.")
+parser.add_argument("--withWarnings", action="store_true", help="Add warnings to processed data.")
+parser.add_argument("--maxSequences", type=int, help="Max number of sequence entry versions to process.")
+parser.add_argument("--keycloak-host", type=str, default="http://172.0.0.1:8083", help="Host address of Keycloak")
+parser.add_argument("--keycloak-user", type=str, default="dummy_prerocessing_pipeline",
+                    help="Keycloak user to use for authentication")
+parser.add_argument("--keycloak-password", type=str, default="dummy_prerocessing_pipeline",
+                    help="Keycloak password to use for authentication")
+parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculusRealm/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
+
 args = parser.parse_args()
-host = "http://{}:8079".format(args.backend_host)
+backendHost = args.backend_host
+watch_mode = args.watch
+addErrors = args.withErrors
+addWarnings = args.withWarnings
+keycloakHost = args.keycloak_host
+keycloakUser = args.keycloak_user
+keycloakPassword = args.keycloak_password
+keycloakTokenPath = args.keycloak_token_path
+
 
 @dataclass
 class AnnotationSource:
-    field: str
+    name: str
     type: str
+
 
 @dataclass
 class ProcessingAnnotation:
-    source: AnnotationSource
+    source: List[AnnotationSource]
     message: str
+
 
 @dataclass
 class Sequence:
-    sequenceId: int
+    accession: int
     version: int
     data: dict
-    errors: Optional[List[ProcessingAnnotation]] =field(default_factory=list)
+    errors: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
     warnings: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
 
 
 def fetch_unprocessed_sequences(n: int) -> List[Sequence]:
-    url = host + "/extract-unprocessed-data"
-    params = {"numberOfSequences": n}
-    response = requests.post(url, data=params)
+    url = backendHost + "/extract-unprocessed-data"
+    params = {"numberOfSequenceEntries": n}
+    headers = {'Authorization': 'Bearer ' + get_jwt()}
+    response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         raise Exception("Fetching unprocessed data failed. Status code: {}".format(response.status_code), response.text)
     return parse_ndjson(response.text)
@@ -47,8 +70,9 @@ def parse_ndjson(ndjson_data: str) -> List[Sequence]:
     for json_str in json_strings:
         if json_str:
             json_object = json.loads(json_str)
-            entries.append(Sequence(json_object["sequenceId"],json_object["version"], json_object["data"]))
+            entries.append(Sequence(json_object["accession"], json_object["version"], json_object["data"]))
     return entries
+
 
 def process(unprocessed: List[Sequence]) -> List[Sequence]:
     with open("mock-sequences.json", "r") as f:
@@ -58,35 +82,107 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
     processed = []
     for sequence in unprocessed:
         metadata = sequence.data.get("metadata", {})
-        metadata["pangoLineage"] = random.choice(possible_lineages)
+        metadata["pango_lineage"] = random.choice(possible_lineages)
 
         updated_sequence = Sequence(
-            sequence.sequenceId,
+            sequence.accession,
+            sequence.version,
             {"metadata": metadata, **mock_sequences},
         )
+
+        if addErrors:
+            updated_sequence.errors = [
+                ProcessingAnnotation(
+                    [AnnotationSource(list(metadata.keys())[0], "Metadata")],
+                    "This is a metadata error"
+                ),
+                ProcessingAnnotation(
+                    [
+                        AnnotationSource(
+                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                            "NucleotideSequence"
+                        )
+                    ],
+                    "This is a sequence error"
+                ),
+            ]
+
+        if addWarnings:
+            updated_sequence.warnings = [
+                ProcessingAnnotation(
+                    [AnnotationSource(list(metadata.keys())[0], "Metadata")],
+                    "This is a metadata warning"
+                ),
+                ProcessingAnnotation(
+                    [
+                        AnnotationSource(
+                            list(mock_sequences["alignedNucleotideSequences"].keys())[0],
+                            "NucleotideSequence"
+                        )
+                    ],
+                    "This is a sequence warning"
+                ),
+            ]
 
         processed.append(updated_sequence)
 
     return processed
 
+
 def submit_processed_sequences(processed: List[Sequence]):
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = '\n'.join(json_strings)
-    url = host + "/submit-processed-data"
-    headers = {'Content-Type': 'application/x-ndjson'}
+    url = backendHost + "/submit-processed-data"
+    headers = {'Content-Type': 'application/x-ndjson', 'Authorization': 'Bearer ' + get_jwt()}
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:
         raise Exception("Submitting processed data failed. Status code: {}".format(response.status_code), response.text)
 
+
+def get_jwt():
+    url = keycloakHost + keycloakTokenPath
+    data = {
+        "client_id": "test-cli",
+        "username": keycloakUser,
+        "password": keycloakPassword,
+        "grant_type": "password"
+    }
+    response = requests.post(url, data=data)
+    if not response.ok:
+        raise Exception("Fetching JWT failed. Status code: {}".format(response.status_code), response.text)
+    return response.json()["access_token"]
+
+
 def main():
     total_processed = 0
+    locally_processed = 0
+
+    if watch_mode:
+        print("Started in watch mode - waiting 10 seconds before fetching data.")
+        time.sleep(10)
+
+    if args.maxSequences and args.maxSequences < 5:
+        sequences_to_fetch = args.maxSequences
+    else:
+        sequences_to_fetch = 5
+
     while True:
-        unprocessed = fetch_unprocessed_sequences(5)
+        unprocessed = fetch_unprocessed_sequences(sequences_to_fetch)
         if len(unprocessed) == 0:
-            break
+            if watch_mode:
+                print("Processed {} sequences. Sleeping for 10 seconds.".format(locally_processed))
+                time.sleep(10)
+                locally_processed = 0
+                continue
+            else:
+                break
         processed = process(unprocessed)
         submit_processed_sequences(processed)
         total_processed += len(processed)
+        locally_processed += len(processed)
+
+        if args.maxSequences and total_processed >= args.maxSequences:
+            break
     print("Total processed sequences: {}".format(total_processed))
 
 

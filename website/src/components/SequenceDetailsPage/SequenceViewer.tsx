@@ -1,27 +1,33 @@
-import { useQuery } from '@tanstack/react-query';
 import { noCase } from 'change-case';
 import { type FC, useMemo } from 'react';
 
-import { fetchSequence } from '../../api';
-import type { ClientConfig, Config, SequenceType } from '../../types';
+import { getLapisUrl } from '../../config.ts';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
+import type { Schema } from '../../types/config.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { isUnalignedSequence, type SequenceType } from '../../utils/sequenceTypeHelpers.ts';
 import { splitString } from '../../utils/splitLines';
 
 const LINE_LENGTH = 100;
 
 type Props = {
-    accession: string;
-    config: Config;
+    organism: string;
+    accessionVersion: string;
+    schema: Schema;
     clientConfig: ClientConfig;
     sequenceType: SequenceType;
 };
 
-export const SequencesViewer: FC<Props> = ({ accession, config, clientConfig, sequenceType }) => {
-    const { isLoading, data, error } = useQuery({
-        queryKey: [accession, sequenceType],
-        queryFn: () => fetchSequence(accession, sequenceType, config, clientConfig),
-    });
+export const SequencesViewer: FC<Props> = ({ organism, accessionVersion, schema, clientConfig, sequenceType }) => {
+    const { data, error, isLoading } = lapisClientHooks(
+        getLapisUrl(clientConfig, organism),
+    ).utilityHooks.useGetSequence(accessionVersion, sequenceType, schema);
 
-    const lines = useMemo(() => (data !== undefined ? splitString(data, LINE_LENGTH) : undefined), [data]);
+    const lines = useMemo(() => (data !== undefined ? splitString(data.sequence, LINE_LENGTH) : undefined), [data]);
+
+    if (isUnalignedSequence(sequenceType)) {
+        return <div className='text-error'>LAPIS v2 doesn't support unaligned nucleotide sequences yet</div>;
+    }
 
     if (error !== null) {
         return (

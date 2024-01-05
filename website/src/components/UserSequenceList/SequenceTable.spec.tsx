@@ -4,45 +4,49 @@ import userEvent from '@testing-library/user-event';
 import { sentenceCase } from 'change-case';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { SequenceTable } from './SequenceTable.tsx';
+import { SequenceEntryTable } from './SequenceEntryTable.tsx';
 import type { BulkSequenceActionName, SingleSequenceActionName } from './sequenceActions.ts';
-import { testuser } from '../../../tests/e2e.fixture.ts';
-import type { ClientConfig, SequenceStatus } from '../../types';
-import { getSequenceVersionString } from '../../utils/extractSequenceVersion.ts';
+import { testAccessToken, testOrganism } from '../../../vitest.setup.ts';
+import { routes } from '../../routes.ts';
+import type { SequenceEntryStatus } from '../../types/backend.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 
 const queryClient = new QueryClient();
-const defaultSequencesWithStatus: readonly SequenceStatus[] = [
+const defaultSequenceEntryStatuses: readonly SequenceEntryStatus[] = [
     {
-        sequenceId: 1,
+        accession: '1',
         version: 1,
-        status: 'NEEDS_REVIEW',
+        status: 'HAS_ERRORS',
         isRevocation: false,
     },
     {
-        sequenceId: 2,
+        accession: '2',
         version: 1,
-        status: 'NEEDS_REVIEW',
+        status: 'HAS_ERRORS',
         isRevocation: false,
     },
-] as const;
+];
 
-const dummyConfig = {} as ClientConfig;
+const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 const everyBulkActionImplemented: readonly BulkSequenceActionName[] = [
     'delete',
     'approve',
     'revoke',
     'confirmRevocation',
-] as const;
-const everySingleActionImplemented: readonly SingleSequenceActionName[] = ['review'] as const;
+];
+const everySingleActionImplemented: readonly SingleSequenceActionName[] = ['edit'];
+
 function renderSequenceTable(
-    sequencesWithStatus: SequenceStatus[] = [...defaultSequencesWithStatus],
+    sequencesWithStatus: SequenceEntryStatus[] = [...defaultSequenceEntryStatuses],
     clientConfig: ClientConfig = dummyConfig,
 ) {
     render(
         <QueryClientProvider client={queryClient}>
-            <SequenceTable
-                username={testuser}
-                sequences={sequencesWithStatus}
+            <SequenceEntryTable
+                organism={testOrganism}
+                accessToken={testAccessToken}
+                sequenceEntries={sequencesWithStatus}
                 bulkActionNames={[...everyBulkActionImplemented]}
                 singleActionNames={[...everySingleActionImplemented]}
                 clientConfig={clientConfig}
@@ -68,17 +72,17 @@ describe('SequenceTable', () => {
         });
     });
 
-    test('should render each row with the sequence version and a single action', async () => {
+    test('should render each row with the accession version and a single action', async () => {
         renderSequenceTable();
 
         everySingleActionImplemented.forEach((action) => {
             expect(screen.getAllByRole('button', { name: sentenceCase(action) }).length).toBe(
-                defaultSequencesWithStatus.length,
+                defaultSequenceEntryStatuses.length,
             );
         });
 
-        defaultSequencesWithStatus.map(getSequenceVersionString).forEach((sequenceVersion) => {
-            expect(screen.getByText(sequenceVersion)).toBeInTheDocument();
+        defaultSequenceEntryStatuses.map(getAccessionVersionString).forEach((accessionVersion) => {
+            expect(screen.getByText(accessionVersion)).toBeInTheDocument();
         });
     });
 
@@ -88,7 +92,7 @@ describe('SequenceTable', () => {
         const deleteButton = screen.getByRole('button', { name: sentenceCase('delete') });
         expect(deleteButton).toBeDisabled();
 
-        const clickableRow = screen.getByText(getSequenceVersionString(defaultSequencesWithStatus[0]));
+        const clickableRow = screen.getByText(getAccessionVersionString(defaultSequenceEntryStatuses[0]));
         await userEvent.click(clickableRow);
 
         expect(deleteButton).not.toBeDisabled();
@@ -97,17 +101,15 @@ describe('SequenceTable', () => {
         // await userEvent.click(deleteButton);
     });
 
-    test('should navigate to review page when single action "review" is clicked', async () => {
+    test('should navigate to edit page when single action "edit" is clicked', async () => {
         renderSequenceTable();
 
-        const sequenceVersionToReview = defaultSequencesWithStatus[0];
+        const accessionVersionToEdit = defaultSequenceEntryStatuses[0];
 
-        const reviewButton = screen.getAllByRole('button', { name: sentenceCase(everySingleActionImplemented[0]) })[0];
-        expect(reviewButton).toBeDefined();
-        await userEvent.click(reviewButton);
+        const editButton = screen.getAllByRole('button', { name: sentenceCase(everySingleActionImplemented[0]) })[0];
+        expect(editButton).toBeDefined();
+        await userEvent.click(editButton);
 
-        expect(window.location.href).toBe(
-            `/user/${testuser}/review/${sequenceVersionToReview.sequenceId}/${sequenceVersionToReview.version}`,
-        );
+        expect(window.location.href).toBe(routes.editPage(testOrganism, accessionVersionToEdit));
     });
 });

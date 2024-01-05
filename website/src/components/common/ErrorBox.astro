@@ -1,0 +1,20 @@
+---
+import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
+
+interface Props {
+    title?: string;
+    message: string;
+}
+
+const { title, message } = Astro.props;
+---
+
+<div>
+    <div class='alert alert-error my-8'>
+        <DangerousTwoToneIcon />
+        <div class='grid-flow-row'>
+            <p class='text-lg font-bold'>{title}</p>
+            <p>{message}</p>
+        </div>
+    </div>
+</div>

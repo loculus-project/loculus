@@ -1,4 +1,4 @@
-import AddBoxIcon from '@mui/icons-material/AddToPhotos';
+import { AddBoxIcon } from '~icons/ic/baseline-library-add';
 import CircularProgress from '@mui/material/CircularProgress';
 import IconButton from '@mui/material/IconButton';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
@@ -9,7 +9,7 @@ import DatasetsTable from './Table';
 import { fetchAuthorDatasets } from './api';
 import type { Config, ClientConfig, Dataset } from '../../types';
 import Modal from '../common/Modal';
-import withQueryProvider from '../common/withQueryProvider';
+import { withQueryProvider } from '../common/withQueryProvider';
 
 type DatasetListProps = {
     config: Config;

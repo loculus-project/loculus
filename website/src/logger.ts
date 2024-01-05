@@ -1,23 +1,20 @@
 import winston, { type Logger } from 'winston';
 
-const logPath = import.meta.env.LOG_DIR;
-const serverLogFile = `${logPath}/website.log`;
-
 let _logger: Logger | undefined;
 
 const getLogger = (): Logger => {
     if (_logger === undefined) {
+        const logPath = import.meta.env.LOG_DIR;
+        const serverLogFile = `${logPath}/website.log`;
         const transports: winston.transport[] = [];
 
         if (logPath !== undefined) {
             transports.push(new winston.transports.File({ filename: serverLogFile }));
         }
 
-        if (import.meta.env.DEV) {
-            transports.push(new winston.transports.Console());
-        }
+        transports.push(new winston.transports.Console());
         _logger = winston.createLogger({
-            level: 'info',
+            level: import.meta.env.LOG_LEVEL ?? 'info',
             format: winston.format.combine(winston.format.timestamp(), winston.format.json()),
             transports,
         });
@@ -25,10 +22,12 @@ const getLogger = (): Logger => {
     return _logger;
 };
 
-export const logger = getLogger();
+export type InstanceLogger = ReturnType<typeof getInstanceLogger>;
+
 export const getInstanceLogger = (instance: string) => {
     return {
-        info: (message: string) => logger.info(message, { instance }),
-        error: (message: string) => logger.error(message, { instance }),
+        error: (message: string) => getLogger().error(message, { instance }),
+        info: (message: string) => getLogger().info(message, { instance }),
+        debug: (message: string) => getLogger().debug(message, { instance }),
     };
 };

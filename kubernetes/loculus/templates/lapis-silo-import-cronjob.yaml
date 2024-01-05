@@ -1,0 +1,72 @@
+{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
+
+{{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/token" }}
+
+
+{{- range $key, $_ := $configFile.instances }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: lapis-silo-import-cronjob-{{ $key }}
+  namespace: {{ $.Values.namespace  }}
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: silo-import-cronjob-{{ $key }}
+        spec:
+          containers:
+            - name: silo-preprocessing
+              image: ghcr.io/genspectrum/lapis-silo:latest
+              imagePullPolicy: IfNotPresent
+              command:
+                - sh
+                - /silo_import_job.sh
+              env:
+                - name: BACKEND_BASE_URL
+                  {{- if $.Values.disableBackend }}
+                  value: "http://host.k3d.internal:8079/{{ $key }}"
+                  {{- else }}
+                  value: "http://loculus-backend-service:8079/{{ $key }}"
+                  {{- end }}
+                - name: KEYCLOAK_TOKEN_URL
+                  value: "{{ $keycloakTokenUrl }}"
+                - name: KEYCLOAK_CLIENT_ID
+                  value: "test-cli"
+                - name: IMPORT_JOB_USER
+                  value: "silo_import_job"
+                - name: IMPORT_JOB_USER_PASSWORD
+                  value: "silo_import_job"
+              volumeMounts:
+                - name: lapis-silo-database-config
+                  mountPath: /preprocessing/input/reference_genomes.json
+                  subPath: reference_genomes.json
+                - name: lapis-silo-database-config
+                  mountPath: /preprocessing/input/pangolineage_alias.json
+                  subPath: pangolineage_alias.json
+                - name: lapis-silo-database-config
+                  mountPath: /app/preprocessing_config.yaml
+                  subPath: preprocessing_config.yaml
+                - name: lapis-silo-database-config
+                  mountPath: /app/database_config.yaml
+                  subPath: database_config.yaml
+                - name: lapis-silo-shared-data
+                  mountPath: /preprocessing/output
+                - name: lapis-silo-database-config
+                  mountPath: /silo_import_job.sh
+                  subPath: silo_import_job.sh
+          volumes:
+            - name: lapis-silo-database-config
+              configMap:
+                name: lapis-silo-database-config-{{ $key }}
+            - name: lapis-silo-shared-data
+              persistentVolumeClaim:
+                claimName: lapis-silo-shared-data-{{ $key }}
+          restartPolicy: OnFailure
+{{- end }}

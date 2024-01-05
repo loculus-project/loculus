@@ -15,7 +15,7 @@ export const DateField: FC<FieldProps> = ({ field, handleFieldChange, isLoading 
                 margin: 'dense',
             },
         }}
-        value={field.filter === '' ? null : DateTime.fromISO(field.filter)}
+        value={field.filterValue === '' ? null : DateTime.fromISO(field.filterValue)}
         onChange={(date: DateTime | null) => {
             const dateString = date?.toISODate() ?? '';
             return handleFieldChange(field.name, dateString);

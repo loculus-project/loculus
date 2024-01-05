@@ -1,0 +1,52 @@
+# This file is deployed manually, it does not get automatically deployed from the git repository: with access to our kubernetes cluster run `kubectl apply -f appset.yaml`
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: pp-preview
+  namespace: argocd
+spec:
+  goTemplate: true
+  generators:
+    - pullRequest:
+        github:
+          owner: pathoplexus
+          labels:
+            - preview
+          repo: loculus
+          tokenRef:
+            key: token
+            secretName: github-access-token
+        requeueAfterSeconds: 60
+    - git:
+        repoURL: https://github.com/pathoplexus/argocd_metadata.git
+        revision: HEAD
+        files:
+        - path: "config.json"
+  template:
+    metadata:
+      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower }}-{{.number}}'
+
+    spec:
+      destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}'
+      project: default
+      source:
+        path: 'kubernetes/loculus/'
+        repoURL: 'https://github.com/pathoplexus/loculus.git'
+        targetRevision: '{{.branch}}'
+        helm:
+          parameters:
+            - name: namespace
+              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower }}'
+            - name: shortbranch
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}'
+            - name: sha
+              value: '{{.head_short_sha_7}}'
+            - name: branch
+              value: '{{.branch}}'
+            - name: host
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | trimSuffix "-" | lower  }}.preview.k3s.loculus.org'
+      syncPolicy:
+        automated:
+          selfHeal: true

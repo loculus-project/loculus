@@ -7,7 +7,7 @@ import type { ClientConfig } from '../../types';
 import { CitationPlot } from '../Datasets/CitationPlot';
 import { fetchAuthorCitations } from '../Datasets/api';
 import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
-import withQueryProvider from '../common/withQueryProvider';
+import { withQueryProvider } from '../common/withQueryProvider';
 
 const clientLogger = getClientLogger('UserCitations');
 

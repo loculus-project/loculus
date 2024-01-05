@@ -12,7 +12,7 @@ import { type Config, type ClientConfig, type DatasetRecord, type Dataset, Acces
 import { AlertDialog } from '../common/AlertDialog';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
-import withQueryProvider from '../common/withQueryProvider';
+import { withQueryProvider } from '../common/withQueryProvider';
 
 const clientLogger = getClientLogger('DatasetItem');
 

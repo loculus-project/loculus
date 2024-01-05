@@ -1,5 +1,5 @@
-import CheckIcon from '@mui/icons-material/Check';
-import ErrorIcon from '@mui/icons-material/Error';
+import { CheckIcon } from '~icons/ic/baseline-check-circle';
+import { ErrorIcon } from '~icons/ic/baseline-error';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControl from '@mui/material/FormControl';

@@ -1,0 +1,58 @@
+---
+import { getData, getSearchFormFilters } from './search';
+import { Pagination } from '../../../components/SearchPage/Pagination';
+import { SearchForm } from '../../../components/SearchPage/SearchForm';
+import { Table } from '../../../components/SearchPage/Table';
+import ErrorBox from '../../../components/common/ErrorBox.astro';
+import { getRuntimeConfig, getSchema } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { pageSize } from '../../../settings';
+
+const organism = Astro.params.organism!;
+
+const schema = getSchema(organism);
+const clientConfig = getRuntimeConfig().public;
+const getSearchParams = (field: string): string => {
+    return Astro.url.searchParams.get(field) ?? '';
+};
+
+const searchFormFilter = getSearchFormFilters(getSearchParams, organism);
+
+const pageParam = Astro.url.searchParams.get('page');
+const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
+const offset = (page - 1) * pageSize;
+
+const data = await getData(organism, searchFormFilter, offset, pageSize);
+---
+
+<BaseLayout title='Search'>
+    <h1 class='title'>Search</h1>
+    <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
+        <div class='md:w-72'>
+            <SearchForm
+                organism={organism}
+                filters={searchFormFilter}
+                clientConfig={clientConfig}
+                client:only='react'
+            />
+        </div>
+        {
+            data.match(
+                (data) => (
+                    <div class='flex-1'>
+                        <div class='mb-1'>
+                            Search returned {data.totalCount.toLocaleString()}
+                            sequence{data.totalCount === 1 ? '' : 's'}
+                        </div>
+                        <Table organism={organism} data={data.data} schema={schema} client:load />
+
+                        <div class='mt-4 flex justify-center'>
+                            <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)} />
+                        </div>
+                    </div>
+                ),
+                (error) => <ErrorBox title='Failed searching sequences' message={error.detail} />,
+            )
+        }
+    </div>
+</BaseLayout>

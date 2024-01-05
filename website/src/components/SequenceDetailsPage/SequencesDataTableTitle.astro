@@ -1,0 +1,54 @@
+---
+import { sentenceCase } from 'change-case';
+
+import { routes } from '../../routes';
+import { type SequenceEntryHistory } from '../../types/lapis';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
+import { getVersionStatusColor } from '../../utils/getVersionStatusColor';
+import { BackButton } from '../Navigation/BackButton';
+import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
+
+interface Props {
+    sequenceEntryHistory?: SequenceEntryHistory;
+    organism: string;
+    accessionVersion: string;
+}
+
+const { sequenceEntryHistory, organism, accessionVersion } = Astro.props;
+---
+
+<div class='flex justify-between flex-wrap'>
+    <div class='flex flex-row pb-2'>
+        <BackButton marginRight={3} client:load />
+        <h1 class='title'>Sequence Entry Version {accessionVersion}</h1>
+    </div>
+
+    {
+        sequenceEntryHistory !== undefined && sequenceEntryHistory.length > 1 && (
+            <div class='dropdown dropdown-hover'>
+                <label tabindex='0' class='btn btn-sm btn-outline py-1'>
+                    <a href={routes.versionPage(organism, accessionVersion)} class='text-sm'>
+                        All versions
+                    </a>
+                    <Arrow />
+                </label>
+                <ul
+                    tabindex='0'
+                    class='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box absolute top-full left-0 text-sm'
+                >
+                    {sequenceEntryHistory.map((version) => (
+                        <li>
+                            <a href={routes.sequencesDetailsPage(organism, getAccessionVersionString({ ...version }))}>
+                                {getAccessionVersionString({ ...version })}
+
+                                <p class={`font-bold ${getVersionStatusColor(version.versionStatus)}`}>
+                                    ({sentenceCase(version.versionStatus)})
+                                </p>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        )
+    }
+</div>

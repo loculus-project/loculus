@@ -1,7 +1,14 @@
 # Dummy Preprocessing Pipeline
 
-This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It returns a fixed aligned nucleotide
-sequence and fixed amino acid sequences for S and ORF1a. As lineage, it returns randomly A.1, A.1.1, or A.2.
+This preprocessing pipeline is for demonstration and test purposes. 
+It returns fixed SARS-CoV-2 sequences and the metadata that was provided by the submitter.
+As lineage, it returns randomly A.1, A.1.1, or A.2.
+
+It shows the easiest possible implementation of a preprocessing pipeline.
+Note that a real-world implementation needs to validate the data.
+
+This is also supposed to be used for local testing.
+It can be used to prepare sequence entries to a desired state, e.g. with processing errors or warnings.
 
 ## Setup
 
@@ -22,17 +29,19 @@ python main.py
 Build the image:
 
 ```bash
-docker build -t pathoplexus-dummy-preprocessing .
+docker build -t loculus-dummy-preprocessing .
 ```
 
 Run on Mac and Windows:
 
 ```bash
-docker run --rm pathoplexus-dummy-preprocessing --backend-host host.docker.internal
+docker run --rm loculus-dummy-preprocessing --backend-host http://host.docker.internal
 ```
 
 Run on Linux:
 
 ```bash
-docker run --rm --network host pathoplexus-dummy-preprocessing
+docker run --rm --network host loculus-dummy-preprocessing
 ```
+
+Run with `--help` to see available options.

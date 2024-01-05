@@ -1,0 +1,37 @@
+---
+import { GroupManager } from './GroupManager';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getKeycloakClient } from '../../middleware/authMiddleware';
+import { routes } from '../../routes';
+import { BackButton } from '../Navigation/BackButton';
+
+const session = Astro.locals.session;
+const organism: string | undefined = Astro.params.organism;
+
+const logoutUrl = new URL(Astro.request.url);
+logoutUrl.pathname = routes.logout();
+
+const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
+    post_logout_redirect_uri: logoutUrl.href,
+});
+---
+
+<BaseLayout title='Login'>
+    <div class='flex items-center'>
+        <BackButton marginRight={2} client:load />
+        <h1 class='title'>User {session.user?.name}</h1>
+    </div>
+    <div>
+        <a href={keycloakLogoutUrl}>Logout</a>
+    </div>
+
+    {
+        organism !== undefined && (
+            <div>
+                <a href={routes.userSequencesPage(organism)}>Sequence Overview</a>
+            </div>
+        )
+    }
+
+    <GroupManager initialGroups={[]} client:load />
+</BaseLayout>

@@ -37,17 +37,16 @@ module.exports = {
         extraFileExtensions: ['.astro'],
       },
       rules: {
-        // override/add rules settings here, such as:
-        // "astro/no-set-html-directive": "error"
+        '@typescript-eslint/naming-convention': 'off',
       },
     },
     {
-        // Prettier is stubborn, need to accept its rules in case of conflict
-        // See https://github.com/pathoplexus/pathoplexus/pull/283#issuecomment-1733872357
-        files: ['*'],
-        rules: {
-            'react/self-closing-comp': 'off',
-        },
+      // Prettier is stubborn, need to accept its rules in case of conflict
+      // See https://github.com/pathoplexus/loculus/pull/283#issuecomment-1733872357
+      files: ['*'],
+      rules: {
+        'react/self-closing-comp': 'off',
+      },
     },
   ],
   rules: {
@@ -124,6 +123,10 @@ module.exports = {
         format: ['camelCase', 'UPPER_CASE', 'PascalCase'],
       },
       {
+        selector: 'import',
+        format: null,
+      },
+      {
         selector: 'typeLike',
         format: ['PascalCase'],
       },
@@ -131,7 +134,7 @@ module.exports = {
     '@typescript-eslint/no-empty-function': 'error',
     '@typescript-eslint/no-empty-interface': 'error',
     '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-floating-promises': 'error',
+    '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true }],
     '@typescript-eslint/no-for-in-array': 'error',
     '@typescript-eslint/no-misused-new': 'error',
     '@typescript-eslint/no-namespace': 'error',
@@ -241,7 +244,7 @@ module.exports = {
     'no-unsafe-finally': 'error',
     'no-unused-labels': 'error',
     'no-var': 'error',
-    'no-void': 'error',
+    'no-void': ['error', { allowAsStatement: true }],
     'object-shorthand': 'error',
     'one-var': ['error', 'never'],
     'prefer-const': 'error',
