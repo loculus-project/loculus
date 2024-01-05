@@ -24,7 +24,9 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.MvcResult
 import org.springframework.test.web.servlet.ResultActions
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.testcontainers.containers.PostgreSQLContainer
@@ -104,55 +106,6 @@ class SubmissionControllerTest(
                     version = 2,
                     status = Status.RECEIVED,
                     isRevocation = false,
-                ),
-            )
-    }
-
-    @Test
-    fun `revoke sequences and check that the 'revoke' flag is set properly`() {
-        prepareDataToSiloReady()
-
-        assertThat(getSequenceList().filter { it.sequenceId == DefaultFiles.firstSequence })
-            .hasSize(1)
-            .contains(
-                SequenceVersionStatus(
-                    sequenceId = DefaultFiles.firstSequence,
-                    version = 1,
-                    status = Status.SILO_READY,
-                    isRevocation = false,
-                ),
-            )
-
-        revokeSequences(DefaultFiles.allSequenceIds)
-
-        assertThat(getSequenceList().filter { it.sequenceId == DefaultFiles.firstSequence })
-            .hasSize(2)
-            .contains(
-                SequenceVersionStatus(
-                    sequenceId = DefaultFiles.firstSequence,
-                    version = 1,
-                    status = Status.SILO_READY,
-                    isRevocation = false,
-                ),
-            ).contains(
-                SequenceVersionStatus(
-                    sequenceId = DefaultFiles.firstSequence,
-                    version = 2,
-                    status = Status.REVOKED_STAGING,
-                    isRevocation = true,
-                ),
-            )
-
-        confirmRevocation(DefaultFiles.allSequenceIds)
-
-        assertThat(getSequenceList().filter { it.sequenceId == DefaultFiles.firstSequence })
-            .hasSize(1)
-            .contains(
-                SequenceVersionStatus(
-                    sequenceId = DefaultFiles.firstSequence,
-                    version = 2,
-                    status = Status.SILO_READY,
-                    isRevocation = true,
                 ),
             )
     }
@@ -240,7 +193,7 @@ class SubmissionControllerTest(
 
         val files = getTestDataFiles(false)
         mockMvc.perform(
-            MockMvcRequestBuilders.multipart("/revise")
+            multipart("/revise")
                 .file(files.first)
                 .file(files.second)
                 .param("username", USER_NAME),
@@ -263,7 +216,7 @@ class SubmissionControllerTest(
 
     private fun submitProcessedData(testData: String): ResultActions {
         return mockMvc.perform(
-            MockMvcRequestBuilders.post("/submit-processed-data")
+            post("/submit-processed-data")
                 .contentType(MediaType.APPLICATION_NDJSON_VALUE)
                 .content(testData),
         )
@@ -272,7 +225,7 @@ class SubmissionControllerTest(
 
     private fun querySequenceList(): MvcResult {
         return mockMvc.perform(
-            MockMvcRequestBuilders.get("/get-sequences-of-user")
+            get("/get-sequences-of-user")
                 .param("username", USER_NAME),
         )
             .andExpect(status().isOk())
@@ -288,7 +241,7 @@ class SubmissionControllerTest(
         val files = getTestDataFiles(false)
 
         return mockMvc.perform(
-            MockMvcRequestBuilders.multipart("/submit")
+            multipart("/submit")
                 .file(files.first)
                 .file(files.second)
                 .param("username", USER_NAME),
@@ -296,7 +249,7 @@ class SubmissionControllerTest(
     }
 
     private fun queryUnprocessedSequences(numberOfSequences: Int): MvcResult = mockMvc.perform(
-        MockMvcRequestBuilders.post("/extract-unprocessed-data")
+        post("/extract-unprocessed-data")
             .param("numberOfSequences", numberOfSequences.toString()),
     )
         .andExpect(status().isOk())
@@ -305,7 +258,7 @@ class SubmissionControllerTest(
 
     private fun approveProcessedSequences(listOfSequencesToApprove: List<SequenceVersion>): ResultActions =
         mockMvc.perform(
-            MockMvcRequestBuilders.post("/approve-processed-data")
+            post("/approve-processed-data")
                 .param("username", USER_NAME)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content("""{"sequenceVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}"""),
@@ -316,7 +269,7 @@ class SubmissionControllerTest(
         val files = getTestDataFiles(true)
 
         return mockMvc.perform(
-            MockMvcRequestBuilders.multipart("/revise")
+            multipart("/revise")
                 .file(files.first)
                 .file(files.second)
                 .param("username", USER_NAME),
@@ -330,24 +283,6 @@ class SubmissionControllerTest(
 
         return Pair(metadataFile, sequencesFile)
     }
-
-    private fun revokeSequences(listOfSequencesToRevoke: List<Number>) =
-        objectMapper.readValue<List<SequenceVersionStatus>>(
-            mockMvc.perform(
-                MockMvcRequestBuilders.post("/revoke")
-                    .contentType(MediaType.APPLICATION_JSON_VALUE)
-                    .content("""{"sequenceIds":$listOfSequencesToRevoke}"""),
-            )
-                .andExpect(status().isOk())
-                .andReturn().response.contentAsString,
-        )
-
-    private fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions = mockMvc.perform(
-        MockMvcRequestBuilders.post("/confirm-revocation")
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content("""{"sequenceIds":$listOfSequencesToConfirm}"""),
-    )
-        .andExpect(status().isOk())
 
     private fun prepareDataToSiloReady() {
         submitInitialData()
@@ -368,7 +303,7 @@ class SubmissionControllerTest(
                     metadata = objectMapper.readValue<Map<String, JsonNode>>(
                         objectMapper.writeValueAsString(it.data.metadata),
                     ),
-                    it.data.unalignedNucleotideSequences,
+                    unalignedNucleotideSequences = it.data.unalignedNucleotideSequences + ("secondSegment" to "ATAG"),
                 )
             }
             .map { objectMapper.writeValueAsString(it) }

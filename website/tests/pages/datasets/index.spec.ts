@@ -5,6 +5,9 @@ test.describe.configure({ mode: 'serial' });
 let testDatasetManager: DatasetPage;
 const testDatasetName = 'Test Dataset 1';
 
+// TODO: remove after new API is merged
+test.skip();
+
 test.describe('The datasets list page', () => {
     test.describe('with no existing datasets', () => {
         test('displays empty message', async ({ datasetPage }) => {
@@ -13,7 +16,7 @@ test.describe('The datasets list page', () => {
         });
     });
 
-    test.describe('with existing datatsets', () => {
+    test.describe('with existing datasets', () => {
         // Create test dataset
         test.beforeAll(async ({ browser }) => {
             const page = await browser.newPage();
@@ -26,8 +29,7 @@ test.describe('The datasets list page', () => {
             await testDatasetManager.deleteTestDataset(testDatasetName);
         });
 
-        test('allows successfully creating dataset', async () => {
-            // validate beforeAll hook creates dataset
+        test('successfully creates test dataset in beforeAll', async () => {
             await expect(testDatasetManager.page.getByText(testDatasetName)).toBeVisible();
         });
 

@@ -1,3 +1,7 @@
+import z from 'zod';
+
+export type PangoLineage = string;
+
 export type BaseType = 'nucleotide' | 'aminoAcid';
 
 export type SequenceType =
@@ -58,27 +62,88 @@ export type InsertionCount = {
     count: number;
 };
 
-export type HeaderId = {
-    sequenceId: number;
-    version: number;
+const sequenceStatusNames = z.union([
+    z.literal('RECEIVED'),
+    z.literal('PROCESSING'),
+    z.literal('NEEDS_REVIEW'),
+    z.literal('REVIEWED'),
+    z.literal('PROCESSED'),
+    z.literal('SILO_READY'),
+    z.literal('REVOKED_STAGING'),
+]);
+export type SequenceStatusNames = z.infer<typeof sequenceStatusNames>;
+const statusThatAllowsReview = z.union([z.literal('NEEDS_REVIEW'), z.literal('PROCESSED')]);
+
+export type SequenceStatus = SequenceVersion & {
+    status: SequenceStatusNames;
+    isRevocation: boolean;
+};
+
+const processingAnnotationSourceType = z.union([z.literal('Metadata'), z.literal('NucleotideSequence')]);
+export type ProcessingAnnotationSourceType = z.infer<typeof processingAnnotationSourceType>;
+
+const processingAnnotation = z.object({
+    source: z.array(
+        z.object({
+            name: z.string(),
+            type: processingAnnotationSourceType,
+        }),
+    ),
+    message: z.string(),
+});
+export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
+
+export const metadataField = z.union([z.string(), z.number(), z.date(), z.string()]);
+export type MetadataField = z.infer<typeof metadataField>;
+
+const metadataRecord = z.record(metadataField);
+export type MetadataRecord = z.infer<typeof metadataRecord>;
+
+export const sequenceVersion = z.object({
+    sequenceId: z.number(),
+    version: z.number(),
+});
+
+export type SequenceVersion = z.infer<typeof sequenceVersion>;
+
+export type HeaderId = SequenceVersion & {
     customId: string;
 };
 
-export interface SequenceVersion {
-    sequenceId: number;
-    version: number;
-}
-
-export type SequenceDetails = {
-    [otherDetails: string | number | symbol]: unknown;
-    accession?: string;
-    genbankAccession?: string;
-    sraAccession?: string;
-    gisaidEpiIsl?: string;
-    date?: string;
-    country?: string;
-    region?: string;
+export type UnprocessedData = SequenceVersion & {
+    data: {
+        metadata: { [key in string]: string | number | PangoLineage | Date };
+        unalignedNucleotideSequences: { [key in string]: string };
+    };
 };
+
+export type Sequence = SequenceVersion & {
+    data: any;
+    errors?: ProcessingAnnotation[];
+    warnings?: ProcessingAnnotation[];
+};
+
+export const sequenceReview = sequenceVersion.merge(
+    z.object({
+        status: statusThatAllowsReview,
+        errors: z.array(processingAnnotation).nullable(),
+        warnings: z.array(processingAnnotation).nullable(),
+        originalData: z.object({
+            metadata: metadataRecord,
+            unalignedNucleotideSequences: z.record(z.string()),
+        }),
+        processedData: z.object({
+            metadata: metadataRecord,
+            unalignedNucleotideSequences: z.record(z.string()),
+            alignedNucleotideSequences: z.record(z.string()),
+            nucleotideInsertions: z.record(z.array(z.string())),
+            aminoAcidSequences: z.record(z.string()),
+            aminoAcidInsertions: z.record(z.array(z.string())),
+        }),
+    }),
+);
+
+export type SequenceReview = z.infer<typeof sequenceReview>;
 
 /**
  * Types for datasets and citations.
@@ -113,6 +178,6 @@ export type AccessionCitation = {
 };
 
 export type DatasetCitationResults = {
-    sequenceId: string;
-    citations: AccessionCitation[];
+    years: string[];
+    citations: number[];
 };

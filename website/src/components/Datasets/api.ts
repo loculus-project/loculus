@@ -1,50 +1,34 @@
 import type { ServiceUrls, Dataset, DatasetRecord, DatasetCitationResults } from '../../types';
 
-const USE_MOCK_DATA = true;
+const USE_MOCK_API_DATA = true;
 
-export const mockUserAggCitations = [
+const mockUserAggCitations: DatasetCitationResults = {
+    years: ['2021', '2022', '2023'],
+    citations: [5, 10, 20],
+};
+
+const mockDataset = {
+    datasetId: 'testDatasetId',
+    datasetVersion: 1,
+    name: 'Test Dataset',
+    description: 'Test Dataset Description',
+    createdAt: '2021-01-01',
+    createdBy: 'testUser',
+};
+
+const mockDatasetRecords = [
     {
-        sequenceId: 'sequenceId1',
-        citations: [
-            {
-                datasetId: 'datasetId1',
-                date: '2023-01-01',
-            },
-            {
-                datasetId: 'datasetId2',
-                date: '2022-01-01',
-            },
-        ],
-    },
-    {
-        sequenceId: 'sequenceId2',
-        citations: [
-            {
-                datasetId: 'datasetId3',
-                date: '2023-01-01',
-            },
-            {
-                datasetId: 'datasetId4',
-                date: '2021-01-01',
-            },
-        ],
-    },
-    {
-        sequenceId: 'sequenceId3',
-        citations: [
-            {
-                datasetId: 'datasetId5',
-                date: '2023-01-01',
-            },
-            {
-                datasetId: 'datasetId6',
-                date: '2021-01-01',
-            },
-        ],
+        accession: 'id_129663',
+        type: 'Pathoplexus',
     },
 ];
 
 export const fetchAuthorDatasets = async (userId: string, serviceConfig: ServiceUrls): Promise<Dataset[]> => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (USE_MOCK_API_DATA) {
+        return [mockDataset as unknown as Dataset];
+    }
+
     const response = await fetch(`${serviceConfig.backendUrl}/get-datasets-of-user?username=${userId}`);
     return response.json();
 };
@@ -52,11 +36,12 @@ export const fetchAuthorDatasets = async (userId: string, serviceConfig: Service
 export const fetchAuthorCitations = async (
     userId: string,
     serviceConfig: ServiceUrls,
-): Promise<DatasetCitationResults[]> => {
+): Promise<DatasetCitationResults> => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    if (USE_MOCK_DATA) {
+    if (USE_MOCK_API_DATA) {
         return mockUserAggCitations;
     }
+
     const response = await fetch(`${serviceConfig.backendUrl}/get-citations-of-user?username=${userId}`);
     return response.json();
 };
@@ -66,6 +51,11 @@ export const fetchDataset = async (
     datasetVersion: string,
     serviceConfig: ServiceUrls,
 ): Promise<Dataset[]> => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (USE_MOCK_API_DATA) {
+        return [mockDataset as unknown as Dataset];
+    }
+
     const response = await fetch(
         `${serviceConfig.backendUrl}/get-dataset?datasetId=${datasetId}&version=${datasetVersion}`,
     );
@@ -77,6 +67,11 @@ export const fetchDatasetRecords = async (
     datasetVersion: string,
     serviceConfig: ServiceUrls,
 ): Promise<DatasetRecord[]> => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (USE_MOCK_API_DATA) {
+        return mockDatasetRecords;
+    }
+
     const response = await fetch(
         `${serviceConfig.backendUrl}/get-dataset-records?datasetId=${datasetId}&version=${datasetVersion}`,
     );
@@ -88,6 +83,11 @@ export const createDataset = async (
     dataset: Partial<Dataset>,
     serviceUrls: ServiceUrls,
 ): Promise<any> => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (USE_MOCK_API_DATA) {
+        return { datasetId: mockDataset.datasetId, datasetVersion: mockDataset.datasetVersion };
+    }
+
     const body = JSON.stringify(dataset);
     const response = await fetch(`${serviceUrls.backendUrl}/create-dataset?username=${userId}`, {
         method: 'POST',
@@ -109,6 +109,11 @@ export const updateDataset = async (
     dataset: Partial<Dataset>,
     serviceUrls: ServiceUrls,
 ): Promise<any> => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (USE_MOCK_API_DATA) {
+        return { datasetId: mockDataset.datasetId, datasetVersion: mockDataset.datasetVersion };
+    }
+
     const body = JSON.stringify(dataset);
     const response = await fetch(`${serviceUrls.backendUrl}/update-dataset?username=${userId}&datasetId=${datasetId}`, {
         method: 'PUT',
@@ -131,6 +136,11 @@ export const deleteDataset = async (
     datasetVersion: string,
     serviceUrls: ServiceUrls,
 ): Promise<any> => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (USE_MOCK_API_DATA) {
+        return { status: 200 };
+    }
+
     const response = await fetch(
         `${serviceUrls.backendUrl}/delete-dataset?username=${userId}&datasetId=${datasetId}&version=${datasetVersion}`,
         {

@@ -25,7 +25,7 @@ export const SequenceStatusBox: FC<Props> = ({ count, description, localStorageK
         <div className='collapse bg-base-200'>
             <input type='checkbox' checked={isChecked} onChange={handleCheckboxChange} data-testid={localStorageKey} />
             <div className='collapse-title text-xl font-medium'>
-                {count} sequence(s) {description}
+                {count} sequence{count === 1 ? '' : 's'} {description}
             </div>
             <div className='collapse-content'>{children}</div>
         </div>

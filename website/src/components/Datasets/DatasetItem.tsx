@@ -2,17 +2,19 @@ import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Link from '@mui/material/Link';
 import { useQueries, useQuery, useMutation, type UseQueryResult } from '@tanstack/react-query';
-import { type FC, useState } from 'react';
+import { type FC, useState, useEffect } from 'react';
 
 import { DatasetForm } from './DatasetForm';
 import { ExportDataset } from './ExportDataset';
 import { fetchDataset, fetchDatasetRecords, deleteDataset } from './api';
-import { clientLogger, fetchSequenceDetails } from '../../api';
-import type { Config, ClientConfig, SequenceDetails, DatasetRecord, Dataset } from '../../types';
+import { getClientLogger, fetchSequenceDetails } from '../../api';
+import { type Config, type ClientConfig, type DatasetRecord, type Dataset, AccessionType } from '../../types';
 import { AlertDialog } from '../common/AlertDialog';
-import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
 import withQueryProvider from '../common/withQueryProvider';
+
+const clientLogger = getClientLogger('DatasetItem');
 
 type DatasetRecordsTableProps = {
     accessionQueries: UseQueryResult<any>[];
@@ -46,7 +48,7 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ accessionQueries, d
                     return (
                         <tr key={`accessionData-${index}`}>
                             <td className='text-left'>
-                                {datasetRecord.type === 'pathoplexus' ? (
+                                {datasetRecord.type === AccessionType.pathoplexus ? (
                                     <Button
                                         href={`/sequences/${datasetRecord.accession}`}
                                         target='_blank'
@@ -90,59 +92,66 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     const [doiDialogVisible, setDoiDialogVisible] = useState(false);
     const [citationsDialogVisible, setCitationsDialogVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
-
-    const [isErrorOpen, setIsErrorOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
+    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     const userId = 'testuser';
 
-    // TODO: centralize this into an ErrorBoundary component (react-error-boundary)
-    const handleOpenError = (message: string) => {
-        setErrorMessage(message);
-        setIsErrorOpen(true);
-    };
-    const handleCloseError = () => {
-        setErrorMessage('');
-        setIsErrorOpen(false);
-    };
+    const {
+        data: datasets,
+        isLoading: isLoadingDataset,
+        error: datasetError,
+    }: UseQueryResult<Dataset[]> = useQuery({
+        queryKey: ['datasets', datasetId, datasetVersion],
+        queryFn: () => fetchDataset(datasetId, datasetVersion, clientConfig),
+    });
 
-    const { data: datasets, isLoading: isLoadingDataset }: UseQueryResult<Dataset[]> = useQuery(
-        ['datasets', datasetId, datasetVersion],
-        () => fetchDataset(datasetId, datasetVersion, clientConfig),
-    );
-
-    const { data: datasetRecords, isLoading: isLoadingDatasetRecords }: UseQueryResult<DatasetRecord[]> = useQuery(
-        ['datasetRecords', datasetId, datasetVersion],
-        () => fetchDatasetRecords(datasetId, datasetVersion, clientConfig),
-    );
-
-    const fetchAccessionDetails = async (accession: string, type: string) => {
-        let accessionConfig: Config = config;
-        if (type === 'SRA') {
-            accessionConfig = {
-                ...config,
-                schema: {
-                    ...config.schema,
-                    primaryKey: 'sraAccession',
-                },
-            };
+    useEffect(() => {
+        const handleError = async (): Promise<void> => {
+            openErrorFeedback(`fetchDataset failed with error: ${(datasetError as Error).message}`);
+            await clientLogger.error(`fetchDataset failed with error: ${(datasetError as Error).message}`);
+        };
+        if (datasetError !== null) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            handleError();
         }
+    }, [datasetError, openErrorFeedback]);
+
+    const {
+        data: datasetRecords,
+        isLoading: isLoadingDatasetRecords,
+        error: recordsError,
+    }: UseQueryResult<DatasetRecord[]> = useQuery(['datasetRecords', datasetId, datasetVersion], () =>
+        fetchDatasetRecords(datasetId, datasetVersion, clientConfig),
+    );
+
+    useEffect(() => {
+        const handleError = async () => {
+            openErrorFeedback(`fetchDatasetRecords failed with error: ${(recordsError as Error).message}`);
+            await clientLogger.error(`fetchDatasetRecords failed with error: ${(recordsError as Error).message}`);
+        };
+        if (recordsError !== null) {
+            // eslint-disable-next-line @typescript-eslint/no-floating-promises
+            handleError().then();
+        }
+    }, [recordsError, openErrorFeedback]);
+
+    const handleFetchSequence = async (accession: string) => {
         try {
-            const response: SequenceDetails[] = await fetchSequenceDetails(accession, accessionConfig, clientConfig);
+            const response = await fetchSequenceDetails(accession, config, clientConfig);
             await clientLogger.info(`fetchSequenceDetails succeeded for ${accession}`);
             return response;
         } catch (error) {
-            handleOpenError(`fetchSequenceDetails failed with error' + ${(error as Error).message}`);
-            await clientLogger.error(`fetchSequenceDetails failed with error' + ${(error as Error).message}`);
+            openErrorFeedback(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
+            await clientLogger.error(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
         }
     };
 
     const accessionQueries = useQueries({
         queries:
-            datasetRecords != null && datasetRecords.length > 0
+            datasetRecords !== undefined && datasetRecords.length > 0
                 ? datasetRecords.map((record: DatasetRecord) => ({
                       queryKey: ['accessionDetails', record.accession, record.type],
-                      queryFn: () => fetchAccessionDetails(record.accession ?? '', record.type as string),
+                      queryFn: () => handleFetchSequence(record.accession ?? ''),
                   }))
                 : [],
     });
@@ -152,14 +161,14 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     });
 
     const handleDeleteDataset = async () => {
-        const response = await deleteDatasetMutation.mutateAsync();
-        if (response.status === 200) {
+        try {
+            await deleteDatasetMutation.mutateAsync();
             await clientLogger.info(`deleteDataset succeeded for ${datasetId}`);
             location.href = '/datasets';
-            return;
+        } catch (error) {
+            openErrorFeedback(`deleteDataset failed with error: ${(error as Error).message}`);
+            await clientLogger.error(`deleteDataset failed with error: ${(error as Error).message}`);
         }
-        handleOpenError(`fetchSequenceDetails failed with error' + ${(response as Error).message}`);
-        await clientLogger.error(`deleteDataset failed with error' + ${(response as Error).message}`);
     };
 
     const handleCreateDOI = () => {
@@ -171,8 +180,8 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     };
 
     const formatDate = (date?: string) => {
-        if (date == null) {
-            return null;
+        if (date === undefined) {
+            return 'N/A';
         }
         const dateObj = new Date(date);
         return dateObj.toLocaleDateString();
@@ -182,8 +191,8 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
 
     return (
         <div className='flex flex-col items-left'>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
-            {isLoadingDataset || dataset == null ? (
+            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
+            {isLoadingDataset || dataset === undefined ? (
                 <CircularProgress />
             ) : (
                 <>
@@ -259,12 +268,12 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
-                            <p className='text'>{formatDate(dataset.createdAt) ?? 'N/A'}</p>
+                            <p className='text'>{formatDate(dataset.createdAt)}</p>
                         </div>
                         <div className='flex flex-row'>
                             <p className='mr-8 font-medium w-[150px] text-right'>DOI: </p>
                             <p className='text'>{dataset.datasetDOI ?? 'N/A'}</p>
-                            {dataset.datasetDOI == null ? (
+                            {dataset.datasetDOI === undefined ? (
                                 <Link
                                     className='ml-2'
                                     component='button'
@@ -288,7 +297,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                             </Link>
                         </div>
                     </div>
-                    {isLoadingDatasetRecords || datasetRecords == null ? (
+                    {isLoadingDatasetRecords || datasetRecords === undefined ? (
                         <CircularProgress />
                     ) : (
                         <div className='flex flex-col my-4'>

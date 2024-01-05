@@ -24,6 +24,7 @@ services:
     volumes:
       - ./log:/workspace/log
       - ./website/tests/config/config.json:/workspace/config.json
+      - ./website/tests/config/reference_genomes.json:/workspace/reference_genomes.json
 
   database:
     image: postgres:latest
@@ -41,7 +42,7 @@ services:
     command: --silo.url=http://silo:8081
     volumes:
       - ./website/tests/config/database_config.yaml:/workspace/database_config.yaml
-      - ./website/tests/config/silo_reference_genomes.json:/workspace/reference_genomes.json
+      - ./website/tests/config/reference_genomes.json:/workspace/reference_genomes.json
       - ./log:/workspace/log
 
   silo:
@@ -62,7 +63,7 @@ services:
     volumes:
       - ./website/tests/initialSiloData:/preprocessing/input
       - ./website/tests/initialSiloData/preprocessingOutput:/preprocessing/output
-      - ./website/tests/config/silo_reference_genomes.json:/preprocessing/input/reference_genomes.json
+      - ./website/tests/config/reference_genomes.json:/preprocessing/input/reference_genomes.json
       - ./website/tests/config/preprocessing_config.yaml:/app/preprocessing_config.yaml
       - ./website/tests/config/database_config.yaml:/app/database_config.yaml
       - ./log/preprocessing:/app/logs

@@ -15,70 +15,6 @@ import type { Dataset } from '../../types';
 
 type Order = 'asc' | 'desc';
 
-const getComparator = <Key extends keyof any>(
-    order: Order,
-    orderBy: Key,
-): ((a: { [key in Key]: number | string }, b: { [key in Key]: number | string }) => number) => {
-    const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) => {
-        if (b[orderBy] < a[orderBy]) {
-            return -1;
-        }
-        if (b[orderBy] > a[orderBy]) {
-            return 1;
-        }
-        return 0;
-    };
-    return order === 'desc'
-        ? (a, b) => descendingComparator(a, b, orderBy)
-        : (a, b) => -descendingComparator(a, b, orderBy);
-};
-
-function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number) {
-    const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
-    stabilizedThis.sort((a, b) => {
-        const order = comparator(a[0], b[0]);
-        if (order !== 0) {
-            return order;
-        }
-        return a[1] - b[1];
-    });
-    return stabilizedThis.map((el) => el[0]);
-}
-
-interface HeadCell {
-    id: keyof Dataset;
-    label: string;
-    numeric: boolean;
-}
-
-const headCells: readonly HeadCell[] = [
-    {
-        id: 'createdAt',
-        numeric: false,
-        label: 'Last Updated',
-    },
-    {
-        id: 'datasetVersion',
-        numeric: false,
-        label: 'Version',
-    },
-    {
-        id: 'name',
-        numeric: false,
-        label: 'Name',
-    },
-    {
-        id: 'description',
-        numeric: false,
-        label: 'Description',
-    },
-    {
-        id: 'datasetDOI',
-        numeric: false,
-        label: 'Dataset DOI',
-    },
-];
-
 interface DatasetsTableHeadProps {
     onRequestSort: (event: MouseEvent<unknown>, property: keyof Dataset) => void;
     order: Order;
@@ -88,6 +24,35 @@ interface DatasetsTableHeadProps {
 
 const DatasetsTableHead = (props: DatasetsTableHeadProps) => {
     const { order, orderBy, onRequestSort } = props;
+
+    interface HeadCell {
+        id: keyof Dataset;
+        label: string;
+    }
+
+    const headCells: readonly HeadCell[] = [
+        {
+            id: 'createdAt',
+            label: 'Last Updated',
+        },
+        {
+            id: 'datasetVersion',
+            label: 'Version',
+        },
+        {
+            id: 'name',
+            label: 'Name',
+        },
+        {
+            id: 'description',
+            label: 'Description',
+        },
+        {
+            id: 'datasetDOI',
+            label: 'Dataset DOI',
+        },
+    ];
+
     const createSortHandler = (property: keyof Dataset) => (event: MouseEvent<unknown>) => {
         onRequestSort(event, property);
     };
@@ -98,7 +63,7 @@ const DatasetsTableHead = (props: DatasetsTableHeadProps) => {
                 {headCells.map((headCell) => (
                     <TableCell
                         key={headCell.id}
-                        align={headCell.numeric ? 'right' : 'left'}
+                        align='left'
                         padding='normal'
                         sortDirection={orderBy === headCell.id ? order : false}
                     >
@@ -152,6 +117,24 @@ const DatasetsTable = (props: DatasetsTableProps) => {
         setPage(0);
     };
 
+    const getComparator = <Key extends keyof any>(
+        order: Order,
+        orderBy: Key,
+    ): ((a: { [key in Key]: number | string }, b: { [key in Key]: number | string }) => number) => {
+        const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) => {
+            if (b[orderBy] < a[orderBy]) {
+                return -1;
+            }
+            if (b[orderBy] > a[orderBy]) {
+                return 1;
+            }
+            return 0;
+        };
+        return order === 'desc'
+            ? (a, b) => descendingComparator(a, b, orderBy)
+            : (a, b) => -descendingComparator(a, b, orderBy);
+    };
+
     // Avoid a layout jump when reaching the last page with empty rows.
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - datasets.length) : 0;
 
@@ -167,15 +150,14 @@ const DatasetsTable = (props: DatasetsTableProps) => {
         };
         const serializedDatasets = datasets.map((dataset) => stringifyKeys(dataset));
 
-        return stableSort(serializedDatasets, getComparator(order, orderBy)).slice(
-            page * rowsPerPage,
-            page * rowsPerPage + rowsPerPage,
-        );
+        return serializedDatasets
+            .sort(getComparator(order, orderBy))
+            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
     }, [datasets, order, orderBy, page, rowsPerPage]);
 
     const maxCellLength = 25;
     const truncateCell = (cell: string | undefined) => {
-        if (cell == null) {
+        if (cell === undefined) {
             return 'N/A';
         }
         if (cell.length > maxCellLength) {

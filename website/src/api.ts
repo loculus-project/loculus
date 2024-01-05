@@ -1,3 +1,6 @@
+import { err, ok, type Result } from 'neverthrow';
+import type z from 'zod';
+
 import type { BaseType, Config, InsertionCount, MutationProportionCount, SequenceType, ServiceUrls } from './types';
 import { parseFasta } from './utils/parseFasta';
 import { isAlignedSequence, isUnalignedSequence } from './utils/sequenceTypeHelpers';
@@ -36,18 +39,29 @@ export async function fetchInsertions(
 export type Log = {
     level: string;
     message: string;
+    instance?: string;
 };
-export const clientLogger = {
-    log: async ({ message, level }: Log): Promise<Response> =>
-        fetch('/admin/logs.txt', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ level, message }),
-        }),
-    error: async (message: string): Promise<Response> => clientLogger.log({ level: 'error', message }),
-    info: async (message: string) => clientLogger.log({ level: 'info', message }),
+
+type ClientLogger = {
+    log: (log: Log) => Promise<Response>;
+    error: (message: string) => Promise<Response>;
+    info: (message: string) => Promise<Response>;
+};
+
+export const getClientLogger = (instance: string = 'client'): ClientLogger => {
+    const clientLogger = {
+        log: async ({ message, level, instance }: Log): Promise<Response> =>
+            fetch('/admin/logs.txt', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ level, message, instance }),
+            }),
+        error: async (message: string): Promise<Response> => clientLogger.log({ level: 'error', instance, message }),
+        info: async (message: string) => clientLogger.log({ level: 'info', instance, message }),
+    };
+    return clientLogger;
 };
 
 export async function fetchSequence(
@@ -74,3 +88,53 @@ export async function fetchSequence(
     }
     return fastaEntries[0].sequence;
 }
+
+type FetchParameter<T> = {
+    endpoint: `/${string}`;
+    backendUrl: string;
+    zodSchema: T;
+    options?: RequestInit;
+};
+
+export const clientFetch = async <T extends z.Schema | undefined>({
+    endpoint,
+    backendUrl,
+    zodSchema,
+    options,
+}: FetchParameter<T>): Promise<Result<T extends z.Schema<infer S> ? S : never, string>> => {
+    const logger = getClientLogger('clientFetch ' + endpoint);
+    try {
+        const response = await fetch(`${backendUrl}${endpoint}`, options);
+
+        if (!response.ok) {
+            await logger.error(`Failed to fetch user sequences with status ${response.status}`);
+            return err(`Failed to fetch user sequences ${JSON.stringify(await response.text())}`);
+        }
+
+        try {
+            if (zodSchema === undefined) {
+                return ok(undefined as never);
+            }
+
+            const parser = (candidate: unknown) => {
+                try {
+                    return ok(zodSchema.parse(candidate));
+                } catch (error) {
+                    return err((error as Error).message);
+                }
+            };
+
+            const responseJson = await response.json();
+
+            return parser(responseJson);
+        } catch (error) {
+            await logger.error(
+                `Parsing the response review for sequence version failed with error '${JSON.stringify(error)}'`,
+            );
+            return err(`Parsing the response review for sequence version failed with error '${JSON.stringify(error)}'`);
+        }
+    } catch (error) {
+        await logger.error(`Failed to fetch user sequences with error '${JSON.stringify(error)}'`);
+        return err(`Failed to fetch user sequences with error '${JSON.stringify(error)}'`);
+    }
+};

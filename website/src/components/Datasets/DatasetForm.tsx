@@ -10,10 +10,12 @@ import { useQueries, useMutation, type UseQueryResult } from '@tanstack/react-qu
 import { type FC, type FormEvent, useState, useEffect } from 'react';
 
 import { createDataset, updateDataset } from './api';
-import { clientLogger, fetchSequenceDetails } from '../../api';
+import { getClientLogger, fetchSequenceDetails } from '../../api';
 import { AccessionType, type Config, type ClientConfig, type Dataset, type DatasetRecord } from '../../types';
 import { serializeRecordsToAccessionsInput, parseRecordsFromAccessionInput } from '../../utils/parseAccessionInput';
-import { ManagedErrorFeedback } from '../common/ManagedErrorFeedback';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
+
+const clientLogger = getClientLogger('DatasetForm');
 
 type DatasetFormProps = {
     userId: string;
@@ -36,18 +38,25 @@ export const DatasetForm: FC<DatasetFormProps> = ({
     const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editDatasetRecords));
     const [datasetRecords, setDatasetRecords] = useState(editDatasetRecords);
 
+    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
     const [isLoading, setIsLoading] = useState(false);
-    const [isErrorOpen, setIsErrorOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState('');
 
-    const handleOpenError = (message: string) => {
-        setErrorMessage(message);
-        setIsErrorOpen(true);
-    };
+    useEffect(() => {
+        const parseRecordsFromInput = () => {
+            const parsedRecords = parseRecordsFromAccessionInput(accessionsInput);
+            setDatasetRecords(parsedRecords);
+        };
+        const timeOutId = setTimeout(async () => {
+            parseRecordsFromInput();
+        }, 2000);
+        return () => clearTimeout(timeOutId);
+    }, [accessionsInput]);
 
-    const handleCloseError = () => {
-        setErrorMessage('');
-        setIsErrorOpen(false);
+    const setAccessionInput = (accessionInput: string, type: AccessionType) => {
+        setAccessionsInput((prevState) => ({
+            ...prevState,
+            [type]: accessionInput,
+        }));
     };
 
     const createDatasetMutation = useMutation({
@@ -59,11 +68,8 @@ export const DatasetForm: FC<DatasetFormProps> = ({
             updateDataset(userId, editDataset?.datasetId ?? '', dataset, clientConfig),
     });
 
-    const handleSubmit = async (event: FormEvent) => {
-        event.preventDefault();
-        setIsLoading(true);
-
-        const dataset = {
+    const getDatasetFromInput = () => {
+        return {
             name: datasetName,
             description: datasetDescription,
             records: [
@@ -85,25 +91,31 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                 })),
             ],
         };
+    };
+
+    const handleSubmit = async (event: FormEvent) => {
+        event.preventDefault();
+        setIsLoading(true);
+
+        const dataset = getDatasetFromInput();
+
         let redirectUrl = '/datasets';
 
-        const isEdit = editDataset != null;
-
-        if (isEdit) {
+        if (editDataset !== undefined) {
             try {
                 const response = await updateDatasetMutation.mutateAsync(dataset);
-                await clientLogger.info(`Dataset edit successful, datasetId: '${editDataset.datasetId}'`);
+                await clientLogger.info(`updateDataset succeeded for datasetId: '${editDataset.datasetId}'`);
                 redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
             } catch (error) {
-                handleOpenError(
-                    `Dataset edit failed with error '${(error as Error).message}', datasetId: '${
+                openErrorFeedback(
+                    `updateDataset failed with error: ${(error as Error).message} for datasetId: ${
                         editDataset.datasetId
                     }'`,
                 );
                 await clientLogger.error(
-                    `Dataset edit failed with error '${(error as Error).message}', datasetId: '${
+                    `updateDataset failed with error: ${(error as Error).message} for datasetId: ${
                         editDataset.datasetId
-                    }'`,
+                    }`,
                 );
             }
         } else {
@@ -112,7 +124,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                 await clientLogger.info(`Dataset create successful with datasetId: ${response?.datasetId}`);
                 redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
             } catch (error) {
-                handleOpenError(`Dataset create failed with error '${(error as Error).message}'`);
+                openErrorFeedback(`Dataset create failed with error '${(error as Error).message}'`);
                 await clientLogger.error(`Dataset create failed with error '${(error as Error).message}'`);
             }
         }
@@ -129,49 +141,26 @@ export const DatasetForm: FC<DatasetFormProps> = ({
             .filter(Boolean);
     };
 
-    const querySequenceDetails = async (type: AccessionType, accession: string) => {
-        let accessionConfig: Config = config;
-
-        if (type === 'SRA') {
-            accessionConfig = {
-                ...config,
-                schema: {
-                    ...config.schema,
-                    primaryKey: 'sraAccession',
-                },
-            };
-        }
+    const handleFetchSequence = async (accession: string) => {
         try {
-            const response = await fetchSequenceDetails(accession, accessionConfig, clientConfig);
+            const response = await fetchSequenceDetails(accession, config, clientConfig);
+            await clientLogger.info(`fetchSequenceDetails succeeded for ${accession}`);
             return response;
         } catch (error) {
-            throw new Error(
-                `Failed to fetch sequence details for accession: ${accession}. Error: ${(error as Error).message}`,
-            );
+            openErrorFeedback(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
+            await clientLogger.error(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
         }
     };
 
-    useEffect(() => {
-        const parseRecordsFromInput = () => {
-            const parsedRecords = parseRecordsFromAccessionInput(accessionsInput);
-            setDatasetRecords(parsedRecords);
-        };
-
-        const timeOutId = setTimeout(async () => {
-            parseRecordsFromInput();
-        }, 2000);
-        return () => clearTimeout(timeOutId);
-    }, [accessionsInput]);
-
     const accessionQueries: UseQueryResult<DatasetRecord>[] = useQueries(
-        datasetRecords == null || datasetRecords.length === 0
+        datasetRecords === undefined || datasetRecords.length === 0
             ? {
                   queries: [],
               }
             : {
                   queries: datasetRecords.map((record) => ({
                       queryKey: [record.type, record.accession],
-                      queryFn: () => querySequenceDetails(record.type as AccessionType, record.accession ?? ''),
+                      queryFn: () => handleFetchSequence(record.accession ?? ''),
                       retry: false,
                   })),
               },
@@ -180,11 +169,12 @@ export const DatasetForm: FC<DatasetFormProps> = ({
     const renderAccessionStatus = (type: string, accession: string) => {
         const accessionQuery = accessionQueries.find(
             (accessionQuery: any) =>
+                accessionQuery.data?.accession === accession ||
                 accessionQuery.data?.[type] === accession ||
-                (accessionQuery?.failureReason != null && accessionQuery?.failureReason?.message.includes(accession)),
+                (accessionQuery?.failureReason !== undefined &&
+                    accessionQuery?.failureReason?.message.includes(accession)),
         );
-
-        if (accessionQuery == null || accessionQuery.isLoading === true) {
+        if (accessionQuery === undefined || accessionQuery.isLoading === true) {
             return <CircularProgress size={20} color='primary' />;
         }
         if (accessionQuery.status === 'success') {
@@ -193,16 +183,9 @@ export const DatasetForm: FC<DatasetFormProps> = ({
         return <ErrorIcon />;
     };
 
-    const setAccessionInput = (accessionInput: string, type: AccessionType) => {
-        setAccessionsInput((prevState) => ({
-            ...prevState,
-            [type]: accessionInput,
-        }));
-    };
-
     return (
         <div className='flex flex-col items-center  overflow-auto-y w-full'>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={handleCloseError} />
+            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex justify-start items-center py-5'>
                 <h1 className='text-xl font-semibold py-4'>{`${editDataset ? 'Edit' : 'Create'} Dataset`}</h1>
             </div>
@@ -269,24 +252,14 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                     <h2 className='text-lg font-bold'>Verified</h2>
                     <div className='p-6 space-y-6 max-w-md w-full'>
                         <div>
-                            {getAccessionsList(AccessionType.pathoplexus).map((accession) => (
-                                <div key={accession} className='flex flex-row justify-between'>
-                                    <div>{accession}</div>
-                                    {renderAccessionStatus(AccessionType.pathoplexus, accession)}
-                                </div>
-                            ))}
-                            {getAccessionsList(AccessionType.genbank).map((accession) => (
-                                <div key={accession} className='flex flex-row justify-between'>
-                                    <div>{accession}</div>
-                                    {renderAccessionStatus(AccessionType.genbank, accession)}
-                                </div>
-                            ))}
-                            {getAccessionsList(AccessionType.sra).map((accession) => (
-                                <div key={accession} className='flex flex-row justify-between'>
-                                    <div>{accession}</div>
-                                    {renderAccessionStatus(AccessionType.sra, accession)}
-                                </div>
-                            ))}
+                            {Object.values(AccessionType).map((type) =>
+                                getAccessionsList(type as AccessionType).map((accession) => (
+                                    <div key={accession} className='flex flex-row justify-between'>
+                                        <div>{accession}</div>
+                                        {renderAccessionStatus(type as AccessionType, accession)}
+                                    </div>
+                                )),
+                            )}
                         </div>
                     </div>
                 </div>

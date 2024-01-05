@@ -2,6 +2,7 @@ package org.pathoplexus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.pathoplexus.backend.controller.SubmitFiles.DefaultFiles
 import org.pathoplexus.backend.model.HeaderId
 import org.pathoplexus.backend.service.SequenceReview
 import org.pathoplexus.backend.service.SequenceVersion
@@ -20,8 +21,8 @@ class SubmissionConvenienceClient(
     fun submitDefaultFiles(username: String = USER_NAME): List<HeaderId> {
         val submit = client.submit(
             username,
-            SubmitFiles.DefaultFiles.metadataFile,
-            SubmitFiles.DefaultFiles.sequencesFile,
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFile,
         )
 
         return deserializeJsonResponse(submit)
@@ -40,12 +41,32 @@ class SubmissionConvenienceClient(
 
     fun prepareDefaultSequencesToNeedReview() {
         prepareDefaultSequencesToProcessing()
-        SubmitFiles.DefaultFiles.allSequenceIds.forEach { sequenceId ->
+        DefaultFiles.allSequenceIds.forEach { sequenceId ->
             client.submitProcessedData(PreparedProcessedData.withErrors(sequenceId = sequenceId))
         }
     }
 
-    fun extractUnprocessedData(numberOfSequences: Int = SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES) =
+    fun prepareDefaultSequencesToSiloReady() {
+        prepareDefaultSequencesToProcessing()
+
+        client.submitProcessedData(
+            *DefaultFiles.allSequenceIds.map {
+                PreparedProcessedData.successfullyProcessed(sequenceId = it)
+            }.toTypedArray(),
+        )
+
+        approveProcessedSequences(
+            DefaultFiles.allSequenceIds.map
+            { SequenceVersion(it, 1) },
+        )
+    }
+
+    fun prepareDefaultSequencesToRevokedStaging() {
+        prepareDefaultSequencesToSiloReady()
+        revokeSequences(DefaultFiles.allSequenceIds)
+    }
+
+    fun extractUnprocessedData(numberOfSequences: Int = DefaultFiles.NUMBER_OF_SEQUENCES) =
         client.extractUnprocessedData(numberOfSequences)
             .expectNdjsonAndGetContent<UnprocessedData>()
 
@@ -91,9 +112,9 @@ class SubmissionConvenienceClient(
     fun revokeSequences(listOfSequencesToRevoke: List<Number>): List<SequenceVersionStatus> =
         deserializeJsonResponse(client.revokeSequences(listOfSequencesToRevoke))
 
-    fun confirmRevocation(listOfSequencesToConfirm: List<Number>): ResultActions =
+    fun confirmRevocation(listOfSequencesToConfirm: List<SequenceVersion>): ResultActions =
         client.confirmRevocation(listOfSequencesToConfirm)
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =

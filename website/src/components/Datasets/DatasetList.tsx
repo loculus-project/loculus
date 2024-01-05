@@ -36,7 +36,7 @@ const DatasetListInner: FC<DatasetListProps> = ({ config, clientConfig }) => {
                 <div>
                     {isLoadingDatasets ? (
                         <CircularProgress />
-                    ) : datasets != null && datasets.length > 0 ? (
+                    ) : datasets !== undefined && datasets.length > 0 ? (
                         <DatasetsTable datasets={datasets} />
                     ) : (
                         'You have no datasets yet.'

@@ -1,0 +1,48 @@
+# THIS FILE IS DEPLOYED MANUALLY, NEED TO FILL IN GITHUB PAT BELOW
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: pp-preview
+spec:
+  goTemplate: true
+  generators:
+    - pullRequest:
+        github:
+          owner: pathoplexus
+          labels:
+            - preview
+          repo: pathoplexus
+          tokenRef:
+            key: token
+            secretName: github-token
+        requeueAfterSeconds: 60
+  template:
+    metadata:
+      name: 'pp-{{printf "%.25s" .branch  }}-{{.number}}'
+    spec:
+      destination:
+        server: 'https://kubernetes.default.svc'
+        namespace: preview
+      project: default
+      source:
+        path: '.argocd/preview/'
+        repoURL: 'https://github.com/pathoplexus/pathoplexus.git'
+        targetRevision: '{{.branch}}'
+        helm:
+          parameters:
+            - name: namespace
+              value: 'preview-{{.branch}}'
+            - name: version
+              value: '{{.branch}}'
+            - name: shortbranch
+              value: '{{printf "%.25s" .branch  }}'
+            - name: branch
+              value: '{{.branch}}'
+            - name: githubToken
+              value: 'REPLACE ME WITH GITHUB PAT'
+            - name: host
+              value: '{{printf "%.25s" .branch  }}.preview.pathoplexus.org'
+
+      syncPolicy:
+        automated:
+          selfHeal: true

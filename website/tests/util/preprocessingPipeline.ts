@@ -1,3 +1,4 @@
+import type { UnprocessedData } from '../../src/types.ts';
 import { backendUrl } from '../e2e.fixture.ts';
 
 export const fakeProcessingPipeline = async ({
@@ -23,17 +24,27 @@ export const fakeProcessingPipeline = async ({
                 division: 'Schaffhausen',
             },
             unalignedNucleotideSequences: {
-                main: 'AATTCC...',
+                main: 'A'.repeat(123),
             },
             alignedNucleotideSequences: {
-                main: 'NNNNNAATTCC...',
+                main: 'A'.repeat(29903),
             },
             nucleotideInsertions: {
-                insertions: ['123:TCTCT', '234:ATATAT'],
+                main: ['123:TCTCT', '234:ATATAT'],
             },
             aminoAcidSequences: {
-                S: 'XXMSR...',
-                ORF1a: 'NRNR...',
+                E: 'M'.repeat(76),
+                M: 'A'.repeat(223),
+                N: 'S'.repeat(420),
+                ORF1a: 'E'.repeat(4401),
+                ORF1b: 'R'.repeat(2696),
+                ORF3a: 'D'.repeat(276),
+                ORF6: 'F'.repeat(62),
+                ORF7a: 'K'.repeat(122),
+                ORF7b: 'I'.repeat(44),
+                ORF8: 'L'.repeat(122),
+                ORF9b: 'P'.repeat(98),
+                S: 'V'.repeat(1274),
             },
             aminoAcidInsertions: {
                 S: ['123:NRNR'],
@@ -69,20 +80,3 @@ export async function queryUnprocessedData(countOfSequences: number) {
         .filter((line) => line.length > 0)
         .map((line): UnprocessedData => JSON.parse(line));
 }
-
-export type UnprocessedData = {
-    sequenceId: number;
-    version: number;
-    data: {
-        metadata: Record<string, string>;
-        unalignedNucleotideSequences: Record<string, string>;
-    };
-};
-
-export type Sequence = {
-    sequenceId: number;
-    version: number;
-    data: any;
-    errors?: any[];
-    warnings?: any[];
-};

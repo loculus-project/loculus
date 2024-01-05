@@ -1,0 +1,42 @@
+---
+import { getReviewForSequenceVersion } from './getReviewData';
+import { BackButton } from '../../../../../components/Navigation/BackButton';
+import { ReviewPage } from '../../../../../components/Review/ReviewPage';
+import { getRuntimeConfig } from '../../../../../config';
+import BaseLayout from '../../../../../layouts/BaseLayout.astro';
+
+const version = Astro.params.version!;
+const sequenceId = Astro.params.sequenceId!;
+
+const username = Astro.params.username!;
+
+const clientConfig = getRuntimeConfig().forClient;
+
+const reviewData = await getReviewForSequenceVersion(username, sequenceId, version);
+---
+
+<BaseLayout title={`Review ${sequenceId}.${version}`}>
+    <div class='flex items-center mb-4'>
+        <BackButton marginRight={2} client:load />
+        <h1 class='title'>
+            Review for Id: {sequenceId}.{version}
+        </h1>
+    </div>
+    {
+        reviewData.match(
+            (reviewData) => (
+                <ReviewPage username={username} reviewData={reviewData} clientConfig={clientConfig} client:load />
+            ),
+            (error) => (
+                <>
+                    <div class='flex items-center'>
+                        <h1 class='subtitle'>
+                            Error while fetching review data for sequence version: {sequenceId}.{version}
+                        </h1>
+                    </div>
+                    <div>{error}</div>
+                </>
+            ),
+        )
+    }
+</BaseLayout>
