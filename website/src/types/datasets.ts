@@ -3,7 +3,7 @@
  **/
 
 export enum AccessionType {
-    pathoplexus = 'Pathoplexus',
+    loculus = 'Loculus',
     genbank = 'GenBank',
     sra = 'SRA',
     gisaid = 'GISAID',

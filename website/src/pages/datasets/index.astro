@@ -1,12 +1,25 @@
 ---
-import { DatasetList } from '../../components/Datasets/DatasetList';
-import { getConfig, getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { DatasetList } from '../../components/Datasets/DatasetList';
+import { getRuntimeConfig } from '../../config';
+import { getAccessToken } from '../../utils/getAccessToken';
+import { mockDataset } from '../../components/Datasets/mockData';
+import { BackendClient } from '../../services/backendClient';
 
-const config = getConfig();
-const clientConfig = getRuntimeConfig().forClient;
+
+const clientConfig = getRuntimeConfig().public;
+const accessToken = getAccessToken(Astro.locals.session)!;
+const username = Astro.locals.session?.user?.username;
+const datasets = await BackendClient.create().astroFileTypeHelpers.getDatasetsofUser(
+    accessToken,
+    username,
+);
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>
-    <DatasetList config={config} clientConfig={clientConfig} client:only='react' />
+    <DatasetList
+        datasets={[mockDataset]}
+        clientConfig={clientConfig}
+        accessToken={accessToken}
+    />
 </BaseLayout>

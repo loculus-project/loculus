@@ -1,4 +1,4 @@
-import { type DatasetRecord, AccessionType } from '../types';
+import { type DatasetRecord, AccessionType } from '../types/datasets';
 
 const getAccessionsByType = (type: string, records: DatasetRecord[]): string[] => {
     return records.filter((record) => record.type === type).map((record) => record.accession ?? '');
@@ -7,14 +7,14 @@ const getAccessionsByType = (type: string, records: DatasetRecord[]): string[] =
 export const serializeRecordsToAccessionsInput = (records?: DatasetRecord[], delimiter = ',') => {
     if (!records || records.length === 0) {
         return {
-            [AccessionType.pathoplexus]: '',
+            [AccessionType.loculus]: '',
             [AccessionType.genbank]: '',
             [AccessionType.sra]: '',
             [AccessionType.gisaid]: '',
         };
     }
     return {
-        [AccessionType.pathoplexus]: getAccessionsByType(AccessionType.pathoplexus, records).join(`${delimiter} `),
+        [AccessionType.loculus]: getAccessionsByType(AccessionType.loculus, records).join(`${delimiter} `),
         [AccessionType.genbank]: getAccessionsByType(AccessionType.genbank, records).join(`${delimiter} `),
         [AccessionType.sra]: getAccessionsByType(AccessionType.sra, records).join(`${delimiter} `),
         [AccessionType.gisaid]: getAccessionsByType(AccessionType.gisaid, records).join(`${delimiter} `),

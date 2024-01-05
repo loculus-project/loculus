@@ -1,30 +1,47 @@
-import { BarChart } from '@mui/x-charts/BarChart';
-import type { FC } from 'react';
-
-import type { DatasetCitationResults } from '../../types';
+import { type FC, useState, useEffect } from 'react';
+import { Line } from 'react-chartjs-2';
+import { Chart as ChartJS, LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip } from 'chart.js';
+import type { DatasetCitationResults } from '../../types/datasets';
 
 type CitationPlotProps = {
     citationData: DatasetCitationResults;
 };
 
 export const CitationPlot: FC<CitationPlotProps> = ({ citationData }) => {
+    const [isRegistered, setIsRegistered] = useState(false);
+
+    useEffect(() => {
+        ChartJS.register(LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip);
+        setIsRegistered(true);
+    }, []);
+
+    if (!isRegistered) return <></>;
+
     return (
-        <BarChart
-            xAxis={[
-                {
-                    id: 'citationDates',
-                    data: citationData.years,
-                    scaleType: 'band',
+        <Line
+            data={{
+                labels: citationData.years,
+                datasets: [
+                    {
+                        data: citationData.citations,
+                        label: 'Citation count',
+                        borderColor: '#54858c',
+                        fill: false,
+                    },
+                ],
+            }}
+            options={{
+                responsive: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Citations by Year',
+                    },
+                    legend: {
+                        display: false,
+                    },
                 },
-            ]}
-            series={[
-                {
-                    data: citationData.citations,
-                    color: '#54858c',
-                },
-            ]}
-            height={200}
-            margin={{ top: 8, left: 32, right: 8 }}
+            }}
         />
     );
 };

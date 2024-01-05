@@ -1,6 +1,5 @@
 import { type FC, useState } from 'react';
 
-import { ManagedErrorFeedback, useErrorFeedbackState } from './ManagedErrorFeedback';
 import type { SubmissionIdMapping } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';

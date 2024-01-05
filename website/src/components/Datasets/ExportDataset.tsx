@@ -4,17 +4,16 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
-import type { UseQueryResult } from '@tanstack/react-query';
 import { type FC, useState } from 'react';
 
-import type { Dataset } from '../../types';
+import type { Dataset, DatasetRecord } from '../../types/datasets';
 
 type ExportDatasetProps = {
     dataset: Dataset;
-    accessionQueries: UseQueryResult[];
+    datasetRecords: DatasetRecord[];
 };
 
-export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQueries }) => {
+export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, datasetRecords }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [isCopyAlertOpen, setIsCopyAlertOpen] = useState(false);
 
@@ -24,15 +23,11 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, accessionQuerie
     };
 
     const exportDataset = () => {
-        if (accessionQueries.length === 0) {
-            return;
-        }
         setIsDownloading(true);
 
-        const accessionData = accessionQueries.map((accessionQuery) => accessionQuery.data);
         const exportData = {
             dataset,
-            sequences: accessionData,
+            sequences: datasetRecords,
         };
         const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData));
         const hiddenLink = document.createElement('a');

@@ -11,7 +11,7 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import { visuallyHidden } from '@mui/utils';
 import { type MouseEvent, type ChangeEvent, useState, useMemo } from 'react';
 
-import type { Dataset } from '../../types';
+import type { Dataset } from '../../types/datasets';
 
 type Order = 'asc' | 'desc';
 

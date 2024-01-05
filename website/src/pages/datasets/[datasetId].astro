@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { DatasetItem } from '../../components/Datasets/DatasetItem';
+import { DatasetItemActions } from '../../components/Datasets/DatasetItemActions';
+import { BackButton } from '../../components/Navigation/BackButton';
+import { AvatarBadge } from '../../components/User/AvatarBadge';
+import { getRuntimeConfig } from '../../config';
+import { getAccessToken } from '../../utils/getAccessToken';
+import { mockDataset, mockDatasetRecords } from '../../components/Datasets/mockData';
+
+const clientConfig = getRuntimeConfig().public;
+const accessToken = getAccessToken(Astro.locals.session)!;
+const { datasetId } = Astro.params;
+const version = Astro.url.searchParams.get('version')! || '';
+const username = Astro.locals.session.user!.name;
+
+// Fetch dataset
+const dataset = mockDataset
+
+// Fetch dataset records
+const datasetRecords = mockDatasetRecords
+
+// Determine if user is admin
+const isAdminView = true
+
+---
+
+<BaseLayout title='Datasets' data-testid='datasets-item-container'>
+    <BackButton marginRight={0} client:only='react' />
+    <div class='flex flex-col justify-start'>
+        <div class='flex flex-row items-left'>
+            <div class='w-1/4 flex flex-col justify-start items-center'>
+                <AvatarBadge username={username} />
+            </div>
+            <div class='w-3/4'>
+                <DatasetItemActions
+                    dataset={dataset}
+                    datasetRecords={datasetRecords}
+                    clientConfig={clientConfig}
+                    accessToken={accessToken}
+                    isAdminView={isAdminView}
+                    client:only='react'
+                />
+                <DatasetItem
+                    dataset={dataset}
+                    datasetRecords={datasetRecords}
+                    clientConfig={clientConfig}
+                    accessToken={accessToken}
+                    isAdminView={isAdminView}
+                />
+            </div>
+        </div>
+    </div>
+</BaseLayout>

@@ -18,6 +18,18 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
                 params: { accession, version, organism },
                 headers: createAuthorizationHeader(token),
             }),
+
+        getCitationsOfUser: (token: string, userId?: string) =>
+            this.call('getCitationsOfUser', {
+                params: { userId },
+                headers: createAuthorizationHeader(token),
+            }),
+
+        getDatasetsofUser: (token: string, userId?: string) =>
+            this.call('getDatasetsOfUser', {
+                params: { userId },
+                headers: createAuthorizationHeader(token),
+            }),
     };
 
     public static create(

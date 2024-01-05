@@ -29,7 +29,7 @@ export class DatasetPage {
         await this.page.getByTestId('AddToPhotosIcon').click();
         await this.page.locator('#dataset-name').fill(datasetName);
         await this.page.locator('#dataset-description').fill(testDataset.description);
-        await this.page.locator('#Pathoplexus-accession-input').fill(testDataset.genbankAccessions);
+        await this.page.locator('#Loculus-accession-input').fill(testDataset.genbankAccessions);
         await this.page.locator('#GenBank-accession-input').fill(testDataset.genbankAccessions);
         await this.page.locator('#SRA-accession-input').fill(testDataset.sraAccessions);
         await this.page.getByRole('button', { name: 'Save' }).click();

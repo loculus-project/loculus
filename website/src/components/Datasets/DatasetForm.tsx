@@ -1,45 +1,38 @@
-import { CheckIcon } from '~icons/ic/baseline-check-circle';
-import { ErrorIcon } from '~icons/ic/baseline-error';
+import { type FC, type FormEvent, useState, useEffect } from 'react';
+import ExpandMoreIcon from '~icons/ic/baseline-expand-more';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormHelperText from '@mui/material/FormHelperText';
 import TextField from '@mui/material/TextField';
-import { useQueries, useMutation, type UseQueryResult } from '@tanstack/react-query';
-import { type FC, type FormEvent, useState, useEffect } from 'react';
-
-import { createDataset, updateDataset } from './api';
-import { getClientLogger, fetchSequenceDetails } from '../../api';
-import { AccessionType, type Config, type ClientConfig, type Dataset, type DatasetRecord } from '../../types';
-import { serializeRecordsToAccessionsInput, parseRecordsFromAccessionInput } from '../../utils/parseAccessionInput';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
+import { backendClientHooks } from '../../services/serviceHooks';
+import { getClientLogger } from '../../clientLogger';
+import { AccessionType, type Dataset, type DatasetRecord } from '../../types/datasets';
+import type { ClientConfig } from '../../types/runtimeConfig';
+import { serializeRecordsToAccessionsInput, parseRecordsFromAccessionInput } from '../../utils/parseAccessionInput';
+import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 
-const clientLogger = getClientLogger('DatasetForm');
+const logger = getClientLogger('DatasetForm');
 
 type DatasetFormProps = {
-    userId: string;
+    clientConfig: ClientConfig;
+    accessToken: string;
     editDataset?: Dataset;
     editDatasetRecords?: DatasetRecord[];
-    config: Config;
-    clientConfig: ClientConfig;
 };
 
-export const DatasetForm: FC<DatasetFormProps> = ({
-    userId,
-    editDataset,
-    editDatasetRecords,
-    config,
-    clientConfig,
-}) => {
+export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, editDataset, editDatasetRecords }) => {
     const [datasetName, setDatasetName] = useState(editDataset?.name ?? '');
     const [datasetDescription, setDatasetDescription] = useState(editDataset?.description ?? '');
-
     const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editDatasetRecords));
     const [datasetRecords, setDatasetRecords] = useState(editDatasetRecords);
-
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
-    const [isLoading, setIsLoading] = useState(false);
+    const { createDataset, updateDataset, isLoading } = useActionHooks(clientConfig, accessToken, openErrorFeedback);
 
     useEffect(() => {
         const parseRecordsFromInput = () => {
@@ -59,23 +52,14 @@ export const DatasetForm: FC<DatasetFormProps> = ({
         }));
     };
 
-    const createDatasetMutation = useMutation({
-        mutationFn: (dataset: Partial<Dataset>) => createDataset(userId, dataset, clientConfig),
-    });
-
-    const updateDatasetMutation = useMutation({
-        mutationFn: (dataset: Partial<Dataset>) =>
-            updateDataset(userId, editDataset?.datasetId ?? '', dataset, clientConfig),
-    });
-
     const getDatasetFromInput = () => {
         return {
             name: datasetName,
             description: datasetDescription,
             records: [
-                ...getAccessionsList(AccessionType.pathoplexus).map((accession) => ({
+                ...getAccessionsList(AccessionType.loculus).map((accession) => ({
                     accession,
-                    type: AccessionType.pathoplexus,
+                    type: AccessionType.loculus,
                 })),
                 ...getAccessionsList(AccessionType.genbank).map((accession) => ({
                     accession,
@@ -95,41 +79,15 @@ export const DatasetForm: FC<DatasetFormProps> = ({
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
-        setIsLoading(true);
-
         const dataset = getDatasetFromInput();
-
-        let redirectUrl = '/datasets';
-
         if (editDataset !== undefined) {
-            try {
-                const response = await updateDatasetMutation.mutateAsync(dataset);
-                await clientLogger.info(`updateDataset succeeded for datasetId: '${editDataset.datasetId}'`);
-                redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
-            } catch (error) {
-                openErrorFeedback(
-                    `updateDataset failed with error: ${(error as Error).message} for datasetId: ${
-                        editDataset.datasetId
-                    }'`,
-                );
-                await clientLogger.error(
-                    `updateDataset failed with error: ${(error as Error).message} for datasetId: ${
-                        editDataset.datasetId
-                    }`,
-                );
-            }
+            updateDataset({
+                datasetId: editDataset?.datasetId,
+                ...dataset,
+            });
         } else {
-            try {
-                const response = await createDatasetMutation.mutateAsync(dataset);
-                await clientLogger.info(`Dataset create successful with datasetId: ${response?.datasetId}`);
-                redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
-            } catch (error) {
-                openErrorFeedback(`Dataset create failed with error '${(error as Error).message}'`);
-                await clientLogger.error(`Dataset create failed with error '${(error as Error).message}'`);
-            }
+            createDataset(dataset);
         }
-        setIsLoading(false);
-        location.href = redirectUrl;
         return;
     };
 
@@ -139,48 +97,6 @@ export const DatasetForm: FC<DatasetFormProps> = ({
             .split(',')
             .map((accession) => accession.trim())
             .filter(Boolean);
-    };
-
-    const handleFetchSequence = async (accession: string) => {
-        try {
-            const response = await fetchSequenceDetails(accession, config, clientConfig);
-            await clientLogger.info(`fetchSequenceDetails succeeded for ${accession}`);
-            return response;
-        } catch (error) {
-            openErrorFeedback(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
-            await clientLogger.error(`fetchSequenceDetails failed with error: ${(error as Error).message}`);
-        }
-    };
-
-    const accessionQueries: UseQueryResult<DatasetRecord>[] = useQueries(
-        datasetRecords === undefined || datasetRecords.length === 0
-            ? {
-                  queries: [],
-              }
-            : {
-                  queries: datasetRecords.map((record) => ({
-                      queryKey: [record.type, record.accession],
-                      queryFn: () => handleFetchSequence(record.accession ?? ''),
-                      retry: false,
-                  })),
-              },
-    );
-
-    const renderAccessionStatus = (type: string, accession: string) => {
-        const accessionQuery = accessionQueries.find(
-            (accessionQuery: any) =>
-                accessionQuery.data?.accession === accession ||
-                accessionQuery.data?.[type] === accession ||
-                (accessionQuery?.failureReason !== undefined &&
-                    accessionQuery?.failureReason?.message.includes(accession)),
-        );
-        if (accessionQuery === undefined || accessionQuery.isLoading === true) {
-            return <CircularProgress size={20} color='primary' />;
-        }
-        if (accessionQuery.status === 'success') {
-            return <CheckIcon />;
-        }
-        return <ErrorIcon />;
     };
 
     return (
@@ -224,46 +140,40 @@ export const DatasetForm: FC<DatasetFormProps> = ({
                 <h2 className='text-lg font-bold'>Accessions</h2>
                 <FormGroup>
                     {Object.keys(accessionsInput).map((type) => (
-                        <div className='mb-4' key={`${type}-input-field`}>
-                            <FormControl variant='outlined' fullWidth>
-                                <TextField
-                                    id={`${type}-accession-input`}
-                                    label={`${type} accessions`}
-                                    fullWidth
-                                    multiline
-                                    rows={4}
-                                    variant='outlined'
-                                    margin='none'
-                                    size='small'
-                                    value={accessionsInput[type as AccessionType]}
-                                    onChange={(event: any) =>
-                                        setAccessionInput(event.target.value, type as AccessionType)
-                                    }
-                                />
-                                <FormHelperText id='outlined-weight-helper-text'>
-                                    {`Enter a list of comma-separated ${type} accessions.`}
-                                </FormHelperText>
-                            </FormControl>
-                        </div>
+                        <Accordion defaultExpanded={type === AccessionType.loculus} key={`${type}-accordian`}>
+                            <AccordionSummary
+                                expandIcon={<ExpandMoreIcon />}
+                                aria-controls={`${type}-content`}
+                                id={`${type}-header`}
+                            >
+                                {`${type}`}
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <div className='mb-4' key={`${type}-input-field`}>
+                                    <FormControl variant='outlined' fullWidth>
+                                        <TextField
+                                            id={`${type}-accession-input`}
+                                            label={`${type} accessions`}
+                                            fullWidth
+                                            multiline
+                                            rows={4}
+                                            variant='outlined'
+                                            margin='none'
+                                            size='small'
+                                            value={accessionsInput[type as AccessionType]}
+                                            onChange={(event: any) =>
+                                                setAccessionInput(event.target.value, type as AccessionType)
+                                            }
+                                        />
+                                        <FormHelperText id='outlined-weight-helper-text'>
+                                            {`Enter a list of comma-separated ${type} accessions.`}
+                                        </FormHelperText>
+                                    </FormControl>
+                                </div>
+                            </AccordionDetails>
+                        </Accordion>
                     ))}
                 </FormGroup>
-
-                <div>
-                    <h2 className='text-lg font-bold'>Verified</h2>
-                    <div className='p-6 space-y-6 max-w-md w-full'>
-                        <div>
-                            {Object.values(AccessionType).map((type) =>
-                                getAccessionsList(type as AccessionType).map((accession) => (
-                                    <div key={accession} className='flex flex-row justify-between'>
-                                        <div>{accession}</div>
-                                        {renderAccessionStatus(type as AccessionType, accession)}
-                                    </div>
-                                )),
-                            )}
-                        </div>
-                    </div>
-                </div>
-
                 <Button variant='outlined' disabled={isLoading} onClick={handleSubmit}>
                     {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}
                 </Button>
@@ -271,3 +181,47 @@ export const DatasetForm: FC<DatasetFormProps> = ({
         </div>
     );
 };
+
+function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErrorFeedback: (message: string) => void) {
+    const backendHooks = backendClientHooks(clientConfig);
+
+    const useCreateDataset = backendHooks.useCreateDataset(
+        { headers: createAuthorizationHeader(accessToken) },
+        {
+            onSuccess: async (response) => {
+                await logger.info(`Successfully created dataset with datasetId: ${response?.datasetId}`);
+                const redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
+                location.href = redirectUrl;
+            },
+            onError: async (error) => {
+                const message = `Failed to create dataset. Error: '${JSON.stringify(error)})}'`;
+                await logger.info(message);
+                openErrorFeedback(message);
+            },
+        },
+    );
+
+    const useUpdateDataset = backendHooks.useUpdateDataset(
+        { headers: createAuthorizationHeader(accessToken) },
+        {
+            onSuccess: async (response) => {
+                await logger.info(`Successfully updated dataset with datasetId: ${response?.datasetId}`);
+                const redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
+                location.href = redirectUrl;
+            },
+            onError: async (error) => {
+                const message = `Failed to update dataset with datasetId ${dataset.datasetId}. Error: '${JSON.stringify(
+                    error,
+                )})}'`;
+                await logger.info(message);
+                openErrorFeedback(message);
+            },
+        },
+    );
+
+    return {
+        createDataset: useCreateDataset.mutate,
+        updateDataset: useUpdateDataset.mutate,
+        isLoading: useCreateDataset.isLoading || useUpdateDataset.isLoading,
+    };
+}
