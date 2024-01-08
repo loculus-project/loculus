@@ -10,7 +10,7 @@ import { pageSize } from '../../../settings';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 
 const organism = Astro.params.organism!;
-const cleanOrganism = cleanOrganism(organism);
+const cleanedOrganism = cleanOrganism(organism);
 const schema = getSchema(organism);
 const clientConfig = getRuntimeConfig().public;
 const getSearchParams = (field: string): string => {
@@ -26,7 +26,7 @@ const offset = (page - 1) * pageSize;
 const data = await getData(organism, searchFormFilter, offset, pageSize);
 ---
 
-<BaseLayout title=`${cleanOrganism.displayName} - Browse`>
+<BaseLayout title=`${cleanedOrganism.displayName} - Browse`>
     <h1 class='title'>Search</h1>
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         <div class='md:w-72'>
