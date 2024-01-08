@@ -20,6 +20,18 @@ Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
 Start the [backend](/backend/README.md) and the [website](/website/README.md) locally.
 
+### The `deploy.py` script
+
+The `deploy.py` script wraps the most important `k3d` and `helm` commands.
+Check the help for more information:
+
+```shell
+../deploy.py --help
+```
+
+Basic cluster management should be done with this script.
+Use `kubectl` to interact with the running cluster in full power (e.g. accessing individual pods, getting logs, etc.).
+
 ### Details
 
 Create a cluster that doesn't expose the ports of the backend and the website:
