@@ -1,5 +1,6 @@
 ---
 import { getData, getSearchFormFilters } from './search';
+import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { Pagination } from '../../../components/SearchPage/Pagination';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
 import { Table } from '../../../components/SearchPage/Table';
@@ -7,7 +8,7 @@ import ErrorBox from '../../../components/common/ErrorBox.astro';
 import { getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { pageSize } from '../../../settings';
-import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
+
 
 const organism = Astro.params.organism!;
 const cleanedOrganism = cleanOrganism(organism);
