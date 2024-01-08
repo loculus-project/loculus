@@ -8,7 +8,7 @@ import winston from 'winston';
 import { EditPage } from './pages/edit/edit.page';
 import { NavigationFixture } from './pages/navigation.fixture';
 import { RevisePage } from './pages/revise/revise.page';
-import { SearchPage } from './pages/search/search.page';
+import { SearchPage } from './pages/browse/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { UserPage } from './pages/user/user.page';

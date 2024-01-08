@@ -9,7 +9,7 @@ export const routes = {
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
     searchPage: <Filter extends FilterValue>(organism: string, searchFilter: Filter[] = [], page: number = 1) =>
-        withOrganism(organism, `/search?${buildSearchParams(searchFilter, page).toString()}`),
+        withOrganism(organism, `/browse?${buildSearchParams(searchFilter, page).toString()}`),
     sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
         `/${organism}/sequences/${getAccessionVersionString(accessionVersion)}`,
     sequencesVersionsPage: (organism: string, accessionVersion: AccessionVersion | string) =>

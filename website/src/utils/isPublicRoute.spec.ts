@@ -16,7 +16,7 @@ describe('isPublicRoute', () => {
     });
 
     test('should return true if specified as public route', () => {
-        expectToBePublic(`/${testOrganism}/search`);
+        expectToBePublic(`/${testOrganism}/browse`);
         expectToBePublic('/');
         expectToBePublic(`/${testOrganism}`);
         expectToBePublic(`/${testOrganism}/sequences/id_002156`);
