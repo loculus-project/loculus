@@ -16,6 +16,10 @@ Data may be compressed using zstd, gzip, bzip2, xz, lzma or zip.
 For each sequence, a new row in the "sequenceEntries" table is created.
 It generates a new accession. The version number of the sequence entries is 1.
 
+Technically, the upload of data happens in two steps. The user uploads the data to the backend to persist it. Additional auxiliary tables are used for validation and processing reasons. The following diagram shows the sequence of events. 
+
+![sequencePersistingData.svg](./plantuml/sequencePersistingData.svg)
+
 ### Preprocessing & Editing
 The data will be processed by a preprocessing pipeline (see [preprocessing pipeline specification](../../preprocessing/specification.md)). If the data contain errors, the user has to review the errors and edit the data (sequence data can be downloaded as _fasta_ file to ease editing).
 
@@ -24,7 +28,6 @@ If the data do not contain errors, they will be staged unless the user selected 
 The user can then edit the data and approve them.
 If the "release directly"-mode is used, the staging phase will be skipped and the data directly released.
 If the user decides to not approve a sequence entry, the entry will be (permanently) removed from the database.
-
 
 ### Sequence entry statuses
 
