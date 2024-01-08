@@ -4,11 +4,8 @@ import { cleanOrganism } from '../../components/Navigation/cleanOrganism';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 
 const { organism } = cleanOrganism(Astro.params.organism);
+return Astro.redirect(`/${organism.key}/search/`);
 ---
 
 <BaseLayout title={organism!.displayName}>
-    <div class='flex items-center'>
-        <BackButton marginRight={2} client:load />
-        <h1 class='title'>Organism {organism?.displayName}</h1>
-    </div>
 </BaseLayout>
