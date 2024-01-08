@@ -29,7 +29,7 @@ test.describe('Clicking the navigation links', () => {
 
         await navigationFixture.openOrganismNavigation();
         await navigationFixture.clickLink(dummyOrganism.displayName);
-        await navigationFixture.expectTitle(dummyOrganism.displayName);
+        await navigationFixture.expectTitle(`${dummyOrganism.displayName} - Browse`);
 
         for (const { link, title } of organismNavigationItems) {
             await navigationFixture.clickLink(link);
