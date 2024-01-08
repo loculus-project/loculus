@@ -9,9 +9,8 @@ import { getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { pageSize } from '../../../settings';
 
-
 const organism = Astro.params.organism!;
-const {organism: cleanedOrganism} = cleanOrganism(organism);
+const { organism: cleanedOrganism } = cleanOrganism(organism);
 const schema = getSchema(organism);
 const clientConfig = getRuntimeConfig().public;
 const getSearchParams = (field: string): string => {
