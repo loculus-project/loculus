@@ -22,6 +22,6 @@ export default defineConfig({
         plugins: [Icons({compiler: 'jsx', jsx: 'react'})],
     },
     redirects: {
-        "/[...organism]/": "/[...organism]/search"
+        "/[organism]/": "/[organism]/search"
     }
 });
