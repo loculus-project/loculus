@@ -6,6 +6,7 @@ import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
 import { withQueryProvider } from './common/withQueryProvider.tsx';
 import { getClientLogger } from '../clientLogger.ts';
 import { useGroupManagementClient } from '../hooks/useGroupOperations.ts';
+import { routes } from '../routes.ts';
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import type { SubmissionIdMapping } from '../types/backend.ts';
@@ -100,7 +101,9 @@ const InnerDataUploadForm = ({
                     groupsOfUser.isLoading ? (
                         <p className='text-gray-500'>Loading groups...</p>
                     ) : (
-                        <p className='text-red-500'>No group found. Please join or create a group.</p>
+                        <p className='text-red-500'>
+                            No group found. Please join or <a href={routes.userOverviewPage()}> create a group </a>.
+                        </p>
                     )
                 ) : (
                     <div className='flex flex-col gap-3 w-fit'>
