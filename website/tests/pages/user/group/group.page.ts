@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { routes } from '../../../../src/routes.ts';
-import { baseUrl, dummyOrganism, expect } from '../../../e2e.fixture';
+import { baseUrl, expect } from '../../../e2e.fixture';
 
 export class GroupPage {
     constructor(public readonly page: Page) {}
