@@ -50,7 +50,8 @@ The following diagram shows the different statuses and their transitions. The **
 
 To revise a sequence entry that has been released (i.e., the status is APPROVED_FOR_RELEASE),
 the user calls the `/revise` endpoint and sends accessions and unpreprocessed data.
-For each revised sequence entry, the user has to be part of the group for which the entry was initially submitted. Then a new row in the "sequenceEntries" table is created.
+For each revised sequence entry, the user has to be part of the group for which the entry was initially submitted.
+Then a new row in the "sequenceEntries" table is created.
 It does not change any existing rows and does not create new accessions.
 The new rows have an incremented version number.
 

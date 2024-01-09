@@ -115,12 +115,11 @@ The user submits data on behalf of a group that they must be a member of.
 const val REVISE_DESCRIPTION = """
 Submit revised data for new accession versions as multipart/form-data. The following rules apply:
  - Given sequence entries must exist (identified by the column 'accession' in the metadata file) 
- - The user has the right to revise all of the sequence entries (the user is part of the group for that a sequence 
-entry was initially submitted)
+ - The submitting user is member of the group that a sequence entry was initially submitted for.
  - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. revisable
  - The provided files contain only specified content
  
-If any of above does not apply, this will return an error and roll back the whole transaction.
+If any of above is not fulfilled, this will return an error and roll back the whole transaction.
 """
 
 const val DELETE_SEQUENCES_DESCRIPTION = """
