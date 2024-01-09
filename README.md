@@ -51,7 +51,7 @@ For testing we added multiple users to the realm. The users are:
 ### Group management
 
  - Groups are entities managed by the backend, uniquely identified by a name.
- - Sequence entries are owned by a group, any modification to a sequence entry must be authorized by a member of the group.
+ - Every sequence entry is owned by the group that it was initially submitted for. Modifications (edits while staging, revisions, revocations) can only be made by members of that group.
  - Each user can be a member of multiple groups.
  - Users can create new groups, becoming the initial member automatically.
  - Group members have the authority to add or remove other members.
