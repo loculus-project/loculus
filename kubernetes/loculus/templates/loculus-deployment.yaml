@@ -22,7 +22,7 @@ spec:
       containers:
         {{- if not .Values.disableWebsite }}
         - name: website
-          image: "ghcr.io/pathoplexus/website:{{ $dockerTag }}"
+          image: "ghcr.io/loculus-project/website:{{ $dockerTag }}"
           imagePullPolicy: Always
           resources:
             requests:
@@ -51,7 +51,7 @@ spec:
         {{- end }}
         {{- if not .Values.disableBackend }}
         - name: backend
-          image: "ghcr.io/pathoplexus/backend:{{ $dockerTag }}"
+          image: "ghcr.io/loculus-project/backend:{{ $dockerTag }}"
           imagePullPolicy: Always
           livenessProbe:
             httpGet:

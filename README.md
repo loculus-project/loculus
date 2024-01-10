@@ -64,5 +64,5 @@ For testing we added multiple users to the realm. The users are:
 ## Contributing to Loculus
 
 Contributions are very welcome!
-Please see [`CONTRIBUTING.md`](https://github.com/pathoplexus/loculus/blob/main/CONTRIBUTING.md)
+Please see [`CONTRIBUTING.md`](https://github.com/loculus-project/loculus/blob/main/CONTRIBUTING.md)
 for more information or ping us in case you need help.

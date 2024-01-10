@@ -40,7 +40,7 @@ jobs:
     - name: Checkout External Repository
       uses: actions/checkout@v4
       with:
-        repository: 'pathoplexus/argocd_metadata'
+        repository: 'loculus-project/argocd_metadata'
         token: ${{ secrets.ARGOCD_METADATA_PAT }}
 
     - name: Modify config.json

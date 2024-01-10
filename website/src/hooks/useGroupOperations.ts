@@ -87,7 +87,7 @@ export const useGroupPageHooks = ({
 
 export const useGroupManagementClient = (clientConfig: ClientConfig) => {
     const zodios = useMemo(() => new Zodios(clientConfig.backendUrl, groupManagementApi), [clientConfig]);
-    const zodiosHooks = useMemo(() => new ZodiosHooks('pathoplexus', zodios), [zodios]);
+    const zodiosHooks = useMemo(() => new ZodiosHooks('loculus', zodios), [zodios]);
     return {
         zodios,
         zodiosHooks,
