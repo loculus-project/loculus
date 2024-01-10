@@ -56,6 +56,7 @@ class SequenceEntriesDataTable(
     val submittedAtColumn = datetime("submitted_at")
     val startedProcessingAtColumn = datetime("started_processing_at").nullable()
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
+    val releasedAtColumn = datetime("released_at").nullable()
     val statusColumn = varchar("status", 255)
     val isRevocationColumn = bool("is_revocation").default(false)
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
