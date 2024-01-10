@@ -81,7 +81,7 @@ function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(acces
                     title: 'Not Found',
                     status: 0,
                     detail: 'No data found for accession version ' + accessionVersion,
-                    instance: '/sequences/' + accessionVersion,
+                    instance: '/seq/' + accessionVersion,
                 });
             }
         }
