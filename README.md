@@ -36,6 +36,7 @@ If you are running on an ARM macOS machine, you need to configure docker to use 
 ```bash
 export DOCKER_DEFAULT_PLATFORM=linux/amd64
 ```
+a
 
 ## Authorization
 
