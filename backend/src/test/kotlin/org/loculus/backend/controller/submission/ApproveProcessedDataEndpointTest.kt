@@ -81,7 +81,7 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(
                 jsonPath(
                     "$.detail",
-                    containsString("Affected AccessionVersions: [2.1, 1.1]"),
+                    containsString("Affected AccessionVersions: [1.1, 2.1]"),
                 ),
             )
     }

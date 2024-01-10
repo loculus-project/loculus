@@ -13,6 +13,12 @@ data class ReferenceGenome(
         }
     }
 
+    override fun toString(): String {
+        val nucleotideSequencesString = referenceListToString(nucleotideSequences)
+        val genesString = referenceListToString(genes)
+        return "ReferenceGenome(nucleotideSequences=[$nucleotideSequencesString], genes=[$genesString])"
+    }
+
     fun getNucleotideSegmentReference(segmentName: String): NucleotideSequence? = nucleotideSequences.find {
         it.name == segmentName
     }?.sequence
@@ -20,6 +26,18 @@ data class ReferenceGenome(
     fun getAminoAcidGeneReference(gene: String): AminoAcidSequence? = genes.find {
         it.name == gene
     }?.sequence
+
+    private fun shortenSequence(sequence: String): String {
+        return if (sequence.length > 10) {
+            sequence.substring(0, 10) + "..."
+        } else {
+            sequence
+        }
+    }
+
+    private fun referenceListToString(list: List<ReferenceSequence>) = list.joinToString(", ") {
+        it.copy(sequence = shortenSequence(it.sequence)).toString()
+    }
 }
 
 data class ReferenceSequence(

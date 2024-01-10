@@ -73,16 +73,22 @@ class SubmitProcessedDataEndpointTest(
         prepareExtractedSequencesInDatabase()
 
         val allNucleotideSymbols = NucleotideSymbols.entries.joinToString("") { it.symbol.toString() }
+        val desiredLength = 49
+
+        val nucleotideSequenceOfDesiredLength = if (allNucleotideSymbols.length >= desiredLength) {
+            throw Error("The desired length must be bigger than the length of all nucleotide symbols")
+        } else {
+            allNucleotideSymbols.repeat((desiredLength / allNucleotideSymbols.length) + 1).take(desiredLength)
+        }
+
         val allAminoAcidSymbols = AminoAcidSymbols.entries.joinToString("") { it.symbol.toString() }
         val defaultData = PreparedProcessedData.successfullyProcessed().data
 
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = "3").withValues(
                 data = defaultData.withValues(
-                    unalignedNucleotideSequences = defaultData.unalignedNucleotideSequences +
-                        ("secondSegment" to allNucleotideSymbols),
-                    alignedNucleotideSequences = defaultData.alignedNucleotideSequences +
-                        ("secondSegment" to allNucleotideSymbols),
+                    unalignedNucleotideSequences = mapOf("main" to nucleotideSequenceOfDesiredLength),
+                    alignedNucleotideSequences = mapOf("main" to nucleotideSequenceOfDesiredLength),
                     alignedAminoAcidSequences =
                     defaultData.alignedAminoAcidSequences + ("someLongGene" to allAminoAcidSymbols),
                 ),
@@ -97,6 +103,53 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit preprocessed data without insertions THEN the missing keys of the reference will be added`() {
+        prepareExtractedSequencesInDatabase(organism = OTHER_ORGANISM)
+
+        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessedOtherOrganismData().data.withValues(
+            nucleotideInsertions = mapOf("notOnlySegment" to listOf(Insertion(1, "A"))),
+            aminoAcidInsertions = emptyMap(),
+        )
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = "3").withValues(
+                data = dataWithoutInsertions,
+            ),
+            organism = OTHER_ORGANISM,
+        ).andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntryOfUser(
+            accession = "3",
+            version = 1,
+            organism = OTHER_ORGANISM,
+        ).assertStatusIs(
+            Status.AWAITING_APPROVAL,
+        )
+
+        submissionControllerClient.getSequenceEntryThatHasErrors(
+            accession = "3",
+            version = 1,
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath("\$.processedData.nucleotideInsertions")
+                    .value(
+                        mapOf(
+                            "notOnlySegment" to listOf(
+                                Insertion(1, "A").toString(),
+                            ),
+                            "secondSegment" to emptyList(),
+                        ),
+                    ),
+            )
+            .andExpect(
+                jsonPath("\$.processedData.aminoAcidInsertions")
+                    .value(mapOf("someShortGene" to emptyList<String>(), "someLongGene" to emptyList())),
+            )
+    }
+
+    @Test
+    fun `WHEN I submit single-segment data without insertions THEN the missing keys of the reference will be added`() {
         prepareExtractedSequencesInDatabase()
 
         val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed().data.withValues(
@@ -105,18 +158,23 @@ class SubmitProcessedDataEndpointTest(
         )
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "3").withValues(data = dataWithoutInsertions),
+            PreparedProcessedData.successfullyProcessed(accession = "3").withValues(
+                data = dataWithoutInsertions,
+            ),
         ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntryOfUser(accession = "3", version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
 
-        submissionControllerClient.getSequenceEntryThatHasErrors(accession = "3", version = 1)
+        submissionControllerClient.getSequenceEntryThatHasErrors(
+            accession = "3",
+            version = 1,
+        )
             .andExpect(status().isOk)
             .andExpect(
-                jsonPath("\$.processedData.nucleotideInsertions")
-                    .value(mapOf("main" to listOf(Insertion(1, "A").toString()), "secondSegment" to emptyList())),
+                jsonPath("\$.processedData.nucleotideInsertions.main[0]")
+                    .value(Insertion(1, "A").toString()),
             )
             .andExpect(
                 jsonPath("\$.processedData.aminoAcidInsertions")

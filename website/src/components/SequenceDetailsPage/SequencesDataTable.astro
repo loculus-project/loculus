@@ -1,7 +1,7 @@
 ---
 import { SequencesContainer } from './SequencesContainer';
 import { type TableDataEntry } from './getTableData';
-import { getReferenceGenomes, getRuntimeConfig, getSchema } from '../../config';
+import { getReferenceGenomes, getRuntimeConfig } from '../../config';
 
 interface Props {
     tableData: TableDataEntry[];
@@ -12,9 +12,11 @@ interface Props {
 const { tableData, organism, accessionVersion } = Astro.props;
 
 const runtimeConfig = getRuntimeConfig();
-const schema = getSchema(organism);
 
-const genes = getReferenceGenomes(organism).genes.map((g) => g.name);
+const referenceGenomes = getReferenceGenomes(organism);
+
+const genes = referenceGenomes.genes.map((g) => g.name);
+const nucleotideSegmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name) as [string, ...string[]];
 ---
 
 <div class='mt-6'>
@@ -36,8 +38,8 @@ const genes = getReferenceGenomes(organism).genes.map((g) => g.name);
         client:load
         organism={organism}
         accessionVersion={accessionVersion}
-        schema={schema}
         clientConfig={runtimeConfig.public}
         genes={genes}
+        nucleotideSegmentNames={nucleotideSegmentNames}
     />
 </div>

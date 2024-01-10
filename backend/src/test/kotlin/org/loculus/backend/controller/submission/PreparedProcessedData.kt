@@ -30,14 +30,50 @@ val defaultProcessedData = ProcessedData(
     ),
     unalignedNucleotideSequences = mapOf(
         "main" to "NNACTGNN",
-        "secondSegment" to "NNATAGN",
     ),
     alignedNucleotideSequences = mapOf(
         "main" to "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT",
-        "secondSegment" to "ACGTMRWSYKVHDBN-",
     ),
     nucleotideInsertions = mapOf(
         "main" to listOf(
+            Insertion(123, "ACTG"),
+        ),
+    ),
+    alignedAminoAcidSequences = mapOf(
+        "someLongGene" to "ACDEFGHIKLMNPQRSTVWYBZX-*",
+        "someShortGene" to "MADS",
+    ),
+    aminoAcidInsertions = mapOf(
+        "someLongGene" to listOf(
+            Insertion(123, "RNRNRN"),
+        ),
+        "someShortGene" to listOf(
+            Insertion(123, "RN"),
+        ),
+    ),
+)
+
+val defaultProcessedDataMultiSegmented = ProcessedData(
+    metadata = mapOf(
+        "date" to TextNode("2002-12-15"),
+        "host" to TextNode("google.com"),
+        "region" to TextNode("Europe"),
+        "country" to TextNode("Spain"),
+        "specialOtherField" to TextNode("specialOtherValue"),
+        "age" to IntNode(42),
+        "qc" to DoubleNode(0.9),
+        "pangoLineage" to TextNode("XBB.1.5"),
+    ),
+    unalignedNucleotideSequences = mapOf(
+        "notOnlySegment" to "NNACTGNN",
+        "secondSegment" to "NNATAGN",
+    ),
+    alignedNucleotideSequences = mapOf(
+        "notOnlySegment" to "ATTA",
+        "secondSegment" to "ACGTMRWSYKVHDBN-",
+    ),
+    nucleotideInsertions = mapOf(
+        "notOnlySegment" to listOf(
             Insertion(123, "ACTG"),
         ),
         "secondSegment" to listOf(
@@ -66,6 +102,14 @@ private val defaultSuccessfulSubmittedData = SubmittedProcessedData(
     warnings = null,
 )
 
+private val defaultSuccessfulSubmittedDataMultiSegmented = SubmittedProcessedData(
+    accession = "1",
+    version = 1,
+    data = defaultProcessedDataMultiSegmented,
+    errors = null,
+    warnings = null,
+)
+
 object PreparedProcessedData {
     fun successfullyProcessed(
         accession: Accession = DefaultFiles.firstAccession,
@@ -77,22 +121,10 @@ object PreparedProcessedData {
 
     fun successfullyProcessedOtherOrganismData(
         accession: Accession = DefaultFiles.firstAccession,
-        version: Long = defaultSuccessfulSubmittedData.version,
-    ) = defaultSuccessfulSubmittedData.withValues(
+        version: Long = defaultSuccessfulSubmittedDataMultiSegmented.version,
+    ) = defaultSuccessfulSubmittedDataMultiSegmented.withValues(
         accession = accession,
         version = version,
-        data = ProcessedData(
-            metadata = mapOf(
-                "date" to TextNode("2022-12-24"),
-                "specialOtherField" to TextNode("some value"),
-                "pangoLineage" to TextNode("B.1.1.7"),
-            ),
-            alignedNucleotideSequences = mapOf("main" to "ATCG"),
-            alignedAminoAcidSequences = mapOf("gene" to "MADS"),
-            unalignedNucleotideSequences = mapOf("main" to "ATCG"),
-            nucleotideInsertions = mapOf("main" to listOf(Insertion(123, "ACTG"))),
-            aminoAcidInsertions = mapOf("gene" to listOf(Insertion(123, "MADS"))),
-        ),
     )
 
     fun withNullForFields(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =

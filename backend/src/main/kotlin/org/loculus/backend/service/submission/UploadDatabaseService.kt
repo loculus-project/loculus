@@ -88,7 +88,7 @@ class UploadDatabaseService(
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
         SequenceUploadAuxTable.batchInsert(uploadedSequencesBatch) {
-            val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName)
+            val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
             this[sequenceSubmissionIdColumn] = submissionId
             this[segmentNameColumn] = segmentName
             this[sequenceUploadIdColumn] = uploadId
