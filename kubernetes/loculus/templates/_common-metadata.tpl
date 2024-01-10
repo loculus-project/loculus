@@ -17,6 +17,8 @@ fields:
     type: string
   - name: submittedAt
     type: string
+  - name: releasedAt
+    type: string
   - name: versionStatus
     type: string
     notSearchable: true
@@ -69,7 +71,7 @@ instances:
       {{- with $instance.schema }}
       instanceName: {{ .instanceName }}
       metadata:
-        {{ $metadata := include "loculus.generateWebsiteMetadata" .metadata | fromYaml }}
+        {{ $metadata := include "loculus.generateBackendMetadata" .metadata | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:

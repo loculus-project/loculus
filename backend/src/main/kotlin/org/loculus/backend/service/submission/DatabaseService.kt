@@ -238,6 +238,8 @@ class DatabaseService(
     fun approveProcessedData(submitter: String, accessionVersions: List<AccessionVersion>, organism: Organism) {
         log.info { "approving ${accessionVersions.size} sequences by $submitter" }
 
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
         submissionPreconditionValidator.validateAccessionVersions(
             submitter,
             accessionVersions,
@@ -252,6 +254,7 @@ class DatabaseService(
                 },
             ) {
                 it[statusColumn] = APPROVED_FOR_RELEASE.name
+                it[releasedAtColumn] = now
             }
         }
     }
@@ -295,6 +298,7 @@ class DatabaseService(
                 table.processedDataColumn,
                 table.submitterColumn,
                 table.submittedAtColumn,
+                table.releasedAtColumn,
                 table.submissionIdColumn,
             )
                 .select(
@@ -311,6 +315,7 @@ class DatabaseService(
                         submissionId = it[table.submissionIdColumn],
                         processedData = it[table.processedDataColumn]!!,
                         submittedAt = it[table.submittedAtColumn],
+                        releasedAt = it[table.releasedAtColumn]!!,
                     )
                 }
                 .asSequence()
@@ -594,6 +599,7 @@ data class RawProcessedData(
     val isRevocation: Boolean,
     val submitter: String,
     val submittedAt: LocalDateTime,
+    val releasedAt: LocalDateTime,
     val submissionId: String,
     val processedData: ProcessedData,
 ) : AccessionVersionInterface
