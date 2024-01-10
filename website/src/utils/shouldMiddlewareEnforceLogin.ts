@@ -8,10 +8,7 @@ function getEnforcedLoginRoutes(configuredOrganisms: string[]) {
             new RegExp(`^/${organism}/submit`),
         ]);
 
-        enforcedLoginRoutesCache[cacheKey] = [
-            new RegExp('^/user/'),
-            ...organismSpecificRoutes,
-        ];
+        enforcedLoginRoutesCache[cacheKey] = [new RegExp('^/user/'), ...organismSpecificRoutes];
     }
     return enforcedLoginRoutesCache[cacheKey];
 }

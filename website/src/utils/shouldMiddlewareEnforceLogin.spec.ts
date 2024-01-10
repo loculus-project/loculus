@@ -16,19 +16,17 @@ describe('shouldMiddlewareEnforceLogin', () => {
     });
 
     test('should return false for various public routes route', () => {
-        expect(`/${testOrganism}/search`).toBe(false);
-        expect('/').toBe(false);
-        expect(`/${testOrganism}`).toBe(false);
-        expect(`/${testOrganism}/sequences/id_002156`).toBe(false);
-        expect(`/${testOrganism}/sequences/id_002156`).toBe(false);
-        expect(`/${otherOrganism}/sequences/id_002156`).toBe(false);
+        expect(shouldMiddlewareEnforceLogin(`/${testOrganism}/search`, configuredOrganisms)).toBe(false);
+        expect(shouldMiddlewareEnforceLogin(`/`, configuredOrganisms)).toBe(false);
+        expect(shouldMiddlewareEnforceLogin(`/${testOrganism}`, configuredOrganisms)).toBe(false);
+        expect(shouldMiddlewareEnforceLogin(`/${testOrganism}/sequences/id_002156`, configuredOrganisms)).toBe(false);
     });
 
     test('should return true on routes which should force login', () => {
-        expectForceLogin(isPublicRoute('/user', configuredOrganisms))
-        expectForceLogin(isPublicRoute('/user/someUsername', configuredOrganisms));
-        expectForceLogin(isPublicRoute(`/${testOrganism}/revise`, configuredOrganisms));
-        expectForceLogin(isPublicRoute(`/${testOrganism}/submit`, configuredOrganisms));
+        expectForceLogin('/user');
+        expectForceLogin('/user/someUsername');
+        expectForceLogin(`/${testOrganism}/revise`);
+        expectForceLogin(`/${testOrganism}/submit`);
     });
 
     function expectForceLogin(path: string) {
