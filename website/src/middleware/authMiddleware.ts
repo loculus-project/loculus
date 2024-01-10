@@ -7,7 +7,7 @@ import { type BaseClient, Issuer, type TokenSet } from 'openid-client';
 
 import { getConfiguredOrganisms, getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
-import { isPublicRoute } from '../utils/isPublicRoute.ts';
+import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 const { decode, verify } = jsonwebtoken;
 
@@ -51,11 +51,11 @@ export async function getKeycloakClient() {
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token = await getTokenFromCookie(context);
 
-    const urlIsPublicRoute = isPublicRoute(
+    const enforceLogin = shouldMiddlewareEnforceLogin(
         context.url.pathname,
         getConfiguredOrganisms().map((it) => it.key),
     );
-    if (urlIsPublicRoute) {
+    if (!enforceLogin) {
         if (token === undefined) {
             context.locals.session = {
                 isLoggedIn: false,
