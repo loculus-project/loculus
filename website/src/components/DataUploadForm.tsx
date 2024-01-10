@@ -102,7 +102,7 @@ const InnerDataUploadForm = ({
                         <p className='text-gray-500'>Loading groups...</p>
                     ) : (
                         <p className='text-red-500'>
-                            No group found. Please join or <a href={routes.userOverviewPage()}> create a group </a>.
+                            No group found. Please join or <a href={routes.userOverviewPage()}>create a group</a>.
                         </p>
                     )
                 ) : (
