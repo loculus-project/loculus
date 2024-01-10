@@ -1,6 +1,6 @@
 <configuration>
 
-    <property name="PATTERN" value="%date %level [%thread] [%X{organism}] - %class: %message%n"/>
+    <property name="PATTERN" value="%date %level [%thread] [%X{organism}] - %class:  %replace(%message){'Bearer [^ ]*':'Bearer ***'}%n"/>
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <layout class="ch.qos.logback.classic.PatternLayout">
