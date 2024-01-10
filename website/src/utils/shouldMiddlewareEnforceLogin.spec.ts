@@ -8,11 +8,11 @@ const configuredOrganisms = [testOrganism, otherOrganism];
 
 describe('shouldMiddlewareEnforceLogin', () => {
     test('should return false if not specified', () => {
-        expect(shouldMiddlewareEnforceLogin('/someRoute', [])).toBe(false);
+        expectNoLogin('/someRoute');
     });
 
     test('should return false for empty string', () => {
-        expect(shouldMiddlewareEnforceLogin('', [])).toBe(false);
+        expectNoLogin('');
     });
 
     test('should return true on routes which should force login', () => {
@@ -23,13 +23,17 @@ describe('shouldMiddlewareEnforceLogin', () => {
     });
 
     test('should return false for various public routes', () => {
-        expect(shouldMiddlewareEnforceLogin(`/${testOrganism}/search`, configuredOrganisms)).toBe(false);
-        expect(shouldMiddlewareEnforceLogin(`/`, configuredOrganisms)).toBe(false);
-        expect(shouldMiddlewareEnforceLogin(`/${testOrganism}`, configuredOrganisms)).toBe(false);
-        expect(shouldMiddlewareEnforceLogin(`/${testOrganism}/sequences/id_002156`, configuredOrganisms)).toBe(false);
+        expectNoLogin(`/${testOrganism}/search`);
+        expectNoLogin(`/`);
+        expectNoLogin(`/${testOrganism}`);
+        expectNoLogin(`/${testOrganism}/sequences/id_002156`);
     });
 
     function expectForceLogin(path: string) {
         expect(shouldMiddlewareEnforceLogin(path, configuredOrganisms), path).toBe(true);
+    }
+
+    function expectNoLogin(path: string) {
+        expect(shouldMiddlewareEnforceLogin(path, configuredOrganisms), path).toBe(false);
     }
 });
