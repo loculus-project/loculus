@@ -1,4 +1,4 @@
-import { Result } from 'neverthrow';
+import { ok, Result } from 'neverthrow';
 
 import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
 import { getSchema } from '../../../config.ts';
@@ -39,6 +39,14 @@ export const getData = async (
     const lapisClient = LapisClient.createForOrganism(organism);
 
     const aggregateResult = await lapisClient.call('aggregated', searchFilters);
+
+    if (aggregateResult.isOk() && aggregateResult.value.data[0].count === 0) {
+        return ok({
+            data: [],
+            totalCount: 0,
+        });
+    }
+
     const detailsResult = await lapisClient.call('details', {
         fields: [...config.tableColumns, config.primaryKey],
         limit,
