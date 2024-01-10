@@ -4,7 +4,7 @@ on:
   push:
 
 env:
-  DOCKER_IMAGE_NAME: ghcr.io/pathoplexus/preprocessing-dummy
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-dummy
 
 defaults:
   run:

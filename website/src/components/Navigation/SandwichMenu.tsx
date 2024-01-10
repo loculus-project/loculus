@@ -56,7 +56,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, know
 
                     <div className='mt-auto mb-10'>
                         <div className='flex justify-end items-center py-5'>
-                            <a href='https://github.com/pathoplexus'>
+                            <a href='https://github.com/loculus-project'>
                                 <img src='/github-mark.svg' className='w-8' alt='GitHub logo' />
                             </a>
                         </div>

@@ -140,7 +140,7 @@ This will return a base64 encoded string similar to the one you can see above th
 
 Using Docker desktop as your container runtime won't work on ARM64 macOS. Instead, you will need to use `colima` to run an AMD64 VM which will host AMD64 docker containers.
 
-This will be quite slow due to QEMU emulation but it will work nonetheless (you may need to [adjust timeouts](https://github.com/pathoplexus/loculus/pull/583).
+This will be quite slow due to QEMU emulation but it will work nonetheless (you may need to [adjust timeouts](https://github.com/loculus-project/loculus/pull/583).
 
 First, install `colima`:
 

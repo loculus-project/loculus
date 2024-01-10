@@ -4,7 +4,7 @@ on:
   push:
 
 env:
-  DOCKER_IMAGE_NAME: ghcr.io/pathoplexus/backend
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/backend
 
 defaults:
   run:
