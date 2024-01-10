@@ -6,10 +6,6 @@
                     {
                         "name": "main",
                         "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
-                    },
-                    {
-                        "name": "secondSegment",
-                        "sequence": "AAAAAAAAAAAAAAAA"
                     }
                 ],
                 "genes": [
@@ -82,13 +78,21 @@
             "referenceGenomes": {
                 "nucleotideSequences": [
                     {
-                        "name": "main",
+                        "name": "notOnlySegment",
                         "sequence": "ATCG"
+                    },
+                    {
+                        "name": "secondSegment",
+                        "sequence": "AAAAAAAAAAAAAAAA"
                     }
                 ],
                 "genes": [
                     {
-                        "name": "gene",
+                        "name": "someLongGene",
+                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+                    },
+                    {
+                        "name": "someShortGene",
                         "sequence": "MADS"
                     }
                 ]
@@ -102,15 +106,53 @@
                         "required": true
                     },
                     {
-                        "name": "specialOtherField",
+                        "name": "dateSubmitted",
+                        "type": "date"
+                    },
+                    {
+                        "name": "region",
                         "type": "string",
                         "autocomplete": true,
                         "required": true
                     },
                     {
+                        "name": "specialOtherField",
+                        "type": "string",
+                        "required": false
+                    },
+                    {
+                        "name": "country",
+                        "type": "string",
+                        "autocomplete": true,
+                        "required": true
+                    },
+                    {
+                        "name": "division",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "host",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
+                        "name": "age",
+                        "type": "integer"
+                    },
+                    {
+                        "name": "sex",
+                        "type": "string",
+                        "autocomplete": true
+                    },
+                    {
                         "name": "pangoLineage",
                         "type": "pango_lineage",
                         "autocomplete": true
+                    },
+                    {
+                        "name": "qc",
+                        "type": "double"
                     }
                 ]
             }

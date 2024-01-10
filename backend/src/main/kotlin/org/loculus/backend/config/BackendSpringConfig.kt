@@ -65,11 +65,5 @@ class BackendSpringConfig {
     }
 
     @Bean
-    fun schema(backendConfig: BackendConfig) = backendConfig.instances.values.first().schema
-
-    @Bean
-    fun referenceGenome(backendConfig: BackendConfig) = backendConfig.instances.values.first().referenceGenomes
-
-    @Bean
     fun openApi(backendConfig: BackendConfig) = buildOpenApiSchema(backendConfig)
 }

@@ -283,19 +283,22 @@ class SubmitModel(
 
     private fun validateSubmissionIdSets(metadataKeysSet: Set<SubmissionId>, sequenceKeysSet: Set<SubmissionId>) {
         val metadataKeysNotInSequences = metadataKeysSet.subtract(sequenceKeysSet)
-        if (metadataKeysNotInSequences.isNotEmpty()) {
-            throw UnprocessableEntityException(
-                "Metadata file contains ${metadataKeysNotInSequences.size} submissionIds that are not present " +
-                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10),
-            )
-        }
-
         val sequenceKeysNotInMetadata = sequenceKeysSet.subtract(metadataKeysSet)
-        if (sequenceKeysNotInMetadata.isNotEmpty()) {
-            throw UnprocessableEntityException(
+
+        if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
+            val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
+                "Metadata file contains ${metadataKeysNotInSequences.size} submissionIds that are not present " +
+                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
+            } else {
+                ""
+            }
+            val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
                 "Sequence file contains ${sequenceKeysNotInMetadata.size} submissionIds that are not present " +
-                    "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10),
-            )
+                    "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
+            } else {
+                ""
+            }
+            throw UnprocessableEntityException(metadataNotPresentErrorText + sequenceNotPresentErrorText)
         }
     }
 }

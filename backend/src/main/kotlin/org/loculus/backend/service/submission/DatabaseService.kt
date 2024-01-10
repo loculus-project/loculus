@@ -34,6 +34,7 @@ import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.ReferenceGenome
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
@@ -58,7 +59,7 @@ class DatabaseService(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
-    private val referenceGenome: ReferenceGenome,
+    private val backendConfig: BackendConfig,
     private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
 ) {
 
@@ -141,7 +142,11 @@ class DatabaseService(
         }
 
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
-        val submittedProcessedDataWithAllKeysForInsertions = addMissingKeysForInsertions(submittedProcessedData)
+        val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenomes
+        val submittedProcessedDataWithAllKeysForInsertions = addMissingKeysForInsertions(
+            submittedProcessedData,
+            referenceGenome,
+        )
 
         val newStatus = when {
             submittedErrors.isEmpty() -> AWAITING_APPROVAL
@@ -183,7 +188,10 @@ class DatabaseService(
         }
     }
 
-    private fun addMissingKeysForInsertions(submittedProcessedData: SubmittedProcessedData): SubmittedProcessedData {
+    private fun addMissingKeysForInsertions(
+        submittedProcessedData: SubmittedProcessedData,
+        referenceGenome: ReferenceGenome,
+    ): SubmittedProcessedData {
         val nucleotideInsertions = referenceGenome.nucleotideSequences.associate {
             if (it.name in submittedProcessedData.data.nucleotideInsertions.keys) {
                 it.name to submittedProcessedData.data.nucleotideInsertions[it.name]!!

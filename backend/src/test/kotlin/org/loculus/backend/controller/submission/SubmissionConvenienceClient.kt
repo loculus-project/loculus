@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
@@ -11,6 +12,7 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.OTHER_ORGANISM
@@ -25,6 +27,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 class SubmissionConvenienceClient(
+    private val backendConfig: BackendConfig,
     private val client: SubmissionControllerClient,
     private val objectMapper: ObjectMapper,
 ) {
@@ -33,9 +36,18 @@ class SubmissionConvenienceClient(
         groupName: String = DEFAULT_GROUP_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): List<SubmissionIdMapping> {
+        val isMultiSegmented = backendConfig
+            .getInstanceConfig(Organism(organism))
+            .referenceGenomes
+            .nucleotideSequences.size > 1
+
         val submit = client.submit(
             DefaultFiles.metadataFile,
-            DefaultFiles.sequencesFile,
+            if (isMultiSegmented) {
+                DefaultFiles.sequencesFileMultiSegmented
+            } else {
+                DefaultFiles.sequencesFile
+            },
             organism = organism,
             groupName = groupName,
             jwt = generateJwtFor(username),

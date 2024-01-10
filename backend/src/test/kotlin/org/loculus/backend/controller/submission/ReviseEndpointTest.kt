@@ -125,8 +125,8 @@ class ReviseEndpointTest(
                 content =
                 """
                  accession	submissionId	firstColumn
-                    123	someHeader	someValue
-                    1	someHeader2	someOtherValue
+                    123	someHeader_main	someValue
+                    1	someHeader2_main	someOtherValue
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(),
@@ -145,7 +145,7 @@ class ReviseEndpointTest(
 
         client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
-            DefaultFiles.sequencesFile,
+            DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
         )
             .andExpect(status().isUnprocessableEntity)
@@ -318,9 +318,9 @@ class ReviseEndpointTest(
                     ),
                     SubmitFiles.sequenceFileWith(
                         content = """
-                            >commonHeader_main
+                            >commonHeader
                             AC
-                            >notInMetadata_main
+                            >notInMetadata
                             AC
                         """.trimIndent(),
                     ),
@@ -339,7 +339,7 @@ class ReviseEndpointTest(
                     ),
                     SubmitFiles.sequenceFileWith(
                         content = """
-                            >commonHeader_main
+                            >commonHeader
                             AC
                         """.trimIndent(),
                     ),

@@ -106,7 +106,7 @@ const sequenceData = {
         main: 'A'.repeat(123),
     },
     alignedNucleotideSequences: {
-        main: 'A'.repeat(29903),
+        main: 'N' + 'A'.repeat(29902),
     },
     nucleotideInsertions: {
         main: ['123:TCTCT', '234:ATATAT'],

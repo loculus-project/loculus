@@ -3,7 +3,6 @@ import { type FC, useMemo } from 'react';
 
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
-import type { Schema } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { isUnalignedSequence, type SequenceType } from '../../utils/sequenceTypeHelpers.ts';
 import { splitString } from '../../utils/splitLines';
@@ -13,15 +12,21 @@ const LINE_LENGTH = 100;
 type Props = {
     organism: string;
     accessionVersion: string;
-    schema: Schema;
     clientConfig: ClientConfig;
     sequenceType: SequenceType;
+    isMultiSegmented: boolean;
 };
 
-export const SequencesViewer: FC<Props> = ({ organism, accessionVersion, schema, clientConfig, sequenceType }) => {
+export const SequencesViewer: FC<Props> = ({
+    organism,
+    accessionVersion,
+    clientConfig,
+    sequenceType,
+    isMultiSegmented,
+}) => {
     const { data, error, isLoading } = lapisClientHooks(
         getLapisUrl(clientConfig, organism),
-    ).utilityHooks.useGetSequence(accessionVersion, sequenceType, schema);
+    ).utilityHooks.useGetSequence(accessionVersion, sequenceType, isMultiSegmented);
 
     const lines = useMemo(() => (data !== undefined ? splitString(data.sequence, LINE_LENGTH) : undefined), [data]);
 
