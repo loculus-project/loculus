@@ -11,9 +11,9 @@ export const routes = {
     searchPage: <Filter extends FilterValue>(organism: string, searchFilter: Filter[] = [], page: number = 1) =>
         withOrganism(organism, `/search?${buildSearchParams(searchFilter, page).toString()}`),
     sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
-        `/${organism}/sequences/${getAccessionVersionString(accessionVersion)}`,
+        `/${organism}/seq/${getAccessionVersionString(accessionVersion)}`,
     sequencesVersionsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
-        `/${organism}/sequences/${getAccessionVersionString(accessionVersion)}/versions`,
+        `/${organism}/seq/${getAccessionVersionString(accessionVersion)}/versions`,
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
@@ -26,8 +26,8 @@ export const routes = {
         const groupPagePath = `/group/${groupName}` as const;
         return groupPagePath;
     },
-    userSequencesPage: (organism: string) => withOrganism(organism, `/user/sequences`),
-    versionPage: (organism: string, accession: string) => withOrganism(organism, `/sequences/${accession}/versions`),
+    userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
+    versionPage: (organism: string, accession: string) => withOrganism(organism, `/seq/${accession}/versions`),
     unknownOrganismPage: (organism: string) => `/404?unknownOrganism=${organism}`,
     logout: () => '/logout',
 };
