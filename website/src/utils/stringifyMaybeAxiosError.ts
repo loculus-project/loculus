@@ -1,5 +1,12 @@
 import { type AxiosError } from 'axios';
 
-export function stringifyMaybeAxiosError(error: unknown | AxiosError) {
-    return error?.toString() ?? JSON.stringify(error);
-}
+import type { ProblemDetail } from '../types/backend.ts';
+
+export const stringifyMaybeAxiosError = (error: unknown): string => {
+    const data = (error as AxiosError).response?.data;
+    if (typeof data === 'object' && data !== null) {
+        return (data as ProblemDetail).detail;
+    }
+
+    return error?.toString() ?? JSON.stringify((error as Error).message);
+};

@@ -4,7 +4,7 @@ on:
   push:
 
 env:
-  DOCKER_IMAGE_NAME: ghcr.io/pathoplexus/preprocessing-nextclade
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-nextclade
 
 defaults:
   run:

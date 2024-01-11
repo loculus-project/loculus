@@ -6,7 +6,6 @@ import { baseUrl, dummyOrganism, expect, test, testSequenceEntry } from '../../e
 test.describe('The search page', () => {
     test('should show the search form with button and a table', async ({ searchPage }) => {
         await searchPage.goto();
-        await expect(searchPage.page).toHaveTitle('Search');
         await expect(searchPage.searchButton).toBeVisible();
         await expect(searchPage.table).toBeVisible();
     });

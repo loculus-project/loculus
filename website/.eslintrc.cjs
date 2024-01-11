@@ -42,7 +42,7 @@ module.exports = {
     },
     {
       // Prettier is stubborn, need to accept its rules in case of conflict
-      // See https://github.com/pathoplexus/loculus/pull/283#issuecomment-1733872357
+      // See https://github.com/loculus-project/loculus/pull/283#issuecomment-1733872357
       files: ['*'],
       rules: {
         'react/self-closing-comp': 'off',

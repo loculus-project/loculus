@@ -9,7 +9,7 @@ spec:
   generators:
     - pullRequest:
         github:
-          owner: pathoplexus
+          owner: loculus-project
           labels:
             - preview
           repo: loculus
@@ -18,7 +18,7 @@ spec:
             secretName: github-access-token
         requeueAfterSeconds: 60
     - git:
-        repoURL: https://github.com/pathoplexus/argocd_metadata.git
+        repoURL: https://github.com/loculus-project/argocd_metadata.git
         revision: HEAD
         files:
         - path: "config.json"
@@ -33,7 +33,7 @@ spec:
       project: default
       source:
         path: 'kubernetes/loculus/'
-        repoURL: 'https://github.com/pathoplexus/loculus.git'
+        repoURL: 'https://github.com/loculus-project/loculus.git'
         targetRevision: '{{.branch}}'
         helm:
           parameters:

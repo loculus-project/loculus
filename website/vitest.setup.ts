@@ -9,6 +9,7 @@ import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 import type { SubmissionIdMapping } from './src/types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
 import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
+import { DEFAULT_GROUP_NAME } from './tests/playwrightSetup.ts';
 
 export const testConfig = {
     public: {
@@ -38,6 +39,15 @@ const backendRequestMocks = {
     submit: (statusCode: number = 200, response: SubmissionIdMapping[] | any = []) => {
         testServer.use(
             http.post(`${testConfig.serverSide.backendUrl}/${testOrganism}/submit`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
+            }),
+        );
+    },
+    getGroupsOfUser: (statusCode: number = 200, response: any = [{ groupName: DEFAULT_GROUP_NAME }]) => {
+        testServer.use(
+            http.get(`${testConfig.serverSide.backendUrl}/user/groups`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });

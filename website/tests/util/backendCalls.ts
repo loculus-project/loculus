@@ -1,7 +1,7 @@
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
 import type { Accession, AccessionVersion } from '../../src/types/backend.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
-import { backendClient, dummyOrganism, testSequenceCount } from '../e2e.fixture.ts';
+import { backendClient, dummyOrganism, groupManagementClient, testSequenceCount } from '../e2e.fixture.ts';
 import { DEFAULT_GROUP_NAME } from '../playwrightSetup.ts';
 
 export const submitViaApi = async (numberOfSequenceEntries: number = testSequenceCount, token: string) => {
@@ -95,32 +95,17 @@ export const revokeReleasedData = async (accessions: Accession[], token: string)
 };
 
 export const createGroup = async (newGroupName: string = DEFAULT_GROUP_NAME, token: string) => {
-    const response = await backendClient.call(
-        'createGroup',
+    await groupManagementClient.zodios.createGroup(
         { groupName: newGroupName },
         {
             headers: createAuthorizationHeader(token),
         },
     );
-
-    if (response.isOk()) {
-        return;
-    }
-    throw new Error(JSON.stringify(response.error));
 };
 
 export const addUserToGroup = async (groupName: string = DEFAULT_GROUP_NAME, usernameToAdd: string, token: string) => {
-    const response = await backendClient.call(
-        'addUserToGroup',
-        { username: usernameToAdd },
-        {
-            params: { groupName },
-            headers: createAuthorizationHeader(token),
-        },
-    );
-
-    if (response.isOk()) {
-        return;
-    }
-    throw new Error(JSON.stringify(response.error));
+    await groupManagementClient.zodios.addUserToGroup(undefined, {
+        params: { groupName, userToAdd: usernameToAdd },
+        headers: createAuthorizationHeader(token),
+    });
 };

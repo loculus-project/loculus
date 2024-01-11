@@ -152,3 +152,17 @@ export const datasetCitationResult = z.object({
 });
 export const datasetCitationResults = z.array(datasetCitationResult);
 export type DatasetCitationResult = z.infer<typeof datasetCitationResult>;
+export const group = z.object({
+    groupName: z.string(),
+});
+
+export type Group = z.infer<typeof group>;
+
+export const groupDetails = z.object({
+    groupName: z.string(),
+    users: z.array(
+        z.object({
+            name: z.string(),
+        }),
+    ),
+});

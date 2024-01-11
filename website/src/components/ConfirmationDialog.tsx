@@ -14,14 +14,14 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ dialogText, on
 
             <h3 className='font-bold text-lg'>{dialogText}</h3>
 
-            <div className='flex items-center gap-4 mt-4'>
-                <form method='dialog'>
-                    <button className='btn' onClick={onConfirmation}>
-                        Confirm
-                    </button>
-                </form>
+            <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
                     <button className='btn btn-error'>Cancel</button>
+                </form>
+                <form method='dialog'>
+                    <button className='btn loculusGreen' onClick={onConfirmation}>
+                        Confirm
+                    </button>
                 </form>
             </div>
         </div>

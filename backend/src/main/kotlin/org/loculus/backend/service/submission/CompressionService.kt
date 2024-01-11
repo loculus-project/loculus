@@ -150,8 +150,11 @@ class CompressionService(private val backendConfig: BackendConfig) {
 
     private fun decompress(compressedSequenceString: String, dictionary: ByteArray?): String {
         val compressed = Base64.getDecoder().decode(compressedSequenceString)
-        val decompressedSize = Zstd.decompressedSize(compressed).toInt()
-        val decompressedBuffer = ByteArray(decompressedSize)
+        val decompressedSize = Zstd.getFrameContentSize(compressed)
+        if (Zstd.isError(decompressedSize)) {
+            throw RuntimeException("reading Zstd decompressed size failed: error code $decompressedSize")
+        }
+        val decompressedBuffer = ByteArray(decompressedSize.toInt())
         val decompressionReturnCode: Long = if (dictionary == null) {
             Zstd.decompress(decompressedBuffer, compressed)
         } else {

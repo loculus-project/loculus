@@ -38,6 +38,9 @@ export DOCKER_DEFAULT_PLATFORM=linux/amd64
 ```
 
 ## Authorization
+
+### User management
+
 We use keycloak for authorization. The keycloak instance is deployed in the `loculus` namespace and exposed to the outside either under `localhost:8083` or `authentication.[your-argo-cd-path]`. The keycloak instance is configured with a realm called `loculusRealm` and a client called `test-cli`. The realm is configured to use the exposed url of keycloak as a [frontend url](https://www.keycloak.org/server/hostname).
 For testing we added multiple users to the realm. The users are:
 - `admin` with password `admin` (login under `your-exposed-keycloak-url/admin/master/console/`)
@@ -45,8 +48,21 @@ For testing we added multiple users to the realm. The users are:
 - and more testusers, for each browser in the e2e test following the pattern: `testuser_[processId]_[browser]` with password `testuser_[processId]_[browser]` 
 - These testusers will be added to the `testGroup` in the setup for e2e tests. If you change the number of browsers in the e2e test, you need to adapt `website/tests/playwrightSetup.ts` accordingly. 
 
+### Group management
+
+ - Groups are entities managed by the backend, uniquely identified by a name.
+ - Every sequence entry is owned by the group that it was initially submitted for. Modifications (edits while staging, revisions, revocations) can only be made by members of that group.
+ - Each user can be a member of multiple groups.
+ - Users can create new groups, becoming the initial member automatically.
+ - Group members have the authority to add or remove other members.
+ - If the last user leaves a group, the group becomes 'dangling'—it exists but is no longer accessible, and a new group with the same name cannot be created.
+ - Admin users can manually delete a group directly on the DB but must transfer ownership of sequence entries to another group before doing so to fulfill the foreign key constraint.
+
+ For testing we added all users declared above to the group `testGroup`. 
+ 
+
 ## Contributing to Loculus
 
 Contributions are very welcome!
-Please see [`CONTRIBUTING.md`](https://github.com/pathoplexus/loculus/blob/main/CONTRIBUTING.md)
+Please see [`CONTRIBUTING.md`](https://github.com/loculus-project/loculus/blob/main/CONTRIBUTING.md)
 for more information or ping us in case you need help.

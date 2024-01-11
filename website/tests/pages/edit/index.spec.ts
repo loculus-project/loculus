@@ -3,7 +3,7 @@ import { routes } from '../../../src/routes.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
 import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
-import type { UserPage } from '../user/user.page.ts';
+import type { UserSequencePage } from '../user/userSequencePage/userSequencePage.ts';
 
 test.describe('The edit page', () => {
     test(
@@ -25,7 +25,7 @@ test.describe('The edit page', () => {
         },
     );
 
-    const testEditFlow = async (editPage: EditPage, userPage: UserPage, testSequence: AccessionVersion) => {
+    const testEditFlow = async (editPage: EditPage, userPage: UserSequencePage, testSequence: AccessionVersion) => {
         await userPage.clickOnEditForSequenceEntry(testSequence);
 
         expect(await editPage.page.isVisible(`text=Edit Id: ${testSequence.accession}`)).toBe(true);

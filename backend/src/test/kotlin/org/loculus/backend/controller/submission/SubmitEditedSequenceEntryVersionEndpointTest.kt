@@ -132,8 +132,6 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
             .assertStatusIs(Status.HAS_ERRORS)
 
         val editedDataFromWrongSubmitter = generateUnprocessedData(firstAccession)
-        val accessionVersionString = "${editedDataFromWrongSubmitter.accession}." +
-            "${editedDataFromWrongSubmitter.version}"
         val nonExistingUser = "whoseNameMayNotBeMentioned"
 
         client.submitEditedSequenceEntryVersion(editedDataFromWrongSubmitter, jwt = generateJwtFor(nonExistingUser))

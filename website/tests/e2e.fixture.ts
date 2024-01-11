@@ -11,17 +11,20 @@ import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
-import { UserPage } from './pages/user/user.page';
 import { DatasetPage } from './pages/datasets/dataset.page';
+import { GroupPage } from './pages/user/group/group.page.ts';
+import { UserSequencePage } from './pages/user/userSequencePage/userSequencePage.ts';
 import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
+import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
 
 type E2EFixture = {
     searchPage: SearchPage;
     sequencePage: SequencePage;
     submitPage: SubmitPage;
-    userPage: UserPage;
     datasetPage: DatasetPage;
+    userPage: UserSequencePage;
+    groupPage: GroupPage;
     revisePage: RevisePage;
     editPage: EditPage;
     navigationFixture: NavigationFixture;
@@ -42,6 +45,7 @@ export const e2eLogger = winston.createLogger({
 });
 
 export const backendClient = BackendClient.create(backendUrl, e2eLogger);
+export const groupManagementClient = GroupManagementClient.create(backendUrl, e2eLogger);
 
 export const testSequenceEntry = {
     name: '1.1',
@@ -167,12 +171,16 @@ export const test = base.extend<E2EFixture>({
         await use(submitPage);
     },
     userPage: async ({ page }, use) => {
-        const userPage = new UserPage(page);
+        const userPage = new UserSequencePage(page);
         await use(userPage);
     },
     datasetPage: async ({ page }, use) => {
         const datasetPage = new DatasetPage(page);
         await use(datasetPage);
+    },
+    groupPage: async ({ page }, use) => {
+        const groupPage = new GroupPage(page);
+        await use(groupPage);
     },
     revisePage: async ({ page }, use) => {
         const revisePage = new RevisePage(page);

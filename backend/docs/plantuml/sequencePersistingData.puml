@@ -1,0 +1,42 @@
+@startuml
+    participant "Loculus Frontend / User" as frontend #LightCyan
+    participant "Loculus Backend" as backend #Orange
+    database "Sequence \nentry table" as prodDB
+    database "Auxiliary \nmetadata table" as auxMetaDB
+    database "Auxiliary \nsequence table" as auxSeqDB
+
+    frontend -> backend: submit initial/revised sequence data
+
+        backend -> auxMetaDB: Store metadata in auxiliary table
+        auxMetaDB -> backend: Send list of submissionIDs of submitted metadata
+        backend -> auxSeqDB: Store sequence data in auxiliary table
+        auxSeqDB -> backend: Send list of submissionIDs of submitted sequence data
+
+        alt for revisions additionally:
+           prodDB -> backend: Send list of new versions by matching given accessions
+        end
+        backend -> backend: Check if all sequence data and metadata are consistent
+        alt data consistent*
+          group Merge and Copy to prodDB
+                auxMetaDB <-> auxSeqDB: Merge metadata and sequence data
+                auxMetaDB -> prodDB: Copy merged data to production DB
+                prodDB -> backend: Send list of accession versions of new sequence entries
+            end
+                backend -> frontend: Send list of accession versions of new sequence entries
+         else data inconsistent*
+
+            backend -> frontend: Send error message
+    end
+           backend -> auxMetaDB: Delete temporary metadata
+              backend -> auxSeqDB: Delete temporary sequence data
+
+     note right of frontend
+     (*) data consistency:
+       - each metadata entry has a unique submission ID
+       - each metadata entry has at least one corresponding sequence entry
+       - each sequence entry has exactly one corresponding metadata entry
+       - (for revision) submitted accession versions exists
+       end note
+
+@enduml
+

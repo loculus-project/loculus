@@ -30,7 +30,7 @@ spec:
       containers:
         {{- range $key, $_ := $configFile.instances }}
         - name: preprocessing-{{ $key }}
-          image: ghcr.io/pathoplexus/preprocessing-dummy:{{ $dockerTag }}
+          image: ghcr.io/loculus-project/preprocessing-dummy:{{ $dockerTag }}
           imagePullPolicy: Always
           args:
             - "--watch"

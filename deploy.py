@@ -2,8 +2,8 @@
 
 import argparse
 import subprocess
-from pathlib import Path
 import time
+from pathlib import Path
 
 script_path = Path(__file__).resolve()
 ROOT_DIR = script_path.parent
@@ -23,16 +23,17 @@ PORTS = [WEBSITE_PORT_MAPPING, BACKEND_PORT_MAPPING, LAPIS_PORT_MAPPING, DATABAS
 parser = argparse.ArgumentParser(description='Manage k3d cluster and helm installations.')
 subparsers = parser.add_subparsers(dest='subcommand', required=True, help='Subcommands')
 
-cluster_parser = subparsers.add_parser('cluster', help='Manage the k3d cluster')
+cluster_parser = subparsers.add_parser('cluster', help='Start the k3d cluster')
 cluster_parser.add_argument('--dev', action='store_true',
                             help='Set up a development environment for running the website and the backend locally')
 cluster_parser.add_argument('--delete', action='store_true', help='Delete the cluster')
 
-helm_parser = subparsers.add_parser('helm', help='Manage helm installation')
+helm_parser = subparsers.add_parser('helm', help='Install the Helm chart to the k3d cluster')
 helm_parser.add_argument('--dev', action='store_true',
                          help='Set up a development environment for running the website and the backend locally')
 helm_parser.add_argument('--branch', help='Set the branch to deploy with the Helm chart')
-helm_parser.add_argument('--dockerconfigjson', help='Base64 encoded dockerconfigjson secret for pulling the images')
+helm_parser.add_argument('--dockerconfigjson',
+                         help='Set the base64 encoded dockerconfigjson secret for pulling the images')
 helm_parser.add_argument('--uninstall', action='store_true', help='Uninstall installation')
 helm_parser.add_argument('--enablePreprocessing', action='store_true',
                          help='Include deployment of preprocessing pipelines')

@@ -9,6 +9,7 @@ type Session = {
     isLoggedIn: boolean;
     user?: {
         name?: string;
+        username?: string;
     };
     token?: TokenCookie;
 };

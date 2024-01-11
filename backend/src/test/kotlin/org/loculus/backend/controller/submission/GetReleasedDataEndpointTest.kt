@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-private const val NUMBER_OF_FIELDS_WITH_UNKNOWN_VALUE = 2
+private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf("releasedAt", "submissionId", "submittedAt")
 
 @EndpointTest
 class GetReleasedDataEndpointTest(
@@ -82,10 +82,18 @@ class GetReleasedDataEndpointTest(
                 "versionStatus" to TextNode("LATEST_VERSION"),
             )
 
-            assertThat(it.metadata.size, `is`(expectedMetadata.size + NUMBER_OF_FIELDS_WITH_UNKNOWN_VALUE))
+            assertThat(
+                it.metadata.size,
+                `is`(expectedMetadata.size + ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE.size),
+            )
             for ((key, value) in it.metadata) {
                 when (key) {
                     "submittedAt" -> {
+                        val dateTime = LocalDateTime.parse(value.textValue(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                        assertThat(dateTime.year, `is`(currentYear))
+                    }
+
+                    "releasedAt" -> {
                         val dateTime = LocalDateTime.parse(value.textValue(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                         assertThat(dateTime.year, `is`(currentYear))
                     }

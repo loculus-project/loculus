@@ -9,7 +9,7 @@ const organismIndependentNavigationItems = [
 ];
 
 const organismNavigationItems = [
-    { link: 'Search', title: 'Search' },
+    { link: 'Search', title: '[Organism] - Browse' },
     { link: 'Submit', title: 'Submit' },
     { link: 'Revise', title: 'Revise' },
     { link: 'User', title: 'Login' },
@@ -29,11 +29,11 @@ test.describe('Clicking the navigation links', () => {
 
         await navigationFixture.openOrganismNavigation();
         await navigationFixture.clickLink(dummyOrganism.displayName);
-        await navigationFixture.expectTitle(dummyOrganism.displayName);
+        await navigationFixture.expectTitle(`${dummyOrganism.displayName} - Browse`);
 
         for (const { link, title } of organismNavigationItems) {
             await navigationFixture.clickLink(link);
-            await navigationFixture.expectTitle(title);
+            await navigationFixture.expectTitle(title.replace('[Organism]', dummyOrganism.displayName));
         }
     });
 });

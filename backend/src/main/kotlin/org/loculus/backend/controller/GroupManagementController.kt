@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -60,7 +61,7 @@ class GroupManagementController(
 
     @Operation(description = "Add user to a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PostMapping("/groups/{groupName}/users", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @PutMapping("/groups/{groupName}/users/{usernameToAdd}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun addUserToGroup(
         @UsernameFromJwt groupMember: String,
         @Parameter(
@@ -68,12 +69,12 @@ class GroupManagementController(
         ) @PathVariable groupName: String,
         @Parameter(
             description = "The user name that should be added to the group.",
-        ) @RequestBody usernameToAdd: Username,
-    ) = groupManagementDatabaseService.addUserToGroup(groupMember, groupName, usernameToAdd.username)
+        ) @PathVariable usernameToAdd: String,
+    ) = groupManagementDatabaseService.addUserToGroup(groupMember, groupName, usernameToAdd)
 
     @Operation(description = "Remove user from a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @DeleteMapping("/groups/{groupName}/users", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @DeleteMapping("/groups/{groupName}/users/{usernameToRemove}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun removeUserFromGroup(
         @UsernameFromJwt groupMember: String,
         @Parameter(
@@ -81,14 +82,10 @@ class GroupManagementController(
         ) @PathVariable groupName: String,
         @Parameter(
             description = "The user name that should be removed from the group.",
-        ) @RequestBody usernameToRemove: Username,
-    ) = groupManagementDatabaseService.removeUserFromGroup(groupMember, groupName, usernameToRemove.username)
+        ) @PathVariable usernameToRemove: String,
+    ) = groupManagementDatabaseService.removeUserFromGroup(groupMember, groupName, usernameToRemove)
 
     data class GroupName(
         val groupName: String,
-    )
-
-    data class Username(
-        val username: String,
     )
 }

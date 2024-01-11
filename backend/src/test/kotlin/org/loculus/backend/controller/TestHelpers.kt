@@ -67,7 +67,7 @@ fun expectUnauthorizedResponse(isModifyingRequest: Boolean = false, apiCall: (jw
         .andExpect(
             MockMvcResultMatchers.header().string(
                 "WWW-Authenticate",
-                Matchers.containsString("Invalid JWT serialization: Missing dot delimiter"),
+                Matchers.containsString("An error occurred while attempting to decode the Jwt: Malformed token"),
             ),
         )
 }

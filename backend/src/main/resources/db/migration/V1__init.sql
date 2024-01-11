@@ -14,6 +14,7 @@ create table sequence_entries (
     submitted_at timestamp not null,
     started_processing_at timestamp,
     finished_processing_at timestamp,
+    released_at timestamp,
     status text not null,
     is_revocation boolean not null default false,
     original_data jsonb,

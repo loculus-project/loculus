@@ -10,9 +10,14 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
+    env:
+      CONFIG_DIR: ./tests/config
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Generate local test config
+      run: ./generate_local_test_config.sh
  
     - name: Install dependencies
       working-directory: website

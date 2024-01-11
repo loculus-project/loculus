@@ -1,11 +1,11 @@
 import type { Page } from '@playwright/test';
 
-import { routes } from '../../../src/routes.ts';
-import type { AccessionVersion, SequenceEntryStatus } from '../../../src/types/backend.ts';
-import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, dummyOrganism } from '../../e2e.fixture';
+import { routes } from '../../../../src/routes.ts';
+import type { AccessionVersion, SequenceEntryStatus } from '../../../../src/types/backend.ts';
+import { getAccessionVersionString } from '../../../../src/utils/extractAccessionVersion.ts';
+import { baseUrl, dummyOrganism } from '../../../e2e.fixture';
 
-export class UserPage {
+export class UserSequencePage {
     private readonly sequenceBoxNames = [
         `userSequences.receivedExpanded`,
         `userSequences.processingExpanded`,

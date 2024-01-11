@@ -1,0 +1,19 @@
+---
+import { BackButton } from '../../../components/Navigation/BackButton';
+import { GroupPage } from '../../../components/User/GroupPage';
+import { getRuntimeConfig } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getAccessToken } from '../../../utils/getAccessToken';
+
+const accessToken = getAccessToken(Astro.locals.session)!;
+const groupName = Astro.params.groupName!;
+const clientConfig = getRuntimeConfig().public;
+---
+
+<BaseLayout title='Group'>
+    <div class='flex items-center'>
+        <BackButton marginRight={2} client:load />
+        <h1 class='title'>Group: {groupName}</h1>
+    </div>
+    <GroupPage groupName={groupName} accessToken={accessToken} clientConfig={clientConfig} client:load />
+</BaseLayout>

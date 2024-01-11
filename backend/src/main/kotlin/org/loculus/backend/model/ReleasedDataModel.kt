@@ -43,6 +43,7 @@ class ReleasedDataModel(private val databaseService: DatabaseService) {
             ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
             ("submitter" to TextNode(rawProcessedData.submitter)) +
             ("submittedAt" to TextNode(rawProcessedData.submittedAt.toString())) +
+            ("releasedAt" to TextNode(rawProcessedData.releasedAt.toString())) +
             ("versionStatus" to TextNode(siloVersionStatus.name))
 
         return ProcessedData(

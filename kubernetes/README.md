@@ -20,6 +20,18 @@ Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
 Start the [backend](/backend/README.md) and the [website](/website/README.md) locally.
 
+### The `deploy.py` script
+
+The `deploy.py` script wraps the most important `k3d` and `helm` commands.
+Check the help for more information:
+
+```shell
+../deploy.py --help
+```
+
+Basic cluster management should be done with this script.
+Use `kubectl` to interact with the running cluster in full power (e.g. accessing individual pods, getting logs, etc.).
+
 ### Details
 
 Create a cluster that doesn't expose the ports of the backend and the website:
@@ -128,7 +140,7 @@ This will return a base64 encoded string similar to the one you can see above th
 
 Using Docker desktop as your container runtime won't work on ARM64 macOS. Instead, you will need to use `colima` to run an AMD64 VM which will host AMD64 docker containers.
 
-This will be quite slow due to QEMU emulation but it will work nonetheless (you may need to [adjust timeouts](https://github.com/pathoplexus/loculus/pull/583).
+This will be quite slow due to QEMU emulation but it will work nonetheless (you may need to [adjust timeouts](https://github.com/loculus-project/loculus/pull/583).
 
 First, install `colima`:
 

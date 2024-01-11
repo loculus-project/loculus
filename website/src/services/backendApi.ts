@@ -1,12 +1,13 @@
-import { makeApi, makeEndpoint, makeErrors, makeParameters } from '@zodios/core';
+import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
+import { authorizationHeader, notAuthorizedError, withOrganismPathSegment } from './commonApiTypes.ts';
 import {
-    sequenceEntryToEdit,
     accessions,
     accessionVersionsObject,
     problemDetail,
     sequenceEntryStatus,
+    sequenceEntryToEdit,
     submissionIdMapping,
     submitFiles,
     unprocessedData,
@@ -15,27 +16,6 @@ import {
     datasetRecord,
     accessionCitations,
 } from '../types/backend.ts';
-
-import type { Dataset, DatasetRecord, DatasetCitationResults } from '../types/datasets';
-
-const [authorizationHeader] = makeParameters([
-    {
-        name: 'Authorization',
-        type: 'Header',
-        schema: z.string().includes('Bearer ', { position: 0 }),
-    },
-]);
-
-function withOrganismPathSegment<Path extends `/${string}`>(path: Path) {
-    return `/:organism${path}` as const;
-}
-
-const notAuthorizedError = makeErrors([
-    {
-        status: 401,
-        schema: z.never(),
-    },
-])[0];
 
 const submitEndpoint = makeEndpoint({
     method: 'post',
