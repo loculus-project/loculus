@@ -2,11 +2,21 @@ import z, { type ZodTypeAny } from 'zod';
 
 import { accessionVersion, type ProblemDetail } from './backend.ts';
 
+export const orderByType = z.enum(['ascending', 'descending']);
+export type OrderByType = z.infer<typeof orderByType>;
+
+export const orderBy = z.object({
+    field: z.string(),
+    type: orderByType,
+});
+export type OrderBy = z.infer<typeof orderBy>;
+
 export const lapisBaseRequest = z
     .object({
         limit: z.number().optional(),
         offset: z.number().optional(),
         fields: z.array(z.string()).optional(),
+        orderBy: z.array(orderBy).optional(),
     })
     .catchall(z.union([z.string(), z.number(), z.null(), z.array(z.string())]));
 export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
