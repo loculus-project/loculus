@@ -20,6 +20,8 @@ object BackendSpringProperty {
     const val BACKEND_CONFIG_PATH = "backend.config.path"
 }
 
+val logger = mu.KotlinLogging.logger {}
+
 @Configuration
 @ImportAutoConfiguration(
     value = [ExposedAutoConfiguration::class],
@@ -61,6 +63,9 @@ class BackendSpringConfig {
         objectMapper: ObjectMapper,
         @Value("\${${BackendSpringProperty.BACKEND_CONFIG_PATH}}") configPath: String,
     ): BackendConfig {
+        val config = objectMapper.readValue<BackendConfig>(File(configPath))
+        logger.info { "Loaded backend config from $configPath" }
+        logger.info { "Config: $config" }
         return objectMapper.readValue(File(configPath))
     }
 
