@@ -10,6 +10,13 @@
 
 **Nucleotide sequence and amino acid sequences**: Users upload unaligned nucleotide sequences. The preprocessing pipeline aligns the sequences against an organism-specific reference genome and translates them to amino acid sequences.
 
+**Data Use Terms**: 
+When submitting data, the user may choose to restrict the usage of that data for a certain time period (up to a maximum of one year).
+These data use terms are associated with the accession and apply to all versions of that accession.
+The period can be _shortened_ by any member of the group.
+Extending the restriction time is not permitted.
+After the restricted period, the data use terms will be changed to open use.
+
 ## Abbreviations
 
 - AA = amino acid
