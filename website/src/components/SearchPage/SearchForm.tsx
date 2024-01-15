@@ -32,7 +32,6 @@ export const SearchForm: FC<SearchFormProps> = ({ organism, filters, clientConfi
     const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
         filters.map((filter) => ({
             ...filter,
-            filterValue: '',
             label: filter.label ?? sentenceCase(filter.name),
         })),
     );
