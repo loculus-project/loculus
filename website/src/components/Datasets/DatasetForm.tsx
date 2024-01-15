@@ -32,7 +32,8 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
     const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editDatasetRecords));
     const [datasetRecords, setDatasetRecords] = useState(editDatasetRecords);
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
-    const { createDataset, updateDataset, isLoading } = useActionHooks(clientConfig, accessToken, openErrorFeedback);
+    const { mutate: createDataset, isLoading: isLoadingCreate } = useCreateHook(clientConfig, accessToken, openErrorFeedback);
+    const { mutate: updateDataset, isLoading: isLoadingUpdate } = useUpdateHook(clientConfig, accessToken, editDataset?.datasetId ?? '', openErrorFeedback);
 
     useEffect(() => {
         const parseRecordsFromInput = () => {
@@ -174,18 +175,16 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                         </Accordion>
                     ))}
                 </FormGroup>
-                <Button variant='outlined' disabled={isLoading} onClick={handleSubmit}>
-                    {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}
+                <Button variant='outlined' disabled={isLoadingCreate || isLoadingUpdate } onClick={handleSubmit}>
+                    {isLoadingCreate || isLoadingUpdate ? <CircularProgress size={20} color='primary' /> : 'Save'}
                 </Button>
             </div>
         </div>
     );
 };
 
-function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErrorFeedback: (message: string) => void) {
-    const backendHooks = backendClientHooks(clientConfig);
-
-    const useCreateDataset = backendHooks.useCreateDataset(
+function useCreateHook(clientConfig: ClientConfig, accessToken: string, openErrorFeedback: (message: string) => void) {
+    return backendClientHooks(clientConfig).useCreateDataset(
         { headers: createAuthorizationHeader(accessToken) },
         {
             onSuccess: async (response) => {
@@ -200,9 +199,11 @@ function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErr
             },
         },
     );
+}
 
-    const useUpdateDataset = backendHooks.useUpdateDataset(
-        { headers: createAuthorizationHeader(accessToken) },
+function useUpdateHook(clientConfig: ClientConfig, accessToken: string, datasetId: string, openErrorFeedback: (message: string) => void) {
+    return backendClientHooks(clientConfig).useUpdateDataset(
+        { headers: createAuthorizationHeader(accessToken), datasetId },
         {
             onSuccess: async (response) => {
                 await logger.info(`Successfully updated dataset with datasetId: ${response?.datasetId}`);
@@ -210,7 +211,7 @@ function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErr
                 location.href = redirectUrl;
             },
             onError: async (error) => {
-                const message = `Failed to update dataset with datasetId ${dataset.datasetId}. Error: '${JSON.stringify(
+                const message = `Failed to update dataset with datasetId ${datasetId}. Error: '${JSON.stringify(
                     error,
                 )})}'`;
                 await logger.info(message);
@@ -218,10 +219,4 @@ function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErr
             },
         },
     );
-
-    return {
-        createDataset: useCreateDataset.mutate,
-        updateDataset: useUpdateDataset.mutate,
-        isLoading: useCreateDataset.isLoading || useUpdateDataset.isLoading,
-    };
 }

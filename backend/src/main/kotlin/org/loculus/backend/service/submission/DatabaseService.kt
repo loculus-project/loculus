@@ -597,7 +597,8 @@ class DatabaseService(
         }
     }
 
-        // DatasetController
+    // DatasetController
+
     fun createDataset(
         username: String,
         datasetName: String,
@@ -701,7 +702,7 @@ class DatabaseService(
         )
     }
 
-    fun getDataSet(datasetId: String, version: Long?): List<Dataset> {
+    fun getDataset(datasetId: String, version: Long?): List<Dataset> {
         log.info { "Get dataset $datasetId, version $version" }
 
         var datasetList = mutableListOf<Dataset>()
@@ -752,6 +753,15 @@ class DatabaseService(
         log.info { "Get dataset records $datasetId, version $version" }
 
         var selectedVersion = version
+
+        // var secquenceTable = sequenceEntriesTableProvider.get().let { table ->
+        //     val maxVersionExpression = table.versionColumn.max()
+        //     return table
+        //         .slice(table.accessionColumn, maxVersionExpression)
+        //         .groupBy(table.accessionColumn)
+        //         .associate { it[table.accessionColumn] to it[maxVersionExpression]!! }
+        // }
+
         if (selectedVersion == null) {
             selectedVersion = DatasetsTable
                 .slice(DatasetsTable.datasetVersion.max())
@@ -841,9 +851,9 @@ class DatabaseService(
                 selectedCitation[CitationsTable.updatedBy],
             ),
         )
-
         return citationList
     }
+
 
     fun updateCitation(citationId: Long, _data: String, _type: String) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)

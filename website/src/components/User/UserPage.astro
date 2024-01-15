@@ -10,7 +10,6 @@ import { routes } from '../../routes';
 import { BackendClient } from '../../services/backendClient';
 import { getAccessToken } from '../../utils/getAccessToken';
 import { BackButton } from '../Navigation/BackButton';
-import { mockUserAggCitations } from '../../components/Datasets/mockData';
 
 const session = Astro.locals.session;
 
@@ -77,11 +76,10 @@ const userCitationsResponse = await BackendClient.create().astroFileTypeHelpers.
                         (citationData) => <CitationPlot citationData={citationData} />,
                         (error) => (
                             <div>
-                            <ErrorFeedback
-                                message={'Error while fetching user sequences: ' + JSON.stringify(error)}
-                                client:only='react'
-                            />
-                            <CitationPlot citationData={mockUserAggCitations} client:only='react'/>
+                                <ErrorFeedback
+                                    message={'Error while fetching user sequences: ' + JSON.stringify(error)}
+                                    client:only='react'
+                                />
                             </div>
                         ),
                     )

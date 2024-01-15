@@ -12,6 +12,6 @@
             "dummy-organism": "https://lapis.main.preview.k3s.loculus.org/dummy-organism",
             "dummy-organism-2": "https://lapis.main.preview.k3s.loculus.org/dummy-organism-2"
         },
-        "keycloakUrl": "https://authentication.main.preview.k3s.loculus.org"
+        "keycloakUrl": "http://localhost:8083"
     }
 }

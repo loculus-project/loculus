@@ -2,9 +2,7 @@ import { type FC, useState } from 'react';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import { type DatasetRecord, type Dataset, AccessionType } from '../../types/datasets';
-import type { ClientConfig } from '../../types/runtimeConfig';
 import { AlertDialog } from '../common/AlertDialog';
-import { withQueryProvider } from '../common/withQueryProvider';
 
 type DatasetRecordsTableProps = {
     datasetRecords: DatasetRecord[];
@@ -51,13 +49,11 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
 };
 
 type DatasetItemProps = {
-    clientConfig: ClientConfig;
-    accessToken: string;
     dataset: Dataset;
     datasetRecords: DatasetRecord[];
 };
 
-const DatasetItemInner: FC<DatasetItemProps> = ({ dataset, datasetRecords }) => {
+export const DatasetItem: FC<DatasetItemProps> = ({ dataset, datasetRecords }) => {
     const [doiDialogVisible, setDoiDialogVisible] = useState(false);
     const [citationsDialogVisible, setCitationsDialogVisible] = useState(false);
 
@@ -146,5 +142,3 @@ const DatasetItemInner: FC<DatasetItemProps> = ({ dataset, datasetRecords }) => 
         </div>
     );
 };
-
-export const DatasetItem = withQueryProvider(DatasetItemInner);

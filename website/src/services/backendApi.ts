@@ -13,7 +13,7 @@ import {
     unprocessedData,
     uploadFiles,
     datasets,
-    datasetRecord,
+    datasetRecords,
     accessionCitations,
 } from '../types/backend.ts';
 
@@ -227,16 +227,16 @@ const addUserToGroupEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-const getDatasetsOfUser = makeEndpoint({
+const getDatasetsOfUserEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-datasets-of-user?username=:userId',
-    alias: 'getDatasetsofUser',
+    alias: 'getDatasetsOfUser',
     parameters: [authorizationHeader],
     response: datasets,
     errors: [notAuthorizedError],
 });
 
-const getCitationsOfUser = makeEndpoint({
+const getCitationsOfUserEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-citations-of-user?username=:userId',
     alias: 'getCitationsOfUser',
@@ -245,25 +245,25 @@ const getCitationsOfUser = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-const getDataset = makeEndpoint({
+const getDatasetEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-dataset?datasetId=:datasetId&version=:datasetVersion',
+    path: '/get-dataset?datasetId=:datasetId&version=:version',
     alias: 'getDataset',
     parameters: [authorizationHeader],
     response: datasets,
     errors: [notAuthorizedError],
 });
 
-const getDatasetRecords = makeEndpoint({
+const getDatasetRecordsEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-dataset-records?datasetId=:datasetId&version=:datasetVersion',
+    path: '/get-dataset-records?datasetId=:datasetId&version=:version',
     alias: 'getDatasetRecords',
     parameters: [authorizationHeader],
-    response: datasetRecord,
+    response: datasetRecords,
     errors: [notAuthorizedError],
 });
 
-const createDataset = makeEndpoint({
+const createDatasetEndpoint = makeEndpoint({
     method: 'post',
     path: '/create-dataset',
     alias: 'createDataset',
@@ -288,12 +288,12 @@ const createDataset = makeEndpoint({
     ],
     response: z.object({
         datasetId: z.string(),
-        datasetVersion: z.string(),
+        datasetVersion: z.number()
     }),
     errors: [notAuthorizedError],
 });
 
-const updateDataset = makeEndpoint({
+const updateDatasetEndpoint = makeEndpoint({
     method: 'put',
     path: '/update-dataset',
     alias: 'updateDataset',
@@ -319,12 +319,12 @@ const updateDataset = makeEndpoint({
     ],
     response: z.object({
         datasetId: z.string(),
-        datasetVersion: z.string(),
+        datasetVersion: z.number(),
     }),
     errors: [notAuthorizedError],
 });
 
-const deleteDataset = makeEndpoint({
+const deleteDatasetEndpoint = makeEndpoint({
     method: 'delete',
     path: '/delete-dataset?datasetId=:datasetId&version=:datasetVersion',
     alias: 'deleteDataset',
@@ -347,11 +347,11 @@ export const backendApi = makeApi([
     submitProcessedDataEndpoint,
     createGroupEndpoint,
     addUserToGroupEndpoint,
-    getDatasetsOfUser,
-    getCitationsOfUser,
-    getDataset,
-    getDatasetRecords,
-    createDataset,
-    updateDataset,
-    deleteDataset,
+    getDatasetsOfUserEndpoint,
+    getCitationsOfUserEndpoint,
+    getDatasetEndpoint,
+    getDatasetRecordsEndpoint,
+    createDatasetEndpoint,
+    updateDatasetEndpoint,
+    deleteDatasetEndpoint,
 ]);

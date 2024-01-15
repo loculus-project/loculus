@@ -1,25 +1,42 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { ErrorFeedback } from '../../../components/ErrorFeedback';
 import { DatasetList } from '../../components/Datasets/DatasetList';
+import { DatasetListActions } from '../../components/Datasets/DatasetListActions';
 import { getRuntimeConfig } from '../../config';
 import { getAccessToken } from '../../utils/getAccessToken';
-import { mockDataset } from '../../components/Datasets/mockData';
 import { BackendClient } from '../../services/backendClient';
-
 
 const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
-const username = Astro.locals.session?.user?.username;
-const datasets = await BackendClient.create().astroFileTypeHelpers.getDatasetsofUser(
+const datasetsResponse = await BackendClient.create().astroFileTypeHelpers.getDatasetsOfUser(
     accessToken,
-    username,
 );
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>
-    <DatasetList
-        datasets={[mockDataset]}
-        clientConfig={clientConfig}
-        accessToken={accessToken}
-    />
+    <div class='flex justify-center'>
+        <div class='w-3/4'>
+            <div class='flex justify-start items-center py-5 '>
+                <h1 class='pr-4 text-2xl font-semibold'>Datasets</h1>
+                <DatasetListActions clientConfig={clientConfig} accessToken={accessToken} client:load />
+            </div>
+        <div>
+        <div>
+            {
+                datasetsResponse.match(
+                    (datasets) => (
+                        datasets && datasets?.length > 0 ? 
+                        <DatasetList datasets={datasets} client:load />
+                        : 'You have no datasets yet.'
+                    ),
+                    (error) => 
+                        <ErrorFeedback
+                            message={'Error while fetching datasets: ' + JSON.stringify(error)}
+                            client:only='react'
+                        />
+                    )
+            }
+        </div>
+    </div>
 </BaseLayout>

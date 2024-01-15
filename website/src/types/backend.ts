@@ -115,7 +115,7 @@ export type ProblemDetail = z.infer<typeof problemDetail>;
 export const dataset = z.object({
     datasetId: z.string(),
     datasetDOI: z.string().optional(),
-    datasetVersion: z.string(),
+    datasetVersion: z.number(),
     name: z.string(),
     description: z.string().optional(),
     createdAt: z.string(),

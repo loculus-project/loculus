@@ -2,6 +2,7 @@ package org.loculus.backend.controller
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.loculus.backend.service.submission.Author
 import org.loculus.backend.service.submission.Citation
 import org.loculus.backend.service.submission.DatabaseService
@@ -10,6 +11,7 @@ import org.loculus.backend.service.submission.DatasetRecord
 import org.loculus.backend.service.submission.ResponseDataset
 import org.loculus.backend.service.submission.SubmittedDataset
 import org.springframework.http.MediaType
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -19,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
+@Validated
+@SecurityRequirement(name = "bearerAuth")
 class DatasetController(
     private val databaseService: DatabaseService,
     private val objectMapper: ObjectMapper,
@@ -26,7 +30,7 @@ class DatasetController(
     @Operation(description = "Create a new dataset with the specified data")
     @PostMapping("/create-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createDataset(
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
         @RequestBody body: SubmittedDataset,
     ): ResponseDataset {
         return databaseService.createDataset(username, body.name, body.records, body.description)
@@ -35,7 +39,7 @@ class DatasetController(
     @Operation(description = "Update a dataset with the specified data")
     @PutMapping("/update-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun updateDataset(
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
         @RequestParam datasetId: String,
         @RequestBody body: SubmittedDataset,
     ): ResponseDataset {
@@ -44,11 +48,11 @@ class DatasetController(
 
     @Operation(description = "Get a dataset")
     @GetMapping("/get-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getDataSet(
+    fun getDataset(
         @RequestParam datasetId: String,
         @RequestParam version: Long?,
     ): List<Dataset> {
-        return databaseService.getDataSet(datasetId, version)
+        return databaseService.getDataset(datasetId, version)
     }
 
     @Operation(description = "Get records for a dataset")
@@ -63,7 +67,7 @@ class DatasetController(
     @Operation(description = "Get a list of datasets created by a user")
     @GetMapping("/get-datasets-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getDatasets(
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
     ): List<Dataset> {
         return databaseService.getDatasets(username)
     }
@@ -71,7 +75,7 @@ class DatasetController(
     @Operation(description = "Delete a dataset")
     @DeleteMapping("/delete-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteDataset(
-        @RequestParam username: String,
+        @UsernameFromJwt username: String,
         @RequestParam datasetId: String,
         @RequestParam version: Long,
     ) {
