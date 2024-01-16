@@ -15,7 +15,9 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.model.SubmissionId
+import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.UploadType
+import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupNameColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
@@ -43,6 +45,7 @@ class UploadDatabaseService(
     private val parseFastaHeader: ParseFastaHeader,
     private val compressor: CompressionService,
     private val submissionPreconditionValidator: SubmissionPreconditionValidator,
+    private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
 ) {
 
     fun batchInsertMetadataInAuxTable(
@@ -112,11 +115,13 @@ class UploadDatabaseService(
             },
     )
 
-    fun mapAndCopy(uploadId: String, uploadType: UploadType): List<SubmissionIdMapping> = transaction {
-        log.debug { "mapping and copying sequences with UploadId $uploadId and uploadType: $uploadType" }
+    fun mapAndCopy(uploadId: String, submissionParams: SubmissionParams): List<SubmissionIdMapping> = transaction {
+        log.debug {
+            "mapping and copying sequences with UploadId $uploadId and uploadType: $submissionParams.uploadType"
+        }
 
-        exec(
-            generateMapAndCopyStatement(uploadType),
+        val insertionResult = exec(
+            generateMapAndCopyStatement(submissionParams.uploadType),
             listOf(
                 Pair(VarCharColumnType(), uploadId),
             ),
@@ -132,6 +137,27 @@ class UploadDatabaseService(
             }
             result.toList()
         } ?: emptyList()
+
+        val result = if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
+            dataUseTermsDatabaseService.setNewDataUseTerms(
+                insertionResult.map { it.accession },
+                submissionParams.username,
+                submissionParams.dataUseTerms,
+            )
+
+            insertionResult.map {
+                SubmissionIdMapping(
+                    it.accession,
+                    it.version,
+                    it.submissionId,
+                    submissionParams.dataUseTerms,
+                )
+            }
+        } else {
+            insertionResult
+        }
+
+        return@transaction result
     }
 
     fun deleteUploadData(uploadId: String) {

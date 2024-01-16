@@ -8,6 +8,7 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
+import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.model.SubmitModel
 import org.springframework.beans.factory.annotation.Autowired
@@ -28,6 +29,7 @@ private val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
     .file("sequenceFile", "sequences".toByteArray())
     .file("metadataFile", "metadata".toByteArray())
     .param("groupName", "groupName")
+    .param("dataUseTermsType", DataUseTermsType.OPEN.name)
     .withAuth()
 
 private val validResponse = emptyList<SubmissionIdMapping>()
@@ -44,6 +46,8 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
     }
 
     private fun MockKMatcherScope.validControllerCall() = submissionController.submit(
+        any(),
+        any(),
         any(),
         any(),
         any(),
@@ -124,6 +128,7 @@ class ExceptionHandlerWithMockedModelTest(@Autowired val mockMvc: MockMvc) {
                 .file("sequenceFile", "sequences".toByteArray())
                 .file("metadataFile", "metadata".toByteArray())
                 .param("groupName", "groupName")
+                .param("dataUseTermsType", DataUseTermsType.OPEN.name)
                 .withAuth(),
         )
             .andExpect(status().isBadRequest)
