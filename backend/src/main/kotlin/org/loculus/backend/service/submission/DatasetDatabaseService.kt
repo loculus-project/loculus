@@ -1,0 +1,393 @@
+package org.loculus.backend.service.submission
+
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toLocalDateTime
+import mu.KotlinLogging
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.update
+import org.loculus.backend.api.Author
+import org.loculus.backend.api.Citation
+import org.loculus.backend.api.CitedBy
+import org.loculus.backend.api.Dataset
+import org.loculus.backend.api.DatasetRecord
+import org.loculus.backend.api.ResponseDataset
+import org.loculus.backend.api.SubmittedDatasetRecord
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.sql.Timestamp
+import java.util.UUID
+import javax.sql.DataSource
+
+private val log = KotlinLogging.logger { }
+
+@Service
+@Transactional
+class DatasetDatabaseService(
+    pool: DataSource,
+    private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
+) {
+    init {
+        Database.connect(pool)
+    }
+
+    fun createDataset(
+        username: String,
+        datasetName: String,
+        datasetRecords: List<SubmittedDatasetRecord>,
+        datasetDescription: String?,
+    ): ResponseDataset {
+        log.info { "creating dataset $datasetName, user $username" }
+
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val insertedSet = DatasetsTable
+            .insert {
+                it[name] = datasetName
+                it[description] = datasetDescription ?: ""
+                it[datasetVersion] = 1
+                it[createdAt] = now
+                it[createdBy] = username
+            }
+
+        for (record in datasetRecords) {
+            val insertedRecord = DatasetRecordsTable
+                .insert {
+                    it[accession] = record.accession
+                    it[type] = record.type
+                }
+            DatasetToRecordsTable
+                .insert {
+                    it[datasetRecordId] = insertedRecord[DatasetRecordsTable.datasetRecordId]
+                    it[datasetId] = insertedSet[DatasetsTable.datasetId]
+                    it[datasetVersion] = 1
+                }
+        }
+
+        return ResponseDataset(
+            insertedSet[DatasetsTable.datasetId].toString(),
+            insertedSet[DatasetsTable.datasetVersion],
+        )
+    }
+
+    fun updateDataset(
+        username: String,
+        datasetId: String,
+        datasetName: String,
+        datasetRecords: List<SubmittedDatasetRecord>,
+        datasetDescription: String?,
+    ): ResponseDataset {
+        log.info { "updating dataset $datasetName, user $username" }
+
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val maxVersion = DatasetsTable
+            .slice(DatasetsTable.datasetVersion.max())
+            .select { DatasetsTable.datasetId eq UUID.fromString(datasetId) }
+            .firstOrNull()
+            ?.get(DatasetsTable.datasetVersion.max())
+
+        if (maxVersion == null) {
+            throw IllegalArgumentException("Dataset set $datasetId does not exist")
+        }
+
+        val version = maxVersion + 1
+
+        val insertedSet = DatasetsTable
+            .insert {
+                it[name] = datasetName
+                it[description] = datasetDescription ?: ""
+                it[datasetVersion] = version
+                it[createdAt] = now
+                it[createdBy] = username
+            }
+
+        for (record in datasetRecords) {
+            val existingRecord = DatasetRecordsTable
+                .select { DatasetRecordsTable.accession eq record.accession }
+                .singleOrNull()
+
+            var datasetRecordId: Long
+
+            if (existingRecord == null) {
+                val insertedRecord = DatasetRecordsTable
+                    .insert {
+                        it[accession] = record.accession
+                        it[type] = record.type
+                    }
+                datasetRecordId = insertedRecord[DatasetRecordsTable.datasetRecordId]
+            } else {
+                datasetRecordId = existingRecord[DatasetRecordsTable.datasetRecordId]
+            }
+
+            DatasetToRecordsTable
+                .insert {
+                    it[DatasetToRecordsTable.datasetVersion] = version
+                    it[DatasetToRecordsTable.datasetId] = insertedSet[DatasetsTable.datasetId]
+                    it[DatasetToRecordsTable.datasetRecordId] = datasetRecordId
+                }
+        }
+
+        return ResponseDataset(
+            insertedSet[DatasetsTable.datasetId].toString(),
+            insertedSet[DatasetsTable.datasetVersion],
+        )
+    }
+
+    fun getDataset(datasetId: String, version: Long?): List<Dataset> {
+        log.info { "Get dataset $datasetId, version $version" }
+
+        var datasetList = mutableListOf<Dataset>()
+
+        if (version == null) {
+            var selectedDatasets = DatasetsTable
+                .select {
+                    DatasetsTable.datasetId eq UUID.fromString(datasetId)
+                }
+            selectedDatasets.forEach {
+                datasetList.add(
+                    Dataset(
+                        it[DatasetsTable.datasetId],
+                        it[DatasetsTable.datasetVersion],
+                        it[DatasetsTable.name],
+                        it[DatasetsTable.description],
+                        Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                        it[DatasetsTable.createdBy],
+                    ),
+                )
+            }
+        } else {
+            var selectedDataset = DatasetsTable
+                .select {
+                    (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
+                        (DatasetsTable.datasetVersion eq version)
+                }.singleOrNull()
+
+            if (selectedDataset == null) {
+                throw IllegalArgumentException("Dataset set $datasetId does not exist")
+            }
+
+            datasetList.add(
+                Dataset(
+                    selectedDataset[DatasetsTable.datasetId],
+                    selectedDataset[DatasetsTable.datasetVersion],
+                    selectedDataset[DatasetsTable.name],
+                    selectedDataset[DatasetsTable.description],
+                    Timestamp.valueOf(selectedDataset[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                    selectedDataset[DatasetsTable.createdBy],
+                ),
+            )
+        }
+        return datasetList
+    }
+
+    fun getDatasetRecords(datasetId: String, version: Long?): List<DatasetRecord> {
+        log.info { "Get dataset records $datasetId, version $version" }
+
+        var selectedVersion = version
+
+        if (selectedVersion == null) {
+            selectedVersion = DatasetsTable
+                .slice(DatasetsTable.datasetVersion.max())
+                .select { DatasetsTable.datasetId eq UUID.fromString(datasetId) }
+                .singleOrNull()?.get(DatasetsTable.datasetVersion)
+        }
+        if (selectedVersion == null) {
+            throw IllegalArgumentException("Dataset set $datasetId does not exist")
+        }
+
+        // TODO: join with sequenceEntries without needing organism
+        var selectedDatasetRecords = DatasetToRecordsTable
+            .innerJoin(DatasetRecordsTable)
+            .select {
+                (DatasetToRecordsTable.datasetId eq UUID.fromString(datasetId)) and
+                    (DatasetToRecordsTable.datasetVersion eq selectedVersion)
+            }
+            .map {
+                DatasetRecord(
+                    it[DatasetRecordsTable.datasetRecordId],
+                    it[DatasetRecordsTable.accession],
+                    it[DatasetRecordsTable.type],
+                )
+            }
+
+        return selectedDatasetRecords
+    }
+
+    fun getDatasets(username: String): List<Dataset> {
+        var datasetList = mutableListOf<Dataset>()
+        var selectedDatasets = DatasetsTable
+            .select { DatasetsTable.createdBy eq username }
+
+        selectedDatasets.forEach {
+            datasetList.add(
+                Dataset(
+                    it[DatasetsTable.datasetId],
+                    it[DatasetsTable.datasetVersion],
+                    it[DatasetsTable.name],
+                    it[DatasetsTable.description],
+                    Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                    it[DatasetsTable.createdBy],
+                ),
+            )
+        }
+        return datasetList
+    }
+
+    fun deleteDataset(username: String, _datasetId: String, _version: Long) {
+        DatasetsTable.deleteWhere {
+            (datasetId eq UUID.fromString(_datasetId)) and
+                (datasetVersion eq _version) and
+                (createdBy eq username)
+        }
+    }
+
+    fun createCitation(_data: String, _type: String): Long {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val insert = CitationsTable
+            .insert {
+                it[data] = _data
+                it[type] = _type
+                it[createdAt] = now
+                it[createdBy] = "nobody"
+                it[updatedAt] = now
+                it[updatedBy] = "nobody"
+            }
+
+        return insert[CitationsTable.citationId]
+    }
+
+    fun getCitation(citationId: Long): List<Citation> {
+        var citationList = mutableListOf<Citation>()
+        var selectedCitations = CitationsTable
+            .select(
+                where = { CitationsTable.citationId eq citationId },
+            )
+        var selectedCitation = selectedCitations.single()
+        citationList.add(
+            Citation(
+                selectedCitation[CitationsTable.citationId],
+                selectedCitation[CitationsTable.data],
+                selectedCitation[CitationsTable.type],
+                Timestamp.valueOf(selectedCitation[CitationsTable.createdAt].toJavaLocalDateTime()),
+                selectedCitation[CitationsTable.createdBy],
+                Timestamp.valueOf(selectedCitation[CitationsTable.updatedAt].toJavaLocalDateTime()),
+                selectedCitation[CitationsTable.updatedBy],
+            ),
+        )
+        return citationList
+    }
+
+    fun getUserCitations(username: String): List<Citation> {
+        var citationList = mutableListOf<Citation>()
+        var selectedCitations = CitationsTable
+            .select(
+                where = { CitationsTable.createdBy eq username },
+            )
+        selectedCitations.forEach {
+            citationList.add(
+                Citation(
+                    it[CitationsTable.citationId],
+                    it[CitationsTable.data],
+                    it[CitationsTable.type],
+                    Timestamp.valueOf(it[CitationsTable.createdAt].toJavaLocalDateTime()),
+                    it[CitationsTable.createdBy],
+                    Timestamp.valueOf(it[CitationsTable.updatedAt].toJavaLocalDateTime()),
+                    it[CitationsTable.updatedBy],
+                ),
+            )
+        }
+        return citationList
+    }
+
+    fun getUserCitedBy(username: String): CitedBy {
+        var citedBy = CitedBy()
+        // TODO: sequenceEntriesTableProvider requires organism, should allow querying entire table directly
+        return citedBy
+    }
+
+    fun updateCitation(citationId: Long, _data: String, _type: String) {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        CitationsTable
+            .update(
+                where = { CitationsTable.citationId eq citationId },
+            ) {
+                it[data] = _data
+                it[type] = _type
+                it[updatedAt] = now
+                it[updatedBy] = "nobody"
+            }
+    }
+
+    fun deleteCitation(_citationId: Long) {
+        CitationsTable.deleteWhere { citationId eq _citationId }
+    }
+
+    fun createAuthor(_affiliation: String, _email: String, _name: String): Long {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val insert = AuthorsTable
+            .insert {
+                it[affiliation] = _affiliation
+                it[email] = _email
+                it[name] = _name
+                it[createdAt] = now
+                it[createdBy] = "nobody"
+                it[updatedAt] = now
+                it[updatedBy] = "nobody"
+            }
+
+        return insert[AuthorsTable.authorId]
+    }
+
+    fun getAuthor(authorId: Long): List<Author> {
+        var authorList = mutableListOf<Author>()
+        var selectedAuthors = AuthorsTable
+            .select(
+                where = { AuthorsTable.authorId eq authorId },
+            )
+        var selectedAuthor = selectedAuthors.single()
+        authorList.add(
+            Author(
+                selectedAuthor[AuthorsTable.authorId],
+                selectedAuthor[AuthorsTable.affiliation],
+                selectedAuthor[AuthorsTable.email],
+                selectedAuthor[AuthorsTable.name],
+                Timestamp.valueOf(selectedAuthor[AuthorsTable.createdAt].toJavaLocalDateTime()),
+                selectedAuthor[AuthorsTable.createdBy],
+                Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
+                selectedAuthor[AuthorsTable.updatedBy],
+            ),
+        )
+        return authorList
+    }
+
+    fun updateAuthor(authorId: Long, _affiliation: String, _email: String, _name: String) {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        AuthorsTable
+            .update(
+                where = { AuthorsTable.authorId eq authorId },
+            ) {
+                it[affiliation] = _affiliation
+                it[email] = _email
+                it[name] = _name
+                it[updatedAt] = now
+                it[updatedBy] = "nobody"
+            }
+    }
+
+    fun deleteAuthor(_authorId: Long) {
+        AuthorsTable.deleteWhere { authorId eq _authorId }
+    }
+}

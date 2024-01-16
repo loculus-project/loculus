@@ -34,10 +34,10 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
-    const { mutate: deleteDataset } = useDeleteDataset(clientConfig, accessToken, openErrorFeedback);
+    const { mutate: deleteDataset } = useDeleteDataset(clientConfig, accessToken, dataset.datasetId, dataset.datasetVersion, openErrorFeedback);
 
     const handleDeleteDataset = async () => {
-        await deleteDataset(dataset.datasetId);
+        await deleteDataset();
     };
 
     return (
@@ -115,7 +115,7 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
                     isVisible={deleteDialogVisible}
                     setVisible={setDeleteDialogVisible}
                     title='Delete Dataset'
-                    description='Are you sure you want to delete this dataset?'
+                    description='Are you sure you want to delete this dataset version?'
                     onAccept={handleDeleteDataset}
                 />
             </>
@@ -123,13 +123,13 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
     );
 };
 
-function useDeleteDataset(clientConfig: ClientConfig, accessToken: string, onError: (message: string) => void) {
+function useDeleteDataset(clientConfig: ClientConfig, accessToken: string, datasetId: string, datasetVersion: string, onError: (message: string) => void) {
     return backendClientHooks(clientConfig).useDeleteDataset(
-        { headers: createAuthorizationHeader(accessToken) },
+        { headers: createAuthorizationHeader(accessToken), params: { datasetId, datasetVersion }},
         {
             onSuccess: async (response) => {
                 await logger.info(`Successfully deleted dataset with datasetId: ${response.datasetId}`);
-                return response;
+                window.location.href = '/datasets'
             },
             onError: async (error) => {
                 const message = `Failed to delete dataset with error: '${JSON.stringify(error)})}'`;

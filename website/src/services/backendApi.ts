@@ -12,10 +12,13 @@ import {
     submitFiles,
     unprocessedData,
     uploadFiles,
+} from '../types/backend.ts';
+import {
     datasets,
     datasetRecords,
-    accessionCitations,
-} from '../types/backend.ts';
+    citedByResult,
+} from '../types/datasets.ts';
+
 
 const submitEndpoint = makeEndpoint({
     method: 'post',
@@ -236,12 +239,12 @@ const getDatasetsOfUserEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-const getCitationsOfUserEndpoint = makeEndpoint({
+const getUserCitedByEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-citations-of-user?username=:userId',
-    alias: 'getCitationsOfUser',
+    path: '/get-user-cited-by?username=:userId',
+    alias: 'getUserCitedBy',
     parameters: [authorizationHeader],
-    response: accessionCitations,
+    response: citedByResult,
     errors: [notAuthorizedError],
 });
 
@@ -329,7 +332,10 @@ const deleteDatasetEndpoint = makeEndpoint({
     path: '/delete-dataset?datasetId=:datasetId&version=:datasetVersion',
     alias: 'deleteDataset',
     parameters: [authorizationHeader],
-    response: z.never(),
+    response: z.object({
+        datasetId: z.string(),
+        datasetVersion: z.number(),
+    }),
     errors: [notAuthorizedError],
 });
 
@@ -348,7 +354,7 @@ export const backendApi = makeApi([
     createGroupEndpoint,
     addUserToGroupEndpoint,
     getDatasetsOfUserEndpoint,
-    getCitationsOfUserEndpoint,
+    getUserCitedByEndpoint,
     getDatasetEndpoint,
     getDatasetRecordsEndpoint,
     createDatasetEndpoint,

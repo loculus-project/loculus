@@ -29,22 +29,61 @@ class DatasetControllerTest(@Autowired val mockMvc: MockMvc, @Autowired val obje
         )
     }
 
-    private fun queryCreateAuthor(): Boolean { return true }
-    private fun queryGetAuthor(): Boolean { return true }
-    private fun queryUpdateAuthor(): Boolean { return true }
-    private fun queryDeleteAuthor(): Boolean { return true }
-    private fun queryGetAuthorCount(): Boolean { return true }
+    private fun queryCreateAuthor(): Boolean {
+        return true
+    }
 
-    private fun queryCreateDataset(): Boolean { return true }
-    private fun queryGetDataset(): Boolean { return true }
-    private fun queryUpdateDataset(): Boolean { return true }
-    private fun queryDeleteDataset(): Boolean { return true }
-    private fun queryGetDatasetCount(): Boolean { return true }
+    private fun queryGetAuthor(): Boolean {
+        return true
+    }
 
-    private fun queryCreateCitation(): Boolean { return true }
-    private fun queryGetCitation(): Boolean { return true }
-    private fun queryUpdateCitation(): Boolean { return true }
-    private fun queryDeleteCitation(): Boolean { return true }
+    private fun queryUpdateAuthor(): Boolean {
+        return true
+    }
+
+    private fun queryDeleteAuthor(): Boolean {
+        return true
+    }
+
+    private fun queryGetAuthorCount(): Boolean {
+        return true
+    }
+
+    private fun queryCreateDataset(): Boolean {
+        return true
+    }
+
+    private fun queryGetDataset(): Boolean {
+        return true
+    }
+
+    private fun queryUpdateDataset(): Boolean {
+        return true
+    }
+
+    private fun queryDeleteDataset(): Boolean {
+        return true
+    }
+
+    private fun queryGetDatasetCount(): Boolean {
+        return true
+    }
+
+    private fun queryCreateCitation(): Boolean {
+        return true
+    }
+
+    private fun queryGetCitation(): Boolean {
+        return true
+    }
+
+    private fun queryUpdateCitation(): Boolean {
+        return true
+    }
+
+    private fun queryDeleteCitation(): Boolean {
+        return true
+    }
 
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")

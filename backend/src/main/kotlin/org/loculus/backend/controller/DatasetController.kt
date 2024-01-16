@@ -3,13 +3,15 @@ package org.loculus.backend.controller
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import org.loculus.backend.service.submission.Author
-import org.loculus.backend.service.submission.Citation
-import org.loculus.backend.service.submission.DatabaseService
-import org.loculus.backend.service.submission.Dataset
-import org.loculus.backend.service.submission.DatasetRecord
-import org.loculus.backend.service.submission.ResponseDataset
-import org.loculus.backend.service.submission.SubmittedDataset
+import org.loculus.backend.api.Author
+import org.loculus.backend.api.Citation
+import org.loculus.backend.api.CitedBy
+import org.loculus.backend.api.Dataset
+import org.loculus.backend.api.DatasetRecord
+import org.loculus.backend.api.ResponseDataset
+import org.loculus.backend.api.SubmittedDataset
+import org.loculus.backend.api.SubmittedDatasetUpdate
+import org.loculus.backend.service.submission.DatasetDatabaseService
 import org.springframework.http.MediaType
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -24,51 +26,36 @@ import org.springframework.web.bind.annotation.RestController
 @Validated
 @SecurityRequirement(name = "bearerAuth")
 class DatasetController(
-    private val databaseService: DatabaseService,
+    private val databaseService: DatasetDatabaseService,
     private val objectMapper: ObjectMapper,
 ) {
     @Operation(description = "Create a new dataset with the specified data")
     @PostMapping("/create-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun createDataset(
-        @UsernameFromJwt username: String,
-        @RequestBody body: SubmittedDataset,
-    ): ResponseDataset {
+    fun createDataset(@UsernameFromJwt username: String, @RequestBody body: SubmittedDataset): ResponseDataset {
         return databaseService.createDataset(username, body.name, body.records, body.description)
     }
 
     @Operation(description = "Update a dataset with the specified data")
     @PutMapping("/update-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun updateDataset(
-        @UsernameFromJwt username: String,
-        @RequestParam datasetId: String,
-        @RequestBody body: SubmittedDataset,
-    ): ResponseDataset {
-        return databaseService.updateDataset(username, datasetId, body.name, body.records, body.description)
+    fun updateDataset(@UsernameFromJwt username: String, @RequestBody body: SubmittedDatasetUpdate): ResponseDataset {
+        return databaseService.updateDataset(username, body.datasetId, body.name, body.records, body.description)
     }
 
     @Operation(description = "Get a dataset")
     @GetMapping("/get-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getDataset(
-        @RequestParam datasetId: String,
-        @RequestParam version: Long?,
-    ): List<Dataset> {
+    fun getDataset(@RequestParam datasetId: String, @RequestParam version: Long?): List<Dataset> {
         return databaseService.getDataset(datasetId, version)
     }
 
     @Operation(description = "Get records for a dataset")
     @GetMapping("/get-dataset-records", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getDatasetRecords(
-        @RequestParam datasetId: String,
-        @RequestParam version: Long?,
-    ): List<DatasetRecord> {
+    fun getDatasetRecords(@RequestParam datasetId: String, @RequestParam version: Long?): List<DatasetRecord> {
         return databaseService.getDatasetRecords(datasetId, version)
     }
 
     @Operation(description = "Get a list of datasets created by a user")
     @GetMapping("/get-datasets-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getDatasets(
-        @UsernameFromJwt username: String,
-    ): List<Dataset> {
+    fun getDatasets(@UsernameFromJwt username: String): List<Dataset> {
         return databaseService.getDatasets(username)
     }
 
@@ -84,36 +71,37 @@ class DatasetController(
 
     @Operation(description = "Create a new citation with the specified data")
     @PostMapping("/create-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun createCitation(
-        @RequestParam data: String,
-        @RequestParam type: String,
-    ): Long {
+    fun createCitation(@RequestParam data: String, @RequestParam type: String): Long {
         return databaseService.createCitation(data, type)
     }
 
     @Operation(description = "Get a citation")
     @GetMapping("/get-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getCitation(
-        @RequestParam citationId: Long,
-    ): List<Citation> {
+    fun getCitation(@RequestParam citationId: Long): List<Citation> {
         return databaseService.getCitation(citationId)
+    }
+
+    @Operation(description = "Get citations created by user")
+    @GetMapping("/get-citations-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getUserCitations(@RequestParam username: String): List<Citation> {
+        return databaseService.getUserCitations(username)
+    }
+
+    @Operation(description = "Get citations associated to a user's sequences")
+    @GetMapping("/get-user-cited-by", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getUserCitedBy(@RequestParam username: String): CitedBy {
+        return databaseService.getUserCitedBy(username)
     }
 
     @Operation(description = "Update a citation with the specified data")
     @PutMapping("/update-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun updateCitation(
-        @RequestParam citationId: Long,
-        @RequestParam date: String,
-        @RequestParam type: String,
-    ) {
+    fun updateCitation(@RequestParam citationId: Long, @RequestParam date: String, @RequestParam type: String) {
         return databaseService.updateCitation(citationId, date, type)
     }
 
     @Operation(description = "Delete a citation")
     @DeleteMapping("/delete-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun deleteCitation(
-        @RequestParam citationId: Long,
-    ) {
+    fun deleteCitation(@RequestParam citationId: Long) {
         return databaseService.deleteCitation(citationId)
     }
 
@@ -129,9 +117,7 @@ class DatasetController(
 
     @Operation(description = "Get an author")
     @GetMapping("/get-author", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAuthor(
-        @RequestParam authorId: Long,
-    ): List<Author> {
+    fun getAuthor(@RequestParam authorId: Long): List<Author> {
         return databaseService.getAuthor(authorId)
     }
 
@@ -148,9 +134,7 @@ class DatasetController(
 
     @Operation(description = "Delete an author")
     @DeleteMapping("/delete-author", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun deleteAuthor(
-        @RequestParam authorId: Long,
-    ) {
+    fun deleteAuthor(@RequestParam authorId: Long) {
         return databaseService.deleteAuthor(authorId)
     }
 }

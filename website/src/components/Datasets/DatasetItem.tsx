@@ -70,7 +70,7 @@ export const DatasetItem: FC<DatasetItemProps> = ({ dataset, datasetRecords }) =
             return 'N/A';
         }
         const dateObj = new Date(date);
-        return dateObj.toLocaleDateString();
+        return dateObj.toLocaleDateString('en-US');
     };
 
     return (

@@ -28,7 +28,7 @@ const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
 
 const username = Astro.locals.session.user!.name;
 
-const userCitationsResponse = await BackendClient.create().astroFileTypeHelpers.getCitationsOfUser(
+const userCitedByResponse = await BackendClient.create().astroFileTypeHelpers.getUserCitedBy(
     accessToken,
     username,
 );
@@ -42,10 +42,13 @@ const userCitationsResponse = await BackendClient.create().astroFileTypeHelpers.
                 {
                     session.user?.name !== undefined && (
                         <div class='self-start my-4'>
-                            <AvatarBadge username={session.user?.name} client:only='react' />
+                            <AvatarBadge displayName={session.user?.name} client:load />
                         </div>
                     )
                 }
+                <div class='my-2 mx-4'>
+                    <a href={keycloakLogoutUrl}>Logout</a>
+                </div>
                 {
                     organism !== undefined && (
                         <div class='my-2 mx-4'>
@@ -55,9 +58,6 @@ const userCitationsResponse = await BackendClient.create().astroFileTypeHelpers.
                 }
                 <div class='my-2 mx-4'>
                     <a href={routes.datasetsPage()}>Datasets Overview</a>
-                </div>
-                <div class='my-2 mx-4'>
-                    <a href={keycloakLogoutUrl}>Logout</a>
                 </div>
                 {
                     session.user?.username !== undefined && (
@@ -72,15 +72,13 @@ const userCitationsResponse = await BackendClient.create().astroFileTypeHelpers.
             </div>
             <div class='w-1/4 flex flex-col justify-start'>
                 {
-                    userCitationsResponse.match(
-                        (citationData) => <CitationPlot citationData={citationData} />,
+                    userCitedByResponse.match(
+                        (citationData) => <CitationPlot citationData={citationData} client:load />,
                         (error) => (
-                            <div>
                                 <ErrorFeedback
                                     message={'Error while fetching user sequences: ' + JSON.stringify(error)}
                                     client:only='react'
                                 />
-                            </div>
                         ),
                     )
                 }

@@ -19,8 +19,8 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
                 headers: createAuthorizationHeader(token),
             }),
 
-        getCitationsOfUser: (token: string, username?: string) =>
-            this.call('getCitationsOfUser', {
+        getUserCitedBy: (token: string, username?: string) =>
+            this.call('getUserCitedBy', {
                 params: { username },
                 headers: createAuthorizationHeader(token),
             }),

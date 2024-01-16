@@ -1,6 +1,4 @@
-/**
- * Types for datasets and citations.
- **/
+import z from 'zod';
 
 export enum AccessionType {
     loculus = 'Loculus',
@@ -9,28 +7,39 @@ export enum AccessionType {
     gisaid = 'GISAID',
 }
 
-export type DatasetRecord = {
-    accession?: string;
-    type?: AccessionType[keyof AccessionType];
-};
+export const datasetRecord = z.object({
+    accession: z.string().optional(),
+    type: z.nativeEnum(AccessionType).optional(),
+});
+export type DatasetRecord = z.infer<typeof datasetRecord>;
+export const datasetRecords = z.array(datasetRecord);
 
-export type Dataset = {
-    datasetId: string;
-    datasetDOI?: string;
-    datasetVersion: string;
-    name: string;
-    description?: string;
-    createdAt: string;
-    createdBy: string;
-    records?: DatasetRecord[];
-};
+export const dataset = z.object({
+    datasetId: z.string(),
+    datasetDOI: z.string().optional(),
+    datasetVersion: z.number(),
+    name: z.string(),
+    description: z.string().optional(),
+    createdAt: z.string(),
+    createdBy: z.string(),
+    records: z
+        .array(datasetRecord)
+        .optional(),
+});
+export const datasets = z.array(dataset);
+export type Dataset = z.infer<typeof dataset>;
 
-export type AccessionCitation = {
-    datasetId: string;
-    date: string;
-};
+export const datasetCitation = z.object({
+    citationId: z.string(),
+    datasetId: z.string(),
+    createdAt: z.string(),
+    createdBy: z.string(),
+});
+export type DatasetCitation = z.infer<typeof datasetCitation>;
+export const datasetCitations = z.array(datasetCitation);
 
-export type DatasetCitationResults = {
-    years: string[];
-    citations: number[];
-};
+export const citedByResult = z.object({
+    years: z.array(z.string()),
+    citations: z.array(z.string()),
+});
+export type CitedByResult = z.infer<typeof citedByResult>;

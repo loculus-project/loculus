@@ -19,7 +19,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type SequenceTableProps = {

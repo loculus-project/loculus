@@ -112,50 +112,9 @@ export const problemDetail = z.object({
 });
 export type ProblemDetail = z.infer<typeof problemDetail>;
 
-export const dataset = z.object({
-    datasetId: z.string(),
-    datasetDOI: z.string().optional(),
-    datasetVersion: z.number(),
-    name: z.string(),
-    description: z.string().optional(),
-    createdAt: z.string(),
-    createdBy: z.string(),
-    records: z
-        .array(
-            z.object({
-                accession: z.string().optional(),
-                type: z.string().optional(),
-            }),
-        )
-        .optional(),
-});
-export const datasets = z.array(dataset);
-export type Dataset = z.infer<typeof dataset>;
-
-export const datasetRecord = z.object({
-    accession: z.string().optional(),
-    type: z.string().optional(),
-});
-export const datasetRecords = z.array(datasetRecord);
-export type DatasetRecord = z.infer<typeof datasetRecord>;
-
-export const accessionCitation = z.object({
-    datasetId: z.string(),
-    date: z.string(),
-});
-export const accessionCitations = z.array(accessionCitation);
-export type AccessionCitation = z.infer<typeof accessionCitation>;
-
-export const datasetCitationResult = z.object({
-    years: z.array(z.string()),
-    citations: z.array(z.number()),
-});
-export const datasetCitationResults = z.array(datasetCitationResult);
-export type DatasetCitationResult = z.infer<typeof datasetCitationResult>;
 export const group = z.object({
     groupName: z.string(),
 });
-
 export type Group = z.infer<typeof group>;
 
 export const groupDetails = z.object({

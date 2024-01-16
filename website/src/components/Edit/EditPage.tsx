@@ -12,7 +12,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback.tsx';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {

@@ -168,7 +168,7 @@ export const DatasetList = (props: DatasetListProps) => {
 
     const formatDate = (date: string) => {
         const dateObj = new Date(date);
-        return dateObj.toLocaleDateString();
+        return dateObj.toLocaleDateString('en-US');
     };
 
     return (

@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { ErrorFeedback } from '../../../components/ErrorFeedback';
+import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { DatasetList } from '../../components/Datasets/DatasetList';
 import { DatasetListActions } from '../../components/Datasets/DatasetListActions';
 import { getRuntimeConfig } from '../../config';
@@ -33,7 +33,7 @@ const datasetsResponse = await BackendClient.create().astroFileTypeHelpers.getDa
                     (error) => 
                         <ErrorFeedback
                             message={'Error while fetching datasets: ' + JSON.stringify(error)}
-                            client:only='react'
+                            client:load
                         />
                     )
             }
