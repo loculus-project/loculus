@@ -11,6 +11,8 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
@@ -67,6 +69,14 @@ class SubmissionController(
         @Parameter(description = GROUP_DESCRIPTION) @RequestParam groupName: String,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
+        @Parameter(description = "Data Use terms under which data is released.")
+        @RequestParam
+        dataUseTermsType: DataUseTermsType,
+        @Parameter(
+            description = "Mandatory when data use terms are set to 'RESTRICTED'." +
+                " It is the date when the sequence entries will become 'OPEN'." +
+                " Format: YYYY-MM-DD",
+        ) @RequestParam restrictedUntil: String?,
     ): List<SubmissionIdMapping> {
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
@@ -74,6 +84,7 @@ class SubmissionController(
             metadataFile,
             sequenceFile,
             groupName,
+            DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil),
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }

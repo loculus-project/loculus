@@ -2,6 +2,7 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
@@ -29,12 +30,16 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         sequencesFile: MockMultipartFile,
         organism: String = DEFAULT_ORGANISM,
         groupName: String = DEFAULT_GROUP_NAME,
+        dataUseTermType: DataUseTermsType = DataUseTermsType.OPEN,
+        restrictedUntil: String? = null,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/submit", organism = organism))
             .file(sequencesFile)
             .file(metadataFile)
             .param("groupName", groupName)
+            .param("dataUseTermsType", dataUseTermType.name)
+            .param("restrictedUntil", restrictedUntil)
             .withAuth(jwt),
     )
 

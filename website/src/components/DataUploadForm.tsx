@@ -1,16 +1,25 @@
 import { CircularProgress, TextField } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
+import { type DateTime } from 'luxon';
 import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
 
-import { withQueryProvider } from './common/withQueryProvider.tsx';
+import { withLocalizationProvider, withQueryProvider } from './common/withProvider.tsx';
 import { getClientLogger } from '../clientLogger.ts';
 import { useGroupManagementClient } from '../hooks/useGroupOperations.ts';
 import { routes } from '../routes.ts';
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
-import type { SubmissionIdMapping } from '../types/backend.ts';
+import {
+    type DataUseTermsType,
+    dataUseTermsTypes,
+    openDataUseTermsType,
+    restrictedDataUseTermsType,
+    type SubmissionIdMapping,
+} from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
+import { dateTimeInMonths } from '../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
@@ -54,6 +63,8 @@ const InnerDataUploadForm = ({
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [selectedGroup, setSelectedGroup] = useState<string | undefined>(undefined);
+    const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
+    const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData();
@@ -86,7 +97,14 @@ const InnerDataUploadForm = ({
                     onError('Please select a group');
                     return;
                 }
-                submit({ metadataFile, sequenceFile, groupName });
+                submit({
+                    metadataFile,
+                    sequenceFile,
+                    groupName,
+                    dataUseTermsType,
+                    restrictedUntil:
+                        dataUseTermsType === restrictedDataUseTermsType ? restrictedUntil.toFormat('yyyy-MM-dd') : null,
+                });
                 break;
             case 'revise':
                 revise({ metadataFile, sequenceFile });
@@ -153,6 +171,44 @@ const InnerDataUploadForm = ({
                 }}
             />
 
+            {action === 'submit' && (
+                <>
+                    <div className='flex flex-col gap-3 w-fit'>
+                        <span className='text-gray-700'>Data Use Terms</span>
+                        <select
+                            id='dataUseTermsDropdown'
+                            name='dataUseTermsDropdown'
+                            value={dataUseTermsType}
+                            onChange={(event) => setDataUseTermsType(event.target.value as DataUseTermsType)}
+                            disabled={false}
+                            className='p-2 border rounded-md'
+                        >
+                            {dataUseTermsTypes.map((dataUseTerm) => (
+                                <option key={dataUseTerm} value={dataUseTerm}>
+                                    {dataUseTerm}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <DatePicker
+                        format='yyyy-MM-dd'
+                        disabled={isLoading || dataUseTermsType !== 'RESTRICTED'}
+                        value={restrictedUntil}
+                        label='Restricted Until'
+                        minDate={dateTimeInMonths(0)}
+                        maxDate={dateTimeInMonths(12)}
+                        slotProps={{
+                            textField: {
+                                size: 'small',
+                                margin: 'dense',
+                            },
+                        }}
+                        onChange={(date: DateTime | null) => (date !== null ? setRestrictedUntil(date) : null)}
+                    />
+                </>
+            )}
+
             <div className='flex gap-4'>
                 <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
                     Load Example Data
@@ -170,7 +226,7 @@ const InnerDataUploadForm = ({
     );
 };
 
-export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
+export const DataUploadForm = withQueryProvider(withLocalizationProvider(InnerDataUploadForm));
 
 function useSubmitFiles(
     accessToken: string,
@@ -202,7 +258,7 @@ function handleError(onError: (message: string) => void, action: Action) {
         if (isErrorFromAlias(backendApi, action, error)) {
             switch (error.response.status) {
                 case 400:
-                    onError('The submitted files were invalid: ' + error.response.data.detail);
+                    onError('Failed to submit sequence entries: ' + error.response.data.detail);
                     return;
                 case 422:
                     onError('The submitted file content was invalid: ' + error.response.data.detail);

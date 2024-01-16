@@ -7,6 +7,7 @@ import mu.KotlinLogging
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.controller.BadRequestException
@@ -46,6 +47,7 @@ interface SubmissionParams {
         override val metadataFile: MultipartFile,
         override val sequenceFile: MultipartFile,
         val groupName: String,
+        val dataUseTerms: DataUseTerms,
     ) : SubmissionParams {
         override val uploadType: UploadType = UploadType.ORIGINAL
     }
@@ -116,7 +118,7 @@ class SubmitModel(
             }
 
             log.debug { "Persisting submission with uploadId $uploadId" }
-            uploadDatabaseService.mapAndCopy(uploadId, submissionParams.uploadType)
+            uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
         } finally {
             uploadDatabaseService.deleteUploadData(uploadId)
         }

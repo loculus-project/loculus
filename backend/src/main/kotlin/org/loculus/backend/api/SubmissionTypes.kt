@@ -27,6 +27,7 @@ data class SubmissionIdMapping(
     override val accession: Accession,
     override val version: Version,
     val submissionId: String,
+    val dataUseTerms: DataUseTerms? = null,
 ) : AccessionVersionInterface
 
 fun <T : AccessionVersionInterface> List<T>.toPairs() = map { Pair(it.accession, it.version) }
@@ -147,12 +148,6 @@ data class SequenceEntryStatus(
     val status: Status,
     val isRevocation: Boolean = false,
 ) : AccessionVersionInterface
-
-data class RevisedData(
-    val submissionId: String,
-    val accession: Accession,
-    val originalData: OriginalData,
-)
 
 data class UnprocessedData(
     @Schema(example = "123") override val accession: Accession,
