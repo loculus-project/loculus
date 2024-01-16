@@ -56,11 +56,12 @@ create table user_groups_table (
      foreign key (group_name) references groups_table(group_name)
 );
 
-create table licenses_table (
+create table data_use_terms_table (
     accession text not null,
     change_date timestamp not null,
-    license_type text not null,
+    data_use_terms_type text not null,
     restricted_until timestamp,
-    submitter text not null,
-    primary key (accession, change_date)
+    user_name text not null
 );
+
+create index on data_use_terms_table (accession);

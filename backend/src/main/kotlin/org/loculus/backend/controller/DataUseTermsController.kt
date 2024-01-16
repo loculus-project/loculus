@@ -3,8 +3,8 @@ package org.loculus.backend.controller
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import org.loculus.backend.service.licenses.License
-import org.loculus.backend.service.licenses.LicensesDatabaseService
+import org.loculus.backend.service.datauseterms.DataUseTerms
+import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.utils.Accession
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -15,21 +15,21 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @SecurityRequirement(name = "bearerAuth")
-class LicensesController(
-    private val licensesDatabaseService: LicensesDatabaseService,
+class DataUseTermsController(
+    private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
 ) {
 
-    @Operation(description = "Set a new license. Until now, just testing purposes")
+    @Operation(description = "Set new data use terms. Until now, just testing purposes")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PutMapping("/licenses", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun createNewGroup(
+    @PutMapping("/data-use-terms", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun setNewDataUseTerms(
         @UsernameFromJwt username: String,
         @Parameter(
-            description = "The accession of the dataset to set the license for",
+            description = "The accession of the dataset to set the data use terms for",
         ) @RequestParam accession: Accession,
-    ) = licensesDatabaseService.setNewLicense(
+    ) = dataUseTermsDatabaseService.setNewDataUseTerms(
         accession,
         username,
-        License(),
+        DataUseTerms(),
     )
 }
