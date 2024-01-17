@@ -13,6 +13,7 @@ import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.UploadDatabaseService
@@ -70,6 +71,7 @@ enum class UploadType {
 class SubmitModel(
     private val uploadDatabaseService: UploadDatabaseService,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
+    private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
 ) {
 
     companion object AcceptedFileTypes {
@@ -130,6 +132,7 @@ class SubmitModel(
                 submissionParams.groupName,
                 submissionParams.username,
             )
+            dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(submissionParams.dataUseTerms)
         }
 
         val metadataTempFileToDelete = MaybeFile()

@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -149,15 +149,13 @@ class SubmitEndpointTest(
         expectedTitle: String,
         expectedMessage: String,
         organism: Organism,
-        dataUseTermType: DataUseTermsType,
-        restrictedUntil: String?,
+        dataUseTerm: DataUseTerms,
     ) {
         submissionControllerClient.submit(
             metadataFile,
             sequencesFile,
             organism = organism.name,
-            dataUseTermType = dataUseTermType,
-            restrictedUntil = restrictedUntil,
+            dataUseTerm = dataUseTerm,
         )
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))
@@ -207,8 +205,7 @@ class SubmitEndpointTest(
                     "Bad Request",
                     "Required part 'metadataFile' is not present.",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "sequences file with wrong submitted filename",
@@ -218,8 +215,7 @@ class SubmitEndpointTest(
                     "Bad Request",
                     "Required part 'sequenceFile' is not present.",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "wrong extension for metadata file",
@@ -233,8 +229,7 @@ class SubmitEndpointTest(
                         ".${metadataFileTypes.getCompressedExtensions()} " +
                         "for compressed submissions",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "wrong extension for sequences file",
@@ -248,8 +243,7 @@ class SubmitEndpointTest(
                         ".${sequenceFileTypes.getCompressedExtensions()} " +
                         "for compressed submissions",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "metadata file where one row has a blank header",
@@ -265,8 +259,7 @@ class SubmitEndpointTest(
                     "Unprocessable Entity",
                     "A row in metadata file contains no submissionId",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "metadata file with no header",
@@ -281,8 +274,7 @@ class SubmitEndpointTest(
                     "Unprocessable Entity",
                     "The metadata file does not contain the header 'submissionId'",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "duplicate headers in metadata file",
@@ -298,8 +290,7 @@ class SubmitEndpointTest(
                     "Unprocessable Entity",
                     "Metadata file contains at least one duplicate submissionId",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "duplicate headers in sequence file",
@@ -316,8 +307,7 @@ class SubmitEndpointTest(
                     "Unprocessable Entity",
                     "Sequence file contains at least one duplicate submissionId",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "metadata file misses headers",
@@ -339,8 +329,7 @@ class SubmitEndpointTest(
                     "Unprocessable Entity",
                     "Sequence file contains 1 submissionIds that are not present in the metadata file: notInMetadata",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "sequence file misses headers",
@@ -361,8 +350,7 @@ class SubmitEndpointTest(
                     "Unprocessable Entity",
                     "Metadata file contains 1 submissionIds that are not present in the sequence file: notInSequences",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "FASTA header misses segment name",
@@ -383,19 +371,7 @@ class SubmitEndpointTest(
                     "The FASTA header commonHeader does not contain the segment name. Please provide the segment " +
                         "name in the format <submissionId>_<segment name>",
                     OTHER_ORGANISM,
-                    DataUseTermsType.OPEN,
-                    null,
-                ),
-                Arguments.of(
-                    "restricted use data without until date",
-                    DefaultFiles.metadataFile,
-                    DefaultFiles.sequencesFile,
-                    status().isBadRequest,
-                    "Bad Request",
-                    "The date 'restrictedUntil' must be set if 'dataUseTermsType' is RESTRICTED.",
-                    DEFAULT_ORGANISM,
-                    DataUseTermsType.RESTRICTED,
-                    null,
+                    DataUseTerms.Open,
                 ),
                 Arguments.of(
                     "restricted use data with until date in the past",
@@ -405,8 +381,8 @@ class SubmitEndpointTest(
                     "Bad Request",
                     "The date 'restrictedUntil' must be in the future, up to a maximum of 1 year from now.",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.RESTRICTED,
-                    now.minus(1, DAY).toString(),
+                    DataUseTerms.Restricted(now.minus(1, DAY)),
+
                 ),
                 Arguments.of(
                     "restricted use data with until date further than 1 year",
@@ -416,8 +392,7 @@ class SubmitEndpointTest(
                     "Bad Request",
                     "The date 'restrictedUntil' must not exceed 1 year from today.",
                     DEFAULT_ORGANISM,
-                    DataUseTermsType.RESTRICTED,
-                    now.plus(2, YEAR).toString(),
+                    DataUseTerms.Restricted(now.plus(2, YEAR)),
                 ),
             )
         }

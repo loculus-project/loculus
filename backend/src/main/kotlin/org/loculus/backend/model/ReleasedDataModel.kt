@@ -6,8 +6,8 @@ import mu.KotlinLogging
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
-import org.loculus.backend.service.submission.DatabaseService
 import org.loculus.backend.service.submission.RawProcessedData
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Service
@@ -16,15 +16,15 @@ import org.springframework.transaction.annotation.Transactional
 private val log = KotlinLogging.logger { }
 
 @Service
-class ReleasedDataModel(private val databaseService: DatabaseService) {
+class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabaseService) {
     @Transactional(readOnly = true)
     fun getReleasedData(organism: Organism): Sequence<ProcessedData> {
         log.info { "fetching released submissions" }
 
-        val latestVersions = databaseService.getLatestVersions(organism)
-        val latestRevocationVersions = databaseService.getLatestRevocationVersions(organism)
+        val latestVersions = submissionDatabaseService.getLatestVersions(organism)
+        val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
-        return databaseService.streamReleasedSubmissions(organism)
+        return submissionDatabaseService.streamReleasedSubmissions(organism)
             .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions) }
     }
 

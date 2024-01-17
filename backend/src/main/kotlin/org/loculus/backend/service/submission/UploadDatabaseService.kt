@@ -44,7 +44,7 @@ private val log = KotlinLogging.logger { }
 class UploadDatabaseService(
     private val parseFastaHeader: ParseFastaHeader,
     private val compressor: CompressionService,
-    private val submissionPreconditionValidator: SubmissionPreconditionValidator,
+    private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
 ) {
 
@@ -140,8 +140,8 @@ class UploadDatabaseService(
 
         val result = if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             dataUseTermsDatabaseService.setNewDataUseTerms(
-                insertionResult.map { it.accession },
                 submissionParams.username,
+                insertionResult.map { it.accession },
                 submissionParams.dataUseTerms,
             )
 
@@ -176,7 +176,7 @@ class UploadDatabaseService(
                 .select { uploadIdColumn eq uploadId }
                 .map { it[accessionColumn]!! }
 
-        val existingAccessionVersions = submissionPreconditionValidator.validateAccessions(
+        val existingAccessionVersions = accessionPreconditionValidator.validateAccessions(
             username,
             accessions,
             listOf(Status.APPROVED_FOR_RELEASE),

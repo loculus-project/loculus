@@ -17,7 +17,7 @@ import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Component
 
 @Component
-class SubmissionPreconditionValidator(
+class AccessionPreconditionValidator(
     private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
 ) {
@@ -71,6 +71,32 @@ class SubmissionPreconditionValidator(
             validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
             validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
             validateOrganism(sequenceEntries, organism, table)
+
+            return sequenceEntries.map {
+                AccessionVersionGroup(
+                    it[table.accessionColumn],
+                    it[table.versionColumn],
+                    it[table.groupNameColumn],
+                )
+            }
+        }
+    }
+
+    fun validateAccessions(submitter: String, accessions: List<Accession>): List<AccessionVersionGroup> {
+        sequenceEntriesTableProvider.get(organism = null).let { table ->
+            val sequenceEntries = table
+                .slice(
+                    table.accessionColumn,
+                    table.versionColumn,
+                    table.submitterColumn,
+                    table.groupNameColumn,
+                )
+                .select(
+                    where = { (table.accessionColumn inList accessions) and table.isMaxVersion },
+                )
+
+            validateAccessionsExist(sequenceEntries, accessions, table)
+            validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
 
             return sequenceEntries.map {
                 AccessionVersionGroup(
@@ -138,11 +164,14 @@ class SubmissionPreconditionValidator(
         table: SequenceEntriesDataTable,
     ) {
         val groupsOfSequenceEntries = sequenceEntries
-            .groupBy({
-                it[table.groupNameColumn]
-            }, {
-                AccessionVersion(it[table.accessionColumn], it[table.versionColumn])
-            })
+            .groupBy(
+                {
+                    it[table.groupNameColumn]
+                },
+                {
+                    AccessionVersion(it[table.accessionColumn], it[table.versionColumn])
+                },
+            )
 
         groupsOfSequenceEntries.forEach { (groupName, accessionList) ->
             try {

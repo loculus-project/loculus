@@ -11,6 +11,10 @@ import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 
+data class Accessions(
+    val accessions: List<Accession>,
+)
+
 interface AccessionVersionInterface {
     val accession: Accession
     val version: Version
