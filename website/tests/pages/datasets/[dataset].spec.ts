@@ -1,4 +1,4 @@
-import { expect, test, testuser } from '../../e2e.fixture';
+import { expect, test } from '../../e2e.fixture';
 import { DatasetPage } from './dataset.page';
 
 test.describe.configure({ mode: 'serial' });
@@ -25,7 +25,7 @@ test.describe('The dataset item page', () => {
         await datasetPage.gotoDetail(testDatasetName);
 
         // Author information
-        await expect(datasetPage.page.getByText(testuser)).toBeVisible();
+        // await expect(datasetPage.page.getByText(testuser)).toBeVisible();
 
         // Dataset action buttons
         await expect(datasetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();

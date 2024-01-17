@@ -13,12 +13,7 @@ import {
     unprocessedData,
     uploadFiles,
 } from '../types/backend.ts';
-import {
-    datasets,
-    datasetRecords,
-    citedByResult,
-} from '../types/datasets.ts';
-
+import { datasets, datasetRecords, citedByResult } from '../types/datasets.ts';
 
 const submitEndpoint = makeEndpoint({
     method: 'post',
@@ -232,7 +227,7 @@ const addUserToGroupEndpoint = makeEndpoint({
 
 const getDatasetsOfUserEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-datasets-of-user?username=:userId',
+    path: '/get-datasets-of-user',
     alias: 'getDatasetsOfUser',
     parameters: [authorizationHeader],
     response: datasets,
@@ -241,7 +236,7 @@ const getDatasetsOfUserEndpoint = makeEndpoint({
 
 const getUserCitedByEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-user-cited-by?username=:userId',
+    path: '/get-user-cited-by?username=:username',
     alias: 'getUserCitedBy',
     parameters: [authorizationHeader],
     response: citedByResult,
@@ -291,7 +286,7 @@ const createDatasetEndpoint = makeEndpoint({
     ],
     response: z.object({
         datasetId: z.string(),
-        datasetVersion: z.number()
+        datasetVersion: z.number(),
     }),
     errors: [notAuthorizedError],
 });
@@ -332,10 +327,7 @@ const deleteDatasetEndpoint = makeEndpoint({
     path: '/delete-dataset?datasetId=:datasetId&version=:datasetVersion',
     alias: 'deleteDataset',
     parameters: [authorizationHeader],
-    response: z.object({
-        datasetId: z.string(),
-        datasetVersion: z.number(),
-    }),
+    response: z.never(),
     errors: [notAuthorizedError],
 });
 

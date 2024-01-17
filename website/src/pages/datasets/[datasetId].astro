@@ -1,18 +1,17 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { ErrorFeedback } from '../../../components/ErrorFeedback';
+import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { DatasetItem } from '../../components/Datasets/DatasetItem';
 import { DatasetItemActions } from '../../components/Datasets/DatasetItemActions';
 import { BackButton } from '../../components/Navigation/BackButton';
 import { AvatarBadge } from '../../components/User/AvatarBadge';
 import { getRuntimeConfig } from '../../config';
-import { getAccessToken } from '../../utils/getAccessToken';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../services/backendClient';
+import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
-const { datasetId } = Astro.params;
-const version = Astro.url.searchParams.get('version')! || '';
+const { datasetId = '', version = '1' } = Astro.params;
 
 const username = Astro.locals.session.user?.username;
 
@@ -37,11 +36,11 @@ const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers
                 (dataset) => (
                     <div class='flex flex-row items-left'>
                         <div class='w-1/4 flex flex-col justify-start items-center'>
-                            <AvatarBadge displayName={dataset.createdBy} />
+                            <AvatarBadge displayName={dataset[0]?.createdBy} />
                         </div>
                         <div class='w-3/4'>
                             {
-                                dataset && dataset.length > 0 ? (
+                                dataset !== undefined && dataset.length > 0 ? (
                                     datasetRecordsResponse.match(
                                         (datasetRecords) => (
                                             <DatasetItemActions
@@ -49,7 +48,7 @@ const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers
                                                 datasetRecords={datasetRecords}
                                                 clientConfig={clientConfig}
                                                 accessToken={accessToken}
-                                                isAdminView={dataset[0]?.createdBy == username}
+                                                isAdminView={dataset[0]?.createdBy === username}
                                                 client:load
                                             />
                                             <DatasetItem

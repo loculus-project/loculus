@@ -19,23 +19,23 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
                 headers: createAuthorizationHeader(token),
             }),
 
-        getUserCitedBy: (token: string, username?: string) =>
+        getUserCitedBy: (token: string, username: string) =>
             this.call('getUserCitedBy', {
                 params: { username },
                 headers: createAuthorizationHeader(token),
             }),
 
-        getDatasetsOfUser: (token: string, username?: string) =>
+        getDatasetsOfUser: (token: string) =>
             this.call('getDatasetsOfUser', {
                 headers: createAuthorizationHeader(token),
             }),
-        
-        getDataset: (token: string, datasetId?: string, version?: string) => 
+
+        getDataset: (token: string, datasetId: string, version: string) =>
             this.call('getDataset', {
                 params: { datasetId, version },
                 headers: createAuthorizationHeader(token),
             }),
-        getDatasetRecords: (token: string, datasetId?: string, version?: string) => 
+        getDatasetRecords: (token: string, datasetId: string, version: string) =>
             this.call('getDatasetRecords', {
                 params: { datasetId, version },
                 headers: createAuthorizationHeader(token),

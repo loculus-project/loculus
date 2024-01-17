@@ -1,6 +1,7 @@
-import { type FC, useState } from 'react';
 import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
+import { type FC, useState } from 'react';
+
 import { type DatasetRecord, type Dataset, AccessionType } from '../../types/datasets';
 import { AlertDialog } from '../common/AlertDialog';
 
@@ -75,70 +76,68 @@ export const DatasetItem: FC<DatasetItemProps> = ({ dataset, datasetRecords }) =
 
     return (
         <div className='flex flex-col items-left'>
-            <>
-                <div>
-                    <h1 className='text-2xl font-semibold pb-8'>{dataset.name}</h1>
+            <div>
+                <h1 className='text-2xl font-semibold pb-8'>{dataset.name}</h1>
+            </div>
+            <hr />
+            <div className='flex flex-col my-4'>
+                <div className='flex flex-row'>
+                    <p className='mr-8 font-medium w-[150px] text-right'>Description: </p>
+                    <p className='text'>{dataset.description ?? 'N/A'}</p>
                 </div>
-                <hr />
-                <div className='flex flex-col my-4'>
-                    <div className='flex flex-row'>
-                        <p className='mr-8 font-medium w-[150px] text-right'>Description: </p>
-                        <p className='text'>{dataset.description ?? 'N/A'}</p>
-                    </div>
-                    <div className='flex flex-row'>
-                        <p className='mr-8 font-medium w-[150px] text-right'>Version: </p>
-                        <p className='text'>{dataset.datasetVersion}</p>
-                    </div>
-                    <div className='flex flex-row'>
-                        <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
-                        <p className='text'>{formatDate(dataset.createdAt)}</p>
-                    </div>
-                    <div className='flex flex-row'>
-                        <p className='mr-8 font-medium w-[150px] text-right'>DOI: </p>
-                        <p className='text'>{dataset.datasetDOI ?? 'N/A'}</p>
-                        {dataset.datasetDOI === undefined ? (
-                            <Link
-                                className='mr-4'
-                                component='button'
-                                underline='none'
-                                onClick={() => setDoiDialogVisible(true)}
-                            >
-                                (Generate a DOI)
-                            </Link>
-                        ) : null}
-                    </div>
-                    <div className='flex flex-row'>
-                        <p className='mr-8 font-medium w-[150px] text-right'>Citations:</p>
-                        <p className='text mr-4'>{1}</p>
+                <div className='flex flex-row'>
+                    <p className='mr-8 font-medium w-[150px] text-right'>Version: </p>
+                    <p className='text'>{dataset.datasetVersion}</p>
+                </div>
+                <div className='flex flex-row'>
+                    <p className='mr-8 font-medium w-[150px] text-right'>Created Dated: </p>
+                    <p className='text'>{formatDate(dataset.createdAt)}</p>
+                </div>
+                <div className='flex flex-row'>
+                    <p className='mr-8 font-medium w-[150px] text-right'>DOI: </p>
+                    <p className='text'>{dataset.datasetDOI ?? 'N/A'}</p>
+                    {dataset.datasetDOI === undefined ? (
                         <Link
-                            className='ml-2'
+                            className='mr-4'
                             component='button'
                             underline='none'
-                            onClick={() => setCitationsDialogVisible(true)}
+                            onClick={() => setDoiDialogVisible(true)}
                         >
-                            (View)
+                            (Generate a DOI)
                         </Link>
-                    </div>
+                    ) : null}
                 </div>
-                <div className='flex flex-col my-4'>
-                    <p className='text-xl py-4 font-semibold'>Sequences</p>
-                    <DatasetRecordsTable datasetRecords={datasetRecords} />
+                <div className='flex flex-row'>
+                    <p className='mr-8 font-medium w-[150px] text-right'>Citations:</p>
+                    <p className='text mr-4'>{1}</p>
+                    <Link
+                        className='ml-2'
+                        component='button'
+                        underline='none'
+                        onClick={() => setCitationsDialogVisible(true)}
+                    >
+                        (View)
+                    </Link>
                 </div>
-                <AlertDialog
-                    isVisible={doiDialogVisible}
-                    setVisible={setDoiDialogVisible}
-                    title='Generate a DOI'
-                    description='This feature is under development and will be available soon!'
-                    onAccept={handleCreateDOI}
-                />
-                <AlertDialog
-                    isVisible={citationsDialogVisible}
-                    setVisible={setCitationsDialogVisible}
-                    title='Citations'
-                    description='This feature is under development and will be available soon!'
-                    onAccept={handleCitationsClose}
-                />
-            </>
+            </div>
+            <div className='flex flex-col my-4'>
+                <p className='text-xl py-4 font-semibold'>Sequences</p>
+                <DatasetRecordsTable datasetRecords={datasetRecords} />
+            </div>
+            <AlertDialog
+                isVisible={doiDialogVisible}
+                setVisible={setDoiDialogVisible}
+                title='Generate a DOI'
+                description='This feature is under development and will be available soon!'
+                onAccept={handleCreateDOI}
+            />
+            <AlertDialog
+                isVisible={citationsDialogVisible}
+                setVisible={setCitationsDialogVisible}
+                title='Citations'
+                description='This feature is under development and will be available soon!'
+                onAccept={handleCitationsClose}
+            />
         </div>
     );
 };

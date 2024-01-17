@@ -1,21 +1,22 @@
-import { type FC, type FormEvent, useState, useEffect } from 'react';
-import ExpandMoreIcon from '~icons/ic/baseline-expand-more';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormHelperText from '@mui/material/FormHelperText';
 import TextField from '@mui/material/TextField';
-import Accordion from '@mui/material/Accordion';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
-import { backendClientHooks } from '../../services/serviceHooks';
+import { type FC, type FormEvent, useState } from 'react';
+
 import { getClientLogger } from '../../clientLogger';
+import { backendClientHooks } from '../../services/serviceHooks';
 import { AccessionType, type Dataset, type DatasetRecord } from '../../types/datasets';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { serializeRecordsToAccessionsInput, parseRecordsFromAccessionInput } from '../../utils/parseAccessionInput';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { serializeRecordsToAccessionsInput } from '../../utils/parseAccessionInput';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
+import ExpandMoreIcon from '~icons/ic/baseline-expand-more';
 
 const logger = getClientLogger('DatasetForm');
 
@@ -30,20 +31,8 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
     const [datasetName, setDatasetName] = useState(editDataset?.name ?? '');
     const [datasetDescription, setDatasetDescription] = useState(editDataset?.description ?? '');
     const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editDatasetRecords));
-    const [datasetRecords, setDatasetRecords] = useState(editDatasetRecords);
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
     const { createDataset, updateDataset, isLoading } = useActionHook(clientConfig, accessToken, openErrorFeedback);
-
-    useEffect(() => {
-        const parseRecordsFromInput = () => {
-            const parsedRecords = parseRecordsFromAccessionInput(accessionsInput);
-            setDatasetRecords(parsedRecords);
-        };
-        const timeOutId = setTimeout(async () => {
-            parseRecordsFromInput();
-        }, 2000);
-        return () => clearTimeout(timeOutId);
-    }, [accessionsInput]);
 
     const setAccessionInput = (accessionInput: string, type: AccessionType) => {
         setAccessionsInput((prevState) => ({
@@ -82,7 +71,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
         const dataset = getDatasetFromInput();
         if (editDataset !== undefined) {
             updateDataset({
-                datasetId: editDataset?.datasetId,
+                datasetId: editDataset.datasetId,
                 ...dataset,
             });
         } else {
@@ -182,15 +171,14 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
     );
 };
 
-
 function useActionHook(clientConfig: ClientConfig, accessToken: string, openErrorFeedback: (message: string) => void) {
-    const hooks = backendClientHooks(clientConfig)
+    const hooks = backendClientHooks(clientConfig);
     const create = hooks.useCreateDataset(
         { headers: createAuthorizationHeader(accessToken) },
         {
             onSuccess: async (response) => {
-                await logger.info(`Successfully created dataset with datasetId: ${response?.datasetId}`);
-                const redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
+                await logger.info(`Successfully created dataset with datasetId: ${response.datasetId}`);
+                const redirectUrl = `/datasets/${response.datasetId}?version=${response.datasetVersion}`;
                 location.href = redirectUrl;
             },
             onError: async (error) => {
@@ -204,14 +192,12 @@ function useActionHook(clientConfig: ClientConfig, accessToken: string, openErro
         { headers: createAuthorizationHeader(accessToken) },
         {
             onSuccess: async (response) => {
-                await logger.info(`Successfully updated dataset with datasetId: ${response?.datasetId}`);
-                const redirectUrl = `/datasets/${response?.datasetId}?version=${response?.datasetVersion}`;
+                await logger.info(`Successfully updated dataset with datasetId: ${response.datasetId}`);
+                const redirectUrl = `/datasets/${response.datasetId}?version=${response.datasetVersion}`;
                 location.href = redirectUrl;
             },
             onError: async (error) => {
-                const message = `Failed to update dataset with datasetId. Error: '${JSON.stringify(
-                    error,
-                )})}'`;
+                const message = `Failed to update dataset with datasetId. Error: '${JSON.stringify(error)})}'`;
                 await logger.info(message);
                 openErrorFeedback(message);
             },
@@ -221,5 +207,5 @@ function useActionHook(clientConfig: ClientConfig, accessToken: string, openErro
         createDataset: create.mutate,
         updateDataset: update.mutate,
         isLoading: create.isLoading || update.isLoading,
-    }
+    };
 }
