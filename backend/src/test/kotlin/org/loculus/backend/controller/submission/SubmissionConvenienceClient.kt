@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
@@ -35,6 +36,7 @@ class SubmissionConvenienceClient(
         username: String = DEFAULT_USER_NAME,
         groupName: String = DEFAULT_GROUP_NAME,
         organism: String = DEFAULT_ORGANISM,
+        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<SubmissionIdMapping> {
         val isMultiSegmented = backendConfig
             .getInstanceConfig(Organism(organism))
@@ -50,6 +52,7 @@ class SubmissionConvenienceClient(
             },
             organism = organism,
             groupName = groupName,
+            dataUseTerm = dataUseTerms,
             jwt = generateJwtFor(username),
         )
 

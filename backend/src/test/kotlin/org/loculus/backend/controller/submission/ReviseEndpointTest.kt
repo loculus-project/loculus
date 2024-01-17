@@ -193,9 +193,8 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession versions are in not in one of the states [APPROVED_FOR_RELEASE]: " +
-                        "1.1 - HAS_ERRORS, 2.1 - HAS_ERRORS, 3.1 - HAS_ERRORS, 4.1 - HAS_ERRORS, " +
-                        "5.1 - HAS_ERRORS, 6.1 - HAS_ERRORS, 7.1 - HAS_ERRORS, 8.1 - HAS_ERRORS, " +
-                        "9.1 - HAS_ERRORS, 10.1 - HAS_ERRORS",
+                        "1.1 - HAS_ERRORS, 10.1 - HAS_ERRORS, 2.1 - HAS_ERRORS, 3.1 - HAS_ERRORS, 4.1 - HAS_ERRORS, " +
+                        "5.1 - HAS_ERRORS, 6.1 - HAS_ERRORS, 7.1 - HAS_ERRORS, 8.1 - HAS_ERRORS, 9.1 - HAS_ERRORS",
                 ),
             )
     }

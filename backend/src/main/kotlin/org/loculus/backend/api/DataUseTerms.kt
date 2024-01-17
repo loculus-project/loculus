@@ -1,6 +1,7 @@
 package org.loculus.backend.api
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonPropertyOrder
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
@@ -9,43 +10,60 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimeUnit.Companion.YEAR
+import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.plus
-import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.loculus.backend.config.logger
 import org.loculus.backend.controller.BadRequestException
+import org.loculus.backend.utils.Accession
 
 enum class DataUseTermsType {
+    @JsonProperty("OPEN")
     OPEN,
+
+    @JsonProperty("RESTRICTED")
     RESTRICTED,
+
+    ;
+
+    companion object {
+        private val stringToEnumMap: Map<String, DataUseTermsType> = entries.associateBy { it.name }
+
+        fun fromString(dataUseTermsTypeString: String): DataUseTermsType {
+            return stringToEnumMap[dataUseTermsTypeString]
+                ?: throw IllegalArgumentException("Unknown DataUseTermsType: $dataUseTermsTypeString")
+        }
+    }
 }
 
-val logger = KotlinLogging.logger { }
+private val logger = KotlinLogging.logger { }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
     JsonSubTypes.Type(value = DataUseTerms.Open::class, name = "OPEN"),
     JsonSubTypes.Type(value = DataUseTerms.Restricted::class, name = "RESTRICTED"),
 )
-@JsonPropertyOrder(value = ["type", "restrictedUntil", "changeDateTime"])
+@JsonPropertyOrder(value = ["type", "restrictedUntil"])
 sealed interface DataUseTerms {
     val type: DataUseTermsType
 
     @JsonTypeName("OPEN")
-    data class Open(private val dummy: String = "") :
-        DataUseTerms {
+    @Schema(description = "The sequence entry is open access. No restrictions apply.")
+    data object Open : DataUseTerms {
         @JsonIgnore
         override val type = DataUseTermsType.OPEN
     }
 
     @JsonTypeName("RESTRICTED")
+    @Schema(description = "The sequence entry is restricted access.")
     data class Restricted(
         @JsonSerialize(using = LocalDateSerializer::class)
+        @Schema(
+            description = "The date (YYYY-MM-DD) until which the sequence entry is restricted.",
+            type = "string",
+            format = "date",
+            example = "2021-01-01",
+        )
         val restrictedUntil: LocalDate,
     ) : DataUseTerms {
         @JsonIgnore
@@ -56,12 +74,8 @@ sealed interface DataUseTerms {
         fun fromParameters(type: DataUseTermsType, restrictedUntilString: String?): DataUseTerms {
             logger.info { "Creating DataUseTerms from parameters: type=$type, restrictedUntil=$restrictedUntilString" }
             return when (type) {
-                DataUseTermsType.OPEN -> Open()
-                DataUseTermsType.RESTRICTED -> {
-                    val restrictedUntil = parseRestrictedUntil(restrictedUntilString)
-                    validateRestrictedUntil(restrictedUntil)
-                    Restricted(restrictedUntil)
-                }
+                DataUseTermsType.OPEN -> Open
+                DataUseTermsType.RESTRICTED -> Restricted(parseRestrictedUntil(restrictedUntilString))
             }
         }
 
@@ -77,32 +91,22 @@ sealed interface DataUseTerms {
                 )
             }
         }
-
-        private fun validateRestrictedUntil(restrictedUntil: LocalDate) {
-            val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
-            val oneYearFromNow = now.plus(1, YEAR)
-
-            if (restrictedUntil < now) {
-                throw BadRequestException(
-                    "The date 'restrictedUntil' must be in the future, up to a maximum of 1 year from now.",
-                )
-            }
-            if (restrictedUntil > oneYearFromNow) {
-                throw BadRequestException(
-                    "The date 'restrictedUntil' must not exceed 1 year from today.",
-                )
-            }
-        }
     }
 }
 
-class LocalDateSerializer : StdSerializer<LocalDate>(LocalDate::class.java) {
+data class DataUseTermsChangeRequest(
+    @Schema(description = "A list of accessions of the dataset to set the data use terms for")
+    val accessions: List<Accession>,
+    val newDataUseTerms: DataUseTerms,
+)
+
+private class LocalDateSerializer : StdSerializer<LocalDate>(LocalDate::class.java) {
     override fun serialize(value: LocalDate, gen: JsonGenerator, provider: SerializerProvider) {
         gen.writeString(value.toString())
     }
 }
 
-class LocalDateTimeSerializer : StdSerializer<LocalDateTime>(LocalDateTime::class.java) {
+private class LocalDateTimeSerializer : StdSerializer<LocalDateTime>(LocalDateTime::class.java) {
     override fun serialize(value: LocalDateTime, gen: JsonGenerator, provider: SerializerProvider) {
         gen.writeString(value.toString())
     }

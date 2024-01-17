@@ -1,4 +1,4 @@
-package org.loculus.backend.service
+package org.loculus.backend.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -8,7 +8,6 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.loculus.backend.SpringBootTestWithoutDatabase
-import org.loculus.backend.api.DataUseTerms
 import org.springframework.beans.factory.annotation.Autowired
 
 @SpringBootTestWithoutDatabase
@@ -43,11 +42,11 @@ class DataUseTermsTest(@Autowired private val objectMapper: ObjectMapper) {
             """.replace("\n", "").replace(" ", ""),
         )
 
-        assertThat(dataUseTerms, `is`(DataUseTerms.Open()))
+        assertThat(dataUseTerms, `is`(DataUseTerms.Open))
     }
 
     @Test
-    fun `serialized restricted`() {
+    fun `serialize restricted`() {
         val restrictedUntil = "2021-02-01"
 
         val dataUseTerms = DataUseTerms.Restricted(LocalDate.parse(restrictedUntil))
@@ -66,8 +65,8 @@ class DataUseTermsTest(@Autowired private val objectMapper: ObjectMapper) {
     }
 
     @Test
-    fun `serialized open`() {
-        val dataUseTerms = DataUseTerms.Open()
+    fun `serialize open`() {
+        val dataUseTerms = DataUseTerms.Open
 
         val expected = """
                 {

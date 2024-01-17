@@ -52,9 +52,9 @@ private val log = KotlinLogging.logger { }
 
 @Service
 @Transactional
-class DatabaseService(
+class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
-    private val submissionPreconditionValidator: SubmissionPreconditionValidator,
+    private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
@@ -211,7 +211,7 @@ class DatabaseService(
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        submissionPreconditionValidator.validateAccessionVersions(
+        accessionPreconditionValidator.validateAccessionVersions(
             submitter,
             accessionVersions,
             listOf(AWAITING_APPROVAL),
@@ -388,7 +388,7 @@ class DatabaseService(
     fun revoke(accessions: List<Accession>, username: String, organism: Organism): List<SequenceEntryStatus> {
         log.info { "revoking ${accessions.size} sequences" }
 
-        submissionPreconditionValidator.validateAccessions(
+        accessionPreconditionValidator.validateAccessions(
             username,
             accessions,
             listOf(APPROVED_FOR_RELEASE),
@@ -455,7 +455,7 @@ class DatabaseService(
     fun confirmRevocation(accessionVersions: List<AccessionVersion>, username: String, organism: Organism) {
         log.info { "Confirming revocation for ${accessionVersions.size} sequence entries" }
 
-        submissionPreconditionValidator.validateAccessionVersions(
+        accessionPreconditionValidator.validateAccessionVersions(
             username,
             accessionVersions,
             listOf(AWAITING_APPROVAL_FOR_REVOCATION),
@@ -481,7 +481,7 @@ class DatabaseService(
     fun deleteSequenceEntryVersions(accessionVersions: List<AccessionVersion>, submitter: String, organism: Organism) {
         log.info { "Deleting accession versions: $accessionVersions" }
 
-        submissionPreconditionValidator.validateAccessionVersions(
+        accessionPreconditionValidator.validateAccessionVersions(
             submitter,
             accessionVersions,
             listOf(RECEIVED, AWAITING_APPROVAL, HAS_ERRORS, AWAITING_APPROVAL_FOR_REVOCATION),
@@ -496,7 +496,7 @@ class DatabaseService(
     fun submitEditedData(submitter: String, editedAccessionVersion: UnprocessedData, organism: Organism) {
         log.info { "edited sequence entry submitted $editedAccessionVersion" }
 
-        submissionPreconditionValidator.validateAccessionVersions(
+        accessionPreconditionValidator.validateAccessionVersions(
             submitter,
             listOf(editedAccessionVersion),
             listOf(AWAITING_APPROVAL, HAS_ERRORS),
@@ -529,7 +529,7 @@ class DatabaseService(
             "Getting sequence entry ${accessionVersion.displayAccessionVersion()} by $submitter to edit"
         }
 
-        submissionPreconditionValidator.validateAccessionVersions(
+        accessionPreconditionValidator.validateAccessionVersions(
             submitter,
             listOf(accessionVersion),
             listOf(HAS_ERRORS, AWAITING_APPROVAL),

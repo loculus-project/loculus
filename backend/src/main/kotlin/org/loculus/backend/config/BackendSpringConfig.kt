@@ -20,7 +20,7 @@ object BackendSpringProperty {
     const val BACKEND_CONFIG_PATH = "backend.config.path"
 }
 
-val logger = mu.KotlinLogging.logger {}
+private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
 @ImportAutoConfiguration(

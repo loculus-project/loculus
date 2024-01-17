@@ -8,10 +8,12 @@ import org.junit.platform.engine.support.descriptor.ClassSource
 import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
+import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.submission.DEFAULT_USER_NAME
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.USER_GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.METADATA_UPLOAD_TABLE_NAME
@@ -36,6 +38,7 @@ import org.testcontainers.containers.PostgreSQLContainer
     SubmissionControllerClient::class,
     SubmissionConvenienceClient::class,
     GroupManagementControllerClient::class,
+    DataUseTermsControllerClient::class,
     PublicJwtKeyConfig::class,
 )
 annotation class EndpointTest(
@@ -140,7 +143,8 @@ private fun clearDatabaseStatement(): String {
         "alter sequence $ACCESSION_SEQUENCE_NAME restart with 1; " +
         "truncate table $USER_GROUPS_TABLE_NAME; " +
         "truncate $METADATA_UPLOAD_TABLE_NAME; " +
-        "truncate $SEQUENCE_UPLOAD_TABLE_NAME; \n"
+        "truncate $SEQUENCE_UPLOAD_TABLE_NAME; " +
+        "truncate table $DATA_USE_TERMS_TABLE_NAME cascade; \n"
 }
 
 private fun addUsersToGroupStatement(groupName: String, userNames: List<String>): String {
