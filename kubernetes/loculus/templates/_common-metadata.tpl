@@ -90,8 +90,3 @@ fields:
     {{- end }}
 {{- end}}
 {{- end}}
-
-
-{{- define "loculus.getConfig" }}
-{{- $.Values.configYaml }}
-{{- end }}
