@@ -6,4 +6,4 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   backend_config.json: |
-    {{ $.Values.configYaml | include "loculus.generateBackendConfig" | fromYaml | toJson }}
+    {{ include "loculus.generateBackendConfig" . | fromYaml | toJson }}

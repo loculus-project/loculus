@@ -1,6 +1,5 @@
 {{- $lapisHost := printf "lapis.%s" .Values.host }}
-{{- $config := $.Values.configYaml }}
-{{- range $key, $_ := $config.instances }}
+{{- range $key, $_ := $.instances }}
 
 ---
 apiVersion: traefik.containo.us/v1alpha1
