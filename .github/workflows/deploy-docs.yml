@@ -1,8 +1,8 @@
 name: Builds and deploy documentation
 
 on:
+  workflow_dispatch:
   push:
-    workflow_dispatch:
     branches:
       - main
 
