@@ -291,6 +291,20 @@ const createDatasetEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
+const createDatasetDOIEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/create-dataset-doi?datasetId=:datasetId&version=:version',
+    alias: 'createDatasetDOI',
+    parameters: [
+        authorizationHeader,
+    ],
+    response: z.object({
+        datasetId: z.string(),
+        datasetVersion: z.number(),
+    }),
+    errors: [notAuthorizedError],
+});
+
 const updateDatasetEndpoint = makeEndpoint({
     method: 'put',
     path: '/update-dataset',
@@ -350,6 +364,7 @@ export const backendApi = makeApi([
     getDatasetEndpoint,
     getDatasetRecordsEndpoint,
     createDatasetEndpoint,
+    createDatasetDOIEndpoint,
     updateDatasetEndpoint,
     deleteDatasetEndpoint,
 ]);

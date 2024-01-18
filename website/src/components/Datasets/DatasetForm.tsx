@@ -11,7 +11,7 @@ import { type FC, type FormEvent, useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
 import { backendClientHooks } from '../../services/serviceHooks';
-import { AccessionType, type Dataset, type DatasetRecord } from '../../types/datasets';
+import { DatasetRecordType, type Dataset, type DatasetRecord } from '../../types/datasets';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { serializeRecordsToAccessionsInput } from '../../utils/parseAccessionInput';
@@ -34,7 +34,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
     const { createDataset, updateDataset, isLoading } = useActionHook(clientConfig, accessToken, openErrorFeedback);
 
-    const setAccessionInput = (accessionInput: string, type: AccessionType) => {
+    const setAccessionInput = (accessionInput: string, type: DatasetRecordType) => {
         setAccessionsInput((prevState) => ({
             ...prevState,
             [type]: accessionInput,
@@ -46,21 +46,21 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
             name: datasetName,
             description: datasetDescription,
             records: [
-                ...getAccessionsList(AccessionType.loculus).map((accession) => ({
+                ...getAccessionsList(DatasetRecordType.loculus).map((accession) => ({
                     accession,
-                    type: AccessionType.loculus,
+                    type: DatasetRecordType.loculus,
                 })),
-                ...getAccessionsList(AccessionType.genbank).map((accession) => ({
+                ...getAccessionsList(DatasetRecordType.genbank).map((accession) => ({
                     accession,
-                    type: AccessionType.genbank,
+                    type: DatasetRecordType.genbank,
                 })),
-                ...getAccessionsList(AccessionType.sra).map((accession) => ({
+                ...getAccessionsList(DatasetRecordType.sra).map((accession) => ({
                     accession,
-                    type: AccessionType.sra,
+                    type: DatasetRecordType.sra,
                 })),
-                ...getAccessionsList(AccessionType.gisaid).map((accession) => ({
+                ...getAccessionsList(DatasetRecordType.gisaid).map((accession) => ({
                     accession,
-                    type: AccessionType.gisaid,
+                    type: DatasetRecordType.gisaid,
                 })),
             ],
         };
@@ -80,7 +80,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
         return;
     };
 
-    const getAccessionsList = (type: AccessionType) => {
+    const getAccessionsList = (type: DatasetRecordType) => {
         const accessions = accessionsInput[type];
         return accessions
             .split(',')
@@ -129,7 +129,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                 <h2 className='text-lg font-bold'>Accessions</h2>
                 <FormGroup>
                     {Object.keys(accessionsInput).map((type) => (
-                        <Accordion defaultExpanded={type === AccessionType.loculus} key={`${type}-accordian`}>
+                        <Accordion defaultExpanded={type === DatasetRecordType.loculus} key={`${type}-accordian`}>
                             <AccordionSummary
                                 expandIcon={<ExpandMoreIcon />}
                                 aria-controls={`${type}-content`}
@@ -149,9 +149,9 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                                             variant='outlined'
                                             margin='none'
                                             size='small'
-                                            value={accessionsInput[type as AccessionType]}
+                                            value={accessionsInput[type as DatasetRecordType]}
                                             onChange={(event: any) =>
-                                                setAccessionInput(event.target.value, type as AccessionType)
+                                                setAccessionInput(event.target.value, type as DatasetRecordType)
                                             }
                                         />
                                         <FormHelperText id='outlined-weight-helper-text'>

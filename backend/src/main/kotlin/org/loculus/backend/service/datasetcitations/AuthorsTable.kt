@@ -21,12 +21,13 @@ object AuthorsTable : Table("authors") {
     val affiliation = varchar("affiliation", 255)
     val email = varchar("email", 255)
     val name = varchar("name", 255)
+    val username = varchar("username", 255).nullable()
+    val is_public = bool("is_public").default(false)
 
     val createdAt = datetime("created_at")
     val createdBy = varchar("created_by", 255)
     val updatedAt = datetime("updated_at")
     val updatedBy = varchar("updated_by", 255)
-    val metadata = jacksonSerializableJsonb<JsonNode>("metadata").nullable()
 
     override val primaryKey = PrimaryKey(authorId)
 }

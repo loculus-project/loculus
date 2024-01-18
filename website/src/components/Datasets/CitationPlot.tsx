@@ -2,7 +2,6 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 import { type FC, useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 
-// import { Chart as ChartJS, LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip } from 'chart.js';
 import type { CitedByResult } from '../../types/datasets';
 
 type CitationPlotProps = {
@@ -13,7 +12,6 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
     const [isRegistered, setIsRegistered] = useState(false);
 
     useEffect(() => {
-        // ChartJS.register(LineElement, PointElement, LinearScale, Title, CategoryScale, Tooltip);
         ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
         setIsRegistered(true);
     }, []);
@@ -44,15 +42,23 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
                 plugins: {
                     title: {
                         display: true,
-                        text: 'Dataset Citations by Year',
+                        // text: 'Dataset Citations by Year',
                     },
                     legend: {
                         display: false,
                     },
                 },
                 scales: {
+                    // x: {
+                    //     grid: {
+                    //         color: "rgba(0, 0, 0, 0)",
+                    //     }  
+                    // },
                     y: {
-                        suggestedMax: 10,
+                        suggestedMax: 10, 
+                        grid: {
+                            color: "rgba(0, 0, 0, 0)",
+                        }  
                     },
                 },
             }}

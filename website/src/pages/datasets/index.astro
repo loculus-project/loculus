@@ -2,42 +2,76 @@
 import { DatasetList } from '../../components/Datasets/DatasetList';
 import { DatasetListActions } from '../../components/Datasets/DatasetListActions';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
+import { CitationPlot } from '../../components/Datasets/CitationPlot';
+import { AuthorDetails } from '../../components/Datasets/AuthorDetails';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../services/backendClient';
 import { getAccessToken } from '../../utils/getAccessToken';
+import { BackButton } from '../../components/Navigation/BackButton';
+
 
 const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
+const username = Astro.locals.session.user!.username!;
+
 const datasetsResponse = await BackendClient.create().astroFileTypeHelpers.getDatasetsOfUser(accessToken);
+const userCitedByResponse = await BackendClient.create().astroFileTypeHelpers.getUserCitedBy(accessToken, username);
+
+const session = Astro.locals.session;
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>
-    <div class='flex justify-center'>
-        <div class='w-3/4'>
-            <div class='flex justify-start items-center py-5'>
-                <h1 class='pr-4 text-2xl font-semibold'>Datasets</h1>
-                <DatasetListActions clientConfig={clientConfig} accessToken={accessToken} client:load />
-            </div>
-            <div>
-                <div>
-                    {
-                        datasetsResponse.match(
-                            (datasets) =>
-                                datasets !== undefined && datasets?.length > 0 ? (
-                                    <DatasetList datasets={datasets} client:load />
-                                ) : (
-                                    'You have no datasets yet.'
-                                ),
-                            (error) => (
-                                <ErrorFeedback
-                                    message={'Error while fetching datasets: ' + JSON.stringify(error)}
-                                    client:load
-                                />
-                            ),
-                        )
-                    }
+    <div class='flex flex-col justify-center items-center'>
+        <div class='flex flex-row justify-center w-5/6 divide-x'>
+            <div class='w-3/4 flex flex-col justify-start'>
+                <AuthorDetails 
+                    displayFullDetails={true}
+                    name={session.user?.name}
+                    fontSize={120}
+                    client:load
+                />
+                <hr />
+                <div class='flex justify-start'>
+                    <div>
+                        <div class='flex justify-start items-center py-5'>
+                            <h1 class='text-2xl font-semibold'>Datasets</h1>
+                            <DatasetListActions clientConfig={clientConfig} accessToken={accessToken} client:load />
+                        </div>
+                        <div>
+                            {
+                                datasetsResponse.match(
+                                    (datasets) =>
+                                        datasets !== undefined && datasets?.length > 0 ? (
+                                            <DatasetList datasets={datasets} username={username} client:load />
+                                        ) : (
+                                            'You have no datasets yet.'
+                                        ),
+                                    (error) => (
+                                        <ErrorFeedback
+                                            message={'Error while fetching datasets: ' + JSON.stringify(error)}
+                                            client:load
+                                        />
+                                    ),
+                                )
+                            }
+                        </div>
+                    </div>
                 </div>
+            </div>
+            <div class='w-1/4 flex flex-col justify-start items-start pl-4'>
+                <span class='text-xl'>Cited By</span>
+                {
+                    userCitedByResponse.match(
+                        (citedByData) => <CitationPlot citedByData={citedByData} client:load />,
+                        (error) => (
+                            <ErrorFeedback
+                                message={'Error while fetching user sequences: ' + JSON.stringify(error)}
+                                client:only='react'
+                            />
+                        ),
+                    )
+                }
             </div>
         </div>
     </div>

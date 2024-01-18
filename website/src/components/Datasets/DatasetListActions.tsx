@@ -17,9 +17,11 @@ const DatasetListActionsInner: FC<DatasetListActionsProps> = ({ clientConfig, ac
 
     return (
         <>
-            <IconButton onClick={() => setCreateModalVisible(true)}>
-                <AddBoxIcon fontSize='large' />
-            </IconButton>
+            <div className={'pl-2'}>
+                <IconButton onClick={() => setCreateModalVisible(true)}>
+                    <AddBoxIcon fontSize='large' />
+                </IconButton>
+            </div>
             <Modal isModalVisible={createModalVisible} setModalVisible={setCreateModalVisible}>
                 <DatasetForm clientConfig={clientConfig} accessToken={accessToken} />
             </Modal>

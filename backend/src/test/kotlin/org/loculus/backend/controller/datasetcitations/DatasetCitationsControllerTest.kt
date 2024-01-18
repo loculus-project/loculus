@@ -45,10 +45,6 @@ class DatasetCitationsControllerTest(@Autowired val mockMvc: MockMvc, @Autowired
         return true
     }
 
-    private fun queryGetAuthorCount(): Boolean {
-        return true
-    }
-
     private fun queryCreateDataset(): Boolean {
         return true
     }
@@ -65,23 +61,15 @@ class DatasetCitationsControllerTest(@Autowired val mockMvc: MockMvc, @Autowired
         return true
     }
 
-    private fun queryGetDatasetCount(): Boolean {
-        return true
-    }
-
     private fun queryCreateCitation(): Boolean {
         return true
     }
 
-    private fun queryGetCitation(): Boolean {
+    private fun queryGetDatasetCitedBy(): Boolean {
         return true
     }
 
-    private fun queryUpdateCitation(): Boolean {
-        return true
-    }
-
-    private fun queryDeleteCitation(): Boolean {
+    private fun queryGetUserCitedBy(): Boolean {
         return true
     }
 

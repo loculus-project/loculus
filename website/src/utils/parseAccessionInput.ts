@@ -1,4 +1,4 @@
-import { type DatasetRecord, AccessionType } from '../types/datasets';
+import { type DatasetRecord, DatasetRecordType } from '../types/datasets';
 
 const getAccessionsByType = (type: string, records: DatasetRecord[]): string[] => {
     return records.filter((record) => record.type === type).map((record) => record.accession ?? '');
@@ -7,21 +7,21 @@ const getAccessionsByType = (type: string, records: DatasetRecord[]): string[] =
 export const serializeRecordsToAccessionsInput = (records?: DatasetRecord[], delimiter = ',') => {
     if (!records || records.length === 0) {
         return {
-            [AccessionType.loculus]: '',
-            [AccessionType.genbank]: '',
-            [AccessionType.sra]: '',
-            [AccessionType.gisaid]: '',
+            [DatasetRecordType.loculus]: '',
+            [DatasetRecordType.genbank]: '',
+            [DatasetRecordType.sra]: '',
+            [DatasetRecordType.gisaid]: '',
         };
     }
     return {
-        [AccessionType.loculus]: getAccessionsByType(AccessionType.loculus, records).join(`${delimiter} `),
-        [AccessionType.genbank]: getAccessionsByType(AccessionType.genbank, records).join(`${delimiter} `),
-        [AccessionType.sra]: getAccessionsByType(AccessionType.sra, records).join(`${delimiter} `),
-        [AccessionType.gisaid]: getAccessionsByType(AccessionType.gisaid, records).join(`${delimiter} `),
+        [DatasetRecordType.loculus]: getAccessionsByType(DatasetRecordType.loculus, records).join(`${delimiter} `),
+        [DatasetRecordType.genbank]: getAccessionsByType(DatasetRecordType.genbank, records).join(`${delimiter} `),
+        [DatasetRecordType.sra]: getAccessionsByType(DatasetRecordType.sra, records).join(`${delimiter} `),
+        [DatasetRecordType.gisaid]: getAccessionsByType(DatasetRecordType.gisaid, records).join(`${delimiter} `),
     };
 };
 
-export const parseRecordsFromAccessionInput = (accessions: { [key in AccessionType]: string }): DatasetRecord[] => {
+export const parseRecordsFromAccessionInput = (accessions: { [key in DatasetRecordType]: string }): DatasetRecord[] => {
     const records: DatasetRecord[] = [];
 
     const cleanAccessionInput = (accessionInput: string, delimiter = ','): string[] => {
@@ -31,7 +31,7 @@ export const parseRecordsFromAccessionInput = (accessions: { [key in AccessionTy
             .filter((accession) => accession.length > 0);
     };
 
-    Object.values(AccessionType).forEach((type) => {
+    Object.values(DatasetRecordType).forEach((type) => {
         const accessionsByType = cleanAccessionInput(accessions[type]);
         accessionsByType.forEach((accession) => {
             records.push({

@@ -3,7 +3,7 @@ import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { DatasetItem } from '../../components/Datasets/DatasetItem';
 import { DatasetItemActions } from '../../components/Datasets/DatasetItemActions';
 import { BackButton } from '../../components/Navigation/BackButton';
-import { AvatarBadge } from '../../components/User/AvatarBadge';
+import { AuthorDetails } from '../../components/Datasets/AuthorDetails';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../services/backendClient';
@@ -20,6 +20,7 @@ const datasetResponse = await BackendClient.create().astroFileTypeHelpers.getDat
     datasetId,
     version,
 );
+
 const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers.getDatasetRecords(
     accessToken,
     datasetId,
@@ -35,10 +36,14 @@ const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers
             datasetResponse.match(
                 (dataset) => (
                     <div class='flex flex-row items-left'>
-                        <div class='w-1/4 flex flex-col justify-start items-center'>
-                            <AvatarBadge displayName={dataset[0]?.createdBy} />
+                        <div class='w-1/6 flex flex-col justify-start items-center'>
+                            <AuthorDetails 
+                                displayFullDetails={false}
+                                name={dataset[0]?.createdBy}
+                                fontSize={60}
+                            />
                         </div>
-                        <div class='w-3/4'>
+                        <div class='w-5/6 pl-6'>
                             {
                                 dataset !== undefined && dataset.length > 0 ? (
                                     datasetRecordsResponse.match(

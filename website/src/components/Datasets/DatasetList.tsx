@@ -9,7 +9,7 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
 import { visuallyHidden } from '@mui/utils';
-import { type MouseEvent, type ChangeEvent, useState, useMemo } from 'react';
+import { type FC, type MouseEvent, type ChangeEvent, useState, useMemo } from 'react';
 
 import type { Dataset } from '../../types/datasets';
 
@@ -88,10 +88,10 @@ const DatasetListHead = (props: DatasetListHeadProps) => {
 
 type DatasetListProps = {
     datasets: Dataset[];
+    username: string;
 };
 
-export const DatasetList = (props: DatasetListProps) => {
-    const { datasets } = props;
+export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
 
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<keyof Dataset>('createdAt');
@@ -105,7 +105,7 @@ export const DatasetList = (props: DatasetListProps) => {
     };
 
     const handleClick = (_: MouseEvent<unknown>, datasetId: string, datasetVersion: string) => {
-        window.location.href = '/datasets/' + datasetId + '?version=' + datasetVersion;
+        window.location.href = `/datasets/${datasetId}?version=${datasetVersion}?user=${username}`;
     };
 
     const handleChangePage = (_: unknown, newPage: number) => {

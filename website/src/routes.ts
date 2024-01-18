@@ -29,12 +29,14 @@ export const routes = {
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/sequences`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/sequences/${accession}/versions`),
     unknownOrganismPage: (organism: string) => `/404?unknownOrganism=${organism}`,
-    userCitationsPage: (organism?: string | undefined) => {
-        const userCitationsPagePath = `/user/citations` as const;
-        return organism === undefined ? userCitationsPagePath : withOrganism(organism, `/user/citations`);
+    datasetsPage: (username?: string | undefined) => {
+        const datasetPagePath = `/datasets` as const;
+        return username === undefined ? datasetPagePath : datasetPagePath + `?user=${username}`
     },
-    datasetsPage: () => '/datasets',
-    datasetPage: (datasetId: string, datasetVersion: string) => `/datasets/${datasetId}?=${datasetVersion}`,
+    datasetPage: (datasetId: string, datasetVersion: string, username?: string | undefined) => {
+        const datasetPagePath = `/datasets/${datasetId}?=${datasetVersion}`
+        return username === undefined ? datasetPagePath : datasetPagePath + `&user=${username}`
+    },
     logout: () => '/logout',
 };
 

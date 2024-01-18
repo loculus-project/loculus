@@ -17,7 +17,8 @@ import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Author
 import org.loculus.backend.api.Citation
 import org.loculus.backend.api.CitedBy
-import org.loculus.backend.api.Dataset
+import org.loculus.backend.api.Dataset 
+import org.loculus.backend.api.DatsetCitationsConstants
 import org.loculus.backend.api.DatasetRecord
 import org.loculus.backend.api.ResponseDataset
 import org.loculus.backend.api.SubmittedDatasetRecord
@@ -242,95 +243,55 @@ class DatasetCitationsDatabaseService(
         return datasetList
     }
 
-    fun deleteDataset(username: String, _datasetId: String, _version: Long) {
+    fun deleteDataset(username: String, datasetId: String, version: Long) {
         DatasetsTable.deleteWhere {
-            (datasetId eq UUID.fromString(_datasetId)) and
-                (datasetVersion eq _version) and
-                (createdBy eq username)
+            (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
+                (DatasetsTable.datasetVersion eq version) and
+                (DatasetsTable.createdBy eq username)
         }
     }
 
-    fun createCitation(_data: String, _type: String): Long {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val insert = CitationsTable
-            .insert {
-                it[data] = _data
-                it[type] = _type
-                it[createdAt] = now
-                it[createdBy] = "nobody"
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
+    fun createDatasetDOI(
+        username: String,
+        datasetId: String,
+        version: Long,
+    ): ResponseDataset {
+        log.info { "Create DOI for dataset $datasetId, user $username" }
+
+        val datasetDOI = "$DatsetCitationsConstants.DOI_PREFIX/$datasetId.$version"
+
+        log.info { "Debug DOI $datasetDOI" }
+
+        DatasetsTable.update (
+            {
+                (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
+                (DatasetsTable.datasetVersion eq version) and
+                (DatasetsTable.createdBy eq username)
             }
-
-        return insert[CitationsTable.citationId]
-    }
-
-    fun getCitation(citationId: Long): List<Citation> {
-        var citationList = mutableListOf<Citation>()
-        var selectedCitations = CitationsTable
-            .select(
-                where = { CitationsTable.citationId eq citationId },
-            )
-        var selectedCitation = selectedCitations.single()
-        citationList.add(
-            Citation(
-                selectedCitation[CitationsTable.citationId],
-                selectedCitation[CitationsTable.data],
-                selectedCitation[CitationsTable.type],
-                Timestamp.valueOf(selectedCitation[CitationsTable.createdAt].toJavaLocalDateTime()),
-                selectedCitation[CitationsTable.createdBy],
-                Timestamp.valueOf(selectedCitation[CitationsTable.updatedAt].toJavaLocalDateTime()),
-                selectedCitation[CitationsTable.updatedBy],
-            ),
-        )
-        return citationList
-    }
-
-    fun getUserCitations(username: String): List<Citation> {
-        var citationList = mutableListOf<Citation>()
-        var selectedCitations = CitationsTable
-            .select(
-                where = { CitationsTable.createdBy eq username },
-            )
-        selectedCitations.forEach {
-            citationList.add(
-                Citation(
-                    it[CitationsTable.citationId],
-                    it[CitationsTable.data],
-                    it[CitationsTable.type],
-                    Timestamp.valueOf(it[CitationsTable.createdAt].toJavaLocalDateTime()),
-                    it[CitationsTable.createdBy],
-                    Timestamp.valueOf(it[CitationsTable.updatedAt].toJavaLocalDateTime()),
-                    it[CitationsTable.updatedBy],
-                ),
-            )
+        ) {
+            it[DatasetsTable.datasetDOI] = datasetDOI
         }
-        return citationList
+
+        // TODO: Register with DOI agency (crossref)
+        // Include URL to dataset on app in crossref metadata
+
+        return ResponseDataset(
+            datasetId,
+            version,
+        )
     }
 
-    fun getUserCitedBy(username: String): CitedBy {
+    fun getDatasetCitedBy(datasetId: String, version: Long): CitedBy {
+        // TODO: implement using CrossRef API: https://www.crossref.org/services/cited-by/
         var citedBy = CitedBy()
-        // TODO: sequenceEntriesTableProvider requires organism, should allow querying entire table directly
         return citedBy
     }
 
-    fun updateCitation(citationId: Long, _data: String, _type: String) {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        CitationsTable
-            .update(
-                where = { CitationsTable.citationId eq citationId },
-            ) {
-                it[data] = _data
-                it[type] = _type
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
-            }
-    }
-
-    fun deleteCitation(_citationId: Long) {
-        CitationsTable.deleteWhere { citationId eq _citationId }
+    fun getUserCitedBy(username: String): CitedBy {
+        // TODO: implement using sequences table + datasets table + CrossRef API: https://www.crossref.org/services/cited-by/
+        var citedBy = CitedBy()
+        return citedBy
     }
 
     fun createAuthor(_affiliation: String, _email: String, _name: String): Long {

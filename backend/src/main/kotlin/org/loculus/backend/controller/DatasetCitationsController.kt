@@ -69,40 +69,20 @@ class DatasetCitationsController(
         return databaseService.deleteDataset(username, datasetId, version)
     }
 
-    @Operation(description = "Create a new citation with the specified data")
-    @PostMapping("/create-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun createCitation(@RequestParam data: String, @RequestParam type: String): Long {
-        return databaseService.createCitation(data, type)
+    @Operation(description = "Create a dataset DOI")
+    @PostMapping("/create-dataset-doi", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun createDatasetDOI(
+        @UsernameFromJwt username: String,
+        @RequestParam datasetId: String,
+        @RequestParam version: Long,
+    ): ResponseDataset {
+        return databaseService.createDatasetDOI(username, datasetId, version)
     }
 
-    @Operation(description = "Get a citation")
-    @GetMapping("/get-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getCitation(@RequestParam citationId: Long): List<Citation> {
-        return databaseService.getCitation(citationId)
-    }
-
-    @Operation(description = "Get citations created by user")
-    @GetMapping("/get-citations-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getUserCitations(@RequestParam username: String): List<Citation> {
-        return databaseService.getUserCitations(username)
-    }
-
-    @Operation(description = "Get citations associated to a user's sequences")
+    @Operation(description = "Get citations associated to an user's sequences")
     @GetMapping("/get-user-cited-by", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserCitedBy(@RequestParam username: String): CitedBy {
         return databaseService.getUserCitedBy(username)
-    }
-
-    @Operation(description = "Update a citation with the specified data")
-    @PutMapping("/update-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun updateCitation(@RequestParam citationId: Long, @RequestParam date: String, @RequestParam type: String) {
-        return databaseService.updateCitation(citationId, date, type)
-    }
-
-    @Operation(description = "Delete a citation")
-    @DeleteMapping("/delete-citation", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun deleteCitation(@RequestParam citationId: Long) {
-        return databaseService.deleteCitation(citationId)
     }
 
     @Operation(description = "Create a new author with the specified data")

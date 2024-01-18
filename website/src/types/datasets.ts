@@ -1,6 +1,6 @@
 import z from 'zod';
 
-export enum AccessionType {
+export enum DatasetRecordType {
     loculus = 'Loculus',
     genbank = 'GenBank',
     sra = 'SRA',
@@ -9,7 +9,7 @@ export enum AccessionType {
 
 export const datasetRecord = z.object({
     accession: z.string().optional(),
-    type: z.nativeEnum(AccessionType).optional(),
+    type: z.nativeEnum(DatasetRecordType).optional(),
 });
 export type DatasetRecord = z.infer<typeof datasetRecord>;
 export const datasetRecords = z.array(datasetRecord);

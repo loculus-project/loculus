@@ -66,3 +66,8 @@ data class Author(
     val updatedAt: Timestamp,
     val updatedBy: String,
 )
+
+
+object DatsetCitationsConstants {
+    const val DOI_PREFIX = "placeholder"
+}

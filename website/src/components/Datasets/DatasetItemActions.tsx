@@ -51,7 +51,7 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
         <div className='flex flex-col items-left'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex-row items-center justify-between w-full'>
-                <div className='flex justify-start items-center py-8'>
+                <div className='flex justify-start items-center pt-4 pb-8'>
                     <div className='pr-2'>
                         <Button
                             sx={{
@@ -68,7 +68,7 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
                             Export
                         </Button>
                     </div>
-                    <div className='px-2 '>
+                    <div className='px-2'>
                         {isAdminView ? (
                             <Button
                                 sx={{
