@@ -1,6 +1,6 @@
 {{/* generates internal LAPIS urls from given config object */}}
 {{ define "loculus.generateInternalLapisUrls"}}
-{{ range $key, $_ := .instances }}
+{{ range $key, $_ := $.Values.instances }}
 "{{ $key -}}": "http://{{ template "loculus.lapisServiceName" $key }}:8080"
 {{ end }}
 {{ end }}
@@ -8,7 +8,7 @@
 {{/* generates external LAPIS urls from { config, host } */}}
 {{ define "loculus.generateExternalLapisUrls"}}
 {{ $host := .host }}
-{{ range $key, $_ := .config.instances }}
+{{ range $key, $_ := $.Values.instances }}
 "{{ $key -}}": "{{ $host }}/{{ $key }}"
 {{ end }}
 {{ end }}

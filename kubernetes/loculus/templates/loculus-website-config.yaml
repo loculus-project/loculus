@@ -6,7 +6,6 @@
 ) }}
 {{- $externalLapisUrlConfig := dict
   "host" $lapisHost
-  "config" $.Values
 }}
 
 ---
