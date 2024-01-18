@@ -1,5 +1,5 @@
 {{- $keycloakHost := printf "authentication.%s" .Values.host }}
-{{- $config := .Files.Get "config.yaml" | fromYaml }}
+{{- $config := include "loculus.getConfig" }}
 {{- $lapisHost := (
   eq .Values.environment "server" | ternary
     (printf "https://lapis.%s" .Values.host)
@@ -18,7 +18,7 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   website_config.json: |
-    {{ .Files.Get "config.yaml" | fromYaml | include "loculus.generateWebsiteConfig" | fromYaml | toJson }}
+    {{ $config | include "loculus.generateWebsiteConfig" | fromYaml | toJson }}
 
   runtime_config.json: |
     {

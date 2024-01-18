@@ -1,5 +1,5 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{ $configFile := .Files.Get "config.yaml" | fromYaml }}
+{{ $config := include "loculus.getConfig" }}
 {{ $backendHost := .Values.disableBackend | ternary
     "http://host.k3d.internal:8079"
     "http://loculus-backend-service:8079"
@@ -28,7 +28,7 @@ spec:
         component: loculus-preprocessing
     spec:
       containers:
-        {{- range $key, $_ := $configFile.instances }}
+        {{- range $key, $_ := $config.instances }}
         - name: preprocessing-{{ $key }}
           image: ghcr.io/loculus-project/preprocessing-dummy:{{ $dockerTag }}
           imagePullPolicy: Always

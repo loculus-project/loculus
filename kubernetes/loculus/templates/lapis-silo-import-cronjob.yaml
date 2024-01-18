@@ -1,9 +1,9 @@
-{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
+{{- $config := include "loculus.getConfig" }}
 
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/token" }}
 
 
-{{- range $key, $_ := $configFile.instances }}
+{{- range $key, $_ := $config.instances }}
 ---
 apiVersion: batch/v1
 kind: CronJob

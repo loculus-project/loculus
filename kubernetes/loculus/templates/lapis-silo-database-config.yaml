@@ -1,8 +1,8 @@
-{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
+{{- $config := include "loculus.getConfig" }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 {{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
 
-{{- range $key, $instance := $configFile.instances }}
+{{- range $key, $instance := $config.instances }}
 ---
 apiVersion: v1
 kind: ConfigMap

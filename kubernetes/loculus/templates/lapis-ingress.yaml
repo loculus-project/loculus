@@ -1,6 +1,6 @@
 {{- $lapisHost := printf "lapis.%s" .Values.host }}
-{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
-{{- range $key, $_ := $configFile.instances }}
+{{- $config := include "loculus.getConfig" }}
+{{- range $key, $_ := $config.instances }}
 
 ---
 apiVersion: traefik.containo.us/v1alpha1

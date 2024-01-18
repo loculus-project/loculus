@@ -1,6 +1,6 @@
-{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
+{{- $config := include "loculus.getConfig" }}
 
-{{- range $key, $_ := $configFile.instances }}
+{{- range $key, $_ := $config.instances }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
