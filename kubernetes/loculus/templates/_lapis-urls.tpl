@@ -8,7 +8,7 @@
 {{/* generates external LAPIS urls from { config, host } */}}
 {{ define "loculus.generateExternalLapisUrls"}}
 {{ $host := .host }}
-{{ range $key, $_ := $.Values.instances }}
+{{ range $key, $_ := .config.instances }}
 "{{ $key -}}": "{{ $host }}/{{ $key }}"
 {{ end }}
 {{ end }}
