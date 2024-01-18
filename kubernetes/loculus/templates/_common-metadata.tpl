@@ -93,9 +93,5 @@ fields:
 
 
 {{- define "loculus.getConfig" }}
-  {{- if $.Values.configYaml }}
     {{- $.Values.configYaml | fromYaml }}
-  {{- else }}
-    {{- /* Handle the case where $.Values.ConfigYaml is not set, possibly by returning a default value or configuration */ }}
-  {{- end }}
 {{- end }}
