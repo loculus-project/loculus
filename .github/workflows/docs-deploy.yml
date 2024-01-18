@@ -3,8 +3,8 @@ name: Builds and deploy documentation
 on:
   workflow_dispatch:
   push:
-   # branches:
-   #   - main
+    branches:
+      - main
 
 jobs:
   build-and-deploy:
