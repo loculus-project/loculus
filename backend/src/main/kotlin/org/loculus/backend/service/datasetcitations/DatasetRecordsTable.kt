@@ -1,4 +1,4 @@
-package org.loculus.backend.service.submission
+package org.loculus.backend.service.datasetcitations
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
@@ -13,10 +13,10 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
-object DatasetToRecordsTable : Table("dataset_to_records") {
-    val datasetRecordId = long("dataset_record_id") references DatasetRecordsTable.datasetRecordId
-    val datasetId = uuid("dataset_id") references DatasetsTable.datasetId
-    val datasetVersion = long("dataset_version") references DatasetsTable.datasetVersion
+object DatasetRecordsTable : Table("dataset_records") {
+    val datasetRecordId = long("dataset_record_id").autoIncrement()
 
-    override val primaryKey = PrimaryKey(datasetRecordId, datasetId, datasetVersion)
+    val accession = varchar("accession", 255)
+    val type = varchar("type", 255)
+    override val primaryKey = PrimaryKey(datasetRecordId)
 }

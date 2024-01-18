@@ -1,5 +1,6 @@
-package org.loculus.backend.service.submission
+package org.loculus.backend.service.datasetcitations
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.Table
@@ -14,14 +15,17 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
-object DatasetsTable : Table("datasets") {
-    val datasetId = uuid("dataset_id").autoGenerate()
-    val datasetVersion = long("dataset_version")
+object CitationsTable : Table("citations") {
+    val citationId = long("citation_id").autoIncrement()
 
-    val name = varchar("name", 255)
-    val description = varchar("description", 255)
+    val data = varchar("data", 255)
+    val type = varchar("type", 255)
+
     val createdAt = datetime("created_at")
     val createdBy = varchar("created_by", 255)
+    val updatedAt = datetime("updated_at")
+    val updatedBy = varchar("updated_by", 255)
+    val metadata = jacksonSerializableJsonb<JsonNode>("metadata").nullable()
 
-    override val primaryKey = PrimaryKey(datasetId)
+    override val primaryKey = PrimaryKey(citationId)
 }

@@ -1,4 +1,4 @@
-package org.loculus.backend.service.submission
+package org.loculus.backend.service.datasetcitations
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -15,11 +15,12 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
     { string -> jacksonObjectMapper.readValue(string) },
 )
 
-object CitationsTable : Table("citations") {
-    val citationId = long("citation_id").autoIncrement()
+object AuthorsTable : Table("authors") {
+    val authorId = long("author_id").autoIncrement()
 
-    val data = varchar("data", 255)
-    val type = varchar("type", 255)
+    val affiliation = varchar("affiliation", 255)
+    val email = varchar("email", 255)
+    val name = varchar("name", 255)
 
     val createdAt = datetime("created_at")
     val createdBy = varchar("created_by", 255)
@@ -27,5 +28,5 @@ object CitationsTable : Table("citations") {
     val updatedBy = varchar("updated_by", 255)
     val metadata = jacksonSerializableJsonb<JsonNode>("metadata").nullable()
 
-    override val primaryKey = PrimaryKey(citationId)
+    override val primaryKey = PrimaryKey(authorId)
 }

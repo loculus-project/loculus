@@ -1,4 +1,4 @@
-package org.loculus.backend.service.submission
+package org.loculus.backend.service.datasetcitations
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -31,9 +31,9 @@ private val log = KotlinLogging.logger { }
 
 @Service
 @Transactional
-class DatasetDatabaseService(
+class DatasetCitationsDatabaseService(
     pool: DataSource,
-    private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
+    // private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
 ) {
     init {
         Database.connect(pool)

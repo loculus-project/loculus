@@ -11,7 +11,7 @@ import org.loculus.backend.api.DatasetRecord
 import org.loculus.backend.api.ResponseDataset
 import org.loculus.backend.api.SubmittedDataset
 import org.loculus.backend.api.SubmittedDatasetUpdate
-import org.loculus.backend.service.submission.DatasetDatabaseService
+import org.loculus.backend.service.datasetcitations.DatasetCitationsDatabaseService
 import org.springframework.http.MediaType
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -25,8 +25,8 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @Validated
 @SecurityRequirement(name = "bearerAuth")
-class DatasetController(
-    private val databaseService: DatasetDatabaseService,
+class DatasetCitationsController(
+    private val databaseService: DatasetCitationsDatabaseService,
     private val objectMapper: ObjectMapper,
 ) {
     @Operation(description = "Create a new dataset with the specified data")

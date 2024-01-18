@@ -7,6 +7,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 
 const val USER_NAME = "testUser"
 
-class DatasetControllerClient(private val mockMvc: MockMvc, @Autowired val objectMapper: ObjectMapper) {
+class DatasetCitationsControllerClient(private val mockMvc: MockMvc, @Autowired val objectMapper: ObjectMapper) {
     // ...
 }
