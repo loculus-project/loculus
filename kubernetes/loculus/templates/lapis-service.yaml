@@ -1,4 +1,4 @@
-{{- $config := include "loculus.getConfig" . | fromYaml }}
+{{- $config := include "loculus.getConfig" . }}
 
 {{- range $key, $_ := $config.instances }}
 ---

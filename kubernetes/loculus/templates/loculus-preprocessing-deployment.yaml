@@ -1,5 +1,5 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{ $config := include "loculus.getConfig" . | fromYaml }}
+{{ $config := include "loculus.getConfig" . }}
 {{ $backendHost := .Values.disableBackend | ternary
     "http://host.k3d.internal:8079"
     "http://loculus-backend-service:8079"
