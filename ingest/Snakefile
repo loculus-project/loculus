@@ -1,0 +1,77 @@
+TAXON_ID = 10244  # Mpox
+
+
+rule all:
+    input:
+        "data/sequences.fasta",
+        "data/metadata.tsv",
+
+
+rule fetch_ncbi_dataset_package:
+    output:
+        dataset_package="data/ncbi_dataset.zip",
+    retries: 5
+    shell:
+        """
+        datasets download virus genome taxon {TAXON_ID} \
+            --no-progressbar \
+            --filename {output.dataset_package}
+        """
+
+
+rule extract_ncbi_dataset_sequences:
+    input:
+        dataset_package="data/ncbi_dataset.zip",
+    output:
+        ncbi_dataset_sequences="data/sequences.fasta",
+    shell:
+        """
+        unzip -jp {input.dataset_package} \
+            ncbi_dataset/data/genomic.fna \
+        | seqkit seq -i -w0 \
+        > {output.ncbi_dataset_sequences}
+        """
+
+
+rule format_ncbi_dataset_report:
+    input:
+        dataset_package="data/ncbi_dataset.zip",
+    output:
+        ncbi_dataset_tsv="data/metadata_raw.tsv",
+    params:
+        fields_to_include="accession,isolate-collection-date,geo-location,geo-region,isolate-lineage,release-date,submitter-affiliation,submitter-names",
+    shell:
+        """
+        dataformat tsv virus-genome \
+            --package {input.dataset_package} \
+            --fields {params.fields_to_include:q} \
+            > {output.ncbi_dataset_tsv}
+        """
+
+
+rule rename_columns:
+    input:
+        ncbi_dataset_tsv="data/metadata_raw.tsv",
+    output:
+        ncbi_dataset_tsv="data/metadata.tsv",
+    shell:
+        """
+        sed '1s/Accession/submissionId/; 1s/Isolate Collection date/collection_date/' \
+            {input.ncbi_dataset_tsv} \
+            > {output.ncbi_dataset_tsv}
+        """
+
+
+rule submit_to_loculus:
+    input:
+        metadata="data/metadata.tsv",
+        sequences="data/sequences.fasta",
+        submit_config="config/submit_config.yaml",
+    output:
+        ids="result/loculus_ids.tsv",
+    shell:
+        """
+        python scripts/submit_to_loculus.py \
+            --metadata {input.metadata} \
+            --sequences {input.sequences}
+        """
