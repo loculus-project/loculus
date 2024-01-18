@@ -1,4 +1,4 @@
-{{- $config := include "loculus.getConfig" . }}
+{{- $config := include "loculus.getConfig" . | fromYaml }}
 
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/token" }}
 

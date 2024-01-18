@@ -1,5 +1,5 @@
 {{- $lapisHost := printf "lapis.%s" .Values.host }}
-{{- $config := include "loculus.getConfig" . }}
+{{- $config := include "loculus.getConfig" . | fromYaml }}
 {{- range $key, $_ := $config.instances }}
 
 ---

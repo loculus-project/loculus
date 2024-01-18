@@ -1,5 +1,5 @@
 {{- $keycloakHost := printf "authentication.%s" .Values.host }}
-{{- $config := include "loculus.getConfig" . }}
+{{- $config := include "loculus.getConfig" . | fromYaml }}
 {{- $lapisHost := (
   eq .Values.environment "server" | ternary
     (printf "https://lapis.%s" .Values.host)
