@@ -2,6 +2,11 @@ name: E2E test (on kubernetes)
 
 on:
   push:
+    paths:
+      - 'website/**'
+      - 'backend/**'
+      - 'kubernetes/**'
+      - 'preprocessing/**'
 
 concurrency:
   group: ci-${{ github.ref }}-e2e-k3d
