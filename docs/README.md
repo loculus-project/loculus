@@ -4,7 +4,7 @@ This directory is used to build the [Loculus documentation site](https://loculus
 
 ## Project Structure
 
-The format is as ffollows
+The directory structure is as follows:
 
 ```
 .
