@@ -1,4 +1,4 @@
-{{- $config := include "loculus.getConfig" }}
+{{- $config := include "loculus.getConfig" . }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 {{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
 
