@@ -3,7 +3,7 @@ namespace: loculus
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
-configYaml: |
+configYaml:
   instances:
     dummy-organism:
       schema:
