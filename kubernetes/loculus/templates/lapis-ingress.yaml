@@ -1,5 +1,5 @@
 {{- $lapisHost := printf "lapis.%s" .Values.host }}
-{{- $config := $.Values.configYaml }}
+{{- $config := $.Values.configYaml | fromYaml }}
 {{- range $key, $_ := $config.instances }}
 
 ---

@@ -1,5 +1,5 @@
 {{- $keycloakHost := printf "authentication.%s" .Values.host }}
-{{- $config := $.Values.configYaml }}
+{{- $config := $.Values.configYaml | fromYaml }}
 {{- $lapisHost := (
   eq .Values.environment "server" | ternary
     (printf "https://lapis.%s" .Values.host)
