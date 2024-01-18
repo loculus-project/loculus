@@ -2,6 +2,7 @@ name: Builds and deploy documentation
 
 on:
   push:
+    workflow_dispatch:
     branches:
       - main
 
