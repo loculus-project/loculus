@@ -1,4 +1,7 @@
-# Glossary
+---
+title: Glossary
+description: Glossary of terms used in Loculus
+---
 
 **Sequence entry**: A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated metadata. It is the main entity of the Loculus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own accession. Changes to sequence entries are versioned, meaning that a sequence entry can have multiple versions.
 
@@ -10,7 +13,7 @@
 
 **Nucleotide sequence and amino acid sequences**: Users upload unaligned nucleotide sequences. The preprocessing pipeline aligns the sequences against an organism-specific reference genome and translates them to amino acid sequences.
 
-**Data Use Terms**: 
+**Data Use Terms**:
 When submitting data, the user may choose to restrict the usage of that data for a certain time period (up to a maximum of one year).
 These data use terms are associated with the accession and apply to all versions of that accession.
 The period can be _shortened_ by any member of the group.
