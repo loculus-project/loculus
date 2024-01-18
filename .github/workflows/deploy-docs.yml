@@ -1,9 +1,9 @@
-name: Deploy Astro Documentation
+name: Builds and deploy documentation
 
 on:
   push:
-   # branches:
-   #   - main  # Your default branch, change if necessary
+    branches:
+      - main
 
 jobs:
   build-and-deploy:
