@@ -13,9 +13,25 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import io.swagger.v3.oas.annotations.media.Schema
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import mu.KotlinLogging
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.utils.Accession
+
+data class DataUseTermsHistoryEntry(
+    val accession: Accession,
+    @Schema(
+        description = "The date time string (ISO-8601) until which the sequence entry is restricted.",
+        type = "string",
+        format = "date",
+        example = "2007-12-03T10:15:30",
+    )
+    val changeDate: String,
+    val dataUseTerms: DataUseTerms,
+    @Schema(
+        description = "The user who changed the data use terms of the sequence entry.",
+        type = "string",
+    )
+    val userName: String,
+)
 
 enum class DataUseTermsType {
     @JsonProperty("OPEN")
@@ -35,8 +51,6 @@ enum class DataUseTermsType {
         }
     }
 }
-
-private val logger = KotlinLogging.logger { }
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(
@@ -72,10 +86,23 @@ sealed interface DataUseTerms {
 
     companion object {
         fun fromParameters(type: DataUseTermsType, restrictedUntilString: String?): DataUseTerms {
-            logger.info { "Creating DataUseTerms from parameters: type=$type, restrictedUntil=$restrictedUntilString" }
             return when (type) {
                 DataUseTermsType.OPEN -> Open
                 DataUseTermsType.RESTRICTED -> Restricted(parseRestrictedUntil(restrictedUntilString))
+            }
+        }
+
+        fun fromParameters(type: DataUseTermsType, restrictedUntilString: LocalDate?): DataUseTerms {
+            return when (type) {
+                DataUseTermsType.OPEN -> Open
+                DataUseTermsType.RESTRICTED ->
+                    if (restrictedUntilString == null) {
+                        throw BadRequestException(
+                            "The date 'restrictedUntil' must be set if 'dataUseTermsType' is RESTRICTED.",
+                        )
+                    } else {
+                        Restricted(restrictedUntilString)
+                    }
             }
         }
 

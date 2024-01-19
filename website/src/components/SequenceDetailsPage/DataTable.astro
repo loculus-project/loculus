@@ -1,21 +1,37 @@
 ---
+import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { type TableDataEntry } from './getTableData';
+import { DATA_USE_TERMS_FIELD } from '../../settings';
+import { type DataUseTermsHistoryEntry } from '../../types/backend';
 
 interface Props {
     tableData: TableDataEntry[];
+    dataUseTermsHistory: DataUseTermsHistoryEntry[];
 }
 
-const { tableData } = Astro.props;
+const { tableData, dataUseTermsHistory } = Astro.props;
 ---
 
 <div class='mt-6'>
     <table class='table-auto'>
         <tbody>
             {
-                tableData.map(({ label, value }) => (
+                tableData.map(({ label, name, value }) => (
                     <tr>
-                        <td class='font-semibold pr-4 align-top w-1/4'>{label}:</td>
-                        <td class='break-normal'>{value}</td>
+                        <td class='font-semibold pr-4 align-top w-1/4'>
+                            <div class='flex flex-row'>{label}:</div>
+                        </td>
+                        <td class='break-normal'>
+                            <div class='flex flex-row gap-3'>
+                                {value}{' '}
+                                {name === DATA_USE_TERMS_FIELD ? (
+                                    <DataUseTermsHistoryModal
+                                        dataUseTermsHistory={dataUseTermsHistory}
+                                        client:only='react'
+                                    />
+                                ) : null}
+                            </div>
+                        </td>
                     </tr>
                 ))
             }

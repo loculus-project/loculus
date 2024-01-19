@@ -11,9 +11,11 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsChangeRequest
+import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -29,6 +31,52 @@ class DataUseTermsControllerTest(
     @Autowired private val client: DataUseTermsControllerClient,
     @Autowired private val submissionConvenienceClient: SubmissionConvenienceClient,
 ) {
+
+    @Test
+    fun `WHEN I get data use terms of non-existing accession THEN returns unprocessable entity`() {
+        client.getDataUseTerms(firstAccession)
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail", containsString("Accession $firstAccession not found")),
+            )
+    }
+
+    @Test
+    fun `GIVEN open submission WHEN getting data use terms THEN return history with one OPEN entry`() {
+        submissionConvenienceClient.submitDefaultFiles()
+        client.getDataUseTerms(firstAccession)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$").isArray)
+            .andExpect(jsonPath("\$").isNotEmpty)
+            .andExpect(jsonPath("\$[0].accession").value("1"))
+            .andExpect(jsonPath("\$[0].changeDate", containsString(dateMonthsFromNow(0).toString())))
+            .andExpect(jsonPath("\$[0].dataUseTerms.type").value(DataUseTermsType.OPEN.name))
+    }
+
+    @Test
+    fun `GIVEN changes in data use terms WHEN getting data use terms THEN return full history`() {
+        submissionConvenienceClient.submitDefaultFiles(dataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)))
+
+        client.changeDataUseTerms(
+            DataUseTermsChangeRequest(
+                accessions = listOf(firstAccession),
+                newDataUseTerms = DataUseTerms.Open,
+            ),
+        )
+
+        client.getDataUseTerms(firstAccession)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$").isArray)
+            .andExpect(jsonPath("\$[0].accession").value(firstAccession))
+            .andExpect(jsonPath("\$[0].changeDate", containsString(dateMonthsFromNow(0).toString())))
+            .andExpect(jsonPath("\$[0].dataUseTerms.type").value(DataUseTermsType.RESTRICTED.name))
+            .andExpect(jsonPath("\$[0].dataUseTerms.restrictedUntil").value(dateMonthsFromNow(6).toString()))
+            .andExpect(jsonPath("\$[1].accession").value(firstAccession))
+            .andExpect(jsonPath("\$[1].dataUseTerms.type").value(DataUseTermsType.OPEN.name))
+    }
 
     @ParameterizedTest
     @MethodSource("authorizationTestCases")

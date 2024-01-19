@@ -3,8 +3,9 @@ import { Result } from 'neverthrow';
 import { getTableData, type TableDataEntry } from '../../../../components/SequenceDetailsPage/getTableData.ts';
 import { getSchema } from '../../../../config.ts';
 import { routes } from '../../../../routes.ts';
+import { BackendClient } from '../../../../services/backendClient.ts';
 import { LapisClient } from '../../../../services/lapisClient.ts';
-import type { ProblemDetail } from '../../../../types/backend.ts';
+import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../../types/backend.ts';
 import type { SequenceEntryHistory } from '../../../../types/lapis.ts';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion.ts';
 
@@ -17,6 +18,7 @@ type TableData = {
     type: SequenceDetailsTableResultType.TABLE_DATA;
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
+    dataUseTermsHistory: DataUseTermsHistoryEntry[];
 };
 
 type Redirect = {
@@ -31,6 +33,7 @@ export const getSequenceDetailsTableData = async (
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
     const lapisClient = LapisClient.createForOrganism(organism);
+    const backendClient = BackendClient.create();
 
     if (version === undefined) {
         const latestVersionResult = await lapisClient.getLatestAccessionVersion(accession);
@@ -42,14 +45,20 @@ export const getSequenceDetailsTableData = async (
 
     const schema = getSchema(organism);
 
-    const [tableDataResult, sequenceEntryHistoryResult] = await Promise.all([
+    const [tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult] = await Promise.all([
         getTableData(accessionVersion, schema, lapisClient),
         lapisClient.getAllSequenceEntryHistoryForAccession(accession),
+        backendClient.call('getDataUseTermsHistory', {
+            params: { accession },
+        }),
     ]);
 
-    return Result.combine([tableDataResult, sequenceEntryHistoryResult]).map(([tableData, sequenceEntryHistory]) => ({
-        type: SequenceDetailsTableResultType.TABLE_DATA as const,
-        tableData,
-        sequenceEntryHistory,
-    }));
+    return Result.combine([tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult]).map(
+        ([tableData, sequenceEntryHistory, dataUseTermsHistory]) => ({
+            type: SequenceDetailsTableResultType.TABLE_DATA as const,
+            tableData,
+            sequenceEntryHistory,
+            dataUseTermsHistory,
+        }),
+    );
 };

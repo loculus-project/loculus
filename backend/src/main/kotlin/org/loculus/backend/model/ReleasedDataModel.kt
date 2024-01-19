@@ -2,10 +2,14 @@ package org.loculus.backend.model
 
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.TextNode
+import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
+import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
@@ -38,6 +42,8 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
     ): ProcessedData {
         val siloVersionStatus = computeSiloVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
+        val currentDataUseTermsType = computeDataUseTerm(rawProcessedData)
+
         val metadata = rawProcessedData.processedData.metadata +
             ("accession" to TextNode(rawProcessedData.accession)) +
             ("version" to LongNode(rawProcessedData.version)) +
@@ -48,7 +54,8 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
             ("group" to TextNode(rawProcessedData.group)) +
             ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
             ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
-            ("versionStatus" to TextNode(siloVersionStatus.name))
+            ("versionStatus" to TextNode(siloVersionStatus.name)) +
+            ("dataUseTerms" to TextNode(currentDataUseTermsType.name))
 
         return ProcessedData(
             metadata = metadata,
@@ -58,6 +65,15 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
             aminoAcidInsertions = rawProcessedData.processedData.aminoAcidInsertions,
             alignedAminoAcidSequences = rawProcessedData.processedData.alignedAminoAcidSequences,
         )
+    }
+
+    private fun computeDataUseTerm(rawProcessedData: RawProcessedData) = if (
+        rawProcessedData.dataUseTerms is DataUseTerms.Restricted &&
+        rawProcessedData.dataUseTerms.restrictedUntil < Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+    ) {
+        DataUseTermsType.RESTRICTED
+    } else {
+        rawProcessedData.dataUseTerms.type
     }
 
     private fun computeSiloVersionStatus(
