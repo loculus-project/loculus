@@ -2,8 +2,8 @@
 import { getSequenceDetailsTableData, SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
 import RevocationEntryDataTable from '../../../../components/SequenceDetailsPage/RevocationEntryDataTable.astro';
 import SequencesBanner from '../../../../components/SequenceDetailsPage/SequencesBanner.astro';
-import SequencesDataTable from '../../../../components/SequenceDetailsPage/SequencesDataTable.astro';
 import SequencesDataTableTitle from '../../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
+import SequencesDataPage from '../../../../components/SequenceDetailsPage/SequencesDetailsPage.astro';
 import { isRevocationEntry } from '../../../../components/SequenceDetailsPage/getTableData';
 import ErrorBox from '../../../../components/common/ErrorBox.astro';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
@@ -50,12 +50,16 @@ if (
             (data) =>
                 data.type === SequenceDetailsTableResultType.TABLE_DATA &&
                 (isRevocationEntry(data.tableData) ? (
-                    <RevocationEntryDataTable tableData={data.tableData} />
+                    <RevocationEntryDataTable
+                        tableData={data.tableData}
+                        dataUseTermsHistory={data.dataUseTermsHistory}
+                    />
                 ) : (
-                    <SequencesDataTable
+                    <SequencesDataPage
                         tableData={data.tableData}
                         organism={organism}
                         accessionVersion={accessionVersion}
+                        dataUseTermsHistory={data.dataUseTermsHistory}
                     />
                 )),
             () => (

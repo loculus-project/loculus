@@ -73,6 +73,15 @@ export const dataUseTerms = z.union([
 
 export type DataUseTerms = z.infer<typeof dataUseTerms>;
 
+export const dataUseTermsHistoryEntry = z.object({
+    accession,
+    changeDate: z.string(),
+    dataUseTerms,
+    userName: z.string(),
+});
+
+export type DataUseTermsHistoryEntry = z.infer<typeof dataUseTermsHistoryEntry>;
+
 export const submissionIdMapping = accessionVersion.merge(
     z.object({
         submissionId: z.string(),

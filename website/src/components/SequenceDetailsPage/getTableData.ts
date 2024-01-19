@@ -101,7 +101,6 @@ function toTableData(config: Schema) {
             name: metadata.name,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),
         }));
-
         data.push(
             {
                 label: 'Nucleotide substitutions',

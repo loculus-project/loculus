@@ -5,6 +5,7 @@ import { authorizationHeader, notAuthorizedError, withOrganismPathSegment } from
 import {
     accessions,
     accessionVersionsObject,
+    dataUseTermsHistoryEntry,
     problemDetail,
     sequenceEntryStatus,
     sequenceEntryToEdit,
@@ -188,6 +189,17 @@ const submitProcessedDataEndpoint = makeEndpoint({
     errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
 });
 
+const getDataUseTermsHistoryEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/data-use-terms/:accession',
+    alias: 'getDataUseTermsHistory',
+    response: z.array(dataUseTermsHistoryEntry),
+    errors: [
+        { status: 'default', schema: problemDetail },
+        { status: 404, schema: problemDetail },
+    ],
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -200,4 +212,5 @@ export const backendApi = makeApi([
     confirmRevocationEndpoint,
     extractUnprocessedDataEndpoint,
     submitProcessedDataEndpoint,
+    getDataUseTermsHistoryEndpoint,
 ]);

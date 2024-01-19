@@ -21,6 +21,8 @@ fields:
     type: timestamp
   - name: releasedAt
     type: timestamp
+  - name: dataUseTerms
+    type: string
   - name: versionStatus
     type: string
     notSearchable: true

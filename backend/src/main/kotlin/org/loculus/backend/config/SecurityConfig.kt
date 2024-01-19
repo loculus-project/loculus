@@ -48,6 +48,10 @@ class SecurityConfig {
         "/*/submit-processed-data",
     )
 
+    private val getEndpointsThatArePublic = arrayOf(
+        "/data-use-terms/*",
+    )
+
     @Bean
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
@@ -64,6 +68,7 @@ class SecurityConfig {
                     "/api-docs/**",
                     "/swagger-ui/**",
                 ).permitAll()
+                auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
                 auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
                 auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority("preprocessing_pipeline")
                 auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority("get_released_data")
