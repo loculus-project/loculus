@@ -1,19 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-
-const unknownOrganism = Astro.url.searchParams.get('unknownOrganism');
-
-const errorMessage =
-    typeof unknownOrganism === 'string'
-        ? `The organism "${unknownOrganism}" does not exist on this instance. `
-        : 'The page you are looking for does not exist. ';
 ---
 
 <BaseLayout title='Not Found'>
     <div class='bc'>
         <h1 class='title'>Page not found</h1>
         <p>
-            {errorMessage}
             <a href='/'>Go to start page.</a>
         </p>
     </div>
