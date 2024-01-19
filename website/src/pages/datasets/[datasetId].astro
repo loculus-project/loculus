@@ -11,7 +11,8 @@ import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
-const { datasetId = '', version = '1' } = Astro.params;
+const { datasetId = '' } = Astro.params;
+const version = Astro.url.searchParams.get('version')! || '1';
 
 const username = Astro.locals.session.user?.username;
 
@@ -27,6 +28,17 @@ const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers
     version,
 );
 
+const getDatasetByVersion = (datasetVersions, version) => {
+    const matchedVersion = datasetVersions.find(obj => {
+        return obj.datasetVersion === version
+    })
+    console.log(matchedVersion, datasetVersions)
+    if (matchedVersion === undefined) {
+        return datasetVersions[datasetVersions.length - 1]
+    }
+    return matchedVersion
+}
+
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-item-container'>
@@ -39,7 +51,7 @@ const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers
                         <div class='w-1/6 flex flex-col justify-start items-center'>
                             <AuthorDetails 
                                 displayFullDetails={false}
-                                name={dataset[0]?.createdBy}
+                                name={getDatasetByVersion(dataset, version)?.createdBy}
                                 fontSize={60}
                             />
                         </div>
@@ -49,15 +61,17 @@ const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers
                                     datasetRecordsResponse.match(
                                         (datasetRecords) => (
                                             <DatasetItemActions
-                                                dataset={dataset[0]}
-                                                datasetRecords={datasetRecords}
                                                 clientConfig={clientConfig}
                                                 accessToken={accessToken}
-                                                isAdminView={dataset[0]?.createdBy === username}
+                                                dataset={getDatasetByVersion(dataset, version)}
+                                                datasetRecords={datasetRecords}
+                                                isAdminView={getDatasetByVersion(dataset, version)?.createdBy === username}
                                                 client:load
                                             />
                                             <DatasetItem
-                                                dataset={dataset[0]}
+                                                clientConfig={clientConfig}
+                                                accessToken={accessToken}
+                                                dataset={getDatasetByVersion(dataset, version)}
                                                 datasetRecords={datasetRecords}
                                                 client:load
                                             />

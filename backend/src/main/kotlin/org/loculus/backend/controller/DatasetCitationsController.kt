@@ -47,16 +47,16 @@ class DatasetCitationsController(
         return databaseService.getDataset(datasetId, version)
     }
 
-    @Operation(description = "Get records for a dataset")
-    @GetMapping("/get-dataset-records", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getDatasetRecords(@RequestParam datasetId: String, @RequestParam version: Long?): List<DatasetRecord> {
-        return databaseService.getDatasetRecords(datasetId, version)
-    }
-
     @Operation(description = "Get a list of datasets created by a user")
     @GetMapping("/get-datasets-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getDatasets(@UsernameFromJwt username: String): List<Dataset> {
         return databaseService.getDatasets(username)
+    }
+
+    @Operation(description = "Get records for a dataset")
+    @GetMapping("/get-dataset-records", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getDatasetRecords(@RequestParam datasetId: String, @RequestParam version: Long?): List<DatasetRecord> {
+        return databaseService.getDatasetRecords(datasetId, version)
     }
 
     @Operation(description = "Delete a dataset")

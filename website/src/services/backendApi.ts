@@ -293,7 +293,7 @@ const createDatasetEndpoint = makeEndpoint({
 
 const createDatasetDOIEndpoint = makeEndpoint({
     method: 'post',
-    path: '/create-dataset-doi?datasetId=:datasetId&version=:version',
+    path: '/create-dataset-doi?datasetId=:datasetId&version=:datasetVersion',
     alias: 'createDatasetDOI',
     parameters: [
         authorizationHeader,

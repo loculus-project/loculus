@@ -13,7 +13,7 @@ import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedEr
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider';
 
-const logger = getClientLogger('DatasetList');
+const logger = getClientLogger('DatasetItemActions');
 
 type DatasetItemActionsProps = {
     clientConfig: ClientConfig;

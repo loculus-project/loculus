@@ -16,7 +16,7 @@ export const datasetRecords = z.array(datasetRecord);
 
 export const dataset = z.object({
     datasetId: z.string(),
-    datasetDOI: z.string().optional(),
+    datasetDOI: z.string().nullish(),
     datasetVersion: z.number(),
     name: z.string(),
     description: z.string().optional(),

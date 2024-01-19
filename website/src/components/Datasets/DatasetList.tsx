@@ -92,7 +92,6 @@ type DatasetListProps = {
 };
 
 export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
-
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<keyof Dataset>('createdAt');
     const [page, setPage] = useState(0);
@@ -105,7 +104,7 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
     };
 
     const handleClick = (_: MouseEvent<unknown>, datasetId: string, datasetVersion: string) => {
-        window.location.href = `/datasets/${datasetId}?version=${datasetVersion}?user=${username}`;
+        window.location.href = `/datasets/${datasetId}?version=${datasetVersion}&user=${username}`;
     };
 
     const handleChangePage = (_: unknown, newPage: number) => {
@@ -139,25 +138,14 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - datasets.length) : 0;
 
     const visibleRows = useMemo(() => {
-        const stringifyKeys = (obj: any) => {
-            Object.keys(obj).forEach((k) => {
-                if (typeof obj[k] === 'object') {
-                    return stringifyKeys(obj[k]);
-                }
-                obj[k] = '' + obj[k];
-            });
-            return obj;
-        };
-        const serializedDatasets = datasets.map((dataset) => stringifyKeys(dataset));
-
-        return serializedDatasets
+        return datasets
             .sort(getComparator(order, orderBy))
             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
     }, [datasets, order, orderBy, page, rowsPerPage]);
 
     const maxCellLength = 25;
     const truncateCell = (cell: string | undefined) => {
-        if (cell === undefined) {
+        if (cell === undefined || cell === null) {
             return 'N/A';
         }
         if (cell.length > maxCellLength) {
@@ -203,7 +191,7 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
                                         </TableCell>
                                         <TableCell align='left'>{truncateCell(row.name as string)}</TableCell>
                                         <TableCell align='left'> {truncateCell(row.description as string)}</TableCell>
-                                        <TableCell align='left'>N/A</TableCell>
+                                        <TableCell align='left'>{ row?.datasetDOI !== undefined  ? truncateCell(row.datasetDOI as string) : 'N/A'}</TableCell>
                                     </TableRow>
                                 );
                             })}
@@ -215,15 +203,21 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
                         </TableBody>
                     </Table>
                 </TableContainer>
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component='div'
-                    count={datasets.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
+                {
+                    datasets !== undefined && datasets?.length === 0 ? (
+                        <p className={'px-8 py-8'}> You have no datasets yet. </p>
+                    ) :
+                    <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        component='div'
+                        count={datasets.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
+                }
+                
             </Paper>
         </Box>
     );

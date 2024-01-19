@@ -31,9 +31,10 @@ data class Dataset(
     val datasetId: UUID,
     val datasetVersion: Long,
     val name: String,
-    val description: String? = null,
     val createdAt: Timestamp,
     val createdBy: String,
+    val description: String?,
+    val datasetDOI: String?,
 )
 
 data class ResponseDataset(

@@ -52,24 +52,24 @@ class DatasetCitationsDatabaseService(
 
         val insertedSet = DatasetsTable
             .insert {
-                it[name] = datasetName
-                it[description] = datasetDescription ?: ""
-                it[datasetVersion] = 1
-                it[createdAt] = now
-                it[createdBy] = username
+                it[DatasetsTable.name] = datasetName
+                it[DatasetsTable.description] = datasetDescription ?: ""
+                it[DatasetsTable.datasetVersion] = 1
+                it[DatasetsTable.createdAt] = now
+                it[DatasetsTable.createdBy] = username
             }
 
         for (record in datasetRecords) {
             val insertedRecord = DatasetRecordsTable
                 .insert {
-                    it[accession] = record.accession
-                    it[type] = record.type
+                    it[DatasetRecordsTable.accession] = record.accession
+                    it[DatasetRecordsTable.type] = record.type
                 }
             DatasetToRecordsTable
                 .insert {
-                    it[datasetRecordId] = insertedRecord[DatasetRecordsTable.datasetRecordId]
-                    it[datasetId] = insertedSet[DatasetsTable.datasetId]
-                    it[datasetVersion] = 1
+                    it[DatasetToRecordsTable.datasetRecordId] = insertedRecord[DatasetRecordsTable.datasetRecordId]
+                    it[DatasetToRecordsTable.datasetId] = insertedSet[DatasetsTable.datasetId]
+                    it[DatasetToRecordsTable.datasetVersion] = 1
                 }
         }
 
@@ -86,7 +86,7 @@ class DatasetCitationsDatabaseService(
         datasetRecords: List<SubmittedDatasetRecord>,
         datasetDescription: String?,
     ): ResponseDataset {
-        log.info { "updating dataset $datasetName, user $username" }
+        log.info { "updating dataset $datasetId, user $username" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
@@ -97,18 +97,19 @@ class DatasetCitationsDatabaseService(
             ?.get(DatasetsTable.datasetVersion.max())
 
         if (maxVersion == null) {
-            throw IllegalArgumentException("Dataset set $datasetId does not exist")
+            throw IllegalArgumentException("Dataset $datasetId does not exist")
         }
 
         val version = maxVersion + 1
 
         val insertedSet = DatasetsTable
             .insert {
-                it[name] = datasetName
-                it[description] = datasetDescription ?: ""
-                it[datasetVersion] = version
-                it[createdAt] = now
-                it[createdBy] = username
+                it[DatasetsTable.datasetId] = UUID.fromString(datasetId)
+                it[DatasetsTable.name] = datasetName
+                it[DatasetsTable.description] = datasetDescription ?: ""
+                it[DatasetsTable.datasetVersion] = version
+                it[DatasetsTable.createdAt] = now
+                it[DatasetsTable.createdBy] = username
             }
 
         for (record in datasetRecords) {
@@ -121,8 +122,8 @@ class DatasetCitationsDatabaseService(
             if (existingRecord == null) {
                 val insertedRecord = DatasetRecordsTable
                     .insert {
-                        it[accession] = record.accession
-                        it[type] = record.type
+                        it[DatasetRecordsTable.accession] = record.accession
+                        it[DatasetRecordsTable.type] = record.type
                     }
                 datasetRecordId = insertedRecord[DatasetRecordsTable.datasetRecordId]
             } else {
@@ -159,9 +160,10 @@ class DatasetCitationsDatabaseService(
                         it[DatasetsTable.datasetId],
                         it[DatasetsTable.datasetVersion],
                         it[DatasetsTable.name],
-                        it[DatasetsTable.description],
                         Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
                         it[DatasetsTable.createdBy],
+                        it[DatasetsTable.description],
+                        it[DatasetsTable.datasetDOI],
                     ),
                 )
             }
@@ -173,7 +175,7 @@ class DatasetCitationsDatabaseService(
                 }.singleOrNull()
 
             if (selectedDataset == null) {
-                throw IllegalArgumentException("Dataset set $datasetId does not exist")
+                throw IllegalArgumentException("Dataset $datasetId, version $version does not exist")
             }
 
             datasetList.add(
@@ -181,9 +183,10 @@ class DatasetCitationsDatabaseService(
                     selectedDataset[DatasetsTable.datasetId],
                     selectedDataset[DatasetsTable.datasetVersion],
                     selectedDataset[DatasetsTable.name],
-                    selectedDataset[DatasetsTable.description],
                     Timestamp.valueOf(selectedDataset[DatasetsTable.createdAt].toJavaLocalDateTime()),
                     selectedDataset[DatasetsTable.createdBy],
+                    selectedDataset[DatasetsTable.description],
+                    selectedDataset[DatasetsTable.datasetDOI],
                 ),
             )
         }
@@ -202,7 +205,7 @@ class DatasetCitationsDatabaseService(
                 .singleOrNull()?.get(DatasetsTable.datasetVersion)
         }
         if (selectedVersion == null) {
-            throw IllegalArgumentException("Dataset set $datasetId does not exist")
+            throw IllegalArgumentException("Dataset $datasetId, version $version does not exist")
         }
 
         // TODO: join with sequenceEntries without needing organism
@@ -234,9 +237,10 @@ class DatasetCitationsDatabaseService(
                     it[DatasetsTable.datasetId],
                     it[DatasetsTable.datasetVersion],
                     it[DatasetsTable.name],
-                    it[DatasetsTable.description],
                     Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
                     it[DatasetsTable.createdBy],
+                    it[DatasetsTable.description],
+                    it[DatasetsTable.datasetDOI],
                 ),
             )
         }
@@ -257,11 +261,11 @@ class DatasetCitationsDatabaseService(
         datasetId: String,
         version: Long,
     ): ResponseDataset {
-        log.info { "Create DOI for dataset $datasetId, user $username" }
+        log.info { "Create DOI for dataset $datasetId, version $version, user $username" }
 
-        val datasetDOI = "$DatsetCitationsConstants.DOI_PREFIX/$datasetId.$version"
+        val datasetDOI = "${DatsetCitationsConstants.DOI_PREFIX}/$datasetId.$version"
 
-        log.info { "Debug DOI $datasetDOI" }
+        log.info { "Debug DOI $datasetDOI $DatsetCitationsConstants.DOI_PREFIX" }
 
         DatasetsTable.update (
             {
@@ -294,18 +298,18 @@ class DatasetCitationsDatabaseService(
         return citedBy
     }
 
-    fun createAuthor(_affiliation: String, _email: String, _name: String): Long {
+    fun createAuthor(affiliation: String, email: String, name: String): Long {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val insert = AuthorsTable
             .insert {
-                it[affiliation] = _affiliation
-                it[email] = _email
-                it[name] = _name
-                it[createdAt] = now
-                it[createdBy] = "nobody"
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
+                it[AuthorsTable.affiliation] = affiliation
+                it[AuthorsTable.email] = email
+                it[AuthorsTable.name] = name
+                it[AuthorsTable.createdAt] = now
+                it[AuthorsTable.createdBy] = "nobody"
+                it[AuthorsTable.updatedAt] = now
+                it[AuthorsTable.updatedBy] = "nobody"
             }
 
         return insert[AuthorsTable.authorId]
@@ -333,18 +337,18 @@ class DatasetCitationsDatabaseService(
         return authorList
     }
 
-    fun updateAuthor(authorId: Long, _affiliation: String, _email: String, _name: String) {
+    fun updateAuthor(authorId: Long, affiliation: String, email: String, name: String) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         AuthorsTable
             .update(
                 where = { AuthorsTable.authorId eq authorId },
             ) {
-                it[affiliation] = _affiliation
-                it[email] = _email
-                it[name] = _name
-                it[updatedAt] = now
-                it[updatedBy] = "nobody"
+                it[AuthorsTable.affiliation] = affiliation
+                it[AuthorsTable.email] = email
+                it[AuthorsTable.name] = name
+                it[AuthorsTable.updatedAt] = now
+                it[AuthorsTable.updatedBy] = "nobody"
             }
     }
 

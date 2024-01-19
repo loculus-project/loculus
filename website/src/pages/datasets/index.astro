@@ -41,18 +41,17 @@ const session = Astro.locals.session;
                         <div>
                             {
                                 datasetsResponse.match(
-                                    (datasets) =>
-                                        datasets !== undefined && datasets?.length > 0 ? (
-                                            <DatasetList datasets={datasets} username={username} client:load />
-                                        ) : (
-                                            'You have no datasets yet.'
-                                        ),
-                                    (error) => (
+                                    (datasets) => 
+                                        <DatasetList 
+                                            datasets={datasets} 
+                                            username={username} 
+                                            client:load 
+                                        />,
+                                    (error) => 
                                         <ErrorFeedback
                                             message={'Error while fetching datasets: ' + JSON.stringify(error)}
                                             client:load
-                                        />
-                                    ),
+                                        />,
                                 )
                             }
                         </div>
