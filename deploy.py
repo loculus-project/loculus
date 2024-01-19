@@ -11,6 +11,7 @@ ROOT_DIR = script_path.parent
 CLUSTER_NAME = 'testCluster'
 HELM_RELEASE_NAME = 'preview'
 HELM_CHART_DIR = ROOT_DIR / 'kubernetes' / 'loculus'
+HELM_VALUES_FILE = HELM_CHART_DIR / 'values.yaml'
 
 WEBSITE_PORT_MAPPING = '-p 3000:30081@agent:0'
 BACKEND_PORT_MAPPING = '-p 8079:30082@agent:0'
@@ -37,6 +38,8 @@ helm_parser.add_argument('--dockerconfigjson',
 helm_parser.add_argument('--uninstall', action='store_true', help='Uninstall installation')
 helm_parser.add_argument('--enablePreprocessing', action='store_true',
                          help='Include deployment of preprocessing pipelines')
+helm_parser.add_argument('--values', help='Values file for helm chart',
+                         default=HELM_VALUES_FILE)
 
 upgrade_parser = subparsers.add_parser('upgrade', help='Upgrade helm installation')
 
@@ -112,6 +115,7 @@ def handle_helm():
 
     parameters = [
         'helm', 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
+        '-f', args.values,
         '--set', "environment=local",
         '--set', f"branch={branch}",
         '--set', f"dockerconfigjson={docker_config_json}",
@@ -136,7 +140,11 @@ def get_docker_config_json():
 
 
 def handle_helm_upgrade():
-    subprocess.run(['helm', 'upgrade', HELM_RELEASE_NAME, HELM_CHART_DIR], check=True)
+        parameters = [
+        'helm', 'upgrade', HELM_RELEASE_NAME, HELM_CHART_DIR,
+        '-f', args.values
+    ]
+    subprocess.run(parameters, check=True)
 
 
 if __name__ == '__main__':
