@@ -70,7 +70,7 @@ jobs:
         node-version: 20
 
     - name: Cache .npm
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.npm
         key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
@@ -83,7 +83,7 @@ jobs:
       run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
 
     - name: Cache Playwright Browsers
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: playwright-cache
       with:
         path: ~/.cache/ms-playwright
