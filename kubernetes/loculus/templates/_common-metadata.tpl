@@ -28,7 +28,7 @@ fields:
 {{- define "loculus.generateWebsiteConfig" }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 instances:
-  {{- range $key, $instance := .instances }}
+  {{- range $key, $instance := $.Values.instances }}
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
@@ -65,7 +65,7 @@ fields:
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
 instances:
-  {{- range $key, $instance := .instances }}
+  {{- range $key, $instance := $.Values.instances }}
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
