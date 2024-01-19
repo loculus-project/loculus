@@ -95,6 +95,7 @@ You can also delete the cluster with:
 ../deploy.py cluster --delete
 ```
 
+With helm based commands you can customise the values yaml file with `--values [file.yaml]`.
 ## Argo CD
 
 ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].preview.k3s.loculus.org`. Very long branch names, and some special characters, are not supported.
