@@ -1,19 +1,20 @@
 import { ok, Result } from 'neverthrow';
 
 import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
-import { getSchema } from '../../../config.ts';
+import { getReferenceGenomes, getSchema } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { hiddenDefaultSearchFilters } from '../../../settings.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
-import type { Filter } from '../../../types/config.ts';
+import type { MetadataFilter, FilterValue, MutationFilter } from '../../../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../../../types/lapis.ts';
+import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
 };
 
-function addHiddenFilters(searchFormFilter: Filter[], hiddenFilters: Filter[]) {
+function addHiddenFilters(searchFormFilter: FilterValue[], hiddenFilters: FilterValue[]) {
     const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
     const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
     return [...searchFormFilter, ...hiddenFiltersToAdd];
@@ -21,20 +22,28 @@ function addHiddenFilters(searchFormFilter: Filter[], hiddenFilters: Filter[]) {
 
 export const getData = async (
     organism: string,
-    searchFormFilter: Filter[],
+    metadataFilter: FilterValue[],
+    mutationFilter: MutationFilter,
     offset: number,
     limit: number,
     orderBy?: OrderBy,
-    hiddenDefaultFilters: Filter[] = hiddenDefaultSearchFilters,
+    hiddenDefaultFilters: FilterValue[] = hiddenDefaultSearchFilters,
 ): Promise<Result<SearchResponse, ProblemDetail>> => {
-    const filters = addHiddenFilters(searchFormFilter, hiddenDefaultFilters);
+    const filters = addHiddenFilters(metadataFilter, hiddenDefaultFilters);
 
-    const searchFilters = filters
+    const metadataSearchFilters = filters
         .filter((metadata) => metadata.filterValue !== '')
         .reduce((acc: Record<string, string>, metadata) => {
             acc[metadata.name] = metadata.filterValue;
             return acc;
         }, {});
+    const searchFilters = {
+        ...metadataSearchFilters,
+        nucleotideMutations: mutationFilter.nucleotideMutationQueries ?? [],
+        aminoAcidMutations: mutationFilter.aminoAcidMutationQueries ?? [],
+        nucleotideInsertions: mutationFilter.nucleotideInsertionQueries ?? [],
+        aminoAcidInsertions: mutationFilter.aminoAcidInsertionQueries ?? [],
+    };
 
     const config = getSchema(organism);
 
@@ -54,7 +63,7 @@ export const getData = async (
         fields: [...config.tableColumns, config.primaryKey],
         limit,
         offset,
-        ...searchFilters,
+        ...metadataSearchFilters,
         orderBy: orderBy !== undefined ? [orderBy] : undefined,
     };
 
@@ -68,7 +77,7 @@ export const getData = async (
     });
 };
 
-export const getSearchFormFilters = (getSearchParams: (param: string) => string, organism: string): Filter[] => {
+export const getMetadataFilters = (getSearchParams: (param: string) => string, organism: string): MetadataFilter[] => {
     const schema = getSchema(organism);
     return schema.metadata.flatMap((metadata) => {
         if (metadata.notSearchable === true) {
@@ -106,4 +115,21 @@ export const getOrderBy = (searchParams: URLSearchParams): OrderBy | undefined =
               type: orderByTypeValue,
           }
         : undefined;
+};
+
+export const getMutationFilter = (searchParams: URLSearchParams): MutationFilter => {
+    return {
+        nucleotideMutationQueries: searchParams.get('nucleotideMutations')?.split(','),
+        aminoAcidMutationQueries: searchParams.get('aminoAcidMutations')?.split(','),
+        nucleotideInsertionQueries: searchParams.get('nucleotideInsertions')?.split(','),
+        aminoAcidInsertionQueries: searchParams.get('aminoAcidInsertions')?.split(','),
+    };
+};
+
+export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
+    const referenceGenomes = getReferenceGenomes(organism);
+    return {
+        nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
+        genes: referenceGenomes.genes.map((n) => n.name),
+    };
 };

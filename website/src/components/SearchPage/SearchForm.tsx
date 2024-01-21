@@ -7,13 +7,15 @@ import { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
 import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField } from './fields/DateField';
+import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { routes } from '../../routes.ts';
-import type { Filter } from '../../types/config.ts';
+import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
@@ -22,19 +24,28 @@ const queryClient = new QueryClient();
 
 interface SearchFormProps {
     organism: string;
-    filters: Filter[];
+    filters: MetadataFilter[];
+    initialMutationFilter: MutationFilter;
     clientConfig: ClientConfig;
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
 }
 
 const clientLogger = getClientLogger('SearchForm');
 
-export const SearchForm: FC<SearchFormProps> = ({ organism, filters, clientConfig }) => {
-    const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
+export const SearchForm: FC<SearchFormProps> = ({
+    organism,
+    filters,
+    initialMutationFilter,
+    clientConfig,
+    referenceGenomesSequenceNames,
+}) => {
+    const [fieldValues, setFieldValues] = useState<(MetadataFilter & { label: string })[]>(
         filters.map((filter) => ({
             ...filter,
             label: filter.label ?? sentenceCase(filter.name),
         })),
     );
+    const [mutationFilter, setMutationFilter] = useState<MutationFilter>(initialMutationFilter);
     const [isLoading, setIsLoading] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
 
@@ -53,7 +64,7 @@ export const SearchForm: FC<SearchFormProps> = ({ organism, filters, clientConfi
     const handleSearch: FormEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();
         setIsLoading(true);
-        location.href = routes.searchPage(organism, fieldValues);
+        location.href = routes.searchPage(organism, fieldValues, mutationFilter);
     };
 
     const resetSearch = async () => {
@@ -119,7 +130,14 @@ export const SearchForm: FC<SearchFormProps> = ({ organism, filters, clientConfi
                             </button>
                         </div>
                         <form onSubmit={handleSearch}>
-                            <div className='flex flex-col'>{fields}</div>
+                            <div className='flex flex-col'>
+                                <MutationField
+                                    referenceGenomes={referenceGenomesSequenceNames}
+                                    value={mutationFilter}
+                                    onChange={setMutationFilter}
+                                />
+                                {fields}
+                            </div>
                             <div className='sticky bottom-0 z-10'>
                                 <div
                                     className='h-3'

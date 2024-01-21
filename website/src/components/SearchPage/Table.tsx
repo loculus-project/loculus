@@ -2,7 +2,7 @@ import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 
 import { routes } from '../../routes.ts';
-import type { Filter, Schema } from '../../types/config.ts';
+import type { MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
@@ -15,12 +15,13 @@ type TableProps = {
     organism: string;
     schema: Schema;
     data: TableSequenceData[];
-    filters: Filter[];
+    metadataFilter: MetadataFilter[];
+    mutationFilter: MutationFilter;
     page: number;
     orderBy?: OrderBy;
 };
 
-export const Table: FC<TableProps> = ({ organism, data, schema, filters, page, orderBy }) => {
+export const Table: FC<TableProps> = ({ organism, data, schema, metadataFilter, mutationFilter, page, orderBy }) => {
     const primaryKey = schema.primaryKey;
 
     const columns = schema.tableColumns.map((field) => ({
@@ -31,12 +32,18 @@ export const Table: FC<TableProps> = ({ organism, data, schema, filters, page, o
     const handleSort = (field: string) => {
         if (orderBy?.field === field) {
             if (orderBy.type === 'ascending') {
-                location.href = routes.searchPage(organism, filters, page, { field, type: 'descending' });
+                location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, {
+                    field,
+                    type: 'descending',
+                });
             } else {
-                location.href = routes.searchPage(organism, filters);
+                location.href = routes.searchPage(organism, metadataFilter, mutationFilter);
             }
         } else {
-            location.href = routes.searchPage(organism, filters, page, { field, type: 'ascending' });
+            location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, {
+                field,
+                type: 'ascending',
+            });
         }
     };
 

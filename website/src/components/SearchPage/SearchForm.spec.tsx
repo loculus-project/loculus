@@ -6,7 +6,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { routes } from '../../routes.ts';
-import type { Filter } from '../../types/config.ts';
+import type { MetadataFilter } from '../../types/config.ts';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 vi.mock('../../config', () => ({
@@ -22,13 +23,25 @@ const defaultSearchFormFilters = [
     { name: 'field3', type: 'pango_lineage' as const, label: 'Field 3', autocomplete: true, filterValue: '' },
 ];
 
+const defaultReferenceGenomesSequenceNames = {
+    nucleotideSequences: ['main'],
+    genes: ['gene1', 'gene2'],
+};
+
 function renderSearchForm(
-    searchFormFilters: Filter[] = [...defaultSearchFormFilters],
+    searchFormFilters: MetadataFilter[] = [...defaultSearchFormFilters],
     clientConfig: ClientConfig = testConfig.public,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
 ) {
     render(
         <QueryClientProvider client={queryClient}>
-            <SearchForm organism={testOrganism} filters={searchFormFilters} clientConfig={clientConfig} />
+            <SearchForm
+                organism={testOrganism}
+                filters={searchFormFilters}
+                initialMutationFilter={{}}
+                clientConfig={clientConfig}
+                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+            />
         </QueryClientProvider>,
     );
 }
