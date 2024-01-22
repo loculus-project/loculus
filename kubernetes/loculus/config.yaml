@@ -10,19 +10,25 @@ instances:
           type: string
           generateIndex: true
           autocomplete: true
-          required: true
+          required: false 
         - name: country
           type: string
           generateIndex: true
           autocomplete: true
-          required: true
+          required: false
         - name: isolate_name
           type: string
+        - name: clade
+          type: string
+          generateIndex: true
+          autocomplete: true
+          required: false
       website:
         tableColumns:
           - country
           - collection_date
           - isolate_name
+          - clade
       silo:
         dateToSortBy: date
         partitionBy: country
