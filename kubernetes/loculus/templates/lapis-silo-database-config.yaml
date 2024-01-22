@@ -22,6 +22,10 @@ data:
           generateIndex: {{ .generateIndex }}
           {{- end }}
       {{- end }}
+        - name: nucleotideInsertions
+          type: insertion
+        - name: aminoAcidInsertions
+          type: aaInsertion
       primaryKey: accessionVersion
       {{- .silo | toYaml | nindent 6 }}
   {{- end }}
