@@ -42,16 +42,6 @@ data class ResponseDataset(
     val datasetVersion: Long,
 )
 
-data class Citation(
-    val citationId: Long,
-    val data: String,
-    val type: String,
-    val createdAt: Timestamp,
-    val createdBy: String,
-    val updatedAt: Timestamp,
-    val updatedBy: String,
-)
-
 data class CitedBy(
     val years: List<Long> = mutableListOf<Long>(),
     val citations: List<Long> = mutableListOf<Long>(),
@@ -68,7 +58,6 @@ data class Author(
     val updatedBy: String,
 )
 
-
-object DatsetCitationsConstants {
+object DatasetCitationsConstants {
     const val DOI_PREFIX = "placeholder"
 }

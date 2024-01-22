@@ -15,10 +15,9 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Author
-import org.loculus.backend.api.Citation
 import org.loculus.backend.api.CitedBy
-import org.loculus.backend.api.Dataset 
-import org.loculus.backend.api.DatsetCitationsConstants
+import org.loculus.backend.api.Dataset
+import org.loculus.backend.api.DatasetCitationsConstants
 import org.loculus.backend.api.DatasetRecord
 import org.loculus.backend.api.ResponseDataset
 import org.loculus.backend.api.SubmittedDatasetRecord
@@ -255,25 +254,18 @@ class DatasetCitationsDatabaseService(
         }
     }
 
-
-    fun createDatasetDOI(
-        username: String,
-        datasetId: String,
-        version: Long,
-    ): ResponseDataset {
+    fun createDatasetDOI(username: String, datasetId: String, version: Long): ResponseDataset {
         log.info { "Create DOI for dataset $datasetId, version $version, user $username" }
 
-        val datasetDOI = "${DatsetCitationsConstants.DOI_PREFIX}/$datasetId.$version"
+        val datasetDOI = "${DatasetCitationsConstants.DOI_PREFIX}/$datasetId.$version"
 
-        log.info { "Debug DOI $datasetDOI $DatsetCitationsConstants.DOI_PREFIX" }
+        log.info { "Debug DOI $datasetDOI $DatasetCitationsConstants.DOI_PREFIX" }
 
-        DatasetsTable.update (
-            {
-                (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
+        DatasetsTable.update({
+            (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
                 (DatasetsTable.datasetVersion eq version) and
                 (DatasetsTable.createdBy eq username)
-            }
-        ) {
+        }) {
             it[DatasetsTable.datasetDOI] = datasetDOI
         }
 
@@ -286,14 +278,14 @@ class DatasetCitationsDatabaseService(
         )
     }
 
-    fun getDatasetCitedBy(datasetId: String, version: Long): CitedBy {
-        // TODO: implement using CrossRef API: https://www.crossref.org/services/cited-by/
+    fun getUserCitedByDataset(username: String): CitedBy {
+        // TODO: implement using sequences table + datasets table
         var citedBy = CitedBy()
         return citedBy
     }
 
-    fun getUserCitedBy(username: String): CitedBy {
-        // TODO: implement using sequences table + datasets table + CrossRef API: https://www.crossref.org/services/cited-by/
+    fun getDatasetCitedByPublication(datasetId: String, version: Long): CitedBy {
+        // TODO: implement using CrossRef API: https://www.crossref.org/services/cited-by/
         var citedBy = CitedBy()
         return citedBy
     }

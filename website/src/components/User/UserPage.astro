@@ -41,7 +41,7 @@ const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
     {
         session.user?.username !== undefined && (
             <div class='my-2 mx-4'>
-                <a href={routes.datasetsPage(session.user?.username)}>Datasets Overview</a>
+                <a href={routes.datasetsPage(session.user.username)}>Datasets Overview</a>
             </div>
         )
     }

@@ -2,15 +2,15 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import { type FC, useState } from 'react';
 
-import { type DatasetRecord, type Dataset, DatasetRecordType } from '../../types/datasets';
-import { backendClientHooks } from '../../services/serviceHooks';
-import { AlertDialog } from '../common/AlertDialog';
 import { CitationPlot } from './CitationPlot';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
+import { getClientLogger } from '../../clientLogger';
+import { backendClientHooks } from '../../services/serviceHooks';
+import { type DatasetRecord, type Dataset, type CitedByResult, DatasetRecordType } from '../../types/datasets';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
+import { AlertDialog } from '../common/AlertDialog';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import { withQueryProvider } from '../common/withQueryProvider';
-import { getClientLogger } from '../../clientLogger';
 
 const logger = getClientLogger('DatasetItem');
 
@@ -59,11 +59,20 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
 };
 
 type DatasetItemProps = {
+    clientConfig: ClientConfig;
+    accessToken: string;
     dataset: Dataset;
     datasetRecords: DatasetRecord[];
+    citedByData: CitedByResult;
 };
 
-const DatasetItemInner: FC<DatasetItemProps> = ({clientConfig, accessToken, dataset, datasetRecords }) => {
+const DatasetItemInner: FC<DatasetItemProps> = ({
+    clientConfig,
+    accessToken,
+    dataset,
+    datasetRecords,
+    citedByData,
+}) => {
     const [doiDialogVisible, setDoiDialogVisible] = useState(false);
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
@@ -80,8 +89,8 @@ const DatasetItemInner: FC<DatasetItemProps> = ({clientConfig, accessToken, data
     };
 
     const getCrossRefUrl = () => {
-        return `https://search.crossref.org/search/works?from_ui=yes&q=${dataset.datasetDOI}`
-    } 
+        return `https://search.crossref.org/search/works?from_ui=yes&q=${dataset.datasetDOI}`;
+    };
 
     const formatDate = (date?: string) => {
         if (date === undefined) {
@@ -121,28 +130,23 @@ const DatasetItemInner: FC<DatasetItemProps> = ({clientConfig, accessToken, data
                         >
                             Generate a DOI
                         </Link>
-                    ) : dataset.datasetDOI}
+                    ) : (
+                        dataset.datasetDOI
+                    )}
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Total citations</p>
                     {dataset.datasetDOI === undefined || dataset.datasetDOI === null ? (
-                        <p className='text'>{'Cited By 0'}</p>
+                        <p className='text'>Cited By 0</p>
                     ) : (
-                        <Link
-                            variant='text'
-                            href={getCrossRefUrl()}
-                            target={'_blank'}
-                            underline='none'
-                        >
+                        <Link variant='text' href={getCrossRefUrl()} target='_blank' underline='none'>
                             Cited By 0
                         </Link>
-                    )
-                    }
-
+                    )}
                 </div>
                 <div className='flex flex-row'>
                     <p className='mr-0 w-[120px] text-gray-500 text-right'></p>
-                    <CitationPlot />
+                    <CitationPlot citedByData={citedByData} />
                 </div>
             </div>
             <div className='flex flex-col my-4'>
@@ -160,7 +164,6 @@ const DatasetItemInner: FC<DatasetItemProps> = ({clientConfig, accessToken, data
     );
 };
 
-
 function useCreateDatasetDOIAction(
     clientConfig: ClientConfig,
     accessToken: string,
@@ -172,8 +175,10 @@ function useCreateDatasetDOIAction(
         { headers: createAuthorizationHeader(accessToken), params: { datasetId, datasetVersion } },
         {
             onSuccess: async () => {
-                await logger.info(`Successfully created dataset DOI for datasetId: ${datasetId}, version ${datasetVersion}`);
-                location.reload()
+                await logger.info(
+                    `Successfully created dataset DOI for datasetId: ${datasetId}, version ${datasetVersion}`,
+                );
+                location.reload();
             },
             onError: async (error) => {
                 const message = `Failed to create dataset DOI with error: '${JSON.stringify(error)})}'`;
@@ -184,4 +189,4 @@ function useCreateDatasetDOIAction(
     );
 }
 
-export const DatasetItem = withQueryProvider(DatasetItemInner)
+export const DatasetItem = withQueryProvider(DatasetItemInner);

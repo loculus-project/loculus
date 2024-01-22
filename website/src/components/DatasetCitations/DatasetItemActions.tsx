@@ -139,7 +139,9 @@ function useDeleteDatasetAction(
         { headers: createAuthorizationHeader(accessToken), params: { datasetId, datasetVersion } },
         {
             onSuccess: async () => {
-                await logger.info(`Successfully deleted dataset with datasetId: ${datasetId}, version ${datasetVersion}`);
+                await logger.info(
+                    `Successfully deleted dataset with datasetId: ${datasetId}, version ${datasetVersion}`,
+                );
                 window.location.href = '/datasets';
             },
             onError: async (error) => {

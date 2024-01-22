@@ -1,15 +1,13 @@
 ---
-import { DatasetList } from '../../components/Datasets/DatasetList';
-import { DatasetListActions } from '../../components/Datasets/DatasetListActions';
+import { AuthorDetails } from '../../components/DatasetCitations/AuthorDetails';
+import { CitationPlot } from '../../components/DatasetCitations/CitationPlot';
+import { DatasetList } from '../../components/DatasetCitations/DatasetList';
+import { DatasetListActions } from '../../components/DatasetCitations/DatasetListActions';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
-import { CitationPlot } from '../../components/Datasets/CitationPlot';
-import { AuthorDetails } from '../../components/Datasets/AuthorDetails';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../services/backendClient';
 import { getAccessToken } from '../../utils/getAccessToken';
-import { BackButton } from '../../components/Navigation/BackButton';
-
 
 const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
@@ -25,12 +23,7 @@ const session = Astro.locals.session;
     <div class='flex flex-col justify-center items-center'>
         <div class='flex flex-row justify-center w-5/6 divide-x'>
             <div class='w-3/4 flex flex-col justify-start'>
-                <AuthorDetails 
-                    displayFullDetails={true}
-                    name={session.user?.name}
-                    fontSize={120}
-                    client:load
-                />
+                <AuthorDetails displayFullDetails name={session.user?.name} fontSize={120} client:load />
                 <hr />
                 <div class='flex justify-start'>
                     <div>
@@ -41,17 +34,13 @@ const session = Astro.locals.session;
                         <div>
                             {
                                 datasetsResponse.match(
-                                    (datasets) => 
-                                        <DatasetList 
-                                            datasets={datasets} 
-                                            username={username} 
-                                            client:load 
-                                        />,
-                                    (error) => 
+                                    (datasets) => <DatasetList datasets={datasets} username={username} client:load />,
+                                    (error) => (
                                         <ErrorFeedback
                                             message={'Error while fetching datasets: ' + JSON.stringify(error)}
                                             client:load
-                                        />,
+                                        />
+                                    ),
                                 )
                             }
                         </div>

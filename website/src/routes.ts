@@ -31,11 +31,11 @@ export const routes = {
     unknownOrganismPage: (organism: string) => `/404?unknownOrganism=${organism}`,
     datasetsPage: (username?: string | undefined) => {
         const datasetPagePath = `/datasets` as const;
-        return username === undefined ? datasetPagePath : datasetPagePath + `?user=${username}`
+        return username === undefined ? datasetPagePath : datasetPagePath + `?user=${username}`;
     },
     datasetPage: (datasetId: string, datasetVersion: string, username?: string | undefined) => {
-        const datasetPagePath = `/datasets/${datasetId}?=${datasetVersion}`
-        return username === undefined ? datasetPagePath : datasetPagePath + `&user=${username}`
+        const datasetPagePath = `/datasets/${datasetId}?=${datasetVersion}`;
+        return username === undefined ? datasetPagePath : datasetPagePath + `&user=${username}`;
     },
     logout: () => '/logout',
 };

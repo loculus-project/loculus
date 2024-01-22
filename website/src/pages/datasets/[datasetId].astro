@@ -1,9 +1,9 @@
 ---
+import { AuthorDetails } from '../../components/DatasetCitations/AuthorDetails';
+import { DatasetItem } from '../../components/DatasetCitations/DatasetItem';
+import { DatasetItemActions } from '../../components/DatasetCitations/DatasetItemActions';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
-import { DatasetItem } from '../../components/Datasets/DatasetItem';
-import { DatasetItemActions } from '../../components/Datasets/DatasetItemActions';
 import { BackButton } from '../../components/Navigation/BackButton';
-import { AuthorDetails } from '../../components/Datasets/AuthorDetails';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../services/backendClient';
@@ -13,14 +13,9 @@ const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
 const { datasetId = '' } = Astro.params;
 const version = Astro.url.searchParams.get('version')! || '1';
-
 const username = Astro.locals.session.user?.username;
 
-const datasetResponse = await BackendClient.create().astroFileTypeHelpers.getDataset(
-    accessToken,
-    datasetId,
-    version,
-);
+const datasetResponse = await BackendClient.create().astroFileTypeHelpers.getDataset(accessToken, datasetId, version);
 
 const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers.getDatasetRecords(
     accessToken,
@@ -28,72 +23,78 @@ const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers
     version,
 );
 
-const getDatasetByVersion = (datasetVersions, version) => {
-    const matchedVersion = datasetVersions.find(obj => {
-        return obj.datasetVersion === version
-    })
-    console.log(matchedVersion, datasetVersions)
-    if (matchedVersion === undefined) {
-        return datasetVersions[datasetVersions.length - 1]
-    }
-    return matchedVersion
-}
+const datasetCitedByResponse = await BackendClient.create().astroFileTypeHelpers.getDatasetCitedBy(
+    accessToken,
+    datasetId,
+    version,
+);
 
+const getDatasetByVersion = (datasetVersions, version) => {
+    const matchedVersion = datasetVersions.find((obj) => {
+        return obj.datasetVersion === version;
+    });
+    if (matchedVersion === undefined) {
+        return datasetVersions[datasetVersions.length - 1];
+    }
+    return matchedVersion;
+};
+
+const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datasetResponse.value, version) : undefined;
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-item-container'>
     <BackButton marginRight={0} client:load />
     <div class='flex flex-col justify-start'>
         {
-            datasetResponse.match(
-                (dataset) => (
-                    <div class='flex flex-row items-left'>
-                        <div class='w-1/6 flex flex-col justify-start items-center'>
-                            <AuthorDetails 
-                                displayFullDetails={false}
-                                name={getDatasetByVersion(dataset, version)?.createdBy}
-                                fontSize={60}
-                            />
-                        </div>
-                        <div class='w-5/6 pl-6'>
-                            {
-                                dataset !== undefined && dataset.length > 0 ? (
-                                    datasetRecordsResponse.match(
-                                        (datasetRecords) => (
-                                            <DatasetItemActions
-                                                clientConfig={clientConfig}
-                                                accessToken={accessToken}
-                                                dataset={getDatasetByVersion(dataset, version)}
-                                                datasetRecords={datasetRecords}
-                                                isAdminView={getDatasetByVersion(dataset, version)?.createdBy === username}
-                                                client:load
-                                            />
-                                            <DatasetItem
-                                                clientConfig={clientConfig}
-                                                accessToken={accessToken}
-                                                dataset={getDatasetByVersion(dataset, version)}
-                                                datasetRecords={datasetRecords}
-                                                client:load
-                                            />
-                                        ),
-                                        (error) => (
-                                            <ErrorFeedback
-                                                message={'Error while fetching dataset records: ' + JSON.stringify(error)}
-                                                client:only='react'
-                                            />
-                                        )
-                                    )
-                                ) : null
-                            }
-                        </div>
+            dataset !== undefined ? (
+                <div class='flex flex-row items-left'>
+                    <div class='w-1/6 flex flex-col justify-start items-center'>
+                        <AuthorDetails displayFullDetails={false} name={dataset?.createdBy} fontSize={60} />
                     </div>
-                ),
-                (error) => (
-                    <ErrorFeedback
-                        message={'Error while fetching dataset: ' + JSON.stringify(error)}
-                        client:only='react'
-                    />
-                )
+                    <div class='w-5/6 pl-6'>
+                        {datasetRecordsResponse.value !== undefined ? (
+                            <DatasetItemActions
+                                clientConfig={clientConfig}
+                                accessToken={accessToken}
+                                dataset={dataset}
+                                datasetRecords={datasetRecordsResponse.value}
+                                isAdminView={dataset?.createdBy === username}
+                                client:load
+                            />
+                        ) : (
+                            <ErrorFeedback
+                                message={
+                                    'Error while fetching dataset records: ' +
+                                    JSON.stringify(datasetRecordsResponse.error)
+                                }
+                                client:only='react'
+                            />
+                        )}
+                        {datasetRecordsResponse.value !== undefined && datasetCitedByResponse.value !== undefined ? (
+                            <DatasetItem
+                                clientConfig={clientConfig}
+                                accessToken={accessToken}
+                                dataset={dataset}
+                                datasetRecords={datasetRecordsResponse.value}
+                                citedByData={datasetCitedByResponse.value}
+                                client:load
+                            />
+                        ) : (
+                            <ErrorFeedback
+                                message={
+                                    'Error while fetching dataset citations: ' +
+                                    JSON.stringify(datasetCitedByResponse.error)
+                                }
+                                client:only='react'
+                            />
+                        )}
+                    </div>
+                </div>
+            ) : (
+                <ErrorFeedback
+                    message={'Error while fetching dataset: ' + JSON.stringify(datasetResponse.error)}
+                    client:only='react'
+                />
             )
         }
     </div>

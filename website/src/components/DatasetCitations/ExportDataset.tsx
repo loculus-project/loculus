@@ -43,7 +43,7 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, datasetRecords 
     title = {${dataset.name}},
     year = {${formatYear(dataset.createdAt)}},
     doi = {${dataset.datasetDOI}},
-    url = {https://doi.org/placeholder/${dataset?.datasetDOI}},
+    url = {https://doi.org/placeholder/${dataset.datasetDOI}},
 }`;
     };
 

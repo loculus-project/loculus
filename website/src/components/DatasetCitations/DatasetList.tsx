@@ -138,13 +138,11 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - datasets.length) : 0;
 
     const visibleRows = useMemo(() => {
-        return datasets
-            .sort(getComparator(order, orderBy))
-            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+        return datasets.sort(getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
     }, [datasets, order, orderBy, page, rowsPerPage]);
 
     const maxCellLength = 25;
-    const truncateCell = (cell: string | undefined) => {
+    const truncateCell = (cell: string | undefined | null) => {
         if (cell === undefined || cell === null) {
             return 'N/A';
         }
@@ -178,20 +176,24 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
                                         id={labelId}
                                         hover
                                         onClick={(event) =>
-                                            handleClick(event, row.datasetId as string, row.datasetVersion as string)
+                                            handleClick(event, row.datasetId, row.datasetVersion as string)
                                         }
                                         role='checkbox'
                                         tabIndex={-1}
                                         key={row.datasetId}
                                         sx={{ cursor: 'pointer' }}
                                     >
-                                        <TableCell align='left'>{formatDate(row.createdAt as string)}</TableCell>
+                                        <TableCell align='left'>{formatDate(row.createdAt)}</TableCell>
                                         <TableCell component='th' scope='row'>
                                             {row.datasetVersion}
                                         </TableCell>
-                                        <TableCell align='left'>{truncateCell(row.name as string)}</TableCell>
+                                        <TableCell align='left'>{truncateCell(row.name)}</TableCell>
                                         <TableCell align='left'> {truncateCell(row.description as string)}</TableCell>
-                                        <TableCell align='left'>{ row?.datasetDOI !== undefined  ? truncateCell(row.datasetDOI as string) : 'N/A'}</TableCell>
+                                        <TableCell align='left'>
+                                            {row.datasetDOI !== undefined
+                                                ? truncateCell(row.datasetDOI as string)
+                                                : 'N/A'}
+                                        </TableCell>
                                     </TableRow>
                                 );
                             })}
@@ -203,10 +205,9 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
                         </TableBody>
                     </Table>
                 </TableContainer>
-                {
-                    datasets !== undefined && datasets?.length === 0 ? (
-                        <p className={'px-8 py-8'}> You have no datasets yet. </p>
-                    ) :
+                {datasets.length === 0 ? (
+                    <p className='px-8 py-8'> You have no datasets yet. </p>
+                ) : (
                     <TablePagination
                         rowsPerPageOptions={[5, 10, 25]}
                         component='div'
@@ -216,8 +217,7 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
                         onPageChange={handleChangePage}
                         onRowsPerPageChange={handleChangeRowsPerPage}
                     />
-                }
-                
+                )}
             </Paper>
         </Box>
     );

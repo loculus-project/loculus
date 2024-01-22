@@ -236,8 +236,17 @@ const getDatasetsOfUserEndpoint = makeEndpoint({
 
 const getUserCitedByEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-user-cited-by?username=:username',
+    path: '/get-user-cited-by-datasets?username=:username',
     alias: 'getUserCitedBy',
+    parameters: [authorizationHeader],
+    response: citedByResult,
+    errors: [notAuthorizedError],
+});
+
+const getDatasetCitedByEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-dataset-cited-by-publication?datasetId=:datasetId&version=:version',
+    alias: 'getDatasetCitedBy',
     parameters: [authorizationHeader],
     response: citedByResult,
     errors: [notAuthorizedError],
@@ -295,9 +304,7 @@ const createDatasetDOIEndpoint = makeEndpoint({
     method: 'post',
     path: '/create-dataset-doi?datasetId=:datasetId&version=:datasetVersion',
     alias: 'createDatasetDOI',
-    parameters: [
-        authorizationHeader,
-    ],
+    parameters: [authorizationHeader],
     response: z.object({
         datasetId: z.string(),
         datasetVersion: z.number(),
@@ -361,6 +368,7 @@ export const backendApi = makeApi([
     addUserToGroupEndpoint,
     getDatasetsOfUserEndpoint,
     getUserCitedByEndpoint,
+    getDatasetCitedByEndpoint,
     getDatasetEndpoint,
     getDatasetRecordsEndpoint,
     createDatasetEndpoint,

@@ -1,10 +1,9 @@
+import IconButton from '@mui/material/IconButton';
 import { type FC, useState } from 'react';
 
+import { AlertDialog } from '../common/AlertDialog';
 import AccountCircleIcon from '~icons/ic/baseline-account-circle';
 import EditIcon from '~icons/ic/baseline-edit';
-import IconButton from '@mui/material/IconButton';
-import { AlertDialog } from '../common/AlertDialog';
-
 
 type Props = {
     displayFullDetails: boolean;
@@ -16,22 +15,17 @@ type Props = {
 
 export const AuthorDetails: FC<Props> = ({ displayFullDetails, name, affiliation, email, fontSize = 100 }) => {
     const [editDetailsDialogVisible, setEditDetailsDialogVisible] = useState(false);
-    
 
     const renderPartialDetails = () => (
         <div className='flex flex-col items-center justify-center'>
             <AccountCircleIcon fontSize={fontSize} />
-            {
-                name !== undefined ? 
-                (
-                    <div className='flex flex-col items-left justify-center'>
-                        <div className={`text-${fontSize}`}>{name ?? ''}</div>
-                    </div>
-                )
-                : null
-            }
+            {name !== undefined ? (
+                <div className='flex flex-col items-left justify-center'>
+                    <div className={`text-${fontSize}`}>{name}</div>
+                </div>
+            ) : null}
         </div>
-    )
+    );
 
     const renderFullDetails = () => (
         <div className='flex self-start my-4 flex-row'>
@@ -49,17 +43,16 @@ export const AuthorDetails: FC<Props> = ({ displayFullDetails, name, affiliation
                 <h1 className='flex text-base'>{email ?? 'Unverified email'}</h1>
             </div>
         </div>
-    )
+    );
 
     return (
         <>
-            { displayFullDetails === true ? renderFullDetails() : renderPartialDetails()}
+            {displayFullDetails === true ? renderFullDetails() : renderPartialDetails()}
             <AlertDialog
                 isVisible={editDetailsDialogVisible}
                 setVisible={setEditDetailsDialogVisible}
                 title='Edit author profile'
                 description='This feature is under development and will be available soon!'
-                onAccept={()=>{}}
             />
         </>
     );

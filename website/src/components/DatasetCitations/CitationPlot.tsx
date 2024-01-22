@@ -22,7 +22,7 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
         citations: [0, 0, 0, 0, 0],
     };
 
-    const renderData = citedByData !== undefined && citedByData?.years?.length > 0 ? citedByData : emptyCitedByData;
+    const renderData = citedByData.years.length > 0 ? citedByData : emptyCitedByData;
 
     return (
         <Bar
@@ -52,13 +52,13 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
                     // x: {
                     //     grid: {
                     //         color: "rgba(0, 0, 0, 0)",
-                    //     }  
+                    //     }
                     // },
                     y: {
-                        suggestedMax: 10, 
+                        suggestedMax: 10,
                         grid: {
-                            color: "rgba(0, 0, 0, 0)",
-                        }  
+                            color: 'rgba(0, 0, 0, 0)',
+                        },
                     },
                 },
             }}

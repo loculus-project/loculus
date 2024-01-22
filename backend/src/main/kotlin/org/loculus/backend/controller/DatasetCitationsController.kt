@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.loculus.backend.api.Author
-import org.loculus.backend.api.Citation
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.Dataset
 import org.loculus.backend.api.DatasetRecord
@@ -79,10 +78,16 @@ class DatasetCitationsController(
         return databaseService.createDatasetDOI(username, datasetId, version)
     }
 
-    @Operation(description = "Get citations associated to an user's sequences")
-    @GetMapping("/get-user-cited-by", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getUserCitedBy(@RequestParam username: String): CitedBy {
-        return databaseService.getUserCitedBy(username)
+    @Operation(description = "Get count of user sequences cited by datasets")
+    @GetMapping("/get-user-cited-by-datasets", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getUserCitedByDataset(@RequestParam username: String): CitedBy {
+        return databaseService.getUserCitedByDataset(username)
+    }
+
+    @Operation(description = "Get count of dataset cited by publication")
+    @GetMapping("/get-dataset-cited-by-publication", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getDatasetCitedByPublication(@RequestParam datasetId: String, @RequestParam version: Long): CitedBy {
+        return databaseService.getDatasetCitedByPublication(datasetId, version)
     }
 
     @Operation(description = "Create a new author with the specified data")
