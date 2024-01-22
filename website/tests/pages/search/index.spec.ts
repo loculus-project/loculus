@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon';
 
+import { ACCESSION_VERSION } from './search.page.ts';
 import { routes } from '../../../src/routes.ts';
 import { baseUrl, dummyOrganism, expect, test, testSequenceEntry } from '../../e2e.fixture';
 
@@ -52,5 +53,19 @@ test.describe('The search page', () => {
         await searchPage.clickResetButton();
 
         await expect(searchPage.getEmptyAccessionVersionField()).toHaveValue('');
+    });
+
+    test('should sort result table', async ({ searchPage }) => {
+        await searchPage.goto();
+
+        await searchPage.clickTableHeader(ACCESSION_VERSION);
+        const ascendingColumn = (await searchPage.getTableContent()).map((row) => row[0]);
+        const isAscending = ascendingColumn.every((_, i, arr) => i === 0 || arr[i - 1] <= arr[i]);
+        expect(isAscending).toBeTruthy();
+
+        await searchPage.clickTableHeader(ACCESSION_VERSION);
+        const descendingColumn = (await searchPage.getTableContent()).map((row) => row[0]);
+        const isDescending = descendingColumn.every((_, i, arr) => i === 0 || arr[i - 1] >= arr[i]);
+        expect(isDescending).toBeTruthy();
     });
 });

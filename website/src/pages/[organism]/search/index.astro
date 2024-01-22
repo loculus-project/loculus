@@ -1,5 +1,5 @@
 ---
-import { getData, getSearchFormFilters } from './search';
+import { getData, getOrderBy, getSearchFormFilters } from './search';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { Pagination } from '../../../components/SearchPage/Pagination';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
@@ -22,8 +22,9 @@ const searchFormFilter = getSearchFormFilters(getSearchParams, organism);
 const pageParam = Astro.url.searchParams.get('page');
 const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
+const orderBy = getOrderBy(Astro.url.searchParams);
 
-const data = await getData(organism, searchFormFilter, offset, pageSize);
+const data = await getData(organism, searchFormFilter, offset, pageSize, orderBy);
 ---
 
 <BaseLayout title={`${cleanedOrganism!.displayName} - Browse`}>
@@ -45,7 +46,15 @@ const data = await getData(organism, searchFormFilter, offset, pageSize);
                             Search returned {data.totalCount.toLocaleString()}
                             sequence{data.totalCount === 1 ? '' : 's'}
                         </div>
-                        <Table organism={organism} data={data.data} schema={schema} client:load />
+                        <Table
+                            organism={organism}
+                            data={data.data}
+                            schema={schema}
+                            filters={searchFormFilter}
+                            page={page}
+                            orderBy={orderBy}
+                            client:load
+                        />
 
                         <div class='mt-4 flex justify-center'>
                             <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)} />

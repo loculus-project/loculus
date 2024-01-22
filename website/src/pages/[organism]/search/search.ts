@@ -6,6 +6,7 @@ import { LapisClient } from '../../../services/lapisClient.ts';
 import { hiddenDefaultSearchFilters } from '../../../settings.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
 import type { Filter } from '../../../types/config.ts';
+import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../../../types/lapis.ts';
 
 export type SearchResponse = {
     data: TableSequenceData[];
@@ -23,6 +24,7 @@ export const getData = async (
     searchFormFilter: Filter[],
     offset: number,
     limit: number,
+    orderBy?: OrderBy,
     hiddenDefaultFilters: Filter[] = hiddenDefaultSearchFilters,
 ): Promise<Result<SearchResponse, ProblemDetail>> => {
     const filters = addHiddenFilters(searchFormFilter, hiddenDefaultFilters);
@@ -47,12 +49,16 @@ export const getData = async (
         });
     }
 
-    const detailsResult = await lapisClient.call('details', {
+    // @ts-expect-error Bug in Zod: https://github.com/colinhacks/zod/issues/3136
+    const request: LapisBaseRequest = {
         fields: [...config.tableColumns, config.primaryKey],
         limit,
         offset,
         ...searchFilters,
-    });
+        orderBy: orderBy !== undefined ? [orderBy] : undefined,
+    };
+
+    const detailsResult = await lapisClient.call('details', request);
 
     return Result.combine([detailsResult, aggregateResult]).map(([details, aggregate]) => {
         return {
@@ -88,4 +94,16 @@ export const getSearchFormFilters = (getSearchParams: (param: string) => string,
             return [metadataSetting];
         }
     });
+};
+
+export const getOrderBy = (searchParams: URLSearchParams): OrderBy | undefined => {
+    const orderByTypeParam = searchParams.get('order');
+    const orderByTypeParsed = orderByTypeParam !== null ? orderByType.safeParse(orderByTypeParam) : undefined;
+    const orderByTypeValue: OrderByType = orderByTypeParsed?.success === true ? orderByTypeParsed.data : 'ascending';
+    return searchParams.get('orderBy') !== null
+        ? {
+              field: searchParams.get('orderBy')!,
+              type: orderByTypeValue,
+          }
+        : undefined;
 };

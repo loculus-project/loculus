@@ -1,5 +1,6 @@
 import type { AccessionVersion } from './types/backend.ts';
 import type { FilterValue } from './types/config.ts';
+import type { OrderBy } from './types/lapis.ts';
 import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
 
 export const routes = {
@@ -8,8 +9,12 @@ export const routes = {
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
-    searchPage: <Filter extends FilterValue>(organism: string, searchFilter: Filter[] = [], page: number = 1) =>
-        withOrganism(organism, `/search?${buildSearchParams(searchFilter, page).toString()}`),
+    searchPage: <Filter extends FilterValue>(
+        organism: string,
+        searchFilter: Filter[] = [],
+        page: number = 1,
+        orderBy?: OrderBy,
+    ) => withOrganism(organism, `/search?${buildSearchParams(searchFilter, page, orderBy).toString()}`),
     sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
         `/${organism}/seq/${getAccessionVersionString(accessionVersion)}`,
     sequencesVersionsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
@@ -32,13 +37,21 @@ export const routes = {
     logout: () => '/logout',
 };
 
-const buildSearchParams = <Filter extends FilterValue>(searchFilter: Filter[] = [], page: number = 1) => {
+const buildSearchParams = <Filter extends FilterValue>(
+    searchFilter: Filter[] = [],
+    page: number = 1,
+    orderBy?: OrderBy,
+) => {
     const params = new URLSearchParams();
     searchFilter.forEach((filter) => {
         if (filter.filterValue !== '') {
             params.set(filter.name, filter.filterValue);
         }
     });
+    if (orderBy !== undefined) {
+        params.set('orderBy', orderBy.field);
+        params.set('order', orderBy.type);
+    }
     params.set('page', page.toString());
     return params;
 };
