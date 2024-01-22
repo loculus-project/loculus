@@ -11,7 +11,7 @@ export const organismValidatorMiddleware = defineMiddleware(async (context, next
 
     const { organism: validatedOrganism } = cleanOrganism(organism);
     if (validatedOrganism === undefined) {
-        return context.redirect(routes.unknownOrganismPage(organism));
+        return context.redirect(routes.unknownOrganismPage());
     }
 
     return next();
