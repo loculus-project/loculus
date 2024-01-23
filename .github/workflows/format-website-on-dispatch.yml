@@ -14,22 +14,18 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: '14' # You can change this to your required Node.js version
+        node-version: '20' # You can change this to your required Node.js version
 
     - name: Change Directory and Run NPM Install
+      working-directory: website
       run: |
-        cd path/to/your/website # Change this to the path of your website directory
         npm install
-
-    - name: Format Code
-      run: |
-        cd path/to/your/website # Ensure you're in the right directory
-        npm run format # Make sure this script is defined in your package.json
+        npm run format
 
     - name: Commit and Push Changes
       run: |
-        git config --global user.name 'Your Name'
-        git config --global user.email 'your-email@example.com'
+        git config --global user.name 'Loculus bot'
+        git config --global user.email 'bot@loculus.org'
         git add -A
         git commit -m "Automated code formatting" || echo "No changes to commit"
         git push
