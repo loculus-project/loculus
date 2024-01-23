@@ -10,12 +10,19 @@ export const metadata = z.object({
 });
 export type Metadata = z.infer<typeof metadata>;
 
-export type Filter = Metadata & {
+export type MetadataFilter = Metadata & {
     filterValue: string;
     label?: string;
 };
 
-export type FilterValue = Pick<Filter, 'name' | 'filterValue'>;
+export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
+
+export type MutationFilter = {
+    aminoAcidMutationQueries?: string[];
+    nucleotideMutationQueries?: string[];
+    aminoAcidInsertionQueries?: string[];
+    nucleotideInsertionQueries?: string[];
+};
 
 const schema = z.object({
     instanceName: z.string(),
