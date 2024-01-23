@@ -1,8 +1,8 @@
 import { DateTime } from 'luxon';
 
-import { ACCESSION_VERSION } from './browse.page.ts';
-import { routes } from '../../../src/routes.ts';
-import { baseUrl, dummyOrganism, expect, test, testSequenceEntry } from '../../e2e.fixture';
+import { ACCESSION_VERSION } from './browse.page.js';
+import { routes } from '../../../src/routes.js';
+import { baseUrl, dummyOrganism, expect, test, testSequenceEntry } from '../../e2e.fixture.js';
 
 test.describe('The search page', () => {
     test('should show the search form with button and a table', async ({ searchPage }) => {

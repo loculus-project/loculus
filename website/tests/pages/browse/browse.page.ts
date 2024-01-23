@@ -1,8 +1,8 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { baseUrl, dummyOrganism } from '../../e2e.fixture';
-import { routes } from '../../../src/routes.ts';
-import type { FilterValue } from '../../../src/types/config.ts';
+import { routes } from '../../../src/routes';
+import type { FilterValue } from '../../../src/types/config';
 
 export const ACCESSION_VERSION = 'Accession version';
 
