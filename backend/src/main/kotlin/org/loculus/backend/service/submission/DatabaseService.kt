@@ -34,7 +34,6 @@ import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -54,7 +53,7 @@ private val log = KotlinLogging.logger { }
 @Service
 @Transactional
 class DatabaseService(
-    private val sequenceValidatorFactory: SequenceValidatorFactory,
+    private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val submissionPreconditionValidator: SubmissionPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val objectMapper: ObjectMapper,
@@ -156,7 +155,7 @@ class DatabaseService(
     }
 
     private fun validateProcessedData(submittedProcessedData: SubmittedProcessedData, organism: Organism) = try {
-        sequenceValidatorFactory.create(organism).validateSequence(submittedProcessedData.data)
+        processedSequenceEntryValidatorFactory.create(organism).validate(submittedProcessedData.data)
     } catch (validationException: ProcessingValidationException) {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
         throw validationException
