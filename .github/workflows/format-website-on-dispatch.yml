@@ -1,0 +1,31 @@
+name: Format and Commit Code
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20' # You can change this to your required Node.js version
+
+    - name: Change Directory and Run NPM Install
+      working-directory: website
+      run: |
+        npm install
+        npm run format
+
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name 'Loculus bot'
+        git config --global user.email 'bot@loculus.org'
+        git add -A
+        git commit -m "Automated code formatting" || echo "No changes to commit"
+        git push
