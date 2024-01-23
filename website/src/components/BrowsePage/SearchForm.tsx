@@ -7,16 +7,16 @@ import { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
 import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField } from './fields/DateField';
-import { MutationField } from './fields/MutationField.tsx';
+import { MutationField } from './fields/MutationField';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
-import { getClientLogger } from '../../clientLogger.ts';
-import { getLapisUrl } from '../../config.ts';
+import { getClientLogger } from '../../clientLogger';
+import { getLapisUrl } from '../../config';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { routes } from '../../routes.ts';
-import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { routes } from '../../routes';
+import type { MetadataFilter, MutationFilter } from '../../types/config';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import type { ClientConfig } from '../../types/runtimeConfig';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 

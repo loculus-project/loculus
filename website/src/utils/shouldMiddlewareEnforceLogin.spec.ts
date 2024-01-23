@@ -24,7 +24,7 @@ describe('shouldMiddlewareEnforceLogin', () => {
     });
 
     test('should return false for various public routes', () => {
-        expectNoLogin(`/${testOrganism}/search`);
+        expectNoLogin(`/${testOrganism}/browse`);
         expectNoLogin(`/`);
         expectNoLogin(`/${testOrganism}`);
         expectNoLogin(routes.sequencesDetailsPage(testOrganism, 'id_002156'));

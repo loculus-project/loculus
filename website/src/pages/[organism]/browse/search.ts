@@ -1,6 +1,6 @@
 import { ok, Result } from 'neverthrow';
 
-import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
+import type { TableSequenceData } from '../../../components/BrowsePage/Table.js';
 import { getReferenceGenomes, getSchema } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { hiddenDefaultSearchFilters } from '../../../settings.ts';

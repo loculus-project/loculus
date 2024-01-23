@@ -2,9 +2,9 @@ import { Autocomplete, Box, createFilterOptions, TextField } from '@mui/material
 import { type FC, useEffect, useMemo, useState } from 'react';
 
 import type { FieldProps } from './FieldProps';
-import { getClientLogger } from '../../../clientLogger.ts';
-import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import type { MetadataFilter } from '../../../types/config.ts';
+import { getClientLogger } from '../../../clientLogger';
+import { lapisClientHooks } from '../../../services/serviceHooks';
+import type { MetadataFilter } from '../../../types/config';
 
 const logger = getClientLogger('AutoCompleteField');
 

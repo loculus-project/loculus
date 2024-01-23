@@ -1,5 +1,5 @@
 ---
-import { getData, getReferenceGenomesSequenceNames, getMetadataFilters, getMutationFilter, getOrderBy } from './search';
+import { getData, getReferenceGenomesSequenceNames, getMetadataFilters, getMutationFilter, getOrderBy } from './browse';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { Pagination } from '../../../components/SearchPage/Pagination';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
@@ -72,3 +72,4 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
         }
     </div>
 </BaseLayout>
+../../../components/BrowsePage/Pagination../../../components/BrowsePage/SearchForm../../../components/BrowsePage/Table

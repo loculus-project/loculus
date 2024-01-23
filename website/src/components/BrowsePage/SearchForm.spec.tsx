@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
-import { testConfig, testOrganism } from '../../../vitest.setup.ts';
-import { routes } from '../../routes.ts';
-import type { MetadataFilter } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { testConfig, testOrganism } from '../../../vitest.setup';
+import { routes } from '../../routes';
+import type { MetadataFilter } from '../../types/config';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
+import type { ClientConfig } from '../../types/runtimeConfig';
 
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),

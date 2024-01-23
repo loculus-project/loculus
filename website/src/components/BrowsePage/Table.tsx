@@ -1,9 +1,9 @@
 import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 
-import { routes } from '../../routes.ts';
-import type { MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
-import type { OrderBy } from '../../types/lapis.ts';
+import { routes } from '../../routes.js';
+import type { MetadataFilter, MutationFilter, Schema } from '../../types/config.js';
+import type { OrderBy } from '../../types/lapis.js';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
 

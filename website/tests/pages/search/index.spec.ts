@@ -1,6 +1,6 @@
 import { DateTime } from 'luxon';
 
-import { ACCESSION_VERSION } from './search.page.ts';
+import { ACCESSION_VERSION } from './browse.page.ts';
 import { routes } from '../../../src/routes.ts';
 import { baseUrl, dummyOrganism, expect, test, testSequenceEntry } from '../../e2e.fixture';
 

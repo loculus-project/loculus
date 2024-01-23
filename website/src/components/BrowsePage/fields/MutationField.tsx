@@ -2,9 +2,9 @@ import { Autocomplete, Box, Chip, TextField } from '@mui/material';
 import { type FC, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import type { MutationFilter } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
-import type { BaseType } from '../../../utils/sequenceTypeHelpers.ts';
+import type { MutationFilter } from '../../../types/config.js';
+import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.js';
+import type { BaseType } from '../../../utils/sequenceTypeHelpers.js';
 
 interface MutationFieldProps {
     referenceGenomes: ReferenceGenomesSequenceNames;

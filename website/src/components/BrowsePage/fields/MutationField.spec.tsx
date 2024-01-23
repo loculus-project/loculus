@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
-import { MutationField } from './MutationField.tsx';
-import type { MutationFilter } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import { MutationField } from './MutationField.js';
+import type { MutationFilter } from '../../../types/config.js';
+import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.js';
 
 const singleSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],

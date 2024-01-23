@@ -18,7 +18,7 @@ export const routes = {
     ) =>
         withOrganism(
             organism,
-            `/search?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
+            `/browse?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
         ),
     sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
         `/${organism}/seq/${getAccessionVersionString(accessionVersion)}`,

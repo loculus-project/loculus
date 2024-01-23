@@ -1,4 +1,4 @@
-import type { MetadataFilter } from '../../../types/config.ts';
+import type { MetadataFilter } from '../../../types/config.js';
 
 export type FieldProps = {
     field: MetadataFilter;
