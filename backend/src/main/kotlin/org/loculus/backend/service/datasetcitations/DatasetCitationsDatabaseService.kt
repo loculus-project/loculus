@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Author
+import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.Dataset
 import org.loculus.backend.api.DatasetCitationsConstants
@@ -45,7 +46,7 @@ class DatasetCitationsDatabaseService(
         datasetRecords: List<SubmittedDatasetRecord>,
         datasetDescription: String?,
     ): ResponseDataset {
-        log.info { "creating dataset $datasetName, user $username" }
+        log.info { "Create dataset $datasetName, user $username" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
@@ -85,7 +86,7 @@ class DatasetCitationsDatabaseService(
         datasetRecords: List<SubmittedDatasetRecord>,
         datasetDescription: String?,
     ): ResponseDataset {
-        log.info { "updating dataset $datasetId, user $username" }
+        log.info { "Update dataset $datasetId, user $username" }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
@@ -193,7 +194,7 @@ class DatasetCitationsDatabaseService(
     }
 
     fun getDatasetRecords(datasetId: String, version: Long?): List<DatasetRecord> {
-        log.info { "Get dataset records $datasetId, version $version" }
+        log.info { "Get dataset records for dataset $datasetId, version $version" }
 
         var selectedVersion = version
 
@@ -226,6 +227,8 @@ class DatasetCitationsDatabaseService(
     }
 
     fun getDatasets(username: String): List<Dataset> {
+        log.info { "Get datasets for user $username" }
+
         var datasetList = mutableListOf<Dataset>()
         var selectedDatasets = DatasetsTable
             .select { DatasetsTable.createdBy eq username }
@@ -247,6 +250,8 @@ class DatasetCitationsDatabaseService(
     }
 
     fun deleteDataset(username: String, datasetId: String, version: Long) {
+        log.info { "Delete dataset $datasetId, version $version, user $username" }
+
         DatasetsTable.deleteWhere {
             (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
                 (DatasetsTable.datasetVersion eq version) and
@@ -258,8 +263,6 @@ class DatasetCitationsDatabaseService(
         log.info { "Create DOI for dataset $datasetId, version $version, user $username" }
 
         val datasetDOI = "${DatasetCitationsConstants.DOI_PREFIX}/$datasetId.$version"
-
-        log.info { "Debug DOI $datasetDOI $DatasetCitationsConstants.DOI_PREFIX" }
 
         DatasetsTable.update({
             (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
@@ -279,15 +282,39 @@ class DatasetCitationsDatabaseService(
     }
 
     fun getUserCitedByDataset(username: String): CitedBy {
+        log.info { "Get user cited by dataset for username $username" }
+
         // TODO: implement using sequences table + datasets table
         var citedBy = CitedBy()
         return citedBy
     }
 
     fun getDatasetCitedByPublication(datasetId: String, version: Long): CitedBy {
+        log.info { "Get dataset cited by publication for datasetId $datasetId, version $version" }
+
         // TODO: implement using CrossRef API: https://www.crossref.org/services/cited-by/
         var citedBy = CitedBy()
         return citedBy
+    }
+
+    fun getAuthorProfiles(authorQuery: String): List<AuthorProfile> {
+        log.info { "Get author profiles matching query $authorQuery" }
+        
+        // TODO: implement using SerpAPI: https://serpapi.com/google-scholar-profiles-api
+        var authorList = mutableListOf<AuthorProfile>()
+        return authorList
+    }
+
+    fun getAuthorProfile(authorId: String): AuthorProfile? {
+        log.info { "Get author profile with id $authorId" }
+        // TODO: implement using SerpAPI: https://serpapi.com/google-scholar-author-api
+        return null
+    }
+
+    fun setAuthorProfile(username: String, authorId: String) {
+        log.info { "Set author profile with id $authorId to username $username" }
+        // TODO: implement using keycloak custom user attributes
+        return
     }
 
     fun createAuthor(affiliation: String, email: String, name: String): Long {

@@ -27,17 +27,26 @@ export const dataset = z.object({
 export const datasets = z.array(dataset);
 export type Dataset = z.infer<typeof dataset>;
 
-export const datasetCitation = z.object({
-    citationId: z.string(),
-    datasetId: z.string(),
-    createdAt: z.string(),
-    createdBy: z.string(),
-});
-export type DatasetCitation = z.infer<typeof datasetCitation>;
-export const datasetCitations = z.array(datasetCitation);
-
 export const citedByResult = z.object({
     years: z.array(z.number()),
     citations: z.array(z.number()),
 });
 export type CitedByResult = z.infer<typeof citedByResult>;
+
+export const authorProfile = z.object({
+    authorId: z.string(),
+    name: z.string(),
+    link: z.string(),
+    affiliations: z.string(),
+    email: z.string(),
+    citedBy: z.number(),
+    thumbnail: z.string(),
+    interests: z.array(
+        z.object({
+            title: z.string(),
+            link: z.string(),
+        })
+    ),
+});
+export const authorProfiles = z.array(authorProfile);
+export type AuthorProfile = z.infer<typeof authorProfile>;

@@ -13,7 +13,7 @@ import {
     unprocessedData,
     uploadFiles,
 } from '../types/backend.ts';
-import { datasets, datasetRecords, citedByResult } from '../types/datasets.ts';
+import { authorProfiles, datasets, datasetRecords, citedByResult } from '../types/datasets.ts';
 
 const submitEndpoint = makeEndpoint({
     method: 'post',
@@ -352,6 +352,15 @@ const deleteDatasetEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
+const getAuthorProfilesEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-matching-author-profiles?authorQuery=:authorQuery',
+    alias: 'getAuthorProfiles',
+    parameters: [authorizationHeader],
+    response: authorProfiles,
+    errors: [notAuthorizedError],
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -375,4 +384,5 @@ export const backendApi = makeApi([
     createDatasetDOIEndpoint,
     updateDatasetEndpoint,
     deleteDatasetEndpoint,
+    getAuthorProfilesEndpoint,
 ]);

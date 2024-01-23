@@ -47,6 +47,22 @@ data class CitedBy(
     val citations: List<Long> = mutableListOf<Long>(),
 )
 
+data class AuthorInterest(
+    val title: String,
+    val link: String,
+)
+
+data class AuthorProfile(
+    val authorId: String,
+    val name: String,
+    val link: String,
+    val affiliations: String,
+    val email: String,
+    val citedBy: Long,
+    val interests: List<AuthorInterest>,
+    val thumbnail: String,
+)
+
 data class Author(
     val authorId: Long,
     val affiliation: String,
