@@ -18,7 +18,7 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ dialogText, on
                 <form method='dialog'>
                     <button className='btn btn-error'>Cancel</button>
                 </form>
-                <form method='dialog'>
+                <form method='dialog'           >
                     <button className='btn loculusGreen' onClick={onConfirmation}>
                         Confirm
                     </button>
