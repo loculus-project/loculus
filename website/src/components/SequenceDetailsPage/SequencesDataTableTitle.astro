@@ -20,7 +20,7 @@ const { sequenceEntryHistory, organism, accessionVersion } = Astro.props;
 <div class='flex justify-between flex-wrap'>
     <div class='flex flex-row pb-2'>
         <BackButton marginRight={3} client:load />
-        <h1 class='title'>Sequence Entry Version {accessionVersion}</h1>
+        <h1 class='title'>{accessionVersion}</h1>
     </div>
 
     {
