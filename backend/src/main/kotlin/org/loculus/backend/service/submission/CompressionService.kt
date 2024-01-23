@@ -53,11 +53,10 @@ class CompressionService(private val backendConfig: BackendConfig) {
         originalData.metadata,
         originalData
             .unalignedNucleotideSequences.mapValues {
-                decompressNucleotideSequence(
-                    it.value,
-                    it.key,
-                    organism,
-                )
+                when (val compressedSequence = it.value) {
+                    null -> null
+                    else -> decompressNucleotideSequence(compressedSequence, it.key, organism)
+                }
             },
     )
 
@@ -65,11 +64,10 @@ class CompressionService(private val backendConfig: BackendConfig) {
         originalData.metadata,
         originalData
             .unalignedNucleotideSequences.mapValues { (segmentName, sequenceData) ->
-                compressNucleotideSequence(
-                    sequenceData,
-                    segmentName,
-                    organism,
-                )
+                when (sequenceData) {
+                    null -> null
+                    else -> compressNucleotideSequence(sequenceData, segmentName, organism)
+                }
             },
     )
 
@@ -165,12 +163,14 @@ class CompressionService(private val backendConfig: BackendConfig) {
             .referenceGenomes
             .getNucleotideSegmentReference(
                 segmentName,
-            )?.toByteArray()
+            )
+            ?.toByteArray()
 
     private fun getDictionaryForAminoAcidSequence(geneName: String, organism: Organism): ByteArray? = backendConfig
         .getInstanceConfig(organism)
         .referenceGenomes
         .getAminoAcidGeneReference(
             geneName,
-        )?.toByteArray()
+        )
+        ?.toByteArray()
 }

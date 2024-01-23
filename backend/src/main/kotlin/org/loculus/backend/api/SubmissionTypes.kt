@@ -166,7 +166,7 @@ data class OriginalData(
         example = "{\"segment1\": \"ACTG\", \"segment2\": \"GTCA\"}",
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
-    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
+    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>,
 )
 
 enum class Status {

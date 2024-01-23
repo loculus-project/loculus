@@ -69,6 +69,19 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
+    fun `WHEN I submit data with null as sequences THEN the sequence entry is in status processed`() {
+        val (accession, version, _) = prepareExtractedSequencesInDatabase()[0]
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withNullForSequences(accession = accession, version = version),
+        )
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntryOfUser(accession = accession, version = version)
+            .assertStatusIs(Status.AWAITING_APPROVAL)
+    }
+
+    @Test
     fun `WHEN I submit with all valid symbols THEN the sequence entry is in status processed`() {
         prepareExtractedSequencesInDatabase()
 
@@ -85,8 +98,8 @@ class SubmitProcessedDataEndpointTest(
         val defaultData = PreparedProcessedData.successfullyProcessed().data
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "3").withValues(
-                data = defaultData.withValues(
+            PreparedProcessedData.successfullyProcessed(accession = "3").copy(
+                data = defaultData.copy(
                     unalignedNucleotideSequences = mapOf(MAIN_SEGMENT to nucleotideSequenceOfDesiredLength),
                     alignedNucleotideSequences = mapOf(MAIN_SEGMENT to nucleotideSequenceOfDesiredLength),
                     alignedAminoAcidSequences =
@@ -105,13 +118,13 @@ class SubmitProcessedDataEndpointTest(
     fun `WHEN I submit preprocessed data without insertions THEN the missing keys of the reference will be added`() {
         prepareExtractedSequencesInDatabase(organism = OTHER_ORGANISM)
 
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessedOtherOrganismData().data.withValues(
+        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessedOtherOrganismData().data.copy(
             nucleotideInsertions = mapOf("notOnlySegment" to listOf(Insertion(1, "A"))),
             aminoAcidInsertions = emptyMap(),
         )
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = "3").withValues(
+            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = "3").copy(
                 data = dataWithoutInsertions,
             ),
             organism = OTHER_ORGANISM,
@@ -152,13 +165,13 @@ class SubmitProcessedDataEndpointTest(
     fun `WHEN I submit single-segment data without insertions THEN the missing keys of the reference will be added`() {
         prepareExtractedSequencesInDatabase()
 
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed().data.withValues(
+        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed().data.copy(
             nucleotideInsertions = mapOf("main" to listOf(Insertion(1, "A"))),
             aminoAcidInsertions = emptyMap(),
         )
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "3").withValues(
+            PreparedProcessedData.successfullyProcessed(accession = "3").copy(
                 data = dataWithoutInsertions,
             ),
         ).andExpect(status().isNoContent)
@@ -213,7 +226,7 @@ class SubmitProcessedDataEndpointTest(
         convenienceClient.submitDefaultFiles()
         convenienceClient.extractUnprocessedData(1)
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.withWrongDateFormat().withValues(
+            PreparedProcessedData.withWrongDateFormat().copy(
                 accession = firstAccession,
                 errors = PreparedProcessedData.withErrors().errors,
             ),
@@ -279,7 +292,7 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = firstAccession),
             PreparedProcessedData.successfullyProcessed(accession = firstAccession)
-                .withValues(version = nonExistentVersion),
+                .copy(version = nonExistentVersion),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
