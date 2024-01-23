@@ -6,18 +6,6 @@ instances:
         - name: collection_date
           type: date
           required: true
-        - name: region
-          type: string
-          generateIndex: true
-          autocomplete: true
-          required: false 
-        - name: country
-          type: string
-          generateIndex: true
-          autocomplete: true
-          required: false
-        - name: isolate_name
-          type: string
         - name: clade
           type: string
           generateIndex: true
@@ -25,9 +13,7 @@ instances:
           required: false
       website:
         tableColumns:
-          - country
           - collection_date
-          - isolate_name
           - clade
       silo:
         dateToSortBy: collection_date
