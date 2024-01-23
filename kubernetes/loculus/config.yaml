@@ -30,7 +30,7 @@ instances:
           - isolate_name
           - clade
       silo:
-        dateToSortBy: date
+        dateToSortBy: collection_date
         partitionBy: country
     referenceGenomes:
       nucleotideSequences:
