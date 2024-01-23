@@ -31,7 +31,7 @@ instances:
           - clade
       silo:
         dateToSortBy: collection_date
-        partitionBy: country
+        partitionBy: pango_lineage
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
