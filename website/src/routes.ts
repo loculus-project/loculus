@@ -28,7 +28,7 @@ export const routes = {
     },
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/seq/${accession}/versions`),
-    unknownOrganismPage: () => `/404`,
+    notFoundPage: () => `/404`,
     logout: () => '/logout',
 };
 
