@@ -6,8 +6,8 @@ import requests
 
 GROUP_NAME="insdc_ingest_group"
 USERNAME="insdc_ingest_user"
-PASSWORD="password"
-KEYCLOAK_TOKEN_URL="https://authentication.main.preview.k3s.loculus.org/realms/loculusRealm/protocol/openid-connect/token"
+PASSWORD="insdc_ingest_user"
+KEYCLOAK_TOKEN_URL="https://authentication.mpox-config.preview.k3s.loculus.org/realms/loculusRealm/protocol/openid-connect/token"
 KEYCLOAK_CLIENT_ID="test-cli" # Apparently required to be exactly this
 
 # Create the ingest user on instance start in kubernetes/loculus/templates/keycloak-config-map.yaml
@@ -36,7 +36,7 @@ def get_jwt(username, password):
 
 def create_group(group_name):
     # Create the ingest group
-    url = "https://backend.main.preview.k3s.loculus.org/groups"
+    url = "https://backend.mpox-config.preview.k3s.loculus.org/groups"
     token = get_jwt(USERNAME, PASSWORD)
     group_name = group_name
 

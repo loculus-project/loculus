@@ -37,7 +37,7 @@ rule format_ncbi_dataset_report:
     input:
         dataset_package="data/ncbi_dataset.zip",
     output:
-        ncbi_dataset_tsv=temp("data/metadata_raw.tsv"),
+        ncbi_dataset_tsv="data/metadata_raw.tsv",
     params:
         fields_to_include="accession,isolate-collection-date,geo-location,geo-region,isolate-lineage,release-date,submitter-affiliation,submitter-names",
     shell:
@@ -56,7 +56,7 @@ rule rename_columns:
         ncbi_dataset_tsv="data/metadata.tsv",
     shell:
         """
-        sed '1s/Accession/submissionId/; 1s/Isolate Collection date/date/' \
+        sed '1s/Accession/submissionId/; 1s/Isolate Collection date/collection_date/' \
             {input.ncbi_dataset_tsv} \
             > {output.ncbi_dataset_tsv}
         """

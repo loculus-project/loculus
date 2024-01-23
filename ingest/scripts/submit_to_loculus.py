@@ -10,7 +10,7 @@ import requests
 BRANCH="mpox-config"
 GROUP_NAME="insdc_ingest_group"
 USERNAME="insdc_ingest_user"
-PASSWORD="password"
+PASSWORD="insdc_ingest_user"
 KEYCLOAK_TOKEN_URL=f"https://authentication.{BRANCH}.preview.k3s.loculus.org/realms/loculusRealm/protocol/openid-connect/token"
 KEYCLOAK_CLIENT_ID="test-cli" # Apparently required to be exactly this
 ORGANISM="mpox"
