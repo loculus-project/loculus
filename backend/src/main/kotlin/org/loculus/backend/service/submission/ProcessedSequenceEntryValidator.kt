@@ -2,8 +2,10 @@ package org.loculus.backend.service.submission
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
+import org.loculus.backend.api.AminoAcidSequence
 import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.MetadataMap
+import org.loculus.backend.api.NucleotideSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
@@ -245,11 +247,7 @@ class ProcessedSequenceEntryValidator(
         )
     }
 
-    private fun <T> validateNoMissingSegment(
-        segment: ReferenceSequence,
-        sequenceData: Map<String, T>,
-        sequence: String,
-    ) {
+    private fun validateNoMissingSegment(segment: ReferenceSequence, sequenceData: Map<String, *>, sequence: String) {
         if (!sequenceData.containsKey(segment.name)) {
             throw ProcessingValidationException("Missing the required segment '${segment.name}' in '$sequence'.")
         }
@@ -269,7 +267,7 @@ class ProcessedSequenceEntryValidator(
         }
     }
 
-    private fun <T> validateNoUnknownSegment(dataToValidate: Map<String, T>, sequenceGrouping: String) {
+    private fun validateNoUnknownSegment(dataToValidate: Map<String, *>, sequenceGrouping: String) {
         val unknownSegments = dataToValidate.keys.subtract(referenceGenome.nucleotideSequences.map { it.name }.toSet())
         if (unknownSegments.isNotEmpty()) {
             val unknownSegmentsString = unknownSegments.sorted().joinToString(", ")
@@ -279,7 +277,10 @@ class ProcessedSequenceEntryValidator(
         }
     }
 
-    private fun validateNoUnknownNucleotideSymbol(dataToValidate: Map<String, String?>, sequenceGrouping: String) {
+    private fun validateNoUnknownNucleotideSymbol(
+        dataToValidate: Map<String, NucleotideSequence?>,
+        sequenceGrouping: String,
+    ) {
         for ((segmentName, sequence) in dataToValidate) {
             if (sequence == null) {
                 continue
@@ -354,7 +355,7 @@ class ProcessedSequenceEntryValidator(
         }
     }
 
-    private fun validateNoUnknownAminoAcidSymbol(dataToValidate: Map<String, String?>) {
+    private fun validateNoUnknownAminoAcidSymbol(dataToValidate: Map<String, AminoAcidSequence?>) {
         for ((gene, sequence) in dataToValidate) {
             if (sequence == null) {
                 continue
