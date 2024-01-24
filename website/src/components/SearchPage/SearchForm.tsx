@@ -6,7 +6,8 @@ import { sentenceCase } from 'change-case';
 import { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
 import { AutoCompleteField } from './fields/AutoCompleteField';
-import { DateField } from './fields/DateField';
+import { DateField, TimestampField } from './fields/DateField';
+import type { FieldProps } from './fields/FieldProps.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
@@ -77,30 +78,16 @@ export const SearchForm: FC<SearchFormProps> = ({
 
     const fields = useMemo(
         () =>
-            fieldValues.map((field) => {
-                if (field.notSearchable === true) return null;
-
-                const props = {
-                    key: field.name,
-                    field,
-                    handleFieldChange,
-                    isLoading,
-                    lapisUrl,
-                    allFields: fieldValues,
-                };
-
-                switch (field.type) {
-                    case 'date':
-                        return <DateField {...props} />;
-                    case 'pango_lineage':
-                        return <PangoLineageField {...props} />;
-                    default:
-                        if (field.autocomplete === true) {
-                            return <AutoCompleteField {...props} />;
-                        }
-                        return <NormalTextField {...props} />;
-                }
-            }),
+            fieldValues.map((field) => (
+                <SearchField
+                    key={field.name}
+                    field={field}
+                    handleFieldChange={handleFieldChange}
+                    isLoading={isLoading}
+                    lapisUrl={lapisUrl}
+                    allFields={fieldValues}
+                />
+            )),
         [lapisUrl, fieldValues, isLoading],
     );
 
@@ -153,6 +140,28 @@ export const SearchForm: FC<SearchFormProps> = ({
             </LocalizationProvider>
         </QueryClientProvider>
     );
+};
+
+const SearchField: FC<FieldProps> = (props) => {
+    const { field } = props;
+
+    if (field.notSearchable === true) {
+        return null;
+    }
+
+    switch (field.type) {
+        case 'date':
+            return <DateField {...props} />;
+        case 'timestamp':
+            return <TimestampField {...props} />;
+        case 'pango_lineage':
+            return <PangoLineageField {...props} />;
+        default:
+            if (field.autocomplete === true) {
+                return <AutoCompleteField {...props} />;
+            }
+            return <NormalTextField {...props} />;
+    }
 };
 
 const SearchButton: FC<{ isLoading: boolean }> = ({ isLoading }) => (

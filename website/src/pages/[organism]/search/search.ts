@@ -5,7 +5,7 @@ import { getReferenceGenomes, getSchema } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { hiddenDefaultSearchFilters } from '../../../settings.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
-import type { MetadataFilter, FilterValue, MutationFilter } from '../../../types/config.ts';
+import type { FilterValue, MetadataFilter, MutationFilter } from '../../../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
@@ -83,7 +83,8 @@ export const getMetadataFilters = (getSearchParams: (param: string) => string, o
         if (metadata.notSearchable === true) {
             return [];
         }
-        if (metadata.type === 'date') {
+
+        if (metadata.type === 'date' || metadata.type === 'timestamp') {
             const metadataFrom = {
                 ...metadata,
                 name: `${metadata.name}From`,
@@ -95,13 +96,14 @@ export const getMetadataFilters = (getSearchParams: (param: string) => string, o
                 filterValue: getSearchParams(`${metadata.name}To`),
             };
             return [metadataFrom, metadataTo];
-        } else {
-            const metadataSetting = {
+        }
+
+        return [
+            {
                 ...metadata,
                 filterValue: getSearchParams(metadata.name),
-            };
-            return [metadataSetting];
-        }
+            },
+        ];
     });
 };
 

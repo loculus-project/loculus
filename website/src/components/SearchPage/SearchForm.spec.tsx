@@ -92,4 +92,42 @@ describe('SearchForm', () => {
         expect(screen.getByPlaceholderText('Field 1')).toBeDefined();
         expect(screen.queryByPlaceholderText('NotSearchable')).not.toBeInTheDocument();
     });
+
+    test('should display dates of timestamp fields', async () => {
+        const timestampFieldName = 'timestampField';
+        renderSearchForm([
+            {
+                name: timestampFieldName,
+                type: 'timestamp' as const,
+                filterValue: '1706147200',
+            },
+        ]);
+
+        const timestampField = screen.getByLabelText('Timestamp field');
+        expect(timestampField).toHaveValue('2024-01-25');
+
+        await userEvent.type(timestampField, '2024-01-26');
+        await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+        expect(window.location.href).toContain(`${timestampFieldName}=1706233600`);
+    });
+
+    test('should display dates of date fields', async () => {
+        const dateFieldName = 'dateField';
+        renderSearchForm([
+            {
+                name: dateFieldName,
+                type: 'date' as const,
+                filterValue: '2024-01-25',
+            },
+        ]);
+
+        const dateField = screen.getByLabelText('Date field');
+        expect(dateField).toHaveValue('2024-01-25');
+
+        await userEvent.type(dateField, '2024-01-26');
+        await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+        expect(window.location.href).toContain(`${dateFieldName}=2024-01-26`);
+    });
 });
