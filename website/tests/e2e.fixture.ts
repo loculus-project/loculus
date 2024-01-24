@@ -55,6 +55,10 @@ export const revokedSequenceEntry = {
     accession: '11',
     version: 1,
 };
+export const revocationSequenceEntry = {
+    accession: '11',
+    version: 2,
+};
 export const deprecatedSequenceEntry = {
     accession: '21',
     version: 1,

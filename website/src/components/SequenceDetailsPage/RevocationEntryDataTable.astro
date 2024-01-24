@@ -1,0 +1,37 @@
+---
+import DataTable from './DataTable.astro';
+import { type TableDataEntry } from './getTableData';
+import {
+    ACCESSION_VERSION_FIELD,
+    SUBMITTED_AT_FIELD,
+    RELEASED_AT_FIELD,
+    IS_REVOCATION_FIELD,
+    ACCESSION_FIELD,
+    VERSION_STATUS_FIELD,
+    SUBMITTER_FIELD,
+    GROUP_FIELD,
+    VERSION_FIELD,
+} from '../../settings';
+
+interface Props {
+    tableData: TableDataEntry[];
+}
+
+const { tableData } = Astro.props;
+
+const relevantFieldsForRevocationVersions = [
+    ACCESSION_VERSION_FIELD,
+    ACCESSION_FIELD,
+    IS_REVOCATION_FIELD,
+    RELEASED_AT_FIELD,
+    VERSION_STATUS_FIELD,
+    SUBMITTED_AT_FIELD,
+    SUBMITTER_FIELD,
+    VERSION_FIELD,
+    GROUP_FIELD,
+];
+
+const relevantData = tableData.filter((entry) => relevantFieldsForRevocationVersions.includes(entry.name));
+---
+
+<DataTable tableData={relevantData} />

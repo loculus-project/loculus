@@ -37,7 +37,7 @@ spec:
             {{- if eq $.Values.environment "server" }}
             - "--keycloak-host=https://{{ $keycloakHost}}"
             {{- else }}
-            - "--keycloak-host=http://localhost:8083"
+            - "--keycloak-host=http://loculus-keycloak-service:8083"
             {{- end }}
         {{- end }}
       imagePullSecrets:

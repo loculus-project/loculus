@@ -5,7 +5,13 @@ import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
-import { ACCESSION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD } from '../settings.ts';
+import {
+    ACCESSION_FIELD,
+    ACCESSION_VERSION_FIELD,
+    IS_REVOCATION_FIELD,
+    VERSION_FIELD,
+    VERSION_STATUS_FIELD,
+} from '../settings.ts';
 import { accessionVersion, type AccessionVersion, type ProblemDetail } from '../types/backend.ts';
 import type { Schema } from '../types/config.ts';
 import {
@@ -84,7 +90,13 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         // @ts-expect-error Bug in Zod: https://github.com/colinhacks/zod/issues/3136
         const request: LapisBaseRequest = {
             accession,
-            fields: [ACCESSION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD],
+            fields: [
+                ACCESSION_VERSION_FIELD,
+                ACCESSION_FIELD,
+                VERSION_FIELD,
+                VERSION_STATUS_FIELD,
+                IS_REVOCATION_FIELD,
+            ],
             orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
         };
         const result = await this.call('details', request);

@@ -1,15 +1,11 @@
 import { Result } from 'neverthrow';
 
-import {
-    getTableData,
-    getVersionStatus,
-    type TableDataEntry,
-} from '../../../../components/SequenceDetailsPage/getTableData.ts';
+import { getTableData, type TableDataEntry } from '../../../../components/SequenceDetailsPage/getTableData.ts';
 import { getSchema } from '../../../../config.ts';
 import { routes } from '../../../../routes.ts';
 import { LapisClient } from '../../../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../../../types/backend.ts';
-import type { SequenceEntryHistory, SiloVersionStatus } from '../../../../types/lapis.ts';
+import type { SequenceEntryHistory } from '../../../../types/lapis.ts';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion.ts';
 
 export enum SequenceDetailsTableResultType {
@@ -21,7 +17,6 @@ type TableData = {
     type: SequenceDetailsTableResultType.TABLE_DATA;
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
-    versionStatus: SiloVersionStatus;
 };
 
 type Redirect = {
@@ -56,6 +51,5 @@ export const getSequenceDetailsTableData = async (
         type: SequenceDetailsTableResultType.TABLE_DATA as const,
         tableData,
         sequenceEntryHistory,
-        versionStatus: getVersionStatus(tableData),
     }));
 };

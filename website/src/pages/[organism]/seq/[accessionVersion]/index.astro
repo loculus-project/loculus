@@ -1,8 +1,10 @@
 ---
 import { getSequenceDetailsTableData, SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
+import RevocationEntryDataTable from '../../../../components/SequenceDetailsPage/RevocationEntryDataTable.astro';
 import SequencesBanner from '../../../../components/SequenceDetailsPage/SequencesBanner.astro';
 import SequencesDataTable from '../../../../components/SequenceDetailsPage/SequencesDataTable.astro';
 import SequencesDataTableTitle from '../../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
+import { isRevocationEntry } from '../../../../components/SequenceDetailsPage/getTableData';
 import ErrorBox from '../../../../components/common/ErrorBox.astro';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import { routes } from '../../../../routes';
@@ -27,7 +29,7 @@ if (
                 <div slot='banner'>
                     <SequencesBanner
                         sequenceEntryHistory={sequenceDetailsTableData.value.sequenceEntryHistory}
-                        versionStatus={sequenceDetailsTableData.value.versionStatus}
+                        accessionVersion={accessionVersion}
                         organism={organism}
                     />
                 </div>
@@ -46,27 +48,28 @@ if (
     {
         sequenceDetailsTableData.match(
             (data) =>
-                data.type === SequenceDetailsTableResultType.TABLE_DATA && (
+                data.type === SequenceDetailsTableResultType.TABLE_DATA &&
+                (isRevocationEntry(data.tableData) ? (
+                    <RevocationEntryDataTable tableData={data.tableData} />
+                ) : (
                     <SequencesDataTable
                         tableData={data.tableData}
                         organism={organism}
                         accessionVersion={accessionVersion}
                     />
-                ),
-            () => {
-                return (
-                    <>
-                        <ErrorBox title='Sequence entry not found' message='No data found for accession version' />
-                        <div>
-                            Click
-                            <a class='underline' href={routes.searchPage(organism, [])}>
-                                here
-                            </a>
-                            to search for a different sequence.
-                        </div>
-                    </>
-                );
-            },
+                )),
+            () => (
+                <>
+                    <ErrorBox title='Sequence entry not found' message='No data found for accession version' />
+                    <div>
+                        Click
+                        <a class='underline' href={routes.searchPage(organism, [])}>
+                            here
+                        </a>
+                        to search for a different sequence.
+                    </div>
+                </>
+            ),
         )
     }
 </BaseLayout>

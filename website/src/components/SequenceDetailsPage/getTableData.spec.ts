@@ -1,12 +1,10 @@
 import { err, ok } from 'neverthrow';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { getTableData, getVersionStatus } from './getTableData.ts';
+import { getTableData } from './getTableData.ts';
 import { mockRequest, testConfig } from '../../../vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
-import { VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { Schema } from '../../types/config.ts';
-import { siloVersionStatuses } from '../../types/lapis.ts';
 
 const schema: Schema = {
     instanceName: 'instance name',
@@ -207,32 +205,6 @@ describe('getTableData', () => {
             name: 'timestampField',
             value: '2024-01-25 14:59:21 UTC',
         });
-    });
-});
-
-describe('getVersionStatus', () => {
-    test('should return status for correct status', () => {
-        const versionStatus = getVersionStatus([
-            {
-                label: 'does not matter',
-                name: VERSION_STATUS_FIELD,
-                value: siloVersionStatuses.latestVersion,
-            },
-        ]);
-
-        expect(versionStatus).toStrictEqual(siloVersionStatuses.latestVersion);
-    });
-
-    test('should throw error for unknown status', () => {
-        expect(() =>
-            getVersionStatus([
-                {
-                    label: 'does not matter',
-                    name: VERSION_STATUS_FIELD,
-                    value: 'unknown status',
-                },
-            ]),
-        ).toThrowError(/Invalid version status: "unknown status"/);
     });
 });
 

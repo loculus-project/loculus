@@ -1,0 +1,24 @@
+---
+import { type TableDataEntry } from './getTableData';
+
+interface Props {
+    tableData: TableDataEntry[];
+}
+
+const { tableData } = Astro.props;
+---
+
+<div class='mt-6'>
+    <table class='table-auto'>
+        <tbody>
+            {
+                tableData.map(({ label, value }) => (
+                    <tr>
+                        <td class='font-semibold pr-4 align-top w-1/4'>{label}:</td>
+                        <td class='break-normal'>{value}</td>
+                    </tr>
+                ))
+            }
+        </tbody>
+    </table>
+</div>

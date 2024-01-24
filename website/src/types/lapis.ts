@@ -75,12 +75,18 @@ export const siloVersionStatusSchema = z.enum([
 
 export type SiloVersionStatus = z.infer<typeof siloVersionStatusSchema>;
 
-export const sequenceEntryHistory = z.array(
-    accessionVersion.merge(
-        z.object({
-            versionStatus: siloVersionStatusSchema,
-        }),
-    ),
+export const siloBooleanWorkaround = z.enum(['true', 'false']).transform((value) => value === 'true');
+
+export const sequenceEntryHistoryEntry = accessionVersion.merge(
+    z.object({
+        accessionVersion: z.string(),
+        versionStatus: siloVersionStatusSchema,
+        isRevocation: siloBooleanWorkaround,
+    }),
 );
+
+export type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry>;
+
+export const sequenceEntryHistory = z.array(sequenceEntryHistoryEntry);
 
 export type SequenceEntryHistory = z.infer<typeof sequenceEntryHistory>;
