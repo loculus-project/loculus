@@ -91,6 +91,31 @@ const lapisRequestMocks = {
             ),
         );
     },
+    unalignedNucleotideSequences: (statusCode: number = 200, response: string | LapisError) => {
+        testServer.use(
+            http.post(`${testConfig.serverSide.lapisUrls.dummy}/sample/unalignedNucleotideSequences`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
+            }),
+        );
+    },
+    unalignedNucleotideSequencesMultiSegment: (
+        statusCode: number = 200,
+        response: string | LapisError,
+        segmentName: string,
+    ) => {
+        testServer.use(
+            http.post(
+                `${testConfig.serverSide.lapisUrls.dummy}/sample/unalignedNucleotideSequences/${segmentName}`,
+                () => {
+                    return new Response(JSON.stringify(response), {
+                        status: statusCode,
+                    });
+                },
+            ),
+        );
+    },
     nucleotideMutations: (statusCode: number = 200, response: MutationsResponse | LapisError) => {
         testServer.use(
             http.post(`${testConfig.serverSide.lapisUrls.dummy}/sample/nucleotideMutations`, () => {
