@@ -45,6 +45,7 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
             ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
             ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
             ("submitter" to TextNode(rawProcessedData.submitter)) +
+            ("group" to TextNode(rawProcessedData.group)) +
             ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
             ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
             ("versionStatus" to TextNode(siloVersionStatus.name))
