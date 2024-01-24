@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
+import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -80,6 +81,7 @@ class GetReleasedDataEndpointTest(
                 "accessionVersion" to TextNode("$id.$version"),
                 "isRevocation" to TextNode("false"),
                 "submitter" to TextNode(DEFAULT_USER_NAME),
+                "group" to TextNode(DEFAULT_GROUP_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
             )
 
@@ -178,6 +180,7 @@ class GetReleasedDataEndpointTest(
                 "submittedAt" -> expectIsTimestampWithCurrentYear(value)
                 "releasedAt" -> expectIsTimestampWithCurrentYear(value)
                 "submitter" -> assertThat(value, `is`(TextNode(DEFAULT_USER_NAME)))
+                "group" -> assertThat(value, `is`(TextNode(DEFAULT_GROUP_NAME)))
                 "accession", "version", "accessionVersion", "submissionId" -> {}
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
             }

@@ -15,6 +15,8 @@ fields:
     notSearchable: true
   - name: submitter
     type: string
+  - name: group
+    type: string
   - name: submittedAt
     type: timestamp
   - name: releasedAt
