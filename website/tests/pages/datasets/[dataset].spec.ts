@@ -1,17 +1,18 @@
-import { expect, test } from '../../e2e.fixture';
+import { expect, test, authorize } from '../../e2e.fixture';
 import { DatasetPage } from './dataset.page';
 
 test.describe.configure({ mode: 'serial' });
 let testDatasetManager: DatasetPage;
 const testDatasetName = 'Test Dataset 2';
 
-// TODO: remove after new API is merged
-test.skip();
-
 test.describe('The dataset item page', () => {
     // Create test dataset
+    test.beforeEach(async ({ loginAsTestUser }) => {
+        await loginAsTestUser();
+    });
     test.beforeAll(async ({ browser }) => {
         const page = await browser.newPage();
+        await authorize(page);
         testDatasetManager = new DatasetPage(page);
         await testDatasetManager.createTestDataset(testDatasetName);
     });
@@ -24,9 +25,6 @@ test.describe('The dataset item page', () => {
     test('displays layout correctly', async ({ datasetPage }) => {
         await datasetPage.gotoDetail(testDatasetName);
 
-        // Author information
-        // await expect(datasetPage.page.getByText(testuser)).toBeVisible();
-
         // Dataset action buttons
         await expect(datasetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
         await expect(datasetPage.page.getByRole('button', { name: 'Edit' })).toBeVisible();
@@ -34,7 +32,7 @@ test.describe('The dataset item page', () => {
 
         // Dataset details
         await expect(datasetPage.page.getByRole('heading', { name: testDatasetName })).toBeVisible();
-        await expect(datasetPage.page.getByText('Created Dated')).toBeVisible();
+        await expect(datasetPage.page.getByText('Created date')).toBeVisible();
         await expect(datasetPage.page.getByText('Version')).toBeVisible();
         await expect(datasetPage.page.getByText('Sequences')).toBeVisible();
     });

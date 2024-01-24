@@ -49,11 +49,7 @@ const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datase
             dataset !== undefined ? (
                 <div class='flex flex-row items-left'>
                     <div class='w-1/6 flex flex-col justify-start items-center'>
-                        <AuthorDetails 
-                            displayFullDetails={false}
-                            name={dataset?.createdBy}
-                            fontSize={60}
-                        />
+                        <AuthorDetails displayFullDetails={false} name={dataset?.createdBy} fontSize={60} />
                     </div>
                     <div class='w-5/6 pl-6'>
                         {datasetRecordsResponse.value !== undefined ? (
@@ -63,7 +59,7 @@ const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datase
                                 dataset={dataset}
                                 datasetRecords={datasetRecordsResponse.value}
                                 isAdminView={dataset?.createdBy === username}
-                                client:load
+                                client:only='react'
                             />
                         ) : (
                             <ErrorFeedback

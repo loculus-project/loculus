@@ -2,15 +2,15 @@
     "public": {
         "backendUrl": "http://localhost:8079",
         "lapisUrls": {
-            "dummy-organism": "https://lapis.main.preview.k3s.loculus.org/dummy-organism",
-            "dummy-organism-2": "https://lapis.main.preview.k3s.loculus.org/dummy-organism-2"
+            "dummy-organism": "http://localhost:8080/dummy-organism",
+            "dummy-organism-2": "http://localhost:8080/dummy-organism-2"
         }
     },
     "serverSide": {
         "backendUrl": "http://localhost:8079",
         "lapisUrls": {
-            "dummy-organism": "https://lapis.main.preview.k3s.loculus.org/dummy-organism",
-            "dummy-organism-2": "https://lapis.main.preview.k3s.loculus.org/dummy-organism-2"
+            "dummy-organism": "http://localhost:8080/dummy-organism",
+            "dummy-organism-2": "http://localhost:8080/dummy-organism-2"
         },
         "keycloakUrl": "http://localhost:8083"
     }

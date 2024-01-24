@@ -45,7 +45,7 @@ export const authorProfile = z.object({
         z.object({
             title: z.string(),
             link: z.string(),
-        })
+        }),
     ),
 });
 export const authorProfiles = z.array(authorProfile);

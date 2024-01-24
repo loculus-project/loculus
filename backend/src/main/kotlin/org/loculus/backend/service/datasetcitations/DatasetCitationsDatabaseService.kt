@@ -299,7 +299,7 @@ class DatasetCitationsDatabaseService(
 
     fun getAuthorProfiles(authorQuery: String): List<AuthorProfile> {
         log.info { "Get author profiles matching query $authorQuery" }
-        
+
         // TODO: implement using SerpAPI: https://serpapi.com/google-scholar-profiles-api
         var authorList = mutableListOf<AuthorProfile>()
         return authorList
