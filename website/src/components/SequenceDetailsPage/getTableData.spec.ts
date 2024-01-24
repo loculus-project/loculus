@@ -13,6 +13,7 @@ const schema: Schema = {
     metadata: [
         { name: 'metadataField1', type: 'string' },
         { name: 'metadataField2', type: 'string' },
+        { name: 'timestampField', type: 'timestamp' },
     ],
     tableColumns: [],
     primaryKey: 'primary key',
@@ -78,6 +79,11 @@ describe('getTableData', () => {
                 {
                     label: 'Metadata field2',
                     name: 'metadataField2',
+                    value: 'N/A',
+                },
+                {
+                    label: 'Timestamp field',
+                    name: 'timestampField',
                     value: 'N/A',
                 },
                 {
@@ -187,6 +193,19 @@ describe('getTableData', () => {
             label: 'Amino acid insertions',
             name: 'aminoAcidInsertions',
             value: 'aminoAcidInsertion1, aminoAcidInsertion2',
+        });
+    });
+
+    test('should map timestamps to human readable dates', async () => {
+        mockRequest.lapis.details(200, { data: [{ timestampField: 1706194761 }] });
+
+        const result = await getTableData('accession', schema, lapisClient);
+
+        const data = result._unsafeUnwrap();
+        expect(data).toContainEqual({
+            label: 'Timestamp field',
+            name: 'timestampField',
+            value: '2024-01-25 14:59:21 UTC',
         });
     });
 });

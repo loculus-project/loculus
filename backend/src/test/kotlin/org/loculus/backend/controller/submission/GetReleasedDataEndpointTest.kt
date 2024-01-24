@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.`is`
@@ -24,8 +25,6 @@ import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.firstA
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Autowired
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf("releasedAt", "submissionId", "submittedAt")
 
@@ -91,8 +90,8 @@ class GetReleasedDataEndpointTest(
             )
             for ((key, value) in it.metadata) {
                 when (key) {
-                    "submittedAt" -> expectIsDateWithCurrentYear(value)
-                    "releasedAt" -> expectIsDateWithCurrentYear(value)
+                    "submittedAt" -> expectIsTimestampWithCurrentYear(value)
+                    "releasedAt" -> expectIsTimestampWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
                     else -> assertThat(value, `is`(expectedMetadata[key]))
                 }
@@ -176,8 +175,8 @@ class GetReleasedDataEndpointTest(
             when (key) {
                 "isRevocation" -> assertThat(value, `is`(TextNode("true")))
                 "versionStatus" -> assertThat(value, `is`(TextNode("LATEST_VERSION")))
-                "submittedAt" -> expectIsDateWithCurrentYear(value)
-                "releasedAt" -> expectIsDateWithCurrentYear(value)
+                "submittedAt" -> expectIsTimestampWithCurrentYear(value)
+                "releasedAt" -> expectIsTimestampWithCurrentYear(value)
                 "submitter" -> assertThat(value, `is`(TextNode(DEFAULT_USER_NAME)))
                 "accession", "version", "accessionVersion", "submissionId" -> {}
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
@@ -229,8 +228,8 @@ class GetReleasedDataEndpointTest(
         )
     }
 
-    private fun expectIsDateWithCurrentYear(value: JsonNode) {
-        val dateTime = LocalDateTime.parse(value.textValue(), DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    private fun expectIsTimestampWithCurrentYear(value: JsonNode) {
+        val dateTime = Instant.fromEpochSeconds(value.asLong()).toLocalDateTime(TimeZone.UTC)
         assertThat(dateTime.year, `is`(currentYear))
     }
 }

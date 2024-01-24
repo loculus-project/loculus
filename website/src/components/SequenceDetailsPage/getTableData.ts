@@ -1,10 +1,11 @@
 import { sentenceCase } from 'change-case';
+import { DateTime, FixedOffsetZone } from 'luxon';
 import { err, Result } from 'neverthrow';
 
 import { type LapisClient } from '../../services/lapisClient.ts';
 import { VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { AccessionVersion, ProblemDetail } from '../../types/backend.ts';
-import type { Schema } from '../../types/config.ts';
+import type { Metadata, Schema } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -106,8 +107,9 @@ function toTableData(config: Schema) {
         const data: TableDataEntry[] = config.metadata.map((metadata) => ({
             label: sentenceCase(metadata.name),
             name: metadata.name,
-            value: details[metadata.name] ?? 'N/A',
+            value: mapValueToDisplayedValue(details[metadata.name], metadata),
         }));
+
         data.push(
             {
                 label: 'Nucleotide substitutions',
@@ -143,6 +145,18 @@ function toTableData(config: Schema) {
 
         return data;
     };
+}
+
+function mapValueToDisplayedValue(value: undefined | null | string | number, metadata: Metadata) {
+    if (value === null || value === undefined) {
+        return 'N/A';
+    }
+
+    if (metadata.type === 'timestamp' && typeof value === 'number') {
+        return DateTime.fromSeconds(value, { zone: FixedOffsetZone.utcInstance }).toFormat('yyyy-MM-dd TTT');
+    }
+
+    return value;
 }
 
 function mutationsToCommaSeparatedString(

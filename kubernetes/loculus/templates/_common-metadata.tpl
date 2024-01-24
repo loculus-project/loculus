@@ -16,9 +16,9 @@ fields:
   - name: submitter
     type: string
   - name: submittedAt
-    type: string
+    type: timestamp
   - name: releasedAt
-    type: string
+    type: timestamp
   - name: versionStatus
     type: string
     notSearchable: true

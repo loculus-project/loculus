@@ -2,6 +2,9 @@ package org.loculus.backend.model
 
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.TextNode
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import mu.KotlinLogging
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
@@ -42,8 +45,8 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
             ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
             ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
             ("submitter" to TextNode(rawProcessedData.submitter)) +
-            ("submittedAt" to TextNode(rawProcessedData.submittedAt.toString())) +
-            ("releasedAt" to TextNode(rawProcessedData.releasedAt.toString())) +
+            ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
+            ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
             ("versionStatus" to TextNode(siloVersionStatus.name))
 
         return ProcessedData(
@@ -75,3 +78,5 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
         return SiloVersionStatus.REVISED
     }
 }
+
+private fun LocalDateTime.toTimestamp() = this.toInstant(TimeZone.UTC).epochSeconds
