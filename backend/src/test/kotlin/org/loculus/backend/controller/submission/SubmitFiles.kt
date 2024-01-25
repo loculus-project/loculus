@@ -16,7 +16,6 @@ import java.util.zip.ZipOutputStream
 private const val DEFAULT_METADATA_FILE_NAME = "metadata.tsv"
 private const val REVISED_METADATA_FILE_NAME = "revised_metadata.tsv"
 private const val DEFAULT_SEQUENCES_FILE_NAME = "sequences.fasta"
-private const val DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME = "sequences_multi_segment.fasta"
 
 object SubmitFiles {
 
@@ -34,17 +33,8 @@ object SubmitFiles {
                 compression = it,
             )
         }
-        private val sequencesFilesMultiSegmented = CompressionAlgorithm.entries.associateWith {
-            sequenceFileWith(
-                content = getFileContent(DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME),
-                compression = it,
-            )
-        }
         val metadataFile = metadataFiles[CompressionAlgorithm.NONE] ?: error("No metadata file")
         val sequencesFile = sequencesFiles[CompressionAlgorithm.NONE] ?: error("No sequences file")
-        val sequencesFileMultiSegmented = sequencesFilesMultiSegmented[CompressionAlgorithm.NONE] ?: error(
-            "No multi-segment sequences file",
-        )
 
         const val NUMBER_OF_SEQUENCES = 10
         val allAccessions = (1L..NUMBER_OF_SEQUENCES).toList().map { it.toString() }

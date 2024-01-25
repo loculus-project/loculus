@@ -11,10 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 
-data class Accessions(
-    val accessions: List<Accession>,
-)
-
 interface AccessionVersionInterface {
     val accession: Accession
     val version: Version
@@ -31,7 +27,6 @@ data class SubmissionIdMapping(
     override val accession: Accession,
     override val version: Version,
     val submissionId: String,
-    val dataUseTerms: DataUseTerms? = null,
 ) : AccessionVersionInterface
 
 fun <T : AccessionVersionInterface> List<T>.toPairs() = map { Pair(it.accession, it.version) }
@@ -68,24 +63,23 @@ typealias SegmentName = String
 typealias GeneName = String
 typealias NucleotideSequence = String
 typealias AminoAcidSequence = String
-typealias MetadataMap = Map<String, JsonNode>
 
 data class ProcessedData(
     @Schema(
         example = """{"date": "2020-01-01", "country": "Germany", "age": 42, "qc": 0.95}""",
         description = "Key value pairs of metadata, correctly typed",
     )
-    val metadata: MetadataMap,
+    val metadata: Map<String, JsonNode>,
     @Schema(
         example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
-    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>,
+    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
     @Schema(
         example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
         description = "The key is the segment name, the value is the aligned nucleotide sequence",
     )
-    val alignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>,
+    val alignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
     @Schema(
         example = """{"segment1": ["123:GTCA", "345:AAAA"], "segment2": ["123:GTCA", "345:AAAA"]}""",
         description = "The key is the segment name, the value is a list of nucleotide insertions",
@@ -95,7 +89,7 @@ data class ProcessedData(
         example = """{"gene1": "NRNR", "gene2": "NRNR"}""",
         description = "The key is the gene name, the value is the amino acid sequence",
     )
-    val alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence?>,
+    val alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence>,
     @Schema(
         example = """{"gene1": ["123:RRN", "345:NNN"], "gene2": ["123:NNR", "345:RN"]}""",
         description = "The key is the gene name, the value is a list of amino acid insertions",
@@ -154,6 +148,12 @@ data class SequenceEntryStatus(
     val isRevocation: Boolean = false,
 ) : AccessionVersionInterface
 
+data class RevisedData(
+    val submissionId: String,
+    val accession: Accession,
+    val originalData: OriginalData,
+)
+
 data class UnprocessedData(
     @Schema(example = "123") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
@@ -170,7 +170,7 @@ data class OriginalData(
         example = "{\"segment1\": \"ACTG\", \"segment2\": \"GTCA\"}",
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
-    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>,
+    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence>,
 )
 
 enum class Status {

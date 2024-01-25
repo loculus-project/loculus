@@ -1,4 +1,6 @@
-{{- range $key, $_ := $.Values.instances }}
+{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
+
+{{- range $key, $_ := $configFile.instances }}
 ---
 apiVersion: v1
 kind: Service

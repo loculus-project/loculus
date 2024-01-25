@@ -29,17 +29,17 @@ class SingleSegmentedSubmitEndpointTest(
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
                 content = """
-                        submissionId	firstColumn
-                        header1	someValue
-                        header2	someValue
+                    submissionId	firstColumn
+                    header1	someValue
+                    header2	someValue
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(
                 content = """
-                        >header1
-                        AC
-                        >header2
-                        GT
+                    >header1
+                    AC
+                    >header2
+                    GT
                 """.trimIndent(),
             ),
         )
@@ -64,14 +64,14 @@ class SingleSegmentedSubmitEndpointTest(
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
                 content = """
-                        submissionId	firstColumn
-                        header1	someValue
+                    submissionId	firstColumn
+                    header1	someValue
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(
                 content = """
-                        >header1_$DEFAULT_SEQUENCE_NAME
-                        AC
+                    >header1_$DEFAULT_SEQUENCE_NAME
+                    AC
                 """.trimIndent(),
             ),
         )

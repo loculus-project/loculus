@@ -32,7 +32,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `GIVEN a sequence entry has errors WHEN I submit edited data THEN the status changes to RECEIVED`() {
-        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.withErrors())
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
@@ -47,7 +47,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN the status changes to RECEIVED`() {
-        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed())
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.successfullyProcessed())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
@@ -63,7 +63,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `WHEN a version does not exist THEN it returns an unprocessable entity error`() {
-        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.withErrors())
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
@@ -81,7 +81,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `WHEN an accession does not exist THEN it returns an unprocessable entity error`() {
-        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.withErrors())
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
@@ -104,7 +104,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `WHEN submitting data for wrong organism THEN it returns an unprocessable entity error`() {
-        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.withErrors())
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
@@ -126,7 +126,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
     @Test
     fun `WHEN a sequence entry does not belong to a user THEN it returns an forbidden error`() {
-        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.withErrors())
+        convenienceClient.prepareDatabaseWith(PreparedProcessedData.withErrors())
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)

@@ -7,11 +7,12 @@ import java.io.InputStreamReader
 data class FastaEntry(val sampleName: String, val sequence: String)
 
 class FastaReader(inputStream: InputStream) : Iterator<FastaEntry>, Iterable<FastaEntry>, AutoCloseable {
-    private val reader: BufferedReader = BufferedReader(InputStreamReader(inputStream))
+    private val reader: BufferedReader
     private var nextEntry: FastaEntry? = null
     private var nextLine: String? = ""
 
     init {
+        reader = BufferedReader(InputStreamReader(inputStream))
         read()
     }
 

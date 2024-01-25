@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
@@ -13,7 +11,6 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.OTHER_ORGANISM
@@ -28,7 +25,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 class SubmissionConvenienceClient(
-    private val backendConfig: BackendConfig,
     private val client: SubmissionControllerClient,
     private val objectMapper: ObjectMapper,
 ) {
@@ -36,23 +32,12 @@ class SubmissionConvenienceClient(
         username: String = DEFAULT_USER_NAME,
         groupName: String = DEFAULT_GROUP_NAME,
         organism: String = DEFAULT_ORGANISM,
-        dataUseTerms: DataUseTerms = DataUseTerms.Open,
     ): List<SubmissionIdMapping> {
-        val isMultiSegmented = backendConfig
-            .getInstanceConfig(Organism(organism))
-            .referenceGenomes
-            .nucleotideSequences.size > 1
-
         val submit = client.submit(
             DefaultFiles.metadataFile,
-            if (isMultiSegmented) {
-                DefaultFiles.sequencesFileMultiSegmented
-            } else {
-                DefaultFiles.sequencesFile
-            },
+            DefaultFiles.sequencesFile,
             organism = organism,
             groupName = groupName,
-            dataUseTerm = dataUseTerms,
             jwt = generateJwtFor(username),
         )
 
@@ -67,13 +52,6 @@ class SubmissionConvenienceClient(
     }
 
     fun submitProcessedData(
-        submittedProcessedData: List<SubmittedProcessedData>,
-        organism: String = DEFAULT_ORGANISM,
-    ) {
-        submitProcessedData(*submittedProcessedData.toTypedArray(), organism = organism)
-    }
-
-    fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
         organism: String = DEFAULT_ORGANISM,
     ) {
@@ -84,9 +62,9 @@ class SubmissionConvenienceClient(
     fun prepareDefaultSequenceEntriesToHasErrors(organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
         val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(organism = organism)
         submitProcessedData(
-            accessionVersions.map {
+            *accessionVersions.map {
                 PreparedProcessedData.withErrors(accession = it.accession)
-            },
+            }.toTypedArray(),
             organism = organism,
         )
         return accessionVersions
@@ -128,8 +106,9 @@ class SubmissionConvenienceClient(
         reviseDefaultProcessedSequenceEntries()
         val extractedAccessionVersions = extractUnprocessedData().map { AccessionVersion(it.accession, it.version) }
         submitProcessedData(
-            extractedAccessionVersions
-                .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) },
+            *extractedAccessionVersions
+                .map { PreparedProcessedData.successfullyProcessed(accession = it.accession, version = it.version) }
+                .toTypedArray(),
         )
         approveProcessedSequenceEntries(extractedAccessionVersions)
     }
@@ -141,19 +120,13 @@ class SubmissionConvenienceClient(
         return revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism)
     }
 
-    fun prepareRevokedSequenceEntries(organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
-        val accessionVersions = prepareDataTo(Status.AWAITING_APPROVAL_FOR_REVOCATION, organism = organism)
-        confirmRevocation(accessionVersions, organism = organism)
-        return accessionVersions
-    }
-
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
         organism: String = DEFAULT_ORGANISM,
     ) = client.extractUnprocessedData(numberOfSequenceEntries, organism)
         .expectNdjsonAndGetContent<UnprocessedData>()
 
-    fun prepareDatabaseWithProcessedData(vararg processedData: SubmittedProcessedData) {
+    fun prepareDatabaseWith(vararg processedData: SubmittedProcessedData) {
         submitDefaultFiles()
         extractUnprocessedData()
         client.submitProcessedData(*processedData)
@@ -216,18 +189,10 @@ class SubmissionConvenienceClient(
     }
 
     fun approveProcessedSequenceEntries(
-        listOfSequencesToApprove: List<AccessionVersionInterface>,
+        listOfSequencesToApprove: List<AccessionVersion>,
         organism: String = DEFAULT_ORGANISM,
     ) {
-        client.approveProcessedSequenceEntries(
-            listOfSequencesToApprove.map {
-                AccessionVersion(
-                    it.accession,
-                    it.version,
-                )
-            },
-            organism = organism,
-        )
+        client.approveProcessedSequenceEntries(listOfSequencesToApprove, organism = organism)
             .andExpect(status().isNoContent)
     }
 
@@ -247,11 +212,8 @@ class SubmissionConvenienceClient(
     ): List<SequenceEntryStatus> =
         deserializeJsonResponse(client.revokeSequenceEntries(listOfSequencesToRevoke, organism = organism))
 
-    fun confirmRevocation(
-        listOfSequencesToConfirm: List<AccessionVersionInterface>,
-        organism: String = DEFAULT_ORGANISM,
-    ) {
-        client.confirmRevocation(listOfSequencesToConfirm.map { AccessionVersion(it.accession, it.version) }, organism)
+    fun confirmRevocation(listOfSequencesToConfirm: List<AccessionVersion>) {
+        client.confirmRevocation(listOfSequencesToConfirm)
             .andExpect(status().isNoContent)
     }
 

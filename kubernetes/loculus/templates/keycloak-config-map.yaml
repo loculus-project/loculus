@@ -63,15 +63,15 @@ data:
           }
         },
         {
-          "username": "dummy_preprocessing_pipeline",
+          "username": "dummy_prerocessing_pipeline",
           "enabled": true,
-          "email": "dummy_preprocessing_pipeline@keycloak.org",
+          "email": "dummy_prerocessing_pipeline@keycloak.org",
           "firstName": "Dummy",
           "lastName": "Preprocessing",
           "credentials": [
             {
               "type": "password",
-              "value": "dummy_preprocessing_pipeline"
+              "value": "dummy_prerocessing_pipeline"
             }
           ],
           "realmRoles": [

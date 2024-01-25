@@ -189,11 +189,8 @@ class GetDataToEditEndpointTest(
             sequencesToEdit.getAccessionVersions(),
             containsInAnyOrder(*otherOrganismData.getAccessionVersions().toTypedArray()),
         )
-
-        val accessionVersionSet = defaultOrganismData.getAccessionVersions().toSet()
-
         assertThat(
-            sequencesToEdit.getAccessionVersions().intersect(accessionVersionSet),
+            sequencesToEdit.getAccessionVersions().intersect(defaultOrganismData.getAccessionVersions().toSet()),
             `is`(empty()),
         )
     }

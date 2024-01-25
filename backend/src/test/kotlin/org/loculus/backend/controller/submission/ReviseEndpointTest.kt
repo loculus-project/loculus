@@ -125,8 +125,8 @@ class ReviseEndpointTest(
                 content =
                 """
                  accession	submissionId	firstColumn
-                    123	someHeader_main	someValue
-                    1	someHeader2_main	someOtherValue
+                    123	someHeader	someValue
+                    1	someHeader2	someOtherValue
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(),
@@ -145,7 +145,7 @@ class ReviseEndpointTest(
 
         client.reviseSequenceEntries(
             DefaultFiles.revisedMetadataFile,
-            DefaultFiles.sequencesFileMultiSegmented,
+            DefaultFiles.sequencesFile,
             organism = OTHER_ORGANISM,
         )
             .andExpect(status().isUnprocessableEntity)
@@ -193,8 +193,9 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession versions are in not in one of the states [APPROVED_FOR_RELEASE]: " +
-                        "1.1 - HAS_ERRORS, 10.1 - HAS_ERRORS, 2.1 - HAS_ERRORS, 3.1 - HAS_ERRORS, 4.1 - HAS_ERRORS, " +
-                        "5.1 - HAS_ERRORS, 6.1 - HAS_ERRORS, 7.1 - HAS_ERRORS, 8.1 - HAS_ERRORS, 9.1 - HAS_ERRORS",
+                        "1.1 - HAS_ERRORS, 2.1 - HAS_ERRORS, 3.1 - HAS_ERRORS, 4.1 - HAS_ERRORS, " +
+                        "5.1 - HAS_ERRORS, 6.1 - HAS_ERRORS, 7.1 - HAS_ERRORS, 8.1 - HAS_ERRORS, " +
+                        "9.1 - HAS_ERRORS, 10.1 - HAS_ERRORS",
                 ),
             )
     }
@@ -317,9 +318,9 @@ class ReviseEndpointTest(
                     ),
                     SubmitFiles.sequenceFileWith(
                         content = """
-                            >commonHeader
+                            >commonHeader_main
                             AC
-                            >notInMetadata
+                            >notInMetadata_main
                             AC
                         """.trimIndent(),
                     ),
@@ -338,7 +339,7 @@ class ReviseEndpointTest(
                     ),
                     SubmitFiles.sequenceFileWith(
                         content = """
-                            >commonHeader
+                            >commonHeader_main
                             AC
                         """.trimIndent(),
                     ),

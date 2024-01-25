@@ -1,4 +1,5 @@
 {{- $keycloakHost := printf "authentication.%s" .Values.host }}
+{{- $config := .Files.Get "config.yaml" | fromYaml }}
 {{- $lapisHost := (
   eq .Values.environment "server" | ternary
     (printf "https://lapis.%s" .Values.host)
@@ -6,7 +7,7 @@
 ) }}
 {{- $externalLapisUrlConfig := dict
   "host" $lapisHost
-  "config" $.Values
+  "config" $config
 }}
 
 ---
@@ -17,7 +18,7 @@ metadata:
   namespace: {{ .Values.namespace }}
 data:
   website_config.json: |
-    {{ include "loculus.generateWebsiteConfig" . | fromYaml | toJson }}
+    {{ .Files.Get "config.yaml" | fromYaml | include "loculus.generateWebsiteConfig" | fromYaml | toJson }}
 
   runtime_config.json: |
     {
@@ -27,7 +28,7 @@ data:
             {{- else }}
             "backendUrl": "http://localhost:8079",
             {{- end }}
-            "lapisUrls": {{- include "loculus.generateInternalLapisUrls" . | fromYaml | toJson }},
+            "lapisUrls": {{- include "loculus.generateInternalLapisUrls" $config | fromYaml | toJson }},
             "keycloakUrl": "http://loculus-keycloak-service:8083"
         },
         "public": {

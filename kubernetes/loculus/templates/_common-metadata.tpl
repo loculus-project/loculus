@@ -15,12 +15,10 @@ fields:
     notSearchable: true
   - name: submitter
     type: string
-  - name: group
-    type: string
   - name: submittedAt
-    type: timestamp
+    type: string
   - name: releasedAt
-    type: timestamp
+    type: string
   - name: versionStatus
     type: string
     notSearchable: true
@@ -30,7 +28,7 @@ fields:
 {{- define "loculus.generateWebsiteConfig" }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 instances:
-  {{- range $key, $instance := $.Values.instances }}
+  {{- range $key, $instance := .instances }}
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
@@ -67,7 +65,7 @@ fields:
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
 instances:
-  {{- range $key, $instance := $.Values.instances }}
+  {{- range $key, $instance := .instances }}
   {{ $key }}:
     schema:
       {{- with $instance.schema }}

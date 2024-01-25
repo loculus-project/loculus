@@ -1,7 +1,8 @@
+{{- $configFile := .Files.Get "config.yaml" | fromYaml }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 {{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
 
-{{- range $key, $instance := $.Values.instances }}
+{{- range $key, $instance := $configFile.instances }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -17,15 +18,11 @@ data:
       metadata:
       {{- range (concat $commonMetadata .metadata) }}
         - name: {{ .name }}
-          type: {{ (.type | eq "timestamp") | ternary "int" .type }}
+          type: {{ .type }}
           {{- if .generateIndex }}
           generateIndex: {{ .generateIndex }}
           {{- end }}
       {{- end }}
-        - name: nucleotideInsertions
-          type: insertion
-        - name: aminoAcidInsertions
-          type: aaInsertion
       primaryKey: accessionVersion
       {{- .silo | toYaml | nindent 6 }}
   {{- end }}

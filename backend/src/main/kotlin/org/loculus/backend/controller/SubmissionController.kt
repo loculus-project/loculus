@@ -11,9 +11,6 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.Accessions
-import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
@@ -24,7 +21,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
-import org.loculus.backend.service.submission.SubmissionDatabaseService
+import org.loculus.backend.service.submission.DatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.IteratorStreamer
 import org.springframework.http.HttpHeaders
@@ -56,7 +53,7 @@ private val log = KotlinLogging.logger { }
 class SubmissionController(
     private val submitModel: SubmitModel,
     private val releasedDataModel: ReleasedDataModel,
-    private val submissionDatabaseService: SubmissionDatabaseService,
+    private val databaseService: DatabaseService,
     private val iteratorStreamer: IteratorStreamer,
 ) {
 
@@ -70,14 +67,6 @@ class SubmissionController(
         @Parameter(description = GROUP_DESCRIPTION) @RequestParam groupName: String,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
-        @Parameter(description = "Data Use terms under which data is released.")
-        @RequestParam
-        dataUseTermsType: DataUseTermsType,
-        @Parameter(
-            description = "Mandatory when data use terms are set to 'RESTRICTED'." +
-                " It is the date when the sequence entries will become 'OPEN'." +
-                " Format: YYYY-MM-DD",
-        ) @RequestParam restrictedUntil: String?,
     ): List<SubmissionIdMapping> {
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
@@ -85,7 +74,6 @@ class SubmissionController(
             metadataFile,
             sequenceFile,
             groupName,
-            DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil),
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
     }
@@ -137,8 +125,7 @@ class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
-        val streamBody =
-            stream { submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism) }
+        val streamBody = stream { databaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism) }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
@@ -161,7 +148,7 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         request: HttpServletRequest,
-    ) = submissionDatabaseService.updateProcessedData(request.inputStream, organism)
+    ) = databaseService.updateProcessedData(request.inputStream, organism)
 
     @Operation(description = GET_RELEASED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)
@@ -205,7 +192,7 @@ class SubmissionController(
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
 
-        val entries = submissionDatabaseService.streamDataToEdit(username, groupName, numberOfSequenceEntries, organism)
+        val entries = databaseService.streamDataToEdit(username, groupName, numberOfSequenceEntries, organism)
         val streamBody = stream { entries }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -219,7 +206,7 @@ class SubmissionController(
         @PathVariable accession: Accession,
         @PathVariable version: Long,
         @UsernameFromJwt username: String,
-    ): SequenceEntryVersionToEdit = submissionDatabaseService.getSequenceEntryVersionToEdit(
+    ): SequenceEntryVersionToEdit = databaseService.getSequenceEntryVersionToEdit(
         username,
         AccessionVersion(accession, version),
         organism,
@@ -233,7 +220,7 @@ class SubmissionController(
         organism: Organism,
         @UsernameFromJwt username: String,
         @RequestBody accessionVersion: UnprocessedData,
-    ) = submissionDatabaseService.submitEditedData(username, accessionVersion, organism)
+    ) = databaseService.submitEditedData(username, accessionVersion, organism)
 
     @Operation(description = GET_SEQUENCES_OF_USER_DESCRIPTION)
     @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -242,7 +229,7 @@ class SubmissionController(
         organism: Organism,
         @UsernameFromJwt username: String,
     ): List<SequenceEntryStatus> {
-        return submissionDatabaseService.getActiveSequencesSubmittedBy(username, organism)
+        return databaseService.getActiveSequencesSubmittedBy(username, organism)
     }
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
@@ -254,7 +241,7 @@ class SubmissionController(
         @UsernameFromJwt username: String,
         @RequestBody body: AccessionVersions,
     ) {
-        submissionDatabaseService.approveProcessedData(username, body.accessionVersions, organism)
+        databaseService.approveProcessedData(username, body.accessionVersions, organism)
     }
 
     @Operation(description = REVOKE_DESCRIPTION)
@@ -264,7 +251,7 @@ class SubmissionController(
         organism: Organism,
         @RequestBody body: Accessions,
         @UsernameFromJwt username: String,
-    ): List<SequenceEntryStatus> = submissionDatabaseService.revoke(body.accessions, username, organism)
+    ): List<SequenceEntryStatus> = databaseService.revoke(body.accessions, username, organism)
 
     @Operation(description = CONFIRM_REVOCATION_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -274,7 +261,7 @@ class SubmissionController(
         organism: Organism,
         @UsernameFromJwt username: String,
         @RequestBody body: AccessionVersions,
-    ) = submissionDatabaseService.confirmRevocation(body.accessionVersions, username, organism)
+    ) = databaseService.confirmRevocation(body.accessionVersions, username, organism)
 
     @Operation(description = DELETE_SEQUENCES_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -286,7 +273,7 @@ class SubmissionController(
         organism: Organism,
         @UsernameFromJwt username: String,
         @RequestBody body: AccessionVersions,
-    ) = submissionDatabaseService.deleteSequenceEntryVersions(body.accessionVersions, username, organism)
+    ) = databaseService.deleteSequenceEntryVersions(body.accessionVersions, username, organism)
 
     private fun <T> stream(sequenceProvider: () -> Sequence<T>) = StreamingResponseBody { outputStream ->
         try {
@@ -298,6 +285,10 @@ class SubmissionController(
             )
         }
     }
+
+    data class Accessions(
+        val accessions: List<Accession>,
+    )
 
     data class AccessionVersions(
         val accessionVersions: List<AccessionVersion>,
