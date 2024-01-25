@@ -13,6 +13,15 @@ updates:
         update-types:
           - "minor"
           - "patch"
+  - package-ecosystem: npm
+    directory: docs/
+    schedule:
+      interval: weekly
+    groups:
+      minorAndPatch:
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: gradle
     directory: backend/
     schedule:

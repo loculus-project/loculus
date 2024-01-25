@@ -3,7 +3,6 @@ import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 
 import { backendApi } from './backendApi.ts';
 import { lapisApi } from './lapisApi.ts';
-import type { Schema } from '../types/config.ts';
 import type { LapisBaseRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
@@ -18,11 +17,12 @@ export function lapisClientHooks(lapisUrl: string) {
     return {
         zodiosHooks,
         utilityHooks: {
-            useGetSequence(accessionVersion: string, sequenceType: SequenceType, schema: Schema) {
+            useGetSequence(accessionVersion: string, sequenceType: SequenceType, isMultiSegmented: boolean) {
                 const { data, error, isLoading } = getSequenceHook(
                     zodiosHooks,
-                    { [schema.primaryKey]: accessionVersion },
+                    { accessionVersion },
                     sequenceType,
+                    isMultiSegmented,
                 );
 
                 if (data === undefined) {
@@ -52,13 +52,18 @@ function getSequenceHook(
     hooks: ZodiosHooksInstance<typeof lapisApi>,
     request: LapisBaseRequest,
     sequenceType: SequenceType,
+    isMultiSegmented: boolean,
 ) {
     if (isUnalignedSequence(sequenceType)) {
-        return hooks.useUnalignedNucleotideSequences(request);
+        return isMultiSegmented
+            ? hooks.useUnalignedNucleotideSequencesMultiSegment(request, { params: { segment: sequenceType.name } })
+            : hooks.useUnalignedNucleotideSequences(request);
     }
 
     if (isAlignedSequence(sequenceType)) {
-        return hooks.useAlignedNucleotideSequences(request);
+        return isMultiSegmented
+            ? hooks.useAlignedNucleotideSequencesMultiSegment(request, { params: { segment: sequenceType.name } })
+            : hooks.useAlignedNucleotideSequences(request);
     }
 
     return hooks.useAlignedAminoAcidSequences(request, { params: { gene: sequenceType.name } });

@@ -4,7 +4,7 @@ import { type FC, useState } from 'react';
 import { DatasetForm } from './DatasetForm';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import Modal from '../common/Modal';
-import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import { withQueryProvider } from '../common/withProvider';
 import AddBoxIcon from '~icons/ic/baseline-library-add';
 
 type DatasetListActionsProps = {

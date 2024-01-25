@@ -69,22 +69,41 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
+    fun `WHEN I submit data with null as sequences THEN the sequence entry is in status processed`() {
+        val (accession, version, _) = prepareExtractedSequencesInDatabase()[0]
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.withNullForSequences(accession = accession, version = version),
+        )
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntryOfUser(accession = accession, version = version)
+            .assertStatusIs(Status.AWAITING_APPROVAL)
+    }
+
+    @Test
     fun `WHEN I submit with all valid symbols THEN the sequence entry is in status processed`() {
         prepareExtractedSequencesInDatabase()
 
         val allNucleotideSymbols = NucleotideSymbols.entries.joinToString("") { it.symbol.toString() }
+        val desiredLength = 49
+
+        val nucleotideSequenceOfDesiredLength = if (allNucleotideSymbols.length >= desiredLength) {
+            throw Error("The desired length must be bigger than the length of all nucleotide symbols")
+        } else {
+            allNucleotideSymbols.repeat((desiredLength / allNucleotideSymbols.length) + 1).take(desiredLength)
+        }
+
         val allAminoAcidSymbols = AminoAcidSymbols.entries.joinToString("") { it.symbol.toString() }
         val defaultData = PreparedProcessedData.successfullyProcessed().data
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "3").withValues(
-                data = defaultData.withValues(
-                    unalignedNucleotideSequences = defaultData.unalignedNucleotideSequences +
-                        ("secondSegment" to allNucleotideSymbols),
-                    alignedNucleotideSequences = defaultData.alignedNucleotideSequences +
-                        ("secondSegment" to allNucleotideSymbols),
+            PreparedProcessedData.successfullyProcessed(accession = "3").copy(
+                data = defaultData.copy(
+                    unalignedNucleotideSequences = mapOf(MAIN_SEGMENT to nucleotideSequenceOfDesiredLength),
+                    alignedNucleotideSequences = mapOf(MAIN_SEGMENT to nucleotideSequenceOfDesiredLength),
                     alignedAminoAcidSequences =
-                    defaultData.alignedAminoAcidSequences + ("someLongGene" to allAminoAcidSymbols),
+                    defaultData.alignedAminoAcidSequences + (SOME_LONG_GENE to allAminoAcidSymbols),
                 ),
             ),
         )
@@ -97,30 +116,82 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit preprocessed data without insertions THEN the missing keys of the reference will be added`() {
+        prepareExtractedSequencesInDatabase(organism = OTHER_ORGANISM)
+
+        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessedOtherOrganismData().data.copy(
+            nucleotideInsertions = mapOf("notOnlySegment" to listOf(Insertion(1, "A"))),
+            aminoAcidInsertions = emptyMap(),
+        )
+
+        submissionControllerClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = "3").copy(
+                data = dataWithoutInsertions,
+            ),
+            organism = OTHER_ORGANISM,
+        ).andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntryOfUser(
+            accession = "3",
+            version = 1,
+            organism = OTHER_ORGANISM,
+        ).assertStatusIs(
+            Status.AWAITING_APPROVAL,
+        )
+
+        submissionControllerClient.getSequenceEntryThatHasErrors(
+            accession = "3",
+            version = 1,
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isOk)
+            .andExpect(
+                jsonPath("\$.processedData.nucleotideInsertions")
+                    .value(
+                        mapOf(
+                            "notOnlySegment" to listOf(
+                                Insertion(1, "A").toString(),
+                            ),
+                            "secondSegment" to emptyList(),
+                        ),
+                    ),
+            )
+            .andExpect(
+                jsonPath("\$.processedData.aminoAcidInsertions")
+                    .value(mapOf("someShortGene" to emptyList<String>(), "someLongGene" to emptyList())),
+            )
+    }
+
+    @Test
+    fun `WHEN I submit single-segment data without insertions THEN the missing keys of the reference will be added`() {
         prepareExtractedSequencesInDatabase()
 
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed().data.withValues(
+        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed().data.copy(
             nucleotideInsertions = mapOf("main" to listOf(Insertion(1, "A"))),
             aminoAcidInsertions = emptyMap(),
         )
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "3").withValues(data = dataWithoutInsertions),
+            PreparedProcessedData.successfullyProcessed(accession = "3").copy(
+                data = dataWithoutInsertions,
+            ),
         ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntryOfUser(accession = "3", version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
 
-        submissionControllerClient.getSequenceEntryThatHasErrors(accession = "3", version = 1)
+        submissionControllerClient.getSequenceEntryThatHasErrors(
+            accession = "3",
+            version = 1,
+        )
             .andExpect(status().isOk)
             .andExpect(
-                jsonPath("\$.processedData.nucleotideInsertions")
-                    .value(mapOf("main" to listOf(Insertion(1, "A").toString()), "secondSegment" to emptyList())),
+                jsonPath("\$.processedData.nucleotideInsertions.$MAIN_SEGMENT[0]")
+                    .value(Insertion(1, "A").toString()),
             )
             .andExpect(
                 jsonPath("\$.processedData.aminoAcidInsertions")
-                    .value(mapOf("someShortGene" to emptyList<String>(), "someLongGene" to emptyList())),
+                    .value(mapOf(SOME_SHORT_GENE to emptyList<String>(), SOME_LONG_GENE to emptyList())),
             )
     }
 
@@ -155,7 +226,7 @@ class SubmitProcessedDataEndpointTest(
         convenienceClient.submitDefaultFiles()
         convenienceClient.extractUnprocessedData(1)
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.withWrongDateFormat().withValues(
+            PreparedProcessedData.withWrongDateFormat().copy(
                 accession = firstAccession,
                 errors = PreparedProcessedData.withErrors().errors,
             ),
@@ -221,7 +292,7 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.successfullyProcessed(accession = firstAccession),
             PreparedProcessedData.successfullyProcessed(accession = firstAccession)
-                .withValues(version = nonExistentVersion),
+                .copy(version = nonExistentVersion),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -450,7 +521,7 @@ class SubmitProcessedDataEndpointTest(
             InvalidDataScenario(
                 name = "data with missing gene in alignedAminoAcidSequences",
                 processedData = PreparedProcessedData.withMissingGeneInAlignedAminoAcidSequences(
-                    gene = "someShortGene",
+                    gene = SOME_SHORT_GENE,
                 ),
                 expectedErrorMessage = "Missing the required gene 'someShortGene'.",
             ),
@@ -470,19 +541,19 @@ class SubmitProcessedDataEndpointTest(
             ),
             InvalidDataScenario(
                 name = "data with gene in alignedAminoAcidSequences of wrong length",
-                processedData = PreparedProcessedData.withAminoAcidSequenceOfWrongLength(gene = "someShortGene"),
+                processedData = PreparedProcessedData.withAminoAcidSequenceOfWrongLength(gene = SOME_SHORT_GENE),
                 expectedErrorMessage = "The length of 'someShortGene' in 'alignedAminoAcidSequences' is 123, " +
                     "but it should be 4.",
             ),
             InvalidDataScenario(
                 name = "data with gene in alignedAminoAcidSequences with wrong symbols",
-                processedData = PreparedProcessedData.withAminoAcidSequenceWithWrongSymbols(gene = "someShortGene"),
+                processedData = PreparedProcessedData.withAminoAcidSequenceWithWrongSymbols(gene = SOME_SHORT_GENE),
                 expectedErrorMessage = "The gene 'someShortGene' in 'alignedAminoAcidSequences' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),
             InvalidDataScenario(
                 name = "data with segment in amino acid insertions with wrong symbols",
-                processedData = PreparedProcessedData.withAminoAcidInsertionsWithWrongSymbols(gene = "someShortGene"),
+                processedData = PreparedProcessedData.withAminoAcidInsertionsWithWrongSymbols(gene = SOME_SHORT_GENE),
                 expectedErrorMessage = "An insertion of gene 'someShortGene' in 'aminoAcidInsertions' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),

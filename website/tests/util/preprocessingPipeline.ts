@@ -55,8 +55,8 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
 }
 
 async function getJwtTokenForPreprocessingPipeline(
-    username: string = 'dummy_prerocessing_pipeline',
-    password: string = 'dummy_prerocessing_pipeline',
+    username: string = 'dummy_preprocessing_pipeline',
+    password: string = 'dummy_preprocessing_pipeline',
 ): Promise<string> {
     const token = await getToken(username, password);
 
@@ -106,7 +106,7 @@ const sequenceData = {
         main: 'A'.repeat(123),
     },
     alignedNucleotideSequences: {
-        main: 'A'.repeat(29903),
+        main: 'N' + 'A'.repeat(29902),
     },
     nucleotideInsertions: {
         main: ['123:TCTCT', '234:ATATAT'],

@@ -1,11 +1,21 @@
 export type SequenceType =
-    | { type: 'nucleotide'; aligned: boolean; name: 'main' }
+    | { type: 'nucleotide'; aligned: boolean; name: string }
     | { type: 'aminoAcid'; aligned: true; name: string };
 export type BaseType = SequenceType['type'];
 
-export const unalignedSequence: SequenceType = { type: 'nucleotide', aligned: false, name: 'main' };
-export const alignedSequence: SequenceType = { type: 'nucleotide', aligned: true, name: 'main' };
-export const geneSequence: (gene: string) => SequenceType = (gene) => ({
+export const unalignedSequenceSegment = (segmentName: string): SequenceType => ({
+    type: 'nucleotide',
+    aligned: false,
+    name: segmentName,
+});
+
+export const alignedSequenceSegment = (segmentName: string): SequenceType => ({
+    type: 'nucleotide',
+    aligned: true,
+    name: segmentName,
+});
+
+export const geneSequence = (gene: string): SequenceType => ({
     type: 'aminoAcid',
     aligned: true,
     name: gene,

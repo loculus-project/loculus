@@ -11,7 +11,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { AlertDialog } from '../common/AlertDialog';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
-import { withQueryProvider } from '../common/withQueryProvider';
+import { withQueryProvider } from '../common/withProvider';
 
 const logger = getClientLogger('DatasetItemActions');
 

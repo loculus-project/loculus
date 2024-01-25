@@ -1,5 +1,6 @@
 package org.loculus.backend.controller
 
+import mu.KotlinLogging
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -7,10 +8,12 @@ import org.junit.platform.engine.support.descriptor.ClassSource
 import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
+import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.submission.DEFAULT_USER_NAME
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
+import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.GROUPS_TABLE_NAME
 import org.loculus.backend.service.groupmanagement.USER_GROUPS_TABLE_NAME
 import org.loculus.backend.service.submission.METADATA_UPLOAD_TABLE_NAME
@@ -35,6 +38,7 @@ import org.testcontainers.containers.PostgreSQLContainer
     SubmissionControllerClient::class,
     SubmissionConvenienceClient::class,
     GroupManagementControllerClient::class,
+    DataUseTermsControllerClient::class,
     PublicJwtKeyConfig::class,
 )
 annotation class EndpointTest(
@@ -50,6 +54,8 @@ const val DEFAULT_GROUP_NAME = "testGroup"
 const val ALTERNATIVE_DEFAULT_GROUP_NAME = "testGroup2"
 const val ALTERNATIVE_DEFAULT_USER_NAME = "testUser2"
 
+private val log = KotlinLogging.logger { }
+
 class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
@@ -62,6 +68,10 @@ class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
                 postgres.start()
                 isStarted = true
             }
+        }
+
+        log.info {
+            "Started Postgres container: ${postgres.jdbcUrl}, user ${postgres.username}, pw ${postgres.password}"
         }
 
         System.setProperty(SPRING_DATASOURCE_URL, postgres.jdbcUrl)
@@ -133,7 +143,8 @@ private fun clearDatabaseStatement(): String {
         "alter sequence $ACCESSION_SEQUENCE_NAME restart with 1; " +
         "truncate table $USER_GROUPS_TABLE_NAME; " +
         "truncate $METADATA_UPLOAD_TABLE_NAME; " +
-        "truncate $SEQUENCE_UPLOAD_TABLE_NAME; \n"
+        "truncate $SEQUENCE_UPLOAD_TABLE_NAME; " +
+        "truncate table $DATA_USE_TERMS_TABLE_NAME cascade; \n"
 }
 
 private fun addUsersToGroupStatement(groupName: String, userNames: List<String>): String {

@@ -130,6 +130,12 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
             versionStatus: siloVersionStatuses.revoked,
             isRevocation: 'false',
         },
+        {
+            accession: '11',
+            version: 2,
+            versionStatus: siloVersionStatuses.latestVersion,
+            isRevocation: 'true',
+        },
     ];
 
     if (!isEqual(shouldBeTwoVersionsAndOneRevoked, expectedRevokedVersion)) {

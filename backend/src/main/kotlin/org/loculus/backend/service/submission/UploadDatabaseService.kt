@@ -15,7 +15,9 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.model.SubmissionId
+import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.UploadType
+import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupNameColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
@@ -42,7 +44,8 @@ private val log = KotlinLogging.logger { }
 class UploadDatabaseService(
     private val parseFastaHeader: ParseFastaHeader,
     private val compressor: CompressionService,
-    private val submissionPreconditionValidator: SubmissionPreconditionValidator,
+    private val accessionPreconditionValidator: AccessionPreconditionValidator,
+    private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
 ) {
 
     fun batchInsertMetadataInAuxTable(
@@ -88,7 +91,7 @@ class UploadDatabaseService(
         uploadedSequencesBatch: List<FastaEntry>,
     ) {
         SequenceUploadAuxTable.batchInsert(uploadedSequencesBatch) {
-            val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName)
+            val (submissionId, segmentName) = parseFastaHeader.parse(it.sampleName, submittedOrganism)
             this[sequenceSubmissionIdColumn] = submissionId
             this[segmentNameColumn] = segmentName
             this[sequenceUploadIdColumn] = uploadId
@@ -112,11 +115,13 @@ class UploadDatabaseService(
             },
     )
 
-    fun mapAndCopy(uploadId: String, uploadType: UploadType): List<SubmissionIdMapping> = transaction {
-        log.debug { "mapping and copying sequences with UploadId $uploadId and uploadType: $uploadType" }
+    fun mapAndCopy(uploadId: String, submissionParams: SubmissionParams): List<SubmissionIdMapping> = transaction {
+        log.debug {
+            "mapping and copying sequences with UploadId $uploadId and uploadType: $submissionParams.uploadType"
+        }
 
-        exec(
-            generateMapAndCopyStatement(uploadType),
+        val insertionResult = exec(
+            generateMapAndCopyStatement(submissionParams.uploadType),
             listOf(
                 Pair(VarCharColumnType(), uploadId),
             ),
@@ -132,6 +137,27 @@ class UploadDatabaseService(
             }
             result.toList()
         } ?: emptyList()
+
+        val result = if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
+            dataUseTermsDatabaseService.setNewDataUseTerms(
+                submissionParams.username,
+                insertionResult.map { it.accession },
+                submissionParams.dataUseTerms,
+            )
+
+            insertionResult.map {
+                SubmissionIdMapping(
+                    it.accession,
+                    it.version,
+                    it.submissionId,
+                    submissionParams.dataUseTerms,
+                )
+            }
+        } else {
+            insertionResult
+        }
+
+        return@transaction result
     }
 
     fun deleteUploadData(uploadId: String) {
@@ -150,7 +176,7 @@ class UploadDatabaseService(
                 .select { uploadIdColumn eq uploadId }
                 .map { it[accessionColumn]!! }
 
-        val existingAccessionVersions = submissionPreconditionValidator.validateAccessions(
+        val existingAccessionVersions = accessionPreconditionValidator.validateAccessions(
             username,
             accessions,
             listOf(Status.APPROVED_FOR_RELEASE),

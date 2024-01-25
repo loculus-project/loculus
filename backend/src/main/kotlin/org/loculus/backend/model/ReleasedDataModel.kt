@@ -2,12 +2,15 @@ package org.loculus.backend.model
 
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.TextNode
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import mu.KotlinLogging
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
-import org.loculus.backend.service.submission.DatabaseService
 import org.loculus.backend.service.submission.RawProcessedData
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Service
@@ -16,15 +19,15 @@ import org.springframework.transaction.annotation.Transactional
 private val log = KotlinLogging.logger { }
 
 @Service
-class ReleasedDataModel(private val databaseService: DatabaseService) {
+class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabaseService) {
     @Transactional(readOnly = true)
     fun getReleasedData(organism: Organism): Sequence<ProcessedData> {
         log.info { "fetching released submissions" }
 
-        val latestVersions = databaseService.getLatestVersions(organism)
-        val latestRevocationVersions = databaseService.getLatestRevocationVersions(organism)
+        val latestVersions = submissionDatabaseService.getLatestVersions(organism)
+        val latestRevocationVersions = submissionDatabaseService.getLatestRevocationVersions(organism)
 
-        return databaseService.streamReleasedSubmissions(organism)
+        return submissionDatabaseService.streamReleasedSubmissions(organism)
             .map { computeAdditionalMetadataFields(it, latestVersions, latestRevocationVersions) }
     }
 
@@ -42,8 +45,9 @@ class ReleasedDataModel(private val databaseService: DatabaseService) {
             ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
             ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
             ("submitter" to TextNode(rawProcessedData.submitter)) +
-            ("submittedAt" to TextNode(rawProcessedData.submittedAt.toString())) +
-            ("releasedAt" to TextNode(rawProcessedData.releasedAt.toString())) +
+            ("group" to TextNode(rawProcessedData.group)) +
+            ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
+            ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
             ("versionStatus" to TextNode(siloVersionStatus.name))
 
         return ProcessedData(
@@ -75,3 +79,5 @@ class ReleasedDataModel(private val databaseService: DatabaseService) {
         return SiloVersionStatus.REVISED
     }
 }
+
+private fun LocalDateTime.toTimestamp() = this.toInstant(TimeZone.UTC).epochSeconds

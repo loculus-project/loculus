@@ -5,6 +5,26 @@ The Helm variable `environment` reflects those purposes:
 * `local`: Running locally with ports
 * `server`: Running on a server with domain name
 
+## Deploying on a Kubernetes cluster
+
+### Prerequisites
+
+Install [helm](https://helm.sh/) and use [traefik](https://traefik.io/traefik/) for ingress.
+
+Create a long-lived managed database: [to be documented as part of: https://github.com/loculus-project/loculus/issues/793]
+
+Create your own configuration, by copying the `loculus/values.yaml` file and editing it as appropriate.
+
+### Deployment
+
+Install the Helm chart:
+
+```
+helm install loculus kubernetes/loculus -f my-values.yaml
+```
+
+# Local development/testing with k3d
+
 ## Prerequisites
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
@@ -20,7 +40,7 @@ Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
 Start the [backend](/backend/README.md) and the [website](/website/README.md) locally.
 
-### The `deploy.py` script
+#### The `deploy.py` script
 
 The `deploy.py` script wraps the most important `k3d` and `helm` commands.
 Check the help for more information:
@@ -75,6 +95,7 @@ You can also delete the cluster with:
 ../deploy.py cluster --delete
 ```
 
+With helm based commands you can customise the values yaml file with `--values [file.yaml]`.
 ## Argo CD
 
 ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].preview.k3s.loculus.org`. Very long branch names, and some special characters, are not supported.

@@ -7,11 +7,13 @@ import mu.KotlinLogging
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.service.datauseterms.DataUseTermsPreconditionValidator
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.loculus.backend.service.submission.UploadDatabaseService
@@ -46,6 +48,7 @@ interface SubmissionParams {
         override val metadataFile: MultipartFile,
         override val sequenceFile: MultipartFile,
         val groupName: String,
+        val dataUseTerms: DataUseTerms,
     ) : SubmissionParams {
         override val uploadType: UploadType = UploadType.ORIGINAL
     }
@@ -68,6 +71,7 @@ enum class UploadType {
 class SubmitModel(
     private val uploadDatabaseService: UploadDatabaseService,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
+    private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
 ) {
 
     companion object AcceptedFileTypes {
@@ -116,7 +120,7 @@ class SubmitModel(
             }
 
             log.debug { "Persisting submission with uploadId $uploadId" }
-            uploadDatabaseService.mapAndCopy(uploadId, submissionParams.uploadType)
+            uploadDatabaseService.mapAndCopy(uploadId, submissionParams)
         } finally {
             uploadDatabaseService.deleteUploadData(uploadId)
         }
@@ -128,6 +132,7 @@ class SubmitModel(
                 submissionParams.groupName,
                 submissionParams.username,
             )
+            dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(submissionParams.dataUseTerms)
         }
 
         val metadataTempFileToDelete = MaybeFile()
@@ -283,19 +288,22 @@ class SubmitModel(
 
     private fun validateSubmissionIdSets(metadataKeysSet: Set<SubmissionId>, sequenceKeysSet: Set<SubmissionId>) {
         val metadataKeysNotInSequences = metadataKeysSet.subtract(sequenceKeysSet)
-        if (metadataKeysNotInSequences.isNotEmpty()) {
-            throw UnprocessableEntityException(
-                "Metadata file contains ${metadataKeysNotInSequences.size} submissionIds that are not present " +
-                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10),
-            )
-        }
-
         val sequenceKeysNotInMetadata = sequenceKeysSet.subtract(metadataKeysSet)
-        if (sequenceKeysNotInMetadata.isNotEmpty()) {
-            throw UnprocessableEntityException(
+
+        if (metadataKeysNotInSequences.isNotEmpty() || sequenceKeysNotInMetadata.isNotEmpty()) {
+            val metadataNotPresentErrorText = if (metadataKeysNotInSequences.isNotEmpty()) {
+                "Metadata file contains ${metadataKeysNotInSequences.size} submissionIds that are not present " +
+                    "in the sequence file: " + metadataKeysNotInSequences.toList().joinToString(limit = 10) + "; "
+            } else {
+                ""
+            }
+            val sequenceNotPresentErrorText = if (sequenceKeysNotInMetadata.isNotEmpty()) {
                 "Sequence file contains ${sequenceKeysNotInMetadata.size} submissionIds that are not present " +
-                    "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10),
-            )
+                    "in the metadata file: " + sequenceKeysNotInMetadata.toList().joinToString(limit = 10)
+            } else {
+                ""
+            }
+            throw UnprocessableEntityException(metadataNotPresentErrorText + sequenceNotPresentErrorText)
         }
     }
 }

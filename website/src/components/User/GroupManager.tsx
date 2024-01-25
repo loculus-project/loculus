@@ -6,7 +6,7 @@ import type { Group } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
-import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import { withQueryProvider } from '../common/withProvider.tsx';
 import LeaveIcon from '~icons/pepicons-pop/leave-circle-filled';
 
 interface GroupManagerProps {

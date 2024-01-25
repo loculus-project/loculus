@@ -18,9 +18,9 @@ parser.add_argument(
     help="Host address of the Loculus backend",
 )
 parser.add_argument("--keycloak-host", type=str, default="http://172.0.0.1:8083", help="Host address of Keycloak")
-parser.add_argument("--keycloak-user", type=str, default="dummy_prerocessing_pipeline",
+parser.add_argument("--keycloak-user", type=str, default="dummy_preprocessing_pipeline",
                     help="Keycloak user to use for authentication")
-parser.add_argument("--keycloak-password", type=str, default="dummy_prerocessing_pipeline",
+parser.add_argument("--keycloak-password", type=str, default="dummy_preprocessing_pipeline",
                     help="Keycloak password to use for authentication")
 parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculusRealm/protocol/openid-connect/token",
                     help="Path to Keycloak token endpoint")

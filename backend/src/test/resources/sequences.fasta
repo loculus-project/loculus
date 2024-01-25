@@ -1,38 +1,29 @@
->custom1_main
+>custom1
 ACTG
 
->custom1_secondSegment
+>custom2
 ACTG
 
->custom2_main
+>custom3
 ACTG
 
->custom3_main
+>custom4
 ACTG
 
->custom4_main
+>custom5
 ACTG
 
->custom4_secondSegment
+>custom6
 ACTG
 
->custom5_main
+>custom7
 ACTG
 
->custom5_secondSegment
+>custom8
 ACTG
 
->custom6_main
+>custom9
 ACTG
 
->custom7_main
-ACTG
-
->custom8_secondSegment
-ACTG
-
->custom9_secondSegment
-ACTG
-
->custom0_main
+>custom0
 ACTG

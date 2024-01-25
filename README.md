@@ -1,6 +1,10 @@
-# loculus
+# Loculus
 
-Detailed documentation is available in each folder's README. This file contains a high-level overview of the project and shared documentation that is best kept in one place.
+Loculus is a software package to power microbial genomial databases.
+
+### [Visit the Loculus documentation website](https://loculus-project.github.io/loculus/)
+
+Additional documentation for development is available in each folder's README. This file contains a high-level overview of the project and shared development information that is best kept in one place.
 
 ## Architecture
 

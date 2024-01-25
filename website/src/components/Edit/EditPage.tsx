@@ -13,7 +13,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
-import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import { withQueryProvider } from '../common/withProvider.tsx';
 
 type EditPageProps = {
     organism: string;

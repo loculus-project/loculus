@@ -6,7 +6,8 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { routes } from '../../routes.ts';
-import type { Filter } from '../../types/config.ts';
+import type { MetadataFilter } from '../../types/config.ts';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 vi.mock('../../config', () => ({
@@ -22,13 +23,25 @@ const defaultSearchFormFilters = [
     { name: 'field3', type: 'pango_lineage' as const, label: 'Field 3', autocomplete: true, filterValue: '' },
 ];
 
+const defaultReferenceGenomesSequenceNames = {
+    nucleotideSequences: ['main'],
+    genes: ['gene1', 'gene2'],
+};
+
 function renderSearchForm(
-    searchFormFilters: Filter[] = [...defaultSearchFormFilters],
+    searchFormFilters: MetadataFilter[] = [...defaultSearchFormFilters],
     clientConfig: ClientConfig = testConfig.public,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
 ) {
     render(
         <QueryClientProvider client={queryClient}>
-            <SearchForm organism={testOrganism} filters={searchFormFilters} clientConfig={clientConfig} />
+            <SearchForm
+                organism={testOrganism}
+                filters={searchFormFilters}
+                initialMutationFilter={{}}
+                clientConfig={clientConfig}
+                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+            />
         </QueryClientProvider>,
     );
 }
@@ -78,5 +91,43 @@ describe('SearchForm', () => {
 
         expect(screen.getByPlaceholderText('Field 1')).toBeDefined();
         expect(screen.queryByPlaceholderText('NotSearchable')).not.toBeInTheDocument();
+    });
+
+    test('should display dates of timestamp fields', async () => {
+        const timestampFieldName = 'timestampField';
+        renderSearchForm([
+            {
+                name: timestampFieldName,
+                type: 'timestamp' as const,
+                filterValue: '1706147200',
+            },
+        ]);
+
+        const timestampField = screen.getByLabelText('Timestamp field');
+        expect(timestampField).toHaveValue('2024-01-25');
+
+        await userEvent.type(timestampField, '2024-01-26');
+        await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+        expect(window.location.href).toContain(`${timestampFieldName}=1706233600`);
+    });
+
+    test('should display dates of date fields', async () => {
+        const dateFieldName = 'dateField';
+        renderSearchForm([
+            {
+                name: dateFieldName,
+                type: 'date' as const,
+                filterValue: '2024-01-25',
+            },
+        ]);
+
+        const dateField = screen.getByLabelText('Date field');
+        expect(dateField).toHaveValue('2024-01-25');
+
+        await userEvent.type(dateField, '2024-01-26');
+        await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+
+        expect(window.location.href).toContain(`${dateFieldName}=2024-01-26`);
     });
 });
