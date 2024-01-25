@@ -128,12 +128,7 @@ The `metadata` field should contain a flat object consisting of the fields speci
 
 #### Sequences
 
-The `unalignedNucleotideSequences`, `alignedNucleotideSequences`, and `alignedAminoAcidSequences` fields contain objects with the segment/gene name as key and the sequence as value.
-If there is only a single segment (e.g., as in SARS-CoV-2), the segment name of the nucleotide sequence should be `main`.
-
-If a segment or a gene is not present in the sequence, the value should be `null`.
-
-Examples:
+The `unalignedNucleotideSequences`, `alignedNucleotideSequences`, and `alignedAminoAcidSequences` fields contain objects with the segment/gene name as key and the sequence as value. If there is only a single segment (e.g., as in SARS-CoV-2), the segment name of the nucleotide sequence should be `main`. Examples:
 
 SARS-CoV-2 nucleotide sequence:
 
@@ -148,7 +143,7 @@ SARS-CoV-2 amino acid sequences:
 ```
 {
     "S": "...",
-    "N": null,
+    "N": "...",
     ...
 }
 ```
@@ -156,4 +151,3 @@ SARS-CoV-2 amino acid sequences:
 #### Insertions
 
 This is not yet specified.
-TODO https://github.com/loculus-project/loculus/issues/823

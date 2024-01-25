@@ -5,21 +5,10 @@ import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../config.ts';
 import { getInstanceLogger, type InstanceLogger } from '../logger.ts';
-import {
-    ACCESSION_FIELD,
-    ACCESSION_VERSION_FIELD,
-    IS_REVOCATION_FIELD,
-    VERSION_FIELD,
-    VERSION_STATUS_FIELD,
-} from '../settings.ts';
+import { ACCESSION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD } from '../settings.ts';
 import { accessionVersion, type AccessionVersion, type ProblemDetail } from '../types/backend.ts';
 import type { Schema } from '../types/config.ts';
-import {
-    type LapisBaseRequest,
-    sequenceEntryHistory,
-    type SequenceEntryHistory,
-    siloVersionStatuses,
-} from '../types/lapis.ts';
+import { sequenceEntryHistory, type SequenceEntryHistory, siloVersionStatuses } from '../types/lapis.ts';
 import type { BaseType } from '../utils/sequenceTypeHelpers.ts';
 
 export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
@@ -87,19 +76,11 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
     public async getAllSequenceEntryHistoryForAccession(
         accession: string,
     ): Promise<Result<SequenceEntryHistory, ProblemDetail>> {
-        // @ts-expect-error Bug in Zod: https://github.com/colinhacks/zod/issues/3136
-        const request: LapisBaseRequest = {
+        const result = await this.call('details', {
             accession,
-            fields: [
-                ACCESSION_VERSION_FIELD,
-                ACCESSION_FIELD,
-                VERSION_FIELD,
-                VERSION_STATUS_FIELD,
-                IS_REVOCATION_FIELD,
-            ],
-            orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
-        };
-        const result = await this.call('details', request);
+            fields: [ACCESSION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD],
+            orderBy: [VERSION_FIELD],
+        });
 
         const createSequenceHistoryProblemDetail = (detail: string): ProblemDetail => ({
             type: 'about:blank',

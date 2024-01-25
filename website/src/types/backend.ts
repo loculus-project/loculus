@@ -54,29 +54,9 @@ export const sequenceEntryStatus = accessionVersion.merge(
 );
 export type SequenceEntryStatus = z.infer<typeof sequenceEntryStatus>;
 
-export const openDataUseTermsType = 'OPEN';
-export const restrictedDataUseTermsType = 'RESTRICTED';
-
-export const dataUseTermsTypes = [restrictedDataUseTermsType, openDataUseTermsType] as const;
-
-export type DataUseTermsType = typeof openDataUseTermsType | typeof restrictedDataUseTermsType;
-
-export const dataUseTerms = z.union([
-    z.object({
-        type: z.literal(restrictedDataUseTermsType),
-        restrictedUntil: z.string(),
-    }),
-    z.object({
-        type: z.literal(openDataUseTermsType),
-    }),
-]);
-
-export type DataUseTerms = z.infer<typeof dataUseTerms>;
-
 export const submissionIdMapping = accessionVersion.merge(
     z.object({
         submissionId: z.string(),
-        dataUseTerms: dataUseTerms.nullable(),
     }),
 );
 export type SubmissionIdMapping = z.infer<typeof submissionIdMapping>;
@@ -120,8 +100,6 @@ export const uploadFiles = z.object({
 export const submitFiles = uploadFiles.merge(
     z.object({
         groupName: z.string(),
-        dataUseTermsType: z.enum(dataUseTermsTypes),
-        restrictedUntil: z.string().nullable(),
     }),
 );
 

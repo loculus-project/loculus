@@ -1,5 +1,5 @@
 ---
-import { getData, getReferenceGenomesSequenceNames, getMetadataFilters, getMutationFilter, getOrderBy } from './search';
+import { getData, getSearchFormFilters } from './search';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { Pagination } from '../../../components/SearchPage/Pagination';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
@@ -17,17 +17,13 @@ const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
 };
 
-const metadataFilter = getMetadataFilters(getSearchParams, organism);
-const mutationFilter = getMutationFilter(Astro.url.searchParams);
+const searchFormFilter = getSearchFormFilters(getSearchParams, organism);
 
 const pageParam = Astro.url.searchParams.get('page');
 const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
-const orderBy = getOrderBy(Astro.url.searchParams);
 
-const referenceGenomesSequenceNames = getReferenceGenomesSequenceNames(organism);
-
-const data = await getData(organism, metadataFilter, mutationFilter, offset, pageSize, orderBy);
+const data = await getData(organism, searchFormFilter, offset, pageSize);
 ---
 
 <BaseLayout title={`${cleanedOrganism!.displayName} - Browse`}>
@@ -36,10 +32,8 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
         <div class='md:w-72'>
             <SearchForm
                 organism={organism}
-                filters={metadataFilter}
-                initialMutationFilter={mutationFilter}
+                filters={searchFormFilter}
                 clientConfig={clientConfig}
-                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                 client:only='react'
             />
         </div>
@@ -51,16 +45,7 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
                             Search returned {data.totalCount.toLocaleString()}
                             sequence{data.totalCount === 1 ? '' : 's'}
                         </div>
-                        <Table
-                            organism={organism}
-                            data={data.data}
-                            schema={schema}
-                            metadataFilter={metadataFilter}
-                            mutationFilter={mutationFilter}
-                            page={page}
-                            orderBy={orderBy}
-                            client:load
-                        />
+                        <Table organism={organism} data={data.data} schema={schema} client:load />
 
                         <div class='mt-4 flex justify-center'>
                             <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)} />

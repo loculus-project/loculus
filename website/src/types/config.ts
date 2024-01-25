@@ -4,25 +4,18 @@ import { referenceGenomes } from './referencesGenomes.ts';
 
 export const metadata = z.object({
     name: z.string(),
-    type: z.enum(['string', 'date', 'int', 'float', 'pango_lineage', 'timestamp']),
+    type: z.enum(['string', 'date', 'int', 'float', 'pango_lineage']),
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
 });
 export type Metadata = z.infer<typeof metadata>;
 
-export type MetadataFilter = Metadata & {
+export type Filter = Metadata & {
     filterValue: string;
     label?: string;
 };
 
-export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
-
-export type MutationFilter = {
-    aminoAcidMutationQueries?: string[];
-    nucleotideMutationQueries?: string[];
-    aminoAcidInsertionQueries?: string[];
-    nucleotideInsertionQueries?: string[];
-};
+export type FilterValue = Pick<Filter, 'name' | 'filterValue'>;
 
 const schema = z.object({
     instanceName: z.string(),

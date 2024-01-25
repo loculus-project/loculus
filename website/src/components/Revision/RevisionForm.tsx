@@ -3,7 +3,7 @@ import { type FC, useState } from 'react';
 import type { SubmissionIdMapping } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { DataUploadForm } from '../DataUploadForm.tsx';
-import { ManagedErrorFeedback, useErrorFeedbackState } from '../Submission/ManagedErrorFeedback';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
 type RevisionFormProps = {
     accessToken: string;

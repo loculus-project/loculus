@@ -1,17 +1,18 @@
 import { sentenceCase } from 'change-case';
-import { DateTime, FixedOffsetZone } from 'luxon';
 import { err, Result } from 'neverthrow';
 
 import { type LapisClient } from '../../services/lapisClient.ts';
-import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, Schema } from '../../types/config.ts';
+import { VERSION_STATUS_FIELD } from '../../settings.ts';
+import type { AccessionVersion, ProblemDetail } from '../../types/backend.ts';
+import type { Schema } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
     type InsertionCount,
     type MutationProportionCount,
     type SequenceEntryHistory,
-    type SequenceEntryHistoryEntry,
+    type SiloVersionStatus,
+    siloVersionStatusSchema,
 } from '../../types/lapis.ts';
 
 export type TableDataEntry = { label: string; name: string; value: string | number };
@@ -51,13 +52,19 @@ export async function getTableData(
         );
 }
 
-export function isRevocationEntry(tableData: TableDataEntry[]): boolean {
-    return tableData.some((entry) => entry.name === 'isRevocation' && entry.value === 'true');
+export function getVersionStatus(tableData: TableDataEntry[]): SiloVersionStatus {
+    const versionStatus = tableData.find((pred) => pred.name === VERSION_STATUS_FIELD)?.value.toString() ?? undefined;
+
+    const parsedStatus = siloVersionStatusSchema.safeParse(versionStatus);
+
+    if (parsedStatus.success) {
+        return parsedStatus.data;
+    }
+
+    throw new Error('Invalid version status: ' + JSON.stringify(versionStatus) + ': ' + parsedStatus.error.toString());
 }
 
-export function getLatestAccessionVersion(
-    sequenceEntryHistory: SequenceEntryHistory,
-): SequenceEntryHistoryEntry | undefined {
+export function getLatestAccessionVersion(sequenceEntryHistory: SequenceEntryHistory): AccessionVersion | undefined {
     if (sequenceEntryHistory.length === 0) {
         return undefined;
     }
@@ -74,7 +81,7 @@ function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(acces
                     title: 'Not Found',
                     status: 0,
                     detail: 'No data found for accession version ' + accessionVersion,
-                    instance: '/seq/' + accessionVersion,
+                    instance: '/sequences/' + accessionVersion,
                 });
             }
         }
@@ -99,19 +106,18 @@ function toTableData(config: Schema) {
         const data: TableDataEntry[] = config.metadata.map((metadata) => ({
             label: sentenceCase(metadata.name),
             name: metadata.name,
-            value: mapValueToDisplayedValue(details[metadata.name], metadata),
+            value: details[metadata.name] ?? 'N/A',
         }));
-
         data.push(
             {
                 label: 'Nucleotide substitutions',
                 name: 'nucleotideSubstitutions',
-                value: substitutionsToCommaSeparatedString(nucleotideMutations),
+                value: mutationsToCommaSeparatedString(nucleotideMutations, (m) => !m.endsWith('-')),
             },
             {
                 label: 'Nucleotide deletions',
                 name: 'nucleotideDeletions',
-                value: deletionsToCommaSeparatedString(nucleotideMutations),
+                value: mutationsToCommaSeparatedString(nucleotideMutations, (m) => m.endsWith('-')),
             },
             {
                 label: 'Nucleotide insertions',
@@ -121,12 +127,12 @@ function toTableData(config: Schema) {
             {
                 label: 'Amino acid substitutions',
                 name: 'aminoAcidSubstitutions',
-                value: substitutionsToCommaSeparatedString(aminoAcidMutations),
+                value: mutationsToCommaSeparatedString(aminoAcidMutations, (m) => !m.endsWith('-')),
             },
             {
                 label: 'Amino acid deletions',
                 name: 'aminoAcidDeletions',
-                value: deletionsToCommaSeparatedString(aminoAcidMutations),
+                value: mutationsToCommaSeparatedString(aminoAcidMutations, (m) => m.endsWith('-')),
             },
             {
                 label: 'Amino acid insertions',
@@ -139,74 +145,13 @@ function toTableData(config: Schema) {
     };
 }
 
-function mapValueToDisplayedValue(value: undefined | null | string | number, metadata: Metadata) {
-    if (value === null || value === undefined) {
-        return 'N/A';
-    }
-
-    if (metadata.type === 'timestamp' && typeof value === 'number') {
-        return DateTime.fromSeconds(value, { zone: FixedOffsetZone.utcInstance }).toFormat('yyyy-MM-dd TTT');
-    }
-
-    return value;
-}
-
-function substitutionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
+function mutationsToCommaSeparatedString(
+    mutationData: MutationProportionCount[],
+    filter: (mutation: string) => boolean,
+) {
     return mutationData
         .map((m) => m.mutation)
-        .filter((m) => !m.endsWith('-'))
-        .join(', ');
-}
-
-function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
-    const segmentPositions = new Map<string | undefined, number[]>();
-    mutationData
-        .filter((m) => m.mutation.endsWith('-'))
-        .forEach((m) => {
-            const parts = m.mutation.split(':');
-            const [segment, mutation] = parts.length === 1 ? ([undefined, parts[0]] as const) : parts;
-            const position = Number.parseInt(mutation.slice(1, -1), 10);
-            if (!segmentPositions.has(segment)) {
-                segmentPositions.set(segment, []);
-            }
-            segmentPositions.get(segment)!.push(position);
-        });
-    const segmentRanges = [...segmentPositions.entries()].map(([segment, positions]) => {
-        const sortedPositions = positions.sort();
-        const ranges = [];
-        let rangeStart: number | null = null;
-        for (let i = 0; i < sortedPositions.length; i++) {
-            const current = sortedPositions[i];
-            const next = sortedPositions[i + 1] as number | undefined;
-            if (rangeStart === null) {
-                rangeStart = current;
-            }
-            if (next === undefined || next !== current + 1) {
-                if (current - rangeStart >= 2) {
-                    ranges.push(`${rangeStart}-${current}`);
-                } else {
-                    ranges.push(rangeStart.toString());
-                    if (current !== rangeStart) {
-                        ranges.push(current.toString());
-                    }
-                }
-                rangeStart = null;
-            }
-        }
-        return { segment, ranges };
-    });
-    segmentRanges.sort((a, b) => {
-        const safeA = a.segment ?? '';
-        const safeB = b.segment ?? '';
-        if (safeA <= safeB) {
-            return -1;
-        } else {
-            return 1;
-        }
-    });
-    return segmentRanges
-        .map(({ segment, ranges }) => ranges.map((range) => `${segment !== undefined ? segment + ':' : ''}${range}`))
-        .flat()
+        .filter(filter)
         .join(', ');
 }
 

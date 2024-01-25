@@ -11,6 +11,7 @@ import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
+import { DatasetPage } from './pages/datasets/dataset.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserSequencePage } from './pages/user/userSequencePage/userSequencePage.ts';
 import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
@@ -21,6 +22,7 @@ type E2EFixture = {
     searchPage: SearchPage;
     sequencePage: SequencePage;
     submitPage: SubmitPage;
+    datasetPage: DatasetPage;
     userPage: UserSequencePage;
     groupPage: GroupPage;
     revisePage: RevisePage;
@@ -54,10 +56,6 @@ export const testSequenceEntry = {
 export const revokedSequenceEntry = {
     accession: '11',
     version: 1,
-};
-export const revocationSequenceEntry = {
-    accession: '11',
-    version: 2,
 };
 export const deprecatedSequenceEntry = {
     accession: '21',
@@ -175,6 +173,10 @@ export const test = base.extend<E2EFixture>({
     userPage: async ({ page }, use) => {
         const userPage = new UserSequencePage(page);
         await use(userPage);
+    },
+    datasetPage: async ({ page }, use) => {
+        const datasetPage = new DatasetPage(page);
+        await use(datasetPage);
     },
     groupPage: async ({ page }, use) => {
         const groupPage = new GroupPage(page);

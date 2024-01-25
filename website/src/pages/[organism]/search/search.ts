@@ -1,20 +1,18 @@
 import { ok, Result } from 'neverthrow';
 
 import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
-import { getReferenceGenomes, getSchema } from '../../../config.ts';
+import { getSchema } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { hiddenDefaultSearchFilters } from '../../../settings.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
-import type { FilterValue, MetadataFilter, MutationFilter } from '../../../types/config.ts';
-import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../../../types/lapis.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { Filter } from '../../../types/config.ts';
 
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
 };
 
-function addHiddenFilters(searchFormFilter: FilterValue[], hiddenFilters: FilterValue[]) {
+function addHiddenFilters(searchFormFilter: Filter[], hiddenFilters: Filter[]) {
     const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
     const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
     return [...searchFormFilter, ...hiddenFiltersToAdd];
@@ -22,28 +20,19 @@ function addHiddenFilters(searchFormFilter: FilterValue[], hiddenFilters: Filter
 
 export const getData = async (
     organism: string,
-    metadataFilter: FilterValue[],
-    mutationFilter: MutationFilter,
+    searchFormFilter: Filter[],
     offset: number,
     limit: number,
-    orderBy?: OrderBy,
-    hiddenDefaultFilters: FilterValue[] = hiddenDefaultSearchFilters,
+    hiddenDefaultFilters: Filter[] = hiddenDefaultSearchFilters,
 ): Promise<Result<SearchResponse, ProblemDetail>> => {
-    const filters = addHiddenFilters(metadataFilter, hiddenDefaultFilters);
+    const filters = addHiddenFilters(searchFormFilter, hiddenDefaultFilters);
 
-    const metadataSearchFilters = filters
+    const searchFilters = filters
         .filter((metadata) => metadata.filterValue !== '')
         .reduce((acc: Record<string, string>, metadata) => {
             acc[metadata.name] = metadata.filterValue;
             return acc;
         }, {});
-    const searchFilters = {
-        ...metadataSearchFilters,
-        nucleotideMutations: mutationFilter.nucleotideMutationQueries ?? [],
-        aminoAcidMutations: mutationFilter.aminoAcidMutationQueries ?? [],
-        nucleotideInsertions: mutationFilter.nucleotideInsertionQueries ?? [],
-        aminoAcidInsertions: mutationFilter.aminoAcidInsertionQueries ?? [],
-    };
 
     const config = getSchema(organism);
 
@@ -58,16 +47,12 @@ export const getData = async (
         });
     }
 
-    // @ts-expect-error Bug in Zod: https://github.com/colinhacks/zod/issues/3136
-    const request: LapisBaseRequest = {
+    const detailsResult = await lapisClient.call('details', {
         fields: [...config.tableColumns, config.primaryKey],
         limit,
         offset,
-        ...metadataSearchFilters,
-        orderBy: orderBy !== undefined ? [orderBy] : undefined,
-    };
-
-    const detailsResult = await lapisClient.call('details', request);
+        ...searchFilters,
+    });
 
     return Result.combine([detailsResult, aggregateResult]).map(([details, aggregate]) => {
         return {
@@ -77,14 +62,13 @@ export const getData = async (
     });
 };
 
-export const getMetadataFilters = (getSearchParams: (param: string) => string, organism: string): MetadataFilter[] => {
+export const getSearchFormFilters = (getSearchParams: (param: string) => string, organism: string): Filter[] => {
     const schema = getSchema(organism);
     return schema.metadata.flatMap((metadata) => {
         if (metadata.notSearchable === true) {
             return [];
         }
-
-        if (metadata.type === 'date' || metadata.type === 'timestamp') {
+        if (metadata.type === 'date') {
             const metadataFrom = {
                 ...metadata,
                 name: `${metadata.name}From`,
@@ -96,42 +80,12 @@ export const getMetadataFilters = (getSearchParams: (param: string) => string, o
                 filterValue: getSearchParams(`${metadata.name}To`),
             };
             return [metadataFrom, metadataTo];
-        }
-
-        return [
-            {
+        } else {
+            const metadataSetting = {
                 ...metadata,
                 filterValue: getSearchParams(metadata.name),
-            },
-        ];
+            };
+            return [metadataSetting];
+        }
     });
-};
-
-export const getOrderBy = (searchParams: URLSearchParams): OrderBy | undefined => {
-    const orderByTypeParam = searchParams.get('order');
-    const orderByTypeParsed = orderByTypeParam !== null ? orderByType.safeParse(orderByTypeParam) : undefined;
-    const orderByTypeValue: OrderByType = orderByTypeParsed?.success === true ? orderByTypeParsed.data : 'ascending';
-    return searchParams.get('orderBy') !== null
-        ? {
-              field: searchParams.get('orderBy')!,
-              type: orderByTypeValue,
-          }
-        : undefined;
-};
-
-export const getMutationFilter = (searchParams: URLSearchParams): MutationFilter => {
-    return {
-        nucleotideMutationQueries: searchParams.get('nucleotideMutations')?.split(','),
-        aminoAcidMutationQueries: searchParams.get('aminoAcidMutations')?.split(','),
-        nucleotideInsertionQueries: searchParams.get('nucleotideInsertions')?.split(','),
-        aminoAcidInsertionQueries: searchParams.get('aminoAcidInsertions')?.split(','),
-    };
-};
-
-export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
-    const referenceGenomes = getReferenceGenomes(organism);
-    return {
-        nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
-        genes: referenceGenomes.genes.map((n) => n.name),
-    };
 };

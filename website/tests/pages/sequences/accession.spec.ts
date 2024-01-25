@@ -6,7 +6,6 @@ import {
     dummyOrganism,
     expect,
     revisedSequenceEntry,
-    revocationSequenceEntry,
     revokedSequenceEntry,
     test,
     testSequenceEntry,
@@ -23,21 +22,25 @@ test.describe('The detailed sequence page', () => {
         await expect(sequencePage.page.getByText(testSequenceEntry.orf1a, { exact: false })).toBeVisible();
     });
 
+    // TODO(#619): revoked entries should show a link to the newest version. Since SILO cannot process revocation_entries yet, this is not tested.
     test('check initial sequences and verify that banners are shown when revoked or revised', async ({
         sequencePage,
     }) => {
         await sequencePage.goto(revokedSequenceEntry);
         await expect(sequencePage.page.getByText(`This sequence entry has been revoked!`)).toBeVisible();
-        await expect(sequencePage.notLatestVersionBanner).toBeVisible();
-
-        await sequencePage.goto(revocationSequenceEntry);
-        await expect(sequencePage.revocationVersionBanner).toBeVisible();
+        // await expect(
+        //     sequencePage.page.getByText(`This is not the latest version of this sequence entry.`),
+        // ).toBeVisible();
 
         await sequencePage.goto(deprecatedSequenceEntry);
-        await expect(sequencePage.notLatestVersionBanner).toBeVisible();
+        await expect(
+            sequencePage.page.getByText(`This is not the latest version of this sequence entry.`),
+        ).toBeVisible();
 
         await sequencePage.goto(revisedSequenceEntry);
-        await expect(sequencePage.notLatestVersionBanner).not.toBeVisible();
+        await expect(
+            sequencePage.page.getByText(`This is not the latest version of this sequence entry.`),
+        ).not.toBeVisible();
     });
 
     test('can navigate to the versions page and click the link to the deprecated version', async ({ sequencePage }) => {

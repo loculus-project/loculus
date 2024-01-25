@@ -9,8 +9,6 @@ export class SequencePage {
     private readonly loadButton: Locator;
     private readonly allVersions: Locator;
     private readonly orf1aButton: Locator;
-    readonly notLatestVersionBanner: Locator;
-    readonly revocationVersionBanner: Locator;
 
     constructor(public readonly page: Page) {
         this.loadButton = this.page.getByRole('button', { name: 'Load sequences' });
@@ -18,8 +16,6 @@ export class SequencePage {
         this.allVersions = this.page.getByRole('link', {
             name: `All versions`,
         });
-        this.notLatestVersionBanner = this.page.getByText('This is not the latest version of this sequence entry.');
-        this.revocationVersionBanner = this.page.getByText('This is a revocation version.');
     }
 
     public async goto(accessionVersion: AccessionVersion = testSequenceEntry) {
@@ -27,6 +23,14 @@ export class SequencePage {
             waitUntil: 'networkidle',
         });
         await expect(this.page).toHaveTitle(getAccessionVersionString(accessionVersion));
+        await expect(this.loadButton).toBeVisible();
+    }
+
+    public async gotoVersionsPage(accessionVersion: AccessionVersion = testSequenceEntry) {
+        await this.page.goto(`${baseUrl}${routes.sequencesVersionsPage(dummyOrganism.key, accessionVersion)}`, {
+            waitUntil: 'networkidle',
+        });
+        await expect(this.page).toHaveTitle(`Versions`);
     }
 
     public async gotoAllVersions() {

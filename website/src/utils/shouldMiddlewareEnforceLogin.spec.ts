@@ -2,7 +2,6 @@ import { describe, expect, test } from 'vitest';
 
 import { shouldMiddlewareEnforceLogin } from './shouldMiddlewareEnforceLogin';
 import { testOrganism } from '../../vitest.setup.ts';
-import { routes } from '../routes.ts';
 
 const otherOrganism = 'otherOrganism';
 const configuredOrganisms = [testOrganism, otherOrganism];
@@ -27,7 +26,7 @@ describe('shouldMiddlewareEnforceLogin', () => {
         expectNoLogin(`/${testOrganism}/search`);
         expectNoLogin(`/`);
         expectNoLogin(`/${testOrganism}`);
-        expectNoLogin(routes.sequencesDetailsPage(testOrganism, 'id_002156'));
+        expectNoLogin(`/${testOrganism}/sequences/id_002156`);
     });
 
     function expectForceLogin(path: string) {

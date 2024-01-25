@@ -113,36 +113,6 @@ const alignedNucleotideSequencesEndpoint = makeEndpoint({
     response: z.string(),
 });
 
-const alignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/alignedNucleotideSequences/:segment'),
-    alias: 'alignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: lapisBaseRequest,
-        },
-    ],
-    response: z.string(),
-});
-
-const unalignedNucleotideSequencesMultiSegmentEndpoint = makeEndpoint({
-    method: 'post',
-    path: withSample('/unalignedNucleotideSequences/:segment'),
-    alias: 'unalignedNucleotideSequencesMultiSegment',
-    immutable: true,
-    parameters: [
-        {
-            name: 'request',
-            type: 'Body',
-            schema: lapisBaseRequest,
-        },
-    ],
-    response: z.string(),
-});
-
 const unalignedNucleotideSequencesEndpoint = makeEndpoint({
     method: 'post',
     path: withSample('/unalignedNucleotideSequences'),
@@ -181,8 +151,6 @@ export const lapisApi = makeApi([
     nucleotideInsertionsEndpoint,
     aminoAcidInsertionsEndpoint,
     alignedNucleotideSequencesEndpoint,
-    alignedNucleotideSequencesMultiSegmentEndpoint,
     unalignedNucleotideSequencesEndpoint,
-    unalignedNucleotideSequencesMultiSegmentEndpoint,
     alignedAminoAcidSequencesEndpoint,
 ]);

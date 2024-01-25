@@ -4,7 +4,7 @@ import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
-import { withQueryProvider } from '../common/withProvider.tsx';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DeleteIcon from '~icons/ci/user-remove';
 
 type User = {

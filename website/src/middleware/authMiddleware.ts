@@ -75,7 +75,10 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
         context.locals.session = {
             isLoggedIn: true,
-            user: { name: userInfo.value.name ?? 'Username not set' },
+            user: {
+                name: userInfo.value.name ?? 'Username not set',
+                username: userInfo.value.preferred_username,
+            },
             token,
         };
 
@@ -94,7 +97,6 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     }
 
     const userInfo = await getUserInfo(token);
-
     if (userInfo.isErr()) {
         logger.error(`Error getting user info: ${userInfo.error}`);
         deleteCookie(context);

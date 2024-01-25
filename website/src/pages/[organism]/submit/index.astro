@@ -12,5 +12,6 @@ const clientConfig = getRuntimeConfig().public;
 
 <BaseLayout title='Submit'>
     <h1 class='title'>Submission Page</h1>
-    <SubmissionForm accessToken={accessToken} organism={organism} clientConfig={clientConfig} client:only='react' />
+
+    <SubmissionForm accessToken={accessToken} organism={organism} clientConfig={clientConfig} client:load />
 </BaseLayout>

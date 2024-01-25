@@ -1,0 +1,73 @@
+---
+import { sentenceCase } from 'change-case';
+
+import { BackButton } from '../../../../components/Navigation/BackButton';
+import ErrorBox from '../../../../components/common/ErrorBox.astro';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { routes } from '../../../../routes';
+import { LapisClient } from '../../../../services/lapisClient';
+import {
+    extractAccessionVersion,
+    getAccessionVersionString,
+    parseAccessionVersionFromString,
+} from '../../../../utils/extractAccessionVersion';
+import { getVersionStatusColor } from '../../../../utils/getVersionStatusColor';
+
+const accessionVersion = Astro.params.accessionVersion!;
+
+const { accession } = parseAccessionVersionFromString(accessionVersion);
+
+const organism = Astro.params.organism!;
+
+const lapisClient = LapisClient.createForOrganism(organism);
+
+const versionListResult = await lapisClient.getAllSequenceEntryHistoryForAccession(accession);
+---
+
+<BaseLayout title='Versions'>
+    <div class='flex flex-row pb-2'>
+        <BackButton marginRight={3} client:load />
+        <h1 class='title'>Versions for accession {accession}</h1>
+    </div>
+
+    <ul class='p-3'>
+        {
+            versionListResult.match(
+                (list) => {
+                    return list.map((version) => (
+                        <li class='mb-4'>
+                            <div class='flex flex-row gap-3 justify-start'>
+                                <a
+                                    href={routes.sequencesDetailsPage(
+                                        organism,
+                                        getAccessionVersionString(extractAccessionVersion(version)),
+                                    )}
+                                >
+                                    {getAccessionVersionString(extractAccessionVersion(version))}
+                                </a>
+
+                                <p class={`font-bold ${getVersionStatusColor(version.versionStatus)}`}>
+                                    ({sentenceCase(version.versionStatus)})
+                                </p>
+                            </div>
+                        </li>
+                    ));
+                },
+                (error) => {
+                    return (
+                        <>
+                            <ErrorBox title='Request for sequence history failed' message={error.detail} />
+                            <div>
+                                Click
+                                <a class='underline' href={routes.searchPage(organism, [])}>
+                                    here
+                                </a>
+                                to search for a different sequence.
+                            </div>
+                        </>
+                    );
+                },
+            )
+        }
+    </ul>
+</BaseLayout>

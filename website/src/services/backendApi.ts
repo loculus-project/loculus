@@ -13,6 +13,7 @@ import {
     unprocessedData,
     uploadFiles,
 } from '../types/backend.ts';
+import { authorProfiles, datasets, datasetRecords, citedByResult } from '../types/datasets.ts';
 
 const submitEndpoint = makeEndpoint({
     method: 'post',
@@ -188,6 +189,178 @@ const submitProcessedDataEndpoint = makeEndpoint({
     errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
 });
 
+const createGroupEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/groups',
+    alias: 'createGroup',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                groupName: z.string(),
+            }),
+        },
+    ],
+    response: z.never(),
+    errors: [notAuthorizedError],
+});
+
+const addUserToGroupEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/groups/:groupName/users',
+    alias: 'addUserToGroup',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                username: z.string(),
+            }),
+        },
+    ],
+    response: z.never(),
+    errors: [notAuthorizedError],
+});
+
+const getDatasetsOfUserEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-datasets-of-user',
+    alias: 'getDatasetsOfUser',
+    parameters: [authorizationHeader],
+    response: datasets,
+    errors: [notAuthorizedError],
+});
+
+const getUserCitedByEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-user-cited-by-datasets?username=:username',
+    alias: 'getUserCitedBy',
+    parameters: [authorizationHeader],
+    response: citedByResult,
+    errors: [notAuthorizedError],
+});
+
+const getDatasetCitedByEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-dataset-cited-by-publication?datasetId=:datasetId&version=:version',
+    alias: 'getDatasetCitedBy',
+    parameters: [authorizationHeader],
+    response: citedByResult,
+    errors: [notAuthorizedError],
+});
+
+const getDatasetEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-dataset?datasetId=:datasetId&version=:version',
+    alias: 'getDataset',
+    parameters: [authorizationHeader],
+    response: datasets,
+    errors: [notAuthorizedError],
+});
+
+const getDatasetRecordsEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-dataset-records?datasetId=:datasetId&version=:version',
+    alias: 'getDatasetRecords',
+    parameters: [authorizationHeader],
+    response: datasetRecords,
+    errors: [notAuthorizedError],
+});
+
+const createDatasetEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/create-dataset',
+    alias: 'createDataset',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                name: z.string(),
+                description: z.string().optional(),
+                records: z
+                    .array(
+                        z.object({
+                            accession: z.string().optional(),
+                            type: z.string().optional(),
+                        }),
+                    )
+                    .optional(),
+            }),
+        },
+    ],
+    response: z.object({
+        datasetId: z.string(),
+        datasetVersion: z.number(),
+    }),
+    errors: [notAuthorizedError],
+});
+
+const createDatasetDOIEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/create-dataset-doi?datasetId=:datasetId&version=:datasetVersion',
+    alias: 'createDatasetDOI',
+    parameters: [authorizationHeader],
+    response: z.object({
+        datasetId: z.string(),
+        datasetVersion: z.number(),
+    }),
+    errors: [notAuthorizedError],
+});
+
+const updateDatasetEndpoint = makeEndpoint({
+    method: 'put',
+    path: '/update-dataset',
+    alias: 'updateDataset',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                datasetId: z.string(),
+                name: z.string(),
+                description: z.string().optional(),
+                records: z
+                    .array(
+                        z.object({
+                            accession: z.string().optional(),
+                            type: z.string().optional(),
+                        }),
+                    )
+                    .optional(),
+            }),
+        },
+    ],
+    response: z.object({
+        datasetId: z.string(),
+        datasetVersion: z.number(),
+    }),
+    errors: [notAuthorizedError],
+});
+
+const deleteDatasetEndpoint = makeEndpoint({
+    method: 'delete',
+    path: '/delete-dataset?datasetId=:datasetId&version=:datasetVersion',
+    alias: 'deleteDataset',
+    parameters: [authorizationHeader],
+    response: z.never(),
+    errors: [notAuthorizedError],
+});
+
+const getAuthorProfilesEndpoint = makeEndpoint({
+    method: 'get',
+    path: '/get-matching-author-profiles?authorQuery=:authorQuery',
+    alias: 'getAuthorProfiles',
+    parameters: [authorizationHeader],
+    response: authorProfiles,
+    errors: [notAuthorizedError],
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -200,4 +373,16 @@ export const backendApi = makeApi([
     confirmRevocationEndpoint,
     extractUnprocessedDataEndpoint,
     submitProcessedDataEndpoint,
+    createGroupEndpoint,
+    addUserToGroupEndpoint,
+    getDatasetsOfUserEndpoint,
+    getUserCitedByEndpoint,
+    getDatasetCitedByEndpoint,
+    getDatasetEndpoint,
+    getDatasetRecordsEndpoint,
+    createDatasetEndpoint,
+    createDatasetDOIEndpoint,
+    updateDatasetEndpoint,
+    deleteDatasetEndpoint,
+    getAuthorProfilesEndpoint,
 ]);

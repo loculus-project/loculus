@@ -4,7 +4,7 @@ import { type FC, useEffect, useMemo, useState } from 'react';
 import type { FieldProps } from './FieldProps';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import type { MetadataFilter } from '../../../types/config.ts';
+import type { Filter } from '../../../types/config.ts';
 
 const logger = getClientLogger('AutoCompleteField');
 
@@ -74,7 +74,7 @@ export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFiel
     );
 };
 
-function getOtherFieldsFilter(allFields: MetadataFilter[], field: MetadataFilter) {
+function getOtherFieldsFilter(allFields: Filter[], field: Filter) {
     return allFields
         .filter((f) => f.name !== field.name && f.filterValue !== '')
         .reduce((acc, f) => ({ ...acc, [f.name]: f.filterValue }), {});

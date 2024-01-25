@@ -1,8 +1,8 @@
-import type { MetadataFilter } from '../../../types/config.ts';
+import type { Filter } from '../../../types/config.ts';
 
 export type FieldProps = {
-    field: MetadataFilter;
-    allFields: MetadataFilter[];
+    field: Filter;
+    allFields: Filter[];
     handleFieldChange: (metadataName: string, filter: string) => void;
     isLoading: boolean;
     lapisUrl: string;

@@ -6,14 +6,7 @@ const namedSequence = z.object({
 });
 
 export const referenceGenomes = z.object({
-    nucleotideSequences: z.array(namedSequence).refine((data) => data.length > 0, {
-        message: 'Array must have at least one entry',
-    }),
+    nucleotideSequences: z.array(namedSequence),
     genes: z.array(namedSequence),
 });
 export type ReferenceGenomes = z.infer<typeof referenceGenomes>;
-
-export type ReferenceGenomesSequenceNames = {
-    nucleotideSequences: string[];
-    genes: string[];
-};

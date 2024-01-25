@@ -1,5 +1,5 @@
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
-import { type Accession, type AccessionVersion, openDataUseTermsType } from '../../src/types/backend.ts';
+import type { Accession, AccessionVersion } from '../../src/types/backend.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
 import { backendClient, dummyOrganism, groupManagementClient, testSequenceCount } from '../e2e.fixture.ts';
 import { DEFAULT_GROUP_NAME } from '../playwrightSetup.ts';
@@ -13,8 +13,6 @@ export const submitViaApi = async (numberOfSequenceEntries: number = testSequenc
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
             groupName: DEFAULT_GROUP_NAME,
-            dataUseTermsType: openDataUseTermsType,
-            restrictedUntil: null,
         },
         {
             params: { organism: dummyOrganism.key },

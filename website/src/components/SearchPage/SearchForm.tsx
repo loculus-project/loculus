@@ -6,17 +6,14 @@ import { sentenceCase } from 'change-case';
 import { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
 import { AutoCompleteField } from './fields/AutoCompleteField';
-import { DateField, TimestampField } from './fields/DateField';
-import type { FieldProps } from './fields/FieldProps.tsx';
-import { MutationField } from './fields/MutationField.tsx';
+import { DateField } from './fields/DateField';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { routes } from '../../routes.ts';
-import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { Filter } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
@@ -25,28 +22,20 @@ const queryClient = new QueryClient();
 
 interface SearchFormProps {
     organism: string;
-    filters: MetadataFilter[];
-    initialMutationFilter: MutationFilter;
+    filters: Filter[];
     clientConfig: ClientConfig;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
 }
 
 const clientLogger = getClientLogger('SearchForm');
 
-export const SearchForm: FC<SearchFormProps> = ({
-    organism,
-    filters,
-    initialMutationFilter,
-    clientConfig,
-    referenceGenomesSequenceNames,
-}) => {
-    const [fieldValues, setFieldValues] = useState<(MetadataFilter & { label: string })[]>(
+export const SearchForm: FC<SearchFormProps> = ({ organism, filters, clientConfig }) => {
+    const [fieldValues, setFieldValues] = useState<(Filter & { label: string })[]>(
         filters.map((filter) => ({
             ...filter,
+            filterValue: '',
             label: filter.label ?? sentenceCase(filter.name),
         })),
     );
-    const [mutationFilter, setMutationFilter] = useState<MutationFilter>(initialMutationFilter);
     const [isLoading, setIsLoading] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
 
@@ -65,7 +54,7 @@ export const SearchForm: FC<SearchFormProps> = ({
     const handleSearch: FormEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();
         setIsLoading(true);
-        location.href = routes.searchPage(organism, fieldValues, mutationFilter);
+        location.href = routes.searchPage(organism, fieldValues);
     };
 
     const resetSearch = async () => {
@@ -78,16 +67,30 @@ export const SearchForm: FC<SearchFormProps> = ({
 
     const fields = useMemo(
         () =>
-            fieldValues.map((field) => (
-                <SearchField
-                    key={field.name}
-                    field={field}
-                    handleFieldChange={handleFieldChange}
-                    isLoading={isLoading}
-                    lapisUrl={lapisUrl}
-                    allFields={fieldValues}
-                />
-            )),
+            fieldValues.map((field) => {
+                if (field.notSearchable === true) return null;
+
+                const props = {
+                    key: field.name,
+                    field,
+                    handleFieldChange,
+                    isLoading,
+                    lapisUrl,
+                    allFields: fieldValues,
+                };
+
+                switch (field.type) {
+                    case 'date':
+                        return <DateField {...props} />;
+                    case 'pango_lineage':
+                        return <PangoLineageField {...props} />;
+                    default:
+                        if (field.autocomplete === true) {
+                            return <AutoCompleteField {...props} />;
+                        }
+                        return <NormalTextField {...props} />;
+                }
+            }),
         [lapisUrl, fieldValues, isLoading],
     );
 
@@ -117,14 +120,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                             </button>
                         </div>
                         <form onSubmit={handleSearch}>
-                            <div className='flex flex-col'>
-                                <MutationField
-                                    referenceGenomes={referenceGenomesSequenceNames}
-                                    value={mutationFilter}
-                                    onChange={setMutationFilter}
-                                />
-                                {fields}
-                            </div>
+                            <div className='flex flex-col'>{fields}</div>
                             <div className='sticky bottom-0 z-10'>
                                 <div
                                     className='h-3'
@@ -140,28 +136,6 @@ export const SearchForm: FC<SearchFormProps> = ({
             </LocalizationProvider>
         </QueryClientProvider>
     );
-};
-
-const SearchField: FC<FieldProps> = (props) => {
-    const { field } = props;
-
-    if (field.notSearchable === true) {
-        return null;
-    }
-
-    switch (field.type) {
-        case 'date':
-            return <DateField {...props} />;
-        case 'timestamp':
-            return <TimestampField {...props} />;
-        case 'pango_lineage':
-            return <PangoLineageField {...props} />;
-        default:
-            if (field.autocomplete === true) {
-                return <AutoCompleteField {...props} />;
-            }
-            return <NormalTextField {...props} />;
-    }
 };
 
 const SearchButton: FC<{ isLoading: boolean }> = ({ isLoading }) => (

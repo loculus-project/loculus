@@ -1,17 +1,18 @@
 import { err, ok } from 'neverthrow';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { getTableData } from './getTableData.ts';
+import { getTableData, getVersionStatus } from './getTableData.ts';
 import { mockRequest, testConfig } from '../../../vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
+import { VERSION_STATUS_FIELD } from '../../settings.ts';
 import type { Schema } from '../../types/config.ts';
+import { siloVersionStatuses } from '../../types/lapis.ts';
 
 const schema: Schema = {
     instanceName: 'instance name',
     metadata: [
         { name: 'metadataField1', type: 'string' },
         { name: 'metadataField2', type: 'string' },
-        { name: 'timestampField', type: 'timestamp' },
     ],
     tableColumns: [],
     primaryKey: 'primary key',
@@ -77,11 +78,6 @@ describe('getTableData', () => {
                 {
                     label: 'Metadata field2',
                     name: 'metadataField2',
-                    value: 'N/A',
-                },
-                {
-                    label: 'Timestamp field',
-                    name: 'timestampField',
                     value: 'N/A',
                 },
                 {
@@ -156,22 +152,22 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Nucleotide substitutions',
             name: 'nucleotideSubstitutions',
-            value: 'T10A, C30G',
+            value: 'nucleotideMutation1, nucleotideMutation2',
         });
         expect(data).toContainEqual({
             label: 'Nucleotide deletions',
             name: 'nucleotideDeletions',
-            value: '20, 21, 40-42',
+            value: 'nucleotideDeletion1-, nucleotideDeletion2-',
         });
         expect(data).toContainEqual({
             label: 'Amino acid substitutions',
             name: 'aminoAcidSubstitutions',
-            value: 'gene1:N10Y, gene1:T30N',
+            value: 'aminoAcidMutation1, aminoAcidMutation2',
         });
         expect(data).toContainEqual({
             label: 'Amino acid deletions',
             name: 'aminoAcidDeletions',
-            value: 'gene1:20-23, gene1:40',
+            value: 'aminoAcidDeletion1-, aminoAcidDeletion2-',
         });
     });
 
@@ -193,38 +189,45 @@ describe('getTableData', () => {
             value: 'aminoAcidInsertion1, aminoAcidInsertion2',
         });
     });
+});
 
-    test('should map timestamps to human readable dates', async () => {
-        mockRequest.lapis.details(200, { data: [{ timestampField: 1706194761 }] });
+describe('getVersionStatus', () => {
+    test('should return status for correct status', () => {
+        const versionStatus = getVersionStatus([
+            {
+                label: 'does not matter',
+                name: VERSION_STATUS_FIELD,
+                value: siloVersionStatuses.latestVersion,
+            },
+        ]);
 
-        const result = await getTableData('accession', schema, lapisClient);
+        expect(versionStatus).toStrictEqual(siloVersionStatuses.latestVersion);
+    });
 
-        const data = result._unsafeUnwrap();
-        expect(data).toContainEqual({
-            label: 'Timestamp field',
-            name: 'timestampField',
-            value: '2024-01-25 14:59:21 UTC',
-        });
+    test('should throw error for unknown status', () => {
+        expect(() =>
+            getVersionStatus([
+                {
+                    label: 'does not matter',
+                    name: VERSION_STATUS_FIELD,
+                    value: 'unknown status',
+                },
+            ]),
+        ).toThrowError(/Invalid version status: "unknown status"/);
     });
 });
 
 const nucleotideMutations = [
-    { count: 0, proportion: 0, mutation: 'T10A' },
-    { count: 0, proportion: 0, mutation: 'A20-' },
-    { count: 0, proportion: 0, mutation: 'A21-' },
-    { count: 0, proportion: 0, mutation: 'C30G' },
-    { count: 0, proportion: 0, mutation: 'G40-' },
-    { count: 0, proportion: 0, mutation: 'C41-' },
-    { count: 0, proportion: 0, mutation: 'T42-' },
+    { count: 0, proportion: 0, mutation: 'nucleotideMutation1' },
+    { count: 0, proportion: 0, mutation: 'nucleotideDeletion1-' },
+    { count: 0, proportion: 0, mutation: 'nucleotideMutation2' },
+    { count: 0, proportion: 0, mutation: 'nucleotideDeletion2-' },
 ];
 const aminoAcidMutations = [
-    { count: 0, proportion: 0, mutation: 'gene1:N10Y' },
-    { count: 0, proportion: 0, mutation: 'gene1:R20-' },
-    { count: 0, proportion: 0, mutation: 'gene1:R21-' },
-    { count: 0, proportion: 0, mutation: 'gene1:N22-' },
-    { count: 0, proportion: 0, mutation: 'gene1:P23-' },
-    { count: 0, proportion: 0, mutation: 'gene1:T30N' },
-    { count: 0, proportion: 0, mutation: 'gene1:F40-' },
+    { count: 0, proportion: 0, mutation: 'aminoAcidMutation1' },
+    { count: 0, proportion: 0, mutation: 'aminoAcidDeletion1-' },
+    { count: 0, proportion: 0, mutation: 'aminoAcidMutation2' },
+    { count: 0, proportion: 0, mutation: 'aminoAcidDeletion2-' },
 ];
 
 const nucleotideInsertions = [

@@ -2,21 +2,11 @@ import z, { type ZodTypeAny } from 'zod';
 
 import { accessionVersion, type ProblemDetail } from './backend.ts';
 
-export const orderByType = z.enum(['ascending', 'descending']);
-export type OrderByType = z.infer<typeof orderByType>;
-
-export const orderBy = z.object({
-    field: z.string(),
-    type: orderByType,
-});
-export type OrderBy = z.infer<typeof orderBy>;
-
 export const lapisBaseRequest = z
     .object({
         limit: z.number().optional(),
         offset: z.number().optional(),
         fields: z.array(z.string()).optional(),
-        orderBy: z.array(orderBy).optional(),
     })
     .catchall(z.union([z.string(), z.number(), z.null(), z.array(z.string())]));
 export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
@@ -75,18 +65,12 @@ export const siloVersionStatusSchema = z.enum([
 
 export type SiloVersionStatus = z.infer<typeof siloVersionStatusSchema>;
 
-export const siloBooleanWorkaround = z.enum(['true', 'false']).transform((value) => value === 'true');
-
-export const sequenceEntryHistoryEntry = accessionVersion.merge(
-    z.object({
-        accessionVersion: z.string(),
-        versionStatus: siloVersionStatusSchema,
-        isRevocation: siloBooleanWorkaround,
-    }),
+export const sequenceEntryHistory = z.array(
+    accessionVersion.merge(
+        z.object({
+            versionStatus: siloVersionStatusSchema,
+        }),
+    ),
 );
-
-export type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry>;
-
-export const sequenceEntryHistory = z.array(sequenceEntryHistoryEntry);
 
 export type SequenceEntryHistory = z.infer<typeof sequenceEntryHistory>;

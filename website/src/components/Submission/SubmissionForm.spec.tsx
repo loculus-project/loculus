@@ -4,12 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testOrganism } from '../../../vitest.setup.ts';
-import {
-    type DataUseTerms,
-    openDataUseTermsType,
-    type ProblemDetail,
-    type SubmissionIdMapping,
-} from '../../types/backend.ts';
+import type { ProblemDetail, SubmissionIdMapping } from '../../types/backend.ts';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -28,13 +23,9 @@ function renderSubmissionForm() {
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
 const sequencesFile = new File(['content'], 'sequences.fasta', { type: 'text/plain' });
 
-const defaultDataUseTerms: DataUseTerms = {
-    type: openDataUseTermsType,
-};
-
 const testResponse: SubmissionIdMapping[] = [
-    { accession: '0', version: 1, submissionId: 'header0', dataUseTerms: defaultDataUseTerms },
-    { accession: '1', version: 1, submissionId: 'header1', dataUseTerms: defaultDataUseTerms },
+    { accession: '0', version: 1, submissionId: 'header0' },
+    { accession: '1', version: 1, submissionId: 'header1' },
 ];
 
 describe('SubmitForm', () => {
@@ -73,6 +64,7 @@ describe('SubmitForm', () => {
     });
 
     test('should select a group if there is more than one', async () => {
+        mockRequest.backend.submit(200, testResponse);
         mockRequest.backend.getGroupsOfUser(200, [{ groupName: 'Group1' }, { groupName: 'Group2' }]);
 
         const { getByRole } = renderSubmissionForm();
@@ -80,17 +72,6 @@ describe('SubmitForm', () => {
         await waitFor(() => {
             expect(getByRole('option', { name: 'Group2' })).toBeInTheDocument();
             expect(getByRole('option', { name: 'Group1' })).toBeInTheDocument();
-        });
-    });
-
-    test('should select a restricted data use term', async () => {
-        mockRequest.backend.getGroupsOfUser(200, [{ groupName: 'Group1' }, { groupName: 'Group2' }]);
-
-        const { getByRole } = renderSubmissionForm();
-
-        await waitFor(() => {
-            expect(getByRole('option', { name: 'OPEN' })).toBeInTheDocument();
-            expect(getByRole('option', { name: 'RESTRICTED' })).toBeInTheDocument();
         });
     });
 
