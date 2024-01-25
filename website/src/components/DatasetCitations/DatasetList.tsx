@@ -44,10 +44,6 @@ const DatasetListHead = (props: DatasetListHeadProps) => {
             label: 'Name',
         },
         {
-            id: 'description',
-            label: 'Description',
-        },
-        {
             id: 'datasetDOI',
             label: 'Dataset DOI',
         },
@@ -118,8 +114,15 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
 
     const getComparator = <Key extends keyof any>(
         order: Order,
-        orderBy: Key,
-    ): ((a: { [key in Key]: number | string }, b: { [key in Key]: number | string }) => number) => {
+        orderBy?: Key,
+    ): ((
+        a: { [key in Key]: number | string | undefined },
+        b: { [key in Key]: number | string | undefined },
+    ) => number) => {
+        if (orderBy === undefined) {
+            return () => 0;
+        }
+
         const descendingComparator = <T,>(a: T, b: T, orderBy: keyof T) => {
             if (b[orderBy] < a[orderBy]) {
                 return -1;
@@ -138,7 +141,9 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
     const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - datasets.length) : 0;
 
     const visibleRows = useMemo(() => {
-        return datasets.sort(getComparator(order, orderBy)).slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+        return (datasets as any)
+            .sort(getComparator(order, orderBy))
+            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
     }, [datasets, order, orderBy, page, rowsPerPage]);
 
     const maxCellLength = 25;
@@ -169,14 +174,14 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
                             rowCount={datasets.length}
                         />
                         <TableBody>
-                            {visibleRows.map((row, index: number) => {
+                            {visibleRows.map((row: Dataset, index: number) => {
                                 const labelId = `table-row-${index}`;
                                 return (
                                     <TableRow
                                         id={labelId}
                                         hover
                                         onClick={(event) =>
-                                            handleClick(event, row.datasetId, row.datasetVersion as string)
+                                            handleClick(event, row.datasetId, row.datasetVersion.toString())
                                         }
                                         role='checkbox'
                                         tabIndex={-1}
@@ -184,11 +189,10 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
                                         sx={{ cursor: 'pointer' }}
                                     >
                                         <TableCell align='left'>{formatDate(row.createdAt)}</TableCell>
+                                        <TableCell align='left'>{truncateCell(row.name)}</TableCell>
                                         <TableCell component='th' scope='row'>
                                             {row.datasetVersion}
                                         </TableCell>
-                                        <TableCell align='left'>{truncateCell(row.name)}</TableCell>
-                                        <TableCell align='left'> {truncateCell(row.description as string)}</TableCell>
                                         <TableCell align='left'>
                                             {row.datasetDOI !== undefined
                                                 ? truncateCell(row.datasetDOI as string)

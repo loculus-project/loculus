@@ -7,6 +7,7 @@ import { BackButton } from '../../components/Navigation/BackButton';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../services/backendClient';
+import type { Dataset } from '../../types/datasets';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
@@ -15,23 +16,27 @@ const { datasetId = '' } = Astro.params;
 const version = Astro.url.searchParams.get('version')! || '1';
 const username = Astro.locals.session.user?.username;
 
-const datasetResponse = await BackendClient.create().astroFileTypeHelpers.getDataset(accessToken, datasetId, version);
-
-const datasetRecordsResponse = await BackendClient.create().astroFileTypeHelpers.getDatasetRecords(
+const datasetResponse = (await BackendClient.create().astroFileTypeHelpers.getDataset(
     accessToken,
     datasetId,
     version,
-);
+)) as any;
 
-const datasetCitedByResponse = await BackendClient.create().astroFileTypeHelpers.getDatasetCitedBy(
+const datasetRecordsResponse = (await BackendClient.create().astroFileTypeHelpers.getDatasetRecords(
     accessToken,
     datasetId,
     version,
-);
+)) as any;
 
-const getDatasetByVersion = (datasetVersions, version) => {
+const datasetCitedByResponse = (await BackendClient.create().astroFileTypeHelpers.getDatasetCitedBy(
+    accessToken,
+    datasetId,
+    version,
+)) as any;
+
+const getDatasetByVersion = (datasetVersions: Dataset[], version: string) => {
     const matchedVersion = datasetVersions.find((obj) => {
-        return obj.datasetVersion === version;
+        return obj.datasetVersion === parseInt(version, 10);
     });
     if (matchedVersion === undefined) {
         return datasetVersions[datasetVersions.length - 1];
@@ -49,7 +54,7 @@ const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datase
             dataset !== undefined ? (
                 <div class='flex flex-row items-left'>
                     <div class='w-1/6 flex flex-col justify-start items-center'>
-                        <AuthorDetails displayFullDetails={false} name={dataset?.createdBy} fontSize={60} />
+                        <AuthorDetails displayFullDetails={false} name={dataset.createdBy} fontSize={60} />
                     </div>
                     <div class='w-5/6 pl-6'>
                         {datasetRecordsResponse.value !== undefined ? (
@@ -58,7 +63,7 @@ const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datase
                                 accessToken={accessToken}
                                 dataset={dataset}
                                 datasetRecords={datasetRecordsResponse.value}
-                                isAdminView={dataset?.createdBy === username}
+                                isAdminView={dataset.createdBy === username}
                                 client:only='react'
                             />
                         ) : (

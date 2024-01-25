@@ -15,7 +15,7 @@ type Props = {
     name?: string;
     affiliation?: string;
     email?: string;
-    fontSize?: string;
+    fontSize?: number;
 };
 
 export const AuthorDetails: FC<Props> = ({ displayFullDetails, name, affiliation, email, fontSize = 100 }) => {
@@ -72,7 +72,7 @@ export const AuthorDetails: FC<Props> = ({ displayFullDetails, name, affiliation
                             <TextField
                                 className='text'
                                 id='author-name'
-                                onInput={(e: FormEvent<HTMLFormElement>) => {
+                                onInput={(e: FormEvent<HTMLDivElement>) => {
                                     setAuthorName((e.target as HTMLInputElement).value);
                                 }}
                                 label='Author name'

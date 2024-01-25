@@ -85,7 +85,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     );
 
     const handleCreateDOI = async () => {
-        createDatasetDOI();
+        createDatasetDOI(undefined);
     };
 
     const getCrossRefUrl = () => {
@@ -139,7 +139,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                     {dataset.datasetDOI === undefined || dataset.datasetDOI === null ? (
                         <p className='text'>Cited By 0</p>
                     ) : (
-                        <Link variant='text' href={getCrossRefUrl()} target='_blank' underline='none'>
+                        <Link href={getCrossRefUrl()} target='_blank' underline='none'>
                             Cited By 0
                         </Link>
                     )}

@@ -44,7 +44,7 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
     );
 
     const handleDeleteDataset = async () => {
-        deleteDataset();
+        deleteDataset(undefined);
     };
 
     return (

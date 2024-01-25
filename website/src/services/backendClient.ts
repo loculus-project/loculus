@@ -8,6 +8,7 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
     /** Somehow Typescript's type inference currently doesn't work properly in Astro files */
     public readonly astroFileTypeHelpers = {
         getSequenceEntriesOfUser: (organism: string, token: string) =>
+            // @ts-expect-error: Type instantiation is excessively deep and possibly infinite.
             this.call('getSequencesOfUser', {
                 params: { organism },
                 headers: createAuthorizationHeader(token),
@@ -41,6 +42,7 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
                 params: { datasetId, version },
                 headers: createAuthorizationHeader(token),
             }),
+
         getDatasetRecords: (token: string, datasetId: string, version: string) =>
             this.call('getDatasetRecords', {
                 params: { datasetId, version },
