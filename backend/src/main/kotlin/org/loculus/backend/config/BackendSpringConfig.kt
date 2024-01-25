@@ -18,6 +18,8 @@ import javax.sql.DataSource
 
 object BackendSpringProperty {
     const val BACKEND_CONFIG_PATH = "backend.config.path"
+    const val KEYCLOAK_USER = "keycloak.technicaluser.username"
+    const val KEYCLOAK_PASSWORD = "keycloak.technicaluser.password"
 }
 
 private val logger = mu.KotlinLogging.logger {}
