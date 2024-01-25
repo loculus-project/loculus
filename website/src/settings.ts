@@ -16,3 +16,5 @@ export const hiddenDefaultSearchFilters = [
     { name: VERSION_STATUS_FIELD, filterValue: siloVersionStatuses.latestVersion, type: 'string' as const },
     { name: IS_REVOCATION_FIELD, filterValue: 'false', type: 'string' as const },
 ];
+
+export const metadataDefaultDownloadDataFormat = 'tsv';
