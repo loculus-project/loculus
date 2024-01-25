@@ -106,12 +106,12 @@ function toTableData(config: Schema) {
             {
                 label: 'Nucleotide substitutions',
                 name: 'nucleotideSubstitutions',
-                value: mutationsToCommaSeparatedString(nucleotideMutations, (m) => !m.endsWith('-')),
+                value: substitutionsToCommaSeparatedString(nucleotideMutations),
             },
             {
                 label: 'Nucleotide deletions',
                 name: 'nucleotideDeletions',
-                value: mutationsToCommaSeparatedString(nucleotideMutations, (m) => m.endsWith('-')),
+                value: deletionsToCommaSeparatedString(nucleotideMutations),
             },
             {
                 label: 'Nucleotide insertions',
@@ -121,12 +121,12 @@ function toTableData(config: Schema) {
             {
                 label: 'Amino acid substitutions',
                 name: 'aminoAcidSubstitutions',
-                value: mutationsToCommaSeparatedString(aminoAcidMutations, (m) => !m.endsWith('-')),
+                value: substitutionsToCommaSeparatedString(aminoAcidMutations),
             },
             {
                 label: 'Amino acid deletions',
                 name: 'aminoAcidDeletions',
-                value: mutationsToCommaSeparatedString(aminoAcidMutations, (m) => m.endsWith('-')),
+                value: deletionsToCommaSeparatedString(aminoAcidMutations),
             },
             {
                 label: 'Amino acid insertions',
@@ -151,13 +151,62 @@ function mapValueToDisplayedValue(value: undefined | null | string | number, met
     return value;
 }
 
-function mutationsToCommaSeparatedString(
-    mutationData: MutationProportionCount[],
-    filter: (mutation: string) => boolean,
-) {
+function substitutionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
     return mutationData
         .map((m) => m.mutation)
-        .filter(filter)
+        .filter((m) => !m.endsWith('-'))
+        .join(', ');
+}
+
+function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
+    const segmentPositions = new Map<string | undefined, number[]>();
+    mutationData
+        .filter((m) => m.mutation.endsWith('-'))
+        .forEach((m) => {
+            const parts = m.mutation.split(':');
+            const [segment, mutation] = parts.length === 1 ? ([undefined, parts[0]] as const) : parts;
+            const position = Number.parseInt(mutation.slice(1, -1), 10);
+            if (!segmentPositions.has(segment)) {
+                segmentPositions.set(segment, []);
+            }
+            segmentPositions.get(segment)!.push(position);
+        });
+    const segmentRanges = [...segmentPositions.entries()].map(([segment, positions]) => {
+        const sortedPositions = positions.sort();
+        const ranges = [];
+        let rangeStart: number | null = null;
+        for (let i = 0; i < sortedPositions.length; i++) {
+            const current = sortedPositions[i];
+            const next = sortedPositions[i + 1] as number | undefined;
+            if (rangeStart === null) {
+                rangeStart = current;
+            }
+            if (next === undefined || next !== current + 1) {
+                if (current - rangeStart >= 2) {
+                    ranges.push(`${rangeStart}-${current}`);
+                } else {
+                    ranges.push(rangeStart.toString());
+                    if (current !== rangeStart) {
+                        ranges.push(current.toString());
+                    }
+                }
+                rangeStart = null;
+            }
+        }
+        return { segment, ranges };
+    });
+    segmentRanges.sort((a, b) => {
+        const safeA = a.segment ?? '';
+        const safeB = b.segment ?? '';
+        if (safeA <= safeB) {
+            return -1;
+        } else {
+            return 1;
+        }
+    });
+    return segmentRanges
+        .map(({ segment, ranges }) => ranges.map((range) => `${segment !== undefined ? segment + ':' : ''}${range}`))
+        .flat()
         .join(', ');
 }
 

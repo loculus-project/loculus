@@ -156,22 +156,22 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Nucleotide substitutions',
             name: 'nucleotideSubstitutions',
-            value: 'nucleotideMutation1, nucleotideMutation2',
+            value: 'T10A, C30G',
         });
         expect(data).toContainEqual({
             label: 'Nucleotide deletions',
             name: 'nucleotideDeletions',
-            value: 'nucleotideDeletion1-, nucleotideDeletion2-',
+            value: '20, 21, 40-42',
         });
         expect(data).toContainEqual({
             label: 'Amino acid substitutions',
             name: 'aminoAcidSubstitutions',
-            value: 'aminoAcidMutation1, aminoAcidMutation2',
+            value: 'gene1:N10Y, gene1:T30N',
         });
         expect(data).toContainEqual({
             label: 'Amino acid deletions',
             name: 'aminoAcidDeletions',
-            value: 'aminoAcidDeletion1-, aminoAcidDeletion2-',
+            value: 'gene1:20-23, gene1:40',
         });
     });
 
@@ -209,16 +209,22 @@ describe('getTableData', () => {
 });
 
 const nucleotideMutations = [
-    { count: 0, proportion: 0, mutation: 'nucleotideMutation1' },
-    { count: 0, proportion: 0, mutation: 'nucleotideDeletion1-' },
-    { count: 0, proportion: 0, mutation: 'nucleotideMutation2' },
-    { count: 0, proportion: 0, mutation: 'nucleotideDeletion2-' },
+    { count: 0, proportion: 0, mutation: 'T10A' },
+    { count: 0, proportion: 0, mutation: 'A20-' },
+    { count: 0, proportion: 0, mutation: 'A21-' },
+    { count: 0, proportion: 0, mutation: 'C30G' },
+    { count: 0, proportion: 0, mutation: 'G40-' },
+    { count: 0, proportion: 0, mutation: 'C41-' },
+    { count: 0, proportion: 0, mutation: 'T42-' },
 ];
 const aminoAcidMutations = [
-    { count: 0, proportion: 0, mutation: 'aminoAcidMutation1' },
-    { count: 0, proportion: 0, mutation: 'aminoAcidDeletion1-' },
-    { count: 0, proportion: 0, mutation: 'aminoAcidMutation2' },
-    { count: 0, proportion: 0, mutation: 'aminoAcidDeletion2-' },
+    { count: 0, proportion: 0, mutation: 'gene1:N10Y' },
+    { count: 0, proportion: 0, mutation: 'gene1:R20-' },
+    { count: 0, proportion: 0, mutation: 'gene1:R21-' },
+    { count: 0, proportion: 0, mutation: 'gene1:N22-' },
+    { count: 0, proportion: 0, mutation: 'gene1:P23-' },
+    { count: 0, proportion: 0, mutation: 'gene1:T30N' },
+    { count: 0, proportion: 0, mutation: 'gene1:F40-' },
 ];
 
 const nucleotideInsertions = [
