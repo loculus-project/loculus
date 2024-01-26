@@ -8,11 +8,13 @@ import type { ProblemDetail } from '../../../../types/backend.ts';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion.ts';
 import { fastaEntryToString, parseFasta } from '../../../../utils/parseFasta.ts';
 
-export const GET: APIRoute = async ({ params, redirect }) => {
+export const GET: APIRoute = async ({ params, redirect, request }) => {
     const accessionVersion = params.accessionVersion!;
     const organism = params.organism!;
 
-    const result = await getSequenceDetailsUnalignedFasta(accessionVersion, organism);
+    const isDownload = new URL(request.url).searchParams.has('download');
+
+    const result = await getSequenceDetailsUnalignedFasta(accessionVersion, organism, isDownload);
     if (!result.isOk()) {
         return new Response(undefined, {
             status: 404,
@@ -23,10 +25,16 @@ export const GET: APIRoute = async ({ params, redirect }) => {
         return redirect(result.value.redirectUrl);
     }
 
+    const headers: Record<string, string> = {
+        'Content-Type': 'text/x-fasta',
+    };
+    if (isDownload) {
+        const filename = `${accessionVersion}.fa`;
+        headers['Content-Disposition'] = `attachment; filename="${filename}"`;
+    }
+
     return new Response(result.value.fasta, {
-        headers: {
-            'Content-Type': 'text/x-fasta',
-        },
+        headers,
     });
 };
 
@@ -48,6 +56,7 @@ type Redirect = {
 const getSequenceDetailsUnalignedFasta = async (
     accessionVersion: string,
     organism: string,
+    isDownload: boolean,
 ): Promise<Result<Data | Redirect, ProblemDetail>> => {
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
@@ -57,7 +66,7 @@ const getSequenceDetailsUnalignedFasta = async (
         const latestVersionResult = await lapisClient.getLatestAccessionVersion(accession);
         return latestVersionResult.map((latestVersion) => ({
             type: ResultType.REDIRECT,
-            redirectUrl: routes.sequencesFastaPage(organism, latestVersion),
+            redirectUrl: routes.sequencesFastaPage(organism, latestVersion, isDownload),
         }));
     }
 
