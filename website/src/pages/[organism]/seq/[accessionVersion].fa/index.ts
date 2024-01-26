@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ params, redirect, request }) => {
         return redirect(result.value.redirectUrl);
     }
 
-    const headers = {
+    const headers: Record<string, string> = {
         'Content-Type': 'text/x-fasta',
     };
     if (isDownload) {
