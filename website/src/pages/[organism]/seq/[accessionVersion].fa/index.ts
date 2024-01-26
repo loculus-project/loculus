@@ -8,9 +8,13 @@ import type { ProblemDetail } from '../../../../types/backend.ts';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion.ts';
 import { fastaEntryToString, parseFasta } from '../../../../utils/parseFasta.ts';
 
-export const GET: APIRoute = async ({ params, redirect }) => {
+export const GET: APIRoute = async ({ params, url, redirect }) => {
     const accessionVersion = params.accessionVersion!;
     const organism = params.organism!;
+
+    const urlParams = new URL(url).searchParams;
+    const isDownload = urlParams.has('download');
+
 
     const result = await getSequenceDetailsUnalignedFasta(accessionVersion, organism);
     if (!result.isOk()) {
@@ -23,10 +27,20 @@ export const GET: APIRoute = async ({ params, redirect }) => {
         return redirect(result.value.redirectUrl);
     }
 
+    const headers = {
+        'Content-Type': 'text/x-fasta',
+        
+    };
+    if (isDownload) {
+        const filename = `${organism}_${accessionVersion}.fasta`;
+        headers['Content-Disposition'] = `attachment; filename="${filename}"`;
+    }
+
+    
+
     return new Response(result.value.fasta, {
-        headers: {
-            'Content-Type': 'text/x-fasta',
-        },
+        headers
+        
     });
 };
 
