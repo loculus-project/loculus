@@ -14,7 +14,6 @@ export const GET: APIRoute = async ({ params, redirect, request }) => {
 
     const isDownload = request.url.searchParams.get('download') !== null;
 
-
     const result = await getSequenceDetailsUnalignedFasta(accessionVersion, organism);
     if (!result.isOk()) {
         return new Response(undefined, {
@@ -28,18 +27,14 @@ export const GET: APIRoute = async ({ params, redirect, request }) => {
 
     const headers = {
         'Content-Type': 'text/x-fasta',
-        
     };
     if (isDownload) {
         const filename = `${organism}_${accessionVersion}.fasta`;
         headers['Content-Disposition'] = `attachment; filename="${filename}"`;
     }
 
-    
-
     return new Response(result.value.fasta, {
-        headers
-        
+        headers,
     });
 };
 
