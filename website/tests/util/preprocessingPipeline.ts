@@ -103,7 +103,7 @@ const handleError = (error: unknown): Error => {
 
 const sequenceData = {
     unalignedNucleotideSequences: {
-        main: 'A'.repeat(123),
+        main: testSequenceEntry.unaligned,
     },
     alignedNucleotideSequences: {
         main: 'N' + 'A'.repeat(29902),

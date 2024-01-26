@@ -1,5 +1,5 @@
 import type { Narrow } from '@zodios/core/lib/utils.types';
-import { err, ok, type Result } from 'neverthrow';
+import { err, ok, Result } from 'neverthrow';
 
 import { lapisApi } from './lapisApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
@@ -133,5 +133,26 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
         return this.call(endpoint, {
             [this.schema.primaryKey]: accessionVersion,
         });
+    }
+
+    public getUnalignedSequences(accessionVersion: string) {
+        return this.call('unalignedNucleotideSequences', {
+            [this.schema.primaryKey]: accessionVersion,
+        });
+    }
+
+    public async getUnalignedSequencesMultiSegment(accessionVersion: string, segmentNames: string[]) {
+        const results = await Promise.all(
+            segmentNames.map((segment) =>
+                this.call(
+                    'unalignedNucleotideSequencesMultiSegment',
+                    {
+                        [this.schema.primaryKey]: accessionVersion,
+                    },
+                    { params: { segment } },
+                ),
+            ),
+        );
+        return Result.combine(results);
     }
 }

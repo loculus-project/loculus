@@ -24,6 +24,8 @@ export const routes = {
         `/${organism}/seq/${getAccessionVersionString(accessionVersion)}`,
     sequencesVersionsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
         `/${organism}/seq/${getAccessionVersionString(accessionVersion)}/versions`,
+    sequencesFastaPage: (organism: string, accessionVersion: AccessionVersion | string) =>
+        `${routes.sequencesDetailsPage(organism, accessionVersion)}.fa`,
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
