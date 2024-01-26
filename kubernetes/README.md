@@ -5,7 +5,9 @@ The Helm variable `environment` reflects those purposes:
 * `local`: Running locally with ports
 * `server`: Running on a server with domain name
 
-## Deploying on a Kubernetes cluster
+## Deploying on a Kubernetes cluster (e.g. for production)
+
+*For development, follow the k3d instructions lower down the page.*
 
 ### Prerequisites
 
