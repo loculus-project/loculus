@@ -8,12 +8,11 @@ import type { ProblemDetail } from '../../../../types/backend.ts';
 import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion.ts';
 import { fastaEntryToString, parseFasta } from '../../../../utils/parseFasta.ts';
 
-export const GET: APIRoute = async ({ params, url, redirect }) => {
+export const GET: APIRoute = async ({ params, redirect, request }) => {
     const accessionVersion = params.accessionVersion!;
     const organism = params.organism!;
 
-    const urlParams = new URL(url).searchParams;
-    const isDownload = urlParams.has('download');
+    const isDownload = request.url.searchParams.get('download') !== null;
 
 
     const result = await getSequenceDetailsUnalignedFasta(accessionVersion, organism);
