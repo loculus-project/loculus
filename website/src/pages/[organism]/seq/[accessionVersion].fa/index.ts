@@ -14,7 +14,7 @@ export const GET: APIRoute = async ({ params, redirect, request }) => {
 
     const isDownload = new URL(request.url).searchParams.has('download');
 
-    const result = await getSequenceDetailsUnalignedFasta(accessionVersion, organism);
+    const result = await getSequenceDetailsUnalignedFasta(accessionVersion, organism, isDownload);
     if (!result.isOk()) {
         return new Response(undefined, {
             status: 404,
@@ -56,6 +56,7 @@ type Redirect = {
 const getSequenceDetailsUnalignedFasta = async (
     accessionVersion: string,
     organism: string,
+    isDownload: boolean,
 ): Promise<Result<Data | Redirect, ProblemDetail>> => {
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
@@ -65,7 +66,7 @@ const getSequenceDetailsUnalignedFasta = async (
         const latestVersionResult = await lapisClient.getLatestAccessionVersion(accession);
         return latestVersionResult.map((latestVersion) => ({
             type: ResultType.REDIRECT,
-            redirectUrl: routes.sequencesFastaPage(organism, latestVersion),
+            redirectUrl: routes.sequencesFastaPage(organism, latestVersion, isDownload),
         }));
     }
 

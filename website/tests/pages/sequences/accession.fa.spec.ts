@@ -10,7 +10,7 @@ test.describe('The sequence.fa page', () => {
     });
 
     test('can download fasta file', async () => {
-        const downloadUrl = `${baseUrl}${routes.sequencesFastaPage(dummyOrganism.key, testSequenceEntry)}?download`;
+        const downloadUrl = `${baseUrl}${routes.sequencesFastaPage(dummyOrganism.key, testSequenceEntry, true)}`;
         const response = await fetch(downloadUrl);
         const contentDisposition = response.headers.get('Content-Disposition');
 

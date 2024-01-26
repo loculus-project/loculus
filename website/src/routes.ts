@@ -24,8 +24,13 @@ export const routes = {
         `/${organism}/seq/${getAccessionVersionString(accessionVersion)}`,
     sequencesVersionsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
         `/${organism}/seq/${getAccessionVersionString(accessionVersion)}/versions`,
-    sequencesFastaPage: (organism: string, accessionVersion: AccessionVersion | string) =>
-        `${routes.sequencesDetailsPage(organism, accessionVersion)}.fa`,
+    sequencesFastaPage: (organism: string, accessionVersion: AccessionVersion | string, download = false) => {
+        let url = `${routes.sequencesDetailsPage(organism, accessionVersion)}.fa`;
+        if (download) {
+            url += '?download';
+        }
+        return url;
+    },
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
