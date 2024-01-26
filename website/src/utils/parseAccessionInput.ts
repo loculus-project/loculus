@@ -42,3 +42,66 @@ export const parseRecordsFromAccessionInput = (accessions: { [key in DatasetReco
     });
     return records;
 };
+
+const validateGenbankAccession = (accession: string): boolean => {
+    // https://www.ncbi.nlm.nih.gov/genbank/acc_prefix/
+
+    // Nucleotide patterns
+    const nucleotidePatterns = [/^[A-Z]{1}\d{5}$/, /^[A-Z]{2}\d{6}$/, /^[A-Z]{2}\d{8}$/];
+
+    // Protein patterns
+    const proteinPatterns = [/^[A-Z]{3}\d{5}$/, /^[A-Z]{3}\d{7}$/];
+
+    // WGS patterns
+    const wgsPatterns = [/^[A-Z]{4}\d{2}\d{6,}$/, /^[A-Z]{6}\d{2}\d{7,}$/];
+
+    // MGA pattern
+    const mgaPatterns = [/^[A-Z]{5}\d{7}$/];
+
+    return [...nucleotidePatterns, ...proteinPatterns, ...wgsPatterns, ...mgaPatterns].some((pattern) =>
+        pattern.test(accession),
+    );
+};
+
+const validateSRAAccession = (accession: string): boolean => {
+    // Study patterns
+    const studyPatterns = [/^SRP\d+$/, /^ERP\d+$/, /^DRP\d+$/];
+
+    // Sample patterns
+    const samplePatterns = [/^SRS\d+$/, /^ERS\d+$/, /^DRS\d+$/];
+
+    // Experiment patterns
+    const experimentPatterns = [/^SRX\d+$/, /^ERX\d+$/, /^DRX\d+$/];
+
+    // Run patterns
+    const runPatterns = [/^SRR\d+$/, /^ERR\d+$/, /^DRR\d+$/];
+
+    return [...studyPatterns, ...samplePatterns, ...experimentPatterns, ...runPatterns].some((pattern) =>
+        pattern.test(accession),
+    );
+};
+
+const validateGISAIDAccession = (accession: string): boolean => {
+    const gisaidPatterns = [/^EPI_ISL_\d+$/];
+    return gisaidPatterns.some((pattern) => pattern.test(accession));
+};
+
+const validateLoculusAccession = (accession: string): boolean => {
+    const loculusPatterns = [/^[A-Z]+_\d+(\.\d+)?(\d+)?$/];
+    return loculusPatterns.some((pattern) => pattern.test(accession));
+};
+
+export const validateAccessionByType = (accession: string, type: DatasetRecordType): boolean => {
+    switch (type) {
+        case DatasetRecordType.loculus:
+            return validateLoculusAccession(accession);
+        case DatasetRecordType.genbank:
+            return validateGenbankAccession(accession);
+        case DatasetRecordType.sra:
+            return validateSRAAccession(accession);
+        case DatasetRecordType.gisaid:
+            return validateGISAIDAccession(accession);
+        default:
+            return false;
+    }
+};

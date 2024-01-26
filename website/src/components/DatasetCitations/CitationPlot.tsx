@@ -42,18 +42,12 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
                 plugins: {
                     title: {
                         display: true,
-                        // text: 'Dataset Citations by Year',
                     },
                     legend: {
                         display: false,
                     },
                 },
                 scales: {
-                    // x: {
-                    //     grid: {
-                    //         color: "rgba(0, 0, 0, 0)",
-                    //     }
-                    // },
                     y: {
                         suggestedMax: 10,
                         grid: {

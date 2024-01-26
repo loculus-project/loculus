@@ -1,6 +1,10 @@
 import { expect, test, describe } from 'vitest';
 
-import { serializeRecordsToAccessionsInput, parseRecordsFromAccessionInput } from './parseAccessionInput';
+import {
+    serializeRecordsToAccessionsInput,
+    parseRecordsFromAccessionInput,
+    validateAccessionByType,
+} from './parseAccessionInput';
 import { DatasetRecordType } from '../types/datasets';
 
 describe('serializeRecordsToAccessionsInput', () => {
@@ -88,5 +92,51 @@ describe('parseRecordsFromAccessionInput', () => {
         const records = parseRecordsFromAccessionInput(accessions);
 
         expect(records).toHaveLength(0);
+    });
+});
+
+describe('validateAccessionByType', () => {
+    test('should validate loculus accessions', () => {
+        expect(validateAccessionByType('ABC_123', DatasetRecordType.loculus)).toBe(true);
+        expect(validateAccessionByType('XYZ_456.789', DatasetRecordType.loculus)).toBe(true);
+        expect(validateAccessionByType('PQR_789.123456', DatasetRecordType.loculus)).toBe(true);
+        expect(validateAccessionByType('123', DatasetRecordType.loculus)).toBe(false);
+        expect(validateAccessionByType('ABC', DatasetRecordType.loculus)).toBe(false);
+        expect(validateAccessionByType('PQR_789.', DatasetRecordType.loculus)).toBe(false);
+        expect(validateAccessionByType('PQR_789.23.1', DatasetRecordType.loculus)).toBe(false);
+        expect(validateAccessionByType('ABC_123!', DatasetRecordType.loculus)).toBe(false);
+    });
+    test('should validate genbank accessions', () => {
+        expect(validateAccessionByType('A12345', DatasetRecordType.genbank)).toBe(true);
+        expect(validateAccessionByType('AB123456', DatasetRecordType.genbank)).toBe(true);
+        expect(validateAccessionByType('YZ123456', DatasetRecordType.genbank)).toBe(true);
+        expect(validateAccessionByType('AB12345678', DatasetRecordType.genbank)).toBe(true);
+        expect(validateAccessionByType('ABC12345', DatasetRecordType.genbank)).toBe(true);
+        expect(validateAccessionByType('ABC1234567', DatasetRecordType.genbank)).toBe(true);
+        expect(validateAccessionByType('ABCD12345678', DatasetRecordType.genbank)).toBe(true);
+        expect(validateAccessionByType('ABCDEF12123456789', DatasetRecordType.genbank)).toBe(true);
+        expect(validateAccessionByType('ABCDE1234567', DatasetRecordType.genbank)).toBe(true);
+        expect(validateAccessionByType('123', DatasetRecordType.genbank)).toBe(false);
+        expect(validateAccessionByType('ABC', DatasetRecordType.genbank)).toBe(false);
+        expect(validateAccessionByType('A12345!', DatasetRecordType.genbank)).toBe(false);
+    });
+    test('should validate sra accessions', () => {
+        expect(validateAccessionByType('SRP123456', DatasetRecordType.sra)).toBe(true);
+        expect(validateAccessionByType('ERS789012', DatasetRecordType.sra)).toBe(true);
+        expect(validateAccessionByType('DRX345678', DatasetRecordType.sra)).toBe(true);
+        expect(validateAccessionByType('ERR987654', DatasetRecordType.sra)).toBe(true);
+        expect(validateAccessionByType('ABC123456', DatasetRecordType.sra)).toBe(false);
+        expect(validateAccessionByType('123', DatasetRecordType.sra)).toBe(false);
+        expect(validateAccessionByType('SRP', DatasetRecordType.sra)).toBe(false);
+        expect(validateAccessionByType('SRP123456!', DatasetRecordType.sra)).toBe(false);
+    });
+    test('should validate gisaid accessions', () => {
+        expect(validateAccessionByType('EPI_ISL_123456', DatasetRecordType.gisaid)).toBe(true);
+        expect(validateAccessionByType('EPI_ISL_123456', DatasetRecordType.gisaid)).toBe(true);
+        expect(validateAccessionByType('EPI_ISL_', DatasetRecordType.gisaid)).toBe(false);
+        expect(validateAccessionByType('EPI_123456', DatasetRecordType.gisaid)).toBe(false);
+        expect(validateAccessionByType('ABC_123456', DatasetRecordType.gisaid)).toBe(false);
+        expect(validateAccessionByType('123456', DatasetRecordType.gisaid)).toBe(false);
+        expect(validateAccessionByType('EPI_ISL_123456!', DatasetRecordType.gisaid)).toBe(false);
     });
 });

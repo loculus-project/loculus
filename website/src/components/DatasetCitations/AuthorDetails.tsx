@@ -83,6 +83,7 @@ export const AuthorDetails: FC<Props> = ({ displayFullDetails, name, affiliation
                                 required
                                 fullWidth
                                 focused
+                                inputProps={{ maxLength: 100 }}
                             />
                         </div>
                         <IconButton className='flex' aria-label='search' onClick={handleQueryAuthorProfiles}>

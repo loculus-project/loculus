@@ -14,8 +14,10 @@ import { backendClientHooks } from '../../services/serviceHooks';
 import { DatasetRecordType, type Dataset, type DatasetRecord } from '../../types/datasets';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { serializeRecordsToAccessionsInput } from '../../utils/parseAccessionInput';
+import { serializeRecordsToAccessionsInput, validateAccessionByType } from '../../utils/parseAccessionInput';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
+import CheckIcon from '~icons/ic/baseline-check-circle-outline';
+import ErrorIcon from '~icons/ic/baseline-error';
 import ExpandMoreIcon from '~icons/ic/baseline-expand-more';
 
 const logger = getClientLogger('DatasetForm');
@@ -46,19 +48,19 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
             name: datasetName,
             description: datasetDescription,
             records: [
-                ...getAccessionsList(DatasetRecordType.loculus).map((accession) => ({
+                ...getAccessionsByType(DatasetRecordType.loculus).map((accession) => ({
                     accession,
                     type: DatasetRecordType.loculus,
                 })),
-                ...getAccessionsList(DatasetRecordType.genbank).map((accession) => ({
+                ...getAccessionsByType(DatasetRecordType.genbank).map((accession) => ({
                     accession,
                     type: DatasetRecordType.genbank,
                 })),
-                ...getAccessionsList(DatasetRecordType.sra).map((accession) => ({
+                ...getAccessionsByType(DatasetRecordType.sra).map((accession) => ({
                     accession,
                     type: DatasetRecordType.sra,
                 })),
-                ...getAccessionsList(DatasetRecordType.gisaid).map((accession) => ({
+                ...getAccessionsByType(DatasetRecordType.gisaid).map((accession) => ({
                     accession,
                     type: DatasetRecordType.gisaid,
                 })),
@@ -80,12 +82,17 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
         return;
     };
 
-    const getAccessionsList = (type: DatasetRecordType) => {
+    const getAccessionsByType = (type: DatasetRecordType) => {
         const accessions = accessionsInput[type];
         return accessions
             .split(',')
             .map((accession) => accession.trim())
             .filter(Boolean);
+    };
+
+    const renderAccessionStatus = (accession: string, type: DatasetRecordType) => {
+        const status = validateAccessionByType(accession, type);
+        return status ? <CheckIcon /> : <ErrorIcon />;
     };
 
     return (
@@ -107,6 +114,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                         placeholder=''
                         size='small'
                         value={datasetName}
+                        inputProps={{ maxLength: 100 }}
                         required
                     />
                 </FormControl>
@@ -124,6 +132,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                         multiline
                         value={datasetDescription}
                         rows={2}
+                        inputProps={{ maxLength: 300 }}
                     />
                 </FormControl>
                 <h2 className='text-lg font-bold'>Accessions</h2>
@@ -153,6 +162,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                                             onChange={(event: any) =>
                                                 setAccessionInput(event.target.value, type as DatasetRecordType)
                                             }
+                                            inputProps={{ maxLength: 1000 }}
                                         />
                                         <FormHelperText id='outlined-weight-helper-text'>
                                             {`Enter a list of comma-separated ${type} accessions.`}
@@ -163,10 +173,23 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                         </Accordion>
                     ))}
                 </FormGroup>
-                <Button variant='outlined' disabled={isLoading} onClick={handleSubmit}>
-                    {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}
-                </Button>
+                <div className='p-6 space-y-6 max-w-md w-full'>
+                    <div>
+                        {Object.values(DatasetRecordType).map((type) =>
+                            getAccessionsByType(type as DatasetRecordType).map((accession) => (
+                                <div key={accession} className='flex flex-row justify-between'>
+                                    <div>{accession}</div>
+                                    {renderAccessionStatus(accession, type as DatasetRecordType)}
+                                </div>
+                            )),
+                        )}
+                    </div>
+                    <FormHelperText id='outlined-weight-helper-text'>Validated accessions</FormHelperText>
+                </div>
             </div>
+            <Button className='flex items-center' variant='outlined' disabled={isLoading} onClick={handleSubmit}>
+                {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}
+            </Button>
         </div>
     );
 };
