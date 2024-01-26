@@ -2,6 +2,7 @@
 import { SequencesContainer } from './SequencesContainer';
 import { type TableDataEntry } from './getTableData';
 import { getReferenceGenomes, getRuntimeConfig } from '../../config';
+import { routes } from '../../routes.ts';
 
 interface Props {
     tableData: TableDataEntry[];
@@ -32,6 +33,14 @@ const nucleotideSegmentNames = referenceGenomes.nucleotideSequences.map((s) => s
             }
         </tbody>
     </table>
+</div>
+<div>
+    <a
+        class='mt-4 inline-block text-blue-600 hover:text-blue-800'
+        href={routes.sequencesFastaPage(organism, accessionVersion) + '?download'}
+    >
+        Download FASTA
+    </a>
 </div>
 <div class='mt-10'>
     <SequencesContainer
