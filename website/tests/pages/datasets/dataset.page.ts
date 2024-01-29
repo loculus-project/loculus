@@ -25,8 +25,8 @@ export class DatasetPage {
 
     public async createTestDataset(datasetName: string = testDataset.name) {
         await this.gotoList();
-        await this.page.getByTestId('AddToPhotosIcon').waitFor();
-        await this.page.getByTestId('AddToPhotosIcon').click();
+        await this.page.getByTestId('AddIcon').waitFor();
+        await this.page.getByTestId('AddIcon').click();
         await this.page.locator('#dataset-name').fill(datasetName);
         await this.page.locator('#dataset-description').fill(testDataset.description);
         await this.page.locator('#Loculus-accession-input').fill(testDataset.genbankAccessions);
