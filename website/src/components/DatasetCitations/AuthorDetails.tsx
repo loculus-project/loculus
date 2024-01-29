@@ -1,30 +1,36 @@
-import Button from '@mui/material/Button';
-import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import IconButton from '@mui/material/IconButton';
-import TextField from '@mui/material/TextField';
-import { type FC, type FormEvent, useState } from 'react';
+import { type FC, useState } from 'react';
 
+import { AuthorDetailsForm } from './AuthorDetailsForm';
+import type { ClientConfig } from '../../types/runtimeConfig';
 import Modal from '../common/Modal';
 import AccountCircleIcon from '~icons/ic/baseline-account-circle';
 import EditIcon from '~icons/ic/baseline-edit';
-import SearchIcon from '~icons/ic/baseline-search';
 
 type Props = {
     displayFullDetails: boolean;
+    clientConfig?: ClientConfig;
+    accessToken?: string;
+    authorId?: string;
     name?: string;
     affiliation?: string;
     email?: string;
+    emailVerified?: boolean;
     fontSize?: number;
 };
 
-export const AuthorDetails: FC<Props> = ({ displayFullDetails, name, affiliation, email, fontSize = 100 }) => {
+export const AuthorDetails: FC<Props> = ({
+    displayFullDetails,
+    clientConfig,
+    accessToken,
+    authorId,
+    name,
+    affiliation,
+    email,
+    emailVerified,
+    fontSize = 100,
+}) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
-    const [authorName, setAuthorName] = useState(name ?? '');
-
-    const handleQueryAuthorProfiles = () => {
-        return true;
-    };
 
     const renderPartialDetails = () => (
         <div className='flex flex-col items-center justify-center'>
@@ -36,6 +42,16 @@ export const AuthorDetails: FC<Props> = ({ displayFullDetails, name, affiliation
             ) : null}
         </div>
     );
+
+    const renderEmail = () => {
+        const emailDomain = email?.split('@')[1];
+        const verifiedEmail = emailVerified !== undefined && emailVerified === true ? 'Verified' : 'Unverified';
+        let displayText = 'Unknown email';
+        if (email !== undefined) {
+            displayText = `${verifiedEmail} email at ${emailDomain}`;
+        }
+        return <h1 className='flex text-base'>{displayText}</h1>;
+    };
 
     const renderFullDetails = () => (
         <div className='flex self-start my-4 flex-row'>
@@ -50,70 +66,26 @@ export const AuthorDetails: FC<Props> = ({ displayFullDetails, name, affiliation
                     </IconButton>
                 </div>
                 <h1 className='flex text-base'>{affiliation ?? 'Unknown affiliation'}</h1>
-                <h1 className='flex text-base'>{email ?? 'Unverified email'}</h1>
+                {renderEmail()}
             </div>
-        </div>
-    );
-
-    const handleSubmit = () => {
-        setEditModalVisible(false);
-        return true;
-    };
-
-    const renderEditDetails = () => (
-        <div className='flex flex-col items-center  overflow-auto-y w-full h-full'>
-            <div className='flex justify-start items-center py-5'>
-                <h1 className='text-xl font-semibold py-4'>Edit Author Profile</h1>
-            </div>
-            <div className='flex max-w-md w-full'>
-                <FormControl variant='outlined' fullWidth>
-                    <div className='flex flex-row w-full'>
-                        <div className='flex w-11/12'>
-                            <TextField
-                                className='text'
-                                id='author-name'
-                                onInput={(e: FormEvent<HTMLDivElement>) => {
-                                    setAuthorName((e.target as HTMLInputElement).value);
-                                }}
-                                label='Author name'
-                                variant='outlined'
-                                placeholder=''
-                                size='small'
-                                value={authorName}
-                                required
-                                fullWidth
-                                focused
-                                inputProps={{ maxLength: 100 }}
-                            />
-                        </div>
-                        <IconButton className='flex' aria-label='search' onClick={handleQueryAuthorProfiles}>
-                            <SearchIcon />
-                        </IconButton>
-                    </div>
-                    <FormHelperText id='outlined-weight-helper-text'>
-                        Full name as it appears on your articles
-                    </FormHelperText>
-                </FormControl>
-            </div>
-
-            <div className='flex w-full items-center justify-center h-1/2'>
-                <p>No users found.</p>
-            </div>
-
-            <Button variant='outlined' onClick={handleSubmit}>
-                {/* {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'} */}
-                Save
-            </Button>
         </div>
     );
 
     return (
         <div>
-            {displayFullDetails === true ? (
+            {displayFullDetails === true && clientConfig !== undefined && accessToken !== undefined ? (
                 <>
                     {renderFullDetails()}
                     <Modal isModalVisible={editModalVisible} setModalVisible={setEditModalVisible}>
-                        {renderEditDetails()}
+                        <AuthorDetailsForm
+                            clientConfig={clientConfig}
+                            accessToken={accessToken}
+                            authorId={authorId}
+                            name={name}
+                            affiliation={affiliation}
+                            email={email}
+                            emailVerified={emailVerified}
+                        />
                     </Modal>
                 </>
             ) : (

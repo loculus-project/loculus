@@ -30,8 +30,12 @@ export class DatasetPage {
         await this.page.locator('#dataset-name').fill(datasetName);
         await this.page.locator('#dataset-description').fill(testDataset.description);
         await this.page.locator('#Loculus-accession-input').fill(testDataset.genbankAccessions);
+        await this.page.locator('#GenBank-header').click();
         await this.page.locator('#GenBank-accession-input').fill(testDataset.genbankAccessions);
+        await this.page.locator('#SRA-header').click();
         await this.page.locator('#SRA-accession-input').fill(testDataset.sraAccessions);
+        await this.page.locator('#GISAID-header').click();
+        await this.page.locator('#GISAID-accession-input').fill(testDataset.gisaidAccessions);
         await this.page.getByRole('button', { name: 'Save' }).click();
         await this.waitForLoad();
     }

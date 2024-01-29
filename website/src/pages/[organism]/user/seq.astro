@@ -8,7 +8,7 @@ import { getAccessToken } from '../../../utils/getAccessToken';
 
 const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
-const username = Astro.locals.session.user!.name;
+const name = Astro.locals.session.user!.name;
 
 const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHelpers.getSequenceEntriesOfUser(
     organism,
@@ -20,7 +20,7 @@ const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHe
     <>
         <div class='flex items-center'>
             <BackButton marginRight={2} client:load />
-            <h1 class='subtitle'>{`Submitted sequence entries of user ${username}`}</h1>
+            <h1 class='subtitle'>{`Submitted sequence entries of user ${name}`}</h1>
         </div>
         {
             userSequenceEntriesResponse.match(

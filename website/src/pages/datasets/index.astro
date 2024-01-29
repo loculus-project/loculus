@@ -15,15 +15,49 @@ const username = Astro.locals.session.user!.username!;
 
 const datasetsResponse = await BackendClient.create().astroFileTypeHelpers.getDatasetsOfUser(accessToken);
 const userCitedByResponse = await BackendClient.create().astroFileTypeHelpers.getUserCitedBy(accessToken, username);
+const authorResponse = await BackendClient.create().astroFileTypeHelpers.getAuthor(accessToken, username);
 
 const session = Astro.locals.session;
+
+const parseAuthorData = (authorResponse: any, userSession: any) => {
+    const author = authorResponse !== undefined && authorResponse.length > 0 ? authorResponse[0] : {};
+    return {
+        name: userSession?.name,
+        email: userSession?.email,
+        emailVerified: userSession?.email_verified,
+        ...author,
+    };
+};
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>
     <div class='flex flex-col justify-center items-center'>
         <div class='flex flex-row justify-center w-5/6 divide-x'>
             <div class='w-3/4 flex flex-col justify-start'>
-                <AuthorDetails displayFullDetails name={session.user?.name} fontSize={120} client:load />
+                {
+                    authorResponse.match(
+                        (author) => {
+                            const authorData = parseAuthorData(author, session.user);
+                            return (
+                                <AuthorDetails
+                                    displayFullDetails
+                                    clientConfig={clientConfig}
+                                    accessToken={accessToken}
+                                    fontSize={120}
+                                    client:load
+                                    {...authorData}
+                                />
+                            );
+                        },
+                        (error) => (
+                            <ErrorFeedback
+                                message={'Error while fetching author: ' + JSON.stringify(error)}
+                                client:load
+                            />
+                        ),
+                    )
+                }
+
                 <hr />
                 <div class='flex justify-start'>
                     <div>

@@ -13,7 +13,7 @@ import {
     unprocessedData,
     uploadFiles,
 } from '../types/backend.ts';
-import { authorProfiles, datasets, datasetRecords, citedByResult } from '../types/datasets.ts';
+import { authors, datasets, datasetRecords, citedByResult } from '../types/datasets.ts';
 
 const submitEndpoint = makeEndpoint({
     method: 'post',
@@ -352,12 +352,58 @@ const deleteDatasetEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-const getAuthorProfilesEndpoint = makeEndpoint({
+const getAuthorEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-matching-author-profiles?authorQuery=:authorQuery',
-    alias: 'getAuthorProfiles',
+    path: '/get-author?username=:username',
+    alias: 'getAuthor',
     parameters: [authorizationHeader],
-    response: authorProfiles,
+    response: authors,
+    errors: [notAuthorizedError],
+});
+
+const createAuthorEndpoint = makeEndpoint({
+    method: 'post',
+    path: '/create-author',
+    alias: 'createAuthor',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                name: z.string(),
+                affiliation: z.string().optional(),
+                email: z.string().optional(),
+                emailVerified: z.boolean().optional(),
+            }),
+        },
+    ],
+    response: z.object({
+        authorId: z.string(),
+    }),
+    errors: [notAuthorizedError],
+});
+
+const updateAuthorEndpoint = makeEndpoint({
+    method: 'put',
+    path: '/update-author?authorId=:authorId',
+    alias: 'updateAuthor',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                name: z.string(),
+                affiliation: z.string().optional(),
+                email: z.string().optional(),
+                emailVerified: z.boolean().optional(),
+            }),
+        },
+    ],
+    response: z.object({
+        authorId: z.string(),
+    }),
     errors: [notAuthorizedError],
 });
 
@@ -384,5 +430,7 @@ export const backendApi = makeApi([
     createDatasetDOIEndpoint,
     updateDatasetEndpoint,
     deleteDatasetEndpoint,
-    getAuthorProfilesEndpoint,
+    getAuthorEndpoint,
+    createAuthorEndpoint,
+    updateAuthorEndpoint,
 ]);

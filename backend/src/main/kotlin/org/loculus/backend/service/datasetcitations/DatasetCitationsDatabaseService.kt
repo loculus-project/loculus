@@ -15,11 +15,11 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Author
-import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.Dataset
 import org.loculus.backend.api.DatasetCitationsConstants
 import org.loculus.backend.api.DatasetRecord
+import org.loculus.backend.api.ResponseAuthor
 import org.loculus.backend.api.ResponseDataset
 import org.loculus.backend.api.SubmittedDatasetRecord
 import org.springframework.stereotype.Service
@@ -297,56 +297,26 @@ class DatasetCitationsDatabaseService(
         return citedBy
     }
 
-    fun getAuthorProfiles(authorQuery: String): List<AuthorProfile> {
-        log.info { "Get author profiles matching query $authorQuery" }
-
-        // TODO: implement using SerpAPI: https://serpapi.com/google-scholar-profiles-api
-        var authorList = mutableListOf<AuthorProfile>()
-        return authorList
-    }
-
-    fun getAuthorProfile(authorId: String): AuthorProfile? {
-        log.info { "Get author profile with id $authorId" }
-        // TODO: implement using SerpAPI: https://serpapi.com/google-scholar-author-api
-        return null
-    }
-
-    fun setAuthorProfile(username: String, authorId: String) {
-        log.info { "Set author profile with id $authorId to username $username" }
-        // TODO: implement using keycloak custom user attributes
-        return
-    }
-
-    fun createAuthor(affiliation: String, email: String, name: String): Long {
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        val insert = AuthorsTable
-            .insert {
-                it[AuthorsTable.affiliation] = affiliation
-                it[AuthorsTable.email] = email
-                it[AuthorsTable.name] = name
-                it[AuthorsTable.createdAt] = now
-                it[AuthorsTable.createdBy] = "nobody"
-                it[AuthorsTable.updatedAt] = now
-                it[AuthorsTable.updatedBy] = "nobody"
-            }
-
-        return insert[AuthorsTable.authorId]
-    }
-
-    fun getAuthor(authorId: Long): List<Author> {
+    fun getAuthor(username: String): List<Author> {
         var authorList = mutableListOf<Author>()
         var selectedAuthors = AuthorsTable
             .select(
-                where = { AuthorsTable.authorId eq authorId },
+                where = { AuthorsTable.username eq username },
             )
-        var selectedAuthor = selectedAuthors.single()
+        var selectedAuthor = selectedAuthors.firstOrNull()
+
+        if (selectedAuthor == null) {
+            return authorList
+        }
+
         authorList.add(
             Author(
                 selectedAuthor[AuthorsTable.authorId],
+                selectedAuthor[AuthorsTable.name],
                 selectedAuthor[AuthorsTable.affiliation],
                 selectedAuthor[AuthorsTable.email],
-                selectedAuthor[AuthorsTable.name],
+                selectedAuthor[AuthorsTable.emailVerified],
+                selectedAuthor[AuthorsTable.username],
                 Timestamp.valueOf(selectedAuthor[AuthorsTable.createdAt].toJavaLocalDateTime()),
                 selectedAuthor[AuthorsTable.createdBy],
                 Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
@@ -356,22 +326,65 @@ class DatasetCitationsDatabaseService(
         return authorList
     }
 
-    fun updateAuthor(authorId: Long, affiliation: String, email: String, name: String) {
+    fun createAuthor(
+        username: String,
+        name: String,
+        email: String,
+        emailVerified: Boolean,
+        affiliation: String,
+    ): ResponseAuthor {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        val insert = AuthorsTable
+            .insert {
+                it[AuthorsTable.name] = name
+                it[AuthorsTable.affiliation] = affiliation
+                it[AuthorsTable.email] = email
+                it[AuthorsTable.emailVerified] = emailVerified
+                it[AuthorsTable.username] = username
+                it[AuthorsTable.createdAt] = now
+                it[AuthorsTable.createdBy] = username
+                it[AuthorsTable.updatedAt] = now
+                it[AuthorsTable.updatedBy] = "nobody"
+            }
+        return ResponseAuthor(
+            insert[AuthorsTable.authorId].toString(),
+        )
+    }
+
+    fun updateAuthor(
+        username: String,
+        authorId: String,
+        name: String,
+        email: String,
+        emailVerified: Boolean,
+        affiliation: String,
+    ): ResponseAuthor {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         AuthorsTable
             .update(
-                where = { AuthorsTable.authorId eq authorId },
+                where = {
+                    (AuthorsTable.username eq username) and
+                        (AuthorsTable.authorId eq UUID.fromString(authorId))
+                },
             ) {
                 it[AuthorsTable.affiliation] = affiliation
                 it[AuthorsTable.email] = email
+                it[AuthorsTable.emailVerified] = emailVerified
                 it[AuthorsTable.name] = name
                 it[AuthorsTable.updatedAt] = now
-                it[AuthorsTable.updatedBy] = "nobody"
+                it[AuthorsTable.updatedBy] = username
             }
+        return ResponseAuthor(
+            authorId,
+        )
     }
 
-    fun deleteAuthor(_authorId: Long) {
-        AuthorsTable.deleteWhere { authorId eq _authorId }
+    fun deleteAuthor(username: String, authorId: String) {
+        AuthorsTable.deleteWhere {
+            (AuthorsTable.username eq username) and
+                (AuthorsTable.authorId eq UUID.fromString(authorId))
+        }
     }
 }

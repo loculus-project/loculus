@@ -47,31 +47,35 @@ data class CitedBy(
     val citations: List<Long> = mutableListOf<Long>(),
 )
 
-data class AuthorInterest(
-    val title: String,
-    val link: String,
-)
-
-data class AuthorProfile(
-    val authorId: String,
-    val name: String,
-    val link: String,
-    val affiliations: String,
-    val email: String,
-    val citedBy: Long,
-    val interests: List<AuthorInterest>,
-    val thumbnail: String,
-)
-
 data class Author(
-    val authorId: Long,
+    val authorId: UUID,
+    val name: String,
     val affiliation: String,
     val email: String,
-    val name: String,
+    val emailVerified: Boolean,
+    val username: String?,
     val createdAt: Timestamp,
     val createdBy: String,
     val updatedAt: Timestamp,
     val updatedBy: String,
+)
+
+data class SubmittedAuthor(
+    val name: String,
+    val affiliation: String,
+    val email: String,
+    val emailVerified: Boolean,
+)
+
+data class SubmittedAuthorUpdate(
+    val name: String,
+    val affiliation: String,
+    val email: String,
+    val emailVerified: Boolean,
+)
+
+data class ResponseAuthor(
+    val authorId: String,
 )
 
 object DatasetCitationsConstants {

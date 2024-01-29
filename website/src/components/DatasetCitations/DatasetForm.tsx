@@ -34,7 +34,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
     const [datasetDescription, setDatasetDescription] = useState(editDataset?.description ?? '');
     const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editDatasetRecords));
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
-    const { createDataset, updateDataset, isLoading } = useActionHook(clientConfig, accessToken, openErrorFeedback);
+    const { createDataset, updateDataset, isLoading } = useActionHooks(clientConfig, accessToken, openErrorFeedback);
 
     const setAccessionInput = (accessionInput: string, type: DatasetRecordType) => {
         setAccessionsInput((prevState) => ({
@@ -114,7 +114,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                         placeholder=''
                         size='small'
                         value={datasetName}
-                        inputProps={{ maxLength: 100 }}
+                        inputProps={{ maxLength: 255 }}
                         required
                     />
                 </FormControl>
@@ -132,7 +132,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                         multiline
                         value={datasetDescription}
                         rows={2}
-                        inputProps={{ maxLength: 300 }}
+                        inputProps={{ maxLength: 255 }}
                     />
                 </FormControl>
                 <h2 className='text-lg font-bold'>Accessions</h2>
@@ -194,7 +194,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
     );
 };
 
-function useActionHook(clientConfig: ClientConfig, accessToken: string, openErrorFeedback: (message: string) => void) {
+function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErrorFeedback: (message: string) => void) {
     const hooks = backendClientHooks(clientConfig);
     const create = hooks.useCreateDataset(
         { headers: createAuthorizationHeader(accessToken) },

@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.loculus.backend.api.Author
-import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.Dataset
 import org.loculus.backend.api.DatasetRecord
+import org.loculus.backend.api.ResponseAuthor
 import org.loculus.backend.api.ResponseDataset
+import org.loculus.backend.api.SubmittedAuthor
+import org.loculus.backend.api.SubmittedAuthorUpdate
 import org.loculus.backend.api.SubmittedDataset
 import org.loculus.backend.api.SubmittedDatasetUpdate
 import org.loculus.backend.service.datasetcitations.DatasetCitationsDatabaseService
@@ -91,55 +93,44 @@ class DatasetCitationsController(
         return databaseService.getDatasetCitedByPublication(datasetId, version)
     }
 
-    @Operation(description = "Get an author profile")
-    @GetMapping("/get-author-profile", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAuthorProfile(@RequestParam authorId: String): AuthorProfile? {
-        return databaseService.getAuthorProfile(authorId)
-    }
-
-    @Operation(description = "Get author profiles matching query string")
-    @GetMapping("/get-matching-author-profiles", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAuthorProfiles(@RequestParam authorQuery: String): List<AuthorProfile> {
-        return databaseService.getAuthorProfiles(authorQuery)
-    }
-
-    @Operation(description = "Set author profile to user account")
-    @PostMapping("/set-author-profile", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun setAuthorProfile(@UsernameFromJwt username: String, @RequestParam authorId: String) {
-        return databaseService.setAuthorProfile(username, authorId)
-    }
-
-    // TODO: consider deprecating SQL managed authors in favour of GoogleScholar reference
-    @Operation(description = "Create a new author with the specified data")
-    @PostMapping("/create-author", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun createAuthor(
-        @RequestParam affiliation: String,
-        @RequestParam email: String,
-        @RequestParam name: String,
-    ): Long {
-        return databaseService.createAuthor(affiliation, email, name)
-    }
-
     @Operation(description = "Get an author")
     @GetMapping("/get-author", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAuthor(@RequestParam authorId: Long): List<Author> {
-        return databaseService.getAuthor(authorId)
+    fun getAuthor(@UsernameFromJwt username: String): List<Author> {
+        return databaseService.getAuthor(username)
+    }
+
+    @Operation(description = "Create a new author with the specified data")
+    @PostMapping("/create-author", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun createAuthor(@UsernameFromJwt username: String, @RequestBody body: SubmittedAuthor): ResponseAuthor {
+        return databaseService.createAuthor(
+            username,
+            body.name,
+            body.email,
+            body.emailVerified,
+            body.affiliation,
+        )
     }
 
     @Operation(description = "Update an author with the specified data")
     @PutMapping("/update-author", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun updateAuthor(
-        @RequestParam authorId: Long,
-        @RequestParam affiliation: String,
-        @RequestParam email: String,
-        @RequestParam name: String,
-    ) {
-        return databaseService.updateAuthor(authorId, affiliation, email, name)
+        @UsernameFromJwt username: String,
+        @RequestParam authorId: String,
+        @RequestBody body: SubmittedAuthorUpdate,
+    ): ResponseAuthor {
+        return databaseService.updateAuthor(
+            username,
+            authorId,
+            body.name,
+            body.email,
+            body.emailVerified,
+            body.affiliation,
+        )
     }
 
     @Operation(description = "Delete an author")
     @DeleteMapping("/delete-author", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun deleteAuthor(@RequestParam authorId: Long) {
-        return databaseService.deleteAuthor(authorId)
+    fun deleteAuthor(@UsernameFromJwt username: String, @RequestParam authorId: String) {
+        return databaseService.deleteAuthor(username, authorId)
     }
 }

@@ -76,7 +76,8 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         context.locals.session = {
             isLoggedIn: true,
             user: {
-                name: userInfo.value.name ?? 'Username not set',
+                ...userInfo.value,
+                name: userInfo.value.name ?? 'Name not set',
                 username: userInfo.value.preferred_username,
             },
             token,
@@ -106,7 +107,8 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     context.locals.session = {
         isLoggedIn: true,
         user: {
-            name: userInfo.value.name ?? 'Username not set',
+            ...userInfo.value,
+            name: userInfo.value.name ?? 'Name not set',
             username: userInfo.value.preferred_username,
         },
         token,

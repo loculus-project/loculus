@@ -37,11 +37,12 @@ create table dataset_to_records (
 
 
 create table authors (
-       author_id bigserial,
+       author_id uuid not null,
+       name text not null,
        affiliation text not null,
        email text not null,
-       name text not null,
        username text,
+       email_verified boolean not null default false,
        is_public boolean not null default false,
 
        created_at timestamp not null,
@@ -53,7 +54,7 @@ create table authors (
 );
 
 create table authors_datasets (
-       author_id int8 not null,
+       author_id uuid not null,
        dataset_id uuid not null,
        dataset_version int8 not null,
 

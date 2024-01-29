@@ -15,13 +15,14 @@ private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: 
 )
 
 object AuthorsTable : Table("authors") {
-    val authorId = long("author_id").autoIncrement()
+    val authorId = uuid("author_id").autoGenerate()
 
+    val name = varchar("name", 255)
     val affiliation = varchar("affiliation", 255)
     val email = varchar("email", 255)
-    val name = varchar("name", 255)
     val username = varchar("username", 255).nullable()
-    val is_public = bool("is_public").default(false)
+    val emailVerified = bool("email_verified").default(false)
+    val isPublic = bool("is_public").default(false)
 
     val createdAt = datetime("created_at")
     val createdBy = varchar("created_by", 255)

@@ -33,20 +33,11 @@ export const citedByResult = z.object({
 });
 export type CitedByResult = z.infer<typeof citedByResult>;
 
-export const authorProfile = z.object({
+export const author = z.object({
     authorId: z.string(),
     name: z.string(),
-    link: z.string(),
-    affiliations: z.string(),
-    email: z.string(),
-    citedBy: z.number(),
-    thumbnail: z.string(),
-    interests: z.array(
-        z.object({
-            title: z.string(),
-            link: z.string(),
-        }),
-    ),
+    username: z.string(),
+    affiliation: z.string().optional(),
 });
-export const authorProfiles = z.array(authorProfile);
-export type AuthorProfile = z.infer<typeof authorProfile>;
+export const authors = z.array(author);
+export type Author = z.infer<typeof author>;
