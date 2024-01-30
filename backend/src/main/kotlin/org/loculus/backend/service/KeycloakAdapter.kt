@@ -1,28 +1,32 @@
 package org.loculus.backend.service
 
 import org.keycloak.admin.client.KeycloakBuilder
-import org.springframework.beans.factory.annotation.Value
+import org.keycloak.representations.idm.UserRepresentation
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
 
-private const val PREFIX = "keycloak"
+@ConfigurationProperties(prefix = "keycloak")
+data class KeycloakProperties(
+    val user: String,
+    val password: String,
+    val realm: String,
+    val client: String,
+    val url: String,
+)
 
 @Component
-class KeycloakAdapter(
-    @Value("\${$PREFIX.user}") private val user: String,
-    @Value("\${$PREFIX.password}") private val password: String,
-    @Value("\${$PREFIX.realm}") private val realm: String,
-    @Value("\${$PREFIX.client}") private val client: String,
-    @Value("\${$PREFIX.url}") private val url: String,
-) {
+class KeycloakAdapter(private val keycloakProperties: KeycloakProperties) {
 
-    fun getUsersWithName(username: String) = KeycloakBuilder.builder()
-        .serverUrl(url)
-        .realm(realm)
-        .clientId(client)
-        .username(user)
-        .password(password)
+    private val keycloakRealm = KeycloakBuilder.builder()
+        .serverUrl(keycloakProperties.url)
+        .realm(keycloakProperties.realm)
+        .clientId(keycloakProperties.client)
+        .username(keycloakProperties.user)
+        .password(keycloakProperties.password)
         .build()
-        .realm(realm)
+        .realm(keycloakProperties.realm)
+
+    fun getUsersWithName(username: String): List<UserRepresentation> = keycloakRealm
         .users()
-        .search(username, true)
+        .search(username, true)!!
 }

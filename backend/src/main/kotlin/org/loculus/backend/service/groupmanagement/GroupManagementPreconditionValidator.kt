@@ -33,9 +33,11 @@ class GroupManagementPreconditionValidator(
         return users
     }
 
-    fun validateId(username: String) {
-        if (keycloakAdapter.getUsersWithName(username).size != 1) {
-            throw NotFoundException("User $username does not exist.")
+    fun validateThatUserExists(username: String) {
+        val users = keycloakAdapter.getUsersWithName(username)
+        when {
+            users.isEmpty() -> throw NotFoundException("User $username does not exist.")
+            users.size > 1 -> throw IllegalStateException("Multiple users with name $username exist.")
         }
     }
 }

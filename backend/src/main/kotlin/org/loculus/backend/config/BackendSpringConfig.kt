@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.Slf4jSqlDebugLogger
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.ImportAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -18,8 +19,6 @@ import javax.sql.DataSource
 
 object BackendSpringProperty {
     const val BACKEND_CONFIG_PATH = "backend.config.path"
-    const val KEYCLOAK_USER = "keycloak.technicaluser.username"
-    const val KEYCLOAK_PASSWORD = "keycloak.technicaluser.password"
 }
 
 private val logger = mu.KotlinLogging.logger {}
@@ -29,6 +28,7 @@ private val logger = mu.KotlinLogging.logger {}
     value = [ExposedAutoConfiguration::class],
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],
 )
+@ConfigurationPropertiesScan("org.loculus.backend")
 class BackendSpringConfig {
 
     @Bean
