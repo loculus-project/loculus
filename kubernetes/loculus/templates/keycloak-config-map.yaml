@@ -109,7 +109,7 @@ data:
         {
           "username": "backend",
           "enabled": true,
-          "email": "backend@keycloak.org",
+          "email": "nothing@void.o",
           "firstName": "Backend",
           "lastName": "Technical-User",
           "credentials": [
