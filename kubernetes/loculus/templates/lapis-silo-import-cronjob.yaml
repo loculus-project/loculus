@@ -56,6 +56,8 @@ spec:
                   subPath: database_config.yaml
                 - name: lapis-silo-shared-data
                   mountPath: /preprocessing/output
+                - name: lapis-silo-input-data-cache
+                  mountPath: /preprocessing/input
                 - name: lapis-silo-database-config
                   mountPath: /silo_import_job.sh
                   subPath: silo_import_job.sh
@@ -66,5 +68,8 @@ spec:
             - name: lapis-silo-shared-data
               persistentVolumeClaim:
                 claimName: lapis-silo-shared-data-{{ $key }}
+            - name: lapis-silo-input-data-cache
+              persistentVolumeClaim:
+                claimName: lapis-silo-input-data-cache-{{ $key }}
           restartPolicy: OnFailure
 {{- end }}
