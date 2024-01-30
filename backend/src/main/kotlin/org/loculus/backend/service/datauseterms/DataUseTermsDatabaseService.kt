@@ -4,7 +4,11 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.batchInsert
+import org.jetbrains.exposed.sql.select
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.DataUseTermsHistoryEntry
+import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.utils.Accession
 import org.springframework.stereotype.Service
@@ -38,5 +42,26 @@ class DataUseTermsDatabaseService(
             }
             this[DataUseTermsTable.userNameColumn] = username
         }
+    }
+
+    fun getDataUseTerms(accession: Accession): List<DataUseTermsHistoryEntry> {
+        val accessionDataUseTermsHistory = DataUseTermsTable
+            .select { DataUseTermsTable.accessionColumn eq accession }
+            .sortedBy { it[DataUseTermsTable.changeDateColumn] }
+            .map {
+                DataUseTermsHistoryEntry(
+                    accession = it[DataUseTermsTable.accessionColumn],
+                    changeDate = it[DataUseTermsTable.changeDateColumn].toString(),
+                    dataUseTerms = DataUseTerms.fromParameters(
+                        type = DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
+                        restrictedUntilString = it[DataUseTermsTable.restrictedUntilColumn],
+                    ),
+                    userName = it[DataUseTermsTable.userNameColumn],
+                )
+            }
+        if (accessionDataUseTermsHistory.isEmpty()) {
+            throw NotFoundException("Querying data use terms history: Accession $accession not found")
+        }
+        return accessionDataUseTermsHistory
     }
 }

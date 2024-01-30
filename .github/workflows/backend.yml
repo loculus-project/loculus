@@ -25,12 +25,12 @@ jobs:
           java-version: '21'
           distribution: 'adopt'
       - name: Execute Tests
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: test
           build-root-directory: ./backend
       - name: Check Format And Lint
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           arguments: ktlintCheck
           build-root-directory: ./backend
@@ -75,7 +75,7 @@ jobs:
           SECOND_TAG=$(echo "${{ steps.dockerMetadata.outputs.tags }}" | head -n 2 | tail -n 1)
           echo "::set-output name=secondTag::$SECOND_TAG"
       - name: Build Docker Image For Branch
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         env:
           USER: ${{ github.actor }}
           TOKEN: "${{ secrets.GITHUB_TOKEN }}"

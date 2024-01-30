@@ -1,15 +1,19 @@
 ---
+import DataTable from './DataTable.astro';
 import { SequencesContainer } from './SequencesContainer';
 import { type TableDataEntry } from './getTableData';
 import { getReferenceGenomes, getRuntimeConfig } from '../../config';
+import { routes } from '../../routes.ts';
+import { type DataUseTermsHistoryEntry } from '../../types/backend';
 
 interface Props {
     tableData: TableDataEntry[];
     organism: string;
     accessionVersion: string;
+    dataUseTermsHistory: DataUseTermsHistoryEntry[];
 }
 
-const { tableData, organism, accessionVersion } = Astro.props;
+const { tableData, organism, accessionVersion, dataUseTermsHistory } = Astro.props;
 
 const runtimeConfig = getRuntimeConfig();
 
@@ -19,19 +23,14 @@ const genes = referenceGenomes.genes.map((g) => g.name);
 const nucleotideSegmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name) as [string, ...string[]];
 ---
 
-<div class='mt-6'>
-    <table class='table-auto'>
-        <tbody>
-            {
-                tableData.map(({ label, value }) => (
-                    <tr>
-                        <td class='font-semibold pr-4 align-top w-1/4'>{label}:</td>
-                        <td class='break-normal'>{value}</td>
-                    </tr>
-                ))
-            }
-        </tbody>
-    </table>
+<DataTable tableData={tableData} dataUseTermsHistory={dataUseTermsHistory} />
+<div>
+    <a
+        class='mt-4 inline-block text-blue-600 hover:text-blue-800'
+        href={routes.sequencesFastaPage(organism, accessionVersion) + '?download'}
+    >
+        Download FASTA
+    </a>
 </div>
 <div class='mt-10'>
     <SequencesContainer

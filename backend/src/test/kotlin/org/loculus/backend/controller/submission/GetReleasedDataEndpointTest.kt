@@ -27,7 +27,11 @@ import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Autowired
 
-private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf("releasedAt", "submissionId", "submittedAt")
+private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf(
+    "releasedAt",
+    "submissionId",
+    "submittedAt",
+)
 
 @EndpointTest
 class GetReleasedDataEndpointTest(
@@ -83,6 +87,7 @@ class GetReleasedDataEndpointTest(
                 "submitter" to TextNode(DEFAULT_USER_NAME),
                 "group" to TextNode(DEFAULT_GROUP_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
+                "dataUseTerms" to TextNode("OPEN"),
             )
 
             assertThat(
@@ -182,6 +187,7 @@ class GetReleasedDataEndpointTest(
                 "submitter" -> assertThat(value, `is`(TextNode(DEFAULT_USER_NAME)))
                 "group" -> assertThat(value, `is`(TextNode(DEFAULT_GROUP_NAME)))
                 "accession", "version", "accessionVersion", "submissionId" -> {}
+                "dataUseTerms" -> assertThat(value, `is`(TextNode("OPEN")))
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
             }
         }

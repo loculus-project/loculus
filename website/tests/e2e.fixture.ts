@@ -51,6 +51,7 @@ export const testSequenceEntry = {
     name: '1.1',
     accession: '1',
     version: 1,
+    unaligned: 'A'.repeat(123),
     orf1a: 'QRFEINSA',
 };
 export const revokedSequenceEntry = {

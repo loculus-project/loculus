@@ -9,6 +9,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.booleanParam
@@ -21,6 +22,8 @@ import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
@@ -37,6 +40,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.jsonbParam
 import org.loculus.backend.utils.Accession
@@ -262,17 +266,24 @@ class SubmissionDatabaseService(
 
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> {
         return sequenceEntriesTableProvider.get(organism).let { table ->
-            table.slice(
-                table.accessionColumn,
-                table.versionColumn,
-                table.isRevocationColumn,
-                table.processedDataColumn,
-                table.submitterColumn,
-                table.groupNameColumn,
-                table.submittedAtColumn,
-                table.releasedAtColumn,
-                table.submissionIdColumn,
-            )
+
+            table.join(DataUseTermsTable, JoinType.LEFT, additionalConstraint = {
+                (table.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                    (DataUseTermsTable.isNewestDataUseTerms)
+            })
+                .slice(
+                    table.accessionColumn,
+                    table.versionColumn,
+                    table.isRevocationColumn,
+                    table.processedDataColumn,
+                    table.submitterColumn,
+                    table.groupNameColumn,
+                    table.submittedAtColumn,
+                    table.releasedAtColumn,
+                    table.submissionIdColumn,
+                    DataUseTermsTable.dataUseTermsTypeColumn,
+                    DataUseTermsTable.restrictedUntilColumn,
+                )
                 .select(
                     where = { table.statusIs(APPROVED_FOR_RELEASE) and table.organismIs(organism) },
                 )
@@ -287,6 +298,10 @@ class SubmissionDatabaseService(
                         processedData = it[table.processedDataColumn]!!,
                         submittedAt = it[table.submittedAtColumn],
                         releasedAt = it[table.releasedAtColumn]!!,
+                        dataUseTerms = DataUseTerms.fromParameters(
+                            DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
+                            it[DataUseTermsTable.restrictedUntilColumn],
+                        ),
                     )
                 }
                 .asSequence()
@@ -579,4 +594,5 @@ data class RawProcessedData(
     val releasedAt: LocalDateTime,
     val submissionId: String,
     val processedData: ProcessedData,
+    val dataUseTerms: DataUseTerms,
 ) : AccessionVersionInterface
