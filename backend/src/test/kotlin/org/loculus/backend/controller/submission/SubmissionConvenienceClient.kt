@@ -159,24 +159,27 @@ class SubmissionConvenienceClient(
         client.submitProcessedData(*processedData)
     }
 
-    fun getSequenceEntriesOfUser(
+    fun getSequenceEntries(
         username: String = DEFAULT_USER_NAME,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupsFilter: List<String> = listOf(DEFAULT_GROUP_NAME),
+        statusesFilter: List<Status> = Status.getListOfStatuses(),
         organism: String = DEFAULT_ORGANISM,
-    ): List<SequenceEntryStatus> {
-        return deserializeJsonResponse(
-            client.getSequenceEntriesOfUser(
-                organism = organism,
-                groupName = groupName,
-                jwt = generateJwtFor(username),
-            ),
-        )
-    }
+    ): List<SequenceEntryStatus> = deserializeJsonResponse(
+        client.getSequenceEntries(
+            organism = organism,
+            groupsFilter = groupsFilter,
+            statusesFilter = statusesFilter,
+            jwt = generateJwtFor(username),
+        ),
+    )
 
     fun getSequenceEntriesOfUserInState(
         userName: String = DEFAULT_USER_NAME,
         status: Status,
-    ): List<SequenceEntryStatus> = getSequenceEntriesOfUser(userName).filter { it.status == status }
+    ): List<SequenceEntryStatus> = getSequenceEntries(
+        username = userName,
+        statusesFilter = listOf(status),
+    )
 
     fun getSequenceEntryOfUser(accessionVersion: AccessionVersion, userName: String = DEFAULT_USER_NAME) =
         getSequenceEntryOfUser(accessionVersion.accession, accessionVersion.version, userName)
@@ -188,7 +191,7 @@ class SubmissionConvenienceClient(
         groupName: String = DEFAULT_GROUP_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): SequenceEntryStatus {
-        val sequencesOfUser = getSequenceEntriesOfUser(userName, groupName, organism = organism)
+        val sequencesOfUser = getSequenceEntries(userName, groupsFilter = listOf(groupName), organism = organism)
 
         return sequencesOfUser.find { it.accession == accession && it.version == version }
             ?: error("Did not find $accession.$version for $userName")

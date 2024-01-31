@@ -68,10 +68,11 @@ Get processed sequence data with errors to edit for a single accession version.
 The accession version must be in status 'HAS_ERRORS' or 'AWAITING_APPROVAL'.
 """
 
-const val GET_SEQUENCES_OF_USER_DESCRIPTION = """
-Get a list of submitted accession versions and their status for the given user.
-This returns the last accession version in status APPROVED_FOR_RELEASE and
-the accession version that is not 'APPROVED_FOR_RELEASE' (if it exists).
+const val GET_SEQUENCES_DESCRIPTION = """
+Get a list of submitted accession versions and their status. 
+There are two optional parameter that filter for groups and statuses. 
+When no constraints are given the endpoint returns all sequences of all groups the user is member of.
+If a group is filtered for that the user is not a member of the endpoint will return an error.
 """
 
 const val APPROVE_PROCESSED_DATA_DESCRIPTION = """

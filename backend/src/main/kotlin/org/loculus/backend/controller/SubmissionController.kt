@@ -18,6 +18,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
+import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
@@ -235,15 +236,24 @@ class SubmissionController(
         @RequestBody accessionVersion: UnprocessedData,
     ) = submissionDatabaseService.submitEditedData(username, accessionVersion, organism)
 
-    @Operation(description = GET_SEQUENCES_OF_USER_DESCRIPTION)
-    @GetMapping("/get-sequences-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getUserSequenceList(
+    @Operation(description = GET_SEQUENCES_DESCRIPTION)
+    @GetMapping("/get-sequences", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getSequenceList(
         @PathVariable @Valid
         organism: Organism,
+        @Parameter(
+            description = "Filter by group name. If not provided, all groups are considered.",
+        )
+        @RequestParam(required = false)
+        groupsFilter: List<String>?,
+        @Parameter(
+            description = "Filter by status. If not provided, all statuses are considered.",
+        )
+        @RequestParam(required = false)
+        statusesFilter: List<Status>?,
         @UsernameFromJwt username: String,
-    ): List<SequenceEntryStatus> {
-        return submissionDatabaseService.getActiveSequencesSubmittedBy(username, organism)
-    }
+    ): List<SequenceEntryStatus> =
+        submissionDatabaseService.getSequences(username, organism, groupsFilter, statusesFilter)
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
