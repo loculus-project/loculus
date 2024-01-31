@@ -1,18 +1,7 @@
 package org.loculus.backend.service.datasetcitations
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
-
-private val jacksonObjectMapper = jacksonObjectMapper().findAndRegisterModules()
-
-private inline fun <reified T : Any> Table.jacksonSerializableJsonb(columnName: String) = jsonb<T>(
-    columnName,
-    { value -> jacksonObjectMapper.writeValueAsString(value) },
-    { string -> jacksonObjectMapper.readValue(string) },
-)
 
 object DatasetsTable : Table("datasets") {
     val datasetId = uuid("dataset_id").autoGenerate()
@@ -24,7 +13,7 @@ object DatasetsTable : Table("datasets") {
     val createdAt = datetime("created_at")
     val createdBy = varchar("created_by", 255)
 
-    override val primaryKey = PrimaryKey(datasetId)
+    override val primaryKey = PrimaryKey(datasetId, datasetVersion)
 }
 
 object DatasetRecordsTable : Table("dataset_records") {

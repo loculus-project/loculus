@@ -6,7 +6,7 @@ import TextField from '@mui/material/TextField';
 import { type FC, type FormEvent, useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
-import { backendClientHooks } from '../../services/serviceHooks';
+import { datasetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
@@ -123,7 +123,7 @@ function useActionHooks(
     openErrorFeedback: (message: string) => void,
     authorId?: string,
 ) {
-    const hooks = backendClientHooks(clientConfig);
+    const hooks = datasetCitationClientHooks(clientConfig);
     const create = hooks.useCreateAuthor(
         { headers: createAuthorizationHeader(accessToken) },
         {

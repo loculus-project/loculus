@@ -31,6 +31,12 @@ class DatasetCitationsController(
     private val databaseService: DatasetCitationsDatabaseService,
     private val objectMapper: ObjectMapper,
 ) {
+    @Operation(description = "Get a dataset")
+    @GetMapping("/get-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getDataset(@RequestParam datasetId: String, @RequestParam version: Long?): List<Dataset> {
+        return databaseService.getDataset(datasetId, version)
+    }
+
     @Operation(description = "Create a new dataset with the specified data")
     @PostMapping("/create-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createDataset(@UsernameFromJwt username: String, @RequestBody body: SubmittedDataset): ResponseDataset {
@@ -41,12 +47,6 @@ class DatasetCitationsController(
     @PutMapping("/update-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun updateDataset(@UsernameFromJwt username: String, @RequestBody body: SubmittedDatasetUpdate): ResponseDataset {
         return databaseService.updateDataset(username, body.datasetId, body.name, body.records, body.description)
-    }
-
-    @Operation(description = "Get a dataset")
-    @GetMapping("/get-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getDataset(@RequestParam datasetId: String, @RequestParam version: Long?): List<Dataset> {
-        return databaseService.getDataset(datasetId, version)
     }
 
     @Operation(description = "Get a list of datasets created by a user")
@@ -82,12 +82,12 @@ class DatasetCitationsController(
     }
 
     @Operation(description = "Get count of user sequences cited by datasets")
-    @GetMapping("/get-user-cited-by-datasets", produces = [MediaType.APPLICATION_JSON_VALUE])
+    @GetMapping("/get-user-cited-by-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserCitedByDataset(@RequestParam username: String): CitedBy {
         return databaseService.getUserCitedByDataset(username)
     }
 
-    @Operation(description = "Get count of dataset cited by publication")
+    @Operation(description = "Get count of dataset cited by publications")
     @GetMapping("/get-dataset-cited-by-publication", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getDatasetCitedByPublication(@RequestParam datasetId: String, @RequestParam version: Long): CitedBy {
         return databaseService.getDatasetCitedByPublication(datasetId, version)

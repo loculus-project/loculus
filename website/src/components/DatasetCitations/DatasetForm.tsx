@@ -10,7 +10,7 @@ import TextField from '@mui/material/TextField';
 import { type FC, type FormEvent, useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
-import { backendClientHooks } from '../../services/serviceHooks';
+import { datasetCitationClientHooks } from '../../services/serviceHooks';
 import { DatasetRecordType, type Dataset, type DatasetRecord } from '../../types/datasets';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -195,7 +195,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
 };
 
 function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErrorFeedback: (message: string) => void) {
-    const hooks = backendClientHooks(clientConfig);
+    const hooks = datasetCitationClientHooks(clientConfig);
     const create = hooks.useCreateDataset(
         { headers: createAuthorizationHeader(accessToken) },
         {

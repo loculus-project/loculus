@@ -34,7 +34,6 @@ private val log = KotlinLogging.logger { }
 @Transactional
 class DatasetCitationsDatabaseService(
     pool: DataSource,
-    // private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
 ) {
     init {
         Database.connect(pool)

@@ -1,45 +1,45 @@
-import { BackendClient } from '../../services/backendClient.ts';
+import { DatasetCitationClient } from '../../services/datasetCitationClient.ts';
 import type { Dataset } from '../../types/datasets';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 
-const backendClient = BackendClient.create();
+const apiClient = DatasetCitationClient.create();
 
 export const getUserCitedBy = (token: string, username: string) => {
-    return backendClient.call('getUserCitedBy', {
+    return apiClient.call('getUserCitedBy', {
         params: { username },
         headers: createAuthorizationHeader(token),
     });
 };
 
 export const getDatasetCitedBy = (token: string, datasetId: string, version: string) => {
-    return backendClient.call('getDatasetCitedBy', {
+    return apiClient.call('getDatasetCitedBy', {
         params: { datasetId, version },
         headers: createAuthorizationHeader(token),
     });
 };
 
 export const getDatasetsOfUser = (token: string) => {
-    return backendClient.call('getDatasetsOfUser', {
+    return apiClient.call('getDatasetsOfUser', {
         headers: createAuthorizationHeader(token),
     });
 };
 
 export const getDataset = (token: string, datasetId: string, version: string) => {
-    return backendClient.call('getDataset', {
+    return apiClient.call('getDataset', {
         params: { datasetId, version },
         headers: createAuthorizationHeader(token),
     });
 };
 
 export const getDatasetRecords = (token: string, datasetId: string, version: string) => {
-    return backendClient.call('getDatasetRecords', {
+    return apiClient.call('getDatasetRecords', {
         params: { datasetId, version },
         headers: createAuthorizationHeader(token),
     });
 };
 
 export const getAuthor = (token: string, username: string) => {
-    return backendClient.call('getAuthor', {
+    return apiClient.call('getAuthor', {
         params: { username },
         headers: createAuthorizationHeader(token),
     });

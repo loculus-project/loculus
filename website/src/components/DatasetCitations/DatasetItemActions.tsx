@@ -4,7 +4,7 @@ import { type FC, useState } from 'react';
 import { DatasetForm } from './DatasetForm';
 import { ExportDataset } from './ExportDataset';
 import { getClientLogger } from '../../clientLogger';
-import { backendClientHooks } from '../../services/serviceHooks';
+import { datasetCitationClientHooks } from '../../services/serviceHooks';
 import type { DatasetRecord, Dataset } from '../../types/datasets';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -135,7 +135,7 @@ function useDeleteDatasetAction(
     datasetVersion: number,
     onError: (message: string) => void,
 ) {
-    return backendClientHooks(clientConfig).useDeleteDataset(
+    return datasetCitationClientHooks(clientConfig).useDeleteDataset(
         { headers: createAuthorizationHeader(accessToken), params: { datasetId, datasetVersion } },
         {
             onSuccess: async () => {

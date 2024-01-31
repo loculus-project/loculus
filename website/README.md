@@ -68,5 +68,4 @@ If the environment variable LOG_DIR is set, it will also store them in `LOG_DIR/
 ### General tips
 
 - Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
-- [TanStack Query](https://tanstack.com/query/latest/docs/react/overview) is being used for asynchronous requests and their state management.
-- Tips & Tricks for using icons from MUI  https://mui.com/material-ui/guides/minimizing-bundle-size/
+- Tipps & Tricks for using icons from MUI  https://mui.com/material-ui/guides/minimizing-bundle-size/

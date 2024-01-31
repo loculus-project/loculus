@@ -32,6 +32,16 @@ export const AuthorDetails: FC<Props> = ({
 }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
 
+    const renderEmail = () => {
+        const emailDomain = email?.split('@')[1];
+        const verifiedEmail = emailVerified !== undefined && emailVerified === true ? 'Verified' : 'Unverified';
+        let displayText = 'Unknown email';
+        if (email !== undefined) {
+            displayText = `${verifiedEmail} email at ${emailDomain}`;
+        }
+        return <h1 className='flex text-base'>{displayText}</h1>;
+    };
+
     const renderPartialDetails = () => (
         <div className='flex flex-col items-center justify-center'>
             <AccountCircleIcon fontSize={fontSize} />
@@ -42,16 +52,6 @@ export const AuthorDetails: FC<Props> = ({
             ) : null}
         </div>
     );
-
-    const renderEmail = () => {
-        const emailDomain = email?.split('@')[1];
-        const verifiedEmail = emailVerified !== undefined && emailVerified === true ? 'Verified' : 'Unverified';
-        let displayText = 'Unknown email';
-        if (email !== undefined) {
-            displayText = `${verifiedEmail} email at ${emailDomain}`;
-        }
-        return <h1 className='flex text-base'>{displayText}</h1>;
-    };
 
     const renderFullDetails = () => (
         <div className='flex self-start my-4 flex-row'>

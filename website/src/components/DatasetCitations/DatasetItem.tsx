@@ -1,10 +1,9 @@
-import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import { type FC, useState } from 'react';
 
 import { CitationPlot } from './CitationPlot';
 import { getClientLogger } from '../../clientLogger';
-import { backendClientHooks } from '../../services/serviceHooks';
+import { datasetCitationClientHooks } from '../../services/serviceHooks';
 import { type DatasetRecord, type Dataset, type CitedByResult, DatasetRecordType } from '../../types/datasets';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
@@ -23,6 +22,12 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
         return null;
     }
 
+    const accessionOutlink = {
+        [DatasetRecordType.loculus]: (acc: string) => `/sequences/${acc}`,
+        [DatasetRecordType.genbank]: (acc: string) => `https://www.ncbi.nlm.nih.gov/nuccore/?term=${acc}`,
+        [DatasetRecordType.sra]: (acc: string) => `https://www.ncbi.nlm.nih.gov/sra/?term=${acc}`,
+    };
+
     return (
         <table className='table-auto w-full'>
             <thead>
@@ -36,15 +41,15 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
                     return (
                         <tr key={`accessionData-${index}`}>
                             <td className='text-left'>
-                                {datasetRecord.type === DatasetRecordType.loculus ? (
-                                    <Button
-                                        href={`/sequences/${datasetRecord.accession}`}
+                                {datasetRecord.type !== undefined && datasetRecord.type !== DatasetRecordType.gisaid ? (
+                                    <Link
+                                        href={accessionOutlink[datasetRecord.type](datasetRecord.accession ?? '')}
                                         target='_blank'
-                                        variant='text'
+                                        underline='none'
                                         sx={{ padding: 0, margin: 0 }}
                                     >
                                         {datasetRecord.accession ?? 'N/A'}
-                                    </Button>
+                                    </Link>
                                 ) : (
                                     datasetRecord.accession ?? 'N/A'
                                 )}
@@ -171,7 +176,7 @@ function useCreateDatasetDOIAction(
     datasetVersion: number,
     onError: (message: string) => void,
 ) {
-    return backendClientHooks(clientConfig).useCreateDatasetDOI(
+    return datasetCitationClientHooks(clientConfig).useCreateDatasetDOI(
         { headers: createAuthorizationHeader(accessToken), params: { datasetId, datasetVersion } },
         {
             onSuccess: async () => {

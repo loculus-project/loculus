@@ -6,10 +6,10 @@ let testDatasetManager: DatasetPage;
 const testDatasetName = 'Test Dataset 2';
 
 test.describe('The dataset item page', () => {
-    // Create test dataset
     test.beforeEach(async ({ loginAsTestUser }) => {
         await loginAsTestUser();
     });
+
     test.beforeAll(async ({ browser }) => {
         const page = await browser.newPage();
         await authorize(page);
@@ -17,7 +17,6 @@ test.describe('The dataset item page', () => {
         await testDatasetManager.createTestDataset(testDatasetName);
     });
 
-    // Delete test dataset
     test.afterAll(async () => {
         await testDatasetManager.deleteTestDataset(testDatasetName);
     });
