@@ -8,6 +8,7 @@ import {
     dataUseTermsHistoryEntry,
     problemDetail,
     sequenceEntryStatus,
+    sequenceEntryStatusNames,
     sequenceEntryToEdit,
     submissionIdMapping,
     submitFiles,
@@ -100,13 +101,25 @@ const submitReviewedSequenceEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-const getSequencesOfUserEndpoint = makeEndpoint({
+const getSequencesEndpoint = makeEndpoint({
     method: 'get',
-    path: withOrganismPathSegment('/get-sequences-of-user'),
-    alias: 'getSequencesOfUser',
-    parameters: [authorizationHeader],
+    path: withOrganismPathSegment('/get-sequences'),
+    alias: 'getSequences',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'groupsFilter',
+            type: 'Query',
+            schema: z.array(z.string()).optional(),
+        },
+        {
+            name: 'statusesFilter',
+            type: 'Query',
+            schema: z.array(sequenceEntryStatusNames).optional(),
+        },
+    ],
     response: z.array(sequenceEntryStatus),
-    errors: [notAuthorizedError],
+    errors: [notAuthorizedError, { status: 404, schema: problemDetail }],
 });
 
 const approveProcessedDataEndpoint = makeEndpoint({
@@ -206,7 +219,7 @@ export const backendApi = makeApi([
     getDataToEditEndpoint,
     revokeSequencesEndpoint,
     submitReviewedSequenceEndpoint,
-    getSequencesOfUserEndpoint,
+    getSequencesEndpoint,
     approveProcessedDataEndpoint,
     deleteSequencesEndpoint,
     confirmRevocationEndpoint,

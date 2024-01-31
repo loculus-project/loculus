@@ -2,63 +2,91 @@ package org.loculus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
+import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.empty
+import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.Status
+import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
+import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
+import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class GetSequencesOfUserEndpointTest(
+class GetSequencesEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse { client.getSequenceEntriesOfUser(jwt = it) }
+        expectUnauthorizedResponse { client.getSequenceEntries(jwt = it) }
     }
 
-    // TODO(#702): the endpoint currently returns only the sequences of the user, not the group,
-    //  so these tests wont work yet. If sequences are returned per group activate the following tests
+    @Test
+    fun `GIVEN data submitted from a group member THEN another group member sees the data`() {
+        convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME)
+        val sequencesOfUser = convenienceClient.getSequenceEntries(
+            username = DEFAULT_USER_NAME,
+            groupsFilter = listOf(DEFAULT_GROUP_NAME),
+            statusesFilter = listOf(Status.RECEIVED),
+            organism = DEFAULT_ORGANISM,
+        )
+        assertThat(sequencesOfUser, hasSize(NUMBER_OF_SEQUENCES))
+        val sequencesOfAlternativeUser = convenienceClient.getSequenceEntries(
+            username = ALTERNATIVE_DEFAULT_USER_NAME,
+            groupsFilter = listOf(DEFAULT_GROUP_NAME),
+            statusesFilter = listOf(Status.RECEIVED),
+            organism = DEFAULT_ORGANISM,
+        )
+        assertThat(sequencesOfAlternativeUser, hasSize(NUMBER_OF_SEQUENCES))
+    }
 
-    // @Test
-    // fun `GIVEN data submitted from a group member THEN another group member sees the data`() {
-    //     convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME)
-//
-    //     val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(DEFAULT_USER_NAME)
-    //     assertThat(sequencesOfUser, hasSize(DefaultFiles.NUMBER_OF_SEQUENCES))
-//
-    //     val sequencesOfAlternativeUser = convenienceClient.getSequenceEntriesOfUser(ALTERNATIVE_DEFAULT_USER_NAME)
-    //     assertThat(sequencesOfAlternativeUser, hasSize(DefaultFiles.NUMBER_OF_SEQUENCES))
-    // }
-//
-    // @Test
-    // fun `GIVEN data submitted to a group WHEN querying another group THEN only shows entries of the given group`() {
-    //     convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME, DEFAULT_GROUP_NAME)
-//
-    //     val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(
-    //         DEFAULT_USER_NAME,
-    //         ALTERNATIVE_DEFAULT_GROUP_NAME,
-    //     )
-    //     assertThat(sequencesOfUser, hasSize(0))
-    // }
+    @Test
+    fun `GIVEN data submitted to a group WHEN querying another group THEN only shows entries of the given group`() {
+        convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME, DEFAULT_GROUP_NAME)
+        val sequencesOfUser = convenienceClient.getSequenceEntries(
+            username = DEFAULT_USER_NAME,
+            groupsFilter = listOf(ALTERNATIVE_DEFAULT_GROUP_NAME),
+        )
+        assertThat(sequencesOfUser, hasSize(0))
+    }
+
+    @Test
+    fun `WHEN querying for a non-existing group THEN expect an error that the group is not found`() {
+        val nonExistingGroup = "a-non-existing-group-that-does-not-exist-in-the-database-and-never-will"
+
+        client.getSequenceEntries(
+            groupsFilter = listOf(nonExistingGroup),
+        )
+            .andExpect(status().isNotFound)
+            .andExpect(
+                jsonPath("$.detail", containsString("Groups $nonExistingGroup do not exist.")),
+            )
+    }
 
     @Test
     fun `GIVEN some sequence entries in the database THEN only shows entries of the requested organism`() {
         val defaultOrganismData = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
         val otherOrganismData = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)
 
-        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser(DEFAULT_USER_NAME, organism = OTHER_ORGANISM)
+        val sequencesOfUser = convenienceClient.getSequenceEntries(
+            username = DEFAULT_USER_NAME,
+            organism = OTHER_ORGANISM,
+        )
         assertThat(
             sequencesOfUser.getAccessionVersions(),
             containsInAnyOrder(*otherOrganismData.getAccessionVersions().toTypedArray()),
@@ -74,7 +102,7 @@ class GetSequencesOfUserEndpointTest(
     fun `GIVEN database in prepared state THEN returns sequence entries in expected status`(scenario: Scenario) {
         scenario.prepareDatabase(convenienceClient)
 
-        val sequencesOfUser = convenienceClient.getSequenceEntriesOfUser()
+        val sequencesOfUser = convenienceClient.getSequenceEntries(statusesFilter = listOf(scenario.expectedStatus))
 
         val accessionVersionStatus =
             sequencesOfUser.find { it.accession == firstAccession && it.version == scenario.expectedVersion }

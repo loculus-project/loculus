@@ -9,7 +9,7 @@ const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
 const username = Astro.locals.session.user!.name;
 
-const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHelpers.getSequenceEntriesOfUser(
+const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHelpers.getSequenceEntries(
     organism,
     accessToken,
 );
