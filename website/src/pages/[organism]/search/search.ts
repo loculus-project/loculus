@@ -107,16 +107,19 @@ export const getMetadataFilters = (getSearchParams: (param: string) => string, o
     });
 };
 
-export const getOrderBy = (searchParams: URLSearchParams): OrderBy | undefined => {
+export const getOrderBy = (
+    searchParams: URLSearchParams,
+    defaultOrderByField: string,
+    defaultOrder: OrderByType,
+): OrderBy => {
     const orderByTypeParam = searchParams.get('order');
     const orderByTypeParsed = orderByTypeParam !== null ? orderByType.safeParse(orderByTypeParam) : undefined;
-    const orderByTypeValue: OrderByType = orderByTypeParsed?.success === true ? orderByTypeParsed.data : 'ascending';
-    return searchParams.get('orderBy') !== null
-        ? {
-              field: searchParams.get('orderBy')!,
-              type: orderByTypeValue,
-          }
-        : undefined;
+    const orderByTypeValue: OrderByType = orderByTypeParsed?.success === true ? orderByTypeParsed.data : defaultOrder;
+    const sortByField = searchParams.get('orderBy') ?? defaultOrderByField;
+    return {
+        field: sortByField,
+        type: orderByTypeValue,
+    };
 };
 
 export const getMutationFilter = (searchParams: URLSearchParams): MutationFilter => {

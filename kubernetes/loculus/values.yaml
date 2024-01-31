@@ -35,6 +35,8 @@ instances:
           - division
           - date
           - pango_lineage
+        defaultOrder: descending  
+        defaultOrderBy: date
       silo:
         dateToSortBy: date
         partitionBy: pango_lineage
@@ -99,6 +101,8 @@ instances:
           - division
           - date
           - pango_lineage
+        defaultOrderBy: date
+        defaultOrder: descending 
       silo:
         dateToSortBy: date
         partitionBy: pango_lineage

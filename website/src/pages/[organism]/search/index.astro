@@ -25,7 +25,7 @@ const mutationFilter = getMutationFilter(Astro.url.searchParams);
 const pageParam = Astro.url.searchParams.get('page');
 const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
-const orderBy = getOrderBy(Astro.url.searchParams);
+const orderBy = getOrderBy(Astro.url.searchParams, schema.defaultOrderBy, schema.defaultOrder);
 
 const referenceGenomesSequenceNames = getReferenceGenomesSequenceNames(organism);
 
