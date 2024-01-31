@@ -59,6 +59,7 @@ parser.add_argument(
 parser.add_argument("--config-file", type=str, help="Path to config file")
 parser.add_argument("--log-level", type=str, help="Log level")
 parser.add_argument("--keep-tmp-dir", action="store_true", help="Keep tmp dir")
+parser.add_argument("--organism", type=str, help="Organism")
 
 # Config precedence: CLI args > config file > default
 
