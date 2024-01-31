@@ -3,8 +3,8 @@ import dataclasses
 import json
 import logging
 import os
+import time
 import requests
-import tempfile
 import yaml
 from Bio import SeqIO
 from collections.abc import Mapping, Sequence
@@ -21,11 +21,11 @@ class Config:
     keycloak_user: str = "dummy_preprocessing_pipeline"
     keycloak_password: str = "dummy_preprocessing_pipeline"
     keycloak_token_path: str = "realms/loculusRealm/protocol/openid-connect/token"
-    nextclade_dataset_name: str = "nextstrain/sars-cov-2/wuhan-hu-1/orfs"
+    nextclade_dataset_name: str = "nextstrain/mpox/all-clades"
     nextclade_dataset_version: str = "2024-01-16--20-31-02Z"
     config_file: Optional[str] = None
     organism: str = "dummy-organism"
-    log_level: str = "INFO"
+    log_level: str = "DEBUG"
     genes: dict[str, int] = field(default_factory=dict)
     keep_tmp_dir: bool = False
     reference_length: int = 197209
@@ -364,8 +364,10 @@ def main():
             logging.debug("Fetching unprocessed sequences")
             unprocessed = fetch_unprocessed_sequences(config.batch_size)
             if len(unprocessed) == 0:
-                # Later on there would be a sleep here, for now we just break
-                break
+                # sleep 1 sec and try again
+                logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
+                time.sleep(1)
+                continue
             # Process the sequences, get result as dictionary
             processed = process(unprocessed, dataset_dir)
             # Submit the result

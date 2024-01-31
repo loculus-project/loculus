@@ -30,11 +30,14 @@ spec:
       containers:
         {{- range $key, $_ := $configFile.instances }}
         - name: preprocessing-{{ $key }}
-          image: ghcr.io/loculus-project/preprocessing-dummy:{{ $dockerTag }}
+          image: ghcr.io/loculus-project/preprocessing-nextclade:{{ $dockerTag }}
           imagePullPolicy: Always
           args:
-            - "--watch"
-            - "--backend-host={{ $backendHost }}/{{ $key }}"
+            - "python"
+            - "main.py"
+            - "--backend-host={{ $backendHost }}"
+            - "--organism={{ $key }}"
+            - "--config-file=config.yaml"
             {{- if eq $.Values.environment "server" }}
             - "--keycloak-host=https://{{ $keycloakHost}}"
             {{- else }}
