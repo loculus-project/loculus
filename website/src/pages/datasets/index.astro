@@ -1,4 +1,5 @@
 ---
+import { getAuthor, getUserCitedBy, getDatasetsOfUser, parseAuthorData } from './datasets.ts';
 import { AuthorDetails } from '../../components/DatasetCitations/AuthorDetails';
 import { CitationPlot } from '../../components/DatasetCitations/CitationPlot';
 import { DatasetList } from '../../components/DatasetCitations/DatasetList';
@@ -6,28 +7,17 @@ import { DatasetListActions } from '../../components/DatasetCitations/DatasetLis
 import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { BackendClient } from '../../services/backendClient';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
 const username = Astro.locals.session.user!.username!;
 
-const datasetsResponse = await BackendClient.create().astroFileTypeHelpers.getDatasetsOfUser(accessToken);
-const userCitedByResponse = await BackendClient.create().astroFileTypeHelpers.getUserCitedBy(accessToken, username);
-const authorResponse = await BackendClient.create().astroFileTypeHelpers.getAuthor(accessToken, username);
+const datasetsResponse = await getDatasetsOfUser(accessToken);
+const userCitedByResponse = await getUserCitedBy(accessToken, username);
+const authorResponse = await getAuthor(accessToken, username);
 
 const session = Astro.locals.session;
-
-const parseAuthorData = (authorResponse: any, userSession: any) => {
-    const author = authorResponse !== undefined && authorResponse.length > 0 ? authorResponse[0] : {};
-    return {
-        name: userSession?.name,
-        email: userSession?.email,
-        emailVerified: userSession?.email_verified,
-        ...author,
-    };
-};
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>

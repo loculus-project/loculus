@@ -8,7 +8,6 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
     /** Somehow Typescript's type inference currently doesn't work properly in Astro files */
     public readonly astroFileTypeHelpers = {
         getSequenceEntriesOfUser: (organism: string, token: string) =>
-            // @ts-expect-error: Type instantiation is excessively deep and possibly infinite.
             this.call('getSequencesOfUser', {
                 params: { organism },
                 headers: createAuthorizationHeader(token),
@@ -17,41 +16,6 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
         getDataToEdit: (organism: string, token: string, accession: string, version: string | number) =>
             this.call('getDataToEdit', {
                 params: { accession, version, organism },
-                headers: createAuthorizationHeader(token),
-            }),
-
-        getUserCitedBy: (token: string, username: string) =>
-            this.call('getUserCitedBy', {
-                params: { username },
-                headers: createAuthorizationHeader(token),
-            }),
-
-        getDatasetCitedBy: (token: string, datasetId: string, version: string) =>
-            this.call('getDatasetCitedBy', {
-                params: { datasetId, version },
-                headers: createAuthorizationHeader(token),
-            }),
-
-        getDatasetsOfUser: (token: string) =>
-            this.call('getDatasetsOfUser', {
-                headers: createAuthorizationHeader(token),
-            }),
-
-        getDataset: (token: string, datasetId: string, version: string) =>
-            this.call('getDataset', {
-                params: { datasetId, version },
-                headers: createAuthorizationHeader(token),
-            }),
-
-        getDatasetRecords: (token: string, datasetId: string, version: string) =>
-            this.call('getDatasetRecords', {
-                params: { datasetId, version },
-                headers: createAuthorizationHeader(token),
-            }),
-
-        getAuthor: (token: string, username: string) =>
-            this.call('getAuthor', {
-                params: { username },
                 headers: createAuthorizationHeader(token),
             }),
     };

@@ -61,11 +61,13 @@ export const AuthorDetails: FC<Props> = ({
             <div className='flex flex-col pl-4'>
                 <div className='flex flex-row justify-start items-start items-center pt-2 pb-4'>
                     <h1 className='flex text-xl font-semibold pr-2'>{name}</h1>
-                    <IconButton onClick={() => setEditModalVisible(true)}>
+                    <IconButton data-testid='EditIcon' onClick={() => setEditModalVisible(true)}>
                         <EditIcon fontSize='large' />
                     </IconButton>
                 </div>
-                <h1 className='flex text-base'>{affiliation ?? 'Unknown affiliation'}</h1>
+                <h1 className='flex text-base'>
+                    {affiliation !== undefined && affiliation !== '' ? affiliation : 'Unknown affiliation'}
+                </h1>
                 {renderEmail()}
             </div>
         </div>
