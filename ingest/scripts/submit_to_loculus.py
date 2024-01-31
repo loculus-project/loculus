@@ -7,7 +7,7 @@ Script to create the ingest user and group on a loculus server
 """
 import requests
 
-BRANCH="mpox-config"
+BRANCH="mpox-rebased"
 GROUP_NAME="insdc_ingest_group"
 USERNAME="insdc_ingest_user"
 PASSWORD="insdc_ingest_user"
