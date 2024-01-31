@@ -29,7 +29,14 @@ export default async function globalSetupForPlaywright() {
 
     const lapisClient = LapisClient.create(
         lapisUrl,
-        { metadata: [], instanceName: 'Test', primaryKey: 'doesNotMatter', tableColumns: [] },
+        {
+            metadata: [],
+            instanceName: 'Test',
+            primaryKey: 'doesNotMatter',
+            defaultOrderBy: 'neitherDoesThis',
+            defaultOrder: 'ascending',
+            tableColumns: [],
+        },
         e2eLogger,
     );
 

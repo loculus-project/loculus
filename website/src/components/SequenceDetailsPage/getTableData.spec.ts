@@ -14,6 +14,8 @@ const schema: Schema = {
         { name: 'timestampField', type: 'timestamp' },
     ],
     tableColumns: [],
+    defaultOrderBy: 'metadataField1',
+    defaultOrder: 'ascending',
     primaryKey: 'primary key',
 };
 
