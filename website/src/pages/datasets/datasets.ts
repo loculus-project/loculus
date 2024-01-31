@@ -2,9 +2,8 @@ import { DatasetCitationClient } from '../../services/datasetCitationClient.ts';
 import type { Dataset } from '../../types/datasets';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 
-const apiClient = DatasetCitationClient.create();
-
 export const getUserCitedBy = (token: string, username: string) => {
+    const apiClient = DatasetCitationClient.create();
     return apiClient.call('getUserCitedBy', {
         params: { username },
         headers: createAuthorizationHeader(token),
@@ -12,6 +11,7 @@ export const getUserCitedBy = (token: string, username: string) => {
 };
 
 export const getDatasetCitedBy = (token: string, datasetId: string, version: string) => {
+    const apiClient = DatasetCitationClient.create();
     return apiClient.call('getDatasetCitedBy', {
         params: { datasetId, version },
         headers: createAuthorizationHeader(token),
@@ -19,12 +19,14 @@ export const getDatasetCitedBy = (token: string, datasetId: string, version: str
 };
 
 export const getDatasetsOfUser = (token: string) => {
+    const apiClient = DatasetCitationClient.create();
     return apiClient.call('getDatasetsOfUser', {
         headers: createAuthorizationHeader(token),
     });
 };
 
 export const getDataset = (token: string, datasetId: string, version: string) => {
+    const apiClient = DatasetCitationClient.create();
     return apiClient.call('getDataset', {
         params: { datasetId, version },
         headers: createAuthorizationHeader(token),
@@ -32,6 +34,7 @@ export const getDataset = (token: string, datasetId: string, version: string) =>
 };
 
 export const getDatasetRecords = (token: string, datasetId: string, version: string) => {
+    const apiClient = DatasetCitationClient.create();
     return apiClient.call('getDatasetRecords', {
         params: { datasetId, version },
         headers: createAuthorizationHeader(token),
@@ -39,6 +42,7 @@ export const getDatasetRecords = (token: string, datasetId: string, version: str
 };
 
 export const getAuthor = (token: string, username: string) => {
+    const apiClient = DatasetCitationClient.create();
     return apiClient.call('getAuthor', {
         params: { username },
         headers: createAuthorizationHeader(token),
