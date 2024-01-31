@@ -76,8 +76,11 @@ const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, 
                 <button
                     className='btn normal-case'
                     onClick={() => generateAndDownloadFastaFile(editedSequences, dataToEdit)}
+                    title={`Download the original, unaligned sequence${
+                        editedSequences.length > 1 ? 's' : ''
+                    } as provided by the submitter`}
                 >
-                    Download Sequences as fasta file
+                    Download Sequence{editedSequences.length > 1 ? 's' : ''}
                 </button>
             </div>
 
@@ -157,16 +160,17 @@ function useSubmitEditedSequence(
 
 function generateAndDownloadFastaFile(editedSequences: Row[], editedData: SequenceEntryToEdit) {
     const accessionVersion = getAccessionVersionString(editedData);
-    const fileContent = editedSequences
-        .map((sequence) => `>${accessionVersion}.${sequence.key}\n${sequence.value}\n\n`)
-        .join();
+    const fileContent =
+        editedSequences.length === 1
+            ? `>${accessionVersion}\n${editedSequences[0].value}`
+            : editedSequences.map((sequence) => `>${accessionVersion}_${sequence.key}\n${sequence.value}\n\n`).join();
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
 
     const a = document.createElement('a');
     a.href = url;
-    a.download = `accessionVersion${accessionVersion}.fasta`;
+    a.download = `${accessionVersion}.fasta`;
     a.click();
 
     URL.revokeObjectURL(url);
