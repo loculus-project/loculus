@@ -1,10 +1,14 @@
 package org.loculus.backend.controller.groupmanagement
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
@@ -12,6 +16,7 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.submission.DEFAULT_USER_NAME
+import org.loculus.backend.service.KeycloakAdapter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -25,6 +30,13 @@ const val NEW_GROUP = "newGroup"
 class GroupManagementControllerTest(
     @Autowired private val client: GroupManagementControllerClient,
 ) {
+    @MockkBean
+    lateinit var keycloakAdapter: KeycloakAdapter
+
+    @BeforeEach
+    fun setup() {
+        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+    }
 
     @Test
     fun `GIVEN database preparation WHEN getting groups details THEN I get the default group with the default user`() {
@@ -90,6 +102,25 @@ class GroupManagementControllerTest(
     }
 
     @Test
+    fun `GIVEN a group WHEN I add a user that does not exists to the group THEN expect user is not found`() {
+        every { keycloakAdapter.getUsersWithName(any()) } returns listOf()
+
+        val otherUser = "otherUserThatDoesNotExist"
+
+        client.createNewGroup()
+            .andExpect(status().isNoContent)
+
+        client.addUserToGroup(otherUser)
+            .andExpect(status().isNotFound)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "User $otherUser does not exist.",
+                ),
+            )
+    }
+
+    @Test
     fun `GIVEN a group is created WHEN another user is added THEN expect user is in group`() {
         val otherUser = "otherUser"
 
@@ -109,7 +140,7 @@ class GroupManagementControllerTest(
 
     @Test
     fun `GIVEN a non-member tries to remove another user THEN the action is forbidden`() {
-        client.createNewGroup(jwt = generateJwtFor("otherUser"))
+        client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
             .andExpect(status().isNoContent)
 
         client.addUserToGroup(DEFAULT_USER_NAME)
@@ -151,15 +182,13 @@ class GroupManagementControllerTest(
 
     @Test
     fun `GIVEN a group member WHEN the member is removed by another member THEN the user is not a group member`() {
-        val otherUser = "otherUser"
-
         client.createNewGroup()
             .andExpect(status().isNoContent)
 
-        client.addUserToGroup(otherUser)
+        client.addUserToGroup(ALTERNATIVE_DEFAULT_USER_NAME)
             .andExpect(status().isNoContent)
 
-        client.removeUserFromGroup(otherUser)
+        client.removeUserFromGroup(ALTERNATIVE_DEFAULT_USER_NAME)
             .andExpect(status().isNoContent)
 
         client.getDetailsOfGroup()
@@ -186,7 +215,7 @@ class GroupManagementControllerTest(
 
     @Test
     fun `GIVEN a group is created WHEN a member should be removed by a non-member THEN expect this is forbidden`() {
-        client.createNewGroup(jwt = generateJwtFor("otherUser"))
+        client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
             .andExpect(status().isNoContent)
 
         client.removeUserFromGroup(DEFAULT_USER_NAME)

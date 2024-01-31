@@ -69,6 +69,11 @@ spec:
             - "--spring.datasource.url=jdbc:postgresql://localhost:5432/loculus"
             - "--spring.datasource.username=postgres"
             - "--spring.datasource.password=unsecure"
+            - "--keycloak.user=backend"
+            - "--keycloak.password=backend"
+            - "--keycloak.realm=loculusRealm"
+            - "--keycloak.client=test-cli"
+            - "--keycloak.url=http://loculus-keycloak-service:8083"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/certs"
           volumeMounts:
             - name: loculus-backend-config

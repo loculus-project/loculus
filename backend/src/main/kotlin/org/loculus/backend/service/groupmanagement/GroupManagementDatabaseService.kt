@@ -56,6 +56,8 @@ class GroupManagementDatabaseService(
     }
 
     fun addUserToGroup(groupMember: String, groupName: String, usernameToAdd: String) {
+        groupManagementPreconditionValidator.validateThatUserExists(usernameToAdd)
+
         groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, groupMember)
 
         try {

@@ -51,6 +51,7 @@ For testing we added multiple users to the realm. The users are:
 - `testuser` with password `testuser` (login under `your-exposed-keycloak-url/realms/loculusRealm/account/`)
 - and more testusers, for each browser in the e2e test following the pattern: `testuser_[processId]_[browser]` with password `testuser_[processId]_[browser]` 
 - These testusers will be added to the `testGroup` in the setup for e2e tests. If you change the number of browsers in the e2e test, you need to adapt `website/tests/playwrightSetup.ts` accordingly. 
+- To validate that a user exists we also created a technical user for the backend with username `backend` and password `backend`. The technical user is authorized to view users and groups and in principle to manage its own account. 
 
 ### Group management
 
@@ -62,7 +63,7 @@ For testing we added multiple users to the realm. The users are:
  - If the last user leaves a group, the group becomes 'dangling'—it exists but is no longer accessible, and a new group with the same name cannot be created.
  - Admin users can manually delete a group directly on the DB but must transfer ownership of sequence entries to another group before doing so to fulfill the foreign key constraint.
 
- For testing we added all users declared above to the group `testGroup`. 
+ For testing we added all users declared above to the group `testGroup`.
  
 
 ## Contributing to Loculus

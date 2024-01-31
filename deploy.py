@@ -142,7 +142,6 @@ def get_docker_config_json():
 def handle_helm_upgrade():
     parameters = [
         'helm', 'upgrade', HELM_RELEASE_NAME, HELM_CHART_DIR,
-        '-f', args.values
     ]
     subprocess.run(parameters, check=True)
 

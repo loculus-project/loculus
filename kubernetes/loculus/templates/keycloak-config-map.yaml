@@ -105,6 +105,27 @@ data:
               "manage-account"
             ]
           }
+        },
+        {
+          "username": "backend",
+          "enabled": true,
+          "email": "nothing@void.o",
+          "firstName": "Backend",
+          "lastName": "Technical-User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "backend"
+            }
+          ],
+          "clientRoles": {
+            "realm-management": [
+              "view-users"
+            ],
+            "account": [
+              "manage-account"
+            ]
+          }
         }
       ],
       "roles": {
