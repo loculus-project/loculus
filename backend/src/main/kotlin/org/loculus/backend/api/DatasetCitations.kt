@@ -43,8 +43,8 @@ data class ResponseDataset(
 )
 
 data class CitedBy(
-    val years: List<Long> = mutableListOf<Long>(),
-    val citations: List<Long> = mutableListOf<Long>(),
+    val years: MutableList<Long>,
+    val citations: MutableList<Long>,
 )
 
 data class Author(

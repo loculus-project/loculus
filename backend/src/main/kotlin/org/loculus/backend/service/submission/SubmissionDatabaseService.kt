@@ -12,6 +12,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -352,7 +353,7 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun getActiveSequencesSubmittedBy(username: String, organism: Organism): List<SequenceEntryStatus> {
+    fun getActiveSequencesSubmittedBy(username: String, organism: Organism?): List<SequenceEntryStatus> {
         log.info { "getting active sequence entries submitted by $username" }
 
         sequenceEntriesTableProvider.get(organism).let { table ->
@@ -365,31 +366,40 @@ class SubmissionDatabaseService(
                     table.organismColumn,
                 )
 
-            val releasedSequenceEntries = subTableSequenceStatus
-                .select(
-                    where = {
-                        table.statusIs(APPROVED_FOR_RELEASE) and
-                            (table.submitterColumn eq username) and
-                            table.isMaxReleasedVersion and
-                            table.organismIs(organism)
-                    },
-                ).map { row ->
-                    SequenceEntryStatus(
-                        row[table.accessionColumn],
-                        row[table.versionColumn],
-                        APPROVED_FOR_RELEASE,
-                        row[table.isRevocationColumn],
-                    )
-                }
+            val releasedSequenceQuery = subTableSequenceStatus.select(
+                where = {
+                    table.statusIs(APPROVED_FOR_RELEASE) and
+                        (table.submitterColumn eq username) and
+                        table.isMaxReleasedVersion
+                },
+            )
 
-            val unreleasedSequenceEntries = subTableSequenceStatus.select(
+            if (organism != null) {
+                releasedSequenceQuery.andWhere { table.organismIs(organism) }
+            }
+
+            val releasedSequenceEntries = releasedSequenceQuery.map { row ->
+                SequenceEntryStatus(
+                    row[table.accessionColumn],
+                    row[table.versionColumn],
+                    APPROVED_FOR_RELEASE,
+                    row[table.isRevocationColumn],
+                )
+            }
+
+            val unreleasedSequenceQuery = subTableSequenceStatus.select(
                 where = {
                     (table.statusColumn neq APPROVED_FOR_RELEASE.name) and
                         (table.submitterColumn eq username) and
-                        table.isMaxVersion and
-                        table.organismIs(organism)
+                        table.isMaxVersion
                 },
-            ).map { row ->
+            )
+
+            if (organism != null) {
+                unreleasedSequenceQuery.andWhere { table.organismIs(organism) }
+            }
+
+            val unreleasedSequenceEntries = unreleasedSequenceQuery.map { row ->
                 SequenceEntryStatus(
                     row[table.accessionColumn],
                     row[table.versionColumn],

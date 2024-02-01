@@ -162,7 +162,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                 isVisible={doiDialogVisible}
                 setVisible={setDoiDialogVisible}
                 title='Generate a DOI'
-                description='This feature is under development and will be available soon!'
+                description='A placeholder DOI suffix is being used. A CrossRef account and API key is needed to create a real DOI.'
                 onAccept={handleCreateDOI}
             />
         </div>

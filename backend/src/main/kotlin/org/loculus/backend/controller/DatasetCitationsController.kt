@@ -14,6 +14,8 @@ import org.loculus.backend.api.SubmittedAuthorUpdate
 import org.loculus.backend.api.SubmittedDataset
 import org.loculus.backend.api.SubmittedDatasetUpdate
 import org.loculus.backend.service.datasetcitations.DatasetCitationsDatabaseService
+import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
+import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.http.MediaType
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -28,37 +30,45 @@ import org.springframework.web.bind.annotation.RestController
 @Validated
 @SecurityRequirement(name = "bearerAuth")
 class DatasetCitationsController(
-    private val databaseService: DatasetCitationsDatabaseService,
+    private val datasetCitationsService: DatasetCitationsDatabaseService,
+    private val groupManagementService: GroupManagementDatabaseService,
+    private val submissionDatabaseService: SubmissionDatabaseService,
     private val objectMapper: ObjectMapper,
 ) {
     @Operation(description = "Get a dataset")
     @GetMapping("/get-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getDataset(@RequestParam datasetId: String, @RequestParam version: Long?): List<Dataset> {
-        return databaseService.getDataset(datasetId, version)
+        return datasetCitationsService.getDataset(datasetId, version)
     }
 
     @Operation(description = "Create a new dataset with the specified data")
     @PostMapping("/create-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createDataset(@UsernameFromJwt username: String, @RequestBody body: SubmittedDataset): ResponseDataset {
-        return databaseService.createDataset(username, body.name, body.records, body.description)
+        return datasetCitationsService.createDataset(username, body.name, body.records, body.description)
     }
 
     @Operation(description = "Update a dataset with the specified data")
     @PutMapping("/update-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun updateDataset(@UsernameFromJwt username: String, @RequestBody body: SubmittedDatasetUpdate): ResponseDataset {
-        return databaseService.updateDataset(username, body.datasetId, body.name, body.records, body.description)
+        return datasetCitationsService.updateDataset(
+            username,
+            body.datasetId,
+            body.name,
+            body.records,
+            body.description,
+        )
     }
 
     @Operation(description = "Get a list of datasets created by a user")
     @GetMapping("/get-datasets-of-user", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getDatasets(@UsernameFromJwt username: String): List<Dataset> {
-        return databaseService.getDatasets(username)
+        return datasetCitationsService.getDatasets(username)
     }
 
     @Operation(description = "Get records for a dataset")
     @GetMapping("/get-dataset-records", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getDatasetRecords(@RequestParam datasetId: String, @RequestParam version: Long?): List<DatasetRecord> {
-        return databaseService.getDatasetRecords(datasetId, version)
+        return datasetCitationsService.getDatasetRecords(datasetId, version)
     }
 
     @Operation(description = "Delete a dataset")
@@ -68,7 +78,7 @@ class DatasetCitationsController(
         @RequestParam datasetId: String,
         @RequestParam version: Long,
     ) {
-        return databaseService.deleteDataset(username, datasetId, version)
+        return datasetCitationsService.deleteDataset(username, datasetId, version)
     }
 
     @Operation(description = "Create a dataset DOI")
@@ -78,31 +88,37 @@ class DatasetCitationsController(
         @RequestParam datasetId: String,
         @RequestParam version: Long,
     ): ResponseDataset {
-        return databaseService.createDatasetDOI(username, datasetId, version)
+        return datasetCitationsService.createDatasetDOI(username, datasetId, version)
     }
 
     @Operation(description = "Get count of user sequences cited by datasets")
     @GetMapping("/get-user-cited-by-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserCitedByDataset(@RequestParam username: String): CitedBy {
-        return databaseService.getUserCitedByDataset(username)
+        // get all groups user belongs to from GroupsTable
+        // val groups = groupManagementService.getGroupsOfUser(username)
+        val sequences = submissionDatabaseService.getActiveSequencesSubmittedBy(username, null)
+        // get all datasets that reference these sequences from datasetsrecords table
+        // deduplicate unique datasets by versions
+        // return count of unique datasets per year
+        return datasetCitationsService.getUserCitedByDataset(sequences)
     }
 
     @Operation(description = "Get count of dataset cited by publications")
     @GetMapping("/get-dataset-cited-by-publication", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getDatasetCitedByPublication(@RequestParam datasetId: String, @RequestParam version: Long): CitedBy {
-        return databaseService.getDatasetCitedByPublication(datasetId, version)
+        return datasetCitationsService.getDatasetCitedByPublication(datasetId, version)
     }
 
     @Operation(description = "Get an author")
     @GetMapping("/get-author", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getAuthor(@UsernameFromJwt username: String): List<Author> {
-        return databaseService.getAuthor(username)
+        return datasetCitationsService.getAuthor(username)
     }
 
     @Operation(description = "Create a new author with the specified data")
     @PostMapping("/create-author", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun createAuthor(@UsernameFromJwt username: String, @RequestBody body: SubmittedAuthor): ResponseAuthor {
-        return databaseService.createAuthor(
+        return datasetCitationsService.createAuthor(
             username,
             body.name,
             body.email,
@@ -118,7 +134,7 @@ class DatasetCitationsController(
         @RequestParam authorId: String,
         @RequestBody body: SubmittedAuthorUpdate,
     ): ResponseAuthor {
-        return databaseService.updateAuthor(
+        return datasetCitationsService.updateAuthor(
             username,
             authorId,
             body.name,
@@ -131,6 +147,6 @@ class DatasetCitationsController(
     @Operation(description = "Delete an author")
     @DeleteMapping("/delete-author", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun deleteAuthor(@UsernameFromJwt username: String, @RequestParam authorId: String) {
-        return databaseService.deleteAuthor(username, authorId)
+        return datasetCitationsService.deleteAuthor(username, authorId)
     }
 }

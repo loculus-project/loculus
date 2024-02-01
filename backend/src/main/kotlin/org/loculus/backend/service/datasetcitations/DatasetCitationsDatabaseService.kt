@@ -21,6 +21,7 @@ import org.loculus.backend.api.DatasetCitationsConstants
 import org.loculus.backend.api.DatasetRecord
 import org.loculus.backend.api.ResponseAuthor
 import org.loculus.backend.api.ResponseDataset
+import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SubmittedDatasetRecord
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -271,8 +272,8 @@ class DatasetCitationsDatabaseService(
             it[DatasetsTable.datasetDOI] = datasetDOI
         }
 
-        // TODO: Register with DOI agency (crossref)
-        // Include URL to dataset on app in crossref metadata
+        // TODO: Register dataset with DOI agency (crossref)
+        //       Include URL to dataset on app in crossref metadata
 
         return ResponseDataset(
             datasetId,
@@ -280,11 +281,91 @@ class DatasetCitationsDatabaseService(
         )
     }
 
-    fun getUserCitedByDataset(username: String): CitedBy {
-        log.info { "Get user cited by dataset for username $username" }
+    fun getUserCitedByDataset(accessions: List<SequenceEntryStatus>): CitedBy {
+        log.info { "Get user cited by dataset" }
+        data class EnrichedDatasetRecord(
+            val accession: String,
+            val datasetId: UUID,
+            val datasetVersion: Long,
+            val createdAt: Timestamp,
+        )
+        var selectedDatasetRecords = DatasetRecordsTable
+            .innerJoin(DatasetToRecordsTable)
+            .innerJoin(DatasetsTable)
+            .select(
+                where = {
+                    DatasetRecordsTable.accession inList accessions.map { it.accession.plus('.').plus(it.version) }
+                },
+            )
+            .map {
+                EnrichedDatasetRecord(
+                    it[DatasetRecordsTable.accession],
+                    it[DatasetsTable.datasetId],
+                    it[DatasetsTable.datasetVersion],
+                    Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                )
+            }
 
-        // TODO: implement using sequences table + datasets table
-        var citedBy = CitedBy()
+        var datasetMap = mutableMapOf<String, MutableList<Dataset>>()
+        for (record in selectedDatasetRecords) {
+            var accession = record.accession
+            if (datasetMap.containsKey(accession)) {
+                var datasetList = datasetMap[accession]
+                var dataset = Dataset(
+                    record.datasetId,
+                    record.datasetVersion,
+                    "",
+                    record.createdAt,
+                    "",
+                    "",
+                    "",
+                )
+                if (datasetList != null) {
+                    if (!datasetList.contains(dataset)) {
+                        datasetList.add(dataset)
+                    }
+                }
+            } else {
+                var datasetList = mutableListOf<Dataset>()
+                var dataset = Dataset(
+                    record.datasetId,
+                    record.datasetVersion,
+                    "",
+                    record.createdAt,
+                    "",
+                    "",
+                    "",
+                )
+                datasetList.add(dataset)
+                datasetMap[accession] = datasetList
+            }
+        }
+        var uniqueLatestDatasets = mutableListOf<Dataset>()
+        for (entry in datasetMap) {
+            var datasets = entry.value
+            var latestVersion = datasets.maxByOrNull { it.datasetVersion }
+            if (latestVersion != null && !uniqueLatestDatasets.contains(latestVersion)) {
+                uniqueLatestDatasets.add(latestVersion)
+            }
+        }
+
+        var citedBy = CitedBy(
+            mutableListOf<Long>(),
+            mutableListOf<Long>(),
+        )
+        for (dataset in uniqueLatestDatasets) {
+            var year = dataset.createdAt.toLocalDateTime().year.toLong()
+            if (citedBy.years.contains(year)) {
+                var index = citedBy.years.indexOf(year)
+                while (index >= citedBy.citations.size) {
+                    citedBy.citations.add(0)
+                }
+                citedBy.citations[index] = citedBy.citations[index] + 1
+            } else {
+                citedBy.years.add(year)
+                citedBy.citations.add(1)
+            }
+        }
         return citedBy
     }
 
@@ -292,7 +373,10 @@ class DatasetCitationsDatabaseService(
         log.info { "Get dataset cited by publication for datasetId $datasetId, version $version" }
 
         // TODO: implement using CrossRef API: https://www.crossref.org/services/cited-by/
-        var citedBy = CitedBy()
+        var citedBy = CitedBy(
+            mutableListOf<Long>(),
+            mutableListOf<Long>(),
+        )
         return citedBy
     }
 
