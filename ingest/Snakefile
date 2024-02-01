@@ -62,16 +62,50 @@ rule rename_columns:
         """
 
 
+rule subsample:
+    input:
+        ncbi_dataset_tsv="data/metadata.tsv",
+        ncbi_dataset_sequences="data/sequences.fasta",
+    output:
+        ncbi_dataset_tsv="data/metadata_sample.tsv",
+        ncbi_dataset_sequences="data/sequences_sample.fasta",
+        strains="data/strains_sample.txt",
+    params:
+        number_of_samples=100,
+    shell:
+        """
+        tsv-sample -H -n {params.number_of_samples} \
+            <{input.ncbi_dataset_tsv} \
+            >{output.ncbi_dataset_tsv}
+        tsv-select -H -f submissionId \
+            <{output.ncbi_dataset_tsv} \
+            >{output.strains}
+        seqkit grep -n -f {output.strains} \
+            {input.ncbi_dataset_sequences} \
+            >{output.ncbi_dataset_sequences}
+        """
+
+
 rule submit_to_loculus:
     input:
-        metadata="data/metadata.tsv",
-        sequences="data/sequences.fasta",
+        metadata="data/metadata_sample.tsv",
+        sequences="data/sequences_sample.fasta",
         submit_config="config/submit_config.yaml",
     output:
         ids="result/loculus_ids.tsv",
     shell:
         """
         python scripts/submit_to_loculus.py \
+            --mode submit \
             --metadata {input.metadata} \
-            --sequences {input.sequences}
+            --sequences {input.sequences} \
+            --output-ids {output.ids}
+        """
+
+
+rule approve:
+    shell:
+        """
+        python scripts/submit_to_loculus.py \
+            --mode approve
         """

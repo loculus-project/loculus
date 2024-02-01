@@ -1,13 +1,9 @@
 import click
 import json
-
-#%%
-"""
-Script to create the ingest user and group on a loculus server
-"""
 import requests
+import logging
 
-BRANCH="mpox-config"
+BRANCH="mpox-with-processing"
 GROUP_NAME="insdc_ingest_group"
 USERNAME="insdc_ingest_user"
 PASSWORD="insdc_ingest_user"
@@ -88,13 +84,54 @@ def submit(metadata, sequences):
 
     # POST request
     response = requests.post(url, headers=headers, files=files, params=params)
-    print(json.dumps(response.json(), indent=4))
+    response.raise_for_status()
 
     # Closing files
     files['metadataFile'].close()
     files['sequenceFile'].close()
 
+    return response.json()
+
+def approve():
+    """
+    Get sequences that were preprocessed successfully and approve them.
+    1. Get the ids of the sequences that were preprocessed successfully
+        /ORGANISM/get-sequences-of-user
+    2. Approve the sequences
+    """
+    jwt = get_jwt(USERNAME, PASSWORD)
+
+    url = f'https://backend.{BRANCH}.preview.k3s.loculus.org/{ORGANISM}/get-sequences-of-user'
+
+
+    # Headers with Bearer Authentication
+    headers = {
+        'Authorization': f'Bearer {jwt}'
+    }
+
+
+    # POST request
+    response = requests.get(url, headers=headers)
     response.raise_for_status()
+
+    # Get sequences to approve
+    # Roughly of this shape:  {'accession': '182', 'version': 1, 'status': 'AWAITING_APPROVAL', 'isRevocation': False},
+    to_approve = []
+    for sequence in response.json():
+        # Get sequences where status is AWAITING_APPROVAL
+        # Approve them by adding them to list with {'accession': '182', 'version': 1}
+        if sequence['status'] == 'AWAITING_APPROVAL':
+            to_approve.append({'accession': sequence['accession'], 'version': sequence['version']})
+
+    payload = {"accessionVersions": to_approve}
+
+    url = f'https://backend.{BRANCH}.preview.k3s.loculus.org/{ORGANISM}/approve-processed-data'
+
+    response = requests.post(url, headers=headers, json=payload)
+    response.raise_for_status()
+
+    return to_approve
+
 
 
 
@@ -105,20 +142,40 @@ def submit(metadata, sequences):
 # %%
 
 @click.command()
-@click.option('--metadata', required=True, type=click.Path(exists=True), help='Path to the metadata file')
-@click.option('--sequences', required=True, type=click.Path(exists=True), help='Path to the sequences file')
+@click.option('--metadata', required=False, type=click.Path(exists=True), help='Path to the metadata file')
+@click.option('--sequences', required=False, type=click.Path(exists=True), help='Path to the sequences file')
+@click.option('--output-ids', required=False, type=click.Path(), help='Path to the output IDs file')
+@click.option('--mode', required=True, type=click.Choice(['submit', 'approve']), help='Mode to run in')
+@click.option('--log-level', default='INFO', type=click.Choice(['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']), help='Log level')
 # @click.option('--submit-config', required=True, type=click.Path(exists=True), help='Path to the submit configuration file')
-# @click.option('--output-ids', required=True, type=click.Path(), help='Path to the output IDs file')
 # def submit_to_loculus(metadata, sequences, submit_config, output_ids):
-def submit_to_loculus(metadata, sequences):
+def submit_to_loculus(metadata, sequences, output_ids, mode, log_level):
     """
     Submit data to Loculus.
     """
-    # Create group if it doesn't exist
-    create_group(GROUP_NAME)
+    logging.basicConfig(level=log_level)
+    if mode == 'submit':
+        logging.info(f"Submitting to Loculus")
+        logging.debug(f"Args: {metadata}, {sequences}, {output_ids}")
+        # Create group if it doesn't exist
+        logging.info(f"Creating group {GROUP_NAME}")
+        create_group(GROUP_NAME)
+        logging.info(f"Group {GROUP_NAME} created")
 
-    # Submit
-    submit(metadata, sequences)
+        # Submit
+        logging.info(f"Starting submission")
+        response = submit(metadata, sequences)
+        logging.info(f"Submission complete")
+
+        json.dump(response, open(output_ids, 'w'), indent=4)
+        logging.info(f"IDs written to {output_ids}")
+    
+    if mode == 'approve':
+        logging.info(f"Approving sequences")
+        response = approve()
+        logging.debug(f"Approved: {response}")
+
+        logging.info(f"Approving sequences complete")
     
 
 if __name__ == '__main__':
