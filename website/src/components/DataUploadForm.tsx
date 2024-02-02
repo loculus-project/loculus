@@ -210,9 +210,11 @@ const InnerDataUploadForm = ({
             )}
 
             <div className='flex gap-4'>
-                <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
-                    Load Example Data
-                </button>
+                {organism.startsWith('dummy-organism') && (
+                    <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
+                        Load Example Data
+                    </button>
+                )}
 
                 <button
                     className='px-4 py-2 btn normal-case w-1/5'
