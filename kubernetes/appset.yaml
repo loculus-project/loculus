@@ -1,4 +1,6 @@
-# This file is deployed manually, it does not get automatically deployed from the git repository: with access to our kubernetes cluster run `kubectl apply -f appset.yaml`
+# This file is deployed manually
+# It does not get automatically deployed from the git repository:
+# with access to our kubernetes cluster run `kubectl apply -f appset.yaml`
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -24,12 +26,21 @@ spec:
         - path: "config.json"
   template:
     metadata:
-      name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}-{{.number}}'
-
+      name: >
+        pp-{{ (printf "%.25s" .branch) 
+        | replace "_" "-" 
+        | replace "/" "-" 
+        | trimSuffix "-" 
+        | lower }}-{{.number}}
     spec:
       destination:
         server: 'https://kubernetes.default.svc'
-        namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
+        namespace: >
+          preview-{{ (printf "%.25s" .branch) 
+          | replace "_" "-" 
+          | replace "/" "-" 
+          | trimSuffix "-" 
+          | lower }}
       project: default
       source:
         path: 'kubernetes/loculus/'
@@ -38,15 +49,30 @@ spec:
         helm:
           parameters:
             - name: namespace
-              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}'
+              value: >
+                preview-{{ (printf "%.25s" .branch) 
+                | replace "_" "-" 
+                | replace "/" "-" 
+                | trimSuffix "-" 
+                | lower }}
             - name: shortbranch
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
+              value: >
+                {{ (printf "%.25s" .branch) 
+                | replace "_" "-" 
+                | replace "/" "-" 
+                | trimSuffix "-" 
+                | lower }}
             - name: sha
               value: '{{.head_short_sha_7}}'
             - name: branch
               value: '{{.branch}}'
             - name: host
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}.preview.k3s.loculus.org'
+              value: >
+                {{ (printf "%.25s" .branch) 
+                | replace "_" "-" 
+                | replace "/" "-" 
+                | trimSuffix "-" 
+                | lower  }}.preview.k3s.loculus.org
       syncPolicy:
         automated:
           selfHeal: true
