@@ -1,6 +1,7 @@
 name: E2E test (on kubernetes)
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'website/**'
