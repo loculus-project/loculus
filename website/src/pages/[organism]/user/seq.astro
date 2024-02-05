@@ -1,6 +1,5 @@
 ---
 import { ErrorFeedback } from '../../../components/ErrorFeedback';
-import { BackButton } from '../../../components/Navigation/BackButton';
 import UserSequences from '../../../components/UserSequenceList/UserSequences.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../../services/backendClient';
@@ -19,7 +18,6 @@ const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHe
 <BaseLayout title='Sequences'>
     <>
         <div class='flex items-center'>
-            <BackButton marginRight={2} client:load />
             <h1 class='subtitle'>{`Submitted sequence entries of user ${username}`}</h1>
         </div>
         {
