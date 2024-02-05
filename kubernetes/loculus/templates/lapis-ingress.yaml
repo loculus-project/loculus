@@ -1,33 +1,42 @@
-{{- $lapisHost := printf "lapis-%s" .Values.host }}
+{{- $lapisHost := printf "lapis.%s" .Values.host }}
 {{- range $key, $_ := $.Values.instances }}
 
 ---
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
 metadata:
-  name: lapis-ingress-{{ $key }}
+  name: lapis-ingressroute-{{ $key }}
   namespace: {{ $.Values.namespace }}
   annotations:
-    ingress.kubernetes.io/ssl-redirect: "false"
-    traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
-  rules:
-  - http:
-      paths:
-      - path: /{{ $key }}
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ template "loculus.lapisServiceName" $key }}
-            port:
-              number: 8080
-{{- if eq $.Values.environment "server" }}
-    host: "{{ $lapisHost }}"
-{{- end }}
+  entryPoints:
+    {{- if eq $.Values.environment "server" }}
+    - websecure
+    {{- else }}
+    - web
+    {{- end }}
+  routes:
+  - match: Path(`/{{ $key }}`, `/{{ $key }}/{path:.*}`) {{- if eq $.Values.environment "server" }} && Host(`{{ $lapisHost }}`){{- end }}
+    kind: Rule
+    services:
+    - name: {{ template "loculus.lapisServiceName" $key }}
+      port: 8080
+    middlewares:
+    - name: strip-{{ $key }}-prefix
 {{- if eq $.Values.environment "server" }}
   tls:
-  - hosts:
-    - "{{ $lapisHost }}"
+    options:
 {{- end }}
 
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: strip-{{ $key }}-prefix
+  namespace: {{ $.Values.namespace }}
+spec:
+  stripPrefix:
+    prefixes:
+      - /{{ $key }}
 {{- end }}
