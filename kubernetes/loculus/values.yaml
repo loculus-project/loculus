@@ -90,7 +90,7 @@ instances:
         tableColumns:
           - collection_date
           - clade
-        defaultOrderBy: date
+        defaultOrderBy: collection_date
         defaultOrder: descending 
       silo:
         dateToSortBy: collection_date
