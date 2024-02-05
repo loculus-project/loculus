@@ -39,7 +39,7 @@ spec:
               service:
                 name: loculus-backend-service
                 port:
-                  number: {{ $backendHost }}
+                  number: 8079
   tls:
   - hosts:
     - "{{ $backendHost }}"
