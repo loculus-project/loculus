@@ -1,62 +1,73 @@
 {{- if eq .Values.environment "server" }}
 {{- $backendHost := printf "backend.%s" .Values.host }}
 {{- $keycloakHost := printf "authentication.%s" .Values.host }}
-
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: loculus-website-ingressroute
+  name: loculus-website-ingress
   namespace: {{ .Values.namespace }}
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "traefik"
     link.argocd.argoproj.io/external-link: https://{{ .Values.host }}
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`{{ .Values.host }}`)
-      priority: 10
-      services:
-        - name: loculus-website-service
-          port: 3000
   tls:
+  - hosts:
+    - "{{ .Values.host }}"
+    secretName: loculus-website-tls
+  rules:
+  - host: "{{ .Values.host }}"
+    http:
+      paths:
+      - pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-website-service
+            port:
+              number: 3000
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: loculus-backend-ingressroute
+  name: loculus-backend-ingress
   namespace: {{ .Values.namespace }}
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "traefik"
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`{{ $backendHost }}`)
-      priority: 10
-      services:
-        - name: loculus-backend-service
-          port: 8079
   tls:
+  - hosts:
+    - "{{ $backendHost }}"
+    secretName: loculus-backend-tls
+  rules:
+  - host: "{{ $backendHost }}"
+    http:
+      paths:
+      - pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-backend-service
+            port:
+              number: 8079
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: loculus-keycloak-ingressroute
+  name: loculus-keycloak-ingress
   namespace: {{ .Values.namespace }}
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "traefik"
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`{{ $keycloakHost }}`)
-      priority: 10
-      services:
-        - name: loculus-keycloak-service
-          port: 8083
   tls:
-{{- end}}
+  - hosts:
+    - "{{ $keycloakHost }}"
+    secretName: loculus-keycloak-tls
+  rules:
+  - host: "{{ $keycloakHost }}"
+    http:
+      paths:
+      - pathType: ImplementationSpecific
+        backend:
+          service:
+            name: loculus-keycloak-service
+            port:
+              number: 8083
+{{- end }}
