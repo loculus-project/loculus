@@ -21,6 +21,7 @@ parser.add_argument("--keycloak-user", type=str, default="dummy_preprocessing_pi
 parser.add_argument("--keycloak-password", type=str, default="dummy_preprocessing_pipeline",
                     help="Keycloak password to use for authentication")
 parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculusRealm/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
+parser.add_argument("--ignore-ssl-errors", action="store_true", help="Ignore SSL certificate errors")
 
 args = parser.parse_args()
 backendHost = args.backend_host
@@ -134,7 +135,7 @@ def submit_processed_sequences(processed: List[Sequence]):
     ndjson_string = '\n'.join(json_strings)
     url = backendHost + "/submit-processed-data"
     headers = {'Content-Type': 'application/x-ndjson', 'Authorization': 'Bearer ' + get_jwt()}
-    response = requests.post(url, data=ndjson_string, headers=headers)
+    response = requests.post(url, data=ndjson_string, headers=headers, verify=not args.ignore_ssl_errors)
     if not response.ok:
         raise Exception("Submitting processed data failed. Status code: {}".format(response.status_code), response.text)
 
@@ -147,7 +148,7 @@ def get_jwt():
         "password": keycloakPassword,
         "grant_type": "password"
     }
-    response = requests.post(url, data=data)
+    response = requests.post(url, data=data, verify=not args.ignore_ssl_errors)
     if not response.ok:
         raise Exception("Fetching JWT failed. Status code: {}".format(response.status_code), response.text)
     return response.json()["access_token"]

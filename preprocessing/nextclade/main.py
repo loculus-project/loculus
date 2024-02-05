@@ -29,6 +29,7 @@ class Config:
     keep_tmp_dir: bool = False
     reference_length: int = 197209
     batch_size: int = 5
+    ignore_ssl_errors: bool = True
 
 
 def load_config_from_yaml(config_file: str, config: Config):
@@ -59,6 +60,7 @@ parser.add_argument("--config-file", type=str, help="Path to config file")
 parser.add_argument("--log-level", type=str, help="Log level")
 parser.add_argument("--keep-tmp-dir", action="store_true", help="Keep tmp dir")
 parser.add_argument("--organism", type=str, help="Organism")
+parser.add_argument("--ignore-ssl-errors", action="store_true", help="Ignore SSL certificate errors")
 
 # Config precedence: CLI args > config file > default
 
@@ -132,7 +134,7 @@ def fetch_unprocessed_sequences(n: int) -> Sequence[UnprocessedEntry]:
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n}
     headers = {"Authorization": "Bearer " + get_jwt()}
-    response = requests.post(url, data=params, headers=headers)
+    response = requests.post(url, data=params, headers=headers, verify=not config.ignore_ssl_errors)
     if not response.ok:
         raise Exception(
             "Fetching unprocessed data failed. Status code: {}".format(
@@ -313,7 +315,7 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry]):
         "Content-Type": "application/x-ndjson",
         "Authorization": "Bearer " + get_jwt(),
     }
-    response = requests.post(url, data=ndjson_string, headers=headers)
+    response = requests.post(url, data=ndjson_string, headers=headers, verify=not config.ignore_ssl_errors)
     if not response.ok:
         raise Exception(
             f"Submitting processed data failed. Status code: {response.status_code}\n"
@@ -334,7 +336,7 @@ def get_jwt():
 
     logging.debug(f"Requesting JWT from {url}")
 
-    with requests.post(url, data=data) as response:
+    with requests.post(url, data=data, verify=not config.ignore_ssl_errors) as response:
         if response.ok:
             logging.debug("JWT fetched successfully.")
             return response.json()["access_token"]

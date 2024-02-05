@@ -44,6 +44,7 @@ instances:
       image: ghcr.io/loculus-project/preprocessing-dummy
       args:
         - "--watch"
+        - "--ignore-ssl-errors"
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
@@ -100,6 +101,7 @@ instances:
         - "python"
         - "main.py"
         - "--config-file=config.yaml"
+        - "--ignore-ssl-errors"
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
