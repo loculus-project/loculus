@@ -2,7 +2,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: loculus-cert
-  namespace: {{{{ .Values.namespace }}}}
+  namespace: {{ .Values.namespace }}
 spec:
   commonName: '*.{{ .Values.host }}'
   dnsNames:
