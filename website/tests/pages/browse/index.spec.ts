@@ -1,10 +1,10 @@
 import { DateTime } from 'luxon';
 
-import { ACCESSION_VERSION } from './search.page.ts';
+import { ACCESSION_VERSION } from './browse.page.ts';
 import { routes } from '../../../src/routes.ts';
 import { baseUrl, dummyOrganism, expect, test, testSequenceEntry } from '../../e2e.fixture';
 
-test.describe('The search page', () => {
+test.describe('The browse page', () => {
     test('should show the search form with button and a table', async ({ searchPage }) => {
         await searchPage.goto();
         await expect(searchPage.searchButton).toBeVisible();

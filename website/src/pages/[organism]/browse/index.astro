@@ -1,10 +1,10 @@
 ---
-import { getData, getReferenceGenomesSequenceNames, getMetadataFilters, getMutationFilter, getOrderBy } from './search';
+import { getData, getReferenceGenomesSequenceNames, getMetadataFilters, getMutationFilter, getOrderBy } from './browse';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
-import { DownloadDialog } from '../../../components/SearchPage/DownloadDialog/DownloadDialog';
-import { Pagination } from '../../../components/SearchPage/Pagination';
-import { SearchForm } from '../../../components/SearchPage/SearchForm';
-import { Table } from '../../../components/SearchPage/Table';
+import { DownloadDialog } from '../../../components/BrowsePage/DownloadDialog/DownloadDialog';
+import { Pagination } from '../../../components/BrowsePage/Pagination';
+import { SearchForm } from '../../../components/BrowsePage/SearchForm';
+import { Table } from '../../../components/BrowsePage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
@@ -33,7 +33,7 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
 ---
 
 <BaseLayout title={`${cleanedOrganism!.displayName} - Browse`}>
-    <h1 class='title'>Search</h1>
+    <h1 class='title'>Browse</h1>
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         <div class='md:w-72'>
             <SearchForm
