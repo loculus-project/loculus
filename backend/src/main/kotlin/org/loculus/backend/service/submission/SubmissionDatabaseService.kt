@@ -361,6 +361,8 @@ class SubmissionDatabaseService(
         groupsFilter: List<String>?,
         statusesFilter: List<Status>?,
     ): List<SequenceEntryStatus> {
+        log.info { "getting sequence for user $username (groupFilter: $groupsFilter in statuses $statusesFilter" }
+
         val validatedGroupNames = if (groupsFilter === null) {
             groupManagementDatabaseService.getGroupsOfUser(username)
         } else {
@@ -368,12 +370,9 @@ class SubmissionDatabaseService(
             groupsFilter.map { Group(it) }
         }
 
-        val listOfStatuses = statusesFilter ?: Status.getListOfStatuses()
-
-        log.info { "getting sequence for user $username from groups $validatedGroupNames in statuses $listOfStatuses" }
+        val listOfStatuses = statusesFilter ?: Status.entries
 
         sequenceEntriesTableProvider.get(organism).let { table ->
-
             return table
                 .slice(
                     table.accessionColumn,
@@ -394,7 +393,7 @@ class SubmissionDatabaseService(
                         row[table.accessionColumn],
                         row[table.versionColumn],
                         Status.fromString(row[table.statusColumn]),
-                        Group(row[table.groupNameColumn]),
+                        row[table.groupNameColumn],
                         row[table.isRevocationColumn],
                     )
                 }
@@ -463,7 +462,7 @@ class SubmissionDatabaseService(
                         it[table.accessionColumn],
                         it[table.versionColumn],
                         AWAITING_APPROVAL_FOR_REVOCATION,
-                        Group(it[table.groupNameColumn]),
+                        it[table.groupNameColumn],
                         it[table.isRevocationColumn],
                     )
                 }.sortedBy { it.accession }

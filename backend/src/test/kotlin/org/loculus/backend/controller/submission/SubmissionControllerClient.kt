@@ -1,7 +1,6 @@
 package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import mu.KotlinLogging
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Status
@@ -25,7 +24,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multi
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
 const val DEFAULT_USER_NAME = "testuser"
-private val logger = KotlinLogging.logger {}
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun submit(
         metadataFile: MockMultipartFile,
@@ -83,18 +81,15 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
 
     fun getSequenceEntries(
         organism: String = DEFAULT_ORGANISM,
-        groupsFilter: List<String> = listOf(DEFAULT_GROUP_NAME),
-        statusesFilter: List<Status> = Status.getListOfStatuses(),
+        groupsFilter: List<String>? = null,
+        statusesFilter: List<Status>? = null,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions {
-        logger.info {
-            "Getting sequences for organism $organism, groupNames $groupsFilter, statuses $statusesFilter"
-        }
         return mockMvc.perform(
             get(addOrganismToPath("/get-sequences", organism = organism))
                 .withAuth(jwt)
-                .param("groupsFilter", groupsFilter.joinToString { it })
-                .param("statusesFilter", statusesFilter.joinToString { it.name }),
+                .param("groupsFilter", groupsFilter?.joinToString { it })
+                .param("statusesFilter", statusesFilter?.joinToString { it.name }),
         )
     }
 

@@ -69,10 +69,10 @@ The accession version must be in status 'HAS_ERRORS' or 'AWAITING_APPROVAL'.
 """
 
 const val GET_SEQUENCES_DESCRIPTION = """
-Get a list of submitted accession versions and their status. 
-There are two optional parameter that filter for groups and statuses. 
-When no constraints are given the endpoint returns all sequences of all groups the user is member of.
-If a group is filtered for that the user is not a member of the endpoint will return an error.
+Retrieve a list of submitted accession versions along with their statuses.
+There are two optional parameters that filter by groups and statuses.
+When no constraints are applied, the endpoint returns all sequences from all groups the user is a member of.
+If a filter is applied for a group the user is not a member of, the endpoint will return an error.
 """
 
 const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
