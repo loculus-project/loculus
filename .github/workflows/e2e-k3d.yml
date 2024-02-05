@@ -99,8 +99,8 @@ jobs:
       if: steps.playwright-cache.outputs.cache-hit == 'true'
     - name: Wait for the pods to be ready
       run: ./.github/scripts/wait_for_pods_to_be_ready.py
-    - name: Sleep for 60 secs
-      run: sleep 60
+    - name: Sleep for 20 secs
+      run: sleep 20
     - name: Run E2E test
       run: cd website && npm run e2e
     - uses: actions/upload-artifact@v4

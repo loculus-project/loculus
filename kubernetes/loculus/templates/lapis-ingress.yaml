@@ -9,6 +9,7 @@ metadata:
   namespace: {{ $.Values.namespace }}
   annotations:
     ingress.kubernetes.io/ssl-redirect: "false"
+    traefik.ingress.kubernetes.io/rule-type: PathPrefixStrip
 spec:
   rules:
   - http:
