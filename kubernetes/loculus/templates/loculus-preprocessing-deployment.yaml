@@ -27,12 +27,14 @@ spec:
         component: loculus-preprocessing
     spec:
       containers:
-        {{- range $key, $_ := $.Values.instances }}
+        {{- range $key, $value := $.Values.instances }}
         - name: preprocessing-{{ $key }}
-          image: ghcr.io/loculus-project/preprocessing-dummy:{{ $dockerTag }}
+          image: {{ $value.preprocessing.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
           args:
-            - "--watch"
+            {{- range $arg := $value.preprocessing.args }}
+            - "{{ $arg }}"
+            {{- end }}
             - "--backend-host={{ $backendHost }}/{{ $key }}"
             {{- if eq $.Values.environment "server" }}
             - "--keycloak-host=https://{{ $keycloakHost}}"

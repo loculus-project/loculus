@@ -1,0 +1,18 @@
+log_level: DEBUG
+
+nextclade_dataset_name: nextstrain/mpox/all-clades
+nextclade_dataset_version: 2024-01-16--20-31-02Z
+
+keycloak_host: https://authentication.mpox-config.preview.k3s.loculus.org/
+keycloak_token_path:  realms/loculusRealm/protocol/openid-connect/token
+keycloak_user: dummy_preprocessing_pipeline
+keycloak_password: dummy_preprocessing_pipeline
+
+backend_host: https://backend.mpox-config.preview.k3s.loculus.org/
+
+organism: mpox
+
+genes:
+  OPG001: 247
+
+batch_size: 100
