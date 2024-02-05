@@ -18,7 +18,7 @@ export const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLo
             shrink: true,
         }}
         inputProps={{
-            autoComplete: 'new-password',
+            autoComplete: 'off',
         }}
     />
 );
