@@ -26,7 +26,7 @@ spec:
     - name: strip-{{ $key }}-prefix
 {{- if eq $.Values.environment "server" }}
   tls:
-    certResolver: myresolver
+    secretName: loculus-cert
 {{- end }}
 
 ---

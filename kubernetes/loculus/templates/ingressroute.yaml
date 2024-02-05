@@ -21,7 +21,7 @@ spec:
         - name: loculus-website-service
           port: 3000
   tls:
-    certResolver: myresolver
+    secretName: loculus-cert
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -41,7 +41,7 @@ spec:
         - name: loculus-backend-service
           port: 8079
   tls:
-    certResolver: myresolver
+    secretName: loculus-cert
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
@@ -61,5 +61,5 @@ spec:
         - name: loculus-keycloak-service
           port: 8083
   tls:
-    certResolver: myresolver
+    secretName: loculus-cert
 {{- end}}

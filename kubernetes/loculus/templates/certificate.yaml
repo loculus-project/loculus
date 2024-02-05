@@ -1,0 +1,14 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: loculus-cert
+  namespace: {{{{ .Values.namespace }}}}
+spec:
+  commonName: '*.{{ .Values.host }}'
+  dnsNames:
+    - '*.{{ .Values.host }}'
+    - {{ .Values.host }}
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-prod
+  secretName: loculus-cert
