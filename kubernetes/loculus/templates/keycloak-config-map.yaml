@@ -64,6 +64,28 @@ data:
           }
         },
         {
+          "username": "insdc_ingest_user",
+          "enabled": true,
+          "email": "insdc_ingest_user@keycloak.org",
+          "firstName": "INSDC Ingest",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "insdc_ingest_user"
+            }
+          ],
+          "realmRoles": [
+            "user",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        {
           "username": "dummy_preprocessing_pipeline",
           "enabled": true,
           "email": "dummy_preprocessing_pipeline@keycloak.org",
