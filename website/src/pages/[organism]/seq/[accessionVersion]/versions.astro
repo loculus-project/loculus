@@ -1,7 +1,6 @@
 ---
 import { sentenceCase } from 'change-case';
 
-import { BackButton } from '../../../../components/Navigation/BackButton';
 import ErrorBox from '../../../../components/common/ErrorBox.astro';
 import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import { routes } from '../../../../routes';
@@ -26,7 +25,6 @@ const versionListResult = await lapisClient.getAllSequenceEntryHistoryForAccessi
 
 <BaseLayout title='Versions'>
     <div class='flex flex-row pb-2'>
-        <BackButton marginRight={3} client:load />
         <h1 class='title'>Versions for accession {accession}</h1>
     </div>
 
