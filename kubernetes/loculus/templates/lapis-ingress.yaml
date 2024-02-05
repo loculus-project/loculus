@@ -1,3 +1,4 @@
+{{- $lapisHost := printf "lapis-%s" .Values.host }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -5,6 +6,7 @@ metadata:
   name: lapis-ingress
   namespace: {{ $.Values.namespace }}
   annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: {{- $first := true }}{{- range $key, $_ := $.Values.instances }}{{ if not $first }},{{ end }}{{ $.Values.namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{ $first = false }}{{- end }}
     {{- if eq $.Values.environment "server" }}
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
     {{- else }}
