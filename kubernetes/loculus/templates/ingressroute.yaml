@@ -1,6 +1,6 @@
 {{- if eq .Values.environment "server" }}
-{{- $backendHost := printf "backend.%s" .Values.host }}
-{{- $keycloakHost := printf "authentication.%s" .Values.host }}
+{{- $backendHost := printf "backend-%s" .Values.host }}
+{{- $keycloakHost := printf "authentication-%s" .Values.host }}
 
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
