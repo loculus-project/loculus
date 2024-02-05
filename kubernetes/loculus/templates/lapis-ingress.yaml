@@ -6,11 +6,6 @@ metadata:
   name: lapis-ingress
   namespace: {{ $.Values.namespace }}
   annotations:
-    {{- if eq $.Values.environment "server" }}
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    {{- else }}
-    traefik.ingress.kubernetes.io/router.entrypoints: web
-    {{- end }}
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
