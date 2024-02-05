@@ -42,22 +42,27 @@ spec:
                   number: {{ $backendHost }}
   tls:
   - hosts:
-    - "{{ $backendHost }}""
+    - "{{ $backendHost }}"
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: loculus-keycloak-ingressroute
+  name: loculus-keycloak-ingress
   namespace: {{ .Values.namespace }}
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`{{ $keycloakHost }}`)
-      priority: 10
-      services:
-        - name: loculus-keycloak-service
-          port: 8083
+  rules:
+    - host: "{{ $keycloakHost }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-keycloak-service
+                port:
+                  number: 8083
   tls:
+  - hosts:
+    - "{{ $keycloakHost }}"
 {{- end}}
