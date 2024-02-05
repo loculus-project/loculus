@@ -1,4 +1,4 @@
-{{- $lapisHost := printf "lapis.%s" .Values.host }}
+{{- $lapisHost := printf "lapis-%s" .Values.host }}
 {{- range $key, $_ := $.Values.instances }}
 
 ---
