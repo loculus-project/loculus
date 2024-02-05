@@ -26,7 +26,6 @@ spec:
             port:
               number: 8080
     host: "{{ $lapisHost }}"
-    
 {{- if eq $.Values.environment "server" }}
   tls:
   - hosts:
