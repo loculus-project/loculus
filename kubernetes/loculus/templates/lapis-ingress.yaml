@@ -9,8 +9,7 @@ metadata:
   namespace: {{ $.Values.namespace }}
 spec:
   rules:
-  - host: "{{ $lapisHost }}"
-    http:
+  - http:
       paths:
       - path: /{{ $key }}/
         pathType: Prefix
@@ -26,6 +25,8 @@ spec:
             name: {{ template "loculus.lapisServiceName" $key }}
             port:
               number: 8080
+    host: "{{ $lapisHost }}"
+    
 {{- if eq $.Values.environment "server" }}
   tls:
   - hosts:
