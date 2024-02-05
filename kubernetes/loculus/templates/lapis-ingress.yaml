@@ -9,7 +9,7 @@ metadata:
   namespace: {{ $.Values.namespace }}
 spec:
   rules:
-  - host: {{- if eq $.Values.environment "server" }}{{ $lapisHost }}{{- end }}
+  - host: "{{ $lapisHost }}"
     http:
       paths:
       - path: /{{ $key }}/
@@ -29,7 +29,7 @@ spec:
 {{- if eq $.Values.environment "server" }}
   tls:
   - hosts:
-    - {{ $lapisHost }}
+    - "{{ $lapisHost }}"
 {{- end }}
 
 {{- end }}
