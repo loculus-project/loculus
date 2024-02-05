@@ -151,7 +151,7 @@ data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
-    val group: Group,
+    val group: String,
     val isRevocation: Boolean = false,
 ) : AccessionVersionInterface
 
@@ -201,10 +201,6 @@ enum class Status {
         fun fromString(statusString: String): Status {
             return stringToEnumMap[statusString]
                 ?: throw IllegalArgumentException("Unknown status: $statusString")
-        }
-
-        fun getListOfStatuses(): List<Status> {
-            return stringToEnumMap.values.toList()
         }
     }
 }

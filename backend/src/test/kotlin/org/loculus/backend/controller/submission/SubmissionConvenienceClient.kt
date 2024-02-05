@@ -161,8 +161,8 @@ class SubmissionConvenienceClient(
 
     fun getSequenceEntries(
         username: String = DEFAULT_USER_NAME,
-        groupsFilter: List<String> = listOf(DEFAULT_GROUP_NAME),
-        statusesFilter: List<Status> = Status.getListOfStatuses(),
+        groupsFilter: List<String>? = null,
+        statusesFilter: List<Status>? = null,
         organism: String = DEFAULT_ORGANISM,
     ): List<SequenceEntryStatus> = deserializeJsonResponse(
         client.getSequenceEntries(
