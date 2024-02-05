@@ -2,38 +2,34 @@
 {{- range $key, $_ := $.Values.instances }}
 
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: lapis-ingressroute-{{ $key }}
+  name: lapis-ingress-{{ $key }}
   namespace: {{ $.Values.namespace }}
 spec:
-  entryPoints:
-    {{- if eq $.Values.environment "server" }}
-    - websecure
-    {{- else }}
-    - web
-    {{- end }}
-  routes:
-  - match: Path(`/{{ $key }}`, `/{{ $key }}/{path:.*}`) {{- if eq $.Values.environment "server" }} && Host(`{{ $lapisHost }}`){{- end }}
-    kind: Rule
-    services:
-    - name: {{ template "loculus.lapisServiceName" $key }}
-      port: 8080
-    middlewares:
-    - name: strip-{{ $key }}-prefix
+  rules:
+  - host: {{- if eq $.Values.environment "server" }}{{ $lapisHost }}{{- end }}
+    http:
+      paths:
+      - path: /{{ $key }}/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ template "loculus.lapisServiceName" $key }}
+            port:
+              number: 8080
+      - path: /{{ $key }}
+        pathType: Exact
+        backend:
+          service:
+            name: {{ template "loculus.lapisServiceName" $key }}
+            port:
+              number: 8080
 {{- if eq $.Values.environment "server" }}
   tls:
+  - hosts:
+    - {{ $lapisHost }}
 {{- end }}
 
----
-apiVersion: traefik.containo.us/v1alpha1
-kind: Middleware
-metadata:
-  name: strip-{{ $key }}-prefix
-  namespace: {{ $.Values.namespace }}
-spec:
-  stripPrefix:
-    prefixes:
-      - /{{ $key }}
 {{- end }}
