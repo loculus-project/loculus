@@ -1,3 +1,4 @@
+{{- if eq $.Values.environment "server" }}
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
@@ -12,3 +13,5 @@ spec:
     kind: ClusterIssuer
     name: letsencrypt-prod
   secretName: loculus-cert
+{{- end}}
+
