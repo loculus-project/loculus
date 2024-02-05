@@ -18,7 +18,6 @@ export const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLo
             shrink: true,
         }}
         inputProps={{
-            ...params.inputProps,
             autoComplete: 'new-password',
         }}
     />
