@@ -6,6 +6,7 @@ metadata:
   name: lapis-ingress
   namespace: {{ $.Values.namespace }}
   annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: {{- range $key, $_ := $.Values.instances }}{{ if $key }},{{ end }}{{ $.Values.namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
