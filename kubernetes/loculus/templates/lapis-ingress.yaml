@@ -14,15 +14,8 @@ spec:
   rules:
   - http:
       paths:
-      - path: /{{ $key }}/
-        pathType: Prefix
-        backend:
-          service:
-            name: {{ template "loculus.lapisServiceName" $key }}
-            port:
-              number: 8080
       - path: /{{ $key }}
-        pathType: Exact
+        pathType: Prefix
         backend:
           service:
             name: {{ template "loculus.lapisServiceName" $key }}
