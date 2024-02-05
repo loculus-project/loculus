@@ -25,7 +25,9 @@ spec:
             name: {{ template "loculus.lapisServiceName" $key }}
             port:
               number: 8080
+{{- if eq $.Values.environment "server" }}
     host: "{{ $lapisHost }}"
+{{- end }}
 {{- if eq $.Values.environment "server" }}
   tls:
   - hosts:
