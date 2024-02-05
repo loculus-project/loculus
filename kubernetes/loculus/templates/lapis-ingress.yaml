@@ -9,8 +9,8 @@ metadata:
   namespace: {{ $.Values.namespace }}
 spec:
   rules:
-  - {{ if eq $.Values.environment "server" }}host: "{{ $lapisHost }}"
-{{- end }}http:
+  - host: "{{ $lapisHost }}"
+    http:
       paths:
       - path: /{{ $key }}/
         pathType: Prefix
