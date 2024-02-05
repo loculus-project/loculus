@@ -24,7 +24,7 @@ spec:
     - name: strip-{{ $key }}-prefix
 {{- if eq $.Values.environment "server" }}
   tls:
-    options:
+    certResolver: myresolver
 {{- end }}
 
 ---
