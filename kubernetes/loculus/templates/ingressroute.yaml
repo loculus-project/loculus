@@ -8,7 +8,6 @@ metadata:
   name: loculus-website-ingressroute
   namespace: {{ .Values.namespace }}
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
     link.argocd.argoproj.io/external-link: https://{{ .Values.host }}
 spec:
   entryPoints:
@@ -21,15 +20,12 @@ spec:
         - name: loculus-website-service
           port: 3000
   tls:
-    certResolver: myresolver
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: loculus-backend-ingressroute
   namespace: {{ .Values.namespace }}
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   entryPoints:
     - websecure
@@ -41,15 +37,12 @@ spec:
         - name: loculus-backend-service
           port: 8079
   tls:
-    certResolver: myresolver
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: loculus-keycloak-ingressroute
   namespace: {{ .Values.namespace }}
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   entryPoints:
     - websecure
@@ -61,5 +54,4 @@ spec:
         - name: loculus-keycloak-service
           port: 8083
   tls:
-    certResolver: myresolver
 {{- end}}

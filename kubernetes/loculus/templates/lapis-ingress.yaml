@@ -7,8 +7,6 @@ kind: IngressRoute
 metadata:
   name: lapis-ingressroute-{{ $key }}
   namespace: {{ $.Values.namespace }}
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   entryPoints:
     {{- if eq $.Values.environment "server" }}
@@ -26,7 +24,6 @@ spec:
     - name: strip-{{ $key }}-prefix
 {{- if eq $.Values.environment "server" }}
   tls:
-    certResolver: myresolver
 {{- end }}
 
 ---
