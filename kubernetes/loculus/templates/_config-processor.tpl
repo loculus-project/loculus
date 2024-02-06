@@ -7,8 +7,8 @@
       mountPath: /input
     - name: {{ .name }}-processed
       mountPath: /output
-  command: "/usr/bin/python /app/config-processor.py"
-  args: ["/input", "/output"]
+  command: ["/usr/bin/python"]
+  args: ["app/config-processor.py", "/input", "/output"]
 {{- end -}}
 
 {{- define "loculus.configVolume" -}}
