@@ -6,14 +6,14 @@ metadata:
   name: lapis-ingress
   namespace: {{ $.Values.namespace }}
   annotations:
-    #traefik.ingress.kubernetes.io/router.middlewares: "{{- $first := true }}{{- range $key, $_ := $.Values.instances }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Values.namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{- $first := true }}{{- range $key, $_ := $.Values.instances }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Values.namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
     http:
       paths:
       {{- range $key, $_ := $.Values.instances }}
-      - path: /{{ $key }}
+      - path: /{{ $key }}/
         pathType: Prefix
         backend:
           service:
@@ -41,5 +41,5 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /{{ $key }}
+      - /{{ $key }}/
 {{- end }}
