@@ -5,9 +5,6 @@ import requests
 import re
 
 def copy_structure(input_dir, output_dir):
-    # Copy the directory structure
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir)
     shutil.copytree(input_dir, output_dir)
 
 def replace_url_with_content(file_content):
