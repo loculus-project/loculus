@@ -45,9 +45,9 @@
     IN_PROCESSING --> is_error
     is_error --> HAS_ERRORS : data contain error(s)
     HAS_ERRORS --> RECEIVED : user edits data
-    STAGING --> RECEIVED : user edits data
+    AWAITING_APPROVAL --> RECEIVED : user edits data
     is_error --> STAGING : preprocessing successful
-    STAGING --> is_approved
+    AWAITING_APPROVAL --> is_approved
     is_approved --> APPROVED_FOR_RELEASE : user approves \nor automatic approval\n via 'release_directly'
     is_approved --> DELETION : user rejects
 
