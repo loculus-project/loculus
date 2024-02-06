@@ -9,6 +9,3 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 
 COPY config-processor.py ./
-
-# Run the script when the container launches
-ENTRYPOINT ["python", "./config-processor.py"]
