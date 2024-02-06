@@ -23,6 +23,7 @@ import org.loculus.backend.api.ResponseAuthor
 import org.loculus.backend.api.ResponseDataset
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SubmittedDatasetRecord
+import org.loculus.backend.controller.NotFoundException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
@@ -97,7 +98,7 @@ class DatasetCitationsDatabaseService(
             ?.get(DatasetsTable.datasetVersion.max())
 
         if (maxVersion == null) {
-            throw IllegalArgumentException("Dataset $datasetId does not exist")
+            throw NotFoundException("Dataset $datasetId does not exist")
         }
 
         val version = maxVersion + 1
@@ -147,10 +148,10 @@ class DatasetCitationsDatabaseService(
     fun getDataset(datasetId: String, version: Long?): List<Dataset> {
         log.info { "Get dataset $datasetId, version $version" }
 
-        var datasetList = mutableListOf<Dataset>()
+        val datasetList = mutableListOf<Dataset>()
 
         if (version == null) {
-            var selectedDatasets = DatasetsTable
+            val selectedDatasets = DatasetsTable
                 .select {
                     DatasetsTable.datasetId eq UUID.fromString(datasetId)
                 }
@@ -168,14 +169,14 @@ class DatasetCitationsDatabaseService(
                 )
             }
         } else {
-            var selectedDataset = DatasetsTable
+            val selectedDataset = DatasetsTable
                 .select {
                     (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
                         (DatasetsTable.datasetVersion eq version)
                 }.singleOrNull()
 
             if (selectedDataset == null) {
-                throw IllegalArgumentException("Dataset $datasetId, version $version does not exist")
+                throw NotFoundException("Dataset $datasetId, version $version does not exist")
             }
 
             datasetList.add(
@@ -205,11 +206,10 @@ class DatasetCitationsDatabaseService(
                 .singleOrNull()?.get(DatasetsTable.datasetVersion)
         }
         if (selectedVersion == null) {
-            throw IllegalArgumentException("Dataset $datasetId, version $version does not exist")
+            throw NotFoundException("Dataset $datasetId, version $version does not exist")
         }
 
-        // TODO: join with sequenceEntries without needing organism
-        var selectedDatasetRecords = DatasetToRecordsTable
+        val selectedDatasetRecords = DatasetToRecordsTable
             .innerJoin(DatasetRecordsTable)
             .select {
                 (DatasetToRecordsTable.datasetId eq UUID.fromString(datasetId)) and
@@ -229,8 +229,8 @@ class DatasetCitationsDatabaseService(
     fun getDatasets(username: String): List<Dataset> {
         log.info { "Get datasets for user $username" }
 
-        var datasetList = mutableListOf<Dataset>()
-        var selectedDatasets = DatasetsTable
+        val datasetList = mutableListOf<Dataset>()
+        val selectedDatasets = DatasetsTable
             .select { DatasetsTable.createdBy eq username }
 
         selectedDatasets.forEach {
@@ -272,9 +272,6 @@ class DatasetCitationsDatabaseService(
             it[DatasetsTable.datasetDOI] = datasetDOI
         }
 
-        // TODO: Register dataset with DOI agency (crossref)
-        //       Include URL to dataset on app in crossref metadata
-
         return ResponseDataset(
             datasetId,
             version,
@@ -289,7 +286,7 @@ class DatasetCitationsDatabaseService(
             val datasetVersion: Long,
             val createdAt: Timestamp,
         )
-        var selectedDatasetRecords = DatasetRecordsTable
+        val selectedDatasetRecords = DatasetRecordsTable
             .innerJoin(DatasetToRecordsTable)
             .innerJoin(DatasetsTable)
             .select(
@@ -306,57 +303,44 @@ class DatasetCitationsDatabaseService(
                 )
             }
 
-        var datasetMap = mutableMapOf<String, MutableList<Dataset>>()
+        val datasetMap = mutableMapOf<String, MutableList<Dataset>>()
+
         for (record in selectedDatasetRecords) {
-            var accession = record.accession
-            if (datasetMap.containsKey(accession)) {
-                var datasetList = datasetMap[accession]
-                var dataset = Dataset(
-                    record.datasetId,
-                    record.datasetVersion,
-                    "",
-                    record.createdAt,
-                    "",
-                    "",
-                    "",
-                )
-                if (datasetList != null) {
-                    if (!datasetList.contains(dataset)) {
-                        datasetList.add(dataset)
-                    }
-                }
-            } else {
-                var datasetList = mutableListOf<Dataset>()
-                var dataset = Dataset(
-                    record.datasetId,
-                    record.datasetVersion,
-                    "",
-                    record.createdAt,
-                    "",
-                    "",
-                    "",
-                )
+            val accession = record.accession
+            val datasetList = datasetMap.computeIfAbsent(accession) { mutableListOf() }
+
+            val dataset = Dataset(
+                record.datasetId,
+                record.datasetVersion,
+                "",
+                record.createdAt,
+                "",
+                "",
+                "",
+            )
+
+            if (!datasetList.contains(dataset)) {
                 datasetList.add(dataset)
-                datasetMap[accession] = datasetList
             }
         }
-        var uniqueLatestDatasets = mutableListOf<Dataset>()
+
+        val uniqueLatestDatasets = mutableListOf<Dataset>()
         for (entry in datasetMap) {
-            var datasets = entry.value
-            var latestVersion = datasets.maxByOrNull { it.datasetVersion }
+            val datasets = entry.value
+            val latestVersion = datasets.maxByOrNull { it.datasetVersion }
             if (latestVersion != null && !uniqueLatestDatasets.contains(latestVersion)) {
                 uniqueLatestDatasets.add(latestVersion)
             }
         }
 
-        var citedBy = CitedBy(
+        val citedBy = CitedBy(
             mutableListOf<Long>(),
             mutableListOf<Long>(),
         )
         for (dataset in uniqueLatestDatasets) {
-            var year = dataset.createdAt.toLocalDateTime().year.toLong()
+            val year = dataset.createdAt.toLocalDateTime().year.toLong()
             if (citedBy.years.contains(year)) {
-                var index = citedBy.years.indexOf(year)
+                val index = citedBy.years.indexOf(year)
                 while (index >= citedBy.citations.size) {
                     citedBy.citations.add(0)
                 }
@@ -372,21 +356,21 @@ class DatasetCitationsDatabaseService(
     fun getDatasetCitedByPublication(datasetId: String, version: Long): CitedBy {
         log.info { "Get dataset cited by publication for datasetId $datasetId, version $version" }
 
-        // TODO: implement using CrossRef API: https://www.crossref.org/services/cited-by/
-        var citedBy = CitedBy(
+        val citedBy = CitedBy(
             mutableListOf<Long>(),
             mutableListOf<Long>(),
         )
+
         return citedBy
     }
 
     fun getAuthor(username: String): List<Author> {
-        var authorList = mutableListOf<Author>()
-        var selectedAuthors = AuthorsTable
+        val authorList = mutableListOf<Author>()
+        val selectedAuthors = AuthorsTable
             .select(
                 where = { AuthorsTable.username eq username },
             )
-        var selectedAuthor = selectedAuthors.firstOrNull()
+        val selectedAuthor = selectedAuthors.firstOrNull()
 
         if (selectedAuthor == null) {
             return authorList
@@ -462,12 +446,5 @@ class DatasetCitationsDatabaseService(
         return ResponseAuthor(
             authorId,
         )
-    }
-
-    fun deleteAuthor(username: String, authorId: String) {
-        AuthorsTable.deleteWhere {
-            (AuthorsTable.username eq username) and
-                (AuthorsTable.authorId eq UUID.fromString(authorId))
-        }
     }
 }

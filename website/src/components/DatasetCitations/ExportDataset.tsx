@@ -6,7 +6,7 @@ import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
 import { type FC, useState } from 'react';
 
-import type { Dataset, DatasetRecord } from '../../types/datasets';
+import type { Dataset, DatasetRecord } from '../../types/datasetCitation';
 
 type ExportDatasetProps = {
     dataset: Dataset;

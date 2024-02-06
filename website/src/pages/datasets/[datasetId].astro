@@ -15,11 +15,8 @@ const version = Astro.url.searchParams.get('version')! || '1';
 const username = Astro.locals.session.user?.username;
 
 const datasetResponse = (await getDataset(accessToken, datasetId, version)) as any;
-
 const datasetRecordsResponse = (await getDatasetRecords(accessToken, datasetId, version)) as any;
-
 const datasetCitedByResponse = (await getDatasetCitedBy(accessToken, datasetId, version)) as any;
-
 const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datasetResponse.value, version) : undefined;
 ---
 

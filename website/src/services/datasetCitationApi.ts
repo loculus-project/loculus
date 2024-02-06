@@ -2,7 +2,7 @@ import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
 import { authorizationHeader, notAuthorizedError } from './commonApiTypes.ts';
-import { authors, datasets, datasetRecords, citedByResult } from '../types/datasets.ts';
+import { authors, datasets, datasetRecords, citedByResult } from '../types/datasetCitation.ts';
 
 const getDatasetsOfUserEndpoint = makeEndpoint({
     method: 'get',

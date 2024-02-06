@@ -4,7 +4,7 @@ import { type FC, useState } from 'react';
 import { CitationPlot } from './CitationPlot';
 import { getClientLogger } from '../../clientLogger';
 import { datasetCitationClientHooks } from '../../services/serviceHooks';
-import { type DatasetRecord, type Dataset, type CitedByResult, DatasetRecordType } from '../../types/datasets';
+import { type DatasetRecord, type Dataset, type CitedByResult, DatasetRecordType } from '../../types/datasetCitation';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { AlertDialog } from '../common/AlertDialog';

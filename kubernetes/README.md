@@ -80,19 +80,7 @@ kubectl get pods -n loculus
 If something goes wrong,
 
 ```shell
-kubectl get events -n loculus # Get latest events
-```
-
-```shell
-kubectl describe pods -n loculus # Get pod status and configs
-```
-
-```shell
-kubectl logs -n loculus $pod_name # Get logs for a specific pod
-```
-
-```shell
-kubectl exec -n loculus $pod_name  -it -- /bin/sh # SSH into a specific pod
+kubectl get events -n loculus
 ```
 
 might help to see the reason.

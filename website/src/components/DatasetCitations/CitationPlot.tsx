@@ -2,7 +2,7 @@ import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Toolti
 import { type FC, useState, useEffect } from 'react';
 import { Bar } from 'react-chartjs-2';
 
-import type { CitedByResult } from '../../types/datasets';
+import type { CitedByResult } from '../../types/datasetCitation';
 
 type CitationPlotProps = {
     citedByData: CitedByResult;

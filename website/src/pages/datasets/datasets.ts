@@ -1,5 +1,5 @@
 import { DatasetCitationClient } from '../../services/datasetCitationClient.ts';
-import type { Dataset } from '../../types/datasets';
+import type { Dataset } from '../../types/datasetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 
 export const getUserCitedBy = (token: string, username: string) => {

@@ -11,7 +11,7 @@ import { type FC, type FormEvent, useState } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
 import { datasetCitationClientHooks } from '../../services/serviceHooks';
-import { DatasetRecordType, type Dataset, type DatasetRecord } from '../../types/datasets';
+import { DatasetRecordType, type Dataset, type DatasetRecord } from '../../types/datasetCitation';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { serializeRecordsToAccessionsInput, validateAccessionByType } from '../../utils/parseAccessionInput';

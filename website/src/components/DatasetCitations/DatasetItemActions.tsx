@@ -5,7 +5,7 @@ import { DatasetForm } from './DatasetForm';
 import { ExportDataset } from './ExportDataset';
 import { getClientLogger } from '../../clientLogger';
 import { datasetCitationClientHooks } from '../../services/serviceHooks';
-import type { DatasetRecord, Dataset } from '../../types/datasets';
+import type { DatasetRecord, Dataset } from '../../types/datasetCitation';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { AlertDialog } from '../common/AlertDialog';

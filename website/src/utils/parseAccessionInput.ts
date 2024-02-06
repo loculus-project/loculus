@@ -1,4 +1,4 @@
-import { type DatasetRecord, DatasetRecordType } from '../types/datasets';
+import { type DatasetRecord, DatasetRecordType } from '../types/datasetCitation';
 
 const getAccessionsByType = (type: string, records: DatasetRecord[]): string[] => {
     return records.filter((record) => record.type === type).map((record) => record.accession ?? '');

@@ -140,10 +140,4 @@ class DatasetCitationsController(
             body.affiliation,
         )
     }
-
-    @Operation(description = "Delete an author")
-    @DeleteMapping("/delete-author", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun deleteAuthor(@UsernameFromJwt username: String, @RequestParam authorId: String) {
-        return datasetCitationsService.deleteAuthor(username, authorId)
-    }
 }

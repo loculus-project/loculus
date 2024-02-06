@@ -5,7 +5,7 @@ import {
     parseRecordsFromAccessionInput,
     validateAccessionByType,
 } from './parseAccessionInput';
-import { DatasetRecordType } from '../types/datasets';
+import { DatasetRecordType } from '../types/datasetCitation';
 
 describe('serializeRecordsToAccessionsInput', () => {
     test('should serialize records to accessions input by type', () => {
