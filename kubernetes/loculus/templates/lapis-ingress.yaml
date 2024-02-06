@@ -13,7 +13,7 @@ spec:
     http:
       paths:
       {{- range $key, $_ := $.Values.instances }}
-      - path: /{{ $key }}
+      - path: /{{ $key }}/
         pathType: Prefix
         backend:
           service:
@@ -41,5 +41,5 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /{{ $key }}
+      - /{{ $key }}/
 {{- end }}
