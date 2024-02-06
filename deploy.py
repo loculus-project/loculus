@@ -178,6 +178,8 @@ def generate_config(helm_chart, template, output_path, codespace_name=None):
         helm_template_cmd.extend(['--set', 'codespaceName='+codespace_name])
 
     helm_template_cmd.extend(['--set', 'environment=local'])
+    helm_template_cmd.extend(['--set', 'disableWebsite=true'])
+    helm_template_cmd.extend(['--set', 'disableBackend=true'])
     helm_output = subprocess.run(helm_template_cmd, capture_output=True, text=True, check=True).stdout
     parsed_yaml = yaml.safe_load(helm_output)
     config_data = parsed_yaml['data'][output_path.name]
