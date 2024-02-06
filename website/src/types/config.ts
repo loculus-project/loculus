@@ -1,5 +1,6 @@
 import z from 'zod';
 
+import { orderByType } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
 export const metadata = z.object({
@@ -29,6 +30,8 @@ const schema = z.object({
     metadata: z.array(metadata),
     tableColumns: z.array(z.string()),
     primaryKey: z.string(),
+    defaultOrderBy: z.string(),
+    defaultOrder: orderByType,
 });
 export type Schema = z.infer<typeof schema>;
 

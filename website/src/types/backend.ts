@@ -1,6 +1,6 @@
 import z from 'zod';
 
-const sequenceEntryStatusNames = z.union([
+export const sequenceEntryStatusNames = z.union([
     z.literal('RECEIVED'),
     z.literal('IN_PROCESSING'),
     z.literal('HAS_ERRORS'),

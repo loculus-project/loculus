@@ -18,7 +18,7 @@ type TableProps = {
     metadataFilter: MetadataFilter[];
     mutationFilter: MutationFilter;
     page: number;
-    orderBy?: OrderBy;
+    orderBy: OrderBy;
 };
 
 export const Table: FC<TableProps> = ({ organism, data, schema, metadataFilter, mutationFilter, page, orderBy }) => {
@@ -30,14 +30,17 @@ export const Table: FC<TableProps> = ({ organism, data, schema, metadataFilter, 
     }));
 
     const handleSort = (field: string) => {
-        if (orderBy?.field === field) {
+        if (orderBy.field === field) {
             if (orderBy.type === 'ascending') {
                 location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, {
                     field,
                     type: 'descending',
                 });
             } else {
-                location.href = routes.searchPage(organism, metadataFilter, mutationFilter);
+                location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, {
+                    field,
+                    type: 'ascending',
+                });
             }
         } else {
             location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, {
@@ -47,12 +50,12 @@ export const Table: FC<TableProps> = ({ organism, data, schema, metadataFilter, 
         }
     };
 
-    let orderIcon: ReactElement | undefined;
-    if (orderBy?.type === 'ascending') {
-        orderIcon = <MdiTriangle className='w-3 h-3 ml-1 inline' />;
-    } else if (orderBy?.type === 'descending') {
-        orderIcon = <MdiTriangleDown className='w-3 h-3 ml-1 inline' />;
-    }
+    const orderIcon: ReactElement =
+        orderBy.type === 'ascending' ? (
+            <MdiTriangle className='w-3 h-3 ml-1 inline' />
+        ) : (
+            <MdiTriangleDown className='w-3 h-3 ml-1 inline' />
+        );
 
     return (
         <div className='w-full overflow-x-auto'>
@@ -61,11 +64,11 @@ export const Table: FC<TableProps> = ({ organism, data, schema, metadataFilter, 
                     <thead>
                         <tr>
                             <th onClick={() => handleSort(primaryKey)} className='cursor-pointer'>
-                                {capitalCase(primaryKey)} {orderBy?.field === primaryKey && orderIcon}
+                                {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
                             </th>
                             {columns.map((c) => (
                                 <th key={c.field} onClick={() => handleSort(c.field)} className='cursor-pointer'>
-                                    {c.headerName} {orderBy?.field === c.field && orderIcon}
+                                    {c.headerName} {orderBy.field === c.field && orderIcon}
                                 </th>
                             ))}
                         </tr>

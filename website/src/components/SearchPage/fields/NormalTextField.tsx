@@ -17,5 +17,8 @@ export const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLo
         InputLabelProps={{
             shrink: true,
         }}
+        inputProps={{
+            autoComplete: 'off',
+        }}
     />
 );

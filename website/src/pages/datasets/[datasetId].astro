@@ -4,7 +4,6 @@ import { AuthorDetails } from '../../components/DatasetCitations/AuthorDetails';
 import { DatasetItem } from '../../components/DatasetCitations/DatasetItem';
 import { DatasetItemActions } from '../../components/DatasetCitations/DatasetItemActions';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
-import { BackButton } from '../../components/Navigation/BackButton';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getAccessToken } from '../../utils/getAccessToken';
@@ -25,7 +24,6 @@ const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datase
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-item-container'>
-    <BackButton marginRight={0} client:load />
     <div class='flex flex-col justify-start'>
         {
             dataset !== undefined ? (

@@ -25,6 +25,7 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.api.Group
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
@@ -42,6 +43,7 @@ import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
+import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.service.jsonbParam
 import org.loculus.backend.utils.Accession
@@ -61,6 +63,7 @@ class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
+    private val groupManagementDatabaseService: GroupManagementDatabaseService,
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
@@ -353,62 +356,55 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun getActiveSequencesSubmittedBy(username: String, organism: Organism?): List<SequenceEntryStatus> {
-        log.info { "getting active sequence entries submitted by $username" }
+    fun getSequences(
+        username: String,
+        organism: Organism?,
+        groupsFilter: List<String>?,
+        statusesFilter: List<Status>?,
+    ): List<SequenceEntryStatus> {
+        log.info { "getting sequence for user $username (groupFilter: $groupsFilter in statuses $statusesFilter" }
+
+        val validatedGroupNames = if (groupsFilter === null) {
+            groupManagementDatabaseService.getGroupsOfUser(username)
+        } else {
+            groupManagementPreconditionValidator.validateUserInExistingGroups(groupsFilter, username)
+            groupsFilter.map { Group(it) }
+        }
+
+        val listOfStatuses = statusesFilter ?: Status.entries
 
         sequenceEntriesTableProvider.get(organism).let { table ->
-            val subTableSequenceStatus = table
+            table
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
                     table.statusColumn,
                     table.isRevocationColumn,
+                    table.groupNameColumn,
                     table.organismColumn,
                 )
 
-            val releasedSequenceQuery = subTableSequenceStatus.select(
-                where = {
-                    table.statusIs(APPROVED_FOR_RELEASE) and
-                        (table.submitterColumn eq username) and
-                        table.isMaxReleasedVersion
-                },
-            )
-
-            if (organism != null) {
-                releasedSequenceQuery.andWhere { table.organismIs(organism) }
-            }
-
-            val releasedSequenceEntries = releasedSequenceQuery.map { row ->
-                SequenceEntryStatus(
-                    row[table.accessionColumn],
-                    row[table.versionColumn],
-                    APPROVED_FOR_RELEASE,
-                    row[table.isRevocationColumn],
+            val query = table
+                .select(
+                    where = {
+                        table.statusIsOneOf(listOfStatuses) and
+                            table.groupIsOneOf(validatedGroupNames)
+                    },
                 )
-            }
-
-            val unreleasedSequenceQuery = subTableSequenceStatus.select(
-                where = {
-                    (table.statusColumn neq APPROVED_FOR_RELEASE.name) and
-                        (table.submitterColumn eq username) and
-                        table.isMaxVersion
-                },
-            )
 
             if (organism != null) {
-                unreleasedSequenceQuery.andWhere { table.organismIs(organism) }
+                query.andWhere { table.organismIs(organism) }
             }
 
-            val unreleasedSequenceEntries = unreleasedSequenceQuery.map { row ->
+            return query.map { row ->
                 SequenceEntryStatus(
                     row[table.accessionColumn],
                     row[table.versionColumn],
                     Status.fromString(row[table.statusColumn]),
+                    row[table.groupNameColumn],
                     row[table.isRevocationColumn],
                 )
             }
-
-            return releasedSequenceEntries + unreleasedSequenceEntries
         }
     }
 
@@ -461,6 +457,7 @@ class SubmissionDatabaseService(
                     table.accessionColumn,
                     table.versionColumn,
                     table.isRevocationColumn,
+                    table.groupNameColumn,
                 )
                 .select(
                     where = {
@@ -473,6 +470,7 @@ class SubmissionDatabaseService(
                         it[table.accessionColumn],
                         it[table.versionColumn],
                         AWAITING_APPROVAL_FOR_REVOCATION,
+                        it[table.groupNameColumn],
                         it[table.isRevocationColumn],
                     )
                 }.sortedBy { it.accession }

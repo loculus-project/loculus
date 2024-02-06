@@ -46,7 +46,7 @@ spec:
             - name: branch
               value: '{{.branch}}'
             - name: host
-              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}.preview.k3s.loculus.org'
+              value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}.loculus.org'
       syncPolicy:
         automated:
           selfHeal: true

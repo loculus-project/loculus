@@ -7,8 +7,8 @@ import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts
 export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
     /** Somehow Typescript's type inference currently doesn't work properly in Astro files */
     public readonly astroFileTypeHelpers = {
-        getSequenceEntriesOfUser: (organism: string, token: string) =>
-            this.call('getSequencesOfUser', {
+        getSequenceEntries: (organism: string, token: string) =>
+            this.call('getSequences', {
                 params: { organism },
                 headers: createAuthorizationHeader(token),
             }),

@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.Group
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.PreprocessingAnnotation
@@ -101,11 +102,15 @@ class SequenceEntriesDataTable(
 
     fun statusIs(status: Status) = statusColumn eq status.name
 
+    fun statusIsOneOf(statuses: List<Status>) = statusColumn inList statuses.map { it.name }
+
     fun accessionVersionEquals(accessionVersion: AccessionVersionInterface) =
         (accessionColumn eq accessionVersion.accession) and
             (versionColumn eq accessionVersion.version)
 
     fun groupIs(group: String) = groupNameColumn eq group
+
+    fun groupIsOneOf(groups: List<Group>) = groupNameColumn inList groups.map { it.groupName }
 
     private val warningWhenNoOrganismWhenSerializing = "Organism is null when de-serializing data. " +
         "This should not happen. " +

@@ -9,6 +9,7 @@ import org.loculus.backend.api.Dataset
 import org.loculus.backend.api.DatasetRecord
 import org.loculus.backend.api.ResponseAuthor
 import org.loculus.backend.api.ResponseDataset
+import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedAuthor
 import org.loculus.backend.api.SubmittedAuthorUpdate
 import org.loculus.backend.api.SubmittedDataset
@@ -94,13 +95,9 @@ class DatasetCitationsController(
     @Operation(description = "Get count of user sequences cited by datasets")
     @GetMapping("/get-user-cited-by-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUserCitedByDataset(@RequestParam username: String): CitedBy {
-        // get all groups user belongs to from GroupsTable
-        // val groups = groupManagementService.getGroupsOfUser(username)
-        val sequences = submissionDatabaseService.getActiveSequencesSubmittedBy(username, null)
-        // get all datasets that reference these sequences from datasetsrecords table
-        // deduplicate unique datasets by versions
-        // return count of unique datasets per year
-        return datasetCitationsService.getUserCitedByDataset(sequences)
+        val statusFilter = listOf(APPROVED_FOR_RELEASE)
+        val userSequences = submissionDatabaseService.getSequences(username, null, null, statusFilter)
+        return datasetCitationsService.getUserCitedByDataset(userSequences)
     }
 
     @Operation(description = "Get count of dataset cited by publications")

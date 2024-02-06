@@ -1,6 +1,5 @@
 ---
 import { ErrorFeedback } from '../../../components/ErrorFeedback';
-import { BackButton } from '../../../components/Navigation/BackButton';
 import UserSequences from '../../../components/UserSequenceList/UserSequences.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../../services/backendClient';
@@ -10,7 +9,7 @@ const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
 const name = Astro.locals.session.user!.name;
 
-const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHelpers.getSequenceEntriesOfUser(
+const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHelpers.getSequenceEntries(
     organism,
     accessToken,
 );
@@ -19,7 +18,6 @@ const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHe
 <BaseLayout title='Sequences'>
     <>
         <div class='flex items-center'>
-            <BackButton marginRight={2} client:load />
             <h1 class='subtitle'>{`Submitted sequence entries of user ${name}`}</h1>
         </div>
         {

@@ -1,6 +1,5 @@
 ---
 import { EditPage } from '../../../../../components/Edit/EditPage';
-import { BackButton } from '../../../../../components/Navigation/BackButton';
 import { getRuntimeConfig } from '../../../../../config';
 import BaseLayout from '../../../../../layouts/BaseLayout.astro';
 import { BackendClient } from '../../../../../services/backendClient';
@@ -24,7 +23,6 @@ const dataToEdit = await BackendClient.create().astroFileTypeHelpers.getDataToEd
 
 <BaseLayout title={`Edit ${accession}.${version}`}>
     <div class='flex items-center mb-4'>
-        <BackButton marginRight={2} client:load />
         <h1 class='title'>
             Edit Id: {accession}.{version}
         </h1>

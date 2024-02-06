@@ -5,8 +5,6 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getKeycloakClient } from '../../middleware/authMiddleware';
 import { routes } from '../../routes';
 import { getAccessToken } from '../../utils/getAccessToken';
-import { BackButton } from '../Navigation/BackButton';
-
 const session = Astro.locals.session;
 
 const accessToken = getAccessToken(Astro.locals.session)!;
@@ -25,7 +23,6 @@ const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
 
 <BaseLayout title='Login'>
     <div class='flex items-center'>
-        <BackButton marginRight={2} client:load />
         <h1 class='title'>User {session.user?.name}</h1>
     </div>
     <div class='my-2 mx-4'>

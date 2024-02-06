@@ -151,6 +151,7 @@ data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
+    val group: String,
     val isRevocation: Boolean = false,
 ) : AccessionVersionInterface
 

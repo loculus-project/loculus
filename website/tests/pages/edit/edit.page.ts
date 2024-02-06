@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 
 import { routes } from '../../../src/routes.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
-import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
+import { extractAccessionVersion, getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl, dummyOrganism, expect } from '../../e2e.fixture';
 
 export class EditPage {
@@ -33,7 +33,7 @@ export class EditPage {
         await this.downloadButton.click();
         const download = await downloadPromise;
 
-        expect(download.suggestedFilename()).toContain('accessionVersion');
+        expect(download.suggestedFilename()).toContain(getAccessionVersionString(accessionVersion));
         const downloadStream = await download.createReadStream();
         expect(downloadStream).toBeDefined();
 
@@ -46,7 +46,7 @@ export class EditPage {
             downloadStream.on('end', resolve);
         });
 
-        expect(downloadData.toString()).toContain(`>${getAccessionVersionString(accessionVersion)}.main
+        expect(downloadData.toString()).toContain(`>${getAccessionVersionString(accessionVersion)}
 ACTG`);
     }
 }

@@ -3,7 +3,7 @@
     "http://host.k3d.internal:8079"
     "http://loculus-backend-service:8079"
 }}
-{{- $keycloakHost := printf "authentication.%s" .Values.host }}
+{{- $keycloakHost := printf "authentication-%s" .Values.host }}
 
 {{- if not .Values.disablePreprocessing }}
 ---
