@@ -1,34 +1,37 @@
-{{- $lapisHost := printf "lapis.%s" .Values.host }}
-{{- range $key, $_ := $.Values.instances }}
-
+{{- $lapisHost := printf "lapis-%s" .Values.host }}
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: lapis-ingressroute-{{ $key }}
+  name: lapis-ingress
   namespace: {{ $.Values.namespace }}
   annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{- $first := true }}{{- range $key, $_ := $.Values.instances }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Values.namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
 spec:
-  entryPoints:
-    {{- if eq $.Values.environment "server" }}
-    - websecure
-    {{- else }}
-    - web
-    {{- end }}
-  routes:
-  - match: Path(`/{{ $key }}`, `/{{ $key }}/{path:.*}`) {{- if eq $.Values.environment "server" }} && Host(`{{ $lapisHost }}`){{- end }}
-    kind: Rule
-    services:
-    - name: {{ template "loculus.lapisServiceName" $key }}
-      port: 8080
-    middlewares:
-    - name: strip-{{ $key }}-prefix
-{{- if eq $.Values.environment "server" }}
+  rules:
+  - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
+    http:
+      paths:
+      {{- range $key, $_ := $.Values.instances }}
+      - path: /{{ $key }}/
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ template "loculus.lapisServiceName" $key }}
+            port:
+              number: 8080
+        {{- if eq $.Values.environment "server" }}
+        pathType: ImplementationSpecific
+        {{- end }}
+      {{- end }}
+  {{- if eq $.Values.environment "server" }}
   tls:
-    certResolver: myresolver
-{{- end }}
+  - hosts:
+    - {{ $lapisHost }}
+  {{- end }}
 
+
+{{- range $key, $_ := $.Values.instances }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
@@ -38,5 +41,5 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /{{ $key }}
+      - /{{ $key }}/
 {{- end }}

@@ -1,65 +1,68 @@
 {{- if eq .Values.environment "server" }}
-{{- $backendHost := printf "backend.%s" .Values.host }}
-{{- $keycloakHost := printf "authentication.%s" .Values.host }}
+{{- $backendHost := printf "backend-%s" .Values.host }}
+{{- $keycloakHost := printf "authentication-%s" .Values.host }}
 
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: loculus-website-ingressroute
+  name: loculus-website-ingress
   namespace: {{ .Values.namespace }}
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    link.argocd.argoproj.io/external-link: https://{{ .Values.host }}
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`{{ .Values.host }}`)
-      priority: 10
-      services:
-        - name: loculus-website-service
-          port: 3000
+  rules:
+    - host: "{{ .Values.host }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-website-service
+                port:
+                  number: 3000
   tls:
-    certResolver: myresolver
+  - hosts:
+    - "{{ .Values.host }}"
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: loculus-backend-ingressroute
+  name: loculus-backend-ingress
   namespace: {{ .Values.namespace }}
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`{{ $backendHost }}`)
-      priority: 10
-      services:
-        - name: loculus-backend-service
-          port: 8079
+  rules:
+    - host: "{{ $backendHost }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-backend-service
+                port:
+                  number: 8079
   tls:
-    certResolver: myresolver
+  - hosts:
+    - "{{ $backendHost }}"
 ---
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: loculus-keycloak-ingressroute
+  name: loculus-keycloak-ingress
   namespace: {{ .Values.namespace }}
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
-  entryPoints:
-    - websecure
-  routes:
-    - kind: Rule
-      match: Host(`{{ $keycloakHost }}`)
-      priority: 10
-      services:
-        - name: loculus-keycloak-service
-          port: 8083
+  rules:
+    - host: "{{ $keycloakHost }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-keycloak-service
+                port:
+                  number: 8083
   tls:
-    certResolver: myresolver
+  - hosts:
+    - "{{ $keycloakHost }}"
 {{- end}}
