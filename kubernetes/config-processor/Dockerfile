@@ -1,11 +1,10 @@
 # Use an official Python runtime as a parent image
 FROM python:3.8-slim
 
-# Copy the dependencies file to the working directory
-COPY requirements.txt ./
+
+COPY . .
 
 # Install any dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 
-COPY config-processor.py ./
