@@ -21,6 +21,6 @@ npm install
 
 echo "alias loculusWebsite='cd /workspaces/loculus/website && npm run start'" >> ~/.bashrc
 
-echo "alias loculusBackend='cd /workspaces/loculus/backend && start_dev.sh'" >> ~/.bashrc
+echo "alias loculusBackend='cd /workspaces/loculus/backend && ./start_dev.sh'" >> ~/.bashrc
 
 echo "alias loculusPort='gh codespace ports visibility 8079:public -c $CODESPACE_NAME && gh codespace ports visibility 8079:public -c $CODESPACE_NAME'" >> ~/.bashrc
