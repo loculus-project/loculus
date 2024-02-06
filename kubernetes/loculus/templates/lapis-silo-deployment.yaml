@@ -21,7 +21,7 @@ spec:
         component: lapis-silo-{{ $key }}
     spec:
       initContainers:
-{{- include "loculus.configPreprocessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: silo
           image: ghcr.io/genspectrum/lapis-silo:latest

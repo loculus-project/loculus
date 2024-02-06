@@ -20,8 +20,8 @@ spec:
         component: website-and-backend
     spec:
       initContainers:
-{{- include "loculus.configPreprocessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag) | nindent 8 }}
-{{- include "loculus.configPreprocessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         {{- if not .Values.disableWebsite }}
         - name: website

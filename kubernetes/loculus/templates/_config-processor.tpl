@@ -1,4 +1,4 @@
-{{- define "loculus.configPreprocessor" -}}
+{{- define "loculus.configProcessor" -}}
 - name: config-processor-{{ .name }}
   image: ghcr.io/loculus-project/config-processor:{{ .dockerTag }}
   imagePullPolicy: Always
@@ -7,7 +7,7 @@
       mountPath: /input
     - name: {{ .name }}-processed
       mountPath: /output
-  command: ["python ./config_processor.py"]
+  command: ["python ./config-processor.py"]
   args: ["/input", "/output"]
 {{- end -}}
 

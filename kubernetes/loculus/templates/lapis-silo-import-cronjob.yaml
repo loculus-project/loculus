@@ -21,7 +21,7 @@ spec:
             component: silo-import-cronjob-{{ $key }}
         spec:
           initContainers:
-{{- include "loculus.configPreprocessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 12 }}
+{{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 12 }}
           containers:
             - name: silo-preprocessing
               image: ghcr.io/genspectrum/lapis-silo:latest
