@@ -5,7 +5,13 @@ import requests
 import re
 
 def copy_structure(input_dir, output_dir):
-    shutil.copytree(input_dir, output_dir)
+    for root, dirs, files in os.walk(input_dir):
+        for dir in dirs:
+            dir_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, dir), input_dir))
+            os.makedirs(dir_path, exist_ok=True)
+        for file in files:
+            file_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, file), input_dir))
+            shutil.copy(os.path.join(root, file), file_path)
 
 def replace_url_with_content(file_content):
     urls = re.findall(r'\[\[URL:(http://[^\]]+)\]\]', file_content)
