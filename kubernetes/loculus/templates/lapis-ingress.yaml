@@ -30,8 +30,9 @@ spec:
     - {{ $lapisHost }}
   {{- end }}
 
----
+
 {{- range $key, $_ := $.Values.instances }}
+---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
@@ -41,5 +42,4 @@ spec:
   stripPrefix:
     prefixes:
       - /{{ $key }}
---
 {{- end }}
