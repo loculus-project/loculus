@@ -12,6 +12,7 @@ data:
       "enabled": true,
       "registrationAllowed": true,
       "accessTokenLifespan": 36000,
+      "ssoSessionIdleTimeout": 36000,
       "users": [
         {{- $browsers := list "firefox" "webkit" "chromium"}}
         {{- range $_, $browser := $browsers }}
