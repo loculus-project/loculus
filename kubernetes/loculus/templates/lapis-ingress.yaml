@@ -41,5 +41,5 @@ metadata:
 spec:
   stripPrefix:
     prefixes:
-      - /{{ $key }}/
+      - /{{ $key }}
 {{- end }}
