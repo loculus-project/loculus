@@ -7,7 +7,7 @@
       mountPath: /input
     - name: {{ .name }}-processed
       mountPath: /output
-  command: ["./config_processor.py"]
+  command: ["python ./config_processor.py"]
   args: ["/input", "/output"]
 {{- end -}}
 
