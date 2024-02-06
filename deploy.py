@@ -4,6 +4,9 @@ import argparse
 import subprocess
 import time
 from pathlib import Path
+import json
+import os
+import yaml
 
 script_path = Path(__file__).resolve()
 ROOT_DIR = script_path.parent
@@ -43,6 +46,8 @@ helm_parser.add_argument('--values', help='Values file for helm chart',
 
 upgrade_parser = subparsers.add_parser('upgrade', help='Upgrade helm installation')
 
+config_parser = subparsers.add_parser('config', help='Generate config files')
+
 args = parser.parse_args()
 
 
@@ -53,6 +58,8 @@ def main():
         handle_helm()
     elif args.subcommand == 'upgrade':
         handle_helm_upgrade()
+    elif args.subcommand == 'config':
+        generate_configs()
 
 
 def handle_cluster():
@@ -127,6 +134,9 @@ def handle_helm():
 
     if not args.enablePreprocessing:
         parameters += ['--set', "disablePreprocessing=true"]
+    
+    if get_codespace_name():
+        parameters += ['--set', "codespaceName="+get_codespace_name()]
 
     subprocess.run(parameters, check=True)
 
@@ -145,6 +155,37 @@ def handle_helm_upgrade():
     ]
     subprocess.run(parameters, check=True)
 
+def get_codespace_name():
+    return os.environ.get('CODESPACE_NAME', None)
+
+def generate_configs():
+    helm_chart = str(HELM_CHART_DIR)
+    codespace_name = get_codespace_name()
+
+    backend_config_path = ROOT_DIR / 'website' / 'tests' / 'config' / 'backend_config.json'
+    generate_config(helm_chart, 'templates/loculus-backend-config.yaml', backend_config_path, codespace_name)
+
+    website_config_path = ROOT_DIR / 'website' / 'tests' / 'config' / 'website_config.json'
+    generate_config(helm_chart, 'templates/loculus-website-config.yaml', website_config_path, codespace_name)
+
+    runtime_config_path = ROOT_DIR / 'website' / 'tests' / 'config' / 'runtime_config.json'
+    generate_config(helm_chart, 'templates/loculus-website-config.yaml', runtime_config_path, codespace_name)
+
+def generate_config(helm_chart, template, output_path, codespace_name=None):
+    helm_template_cmd = ['helm', 'template', 'name-does-not-matter', helm_chart, '--show-only', template]
+
+    if codespace_name:
+        helm_template_cmd.extend(['--set', 'codespaceName='+codespace_name])
+
+    helm_template_cmd.extend(['--set', 'environment=local'])
+    helm_output = subprocess.run(helm_template_cmd, capture_output=True, text=True, check=True).stdout
+    parsed_yaml = yaml.safe_load(helm_output)
+    config_data = parsed_yaml['data'][output_path.name]
+
+    with open(output_path, 'w') as f:
+        f.write(config_data)
+
+    print(f"Wrote config to {output_path}")
 
 if __name__ == '__main__':
     main()
