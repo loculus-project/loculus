@@ -162,7 +162,9 @@ data:
       ],
       "attributes": {
         {{- if eq .Values.environment "server" }}
-        "frontendUrl": "https://{{ $keycloakHost}}"
+        "frontendUrl": "https://{{ $keycloakHost }}"
+        {{- else if .Values.codespaceName }}
+        "frontendUrl": "https://{{ .Values.codespaceName }}-8083.app.github.dev"
         {{- else }}
         "frontendUrl": "http://localhost:8083"
         {{- end }}

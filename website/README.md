@@ -68,4 +68,4 @@ If the environment variable LOG_DIR is set, it will also store them in `LOG_DIR/
 ### General tips
 
 - Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
-- Tipps & Tricks for using icons from MUI  https://mui.com/material-ui/guides/minimizing-bundle-size/
+- Tips & Tricks for using icons from MUI  https://mui.com/material-ui/guides/minimizing-bundle-size/
