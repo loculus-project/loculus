@@ -4,6 +4,7 @@ kind: ApplicationSet
 metadata:
   name: pp-preview
   namespace: argocd
+  resourceVersion: "33491144"
 spec:
   goTemplate: true
   generators:
