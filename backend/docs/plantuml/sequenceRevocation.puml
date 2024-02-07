@@ -6,7 +6,7 @@
     frontend -> backend: wants to revoke already processed sequence
 
      alt accession exists and highest version is 'APPROVED_FOR_RELEASE'
-        backend -> DB: insert new version\nwith status 'REVISION_STAGING' \nand ' is_revocation = true'
+        backend -> DB: insert new version\nwith status 'AWAITING_APPROVAL_FOR_REVOCATION' \nand ' is_revocation = true'
     backend -> frontend: response with accession + new version number
     else
         backend -> frontend: response with error message
