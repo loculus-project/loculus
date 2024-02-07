@@ -3,11 +3,12 @@ import json
 import requests
 import logging
 
-BRANCH="mpox-with-processing"
+BRANCH="main"
 GROUP_NAME="insdc_ingest_group"
 USERNAME="insdc_ingest_user"
 PASSWORD="insdc_ingest_user"
-KEYCLOAK_TOKEN_URL=f"https://authentication.{BRANCH}.preview.k3s.loculus.org/realms/loculusRealm/protocol/openid-connect/token"
+BACKEND_URL=f"https://backend-{BRANCH}.loculus.org"
+KEYCLOAK_TOKEN_URL=f"https://authentication-{BRANCH}.loculus.org/realms/loculusRealm/protocol/openid-connect/token"
 KEYCLOAK_CLIENT_ID="test-cli" # Apparently required to be exactly this
 ORGANISM="mpox"
 
@@ -35,7 +36,7 @@ def get_jwt(username, password):
 
 def create_group(group_name):
     # Create the ingest group
-    url = f"https://backend.{BRANCH}.preview.k3s.loculus.org/groups"
+    url = f"{BACKEND_URL}/groups"
     token = get_jwt(USERNAME, PASSWORD)
     group_name = group_name
 
@@ -45,7 +46,7 @@ def create_group(group_name):
     }
 
     data = {
-        "groupName": group_name
+        "groupName": group_name,
     }
 
     response = requests.post(url, json=data, headers=headers)
@@ -64,7 +65,7 @@ def submit(metadata, sequences):
     jwt = get_jwt(USERNAME, PASSWORD)
 
     # Endpoint URL
-    url = f'https://backend.{BRANCH}.preview.k3s.loculus.org/{ORGANISM}/submit'
+    url = f'{BACKEND_URL}/{ORGANISM}/submit'
 
     # Headers with Bearer Authentication
     headers = {
@@ -79,7 +80,8 @@ def submit(metadata, sequences):
 
     # Query parameters
     params = {
-        'groupName': GROUP_NAME
+        'groupName': GROUP_NAME,
+        "dataUseTermsType": "OPEN",
     }
 
     # POST request
@@ -96,12 +98,12 @@ def approve():
     """
     Get sequences that were preprocessed successfully and approve them.
     1. Get the ids of the sequences that were preprocessed successfully
-        /ORGANISM/get-sequences-of-user
+        /ORGANISM/get-sequences
     2. Approve the sequences
     """
     jwt = get_jwt(USERNAME, PASSWORD)
 
-    url = f'https://backend.{BRANCH}.preview.k3s.loculus.org/{ORGANISM}/get-sequences-of-user'
+    url = f'{BACKEND_URL}/{ORGANISM}/get-sequences'
 
 
     # Headers with Bearer Authentication
@@ -125,7 +127,7 @@ def approve():
 
     payload = {"accessionVersions": to_approve}
 
-    url = f'https://backend.{BRANCH}.preview.k3s.loculus.org/{ORGANISM}/approve-processed-data'
+    url = f'{BACKEND_URL}/{ORGANISM}/approve-processed-data'
 
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
