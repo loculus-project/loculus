@@ -22,6 +22,7 @@
     state HAS_ERRORS
     state RECEIVED
     state APPROVED_FOR_RELEASE
+    state AWAITING_APPROVAL
 
     ' actions
     state CREATING_SUBMIT as "entry with new accession\n will be created" #lightgreen;line:green;line.dotted
@@ -45,9 +46,9 @@
     IN_PROCESSING --> is_error
     is_error --> HAS_ERRORS : data contain error(s)
     HAS_ERRORS --> RECEIVED : user edits data
-    STAGING --> RECEIVED : user edits data
-    is_error --> STAGING : preprocessing successful
-    STAGING --> is_approved
+    AWAITING_APPROVAL --> RECEIVED : user edits data
+    is_error --> AWAITING_APPROVAL : preprocessing successful
+    AWAITING_APPROVAL --> is_approved
     is_approved --> APPROVED_FOR_RELEASE : user approves \nor automatic approval\n via 'release_directly'
     is_approved --> DELETION : user rejects
 

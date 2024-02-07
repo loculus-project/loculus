@@ -3,3 +3,5 @@ venv/
 
 # Editors
 .idea/
+
+config.yaml

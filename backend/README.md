@@ -15,7 +15,7 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 ```bash
 ../generate_local_test_config.sh
-./gradlew bootRun --args='--spring.datasource.url=jdbc:postgresql://localhost:5432/loculus --spring.datasource.username=postgres --spring.datasource.password=unsecure --backend.config.path=../website/tests/config/backend_config.json --spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculusRealm/protocol/openid-connect/certs --keycloak.user=backend --keycloak.password=backend --keycloak.realm=loculusRealm --keycloak.client=test-cli --keycloak.url=http://localhost:8083'
+./start_dev.sh
 ```
 
 #### Details

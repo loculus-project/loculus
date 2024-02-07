@@ -2,7 +2,7 @@ import { type FC, type FormEvent, useRef, useState } from 'react';
 
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
-import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withProvider.tsx';
 import DeleteIcon from '~icons/ci/user-remove';

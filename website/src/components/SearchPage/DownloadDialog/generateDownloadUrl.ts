@@ -22,8 +22,7 @@ export const generateDownloadUrl = (
 ) => {
     const baseUrl = `${lapisUrl}${getEndpoint(option.dataType)}`;
     const params = new URLSearchParams();
-    // TODO(#848)
-    // params.set('downloadAsFile', 'true');
+    params.set('downloadAsFile', 'true');
     if (!option.includeOldData) {
         params.set(VERSION_STATUS_FIELD, siloVersionStatuses.latestVersion);
         params.set(IS_REVOCATION_FIELD, 'false');
