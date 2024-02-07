@@ -13,7 +13,7 @@ def copy_structure(input_dir, output_dir):
             shutil.copy(os.path.join(root, file), file_path)
 
 def replace_url_with_content(file_content):
-    urls = re.findall(r'\[\[URL:(.*)\]\]', file_content)
+    urls = re.findall(r'\[\[URL:([^\]]*)\]\]', file_content)
     for url in urls:
         response = requests.get(url)
         if response.status_code == 200:
