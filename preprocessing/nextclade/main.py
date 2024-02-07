@@ -277,7 +277,7 @@ def run_nextclade(
                 id = result["seqName"]
                 processed[id]["metadata"].update({"clade": result["clade"]})
                 processed[id]["metadata"].update({"lineage": result["customNodeAttributes"]["lineage"]})
-                processed[id]["metadata"].update({"completeness": float(result["coverage"])})
+                processed[id]["metadata"].update({"completeness": f"{result["coverage"]}"})
         return processed
 
 

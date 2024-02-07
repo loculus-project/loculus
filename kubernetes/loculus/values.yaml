@@ -91,7 +91,7 @@ instances:
           autocomplete: true
           required: false
         - name: completeness
-          type: double
+          type: string
           required: false
         - name: isolate
           type: string
