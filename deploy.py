@@ -12,6 +12,7 @@ script_path = Path(__file__).resolve()
 ROOT_DIR = script_path.parent
 TEMP_DIR = ROOT_DIR / 'temp'
 
+
 CLUSTER_NAME = 'testCluster'
 HELM_RELEASE_NAME = 'preview'
 HELM_CHART_DIR = ROOT_DIR / 'kubernetes' / 'loculus'
@@ -160,6 +161,8 @@ def get_codespace_name():
     return os.environ.get('CODESPACE_NAME', None)
 
 def generate_configs():
+    TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
     helm_chart = str(HELM_CHART_DIR)
     codespace_name = get_codespace_name()
 
@@ -174,7 +177,7 @@ def generate_configs():
     runtime_config_path =  TEMP_DIR / 'runtime_config.json'
     generate_config(helm_chart, 'templates/loculus-website-config.yaml', runtime_config_path, codespace_name)
 
-    subprocess.run(['python3', 'kubernetes/config-processor/config-processor.py', TEMP_DIR, output_dir])
+    subprocess.run(['python', 'kubernetes/config-processor/config-processor.py', TEMP_DIR, output_dir])
 
 def generate_config(helm_chart, template, output_path, codespace_name=None):
     helm_template_cmd = ['helm', 'template', 'name-does-not-matter', helm_chart, '--show-only', template]
