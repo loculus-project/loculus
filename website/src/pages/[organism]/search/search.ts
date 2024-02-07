@@ -14,12 +14,6 @@ export type SearchResponse = {
     totalCount: number;
 };
 
-function addHiddenFilters(searchFormFilter: FilterValue[], hiddenFilters: FilterValue[]) {
-    const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
-    const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
-    return [...searchFormFilter, ...hiddenFiltersToAdd];
-}
-
 export const getData = async (
     organism: string,
     metadataFilter: FilterValue[],
@@ -29,9 +23,7 @@ export const getData = async (
     orderBy?: OrderBy,
     hiddenDefaultFilters: FilterValue[] = hiddenDefaultSearchFilters,
 ): Promise<Result<SearchResponse, ProblemDetail>> => {
-    const filters = addHiddenFilters(metadataFilter, hiddenDefaultFilters);
-
-    const metadataSearchFilters = filters
+    const metadataSearchFilters = metadataFilter
         .filter((metadata) => metadata.filterValue !== '')
         .reduce((acc: Record<string, string>, metadata) => {
             acc[metadata.name] = metadata.filterValue;
