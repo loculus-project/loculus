@@ -54,5 +54,4 @@ test.describe('The search page', () => {
 
         await expect(searchPage.getEmptyAccessionVersionField()).toHaveValue('');
     });
-
 });
