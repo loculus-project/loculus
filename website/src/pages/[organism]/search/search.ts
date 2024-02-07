@@ -21,7 +21,6 @@ export const getData = async (
     offset: number,
     limit: number,
     orderBy?: OrderBy,
-    hiddenDefaultFilters: FilterValue[] = hiddenDefaultSearchFilters,
 ): Promise<Result<SearchResponse, ProblemDetail>> => {
     const metadataSearchFilters = metadataFilter
         .filter((metadata) => metadata.filterValue !== '')
