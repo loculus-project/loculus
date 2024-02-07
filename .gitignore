@@ -5,6 +5,7 @@
 .idea/*
 !.idea/runConfigurations
 *.iml
+.vscode/*
 
 # build output
 dist/
