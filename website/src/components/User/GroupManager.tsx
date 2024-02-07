@@ -1,10 +1,9 @@
-import { type FC, type FormEvent, useRef, useState } from 'react';
+import { type FC, type FormEvent, useState } from 'react';
 
 import { useGroupManagerHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes.ts';
-import type { Group } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
-import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withProvider.tsx';
 import LeaveIcon from '~icons/pepicons-pop/leave-circle-filled';
@@ -16,9 +15,7 @@ interface GroupManagerProps {
 }
 
 const InnerGroupManager: FC<GroupManagerProps> = ({ clientConfig, accessToken, username }) => {
-    const [groupToLeave, setGroupToLeave] = useState<Group | null>(null);
     const [newGroupName, setNewGroupName] = useState<string>('');
-    const dialogRef = useRef<HTMLDialogElement>(null);
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
@@ -34,20 +31,6 @@ const InnerGroupManager: FC<GroupManagerProps> = ({ clientConfig, accessToken, u
         setNewGroupName('');
     };
 
-    const handleLeaveGroup = async () => {
-        if (groupToLeave) {
-            await leaveGroup(groupToLeave.groupName, username);
-            setGroupToLeave(null);
-        }
-    };
-
-    const handleOpenConfirmationDialog = (group: Group) => {
-        setGroupToLeave(group);
-        if (dialogRef.current) {
-            dialogRef.current.showModal();
-        }
-    };
-
     return (
         <div className='p-4'>
             <h2 className='text-2xl mb-4'>Groups</h2>
@@ -55,13 +38,6 @@ const InnerGroupManager: FC<GroupManagerProps> = ({ clientConfig, accessToken, u
             {errorMessage !== undefined && (
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
             )}
-
-            <dialog ref={dialogRef} className='modal'>
-                <ConfirmationDialog
-                    onConfirmation={handleLeaveGroup}
-                    dialogText={`Do you really want to leave the Group ${groupToLeave?.groupName}?`}
-                />
-            </dialog>
 
             <form onSubmit={handleCreateGroup}>
                 <div className='flex mb-4'>
@@ -87,7 +63,14 @@ const InnerGroupManager: FC<GroupManagerProps> = ({ clientConfig, accessToken, u
                                 {group.groupName}
                             </a>
                             <button
-                                onClick={() => handleOpenConfirmationDialog(group)}
+                                onClick={() =>
+                                    displayConfirmationDialog({
+                                        dialogText: `Are you sure you want to leave group ${group.groupName}?`,
+                                        onConfirmation: async () => {
+                                            await leaveGroup(group.groupName, username);
+                                        },
+                                    })
+                                }
                                 className='px-2 py-1 bg-red-500 text-white rounded'
                                 title='Leave group'
                                 aria-label={`Leave group ${group.groupName}`}

@@ -8,6 +8,7 @@ on:
       - 'backend/**'
       - 'kubernetes/**'
       - 'preprocessing/**'
+      - 'deploy.py'
 
 concurrency:
   group: ci-${{ github.ref }}-e2e-k3d

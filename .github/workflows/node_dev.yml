@@ -4,17 +4,19 @@ on:
   push:
     paths:
       - 'website/**'
+      - 'deploy.py'
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
-    env:
-      CONFIG_DIR: ./tests/config
     steps:
+    - uses: azure/setup-helm@v3
     - name: Checkout repository
       uses: actions/checkout@v4
+    - name: Install yaml package
+      run: pip install PyYAML
 
     - name: Generate local test config
       run: ./generate_local_test_config.sh

@@ -12,6 +12,7 @@ data:
       "enabled": true,
       "registrationAllowed": true,
       "accessTokenLifespan": 36000,
+      "ssoSessionIdleTimeout": 36000,
       "users": [
         {{- $browsers := list "firefox" "webkit" "chromium"}}
         {{- range $_, $browser := $browsers }}
@@ -50,6 +51,28 @@ data:
             {
               "type": "password",
               "value": "testuser"
+            }
+          ],
+          "realmRoles": [
+            "user",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        {
+          "username": "insdc_ingest_user",
+          "enabled": true,
+          "email": "insdc_ingest_user@keycloak.org",
+          "firstName": "INSDC Ingest",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "insdc_ingest_user"
             }
           ],
           "realmRoles": [
@@ -161,7 +184,9 @@ data:
       ],
       "attributes": {
         {{- if eq .Values.environment "server" }}
-        "frontendUrl": "https://{{ $keycloakHost}}"
+        "frontendUrl": "https://{{ $keycloakHost }}"
+        {{- else if .Values.codespaceName }}
+        "frontendUrl": "https://{{ .Values.codespaceName }}-8083.app.github.dev"
         {{- else }}
         "frontendUrl": "http://localhost:8083"
         {{- end }}

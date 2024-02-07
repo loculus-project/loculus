@@ -99,8 +99,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
     const userInfo = await getUserInfo(token);
     if (userInfo.isErr()) {
-        logger.error(`Error getting user info: ${userInfo.error}`);
-        deleteCookie(context);
+        logger.debug(`Error getting user info: ${userInfo.error}`);
         return redirectToAuth(context);
     }
 
@@ -193,6 +192,7 @@ async function verifyToken(accessToken: string) {
 
 async function getUserInfo(token: TokenCookie) {
     return ResultAsync.fromPromise((await getKeycloakClient()).userinfo(token.accessToken), (error) => {
+        logger.error(`Error getting user info: ${error}`);
         return error;
     });
 }
@@ -201,10 +201,10 @@ async function getTokenFromParams(context: APIContext) {
     const client = await getKeycloakClient();
 
     const params = client.callbackParams(context.url.toString());
-    logger.debug(`Keycloak callback params: ${JSON.stringify(params)}`);
+    logger.info(`Keycloak callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
         const redirectUri = removeTokenCodeFromSearchParams(context.url);
-        logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
+        logger.info(`Keycloak callback redirect uri: ${redirectUri}`);
         const tokenSet = await client
             .callback(redirectUri, params, {
                 response_type: 'code',
@@ -242,17 +242,25 @@ function deleteCookie(context: APIContext) {
     }
 }
 
+// https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Basic_concepts#guard
+const createRedirectWithModifiableHeaders = (url: string) => {
+    const redirect = Response.redirect(url);
+    return new Response(null, { status: redirect.status, headers: redirect.headers });
+};
+
 const redirectToAuth = async (context: APIContext) => {
     const currentUrl = context.url;
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
+    logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
     const authUrl = (await getKeycloakClient()).authorizationUrl({
         redirect_uri: redirectUrl,
         scope: 'openid',
         response_type: 'code',
     });
 
-    return Response.redirect(authUrl);
+    deleteCookie(context);
+    return createRedirectWithModifiableHeaders(authUrl);
 };
 
 function removeTokenCodeFromSearchParams(url: URL) {
@@ -266,12 +274,16 @@ function removeTokenCodeFromSearchParams(url: URL) {
 }
 
 async function refreshTokenViaKeycloak(token: TokenCookie) {
-    const refreshedTokenSet = await (await getKeycloakClient()).refresh(token.refreshToken).catch(() => undefined);
+    const refreshedTokenSet = await (await getKeycloakClient()).refresh(token.refreshToken).catch(() => {
+        logger.error(`Error refreshing token`);
+        return undefined;
+    });
     return extractTokenCookieFromTokenSet(refreshedTokenSet);
 }
 
 function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined) {
     if (tokenSet === undefined || tokenSet.access_token === undefined || tokenSet.refresh_token === undefined) {
+        logger.error(`Error extracting token cookie from token set`);
         return undefined;
     }
 

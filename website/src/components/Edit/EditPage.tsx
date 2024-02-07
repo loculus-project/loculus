@@ -11,7 +11,7 @@ import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryToEdi
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import { ConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withProvider.tsx';
 

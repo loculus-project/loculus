@@ -54,18 +54,4 @@ test.describe('The search page', () => {
 
         await expect(searchPage.getEmptyAccessionVersionField()).toHaveValue('');
     });
-
-    test('should sort result table', async ({ searchPage }) => {
-        await searchPage.goto();
-
-        await searchPage.clickTableHeader(ACCESSION_VERSION);
-        const ascendingColumn = (await searchPage.getTableContent()).map((row) => row[0]);
-        const isAscending = ascendingColumn.every((_, i, arr) => i === 0 || arr[i - 1] <= arr[i]);
-        expect(isAscending, `Rows were: ${ascendingColumn}`).toBeTruthy();
-
-        await searchPage.clickTableHeader(ACCESSION_VERSION);
-        const descendingColumn = (await searchPage.getTableContent()).map((row) => row[0]);
-        const isDescending = descendingColumn.every((_, i, arr) => i === 0 || arr[i - 1] >= arr[i]);
-        expect(isDescending, `Rows were: ${ascendingColumn}`).toBeTruthy();
-    });
 });

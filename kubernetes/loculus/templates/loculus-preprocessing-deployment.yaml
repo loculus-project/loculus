@@ -6,12 +6,13 @@
 {{- $keycloakHost := printf "authentication-%s" .Values.host }}
 
 {{- if not .Values.disablePreprocessing }}
+{{- range $key, $value := .Values.instances }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus-preprocessing
-  namespace: {{ .Values.namespace }}
+  name: loculus-preprocessing-{{ $key }}
+  namespace: {{ $.Values.namespace }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
@@ -19,27 +20,38 @@ spec:
   selector:
     matchLabels:
       app: loculus
-      component: loculus-preprocessing
+      component: loculus-preprocessing-{{ $key }}
   template:
     metadata:
       labels:
         app: loculus
-        component: loculus-preprocessing
+        component: loculus-preprocessing-{{ $key }}
     spec:
       containers:
-        {{- range $key, $_ := $.Values.instances }}
         - name: preprocessing-{{ $key }}
-          image: ghcr.io/loculus-project/preprocessing-dummy:{{ $dockerTag }}
+          image: {{ $value.preprocessing.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
           args:
-            - "--watch"
+            {{- range $arg := $value.preprocessing.args }}
+            - "{{ $arg }}"
+            {{- end }}
             - "--backend-host={{ $backendHost }}/{{ $key }}"
             {{- if eq $.Values.environment "server" }}
             - "--keycloak-host=https://{{ $keycloakHost}}"
             {{- else }}
             - "--keycloak-host=http://loculus-keycloak-service:8083"
-            {{- end }}
-        {{- end }}
+            {{- end -}}
+      {{- if $value.preprocessing.configFile }}
+            - "--config=/etc/config/preprocessing-config.yaml"
+          volumeMounts:
+            - name: loculus-preprocessing-config-volume-{{ $key }}
+              mountPath: /etc/config
+      volumes:
+        - name: loculus-preprocessing-config-volume-{{ $key }}
+          configMap:
+            name: loculus-preprocessing-config-{{ $key }}
+      {{- end }}
       imagePullSecrets:
         - name: ghcr-secret
+{{- end }}
 {{- end }}
