@@ -123,8 +123,8 @@ const processSequence = (sequence) => {
         sequence.processedData.warnings.push({
             source: [
                 {
-                    type: 'NucleotideSequence',
-                    name: 'TenthCharacterCheck',
+                    type: 'metadata',
+                    name: 'host',
                 },
             ],
             affected: [
