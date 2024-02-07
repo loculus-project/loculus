@@ -221,12 +221,18 @@ def run_nextclade(
                 # Invalid date format
                 raise ValueError("Invalid date format")
 
-        # TODO: Process metadata. For now, just use "date"
+        # TODO: Process metadata from unprocessed metadata
         processed_metadata = {
             unprocessed_sequence.accessionVersion: {
                 "collection_date": process_date(
                     unprocessed_sequence.data.metadata["collection_date"]
-                )
+                ),
+                "release_date": unprocessed_sequence.data.metadata["Release date"],
+                "isolate": unprocessed_sequence.data.metadata["Isolate Lineage"],
+                "region": unprocessed_sequence.data.metadata["Geographic Region"],
+                "location": unprocessed_sequence.data.metadata["Geographic location"],
+                "submitters": unprocessed_sequence.data.metadata["Submitter Names"],
+                "affiliation": unprocessed_sequence.data.metadata["Submitter Affiliations"],
             }
             for unprocessed_sequence in unprocessed
         }

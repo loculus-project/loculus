@@ -2,7 +2,7 @@ environment: server
 namespace: loculus
 disableWebsite: false
 disableBackend: false
-disablePreprocessing: false
+disablePreprocessing: true
 instances:
   dummy-organism:
     schema:
@@ -91,8 +91,38 @@ instances:
           autocomplete: true
           required: false
         - name: completeness
-          type: float
+          type: double
           required: false
+        - name: isolate
+          type: string
+          required: false
+          autocomplete: true
+        - name: submitters
+          type: string
+          required: false
+          generateIndex: true
+        - name: region
+          type: string
+          required: false
+          autocomplete: true
+          generateIndex: true
+        - name: location
+          type: string
+          required: false
+          autocomplete: true
+          generateIndex: true
+        - name: affiliation
+          type: string
+          required: false
+          generateIndex: true
+          autocomplete: true
+        - name: release_date
+          type: string
+          required: false
+          generateIndex: true
+          autocomplete: true
+
+        
       website:
         tableColumns:
           - collection_date
