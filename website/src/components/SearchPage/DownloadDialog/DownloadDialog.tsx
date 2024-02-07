@@ -84,7 +84,6 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                     <a
                         className={`btn loculusGreen ${!agreedToDataUseTerms ? 'btn-disabled' : ''}`}
                         href={downloadUrl}
-                        target='_blank'
                         onClick={closeDialog}
                     >
                         Download

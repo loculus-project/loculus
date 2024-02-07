@@ -79,12 +79,14 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/details?versionStatus=LATEST_VERSION&isRevocation=false&dataFormat=tsv&field1=value1`,
+            `${defaultLapisUrl}/sample/details?downloadAsFile=true&versionStatus=LATEST_VERSION&isRevocation=false&dataFormat=tsv&field1=value1`,
         );
 
         await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
         await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
-        expect(getDownloadHref()).toBe(`${defaultLapisUrl}/sample/unalignedNucleotideSequences?field1=value1`);
+        expect(getDownloadHref()).toBe(
+            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&field1=value1`,
+        );
     });
 });
 
