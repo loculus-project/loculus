@@ -85,10 +85,19 @@ instances:
           generateIndex: true
           autocomplete: true
           required: false
+        - name: lineage
+          type: string
+          generateIndex: true
+          autocomplete: true
+          required: false
+        - name: completeness
+          type: float
+          required: false
       website:
         tableColumns:
           - collection_date
           - clade
+          - lineage
         defaultOrderBy: collection_date
         defaultOrder: descending
       silo:

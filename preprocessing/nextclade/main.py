@@ -116,6 +116,7 @@ class AnnotationSource:
 @dataclass
 class ProcessingAnnotation:
     source: AnnotationSource
+    affected: AnnotationSource
     message: str
 
 
@@ -269,6 +270,8 @@ def run_nextclade(
             for result in json.load(nextclade_json)["results"]:
                 id = result["seqName"]
                 processed[id]["metadata"].update({"clade": result["clade"]})
+                processed[id]["metadata"].update({"lineage": result["customNodeAttributes"]["lineage"]})
+                processed[id]["metadata"].update({"completeness": result["coverage"]})
         return processed
 
 
