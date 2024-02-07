@@ -19,7 +19,11 @@ const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
 };
 
-const metadataFilter = [...getMetadataFilters(getSearchParams, organism), ...hiddenDefaultSearchFilters];
+const metadataFiltersFromSearch = getMetadataFilters(getSearchParams, organism);
+const metadataFilterNames = metadataFiltersFromSearch.map((filter) => filter.name);
+const hiddenFilters = hiddenDefaultSearchFilters.filter((filter) => !metadataFilterNames.includes(filter.name));
+const metadataFilter = [...metadataFiltersFromSearch, ...hiddenFilters];
+
 const mutationFilter = getMutationFilter(Astro.url.searchParams);
 
 const pageParam = Astro.url.searchParams.get('page');
