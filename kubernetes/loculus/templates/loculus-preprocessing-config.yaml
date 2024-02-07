@@ -1,0 +1,13 @@
+{{- range $key, $values := .Values.instances }}
+{{- if $values.preprocessing.configFile }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-preprocessing-config-{{ $key }}
+  namespace: {{ $.Values.namespace }}
+data:
+  preprocessing-config.yaml: |
+    {{- $values.preprocessing.configFile | toYaml | nindent 4 -}}
+{{- end }}
+{{- end }}
