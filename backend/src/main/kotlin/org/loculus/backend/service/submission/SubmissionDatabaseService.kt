@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -47,6 +48,9 @@ import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionVa
 import org.loculus.backend.service.jsonbParam
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.scheduling.annotation.Scheduled
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
@@ -582,6 +586,40 @@ class SubmissionDatabaseService(
             }
         }
     }
+
+    fun cleanUpStaleSequencesInProcessing(cleanUpIntervalInMs: Long) {
+        val staleDateTime = Instant.fromEpochMilliseconds(
+            Clock.System.now().toEpochMilliseconds() - cleanUpIntervalInMs,
+        ).toLocalDateTime(TimeZone.UTC)
+
+        sequenceEntriesTableProvider.get(organism = null).let { table ->
+            val staleSequences = table
+                .slice(table.accessionColumn, table.versionColumn)
+                .select(
+                    where = {
+                        table.statusIs(IN_PROCESSING) and
+                            table.startedProcessingAtColumn.less(
+                                staleDateTime,
+                            )
+                    },
+                )
+                .map { AccessionVersion(it[table.accessionColumn], it[table.versionColumn]) }
+
+            if (staleSequences.isNotEmpty()) {
+                log.debug { "Cleaning up ${staleSequences.size} stale sequences in processing" }
+                table.update(
+                    where = {
+                        table.accessionVersionIsIn(staleSequences) and table.statusIs(IN_PROCESSING)
+                    },
+                ) {
+                    it[statusColumn] = RECEIVED.name
+                    it[startedProcessingAtColumn] = null
+                }
+            } else {
+                log.debug { "No stale sequences in processing to clean up" }
+            }
+        }
+    }
 }
 
 data class RawProcessedData(
@@ -596,3 +634,15 @@ data class RawProcessedData(
     val processedData: ProcessedData,
     val dataUseTerms: DataUseTerms,
 ) : AccessionVersionInterface
+
+@Component
+class CleanUpStaleSequencesInProcessingTask(
+    private val submissionDatabaseService: SubmissionDatabaseService,
+    @Value("\${clean-up-stale-in-processing-after-milliseconds}") private val cleanUpInterval: Long,
+) {
+    @Scheduled(fixedRateString = "\${clean-up-stale-in-processing-every-milliseconds}")
+    fun task() {
+        log.info { "Cleaning up stale sequences in processing" }
+        submissionDatabaseService.cleanUpStaleSequencesInProcessing(cleanUpInterval)
+    }
+}
