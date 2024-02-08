@@ -76,7 +76,7 @@ class SubmitModel(
 
     companion object AcceptedFileTypes {
         val metadataFileTypes = ValidExtension("Metadata file", listOf("tsv"))
-        val sequenceFileTypes = ValidExtension("Sequence file", listOf("fasta"))
+        val sequenceFileTypes = ValidExtension("Sequence file", listOf(""))
     }
 
     data class ValidExtension(
