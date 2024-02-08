@@ -10,13 +10,13 @@ import java.nio.charset.StandardCharsets
 import java.util.Base64
 
 enum class CompressionAlgorithm(val extension: String) {
+    NONE(""),
     ZSTD(".zst"),
     XZ(".xz"),
     GZIP(".gz"),
     ZIP(".zip"),
     BZIP2(".bz2"),
     LZMA(".lzma"),
-    NONE(""),
 }
 
 @Service
