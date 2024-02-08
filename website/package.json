@@ -41,6 +41,7 @@
     "react-chartjs-2": "^5.2.0",
     "react-confirm-alert": "^3.0.6",
     "react-dom": "^18.2.0",
+    "react-tooltip": "^5.26.2",
     "unplugin-icons": "^0.18.2",
     "winston": "^3.11.0",
     "zod": "^3.22.4"

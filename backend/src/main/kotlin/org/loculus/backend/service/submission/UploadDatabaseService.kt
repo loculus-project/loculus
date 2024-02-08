@@ -138,26 +138,15 @@ class UploadDatabaseService(
             result.toList()
         } ?: emptyList()
 
-        val result = if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
+        if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             dataUseTermsDatabaseService.setNewDataUseTerms(
                 submissionParams.username,
                 insertionResult.map { it.accession },
                 submissionParams.dataUseTerms,
             )
-
-            insertionResult.map {
-                SubmissionIdMapping(
-                    it.accession,
-                    it.version,
-                    it.submissionId,
-                    submissionParams.dataUseTerms,
-                )
-            }
-        } else {
-            insertionResult
         }
 
-        return@transaction result
+        return@transaction insertionResult
     }
 
     fun deleteUploadData(uploadId: String) {

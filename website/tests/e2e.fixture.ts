@@ -5,18 +5,19 @@ import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
 
+import { DatasetPage } from './pages/datasets/dataset.page';
 import { EditPage } from './pages/edit/edit.page';
 import { NavigationFixture } from './pages/navigation.fixture';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
-import { DatasetPage } from './pages/datasets/dataset.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserSequencePage } from './pages/user/userSequencePage/userSequencePage.ts';
 import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
+import { type DataUseTerms, openDataUseTermsType } from '../src/types/backend.ts';
 
 type E2EFixture = {
     searchPage: SearchPage;
@@ -32,6 +33,9 @@ type E2EFixture = {
 };
 
 export const dummyOrganism = { key: 'dummy-organism', displayName: 'Test Dummy Organism' };
+export const openDataUseTerms: DataUseTerms = {
+    type: openDataUseTermsType,
+};
 
 export const baseUrl = 'http://localhost:3000';
 export const backendUrl = 'http://localhost:8079';

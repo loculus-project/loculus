@@ -4,12 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
 import { mockRequest, testAccessToken, testConfig, testOrganism } from '../../../vitest.setup.ts';
-import {
-    type DataUseTerms,
-    openDataUseTermsType,
-    type ProblemDetail,
-    type SubmissionIdMapping,
-} from '../../types/backend.ts';
+import { type ProblemDetail, type SubmissionIdMapping } from '../../types/backend.ts';
 
 vi.mock('../../api', () => ({
     getClientLogger: () => ({
@@ -28,13 +23,9 @@ function renderSubmissionForm() {
 const metadataFile = new File(['content'], 'metadata.tsv', { type: 'text/plain' });
 const sequencesFile = new File(['content'], 'sequences.fasta', { type: 'text/plain' });
 
-const defaultDataUseTerms: DataUseTerms = {
-    type: openDataUseTermsType,
-};
-
 const testResponse: SubmissionIdMapping[] = [
-    { accession: '0', version: 1, submissionId: 'header0', dataUseTerms: defaultDataUseTerms },
-    { accession: '1', version: 1, submissionId: 'header1', dataUseTerms: defaultDataUseTerms },
+    { accession: '0', version: 1, submissionId: 'header0' },
+    { accession: '1', version: 1, submissionId: 'header1' },
 ];
 
 describe('SubmitForm', () => {

@@ -38,6 +38,7 @@ import org.loculus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.loculus.backend.api.Status.HAS_ERRORS
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
+import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.BadRequestException
@@ -375,7 +376,11 @@ class SubmissionDatabaseService(
         val listOfStatuses = statusesFilter ?: Status.entries
 
         sequenceEntriesTableProvider.get(organism).let { table ->
-            var query = table
+            val query = table
+                .join(DataUseTermsTable, JoinType.LEFT, additionalConstraint = {
+                    (table.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                        (DataUseTermsTable.isNewestDataUseTerms)
+                })
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
@@ -385,6 +390,8 @@ class SubmissionDatabaseService(
                     table.groupNameColumn,
                     table.organismColumn,
                     table.submittedAtColumn,
+                    DataUseTermsTable.dataUseTermsTypeColumn,
+                    DataUseTermsTable.restrictedUntilColumn,
                 )
                 .select(
                     where = {
@@ -407,12 +414,16 @@ class SubmissionDatabaseService(
                         row[table.groupNameColumn],
                         row[table.isRevocationColumn],
                         row[table.submissionIdColumn],
+                        dataUseTerms = DataUseTerms.fromParameters(
+                            DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
+                            row[DataUseTermsTable.restrictedUntilColumn],
+                        ),
                     )
                 }
         }
     }
 
-    fun revoke(accessions: List<Accession>, username: String, organism: Organism): List<SequenceEntryStatus> {
+    fun revoke(accessions: List<Accession>, username: String, organism: Organism): List<SubmissionIdMapping> {
         log.info { "revoking ${accessions.size} sequences" }
 
         accessionPreconditionValidator.validateAccessions(
@@ -471,12 +482,9 @@ class SubmissionDatabaseService(
                             table.statusIs(AWAITING_APPROVAL_FOR_REVOCATION)
                     },
                 ).map {
-                    SequenceEntryStatus(
+                    SubmissionIdMapping(
                         it[table.accessionColumn],
                         it[table.versionColumn],
-                        AWAITING_APPROVAL_FOR_REVOCATION,
-                        it[table.groupNameColumn],
-                        it[table.isRevocationColumn],
                         it[table.submissionIdColumn],
                     )
                 }.sortedBy { it.accession }

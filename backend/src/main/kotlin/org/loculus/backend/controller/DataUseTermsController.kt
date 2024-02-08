@@ -44,5 +44,5 @@ class DataUseTermsController(
             description = "The accession of the sequence entry " +
                 "for which the data use terms should be retrieved",
         ) @PathVariable accession: Accession,
-    ) = dataUseTermsDatabaseService.getDataUseTerms(accession)
+    ) = dataUseTermsDatabaseService.getDataUseTermsHistory(accession)
 }

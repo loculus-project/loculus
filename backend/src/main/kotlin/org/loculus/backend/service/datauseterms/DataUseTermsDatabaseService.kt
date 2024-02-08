@@ -44,7 +44,7 @@ class DataUseTermsDatabaseService(
         }
     }
 
-    fun getDataUseTerms(accession: Accession): List<DataUseTermsHistoryEntry> {
+    fun getDataUseTermsHistory(accession: Accession): List<DataUseTermsHistoryEntry> {
         val accessionDataUseTermsHistory = DataUseTermsTable
             .select { DataUseTermsTable.accessionColumn eq accession }
             .sortedBy { it[DataUseTermsTable.changeDateColumn] }

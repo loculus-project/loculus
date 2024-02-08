@@ -80,7 +80,7 @@ const revokeSequencesEndpoint = makeEndpoint({
             schema: accessions,
         },
     ],
-    response: z.array(sequenceEntryStatus),
+    response: z.array(submissionIdMapping),
     errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
 });
 

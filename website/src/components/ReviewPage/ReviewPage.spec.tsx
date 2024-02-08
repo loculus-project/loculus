@@ -2,6 +2,7 @@ import { render, waitFor } from '@testing-library/react';
 import { describe, expect, test } from 'vitest';
 
 import { ReviewPage } from './ReviewPage.tsx';
+import { openDataUseTerms } from '../../../tests/e2e.fixture.ts';
 import { mockRequest, testAccessToken, testConfig, testOrganism } from '../../../vitest.setup.ts';
 import {
     awaitingApprovalStatus,
@@ -23,6 +24,7 @@ const receivedTestData: SequenceEntryStatus = {
     accession: 'accession1',
     version: 1,
     isRevocation: false,
+    dataUseTerms: openDataUseTerms,
 };
 
 const processingTestData: SequenceEntryStatus = {
@@ -31,14 +33,16 @@ const processingTestData: SequenceEntryStatus = {
     accession: 'accession4',
     version: 1,
     isRevocation: false,
+    dataUseTerms: openDataUseTerms,
 };
 
-const erroneosTestData: SequenceEntryStatus = {
+const erroneousTestData: SequenceEntryStatus = {
     submissionId: 'custom2',
     status: hasErrorsStatus,
     accession: 'accession2',
     version: 1,
     isRevocation: false,
+    dataUseTerms: openDataUseTerms,
 };
 
 const awaitingApprovalTestData: SequenceEntryStatus = {
@@ -47,6 +51,7 @@ const awaitingApprovalTestData: SequenceEntryStatus = {
     accession: 'accession3',
     version: 1,
     isRevocation: false,
+    dataUseTerms: openDataUseTerms,
 };
 
 describe('ReviewPage', () => {
@@ -72,14 +77,14 @@ describe('ReviewPage', () => {
     });
 
     test('should render the review page and show button to bulk delete/approve all erroneous sequences', async () => {
-        mockRequest.backend.getSequences(200, [erroneosTestData, awaitingApprovalTestData]);
+        mockRequest.backend.getSequences(200, [erroneousTestData, awaitingApprovalTestData]);
         mockRequest.backend.approveSequences();
         mockRequest.backend.deleteSequences();
 
         const { getByText } = renderReviewPage();
 
         await waitFor(() => {
-            expect(getByText(erroneosTestData.accession)).toBeDefined();
+            expect(getByText(erroneousTestData.accession)).toBeDefined();
             expect(getByText(awaitingApprovalTestData.accession)).toBeDefined();
         });
 
@@ -102,7 +107,7 @@ describe('ReviewPage', () => {
         mockRequest.backend.getSequences(200, [
             receivedTestData,
             processingTestData,
-            erroneosTestData,
+            erroneousTestData,
             awaitingApprovalTestData,
         ]);
 

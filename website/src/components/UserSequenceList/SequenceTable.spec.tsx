@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { SequenceEntryTable } from './SequenceEntryTable.tsx';
 import type { BulkSequenceActionName, SingleSequenceActionName } from './sequenceActions.ts';
+import { openDataUseTerms } from '../../../tests/e2e.fixture.ts';
 import { testAccessToken, testOrganism } from '../../../vitest.setup.ts';
 import { routes } from '../../routes.ts';
 import type { SequenceEntryStatus } from '../../types/backend.ts';
@@ -20,6 +21,7 @@ const defaultSequenceEntryStatuses: readonly SequenceEntryStatus[] = [
         status: 'HAS_ERRORS',
         isRevocation: false,
         submissionId: 'custom1',
+        dataUseTerms: openDataUseTerms,
     },
     {
         accession: '2',
@@ -27,6 +29,7 @@ const defaultSequenceEntryStatuses: readonly SequenceEntryStatus[] = [
         status: 'HAS_ERRORS',
         isRevocation: false,
         submissionId: 'custom2',
+        dataUseTerms: openDataUseTerms,
     },
 ];
 
