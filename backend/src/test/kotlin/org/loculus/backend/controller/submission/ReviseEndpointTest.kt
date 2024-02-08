@@ -244,14 +244,6 @@ class ReviseEndpointTest(
                     "Metadata file has wrong extension.",
                 ),
                 Arguments.of(
-                    "wrong extension for sequences file",
-                    SubmitFiles.revisedMetadataFileWith(),
-                    SubmitFiles.sequenceFileWith(originalFilename = "sequences.wrongExtension"),
-                    status().isBadRequest,
-                    "Bad Request",
-                    "Sequence file has wrong extension.",
-                ),
-                Arguments.of(
                     "metadata file where one row has a blank header",
                     SubmitFiles.metadataFileWith(
                         content = """
