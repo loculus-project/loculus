@@ -2,7 +2,7 @@ import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 
 import { routes } from '../../routes.ts';
-import type { FilterValue, MutationFilter, Schema } from '../../types/config.ts';
+import type { MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
@@ -15,7 +15,7 @@ type TableProps = {
     organism: string;
     schema: Schema;
     data: TableSequenceData[];
-    metadataFilter: FilterValue[];
+    metadataFilter: MetadataFilter[];
     mutationFilter: MutationFilter;
     page: number;
     orderBy: OrderBy;
