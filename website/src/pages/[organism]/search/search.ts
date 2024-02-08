@@ -4,7 +4,7 @@ import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx
 import { getReferenceGenomes, getSchema } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
-import type { FilterValue, MetadataFilter, MutationFilter } from '../../../types/config.ts';
+import type { MetadataFilter, MutationFilter } from '../../../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
@@ -13,7 +13,7 @@ export type SearchResponse = {
     totalCount: number;
 };
 
-export function addHiddenFilters(searchFormFilter: FilterValue[], hiddenFilters: FilterValue[]) {
+export function addHiddenFilters(searchFormFilter: MetadataFilter[], hiddenFilters: MetadataFilter[]) {
     const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
     const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
     return [...searchFormFilter, ...hiddenFiltersToAdd];
@@ -21,7 +21,7 @@ export function addHiddenFilters(searchFormFilter: FilterValue[], hiddenFilters:
 
 export const getData = async (
     organism: string,
-    metadataFilter: FilterValue[],
+    metadataFilter: MetadataFilter[],
     mutationFilter: MutationFilter,
     offset: number,
     limit: number,
