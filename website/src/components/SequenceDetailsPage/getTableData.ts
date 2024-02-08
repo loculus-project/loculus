@@ -171,7 +171,7 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
             segmentPositions.get(segment)!.push(position);
         });
     const segmentRanges = [...segmentPositions.entries()].map(([segment, positions]) => {
-        const sortedPositions = positions.sort();
+        const sortedPositions = positions.sort((a, b) => a - b);
         const ranges = [];
         let rangeStart: number | null = null;
         for (let i = 0; i < sortedPositions.length; i++) {
