@@ -1,3 +1,4 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/token" }}
 
 
@@ -19,6 +20,8 @@ spec:
             app: loculus
             component: silo-import-cronjob-{{ $key }}
         spec:
+          initContainers:
+{{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 12 }}
           containers:
             - name: silo-preprocessing
               image: ghcr.io/genspectrum/lapis-silo:latest
@@ -42,29 +45,29 @@ spec:
                 - name: IMPORT_JOB_USER_PASSWORD
                   value: "silo_import_job"
               volumeMounts:
-                - name: lapis-silo-database-config
+                - name: lapis-silo-database-config-processed
                   mountPath: /preprocessing/input/reference_genomes.json
                   subPath: reference_genomes.json
-                - name: lapis-silo-database-config
+                - name: lapis-silo-database-config-processed
                   mountPath: /preprocessing/input/pangolineage_alias.json
                   subPath: pangolineage_alias.json
-                - name: lapis-silo-database-config
+                - name: lapis-silo-database-config-processed
                   mountPath: /app/preprocessing_config.yaml
                   subPath: preprocessing_config.yaml
-                - name: lapis-silo-database-config
+                - name: lapis-silo-database-config-processed
                   mountPath: /app/database_config.yaml
                   subPath: database_config.yaml
                 - name: lapis-silo-shared-data
                   mountPath: /preprocessing/output
                 - name: lapis-silo-input-data-cache
                   mountPath: /preprocessing/input
-                - name: lapis-silo-database-config
+                - name: lapis-silo-database-config-processed
                   mountPath: /silo_import_job.sh
                   subPath: silo_import_job.sh
+          imagePullSecrets:
+            - name: ghcr-secret
           volumes:
-            - name: lapis-silo-database-config
-              configMap:
-                name: lapis-silo-database-config-{{ $key }}
+{{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 12 }}
             - name: lapis-silo-shared-data
               persistentVolumeClaim:
                 claimName: lapis-silo-shared-data-{{ $key }}

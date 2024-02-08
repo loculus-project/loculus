@@ -19,6 +19,9 @@ spec:
         app: loculus
         component: website-and-backend
     spec:
+      initContainers:
+{{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag) | nindent 8 }}
+{{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         {{- if not .Values.disableWebsite }}
         - name: website
@@ -34,7 +37,7 @@ spec:
           ports:
             - containerPort: 3000
           volumeMounts:
-            - name: loculus-website-config
+            - name: loculus-website-config-processed
               mountPath: /config
           livenessProbe:
             httpGet:
@@ -76,7 +79,7 @@ spec:
             - "--keycloak.url=http://loculus-keycloak-service:8083"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/certs"
           volumeMounts:
-            - name: loculus-backend-config
+            - name: loculus-backend-config-processed
               mountPath: /config
         {{- end }}
         - name: database
@@ -94,9 +97,5 @@ spec:
       imagePullSecrets:
         - name: ghcr-secret
       volumes:
-        - name: loculus-website-config
-          configMap:
-            name: loculus-website-config
-        - name: loculus-backend-config
-          configMap:
-            name: loculus-backend-config
+{{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}
+{{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}

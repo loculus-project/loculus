@@ -1,3 +1,4 @@
+{{- $dockerTag := include "loculus.dockerTag" $.Values }}
 {{- range $key, $_ := $.Values.instances }}
 ---
 apiVersion: apps/v1
@@ -19,6 +20,8 @@ spec:
         app: loculus
         component: lapis-silo-{{ $key }}
     spec:
+      initContainers:
+{{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: silo
           image: ghcr.io/genspectrum/lapis-silo:latest
@@ -36,17 +39,16 @@ spec:
           args:
             - "--silo.url=http://localhost:8081"
           volumeMounts:
-            - name: lapis-silo-database-config
+            - name: lapis-silo-database-config-processed
               mountPath: /workspace/database_config.yaml
               subPath: database_config.yaml
-            - name: lapis-silo-database-config
+            - name: lapis-silo-database-config-processed
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
-
+      imagePullSecrets:
+        - name: ghcr-secret
       volumes:
-        - name: lapis-silo-database-config
-          configMap:
-            name: lapis-silo-database-config-{{ $key }}
+{{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
         - name: lapis-silo-shared-data
           persistentVolumeClaim:
             claimName: lapis-silo-shared-data-{{ $key }}
