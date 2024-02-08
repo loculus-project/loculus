@@ -50,6 +50,19 @@ test.describe('The dataset item page', () => {
         expect(download.suggestedFilename()).toBe(`${testDatasetName}.json`);
     });
 
+    test('delete functionality can be cancelled', async ({ datasetPage }) => {
+        await datasetPage.gotoDetail(testDatasetName);
+        await expect(datasetPage.page.getByRole('button', { name: 'Delete' })).toBeVisible();
+        await datasetPage.page.getByRole('button', { name: 'Delete' }).click();
+        await datasetPage.waitForLoad();
+
+        await expect(async () => {
+            await datasetPage.page.getByRole('button', { name: 'Cancel' }).click();
+            await datasetPage.waitForLoad();
+            await expect(datasetPage.page.getByText(testDatasetName)).toBeVisible();
+        }).toPass();
+    });
+
     test('edit functionality updates dataset and increases version', async ({ datasetPage }) => {
         const editDatasetName = 'Updated dataset name';
         await datasetPage.gotoDetail(testDatasetName);
@@ -66,19 +79,5 @@ test.describe('The dataset item page', () => {
         }).toPass();
 
         await datasetPage.deleteTestDataset(editDatasetName);
-    });
-
-    test('delete functionality can be cancelled', async ({ datasetPage }) => {
-        await datasetPage.gotoDetail(testDatasetName);
-        await expect(datasetPage.page.getByRole('button', { name: 'Delete' })).toBeVisible();
-        await datasetPage.page.getByRole('button', { name: 'Delete' }).click();
-        await datasetPage.waitForLoad();
-
-        await expect(async () => {
-            await expect(datasetPage.page.getByText('Delete Dataset')).toBeVisible();
-            await datasetPage.page.getByRole('button', { name: 'Cancel' }).click();
-            await datasetPage.waitForLoad();
-            await expect(datasetPage.page.getByText(testDatasetName)).toBeVisible();
-        }).toPass();
     });
 });

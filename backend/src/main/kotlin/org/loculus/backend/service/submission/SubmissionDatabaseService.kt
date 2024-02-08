@@ -375,7 +375,7 @@ class SubmissionDatabaseService(
         val listOfStatuses = statusesFilter ?: Status.entries
 
         sequenceEntriesTableProvider.get(organism).let { table ->
-            val query = table
+            var query = table
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
@@ -392,23 +392,23 @@ class SubmissionDatabaseService(
                             table.groupIsOneOf(validatedGroupNames)
                     },
                 )
-                .sortedBy { it[table.submittedAtColumn] }
-
 
             if (organism != null) {
                 query.andWhere { table.organismIs(organism) }
             }
 
-            return query.map { row ->
-                SequenceEntryStatus(
-                    row[table.accessionColumn],
-                    row[table.versionColumn],
-                    Status.fromString(row[table.statusColumn]),
-                    row[table.groupNameColumn],
-                    row[table.isRevocationColumn],
-                    row[table.submissionIdColumn],
-                )
-            }
+            return query
+                .sortedBy { it[table.submittedAtColumn] }
+                .map { row ->
+                    SequenceEntryStatus(
+                        row[table.accessionColumn],
+                        row[table.versionColumn],
+                        Status.fromString(row[table.statusColumn]),
+                        row[table.groupNameColumn],
+                        row[table.isRevocationColumn],
+                        row[table.submissionIdColumn],
+                    )
+                }
         }
     }
 

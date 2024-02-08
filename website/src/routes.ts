@@ -51,7 +51,7 @@ export const routes = {
         return username === undefined ? datasetPagePath : datasetPagePath + `?user=${username}`;
     },
     datasetPage: (datasetId: string, datasetVersion: string, username?: string | undefined) => {
-        const datasetPagePath = `/datasets/${datasetId}?=${datasetVersion}`;
+        const datasetPagePath = `/datasets/${datasetId}?version=${datasetVersion}`;
         return username === undefined ? datasetPagePath : datasetPagePath + `&user=${username}`;
     },
     notFoundPage: () => `/404`,
