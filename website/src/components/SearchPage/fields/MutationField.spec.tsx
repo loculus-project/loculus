@@ -4,7 +4,7 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { MutationField } from './MutationField.tsx';
 import type { MutationFilter } from '../../../types/config.ts';
-import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referenceGenome.ts';
 
 const singleSegmentedReferenceGenome: referenceGenomeSequenceNames = {
     nucleotideSequences: ['main'],

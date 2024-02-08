@@ -2,7 +2,7 @@ import { type FC, useEffect, useState } from 'react';
 
 import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
 import type { DownloadDataType, DownloadOption } from './generateDownloadUrl.ts';
-import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referenceGenome.ts';
 
 type DownloadFormProps = {
     referenceGenomeSequenceNames: referenceGenomeSequenceNames;

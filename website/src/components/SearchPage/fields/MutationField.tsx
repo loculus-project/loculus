@@ -3,7 +3,7 @@ import { type FC, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import type { MutationFilter } from '../../../types/config.ts';
-import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referenceGenome.ts';
 import type { BaseType } from '../../../utils/sequenceTypeHelpers.ts';
 
 interface MutationFieldProps {

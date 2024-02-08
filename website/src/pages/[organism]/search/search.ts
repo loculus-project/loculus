@@ -6,7 +6,7 @@ import { LapisClient } from '../../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
 import type { MetadataFilter, MutationFilter } from '../../../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../../../types/lapis.ts';
-import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referenceGenome.ts';
 
 export type SearchResponse = {
     data: TableSequenceData[];

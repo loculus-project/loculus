@@ -4,7 +4,7 @@ import path from 'path';
 import type { z, ZodError } from 'zod';
 
 import { type InstanceConfig, type Schema, type WebsiteConfig, websiteConfig } from './types/config.ts';
-import { type referenceGenome } from './types/referencesGenomes.ts';
+import { type referenceGenome } from './types/referenceGenome.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
 let _config: WebsiteConfig | null = null;

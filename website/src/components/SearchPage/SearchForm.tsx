@@ -16,7 +16,7 @@ import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { routes } from '../../routes.ts';
 import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
-import type { referenceGenomeSequenceNames } from '../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../types/referenceGenome.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';

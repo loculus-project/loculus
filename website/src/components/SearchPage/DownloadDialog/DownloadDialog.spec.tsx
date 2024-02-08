@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
 import type { FilterValue, MutationFilter } from '../../../types/config.ts';
-import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referenceGenome.ts';
 
 const defaultReferenceGenome: referenceGenomeSequenceNames = {
     nucleotideSequences: ['main'],

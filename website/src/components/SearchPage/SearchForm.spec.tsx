@@ -7,7 +7,7 @@ import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { routes } from '../../routes.ts';
 import type { MetadataFilter } from '../../types/config.ts';
-import type { referenceGenomeSequenceNames } from '../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../types/referenceGenome.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 vi.mock('../../config', () => ({

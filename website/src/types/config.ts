@@ -1,7 +1,7 @@
 import z from 'zod';
 
 import { orderByType } from './lapis.ts';
-import { referenceGenome } from './referencesGenomes.ts';
+import { referenceGenome } from './referenceGenomes.ts';
 
 export const metadata = z.object({
     name: z.string(),

@@ -4,7 +4,7 @@ import { ActiveDownloadFilters } from './ActiveDownloadFilters.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadOption, generateDownloadUrl } from './generateDownloadUrl.ts';
 import type { FilterValue, MutationFilter } from '../../../types/config.ts';
-import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referenceGenome.ts';
 
 type DownloadDialogProps = {
     metadataFilter: FilterValue[];
