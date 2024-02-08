@@ -13,6 +13,12 @@ export type SearchResponse = {
     totalCount: number;
 };
 
+export function addHiddenFilters(searchFormFilter: FilterValue[], hiddenFilters: FilterValue[]) {
+    const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
+    const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
+    return [...searchFormFilter, ...hiddenFiltersToAdd];
+}
+
 export const getData = async (
     organism: string,
     metadataFilter: FilterValue[],

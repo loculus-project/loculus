@@ -65,7 +65,7 @@ export const SearchForm: FC<SearchFormProps> = ({
     const handleSearch: FormEventHandler<HTMLFormElement> = async (event) => {
         event.preventDefault();
         setIsLoading(true);
-        const searchableFieldValues = fieldValues.filter((f) => !(f.notSearchable ?? false));
+        const searchableFieldValues = fieldValues.filter((field) => !(field.notSearchable ?? false));
         location.href = routes.searchPage(organism, searchableFieldValues, mutationFilter);
     };
 
