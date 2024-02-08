@@ -1,6 +1,6 @@
-import { type FC, useState } from 'react';
+import { type FC } from 'react';
 
-import type { SubmissionIdMapping } from '../../types/backend.ts';
+import { routes } from '../../routes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { DataUploadForm } from '../DataUploadForm.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
@@ -12,8 +12,6 @@ type RevisionFormProps = {
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, clientConfig }) => {
-    const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<SubmissionIdMapping[] | null>(null);
-
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     return (
@@ -25,25 +23,10 @@ export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, cli
                 clientConfig={clientConfig}
                 action='revise'
                 onError={openErrorFeedback}
-                onSuccess={setResponseSequenceHeaders}
+                onSuccess={() => {
+                    window.location.href = routes.userSequenceReviewPage(organism);
+                }}
             />
-
-            <div>
-                {responseSequenceHeaders ? (
-                    <div className='p-6 space-y-6 w-full'>
-                        <h2 className='text-lg font-bold'>Result of Revision</h2>
-                        <ul className='list-disc list-inside'>
-                            {responseSequenceHeaders.map((header) => (
-                                <li key={header.accession}>
-                                    Sequence {header.accession} successful revised; new version is {header.version}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                ) : (
-                    <div className='font-bold'>No data submitted yet</div>
-                )}
-            </div>
         </div>
     );
 };
