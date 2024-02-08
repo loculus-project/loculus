@@ -70,7 +70,7 @@ describe('SequencesContainer', () => {
 
         click('Sequence');
         await waitFor(() => {
-            expect(screen.getByText("LAPIS v2 doesn't support unaligned nucleotide sequences yet")).toBeVisible();
+            expect(screen.getByText(unalignedSingleSegmentSequence)).toBeVisible();
         });
     });
 
@@ -89,7 +89,7 @@ describe('SequencesContainer', () => {
 
         click(`${multiSegmentName} (unaligned)`);
         await waitFor(() => {
-            expect(screen.getByText("LAPIS v2 doesn't support unaligned nucleotide sequences yet")).toBeVisible();
+            expect(screen.getByText(unalignedMultiSegmentSequence)).toBeVisible();
         });
     });
 
