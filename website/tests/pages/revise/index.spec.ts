@@ -12,7 +12,6 @@ test.describe('The revise page', () => {
 
         await revisePage.submitRevisedData(sequenceEntries.map((entry) => entry.accession));
 
-        // TODO(#702): Redirect to the review page after submission is successful
-        // await revisePage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
+        await revisePage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
     });
 });

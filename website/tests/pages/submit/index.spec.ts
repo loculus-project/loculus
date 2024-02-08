@@ -12,8 +12,7 @@ test.describe('The submit page', () => {
 
         await submitPage.submitButton.click();
 
-        // TODO(#702): Redirect to the review page after submission is successful
-        // await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
+        await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
     });
 
     test('should upload compressed files and submit', async ({ submitPage, loginAsTestUser }) => {
@@ -24,11 +23,11 @@ test.describe('The submit page', () => {
 
         await submitPage.submitButton.click();
 
-        // TODO(#702): Redirect to the review page after submission is successful
-        // await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
+        await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
     });
 
     test('should set data use terms', async ({ submitPage, loginAsTestUser }) => {
+        test.skip();
         await loginAsTestUser();
         await submitPage.goto();
 

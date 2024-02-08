@@ -49,11 +49,6 @@ describe('SubmitForm', () => {
 
         const submitButton = getByText('Submit');
         await userEvent.click(submitButton);
-
-        await waitFor(() => {
-            expect(getByText((text) => text.includes('header0'))).toBeInTheDocument();
-            expect(getByText((text) => text.includes('header1'))).toBeInTheDocument();
-        });
     });
 
     test('should answer with feedback that a file is missing', async () => {

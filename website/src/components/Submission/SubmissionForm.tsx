@@ -1,8 +1,7 @@
-import { type FC, useState } from 'react';
+import { type FC } from 'react';
 
-import { type SubmissionIdMapping, restrictedDataUseTermsType } from '../../types/backend.ts';
+import { routes } from '../../routes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { DataUploadForm } from '../DataUploadForm.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
@@ -13,8 +12,6 @@ type SubmissionFormProps = {
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism, clientConfig }) => {
-    const [responseSequenceHeaders, setResponseSequenceHeaders] = useState<SubmissionIdMapping[] | null>(null);
-
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     return (
@@ -26,37 +23,10 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism,
                 clientConfig={clientConfig}
                 action='submit'
                 onError={openErrorFeedback}
-                onSuccess={setResponseSequenceHeaders}
+                onSuccess={() => {
+                    window.location.href = routes.userSequenceReviewPage(organism);
+                }}
             />
-
-            <div>
-                {responseSequenceHeaders ? (
-                    <FormatResponseSequenceHeaders responseSequenceHeaders={responseSequenceHeaders} />
-                ) : (
-                    <div className='font-bold'>No data submitted yet</div>
-                )}
-            </div>
-        </div>
-    );
-};
-type FormatResponseSequenceHeadersProps = {
-    responseSequenceHeaders: SubmissionIdMapping[];
-};
-const FormatResponseSequenceHeaders: FC<FormatResponseSequenceHeadersProps> = ({ responseSequenceHeaders }) => {
-    return (
-        <div className='p-6 space-y-6 w-full'>
-            <h2 className='text-lg font-bold'>Response Sequence Headers</h2>
-            <ul className='list-disc list-inside'>
-                {responseSequenceHeaders.map((header) => (
-                    <li key={header.accession}>
-                        {getAccessionVersionString(header)}: {header.submissionId} ({header.dataUseTerms?.type}
-                        {header.dataUseTerms?.type === restrictedDataUseTermsType
-                            ? ` until: ${header.dataUseTerms.restrictedUntil}`
-                            : ''}
-                        )
-                    </li>
-                ))}
-            </ul>
         </div>
     );
 };

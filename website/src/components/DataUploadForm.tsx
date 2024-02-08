@@ -16,7 +16,6 @@ import {
     dataUseTermsTypes,
     openDataUseTermsType,
     restrictedDataUseTermsType,
-    type SubmissionIdMapping,
 } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../utils/DateTimeInMonths.tsx';
@@ -30,7 +29,7 @@ type DataUploadFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     action: Action;
-    onSuccess: (value: SubmissionIdMapping[]) => void;
+    onSuccess: () => void;
     onError: (message: string) => void;
 };
 
@@ -112,8 +111,6 @@ const InnerDataUploadForm = ({
                 revise({ metadataFile, sequenceFile });
                 break;
         }
-        // TODO(#702): Redirect to the review page after submission is successful
-        // window.location.href = routes.userSequenceReviewPage(organism);
     };
 
     useEffect(() => {
@@ -264,6 +261,12 @@ const InnerDataUploadForm = ({
                     {isLoading ? <CircularProgress size={20} color='primary' /> : 'Submit'}
                 </button>
             </div>
+
+            <div className='text-gray-500'>
+                {isLoading
+                    ? 'Uploading files. Please wait. Depending on the size of the files this can take a while'
+                    : ''}
+            </div>
         </form>
     );
 };
@@ -274,7 +277,7 @@ function useSubmitFiles(
     accessToken: string,
     organism: string,
     clientConfig: ClientConfig,
-    onSuccess: (value: SubmissionIdMapping[]) => void,
+    onSuccess: () => void,
     onError: (message: string) => void,
 ) {
     const hooks = backendClientHooks(clientConfig);

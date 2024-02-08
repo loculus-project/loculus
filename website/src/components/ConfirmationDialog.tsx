@@ -9,7 +9,7 @@ type ConfirmationDialogProps = {
 
 type DisplayConfirmationProps = {
     dialogText: string;
-    onConfirmation: () => void;
+    onConfirmation: () => Promise<void>;
 };
 
 export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ dialogText, onConfirmation, onClose }) => {
