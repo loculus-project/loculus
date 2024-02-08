@@ -218,33 +218,19 @@ class SubmitEndpointTest(
                     DataUseTerms.Open,
                 ),
                 Arguments.of(
-                    "wrong extension for metadata file",
-                    SubmitFiles.metadataFileWith(originalFilename = "metadata.wrongExtension"),
-                    DefaultFiles.sequencesFile,
-                    status().isBadRequest,
-                    "Bad Request",
-                    "${metadataFileTypes.displayName} has wrong extension. Must be " +
-                        ".${metadataFileTypes.validExtensions} for uncompressed " +
-                        "submissions or " +
-                        ".${metadataFileTypes.getCompressedExtensions()} " +
-                        "for compressed submissions",
-                    DEFAULT_ORGANISM,
-                    DataUseTerms.Open,
-                ),
-                Arguments.of(
-                    "wrong extension for sequences file",
-                    DefaultFiles.metadataFile,
-                    SubmitFiles.sequenceFileWith(originalFilename = "sequences.wrongExtension"),
-                    status().isBadRequest,
-                    "Bad Request",
-                    "${sequenceFileTypes.displayName} has wrong extension. Must be " +
-                        ".${sequenceFileTypes.validExtensions} for uncompressed " +
-                        "submissions or " +
-                        ".${sequenceFileTypes.getCompressedExtensions()} " +
-                        "for compressed submissions",
-                    DEFAULT_ORGANISM,
-                    DataUseTerms.Open,
-                ),
+    "wrong extension for metadata file",
+    SubmitFiles.metadataFileWith(originalFilename = "metadata.wrongExtension"),
+    DefaultFiles.sequencesFile,
+    status().isBadRequest,
+    "Bad Request",
+    "${metadataFileTypes.displayName} has wrong extension. Must be " +
+        ".${metadataFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+        ".${metadataFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
+            .flatMap { it.value }.joinToString(", .")} for compressed submissions",
+    DEFAULT_ORGANISM,
+    DataUseTerms.Open,
+)
+,
                 Arguments.of(
                     "metadata file where one row has a blank header",
                     SubmitFiles.metadataFileWith(
