@@ -2,18 +2,12 @@ package org.loculus.backend.service.submission
 
 import org.loculus.backend.config.BackendSpringProperty
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
 private val log = mu.KotlinLogging.logger {}
 
 @Component
-@ConditionalOnProperty(
-    name = ["\${${BackendSpringProperty.ENABLE_CLEAN_UP_TASK}}"],
-    havingValue = "true",
-    matchIfMissing = true,
-)
 class CleanUpStaleSequencesInProcessingTask(
     private val submissionDatabaseService: SubmissionDatabaseService,
     @Value("\${${BackendSpringProperty.STALE_AFTER_SECONDS}}") private val timeToStaleInSeconds: Long,
