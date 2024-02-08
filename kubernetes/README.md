@@ -37,7 +37,7 @@ Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
 ```shell
 ../deploy.py cluster --dev
-../deploy.py helm --dev --enablePreprocessing
+../deploy.py helm --dev
 ```
 
 Start the [backend](/backend/README.md) and the [website](/website/README.md) locally.
@@ -62,8 +62,8 @@ Create a cluster that doesn't expose the ports of the backend and the website:
 ../deploy.py cluster --dev
 ```
 
-Install the chart with some port forwarding disabled to link to local manual runs of the backend and website:
 
+Install the chart with some port forwarding disabled to link to local manual runs of the backend and website:
 ```shell
 ../deploy.py helm --dev
 ```
@@ -98,7 +98,6 @@ You can also delete the cluster with:
 ```
 
 With helm based commands you can customise the values yaml file with `--values [file.yaml]`.
-
 ## Argo CD
 
 ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].preview.k3s.loculus.org`. Very long branch names, and some special characters, are not supported.
@@ -115,6 +114,7 @@ For preview instances this repo contains [sealed secrets](https://sealed-secrets
 
 There is a `local` environment intended for E2E testing in GitHub Actions.
 It can also be used locally (though note caveats below for ARM-based mac systems).
+
 
 Create a cluster with ports for all services exposed:
 

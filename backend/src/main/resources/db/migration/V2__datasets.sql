@@ -46,7 +46,7 @@ create table authors (
        created_at timestamp not null,
        created_by text not null,
        updated_at timestamp not null,
-       updated_by text not null,
+       updated_by text,
 
        primary key (author_id)
 );

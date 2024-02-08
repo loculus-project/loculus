@@ -8,8 +8,8 @@ export enum DatasetRecordType {
 }
 
 export const datasetRecord = z.object({
-    accession: z.string().optional(),
-    type: z.nativeEnum(DatasetRecordType).optional(),
+    accession: z.string(),
+    type: z.nativeEnum(DatasetRecordType),
 });
 export type DatasetRecord = z.infer<typeof datasetRecord>;
 export const datasetRecords = z.array(datasetRecord);
@@ -22,7 +22,6 @@ export const dataset = z.object({
     description: z.string().optional(),
     createdAt: z.string(),
     createdBy: z.string(),
-    records: z.array(datasetRecord).optional(),
 });
 export const datasets = z.array(dataset);
 export type Dataset = z.infer<typeof dataset>;
@@ -39,5 +38,4 @@ export const author = z.object({
     username: z.string(),
     affiliation: z.string().optional(),
 });
-export const authors = z.array(author);
 export type Author = z.infer<typeof author>;

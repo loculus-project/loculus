@@ -145,6 +145,10 @@ function topNavigationItems(organism: string | undefined) {
             text: 'User',
             path: routes.userOverviewPage(organism),
         },
+        {
+            text: 'Datasets',
+            path: routes.datasetsPage(),
+        },
     ];
 }
 

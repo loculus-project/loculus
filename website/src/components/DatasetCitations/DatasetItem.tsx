@@ -1,5 +1,5 @@
 import Link from '@mui/material/Link';
-import { type FC, useState } from 'react';
+import { type FC } from 'react';
 
 import { CitationPlot } from './CitationPlot';
 import { getClientLogger } from '../../clientLogger';
@@ -7,7 +7,7 @@ import { datasetCitationClientHooks } from '../../services/serviceHooks';
 import { type DatasetRecord, type Dataset, type CitedByResult, DatasetRecordType } from '../../types/datasetCitation';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { AlertDialog } from '../common/AlertDialog';
+import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import { withQueryProvider } from '../common/withProvider';
 
@@ -41,17 +41,17 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
                     return (
                         <tr key={`accessionData-${index}`}>
                             <td className='text-left'>
-                                {datasetRecord.type !== undefined && datasetRecord.type !== DatasetRecordType.gisaid ? (
+                                {datasetRecord.type !== DatasetRecordType.gisaid ? (
                                     <Link
-                                        href={accessionOutlink[datasetRecord.type](datasetRecord.accession ?? '')}
+                                        href={accessionOutlink[datasetRecord.type](datasetRecord.accession)}
                                         target='_blank'
                                         underline='none'
                                         sx={{ padding: 0, margin: 0 }}
                                     >
-                                        {datasetRecord.accession ?? 'N/A'}
+                                        {datasetRecord.accession}
                                     </Link>
                                 ) : (
-                                    datasetRecord.accession ?? 'N/A'
+                                    datasetRecord.accession
                                 )}
                             </td>
                             <td className='text-left'>{datasetRecord.type as string}</td>
@@ -78,7 +78,6 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     datasetRecords,
     citedByData,
 }) => {
-    const [doiDialogVisible, setDoiDialogVisible] = useState(false);
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     const { mutate: createDatasetDOI } = useCreateDatasetDOIAction(
@@ -131,7 +130,12 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                             className='mr-4'
                             component='button'
                             underline='none'
-                            onClick={() => setDoiDialogVisible(true)}
+                            onClick={() =>
+                                displayConfirmationDialog({
+                                    dialogText: `Are you sure you want to create a DOI for this dataset and version?`,
+                                    onConfirmation: handleCreateDOI,
+                                })
+                            }
                         >
                             Generate a DOI
                         </Link>
@@ -158,13 +162,6 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                 <p className='text-xl py-4 font-semibold'>Sequences</p>
                 <DatasetRecordsTable datasetRecords={datasetRecords} />
             </div>
-            <AlertDialog
-                isVisible={doiDialogVisible}
-                setVisible={setDoiDialogVisible}
-                title='Generate a DOI'
-                description='A placeholder DOI suffix is being used. A CrossRef account and API key is needed to create a real DOI.'
-                onAccept={handleCreateDOI}
-            />
         </div>
     );
 };

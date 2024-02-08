@@ -59,7 +59,7 @@ export const AuthorDetails: FC<Props> = ({
                 <AccountCircleIcon fontSize={fontSize} />
             </div>
             <div className='flex flex-col pl-4'>
-                <div className='flex flex-row justify-start items-start items-center pt-2 pb-4'>
+                <div className='flex flex-row justify-start items-center pt-2 pb-4'>
                     <h1 className='flex text-xl font-semibold pr-2'>{name}</h1>
                     <IconButton data-testid='EditIcon' onClick={() => setEditModalVisible(true)}>
                         <EditIcon fontSize='large' />

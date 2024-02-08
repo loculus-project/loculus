@@ -374,7 +374,7 @@ class SubmissionDatabaseService(
         val listOfStatuses = statusesFilter ?: Status.entries
 
         sequenceEntriesTableProvider.get(organism).let { table ->
-            table
+            val query = table
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
@@ -383,8 +383,6 @@ class SubmissionDatabaseService(
                     table.groupNameColumn,
                     table.organismColumn,
                 )
-
-            val query = table
                 .select(
                     where = {
                         table.statusIsOneOf(listOfStatuses) and

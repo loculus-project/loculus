@@ -2,7 +2,7 @@ import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
 import { authorizationHeader, notAuthorizedError } from './commonApiTypes.ts';
-import { authors, datasets, datasetRecords, citedByResult } from '../types/datasetCitation.ts';
+import { author, datasets, datasetRecords, citedByResult } from '../types/datasetCitation.ts';
 
 const getDatasetsOfUserEndpoint = makeEndpoint({
     method: 'get',
@@ -133,10 +133,10 @@ const deleteDatasetEndpoint = makeEndpoint({
 
 const getAuthorEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-author?username=:username',
+    path: '/get-author',
     alias: 'getAuthor',
     parameters: [authorizationHeader],
-    response: authors,
+    response: author,
     errors: [notAuthorizedError],
 });
 

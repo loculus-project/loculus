@@ -65,13 +65,10 @@ test.describe('The dataset item page', () => {
             await expect(datasetPage.page.getByText(editDatasetName)).toBeVisible();
         }).toPass();
 
-        // Cleanup new dataset version
-        await datasetPage.page.getByRole('button', { name: 'Delete' }).click();
-        await datasetPage.page.getByRole('button', { name: 'Confirm' }).click();
+        await datasetPage.deleteTestDataset(editDatasetName);
     });
 
     test('delete functionality can be cancelled', async ({ datasetPage }) => {
-        // Delete confirm action is covered by afterAll hook
         await datasetPage.gotoDetail(testDatasetName);
         await expect(datasetPage.page.getByRole('button', { name: 'Delete' })).toBeVisible();
         await datasetPage.page.getByRole('button', { name: 'Delete' }).click();

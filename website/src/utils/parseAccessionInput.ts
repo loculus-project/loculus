@@ -1,7 +1,7 @@
 import { type DatasetRecord, DatasetRecordType } from '../types/datasetCitation';
 
 const getAccessionsByType = (type: string, records: DatasetRecord[]): string[] => {
-    return records.filter((record) => record.type === type).map((record) => record.accession ?? '');
+    return records.filter((record) => record.type === type).map((record) => record.accession);
 };
 
 export const serializeRecordsToAccessionsInput = (records?: DatasetRecord[], delimiter = ',') => {
@@ -19,28 +19,6 @@ export const serializeRecordsToAccessionsInput = (records?: DatasetRecord[], del
         [DatasetRecordType.sra]: getAccessionsByType(DatasetRecordType.sra, records).join(`${delimiter} `),
         [DatasetRecordType.gisaid]: getAccessionsByType(DatasetRecordType.gisaid, records).join(`${delimiter} `),
     };
-};
-
-export const parseRecordsFromAccessionInput = (accessions: { [key in DatasetRecordType]: string }): DatasetRecord[] => {
-    const records: DatasetRecord[] = [];
-
-    const cleanAccessionInput = (accessionInput: string, delimiter = ','): string[] => {
-        return accessionInput
-            .split(delimiter)
-            .map((accession) => accession.trim())
-            .filter((accession) => accession.length > 0);
-    };
-
-    Object.values(DatasetRecordType).forEach((type) => {
-        const accessionsByType = cleanAccessionInput(accessions[type]);
-        accessionsByType.forEach((accession) => {
-            records.push({
-                accession,
-                type,
-            });
-        });
-    });
-    return records;
 };
 
 const validateGenbankAccession = (accession: string): boolean => {
@@ -87,6 +65,8 @@ const validateGISAIDAccession = (accession: string): boolean => {
 };
 
 const validateLoculusAccession = (accession: string): boolean => {
+    // TODO: update after finalizing accession format:
+    // https://github.com/loculus-project/loculus/issues/444
     const loculusPatterns = [/^[A-Z]+_\d+(\.\d+)?(\d+)?$/];
     return loculusPatterns.some((pattern) => pattern.test(accession));
 };

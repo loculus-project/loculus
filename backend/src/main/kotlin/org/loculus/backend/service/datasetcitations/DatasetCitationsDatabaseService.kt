@@ -187,7 +187,17 @@ class DatasetCitationsDatabaseService(
                 .singleOrNull()?.get(DatasetsTable.datasetVersion)
         }
         if (selectedVersion == null) {
-            throw NotFoundException("Dataset $datasetId, version $version does not exist")
+            throw NotFoundException("Dataset $datasetId does not exist")
+        }
+
+        if (DatasetToRecordsTable
+                .select {
+                    (DatasetToRecordsTable.datasetId eq UUID.fromString(datasetId)) and
+                        (DatasetToRecordsTable.datasetVersion eq selectedVersion)
+                }
+                .empty()
+        ) {
+            throw NotFoundException("Dataset $datasetId, version $selectedVersion does not exist")
         }
 
         val selectedDatasetRecords = DatasetToRecordsTable
@@ -210,24 +220,20 @@ class DatasetCitationsDatabaseService(
     fun getDatasets(username: String): List<Dataset> {
         log.info { "Get datasets for user $username" }
 
-        val datasetList = mutableListOf<Dataset>()
         val selectedDatasets = DatasetsTable
             .select { DatasetsTable.createdBy eq username }
 
-        selectedDatasets.forEach {
-            datasetList.add(
-                Dataset(
-                    it[DatasetsTable.datasetId],
-                    it[DatasetsTable.datasetVersion],
-                    it[DatasetsTable.name],
-                    Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
-                    it[DatasetsTable.createdBy],
-                    it[DatasetsTable.description],
-                    it[DatasetsTable.datasetDOI],
-                ),
+        return selectedDatasets.map {
+            Dataset(
+                it[DatasetsTable.datasetId],
+                it[DatasetsTable.datasetVersion],
+                it[DatasetsTable.name],
+                Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                it[DatasetsTable.createdBy],
+                it[DatasetsTable.description],
+                it[DatasetsTable.datasetDOI],
             )
         }
-        return datasetList
     }
 
     fun deleteDataset(username: String, datasetId: String, version: Long) {
@@ -244,6 +250,17 @@ class DatasetCitationsDatabaseService(
         log.info { "Create DOI for dataset $datasetId, version $version, user $username" }
 
         val datasetDOI = "${DatasetCitationsConstants.DOI_PREFIX}/$datasetId.$version"
+
+        if (DatasetsTable
+                .select {
+                    (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
+                        (DatasetsTable.datasetVersion eq version) and
+                        (DatasetsTable.createdBy eq username)
+                }
+                .empty()
+        ) {
+            throw NotFoundException("Dataset $datasetId, version $version does not exist")
+        }
 
         DatasetsTable.update({
             (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
@@ -335,6 +352,9 @@ class DatasetCitationsDatabaseService(
     }
 
     fun getDatasetCitedByPublication(datasetId: String, version: Long): CitedBy {
+        // TODO: implement after registering to CrossRef API
+        // https://github.com/orgs/loculus-project/projects/3/views/1?pane=issue&itemId=50282833
+
         log.info { "Get dataset cited by publication for datasetId $datasetId, version $version" }
 
         val citedBy = CitedBy(
@@ -345,33 +365,29 @@ class DatasetCitationsDatabaseService(
         return citedBy
     }
 
-    fun getAuthor(username: String): List<Author> {
-        val authorList = mutableListOf<Author>()
-        val selectedAuthors = AuthorsTable
+    fun getAuthor(username: String): Author {
+        val selectedAuthor = AuthorsTable
             .select(
                 where = { AuthorsTable.username eq username },
             )
-        val selectedAuthor = selectedAuthors.firstOrNull()
+            .firstOrNull()
 
         if (selectedAuthor == null) {
             throw NotFoundException("Author $username does not exist")
         }
 
-        authorList.add(
-            Author(
-                selectedAuthor[AuthorsTable.authorId],
-                selectedAuthor[AuthorsTable.name],
-                selectedAuthor[AuthorsTable.affiliation],
-                selectedAuthor[AuthorsTable.email],
-                selectedAuthor[AuthorsTable.emailVerified],
-                selectedAuthor[AuthorsTable.username],
-                Timestamp.valueOf(selectedAuthor[AuthorsTable.createdAt].toJavaLocalDateTime()),
-                selectedAuthor[AuthorsTable.createdBy],
-                Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
-                selectedAuthor[AuthorsTable.updatedBy],
-            ),
+        return Author(
+            selectedAuthor[AuthorsTable.authorId],
+            selectedAuthor[AuthorsTable.name],
+            selectedAuthor[AuthorsTable.affiliation],
+            selectedAuthor[AuthorsTable.email],
+            selectedAuthor[AuthorsTable.emailVerified],
+            selectedAuthor[AuthorsTable.username],
+            Timestamp.valueOf(selectedAuthor[AuthorsTable.createdAt].toJavaLocalDateTime()),
+            selectedAuthor[AuthorsTable.createdBy],
+            Timestamp.valueOf(selectedAuthor[AuthorsTable.updatedAt].toJavaLocalDateTime()),
+            selectedAuthor[AuthorsTable.updatedBy],
         )
-        return authorList
     }
 
     fun createAuthor(
@@ -393,7 +409,6 @@ class DatasetCitationsDatabaseService(
                 it[AuthorsTable.createdAt] = now
                 it[AuthorsTable.createdBy] = username
                 it[AuthorsTable.updatedAt] = now
-                it[AuthorsTable.updatedBy] = "nobody"
             }
         return ResponseAuthor(
             insert[AuthorsTable.authorId].toString(),
@@ -408,6 +423,16 @@ class DatasetCitationsDatabaseService(
         emailVerified: Boolean,
         affiliation: String,
     ): ResponseAuthor {
+        if (AuthorsTable
+                .select {
+                    (AuthorsTable.username eq username) and
+                        (AuthorsTable.authorId eq UUID.fromString(authorId))
+                }
+                .empty()
+        ) {
+            throw NotFoundException("Author $authorId does not exist")
+        }
+
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         AuthorsTable

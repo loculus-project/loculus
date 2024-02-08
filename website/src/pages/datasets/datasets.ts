@@ -41,21 +41,20 @@ export const getDatasetRecords = (token: string, datasetId: string, version: str
     });
 };
 
-export const getAuthor = (token: string, username: string) => {
+export const getAuthor = (token: string) => {
     const apiClient = DatasetCitationClient.create();
     return apiClient.call('getAuthor', {
-        params: { username },
         headers: createAuthorizationHeader(token),
     });
 };
 
-export const parseAuthorData = (authorResponse: any, userSession: any) => {
-    const author = authorResponse !== undefined && authorResponse.length > 0 ? authorResponse[0] : {};
+export const handlePrivateAuthorProfile = (authorResponse: any, userSession: any) => {
+    const authorData = authorResponse ?? {};
     return {
         name: userSession?.name,
         email: userSession?.email,
         emailVerified: userSession?.email_verified,
-        ...author,
+        ...authorData,
     };
 };
 

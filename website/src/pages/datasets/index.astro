@@ -1,5 +1,4 @@
 ---
-import { getAuthor, getUserCitedBy, getDatasetsOfUser, parseAuthorData } from './datasets.ts';
 import { AuthorDetails } from '../../components/DatasetCitations/AuthorDetails';
 import { CitationPlot } from '../../components/DatasetCitations/CitationPlot';
 import { DatasetList } from '../../components/DatasetCitations/DatasetList';
@@ -7,47 +6,55 @@ import { DatasetListActions } from '../../components/DatasetCitations/DatasetLis
 import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { DatasetCitationClient } from '../../services/datasetCitationClient.ts';
+import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
 const username = Astro.locals.session.user!.username!;
-
-const datasetsResponse = await getDatasetsOfUser(accessToken);
-const userCitedByResponse = await getUserCitedBy(accessToken, username);
-const authorResponse = await getAuthor(accessToken, username);
-
 const session = Astro.locals.session;
+
+const datasetClient = DatasetCitationClient.create();
+
+const datasetsResponse = (await datasetClient.call('getDatasetsOfUser', {
+    headers: createAuthorizationHeader(accessToken),
+})) as any;
+
+const userCitedByResponse = (await datasetClient.call('getUserCitedBy', {
+    params: { username },
+    headers: createAuthorizationHeader(accessToken),
+})) as any;
+
+const authorResponse = (await datasetClient.call('getAuthor', {
+    headers: createAuthorizationHeader(accessToken),
+})) as any;
+
+const handlePrivateAuthorProfile = (authorResponse: any, userSession: any) => {
+    const authorData = authorResponse ?? {};
+    return {
+        name: userSession?.name,
+        email: userSession?.email,
+        emailVerified: userSession?.email_verified,
+        ...authorData,
+    };
+};
+
+const authorData = handlePrivateAuthorProfile(authorResponse.value, session.user);
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>
     <div class='flex flex-col justify-center items-center'>
         <div class='flex flex-row justify-center w-5/6 divide-x'>
             <div class='w-3/4 flex flex-col justify-start'>
-                {
-                    authorResponse.match(
-                        (author) => {
-                            const authorData = parseAuthorData(author, session.user);
-                            return (
-                                <AuthorDetails
-                                    displayFullDetails
-                                    clientConfig={clientConfig}
-                                    accessToken={accessToken}
-                                    fontSize={120}
-                                    client:load
-                                    {...authorData}
-                                />
-                            );
-                        },
-                        (error) => (
-                            <ErrorFeedback
-                                message={'Error while fetching author: ' + JSON.stringify(error)}
-                                client:load
-                            />
-                        ),
-                    )
-                }
-
+                <AuthorDetails
+                    displayFullDetails
+                    clientConfig={clientConfig}
+                    accessToken={accessToken}
+                    fontSize={120}
+                    client:load
+                    {...authorData}
+                />
                 <hr />
                 <div class='flex justify-start'>
                     <div>
@@ -57,14 +64,15 @@ const session = Astro.locals.session;
                         </div>
                         <div>
                             {
-                                datasetsResponse.match(
-                                    (datasets) => <DatasetList datasets={datasets} username={username} client:load />,
-                                    (error) => (
-                                        <ErrorFeedback
-                                            message={'Error while fetching datasets: ' + JSON.stringify(error)}
-                                            client:load
-                                        />
-                                    ),
+                                datasetsResponse.value !== undefined ? (
+                                    <DatasetList datasets={datasetsResponse.value} username={username} client:load />
+                                ) : (
+                                    <ErrorFeedback
+                                        message={
+                                            'Error while fetching datasets: ' + JSON.stringify(datasetsResponse.error)
+                                        }
+                                        client:load
+                                    />
                                 )
                             }
                         </div>
@@ -74,14 +82,13 @@ const session = Astro.locals.session;
             <div class='w-1/4 flex flex-col justify-start items-start pl-4'>
                 <span class='text-xl'>Cited By</span>
                 {
-                    userCitedByResponse.match(
-                        (citedByData) => <CitationPlot citedByData={citedByData} client:load />,
-                        (error) => (
-                            <ErrorFeedback
-                                message={'Error while fetching user sequences: ' + JSON.stringify(error)}
-                                client:only='react'
-                            />
-                        ),
+                    userCitedByResponse.value !== undefined ? (
+                        <CitationPlot citedByData={userCitedByResponse.value} client:load />
+                    ) : (
+                        <ErrorFeedback
+                            message={'Error while fetching datasets: ' + JSON.stringify(userCitedByResponse.error)}
+                            client:load
+                        />
                     )
                 }
             </div>

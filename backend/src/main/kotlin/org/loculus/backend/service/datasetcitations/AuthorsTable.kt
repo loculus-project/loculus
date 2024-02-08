@@ -16,7 +16,7 @@ object AuthorsTable : Table("authors") {
     val createdAt = datetime("created_at")
     val createdBy = varchar("created_by", 255)
     val updatedAt = datetime("updated_at")
-    val updatedBy = varchar("updated_by", 255)
+    val updatedBy = varchar("updated_by", 255).nullable()
 
     override val primaryKey = PrimaryKey(authorId)
 }

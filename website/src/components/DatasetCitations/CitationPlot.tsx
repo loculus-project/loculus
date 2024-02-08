@@ -15,7 +15,10 @@ export const CitationPlot: FC<CitationPlotProps> = ({ citedByData }) => {
         ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
         setIsRegistered(true);
     }, []);
-    if (!isRegistered) return null;
+
+    if (!isRegistered) {
+        return null;
+    }
 
     const emptyCitedByData = {
         years: [2020, 2021, 2022, 2023, 2024],

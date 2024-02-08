@@ -1,10 +1,6 @@
 import { expect, test, describe } from 'vitest';
 
-import {
-    serializeRecordsToAccessionsInput,
-    parseRecordsFromAccessionInput,
-    validateAccessionByType,
-} from './parseAccessionInput';
+import { serializeRecordsToAccessionsInput, validateAccessionByType } from './parseAccessionInput';
 import { DatasetRecordType } from '../types/datasetCitation';
 
 describe('serializeRecordsToAccessionsInput', () => {
@@ -45,53 +41,6 @@ describe('serializeRecordsToAccessionsInput', () => {
         expect(serialized[DatasetRecordType.genbank]).toBe('');
         expect(serialized[DatasetRecordType.sra]).toBe('');
         expect(serialized[DatasetRecordType.gisaid]).toBe('');
-    });
-});
-
-describe('parseRecordsFromAccessionInput', () => {
-    test('should parse accessions input to records by type', () => {
-        const accessions = {
-            [DatasetRecordType.loculus]: 'A123',
-            [DatasetRecordType.genbank]: 'B456',
-            [DatasetRecordType.sra]: 'C789',
-            [DatasetRecordType.gisaid]: 'D012',
-        };
-
-        const records = parseRecordsFromAccessionInput(accessions);
-
-        expect(records).toContainEqual({ accession: 'A123', type: DatasetRecordType.loculus });
-        expect(records).toContainEqual({ accession: 'B456', type: DatasetRecordType.genbank });
-        expect(records).toContainEqual({ accession: 'C789', type: DatasetRecordType.sra });
-        expect(records).toContainEqual({ accession: 'D012', type: DatasetRecordType.gisaid });
-    });
-
-    test('should handle splitting records of the same type', () => {
-        const accessions = {
-            [DatasetRecordType.loculus]: 'A123, B456',
-            [DatasetRecordType.genbank]: 'C789, D012',
-            [DatasetRecordType.sra]: '',
-            [DatasetRecordType.gisaid]: '',
-        };
-
-        const records = parseRecordsFromAccessionInput(accessions);
-
-        expect(records).toContainEqual({ accession: 'A123', type: DatasetRecordType.loculus });
-        expect(records).toContainEqual({ accession: 'B456', type: DatasetRecordType.loculus });
-        expect(records).toContainEqual({ accession: 'C789', type: DatasetRecordType.genbank });
-        expect(records).toContainEqual({ accession: 'D012', type: DatasetRecordType.genbank });
-    });
-
-    test('should handle empty accessions input', () => {
-        const accessions = {
-            [DatasetRecordType.loculus]: '',
-            [DatasetRecordType.genbank]: '',
-            [DatasetRecordType.sra]: '',
-            [DatasetRecordType.gisaid]: '',
-        };
-
-        const records = parseRecordsFromAccessionInput(accessions);
-
-        expect(records).toHaveLength(0);
     });
 });
 

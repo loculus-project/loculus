@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class CitationsEndpointTest(
+class CitationEndpointsTest(
     @Autowired private val client: DatasetCitationsControllerClient,
 ) {
     @ParameterizedTest

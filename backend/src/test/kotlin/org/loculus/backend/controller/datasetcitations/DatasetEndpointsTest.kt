@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class DatasetsEndpointTest(@Autowired private val client: DatasetCitationsControllerClient) {
+class DatasetEndpointsTest(@Autowired private val client: DatasetCitationsControllerClient) {
 
     @ParameterizedTest
     @MethodSource("authorizationTestCases")

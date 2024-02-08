@@ -1,7 +1,6 @@
 package org.loculus.backend.controller.datasetcitations
 
 import com.jayway.jsonpath.JsonPath
-import org.hamcrest.CoreMatchers.containsString
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
@@ -15,7 +14,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class AuthorsEndpointTest(
+class AuthorsEndpointsTest(
     @Autowired private val client: DatasetCitationsControllerClient,
 ) {
     @ParameterizedTest
@@ -31,9 +30,7 @@ class AuthorsEndpointTest(
         client.getAuthor()
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(
-                jsonPath("\$.detail", containsString("Author testuser does not exist")),
-            )
+            .andExpect(jsonPath("\$.detail").value("Author $MOCK_AUTHOR_NAME does not exist"))
     }
 
     @Test
@@ -49,8 +46,8 @@ class AuthorsEndpointTest(
         client.getAuthor()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$[0].authorId").value(authorId))
-            .andExpect(jsonPath("\$[0].name").value("testuser"))
+            .andExpect(jsonPath("\$.authorId").value(authorId))
+            .andExpect(jsonPath("\$.name").value("$MOCK_AUTHOR_NAME"))
 
         client.deleteAuthor(authorId)
             .andExpect(status().isOk)
@@ -75,7 +72,7 @@ class AuthorsEndpointTest(
         client.getAuthor()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$[0].name").value(newAuthorName))
+            .andExpect(jsonPath("\$.name").value(newAuthorName))
 
         client.deleteAuthor(authorId)
             .andExpect(status().isOk)

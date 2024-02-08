@@ -1,11 +1,13 @@
 ---
-import { getDataset, getDatasetRecords, getDatasetCitedBy, getDatasetByVersion } from './datasets';
 import { AuthorDetails } from '../../components/DatasetCitations/AuthorDetails';
 import { DatasetItem } from '../../components/DatasetCitations/DatasetItem';
 import { DatasetItemActions } from '../../components/DatasetCitations/DatasetItemActions';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import { DatasetCitationClient } from '../../services/datasetCitationClient.ts';
+import type { Dataset } from '../../types/datasetCitation';
+import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
@@ -14,9 +16,33 @@ const { datasetId = '' } = Astro.params;
 const version = Astro.url.searchParams.get('version')! || '1';
 const username = Astro.locals.session.user?.username;
 
-const datasetResponse = (await getDataset(accessToken, datasetId, version)) as any;
-const datasetRecordsResponse = (await getDatasetRecords(accessToken, datasetId, version)) as any;
-const datasetCitedByResponse = (await getDatasetCitedBy(accessToken, datasetId, version)) as any;
+const datasetClient = DatasetCitationClient.create();
+
+const datasetResponse = (await datasetClient.call('getDataset', {
+    params: { datasetId, version },
+    headers: createAuthorizationHeader(accessToken),
+})) as any;
+
+const datasetRecordsResponse = (await datasetClient.call('getDatasetRecords', {
+    params: { datasetId, version },
+    headers: createAuthorizationHeader(accessToken),
+})) as any;
+
+const datasetCitedByResponse = (await datasetClient.call('getDatasetCitedBy', {
+    params: { datasetId, version },
+    headers: createAuthorizationHeader(accessToken),
+})) as any;
+
+const getDatasetByVersion = (datasetVersions: Dataset[], version: string) => {
+    const matchedVersion = datasetVersions.find((obj) => {
+        return obj.datasetVersion === parseInt(version, 10);
+    });
+    if (matchedVersion === undefined) {
+        return datasetVersions[datasetVersions.length - 1];
+    }
+    return matchedVersion;
+};
+
 const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datasetResponse.value, version) : undefined;
 ---
 

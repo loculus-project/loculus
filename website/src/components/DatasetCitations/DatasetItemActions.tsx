@@ -8,7 +8,7 @@ import { datasetCitationClientHooks } from '../../services/serviceHooks';
 import type { DatasetRecord, Dataset } from '../../types/datasetCitation';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { AlertDialog } from '../common/AlertDialog';
+import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withProvider';
@@ -31,7 +31,6 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
     isAdminView = false,
 }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
-    const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
@@ -97,7 +96,12 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
                                         backgroundColor: 'whitesmoke',
                                     },
                                 }}
-                                onClick={() => setDeleteDialogVisible(true)}
+                                onClick={() =>
+                                    displayConfirmationDialog({
+                                        dialogText: `Are you sure you want to delete this dataset version?`,
+                                        onConfirmation: handleDeleteDataset,
+                                    })
+                                }
                                 variant='contained'
                             >
                                 Delete
@@ -117,13 +121,6 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
             <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
                 <ExportDataset dataset={dataset} datasetRecords={datasetRecords} />
             </Modal>
-            <AlertDialog
-                isVisible={deleteDialogVisible}
-                setVisible={setDeleteDialogVisible}
-                title='Delete Dataset'
-                description='Are you sure you want to delete this dataset version?'
-                onAccept={handleDeleteDataset}
-            />
         </div>
     );
 };

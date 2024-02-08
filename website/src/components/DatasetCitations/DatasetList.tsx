@@ -11,6 +11,7 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import { visuallyHidden } from '@mui/utils';
 import { type FC, type MouseEvent, type ChangeEvent, useState, useMemo } from 'react';
 
+import { routes } from '../../routes';
 import type { Dataset } from '../../types/datasetCitation';
 
 type Order = 'asc' | 'desc';
@@ -36,12 +37,12 @@ const DatasetListHead = (props: DatasetListHeadProps) => {
             label: 'Last Updated',
         },
         {
-            id: 'datasetVersion',
-            label: 'Version',
-        },
-        {
             id: 'name',
             label: 'Name',
+        },
+        {
+            id: 'datasetVersion',
+            label: 'Version',
         },
         {
             id: 'datasetDOI',
@@ -100,7 +101,7 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
     };
 
     const handleClick = (_: MouseEvent<unknown>, datasetId: string, datasetVersion: string) => {
-        window.location.href = `/datasets/${datasetId}?version=${datasetVersion}&user=${username}`;
+        window.location.href = routes.datasetPage(datasetId, datasetVersion, username);
     };
 
     const handleChangePage = (_: unknown, newPage: number) => {
