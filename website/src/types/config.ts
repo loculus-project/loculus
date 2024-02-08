@@ -1,7 +1,7 @@
 import z from 'zod';
 
 import { orderByType } from './lapis.ts';
-import { referenceGenomes } from './referencesGenomes.ts';
+import { referenceGenome } from './referencesGenomes.ts';
 
 export const metadata = z.object({
     name: z.string(),
@@ -37,7 +37,7 @@ export type Schema = z.infer<typeof schema>;
 
 export const instanceConfig = z.object({
     schema,
-    referenceGenomes,
+    referenceGenome,
 });
 export type InstanceConfig = z.infer<typeof instanceConfig>;
 

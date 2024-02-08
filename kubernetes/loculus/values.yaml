@@ -44,7 +44,7 @@ instances:
       image: ghcr.io/loculus-project/preprocessing-dummy
       args:
         - "--watch"
-    referenceGenomes:
+    referenceGenome:
       nucleotideSequences:
         - name: "main"
           sequence: "[[URL:https://cov2tree.nyc3.cdn.digitaloceanspaces.com/reference.txt]]"
@@ -106,7 +106,7 @@ instances:
         genes:
           OPG001: 247
         batch_size: 100
-    referenceGenomes:
+    referenceGenome:
       nucleotideSequences:
         - name: "main"
           sequence: "[[URL:https://cov2tree.nyc3.cdn.digitaloceanspaces.com/mpox]]"

@@ -4,19 +4,19 @@ import { ActiveDownloadFilters } from './ActiveDownloadFilters.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadOption, generateDownloadUrl } from './generateDownloadUrl.ts';
 import type { FilterValue, MutationFilter } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadDialogProps = {
     metadataFilter: FilterValue[];
     mutationFilter: MutationFilter;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeSequenceNames: referenceGenomeSequenceNames;
     lapisUrl: string;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     metadataFilter,
     mutationFilter,
-    referenceGenomesSequenceNames,
+    referenceGenomeSequenceNames,
     lapisUrl,
 }) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -58,7 +58,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
                     <ActiveDownloadFilters metadataFilter={metadataFilter} mutationFilter={mutationFilter} />
                     <DownloadForm
-                        referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                         onChange={setDownloadOption}
                     />
 

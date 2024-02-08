@@ -3,16 +3,16 @@ import { type FC, useMemo, useState } from 'react';
 import * as React from 'react';
 
 import type { MutationFilter } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
 import type { BaseType } from '../../../utils/sequenceTypeHelpers.ts';
 
 interface MutationFieldProps {
-    referenceGenomes: ReferenceGenomesSequenceNames;
+    referenceGenome: referenceGenomeSequenceNames;
     value: MutationFilter;
     onChange: (mutationFilter: MutationFilter) => void;
 }
 
-export const MutationField: FC<MutationFieldProps> = ({ referenceGenomes, value, onChange }) => {
+export const MutationField: FC<MutationFieldProps> = ({ referenceGenome, value, onChange }) => {
     const [options, setOptions] = useState<MutationQuery[]>([]);
 
     const selectedOptions: MutationQuery[] = useMemo(() => {
@@ -36,7 +36,7 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomes, value,
             { baseType: 'aminoAcid', mutationType: 'insertion', test: isValidAminoAcidInsertionQuery },
         ] as const;
         tests.forEach(({ baseType, mutationType, test }) => {
-            if (test(newValue, referenceGenomes)) {
+            if (test(newValue, referenceGenome)) {
                 newOptions.push({ baseType, mutationType, text: newValue });
             }
         });
@@ -112,14 +112,14 @@ type MutationQuery = {
     text: string;
 };
 
-const isValidNucleotideMutationQuery = (text: string, referenceGenomes: ReferenceGenomesSequenceNames): boolean => {
+const isValidNucleotideMutationQuery = (text: string, referenceGenome: referenceGenomeSequenceNames): boolean => {
     try {
-        const isMultiSegmented = referenceGenomes.nucleotideSequences.length > 1;
+        const isMultiSegmented = referenceGenome.nucleotideSequences.length > 1;
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
         if (isMultiSegmented) {
             const [segment, _mutation] = textUpper.split(':');
-            const existingSegments = new Set(referenceGenomes.nucleotideSequences.map((n) => n.toUpperCase()));
+            const existingSegments = new Set(referenceGenome.nucleotideSequences.map((n) => n.toUpperCase()));
             if (!existingSegments.has(segment)) {
                 return false;
             }
@@ -131,11 +131,11 @@ const isValidNucleotideMutationQuery = (text: string, referenceGenomes: Referenc
     }
 };
 
-const isValidAminoAcidMutationQuery = (text: string, referenceGenomes: ReferenceGenomesSequenceNames): boolean => {
+const isValidAminoAcidMutationQuery = (text: string, referenceGenome: referenceGenomeSequenceNames): boolean => {
     try {
         const textUpper = text.toUpperCase();
         const [gene, mutation] = textUpper.split(':');
-        const existingGenes = new Set(referenceGenomes.genes.map((g) => g.toUpperCase()));
+        const existingGenes = new Set(referenceGenome.genes.map((g) => g.toUpperCase()));
         if (!existingGenes.has(gene)) {
             return false;
         }
@@ -145,9 +145,9 @@ const isValidAminoAcidMutationQuery = (text: string, referenceGenomes: Reference
     }
 };
 
-const isValidNucleotideInsertionQuery = (text: string, referenceGenomes: ReferenceGenomesSequenceNames): boolean => {
+const isValidNucleotideInsertionQuery = (text: string, referenceGenome: referenceGenomeSequenceNames): boolean => {
     try {
-        const isMultiSegmented = referenceGenomes.nucleotideSequences.length > 1;
+        const isMultiSegmented = referenceGenome.nucleotideSequences.length > 1;
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
             return false;
@@ -158,7 +158,7 @@ const isValidNucleotideInsertionQuery = (text: string, referenceGenomes: Referen
             ? split
             : ([undefined, ...split] as [undefined | string, string, string]);
         if (segment !== undefined) {
-            const existingSegments = new Set(referenceGenomes.nucleotideSequences.map((n) => n.toUpperCase()));
+            const existingSegments = new Set(referenceGenome.nucleotideSequences.map((n) => n.toUpperCase()));
             if (!existingSegments.has(segment)) {
                 return false;
             }
@@ -172,7 +172,7 @@ const isValidNucleotideInsertionQuery = (text: string, referenceGenomes: Referen
     }
 };
 
-const isValidAminoAcidInsertionQuery = (text: string, referenceGenomes: ReferenceGenomesSequenceNames): boolean => {
+const isValidAminoAcidInsertionQuery = (text: string, referenceGenome: referenceGenomeSequenceNames): boolean => {
     try {
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
@@ -180,7 +180,7 @@ const isValidAminoAcidInsertionQuery = (text: string, referenceGenomes: Referenc
         }
         const query = textUpper.slice(4);
         const [gene, position, insertion] = query.split(':');
-        const existingGenes = new Set(referenceGenomes.genes.map((g) => g.toUpperCase()));
+        const existingGenes = new Set(referenceGenome.genes.map((g) => g.toUpperCase()));
         if (!existingGenes.has(gene) || !Number.isInteger(Number(position))) {
             return false;
         }

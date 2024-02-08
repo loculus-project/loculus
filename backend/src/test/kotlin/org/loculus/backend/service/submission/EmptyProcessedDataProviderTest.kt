@@ -33,7 +33,7 @@ class EmptyProcessedDataProviderTest {
                             Metadata(name = SECOND_METADATA_FIELD, type = MetadataType.DATE, required = false),
                         ),
                     ),
-                    referenceGenomes = ReferenceGenome(
+                    referenceGenome = ReferenceGenome(
                         listOf(
                             ReferenceSequence(FIRST_NUCLEOTIDE_SEQUENCE, "the sequence"),
                             ReferenceSequence(SECOND_NUCLEOTIDE_SEQUENCE, "the sequence"),

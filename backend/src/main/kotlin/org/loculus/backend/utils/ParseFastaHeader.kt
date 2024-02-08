@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 @Service
 class ParseFastaHeader(private val backendConfig: BackendConfig) {
     fun parse(submissionId: String, organism: Organism): Pair<SubmissionId, SegmentName> {
-        val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenomes
+        val referenceGenome = backendConfig.getInstanceConfig(organism).referenceGenome
 
         if (referenceGenome.nucleotideSequences.size == 1) {
             return Pair(submissionId, "main")

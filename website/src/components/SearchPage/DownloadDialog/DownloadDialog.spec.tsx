@@ -4,9 +4,9 @@ import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
 import type { FilterValue, MutationFilter } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
 
-const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
+const defaultReferenceGenome: referenceGenomeSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
 };
@@ -16,14 +16,14 @@ const defaultLapisUrl = 'https://lapis';
 async function renderDialog(
     metadataFilter: FilterValue[] = [],
     mutationFilter: MutationFilter = {},
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames = defaultReferenceGenome,
+    referenceGenomeSequenceNames: referenceGenomeSequenceNames = defaultReferenceGenome,
     lapisUrl: string = defaultLapisUrl,
 ) {
     render(
         <DownloadDialog
             metadataFilter={metadataFilter}
             mutationFilter={mutationFilter}
-            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+            referenceGenomeSequenceNames={referenceGenomeSequenceNames}
             lapisUrl={lapisUrl}
         />,
     );

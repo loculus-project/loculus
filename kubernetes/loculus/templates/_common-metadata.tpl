@@ -46,8 +46,8 @@ instances:
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
       {{- end }}
-    referenceGenomes:
-      {{ $instance.referenceGenomes | toYaml | nindent 6 }}
+    referenceGenome:
+      {{ $instance.referenceGenome | toYaml | nindent 6 }}
   {{- end }}
 {{- end }}
 
@@ -78,8 +78,8 @@ instances:
         {{ $metadata := include "loculus.generateBackendMetadata" .metadata | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{- end }}
-    referenceGenomes:
-      {{ $instance.referenceGenomes | toYaml | nindent 6 }}
+    referenceGenome:
+      {{ $instance.referenceGenome | toYaml | nindent 6 }}
   {{- end }}
 {{- end }}
 

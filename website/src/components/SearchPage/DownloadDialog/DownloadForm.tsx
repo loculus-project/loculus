@@ -2,14 +2,14 @@ import { type FC, useEffect, useState } from 'react';
 
 import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
 import type { DownloadDataType, DownloadOption } from './generateDownloadUrl.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadFormProps = {
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeSequenceNames: referenceGenomeSequenceNames;
     onChange: (value: DownloadOption) => void;
 };
 
-export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNames, onChange }) => {
+export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomeSequenceNames, onChange }) => {
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [includeOldData, setIncludeOldData] = useState(0);
     const [dataType, setDataType] = useState(0);
@@ -17,7 +17,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
     const [alignedNucleotideSequence, setAlignedNucleotideSequence] = useState(0);
     const [alignedAminoAcidSequence, setAlignedAminoAcidSequence] = useState(0);
 
-    const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
+    const isMultiSegmented = referenceGenomeSequenceNames.nucleotideSequences.length > 1;
 
     useEffect(() => {
         let downloadDataType: DownloadDataType;
@@ -29,7 +29,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                 downloadDataType = {
                     type: 'unalignedNucleotideSequences',
                     segment: isMultiSegmented
-                        ? referenceGenomesSequenceNames.nucleotideSequences[unalignedNucleotideSequence]
+                        ? referenceGenomeSequenceNames.nucleotideSequences[unalignedNucleotideSequence]
                         : undefined,
                 };
                 break;
@@ -37,14 +37,14 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                 downloadDataType = {
                     type: 'alignedNucleotideSequences',
                     segment: isMultiSegmented
-                        ? referenceGenomesSequenceNames.nucleotideSequences[alignedNucleotideSequence]
+                        ? referenceGenomeSequenceNames.nucleotideSequences[alignedNucleotideSequence]
                         : undefined,
                 };
                 break;
             case 3:
                 downloadDataType = {
                     type: 'alignedAminoAcidSequences',
-                    gene: referenceGenomesSequenceNames.genes[alignedAminoAcidSequence],
+                    gene: referenceGenomeSequenceNames.genes[alignedAminoAcidSequence],
                 };
                 break;
             default:
@@ -63,8 +63,8 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
         alignedNucleotideSequence,
         alignedAminoAcidSequence,
         isMultiSegmented,
-        referenceGenomesSequenceNames.nucleotideSequences,
-        referenceGenomesSequenceNames.genes,
+        referenceGenomeSequenceNames.nucleotideSequences,
+        referenceGenomeSequenceNames.genes,
         onChange,
     ]);
 
@@ -112,7 +112,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                             <div className='px-8'>
                                 <DropdownOptionBlock
                                     name='unalignedNucleotideSequences'
-                                    options={referenceGenomesSequenceNames.nucleotideSequences.map((segment) => ({
+                                    options={referenceGenomeSequenceNames.nucleotideSequences.map((segment) => ({
                                         // eslint-disable-next-line react/jsx-no-useless-fragment
                                         label: <>{segment}</>,
                                     }))}
@@ -129,7 +129,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                             <div className='px-8'>
                                 <DropdownOptionBlock
                                     name='alignedNucleotideSequences'
-                                    options={referenceGenomesSequenceNames.nucleotideSequences.map((gene) => ({
+                                    options={referenceGenomeSequenceNames.nucleotideSequences.map((gene) => ({
                                         // eslint-disable-next-line react/jsx-no-useless-fragment
                                         label: <>{gene}</>,
                                     }))}
@@ -146,7 +146,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                             <div className='px-8'>
                                 <DropdownOptionBlock
                                     name='alignedAminoAcidSequences'
-                                    options={referenceGenomesSequenceNames.genes.map((gene) => ({
+                                    options={referenceGenomeSequenceNames.genes.map((gene) => ({
                                         // eslint-disable-next-line react/jsx-no-useless-fragment
                                         label: <>{gene}</>,
                                     }))}

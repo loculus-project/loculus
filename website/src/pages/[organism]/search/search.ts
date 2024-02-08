@@ -1,12 +1,12 @@
 import { ok, Result } from 'neverthrow';
 
 import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
-import { getReferenceGenomes, getSchema } from '../../../config.ts';
+import { getreferenceGenome, getSchema } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
 import type { MetadataFilter, MutationFilter } from '../../../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../../../types/lapis.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
 
 export type SearchResponse = {
     data: TableSequenceData[];
@@ -127,10 +127,10 @@ export const getMutationFilter = (searchParams: URLSearchParams): MutationFilter
     };
 };
 
-export const getReferenceGenomesSequenceNames = (organism: string): ReferenceGenomesSequenceNames => {
-    const referenceGenomes = getReferenceGenomes(organism);
+export const getreferenceGenomeSequenceNames = (organism: string): referenceGenomeSequenceNames => {
+    const referenceGenome = getreferenceGenome(organism);
     return {
-        nucleotideSequences: referenceGenomes.nucleotideSequences.map((n) => n.name),
-        genes: referenceGenomes.genes.map((n) => n.name),
+        nucleotideSequences: referenceGenome.nucleotideSequences.map((n) => n.name),
+        genes: referenceGenome.genes.map((n) => n.name),
     };
 };

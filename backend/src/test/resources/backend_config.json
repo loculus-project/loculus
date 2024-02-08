@@ -1,7 +1,7 @@
 {
     "instances": {
         "dummyOrganism": {
-            "referenceGenomes": {
+            "referenceGenome": {
                 "nucleotideSequences": [
                     {
                         "name": "main",
@@ -75,7 +75,7 @@
             }
         },
         "otherOrganism": {
-            "referenceGenomes": {
+            "referenceGenome": {
                 "nucleotideSequences": [
                     {
                         "name": "notOnlySegment",

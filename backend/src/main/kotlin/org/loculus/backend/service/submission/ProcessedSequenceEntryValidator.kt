@@ -79,7 +79,7 @@ enum class NucleotideSymbols(override val symbol: Char) : Symbol {
 class ProcessedSequenceEntryValidatorFactory(private val backendConfig: BackendConfig) {
     fun create(organism: Organism): ProcessedSequenceEntryValidator {
         val instanceConfig = backendConfig.instances[organism.name]!!
-        return ProcessedSequenceEntryValidator(instanceConfig.schema, instanceConfig.referenceGenomes)
+        return ProcessedSequenceEntryValidator(instanceConfig.schema, instanceConfig.referenceGenome)
     }
 }
 

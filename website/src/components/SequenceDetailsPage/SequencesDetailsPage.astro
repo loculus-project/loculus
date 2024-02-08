@@ -2,7 +2,7 @@
 import DataTable from './DataTable.astro';
 import { SequencesContainer } from './SequencesContainer';
 import { type TableDataEntry } from './getTableData';
-import { getReferenceGenomes, getRuntimeConfig } from '../../config';
+import { getreferenceGenome, getRuntimeConfig } from '../../config';
 import { routes } from '../../routes.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 
@@ -17,10 +17,10 @@ const { tableData, organism, accessionVersion, dataUseTermsHistory } = Astro.pro
 
 const runtimeConfig = getRuntimeConfig();
 
-const referenceGenomes = getReferenceGenomes(organism);
+const referenceGenome = getreferenceGenome(organism);
 
-const genes = referenceGenomes.genes.map((g) => g.name);
-const nucleotideSegmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name) as [string, ...string[]];
+const genes = referenceGenome.genes.map((g) => g.name);
+const nucleotideSegmentNames = referenceGenome.nucleotideSequences.map((s) => s.name) as [string, ...string[]];
 ---
 
 <DataTable tableData={tableData} dataUseTermsHistory={dataUseTermsHistory} />

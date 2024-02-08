@@ -40,7 +40,7 @@ class SubmissionConvenienceClient(
     ): List<SubmissionIdMapping> {
         val isMultiSegmented = backendConfig
             .getInstanceConfig(Organism(organism))
-            .referenceGenomes
+            .referenceGenome
             .nucleotideSequences.size > 1
 
         val submit = client.submit(

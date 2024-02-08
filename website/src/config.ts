@@ -4,7 +4,7 @@ import path from 'path';
 import type { z, ZodError } from 'zod';
 
 import { type InstanceConfig, type Schema, type WebsiteConfig, websiteConfig } from './types/config.ts';
-import { type ReferenceGenomes } from './types/referencesGenomes.ts';
+import { type referenceGenome } from './types/referencesGenomes.ts';
 import { runtimeConfig, type RuntimeConfig, type ServiceUrls } from './types/runtimeConfig.ts';
 
 let _config: WebsiteConfig | null = null;
@@ -63,8 +63,8 @@ export function getLapisUrl(serviceConfig: ServiceUrls, organism: string): strin
     return serviceConfig.lapisUrls[organism];
 }
 
-export function getReferenceGenomes(organism: string): ReferenceGenomes {
-    return getConfig(organism).referenceGenomes;
+export function getreferenceGenome(organism: string): referenceGenome {
+    return getConfig(organism).referenceGenome;
 }
 
 function readTypedConfigFile<T>(fileName: string, schema: z.ZodType<T>) {

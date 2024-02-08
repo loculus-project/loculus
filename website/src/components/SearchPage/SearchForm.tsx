@@ -16,7 +16,7 @@ import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { routes } from '../../routes.ts';
 import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
@@ -28,7 +28,7 @@ interface SearchFormProps {
     filters: MetadataFilter[];
     initialMutationFilter: MutationFilter;
     clientConfig: ClientConfig;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    referenceGenomeSequenceNames: referenceGenomeSequenceNames;
 }
 
 const clientLogger = getClientLogger('SearchForm');
@@ -38,7 +38,7 @@ export const SearchForm: FC<SearchFormProps> = ({
     filters,
     initialMutationFilter,
     clientConfig,
-    referenceGenomesSequenceNames,
+    referenceGenomeSequenceNames,
 }) => {
     const [fieldValues, setFieldValues] = useState<(MetadataFilter & { label: string })[]>(
         filters.map((filter) => ({
@@ -120,7 +120,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                         <form onSubmit={handleSearch}>
                             <div className='flex flex-col'>
                                 <MutationField
-                                    referenceGenomes={referenceGenomesSequenceNames}
+                                    referenceGenome={referenceGenomeSequenceNames}
                                     value={mutationFilter}
                                     onChange={setMutationFilter}
                                 />

@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { err, type Result } from 'neverthrow';
 
-import { getReferenceGenomes } from '../../../../config.ts';
+import { getreferenceGenome } from '../../../../config.ts';
 import { routes } from '../../../../routes.ts';
 import { LapisClient } from '../../../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../../../types/backend.ts';
@@ -70,8 +70,8 @@ const getSequenceDetailsUnalignedFasta = async (
         }));
     }
 
-    const referenceGenomes = getReferenceGenomes(organism);
-    const segmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name);
+    const referenceGenome = getreferenceGenome(organism);
+    const segmentNames = referenceGenome.nucleotideSequences.map((s) => s.name);
     const isMultiSegmented = segmentNames.length > 1;
 
     const fastaResult: Result<string, ProblemDetail> = !isMultiSegmented

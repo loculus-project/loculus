@@ -4,14 +4,14 @@ import { describe, expect, test, vi } from 'vitest';
 
 import { MutationField } from './MutationField.tsx';
 import type { MutationFilter } from '../../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
+import type { referenceGenomeSequenceNames } from '../../../types/referencesGenomes.ts';
 
-const singleSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
+const singleSegmentedReferenceGenome: referenceGenomeSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
 };
 
-const multiSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
+const multiSegmentedReferenceGenome: referenceGenomeSequenceNames = {
     nucleotideSequences: ['seg1', 'seg2'],
     genes: ['gene1', 'gene2'],
 };
@@ -19,9 +19,9 @@ const multiSegmentedReferenceGenome: ReferenceGenomesSequenceNames = {
 function renderField(
     value: MutationFilter,
     onChange: (mutationFilter: MutationFilter) => void,
-    referenceGenome: ReferenceGenomesSequenceNames,
+    referenceGenome: referenceGenomeSequenceNames,
 ) {
-    render(<MutationField value={value} onChange={onChange} referenceGenomes={referenceGenome} />);
+    render(<MutationField value={value} onChange={onChange} referenceGenome={referenceGenome} />);
 }
 
 describe('MutationField', () => {

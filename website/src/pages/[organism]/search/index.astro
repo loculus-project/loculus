@@ -1,7 +1,7 @@
 ---
 import {
     getData,
-    getReferenceGenomesSequenceNames,
+    getreferenceGenomeSequenceNames,
     getMetadataFilters,
     getMutationFilter,
     getOrderBy,
@@ -34,7 +34,7 @@ const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
 const orderBy = getOrderBy(Astro.url.searchParams, schema.defaultOrderBy, schema.defaultOrder);
 
-const referenceGenomesSequenceNames = getReferenceGenomesSequenceNames(organism);
+const referenceGenomeSequenceNames = getreferenceGenomeSequenceNames(organism);
 
 const data = await getData(organism, metadataFilter, mutationFilter, offset, pageSize, orderBy);
 ---
@@ -48,7 +48,7 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
                 filters={metadataFilter}
                 initialMutationFilter={mutationFilter}
                 clientConfig={clientConfig}
-                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                 client:only='react'
             />
         </div>
@@ -59,7 +59,7 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
                         <DownloadDialog
                             metadataFilter={metadataFilter}
                             mutationFilter={mutationFilter}
-                            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                            referenceGenomeSequenceNames={referenceGenomeSequenceNames}
                             lapisUrl={lapisUrl}
                             client:load
                         />

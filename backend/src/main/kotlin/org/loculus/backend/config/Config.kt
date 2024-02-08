@@ -14,7 +14,7 @@ data class BackendConfig(
 
 data class InstanceConfig(
     val schema: Schema,
-    val referenceGenomes: ReferenceGenome,
+    val referenceGenome: ReferenceGenome,
 )
 
 data class Schema(
