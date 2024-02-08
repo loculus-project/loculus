@@ -61,7 +61,7 @@ spec:
                   mountPath: /preprocessing/output
                 - name: lapis-silo-input-data-cache
                   mountPath: /preprocessing/input
-                - name: lapis-silo-database-config
+                - name: lapis-silo-database-config-processed
                   mountPath: /silo_import_job.sh
                   subPath: silo_import_job.sh
           imagePullSecrets:
