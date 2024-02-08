@@ -101,6 +101,7 @@ instances:
           type: string
           required: false
           generateIndex: true
+          autocomplete: false
         - name: region
           type: string
           required: false
