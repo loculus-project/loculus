@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.max
@@ -148,50 +149,30 @@ class DatasetCitationsDatabaseService(
     fun getDataset(datasetId: String, version: Long?): List<Dataset> {
         log.info { "Get dataset $datasetId, version $version" }
 
-        val datasetList = mutableListOf<Dataset>()
-
-        if (version == null) {
-            val selectedDatasets = DatasetsTable
-                .select {
-                    DatasetsTable.datasetId eq UUID.fromString(datasetId)
-                }
-            selectedDatasets.forEach {
-                datasetList.add(
-                    Dataset(
-                        it[DatasetsTable.datasetId],
-                        it[DatasetsTable.datasetVersion],
-                        it[DatasetsTable.name],
-                        Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
-                        it[DatasetsTable.createdBy],
-                        it[DatasetsTable.description],
-                        it[DatasetsTable.datasetDOI],
-                    ),
-                )
-            }
-        } else {
-            val selectedDataset = DatasetsTable
-                .select {
-                    (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
-                        (DatasetsTable.datasetVersion eq version)
-                }.singleOrNull()
-
-            if (selectedDataset == null) {
-                throw NotFoundException("Dataset $datasetId, version $version does not exist")
+        val query = DatasetsTable
+            .select {
+                DatasetsTable.datasetId eq UUID.fromString(datasetId)
             }
 
-            datasetList.add(
-                Dataset(
-                    selectedDataset[DatasetsTable.datasetId],
-                    selectedDataset[DatasetsTable.datasetVersion],
-                    selectedDataset[DatasetsTable.name],
-                    Timestamp.valueOf(selectedDataset[DatasetsTable.createdAt].toJavaLocalDateTime()),
-                    selectedDataset[DatasetsTable.createdBy],
-                    selectedDataset[DatasetsTable.description],
-                    selectedDataset[DatasetsTable.datasetDOI],
-                ),
+        if (version != null) {
+            query.andWhere { DatasetsTable.datasetVersion eq version }
+        }
+
+        if (query.empty()) {
+            throw NotFoundException("Dataset $datasetId, version $version does not exist")
+        }
+
+        return query.map { row ->
+            Dataset(
+                row[DatasetsTable.datasetId],
+                row[DatasetsTable.datasetVersion],
+                row[DatasetsTable.name],
+                Timestamp.valueOf(row[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                row[DatasetsTable.createdBy],
+                row[DatasetsTable.description],
+                row[DatasetsTable.datasetDOI],
             )
         }
-        return datasetList
     }
 
     fun getDatasetRecords(datasetId: String, version: Long?): List<DatasetRecord> {
@@ -373,7 +354,7 @@ class DatasetCitationsDatabaseService(
         val selectedAuthor = selectedAuthors.firstOrNull()
 
         if (selectedAuthor == null) {
-            return authorList
+            throw NotFoundException("Author $username does not exist")
         }
 
         authorList.add(
@@ -446,5 +427,12 @@ class DatasetCitationsDatabaseService(
         return ResponseAuthor(
             authorId,
         )
+    }
+
+    fun deleteAuthor(username: String, authorId: String) {
+        AuthorsTable.deleteWhere {
+            (AuthorsTable.username eq username) and
+                (AuthorsTable.authorId eq UUID.fromString(authorId))
+        }
     }
 }

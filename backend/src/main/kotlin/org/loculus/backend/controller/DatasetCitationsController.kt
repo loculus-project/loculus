@@ -94,7 +94,7 @@ class DatasetCitationsController(
 
     @Operation(description = "Get count of user sequences cited by datasets")
     @GetMapping("/get-user-cited-by-dataset", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getUserCitedByDataset(@RequestParam username: String): CitedBy {
+    fun getUserCitedByDataset(@UsernameFromJwt username: String): CitedBy {
         val statusFilter = listOf(APPROVED_FOR_RELEASE)
         val userSequences = submissionDatabaseService.getSequences(username, null, null, statusFilter)
         return datasetCitationsService.getUserCitedByDataset(userSequences)
@@ -139,5 +139,11 @@ class DatasetCitationsController(
             body.emailVerified,
             body.affiliation,
         )
+    }
+
+    @Operation(description = "Delete an author")
+    @DeleteMapping("/delete-author", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun deleteAuthor(@UsernameFromJwt username: String, @RequestParam authorId: String) {
+        return datasetCitationsService.deleteAuthor(username, authorId)
     }
 }
