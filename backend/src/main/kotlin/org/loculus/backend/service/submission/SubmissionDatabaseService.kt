@@ -48,9 +48,6 @@ import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionVa
 import org.loculus.backend.service.jsonbParam
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.scheduling.annotation.Scheduled
-import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
@@ -587,9 +584,9 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun cleanUpStaleSequencesInProcessing(cleanUpIntervalInMs: Long) {
+    fun cleanUpStaleSequencesInProcessing(timeToStaleInSeconds: Long) {
         val staleDateTime = Instant.fromEpochMilliseconds(
-            Clock.System.now().toEpochMilliseconds() - cleanUpIntervalInMs,
+            Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000,
         ).toLocalDateTime(TimeZone.UTC)
 
         sequenceEntriesTableProvider.get(organism = null).let { table ->
@@ -606,7 +603,7 @@ class SubmissionDatabaseService(
                 .map { AccessionVersion(it[table.accessionColumn], it[table.versionColumn]) }
 
             if (staleSequences.isNotEmpty()) {
-                log.debug { "Cleaning up ${staleSequences.size} stale sequences in processing" }
+                log.info { "Cleaning up ${staleSequences.size} stale sequences in processing" }
                 table.update(
                     where = {
                         table.accessionVersionIsIn(staleSequences) and table.statusIs(IN_PROCESSING)
@@ -616,7 +613,7 @@ class SubmissionDatabaseService(
                     it[startedProcessingAtColumn] = null
                 }
             } else {
-                log.debug { "No stale sequences in processing to clean up" }
+                log.info { "No stale sequences in processing to clean up" }
             }
         }
     }
@@ -634,15 +631,3 @@ data class RawProcessedData(
     val processedData: ProcessedData,
     val dataUseTerms: DataUseTerms,
 ) : AccessionVersionInterface
-
-@Component
-class CleanUpStaleSequencesInProcessingTask(
-    private val submissionDatabaseService: SubmissionDatabaseService,
-    @Value("\${clean-up-stale-in-processing-after-milliseconds}") private val cleanUpInterval: Long,
-) {
-    @Scheduled(fixedRateString = "\${clean-up-stale-in-processing-every-milliseconds}")
-    fun task() {
-        log.info { "Cleaning up stale sequences in processing" }
-        submissionDatabaseService.cleanUpStaleSequencesInProcessing(cleanUpInterval)
-    }
-}
