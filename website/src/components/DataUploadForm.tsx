@@ -118,6 +118,8 @@ const InnerDataUploadForm = ({
 
     useEffect(() => {
         const interval = setInterval(() => {
+            // Check for files which are no longer readable - which generally indicates the file has been edited since being
+            // selected in the UI - and clear these.
             metadataFile
                 ?.slice(0, 1)
                 .arrayBuffer()
