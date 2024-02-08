@@ -1,5 +1,12 @@
 ---
-import { getData, getReferenceGenomesSequenceNames, getMetadataFilters, getMutationFilter, getOrderBy } from './search';
+import {
+    getData,
+    getReferenceGenomesSequenceNames,
+    getMetadataFilters,
+    getMutationFilter,
+    getOrderBy,
+    addHiddenFilters,
+} from './search';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { DownloadDialog } from '../../../components/SearchPage/DownloadDialog/DownloadDialog';
 import { Pagination } from '../../../components/SearchPage/Pagination';
@@ -8,7 +15,7 @@ import { Table } from '../../../components/SearchPage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { pageSize } from '../../../settings';
+import { hiddenDefaultSearchFilters, pageSize } from '../../../settings';
 
 const organism = Astro.params.organism!;
 const { organism: cleanedOrganism } = cleanOrganism(organism);
@@ -19,7 +26,7 @@ const getSearchParams = (field: string): string => {
     return Astro.url.searchParams.get(field) ?? '';
 };
 
-const metadataFilter = getMetadataFilters(getSearchParams, organism);
+const metadataFilter = addHiddenFilters(getMetadataFilters(getSearchParams, organism), hiddenDefaultSearchFilters);
 const mutationFilter = getMutationFilter(Astro.url.searchParams);
 
 const pageParam = Astro.url.searchParams.get('page');

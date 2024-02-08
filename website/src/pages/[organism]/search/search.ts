@@ -3,9 +3,8 @@ import { ok, Result } from 'neverthrow';
 import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
 import { getReferenceGenomes, getSchema } from '../../../config.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
-import { hiddenDefaultSearchFilters } from '../../../settings.ts';
 import type { ProblemDetail } from '../../../types/backend.ts';
-import type { FilterValue, MetadataFilter, MutationFilter } from '../../../types/config.ts';
+import type { MetadataFilter, MutationFilter } from '../../../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
@@ -14,7 +13,7 @@ export type SearchResponse = {
     totalCount: number;
 };
 
-function addHiddenFilters(searchFormFilter: FilterValue[], hiddenFilters: FilterValue[]) {
+export function addHiddenFilters(searchFormFilter: MetadataFilter[], hiddenFilters: MetadataFilter[]) {
     const searchFormFilterNames = searchFormFilter.map((filter) => filter.name);
     const hiddenFiltersToAdd = hiddenFilters.filter((filter) => !searchFormFilterNames.includes(filter.name));
     return [...searchFormFilter, ...hiddenFiltersToAdd];
@@ -22,16 +21,13 @@ function addHiddenFilters(searchFormFilter: FilterValue[], hiddenFilters: Filter
 
 export const getData = async (
     organism: string,
-    metadataFilter: FilterValue[],
+    metadataFilter: MetadataFilter[],
     mutationFilter: MutationFilter,
     offset: number,
     limit: number,
     orderBy?: OrderBy,
-    hiddenDefaultFilters: FilterValue[] = hiddenDefaultSearchFilters,
 ): Promise<Result<SearchResponse, ProblemDetail>> => {
-    const filters = addHiddenFilters(metadataFilter, hiddenDefaultFilters);
-
-    const metadataSearchFilters = filters
+    const metadataSearchFilters = metadataFilter
         .filter((metadata) => metadata.filterValue !== '')
         .reduce((acc: Record<string, string>, metadata) => {
             acc[metadata.name] = metadata.filterValue;
