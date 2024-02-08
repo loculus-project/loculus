@@ -118,30 +118,26 @@ const InnerDataUploadForm = ({
 
     useEffect(() => {
         const interval = setInterval(() => {
-       
-            metadataFile?.slice(0, 1).arrayBuffer().catch((error) => {
-                console.error('Error reading metadata file', error);
-                setMetadataFile(null);
-                if (metadataFileInputRef.current) {
-                    metadataFileInputRef.current.value = '';
-                }
-            }
-            );
+            metadataFile
+                ?.slice(0, 1)
+                .arrayBuffer()
+                .catch(() => {
+                    setMetadataFile(null);
+                    if (metadataFileInputRef.current) {
+                        metadataFileInputRef.current.value = '';
+                    }
+                });
 
-            sequenceFile?.slice(0, 1).arrayBuffer().catch((error) => {
-                // allow console
-                
-                console.error('Error reading sequence file', error);
-                setSequenceFile(null);
-                if (sequenceFileInputRef.current) {
-                    sequenceFileInputRef.current.value = '';
-                }
-            }
-            );
-
-
-
-        }, 1000);
+            sequenceFile
+                ?.slice(0, 1)
+                .arrayBuffer()
+                .catch(() => {
+                    setSequenceFile(null);
+                    if (sequenceFileInputRef.current) {
+                        sequenceFileInputRef.current.value = '';
+                    }
+                });
+        }, 500);
 
         return () => clearInterval(interval);
     }, [metadataFile, sequenceFile]);
@@ -188,7 +184,6 @@ const InnerDataUploadForm = ({
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {
                     const file = event.target.files?.[0] || null;
                     setMetadataFile(file);
-                    setMetadataFileLastModified(file?.lastModified != null ? file.lastModified : null);
                 }}
                 disabled={false}
                 InputLabelProps={{
@@ -207,7 +202,6 @@ const InnerDataUploadForm = ({
                 onChange={(event: ChangeEvent<HTMLInputElement>) => {
                     const file = event.target.files?.[0] || null;
                     setSequenceFile(file);
-                    setSequenceFileLastModified(file?.lastModified != null ? file.lastModified : null);
                 }}
                 disabled={false}
                 InputLabelProps={{
