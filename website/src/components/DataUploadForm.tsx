@@ -3,7 +3,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
-import { type ChangeEvent, type FormEvent, useMemo, useState } from 'react';
+import { type ChangeEvent, type FormEvent, useMemo, useState, useRef, useEffect } from 'react';
 
 import { withLocalizationProvider, withQueryProvider } from './common/withProvider.tsx';
 import { getClientLogger } from '../clientLogger.ts';
@@ -46,6 +46,8 @@ const InnerDataUploadForm = ({
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
+    const metadataFileInputRef = useRef<HTMLInputElement>(null);
+    const sequenceFileInputRef = useRef<HTMLInputElement>(null);
 
     const { zodiosHooks } = useGroupManagementClient(clientConfig);
     const groupsOfUser = zodiosHooks.useGetGroupsOfUser({
@@ -114,6 +116,34 @@ const InnerDataUploadForm = ({
         // window.location.href = routes.userSequenceReviewPage(organism);
     };
 
+    useEffect(() => {
+        const interval = setInterval(() => {
+            // Check for files which are no longer readable - which generally indicates the file has been edited since being
+            // selected in the UI - and clear these.
+            metadataFile
+                ?.slice(0, 1)
+                .arrayBuffer()
+                .catch(() => {
+                    setMetadataFile(null);
+                    if (metadataFileInputRef.current) {
+                        metadataFileInputRef.current.value = '';
+                    }
+                });
+
+            sequenceFile
+                ?.slice(0, 1)
+                .arrayBuffer()
+                .catch(() => {
+                    setSequenceFile(null);
+                    if (sequenceFileInputRef.current) {
+                        sequenceFileInputRef.current.value = '';
+                    }
+                });
+        }, 500);
+
+        return () => clearInterval(interval);
+    }, [metadataFile, sequenceFile]);
+
     return (
         <form onSubmit={handleSubmit} className='p-6 space-y-6 max-w-md w-full'>
             {action === 'submit' &&
@@ -152,7 +182,11 @@ const InnerDataUploadForm = ({
                 placeholder='Metadata File:'
                 size='small'
                 type='file'
-                onChange={(event: ChangeEvent<HTMLInputElement>) => setMetadataFile(event.target.files?.[0] || null)}
+                inputRef={metadataFileInputRef}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    const file = event.target.files?.[0] || null;
+                    setMetadataFile(file);
+                }}
                 disabled={false}
                 InputLabelProps={{
                     shrink: true,
@@ -166,7 +200,11 @@ const InnerDataUploadForm = ({
                 placeholder='Sequences File:'
                 size='small'
                 type='file'
-                onChange={(event: ChangeEvent<HTMLInputElement>) => setSequenceFile(event.target.files?.[0] || null)}
+                inputRef={sequenceFileInputRef}
+                onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                    const file = event.target.files?.[0] || null;
+                    setSequenceFile(file);
+                }}
                 disabled={false}
                 InputLabelProps={{
                     shrink: true,
