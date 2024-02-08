@@ -119,10 +119,7 @@ const InnerDataUploadForm = ({
     useEffect(() => {
         const interval = setInterval(() => {
        
-            metadataFile?.slice(0, 1).arrayBuffer().then((buffer) => {
-                
-            }
-            ).catch((error) => {
+            metadataFile?.slice(0, 1).arrayBuffer().catch((error) => {
                 console.error('Error reading metadata file', error);
                 setMetadataFile(null);
                 if (metadataFileInputRef.current) {
@@ -131,10 +128,9 @@ const InnerDataUploadForm = ({
             }
             );
 
-            sequenceFile?.slice(0, 1).arrayBuffer().then((buffer) => {
-               
-            }
-            ).catch((error) => {
+            sequenceFile?.slice(0, 1).arrayBuffer().catch((error) => {
+                // allow console
+                
                 console.error('Error reading sequence file', error);
                 setSequenceFile(null);
                 if (sequenceFileInputRef.current) {
