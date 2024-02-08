@@ -19,7 +19,10 @@ import java.io.File
 import javax.sql.DataSource
 
 object BackendSpringProperty {
-    const val BACKEND_CONFIG_PATH = "backend.config.path"
+    const val BACKEND_CONFIG_PATH = "loculus.config.path"
+    const val ENABLE_CLEAN_UP_TASK = "loculus.cleanup.task.enabled"
+    const val STALE_AFTER_SECONDS = "loculus.cleanup.task.reset-stale-in-processing-every-seconds"
+    const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
 }
 
 private val logger = mu.KotlinLogging.logger {}

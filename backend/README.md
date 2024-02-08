@@ -32,7 +32,7 @@ You need to set:
 ```
 * the path to the config file (use `../generate_local_test_config.sh` to generate this file):
 ```
---backend.config.path=../website/tests/config/backend_config.json
+--loculus.config.path=../website/tests/config/backend_config.json
 ```
 * the url to fetch the public key for JWT verification 
   (corresponding to the `jwks_uri` value in the `/.well-known/openid-configuration` endpoint of the Keycloak server):
