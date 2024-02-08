@@ -230,9 +230,9 @@ def run_nextclade(
                 "release_date": unprocessed_sequence.data.metadata["Release date"],
                 "isolate": unprocessed_sequence.data.metadata["Isolate Lineage"],
                 "region": unprocessed_sequence.data.metadata["Geographic Region"],
-                "location": unprocessed_sequence.data.metadata["Geographic location"],
+                "location": unprocessed_sequence.data.metadata["Geographic Location"],
                 "submitters": unprocessed_sequence.data.metadata["Submitter Names"],
-                "affiliation": unprocessed_sequence.data.metadata["Submitter Affiliations"],
+                "affiliation": unprocessed_sequence.data.metadata["Submitter Affiliation"],
             }
             for unprocessed_sequence in unprocessed
         }
