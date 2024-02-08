@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JacksonException
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -378,10 +379,12 @@ class SubmissionDatabaseService(
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
+                    table.submissionIdColumn,
                     table.statusColumn,
                     table.isRevocationColumn,
                     table.groupNameColumn,
                     table.organismColumn,
+                    table.submittedAtColumn,
                 )
                 .select(
                     where = {
@@ -389,6 +392,8 @@ class SubmissionDatabaseService(
                             table.groupIsOneOf(validatedGroupNames)
                     },
                 )
+                .sortedBy { it[table.submittedAtColumn] }
+
 
             if (organism != null) {
                 query.andWhere { table.organismIs(organism) }
@@ -401,6 +406,7 @@ class SubmissionDatabaseService(
                     Status.fromString(row[table.statusColumn]),
                     row[table.groupNameColumn],
                     row[table.isRevocationColumn],
+                    row[table.submissionIdColumn],
                 )
             }
         }
@@ -456,6 +462,7 @@ class SubmissionDatabaseService(
                     table.versionColumn,
                     table.isRevocationColumn,
                     table.groupNameColumn,
+                    table.submissionIdColumn,
                 )
                 .select(
                     where = {
@@ -470,6 +477,7 @@ class SubmissionDatabaseService(
                         AWAITING_APPROVAL_FOR_REVOCATION,
                         it[table.groupNameColumn],
                         it[table.isRevocationColumn],
+                        it[table.submissionIdColumn],
                     )
                 }.sortedBy { it.accession }
         }
@@ -585,6 +593,40 @@ class SubmissionDatabaseService(
                     it[table.errorsColumn],
                     it[table.warningsColumn],
                 )
+            }
+        }
+    }
+
+    fun cleanUpStaleSequencesInProcessing(timeToStaleInSeconds: Long) {
+        val staleDateTime = Instant.fromEpochMilliseconds(
+            Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000,
+        ).toLocalDateTime(TimeZone.UTC)
+
+        sequenceEntriesTableProvider.get(organism = null).let { table ->
+            val staleSequences = table
+                .slice(table.accessionColumn, table.versionColumn)
+                .select(
+                    where = {
+                        table.statusIs(IN_PROCESSING) and
+                            table.startedProcessingAtColumn.less(
+                                staleDateTime,
+                            )
+                    },
+                )
+                .map { AccessionVersion(it[table.accessionColumn], it[table.versionColumn]) }
+
+            if (staleSequences.isNotEmpty()) {
+                log.info { "Cleaning up ${staleSequences.size} stale sequences in processing" }
+                table.update(
+                    where = {
+                        table.accessionVersionIsIn(staleSequences) and table.statusIs(IN_PROCESSING)
+                    },
+                ) {
+                    it[statusColumn] = RECEIVED.name
+                    it[startedProcessingAtColumn] = null
+                }
+            } else {
+                log.info { "No stale sequences in processing to clean up" }
             }
         }
     }

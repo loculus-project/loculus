@@ -13,17 +13,21 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.web.filter.CommonsRequestLoggingFilter
 import java.io.File
 import javax.sql.DataSource
 
 object BackendSpringProperty {
-    const val BACKEND_CONFIG_PATH = "backend.config.path"
+    const val BACKEND_CONFIG_PATH = "loculus.config.path"
+    const val STALE_AFTER_SECONDS = "loculus.cleanup.task.reset-stale-in-processing-after-seconds"
+    const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
 }
 
 private val logger = mu.KotlinLogging.logger {}
 
 @Configuration
+@EnableScheduling
 @ImportAutoConfiguration(
     value = [ExposedAutoConfiguration::class],
     exclude = [DataSourceTransactionManagerAutoConfiguration::class],

@@ -4,7 +4,7 @@ import { type FC, useMemo } from 'react';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { isUnalignedSequence, type SequenceType } from '../../utils/sequenceTypeHelpers.ts';
+import { type SequenceType } from '../../utils/sequenceTypeHelpers.ts';
 import { splitString } from '../../utils/splitLines';
 
 const LINE_LENGTH = 100;
@@ -29,10 +29,6 @@ export const SequencesViewer: FC<Props> = ({
     ).utilityHooks.useGetSequence(accessionVersion, sequenceType, isMultiSegmented);
 
     const lines = useMemo(() => (data !== undefined ? splitString(data.sequence, LINE_LENGTH) : undefined), [data]);
-
-    if (isUnalignedSequence(sequenceType)) {
-        return <div className='text-error'>LAPIS v2 doesn't support unaligned nucleotide sequences yet</div>;
-    }
 
     if (error !== null) {
         return (

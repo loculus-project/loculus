@@ -44,6 +44,7 @@ export const routes = {
         return groupPagePath;
     },
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
+    userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submit/review`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/seq/${accession}/versions`),
     datasetsPage: (username?: string | undefined) => {
         const datasetPagePath = `/datasets` as const;

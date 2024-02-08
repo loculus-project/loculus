@@ -30,9 +30,14 @@ const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
     </div>
     {
         organism !== undefined && (
-            <div class='my-2 mx-4'>
-                <a href={routes.userSequencesPage(organism)}>Sequence Overview</a>
-            </div>
+            <>
+                <div class='my-2 mx-4'>
+                    <a href={routes.userSequencesPage(organism)}>Sequence Overview</a>
+                </div>
+                <div class='my-2 mx-4'>
+                    <a href={routes.userSequenceReviewPage(organism)}>Sequence Review</a>
+                </div>
+            </>
         )
     }
     {

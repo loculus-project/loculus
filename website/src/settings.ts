@@ -14,8 +14,13 @@ export const GROUP_FIELD = 'group';
 export const DATA_USE_TERMS_FIELD = 'dataUseTerms';
 
 export const hiddenDefaultSearchFilters = [
-    { name: VERSION_STATUS_FIELD, filterValue: siloVersionStatuses.latestVersion, type: 'string' as const },
-    { name: IS_REVOCATION_FIELD, filterValue: 'false', type: 'string' as const },
+    {
+        name: VERSION_STATUS_FIELD,
+        filterValue: siloVersionStatuses.latestVersion,
+        type: 'string' as const,
+        notSearchable: true,
+    },
+    { name: IS_REVOCATION_FIELD, filterValue: 'false', type: 'string' as const, notSearchable: true },
 ];
 
 export const metadataDefaultDownloadDataFormat = 'tsv';
