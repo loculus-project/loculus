@@ -71,6 +71,12 @@ Check the deployment for how to run the image.
 ./gradlew ktlintCheck
 ```
 
+## Format
+
+```bash
+./gradlew ktlintFormat
+```
+
 ## Logs
 
 The backend writes logs to stdout and stores them logs in `./log/backend.log`, relative to the working directory.

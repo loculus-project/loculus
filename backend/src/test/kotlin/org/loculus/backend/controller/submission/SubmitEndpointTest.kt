@@ -23,7 +23,6 @@ import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
-import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.sequenceFileTypes
 import org.loculus.backend.service.submission.CompressionAlgorithm
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
@@ -218,19 +217,18 @@ class SubmitEndpointTest(
                     DataUseTerms.Open,
                 ),
                 Arguments.of(
-    "wrong extension for metadata file",
-    SubmitFiles.metadataFileWith(originalFilename = "metadata.wrongExtension"),
-    DefaultFiles.sequencesFile,
-    status().isBadRequest,
-    "Bad Request",
-    "${metadataFileTypes.displayName} has wrong extension. Must be " +
-        ".${metadataFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-        ".${metadataFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
-            .flatMap { it.value }.joinToString(", .")} for compressed submissions",
-    DEFAULT_ORGANISM,
-    DataUseTerms.Open,
-)
-,
+                    "wrong extension for metadata file",
+                    SubmitFiles.metadataFileWith(originalFilename = "metadata.wrongExtension"),
+                    DefaultFiles.sequencesFile,
+                    status().isBadRequest,
+                    "Bad Request",
+                    "${metadataFileTypes.displayName} has wrong extension. Must be " +
+                        ".${metadataFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+                        ".${metadataFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
+                            .flatMap { it.value }.joinToString(", .")} for compressed submissions",
+                    DEFAULT_ORGANISM,
+                    DataUseTerms.Open,
+                ),
                 Arguments.of(
                     "metadata file where one row has a blank header",
                     SubmitFiles.metadataFileWith(

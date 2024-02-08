@@ -279,12 +279,12 @@ class SubmitModel(
             }
         }
 
-       throw BadRequestException(
-    "${expectedFileType.displayName} has wrong extension. Must be " +
-        ".${expectedFileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-        ".${expectedFileType.getCompressedExtensions().filter { it.key != CompressionAlgorithm.NONE }
-            .flatMap { it.value }.joinToString(", .")} for compressed submissions",
-)
+        throw BadRequestException(
+            "${expectedFileType.displayName} has wrong extension. Must be " +
+                ".${expectedFileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+                ".${expectedFileType.getCompressedExtensions().filter { it.key != CompressionAlgorithm.NONE }
+                    .flatMap { it.value }.joinToString(", .")} for compressed submissions",
+        )
     }
 
     private fun validateSubmissionIdSets(metadataKeysSet: Set<SubmissionId>, sequenceKeysSet: Set<SubmissionId>) {
