@@ -1,4 +1,4 @@
-import { expect, test } from '../../../e2e.fixture';
+import { expect, openDataUseTerms, test } from '../../../e2e.fixture';
 import { submitRevisedDataViaApi } from '../../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../../util/prepareDataToBe.ts';
 
@@ -23,24 +23,28 @@ test.describe('The user sequence page', () => {
                 status: 'HAS_ERRORS',
                 isRevocation: false,
                 submissionId: 'custom1',
+                dataUseTerms: openDataUseTerms,
             },
             {
                 ...sequenceEntryAwaitingApproval,
                 status: 'AWAITING_APPROVAL',
                 isRevocation: false,
                 submissionId: 'custom1',
+                dataUseTerms: openDataUseTerms,
             },
             {
                 ...sequenceEntryReleasable,
                 status: 'APPROVED_FOR_RELEASE',
                 isRevocation: false,
                 submissionId: 'custom1',
+                dataUseTerms: openDataUseTerms,
             },
             {
                 ...sequenceEntryToBeRevised,
                 status: 'APPROVED_FOR_RELEASE',
                 isRevocation: false,
                 submissionId: 'custom1',
+                dataUseTerms: openDataUseTerms,
             },
         ]);
 

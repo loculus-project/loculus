@@ -274,7 +274,7 @@ class SubmissionController(
         organism: Organism,
         @RequestBody body: Accessions,
         @UsernameFromJwt username: String,
-    ): List<SequenceEntryStatus> = submissionDatabaseService.revoke(body.accessions, username, organism)
+    ): List<SubmissionIdMapping> = submissionDatabaseService.revoke(body.accessions, username, organism)
 
     @Operation(description = CONFIRM_REVOCATION_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)

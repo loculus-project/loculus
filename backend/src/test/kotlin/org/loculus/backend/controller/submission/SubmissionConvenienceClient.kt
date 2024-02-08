@@ -136,7 +136,7 @@ class SubmissionConvenienceClient(
 
     fun prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation(
         organism: String = DEFAULT_ORGANISM,
-    ): List<SequenceEntryStatus> {
+    ): List<SubmissionIdMapping> {
         val accessionVersions = prepareDefaultSequenceEntriesToApprovedForRelease(organism = organism)
         return revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism)
     }
@@ -247,7 +247,7 @@ class SubmissionConvenienceClient(
     fun revokeSequenceEntries(
         listOfSequencesToRevoke: List<Accession>,
         organism: String = DEFAULT_ORGANISM,
-    ): List<SequenceEntryStatus> =
+    ): List<SubmissionIdMapping> =
         deserializeJsonResponse(client.revokeSequenceEntries(listOfSequencesToRevoke, organism = organism))
 
     fun confirmRevocation(

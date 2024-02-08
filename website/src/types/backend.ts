@@ -30,6 +30,7 @@ const processingAnnotation = z.object({
     ),
     message: z.string(),
 });
+export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 
 export const metadataField = z.union([z.string(), z.number(), z.date()]);
 export type MetadataField = z.infer<typeof metadataField>;
@@ -53,15 +54,6 @@ export type AccessionVersion = z.infer<typeof accessionVersion>;
 export const accessionVersionsObject = z.object({
     accessionVersions: z.array(accessionVersion),
 });
-
-export const sequenceEntryStatus = accessionVersion.merge(
-    z.object({
-        status: sequenceEntryStatusNames,
-        submissionId: z.string(),
-        isRevocation: z.boolean(),
-    }),
-);
-export type SequenceEntryStatus = z.infer<typeof sequenceEntryStatus>;
 
 export const openDataUseTermsType = 'OPEN';
 export const restrictedDataUseTermsType = 'RESTRICTED';
@@ -91,10 +83,20 @@ export const dataUseTermsHistoryEntry = z.object({
 
 export type DataUseTermsHistoryEntry = z.infer<typeof dataUseTermsHistoryEntry>;
 
+export const sequenceEntryStatus = accessionVersion.merge(
+    z.object({
+        status: sequenceEntryStatusNames,
+        submissionId: z.string(),
+        isRevocation: z.boolean(),
+        dataUseTerms,
+    }),
+);
+
+export type SequenceEntryStatus = z.infer<typeof sequenceEntryStatus>;
+
 export const submissionIdMapping = accessionVersion.merge(
     z.object({
         submissionId: z.string(),
-        dataUseTerms: dataUseTerms.nullable(),
     }),
 );
 export type SubmissionIdMapping = z.infer<typeof submissionIdMapping>;

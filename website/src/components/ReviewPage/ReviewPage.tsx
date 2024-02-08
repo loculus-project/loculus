@@ -1,7 +1,7 @@
 import { type FC, useState } from 'react';
 
 import { ReviewCard } from './ReviewCard.tsx';
-import { useSubmissionOperations } from '../../hooks/UseSubmissionOperations.tsx';
+import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts';
 import { routes } from '../../routes.ts';
 import {
     awaitingApprovalStatus,
@@ -110,6 +110,9 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                                         editAccessionVersion={() => {
                                             window.location.href = routes.editPage(organism, sequence);
                                         }}
+                                        clientConfig={clientConfig}
+                                        organism={organism}
+                                        accessToken={accessToken}
                                     />
                                 </div>
                             );

@@ -6,6 +6,7 @@ import io.mockk.every
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
@@ -68,6 +69,7 @@ class CitationEndpointsTest(
                 "mock-group",
                 false,
                 "mock-submission-id",
+                DataUseTerms.Open,
             ),
         )
 
