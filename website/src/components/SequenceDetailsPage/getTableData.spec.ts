@@ -163,7 +163,7 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Nucleotide deletions',
             name: 'nucleotideDeletions',
-            value: '20, 21, 40-42',
+            value: '20, 21, 39-45, 400',
         });
         expect(data).toContainEqual({
             label: 'Amino acid substitutions',
@@ -218,6 +218,11 @@ const nucleotideMutations = [
     { count: 0, proportion: 0, mutation: 'G40-' },
     { count: 0, proportion: 0, mutation: 'C41-' },
     { count: 0, proportion: 0, mutation: 'T42-' },
+    { count: 0, proportion: 0, mutation: 'T39-' },
+    { count: 0, proportion: 0, mutation: 'T43-' },
+    { count: 0, proportion: 0, mutation: 'T44-' },
+    { count: 0, proportion: 0, mutation: 'T45-' },
+    { count: 0, proportion: 0, mutation: 'T400-' },
 ];
 const aminoAcidMutations = [
     { count: 0, proportion: 0, mutation: 'gene1:N10Y' },
