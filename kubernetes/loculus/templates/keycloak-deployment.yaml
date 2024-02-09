@@ -41,6 +41,7 @@ spec:
               value: "true"
           args:
             - "start"
+            - "--verbose"
             - "--import-realm"
           ports:
             - containerPort: 8080
