@@ -82,5 +82,5 @@ jobs:
           context: ./website
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=${{ github.ref }}
+          cache-from: type=gha,scope=website-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=website-${{ github.ref }}
