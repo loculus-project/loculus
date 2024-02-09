@@ -76,7 +76,7 @@ class SubmitModel(
 
     companion object AcceptedFileTypes {
         val metadataFileTypes = ValidExtension("Metadata file", listOf("tsv"))
-        val sequenceFileTypes = ValidExtension("Sequence file", listOf("fasta"))
+        val sequenceFileTypes = ValidExtension("Sequence file", listOf("fa", "fasta", "seq", "fna", "fas"))
     }
 
     data class ValidExtension(
@@ -281,8 +281,9 @@ class SubmitModel(
 
         throw BadRequestException(
             "${expectedFileType.displayName} has wrong extension. Must be " +
-                ".${expectedFileType.validExtensions} for uncompressed submissions or " +
-                ".${expectedFileType.getCompressedExtensions()} for compressed submissions",
+                ".${expectedFileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+                ".${expectedFileType.getCompressedExtensions().filter { it.key != CompressionAlgorithm.NONE }
+                    .flatMap { it.value }.joinToString(", .")} for compressed submissions",
         )
     }
 

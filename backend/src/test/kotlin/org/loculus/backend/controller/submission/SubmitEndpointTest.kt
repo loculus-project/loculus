@@ -224,10 +224,9 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${metadataFileTypes.displayName} has wrong extension. Must be " +
-                        ".${metadataFileTypes.validExtensions} for uncompressed " +
-                        "submissions or " +
-                        ".${metadataFileTypes.getCompressedExtensions()} " +
-                        "for compressed submissions",
+                        ".${metadataFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+                        ".${metadataFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
+                            .flatMap { it.value }.joinToString(", .")} for compressed submissions",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -238,10 +237,9 @@ class SubmitEndpointTest(
                     status().isBadRequest,
                     "Bad Request",
                     "${sequenceFileTypes.displayName} has wrong extension. Must be " +
-                        ".${sequenceFileTypes.validExtensions} for uncompressed " +
-                        "submissions or " +
-                        ".${sequenceFileTypes.getCompressedExtensions()} " +
-                        "for compressed submissions",
+                        ".${sequenceFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
+                        ".${sequenceFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
+                            .flatMap { it.value }.joinToString(", .")} for compressed submissions",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
