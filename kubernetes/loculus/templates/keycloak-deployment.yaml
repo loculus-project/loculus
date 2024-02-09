@@ -8,6 +8,7 @@
   {{- end -}}
 {{- end -}}
 ---
+
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
 apiVersion: apps/v1
 kind: Deployment
@@ -57,8 +58,6 @@ spec:
               value: "true"
             - name: KC_HEALTH_ENABLED
               value: "true"
-            # - name: KC_LOG_LEVEL
-            #   value: "DEBUG"
             - name: KC_HOSTNAME_URL
               value: "{{ include "keycloakUrl" . }}"
             - name: KC_HOSTNAME_ADMIN_URL
@@ -66,7 +65,6 @@ spec:
           args:
             - "start"
             - "--import-realm"
-            # - "--hostname-debug=true"
           ports:
             - containerPort: 8080
           volumeMounts:
