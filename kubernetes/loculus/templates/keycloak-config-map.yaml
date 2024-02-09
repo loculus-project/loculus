@@ -201,7 +201,7 @@ data:
         "storeToken" : false,
         "addReadTokenRoleOnCreate" : false,
         "authenticateByDefault" : false,
-        "linkOnly" : false,
+        "linkOnly" : true,
         "firstBrokerLoginFlowAlias" : "first broker login",
         "config" : {
           "clientSecret" : "65897b89-a888-427d-8828-1f1dd97bf6c1",
