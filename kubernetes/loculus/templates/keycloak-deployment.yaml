@@ -40,7 +40,7 @@ spec:
             - name: KC_HEALTH_ENABLED
               value: "true"
           args:
-            - "start-dev"
+            - "start"
             - "--import-realm"
           ports:
             - containerPort: 8080
