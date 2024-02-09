@@ -4,6 +4,8 @@ import type { FilterValue, MutationFilter } from './types/config.ts';
 import type { OrderBy } from './types/lapis.ts';
 import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
 
+const approxMaxUrlLengthForSearch = 40; // TODO: increase this
+
 export const routes = {
     aboutPage: () => '/about',
     apiDocumentationPage: () => '/api_documentation',
@@ -59,7 +61,7 @@ export const navigateToSearchPage = <Filter extends FilterValue>(
 ) => {
     const paramsString = buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString();
 
-    if (paramsString.length < 5) {
+    if (paramsString.length < approxMaxUrlLengthForSearch) {
         location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, orderBy);
     } else {
       
