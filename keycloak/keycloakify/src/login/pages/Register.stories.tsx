@@ -12,13 +12,6 @@ export default {
 
 export const Default: ComponentStory<typeof PageStory> = () => <PageStory />;
 
-export const WithoutEmailField: ComponentStory<typeof PageStory> = () => (
-    <PageStory
-        kcContext={{
-            register: { email: false }
-        }}
-    />
-);
 
 export const WithoutPasswordField: ComponentStory<typeof PageStory> = () => (
     <PageStory
