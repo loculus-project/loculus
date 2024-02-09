@@ -47,5 +47,5 @@ jobs:
           context: ./keycloak/keycloakify
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=config-preprocessor=${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=config-preprocessor=${{ github.ref }}
+          cache-from: type=gha,scope=keycloakify=${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=keycloakify=${{ github.ref }}
