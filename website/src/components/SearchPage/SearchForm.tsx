@@ -66,7 +66,29 @@ export const SearchForm: FC<SearchFormProps> = ({
         event.preventDefault();
         setIsLoading(true);
         const searchableFieldValues = fieldValues.filter((field) => !(field.notSearchable ?? false));
-        location.href = routes.searchPage(organism, searchableFieldValues, mutationFilter);
+        const searchableFieldValuesStringified = JSON.stringify(searchableFieldValues);
+        if (searchableFieldValuesStringified.length < 5) {
+            location.href = routes.searchPage(organism, searchableFieldValues, mutationFilter);
+        }
+        else{
+            // Trigger a POST request in the browser window
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = routes.searchPage(organism, []);
+            const field = document.createElement('input');
+            field.type = 'hidden';
+            field.name = 'searchQuery';
+            field.value = searchableFieldValuesStringified;
+            form.appendChild(field);
+            document.body.appendChild(form);
+            form.submit();
+
+
+
+        }
+
+        
+        
     };
 
     const resetSearch = async () => {

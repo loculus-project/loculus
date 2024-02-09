@@ -22,8 +22,15 @@ const { organism: cleanedOrganism } = cleanOrganism(organism);
 const schema = getSchema(organism);
 const clientConfig = getRuntimeConfig().public;
 const lapisUrl = getLapisUrl(clientConfig, organism);
+const postParams = Astro.request.method == "POST" ? await Astro.request.json() : {};
+
+
 const getSearchParams = (field: string): string => {
-    return Astro.url.searchParams.get(field) ?? '';
+    let value = Astro.url.searchParams.get(field);
+    if (value === null && postParams[field] !== undefined) {
+        value = postParams[field];
+    }
+    return value ?? '';
 };
 
 const metadataFilter = addHiddenFilters(getMetadataFilters(getSearchParams, organism), hiddenDefaultSearchFilters);
