@@ -4,11 +4,12 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'website/**'
-      - 'backend/**'
-      - 'kubernetes/**'
-      - 'preprocessing/**'
-      - 'deploy.py'
+      - "website/**"
+      - "backend/**"
+      - "kubernetes/**"
+      - "preprocessing/**"
+      - "deploy.py"
+      - ".github/workflows/e2e-test.yml"
 
 concurrency:
   group: ci-${{ github.ref }}-e2e-k3d
@@ -16,7 +17,6 @@ concurrency:
 
 jobs:
   k3d-e2e:
-  
     permissions:
       packages: read
       contents: read
@@ -25,108 +25,108 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Install k3d
-      run: |
-        curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+      - name: Install k3d
+        run: |
+          curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
 
-    - name: Create k3d cluster
-      run: |
-        ./deploy.py cluster
+      - name: Create k3d cluster
+        run: |
+          ./deploy.py cluster
 
-    - name: Test helm template
-      uses: WyriHaximus/github-action-helm3@v3
-      with:
-        exec: helm template does-not-matter ./kubernetes/loculus > defaultTemplate.yaml
+      - name: Test helm template
+        uses: WyriHaximus/github-action-helm3@v3
+        with:
+          exec: helm template does-not-matter ./kubernetes/loculus > defaultTemplate.yaml
 
-    - name: Upload default helm template
-      uses: actions/upload-artifact@v4
-      with:
-        name: default-helm-template
-        path: defaultTemplate.yaml
-      
+      - name: Upload default helm template
+        uses: actions/upload-artifact@v4
+        with:
+          name: default-helm-template
+          path: defaultTemplate.yaml
 
-    - name: Wait for Backend Docker Image
-      uses: lewagon/wait-on-check-action@v1.3.3
-      with:
-        ref: ${{ github.ref }}
-        check-name: Build Backend Docker Image
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Wait for Website Docker Image
-      uses: lewagon/wait-on-check-action@v1.3.3
-      with:
-        ref: ${{ github.ref }}
-        check-name: Build Website Docker Image
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Cache .npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
 
-    - name: Deploy with helm
-      uses: WyriHaximus/github-action-helm3@v3
-      with:
-        exec: ./deploy.py helm --branch ${{ github.ref_name }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
+      - name: Install dependencies
+        run: cd website && npm i
 
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      - name: Get Installed Playwright Version
+        id: playwright-version
+        run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
 
-    - name: Cache .npm
-      uses: actions/cache@v4
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
 
-    - name: Install dependencies
-      run: cd website && npm i
+      - name: Install Playwright Browsers and System Dependencies
+        run: cd website && npx playwright install --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
 
-    - name: Get Installed Playwright Version
-      id: playwright-version
-      run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
+      - name: Install only System Dependencies
+        run: cd website && npx playwright install-deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
 
-    - name: Cache Playwright Browsers
-      uses: actions/cache@v4
-      id: playwright-cache
-      with:
-        path: ~/.cache/ms-playwright
-        key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+      - name: Wait for Backend Docker Image
+        uses: lewagon/wait-on-check-action@v1.3.3
+        with:
+          ref: ${{ github.ref }}
+          check-name: Build Backend Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install Playwright Browsers and System Dependencies
-      run: cd website && npx playwright install --with-deps
-      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - name: Wait for Website Docker Image
+        uses: lewagon/wait-on-check-action@v1.3.3
+        with:
+          ref: ${{ github.ref }}
+          check-name: Build Website Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Install only System Dependencies
-      run: cd website && npx playwright install-deps
-      if: steps.playwright-cache.outputs.cache-hit == 'true'
-    - name: Wait for the pods to be ready
-      run: ./.github/scripts/wait_for_pods_to_be_ready.py
-    - name: Sleep for 20 secs
-      run: sleep 20
-    - name: Run E2E test
-      run: cd website && npm run e2e
-    - uses: actions/upload-artifact@v4
-      if: ${{ failure() }}
-      with:
-        name: playwright-report
-        path: website/playwright-report/
-        retention-days: 30
+      - name: Deploy with helm
+        uses: WyriHaximus/github-action-helm3@v3
+        with:
+          exec: ./deploy.py helm --branch ${{ github.ref_name }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
 
-    - name: List running pods
-      if: ${{ !cancelled() }}
-      run: kubectl get pods --all-namespaces
-    - name: Describe pods
-      if: ${{ !cancelled() }}
-      run: kubectl describe pods -l app=loculus -n loculus
-    - name: Show events
-      if: ${{ !cancelled() }}
-      run: kubectl get events -n loculus
+      - name: Wait for the pods to be ready
+        run: ./.github/scripts/wait_for_pods_to_be_ready.py
+      - name: Sleep for 20 secs
+        run: sleep 20
+      - name: Run E2E test
+        run: cd website && npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: playwright-report
+          path: website/playwright-report/
+          retention-days: 30
 
-    - name: Save logs from all containers to file
-      if: ${{ !cancelled() }}
-      run: ./.github/scripts/collect_kubernetes_logs.sh
-    - name: Upload Kubernetes logs
-      if: ${{ !cancelled() }}
-      uses: actions/upload-artifact@v4
-      with:
-        name: kubernetes-logs
-        path: kubernetes_logs/
+      - name: List running pods
+        if: ${{ !cancelled() }}
+        run: kubectl get pods --all-namespaces
+      - name: Describe pods
+        if: ${{ !cancelled() }}
+        run: kubectl describe pods -l app=loculus -n loculus
+      - name: Show events
+        if: ${{ !cancelled() }}
+        run: kubectl get events -n loculus
+
+      - name: Save logs from all containers to file
+        if: ${{ !cancelled() }}
+        run: ./.github/scripts/collect_kubernetes_logs.sh
+      - name: Upload Kubernetes logs
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: kubernetes-logs
+          path: kubernetes_logs/

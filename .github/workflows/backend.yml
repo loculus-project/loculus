@@ -75,7 +75,7 @@ jobs:
           SECOND_TAG=$(echo "${{ steps.dockerMetadata.outputs.tags }}" | head -n 2 | tail -n 1)
           echo "secondTag=$SECOND_TAG" >> $GITHUB_OUTPUT
       - name: Build Docker Image For Branch
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v3
         env:
           USER: ${{ github.actor }}
           TOKEN: "${{ secrets.GITHUB_TOKEN }}"
