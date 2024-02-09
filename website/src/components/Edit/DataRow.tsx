@@ -1,4 +1,3 @@
-import { sentenceCase } from 'change-case';
 import { type FC } from 'react';
 
 import { InputField, type KeyValuePair, type Row } from './InputField.tsx';
@@ -15,7 +14,7 @@ export const EditableDataRow: FC<EditableRowProps> = ({ row, onChange }) => {
 
     return (
         <tr>
-            <td className={`w-1/4  ${colorClassName}`}>{sentenceCase(row.key)}:</td>
+            <td className={`w-1/4  ${colorClassName}`}>{row.key}:</td>
             <td className='pr-3 text-right '>
                 <ErrorAndWarningIcons row={row} />
             </td>
@@ -55,7 +54,7 @@ type ProcessedDataRowProps = {
 
 export const ProcessedDataRow: FC<ProcessedDataRowProps> = ({ row }) => (
     <tr>
-        <td className={`w-1/4 `}>{sentenceCase(row.key)}:</td>
+        <td className={`w-1/4 `}>{row.key}:</td>
         <td />
         <td className='w-full'>
             <div className='px-3'>{row.value}</div>{' '}
