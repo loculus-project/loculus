@@ -9,7 +9,7 @@ import { useGetClassName } from "keycloakify/login/lib/useGetClassName";
 import type { KcContext } from "./kcContext";
 import type { I18n } from "./i18n";
 import keycloakifyLogoPngUrl from "./assets/keycloakify-logo.png";
-import { PUBLIC_URL } from "../../PUBLIC_URL";
+import { PUBLIC_URL } from "../PUBLIC_URL";
 
 export default function Template(props: TemplateProps<KcContext, I18n>) {
     const {

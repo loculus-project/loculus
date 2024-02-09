@@ -1,6 +1,6 @@
 
-import { kcContext as kcLoginThemeContext } from "keycloak-theme/login/kcContext";
-import { kcContext as kcAccountThemeContext } from "keycloak-theme/login/kcContext";
+import { kcContext as kcLoginThemeContext } from "login/kcContext";
+import { kcContext as kcAccountThemeContext } from "login/kcContext";
 
 /**
  * If you need to use process.env.PUBLIC_URL, use this variable instead.  
