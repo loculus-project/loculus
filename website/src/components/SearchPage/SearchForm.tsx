@@ -14,7 +14,7 @@ import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { routes } from '../../routes.ts';
+import { routes, navigateToSearchPage } from '../../routes.ts';
 import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -66,29 +66,7 @@ export const SearchForm: FC<SearchFormProps> = ({
         event.preventDefault();
         setIsLoading(true);
         const searchableFieldValues = fieldValues.filter((field) => !(field.notSearchable ?? false));
-        const searchableFieldValuesStringified = JSON.stringify(searchableFieldValues);
-        if (searchableFieldValuesStringified.length < 5) {
-            location.href = routes.searchPage(organism, searchableFieldValues, mutationFilter);
-        }
-        else{
-            // Trigger a POST request in the browser window
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = routes.searchPage(organism, []);
-            const field = document.createElement('input');
-            field.type = 'hidden';
-            field.name = 'searchQuery';
-            field.value = searchableFieldValuesStringified;
-            form.appendChild(field);
-            document.body.appendChild(form);
-            form.submit();
-
-
-
-        }
-
-        
-        
+        navigateToSearchPage(organism, searchableFieldValues, mutationFilter);
     };
 
     const resetSearch = async () => {

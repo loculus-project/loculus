@@ -104,14 +104,14 @@ export const getMetadataFilters = (getSearchParams: (param: string) => string, o
 };
 
 export const getOrderBy = (
-    searchParams: URLSearchParams,
+    getSearchParams: (param: string) => string,
     defaultOrderByField: string,
     defaultOrder: OrderByType,
 ): OrderBy => {
-    const orderByTypeParam = searchParams.get('order');
+    const orderByTypeParam = getSearchParams('order');
     const orderByTypeParsed = orderByTypeParam !== null ? orderByType.safeParse(orderByTypeParam) : undefined;
     const orderByTypeValue: OrderByType = orderByTypeParsed?.success === true ? orderByTypeParsed.data : defaultOrder;
-    const sortByField = searchParams.get('orderBy') ?? defaultOrderByField;
+    const sortByField = getSearchParams('orderBy') ? getSearchParams('orderBy') : defaultOrderByField;
     return {
         field: sortByField,
         type: orderByTypeValue,

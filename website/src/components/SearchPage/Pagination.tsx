@@ -1,22 +1,22 @@
 import { Pagination as MUIPagination } from '@mui/material';
 import type { FC } from 'react';
+import { navigateToSearchPage } from '../../routes';
 
 type Props = {
     count: number;
 };
 
-export const Pagination: FC<Props> = ({ count }) => {
-    const params = new URLSearchParams(location.search);
-    const pageParam = params.get('page');
-    const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
 
+export const Pagination: FC<Props> = ({ count, metadataFilter, mutationFilter, orderBy, organism, page }) => {
+
+    
     return (
         <MUIPagination
             count={count}
             page={page}
             onChange={(_, newPage) => {
-                params.set('page', newPage.toString());
-                location.href = `search?${params}`;
+                navigateToSearchPage(organism, metadataFilter, mutationFilter, newPage, orderBy);
+                
             }}
             color='primary'
             variant='outlined'

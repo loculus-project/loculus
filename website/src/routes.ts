@@ -1,3 +1,4 @@
+import { add } from 'lodash';
 import type { AccessionVersion } from './types/backend.ts';
 import type { FilterValue, MutationFilter } from './types/config.ts';
 import type { OrderBy } from './types/lapis.ts';
@@ -13,7 +14,7 @@ export const routes = {
         organism: string,
         metadataFilter: Filter[] = [],
         mutationFilter: MutationFilter = {},
-        page: number = 1,
+        page: number = null,
         orderBy?: OrderBy,
     ) =>
         withOrganism(
@@ -49,11 +50,45 @@ export const routes = {
     notFoundPage: () => `/404`,
     logout: () => '/logout',
 };
+export const navigateToSearchPage = <Filter extends FilterValue>(
+    organism: string,
+    metadataFilter: Filter[] = [],
+    mutationFilter: MutationFilter = {},
+    page: number = 1,
+    orderBy?: OrderBy,
+) => {
+    const paramsString = buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString();
+
+    if (paramsString.length < 5) {
+        location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, orderBy);
+    } else {
+      
+        const form = document.createElement('form');
+        const addField = (name: string, value: string) => {
+            const field = document.createElement('input');
+            field.type = 'hidden';
+            field.name = name;
+            field.value = value;
+            form.appendChild(field);
+        }
+        form.method = 'POST';
+        form.action = routes.searchPage(organism);
+        
+
+        addField('searchQuery', paramsString);
+        addField('organism', organism);
+
+        document.body.appendChild(form);
+        form.submit();
+    }
+};
+
+
 
 const buildSearchParams = <Filter extends FilterValue>(
     metadataFilter: Filter[],
     mutationFilter: MutationFilter,
-    page: number,
+    page?: number,
     orderBy?: OrderBy,
 ) => {
     const params = new URLSearchParams();
@@ -81,7 +116,9 @@ const buildSearchParams = <Filter extends FilterValue>(
         params.set('orderBy', orderBy.field);
         params.set('order', orderBy.type);
     }
-    params.set('page', page.toString());
+    if( page !== null){
+        params.set('page', page.toString());
+    }
     return params;
 };
 
