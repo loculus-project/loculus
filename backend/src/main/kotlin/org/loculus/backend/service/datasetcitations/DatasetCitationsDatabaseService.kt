@@ -92,9 +92,11 @@ class DatasetCitationsDatabaseService(
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
+        val datasetUUID = UUID.fromString(datasetId)
+
         val maxVersion = DatasetsTable
             .slice(DatasetsTable.datasetVersion.max())
-            .select { DatasetsTable.datasetId eq UUID.fromString(datasetId) }
+            .select { DatasetsTable.datasetId eq datasetUUID and (DatasetsTable.createdBy eq username) }
             .firstOrNull()
             ?.get(DatasetsTable.datasetVersion.max())
 
@@ -106,7 +108,7 @@ class DatasetCitationsDatabaseService(
 
         val insertedSet = DatasetsTable
             .insert {
-                it[DatasetsTable.datasetId] = UUID.fromString(datasetId)
+                it[DatasetsTable.datasetId] = datasetUUID
                 it[DatasetsTable.name] = datasetName
                 it[DatasetsTable.description] = datasetDescription ?: ""
                 it[DatasetsTable.datasetVersion] = version
@@ -119,17 +121,15 @@ class DatasetCitationsDatabaseService(
                 .select { DatasetRecordsTable.accession eq record.accession }
                 .singleOrNull()
 
-            var datasetRecordId: Long
-
-            if (existingRecord == null) {
+            val datasetRecordId = if (existingRecord == null) {
                 val insertedRecord = DatasetRecordsTable
                     .insert {
                         it[DatasetRecordsTable.accession] = record.accession
                         it[DatasetRecordsTable.type] = record.type
                     }
-                datasetRecordId = insertedRecord[DatasetRecordsTable.datasetRecordId]
+                insertedRecord[DatasetRecordsTable.datasetRecordId]
             } else {
-                datasetRecordId = existingRecord[DatasetRecordsTable.datasetRecordId]
+                existingRecord[DatasetRecordsTable.datasetRecordId]
             }
 
             DatasetToRecordsTable
@@ -321,15 +321,9 @@ class DatasetCitationsDatabaseService(
                 datasetList.add(dataset)
             }
         }
-
-        val uniqueLatestDatasets = mutableListOf<Dataset>()
-        for (entry in datasetMap) {
-            val datasets = entry.value
-            val latestVersion = datasets.maxByOrNull { it.datasetVersion }
-            if (latestVersion != null && !uniqueLatestDatasets.contains(latestVersion)) {
-                uniqueLatestDatasets.add(latestVersion)
-            }
-        }
+        val uniqueLatestDatasets = datasetMap.values
+            .mapNotNull { datasets -> datasets.maxByOrNull { it.datasetVersion } }
+            .toSet()
 
         val citedBy = CitedBy(
             mutableListOf<Long>(),
@@ -358,8 +352,8 @@ class DatasetCitationsDatabaseService(
         log.info { "Get dataset cited by publication for datasetId $datasetId, version $version" }
 
         val citedBy = CitedBy(
-            mutableListOf<Long>(),
-            mutableListOf<Long>(),
+            mutableListOf(),
+            mutableListOf(),
         )
 
         return citedBy

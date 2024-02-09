@@ -58,6 +58,35 @@ class DatasetEndpointsTest(@Autowired private val client: DatasetCitationsContro
 
         val datasetId = JsonPath.read<String>(result.response.contentAsString, "$.datasetId")
 
+        client.getDataset(datasetId, 1)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$[0].datasetId").value(datasetId))
+            .andExpect(jsonPath("\$[0].datasetVersion").value(1))
+
+        client.deleteDataset(datasetId)
+            .andExpect(status().isOk)
+    }
+
+    @Test
+    fun `WHEN calling create dataset with records THEN returns created`() {
+        val result = client.createDataset()
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.datasetId").isString)
+            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andReturn()
+
+        val datasetId = JsonPath.read<String>(result.response.contentAsString, "$.datasetId")
+
+        client.getDatasetRecords(datasetId, 1)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$").isArray)
+            .andExpect(jsonPath("\$").isNotEmpty)
+            .andExpect(jsonPath("\$[0].accession").value("mock-sequence-accession.1"))
+            .andExpect(jsonPath("\$[0].type").value("loculus"))
+
         client.deleteDataset(datasetId)
             .andExpect(status().isOk)
     }

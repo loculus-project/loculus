@@ -14,7 +14,7 @@ const val MOCK_DATASET_ID = "e302e770-e198-4a8f-9145-b536e3590656"
 const val MOCK_DATASET_VERSION = 1L
 const val MOCK_DATASET_NAME = "mock-dataset-name"
 const val MOCK_DATASET_DESCRIPTION = "mock-dataset-description"
-const val MOCK_DATASET_RECORDS = "[]"
+const val MOCK_DATASET_RECORDS = "[{ \"accession\": \"mock-sequence-accession.1\", \"type\": \"loculus\" }]"
 const val MOCK_AUTHOR_ID = "mock-author-id"
 const val MOCK_AUTHOR_NAME = "testuser"
 const val MOCK_AUTHOR_AFFILIATION = "mock-author-affiliation"
@@ -86,7 +86,7 @@ class DatasetCitationsControllerClient(
         get("/get-dataset-records")
             .param("datasetId", datasetId)
             .param("version", datasetVersion.toString())
-            .param("jwt", jwt),
+            .withAuth(jwt),
     )
 
     fun deleteDataset(
