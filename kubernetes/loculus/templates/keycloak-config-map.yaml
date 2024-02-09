@@ -189,6 +189,9 @@ data:
         {{- else }}
         "frontendUrl": "http://localhost:8083"
         {{- end }}
-      }
+      },
+      "theme": {
+        "name": "loculus"
+      },
     }
 

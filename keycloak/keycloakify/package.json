@@ -1,12 +1,8 @@
 {
-    "name": "keycloakify-starter",
-    "homepage": "https://starter.keycloakify.dev",
-    "version": "5.3.3",
-    "description": "A starter/demo project for keycloakify",
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/codegouvfr/keycloakify-starter.git"
-    },
+    "name": "loculus-keycloak-theme",
+    "version": "0.0.1",
+    "description": "Adapted from keycloakify-starter",
+    
     "scripts": {
         "start": "copy-keycloak-resources-to-public && react-scripts start",
         "storybook": "copy-keycloak-resources-to-public && start-storybook -p 6006",
@@ -14,7 +10,7 @@
         "build-keycloak-theme": "yarn build && keycloakify"
     },
     "keycloakify": {
-        "themeName": "keycloakify-starter",
+        "themeName": "loculus",
         "extraThemeProperties": [ 
             "foo=bar"
         ]
