@@ -73,7 +73,7 @@ spec:
             - name: config-volume
               mountPath: /opt/keycloak/data/import/
             - name: theme-volume
-              mountPath: /opt/keycloak/themes/my-theme
+              mountPath: /opt/keycloak/providers/
           startupProbe:
             httpGet:
               path: /health

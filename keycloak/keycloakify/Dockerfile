@@ -30,8 +30,14 @@ RUN mkdir /output
 # Copy the built JAR from the builder stage
 COPY --from=builder /app/build_keycloak/target/*.jar /output/
 
-# Set the command to copy the JAR file to a mounted volume
-CMD ["cp", "-r", "/output/*", "/destination/"]
+# List the contents of the output directory
+RUN ls -l /output
 
-# Set the volume where the JAR file will be copied to when the container is run
-VOLUME /destination/
+# We will have a destination mounted at /destination
+
+# Copy the built JAR to the destination when the container starts
+
+# Start the container
+CMD ["cp", "/output/*.jar", "/destination/"]
+
+
