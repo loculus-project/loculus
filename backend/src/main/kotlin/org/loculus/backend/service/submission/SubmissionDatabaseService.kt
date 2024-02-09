@@ -13,6 +13,7 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
@@ -358,7 +359,7 @@ class SubmissionDatabaseService(
 
     fun getSequences(
         username: String,
-        organism: Organism,
+        organism: Organism?,
         groupsFilter: List<String>?,
         statusesFilter: List<Status>?,
     ): List<SequenceEntryStatus> {
@@ -374,7 +375,7 @@ class SubmissionDatabaseService(
         val listOfStatuses = statusesFilter ?: Status.entries
 
         sequenceEntriesTableProvider.get(organism).let { table ->
-            return table
+            var query = table
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
@@ -388,10 +389,15 @@ class SubmissionDatabaseService(
                 .select(
                     where = {
                         table.statusIsOneOf(listOfStatuses) and
-                            table.groupIsOneOf(validatedGroupNames) and
-                            table.organismIs(organism)
+                            table.groupIsOneOf(validatedGroupNames)
                     },
                 )
+
+            if (organism != null) {
+                query.andWhere { table.organismIs(organism) }
+            }
+
+            return query
                 .sortedBy { it[table.submittedAtColumn] }
                 .map { row ->
                     SequenceEntryStatus(

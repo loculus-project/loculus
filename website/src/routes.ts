@@ -46,6 +46,14 @@ export const routes = {
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
     userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submit/review`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/seq/${accession}/versions`),
+    datasetsPage: (username?: string | undefined) => {
+        const datasetPagePath = `/datasets` as const;
+        return username === undefined ? datasetPagePath : datasetPagePath + `?user=${username}`;
+    },
+    datasetPage: (datasetId: string, datasetVersion: string, username?: string | undefined) => {
+        const datasetPagePath = `/datasets/${datasetId}?version=${datasetVersion}`;
+        return username === undefined ? datasetPagePath : datasetPagePath + `&user=${username}`;
+    },
     notFoundPage: () => `/404`,
     logout: () => '/logout',
 };
@@ -114,6 +122,10 @@ function topNavigationItems(organism: string | undefined) {
                 text: 'User',
                 path: routes.userOverviewPage(),
             },
+            {
+                text: 'Datasets',
+                path: routes.datasetsPage(),
+            },
         ];
     }
 
@@ -133,6 +145,10 @@ function topNavigationItems(organism: string | undefined) {
         {
             text: 'User',
             path: routes.userOverviewPage(organism),
+        },
+        {
+            text: 'Datasets',
+            path: routes.datasetsPage(),
         },
     ];
 }

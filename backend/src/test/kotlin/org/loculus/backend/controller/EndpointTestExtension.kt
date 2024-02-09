@@ -8,6 +8,7 @@ import org.junit.platform.engine.support.descriptor.ClassSource
 import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
+import org.loculus.backend.controller.datasetcitations.DatasetCitationsControllerClient
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.submission.DEFAULT_USER_NAME
@@ -39,6 +40,7 @@ import org.testcontainers.containers.PostgreSQLContainer
     SubmissionConvenienceClient::class,
     GroupManagementControllerClient::class,
     DataUseTermsControllerClient::class,
+    DatasetCitationsControllerClient::class,
     PublicJwtKeyConfig::class,
 )
 annotation class EndpointTest(
