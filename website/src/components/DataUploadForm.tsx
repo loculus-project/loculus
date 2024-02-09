@@ -46,7 +46,7 @@ const InnerDataUploadForm = ({
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
-    const [exampleEntries, setExampleEntries] = useState< number | null>(null); 
+    const [exampleEntries, setExampleEntries] = useState<number | undefined>(undefined);
     const metadataFileInputRef = useRef<HTMLInputElement>(null);
     const sequenceFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -253,16 +253,16 @@ const InnerDataUploadForm = ({
             <div className='flex gap-4'>
                 {organism.startsWith('dummy-organism') && (
                     <>
-                    <input
-                        type='number'
-                        className='p-2 border rounded-md'
-                        placeholder='Number of Random Example Entries'
-                        value={exampleEntries ?? ''}
-                        onChange={(event) => setExampleEntries(parseInt(event.target.value))}
-                    />
-                    <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
-                        Load Example Data
-                    </button>
+                        <input
+                            type='number'
+                            className='p-2 border rounded-md'
+                            placeholder='Number of Random Example Entries'
+                            value={exampleEntries ?? ''}
+                            onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
+                        />
+                        <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
+                            Load Example Data
+                        </button>
                     </>
                 )}
 
@@ -324,7 +324,7 @@ function handleError(onError: (message: string) => void, action: Action) {
     };
 }
 
-function getExampleData(randomEntries= 0) {
+function getExampleData(randomEntries = 0) {
     // Existing example data
     const exampleData = {
         metadataFileContent: `
@@ -355,18 +355,20 @@ ACTG`,
     }
 
     // Generate random entries
-    const regions = ["Europe", "Asia", "North America", "South America", "Africa", "Australia"];
-    const countries = ["Switzerland", "USA", "China", "Brazil", "Nigeria", "Australia"];
-    const divisions = ["Bern", "California", "Beijing", "Rio de Janeiro", "Lagos", "Sydney"];
-    const hosts = ["Homo sapiens", "Canis lupus familiaris"];
+    const regions = ['Europe', 'Asia', 'North America', 'South America', 'Africa', 'Australia'];
+    const countries = ['Switzerland', 'USA', 'China', 'Brazil', 'Nigeria', 'Australia'];
+    const divisions = ['Bern', 'California', 'Beijing', 'Rio de Janeiro', 'Lagos', 'Sydney'];
+    const hosts = ['Homo sapiens', 'Canis lupus familiaris'];
 
-    let metadataContent = "submissionId\tdate\tregion\tcountry\tdivision\thost\n";
-    let revisedMetadataContent = "accession\tsubmissionId\tdate\tregion\tcountry\tdivision\thost\n";
-    let sequenceContent = "";
+    let metadataContent = 'submissionId\tdate\tregion\tcountry\tdivision\thost\n';
+    let revisedMetadataContent = 'accession\tsubmissionId\tdate\tregion\tcountry\tdivision\thost\n';
+    let sequenceContent = '';
 
     for (let i = 0; i < randomEntries; i++) {
         const submissionId = `custom${i}`;
-        const date = new Date(Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0];
+        const date = new Date(Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000))
+            .toISOString()
+            .split('T')[0];
         const region = regions[Math.floor(Math.random() * regions.length)];
         const country = countries[Math.floor(Math.random() * countries.length)];
         const division = divisions[Math.floor(Math.random() * divisions.length)];
@@ -383,7 +385,6 @@ ACTG`,
         sequenceFileContent: sequenceContent,
     };
 }
-
 
 function createTempFile(content: BlobPart, mimeType: any, fileName: string) {
     const blob = new Blob([content], { type: mimeType });

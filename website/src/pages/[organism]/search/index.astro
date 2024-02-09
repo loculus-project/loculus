@@ -24,26 +24,21 @@ const clientConfig = getRuntimeConfig().public;
 const lapisUrl = getLapisUrl(clientConfig, organism);
 let postParams = new URLSearchParams();
 
-if (Astro.request.method === "POST") {
+if (Astro.request.method === 'POST') {
     // Assuming the content type is application/x-www-form-urlencoded
     const formData = await Astro.request.text();
     const params = new URLSearchParams(formData);
 
     // Convert the URLSearchParams object into a regular object
     const decoded = Object.fromEntries(params);
-    const paramsString = decoded['searchQuery'];
+    const paramsString = decoded.searchQuery;
     postParams = new URLSearchParams(paramsString);
-  
-
-    
-
 }
 
 const getSearchParams = (field: string): string => {
     let value = Astro.url.searchParams.get(field);
     if (value === null && postParams.get(field) !== null) {
         value = postParams.get(field);
-        
     }
     return value ?? '';
 };
@@ -52,7 +47,7 @@ const metadataFilter = addHiddenFilters(getMetadataFilters(getSearchParams, orga
 const mutationFilter = getMutationFilter(Astro.url.searchParams);
 
 const pageParam = getSearchParams('page');
-const page = pageParam !== null && pageParam!='' ? Number.parseInt(pageParam, 10) : 1;
+const page = pageParam !== '' ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
 const orderBy = getOrderBy(getSearchParams, schema.defaultOrderBy, schema.defaultOrder);
 
@@ -101,13 +96,15 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
                         />
 
                         <div class='mt-4 flex justify-center'>
-                            <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)}
-                            page = {page}
-                            metadataFilter={metadataFilter}
-                            mutationFilter={mutationFilter}
-                            orderBy={orderBy}
-                            organism={organism}
-                             />
+                            <Pagination
+                                client:only='react'
+                                count={Math.ceil(data.totalCount / pageSize)}
+                                page={page}
+                                metadataFilter={metadataFilter}
+                                mutationFilter={mutationFilter}
+                                orderBy={orderBy}
+                                organism={organism}
+                            />
                         </div>
                     </div>
                 ),

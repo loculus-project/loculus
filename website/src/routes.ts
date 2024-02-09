@@ -1,4 +1,3 @@
-import { add } from 'lodash';
 import type { AccessionVersion } from './types/backend.ts';
 import type { FilterValue, MutationFilter } from './types/config.ts';
 import type { OrderBy } from './types/lapis.ts';
@@ -16,7 +15,7 @@ export const routes = {
         organism: string,
         metadataFilter: Filter[] = [],
         mutationFilter: MutationFilter = {},
-        page: number = null,
+        page: number | null = null,
         orderBy?: OrderBy,
     ) =>
         withOrganism(
@@ -64,7 +63,6 @@ export const navigateToSearchPage = <Filter extends FilterValue>(
     if (paramsString.length < approxMaxUrlLengthForSearch) {
         location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, orderBy);
     } else {
-      
         const form = document.createElement('form');
         const addField = (name: string, value: string) => {
             const field = document.createElement('input');
@@ -72,10 +70,9 @@ export const navigateToSearchPage = <Filter extends FilterValue>(
             field.name = name;
             field.value = value;
             form.appendChild(field);
-        }
+        };
         form.method = 'POST';
         form.action = routes.searchPage(organism);
-        
 
         addField('searchQuery', paramsString);
         addField('organism', organism);
@@ -84,8 +81,6 @@ export const navigateToSearchPage = <Filter extends FilterValue>(
         form.submit();
     }
 };
-
-
 
 const buildSearchParams = <Filter extends FilterValue>(
     metadataFilter: Filter[],
@@ -118,7 +113,7 @@ const buildSearchParams = <Filter extends FilterValue>(
         params.set('orderBy', orderBy.field);
         params.set('order', orderBy.type);
     }
-    if( page !== null){
+    if (page !== undefined) {
         params.set('page', page.toString());
     }
     return params;

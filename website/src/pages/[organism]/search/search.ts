@@ -109,7 +109,7 @@ export const getOrderBy = (
     defaultOrder: OrderByType,
 ): OrderBy => {
     const orderByTypeParam = getSearchParams('order');
-    const orderByTypeParsed = orderByTypeParam !== null ? orderByType.safeParse(orderByTypeParam) : undefined;
+    const orderByTypeParsed = orderByTypeParam !== '' ? orderByType.safeParse(orderByTypeParam) : undefined;
     const orderByTypeValue: OrderByType = orderByTypeParsed?.success === true ? orderByTypeParsed.data : defaultOrder;
     const sortByField = getSearchParams('orderBy') ? getSearchParams('orderBy') : defaultOrderByField;
     return {
