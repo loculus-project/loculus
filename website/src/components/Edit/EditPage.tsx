@@ -200,10 +200,11 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
     <>
         <Subtitle title='Metadata' />
         {editedMetadata.map((field) => {
+            const rawMetadataKey = 'raw_metadata' + field.key;
             field.key = sentenceCase(field.key);
             return (
                 <EditableDataRow
-                    key={'raw_metadata' + field.key}
+                    key={rawMetadataKey}
                     row={field}
                     onChange={(editedRow: Row) =>
                         setEditedMetadata((prevRows: Row[]) =>
