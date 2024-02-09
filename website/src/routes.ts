@@ -55,7 +55,7 @@ export const navigateToSearchPage = <Filter extends FilterValue>(
     organism: string,
     metadataFilter: Filter[] = [],
     mutationFilter: MutationFilter = {},
-    page: number = 1,
+    page?: number,
     orderBy?: OrderBy,
 ) => {
     const paramsString = buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString();
