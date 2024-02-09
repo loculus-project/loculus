@@ -11,7 +11,7 @@ done
 echo "Docker is up and running!"
 
 ./deploy.py cluster --dev
-./deploy.py helm --dev
+./deploy.py helm --dev --enablePreprocessing
 
 ./deploy.py config
 
