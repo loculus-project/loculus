@@ -4,8 +4,10 @@ import type { PageProps } from "keycloakify/login/pages/PageProps";
 import { useGetClassName } from "keycloakify/login/lib/useGetClassName";
 import type { KcContext } from "../kcContext";
 import type { I18n } from "../i18n";
+import { useState } from "react";
 
 export default function Register(props: PageProps<Extract<KcContext, { pageId: "register.ftl" }>, I18n>) {
+    const [didAgree, setDidAgree] = useState(false);
     const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
 
     const { getClassName } = useGetClassName({
@@ -63,6 +65,32 @@ export default function Register(props: PageProps<Extract<KcContext, { pageId: "
                         />
                     </div>
                 </div>
+
+                {
+                    /* University field */
+                }
+                <div
+                    className={clsx(
+                        getClassName("kcFormGroupClass"),
+                        messagesPerField.printIfExists("university", getClassName("kcFormGroupErrorClass"))
+                    )}
+                >
+                    <div className={getClassName("kcLabelWrapperClass")}>
+                        <label htmlFor="university" className={getClassName("kcLabelClass")}>
+                            University
+                        </label>
+                    </div>
+                    <div className={getClassName("kcInputWrapperClass")}>
+                        <input
+                            type="text"
+                            id="university"
+                            className={getClassName("kcInputClass")}
+                            name="university"
+                            defaultValue={""}
+                        />
+                    </div>
+                </div>
+
 
                 <div
                     className={clsx(getClassName("kcFormGroupClass"), messagesPerField.printIfExists("email", getClassName("kcFormGroupErrorClass")))}
@@ -148,6 +176,25 @@ export default function Register(props: PageProps<Extract<KcContext, { pageId: "
                         </div>
                     </>
                 )}
+
+                <div>
+                    This database is subject to particular terms of use. Some data is available under the restricted use terms, which state that
+                    you may not publish focal analyses of this data without express permission of the authors.
+                    Do you agree to these terms?
+                    <div>
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        name="terms"
+                        onChange={(e) => {
+                            setDidAgree(e.target.checked);
+                        }}
+                    /> I agree
+</div>
+
+                </div>
+
+
                 {recaptchaRequired && (
                     <div className="form-group">
                         <div className={getClassName("kcInputWrapperClass")}>
@@ -155,7 +202,9 @@ export default function Register(props: PageProps<Extract<KcContext, { pageId: "
                         </div>
                     </div>
                 )}
-                <div className={getClassName("kcFormGroupClass")}>
+
+                {/*
+               
                     <div id="kc-form-options" className={getClassName("kcFormOptionsClass")}>
                         <div className={getClassName("kcFormOptionsWrapperClass")}>
                             <span>
@@ -163,7 +212,9 @@ export default function Register(props: PageProps<Extract<KcContext, { pageId: "
                             </span>
                         </div>
                     </div>
+                */}
 
+<div className={getClassName("kcFormGroupClass")}>
                     <div id="kc-form-buttons" className={getClassName("kcFormButtonsClass")}>
                         <input
                             className={clsx(
@@ -172,6 +223,7 @@ export default function Register(props: PageProps<Extract<KcContext, { pageId: "
                                 getClassName("kcButtonBlockClass"),
                                 getClassName("kcButtonLargeClass")
                             )}
+                            disabled={!didAgree}
                             type="submit"
                             value={msgStr("doRegister")}
                         />
