@@ -44,7 +44,7 @@ jobs:
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
-          context: ./keykloak/keycloakify
+          context: ./keycloak/keycloakify
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=config-preprocessor=${{ github.ref }}
