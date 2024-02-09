@@ -38,6 +38,6 @@ RUN ls -l /output
 # Copy the built JAR to the destination when the container starts
 
 # Start the container
-CMD ["cp", "/output/*.jar", "/destination/"]
+CMD sh -c 'cp /output/*.jar /destination/'
 
 
