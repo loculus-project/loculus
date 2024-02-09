@@ -13,4 +13,6 @@
 
 .my-root-class body {
 	background: #efefef;
+	height: auto;
+	min-height: 100%;
 }
