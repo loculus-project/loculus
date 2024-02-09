@@ -46,7 +46,7 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
         "bodyClassName": getClassName("kcBodyClass")
     });
 
-    useState(()=> { document.title = "Log in" });
+    useState(()=> { document.title = "Log in"; });
 
     if (!isReady) {
         return null;
