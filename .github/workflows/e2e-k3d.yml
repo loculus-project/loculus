@@ -46,27 +46,7 @@ jobs:
       with:
         name: default-helm-template
         path: defaultTemplate.yaml
-      
-
-    - name: Wait for Backend Docker Image
-      uses: lewagon/wait-on-check-action@v1.3.3
-      with:
-        ref: ${{ github.ref }}
-        check-name: Build Backend Docker Image
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Wait for Website Docker Image
-      uses: lewagon/wait-on-check-action@v1.3.3
-      with:
-        ref: ${{ github.ref }}
-        check-name: Build Website Docker Image
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Deploy with helm
-      uses: WyriHaximus/github-action-helm3@v3
-      with:
-        exec: ./deploy.py helm --branch ${{ github.ref_name }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
-
+    
     - uses: actions/setup-node@v4
       with:
         node-version: 20
@@ -98,6 +78,27 @@ jobs:
     - name: Install only System Dependencies
       run: cd website && npx playwright install-deps
       if: steps.playwright-cache.outputs.cache-hit == 'true'
+      
+
+    - name: Wait for Backend Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.3
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Backend Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Wait for Website Docker Image
+      uses: lewagon/wait-on-check-action@v1.3.3
+      with:
+        ref: ${{ github.ref }}
+        check-name: Build Website Docker Image
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Deploy with helm
+      uses: WyriHaximus/github-action-helm3@v3
+      with:
+        exec: ./deploy.py helm --branch ${{ github.ref_name }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
+
     - name: Wait for the pods to be ready
       run: ./.github/scripts/wait_for_pods_to_be_ready.py
     - name: Sleep for 20 secs
