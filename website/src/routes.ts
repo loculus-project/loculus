@@ -15,7 +15,7 @@ export const routes = {
         organism: string,
         metadataFilter: Filter[] = [],
         mutationFilter: MutationFilter = {},
-        page: number | null = null,
+        page: number | undefined = undefined,
         orderBy?: OrderBy,
     ) =>
         withOrganism(
