@@ -106,13 +106,13 @@ describe('EditPage', () => {
         renderEditPage();
 
         expect(screen.getByText(/Original Data/i)).toBeInTheDocument();
-        expectTextInSequenceData.original(defaultReviewData.originalData.metadata);
+        expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
 
         expect(screen.getAllByText(/Unaligned nucleotide sequences/i)[0]).toBeInTheDocument();
         expectTextInSequenceData.original(defaultReviewData.originalData.unalignedNucleotideSequences);
 
         expect(screen.getByText(/Processed Data/i)).toBeInTheDocument();
-        expectTextInSequenceData.processed(defaultReviewData.processedData.metadata);
+        expectTextInSequenceData.processedMetadata(defaultReviewData.processedData.metadata);
         expectTextInSequenceData.processed(defaultReviewData.processedData.unalignedNucleotideSequences);
 
         expect(screen.getByText(/^Aligned nucleotide sequences/i)).toBeInTheDocument();
@@ -121,10 +121,10 @@ describe('EditPage', () => {
         expect(screen.getByText(/Amino acid sequences/i)).toBeInTheDocument();
         expectTextInSequenceData.processed(defaultReviewData.processedData.alignedAminoAcidSequences);
 
-        expect(screen.getByText('Processed insertion sequence name:')).toBeInTheDocument();
+        expect(screen.getByText('processedInsertionSequenceName:')).toBeInTheDocument();
         expect(screen.getByText('nucleotideInsertion1,nucleotideInsertion2')).toBeInTheDocument();
 
-        expect(screen.getByText('Processed insertion gene name:')).toBeInTheDocument();
+        expect(screen.getByText('processedInsertionGeneName:')).toBeInTheDocument();
         expect(screen.getByText('aminoAcidInsertion1,aminoAcidInsertion2')).toBeInTheDocument();
     });
 
@@ -146,24 +146,34 @@ describe('EditPage', () => {
         const someTextToAdd = '_addedText';
         await userEvent.type(screen.getByDisplayValue(editableEntry), someTextToAdd);
 
-        expectTextInSequenceData.original({
+        expectTextInSequenceData.originalMetadata({
             [metadataKey]: editableEntry + someTextToAdd,
         });
         const undoButton = document.querySelector(`.tooltip[data-tip="Revert to: ${editableEntry}"]`);
         expect(undoButton).not.toBeNull();
 
         await userEvent.click(undoButton!);
-        expectTextInSequenceData.original(defaultReviewData.originalData.metadata);
+        expectTextInSequenceData.originalMetadata(defaultReviewData.originalData.metadata);
     });
 });
 
 const expectTextInSequenceData = {
     original: (metadata: Record<string, MetadataField>): void =>
         Object.entries(metadata).forEach(([key, value]) => {
+            expect(screen.getByText(key + ':')).toBeInTheDocument();
+            expect(screen.getByDisplayValue(value.toString())).toBeInTheDocument();
+        }),
+    originalMetadata: (metadata: Record<string, MetadataField>): void =>
+        Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
             expect(screen.getByDisplayValue(value.toString())).toBeInTheDocument();
         }),
     processed: (metadata: Record<string, MetadataField>): void =>
+        Object.entries(metadata).forEach(([key, value]) => {
+            expect(screen.getByText(key + ':')).toBeInTheDocument();
+            expect(screen.getByText(value.toString())).toBeInTheDocument();
+        }),
+    processedMetadata: (metadata: Record<string, MetadataField>): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
             expect(screen.getByText(value.toString())).toBeInTheDocument();
