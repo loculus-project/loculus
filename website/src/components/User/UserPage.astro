@@ -25,23 +25,28 @@ const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
     <div class='flex items-center'>
         <h1 class='title'>User {session.user?.name}</h1>
     </div>
-    <div>
+    <div class='my-2 mx-4'>
         <a href={keycloakLogoutUrl}>Logout</a>
     </div>
-
     {
         organism !== undefined && (
             <>
-                <div>
+                <div class='my-2 mx-4'>
                     <a href={routes.userSequencesPage(organism)}>Sequence Overview</a>
                 </div>
-                <div>
+                <div class='my-2 mx-4'>
                     <a href={routes.userSequenceReviewPage(organism)}>Sequence Review</a>
                 </div>
             </>
         )
     }
-
+    {
+        session.user?.username !== undefined && (
+            <div class='my-2 mx-4'>
+                <a href={routes.datasetsPage(session.user.username)}>Datasets Overview</a>
+            </div>
+        )
+    }
     {
         session.user?.username !== undefined && (
             <GroupManager

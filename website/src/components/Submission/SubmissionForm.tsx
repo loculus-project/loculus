@@ -1,10 +1,10 @@
 import { type FC, useState } from 'react';
 
-import { ManagedErrorFeedback, useErrorFeedbackState } from './ManagedErrorFeedback';
 import { type SubmissionIdMapping, restrictedDataUseTermsType } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { DataUploadForm } from '../DataUploadForm.tsx';
+import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
 type SubmissionFormProps = {
     accessToken: string;

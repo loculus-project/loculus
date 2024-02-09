@@ -10,6 +10,8 @@ type Session = {
     user?: {
         name?: string;
         username?: string;
+        email?: string;
+        emailVerified?: boolean;
     };
     token?: TokenCookie;
 };

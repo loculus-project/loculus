@@ -75,7 +75,12 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
         context.locals.session = {
             isLoggedIn: true,
-            user: { name: userInfo.value.name ?? 'Username not set' },
+            user: {
+                name: userInfo.value.name ?? 'Name not set',
+                username: userInfo.value.preferred_username,
+                email: userInfo.value.email,
+                emailVerified: userInfo.value.email_verified,
+            },
             token,
         };
 
@@ -94,7 +99,6 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     }
 
     const userInfo = await getUserInfo(token);
-
     if (userInfo.isErr()) {
         logger.debug(`Error getting user info: ${userInfo.error}`);
         return redirectToAuth(context);
@@ -103,8 +107,10 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     context.locals.session = {
         isLoggedIn: true,
         user: {
-            name: userInfo.value.name ?? 'Username not set',
+            name: userInfo.value.name ?? 'Name not set',
             username: userInfo.value.preferred_username,
+            email: userInfo.value.email,
+            emailVerified: userInfo.value.email_verified,
         },
         token,
     };
