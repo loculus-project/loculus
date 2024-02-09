@@ -3,7 +3,7 @@ import type { FilterValue, MutationFilter } from './types/config.ts';
 import type { OrderBy } from './types/lapis.ts';
 import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
 
-const approxMaxUrlLengthForSearch = 40; // TODO: increase this
+const approxMaxUrlLengthForSearch = 1900; // TODO: increase this
 
 export const routes = {
     aboutPage: () => '/about',

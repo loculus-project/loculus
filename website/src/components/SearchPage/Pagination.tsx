@@ -2,9 +2,8 @@ import { Pagination as MUIPagination } from '@mui/material';
 import type { FC } from 'react';
 
 import { navigateToSearchPage } from '../../routes';
-import type { MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
+import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
-
 
 type Props = {
     count: number;

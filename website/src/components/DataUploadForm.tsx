@@ -255,8 +255,8 @@ const InnerDataUploadForm = ({
                     <>
                         <input
                             type='number'
-                            className='p-2 border rounded-md'
-                            placeholder='Number of Random Example Entries'
+                            className='p-1 border rounded-md w-28 placeholder:text-xs'
+                            placeholder='num of examples'
                             value={exampleEntries ?? ''}
                             onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
                         />
