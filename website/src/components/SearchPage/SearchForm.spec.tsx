@@ -77,6 +77,19 @@ describe('SearchForm', () => {
         );
     });
 
+    test('should redirect according to filters with POST for very long URL', async () => {
+        renderSearchForm();
+
+        const filterValue = 'a'.repeat(4000);
+        await userEvent.type(screen.getByPlaceholderText('Field 1'), filterValue);
+
+        const searchButton = screen.getByRole('button', { name: 'Search' });
+        await userEvent.click(searchButton);
+
+        // expect a short URL
+        expect(window.location.href.length).toBeLessThan(300);
+    });
+
     test('should not render the form with fields with flag notSearchable', async () => {
         renderSearchForm([
             ...defaultSearchFormFilters,
