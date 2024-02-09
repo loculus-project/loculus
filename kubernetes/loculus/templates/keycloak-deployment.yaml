@@ -1,3 +1,5 @@
+{{- $keycloakHost := printf "authentication-%s" .Values.host }}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -41,8 +43,15 @@ spec:
               value: "true"
           args:
             - "start"
-            - "--verbose"
             - "--import-realm"
+            {{- if eq .Values.environment "server" }}
+            - "--hostname-url=https://{{ $keycloakHost }}"
+            {{- else if .Values.codespaceName }}
+            - "--hostname-url=https://{{ .Values.codespaceName }}-8083.app.github.dev"
+            {{- else }}
+            - "--hostname-url=http://localhost:8083"
+            {{- end }}
+            - "--hostname-debug=true"
           ports:
             - containerPort: 8080
           volumeMounts:
