@@ -8,7 +8,6 @@ apiVersion: batch/v1
 kind: CronJob
 metadata:
   name: lapis-silo-import-cronjob-{{ $key }}
-  namespace: {{ $.Values.namespace  }}
 spec:
   schedule: "* * * * *"
   concurrencyPolicy: Forbid

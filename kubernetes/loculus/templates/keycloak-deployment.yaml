@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: loculus-keycloak
-  namespace: {{ .Values.namespace }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:

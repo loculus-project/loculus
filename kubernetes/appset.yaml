@@ -30,7 +30,7 @@ spec:
     spec:
       destination:
         server: 'https://kubernetes.default.svc'
-        namespace: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
+        namespace: 'prev-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
       project: default
       source:
         path: 'kubernetes/loculus/'
@@ -38,10 +38,10 @@ spec:
         targetRevision: '{{.branch}}'
         helm:
           parameters:
-            - name: namespace
-              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}'
             - name: shortbranch
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
+            - name: namespace # TODO(https://github.com/loculus-project/loculus/issues/979) delete this once no unsynced up branches need it
+              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}'
             - name: sha
               value: '{{.head_short_sha_7}}'
             - name: branch
@@ -49,6 +49,8 @@ spec:
             - name: host
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}.loculus.org'
       syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
         automated:
           selfHeal: true
           prune: true

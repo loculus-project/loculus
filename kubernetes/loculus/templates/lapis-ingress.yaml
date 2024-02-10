@@ -4,9 +4,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: lapis-ingress
-  namespace: {{ $.Values.namespace }}
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{- $first := true }}{{- range $key, $_ := $.Values.instances }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Values.namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{- $first := true }}{{- range $key, $_ := $.Values.instances }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
@@ -37,7 +36,6 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
 metadata:
   name: strip-{{ $key }}-prefix
-  namespace: {{ $.Values.namespace }}
 spec:
   stripPrefix:
     prefixes:

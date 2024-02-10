@@ -6,7 +6,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-website-ingress
-  namespace: {{ .Values.namespace }}
 spec:
   rules:
     - host: "{{ .Values.host }}"
@@ -27,7 +26,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-backend-ingress
-  namespace: {{ .Values.namespace }}
 spec:
   rules:
     - host: "{{ $backendHost }}"
@@ -49,7 +47,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-keycloak-ingress
-  namespace: {{ .Values.namespace }}
 spec:
   rules:
     - host: "{{ $keycloakHost }}"

@@ -113,6 +113,7 @@ def cluster_exists(cluster_name):
 def handle_helm():
     if args.uninstall:
         subprocess.run(['helm', 'uninstall', HELM_RELEASE_NAME], check=True)
+
         return
 
     if args.branch:
