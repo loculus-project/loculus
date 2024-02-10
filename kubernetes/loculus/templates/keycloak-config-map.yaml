@@ -180,10 +180,52 @@ data:
             "*"
           ]
         },
-        {
-          "clientId": "account-console",
-          "webOrigins" : [ "+" ]
+              {
           
+          "clientId" : "account-console",
+          "name" : "${client_account-console}",
+          "description" : "",
+          "rootUrl" : "${authBaseUrl}",
+          "adminUrl" : "",
+          "baseUrl" : "/realms/loculusRealm/account/",
+          "surrogateAuthRequired" : false,
+          "enabled" : true,
+          "alwaysDisplayInConsole" : false,
+          "clientAuthenticatorType" : "client-secret",
+          "redirectUris" : [ "/realms/loculusRealm/account/*" ],
+          "webOrigins" : [ "+" ],
+          "notBefore" : 0,
+          "bearerOnly" : false,
+          "consentRequired" : false,
+          "standardFlowEnabled" : true,
+          "implicitFlowEnabled" : false,
+          "directAccessGrantsEnabled" : false,
+          "serviceAccountsEnabled" : false,
+          "publicClient" : true,
+          "frontchannelLogout" : false,
+          "protocol" : "openid-connect",
+          "attributes" : {
+            "oidc.ciba.grant.enabled" : "false",
+            "backchannel.logout.session.required" : "true",
+            "post.logout.redirect.uris" : "+",
+            "oauth2.device.authorization.grant.enabled" : "false",
+            "display.on.consent.screen" : "false",
+            "pkce.code.challenge.method" : "S256",
+            "backchannel.logout.revoke.offline.tokens" : "false"
+          },
+          "authenticationFlowBindingOverrides" : { },
+          "fullScopeAllowed" : false,
+          "nodeReRegistrationTimeout" : 0,
+          "protocolMappers" : [ {
+            "id" : "5b11d5f8-d363-4262-a5b1-c81d261882f4",
+            "name" : "audience resolve",
+            "protocol" : "openid-connect",
+            "protocolMapper" : "oidc-audience-resolve-mapper",
+            "consentRequired" : false,
+            "config" : { }
+          } ],
+          "defaultClientScopes" : [ "web-origins", "acr", "profile", "roles", "email" ],
+          "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
         }
       ],
       "attributes": {
