@@ -179,6 +179,11 @@ data:
           "redirectUris": [
             "*"
           ]
+        },
+        {
+          "clientId": "account-console",
+          "webOrigins" : [ "+" ]
+          
         }
       ],
       "attributes": {
