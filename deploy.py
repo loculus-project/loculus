@@ -112,8 +112,7 @@ def cluster_exists(cluster_name):
 
 def handle_helm():
     if args.uninstall:
-        subprocess.run(['helm', 'uninstall', HELM_RELEASE_NAME, '--namespace', 'loculus'], check=True)
-        subprocess.run(['kubectl', 'delete', 'namespace', 'loculus'], check=True)
+        subprocess.run(['helm', 'uninstall', HELM_RELEASE_NAME], check=True)
 
         return
 
@@ -130,8 +129,6 @@ def handle_helm():
         '--set', "environment=local",
         '--set', f"branch={branch}",
         '--set', f"dockerconfigjson={docker_config_json}",
-        '--namespace', 'loculus',
-        '--create-namespace'
     ]
 
     if args.dev:
