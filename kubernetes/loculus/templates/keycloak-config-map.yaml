@@ -182,7 +182,7 @@ data:
         },
               {
           
-          "clientId" : "account-console",
+          "clientId" : "account-console2",
           "name" : "${client_account-console}",
           "description" : "",
           "rootUrl" : "${authBaseUrl}",
@@ -217,7 +217,7 @@ data:
           "fullScopeAllowed" : false,
           "nodeReRegistrationTimeout" : 0,
           "protocolMappers" : [ {
-            "id" : "5b11d5f8-d363-4262-a5b1-c81d261882f4",
+           
             "name" : "audience resolve",
             "protocol" : "openid-connect",
             "protocolMapper" : "oidc-audience-resolve-mapper",
