@@ -128,6 +128,7 @@ def handle_helm():
         '--set', "environment=local",
         '--set', f"branch={branch}",
         '--set', f"dockerconfigjson={docker_config_json}",
+        '--namespace', 'loculus',
     ]
 
     if args.dev:

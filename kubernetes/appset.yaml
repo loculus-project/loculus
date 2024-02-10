@@ -38,8 +38,6 @@ spec:
         targetRevision: '{{.branch}}'
         helm:
           parameters:
-            - name: namespace
-              value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}'
             - name: shortbranch
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
             - name: sha
