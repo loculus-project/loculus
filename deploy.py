@@ -112,8 +112,8 @@ def cluster_exists(cluster_name):
 
 def handle_helm():
     if args.uninstall:
-        subprocess.run(['helm', 'uninstall', HELM_RELEASE_NAME], check=True)
-        subprocess.run(['kubectl', 'delete','namespace','loculus'], check=True)
+        subprocess.run(['helm', 'uninstall', HELM_RELEASE_NAME, '--namespace', 'loculus'], check=True)
+        subprocess.run(['kubectl', 'delete', 'namespace', 'loculus'], check=True)
 
         return
 
