@@ -1,3 +1,13 @@
+{{- define "keycloakUrl" -}}
+  {{- if eq .Values.environment "server" -}}
+    {{- printf "https://authentication-%s" .Values.host -}}
+  {{- else if .Values.codespaceName -}}
+    {{- printf "https://%s-8083.app.github.dev" .Values.codespaceName -}}
+  {{- else -}}
+    {{- "http://localhost:8083" -}}
+  {{- end -}}
+{{- end -}}
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -38,9 +48,16 @@ spec:
               value: "edge"
             - name: KC_HEALTH_ENABLED
               value: "true"
+            # - name: KC_LOG_LEVEL
+            #   value: "DEBUG"
+            - name: KC_HOSTNAME_URL
+              value: "{{ include "keycloakUrl" . }}"
+            - name: KC_HOSTNAME_ADMIN_URL
+              value: "{{ include "keycloakUrl" . }}"
           args:
-            - "start-dev"
+            - "start"
             - "--import-realm"
+            # - "--hostname-debug=true"
           ports:
             - containerPort: 8080
           volumeMounts:
