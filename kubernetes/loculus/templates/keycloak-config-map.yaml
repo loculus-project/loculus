@@ -190,23 +190,6 @@ data:
         "frontendUrl": "http://localhost:8083"
         {{- end }}
       },
-      "loginTheme": "loculus",
-        "identityProviders" : [ {
-        "alias" : "orcid",
-        "internalId" : "4153d6bd-6f82-4343-bc5c-fdb0b05ba0b0",
-        "providerId" : "orcid",
-        "enabled" : true,
-        "updateProfileFirstLoginMode" : "on",
-        "trustEmail" : false,
-        "storeToken" : false,
-        "addReadTokenRoleOnCreate" : false,
-        "authenticateByDefault" : false,
-        "linkOnly" : false,
-        "firstBrokerLoginFlowAlias" : "first broker login",
-        "config" : {
-          "clientSecret" : "65897b89-a888-427d-8828-1f1dd97bf6c1",
-          "clientId" : "APP-P1P7N7T9YVBHQ4EH"
-        }
-      } ]
+      "loginTheme": "loculus"
     }
 
