@@ -90,7 +90,7 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
             {"metadata": metadata, **mock_sequences},
         )
 
-        if addErrors:
+        if addErrors and random.choice([True, False, False]):
             updated_sequence.errors = [
                 ProcessingAnnotation(
                     [AnnotationSource(list(metadata.keys())[0], "Metadata")],
@@ -107,7 +107,7 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
                 ),
             ]
 
-        if addWarnings:
+        if addWarnings and random.choice([True, False]):
             updated_sequence.warnings = [
                 ProcessingAnnotation(
                     [AnnotationSource(list(metadata.keys())[0], "Metadata")],
