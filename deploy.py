@@ -4,7 +4,6 @@ import argparse
 import subprocess
 import time
 from pathlib import Path
-import json
 import os
 import yaml
 
@@ -104,7 +103,7 @@ def is_traefik_running(namespace='kube-system', label='app.kubernetes.io/name=tr
             print(f"Error executing kubectl: {result.stderr}")
             return False
 
-        if 'Running' in result.stdout:
+        if 'Running' in result.stdout or args.dry_run:
             return True
     except subprocess.SubprocessError as e:
         print(f"Error checking Traefik status: {e}")
@@ -201,6 +200,9 @@ def generate_config(helm_chart, template, output_path, codespace_name=None):
     helm_template_cmd.extend(['--set', 'disableWebsite=true'])
     helm_template_cmd.extend(['--set', 'disableBackend=true'])
     helm_output = run_command(helm_template_cmd, capture_output=True, text=True, check=True).stdout
+    if args.dry_run:
+        return
+
     parsed_yaml = yaml.safe_load(helm_output)
     config_data = parsed_yaml['data'][output_path.name]
 
