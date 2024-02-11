@@ -37,7 +37,15 @@ spec:
             - "{{ $arg }}"
             {{- end }}
             - "--backend-host={{ $backendHost }}/{{ $key }}"
-            - "--keycloak-host={{ $keycloakHost }}
+            - "--keycloak-host={{ $keycloakHost }}"
+            {{- if eq $.Values.environment "server" }}
+            {{- if $value.preprocessing.warnings }}
+            - "--withWarnings"
+            {{- end }}
+            {{- if $value.preprocessing.errors }}
+            - "--withErrors"
+            {{- end }}
+            {{- end }}
       {{- if $value.preprocessing.configFile }}
             - "--config=/etc/config/preprocessing-config.yaml"
           volumeMounts:

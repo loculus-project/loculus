@@ -43,6 +43,8 @@ instances:
       image: ghcr.io/loculus-project/preprocessing-dummy
       args:
         - "--watch"
+      warnings: true
+      errors: true
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
