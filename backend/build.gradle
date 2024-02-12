@@ -58,7 +58,7 @@ dependencies {
     testImplementation "io.jsonwebtoken:jjwt-impl:0.12.5"
     testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.5"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
-    testImplementation "org.testcontainers:postgresql:1.19.4"
+    testImplementation "org.testcontainers:postgresql:1.19.5"
     testImplementation "org.junit.platform:junit-platform-launcher:1.10.2"
 }
 
