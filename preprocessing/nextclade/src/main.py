@@ -7,7 +7,7 @@ import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from tempfile import TemporaryDirectory
-from typing import List, Literal, Optional
+from typing import Any, Literal
 
 import requests
 from Bio import SeqIO
@@ -71,12 +71,12 @@ class UnprocessedEntry:
 
 @dataclass
 class ProcessedData:
-    metadata: Mapping[str, str]
-    unalignedNucleotideSequences: Mapping[str, str]
-    alignedNucleotideSequences: Mapping[str, str]
-    nucleotideInsertions: Mapping[str, str]
-    alignedAminoAcidSequences: Mapping[str, str]
-    aminoAcidInsertions: Mapping[str, str]
+    metadata: dict[str, dict[str, Any]]
+    unalignedNucleotideSequences: dict[str, Any]
+    alignedNucleotideSequences: dict[str, Any]
+    nucleotideInsertions: dict[str, Any]
+    alignedAminoAcidSequences: dict[str, Any]
+    aminoAcidInsertions: dict[str, Any]
 
 
 @dataclass
@@ -96,11 +96,11 @@ class ProcessedEntry:
     accession: int
     version: int
     data: ProcessedData
-    errors: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
-    warnings: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
+    errors: list[ProcessingAnnotation] = field(default_factory=list)
+    warnings: list[ProcessingAnnotation] = field(default_factory=list)
 
 
-NextcladeResult = Mapping[str, str]
+NextcladeResult = dict[str, dict[str, Any]]
 
 
 def fetch_unprocessed_sequences(n: int) -> Sequence[UnprocessedEntry]:
@@ -202,7 +202,7 @@ def run_nextclade(
             for unprocessed_sequence in unprocessed
         }
 
-        processed = {
+        processed: dict[str, dict[str, Any]] = {
             unprocessed_sequence.accessionVersion: {
                 "unalignedNuc": unprocessed_sequence.data.unalignedNucleotideSequences,
                 "alignedNuc": "N" * config.reference_length,

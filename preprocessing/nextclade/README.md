@@ -19,27 +19,27 @@ This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It re
 1. Install `conda`/`mamba`/`micromamba`: see e.g. [micromamba installation docs](https://mamba.readthedocs.io/en/latest/micromamba-installation.html#umamba-install)
 2. Install environment:
 
-    ```bash
-    mamba env create -n loculus-nextclade -f environment.yml
-    ```
+   ```bash
+   mamba env create -n loculus-nextclade -f environment.yml
+   ```
 
 3. Start backend (see [backend README](../backend/README.md))
 4. Submit sequences to backend
 
-    ```bash
-    curl -X 'POST' 'http://localhost:8079/submit?username=testuser' \
-        -H 'accept: application/json' \
-        -H 'Content-Type: multipart/form-data'  \
-        -F 'metadataFile=@testdata/metadata.tsv;type=text/tab-separated-values' \
-        -F 'sequenceFile=@testdata/sequences.fasta'
-    ```
+   ```bash
+   curl -X 'POST' 'http://localhost:8079/submit?username=testuser' \
+       -H 'accept: application/json' \
+       -H 'Content-Type: multipart/form-data'  \
+       -F 'metadataFile=@testdata/metadata.tsv;type=text/tab-separated-values' \
+       -F 'sequenceFile=@testdata/sequences.fasta'
+   ```
 
 5. Run pipeline
 
-    ```bash
-    mamba activate loculus-nextclade
-    python main.py
-    ```
+   ```bash
+   mamba activate loculus-nextclade
+   python main.py
+   ```
 
 ### Docker
 
@@ -54,3 +54,8 @@ Run (TODO: port-forwarding):
 ```bash
 docker run -it --platform=linux/amd64 --network host --rm nextclade_processing python main.py
 ```
+
+## Development
+
+- Install Ruff to lint/format
+- Use `mypy` to check types: `mypy -p src  --python-version 3.12`
