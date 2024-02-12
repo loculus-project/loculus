@@ -188,7 +188,7 @@ def generate_configs():
     runtime_config_path =  TEMP_DIR / 'runtime_config.json'
     generate_config(helm_chart, 'templates/loculus-website-config.yaml', runtime_config_path, codespace_name)
 
-    run_command(['python', 'kubernetes/config-processor/config-processor.py', TEMP_DIR, output_dir], check=True)
+    run_command(['python3', 'kubernetes/config-processor/config-processor.py', TEMP_DIR, output_dir], check=True)
 
 def generate_config(helm_chart, template, output_path, codespace_name=None):
     helm_template_cmd = ['helm', 'template', 'name-does-not-matter', helm_chart, '--show-only', template]
