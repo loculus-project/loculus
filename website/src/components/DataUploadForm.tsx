@@ -324,35 +324,8 @@ function handleError(onError: (message: string) => void, action: Action) {
     };
 }
 
-function getExampleData(randomEntries = 0) {
-    // Existing example data
-    const exampleData = {
-        metadataFileContent: `
-submissionId	date	region	country	division	host
-custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`,
-        revisedMetadataFileContent: `
-accession	submissionId	date	region	country	division	host
-1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-4	custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`,
-        sequenceFileContent: `
->custom0
-ACTG
->custom1
-ACTG
->custom2
-ACTG
->custom3
-ACTG`,
-    };
-
-    if (!randomEntries) {
-        return exampleData;
-    }
+function getExampleData(randomEntries = 20) {
+    
 
     // Generate random entries
     const regions = ['Europe', 'Asia', 'North America', 'South America', 'Africa', 'Australia'];
