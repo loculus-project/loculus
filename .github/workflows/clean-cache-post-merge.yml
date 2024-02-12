@@ -2,13 +2,16 @@
 # https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#usage-limits-and-eviction-policy
 name: cleanup caches by a branch
 on:
-  pull_request:
+  pull_request_target:
     types:
       - closed
+  workflow_dispatch:
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
       - name: Cleanup
         run: |
@@ -22,10 +25,11 @@ jobs:
           echo "Deleting caches..."
           for cacheKey in $cacheKeysForPR
           do
+              echo "Deleting $cacheKey"
               gh actions-cache delete $cacheKey -R $REPO -B $BRANCH --confirm
           done
           echo "Done"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          BRANCH: refs/pull/${{ github.event.pull_request.number }}/merge
+          BRANCH: ${{ github.ref_name }}
