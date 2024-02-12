@@ -14,7 +14,7 @@ import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { routes } from '../../routes.ts';
+import { routes, navigateToSearchPage } from '../../routes.ts';
 import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -66,7 +66,7 @@ export const SearchForm: FC<SearchFormProps> = ({
         event.preventDefault();
         setIsLoading(true);
         const searchableFieldValues = fieldValues.filter((field) => !(field.notSearchable ?? false));
-        location.href = routes.searchPage(organism, searchableFieldValues, mutationFilter);
+        navigateToSearchPage(organism, searchableFieldValues, mutationFilter);
     };
 
     const resetSearch = async () => {

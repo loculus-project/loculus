@@ -22,17 +22,29 @@ const { organism: cleanedOrganism } = cleanOrganism(organism);
 const schema = getSchema(organism);
 const clientConfig = getRuntimeConfig().public;
 const lapisUrl = getLapisUrl(clientConfig, organism);
+let postParams = new URLSearchParams();
+
+if (Astro.request.method === 'POST') {
+    const decoded = await Astro.request.formData();
+    const paramsString = decoded.searchQuery;
+    postParams = new URLSearchParams(paramsString);
+}
+
 const getSearchParams = (field: string): string => {
-    return Astro.url.searchParams.get(field) ?? '';
+    let value = Astro.url.searchParams.get(field);
+    if (value === null && postParams.get(field) !== null) {
+        value = postParams.get(field);
+    }
+    return value ?? '';
 };
 
 const metadataFilter = addHiddenFilters(getMetadataFilters(getSearchParams, organism), hiddenDefaultSearchFilters);
 const mutationFilter = getMutationFilter(Astro.url.searchParams);
 
-const pageParam = Astro.url.searchParams.get('page');
-const page = pageParam !== null ? Number.parseInt(pageParam, 10) : 1;
+const pageParam = getSearchParams('page');
+const page = pageParam !== '' ? Number.parseInt(pageParam, 10) : 1;
 const offset = (page - 1) * pageSize;
-const orderBy = getOrderBy(Astro.url.searchParams, schema.defaultOrderBy, schema.defaultOrder);
+const orderBy = getOrderBy(getSearchParams, schema.defaultOrderBy, schema.defaultOrder);
 
 const referenceGenomesSequenceNames = getReferenceGenomesSequenceNames(organism);
 
@@ -79,7 +91,15 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
                         />
 
                         <div class='mt-4 flex justify-center'>
-                            <Pagination client:only='react' count={Math.ceil(data.totalCount / pageSize)} />
+                            <Pagination
+                                client:only='react'
+                                count={Math.ceil(data.totalCount / pageSize)}
+                                page={page}
+                                metadataFilter={metadataFilter}
+                                mutationFilter={mutationFilter}
+                                orderBy={orderBy}
+                                organism={organism}
+                            />
                         </div>
                     </div>
                 ),

@@ -45,6 +45,7 @@ const InnerDataUploadForm = ({
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
+    const [exampleEntries, setExampleEntries] = useState<number | undefined>(undefined);
     const metadataFileInputRef = useRef<HTMLInputElement>(null);
     const sequenceFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -68,7 +69,7 @@ const InnerDataUploadForm = ({
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
     const handleLoadExampleData = async () => {
-        const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData();
+        const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData(exampleEntries);
 
         const exampleMetadataContent = action === `submit` ? metadataFileContent : revisedMetadataFileContent;
 
@@ -248,9 +249,18 @@ const InnerDataUploadForm = ({
 
             <div className='flex gap-4'>
                 {organism.startsWith('dummy-organism') && (
-                    <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
-                        Load Example Data
-                    </button>
+                    <>
+                        <input
+                            type='number'
+                            className='p-1 border rounded-md w-28 placeholder:text-xs'
+                            placeholder='num of examples'
+                            value={exampleEntries ?? ''}
+                            onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
+                        />
+                        <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
+                            Load Example Data
+                        </button>
+                    </>
                 )}
 
                 <button
@@ -317,29 +327,35 @@ function handleError(onError: (message: string) => void, action: Action) {
     };
 }
 
-function getExampleData() {
+function getExampleData(randomEntries = 20) {
+    const regions = ['Europe', 'Asia', 'North America', 'South America', 'Africa', 'Australia'];
+    const countries = ['Switzerland', 'USA', 'China', 'Brazil', 'Nigeria', 'Australia'];
+    const divisions = ['Bern', 'California', 'Beijing', 'Rio de Janeiro', 'Lagos', 'Sydney'];
+    const hosts = ['Homo sapiens', 'Canis lupus familiaris'];
+
+    let metadataContent = 'submissionId\tdate\tregion\tcountry\tdivision\thost\n';
+    let revisedMetadataContent = 'accession\tsubmissionId\tdate\tregion\tcountry\tdivision\thost\n';
+    let sequenceContent = '';
+
+    for (let i = 0; i < randomEntries; i++) {
+        const submissionId = `custom${i}`;
+        const date = new Date(Date.now() - Math.floor(Math.random() * 365 * 24 * 60 * 60 * 1000))
+            .toISOString()
+            .split('T')[0];
+        const region = regions[Math.floor(Math.random() * regions.length)];
+        const country = countries[Math.floor(Math.random() * countries.length)];
+        const division = divisions[Math.floor(Math.random() * divisions.length)];
+        const host = hosts[Math.floor(Math.random() * hosts.length)];
+
+        metadataContent += `${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\n`;
+        revisedMetadataContent += `${i + 1}\t${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\n`;
+        sequenceContent += `>${submissionId}\nACTG\n`;
+    }
+
     return {
-        metadataFileContent: `
-submissionId	date	region	country	division	host
-custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`,
-        revisedMetadataFileContent: `
-accession	submissionId	date	region	country	division	host
-1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens
-2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens
-3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens
-4	custom3	2020-12-02	Europe	Switzerland	Bern	Homo sapiens`,
-        sequenceFileContent: `
->custom0
-ACTG
->custom1
-ACTG
->custom2
-ACTG
->custom3
-ACTG`,
+        metadataFileContent: metadataContent,
+        revisedMetadataFileContent: revisedMetadataContent,
+        sequenceFileContent: sequenceContent,
     };
 }
 

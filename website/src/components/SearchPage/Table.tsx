@@ -1,7 +1,7 @@
 import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 
-import { routes } from '../../routes.ts';
+import { routes, navigateToSearchPage } from '../../routes.ts';
 import type { MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
@@ -32,18 +32,18 @@ export const Table: FC<TableProps> = ({ organism, data, schema, metadataFilter, 
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
             if (orderBy.type === 'ascending') {
-                location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, {
+                navigateToSearchPage(organism, metadataFilter, mutationFilter, page, {
                     field,
                     type: 'descending',
                 });
             } else {
-                location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, {
+                navigateToSearchPage(organism, metadataFilter, mutationFilter, page, {
                     field,
                     type: 'ascending',
                 });
             }
         } else {
-            location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, {
+            navigateToSearchPage(organism, metadataFilter, mutationFilter, page, {
                 field,
                 type: 'ascending',
             });
