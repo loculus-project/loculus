@@ -45,6 +45,7 @@ instances:
         - "--watch"
       warnings: true
       errors: true
+      randomWarnError: true
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
