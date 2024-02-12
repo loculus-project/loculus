@@ -7,7 +7,6 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteWhere
@@ -180,10 +179,12 @@ class DatasetCitationsDatabaseService(
 
         var selectedVersion = version
 
+        val datasetUuid = UUID.fromString(datasetId)
+
         if (selectedVersion == null) {
             selectedVersion = DatasetsTable
                 .slice(DatasetsTable.datasetVersion.max())
-                .select { DatasetsTable.datasetId eq UUID.fromString(datasetId) }
+                .select { DatasetsTable.datasetId eq datasetUuid }
                 .singleOrNull()?.get(DatasetsTable.datasetVersion)
         }
         if (selectedVersion == null) {
@@ -192,7 +193,7 @@ class DatasetCitationsDatabaseService(
 
         if (DatasetToRecordsTable
                 .select {
-                    (DatasetToRecordsTable.datasetId eq UUID.fromString(datasetId)) and
+                    (DatasetToRecordsTable.datasetId eq datasetUuid) and
                         (DatasetToRecordsTable.datasetVersion eq selectedVersion)
                 }
                 .empty()
@@ -203,7 +204,7 @@ class DatasetCitationsDatabaseService(
         val selectedDatasetRecords = DatasetToRecordsTable
             .innerJoin(DatasetRecordsTable)
             .select {
-                (DatasetToRecordsTable.datasetId eq UUID.fromString(datasetId)) and
+                (DatasetToRecordsTable.datasetId eq datasetUuid) and
                     (DatasetToRecordsTable.datasetVersion eq selectedVersion)
             }
             .map {
@@ -262,11 +263,13 @@ class DatasetCitationsDatabaseService(
             throw NotFoundException("Dataset $datasetId, version $version does not exist")
         }
 
-        DatasetsTable.update({
-            (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
-                (DatasetsTable.datasetVersion eq version) and
-                (DatasetsTable.createdBy eq username)
-        }) {
+        DatasetsTable.update(
+            {
+                (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
+                    (DatasetsTable.datasetVersion eq version) and
+                    (DatasetsTable.createdBy eq username)
+            },
+        ) {
             it[DatasetsTable.datasetDOI] = datasetDOI
         }
 
@@ -284,6 +287,7 @@ class DatasetCitationsDatabaseService(
             val datasetVersion: Long,
             val createdAt: Timestamp,
         )
+
         val selectedDatasetRecords = DatasetRecordsTable
             .innerJoin(DatasetToRecordsTable)
             .innerJoin(DatasetsTable)
@@ -326,8 +330,8 @@ class DatasetCitationsDatabaseService(
             .toSet()
 
         val citedBy = CitedBy(
-            mutableListOf<Long>(),
-            mutableListOf<Long>(),
+            mutableListOf(),
+            mutableListOf(),
         )
         for (dataset in uniqueLatestDatasets) {
             val year = dataset.createdAt.toLocalDateTime().year.toLong()
@@ -365,10 +369,7 @@ class DatasetCitationsDatabaseService(
                 where = { AuthorsTable.username eq username },
             )
             .firstOrNull()
-
-        if (selectedAuthor == null) {
-            throw NotFoundException("Author $username does not exist")
-        }
+            ?: throw NotFoundException("Author $username does not exist")
 
         return Author(
             selectedAuthor[AuthorsTable.authorId],

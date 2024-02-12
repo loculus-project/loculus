@@ -39,10 +39,7 @@ export const routes = {
         const userPagePath = `/user` as const;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
-    groupOverviewPage: (groupName: string) => {
-        const groupPagePath = `/group/${groupName}` as const;
-        return groupPagePath;
-    },
+    groupOverviewPage: (groupName: string) => `/group/${groupName}`,
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
     userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submit/review`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/seq/${accession}/versions`),
