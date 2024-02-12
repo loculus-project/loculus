@@ -6,6 +6,11 @@ on:
     types:
       - closed
   workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch name"
+        required: false
+        default: ""
 
 jobs:
   cleanup:
@@ -13,6 +18,17 @@ jobs:
     permissions:
       actions: write
     steps:
+      - name: Setup Branch Name
+        id: setup-branch
+        run: |
+          if [ "${{ github.event.inputs.branch }}" != "" ]; then
+            echo "branch=${{ github.event.inputs.branch }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.head_ref }}" != "" ]; then
+            echo "branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Cleanup
         run: |
           gh extension install actions/gh-actions-cache
@@ -32,4 +48,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          BRANCH: ${{ github.ref_name }}
+          BRANCH: ${{ steps.setup-branch.outputs.branch }}
