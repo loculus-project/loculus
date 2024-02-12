@@ -325,7 +325,6 @@ function handleError(onError: (message: string) => void, action: Action) {
 }
 
 function getExampleData(randomEntries = 20) {
-    
     const regions = ['Europe', 'Asia', 'North America', 'South America', 'Africa', 'Australia'];
     const countries = ['Switzerland', 'USA', 'China', 'Brazil', 'Nigeria', 'Australia'];
     const divisions = ['Bern', 'California', 'Beijing', 'Rio de Janeiro', 'Lagos', 'Sydney'];
