@@ -14,6 +14,7 @@ parser.add_argument("--backend-host", type=str, default="http://127.0.0.1:8079",
 parser.add_argument("--watch", action="store_true", help="Watch and keep running. Fetches new data every 10 seconds.")
 parser.add_argument("--withErrors", action="store_true", help="Add errors to processed data.")
 parser.add_argument("--withWarnings", action="store_true", help="Add warnings to processed data.")
+parser.add_argument("--randomWarnError", action="store_true", help="Make errors and warnings occur stochastically")
 parser.add_argument("--maxSequences", type=int, help="Max number of sequence entry versions to process.")
 parser.add_argument("--keycloak-host", type=str, default="http://172.0.0.1:8083", help="Host address of Keycloak")
 parser.add_argument("--keycloak-user", type=str, default="dummy_preprocessing_pipeline",
@@ -27,6 +28,7 @@ backendHost = args.backend_host
 watch_mode = args.watch
 addErrors = args.withErrors
 addWarnings = args.withWarnings
+randomWarnError = args.randomWarnError
 keycloakHost = args.keycloak_host
 keycloakUser = args.keycloak_user
 keycloakPassword = args.keycloak_password
@@ -90,7 +92,8 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
             {"metadata": metadata, **mock_sequences},
         )
 
-        if addErrors:
+        disable_randomly = randomWarnError and random.choice([True, True, False])
+        if addErrors and not disable_randomly:
             updated_sequence.errors = [
                 ProcessingAnnotation(
                     [AnnotationSource(list(metadata.keys())[0], "Metadata")],
@@ -107,7 +110,8 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
                 ),
             ]
 
-        if addWarnings:
+        disable_randomly = randomWarnError and random.choice([True, False])
+        if addWarnings and not disable_randomly:
             updated_sequence.warnings = [
                 ProcessingAnnotation(
                     [AnnotationSource(list(metadata.keys())[0], "Metadata")],

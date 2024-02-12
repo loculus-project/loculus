@@ -4,7 +4,6 @@ import argparse
 import subprocess
 import time
 from pathlib import Path
-import json
 import os
 import yaml
 
@@ -28,6 +27,7 @@ PORTS = [WEBSITE_PORT_MAPPING, BACKEND_PORT_MAPPING, LAPIS_PORT_MAPPING, DATABAS
 
 parser = argparse.ArgumentParser(description='Manage k3d cluster and helm installations.')
 subparsers = parser.add_subparsers(dest='subcommand', required=True, help='Subcommands')
+parser.add_argument('--dry-run', action='store_true', help='Print commands instead of executing them')
 
 cluster_parser = subparsers.add_parser('cluster', help='Start the k3d cluster')
 cluster_parser.add_argument('--dev', action='store_true',
@@ -52,6 +52,16 @@ config_parser = subparsers.add_parser('config', help='Generate config files')
 
 args = parser.parse_args()
 
+def run_command(command: list[str], **kwargs):
+    if args.dry_run:
+        if isinstance(command, str):
+            print(command)
+        else:
+            print(" ".join(map(str,command)))
+        return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
+    else:
+        return subprocess.run(command, **kwargs)
+
 
 def main():
     if args.subcommand == 'cluster':
@@ -70,13 +80,13 @@ def handle_cluster():
         remove_port(BACKEND_PORT_MAPPING)
     if args.delete:
         print(f"Deleting cluster '{CLUSTER_NAME}'.")
-        subprocess.run(['k3d', 'cluster', 'delete', CLUSTER_NAME])
+        run_command(['k3d', 'cluster', 'delete', CLUSTER_NAME])
         return
 
     if cluster_exists(CLUSTER_NAME):
         print(f"Cluster '{CLUSTER_NAME}' already exists.")
     else:
-        subprocess.run(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 2",
+        run_command(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 2",
                        shell=True, check=True)
 
     while not is_traefik_running():
@@ -87,13 +97,13 @@ def handle_cluster():
 
 def is_traefik_running(namespace='kube-system', label='app.kubernetes.io/name=traefik'):
     try:
-        result = subprocess.run(['kubectl', 'get', 'pods', '-n', namespace, '-l', label],
+        result = run_command(['kubectl', 'get', 'pods', '-n', namespace, '-l', label],
                                 capture_output=True, text=True)
         if result.returncode != 0:
             print(f"Error executing kubectl: {result.stderr}")
             return False
 
-        if 'Running' in result.stdout:
+        if 'Running' in result.stdout or args.dry_run:
             return True
     except subprocess.SubprocessError as e:
         print(f"Error checking Traefik status: {e}")
@@ -106,13 +116,13 @@ def remove_port(port_mapping):
 
 
 def cluster_exists(cluster_name):
-    result = subprocess.run(['k3d', 'cluster', 'list'], capture_output=True, text=True)
+    result = run_command(['k3d', 'cluster', 'list'], capture_output=True, text=True)
     return cluster_name in result.stdout
 
 
 def handle_helm():
     if args.uninstall:
-        subprocess.run(['helm', 'uninstall', HELM_RELEASE_NAME], check=True)
+        run_command(['helm', 'uninstall', HELM_RELEASE_NAME], check=True)
 
         return
 
@@ -141,14 +151,14 @@ def handle_helm():
     if get_codespace_name():
         parameters += ['--set', "codespaceName="+get_codespace_name()]
 
-    subprocess.run(parameters, check=True)
+    run_command(parameters, check=True)
 
 
 def get_docker_config_json():
     if args.dockerconfigjson:
         return args.dockerconfigjson
     else:
-        command = subprocess.run('base64 ~/.docker/config.json', capture_output=True, text=True, shell=True)
+        command = run_command('base64 ~/.docker/config.json', capture_output=True, text=True, shell=True)
         return command.stdout.replace('\n', '')
 
 
@@ -156,7 +166,7 @@ def handle_helm_upgrade():
     parameters = [
         'helm', 'upgrade', HELM_RELEASE_NAME, HELM_CHART_DIR,
     ]
-    subprocess.run(parameters, check=True)
+    run_command(parameters, check=True)
 
 def get_codespace_name():
     return os.environ.get('CODESPACE_NAME', None)
@@ -178,7 +188,7 @@ def generate_configs():
     runtime_config_path =  TEMP_DIR / 'runtime_config.json'
     generate_config(helm_chart, 'templates/loculus-website-config.yaml', runtime_config_path, codespace_name)
 
-    subprocess.run(['python', 'kubernetes/config-processor/config-processor.py', TEMP_DIR, output_dir], check=True)
+    run_command(['python', 'kubernetes/config-processor/config-processor.py', TEMP_DIR, output_dir], check=True)
 
 def generate_config(helm_chart, template, output_path, codespace_name=None):
     helm_template_cmd = ['helm', 'template', 'name-does-not-matter', helm_chart, '--show-only', template]
@@ -189,7 +199,10 @@ def generate_config(helm_chart, template, output_path, codespace_name=None):
     helm_template_cmd.extend(['--set', 'environment=local'])
     helm_template_cmd.extend(['--set', 'disableWebsite=true'])
     helm_template_cmd.extend(['--set', 'disableBackend=true'])
-    helm_output = subprocess.run(helm_template_cmd, capture_output=True, text=True, check=True).stdout
+    helm_output = run_command(helm_template_cmd, capture_output=True, text=True, check=True).stdout
+    if args.dry_run:
+        return
+
     parsed_yaml = yaml.safe_load(helm_output)
     config_data = parsed_yaml['data'][output_path.name]
 

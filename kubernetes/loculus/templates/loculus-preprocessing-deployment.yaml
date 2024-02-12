@@ -3,8 +3,7 @@
     "http://host.k3d.internal:8079"
     "http://loculus-backend-service:8079"
 }}
-{{- $keycloakHost := printf "authentication-%s" .Values.host }}
-
+{{- $keycloakHost := printf "https://authentication-%s" $.Values.host }}
 {{- if not .Values.disablePreprocessing }}
 {{- range $key, $value := .Values.instances }}
 ---
@@ -35,11 +34,16 @@ spec:
             - "{{ $arg }}"
             {{- end }}
             - "--backend-host={{ $backendHost }}/{{ $key }}"
-            {{- if eq $.Values.environment "server" }}
-            - "--keycloak-host=https://{{ $keycloakHost}}"
-            {{- else }}
-            - "--keycloak-host=http://loculus-keycloak-service:8083"
-            {{- end -}}
+            - "--keycloak-host={{ $keycloakHost }}"
+            {{- if $value.preprocessing.warnings }}
+            - "--withWarnings"
+            {{- end }}
+            {{- if $value.preprocessing.errors }}
+            - "--withErrors"
+            {{- end }}
+            {{- if $value.preprocessing.randomWarnError }}
+            - "--randomWarnError"
+            {{- end }}
       {{- if $value.preprocessing.configFile }}
             - "--config=/etc/config/preprocessing-config.yaml"
           volumeMounts:
