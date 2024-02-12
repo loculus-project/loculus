@@ -10,7 +10,8 @@ on:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
-    permissions: read-all
+    permissions:
+      contents: write
     steps:
       - name: Cleanup
         run: |
