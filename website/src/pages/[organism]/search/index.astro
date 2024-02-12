@@ -25,10 +25,7 @@ const lapisUrl = getLapisUrl(clientConfig, organism);
 let postParams = new URLSearchParams();
 
 if (Astro.request.method === 'POST') {
-    const formData = await Astro.request.text();
-    const params = new URLSearchParams(formData);
-
-    const decoded = Object.fromEntries(params);
+    const decoded = await Astro.request.formData();
     const paramsString = decoded.searchQuery;
     postParams = new URLSearchParams(paramsString);
 }
