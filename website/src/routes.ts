@@ -51,9 +51,9 @@ export const routes = {
     notFoundPage: () => `/404`,
     logout: () => '/logout',
 };
-export const navigateToSearchPage = <Filter extends FilterValue>(
+export const navigateToSearchPage = (
     organism: string,
-    metadataFilter: Filter[] = [],
+    metadataFilter: FilterValue[] = [],
     mutationFilter: MutationFilter = {},
     page?: number,
     orderBy?: OrderBy,
