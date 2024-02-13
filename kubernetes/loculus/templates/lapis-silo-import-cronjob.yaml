@@ -75,5 +75,5 @@ spec:
             - name: lapis-silo-input-data-cache
               persistentVolumeClaim:
                 claimName: lapis-silo-input-data-cache-{{ $key }}
-          restartPolicy: OnFailure
+          restartPolicy: Never
 {{- end }}
