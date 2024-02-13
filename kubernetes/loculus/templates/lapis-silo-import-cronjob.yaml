@@ -2,7 +2,7 @@
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/token" }}
 
 
-{{- range $key, $value := $.Values.instances }}
+{{- range $key, $_ := $.Values.instances }}
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -14,7 +14,7 @@ spec:
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
-      activeDeadlineSeconds: {{ $value.siloImportLimitSeconds }}
+      activeDeadlineSeconds: {{ $.Values.siloImportLimitSeconds }}
       template:
         metadata:
           labels:
