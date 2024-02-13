@@ -32,7 +32,10 @@ const processingAnnotation = z.object({
 });
 export type ProcessingAnnotation = z.infer<typeof processingAnnotation>;
 
-export const metadataField = z.union([z.string(), z.number(), z.date()]);
+const unprocessedMetadataRecord = z.record(z.string());
+export type UnprocessedMetadataRecord = z.infer<typeof unprocessedMetadataRecord>;
+
+export const metadataField = z.union([z.string(), z.number(), z.date(), z.null()]);
 export type MetadataField = z.infer<typeof metadataField>;
 
 const metadataRecord = z.record(metadataField);
@@ -104,7 +107,7 @@ export type SubmissionIdMapping = z.infer<typeof submissionIdMapping>;
 export const unprocessedData = accessionVersion.merge(
     z.object({
         data: z.object({
-            metadata: metadataRecord,
+            metadata: unprocessedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
         }),
     }),
@@ -117,7 +120,7 @@ export const sequenceEntryToEdit = accessionVersion.merge(
         errors: z.array(processingAnnotation).nullable(),
         warnings: z.array(processingAnnotation).nullable(),
         originalData: z.object({
-            metadata: metadataRecord,
+            metadata: unprocessedMetadataRecord,
             unalignedNucleotideSequences: z.record(z.string()),
         }),
         processedData: z.object({
