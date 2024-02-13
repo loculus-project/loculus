@@ -48,49 +48,14 @@ export const ReviewCard: FC<ReviewCardProps> = ({
 }) => {
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
 
-    const ButtonBar = (
-        <div className='absolute top-3 right-3 flex flex-wrap space-x-2'>
-            <button
-                className='text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block mr-2 mb-2 text-xl'
-                onClick={approveAccessionVersion}
-                data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
-                disabled={sequenceEntryStatus.status !== awaitingApprovalStatus}
-            >
-                <Send />
-            </button>
-            <Tooltip id={'approve-tooltip' + sequenceEntryStatus.accession} content='Release this sequence entry' />
-
-            <button
-                className='text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block mr-2 mb-2 text-xl'
-                data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
-                onClick={editAccessionVersion}
-                disabled={
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus
-                }
-            >
-                <Edit />
-            </button>
-            <Tooltip id={'edit-tooltip' + sequenceEntryStatus.accession} content='Edit this sequence entry' />
-
-            <button
-                className='text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block mb-2 text-xl'
-                onClick={deleteAccessionVersion}
-                data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
-                disabled={
-                    sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus
-                }
-            >
-                <Trash />
-            </button>
-            <Tooltip id={'delete-tooltip' + sequenceEntryStatus.accession} content='Discard this sequence entry' />
-        </div>
-    );
-
     return (
         <div className='p-3 border rounded-md shadow-lg relative transition-all duration-500'>
-            {ButtonBar}
+            <ButtonBar
+                sequenceEntryStatus={sequenceEntryStatus}
+                approveAccessionVersion={approveAccessionVersion}
+                deleteAccessionVersion={deleteAccessionVersion}
+                editAccessionVersion={editAccessionVersion}
+            />
             <div className='flex flex-wrap '>
                 <StatusIcon
                     status={sequenceEntryStatus.status}
@@ -112,6 +77,96 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     </>
                 )}
             </div>
+        </div>
+    );
+};
+
+type ButtonBarProps = {
+    sequenceEntryStatus: SequenceEntryStatus;
+    approveAccessionVersion: () => void;
+    deleteAccessionVersion: () => void;
+    editAccessionVersion: () => void;
+};
+
+const ButtonBar: FC<ButtonBarProps> = ({
+    sequenceEntryStatus,
+    approveAccessionVersion,
+    deleteAccessionVersion,
+    editAccessionVersion,
+}) => {
+    const buttonBarClass = (disabled: boolean) =>
+        `${
+            disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'
+        } inline-block mr-2 mb-2 text-xl`;
+
+    return (
+        <div className='absolute top-3 right-3 flex flex-wrap space-x-2'>
+            <button
+                className={buttonBarClass(sequenceEntryStatus.status !== awaitingApprovalStatus)}
+                onClick={approveAccessionVersion}
+                data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
+                disabled={sequenceEntryStatus.status !== awaitingApprovalStatus}
+            >
+                <Send />
+            </button>
+            <Tooltip
+                id={'approve-tooltip' + sequenceEntryStatus.accession}
+                content={
+                    sequenceEntryStatus.status === awaitingApprovalStatus
+                        ? 'Release this sequence entry'
+                        : sequenceEntryStatus.status === hasErrorsStatus
+                          ? 'Cannot release. Fix Errors!'
+                          : 'Cannot release. Wait for preprocessing!'
+                }
+            />
+
+            <button
+                className={buttonBarClass(
+                    sequenceEntryStatus.status !== hasErrorsStatus &&
+                        sequenceEntryStatus.status !== awaitingApprovalStatus,
+                )}
+                data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
+                onClick={editAccessionVersion}
+                disabled={
+                    sequenceEntryStatus.status !== hasErrorsStatus &&
+                    sequenceEntryStatus.status !== awaitingApprovalStatus
+                }
+            >
+                <Edit />
+            </button>
+            <Tooltip
+                id={'edit-tooltip' + sequenceEntryStatus.accession}
+                content={
+                    sequenceEntryStatus.status !== hasErrorsStatus &&
+                    sequenceEntryStatus.status !== awaitingApprovalStatus
+                        ? 'Cannot edit. Wait for preprocessing!'
+                        : 'Edit this sequence entry'
+                }
+            />
+
+            <button
+                className={buttonBarClass(
+                    sequenceEntryStatus.status !== hasErrorsStatus &&
+                        sequenceEntryStatus.status !== awaitingApprovalStatus,
+                )}
+                onClick={deleteAccessionVersion}
+                data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
+                disabled={
+                    sequenceEntryStatus.status !== hasErrorsStatus &&
+                    sequenceEntryStatus.status !== awaitingApprovalStatus
+                }
+            >
+                <Trash />
+            </button>
+            <Tooltip
+                id={'delete-tooltip' + sequenceEntryStatus.accession}
+                content={
+                    sequenceEntryStatus.status !== hasErrorsStatus &&
+                    sequenceEntryStatus.status !== awaitingApprovalStatus
+                        ? 'Cannot discard. Wait for preprocessing.'
+                        : 'Discard this sequence entry'
+                }
+            />
         </div>
     );
 };
@@ -151,17 +206,19 @@ const Errors: FC<ErrorsProps> = ({ errors, accession }) => {
                 {errors.map((error) => {
                     const uniqueKey = error.source.map((source) => source.type + source.name).join('.');
                     return (
-                        <p
-                            key={uniqueKey}
-                            className='text-red-600'
-                            data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
-                        >
-                            {error.message}
+                        <>
+                            <p
+                                key={uniqueKey}
+                                className='text-red-600'
+                                data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
+                            >
+                                {error.message}
+                            </p>
                             <Tooltip
                                 id={'error-tooltip-' + accession + '-' + uniqueKey}
                                 content='You must fix this error before releasing this sequence entry'
                             />
-                        </p>
+                        </>
                     );
                 })}
             </div>

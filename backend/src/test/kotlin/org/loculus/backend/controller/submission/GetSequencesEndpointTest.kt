@@ -11,8 +11,12 @@ import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
+import org.loculus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
+import org.loculus.backend.api.Status.HAS_ERRORS
 import org.loculus.backend.api.Status.IN_PROCESSING
+import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
@@ -45,13 +49,13 @@ class GetSequencesEndpointTest(
 
         val sequencesOfUser = convenienceClient.getSequenceEntries(
             username = DEFAULT_USER_NAME,
-        )
+        ).sequenceEntries
 
         assertThat(sequencesOfUser, hasSize(NUMBER_OF_SEQUENCES))
 
         val sequencesOfAlternativeUser = convenienceClient.getSequenceEntries(
             username = ALTERNATIVE_DEFAULT_USER_NAME,
-        )
+        ).sequenceEntries
 
         assertThat(sequencesOfAlternativeUser, hasSize(NUMBER_OF_SEQUENCES))
     }
@@ -63,7 +67,7 @@ class GetSequencesEndpointTest(
         val sequencesOfUser = convenienceClient.getSequenceEntries(
             username = DEFAULT_USER_NAME,
             groupsFilter = listOf(ALTERNATIVE_DEFAULT_GROUP_NAME),
-        )
+        ).sequenceEntries
 
         assertThat(sequencesOfUser, hasSize(0))
     }
@@ -89,7 +93,7 @@ class GetSequencesEndpointTest(
         val sequencesOfUser = convenienceClient.getSequenceEntries(
             username = DEFAULT_USER_NAME,
             organism = OTHER_ORGANISM,
-        )
+        ).sequenceEntries
 
         assertThat(
             sequencesOfUser.getAccessionVersions(),
@@ -124,16 +128,63 @@ class GetSequencesEndpointTest(
         val sequencesInAwaitingApproval = convenienceClient.getSequenceEntries(
             username = ALTERNATIVE_DEFAULT_USER_NAME,
             statusesFilter = listOf(AWAITING_APPROVAL),
-        )
+        ).sequenceEntries
 
         assertThat(sequencesInAwaitingApproval, hasSize(10))
 
         val sequencesInProcessing = convenienceClient.getSequenceEntries(
             username = ALTERNATIVE_DEFAULT_USER_NAME,
             statusesFilter = listOf(IN_PROCESSING),
-        )
+        ).sequenceEntries
 
         assertThat(sequencesInProcessing, hasSize(0))
+    }
+
+    @Test
+    fun `GIVEN data in many statuses WHEN querying sequences with pagination THEN return paged results`() {
+        val allSubmittedSequencesSorted = convenienceClient.prepareDataTo(AWAITING_APPROVAL).map {
+            it.accession to it.version
+        }.sortedBy { it.first }
+        convenienceClient.prepareDataTo(HAS_ERRORS)
+
+        val resultForInAwaitingApprovalPageOne = convenienceClient.getSequenceEntries(
+            statusesFilter = listOf(AWAITING_APPROVAL),
+            page = 0,
+            size = 5,
+        )
+
+        assertThat(resultForInAwaitingApprovalPageOne.sequenceEntries, hasSize(5))
+        assertThat(resultForInAwaitingApprovalPageOne.statusCounts, `is`(mapOf(AWAITING_APPROVAL to 10)))
+
+        val resultForInAwaitingApprovalPageTwo = convenienceClient.getSequenceEntries(
+            statusesFilter = listOf(AWAITING_APPROVAL),
+            page = 1,
+            size = 5,
+        )
+
+        val combinedResultSorted = (
+            resultForInAwaitingApprovalPageOne.sequenceEntries +
+                resultForInAwaitingApprovalPageTwo.sequenceEntries
+            ).map { it.accession to it.version }.sortedBy { it.first }
+
+        assertThat(combinedResultSorted, `is`(allSubmittedSequencesSorted))
+
+        val generalResult = convenienceClient.getSequenceEntries()
+
+        assertThat(generalResult.sequenceEntries, hasSize(20))
+        assertThat(
+            generalResult.statusCounts,
+            `is`(
+                mapOf(
+                    RECEIVED to 0,
+                    IN_PROCESSING to 0,
+                    AWAITING_APPROVAL to 10,
+                    HAS_ERRORS to 10,
+                    APPROVED_FOR_RELEASE to 0,
+                    AWAITING_APPROVAL_FOR_REVOCATION to 0,
+                ),
+            ),
+        )
     }
 
     @ParameterizedTest(name = "{arguments}")
@@ -141,7 +192,9 @@ class GetSequencesEndpointTest(
     fun `GIVEN database in prepared state THEN returns sequence entries in expected status`(scenario: Scenario) {
         scenario.prepareDatabase(convenienceClient)
 
-        val sequencesOfUser = convenienceClient.getSequenceEntries(statusesFilter = listOf(scenario.expectedStatus))
+        val sequencesOfUser = convenienceClient.getSequenceEntries(
+            statusesFilter = listOf(scenario.expectedStatus),
+        ).sequenceEntries
 
         val accessionVersionStatus =
             sequencesOfUser.find { it.accession == firstAccession && it.version == scenario.expectedVersion }
@@ -155,7 +208,7 @@ class GetSequencesEndpointTest(
             Scenario(
                 setupDescription = "I submitted sequence entries",
                 prepareDatabase = { it.submitDefaultFiles() },
-                expectedStatus = Status.RECEIVED,
+                expectedStatus = RECEIVED,
                 expectedIsRevocation = false,
             ),
             Scenario(
@@ -186,7 +239,7 @@ class GetSequencesEndpointTest(
                     it.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed())
                     it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
                 },
-                expectedStatus = Status.APPROVED_FOR_RELEASE,
+                expectedStatus = APPROVED_FOR_RELEASE,
                 expectedIsRevocation = false,
             ),
             Scenario(
@@ -196,7 +249,7 @@ class GetSequencesEndpointTest(
                     it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
                     it.revokeSequenceEntries(listOf(firstAccession))
                 },
-                expectedStatus = Status.AWAITING_APPROVAL_FOR_REVOCATION,
+                expectedStatus = AWAITING_APPROVAL_FOR_REVOCATION,
                 expectedIsRevocation = true,
                 expectedVersion = 2,
             ),
@@ -208,7 +261,7 @@ class GetSequencesEndpointTest(
                     it.revokeSequenceEntries(listOf(firstAccession))
                     it.confirmRevocation(listOf(AccessionVersion(firstAccession, 2)))
                 },
-                expectedStatus = Status.APPROVED_FOR_RELEASE,
+                expectedStatus = APPROVED_FOR_RELEASE,
                 expectedIsRevocation = true,
                 expectedVersion = 2,
             ),

@@ -84,12 +84,16 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         groupsFilter: List<String>? = null,
         statusesFilter: List<Status>? = null,
         jwt: String? = jwtForDefaultUser,
+        page: Int? = null,
+        size: Int? = null,
     ): ResultActions {
         return mockMvc.perform(
             get(addOrganismToPath("/get-sequences", organism = organism))
                 .withAuth(jwt)
                 .param("groupsFilter", groupsFilter?.joinToString { it })
-                .param("statusesFilter", statusesFilter?.joinToString { it.name }),
+                .param("statusesFilter", statusesFilter?.joinToString { it.name })
+                .param("page", page?.toString())
+                .param("size", size?.toString()),
         )
     }
 

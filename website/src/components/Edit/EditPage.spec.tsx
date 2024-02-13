@@ -5,69 +5,11 @@ import { sentenceCase } from 'change-case';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
-import { testAccessToken, testOrganism } from '../../../vitest.setup.ts';
+import { defaultReviewData, editableEntry, metadataKey, testAccessToken, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataField, SequenceEntryToEdit, UnprocessedMetadataRecord } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
-const metadataKey = 'originalMetaDataField';
-const editableEntry = 'originalMetaDataValue';
-const defaultReviewData: SequenceEntryToEdit = {
-    accession: '1',
-    version: 1,
-    status: 'HAS_ERRORS',
-    errors: [
-        {
-            source: [
-                {
-                    name: metadataKey,
-                    type: 'Metadata',
-                },
-            ],
-            message: 'errorMessage',
-        },
-    ],
-    warnings: [
-        {
-            source: [
-                {
-                    name: metadataKey,
-                    type: 'Metadata',
-                },
-            ],
-            message: 'warningMessage',
-        },
-    ],
-    originalData: {
-        metadata: {
-            [metadataKey]: editableEntry,
-        },
-        unalignedNucleotideSequences: {
-            originalSequenceName: 'originalUnalignedNucleotideSequencesValue',
-        },
-    },
-    processedData: {
-        metadata: {
-            processedMetaDataField: 'processedMetaDataValue',
-            nullField: null,
-        },
-        unalignedNucleotideSequences: {
-            unalignedProcessedSequenceName: 'processedUnalignedNucleotideSequencesValue',
-        },
-        alignedNucleotideSequences: {
-            alignedProcessedSequenceName: 'processedAlignedNucleotideSequencesValue',
-        },
-        nucleotideInsertions: {
-            processedInsertionSequenceName: ['nucleotideInsertion1', 'nucleotideInsertion2'],
-        },
-        alignedAminoAcidSequences: {
-            alignedProcessedGeneName: 'processedAminoAcidSequencesValue',
-        },
-        aminoAcidInsertions: {
-            processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
-        },
-    },
-};
 
 const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 

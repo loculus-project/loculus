@@ -22,7 +22,7 @@ const userSequenceEntriesResponse = await BackendClient.create().astroFileTypeHe
         </div>
         {
             userSequenceEntriesResponse.match(
-                (sequenceEntries) => <UserSequences sequenceEntries={sequenceEntries} />,
+                (sequenceEntries) => <UserSequences sequenceEntries={sequenceEntries.sequenceEntries} />,
                 (error) => (
                     <ErrorFeedback
                         message={'Error while fetching user sequences: ' + JSON.stringify(error)}

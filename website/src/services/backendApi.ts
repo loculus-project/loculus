@@ -6,8 +6,8 @@ import {
     accessions,
     accessionVersionsObject,
     dataUseTermsHistoryEntry,
+    getSequencesResponse,
     problemDetail,
-    sequenceEntryStatus,
     sequenceEntryToEdit,
     submissionIdMapping,
     submitFiles,
@@ -109,15 +109,25 @@ const getSequencesEndpoint = makeEndpoint({
         {
             name: 'groupsFilter',
             type: 'Query',
-            schema: z.array(z.string()).optional(),
+            schema: z.string().optional(),
         },
         {
             name: 'statusesFilter',
             type: 'Query',
             schema: z.string().optional(),
         },
+        {
+            name: 'page',
+            type: 'Query',
+            schema: z.number().optional(),
+        },
+        {
+            name: 'size',
+            type: 'Query',
+            schema: z.number().optional(),
+        },
     ],
-    response: z.array(sequenceEntryStatus),
+    response: getSequencesResponse,
     errors: [notAuthorizedError, { status: 404, schema: problemDetail }],
 });
 

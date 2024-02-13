@@ -6,7 +6,7 @@ import { http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
-import type { SubmissionIdMapping } from './src/types/backend.ts';
+import type { GetSequencesResponse, SequenceEntryToEdit, SubmissionIdMapping } from './src/types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
 import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
 import { DEFAULT_GROUP_NAME } from './tests/playwrightSetup.ts';
@@ -29,6 +29,65 @@ export const testConfig = {
         keycloakUrl: 'http://authentication.dummy',
     },
 } as RuntimeConfig;
+
+export const metadataKey = 'originalMetaDataField';
+export const editableEntry = 'originalMetaDataValue';
+export const defaultReviewData: SequenceEntryToEdit = {
+    accession: '1',
+    version: 1,
+    status: 'HAS_ERRORS',
+    errors: [
+        {
+            source: [
+                {
+                    name: metadataKey,
+                    type: 'Metadata',
+                },
+            ],
+            message: 'errorMessage',
+        },
+    ],
+    warnings: [
+        {
+            source: [
+                {
+                    name: metadataKey,
+                    type: 'Metadata',
+                },
+            ],
+            message: 'warningMessage',
+        },
+    ],
+    originalData: {
+        metadata: {
+            [metadataKey]: editableEntry,
+        },
+        unalignedNucleotideSequences: {
+            originalSequenceName: 'originalUnalignedNucleotideSequencesValue',
+        },
+    },
+    processedData: {
+        metadata: {
+            processedMetaDataField: 'processedMetaDataValue',
+            nullField: null,
+        },
+        unalignedNucleotideSequences: {
+            unalignedProcessedSequenceName: 'processedUnalignedNucleotideSequencesValue',
+        },
+        alignedNucleotideSequences: {
+            alignedProcessedSequenceName: 'processedAlignedNucleotideSequencesValue',
+        },
+        nucleotideInsertions: {
+            processedInsertionSequenceName: ['nucleotideInsertion1', 'nucleotideInsertion2'],
+        },
+        alignedAminoAcidSequences: {
+            alignedProcessedGeneName: 'processedAminoAcidSequencesValue',
+        },
+        aminoAcidInsertions: {
+            processedInsertionGeneName: ['aminoAcidInsertion1', 'aminoAcidInsertion2'],
+        },
+    },
+};
 
 export const testOrganism = 'testOrganism';
 export const testAccessToken = 'someTestToken';
@@ -54,9 +113,21 @@ const backendRequestMocks = {
             }),
         );
     },
-    getSequences: (statusCode: number = 200, response: any = []) => {
+    getSequences: (
+        statusCode: number = 200,
+        response: GetSequencesResponse = { sequenceEntries: [], statusCounts: {} },
+    ) => {
         testServer.use(
             http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-sequences`, () => {
+                return new Response(JSON.stringify(response), {
+                    status: statusCode,
+                });
+            }),
+        );
+    },
+    getDataToEdit: (statusCode: number = 200, response = defaultReviewData) => {
+        testServer.use(
+            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-data-to-edit/*`, () => {
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
