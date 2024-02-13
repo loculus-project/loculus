@@ -11,10 +11,10 @@ metadata:
 spec:
   schedule: "* * * * *"
   concurrencyPolicy: Forbid
-  activeDeadlineSeconds: {{ $value.siloImportLimitSeconds }}
-  startingDeadlineSeconds: 60
   jobTemplate:
     spec:
+      activeDeadlineSeconds: {{ $value.siloImportLimitSeconds }}
+      startingDeadlineSeconds: 60
       template:
         metadata:
           labels:
