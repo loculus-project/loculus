@@ -2,6 +2,7 @@ environment: server
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
+siloImportLimitSeconds: 3600
 instances:
   dummy-organism:
     schema:
