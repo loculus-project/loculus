@@ -10,11 +10,11 @@ metadata:
   name: lapis-silo-import-cronjob-{{ $key }}
 spec:
   schedule: "* * * * *"
+  startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
       activeDeadlineSeconds: {{ $value.siloImportLimitSeconds }}
-      startingDeadlineSeconds: 60
       template:
         metadata:
           labels:
