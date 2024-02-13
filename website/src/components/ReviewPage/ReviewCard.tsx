@@ -16,6 +16,7 @@ import {
 } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
+import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import Edit from '~icons/bxs/edit';
 import Trash from '~icons/bxs/trash';
 import Send from '~icons/fa/send';
@@ -126,18 +127,15 @@ const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotati
 const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) => (
     <div className='flex flex-row flex-wrap'>
         {!isLoading &&
-            Object.entries(data.processedData.metadata).map((entry, index) => {
-                const valueString = entry[1].toString();
-                return (
-                    <KeyValueComponent
-                        key={index}
-                        keyName={entry[0]}
-                        value={valueString}
-                        warnings={data.warnings?.filter(isAnnotationPresent(entry[0]))}
-                        errors={data.errors?.filter(isAnnotationPresent(entry[0]))}
-                    />
-                );
-            })}
+            Object.entries(data.processedData.metadata).map(([metadataName, value], index) => (
+                <KeyValueComponent
+                    key={index}
+                    keyName={metadataName}
+                    value={displayMetadataField(value)}
+                    warnings={data.warnings?.filter(isAnnotationPresent(metadataName))}
+                    errors={data.errors?.filter(isAnnotationPresent(metadataName))}
+                />
+            ))}
     </div>
 );
 

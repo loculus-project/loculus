@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { EditPage } from './EditPage.tsx';
 import { testAccessToken, testOrganism } from '../../../vitest.setup.ts';
-import type { MetadataField, SequenceEntryToEdit } from '../../types/backend.ts';
+import type { MetadataField, SequenceEntryToEdit, UnprocessedMetadataRecord } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
@@ -49,6 +49,7 @@ const defaultReviewData: SequenceEntryToEdit = {
     processedData: {
         metadata: {
             processedMetaDataField: 'processedMetaDataValue',
+            nullField: null,
         },
         unalignedNucleotideSequences: {
             unalignedProcessedSequenceName: 'processedUnalignedNucleotideSequencesValue',
@@ -158,17 +159,17 @@ describe('EditPage', () => {
 });
 
 const expectTextInSequenceData = {
-    original: (metadata: Record<string, MetadataField>): void =>
+    original: (metadata: Record<string, string>): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(key + ':')).toBeInTheDocument();
-            expect(screen.getByDisplayValue(value.toString())).toBeInTheDocument();
+            expect(screen.getByDisplayValue(value)).toBeInTheDocument();
         }),
-    originalMetadata: (metadata: Record<string, MetadataField>): void =>
+    originalMetadata: (metadata: UnprocessedMetadataRecord): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
-            expect(screen.getByDisplayValue(value.toString())).toBeInTheDocument();
+            expect(screen.getByDisplayValue(value)).toBeInTheDocument();
         }),
-    processed: (metadata: Record<string, MetadataField>): void =>
+    processed: (metadata: Record<string, string>): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(key + ':')).toBeInTheDocument();
             expect(screen.getByText(value.toString())).toBeInTheDocument();
@@ -176,6 +177,6 @@ const expectTextInSequenceData = {
     processedMetadata: (metadata: Record<string, MetadataField>): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
-            expect(screen.getByText(value.toString())).toBeInTheDocument();
+            expect(screen.getByText((value ?? 'null').toString())).toBeInTheDocument();
         }),
 };

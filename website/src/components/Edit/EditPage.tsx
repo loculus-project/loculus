@@ -10,6 +10,7 @@ import { ACCESSION_FIELD } from '../../settings.ts';
 import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
+import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
@@ -248,7 +249,10 @@ const ProcessedMetadata: FC<ProcessedMetadataProps> = ({ processedMetadata }) =>
     <>
         <Subtitle title='Metadata' customKey='preprocessing_metadata' />
         {Object.entries(processedMetadata).map(([key, value]) => (
-            <ProcessedDataRow key={'processed' + key} row={{ key: sentenceCase(key), value: value.toString() }} />
+            <ProcessedDataRow
+                key={'processed' + key}
+                row={{ key: sentenceCase(key), value: displayMetadataField(value) }}
+            />
         ))}
     </>
 );
@@ -282,8 +286,8 @@ const ProcessedInsertions: FC<ProcessedInsertionsProps> = ({ processedInsertions
 const mapMetadataToRow = (editedData: SequenceEntryToEdit): Row[] =>
     Object.entries(editedData.originalData.metadata).map(([key, value]) => ({
         key,
-        initialValue: value.toString(),
-        value: value.toString(),
+        value,
+        initialValue: value,
         ...mapErrorsAndWarnings(editedData, key, 'Metadata'),
     }));
 
