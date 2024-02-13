@@ -4,7 +4,7 @@ resolves #
 <!-- Add "preview" label in almost all cases to have testable deployment. Then lookup the deployment URL in argocd and paste it here (if you don't know how to look up the URL, ask here: https://loculus.slack.com/archives/C06JCAZLG14), it's something like `{REPLACE}.loculus.org` -->
 preview URL:
 
-### Description
+### Summary
 <!-- Add a few sentences describing the main changes introduced in this PR -->
 
 ### Screenshot
