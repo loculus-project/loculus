@@ -57,4 +57,4 @@ jobs:
         git config --global user.email 'bot@loculus.org'
         git add config.json
         git commit -m "Update config.json"
-        git push
+        git push --force
