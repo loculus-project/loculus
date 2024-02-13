@@ -14,9 +14,9 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.Accessions
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
-import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
@@ -252,8 +252,20 @@ class SubmissionController(
         @RequestParam(required = false)
         statusesFilter: List<Status>?,
         @UsernameFromJwt username: String,
-    ): List<SequenceEntryStatus> =
-        submissionDatabaseService.getSequences(username, organism, groupsFilter, statusesFilter)
+        @Parameter(
+            description = "Part of pagination parameters. Page number starts from 0. " +
+                "If page or size are not provided, all sequences are returned.",
+        )
+        @RequestParam(required = false)
+        page: Int?,
+        @Parameter(
+            description = "Part of pagination parameters. Number of sequences per page. " +
+                "If page or size are not provided, all sequences are returned.",
+        )
+        @RequestParam(required = false)
+        size: Int?,
+    ): GetSequenceResponse =
+        submissionDatabaseService.getSequences(username, organism, groupsFilter, statusesFilter, page, size)
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)

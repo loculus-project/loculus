@@ -146,6 +146,11 @@ enum class PreprocessingAnnotationSourceType {
     NucleotideSequence,
 }
 
+data class GetSequenceResponse(
+    val sequenceEntries: List<SequenceEntryStatus>,
+    val statusCounts: Map<Status, Int>,
+)
+
 data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,

@@ -5,7 +5,7 @@ import { navigateToSearchPage } from '../../routes';
 import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 
-type Props = {
+type SearchPaginationProps = {
     count: number;
     metadataFilter: MetadataFilter[];
     mutationFilter: MutationFilter;
@@ -14,7 +14,14 @@ type Props = {
     page: number;
 };
 
-export const Pagination: FC<Props> = ({ count, metadataFilter, mutationFilter, orderBy, organism, page }) => {
+export const SearchPagination: FC<SearchPaginationProps> = ({
+    count,
+    metadataFilter,
+    mutationFilter,
+    orderBy,
+    organism,
+    page,
+}) => {
     return (
         <MUIPagination
             count={count}

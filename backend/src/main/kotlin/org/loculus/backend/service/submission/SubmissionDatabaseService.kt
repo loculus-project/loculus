@@ -26,6 +26,7 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Group
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
@@ -363,10 +364,15 @@ class SubmissionDatabaseService(
         organism: Organism?,
         groupsFilter: List<String>?,
         statusesFilter: List<Status>?,
-    ): List<SequenceEntryStatus> {
-        log.info { "getting sequence for user $username (groupFilter: $groupsFilter in statuses $statusesFilter" }
+        page: Int? = null,
+        size: Int? = null,
+    ): GetSequenceResponse {
+        log.info {
+            "getting sequence for user $username (groupFilter: $groupsFilter in statuses $statusesFilter)." +
+                " Page $page of size $size "
+        }
 
-        val validatedGroupNames = if (groupsFilter === null) {
+        val validatedGroupNames = if (groupsFilter == null) {
             groupManagementDatabaseService.getGroupsOfUser(username)
         } else {
             groupManagementPreconditionValidator.validateUserInExistingGroups(groupsFilter, username)
@@ -377,10 +383,14 @@ class SubmissionDatabaseService(
 
         sequenceEntriesTableProvider.get(organism).let { table ->
             val query = table
-                .join(DataUseTermsTable, JoinType.LEFT, additionalConstraint = {
-                    (table.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                        (DataUseTermsTable.isNewestDataUseTerms)
-                })
+                .join(
+                    DataUseTermsTable,
+                    JoinType.LEFT,
+                    additionalConstraint = {
+                        (table.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                            (DataUseTermsTable.isNewestDataUseTerms)
+                    },
+                )
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
@@ -399,27 +409,40 @@ class SubmissionDatabaseService(
                             table.groupIsOneOf(validatedGroupNames)
                     },
                 )
+                .orderBy(table.accessionColumn)
 
             if (organism != null) {
                 query.andWhere { table.organismIs(organism) }
             }
 
-            return query
-                .sortedBy { it[table.submittedAtColumn] }
-                .map { row ->
-                    SequenceEntryStatus(
-                        row[table.accessionColumn],
-                        row[table.versionColumn],
-                        Status.fromString(row[table.statusColumn]),
-                        row[table.groupNameColumn],
-                        row[table.isRevocationColumn],
-                        row[table.submissionIdColumn],
-                        dataUseTerms = DataUseTerms.fromParameters(
-                            DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
-                            row[DataUseTermsTable.restrictedUntilColumn],
-                        ),
-                    )
-                }
+            val statusCounts: Map<Status, Int> = listOfStatuses.associateWith { status ->
+                query.count { it[table.statusColumn] == status.name }
+            }
+
+            val pagedQuery = if (page != null && size != null) {
+                query.limit(size, (page * size).toLong())
+            } else {
+                query
+            }
+
+            return GetSequenceResponse(
+                sequenceEntries = pagedQuery
+                    .map { row ->
+                        SequenceEntryStatus(
+                            row[table.accessionColumn],
+                            row[table.versionColumn],
+                            Status.fromString(row[table.statusColumn]),
+                            row[table.groupNameColumn],
+                            row[table.isRevocationColumn],
+                            row[table.submissionIdColumn],
+                            dataUseTerms = DataUseTerms.fromParameters(
+                                DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
+                                row[DataUseTermsTable.restrictedUntilColumn],
+                            ),
+                        )
+                    },
+                statusCounts = statusCounts,
+            )
         }
     }
 

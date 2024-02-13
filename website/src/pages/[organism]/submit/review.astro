@@ -11,5 +11,6 @@ const clientConfig: ClientConfig = getRuntimeConfig().public;
 ---
 
 <BaseLayout title='Current submissions'>
+    <h1 class='title'>Current submissions</h1>
     <ReviewPage clientConfig={clientConfig} organism={organism} accessToken={accessToken} client:load />
 </BaseLayout>

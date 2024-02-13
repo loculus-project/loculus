@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
@@ -164,12 +165,16 @@ class SubmissionConvenienceClient(
         groupsFilter: List<String>? = null,
         statusesFilter: List<Status>? = null,
         organism: String = DEFAULT_ORGANISM,
-    ): List<SequenceEntryStatus> = deserializeJsonResponse(
+        page: Int? = null,
+        size: Int? = null,
+    ): GetSequenceResponse = deserializeJsonResponse(
         client.getSequenceEntries(
             organism = organism,
             groupsFilter = groupsFilter,
             statusesFilter = statusesFilter,
             jwt = generateJwtFor(username),
+            page = page,
+            size = size,
         ),
     )
 
@@ -179,7 +184,7 @@ class SubmissionConvenienceClient(
     ): List<SequenceEntryStatus> = getSequenceEntries(
         username = userName,
         statusesFilter = listOf(status),
-    )
+    ).sequenceEntries
 
     fun getSequenceEntryOfUser(accessionVersion: AccessionVersion, userName: String = DEFAULT_USER_NAME) =
         getSequenceEntryOfUser(accessionVersion.accession, accessionVersion.version, userName)
@@ -191,7 +196,11 @@ class SubmissionConvenienceClient(
         groupName: String = DEFAULT_GROUP_NAME,
         organism: String = DEFAULT_ORGANISM,
     ): SequenceEntryStatus {
-        val sequencesOfUser = getSequenceEntries(userName, groupsFilter = listOf(groupName), organism = organism)
+        val sequencesOfUser = getSequenceEntries(
+            userName,
+            groupsFilter = listOf(groupName),
+            organism = organism,
+        ).sequenceEntries
 
         return sequencesOfUser.find { it.accession == accession && it.version == version }
             ?: error("Did not find $accession.$version for $userName")

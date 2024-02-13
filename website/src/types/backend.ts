@@ -97,6 +97,19 @@ export const sequenceEntryStatus = accessionVersion.merge(
 
 export type SequenceEntryStatus = z.infer<typeof sequenceEntryStatus>;
 
+export const statusCounts = z.record(z.number()).refine(
+    (entry) => {
+        return Object.keys(entry).every((key) => sequenceEntryStatusNames.safeParse(key).success);
+    },
+    { message: 'Invalid status name in statusCounts' },
+);
+
+export const getSequencesResponse = z.object({
+    sequenceEntries: z.array(sequenceEntryStatus),
+    statusCounts,
+});
+export type GetSequencesResponse = z.infer<typeof getSequencesResponse>;
+
 export const submissionIdMapping = accessionVersion.merge(
     z.object({
         submissionId: z.string(),
@@ -170,3 +183,10 @@ export const groupDetails = z.object({
         }),
     ),
 });
+
+export const pageQuery = z.object({
+    page: z.number(),
+    size: z.number(),
+});
+
+export type PageQuery = z.infer<typeof pageQuery>;

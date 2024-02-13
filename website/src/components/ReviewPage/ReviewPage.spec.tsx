@@ -5,6 +5,8 @@ import { ReviewPage } from './ReviewPage.tsx';
 import { openDataUseTerms } from '../../../tests/e2e.fixture.ts';
 import { mockRequest, testAccessToken, testConfig, testOrganism } from '../../../vitest.setup.ts';
 import {
+    approvedForReleaseStatus,
+    awaitingApprovalForRevocationStatus,
     awaitingApprovalStatus,
     hasErrorsStatus,
     inProcessingStatus,
@@ -54,9 +56,29 @@ const awaitingApprovalTestData: SequenceEntryStatus = {
     dataUseTerms: openDataUseTerms,
 };
 
+const emptyStatusCounts = {
+    [receivedStatus]: 0,
+    [inProcessingStatus]: 0,
+    [hasErrorsStatus]: 0,
+    [awaitingApprovalStatus]: 0,
+    [approvedForReleaseStatus]: 0,
+    [awaitingApprovalForRevocationStatus]: 0,
+};
+
+const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]) => {
+    const statusCounts = sequenceEntries.reduce(
+        (acc, sequence) => {
+            acc[sequence.status] = (acc[sequence.status] || 0) + 1;
+            return acc;
+        },
+        { ...emptyStatusCounts },
+    );
+    return { sequenceEntries, statusCounts };
+};
+
 describe('ReviewPage', () => {
     test('should render the review page and indicate there is no data', async () => {
-        mockRequest.backend.getSequences(200);
+        mockRequest.backend.getSequences(200, generateGetSequencesResponse([]));
 
         const { getByText } = renderReviewPage();
 
@@ -66,7 +88,7 @@ describe('ReviewPage', () => {
     });
 
     test('should render the review page and show data', async () => {
-        mockRequest.backend.getSequences(200, [receivedTestData]);
+        mockRequest.backend.getSequences(200, generateGetSequencesResponse([receivedTestData]));
 
         const { getByText } = renderReviewPage();
 
@@ -77,7 +99,11 @@ describe('ReviewPage', () => {
     });
 
     test('should render the review page and show button to bulk delete/approve all erroneous sequences', async () => {
-        mockRequest.backend.getSequences(200, [erroneousTestData, awaitingApprovalTestData]);
+        mockRequest.backend.getSequences(
+            200,
+            generateGetSequencesResponse([erroneousTestData, awaitingApprovalTestData]),
+        );
+        mockRequest.backend.getDataToEdit();
         mockRequest.backend.approveSequences();
         mockRequest.backend.deleteSequences();
 
@@ -93,7 +119,7 @@ describe('ReviewPage', () => {
             expect(getByText((text) => text.includes('Release 1 sequences without errors'))).toBeDefined();
         });
 
-        mockRequest.backend.getSequences(200, []);
+        mockRequest.backend.getSequences(200, generateGetSequencesResponse([]));
 
         getByText((text) => text.includes('Discard 1 sequences with errors')).click();
         getByText((text) => text.includes('Release 1 sequences without errors')).click();
@@ -104,12 +130,16 @@ describe('ReviewPage', () => {
     });
 
     test('should render the review page and show how many sequences are processed', async () => {
-        mockRequest.backend.getSequences(200, [
-            receivedTestData,
-            processingTestData,
-            erroneousTestData,
-            awaitingApprovalTestData,
-        ]);
+        mockRequest.backend.getSequences(
+            200,
+            generateGetSequencesResponse([
+                receivedTestData,
+                processingTestData,
+                erroneousTestData,
+                awaitingApprovalTestData,
+            ]),
+        );
+        mockRequest.backend.getDataToEdit();
 
         const { getByText } = renderReviewPage();
 

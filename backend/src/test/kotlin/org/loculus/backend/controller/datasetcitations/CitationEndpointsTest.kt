@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
@@ -37,7 +38,9 @@ class CitationEndpointsTest(
 
     @Test
     fun `WHEN calling get user cited by dataset of non-existing user THEN returns empty results`() {
-        every { submissionDatabaseService.getSequences(any(), any(), any(), any()) } returns emptyList()
+        every {
+            submissionDatabaseService.getSequences(any(), any(), any(), any())
+        } returns GetSequenceResponse(sequenceEntries = emptyList(), statusCounts = emptyMap())
 
         client.getUserCitedByDataset()
             .andExpect(status().isOk)
@@ -61,16 +64,21 @@ class CitationEndpointsTest(
 
     @Test
     fun `WHEN calling get dataset cited by publication of existing dataset THEN returns results`() {
-        every { submissionDatabaseService.getSequences(any(), any(), any(), any()) } returns listOf(
-            SequenceEntryStatus(
-                "mock-sequence-accession",
-                1L,
-                Status.APPROVED_FOR_RELEASE,
-                "mock-group",
-                false,
-                "mock-submission-id",
-                DataUseTerms.Open,
+        every {
+            submissionDatabaseService.getSequences(any(), any(), any(), any())
+        } returns GetSequenceResponse(
+            sequenceEntries = listOf(
+                SequenceEntryStatus(
+                    "mock-sequence-accession",
+                    1L,
+                    Status.APPROVED_FOR_RELEASE,
+                    "mock-group",
+                    false,
+                    "mock-submission-id",
+                    DataUseTerms.Open,
+                ),
             ),
+            statusCounts = mapOf(Status.APPROVED_FOR_RELEASE to 1),
         )
 
         val datasetResult = client.createDataset()

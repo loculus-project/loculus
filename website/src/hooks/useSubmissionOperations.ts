@@ -4,7 +4,13 @@ import { useMemo } from 'react';
 
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
-import { awaitingApprovalStatus, hasErrorsStatus, inProcessingStatus, receivedStatus } from '../types/backend.ts';
+import {
+    awaitingApprovalStatus,
+    hasErrorsStatus,
+    inProcessingStatus,
+    type PageQuery,
+    receivedStatus,
+} from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
@@ -14,6 +20,7 @@ export function useSubmissionOperations(
     clientConfig: ClientConfig,
     accessToken: string,
     openErrorFeedback: (message: string) => void,
+    pageQuery: PageQuery,
 ) {
     const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
     const useGetSequences = hooks.useGetSequences(
@@ -25,6 +32,8 @@ export function useSubmissionOperations(
             queries: {
                 statusesFilter:
                     receivedStatus + ',' + inProcessingStatus + ',' + awaitingApprovalStatus + ',' + hasErrorsStatus,
+                page: pageQuery.page - 1,
+                size: pageQuery.size,
             },
         },
         {
