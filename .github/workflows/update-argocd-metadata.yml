@@ -21,7 +21,7 @@ jobs:
     - name: Get SHA - length 7
       id: get_sha
       run: |
-        echo "::set-output name=sha::$(echo ${GITHUB_SHA} | cut -c1-7)"
+        echo "sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
 
     - name: Wait for Backend Docker Image
       uses: lewagon/wait-on-check-action@v1.3.3
