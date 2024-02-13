@@ -26,6 +26,7 @@ spec:
               image: ghcr.io/genspectrum/lapis-silo:latest
               imagePullPolicy: IfNotPresent
               activeDeadlineSeconds: {{ $value.siloImportLimitSeconds }}
+              startingDeadlineSeconds: 60
               command:
                 - sh
                 - /silo_import_job.sh
