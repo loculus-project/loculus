@@ -48,9 +48,9 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
 
     const ButtonBar = (
-        <div className='absolute top-3 right-3 flex flex-wrap space-x-2'>
+        <div className='flex  space-x-2 mb-auto pt-3.5'>
             <button
-                className='text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block mr-2 mb-2 text-xl'
+                className='pl-3 text-gray-500 hover:text-gray-900 hover:cursor-pointer inline-block mr-2 mb-2 text-xl'
                 onClick={approveAccessionVersion}
                 data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
                 disabled={sequenceEntryStatus.status !== awaitingApprovalStatus}
@@ -88,29 +88,36 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     );
 
     return (
-        <div className='p-3 border rounded-md shadow-lg relative transition-all duration-500'>
-            {ButtonBar}
-            <div className='flex flex-wrap '>
-                <StatusIcon
+        <div className='p-3 border rounded-md shadow-lg  transition-all duration-500'>
+            <div className='flex'>
+            <StatusIcon
                     status={sequenceEntryStatus.status}
                     dataUseTerms={sequenceEntryStatus.dataUseTerms}
                     accession={sequenceEntryStatus.accession}
                     hasWarnings={(data?.warnings?.length ?? 0) > 0}
                 />
-                <KeyValueComponent
+            
+            <div className='flex flex-grow flex-wrap'>
+                
+               <KeyValueComponent
                     keyName={sequenceEntryStatus.submissionId}
                     value={sequenceEntryStatus.accession}
-                    extraStyle='font-medium'
-                    keyStyle=' text-gray-600'
+                    
                 />
                 {data !== undefined && (
                     <>
+                    
                         <MetadataList data={data} isLoading={isLoading} />
-                        <Errors errors={data.errors ?? []} accession={sequenceEntryStatus.accession} />
-                        <Warnings warnings={data.warnings ?? []} accession={sequenceEntryStatus.accession} />
+                        
+                        
                     </>
                 )}
             </div>
+            {ButtonBar}
+            </div>
+            
+            {data !== undefined &&  data.errors.length>0 && <Errors dummy={console.log("errors",data.errors)} errors={data.errors ?? []} accession={sequenceEntryStatus.accession} /> }
+            {data !== undefined &&  data.warnings.length>0 && <Warnings warnings={data.warnings ?? []} accession={sequenceEntryStatus.accession} />}
         </div>
     );
 };
@@ -123,9 +130,9 @@ type MetadataListProps = {
 const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotation) =>
     item.source[0].name === metadataField;
 
-const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) => (
-    <div className='flex flex-row flex-wrap'>
-        {!isLoading &&
+const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) =>
+(
+    !isLoading &&
             Object.entries(data.processedData.metadata).map((entry, index) => {
                 const valueString = entry[1].toString();
                 return (
@@ -137,8 +144,7 @@ const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) => (
                         errors={data.errors?.filter(isAnnotationPresent(entry[0]))}
                     />
                 );
-            })}
-    </div>
+            })
 );
 
 type ErrorsProps = {
@@ -281,15 +287,28 @@ type KeyValueComponentProps = {
 };
 
 const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraStyle, keyStyle, warnings, errors }) => {
+let toDisplayUncolored = "";
+let toDisplayInWarningColor = "";
+let toDisplayInErrorColor = "";
+if (errors !== undefined && errors.length > 0) {
+    toDisplayInErrorColor = value;
+} else if (warnings !== undefined && warnings.length > 0) {
+    toDisplayInWarningColor = value;
+}
+else {
+    toDisplayUncolored = value;
+}
+
+
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle !== undefined ? keyStyle : 'text-gray-500 uppercase text-xs'}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>
-                {value}
+                {toDisplayUncolored}
                 {warnings !== undefined && warnings.length > 0 && (
                     <>
                         <span className='text-yellow-500' data-tooltip-id={'warning-tooltip-' + keyName}>
-                            <Note className='inline-block' />
+                           {toDisplayInWarningColor} <Note className='inline-block' />
                         </span>
                         <Tooltip
                             id={'warning-tooltip-' + keyName}
@@ -300,7 +319,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraSt
                 {errors !== undefined && errors.length > 0 && (
                     <>
                         <span className='text-red-600' data-tooltip-id={'error-tooltip-' + keyName}>
-                            <Note className='inline-block' />
+                            {toDisplayInErrorColor}<Note className='inline-block' />
                         </span>
                         <Tooltip
                             id={'error-tooltip-' + keyName}
