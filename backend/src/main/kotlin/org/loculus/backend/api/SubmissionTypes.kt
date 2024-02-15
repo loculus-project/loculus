@@ -35,6 +35,61 @@ data class SubmissionIdMapping(
 
 fun <T : AccessionVersionInterface> List<T>.toPairs() = map { Pair(it.accession, it.version) }
 
+data class AccessionVersions(
+    val accessionVersions: List<AccessionVersion>,
+)
+
+@Schema(
+    description = "If set to 'INCLUDE_WARNINGS', sequence entries with warnings are included in the response." +
+        " If set to 'EXCLUDE_WARNINGS', sequence entries with warnings are not included in the response. " +
+        "Default is 'INCLUDE_WARNINGS'.",
+)
+enum class WarningsFilter {
+    EXCLUDE_WARNINGS,
+    INCLUDE_WARNINGS,
+}
+
+enum class DeleteSequenceScope {
+    ALL,
+    PROCESSED_WITH_ERRORS,
+    PROCESSED_WITH_WARNINGS,
+}
+
+const val ACCESSION_VERSIONS_FILTER_DESCRIPTION =
+    "A List of accession versions that the operation will be restricted to. " +
+        "Omit or set to null to consider all sequences."
+
+data class AccessionVersionsFilterWithDeletionScope(
+    @Schema(
+        description = ACCESSION_VERSIONS_FILTER_DESCRIPTION,
+    )
+    val accessionVersionsFilter: List<AccessionVersion>? = null,
+    @Schema(
+        description = "Scope for deletion. If scope is set to 'ALL', all sequences are deleted. " +
+            "If scope is set to 'PROCESSED_WITH_ERRORS', only processed sequences with errors are deleted. " +
+            "If scope is set to 'PROCESSED_WITH_WARNINGS', only processed sequences in `AWAITING_APPROVAL` " +
+            "with warnings are deleted.",
+    )
+    val scope: DeleteSequenceScope,
+)
+
+enum class ApproveDataScope {
+    ALL,
+    WITHOUT_WARNINGS,
+}
+
+data class AccessionVersionsFilterWithApprovalScope(
+    @Schema(
+        description = ACCESSION_VERSIONS_FILTER_DESCRIPTION,
+    )
+    val accessionVersionsFilter: List<AccessionVersion>? = null,
+    @Schema(
+        description = "Scope for approval. If scope is set to 'ALL', all sequences are approved. " +
+            "If scope is set to 'WITHOUT_WARNINGS', only sequences without warnings are approved.",
+    )
+    val scope: ApproveDataScope,
+)
+
 data class SubmittedProcessedData(
     override val accession: Accession,
     override val version: Version,

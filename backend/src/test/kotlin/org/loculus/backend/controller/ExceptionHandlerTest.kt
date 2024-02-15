@@ -102,14 +102,13 @@ class ExceptionHandlerTest(@Autowired val mockMvc: MockMvc) {
             post(addOrganismToPath("/approve-processed-data"))
                 .param("username", "userName")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""{"fieldThatDoesNotExist": null}""")
-                .param("groupName", "testGroup")
+                .content("""{"fieldThatIsDefinitelyNotScopeWhichIsRequired": null}""")
                 .withAuth(),
         )
             .andExpect(status().isBadRequest)
             .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
             .andExpect(jsonPath("$.title").value("Bad Request"))
-            .andExpect(jsonPath("$.detail", containsString("failed for JSON property accessionVersions")))
+            .andExpect(jsonPath("$.detail", containsString("for creator parameter scope which is a non-nullable type")))
     }
 }
 

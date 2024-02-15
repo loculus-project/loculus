@@ -5,7 +5,10 @@ import { ReviewCard } from './ReviewCard.tsx';
 import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts';
 import { routes } from '../../routes.ts';
 import {
+    approveAllDataScope,
     awaitingApprovalStatus,
+    deleteAllDataScope,
+    deleteProcessedDataWithErrorsScope,
     hasErrorsStatus,
     inProcessingStatus,
     type PageQuery,
@@ -107,7 +110,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                     className='border rounded-md p-1 bg-gray-500 text-white px-2'
                     onClick={() => {
                         hooks.deleteSequenceEntries({
-                            accessionVersions: sequences.filter((sequence) => sequence.status === hasErrorsStatus),
+                            scope: deleteProcessedDataWithErrorsScope.value,
                         });
                     }}
                 >
@@ -119,9 +122,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                     className='border rounded-md p-1 bg-gray-500 text-white px-2 ml-2'
                     onClick={() =>
                         hooks.approveProcessedData({
-                            accessionVersions: sequences.filter(
-                                (sequence) => sequence.status === awaitingApprovalStatus,
-                            ),
+                            scope: approveAllDataScope.value,
                         })
                     }
                 >
@@ -143,12 +144,14 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                             sequenceEntryStatus={sequence}
                             approveAccessionVersion={() =>
                                 hooks.approveProcessedData({
-                                    accessionVersions: [sequence],
+                                    accessionVersionsFilter: [sequence],
+                                    scope: approveAllDataScope.value,
                                 })
                             }
                             deleteAccessionVersion={() =>
                                 hooks.deleteSequenceEntries({
-                                    accessionVersions: [sequence],
+                                    accessionVersionsFilter: [sequence],
+                                    scope: deleteAllDataScope.value,
                                 })
                             }
                             editAccessionVersion={() => {

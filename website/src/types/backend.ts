@@ -58,6 +58,35 @@ export const accessionVersionsObject = z.object({
     accessionVersions: z.array(accessionVersion),
 });
 
+export const accessionVersionsFilter = z.object({
+    accessionVersionsFilter: z.array(accessionVersion).optional(),
+});
+
+export const approveAllDataScope = z.literal('ALL');
+export const approveProcessedDataWithoutWarningsScope = z.literal('WITHOUT_WARNINGS');
+
+export const accessionVersionsFilterWithApprovalScope = accessionVersionsFilter.merge(
+    z.object({
+        scope: z.union([approveAllDataScope, approveProcessedDataWithoutWarningsScope]),
+    }),
+);
+
+export const deleteAllDataScope = z.literal('ALL');
+export const deleteProcessedAndRevocationConfirmationDataScope = z.literal('ALL_PROCESSED_AND_REVOCATIONS');
+export const deleteProcessedDataWithErrorsScope = z.literal('PROCESSED_WITH_ERRORS');
+export const deleteProcessedDataWithWarningsScope = z.literal('PROCESSED_WITH_WARNINGS');
+
+export const accessionVersionsFilterWithDeletionScope = accessionVersionsFilter.merge(
+    z.object({
+        scope: z.union([
+            deleteAllDataScope,
+            deleteProcessedAndRevocationConfirmationDataScope,
+            deleteProcessedDataWithErrorsScope,
+            deleteProcessedDataWithWarningsScope,
+        ]),
+    }),
+);
+
 export const openDataUseTermsType = 'OPEN';
 export const restrictedDataUseTermsType = 'RESTRICTED';
 

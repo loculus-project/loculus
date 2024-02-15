@@ -9,7 +9,8 @@ import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 import type { GetSequencesResponse, SequenceEntryToEdit, SubmissionIdMapping } from './src/types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
 import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
-import { DEFAULT_GROUP_NAME } from './tests/playwrightSetup.ts';
+
+export const DEFAULT_GROUP_NAME = 'testGroup';
 
 export const testConfig = {
     public: {

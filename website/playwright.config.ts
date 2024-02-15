@@ -6,7 +6,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
     testDir: './tests',
-    fullyParallel: true,
+    // This option allows parallel execution of tests in a single file.
+    // It is disabled by default because it can cause issues with some tests.
+    fullyParallel: false,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 1 : 1,
     workers: process.env.CI ? 1 : undefined,

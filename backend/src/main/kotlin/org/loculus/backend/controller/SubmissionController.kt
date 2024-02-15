@@ -11,6 +11,9 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.AccessionVersions
+import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
+import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
 import org.loculus.backend.api.Accessions
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
@@ -22,6 +25,7 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
@@ -252,6 +256,8 @@ class SubmissionController(
         @RequestParam(required = false)
         statusesFilter: List<Status>?,
         @UsernameFromJwt username: String,
+        @RequestParam(required = false, defaultValue = "INCLUDE_WARNINGS")
+        warningsFilter: WarningsFilter,
         @Parameter(
             description = "Part of pagination parameters. Page number starts from 0. " +
                 "If page or size are not provided, all sequences are returned.",
@@ -264,8 +270,15 @@ class SubmissionController(
         )
         @RequestParam(required = false)
         size: Int?,
-    ): GetSequenceResponse =
-        submissionDatabaseService.getSequences(username, organism, groupsFilter, statusesFilter, page, size)
+    ): GetSequenceResponse = submissionDatabaseService.getSequences(
+        username,
+        organism,
+        groupsFilter,
+        statusesFilter,
+        warningsFilter,
+        page,
+        size,
+    )
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -274,9 +287,15 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @UsernameFromJwt username: String,
-        @RequestBody body: AccessionVersions,
+        @RequestBody
+        body: AccessionVersionsFilterWithApprovalScope,
     ) {
-        submissionDatabaseService.approveProcessedData(username, body.accessionVersions, organism)
+        submissionDatabaseService.approveProcessedData(
+            submitter = username,
+            accessionVersionsFilter = body.accessionVersionsFilter,
+            organism = organism,
+            scope = body.scope,
+        )
     }
 
     @Operation(description = REVOKE_DESCRIPTION)
@@ -299,7 +318,7 @@ class SubmissionController(
     ) = submissionDatabaseService.confirmRevocation(body.accessionVersions, username, organism)
 
     @Operation(description = DELETE_SEQUENCES_DESCRIPTION)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     @DeleteMapping(
         "/delete-sequence-entry-versions",
     )
@@ -307,8 +326,14 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @UsernameFromJwt username: String,
-        @RequestBody body: AccessionVersions,
-    ) = submissionDatabaseService.deleteSequenceEntryVersions(body.accessionVersions, username, organism)
+        @RequestBody
+        body: AccessionVersionsFilterWithDeletionScope,
+    ): List<AccessionVersion> = submissionDatabaseService.deleteSequenceEntryVersions(
+        body.accessionVersionsFilter,
+        username,
+        organism,
+        body.scope,
+    )
 
     private fun <T> stream(sequenceProvider: () -> Sequence<T>) = StreamingResponseBody { outputStream ->
         try {
@@ -320,10 +345,6 @@ class SubmissionController(
             )
         }
     }
-
-    data class AccessionVersions(
-        val accessionVersions: List<AccessionVersion>,
-    )
 }
 
 @Target(AnnotationTarget.VALUE_PARAMETER)

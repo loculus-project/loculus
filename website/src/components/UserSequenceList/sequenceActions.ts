@@ -1,6 +1,11 @@
 import type { ActionHooks } from './SequenceEntryTable.tsx';
 import { routes } from '../../routes.ts';
-import type { AccessionVersion, SequenceEntryStatus } from '../../types/backend.ts';
+import {
+    type AccessionVersion,
+    type SequenceEntryStatus,
+    approveAllDataScope,
+    deleteAllDataScope,
+} from '../../types/backend.ts';
 import { extractAccessionVersion, getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 
 export type BulkSequenceAction = {
@@ -14,7 +19,10 @@ export type BulkSequenceAction = {
 const deleteAction: BulkSequenceAction = {
     name: 'delete',
     actionOnSequenceEntries: async (selectedSequences, actionHooks) =>
-        actionHooks.deleteSequenceEntries({ accessionVersions: selectedSequences.map(extractAccessionVersion) }),
+        actionHooks.deleteSequenceEntries({
+            accessionVersionsFilter: selectedSequences.map(extractAccessionVersion),
+            scope: deleteAllDataScope.value,
+        }),
     confirmationDialog: {
         message: (selectedSequences) =>
             `Are you sure you want to delete the selected sequence entry ${pluralizeWord(
@@ -27,7 +35,10 @@ const deleteAction: BulkSequenceAction = {
 const approveAction: BulkSequenceAction = {
     name: 'approve',
     actionOnSequenceEntries: async (selectedSequences, actionHooks) =>
-        actionHooks.approveProcessedData({ accessionVersions: selectedSequences.map(extractAccessionVersion) }),
+        actionHooks.approveProcessedData({
+            accessionVersionsFilter: selectedSequences.map(extractAccessionVersion),
+            scope: approveAllDataScope.value,
+        }),
     confirmationDialog: {
         message: (selectedSequences) =>
             `Are you sure you want to approve the selected sequence entry ${pluralizeWord(

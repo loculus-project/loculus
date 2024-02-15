@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 
 import { type Page, test as base } from '@playwright/test';
+import { isErrorFromAlias } from '@zodios/core';
 import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
@@ -8,14 +9,17 @@ import winston from 'winston';
 import { DatasetPage } from './pages/datasets/dataset.page';
 import { EditPage } from './pages/edit/edit.page';
 import { NavigationFixture } from './pages/navigation.fixture';
+import { ReviewPage } from './pages/review/review.page.ts';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserSequencePage } from './pages/user/userSequencePage/userSequencePage.ts';
+import { createGroup } from './util/backendCalls.ts';
 import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
+import { groupManagementApi } from '../src/services/groupManagementApi.ts';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
 import { type DataUseTerms, openDataUseTermsType } from '../src/types/backend.ts';
 
@@ -23,13 +27,14 @@ type E2EFixture = {
     searchPage: SearchPage;
     sequencePage: SequencePage;
     submitPage: SubmitPage;
+    reviewPage: ReviewPage;
     datasetPage: DatasetPage;
     userPage: UserSequencePage;
     groupPage: GroupPage;
     revisePage: RevisePage;
     editPage: EditPage;
     navigationFixture: NavigationFixture;
-    loginAsTestUser: () => Promise<{ username: string; token: string }>;
+    loginAsTestUser: () => Promise<{ username: string; token: string; groupName: string }>;
 };
 
 export const dummyOrganism = { key: 'dummy-organism', displayName: 'Test Dummy Organism' };
@@ -41,6 +46,8 @@ export const baseUrl = 'http://localhost:3000';
 export const backendUrl = 'http://localhost:8079';
 export const lapisUrl = 'http://localhost:8080/dummy-organism';
 const keycloakUrl = 'http://localhost:8083';
+
+export const DEFAULT_GROUP_NAME = 'testGroup';
 
 export const e2eLogger = winston.createLogger({
     level: 'info',
@@ -136,8 +143,11 @@ export async function authorize(
 ) {
     const username = `${testUser}_${parallelIndex}_${browser?.browserType().name()}`;
     const password = `${testUserPassword}_${parallelIndex}_${browser?.browserType().name()}`;
+    const groupName = username + '-group';
 
     const token = await getToken(username, password);
+
+    await createTestGroupIfNotExistent(token.accessToken, groupName);
 
     await page.context().addCookies([
         {
@@ -162,6 +172,7 @@ export async function authorize(
 
     return {
         username,
+        groupName,
         token: token.accessToken,
     };
 }
@@ -178,6 +189,10 @@ export const test = base.extend<E2EFixture>({
     submitPage: async ({ page }, use) => {
         const submitPage = new SubmitPage(page);
         await use(submitPage);
+    },
+    reviewPage: async ({ page }, use) => {
+        const reviewPage = new ReviewPage(page);
+        await use(reviewPage);
     },
     userPage: async ({ page }, use) => {
         const userPage = new UserSequencePage(page);
@@ -206,5 +221,17 @@ export const test = base.extend<E2EFixture>({
         await use(async () => authorize(page));
     },
 });
+
+export async function createTestGroupIfNotExistent(token: string, groupName: string = DEFAULT_GROUP_NAME) {
+    try {
+        await createGroup(groupName, token);
+    } catch (error) {
+        const groupDoesAlreadyExist =
+            isErrorFromAlias(groupManagementApi, 'createGroup', error) && error.response.status === 409;
+        if (!groupDoesAlreadyExist) {
+            throw error;
+        }
+    }
+}
 
 export { expect } from '@playwright/test';

@@ -1,8 +1,11 @@
 package org.loculus.backend.controller.submission
 
+import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
 import org.loculus.backend.api.Status.IN_PROCESSING
@@ -13,6 +16,7 @@ import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -54,6 +58,19 @@ class ApproveProcessedDataEndpointTest(
             .assertStatusIs(APPROVED_FOR_RELEASE)
         convenienceClient.getSequenceEntryOfUser(accession = "2", version = 1)
             .assertStatusIs(APPROVED_FOR_RELEASE)
+    }
+
+    @Test
+    fun `WHEN I approve without accession filter or with full scope THEN all data is approved`() {
+        convenienceClient.prepareDataTo(AWAITING_APPROVAL)
+
+        client.approveProcessedSequenceEntries(scope = ApproveDataScope.ALL)
+            .andExpect(status().isNoContent)
+
+        assertThat(
+            convenienceClient.getSequenceEntriesOfUserInState(status = APPROVED_FOR_RELEASE),
+            hasSize(NUMBER_OF_SEQUENCES),
+        )
     }
 
     @Test
@@ -180,6 +197,71 @@ class ApproveProcessedDataEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = "1", version = 1, organism = DEFAULT_ORGANISM)
             .assertStatusIs(AWAITING_APPROVAL)
         convenienceClient.getSequenceEntryOfUser(accession = "11", version = 1, organism = OTHER_ORGANISM)
+            .assertStatusIs(AWAITING_APPROVAL)
+    }
+
+    @Test
+    fun `GIVEN data with warnings WHEN I approve with different scopes THEN data are approved depending on scope`() {
+        val submittedSequences =
+            convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val accessionOfSuccessfullyProcessedData = submittedSequences[0].accession
+        val accessionOfDataWithWarnings = submittedSequences[1].accession
+
+        convenienceClient.submitProcessedData(
+            PreparedProcessedData.withWarnings(accession = accessionOfDataWithWarnings),
+        )
+        convenienceClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accessionOfSuccessfullyProcessedData),
+        )
+
+        client.approveProcessedSequenceEntries(scope = ApproveDataScope.WITHOUT_WARNINGS)
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntryOfUser(accession = accessionOfDataWithWarnings, version = 1)
+            .assertStatusIs(AWAITING_APPROVAL)
+        convenienceClient.getSequenceEntryOfUser(accession = accessionOfSuccessfullyProcessedData, version = 1)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
+
+        client.approveProcessedSequenceEntries(scope = ApproveDataScope.ALL)
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntryOfUser(accession = accessionOfDataWithWarnings, version = 1)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
+    }
+
+    @Test
+    @Suppress("ktlint:standard:max-line-length")
+    fun `GIVEN data with and without warnings WHEN I approve with warnings excluded THEN only sequence without warning is approved`() {
+        val submittedSequences =
+            convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val accessionOfSuccessfullyProcessedData = submittedSequences[0].accession
+        val accessionOfDataWithWarnings = submittedSequences[1].accession
+        val accessionOfAnotherSuccessfullyProcessedData = submittedSequences[2].accession
+
+        convenienceClient.submitProcessedData(
+            PreparedProcessedData.withWarnings(accession = accessionOfDataWithWarnings),
+        )
+        convenienceClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accessionOfSuccessfullyProcessedData),
+        )
+        convenienceClient.submitProcessedData(
+            PreparedProcessedData.successfullyProcessed(accession = accessionOfAnotherSuccessfullyProcessedData),
+        )
+
+        client.approveProcessedSequenceEntries(
+            scope = ApproveDataScope.WITHOUT_WARNINGS,
+            listOfSequencesToApprove = listOf(
+                AccessionVersion(accessionOfDataWithWarnings, 1),
+                AccessionVersion(accessionOfSuccessfullyProcessedData, 1),
+            ),
+        )
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntryOfUser(accession = accessionOfDataWithWarnings, version = 1)
+            .assertStatusIs(AWAITING_APPROVAL)
+        convenienceClient.getSequenceEntryOfUser(accession = accessionOfSuccessfullyProcessedData, version = 1)
+            .assertStatusIs(APPROVED_FOR_RELEASE)
+        convenienceClient.getSequenceEntryOfUser(accession = accessionOfAnotherSuccessfullyProcessedData, version = 1)
             .assertStatusIs(AWAITING_APPROVAL)
     }
 }

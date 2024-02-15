@@ -1,10 +1,19 @@
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
 import { type Accession, type AccessionVersion, openDataUseTermsType } from '../../src/types/backend.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
-import { backendClient, dummyOrganism, groupManagementClient, testSequenceCount } from '../e2e.fixture.ts';
-import { DEFAULT_GROUP_NAME } from '../playwrightSetup.ts';
+import {
+    backendClient,
+    DEFAULT_GROUP_NAME,
+    dummyOrganism,
+    groupManagementClient,
+    testSequenceCount,
+} from '../e2e.fixture.ts';
 
-export const submitViaApi = async (numberOfSequenceEntries: number = testSequenceCount, token: string) => {
+export const submitViaApi = async (
+    numberOfSequenceEntries: number = testSequenceCount,
+    token: string,
+    groupName: string = DEFAULT_GROUP_NAME,
+) => {
     const fileContent = createFileContent(numberOfSequenceEntries);
 
     const response = await backendClient.call(
@@ -12,7 +21,7 @@ export const submitViaApi = async (numberOfSequenceEntries: number = testSequenc
         {
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
-            groupName: DEFAULT_GROUP_NAME,
+            groupName,
             dataUseTermsType: openDataUseTermsType,
             restrictedUntil: null,
         },
@@ -50,7 +59,8 @@ export const submitRevisedDataViaApi = async (accessions: Accession[], token: st
 
 export const approveProcessedData = async (accessionVersions: AccessionVersion[], token: string): Promise<void> => {
     const body = {
-        accessionVersions,
+        accessionVersionsFilter: accessionVersions,
+        scope: 'ALL' as const,
     };
 
     const response = await backendClient.call('approveProcessedData', body, {
@@ -103,11 +113,4 @@ export const createGroup = async (newGroupName: string = DEFAULT_GROUP_NAME, tok
             headers: createAuthorizationHeader(token),
         },
     );
-};
-
-export const addUserToGroup = async (groupName: string = DEFAULT_GROUP_NAME, usernameToAdd: string, token: string) => {
-    await groupManagementClient.zodios.addUserToGroup(undefined, {
-        params: { groupName, userToAdd: usernameToAdd },
-        headers: createAuthorizationHeader(token),
-    });
 };

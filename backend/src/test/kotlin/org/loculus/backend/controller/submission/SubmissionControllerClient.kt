@@ -2,10 +2,13 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.addOrganismToPath
@@ -83,6 +86,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         organism: String = DEFAULT_ORGANISM,
         groupsFilter: List<String>? = null,
         statusesFilter: List<Status>? = null,
+        warningsFilter: WarningsFilter? = null,
         jwt: String? = jwtForDefaultUser,
         page: Int? = null,
         size: Int? = null,
@@ -92,6 +96,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .withAuth(jwt)
                 .param("groupsFilter", groupsFilter?.joinToString { it })
                 .param("statusesFilter", statusesFilter?.joinToString { it.name })
+                .param("warningsFilter", warningsFilter?.name)
                 .param("page", page?.toString())
                 .param("size", size?.toString()),
         )
@@ -135,13 +140,18 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     }
 
     fun approveProcessedSequenceEntries(
-        listOfSequencesToApprove: List<AccessionVersion>,
+        listOfSequencesToApprove: List<AccessionVersion>? = null,
         organism: String = DEFAULT_ORGANISM,
+        scope: ApproveDataScope = ApproveDataScope.ALL,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/approve-processed-data", organism = organism))
             .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"accessionVersions":${objectMapper.writeValueAsString(listOfSequencesToApprove)}}""")
+            .content(
+                """{"accessionVersionsFilter": ${createAccessionVersionsFilterBodyString(listOfSequencesToApprove)},
+                    "scope": "$scope"
+                }""",
+            )
             .withAuth(jwt),
     )
 
@@ -174,7 +184,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         )
 
     fun deleteSequenceEntries(
-        listOfAccessionVersionsToDelete: List<AccessionVersion>,
+        listOfAccessionVersionsToDelete: List<AccessionVersion>? = null,
+        scope: DeleteSequenceScope = DeleteSequenceScope.ALL,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
@@ -182,7 +193,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt)
             .contentType(MediaType.APPLICATION_JSON)
             .content(
-                """{"accessionVersions":${objectMapper.writeValueAsString(listOfAccessionVersionsToDelete)}}""",
+                """{"accessionVersionsFilter":${createAccessionVersionsFilterBodyString(
+                    listOfAccessionVersionsToDelete,
+                )},
+                    "scope": "$scope"}
+                """.trimMargin(),
             ),
     )
 
@@ -197,4 +212,16 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .file(metadataFile)
             .withAuth(jwt),
     )
+
+    private fun createAccessionVersionsFilterBodyString(
+        listOfSequencesToApprove: List<AccessionVersion>? = null,
+    ): String {
+        return if (listOfSequencesToApprove != null) {
+            objectMapper.writeValueAsString(
+                listOfSequencesToApprove,
+            )
+        } else {
+            "null"
+        }
+    }
 }
