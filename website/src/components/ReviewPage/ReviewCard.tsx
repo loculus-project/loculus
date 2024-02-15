@@ -300,8 +300,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraSt
                 {errors !== undefined && errors.length > 0 && (
                     <>
                         <span className='text-red-600' data-tooltip-id={'error-tooltip-' + keyName}>
-                            {toDisplayInErrorColor ? toDisplayInErrorColor : ( <Note className='inline-block' />) }
-
+                            {toDisplayInErrorColor !== null ? toDisplayInErrorColor : <Note className='inline-block' />}
                         </span>
                         <Tooltip
                             id={'error-tooltip-' + keyName}
@@ -312,7 +311,11 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraSt
                 {warnings !== undefined && warnings.length > 0 && (
                     <>
                         <span className='text-yellow-500' data-tooltip-id={'warning-tooltip-' + keyName}>
-                            {toDisplayInWarningColor ? toDisplayInWarningColor : ( <Note className='inline-block' />) }
+                            {toDisplayInWarningColor !== null ? (
+                                toDisplayInWarningColor
+                            ) : (
+                                <Note className='inline-block' />
+                            )}
                         </span>
                         <Tooltip
                             id={'warning-tooltip-' + keyName}
