@@ -4,6 +4,9 @@ import z from 'zod';
 import { authorizationHeader, notAuthorizedError, withOrganismPathSegment } from './commonApiTypes.ts';
 import {
     accessions,
+    accessionVersion,
+    accessionVersionsFilterWithApprovalScope,
+    accessionVersionsFilterWithDeletionScope,
     accessionVersionsObject,
     dataUseTermsHistoryEntry,
     getSequencesResponse,
@@ -140,7 +143,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: accessionVersionsObject,
+            schema: accessionVersionsFilterWithApprovalScope,
         },
     ],
     response: z.never(),
@@ -156,10 +159,10 @@ const deleteSequencesEndpoint = makeEndpoint({
         {
             name: 'accessionVersions',
             type: 'Body',
-            schema: accessionVersionsObject,
+            schema: accessionVersionsFilterWithDeletionScope,
         },
     ],
-    response: z.never(),
+    response: z.array(accessionVersion),
     errors: [{ status: 'default', schema: problemDetail }, notAuthorizedError],
 });
 

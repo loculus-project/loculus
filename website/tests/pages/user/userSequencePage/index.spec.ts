@@ -1,4 +1,4 @@
-import { expect, openDataUseTerms, test } from '../../../e2e.fixture';
+import { expect, openDataUseTerms, test, testSequenceCount } from '../../../e2e.fixture';
 import { submitRevisedDataViaApi } from '../../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../../util/prepareDataToBe.ts';
 
@@ -7,12 +7,27 @@ test.describe('The user sequence page', () => {
         userPage,
         loginAsTestUser,
     }) => {
-        const { token } = await loginAsTestUser();
+        const { token, groupName } = await loginAsTestUser();
 
-        const [sequenceEntryAwaitingApproval] = await prepareDataToBe('awaitingApproval', token);
-        const [sequenceEntryWithErrors] = await prepareDataToBe('erroneous', token);
-        const [sequenceEntryReleasable] = await prepareDataToBe('approvedForRelease', token);
-        const [sequenceEntryToBeRevised] = await prepareDataToBe('approvedForRelease', token);
+        const [sequenceEntryAwaitingApproval] = await prepareDataToBe(
+            'awaitingApproval',
+            token,
+            testSequenceCount,
+            groupName,
+        );
+        const [sequenceEntryWithErrors] = await prepareDataToBe('erroneous', token, testSequenceCount, groupName);
+        const [sequenceEntryReleasable] = await prepareDataToBe(
+            'approvedForRelease',
+            token,
+            testSequenceCount,
+            groupName,
+        );
+        const [sequenceEntryToBeRevised] = await prepareDataToBe(
+            'approvedForRelease',
+            token,
+            testSequenceCount,
+            groupName,
+        );
         await submitRevisedDataViaApi([sequenceEntryToBeRevised.accession], token);
 
         await userPage.gotoUserSequencePage();

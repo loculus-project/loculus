@@ -17,6 +17,7 @@ import org.loculus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.loculus.backend.api.Status.HAS_ERRORS
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
+import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
@@ -141,6 +142,20 @@ class GetSequencesEndpointTest(
     }
 
     @Test
+    fun `GIVEN data with warnings WHEN I exclude warnings THEN expect no data returned`() {
+        convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        convenienceClient.submitProcessedData(PreparedProcessedData.withWarnings())
+
+        val sequencesInAwaitingApproval = convenienceClient.getSequenceEntries(
+            username = ALTERNATIVE_DEFAULT_USER_NAME,
+            statusesFilter = listOf(AWAITING_APPROVAL),
+            warningsFilter = WarningsFilter.EXCLUDE_WARNINGS,
+        ).sequenceEntries
+
+        assertThat(sequencesInAwaitingApproval, hasSize(0))
+    }
+
+    @Test
     fun `GIVEN data in many statuses WHEN querying sequences with pagination THEN return paged results`() {
         val allSubmittedSequencesSorted = convenienceClient.prepareDataTo(AWAITING_APPROVAL).map {
             it.accession to it.version
@@ -220,7 +235,7 @@ class GetSequencesEndpointTest(
             Scenario(
                 setupDescription = "I submitted sequence entries that have errors",
                 prepareDatabase = { it.prepareDefaultSequenceEntriesToHasErrors() },
-                expectedStatus = Status.HAS_ERRORS,
+                expectedStatus = HAS_ERRORS,
                 expectedIsRevocation = false,
             ),
             Scenario(

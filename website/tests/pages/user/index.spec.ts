@@ -1,17 +1,16 @@
 import { v4 } from 'uuid';
 
 import { expect, test } from '../../e2e.fixture';
-import { DEFAULT_GROUP_NAME } from '../../playwrightSetup.ts';
 
 test.describe('The user page', () => {
     test('should see the groups the user is member of, create a group and leave it afterwards', async ({
         groupPage,
         loginAsTestUser,
     }) => {
-        await loginAsTestUser();
+        const { groupName } = await loginAsTestUser();
 
         await groupPage.goToUserPage();
-        await groupPage.verifyGroupIsPresent(DEFAULT_GROUP_NAME);
+        await groupPage.verifyGroupIsPresent(groupName);
 
         const uniqueGroupName = v4();
         await groupPage.createGroup(uniqueGroupName);

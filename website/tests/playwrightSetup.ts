@@ -1,11 +1,16 @@
-import { isErrorFromAlias } from '@zodios/core';
 import isEqual from 'lodash/isEqual.js';
 import sortBy from 'lodash/sortBy.js';
 
-import { e2eLogger, getToken, lapisUrl, testUser, testUserPassword } from './e2e.fixture.ts';
-import { addUserToGroup, createGroup } from './util/backendCalls.ts';
+import {
+    createTestGroupIfNotExistent,
+    DEFAULT_GROUP_NAME,
+    e2eLogger,
+    getToken,
+    lapisUrl,
+    testUser,
+    testUserPassword,
+} from './e2e.fixture.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
-import { groupManagementApi } from '../src/services/groupManagementApi.ts';
 import { LapisClient } from '../src/services/lapisClient.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD } from '../src/settings.ts';
 import { siloVersionStatuses } from '../src/types/lapis.ts';
@@ -15,17 +20,18 @@ enum LapisStateBeforeTests {
     CorrectSequencesInLapis = 'CorrectSequencesInLapis',
 }
 
-export const DEFAULT_GROUP_NAME = 'testGroup';
-
 export default async function globalSetupForPlaywright() {
     const secondsToWait = 10;
     const maxNumberOfRetries = 12;
 
-    e2eLogger.info(`logging in as '${testUser}' + playwright users. Setup testGroups.`);
+    e2eLogger.info(
+        'Setting up E2E tests. In order to test search results, data will be prepared in LAPIS. ' +
+            'This preparation may take a few minutes and is done before to allow faster testing of search results.',
+    );
+    e2eLogger.info(`Setup ${DEFAULT_GROUP_NAME}. Logging in as '${testUser}' to create the group.`);
     const token = (await getToken(testUser, testUserPassword)).accessToken;
 
     await createTestGroupIfNotExistent(token);
-    await addTestuserToTestGroupIfNotExistent(token);
 
     const lapisClient = LapisClient.create(
         lapisUrl,
@@ -44,7 +50,8 @@ export default async function globalSetupForPlaywright() {
 
     if (lapisState === LapisStateBeforeTests.CorrectSequencesInLapis) {
         e2eLogger.info(
-            'Skipping data preparation. NOTE: data preparation has to be done before on an empty LAPIS. Expected data found.',
+            'Skipping data preparation. ' +
+                'NOTE: data preparation has to be done before on an empty LAPIS. Expected data found.',
         );
         return;
     }
@@ -176,32 +183,4 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
         );
     }
     return LapisStateBeforeTests.CorrectSequencesInLapis;
-}
-
-async function addTestuserToTestGroupIfNotExistent(token: string) {
-    for (const browser of ['firefox', 'webkit', 'chromium']) {
-        for (let i = 0; i < 20; i++) {
-            try {
-                await addUserToGroup(DEFAULT_GROUP_NAME, `testuser_${i}_${browser}`, token);
-            } catch (error) {
-                const groupDoesAlreadyExist =
-                    isErrorFromAlias(groupManagementApi, 'addUserToGroup', error) && error.response.status === 409;
-                if (!groupDoesAlreadyExist) {
-                    throw error;
-                }
-            }
-        }
-    }
-}
-
-async function createTestGroupIfNotExistent(token: string) {
-    try {
-        await createGroup(DEFAULT_GROUP_NAME, token);
-    } catch (error) {
-        const groupDoesAlreadyExist =
-            isErrorFromAlias(groupManagementApi, 'createGroup', error) && error.response.status === 409;
-        if (!groupDoesAlreadyExist) {
-            throw error;
-        }
-    }
 }

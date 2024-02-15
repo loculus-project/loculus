@@ -10,10 +10,10 @@ test.describe('The edit page', () => {
         'should show the edit page for a sequence entry that has errors, ' +
             'download the sequence and submit the edited data',
         async ({ userPage, editPage, loginAsTestUser }) => {
-            const { token } = await loginAsTestUser();
+            const { token, groupName } = await loginAsTestUser();
 
-            const [erroneousTestSequenceEntry] = await prepareDataToBe('erroneous', token, 1);
-            const [stagedTestSequenceEntry] = await prepareDataToBe('awaitingApproval', token, 1);
+            const [erroneousTestSequenceEntry] = await prepareDataToBe('erroneous', token, 1, groupName);
+            const [stagedTestSequenceEntry] = await prepareDataToBe('awaitingApproval', token, 1, groupName);
 
             expect(erroneousTestSequenceEntry).toBeDefined();
             expect(stagedTestSequenceEntry).toBeDefined();

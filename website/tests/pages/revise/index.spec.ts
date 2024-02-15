@@ -1,12 +1,12 @@
 import { routes } from '../../../src/routes.ts';
-import { baseUrl, dummyOrganism, test } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, test, testSequenceCount } from '../../e2e.fixture';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
 test.describe('The revise page', () => {
     test('should upload files and revise existing data', async ({ revisePage, loginAsTestUser }) => {
-        const { token } = await loginAsTestUser();
+        const { token, groupName } = await loginAsTestUser();
 
-        const sequenceEntries = await prepareDataToBe('approvedForRelease', token);
+        const sequenceEntries = await prepareDataToBe('approvedForRelease', token, testSequenceCount, groupName);
 
         await revisePage.goto();
 

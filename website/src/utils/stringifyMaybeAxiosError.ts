@@ -8,5 +8,5 @@ export const stringifyMaybeAxiosError = (error: unknown): string => {
         return (data as ProblemDetail).detail;
     }
 
-    return error?.toString() ?? JSON.stringify((error as Error).message);
+    return JSON.stringify((error as Error).message);
 };

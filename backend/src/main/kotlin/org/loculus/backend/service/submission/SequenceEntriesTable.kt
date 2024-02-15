@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.json.exists
 import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
@@ -81,8 +82,6 @@ class SequenceEntriesDataTable(
         )
     }
 
-    val isMaxReleasedVersion = versionColumn eq maxReleasedVersionQuery()
-
     private fun maxReleasedVersionQuery(): Expression<Long?> {
         val subQueryTable = alias("subQueryTable")
         return wrapAsExpression(
@@ -99,6 +98,8 @@ class SequenceEntriesDataTable(
         Pair(accessionColumn, versionColumn) inList accessionVersions.toPairs()
 
     fun organismIs(organism: Organism) = organismColumn eq organism.name
+
+    val entriesWithWarnings = warningsColumn.exists("[0]")
 
     fun statusIs(status: Status) = statusColumn eq status.name
 

@@ -2,6 +2,8 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
+import org.hamcrest.CoreMatchers.equalTo
+import org.hamcrest.MatcherAssert.assertThat
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.DataUseTerms
@@ -14,6 +16,7 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -165,6 +168,7 @@ class SubmissionConvenienceClient(
         groupsFilter: List<String>? = null,
         statusesFilter: List<Status>? = null,
         organism: String = DEFAULT_ORGANISM,
+        warningsFilter: WarningsFilter = WarningsFilter.INCLUDE_WARNINGS,
         page: Int? = null,
         size: Int? = null,
     ): GetSequenceResponse = deserializeJsonResponse(
@@ -172,6 +176,7 @@ class SubmissionConvenienceClient(
             organism = organism,
             groupsFilter = groupsFilter,
             statusesFilter = statusesFilter,
+            warningsFilter = warningsFilter,
             jwt = generateJwtFor(username),
             page = page,
             size = size,
@@ -217,6 +222,21 @@ class SubmissionConvenienceClient(
             jwt = generateJwtFor(userName),
         ),
     )
+
+    fun expectStatusCountsOfSequenceEntries(statusCounts: Map<Status, Int>, userName: String = DEFAULT_USER_NAME) {
+        val actualStatusCounts = deserializeJsonResponse<GetSequenceResponse>(
+            client.getSequenceEntries(jwt = generateJwtFor(userName))
+                .andExpect(status().isOk)
+                .andExpect(
+                    content().contentType(MediaType.APPLICATION_JSON_VALUE),
+                ),
+        ).statusCounts
+
+        assertThat(
+            actualStatusCounts,
+            equalTo(Status.entries.associateWith { 0 } + statusCounts),
+        )
+    }
 
     fun submitDefaultEditedData(userName: String = DEFAULT_USER_NAME) {
         DefaultFiles.allAccessions.forEach { accession ->

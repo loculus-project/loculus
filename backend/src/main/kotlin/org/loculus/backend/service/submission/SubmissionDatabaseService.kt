@@ -11,6 +11,7 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
+import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
@@ -19,13 +20,16 @@ import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
+import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.stringParam
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Group
 import org.loculus.backend.api.Organism
@@ -42,6 +46,7 @@ import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -217,26 +222,58 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun approveProcessedData(submitter: String, accessionVersions: List<AccessionVersion>, organism: Organism) {
-        log.info { "approving ${accessionVersions.size} sequences by $submitter" }
+    fun approveProcessedData(
+        submitter: String,
+        accessionVersionsFilter: List<AccessionVersion>?,
+        organism: Organism,
+        scope: ApproveDataScope,
+    ) {
+        if (accessionVersionsFilter == null) {
+            log.info { "approving all sequences by all groups $submitter is member of" }
+        } else {
+            log.info { "approving ${accessionVersionsFilter.size} sequences by $submitter" }
+        }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        accessionPreconditionValidator.validateAccessionVersions(
-            submitter,
-            accessionVersions,
-            listOf(AWAITING_APPROVAL),
-            organism,
-        )
+        if (accessionVersionsFilter != null) {
+            accessionPreconditionValidator.validateAccessionVersions(
+                submitter,
+                accessionVersionsFilter,
+                listOf(AWAITING_APPROVAL),
+                organism,
+            )
+        }
 
         sequenceEntriesTableProvider.get(organism).let { table ->
-            table.update(
+            table.join(
+                DataUseTermsTable,
+                JoinType.LEFT,
+                additionalConstraint = {
+                    (table.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                        (DataUseTermsTable.isNewestDataUseTerms)
+                },
+            ).update(
                 where = {
-                    table.accessionVersionIsIn(accessionVersions) and table.statusIs(AWAITING_APPROVAL)
+                    val statusCondition = table.statusIs(AWAITING_APPROVAL)
+
+                    val accessionCondition = if (accessionVersionsFilter !== null) {
+                        table.accessionVersionIsIn(accessionVersionsFilter)
+                    } else {
+                        table.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(submitter))
+                    }
+
+                    val scopeCondition = if (scope == ApproveDataScope.WITHOUT_WARNINGS) {
+                        not(table.entriesWithWarnings)
+                    } else {
+                        Op.TRUE
+                    }
+
+                    statusCondition and accessionCondition and scopeCondition
                 },
             ) {
-                it[statusColumn] = APPROVED_FOR_RELEASE.name
-                it[releasedAtColumn] = now
+                it[table.statusColumn] = APPROVED_FOR_RELEASE.name
+                it[table.releasedAtColumn] = now
             }
         }
     }
@@ -364,6 +401,7 @@ class SubmissionDatabaseService(
         organism: Organism?,
         groupsFilter: List<String>?,
         statusesFilter: List<Status>?,
+        warningsFilter: WarningsFilter? = null,
         page: Int? = null,
         size: Int? = null,
     ): GetSequenceResponse {
@@ -417,6 +455,12 @@ class SubmissionDatabaseService(
 
             val statusCounts: Map<Status, Int> = listOfStatuses.associateWith { status ->
                 query.count { it[table.statusColumn] == status.name }
+            }
+
+            if (warningsFilter == WarningsFilter.EXCLUDE_WARNINGS) {
+                query.andWhere {
+                    not(table.entriesWithWarnings)
+                }
             }
 
             val pagedQuery = if (page != null && size != null) {
@@ -540,19 +584,66 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun deleteSequenceEntryVersions(accessionVersions: List<AccessionVersion>, submitter: String, organism: Organism) {
-        log.info { "Deleting accession versions: $accessionVersions" }
+    fun deleteSequenceEntryVersions(
+        accessionVersionsFilter: List<AccessionVersion>?,
+        submitter: String,
+        organism: Organism,
+        scope: DeleteSequenceScope,
+    ): List<AccessionVersion> {
+        if (accessionVersionsFilter == null) {
+            log.info { "deleting all sequences of all groups $submitter is member of in the scope $scope" }
+        } else {
+            log.info { "deleting ${accessionVersionsFilter.size} sequences by $submitter in scope $scope" }
+        }
 
-        accessionPreconditionValidator.validateAccessionVersions(
-            submitter,
-            accessionVersions,
-            listOf(RECEIVED, AWAITING_APPROVAL, HAS_ERRORS, AWAITING_APPROVAL_FOR_REVOCATION),
-            organism,
-        )
+        val listOfDeletableStatuses = listOf(RECEIVED, AWAITING_APPROVAL, HAS_ERRORS, AWAITING_APPROVAL_FOR_REVOCATION)
+
+        if (accessionVersionsFilter != null) {
+            accessionPreconditionValidator.validateAccessionVersions(
+                submitter,
+                accessionVersionsFilter,
+                listOfDeletableStatuses,
+                organism,
+            )
+        }
+
+        val sequenceEntriesToDelete = sequenceEntriesTableProvider.get(organism).let { table ->
+            table.join(
+                DataUseTermsTable,
+                JoinType.LEFT,
+                additionalConstraint = {
+                    (table.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                        (DataUseTermsTable.isNewestDataUseTerms)
+                },
+            ).select {
+                val accessionCondition = if (accessionVersionsFilter != null) {
+                    table.accessionVersionIsIn(accessionVersionsFilter)
+                } else {
+                    table.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(submitter))
+                }
+
+                val scopeCondition = when (scope) {
+                    DeleteSequenceScope.PROCESSED_WITH_ERRORS -> {
+                        table.statusIs(HAS_ERRORS)
+                    }
+                    DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> {
+                        table.statusIs(AWAITING_APPROVAL) and
+                            table.entriesWithWarnings
+                    }
+                    DeleteSequenceScope.ALL -> table.statusIsOneOf(listOfDeletableStatuses)
+                }
+
+                accessionCondition and scopeCondition
+            }.map {
+                AccessionVersion(it[table.accessionColumn], it[table.versionColumn])
+            }
+        }
 
         sequenceEntriesTableProvider.get(organism).deleteWhere {
-            accessionVersionIsIn(accessionVersions)
+            accessionVersionIsIn(sequenceEntriesToDelete)
         }
+
+        return sequenceEntriesToDelete
     }
 
     fun submitEditedData(submitter: String, editedAccessionVersion: UnprocessedData, organism: Organism) {
