@@ -19,7 +19,7 @@
   "dependencies": {
     "@astrojs/node": "^6.1.0",
     "@emotion/react": "^11.11.3",
-    "@mui/material": "^5.15.10",
+    "@mui/material": "~5.14.20",
     "@mui/x-date-pickers": "^6.19.4",
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
