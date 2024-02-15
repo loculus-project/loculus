@@ -280,9 +280,9 @@ type KeyValueComponentProps = {
 };
 
 const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraStyle, keyStyle, warnings, errors }) => {
-    let toDisplayUncolored = '';
-    let toDisplayInWarningColor = '';
-    let toDisplayInErrorColor = '';
+    let toDisplayUncolored = null;
+    let toDisplayInWarningColor = null;
+    let toDisplayInErrorColor = null;
     if (errors !== undefined && errors.length > 0) {
         toDisplayInErrorColor = value;
     } else if (warnings !== undefined && warnings.length > 0) {
@@ -300,8 +300,8 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraSt
                 {errors !== undefined && errors.length > 0 && (
                     <>
                         <span className='text-red-600' data-tooltip-id={'error-tooltip-' + keyName}>
-                            {toDisplayInErrorColor}
-                            <Note className='inline-block' />
+                            {toDisplayInErrorColor ? toDisplayInErrorColor : ( <Note className='inline-block' />) }
+
                         </span>
                         <Tooltip
                             id={'error-tooltip-' + keyName}
@@ -312,7 +312,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraSt
                 {warnings !== undefined && warnings.length > 0 && (
                     <>
                         <span className='text-yellow-500' data-tooltip-id={'warning-tooltip-' + keyName}>
-                            {toDisplayInWarningColor} <Note className='inline-block' />
+                            {toDisplayInWarningColor ? toDisplayInWarningColor : ( <Note className='inline-block' />) }
                         </span>
                         <Tooltip
                             id={'warning-tooltip-' + keyName}
