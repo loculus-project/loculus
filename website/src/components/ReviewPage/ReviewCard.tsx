@@ -90,34 +90,29 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     return (
         <div className='p-3 border rounded-md shadow-lg  transition-all duration-500'>
             <div className='flex'>
-            <StatusIcon
+                <StatusIcon
                     status={sequenceEntryStatus.status}
                     dataUseTerms={sequenceEntryStatus.dataUseTerms}
                     accession={sequenceEntryStatus.accession}
                     hasWarnings={(data?.warnings?.length ?? 0) > 0}
                 />
-            
-            <div className='flex flex-grow flex-wrap'>
-                
-               <KeyValueComponent
-                    keyName={sequenceEntryStatus.submissionId}
-                    value={sequenceEntryStatus.accession}
-                    
-                />
-                {data !== undefined && (
-                    <>
-                    
-                        <MetadataList data={data} isLoading={isLoading} />
-                        
-                        
-                    </>
-                )}
+
+                <div className='flex flex-grow flex-wrap'>
+                    <KeyValueComponent
+                        keyName={sequenceEntryStatus.accession}
+                        value={sequenceEntryStatus.submissionId}
+                    />
+                    {data !== undefined && <MetadataList data={data} isLoading={isLoading} />}
+                </div>
+                {ButtonBar}
             </div>
-            {ButtonBar}
-            </div>
-            
-            {data !== undefined &&  data.errors.length>0 && <Errors dummy={console.log("errors",data.errors)} errors={data.errors ?? []} accession={sequenceEntryStatus.accession} /> }
-            {data !== undefined &&  data.warnings.length>0 && <Warnings warnings={data.warnings ?? []} accession={sequenceEntryStatus.accession} />}
+
+            {data?.errors?.length !== undefined && data.errors.length > 0 && (
+                <Errors errors={data.errors} accession={sequenceEntryStatus.accession} />
+            )}
+            {data?.warnings?.length !== undefined && data.warnings.length > 0 && (
+                <Warnings warnings={data.warnings} accession={sequenceEntryStatus.accession} />
+            )}
         </div>
     );
 };
@@ -131,21 +126,19 @@ const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotati
     item.source[0].name === metadataField;
 
 const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) =>
-(
     !isLoading &&
-            Object.entries(data.processedData.metadata).map((entry, index) => {
-                const valueString = entry[1].toString();
-                return (
-                    <KeyValueComponent
-                        key={index}
-                        keyName={entry[0]}
-                        value={valueString}
-                        warnings={data.warnings?.filter(isAnnotationPresent(entry[0]))}
-                        errors={data.errors?.filter(isAnnotationPresent(entry[0]))}
-                    />
-                );
-            })
-);
+    Object.entries(data.processedData.metadata).map((entry, index) => {
+        const valueString = entry[1].toString();
+        return (
+            <KeyValueComponent
+                key={index}
+                keyName={entry[0]}
+                value={valueString}
+                warnings={data.warnings?.filter(isAnnotationPresent(entry[0]))}
+                errors={data.errors?.filter(isAnnotationPresent(entry[0]))}
+            />
+        );
+    });
 
 type ErrorsProps = {
     errors: ProcessingAnnotation[];
@@ -287,43 +280,43 @@ type KeyValueComponentProps = {
 };
 
 const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraStyle, keyStyle, warnings, errors }) => {
-let toDisplayUncolored = "";
-let toDisplayInWarningColor = "";
-let toDisplayInErrorColor = "";
-if (errors !== undefined && errors.length > 0) {
-    toDisplayInErrorColor = value;
-} else if (warnings !== undefined && warnings.length > 0) {
-    toDisplayInWarningColor = value;
-}
-else {
-    toDisplayUncolored = value;
-}
-
+    let toDisplayUncolored = '';
+    let toDisplayInWarningColor = '';
+    let toDisplayInErrorColor = '';
+    if (errors !== undefined && errors.length > 0) {
+        toDisplayInErrorColor = value;
+    } else if (warnings !== undefined && warnings.length > 0) {
+        toDisplayInWarningColor = value;
+    } else {
+        toDisplayUncolored = value;
+    }
 
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle !== undefined ? keyStyle : 'text-gray-500 uppercase text-xs'}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>
                 {toDisplayUncolored}
-                {warnings !== undefined && warnings.length > 0 && (
-                    <>
-                        <span className='text-yellow-500' data-tooltip-id={'warning-tooltip-' + keyName}>
-                           {toDisplayInWarningColor} <Note className='inline-block' />
-                        </span>
-                        <Tooltip
-                            id={'warning-tooltip-' + keyName}
-                            content={warnings.map((annotation) => annotation.message).join(', ')}
-                        />
-                    </>
-                )}
+
                 {errors !== undefined && errors.length > 0 && (
                     <>
                         <span className='text-red-600' data-tooltip-id={'error-tooltip-' + keyName}>
-                            {toDisplayInErrorColor}<Note className='inline-block' />
+                            {toDisplayInErrorColor}
+                            <Note className='inline-block' />
                         </span>
                         <Tooltip
                             id={'error-tooltip-' + keyName}
                             content={errors.map((annotation) => annotation.message).join(', ')}
+                        />
+                    </>
+                )}
+                {warnings !== undefined && warnings.length > 0 && (
+                    <>
+                        <span className='text-yellow-500' data-tooltip-id={'warning-tooltip-' + keyName}>
+                            {toDisplayInWarningColor} <Note className='inline-block' />
+                        </span>
+                        <Tooltip
+                            id={'warning-tooltip-' + keyName}
+                            content={warnings.map((annotation) => annotation.message).join(', ')}
                         />
                     </>
                 )}
