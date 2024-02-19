@@ -16,7 +16,6 @@ import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -33,7 +32,7 @@ class GetDataToEditEndpointTest(
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse {
             client.getSequenceEntryThatHasErrors(
-                firstAccession,
+                "ShouldNotMatterAtAll",
                 1,
                 jwt = it,
             )
@@ -48,9 +47,9 @@ class GetDataToEditEndpointTest(
 
     @Test
     fun `GIVEN an entry has errors WHEN I extract the sequence data THEN I get all data to edit the entry`() {
-        convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
+        val firstAccession = convenienceClient.prepareDefaultSequenceEntriesToInProcessing().first().accession
 
-        convenienceClient.submitProcessedData(PreparedProcessedData.withErrors())
+        convenienceClient.submitProcessedData(PreparedProcessedData.withErrors(firstAccession))
 
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
@@ -62,12 +61,12 @@ class GetDataToEditEndpointTest(
 
         assertThat(editedData.accession, `is`(firstAccession))
         assertThat(editedData.version, `is`(1))
-        assertThat(editedData.processedData, `is`(PreparedProcessedData.withErrors().data))
+        assertThat(editedData.processedData, `is`(PreparedProcessedData.withErrors(firstAccession).data))
     }
 
     @Test
     fun `WHEN I query data for a non-existent accession THEN refuses request with not found`() {
-        val nonExistentAccession = "999"
+        val nonExistentAccession = "DefinitelyNotExisting"
 
         client.getSequenceEntryThatHasErrors(nonExistentAccession, 1)
             .andExpect(status().isUnprocessableEntity)
@@ -81,7 +80,10 @@ class GetDataToEditEndpointTest(
 
     @Test
     fun `WHEN I query data for wrong organism THEN refuses request with unprocessable entity`() {
-        convenienceClient.prepareDataTo(Status.HAS_ERRORS, organism = DEFAULT_ORGANISM)
+        val firstAccession = convenienceClient.prepareDataTo(
+            Status.HAS_ERRORS,
+            organism = DEFAULT_ORGANISM,
+        ).first().accession
 
         client.getSequenceEntryThatHasErrors(firstAccession, 1, organism = DEFAULT_ORGANISM)
             .andExpect(status().isOk)
@@ -115,7 +117,7 @@ class GetDataToEditEndpointTest(
 
     @Test
     fun `WHEN I query a sequence entry that has a wrong state THEN refuses request with unprocessable entity`() {
-        convenienceClient.prepareDataTo(Status.IN_PROCESSING)
+        val firstAccession = convenienceClient.prepareDataTo(Status.IN_PROCESSING).first().accession
 
         client.getSequenceEntryThatHasErrors(
             accession = firstAccession,
@@ -126,14 +128,14 @@ class GetDataToEditEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession versions are in not in one of the states " +
-                        "[HAS_ERRORS, AWAITING_APPROVAL]: 1.1 - IN_PROCESSING",
+                        "[HAS_ERRORS, AWAITING_APPROVAL]: $firstAccession.1 - IN_PROCESSING",
                 ),
             )
     }
 
     @Test
     fun `WHEN I try to get data for a sequence entry that I do not own THEN refuses request with forbidden entity`() {
-        convenienceClient.prepareDataTo(Status.HAS_ERRORS)
+        val firstAccession = convenienceClient.prepareDataTo(Status.HAS_ERRORS).first().accession
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
         client.getSequenceEntryThatHasErrors(

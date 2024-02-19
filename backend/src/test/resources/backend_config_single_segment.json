@@ -1,4 +1,5 @@
 {
+    "accessionPrefix" : "LOC_",
     "instances": {
         "dummyOrganism": {
             "referenceGenomes": {

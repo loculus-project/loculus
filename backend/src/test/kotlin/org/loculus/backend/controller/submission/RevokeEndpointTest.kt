@@ -11,7 +11,6 @@ import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -36,16 +35,16 @@ class RevokeEndpointTest(
 
     @Test
     fun `GIVEN entries with 'APPROVED_FOR_RELEASE' THEN the status changes to 'AWAITING_APPROVAL_FOR_REVOCATION'`() {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val accessions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map { it.accession }
 
-        client.revokeSequenceEntries(DefaultFiles.allAccessions)
+        client.revokeSequenceEntries(accessions)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
-            .andExpect(jsonPath("\$[0].accession").value(firstAccession))
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
             .andExpect(jsonPath("\$[0].version").value(2))
 
-        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 2)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 2)
             .assertStatusIs(AWAITING_APPROVAL_FOR_REVOCATION)
     }
 
@@ -66,9 +65,10 @@ class RevokeEndpointTest(
 
     @Test
     fun `WHEN revoking sequence entry of other organism THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease(organism = DEFAULT_ORGANISM)
+        val accessions = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease(organism = DEFAULT_ORGANISM).map { it.accession }
 
-        client.revokeSequenceEntries(listOf(firstAccession), organism = OTHER_ORGANISM)
+        client.revokeSequenceEntries(listOf(accessions.first()), organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -80,10 +80,10 @@ class RevokeEndpointTest(
 
     @Test
     fun `WHEN revoking sequence entries not from the submitter THEN throws forbidden error`() {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val accessions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map { it.accession }
 
         val notSubmitter = "nonExistingUser"
-        client.revokeSequenceEntries(DefaultFiles.allAccessions.subList(0, 2), jwt = generateJwtFor(notSubmitter))
+        client.revokeSequenceEntries(accessions, jwt = generateJwtFor(notSubmitter))
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -93,15 +93,18 @@ class RevokeEndpointTest(
 
     @Test
     fun `WHEN revoking with latest version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDefaultSequenceEntriesToHasErrors()
+        val accessions = convenienceClient.prepareDefaultSequenceEntriesToHasErrors().map { it.accession }
 
-        client.revokeSequenceEntries(DefaultFiles.allAccessions.subList(0, 2))
+        client.revokeSequenceEntries(accessions)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail").value(
-                    "Accession versions are in not in one of the states [${Status.APPROVED_FOR_RELEASE}]: " +
-                        "1.1 - ${Status.HAS_ERRORS}, 2.1 - ${Status.HAS_ERRORS}",
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "Accession versions are in not in one of the states [${Status.APPROVED_FOR_RELEASE}]: " +
+                            "${accessions.first()}.1 - ${Status.HAS_ERRORS},",
+                    ),
                 ),
             )
     }

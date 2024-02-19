@@ -12,7 +12,6 @@ import org.loculus.backend.api.PreprocessingAnnotationSourceType
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SegmentName
 import org.loculus.backend.api.SubmittedProcessedData
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 
@@ -97,45 +96,38 @@ val defaultProcessedDataMultiSegmented = ProcessedData(
 )
 
 private val defaultSuccessfulSubmittedData = SubmittedProcessedData(
-    accession = "1",
+    accession = "If a test result shows this, processed data was not prepared correctly.",
     version = 1,
     data = defaultProcessedData,
     errors = null,
     warnings = null,
 )
 
-private val defaultSuccessfulSubmittedDataMultiSegmented = SubmittedProcessedData(
-    accession = "1",
-    version = 1,
+private val defaultSuccessfulSubmittedDataMultiSegmented = defaultSuccessfulSubmittedData.copy(
     data = defaultProcessedDataMultiSegmented,
-    errors = null,
-    warnings = null,
 )
 
 object PreparedProcessedData {
-    fun successfullyProcessed(
-        accession: Accession = DefaultFiles.firstAccession,
-        version: Long = defaultSuccessfulSubmittedData.version,
-    ) = defaultSuccessfulSubmittedData.copy(
-        accession = accession,
-        version = version,
-    )
+    fun successfullyProcessed(accession: Accession, version: Long = defaultSuccessfulSubmittedData.version) =
+        defaultSuccessfulSubmittedData.copy(
+            accession = accession,
+            version = version,
+        )
 
     fun successfullyProcessedOtherOrganismData(
-        accession: Accession = DefaultFiles.firstAccession,
+        accession: Accession,
         version: Long = defaultSuccessfulSubmittedDataMultiSegmented.version,
     ) = defaultSuccessfulSubmittedDataMultiSegmented.copy(
         accession = accession,
         version = version,
     )
 
-    fun withNullForFields(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =
-        defaultSuccessfulSubmittedData.copy(
-            accession = accession,
-            data = defaultProcessedData.copy(
-                metadata = defaultProcessedData.metadata + fields.map { it to NullNode.instance },
-            ),
-        )
+    fun withNullForFields(accession: Accession, fields: List<String>) = defaultSuccessfulSubmittedData.copy(
+        accession = accession,
+        data = defaultProcessedData.copy(
+            metadata = defaultProcessedData.metadata + fields.map { it to NullNode.instance },
+        ),
+    )
 
     fun withNullForSequences(accession: Accession, version: Version) = defaultSuccessfulSubmittedData.copy(
         accession = accession,
@@ -148,7 +140,7 @@ object PreparedProcessedData {
     )
 
     fun withMissingMetadataFields(
-        accession: Accession = DefaultFiles.firstAccession,
+        accession: Accession,
         version: Long = defaultSuccessfulSubmittedData.version,
         absentFields: List<String>,
     ) = defaultSuccessfulSubmittedData.copy(
@@ -159,34 +151,31 @@ object PreparedProcessedData {
         ),
     )
 
-    fun withUnknownMetadataField(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =
-        defaultSuccessfulSubmittedData.copy(
-            accession = accession,
-            data = defaultProcessedData.copy(
-                metadata = defaultProcessedData.metadata + fields.map { it to TextNode("value for $it") },
-            ),
-        )
+    fun withUnknownMetadataField(accession: Accession, fields: List<String>) = defaultSuccessfulSubmittedData.copy(
+        accession = accession,
+        data = defaultProcessedData.copy(
+            metadata = defaultProcessedData.metadata + fields.map { it to TextNode("value for $it") },
+        ),
+    )
 
-    fun withMissingRequiredField(accession: Accession = DefaultFiles.firstAccession, fields: List<String>) =
-        defaultSuccessfulSubmittedData.copy(
-            accession = accession,
-            data = defaultProcessedData.copy(
-                metadata = defaultProcessedData.metadata.filterKeys { !fields.contains(it) },
-            ),
-        )
+    fun withMissingRequiredField(accession: Accession, fields: List<String>) = defaultSuccessfulSubmittedData.copy(
+        accession = accession,
+        data = defaultProcessedData.copy(
+            metadata = defaultProcessedData.metadata.filterKeys { !fields.contains(it) },
+        ),
+    )
 
-    fun withWrongTypeForFields(accession: Accession = DefaultFiles.firstAccession) =
-        defaultSuccessfulSubmittedData.copy(
-            accession = accession,
-            data = defaultProcessedData.copy(
-                metadata = defaultProcessedData.metadata + mapOf(
-                    "region" to IntNode(5),
-                    "age" to TextNode("not a number"),
-                ),
+    fun withWrongTypeForFields(accession: Accession) = defaultSuccessfulSubmittedData.copy(
+        accession = accession,
+        data = defaultProcessedData.copy(
+            metadata = defaultProcessedData.metadata + mapOf(
+                "region" to IntNode(5),
+                "age" to TextNode("not a number"),
             ),
-        )
+        ),
+    )
 
-    fun withWrongDateFormat(accession: Accession = DefaultFiles.firstAccession) = defaultSuccessfulSubmittedData.copy(
+    fun withWrongDateFormat(accession: Accession) = defaultSuccessfulSubmittedData.copy(
         accession = accession,
         data = defaultProcessedData.copy(
             metadata = defaultProcessedData.metadata + mapOf(
@@ -195,75 +184,64 @@ object PreparedProcessedData {
         ),
     )
 
-    fun withWrongPangoLineageFormat(accession: Accession = DefaultFiles.firstAccession) =
+    fun withWrongPangoLineageFormat(accession: Accession) = defaultSuccessfulSubmittedData.copy(
+        accession = accession,
+        data = defaultProcessedData.copy(
+            metadata = defaultProcessedData.metadata + mapOf(
+                "pangoLineage" to TextNode("A.5.invalid"),
+            ),
+        ),
+    )
+
+    fun withMissingSegmentInUnalignedNucleotideSequences(accession: Accession, segment: SegmentName) =
         defaultSuccessfulSubmittedData.copy(
             accession = accession,
             data = defaultProcessedData.copy(
-                metadata = defaultProcessedData.metadata + mapOf(
-                    "pangoLineage" to TextNode("A.5.invalid"),
-                ),
+                unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences - segment,
             ),
         )
 
-    fun withMissingSegmentInUnalignedNucleotideSequences(
-        accession: Accession = DefaultFiles.firstAccession,
-        segment: SegmentName,
-    ) = defaultSuccessfulSubmittedData.copy(
-        accession = accession,
-        data = defaultProcessedData.copy(
-            unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences - segment,
-        ),
-    )
+    fun withMissingSegmentInAlignedNucleotideSequences(accession: Accession, segment: SegmentName) =
+        defaultSuccessfulSubmittedData.copy(
+            accession = accession,
+            data = defaultProcessedData.copy(
+                alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences - segment,
+            ),
+        )
 
-    fun withMissingSegmentInAlignedNucleotideSequences(
-        accession: Accession = DefaultFiles.firstAccession,
-        segment: SegmentName,
-    ) = defaultSuccessfulSubmittedData.copy(
-        accession = accession,
-        data = defaultProcessedData.copy(
-            alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences - segment,
-        ),
-    )
+    fun withUnknownSegmentInAlignedNucleotideSequences(accession: Accession, segment: SegmentName) =
+        defaultSuccessfulSubmittedData.copy(
+            accession = accession,
+            data = defaultProcessedData.copy(
+                alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences + (segment to "NNNN"),
+            ),
+        )
 
-    fun withUnknownSegmentInAlignedNucleotideSequences(
-        accession: Accession = DefaultFiles.firstAccession,
-        segment: SegmentName,
-    ) = defaultSuccessfulSubmittedData.copy(
-        accession = accession,
-        data = defaultProcessedData.copy(
-            alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences + (segment to "NNNN"),
-        ),
-    )
+    fun withUnknownSegmentInUnalignedNucleotideSequences(accession: Accession, segment: SegmentName) =
+        defaultSuccessfulSubmittedData.copy(
+            accession = accession,
+            data = defaultProcessedData.copy(
+                unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences + (segment to "NNNN"),
+            ),
+        )
 
-    fun withUnknownSegmentInUnalignedNucleotideSequences(
-        accession: Accession = DefaultFiles.firstAccession,
-        segment: SegmentName,
-    ) = defaultSuccessfulSubmittedData.copy(
-        accession = accession,
-        data = defaultProcessedData.copy(
-            unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences + (segment to "NNNN"),
-        ),
-    )
-
-    fun withUnknownSegmentInNucleotideInsertions(
-        accession: Accession = DefaultFiles.firstAccession,
-        segment: SegmentName,
-    ) = defaultSuccessfulSubmittedData.copy(
-        accession = accession,
-        data = defaultProcessedData.copy(
-            nucleotideInsertions = defaultProcessedData.nucleotideInsertions + (
-                segment to listOf(
-                    Insertion(
-                        123,
-                        "ACTG",
+    fun withUnknownSegmentInNucleotideInsertions(accession: Accession, segment: SegmentName) =
+        defaultSuccessfulSubmittedData.copy(
+            accession = accession,
+            data = defaultProcessedData.copy(
+                nucleotideInsertions = defaultProcessedData.nucleotideInsertions + (
+                    segment to listOf(
+                        Insertion(
+                            123,
+                            "ACTG",
+                        ),
+                    )
                     ),
-                )
-                ),
-        ),
-    )
+            ),
+        )
 
     fun withAlignedNucleotideSequenceOfWrongLength(
-        accession: Accession = DefaultFiles.firstAccession,
+        accession: Accession,
         segment: SegmentName,
         length: Int = 123,
     ): SubmittedProcessedData {
@@ -277,7 +255,7 @@ object PreparedProcessedData {
     }
 
     fun withAlignedNucleotideSequenceWithWrongSymbols(
-        accession: Accession = DefaultFiles.firstAccession,
+        accession: Accession,
         segment: SegmentName,
     ): SubmittedProcessedData {
         val alignedNucleotideSequences = defaultProcessedData.alignedNucleotideSequences.toMutableMap()
@@ -290,7 +268,7 @@ object PreparedProcessedData {
     }
 
     fun withUnalignedNucleotideSequenceWithWrongSymbols(
-        accession: Accession = DefaultFiles.firstAccession,
+        accession: Accession,
         segment: SegmentName,
     ): SubmittedProcessedData {
         val unalignedNucleotideSequences = defaultProcessedData.unalignedNucleotideSequences.toMutableMap()
@@ -302,10 +280,7 @@ object PreparedProcessedData {
         )
     }
 
-    fun withNucleotideInsertionsWithWrongSymbols(
-        accession: Accession = DefaultFiles.firstAccession,
-        segment: SegmentName,
-    ): SubmittedProcessedData {
+    fun withNucleotideInsertionsWithWrongSymbols(accession: Accession, segment: SegmentName): SubmittedProcessedData {
         val nucleotideInsertions = defaultProcessedData.nucleotideInsertions.toMutableMap()
         nucleotideInsertions[segment] = listOf(Insertion(123, "ÄÖ"))
 
@@ -315,7 +290,7 @@ object PreparedProcessedData {
         )
     }
 
-    fun withMissingGeneInAlignedAminoAcidSequences(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
+    fun withMissingGeneInAlignedAminoAcidSequences(accession: Accession, gene: GeneName) =
         defaultSuccessfulSubmittedData.copy(
             accession = accession,
             data = defaultProcessedData.copy(
@@ -323,7 +298,7 @@ object PreparedProcessedData {
             ),
         )
 
-    fun withUnknownGeneInAlignedAminoAcidSequences(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
+    fun withUnknownGeneInAlignedAminoAcidSequences(accession: Accession, gene: GeneName) =
         defaultSuccessfulSubmittedData.copy(
             accession = accession,
             data = defaultProcessedData.copy(
@@ -331,7 +306,7 @@ object PreparedProcessedData {
             ),
         )
 
-    fun withUnknownGeneInAminoAcidInsertions(accession: Accession = DefaultFiles.firstAccession, gene: GeneName) =
+    fun withUnknownGeneInAminoAcidInsertions(accession: Accession, gene: GeneName) =
         defaultSuccessfulSubmittedData.copy(
             accession = accession,
             data = defaultProcessedData.copy(
@@ -347,7 +322,7 @@ object PreparedProcessedData {
         )
 
     fun withAminoAcidSequenceOfWrongLength(
-        accession: Accession = DefaultFiles.firstAccession,
+        accession: Accession,
         gene: SegmentName,
         length: Int = 123,
     ): SubmittedProcessedData {
@@ -360,10 +335,7 @@ object PreparedProcessedData {
         )
     }
 
-    fun withAminoAcidSequenceWithWrongSymbols(
-        accession: Accession = DefaultFiles.firstAccession,
-        gene: SegmentName,
-    ): SubmittedProcessedData {
+    fun withAminoAcidSequenceWithWrongSymbols(accession: Accession, gene: SegmentName): SubmittedProcessedData {
         val aminoAcidSequence = defaultProcessedData.alignedAminoAcidSequences.toMutableMap()
         aminoAcidSequence[gene] = "ÄÖ" + aminoAcidSequence[gene]!!.substring(2)
 
@@ -373,10 +345,7 @@ object PreparedProcessedData {
         )
     }
 
-    fun withAminoAcidInsertionsWithWrongSymbols(
-        accession: Accession = DefaultFiles.firstAccession,
-        gene: SegmentName,
-    ): SubmittedProcessedData {
+    fun withAminoAcidInsertionsWithWrongSymbols(accession: Accession, gene: SegmentName): SubmittedProcessedData {
         val aminoAcidInsertions = defaultProcessedData.aminoAcidInsertions.toMutableMap()
         aminoAcidInsertions[gene] = listOf(Insertion(123, "ÄÖ"))
 
@@ -386,7 +355,7 @@ object PreparedProcessedData {
         )
     }
 
-    fun withErrors(accession: Accession = DefaultFiles.firstAccession) = defaultSuccessfulSubmittedData.copy(
+    fun withErrors(accession: Accession) = defaultSuccessfulSubmittedData.copy(
         accession = accession,
         errors = listOf(
             PreprocessingAnnotation(
@@ -410,7 +379,7 @@ object PreparedProcessedData {
         ),
     )
 
-    fun withWarnings(accession: Accession = DefaultFiles.firstAccession) = defaultSuccessfulSubmittedData.copy(
+    fun withWarnings(accession: Accession) = defaultSuccessfulSubmittedData.copy(
         accession = accession,
         warnings = listOf(
             PreprocessingAnnotation(

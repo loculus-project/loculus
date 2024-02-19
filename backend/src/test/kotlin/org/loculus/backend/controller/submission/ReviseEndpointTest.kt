@@ -39,7 +39,7 @@ class ReviseEndpointTest(
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
             client.reviseSequenceEntries(
-                DefaultFiles.revisedMetadataFile,
+                DefaultFiles.dummyRevisedMetadataFile,
                 DefaultFiles.sequencesFile,
                 jwt = it,
             )
@@ -49,7 +49,7 @@ class ReviseEndpointTest(
     @Test
     fun `WHEN submitting on behalf of a non-existing group THEN expect that the group is not found`() {
         client.submit(
-            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.dummyRevisedMetadataFile,
             DefaultFiles.sequencesFile,
             groupName = "nonExistingGroup",
         )
@@ -63,7 +63,7 @@ class ReviseEndpointTest(
         val otherUser = "otherUser"
 
         client.submit(
-            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.dummyRevisedMetadataFile,
             DefaultFiles.sequencesFile,
             jwt = generateJwtFor(otherUser),
         )
@@ -82,22 +82,22 @@ class ReviseEndpointTest(
 
     @Test
     fun `GIVEN entries with status 'APPROVED_FOR_RELEASE' THEN there is a revised version and returns HeaderIds`() {
-        convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE)
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map { it.accession }
 
         client.reviseSequenceEntries(
-            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.getRevisedMetadataFile(accessions),
             DefaultFiles.sequencesFile,
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
-            .andExpect(jsonPath("\$[0].accession").value(DefaultFiles.firstAccession))
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
             .andExpect(jsonPath("\$[0].version").value(2))
 
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 2)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 2)
             .assertStatusIs(RECEIVED)
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(APPROVED_FOR_RELEASE)
 
         val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
@@ -108,7 +108,7 @@ class ReviseEndpointTest(
             responseBody,
             hasItem(
                 UnprocessedData(
-                    accession = DefaultFiles.firstAccession,
+                    accession = accessions.first(),
                     version = 2,
                     data = defaultOriginalData,
                 ),
@@ -118,7 +118,9 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting revised data with non-existing accessions THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE)
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map {
+            it.accession
+        }
 
         client.reviseSequenceEntries(
             SubmitFiles.revisedMetadataFileWith(
@@ -126,7 +128,7 @@ class ReviseEndpointTest(
                 """
                  accession	submissionId	firstColumn
                     123	someHeader_main	someValue
-                    1	someHeader2_main	someOtherValue
+                    ${accessions.first()}	someHeader2_main	someOtherValue
                 """.trimIndent(),
             ),
             SubmitFiles.sequenceFileWith(),
@@ -141,10 +143,12 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting revised data for wrong organism THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE, organism = DEFAULT_ORGANISM)
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE, organism = DEFAULT_ORGANISM).map {
+            it.accession
+        }
 
         client.reviseSequenceEntries(
-            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.getRevisedMetadataFile(accessions),
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
         )
@@ -159,11 +163,11 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting revised data not from the submitter THEN throws forbidden error`() {
-        convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE)
+        val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map { it.accession }
 
         val notSubmitter = "notTheSubmitter"
         client.reviseSequenceEntries(
-            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.getRevisedMetadataFile(accessions),
             DefaultFiles.sequencesFile,
             jwt = generateJwtFor(notSubmitter),
         )
@@ -182,19 +186,21 @@ class ReviseEndpointTest(
 
     @Test
     fun `WHEN submitting data with version not 'APPROVED_FOR_RELEASE' THEN throws an unprocessableEntity error`() {
-        convenienceClient.prepareDataTo(HAS_ERRORS)
+        val accessions = convenienceClient.prepareDataTo(HAS_ERRORS).map { it.accession }
 
         client.reviseSequenceEntries(
-            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.getRevisedMetadataFile(accessions),
             DefaultFiles.sequencesFile,
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail").value(
-                    "Accession versions are in not in one of the states [APPROVED_FOR_RELEASE]: " +
-                        "1.1 - HAS_ERRORS, 10.1 - HAS_ERRORS, 2.1 - HAS_ERRORS, 3.1 - HAS_ERRORS, 4.1 - HAS_ERRORS, " +
-                        "5.1 - HAS_ERRORS, 6.1 - HAS_ERRORS, 7.1 - HAS_ERRORS, 8.1 - HAS_ERRORS, 9.1 - HAS_ERRORS",
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "Accession versions are in not in one of the states [APPROVED_FOR_RELEASE]: " +
+                            "${accessions.first()}.1 - HAS_ERRORS,",
+                    ),
                 ),
             )
     }
@@ -375,20 +381,6 @@ class ReviseEndpointTest(
                     "A row in metadata file contains no accession",
                 ),
 
-                Arguments.of(
-                    "metadata file with one row with accession which is not a number",
-                    SubmitFiles.metadataFileWith(
-                        content = """
-                            accession	submissionId	firstColumn
-                            abc	someHeader	someValue
-                            2	someHeader2	someValue
-                        """.trimIndent(),
-                    ),
-                    SubmitFiles.sequenceFileWith(),
-                    status().isUnprocessableEntity,
-                    "Unprocessable Entity",
-                    "A row in metadata file contains no valid accession: abc",
-                ),
             )
         }
     }

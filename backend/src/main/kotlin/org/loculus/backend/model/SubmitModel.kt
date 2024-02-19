@@ -117,6 +117,13 @@ class SubmitModel(
                     submissionParams.organism,
                     submissionParams.username,
                 )
+            } else if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
+                log.info { "Generating new accessions for uploaded sequence data with uploadId $uploadId" }
+                uploadDatabaseService.generateNewAccessionsForOriginalUpload(
+                    uploadId,
+                    submissionParams.organism,
+                    submissionParams.username,
+                )
             }
 
             log.debug { "Persisting submission with uploadId $uploadId" }

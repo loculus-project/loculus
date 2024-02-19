@@ -26,65 +26,74 @@ class SubmissionJourneyTest(
 ) {
     @Test
     fun `Submission scenario, from submission, over edit and approval ending in status 'APPROVED_FOR_RELEASE'`() {
-        convenienceClient.submitDefaultFiles()
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
+        val accessions = convenienceClient.submitDefaultFiles().map { it.accession }
+
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(RECEIVED)
 
         convenienceClient.extractUnprocessedData()
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(IN_PROCESSING)
 
         convenienceClient.submitProcessedData(
-            DefaultFiles.allAccessions.map {
+            accessions.map {
                 PreparedProcessedData.withErrors(accession = it)
             },
         )
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(HAS_ERRORS)
 
-        convenienceClient.submitDefaultEditedData()
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
+        convenienceClient.submitDefaultEditedData(accessions)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(RECEIVED)
 
         convenienceClient.extractUnprocessedData()
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(IN_PROCESSING)
 
         convenienceClient.submitProcessedData(
-            DefaultFiles.allAccessions.map {
+            accessions.map {
                 PreparedProcessedData.successfullyProcessed(accession = it)
             },
         )
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(AWAITING_APPROVAL)
 
-        convenienceClient.approveProcessedSequenceEntries(DefaultFiles.allAccessions.map { AccessionVersion(it, 1) })
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 1)
+        convenienceClient.approveProcessedSequenceEntries(
+            accessions.map {
+                AccessionVersion(it, 1)
+            },
+        )
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(APPROVED_FOR_RELEASE)
     }
 
     @Test
     fun `Revising, from submitting revised data over processing, approving ending in status 'APPROVED_FOR_RELEASE'`() {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val accessions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map { it.accession }
 
-        convenienceClient.reviseDefaultProcessedSequenceEntries()
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 2)
+        convenienceClient.reviseDefaultProcessedSequenceEntries(accessions)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 2)
             .assertStatusIs(RECEIVED)
 
         convenienceClient.extractUnprocessedData()
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 2)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 2)
             .assertStatusIs(IN_PROCESSING)
 
         convenienceClient.submitProcessedData(
-            DefaultFiles.allAccessions.map {
+            accessions.map {
                 PreparedProcessedData.successfullyProcessed(accession = it, version = 2)
             },
         )
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 2)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 2)
             .assertStatusIs(AWAITING_APPROVAL)
 
-        convenienceClient.approveProcessedSequenceEntries(DefaultFiles.allAccessions.map { AccessionVersion(it, 2) })
-        convenienceClient.getSequenceEntryOfUser(accession = DefaultFiles.firstAccession, version = 2)
+        convenienceClient.approveProcessedSequenceEntries(
+            accessions.map {
+                AccessionVersion(it, 2)
+            },
+        )
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 2)
             .assertStatusIs(APPROVED_FOR_RELEASE)
     }
 

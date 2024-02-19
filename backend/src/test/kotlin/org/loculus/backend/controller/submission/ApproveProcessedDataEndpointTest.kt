@@ -3,6 +3,7 @@ package org.loculus.backend.controller.submission
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.ApproveDataScope
@@ -41,23 +42,15 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN sequence entries are processed WHEN I approve them THEN their status should be APPROVED_FOR_RELEASE`() {
-        convenienceClient.prepareDatabaseWithProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "1"),
-            PreparedProcessedData.successfullyProcessed(accession = "2"),
-        )
+        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
 
-        client.approveProcessedSequenceEntries(
-            listOf(
-                AccessionVersion("1", 1),
-                AccessionVersion("2", 1),
-            ),
-        )
+        client.approveProcessedSequenceEntries(accessionVersions)
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = "1", version = 1)
-            .assertStatusIs(APPROVED_FOR_RELEASE)
-        convenienceClient.getSequenceEntryOfUser(accession = "2", version = 1)
-            .assertStatusIs(APPROVED_FOR_RELEASE)
+        assertThat(
+            convenienceClient.getSequenceEntries().statusCounts[APPROVED_FOR_RELEASE],
+            `is`(NUMBER_OF_SEQUENCES),
+        )
     }
 
     @Test
@@ -75,18 +68,9 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I approve sequence entries as non-group member THEN it should fail as forbidden`() {
-        convenienceClient.prepareDatabaseWithProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "1"),
-            PreparedProcessedData.successfullyProcessed(accession = "2"),
-        )
+        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
 
-        client.approveProcessedSequenceEntries(
-            listOf(
-                AccessionVersion("1", 1),
-                AccessionVersion("2", 1),
-            ),
-            jwt = generateJwtFor("other user"),
-        )
+        client.approveProcessedSequenceEntries(accessionVersions, jwt = generateJwtFor("other user"))
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(
@@ -98,7 +82,7 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(
                 jsonPath(
                     "$.detail",
-                    containsString("Affected AccessionVersions: [1.1, 2.1]"),
+                    containsString("Affected AccessionVersions"),
                 ),
             )
     }
@@ -107,13 +91,11 @@ class ApproveProcessedDataEndpointTest(
     fun `WHEN I approve a sequence entry that does not exist THEN no accession should be approved`() {
         val nonExistentAccession = "999"
 
-        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed(accession = "1"))
-
-        val existingAccessionVersion = AccessionVersion("1", 1)
+        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
 
         client.approveProcessedSequenceEntries(
             listOf(
-                existingAccessionVersion,
+                accessionVersions.first(),
                 AccessionVersion(nonExistentAccession, 1),
             ),
         )
@@ -121,61 +103,66 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.detail", containsString("Accession versions 999.1 do not exist")))
 
-        convenienceClient.getSequenceEntryOfUser(existingAccessionVersion).assertStatusIs(AWAITING_APPROVAL)
+        convenienceClient.getSequenceEntryOfUser(accessionVersions.first()).assertStatusIs(AWAITING_APPROVAL)
     }
 
     @Test
     fun `WHEN I approve a sequence entry that does not exist THEN no sequence should be approved`() {
-        val nonExistentVersion = 999L
-
-        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed(accession = "1"))
-
-        val existingAccessionVersion = AccessionVersion("1", 1)
+        val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
+        val nonExistingVersion = accessionVersions[1].copy(version = 999L)
 
         client.approveProcessedSequenceEntries(
             listOf(
-                existingAccessionVersion,
-                AccessionVersion("1", nonExistentVersion),
-            ),
-        )
-            .andExpect(status().isUnprocessableEntity)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.detail", containsString("Accession versions 1.999 do not exist")))
-
-        convenienceClient.getSequenceEntryOfUser(existingAccessionVersion).assertStatusIs(AWAITING_APPROVAL)
-    }
-
-    @Test
-    fun `GIVEN one of the entries is not processed WHEN I approve them THEN no sequence should be approved`() {
-        convenienceClient.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed(accession = "1"))
-
-        val accessionVersionInCorrectState = AccessionVersion("1", 1)
-
-        convenienceClient.getSequenceEntryOfUser(accessionVersionInCorrectState)
-            .assertStatusIs(AWAITING_APPROVAL)
-        convenienceClient.getSequenceEntryOfUser(accession = "2", version = 1).assertStatusIs(IN_PROCESSING)
-
-        client.approveProcessedSequenceEntries(
-            listOf(
-                accessionVersionInCorrectState,
-                AccessionVersion("2", 1),
-                AccessionVersion("3", 1),
+                accessionVersions.first(),
+                nonExistingVersion,
             ),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(
-                jsonPath("$.detail")
-                    .value(
-                        "Accession versions are in not in one of the states [$AWAITING_APPROVAL]: " +
-                            "2.1 - $IN_PROCESSING, 3.1 - $IN_PROCESSING",
+                jsonPath(
+                    "$.detail",
+                    containsString(
+                        "Accession versions ${nonExistingVersion.displayAccessionVersion()} " +
+                            "do not exist",
                     ),
+                ),
             )
 
-        convenienceClient.getSequenceEntryOfUser(accessionVersionInCorrectState)
+        convenienceClient.getSequenceEntryOfUser(accessionVersions.first()).assertStatusIs(AWAITING_APPROVAL)
+    }
+
+    @Test
+    fun `GIVEN one of the entries is not processed WHEN I approve them THEN no sequence should be approved`() {
+        val accessionVersionsInCorrectState = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
+        val accessionVersionNotInCorrectState = convenienceClient.prepareDataTo(IN_PROCESSING).getAccessionVersions()
+
+        convenienceClient.getSequenceEntryOfUser(accessionVersionsInCorrectState.first())
             .assertStatusIs(AWAITING_APPROVAL)
-        convenienceClient.getSequenceEntryOfUser(accession = "2", version = 1).assertStatusIs(IN_PROCESSING)
-        convenienceClient.getSequenceEntryOfUser(accession = "3", version = 1).assertStatusIs(IN_PROCESSING)
+        convenienceClient.getSequenceEntryOfUser(accessionVersionNotInCorrectState.first()).assertStatusIs(
+            IN_PROCESSING,
+        )
+
+        client.approveProcessedSequenceEntries(
+            accessionVersionsInCorrectState + accessionVersionNotInCorrectState,
+        )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(
+                jsonPath(
+                    "$.detail",
+                    containsString(
+                        "Accession versions are in not in one of the states [$AWAITING_APPROVAL]: " +
+                            "${accessionVersionNotInCorrectState.first().displayAccessionVersion()} - $IN_PROCESSING",
+                    ),
+                ),
+            )
+
+        convenienceClient.getSequenceEntryOfUser(accessionVersionsInCorrectState.first())
+            .assertStatusIs(AWAITING_APPROVAL)
+        convenienceClient.getSequenceEntryOfUser(accessionVersionNotInCorrectState.first()).assertStatusIs(
+            IN_PROCESSING,
+        )
     }
 
     @Test
@@ -194,9 +181,17 @@ class ApproveProcessedDataEndpointTest(
                     .value(containsString("accession versions are not of organism otherOrganism")),
             )
 
-        convenienceClient.getSequenceEntryOfUser(accession = "1", version = 1, organism = DEFAULT_ORGANISM)
+        convenienceClient.getSequenceEntryOfUser(
+            accession = defaultOrganismData.first().accession,
+            version = 1,
+            organism = DEFAULT_ORGANISM,
+        )
             .assertStatusIs(AWAITING_APPROVAL)
-        convenienceClient.getSequenceEntryOfUser(accession = "11", version = 1, organism = OTHER_ORGANISM)
+        convenienceClient.getSequenceEntryOfUser(
+            accession = otherOrganismData.first().accession,
+            version = 1,
+            organism = OTHER_ORGANISM,
+        )
             .assertStatusIs(AWAITING_APPROVAL)
     }
 

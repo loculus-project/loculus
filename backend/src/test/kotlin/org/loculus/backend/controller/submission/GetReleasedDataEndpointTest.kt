@@ -12,9 +12,9 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
+import org.loculus.backend.api.Status
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
@@ -22,7 +22,6 @@ import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Autowired
@@ -114,6 +113,7 @@ class GetReleasedDataEndpointTest(
     @Test
     fun `GIVEN released data exists in multiple versions THEN the 'versionStatus' flag is set correctly`() {
         val (
+            accession,
             revokedVersion1,
             revokedVersion2,
             revocationVersion3,
@@ -123,25 +123,24 @@ class GetReleasedDataEndpointTest(
 
         val response = submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData>()
 
-        assertThat(response.size, `is`(5 * DefaultFiles.NUMBER_OF_SEQUENCES))
         assertThat(
-            response.findAccessionVersionStatus(firstAccession, revokedVersion1),
+            response.findAccessionVersionStatus(accession, revokedVersion1),
             `is`(SiloVersionStatus.REVOKED.name),
         )
         assertThat(
-            response.findAccessionVersionStatus(firstAccession, revokedVersion2),
+            response.findAccessionVersionStatus(accession, revokedVersion2),
             `is`(SiloVersionStatus.REVOKED.name),
         )
         assertThat(
-            response.findAccessionVersionStatus(firstAccession, revocationVersion3),
+            response.findAccessionVersionStatus(accession, revocationVersion3),
             `is`(SiloVersionStatus.REVISED.name),
         )
         assertThat(
-            response.findAccessionVersionStatus(firstAccession, revisedVersion4),
+            response.findAccessionVersionStatus(accession, revisedVersion4),
             `is`(SiloVersionStatus.REVISED.name),
         )
         assertThat(
-            response.findAccessionVersionStatus(firstAccession, latestVersion5),
+            response.findAccessionVersionStatus(accession, latestVersion5),
             `is`(SiloVersionStatus.LATEST_VERSION.name),
         )
     }
@@ -217,18 +216,18 @@ class GetReleasedDataEndpointTest(
     }
 
     private fun prepareRevokedAndRevocationAndRevisedVersions(): PreparedVersions {
-        convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
-        convenienceClient.reviseAndProcessDefaultSequenceEntries()
+        val preparedSubmissions = convenienceClient.prepareDataTo(Status.APPROVED_FOR_RELEASE)
+        convenienceClient.reviseAndProcessDefaultSequenceEntries(preparedSubmissions.map { it.accession })
 
-        convenienceClient.revokeSequenceEntries(DefaultFiles.allAccessions)
-        convenienceClient.confirmRevocation(
-            DefaultFiles.allAccessions.map { AccessionVersion(accession = it, version = 3L) },
-        )
+        val revokedSequences = convenienceClient.revokeSequenceEntries(preparedSubmissions.map { it.accession })
+        convenienceClient.confirmRevocation(revokedSequences)
 
-        convenienceClient.reviseAndProcessDefaultSequenceEntries()
-        convenienceClient.reviseAndProcessDefaultSequenceEntries()
+        convenienceClient.reviseAndProcessDefaultSequenceEntries(revokedSequences.map { it.accession })
+
+        convenienceClient.reviseAndProcessDefaultSequenceEntries(revokedSequences.map { it.accession })
 
         return PreparedVersions(
+            accession = preparedSubmissions.first().accession,
             revokedVersion1 = 1L,
             revokedVersion2 = 2L,
             revocationVersion3 = 3L,
@@ -252,6 +251,7 @@ private fun List<ProcessedData>.findAccessionVersionStatus(accession: Accession,
 }
 
 data class PreparedVersions(
+    val accession: Accession,
     val revokedVersion1: Version,
     val revokedVersion2: Version,
     val revocationVersion3: Version,

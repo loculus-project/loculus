@@ -6,6 +6,7 @@ import org.loculus.backend.api.Organism
 
 data class BackendConfig(
     val instances: Map<String, InstanceConfig>,
+    val accessionPrefix: String,
 ) {
     fun getInstanceConfig(organism: Organism) = instances[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${instances.keys}",

@@ -128,8 +128,8 @@ class SubmissionConvenienceClient(
         return accessionVersions
     }
 
-    fun reviseAndProcessDefaultSequenceEntries() {
-        reviseDefaultProcessedSequenceEntries()
+    fun reviseAndProcessDefaultSequenceEntries(accessions: List<Accession>) {
+        reviseDefaultProcessedSequenceEntries(accessions)
         val extractedAccessionVersions = extractUnprocessedData().map { AccessionVersion(it.accession, it.version) }
         submitProcessedData(
             extractedAccessionVersions
@@ -156,12 +156,6 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
     ) = client.extractUnprocessedData(numberOfSequenceEntries, organism)
         .expectNdjsonAndGetContent<UnprocessedData>()
-
-    fun prepareDatabaseWithProcessedData(vararg processedData: SubmittedProcessedData) {
-        submitDefaultFiles()
-        extractUnprocessedData()
-        client.submitProcessedData(*processedData)
-    }
 
     fun getSequenceEntries(
         username: String = DEFAULT_USER_NAME,
@@ -238,8 +232,8 @@ class SubmissionConvenienceClient(
         )
     }
 
-    fun submitDefaultEditedData(userName: String = DEFAULT_USER_NAME) {
-        DefaultFiles.allAccessions.forEach { accession ->
+    fun submitDefaultEditedData(accessions: List<Accession>, userName: String = DEFAULT_USER_NAME) {
+        accessions.forEach { accession ->
             client.submitEditedSequenceEntryVersion(
                 UnprocessedData(accession, 1L, defaultOriginalData),
                 jwt = generateJwtFor(userName),
@@ -263,9 +257,12 @@ class SubmissionConvenienceClient(
             .andExpect(status().isNoContent)
     }
 
-    fun reviseDefaultProcessedSequenceEntries(organism: String = DEFAULT_ORGANISM): List<SubmissionIdMapping> {
+    fun reviseDefaultProcessedSequenceEntries(
+        accessions: List<Accession>,
+        organism: String = DEFAULT_ORGANISM,
+    ): List<SubmissionIdMapping> {
         val result = client.reviseSequenceEntries(
-            DefaultFiles.revisedMetadataFile,
+            DefaultFiles.getRevisedMetadataFile(accessions),
             DefaultFiles.sequencesFile,
             organism = organism,
         ).andExpect(status().isOk)
@@ -274,10 +271,10 @@ class SubmissionConvenienceClient(
     }
 
     fun revokeSequenceEntries(
-        listOfSequencesToRevoke: List<Accession>,
+        listOfAccessionsToRevoke: List<Accession>,
         organism: String = DEFAULT_ORGANISM,
     ): List<SubmissionIdMapping> =
-        deserializeJsonResponse(client.revokeSequenceEntries(listOfSequencesToRevoke, organism = organism))
+        deserializeJsonResponse(client.revokeSequenceEntries(listOfAccessionsToRevoke, organism = organism))
 
     fun confirmRevocation(
         listOfSequencesToConfirm: List<AccessionVersionInterface>,

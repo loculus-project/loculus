@@ -15,7 +15,6 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -34,30 +33,34 @@ class DataUseTermsControllerTest(
 
     @Test
     fun `WHEN I get data use terms of non-existing accession THEN returns unprocessable entity`() {
-        client.getDataUseTerms(firstAccession)
+        val nonExistingAccession = "SomeNonExistingAccession"
+
+        client.getDataUseTerms(nonExistingAccession)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail", containsString("Accession $firstAccession not found")),
+                jsonPath("\$.detail", containsString("Accession $nonExistingAccession not found")),
             )
     }
 
     @Test
     fun `GIVEN open submission WHEN getting data use terms THEN return history with one OPEN entry`() {
-        submissionConvenienceClient.submitDefaultFiles()
+        val firstAccession = submissionConvenienceClient.submitDefaultFiles().first().accession
         client.getDataUseTerms(firstAccession)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
             .andExpect(jsonPath("\$").isNotEmpty)
-            .andExpect(jsonPath("\$[0].accession").value("1"))
+            .andExpect(jsonPath("\$[0].accession").value(firstAccession))
             .andExpect(jsonPath("\$[0].changeDate", containsString(dateMonthsFromNow(0).toString())))
             .andExpect(jsonPath("\$[0].dataUseTerms.type").value(DataUseTermsType.OPEN.name))
     }
 
     @Test
     fun `GIVEN changes in data use terms WHEN getting data use terms THEN return full history`() {
-        submissionConvenienceClient.submitDefaultFiles(dataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)))
+        val firstAccession = submissionConvenienceClient.submitDefaultFiles(
+            dataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
+        ).first().accession
 
         client.changeDataUseTerms(
             DataUseTermsChangeRequest(
@@ -100,10 +103,17 @@ class DataUseTermsControllerTest(
 
     @ParameterizedTest
     @MethodSource("dataUseTermsTestCases")
-    fun `test data use terms changes`(testCase: DataUseTermsTestCase) {
-        submissionConvenienceClient.submitDefaultFiles(dataUseTerms = testCase.setupDataUseTerms)
+    fun `WHEN changing data use terms THEN show success or error`(testCase: DataUseTermsTestCase) {
+        val accessions = submissionConvenienceClient
+            .submitDefaultFiles(dataUseTerms = testCase.setupDataUseTerms)
+            .map { it.accession }
 
-        val result = client.changeDataUseTerms(testCase.changeRequest)
+        val result = client.changeDataUseTerms(
+            DataUseTermsChangeRequest(
+                accessions = accessions,
+                newDataUseTerms = testCase.newDataUseTerms,
+            ),
+        )
             .andExpect(testCase.expectedStatus)
 
         if (testCase.expectedContentType != null && testCase.expectedDetailContains != null) {
@@ -134,7 +144,7 @@ class DataUseTermsControllerTest(
 
         data class DataUseTermsTestCase(
             val setupDataUseTerms: DataUseTerms,
-            val changeRequest: DataUseTermsChangeRequest,
+            val newDataUseTerms: DataUseTerms,
             val expectedStatus: ResultMatcher,
             val expectedContentType: String?,
             val expectedDetailContains: String?,
@@ -145,27 +155,21 @@ class DataUseTermsControllerTest(
             return listOf(
                 DataUseTermsTestCase(
                     setupDataUseTerms = DataUseTerms.Open,
-                    changeRequest = DEFAULT_DATA_USE_CHANGE_REQUEST,
+                    newDataUseTerms = DataUseTerms.Open,
                     expectedStatus = status().isNoContent,
                     expectedContentType = null,
                     expectedDetailContains = null,
                 ),
                 DataUseTermsTestCase(
                     setupDataUseTerms = DataUseTerms.Open,
-                    changeRequest = DataUseTermsChangeRequest(
-                        accessions = listOf("1", "2"),
-                        newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
-                    ),
+                    newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
                     expectedStatus = status().isUnprocessableEntity,
                     expectedContentType = MediaType.APPLICATION_JSON_VALUE,
                     expectedDetailContains = "Cannot change data use terms from OPEN to RESTRICTED.",
                 ),
                 DataUseTermsTestCase(
                     setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
-                    changeRequest = DataUseTermsChangeRequest(
-                        accessions = listOf("1", "2"),
-                        newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(-1)),
-                    ),
+                    newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(-1)),
                     expectedStatus = status().isBadRequest,
                     expectedContentType = MediaType.APPLICATION_JSON_VALUE,
                     expectedDetailContains = "The date 'restrictedUntil' must be in the future, " +
@@ -173,10 +177,7 @@ class DataUseTermsControllerTest(
                 ),
                 DataUseTermsTestCase(
                     setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
-                    changeRequest = DataUseTermsChangeRequest(
-                        accessions = listOf("1", "2"),
-                        newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(7)),
-                    ),
+                    newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(7)),
                     expectedStatus = status().isUnprocessableEntity,
                     expectedContentType = MediaType.APPLICATION_JSON_VALUE,
                     expectedDetailContains = "Cannot extend restricted data use period. " +

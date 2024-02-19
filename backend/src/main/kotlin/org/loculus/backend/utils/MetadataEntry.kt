@@ -87,12 +87,6 @@ fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Re
             )
         }
 
-        if (accession.toLongOrNull() == null) {
-            throw UnprocessableEntityException(
-                "A row in metadata file contains no valid $ACCESSION_HEADER: $accession",
-            )
-        }
-
         val metadata = record.toMap().filterKeys { column ->
             column != HEADER_TO_CONNECT_METADATA_AND_SEQUENCES &&
                 column != ACCESSION_HEADER
