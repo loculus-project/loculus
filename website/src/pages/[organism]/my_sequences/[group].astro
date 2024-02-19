@@ -1,13 +1,4 @@
 ---
-import {
-    getData,
-    getReferenceGenomesSequenceNames,
-    getMetadataFilters,
-    getMutationFilter,
-    getOrderBy,
-    addHiddenFilters,
-} from '../../../utils/search';
-
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { DownloadDialog } from '../../../components/SearchPage/DownloadDialog/DownloadDialog';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
@@ -16,8 +7,17 @@ import { Table } from '../../../components/SearchPage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { routes, MY_SEQUENCES } from '../../../routes';
 import { hiddenDefaultSearchFilters, pageSize, GROUP_FIELD } from '../../../settings';
-import { routes } from '../../../routes';
+import { getAccessToken } from '../../../utils/getAccessToken';
+import {
+    getData,
+    getReferenceGenomesSequenceNames,
+    getMetadataFilters,
+    getMutationFilter,
+    getOrderBy,
+    addHiddenFilters,
+} from '../../../utils/search';
 
 const organism = Astro.params.organism!;
 const group = Astro.params.group!;
@@ -45,12 +45,14 @@ const getSearchParams = (field: string): string => {
 
 const hiddenDefaultSearchFiltersWithGroup = [
     ...hiddenDefaultSearchFilters,
-    
-        { name: GROUP_FIELD, filterValue: group, type: 'string' as const, notSearchable: true }
-    
-]
 
-const metadataFilter = addHiddenFilters(getMetadataFilters(getSearchParams, organism, true), hiddenDefaultSearchFiltersWithGroup);
+    { name: GROUP_FIELD, filterValue: group, type: 'string' as const, notSearchable: true },
+];
+
+const metadataFilter = addHiddenFilters(
+    getMetadataFilters(getSearchParams, organism, true),
+    hiddenDefaultSearchFiltersWithGroup,
+);
 const mutationFilter = getMutationFilter(Astro.url.searchParams);
 
 const pageParam = getSearchParams('page');
@@ -61,7 +63,7 @@ const orderBy = getOrderBy(getSearchParams, schema.defaultOrderBy, schema.defaul
 const referenceGenomesSequenceNames = getReferenceGenomesSequenceNames(organism);
 
 const data = await getData(organism, metadataFilter, mutationFilter, offset, pageSize, orderBy);
-import { getAccessToken } from '../../../utils/getAccessToken';
+
 const accessToken = getAccessToken(Astro.locals.session)!;
 const groups = await fetch(`${clientConfig.backendUrl}/user/groups`, {
     headers: {
@@ -71,37 +73,34 @@ const groups = await fetch(`${clientConfig.backendUrl}/user/groups`, {
 
 const groupNames = groups.map((group) => group.groupName);
 const groupExists = groupNames.includes(group);
-if (!groupExists) {
-  
+if (groupExists === false) {
     return new Response(undefined, {
-            status: 404,
-        });
-
+        status: 404,
+    });
 }
-
 ---
 
 <BaseLayout title={`${cleanedOrganism!.displayName} - My sequences`}>
-    
     <h1 class='title'>Viewing sequences for group {group}</h1>
     {
         groups.length > 1 && (
-            <> Choose group:
-            <select
-                class='mt-4 select select-bordered'
-                onchange={(event) => {
-                    const newGroup = event.target.value;
-                    window.location.href = routes.mySequencesPage(organism,newGroup)
-                }}
-            >
-                {groupNames.map((groupName) => (
-                    <option selected={groupName === group} value={groupName}>
-                        {groupName}
-                    </option>
-                ))}
-            </select>
+            <>
+                {' '}
+                Choose group:
+                <select
+                    class='mt-4 select select-bordered'
+                    onchange={(event) => {
+                        const newGroup = event.target.value;
+                        window.location.href = routes.mySequencesPage(organism, newGroup);
+                    }}
+                >
+                    {groupNames.map((groupName) => (
+                        <option selected={groupName === group} value={groupName}>
+                            {groupName}
+                        </option>
+                    ))}
+                </select>
             </>
-
         )
     }
 
@@ -113,6 +112,8 @@ if (!groupExists) {
                 initialMutationFilter={mutationFilter}
                 clientConfig={clientConfig}
                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                classOfSearchPage={MY_SEQUENCES}
+                group={group}
                 client:only='react'
             />
         </div>
@@ -139,6 +140,8 @@ if (!groupExists) {
                             mutationFilter={mutationFilter}
                             page={page}
                             orderBy={orderBy}
+                            classOfSearchPage={MY_SEQUENCES}
+                            group={group}
                             client:load
                         />
 
@@ -151,6 +154,8 @@ if (!groupExists) {
                                 mutationFilter={mutationFilter}
                                 orderBy={orderBy}
                                 organism={organism}
+                                classOfSearchPage={MY_SEQUENCES}
+                                group={group}
                             />
                         </div>
                     </div>

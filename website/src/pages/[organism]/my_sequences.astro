@@ -1,0 +1,41 @@
+---
+// Import necessary utilities
+import { getRuntimeConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { routes } from '../../routes';
+import { getAccessToken } from '../../utils/getAccessToken';
+
+const { organism } = Astro.params;
+
+const clientConfig = getRuntimeConfig().public;
+const accessToken = getAccessToken(Astro.locals.session)!;
+
+// Fetch group data
+async function fetchGroups() {
+    const response = await fetch(`${clientConfig.backendUrl}/user/groups`, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+        },
+    });
+    if (!response.ok) {
+        throw new Error('Failed to fetch groups');
+    }
+    return response.json();
+}
+
+const groups = await fetchGroups();
+const groupNames = groups.map((group: any) => group.groupName);
+if (groupNames.length > 0) {
+    return Astro.redirect(routes.mySequencesPage(organism, groupNames[0]));
+}
+---
+
+<BaseLayout title='My Sequences'>
+    {
+        groupNames.length === 0 && (
+            <div>
+                <h1>No groups found associated with this account</h1>
+            </div>
+        )
+    }
+</BaseLayout>

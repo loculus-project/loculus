@@ -1,7 +1,7 @@
 import { Pagination as MUIPagination } from '@mui/material';
 import type { FC } from 'react';
 
-import { navigateToSearchPage } from '../../routes';
+import { navigateToSearchLikePage } from '../../routes';
 import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 
@@ -12,6 +12,8 @@ type SearchPaginationProps = {
     orderBy: OrderBy;
     organism: string;
     page: number;
+    classOfSearchPage?: string;
+    group?: string;
 };
 
 export const SearchPagination: FC<SearchPaginationProps> = ({
@@ -21,13 +23,25 @@ export const SearchPagination: FC<SearchPaginationProps> = ({
     orderBy,
     organism,
     page,
+    classOfSearchPage,
+    group,
 }) => {
     return (
         <MUIPagination
             count={count}
             page={page}
             onChange={(_, newPage) => {
-                navigateToSearchPage(organism, metadataFilter, mutationFilter, newPage, orderBy);
+                navigateToSearchLikePage(
+                    organism,
+                    classOfSearchPage,
+                    group,
+                    metadataFilter,
+                    mutationFilter,
+                    newPage,
+                    orderBy,
+                    classOfSearchPage,
+                    group,
+                );
             }}
             color='primary'
             variant='outlined'

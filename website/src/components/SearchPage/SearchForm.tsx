@@ -14,7 +14,7 @@ import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { routes, navigateToSearchPage } from '../../routes.ts';
+import { routes, navigateToSearchLikePage } from '../../routes.ts';
 import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -29,6 +29,8 @@ interface SearchFormProps {
     initialMutationFilter: MutationFilter;
     clientConfig: ClientConfig;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    classOfSearchPage: string;
+    group?: string;
 }
 
 const clientLogger = getClientLogger('SearchForm');
@@ -39,6 +41,8 @@ export const SearchForm: FC<SearchFormProps> = ({
     initialMutationFilter,
     clientConfig,
     referenceGenomesSequenceNames,
+    classOfSearchPage,
+    group,
 }) => {
     const [fieldValues, setFieldValues] = useState<(MetadataFilter & { label: string })[]>(
         filters.map((filter) => ({
@@ -66,7 +70,7 @@ export const SearchForm: FC<SearchFormProps> = ({
         event.preventDefault();
         setIsLoading(true);
         const searchableFieldValues = fieldValues.filter((field) => !(field.notSearchable ?? false));
-        navigateToSearchPage(organism, searchableFieldValues, mutationFilter);
+        navigateToSearchLikePage(organism, classOfSearchPage, group, searchableFieldValues, mutationFilter);
     };
 
     const resetSearch = async () => {

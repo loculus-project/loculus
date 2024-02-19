@@ -1,7 +1,7 @@
 import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 
-import { routes, navigateToSearchPage } from '../../routes.ts';
+import { routes, navigateToSearchLikePage } from '../../routes.ts';
 import type { MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
@@ -19,9 +19,21 @@ type TableProps = {
     mutationFilter: MutationFilter;
     page: number;
     orderBy: OrderBy;
+    classOfSearchPage: string;
+    group?: string;
 };
 
-export const Table: FC<TableProps> = ({ organism, data, schema, metadataFilter, mutationFilter, page, orderBy }) => {
+export const Table: FC<TableProps> = ({
+    organism,
+    data,
+    schema,
+    metadataFilter,
+    mutationFilter,
+    page,
+    orderBy,
+    classOfSearchPage,
+    group,
+}) => {
     const primaryKey = schema.primaryKey;
 
     const columns = schema.tableColumns.map((field) => ({
@@ -32,18 +44,18 @@ export const Table: FC<TableProps> = ({ organism, data, schema, metadataFilter, 
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
             if (orderBy.type === 'ascending') {
-                navigateToSearchPage(organism, metadataFilter, mutationFilter, page, {
+                navigateToSearchLikePage(organism, classOfSearchPage, group, metadataFilter, mutationFilter, page, {
                     field,
                     type: 'descending',
                 });
             } else {
-                navigateToSearchPage(organism, metadataFilter, mutationFilter, page, {
+                navigateToSearchLikePage(organism, classOfSearchPage, group, metadataFilter, mutationFilter, page, {
                     field,
                     type: 'ascending',
                 });
             }
         } else {
-            navigateToSearchPage(organism, metadataFilter, mutationFilter, page, {
+            navigateToSearchLikePage(organism, classOfSearchPage, group, metadataFilter, mutationFilter, page, {
                 field,
                 type: 'ascending',
             });

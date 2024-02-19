@@ -1,12 +1,4 @@
 ---
-import {
-    getData,
-    getReferenceGenomesSequenceNames,
-    getMetadataFilters,
-    getMutationFilter,
-    getOrderBy,
-    addHiddenFilters,
-} from '../../../utils/search';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { DownloadDialog } from '../../../components/SearchPage/DownloadDialog/DownloadDialog';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
@@ -15,7 +7,16 @@ import { Table } from '../../../components/SearchPage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { SEARCH } from '../../../routes';
 import { hiddenDefaultSearchFilters, pageSize } from '../../../settings';
+import {
+    getData,
+    getReferenceGenomesSequenceNames,
+    getMetadataFilters,
+    getMutationFilter,
+    getOrderBy,
+    addHiddenFilters,
+} from '../../../utils/search';
 
 const organism = Astro.params.organism!;
 const { organism: cleanedOrganism } = cleanOrganism(organism);
@@ -63,6 +64,7 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
                 initialMutationFilter={mutationFilter}
                 clientConfig={clientConfig}
                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                classOfSearchPage={SEARCH}
                 client:only='react'
             />
         </div>
@@ -89,6 +91,7 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
                             mutationFilter={mutationFilter}
                             page={page}
                             orderBy={orderBy}
+                            classOfSearchPage={SEARCH}
                             client:load
                         />
 
@@ -101,6 +104,7 @@ const data = await getData(organism, metadataFilter, mutationFilter, offset, pag
                                 mutationFilter={mutationFilter}
                                 orderBy={orderBy}
                                 organism={organism}
+                                classOfSearchPage={SEARCH}
                             />
                         </div>
                     </div>
