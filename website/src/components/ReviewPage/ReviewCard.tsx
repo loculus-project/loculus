@@ -280,46 +280,27 @@ type KeyValueComponentProps = {
 };
 
 const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraStyle, keyStyle, warnings, errors }) => {
-    let toDisplayUncolored = null;
-    let toDisplayInWarningColor = null;
-    let toDisplayInErrorColor = null;
-    if (errors !== undefined && errors.length > 0) {
-        toDisplayInErrorColor = value;
-    } else if (warnings !== undefined && warnings.length > 0) {
-        toDisplayInWarningColor = value;
-    } else {
-        toDisplayUncolored = value;
-    }
+    let { textColor, primaryMessages, secondaryMessages } = getTextColorAndMessages(errors, warnings);
 
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle !== undefined ? keyStyle : 'text-gray-500 uppercase text-xs'}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>
-                {toDisplayUncolored}
-
-                {errors !== undefined && errors.length > 0 && (
-                    <>
-                        <span className='text-red-600' data-tooltip-id={'error-tooltip-' + keyName}>
-                            {toDisplayInErrorColor !== null ? toDisplayInErrorColor : <Note className='inline-block' />}
-                        </span>
-                        <Tooltip
-                            id={'error-tooltip-' + keyName}
-                            content={errors.map((annotation) => annotation.message).join(', ')}
-                        />
-                    </>
+                <span className={textColor} data-tooltip-id={'text-tooltip-' + keyName}>
+                    {value}
+                </span>
+                {primaryMessages !== undefined && (
+                    <Tooltip
+                        id={'text-tooltip-' + keyName}
+                        content={primaryMessages.map((annotation) => annotation.message).join(', ')}
+                    />
                 )}
-                {warnings !== undefined && warnings.length > 0 && (
+                {secondaryMessages !== undefined && (
                     <>
-                        <span className='text-yellow-500' data-tooltip-id={'warning-tooltip-' + keyName}>
-                            {toDisplayInWarningColor !== null ? (
-                                toDisplayInWarningColor
-                            ) : (
-                                <Note className='inline-block' />
-                            )}
-                        </span>
+                        <Note className='text-yellow-500 inline-block' data-tooltip-id={'note-tooltip-' + keyName} />
                         <Tooltip
-                            id={'warning-tooltip-' + keyName}
-                            content={warnings.map((annotation) => annotation.message).join(', ')}
+                            id={'note-tooltip-' + keyName}
+                            content={secondaryMessages.map((annotation) => annotation.message).join(', ')}
                         />
                     </>
                 )}
@@ -327,6 +308,36 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraSt
         </div>
     );
 };
+
+function getTextColorAndMessages(
+    errors: ProcessingAnnotation[] | undefined,
+    warnings: ProcessingAnnotation[] | undefined,
+) {
+    const hasErrors = errors !== undefined && errors.length > 0;
+    const hasWarnings = warnings !== undefined && warnings.length > 0;
+
+    if (hasErrors) {
+        return {
+            textColor: 'text-red-600',
+            primaryMessages: errors,
+            secondaryMessages: hasWarnings ? warnings : undefined,
+        };
+    }
+
+    if (hasWarnings) {
+        return {
+            textColor: 'text-yellow-500',
+            primaryMessages: warnings,
+            secondaryMessages: undefined,
+        };
+    }
+
+    return {
+        textColor: '',
+        primaryMessages: undefined,
+        secondaryMessages: undefined,
+    };
+}
 
 function useGetMetadataAndAnnotations(
     organism: string,
