@@ -25,7 +25,7 @@ export const routes = {
             organism,
             `/search?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
         ),
-        
+
     mySequencesPage: <Filter extends FilterValue>(
         organism: string,
         group: string,

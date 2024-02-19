@@ -1,4 +1,5 @@
 ---
+import { GroupSelector } from '../../../components/MySequencesPage/GroupSelector';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { DownloadDialog } from '../../../components/SearchPage/DownloadDialog/DownloadDialog';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
@@ -7,7 +8,7 @@ import { Table } from '../../../components/SearchPage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
 import { getLapisUrl, getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { routes, MY_SEQUENCES } from '../../../routes';
+import { MY_SEQUENCES } from '../../../routes';
 import { hiddenDefaultSearchFilters, pageSize, GROUP_FIELD } from '../../../settings';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import {
@@ -18,7 +19,6 @@ import {
     getOrderBy,
     addHiddenFilters,
 } from '../../../utils/search';
-
 const organism = Astro.params.organism!;
 const group = Astro.params.group!;
 const { organism: cleanedOrganism } = cleanOrganism(organism);
@@ -71,7 +71,7 @@ const groups = await fetch(`${clientConfig.backendUrl}/user/groups`, {
     },
 }).then((response) => response.json());
 
-const groupNames = groups.map((group) => group.groupName);
+const groupNames = groups.map((group: { groupName: string }) => group.groupName);
 const groupExists = groupNames.includes(group);
 if (groupExists === false) {
     return new Response(undefined, {
@@ -83,23 +83,16 @@ if (groupExists === false) {
 <BaseLayout title={`${cleanedOrganism!.displayName} - My sequences`}>
     <h1 class='title'>Viewing sequences for group {group}</h1>
     {
-        groups.length > 1 && (
+        groupNames.length > 1 && (
             <>
                 {' '}
                 Choose group:
-                <select
-                    class='mt-4 select select-bordered'
-                    onchange={(event) => {
-                        const newGroup = event.target.value;
-                        window.location.href = routes.mySequencesPage(organism, newGroup);
-                    }}
-                >
-                    {groupNames.map((groupName) => (
-                        <option selected={groupName === group} value={groupName}>
-                            {groupName}
-                        </option>
-                    ))}
-                </select>
+                <GroupSelector
+                    groupNames={groupNames}
+                    selectedGroupName={group}
+                    organism={organism}
+                    client:only='react'
+                />
             </>
         )
     }

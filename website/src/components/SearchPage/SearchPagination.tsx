@@ -12,7 +12,7 @@ type SearchPaginationProps = {
     orderBy: OrderBy;
     organism: string;
     page: number;
-    classOfSearchPage?: string;
+    classOfSearchPage: string;
     group?: string;
 };
 
@@ -39,8 +39,6 @@ export const SearchPagination: FC<SearchPaginationProps> = ({
                     mutationFilter,
                     newPage,
                     orderBy,
-                    classOfSearchPage,
-                    group,
                 );
             }}
             color='primary'
