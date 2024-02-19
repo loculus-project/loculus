@@ -25,6 +25,7 @@ import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import TickOutline from '~icons/mdi/tick-outline';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
@@ -99,6 +100,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
 
                 <div className='flex flex-grow flex-wrap'>
                     <KeyValueComponent
+                        accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
                         keyName={sequenceEntryStatus.accession}
                         value={sequenceEntryStatus.submissionId}
                     />
@@ -131,6 +133,7 @@ const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) =>
         const valueString = entry[1].toString();
         return (
             <KeyValueComponent
+                accessionVersion={getAccessionVersionString(data)}
                 key={index}
                 keyName={entry[0]}
                 value={valueString}
@@ -271,6 +274,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
 };
 
 type KeyValueComponentProps = {
+    accessionVersion: string;
     keyName: string;
     value: string;
     extraStyle?: string;
@@ -279,27 +283,37 @@ type KeyValueComponentProps = {
     errors?: ProcessingAnnotation[];
 };
 
-const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraStyle, keyStyle, warnings, errors }) => {
+const KeyValueComponent: FC<KeyValueComponentProps> = ({
+    accessionVersion,
+    keyName,
+    value,
+    extraStyle,
+    keyStyle,
+    warnings,
+    errors,
+}) => {
     let { textColor, primaryMessages, secondaryMessages } = getTextColorAndMessages(errors, warnings);
 
+    const textTooltipId = 'text-tooltip-' + keyName + accessionVersion;
+    const noteTooltipId = 'note-tooltip-' + keyName + accessionVersion;
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle !== undefined ? keyStyle : 'text-gray-500 uppercase text-xs'}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>
-                <span className={textColor} data-tooltip-id={'text-tooltip-' + keyName}>
+                <span className={textColor} data-tooltip-id={textTooltipId}>
                     {value}
                 </span>
                 {primaryMessages !== undefined && (
                     <Tooltip
-                        id={'text-tooltip-' + keyName}
+                        id={textTooltipId}
                         content={primaryMessages.map((annotation) => annotation.message).join(', ')}
                     />
                 )}
                 {secondaryMessages !== undefined && (
                     <>
-                        <Note className='text-yellow-500 inline-block' data-tooltip-id={'note-tooltip-' + keyName} />
+                        <Note className='text-yellow-500 inline-block' data-tooltip-id={noteTooltipId} />
                         <Tooltip
-                            id={'note-tooltip-' + keyName}
+                            id={noteTooltipId}
                             content={secondaryMessages.map((annotation) => annotation.message).join(', ')}
                         />
                     </>
