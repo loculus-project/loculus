@@ -1,12 +1,11 @@
 ---
 import { GroupSelector } from '../../../components/MySequencesPage/GroupSelector';
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
-import { DownloadDialog } from '../../../components/SearchPage/DownloadDialog/DownloadDialog';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
 import { SearchPagination } from '../../../components/SearchPage/SearchPagination';
 import { Table } from '../../../components/SearchPage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
-import { getLapisUrl, getRuntimeConfig, getSchema } from '../../../config';
+import { getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { MY_SEQUENCES } from '../../../routes';
 import { hiddenDefaultSearchFilters, pageSize, GROUP_FIELD } from '../../../settings';
@@ -24,7 +23,6 @@ const group = Astro.params.group!;
 const { organism: cleanedOrganism } = cleanOrganism(organism);
 const schema = getSchema(organism);
 const clientConfig = getRuntimeConfig().public;
-const lapisUrl = getLapisUrl(clientConfig, organism);
 let postParams = new URLSearchParams();
 
 if (Astro.request.method === 'POST') {
