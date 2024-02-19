@@ -16,6 +16,7 @@ import {
 } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import Edit from '~icons/bxs/edit';
 import Trash from '~icons/bxs/trash';
 import Send from '~icons/fa/send';
@@ -25,7 +26,6 @@ import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import TickOutline from '~icons/mdi/tick-outline';
-import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
@@ -292,7 +292,7 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({
     warnings,
     errors,
 }) => {
-    let { textColor, primaryMessages, secondaryMessages } = getTextColorAndMessages(errors, warnings);
+    const { textColor, primaryMessages, secondaryMessages } = getTextColorAndMessages(errors, warnings);
 
     const textTooltipId = 'text-tooltip-' + keyName + accessionVersion;
     const noteTooltipId = 'note-tooltip-' + keyName + accessionVersion;
