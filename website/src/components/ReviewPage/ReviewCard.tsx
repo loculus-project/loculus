@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { type FC, Fragment } from 'react';
 import { Tooltip } from 'react-tooltip';
 
 import { backendClientHooks } from '../../services/serviceHooks.ts';
@@ -17,6 +17,7 @@ import {
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
+import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import Edit from '~icons/bxs/edit';
 import Trash from '~icons/bxs/trash';
 import Send from '~icons/fa/send';
@@ -50,33 +51,35 @@ export const ReviewCard: FC<ReviewCardProps> = ({
 
     return (
         <div className='p-3 border rounded-md shadow-lg relative transition-all duration-500'>
-            <ButtonBar
-                sequenceEntryStatus={sequenceEntryStatus}
-                approveAccessionVersion={approveAccessionVersion}
-                deleteAccessionVersion={deleteAccessionVersion}
-                editAccessionVersion={editAccessionVersion}
-            />
-            <div className='flex flex-wrap '>
-                <StatusIcon
-                    status={sequenceEntryStatus.status}
-                    dataUseTerms={sequenceEntryStatus.dataUseTerms}
-                    accession={sequenceEntryStatus.accession}
-                    hasWarnings={(data?.warnings?.length ?? 0) > 0}
+            <div className='flex'>
+                <div className='flex flex-grow flex-wrap '>
+                    <StatusIcon
+                        status={sequenceEntryStatus.status}
+                        dataUseTerms={sequenceEntryStatus.dataUseTerms}
+                        accession={sequenceEntryStatus.accession}
+                        hasWarnings={(data?.warnings?.length ?? 0) > 0}
+                    />
+                    <KeyValueComponent
+                        accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
+                        keyName={sequenceEntryStatus.accession}
+                        value={sequenceEntryStatus.submissionId}
+                    />
+                    {data !== undefined && <MetadataList data={data} isLoading={isLoading} />}
+                </div>
+                <ButtonBar
+                    sequenceEntryStatus={sequenceEntryStatus}
+                    approveAccessionVersion={approveAccessionVersion}
+                    deleteAccessionVersion={deleteAccessionVersion}
+                    editAccessionVersion={editAccessionVersion}
                 />
-                <KeyValueComponent
-                    keyName={sequenceEntryStatus.submissionId}
-                    value={sequenceEntryStatus.accession}
-                    extraStyle='font-medium'
-                    keyStyle=' text-gray-600'
-                />
-                {data !== undefined && (
-                    <>
-                        <MetadataList data={data} isLoading={isLoading} />
-                        <Errors errors={data.errors ?? []} accession={sequenceEntryStatus.accession} />
-                        <Warnings warnings={data.warnings ?? []} accession={sequenceEntryStatus.accession} />
-                    </>
-                )}
             </div>
+
+            {data?.errors?.length !== undefined && data.errors.length > 0 && (
+                <Errors errors={data.errors} accession={sequenceEntryStatus.accession} />
+            )}
+            {data?.warnings?.length !== undefined && data.warnings.length > 0 && (
+                <Warnings warnings={data.warnings} accession={sequenceEntryStatus.accession} />
+            )}
         </div>
     );
 };
@@ -97,10 +100,10 @@ const ButtonBar: FC<ButtonBarProps> = ({
     const buttonBarClass = (disabled: boolean) =>
         `${
             disabled ? 'text-gray-300' : 'text-gray-500 hover:text-gray-900 hover:cursor-pointer'
-        } inline-block mr-2 mb-2 text-xl`;
+        } pl-3 inline-block mr-2 mb-2 text-xl`;
 
     return (
-        <div className='absolute top-3 right-3 flex flex-wrap space-x-2'>
+        <div className='flex space-x-2 mb-auto pt-3.5'>
             <button
                 className={buttonBarClass(sequenceEntryStatus.status !== awaitingApprovalStatus)}
                 onClick={approveAccessionVersion}
@@ -179,20 +182,18 @@ type MetadataListProps = {
 const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotation) =>
     item.source[0].name === metadataField;
 
-const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) => (
-    <div className='flex flex-row flex-wrap'>
-        {!isLoading &&
-            Object.entries(data.processedData.metadata).map(([metadataName, value], index) => (
-                <KeyValueComponent
-                    key={index}
-                    keyName={metadataName}
-                    value={displayMetadataField(value)}
-                    warnings={data.warnings?.filter(isAnnotationPresent(metadataName))}
-                    errors={data.errors?.filter(isAnnotationPresent(metadataName))}
-                />
-            ))}
-    </div>
-);
+const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) =>
+    !isLoading &&
+    Object.entries(data.processedData.metadata).map(([metadataName, value], index) => (
+        <KeyValueComponent
+            accessionVersion={getAccessionVersionString(data)}
+            key={index}
+            keyName={metadataName}
+            value={displayMetadataField(value)}
+            warnings={data.warnings?.filter(isAnnotationPresent(metadataName))}
+            errors={data.errors?.filter(isAnnotationPresent(metadataName))}
+        />
+    ));
 
 type ErrorsProps = {
     errors: ProcessingAnnotation[];
@@ -204,11 +205,10 @@ const Errors: FC<ErrorsProps> = ({ errors, accession }) => {
         <div>
             <div className='flex flex-col m-2 '>
                 {errors.map((error) => {
-                    const uniqueKey = error.source.map((source) => source.type + source.name).join('.');
+                    const uniqueKey = error.source.map((source) => source.type + source.name).join('.') + accession;
                     return (
-                        <>
+                        <div key={uniqueKey} className='flex flex-shrink-0'>
                             <p
-                                key={uniqueKey}
                                 className='text-red-600'
                                 data-tooltip-id={'error-tooltip-' + accession + '-' + uniqueKey}
                             >
@@ -218,7 +218,7 @@ const Errors: FC<ErrorsProps> = ({ errors, accession }) => {
                                 id={'error-tooltip-' + accession + '-' + uniqueKey}
                                 content='You must fix this error before releasing this sequence entry'
                             />
-                        </>
+                        </div>
                     );
                 })}
             </div>
@@ -327,6 +327,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
 };
 
 type KeyValueComponentProps = {
+    accessionVersion: string;
     keyName: string;
     value: string;
     extraStyle?: string;
@@ -335,31 +336,39 @@ type KeyValueComponentProps = {
     errors?: ProcessingAnnotation[];
 };
 
-const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraStyle, keyStyle, warnings, errors }) => {
+const KeyValueComponent: FC<KeyValueComponentProps> = ({
+    accessionVersion,
+    keyName,
+    value,
+    extraStyle,
+    keyStyle,
+    warnings,
+    errors,
+}) => {
+    const { textColor, primaryMessages, secondaryMessages } = getTextColorAndMessages(errors, warnings);
+
+    const textTooltipId = 'text-tooltip-' + keyName + accessionVersion;
+    const noteTooltipId = 'note-tooltip-' + keyName + accessionVersion;
+
     return (
         <div className={`flex flex-col m-2 `}>
             <span className={keyStyle !== undefined ? keyStyle : 'text-gray-500 uppercase text-xs'}>{keyName}</span>
             <span className={`text-base ${extraStyle}`}>
-                {value}
-                {warnings !== undefined && warnings.length > 0 && (
-                    <>
-                        <span className='text-yellow-500' data-tooltip-id={'warning-tooltip-' + keyName}>
-                            <Note className='inline-block' />
-                        </span>
-                        <Tooltip
-                            id={'warning-tooltip-' + keyName}
-                            content={warnings.map((annotation) => annotation.message).join(', ')}
-                        />
-                    </>
+                <span className={textColor} data-tooltip-id={textTooltipId}>
+                    {value}
+                </span>
+                {primaryMessages !== undefined && (
+                    <Tooltip
+                        id={textTooltipId}
+                        content={primaryMessages.map((annotation) => annotation.message).join(', ')}
+                    />
                 )}
-                {errors !== undefined && errors.length > 0 && (
+                {secondaryMessages !== undefined && (
                     <>
-                        <span className='text-red-600' data-tooltip-id={'error-tooltip-' + keyName}>
-                            <Note className='inline-block' />
-                        </span>
+                        <Note className='text-yellow-500 inline-block' data-tooltip-id={noteTooltipId} />
                         <Tooltip
-                            id={'error-tooltip-' + keyName}
-                            content={errors.map((annotation) => annotation.message).join(', ')}
+                            id={noteTooltipId}
+                            content={secondaryMessages.map((annotation) => annotation.message).join(', ')}
                         />
                     </>
                 )}
@@ -367,6 +376,36 @@ const KeyValueComponent: FC<KeyValueComponentProps> = ({ keyName, value, extraSt
         </div>
     );
 };
+
+function getTextColorAndMessages(
+    errors: ProcessingAnnotation[] | undefined,
+    warnings: ProcessingAnnotation[] | undefined,
+) {
+    const hasErrors = errors !== undefined && errors.length > 0;
+    const hasWarnings = warnings !== undefined && warnings.length > 0;
+
+    if (hasErrors) {
+        return {
+            textColor: 'text-red-600',
+            primaryMessages: errors,
+            secondaryMessages: hasWarnings ? warnings : undefined,
+        };
+    }
+
+    if (hasWarnings) {
+        return {
+            textColor: 'text-yellow-500',
+            primaryMessages: warnings,
+            secondaryMessages: undefined,
+        };
+    }
+
+    return {
+        textColor: '',
+        primaryMessages: undefined,
+        secondaryMessages: undefined,
+    };
+}
 
 function useGetMetadataAndAnnotations(
     organism: string,
