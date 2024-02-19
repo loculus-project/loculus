@@ -22,6 +22,18 @@ export const routes = {
             organism,
             `/search?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
         ),
+        mySequencesPage: <Filter extends FilterValue>(
+            organism: string,
+            group: string,
+            metadataFilter: Filter[] = [],
+            mutationFilter: MutationFilter = {},
+            page: number | undefined = undefined,
+            orderBy?: OrderBy,
+        ) =>
+            withOrganism(
+                organism,
+                `/my_sequences/${group}?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
+            ),
     sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
         `/${organism}/seq/${getAccessionVersionString(accessionVersion)}`,
     sequencesVersionsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
