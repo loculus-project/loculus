@@ -1,5 +1,4 @@
 ---
-// Import necessary utilities
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getAccessToken } from '../../utils/getAccessToken';
@@ -9,7 +8,6 @@ const { organism } = Astro.params;
 const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
 
-// Fetch group data
 async function fetchGroups() {
     const response = await fetch(`${clientConfig.backendUrl}/user/groups`, {
         headers: {
