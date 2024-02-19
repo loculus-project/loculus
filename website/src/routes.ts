@@ -13,6 +13,7 @@ export const routes = {
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
+    mySequencesWithoutGroup: (organism: string) => `/${organism}/my_sequences`,
     searchPage: <Filter extends FilterValue>(
         organism: string,
         metadataFilter: Filter[] = [],
@@ -24,6 +25,7 @@ export const routes = {
             organism,
             `/search?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
         ),
+        
     mySequencesPage: <Filter extends FilterValue>(
         organism: string,
         group: string,

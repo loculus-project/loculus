@@ -37,6 +37,9 @@ const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
                 <div class='my-2 mx-4'>
                     <a href={routes.userSequenceReviewPage(organism)}>Sequence Review</a>
                 </div>
+                <div class='my-2 mx-4'>
+                    <a href={routes.mySequencesWithoutGroup(organism)}>My sequences</a>
+                </div>
             </>
         )
     }
