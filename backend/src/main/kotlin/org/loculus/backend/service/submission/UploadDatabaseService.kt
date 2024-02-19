@@ -2,6 +2,7 @@ package org.loculus.backend.service.submission
 
 import kotlinx.datetime.LocalDateTime
 import mu.KotlinLogging
+import org.jetbrains.exposed.sql.IntegerColumnType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.VarCharColumnType
 import org.jetbrains.exposed.sql.and
@@ -17,6 +18,7 @@ import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.UploadType
+import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupNameColumn
@@ -46,6 +48,7 @@ class UploadDatabaseService(
     private val compressor: CompressionService,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
+    private val generateAccessionFromNumberService: GenerateAccessionFromNumberService,
 ) {
 
     fun batchInsertMetadataInAuxTable(
@@ -157,8 +160,6 @@ class UploadDatabaseService(
     }
 
     fun associateRevisedDataWithExistingSequenceEntries(uploadId: String, organism: Organism, username: String) {
-        log.info { "associating revised data with existing sequence entries with UploadId $uploadId" }
-
         val accessions =
             MetadataUploadAuxTable
                 .slice(accessionColumn)
@@ -185,6 +186,45 @@ class UploadDatabaseService(
         }
     }
 
+    fun generateNewAccessionsForOriginalUpload(uploadId: String, organism: Organism, username: String) {
+        val submissionIds =
+            MetadataUploadAuxTable
+                .slice(submissionIdColumn)
+                .select { uploadIdColumn eq uploadId }
+                .map { it[submissionIdColumn] }
+
+        val nextAccessions = getNextSequenceNumbers(submissionIds.size).map {
+            generateAccessionFromNumberService.generateCustomId(it)
+        }
+
+        if (submissionIds.size != nextAccessions.size) {
+            throw IllegalStateException(
+                "Mismatched sizes: accessions=${submissionIds.size}, nextAccessions=${nextAccessions.size}",
+            )
+        }
+
+        val submissionIdToAccessionMap = submissionIds.zip(nextAccessions)
+
+        log.info {
+            "Generated ${submissionIdToAccessionMap.size} new accessions for original upload with UploadId " +
+                "$uploadId: ${submissionIdToAccessionMap.joinToString(
+                    limit = 10,
+                ){
+                    it.toString()
+                } }"
+        }
+
+        submissionIdToAccessionMap.forEach { (submissionId, accession) ->
+            MetadataUploadAuxTable.update(
+                where = {
+                    (submissionIdColumn eq submissionId) and (uploadIdColumn eq uploadId)
+                },
+            ) {
+                it[accessionColumn] = accession
+            }
+        }
+    }
+
     private fun generateMapAndCopyStatement(uploadType: UploadType): String {
         val commonColumns = StringBuilder().apply {
             append("accession,")
@@ -205,7 +245,9 @@ class UploadDatabaseService(
         }.toString()
 
         val specificColumns = if (uploadType == UploadType.ORIGINAL) {
-            "nextval('accession_sequence'),"
+            """
+            m.accession,
+            """.trimIndent()
         } else {
             """
             m.accession,
@@ -243,5 +285,25 @@ class UploadDatabaseService(
             m.uploaded_at
         RETURNING accession, version, submission_id;
         """.trimIndent()
+    }
+
+    fun getNextSequenceNumbers(numberOfNewEntries: Int) = transaction {
+        val nextValues = exec(
+            "SELECT nextval('accession_sequence') FROM generate_series(1, ?)",
+            listOf(
+                Pair(IntegerColumnType(), numberOfNewEntries),
+            ),
+        ) { rs ->
+            val result = mutableListOf<Long>()
+            while (rs.next()) {
+                result += rs.getLong(1)
+            }
+            result.toList()
+        } ?: emptyList()
+
+        if (nextValues.size != numberOfNewEntries) {
+            throw IllegalStateException("Expected $numberOfNewEntries values, got ${nextValues.size}.")
+        }
+        nextValues
     }
 }

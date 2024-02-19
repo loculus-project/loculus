@@ -28,7 +28,7 @@ import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
+import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -143,8 +143,8 @@ class GetSequencesEndpointTest(
 
     @Test
     fun `GIVEN data with warnings WHEN I exclude warnings THEN expect no data returned`() {
-        convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
-        convenienceClient.submitProcessedData(PreparedProcessedData.withWarnings())
+        val accessions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing().map { it.accession }
+        convenienceClient.submitProcessedData(PreparedProcessedData.withWarnings(accessions.first()))
 
         val sequencesInAwaitingApproval = convenienceClient.getSequenceEntries(
             username = ALTERNATIVE_DEFAULT_USER_NAME,
@@ -205,14 +205,14 @@ class GetSequencesEndpointTest(
     @ParameterizedTest(name = "{arguments}")
     @MethodSource("provideStatusScenarios")
     fun `GIVEN database in prepared state THEN returns sequence entries in expected status`(scenario: Scenario) {
-        scenario.prepareDatabase(convenienceClient)
+        val accessions = scenario.prepareDatabase(convenienceClient)
 
         val sequencesOfUser = convenienceClient.getSequenceEntries(
             statusesFilter = listOf(scenario.expectedStatus),
         ).sequenceEntries
 
         val accessionVersionStatus =
-            sequencesOfUser.find { it.accession == firstAccession && it.version == scenario.expectedVersion }
+            sequencesOfUser.find { it.accession == accessions.first() && it.version == scenario.expectedVersion }
         assertThat(accessionVersionStatus?.status, `is`(scenario.expectedStatus))
         assertThat(accessionVersionStatus?.isRevocation, `is`(scenario.expectedIsRevocation))
     }
@@ -222,28 +222,26 @@ class GetSequencesEndpointTest(
         fun provideStatusScenarios() = listOf(
             Scenario(
                 setupDescription = "I submitted sequence entries",
-                prepareDatabase = { it.submitDefaultFiles() },
+                prepareDatabase = { it.submitDefaultFiles().map { entry -> entry.accession } },
                 expectedStatus = RECEIVED,
                 expectedIsRevocation = false,
             ),
             Scenario(
                 setupDescription = "I started processing sequence entries",
-                prepareDatabase = { it.prepareDefaultSequenceEntriesToInProcessing() },
+                prepareDatabase = { it.prepareDefaultSequenceEntriesToInProcessing().map { entry -> entry.accession } },
                 expectedStatus = IN_PROCESSING,
                 expectedIsRevocation = false,
             ),
             Scenario(
                 setupDescription = "I submitted sequence entries that have errors",
-                prepareDatabase = { it.prepareDefaultSequenceEntriesToHasErrors() },
+                prepareDatabase = { it.prepareDefaultSequenceEntriesToHasErrors().map { entry -> entry.accession } },
                 expectedStatus = HAS_ERRORS,
                 expectedIsRevocation = false,
             ),
             Scenario(
                 setupDescription = "I submitted sequence entries that have been successfully processed",
                 prepareDatabase = {
-                    it.prepareDatabaseWithProcessedData(
-                        PreparedProcessedData.successfullyProcessed(),
-                    )
+                    it.prepareDataTo(AWAITING_APPROVAL).map { entry -> entry.accession }
                 },
                 expectedStatus = AWAITING_APPROVAL,
                 expectedIsRevocation = false,
@@ -251,8 +249,9 @@ class GetSequencesEndpointTest(
             Scenario(
                 setupDescription = "I submitted, processed and approved sequence entries",
                 prepareDatabase = {
-                    it.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
+                    val accessionVersions = it.prepareDataTo(AWAITING_APPROVAL)
+                    it.approveProcessedSequenceEntries(listOf(accessionVersions.first()))
+                    accessionVersions.map { entry -> entry.accession }
                 },
                 expectedStatus = APPROVED_FOR_RELEASE,
                 expectedIsRevocation = false,
@@ -260,9 +259,11 @@ class GetSequencesEndpointTest(
             Scenario(
                 setupDescription = "I submitted a revocation",
                 prepareDatabase = {
-                    it.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
-                    it.revokeSequenceEntries(listOf(firstAccession))
+                    val accessionVersions = it.prepareDataTo(AWAITING_APPROVAL)
+                    it.approveProcessedSequenceEntries(listOf(accessionVersions.first()))
+                    val accessions = accessionVersions.map { entry -> entry.accession }
+                    it.revokeSequenceEntries(listOf(accessions.first()))
+                    accessions
                 },
                 expectedStatus = AWAITING_APPROVAL_FOR_REVOCATION,
                 expectedIsRevocation = true,
@@ -271,10 +272,12 @@ class GetSequencesEndpointTest(
             Scenario(
                 setupDescription = "I approved a revocation",
                 prepareDatabase = {
-                    it.prepareDatabaseWithProcessedData(PreparedProcessedData.successfullyProcessed())
-                    it.approveProcessedSequenceEntries(listOf(AccessionVersion(firstAccession, 1)))
-                    it.revokeSequenceEntries(listOf(firstAccession))
-                    it.confirmRevocation(listOf(AccessionVersion(firstAccession, 2)))
+                    val accessionVersions = it.prepareDataTo(AWAITING_APPROVAL)
+                    it.approveProcessedSequenceEntries(listOf(accessionVersions.first()))
+                    val accessions = accessionVersions.map { entry -> entry.accession }
+                    it.revokeSequenceEntries(listOf(accessions.first()))
+                    it.confirmRevocation(listOf(AccessionVersion(accessions.first(), 2)))
+                    accessions
                 },
                 expectedStatus = APPROVED_FOR_RELEASE,
                 expectedIsRevocation = true,
@@ -286,7 +289,7 @@ class GetSequencesEndpointTest(
     data class Scenario(
         val setupDescription: String,
         val expectedVersion: Long = 1,
-        val prepareDatabase: (SubmissionConvenienceClient) -> Unit,
+        val prepareDatabase: (SubmissionConvenienceClient) -> List<Accession>,
         val expectedStatus: Status,
         val expectedIsRevocation: Boolean,
     ) {

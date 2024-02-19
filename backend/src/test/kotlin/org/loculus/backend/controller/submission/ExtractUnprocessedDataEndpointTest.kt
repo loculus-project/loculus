@@ -61,7 +61,7 @@ class ExtractUnprocessedDataEndpointTest(
 
     @Test
     fun `WHEN extracting unprocessed data THEN only previously not extracted sequence entries are returned`() {
-        convenienceClient.submitDefaultFiles()
+        val firstAccession = convenienceClient.submitDefaultFiles().first().accession
 
         val result7 = client.extractUnprocessedData(7)
         val responseBody7 = result7.expectNdjsonAndGetContent<UnprocessedData>()
@@ -69,14 +69,13 @@ class ExtractUnprocessedDataEndpointTest(
         assertThat(
             responseBody7,
             hasItem(
-                UnprocessedData(DefaultFiles.firstAccession, 1, defaultOriginalData),
+                UnprocessedData(firstAccession, 1, defaultOriginalData),
             ),
         )
 
         val result3 = client.extractUnprocessedData(5)
         val responseBody3 = result3.expectNdjsonAndGetContent<UnprocessedData>()
         assertThat(responseBody3, hasSize(3))
-        assertThat(responseBody3[0].accession, `is`("8"))
 
         val result0 = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
         val responseBody0 = result0.expectNdjsonAndGetContent<UnprocessedData>()

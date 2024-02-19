@@ -4,9 +4,9 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
 import org.junit.jupiter.api.Test
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -23,6 +23,7 @@ private const val DEFAULT_SEQUENCE_NAME = "main"
 class SingleSegmentedSubmitEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val backendConfig: BackendConfig,
 ) {
     @Test
     fun `GIVEN valid input data without segment name THEN data is accepted and shows segment name 'main'`() {
@@ -47,7 +48,7 @@ class SingleSegmentedSubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(2))
             .andExpect(jsonPath("\$[0].submissionId").value("header1"))
-            .andExpect(jsonPath("\$[0].accession").value(DefaultFiles.firstAccession))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
             .andExpect(jsonPath("\$[0].version").value(1))
 
         val unalignedNucleotideSequences = convenienceClient.extractUnprocessedData()[0]

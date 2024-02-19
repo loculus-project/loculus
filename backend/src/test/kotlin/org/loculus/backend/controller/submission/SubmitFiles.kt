@@ -5,6 +5,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import org.apache.commons.compress.compressors.xz.XZCompressorOutputStream
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.loculus.backend.service.submission.CompressionAlgorithm
+import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType.TEXT_PLAIN_VALUE
 import org.springframework.mock.web.MockMultipartFile
 import org.tukaani.xz.LZMA2Options
@@ -21,7 +22,30 @@ private const val DEFAULT_MULTI_SEGMENT_SEQUENCES_FILE_NAME = "sequences_multi_s
 object SubmitFiles {
 
     object DefaultFiles {
-        val revisedMetadataFile = metadataFileWith(content = getFileContent(REVISED_METADATA_FILE_NAME))
+
+        val dummyRevisedMetadataFile = metadataFileWith(
+            content = "accession\tsubmissionId\tfirstColumn\n" +
+                "someAccession\tsomeHeader\tsomeValue\n" +
+                "someOtherAccession\tsomeHeader2\tsomeValue2",
+        )
+
+        fun getRevisedMetadataFile(accessions: List<Accession>): MockMultipartFile {
+            val fileContent = getFileContent(REVISED_METADATA_FILE_NAME)
+
+            val lines = fileContent.trim().split("\n")
+            val headerLine = lines.removeFirst()
+
+            val revisedLines = lines
+                .map { it.substringAfter('\t') }
+                .zip(accessions)
+                .map { (line, accession) -> "$accession\t$line" }
+                .toList()
+
+            revisedLines.addFirst(headerLine)
+
+            return metadataFileWith(content = revisedLines.joinToString("\n"))
+        }
+
         val metadataFiles = CompressionAlgorithm.entries.associateWith {
             metadataFileWith(
                 content = getFileContent(DEFAULT_METADATA_FILE_NAME),
@@ -47,8 +71,6 @@ object SubmitFiles {
         )
 
         const val NUMBER_OF_SEQUENCES = 10
-        val allAccessions = (1L..NUMBER_OF_SEQUENCES).toList().map { it.toString() }
-        val firstAccession = allAccessions[0]
 
         private fun getFileContent(file: String): String {
             return String(

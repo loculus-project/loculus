@@ -17,7 +17,6 @@ import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.firstAccession
 import org.loculus.backend.service.submission.AminoAcidSymbols
 import org.loculus.backend.service.submission.NucleotideSymbols
 import org.loculus.backend.utils.Accession
@@ -37,7 +36,7 @@ class SubmitProcessedDataEndpointTest(
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
             submissionControllerClient.submitProcessedData(
-                PreparedProcessedData.successfullyProcessed(),
+                PreparedProcessedData.successfullyProcessed("DoesNotMatter"),
                 jwt = it,
             )
         }
@@ -47,7 +46,7 @@ class SubmitProcessedDataEndpointTest(
     fun `GIVEN authorization token with wrong role THEN returns 403 Forbidden`() {
         expectForbiddenResponse {
             submissionControllerClient.submitProcessedData(
-                PreparedProcessedData.successfullyProcessed(),
+                PreparedProcessedData.successfullyProcessed("DoesNotMatter"),
                 jwt = jwtForDefaultUser,
             )
         }
@@ -55,22 +54,21 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit successfully preprocessed data THEN the sequence entry is in status processed`() {
-        prepareExtractedSequencesInDatabase()
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "3"),
-            PreparedProcessedData.successfullyProcessed(accession = "4"),
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = "3", version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
     }
 
     @Test
     fun `WHEN I submit data with null as sequences THEN the sequence entry is in status processed`() {
-        val (accession, version, _) = prepareExtractedSequencesInDatabase()[0]
+        val (accession, version) = prepareExtractedSequencesInDatabase().first()
 
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.withNullForSequences(accession = accession, version = version),
@@ -83,7 +81,7 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit with all valid symbols THEN the sequence entry is in status processed`() {
-        prepareExtractedSequencesInDatabase()
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
         val allNucleotideSymbols = NucleotideSymbols.entries.joinToString("") { it.symbol.toString() }
         val desiredLength = 49
@@ -95,10 +93,10 @@ class SubmitProcessedDataEndpointTest(
         }
 
         val allAminoAcidSymbols = AminoAcidSymbols.entries.joinToString("") { it.symbol.toString() }
-        val defaultData = PreparedProcessedData.successfullyProcessed().data
+        val defaultData = PreparedProcessedData.successfullyProcessed(accessions.first()).data
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "3").copy(
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()).copy(
                 data = defaultData.copy(
                     unalignedNucleotideSequences = mapOf(MAIN_SEGMENT to nucleotideSequenceOfDesiredLength),
                     alignedNucleotideSequences = mapOf(MAIN_SEGMENT to nucleotideSequenceOfDesiredLength),
@@ -109,29 +107,31 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = "3", version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
     }
 
     @Test
     fun `WHEN I submit preprocessed data without insertions THEN the missing keys of the reference will be added`() {
-        prepareExtractedSequencesInDatabase(organism = OTHER_ORGANISM)
+        val accessions = prepareExtractedSequencesInDatabase(organism = OTHER_ORGANISM).map { it.accession }
 
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessedOtherOrganismData().data.copy(
+        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessedOtherOrganismData(
+            accessions.first(),
+        ).data.copy(
             nucleotideInsertions = mapOf("notOnlySegment" to listOf(Insertion(1, "A"))),
             aminoAcidInsertions = emptyMap(),
         )
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = "3").copy(
+            PreparedProcessedData.successfullyProcessedOtherOrganismData(accession = accessions.first()).copy(
                 data = dataWithoutInsertions,
             ),
             organism = OTHER_ORGANISM,
         ).andExpect(status().isNoContent)
 
         convenienceClient.getSequenceEntryOfUser(
-            accession = "3",
+            accession = accessions.first(),
             version = 1,
             organism = OTHER_ORGANISM,
         ).assertStatusIs(
@@ -139,7 +139,7 @@ class SubmitProcessedDataEndpointTest(
         )
 
         submissionControllerClient.getSequenceEntryThatHasErrors(
-            accession = "3",
+            accession = accessions.first(),
             version = 1,
             organism = OTHER_ORGANISM,
         )
@@ -163,25 +163,25 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit single-segment data without insertions THEN the missing keys of the reference will be added`() {
-        prepareExtractedSequencesInDatabase()
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
-        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed().data.copy(
+        val dataWithoutInsertions = PreparedProcessedData.successfullyProcessed(accessions.first()).data.copy(
             nucleotideInsertions = mapOf("main" to listOf(Insertion(1, "A"))),
             aminoAcidInsertions = emptyMap(),
         )
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "3").copy(
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()).copy(
                 data = dataWithoutInsertions,
             ),
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = "3", version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
 
         submissionControllerClient.getSequenceEntryThatHasErrors(
-            accession = "3",
+            accession = accessions.first(),
             version = 1,
         )
             .andExpect(status().isOk)
@@ -197,53 +197,53 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit null for a non-required field THEN the sequence entry is in status processed`() {
-        prepareExtractedSequencesInDatabase()
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.withNullForFields(fields = listOf("dateSubmitted")),
+            PreparedProcessedData.withNullForFields(accession = accessions.first(), fields = listOf("dateSubmitted")),
         )
             .andExpect(status().isNoContent)
 
         prepareExtractedSequencesInDatabase()
 
-        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
     @Test
     fun `WHEN I submit data with errors THEN the sequence entry is in status has errors`() {
-        prepareExtractedSequencesInDatabase()
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
-        submissionControllerClient.submitProcessedData(PreparedProcessedData.withErrors(firstAccession))
+        submissionControllerClient.submitProcessedData(PreparedProcessedData.withErrors(accessions.first()))
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
     @Test
     fun `GIVEN I submitted invalid data and errors THEN the sequence entry is in status has errors`() {
-        convenienceClient.submitDefaultFiles()
+        val accessions = convenienceClient.submitDefaultFiles().map { it.accession }
         convenienceClient.extractUnprocessedData(1)
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.withWrongDateFormat().copy(
-                accession = firstAccession,
-                errors = PreparedProcessedData.withErrors().errors,
+            PreparedProcessedData.withWrongDateFormat(accessions.first()).copy(
+                accession = accessions.first(),
+                errors = PreparedProcessedData.withErrors(accessions.first()).errors,
             ),
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
     @Test
     fun `WHEN I submit data with warnings THEN the sequence entry is in status processed`() {
-        prepareExtractedSequencesInDatabase()
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
-        submissionControllerClient.submitProcessedData(PreparedProcessedData.withWarnings(firstAccession))
+        submissionControllerClient.submitProcessedData(PreparedProcessedData.withWarnings(accessions.first()))
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
@@ -252,15 +252,17 @@ class SubmitProcessedDataEndpointTest(
     fun `GIVEN invalid processed data THEN refuses to update and an error will be thrown`(
         invalidDataScenario: InvalidDataScenario,
     ) {
-        prepareExtractedSequencesInDatabase()
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
-        submissionControllerClient.submitProcessedData(invalidDataScenario.processedData)
+        submissionControllerClient.submitProcessedData(
+            invalidDataScenario.processedDataThatNeedsAValidAccession.copy(accession = accessions.first()),
+        )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.detail").value(invalidDataScenario.expectedErrorMessage))
 
         val sequenceStatus = convenienceClient.getSequenceEntryOfUser(
-            accession = invalidDataScenario.processedData.accession,
+            accession = accessions.first(),
             version = 1,
         )
         assertThat(sequenceStatus.status, `is`(Status.IN_PROCESSING))
@@ -268,68 +270,71 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I submit data for a non-existent accession THEN refuses update with unprocessable entity`() {
-        prepareExtractedSequencesInDatabase()
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
-        val nonExistentAccesion = "999"
+        val nonExistentAccession = "999"
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = "1"),
-            PreparedProcessedData.successfullyProcessed(accession = nonExistentAccesion),
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+            PreparedProcessedData.successfullyProcessed(accession = nonExistentAccession),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Accession version $nonExistentAccesion.1 does not exist"))
+            .andExpect(jsonPath("\$.detail").value("Accession version $nonExistentAccession.1 does not exist"))
 
-        convenienceClient.getSequenceEntryOfUser(accession = "1", version = 1).assertStatusIs(Status.IN_PROCESSING)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1).assertStatusIs(
+            Status.IN_PROCESSING,
+        )
     }
 
     @Test
     fun `WHEN I submit data for a non-existent accession version THEN refuses update with unprocessable entity`() {
-        prepareExtractedSequencesInDatabase()
+        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
         val nonExistentVersion = 999L
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = firstAccession),
-            PreparedProcessedData.successfullyProcessed(accession = firstAccession)
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first()),
+            PreparedProcessedData.successfullyProcessed(accession = accessions.first())
                 .copy(version = nonExistentVersion),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Accession version $firstAccession.$nonExistentVersion does not exist",
+                    "Accession version ${accessions.first()}.$nonExistentVersion does not exist",
                 ),
             )
 
-        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.IN_PROCESSING)
     }
 
     @Test
     fun `WHEN I submit data for an entry that is not in processing THEN refuses update with unprocessable entity`() {
-        val accession = prepareUnprocessedSequenceEntry()
+        val accessionsNotInProcessing = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL).map { it.accession }
+        val accessionsInProcessing = convenienceClient.prepareDataTo(Status.IN_PROCESSING).map { it.accession }
 
-        val accessionNotInProcessing = "2"
-        convenienceClient.getSequenceEntryOfUser(accession = accessionNotInProcessing, version = 1)
-            .assertStatusIs(Status.RECEIVED)
+        convenienceClient.getSequenceEntryOfUser(accession = accessionsNotInProcessing.first(), version = 1)
+            .assertStatusIs(Status.AWAITING_APPROVAL)
 
         submissionControllerClient.submitProcessedData(
-            PreparedProcessedData.successfullyProcessed(accession = accession),
-            PreparedProcessedData.successfullyProcessed(accession = accessionNotInProcessing),
+            PreparedProcessedData.successfullyProcessed(accession = accessionsInProcessing.first()),
+            PreparedProcessedData.successfullyProcessed(accession = accessionsNotInProcessing.first()),
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Accession version $accessionNotInProcessing.1 is in not in state IN_PROCESSING (was RECEIVED)",
+                    "Accession version ${accessionsNotInProcessing.first()}.1 " +
+                        "is in not in state IN_PROCESSING (was AWAITING_APPROVAL)",
                 ),
             )
 
-        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
+        convenienceClient.getSequenceEntryOfUser(accession = accessionsInProcessing.first(), version = 1)
             .assertStatusIs(Status.IN_PROCESSING)
-        convenienceClient.getSequenceEntryOfUser(accession = accessionNotInProcessing, version = 1)
-            .assertStatusIs(Status.RECEIVED)
+        convenienceClient.getSequenceEntryOfUser(accession = accessionsNotInProcessing.first(), version = 1)
+            .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
     @Test
@@ -339,7 +344,7 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedDataRaw(
             """
                 {
-                    "accession": $accession,
+                    "accession": "$accession",
                     "version": 1,
                     "data": {
                         "noMetadata": null,
@@ -367,10 +372,12 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail").value(containsString("1.1 is for organism dummyOrganism")),
+                jsonPath("\$.detail")
+                    .value(containsString("$accession.1 is for organism dummyOrganism")),
             )
             .andExpect(
-                jsonPath("\$.detail").value(containsString("submitted data is for organism otherOrganism")),
+                jsonPath("\$.detail")
+                    .value(containsString("submitted data is for organism otherOrganism")),
             )
     }
 
@@ -417,7 +424,8 @@ class SubmitProcessedDataEndpointTest(
         fun provideInvalidMetadataScenarios() = listOf(
             InvalidDataScenario(
                 name = "data with unknown metadata fields",
-                processedData = PreparedProcessedData.withUnknownMetadataField(
+                processedDataThatNeedsAValidAccession = PreparedProcessedData.withUnknownMetadataField(
+                    accession = "DoesNotMatter",
                     fields = listOf(
                         "unknown field 1",
                         "unknown field 2",
@@ -427,30 +435,42 @@ class SubmitProcessedDataEndpointTest(
             ),
             InvalidDataScenario(
                 name = "data with missing required fields",
-                processedData = PreparedProcessedData.withMissingRequiredField(fields = listOf("date", "region")),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData.withMissingRequiredField(
+                    accession = "DoesNotMatter",
+                    fields = listOf("date", "region"),
+                ),
                 expectedErrorMessage = "Missing the required field 'date'.",
             ),
             InvalidDataScenario(
                 name = "data with wrong type for fields",
-                processedData = PreparedProcessedData.withWrongTypeForFields(),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData.withWrongTypeForFields(
+                    accession = "DoesNotMatter",
+                ),
                 expectedErrorMessage = "Expected type 'string' for field 'region', found value '5'.",
             ),
             InvalidDataScenario(
                 name = "data with wrong date format",
-                processedData = PreparedProcessedData.withWrongDateFormat(),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData.withWrongDateFormat(
+                    accession = "DoesNotMatter",
+                ),
                 expectedErrorMessage =
                 "Expected type 'date' in format 'yyyy-MM-dd' for field 'date', found value '\"1.2.2021\"'.",
             ),
             InvalidDataScenario(
                 name = "data with wrong pango lineage format",
-                processedData = PreparedProcessedData.withWrongPangoLineageFormat(),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData.withWrongPangoLineageFormat(
+                    accession = "DoesNotMatter",
+                ),
                 expectedErrorMessage =
                 "Expected type 'pango_lineage' for field 'pangoLineage', found value '\"A.5.invalid\"'. " +
                     "A pango lineage must be of the form [a-zA-Z]{1,3}(\\.\\d{1,3}){0,3}, e.g. 'XBB' or 'BA.1.5'.",
             ),
             InvalidDataScenario(
                 name = "data with explicit null for required field",
-                processedData = PreparedProcessedData.withNullForFields(fields = listOf("date")),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData.withNullForFields(
+                    accession = "DoesNotMatter",
+                    fields = listOf("date"),
+                ),
                 expectedErrorMessage = "Field 'date' is null, but a value is required.",
             ),
         )
@@ -459,58 +479,86 @@ class SubmitProcessedDataEndpointTest(
         fun provideInvalidNucleotideSequenceDataScenarios() = listOf(
             InvalidDataScenario(
                 name = "data with missing segment in unaligned nucleotide sequences",
-                processedData = PreparedProcessedData.withMissingSegmentInUnalignedNucleotideSequences(
-                    segment = "main",
-                ),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withMissingSegmentInUnalignedNucleotideSequences(
+                        accession = "DoesNotMatter",
+                        segment = "main",
+                    ),
                 expectedErrorMessage = "Missing the required segment 'main' in 'unalignedNucleotideSequences'.",
             ),
             InvalidDataScenario(
                 name = "data with missing segment in aligned nucleotide sequences",
-                processedData = PreparedProcessedData.withMissingSegmentInAlignedNucleotideSequences(segment = "main"),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withMissingSegmentInAlignedNucleotideSequences(
+                        accession = "DoesNotMatter",
+                        segment = "main",
+                    ),
                 expectedErrorMessage = "Missing the required segment 'main' in 'alignedNucleotideSequences'.",
             ),
             InvalidDataScenario(
                 name = "data with unknown segment in alignedNucleotideSequences",
-                processedData = PreparedProcessedData.withUnknownSegmentInAlignedNucleotideSequences(
-                    segment = "someOtherSegment",
-                ),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withUnknownSegmentInAlignedNucleotideSequences(
+                        accession = "DoesNotMatter",
+                        segment = "someOtherSegment",
+                    ),
                 expectedErrorMessage = "Unknown segments in 'alignedNucleotideSequences': someOtherSegment.",
             ),
             InvalidDataScenario(
                 name = "data with unknown segment in unalignedNucleotideSequences",
-                processedData = PreparedProcessedData.withUnknownSegmentInUnalignedNucleotideSequences(
-                    segment = "someOtherSegment",
-                ),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withUnknownSegmentInUnalignedNucleotideSequences(
+                        accession = "DoesNotMatter",
+                        segment = "someOtherSegment",
+                    ),
                 expectedErrorMessage = "Unknown segments in 'unalignedNucleotideSequences': someOtherSegment.",
             ),
             InvalidDataScenario(
                 name = "data with unknown segment in nucleotideInsertions",
-                processedData = PreparedProcessedData.withUnknownSegmentInNucleotideInsertions(
-                    segment = "someOtherSegment",
-                ),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withUnknownSegmentInNucleotideInsertions(
+                        accession = "DoesNotMatter",
+                        segment = "someOtherSegment",
+                    ),
                 expectedErrorMessage = "Unknown segments in 'nucleotideInsertions': someOtherSegment.",
             ),
             InvalidDataScenario(
                 name = "data with segment in aligned nucleotide sequences of wrong length",
-                processedData = PreparedProcessedData.withAlignedNucleotideSequenceOfWrongLength(segment = "main"),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withAlignedNucleotideSequenceOfWrongLength(
+                        accession = "DoesNotMatter",
+                        segment = "main",
+                    ),
                 expectedErrorMessage = "The length of 'main' in 'alignedNucleotideSequences' is 123, " +
                     "but it should be 49.",
             ),
             InvalidDataScenario(
                 name = "data with segment in aligned nucleotide sequences with wrong symbols",
-                processedData = PreparedProcessedData.withAlignedNucleotideSequenceWithWrongSymbols(segment = "main"),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withAlignedNucleotideSequenceWithWrongSymbols(
+                        accession = "DoesNotMatter",
+                        segment = "main",
+                    ),
                 expectedErrorMessage = "The sequence of segment 'main' in 'alignedNucleotideSequences' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),
             InvalidDataScenario(
                 name = "data with segment in unaligned nucleotide sequences with wrong symbols",
-                processedData = PreparedProcessedData.withUnalignedNucleotideSequenceWithWrongSymbols(segment = "main"),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withUnalignedNucleotideSequenceWithWrongSymbols(
+                        accession = "DoesNotMatter",
+                        segment = "main",
+                    ),
                 expectedErrorMessage = "The sequence of segment 'main' in 'unalignedNucleotideSequences' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),
             InvalidDataScenario(
                 name = "data with segment in nucleotide insertions with wrong symbols",
-                processedData = PreparedProcessedData.withNucleotideInsertionsWithWrongSymbols(segment = "main"),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withNucleotideInsertionsWithWrongSymbols(
+                        accession = "DoesNotMatter",
+                        segment = "main",
+                    ),
                 expectedErrorMessage = "The insertion 123:ÄÖ of segment 'main' in 'nucleotideInsertions' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),
@@ -520,40 +568,58 @@ class SubmitProcessedDataEndpointTest(
         fun provideInvalidAminoAcidSequenceDataScenarios() = listOf(
             InvalidDataScenario(
                 name = "data with missing gene in alignedAminoAcidSequences",
-                processedData = PreparedProcessedData.withMissingGeneInAlignedAminoAcidSequences(
-                    gene = SOME_SHORT_GENE,
-                ),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withMissingGeneInAlignedAminoAcidSequences(
+                        accession = "DoesNotMatter",
+                        gene = SOME_SHORT_GENE,
+                    ),
                 expectedErrorMessage = "Missing the required gene 'someShortGene'.",
             ),
             InvalidDataScenario(
                 name = "data with unknown gene in alignedAminoAcidSequences",
-                processedData = PreparedProcessedData.withUnknownGeneInAlignedAminoAcidSequences(
-                    gene = "someOtherGene",
-                ),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withUnknownGeneInAlignedAminoAcidSequences(
+                        accession = "DoesNotMatter",
+                        gene = "someOtherGene",
+                    ),
                 expectedErrorMessage = "Unknown genes in 'alignedAminoAcidSequences': someOtherGene.",
             ),
             InvalidDataScenario(
                 name = "data with unknown gene in aminoAcidInsertions",
-                processedData = PreparedProcessedData.withUnknownGeneInAminoAcidInsertions(
-                    gene = "someOtherGene",
-                ),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withUnknownGeneInAminoAcidInsertions(
+                        accession = "DoesNotMatter",
+                        gene = "someOtherGene",
+                    ),
                 expectedErrorMessage = "Unknown genes in 'aminoAcidInsertions': someOtherGene.",
             ),
             InvalidDataScenario(
                 name = "data with gene in alignedAminoAcidSequences of wrong length",
-                processedData = PreparedProcessedData.withAminoAcidSequenceOfWrongLength(gene = SOME_SHORT_GENE),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withAminoAcidSequenceOfWrongLength(
+                        accession = "DoesNotMatter",
+                        gene = SOME_SHORT_GENE,
+                    ),
                 expectedErrorMessage = "The length of 'someShortGene' in 'alignedAminoAcidSequences' is 123, " +
                     "but it should be 4.",
             ),
             InvalidDataScenario(
                 name = "data with gene in alignedAminoAcidSequences with wrong symbols",
-                processedData = PreparedProcessedData.withAminoAcidSequenceWithWrongSymbols(gene = SOME_SHORT_GENE),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withAminoAcidSequenceWithWrongSymbols(
+                        accession = "DoesNotMatter",
+                        gene = SOME_SHORT_GENE,
+                    ),
                 expectedErrorMessage = "The gene 'someShortGene' in 'alignedAminoAcidSequences' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),
             InvalidDataScenario(
                 name = "data with segment in amino acid insertions with wrong symbols",
-                processedData = PreparedProcessedData.withAminoAcidInsertionsWithWrongSymbols(gene = SOME_SHORT_GENE),
+                processedDataThatNeedsAValidAccession = PreparedProcessedData
+                    .withAminoAcidInsertionsWithWrongSymbols(
+                        accession = "DoesNotMatter",
+                        gene = SOME_SHORT_GENE,
+                    ),
                 expectedErrorMessage = "An insertion of gene 'someShortGene' in 'aminoAcidInsertions' contains " +
                     "invalid symbols: [Ä, Ö].",
             ),
@@ -563,7 +629,7 @@ class SubmitProcessedDataEndpointTest(
 
 data class InvalidDataScenario(
     val name: String,
-    val processedData: SubmittedProcessedData,
+    val processedDataThatNeedsAValidAccession: SubmittedProcessedData,
     val expectedErrorMessage: String,
 ) {
     override fun toString(): String {

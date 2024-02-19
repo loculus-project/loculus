@@ -2,6 +2,7 @@ import isEqual from 'lodash/isEqual.js';
 import sortBy from 'lodash/sortBy.js';
 
 import {
+    accessionPrefix,
     createTestGroupIfNotExistent,
     DEFAULT_GROUP_NAME,
     e2eLogger,
@@ -10,6 +11,7 @@ import {
     testUser,
     testUserPassword,
 } from './e2e.fixture.ts';
+import { AccessionTransformer } from './util/accessionTransformer.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
 import { LapisClient } from '../src/services/lapisClient.ts';
 import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD } from '../src/settings.ts';
@@ -92,11 +94,25 @@ function waitSeconds(seconds: number) {
 }
 
 async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBeforeTests> {
+    const accessionTransformer = new AccessionTransformer(accessionPrefix);
+
     const numberOfSequencesInLapisResult = await lapisClient.call('aggregated', {});
 
     if (numberOfSequencesInLapisResult._unsafeUnwrap().data[0].count === 0) {
         return LapisStateBeforeTests.NoSequencesInLapis;
     }
+
+    const [singleLatestVersionAccession, revisedAndRevokedAccession, revisedAccession] =
+        accessionTransformer.generateCustomIds([1, 11, 21]);
+
+    e2eLogger.info(
+        'Checking LAPIS for sequences with accessions: ' +
+            singleLatestVersionAccession +
+            ', ' +
+            revisedAndRevokedAccession +
+            ', ' +
+            revisedAccession,
+    );
 
     const fields = [ACCESSION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD, IS_REVOCATION_FIELD];
     const [
@@ -105,9 +121,9 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
         shouldBeTwoVersionsAndOneRevokedResult,
         shouldBeTwoVersionsAndOneRevisedResult,
     ] = await Promise.all([
-        lapisClient.call('details', { accession: '1', fields }),
-        lapisClient.call('details', { accession: '11', fields }),
-        lapisClient.call('details', { accession: '21', fields }),
+        lapisClient.call('details', { accession: singleLatestVersionAccession, fields }),
+        lapisClient.call('details', { accession: revisedAndRevokedAccession, fields }),
+        lapisClient.call('details', { accession: revisedAccession, fields }),
     ]);
 
     const shouldBeLatestVersionAndNotRevoked = sortBy(shouldBeLatestVersionResult._unsafeUnwrap().data, [
@@ -120,66 +136,66 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
         VERSION_FIELD,
     ]);
 
-    const expectedLatestVersion = [
+    const expectedLatestVersions = [
         {
-            accession: '1',
+            accession: singleLatestVersionAccession,
             version: 1,
             versionStatus: siloVersionStatuses.latestVersion,
             isRevocation: 'false',
         },
     ];
 
-    if (!isEqual(shouldBeLatestVersionAndNotRevoked, expectedLatestVersion)) {
+    if (!isEqual(shouldBeLatestVersionAndNotRevoked, expectedLatestVersions)) {
         throw new Error(
             `Unexpected data in LAPIS. Please check the data preparation. Received: ${JSON.stringify(
                 shouldBeLatestVersionAndNotRevoked,
-            )} Expected: ${JSON.stringify(expectedLatestVersion)}`,
+            )} Expected: ${JSON.stringify(expectedLatestVersions)}`,
         );
     }
 
-    const expectedRevokedVersion = [
+    const expectedRevokedVersions = [
         {
-            accession: '11',
+            accession: revisedAndRevokedAccession,
             version: 1,
             versionStatus: siloVersionStatuses.revoked,
             isRevocation: 'false',
         },
         {
-            accession: '11',
+            accession: revisedAndRevokedAccession,
             version: 2,
             versionStatus: siloVersionStatuses.latestVersion,
             isRevocation: 'true',
         },
     ];
 
-    if (!isEqual(shouldBeTwoVersionsAndOneRevoked, expectedRevokedVersion)) {
+    if (!isEqual(shouldBeTwoVersionsAndOneRevoked, expectedRevokedVersions)) {
         throw new Error(
             `Unexpected data in LAPIS. Please check the data preparation. Received: ${JSON.stringify(
                 shouldBeTwoVersionsAndOneRevoked,
-            )} Expected: ${JSON.stringify(expectedRevokedVersion)}`,
+            )} Expected: ${JSON.stringify(expectedRevokedVersions)}`,
         );
     }
 
-    const expectedRevisedVersion = [
+    const expectedRevisedVersions = [
         {
-            accession: '21',
+            accession: revisedAccession,
             version: 1,
             versionStatus: siloVersionStatuses.revised,
             isRevocation: 'false',
         },
         {
-            accession: '21',
+            accession: revisedAccession,
             version: 2,
             versionStatus: siloVersionStatuses.latestVersion,
             isRevocation: 'false',
         },
     ];
 
-    if (!isEqual(sortBy(shouldBeTwoVersionsAndOneRevised, ['version']), expectedRevisedVersion)) {
+    if (!isEqual(sortBy(shouldBeTwoVersionsAndOneRevised, ['version']), expectedRevisedVersions)) {
         throw new Error(
             `Unexpected data in LAPIS. Please check the data preparation. Received: ${JSON.stringify(
                 shouldBeTwoVersionsAndOneRevised,
-            )} Expected: ${JSON.stringify(expectedRevisedVersion)}`,
+            )} Expected: ${JSON.stringify(expectedRevisedVersions)}`,
         );
     }
     return LapisStateBeforeTests.CorrectSequencesInLapis;

@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
@@ -36,6 +37,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @EndpointTest
 class SubmitEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
+    @Autowired val backendConfig: BackendConfig,
 ) {
 
     @Test
@@ -98,7 +100,7 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
-            .andExpect(jsonPath("\$[0].accession").value(DefaultFiles.firstAccession))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
             .andExpect(jsonPath("\$[0].version").value(1))
     }
 
@@ -113,7 +115,7 @@ class SubmitEndpointTest(
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
             .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
-            .andExpect(jsonPath("\$[0].accession").value(DefaultFiles.firstAccession))
+            .andExpect(jsonPath("\$[0].accession", containsString(backendConfig.accessionPrefix)))
             .andExpect(jsonPath("\$[0].version").value(1))
     }
 

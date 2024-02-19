@@ -21,6 +21,7 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.controller.toAccessionVersion
 import org.loculus.backend.utils.AccessionVersionComparator
@@ -67,7 +68,10 @@ class DeleteSequencesEndpointTest(
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.length()").value(accessionVersionsToDelete.size))
-            .andExpect(jsonPath("\$[*].accession").value(accessionVersionsToDelete.map { it.accession }))
+
+        accessionVersionsToDelete.forEach {
+            deletionResult.andExpect(jsonPath("\$[*].accession", hasItem(it.accession)))
+        }
 
         assertThat(
             convenienceClient.getSequenceEntriesOfUserInState(
@@ -180,7 +184,7 @@ class DeleteSequencesEndpointTest(
     @Test
     fun `WHEN deleting via scope = PROCESSED_WITH_WARNINGS THEN expect all accessions with warnings to be deleted `() {
         val originalSubmission = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()
-        val sequenceWithWarning = PreparedProcessedData.withWarnings()
+        val sequenceWithWarning = PreparedProcessedData.withWarnings(originalSubmission.first().accession)
         convenienceClient.submitProcessedData(sequenceWithWarning)
 
         val countOfSequenceEntriesWithWarnings = 1
@@ -219,14 +223,11 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting accession versions not from the submitter THEN throws forbidden error`() {
-        convenienceClient.submitDefaultFiles()
+        val accessionVersions = convenienceClient.submitDefaultFiles().getAccessionVersions()
 
         val notSubmitter = "theOneWhoMustNotBeNamed"
         client.deleteSequenceEntries(
-            listOfAccessionVersionsToDelete = listOf(
-                AccessionVersion("1", 1),
-                AccessionVersion("2", 1),
-            ),
+            accessionVersions,
             jwt = generateJwtFor(notSubmitter),
         )
             .andExpect(status().isForbidden)

@@ -24,7 +24,8 @@ private const val SECOND_AMINO_ACID_SEQUENCE = "secondAminoAcidSequence"
 class EmptyProcessedDataProviderTest {
     private val underTest = EmptyProcessedDataProvider(
         BackendConfig(
-            mapOf(
+            accessionPrefix = "LOC_",
+            instances = mapOf(
                 DEFAULT_ORGANISM to InstanceConfig(
                     schema = Schema(
                         FIRST_NUCLEOTIDE_SEQUENCE,
