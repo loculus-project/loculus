@@ -26,10 +26,10 @@ export const routes = {
             `/search?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
         ),
 
-    mySequencesPage: <Filter extends FilterValue>(
+    mySequencesPage: (
         organism: string,
         group: string,
-        metadataFilter: Filter[] = [],
+        metadataFilter: FilterValue[] = [],
         mutationFilter: MutationFilter = {},
         page: number | undefined = undefined,
         orderBy?: OrderBy,
