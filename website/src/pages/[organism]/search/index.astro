@@ -1,60 +1,29 @@
 ---
-import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { DownloadDialog } from '../../../components/SearchPage/DownloadDialog/DownloadDialog';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
 import { SearchPagination } from '../../../components/SearchPage/SearchPagination';
 import { Table } from '../../../components/SearchPage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
-import { getLapisUrl, getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { SEARCH } from '../../../routes';
-import { hiddenDefaultSearchFilters, pageSize } from '../../../settings';
-import {
-    getData,
-    getReferenceGenomesSequenceNames,
-    getMetadataFilters,
-    getMutationFilter,
-    getOrderBy,
-    addHiddenFilters,
-} from '../../../utils/search';
-
-const organism = Astro.params.organism!;
-const { organism: cleanedOrganism } = cleanOrganism(organism);
-const schema = getSchema(organism);
-const clientConfig = getRuntimeConfig().public;
-const lapisUrl = getLapisUrl(clientConfig, organism);
-let postParams = new URLSearchParams();
-
-if (Astro.request.method === 'POST') {
-    const formData = await Astro.request.text();
-    const params = new URLSearchParams(formData);
-    const decoded = Object.fromEntries(params);
-    const paramsString = decoded.searchQuery;
-    postParams = new URLSearchParams(paramsString);
-}
-
-const getSearchParams = (field: string): string => {
-    let value = Astro.url.searchParams.get(field);
-    if (value === null && postParams.get(field) !== null) {
-        value = postParams.get(field);
-    }
-    return value ?? '';
-};
-
-const metadataFilter = addHiddenFilters(getMetadataFilters(getSearchParams, organism), hiddenDefaultSearchFilters);
-const mutationFilter = getMutationFilter(Astro.url.searchParams);
-
-const pageParam = getSearchParams('page');
-const page = pageParam !== '' ? Number.parseInt(pageParam, 10) : 1;
-const offset = (page - 1) * pageSize;
-const orderBy = getOrderBy(getSearchParams, schema.defaultOrderBy, schema.defaultOrder);
-
-const referenceGenomesSequenceNames = getReferenceGenomesSequenceNames(organism);
-
-const data = await getData(organism, metadataFilter, mutationFilter, offset, pageSize, orderBy);
+import { pageSize } from '../../../settings';
+import { processParametersAndFetchSearch } from '../../../utils/processParametersAndFetchSearch';
+const {
+    cleanedOrganism,
+    organism,
+    data,
+    page,
+    metadataFilter,
+    mutationFilter,
+    lapisUrl,
+    referenceGenomesSequenceNames,
+    schema,
+    clientConfig,
+    orderBy,
+} = await processParametersAndFetchSearch(Astro);
 ---
 
-<BaseLayout title={`${cleanedOrganism!.displayName} - Browse`}>
+<BaseLayout title={`${cleanedOrganism.displayName} - Browse`}>
     <h1 class='title'>Search</h1>
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         <div class='md:w-72'>

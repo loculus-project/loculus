@@ -1,16 +1,13 @@
 ---
-import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getAccessToken } from '../../utils/getAccessToken';
-import { GroupManagementClient } from '../../services/groupManagementClient';
 import { routes } from '../../routes';
-
-const { organism } = Astro.params;
-
-const clientConfig = getRuntimeConfig().public;
+import { GroupManagementClient } from '../../services/groupManagementClient';
+import { getAccessToken } from '../../utils/getAccessToken';
 const accessToken = getAccessToken(Astro.locals.session)!;
 
 const groupsResult = await GroupManagementClient.create().getGroups(accessToken);
+
+const organism = Astro.params.organism;
 
 let errorMessage = '';
 if (groupsResult.isOk()) {

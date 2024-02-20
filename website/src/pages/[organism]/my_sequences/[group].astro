@@ -1,73 +1,38 @@
 ---
 import { GroupSelector } from '../../../components/MySequencesPage/GroupSelector';
-import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
 import { SearchPagination } from '../../../components/SearchPage/SearchPagination';
 import { Table } from '../../../components/SearchPage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
-import { getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { MY_SEQUENCES } from '../../../routes';
-import { hiddenDefaultSearchFilters, pageSize, GROUP_FIELD } from '../../../settings';
+import { GroupManagementClient } from '../../../services/groupManagementClient';
+import { pageSize } from '../../../settings';
 import { getAccessToken } from '../../../utils/getAccessToken';
-import {
-    getData,
-    getReferenceGenomesSequenceNames,
-    getMetadataFilters,
-    getMutationFilter,
-    getOrderBy,
-    addHiddenFilters,
-} from '../../../utils/search';
-const organism = Astro.params.organism!;
+import { processParametersAndFetchSearch } from '../../../utils/processParametersAndFetchSearch';
+
+const {
+    cleanedOrganism,
+    organism,
+    data,
+    page,
+    metadataFilter,
+    mutationFilter,
+    referenceGenomesSequenceNames,
+    schema,
+    clientConfig,
+    orderBy,
+} = await processParametersAndFetchSearch(Astro);
 const group = Astro.params.group!;
-const { organism: cleanedOrganism } = cleanOrganism(organism);
-const schema = getSchema(organism);
-const clientConfig = getRuntimeConfig().public;
-let postParams = new URLSearchParams();
-
-if (Astro.request.method === 'POST') {
-    const formData = await Astro.request.text();
-    const params = new URLSearchParams(formData);
-    const decoded = Object.fromEntries(params);
-    const paramsString = decoded.searchQuery;
-    postParams = new URLSearchParams(paramsString);
-}
-
-const getSearchParams = (field: string): string => {
-    let value = Astro.url.searchParams.get(field);
-    if (value === null && postParams.get(field) !== null) {
-        value = postParams.get(field);
-    }
-    return value ?? '';
-};
-
-const hiddenDefaultSearchFiltersWithGroup = [
-    ...hiddenDefaultSearchFilters,
-
-    { name: GROUP_FIELD, filterValue: group, type: 'string' as const, notSearchable: true },
-];
-
-const metadataFilter = addHiddenFilters(
-    getMetadataFilters(getSearchParams, organism, true),
-    hiddenDefaultSearchFiltersWithGroup,
-);
-const mutationFilter = getMutationFilter(Astro.url.searchParams);
-
-const pageParam = getSearchParams('page');
-const page = pageParam !== '' ? Number.parseInt(pageParam, 10) : 1;
-const offset = (page - 1) * pageSize;
-const orderBy = getOrderBy(getSearchParams, schema.defaultOrderBy, schema.defaultOrder);
-
-const referenceGenomesSequenceNames = getReferenceGenomesSequenceNames(organism);
-
-const data = await getData(organism, metadataFilter, mutationFilter, offset, pageSize, orderBy);
-
 const accessToken = getAccessToken(Astro.locals.session)!;
-const groups = await fetch(`${clientConfig.backendUrl}/user/groups`, {
-    headers: {
-        Authorization: `Bearer ${accessToken}`,
-    },
-}).then((response) => response.json());
+const groupsResult = await GroupManagementClient.create().getGroups(accessToken);
+if (groupsResult.isOk() === false) {
+    return new Response(undefined, {
+        status: 500,
+        message: 'Failed to get groups',
+    });
+}
+const groups = groupsResult.value;
 
 const groupNames = groups.map((group: { groupName: string }) => group.groupName);
 const groupExists = groupNames.includes(group);
@@ -78,18 +43,13 @@ if (groupExists === false) {
 }
 ---
 
-<BaseLayout title={`${cleanedOrganism!.displayName} - My sequences`}>
+<BaseLayout title={`${cleanedOrganism.displayName} - My sequences`}>
     <h1 class='title'>Viewing sequences for group {group}</h1>
     {
         groupNames.length > 1 && (
             <>
                 Choose group:
-                <GroupSelector
-                    groupNames={groupNames}
-                    selectedGroupName={group}
-                    organism={organism}
-                    client:load
-                />
+                <GroupSelector groupNames={groupNames} selectedGroupName={group} organism={organism} client:load />
             </>
         )
     }
