@@ -353,7 +353,7 @@ const InnerDataUploadForm = ({
                   </label>
                 </div>
                 <div className="text-xs pl-6 text-gray-500 mb-4">
-                    Data will be restricted for a period of time, the sequences will be available but there will be limitations on how they can be used by others. <a href="#" className="text-teal-600">Find out more</a>.
+                    Data will be restricted for a period of time. The sequences will be available but there will be limitations on how they can be used by others. <a href="#" className="text-teal-600">Find out more</a>.
 
                 </div>
                 {
