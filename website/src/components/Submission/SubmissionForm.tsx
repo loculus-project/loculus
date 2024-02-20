@@ -11,7 +11,7 @@ type SubmissionFormProps = {
     clientConfig: ClientConfig;
 };
 
-export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism, clientConfig }) => {
+export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism, clientConfig, groupsOfUser }) => {
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     return (
@@ -23,6 +23,7 @@ export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism,
                 clientConfig={clientConfig}
                 action='submit'
                 onError={openErrorFeedback}
+                groupsOfUser={groupsOfUser}
                 onSuccess={() => {
                     window.location.href = routes.userSequenceReviewPage(organism);
                 }}

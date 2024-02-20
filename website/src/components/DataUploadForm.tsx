@@ -29,6 +29,7 @@ type DataUploadFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     action: Action;
+    groupsOfUser: any[]; // figure out what to do here
     onSuccess: () => void;
     onError: (message: string) => void;
 };
@@ -42,6 +43,7 @@ const InnerDataUploadForm = ({
     action,
     onSuccess,
     onError,
+    groupsOfUser,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
@@ -49,18 +51,10 @@ const InnerDataUploadForm = ({
     const metadataFileInputRef = useRef<HTMLInputElement>(null);
     const sequenceFileInputRef = useRef<HTMLInputElement>(null);
 
-    const { zodiosHooks } = useGroupManagementClient(clientConfig);
-    const groupsOfUser = zodiosHooks.useGetGroupsOfUser({
-        headers: createAuthorizationHeader(accessToken),
-    });
-
-    if (groupsOfUser.error) {
-        onError(`Failed to query Groups: ${stringifyMaybeAxiosError(groupsOfUser.error)}`);
-    }
 
     const noGroup = useMemo(
-        () => groupsOfUser.data === undefined || groupsOfUser.data.length === 0,
-        [groupsOfUser.data],
+        () => groupsOfUser === undefined || groupsOfUser.length === 0,
+        [groupsOfUser],
     );
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
@@ -94,7 +88,7 @@ const InnerDataUploadForm = ({
 
         switch (action) {
             case 'submit':
-                const groupName = selectedGroup ?? groupsOfUser.data?.[0].groupName;
+                const groupName = selectedGroup ?? groupsOfUser?.[0].groupName;
                 if (groupName === undefined) {
                     onError('Please select a group');
                     return;
@@ -142,22 +136,21 @@ const InnerDataUploadForm = ({
         return () => clearInterval(interval);
     }, [metadataFile, sequenceFile]);
 
+    if (noGroup){
+        return (<p className='text-red-500'>
+        Sequences are submitted on behalf of a group. To submit, please either
+        <a href={routes.userOverviewPage()} className='underline'>
+            create a group
+        </a> or ask a group administrator to add you to an existing group.
+        
+    </p>)
+    }
+
+
     return (
         <form onSubmit={handleSubmit} className='p-6 space-y-6 max-w-md w-full'>
             {action === 'submit' &&
-                (noGroup ? (
-                    groupsOfUser.isLoading ? (
-                        <p className='text-gray-500'>Loading groups...</p>
-                    ) : (
-                        <p className='text-red-500'>
-                            No group found. Please join or{' '}
-                            <a href={routes.userOverviewPage()} className='underline'>
-                                create a group
-                            </a>
-                            .
-                        </p>
-                    )
-                ) : (
+                 (
                     <div className='flex flex-col gap-3 w-fit'>
                         <span className='text-gray-700'>Submitting for:</span>
                         <select
@@ -168,14 +161,14 @@ const InnerDataUploadForm = ({
                             disabled={false}
                             className='p-2 border rounded-md'
                         >
-                            {groupsOfUser.data!.map((group) => (
+                            {groupsOfUser!.map((group) => (
                                 <option key={group.groupName} value={group.groupName}>
                                     {group.groupName}
                                 </option>
                             ))}
                         </select>
                     </div>
-                ))}
+                )}
 
             <TextField
                 variant='outlined'

@@ -4,13 +4,20 @@ import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getAccessToken } from '../../../utils/getAccessToken';
 
+
+import { GroupManagementClient } from '../../../services/groupManagementClient';
+
 const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
+
+const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 
 const clientConfig = getRuntimeConfig().public;
 ---
 
 <BaseLayout title='Submit'>
-    <h1 class='title'>Submission Page</h1>
-    <SubmissionForm accessToken={accessToken} organism={organism} clientConfig={clientConfig} client:only='react' />
+    <h1 class='title'>Submission</h1>
+    <SubmissionForm accessToken={accessToken} organism={organism} clientConfig={clientConfig} 
+        groupsOfUser={groupsResult.value}
+    client:load />
 </BaseLayout>
