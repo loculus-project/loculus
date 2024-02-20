@@ -1,13 +1,12 @@
 import { ok, Result } from 'neverthrow';
 
-import type { TableSequenceData } from '../../../components/SearchPage/Table.tsx';
-import { getReferenceGenomes, getSchema } from '../../../config.ts';
-import { LapisClient } from '../../../services/lapisClient.ts';
-import type { ProblemDetail } from '../../../types/backend.ts';
-import type { MetadataFilter, MutationFilter } from '../../../types/config.ts';
-import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../../../types/lapis.ts';
-import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
-
+import type { TableSequenceData } from '../components/SearchPage/Table.tsx';
+import { getReferenceGenomes, getSchema } from '../config.ts';
+import { LapisClient } from '../services/lapisClient.ts';
+import type { ProblemDetail } from '../types/backend.ts';
+import type { MetadataFilter, MutationFilter } from '../types/config.ts';
+import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../types/lapis.ts';
+import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes.ts';
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
@@ -73,10 +72,17 @@ export const getData = async (
     });
 };
 
-export const getMetadataFilters = (getSearchParams: (param: string) => string, organism: string): MetadataFilter[] => {
+export const getMetadataFilters = (
+    getSearchParams: (param: string) => string,
+    organism: string,
+    options: { exclude?: string[] } = {},
+): MetadataFilter[] => {
     const schema = getSchema(organism);
     return schema.metadata.flatMap((metadata) => {
         if (metadata.notSearchable === true) {
+            return [];
+        }
+        if (options.exclude && options.exclude.includes(metadata.name)) {
             return [];
         }
 

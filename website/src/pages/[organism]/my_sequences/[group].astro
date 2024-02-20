@@ -1,13 +1,35 @@
 ---
-import { DownloadDialog } from '../../../components/SearchPage/DownloadDialog/DownloadDialog';
+import { GroupSelector } from '../../../components/MySequencesPage/GroupSelector';
 import { SearchForm } from '../../../components/SearchPage/SearchForm';
 import { SearchPagination } from '../../../components/SearchPage/SearchPagination';
 import { Table } from '../../../components/SearchPage/Table';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { SEARCH } from '../../../routes';
+import { MY_SEQUENCES } from '../../../routes';
+import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { pageSize } from '../../../settings';
+import { getAccessToken } from '../../../utils/getAccessToken';
 import { processParametersAndFetchSearch } from '../../../utils/processParametersAndFetchSearch';
+
+const group = Astro.params.group!;
+const accessToken = getAccessToken(Astro.locals.session)!;
+const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
+if (groupsResult.isOk() === false) {
+    return new Response(undefined, {
+        status: 500,
+        message: 'Failed to get groups',
+    });
+}
+const groups = groupsResult.value;
+
+const groupNames = groups.map((group: { groupName: string }) => group.groupName);
+const groupExists = groupNames.includes(group);
+if (groupExists === false) {
+    return new Response(undefined, {
+        status: 404,
+    });
+}
+
 const {
     cleanedOrganism,
     organism,
@@ -15,16 +37,24 @@ const {
     page,
     metadataFilter,
     mutationFilter,
-    lapisUrl,
     referenceGenomesSequenceNames,
     schema,
     clientConfig,
     orderBy,
-} = await processParametersAndFetchSearch(Astro);
+} = await processParametersAndFetchSearch(Astro, group);
 ---
 
-<BaseLayout title={`${cleanedOrganism.displayName} - Browse`}>
-    <h1 class='title'>Search</h1>
+<BaseLayout title={`${cleanedOrganism.displayName} - My sequences`}>
+    <h1 class='title'>Viewing sequences for group {group}</h1>
+    {
+        groupNames.length > 1 && (
+            <>
+                Choose group:
+                <GroupSelector groupNames={groupNames} selectedGroupName={group} organism={organism} client:load />
+            </>
+        )
+    }
+
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         <div class='md:w-72'>
             <SearchForm
@@ -33,7 +63,8 @@ const {
                 initialMutationFilter={mutationFilter}
                 clientConfig={clientConfig}
                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                classOfSearchPage={SEARCH}
+                classOfSearchPage={MY_SEQUENCES}
+                group={group}
                 client:only='react'
             />
         </div>
@@ -41,13 +72,6 @@ const {
             data.match(
                 (data) => (
                     <div class='flex-1'>
-                        <DownloadDialog
-                            metadataFilter={metadataFilter}
-                            mutationFilter={mutationFilter}
-                            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                            lapisUrl={lapisUrl}
-                            client:load
-                        />
                         <div class='mt-4 mb-1'>
                             Search returned {data.totalCount.toLocaleString()}
                             sequence{data.totalCount === 1 ? '' : 's'}
@@ -60,7 +84,8 @@ const {
                             mutationFilter={mutationFilter}
                             page={page}
                             orderBy={orderBy}
-                            classOfSearchPage={SEARCH}
+                            classOfSearchPage={MY_SEQUENCES}
+                            group={group}
                             client:load
                         />
 
@@ -73,7 +98,8 @@ const {
                                 mutationFilter={mutationFilter}
                                 orderBy={orderBy}
                                 organism={organism}
-                                classOfSearchPage={SEARCH}
+                                classOfSearchPage={MY_SEQUENCES}
+                                group={group}
                             />
                         </div>
                     </div>

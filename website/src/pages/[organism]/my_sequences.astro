@@ -1,0 +1,39 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { routes } from '../../routes';
+import { GroupManagementClient } from '../../services/groupManagementClient';
+import { getAccessToken } from '../../utils/getAccessToken';
+
+const accessToken = getAccessToken(Astro.locals.session)!;
+
+const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
+
+const organism = Astro.params.organism;
+let noGroups = false;
+let errorMessage = '';
+if (groupsResult.isOk()) {
+    if (groupsResult.value.length > 0) {
+        return Astro.redirect(routes.mySequencesPage(organism, groupsResult.value[0].groupName));
+    }
+    noGroups = true;
+} else {
+    errorMessage = groupsResult.error.detail;
+}
+---
+
+<BaseLayout title='My Sequences'>
+    <div>
+        <p>
+            {
+                noGroups && (
+                    <div>
+                        To access sequence-management pages your account needs to be part of a group. Please{' '}
+                        <a href={routes.whereYouCreateAGroup()}>create a group</a>, or ask an existing group admin to
+                        add you to their group.
+                    </div>
+                )
+            }
+            {errorMessage && <div class='bg-red-500'>{errorMessage}</div>}
+        </p>
+    </div>
+</BaseLayout>

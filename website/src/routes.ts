@@ -4,13 +4,17 @@ import type { OrderBy } from './types/lapis.ts';
 import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
 
 const approxMaxUrlLengthForSearch = 1900;
+export const SEARCH = 'SEARCH';
+export const MY_SEQUENCES = 'MY_SEQUENCES';
 
 export const routes = {
     aboutPage: () => '/about',
     apiDocumentationPage: () => '/api_documentation',
+    whereYouCreateAGroup: () => '/user',
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
+    mySequencesWithoutGroup: (organism: string) => `/${organism}/my_sequences`,
     searchPage: <Filter extends FilterValue>(
         organism: string,
         metadataFilter: Filter[] = [],
@@ -21,6 +25,19 @@ export const routes = {
         withOrganism(
             organism,
             `/search?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
+        ),
+
+    mySequencesPage: (
+        organism: string,
+        group: string,
+        metadataFilter: FilterValue[] = [],
+        mutationFilter: MutationFilter = {},
+        page: number | undefined = undefined,
+        orderBy?: OrderBy,
+    ) =>
+        withOrganism(
+            organism,
+            `/my_sequences/${group}?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
         ),
     sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
         `/${organism}/seq/${getAccessionVersionString(accessionVersion)}`,
@@ -56,8 +73,13 @@ export const routes = {
     notFoundPage: () => `/404`,
     logout: () => '/logout',
 };
-export const navigateToSearchPage = (
+
+export type ClassOfSearchPageType = 'SEARCH' | 'MY_SEQUENCES';
+
+export const navigateToSearchLikePage = (
     organism: string,
+    classOfSearchPage: ClassOfSearchPageType,
+    group: string | undefined,
     metadataFilter: FilterValue[] = [],
     mutationFilter: MutationFilter = {},
     page?: number,
@@ -66,7 +88,12 @@ export const navigateToSearchPage = (
     const paramsString = buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString();
 
     if (paramsString.length < approxMaxUrlLengthForSearch) {
-        location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, orderBy);
+        if (classOfSearchPage === SEARCH) {
+            location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, orderBy);
+        }
+        if (classOfSearchPage === MY_SEQUENCES) {
+            location.href = routes.mySequencesPage(organism, group!, metadataFilter, mutationFilter, page, orderBy);
+        }
     } else {
         const form = document.createElement('form');
         const addField = (name: string, value: string) => {
@@ -77,7 +104,8 @@ export const navigateToSearchPage = (
             form.appendChild(field);
         };
         form.method = 'POST';
-        form.action = routes.searchPage(organism);
+        form.action =
+            classOfSearchPage === SEARCH ? routes.searchPage(organism) : routes.mySequencesPage(organism, group!);
 
         addField('searchQuery', paramsString);
         addField('organism', organism);
