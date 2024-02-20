@@ -81,7 +81,7 @@ instances:
       instanceName: "SARS-CoV-2"
       metadata:
         - name: collection_date
-          type: string
+          type: date
         - name: clade
           type: string
           generateIndex: true
