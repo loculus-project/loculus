@@ -18,8 +18,8 @@ export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManag
         );
     }
 
-    public getGroups(token: string) {
-        return this.call('getAllGroups', {
+    public getGroupsOfUser(token: string) {
+        return this.call('getGroupsOfUser', {
             headers: createAuthorizationHeader(token),
         });
     }
