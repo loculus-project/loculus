@@ -326,8 +326,9 @@ const InnerDataUploadForm = ({
               <div className="mt-6 space-y-2">
                 <div className="flex items-center gap-x-3">
                   <input
-                    id="push-everything"
-                    name="push-notifications"
+                    id="data-use-open"
+                    name="data-use"
+                    onChange={() => setDataUseTermsType(openDataUseTermsType)}
                     type="radio"
                     className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
                   />
@@ -341,8 +342,9 @@ const InnerDataUploadForm = ({
                 
                 <div className="flex items-center gap-x-3">
                   <input
-                    id="push-email"
-                    name="push-notifications"
+                    id="data-use-restricted"
+                    name="data-use"
+                    onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
                     type="radio"
                     className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
                   />
@@ -355,7 +357,7 @@ const InnerDataUploadForm = ({
 
                 </div>
                 {
-                    true && (
+                    dataUseTermsType===restrictedDataUseTermsType  && (
                         <div className="text-sm pl-6 text-gray-900 mb-4">
                             Data will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>. <button className="border rounded px-2 py-1 "
                             onClick={() => setDateChangeModalOpen(true)}
