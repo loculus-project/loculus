@@ -13,6 +13,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
+        exclude-patterns:
+          - "@mui/material"
+          - change-case
   - package-ecosystem: npm
     directory: docs/
     schedule:
