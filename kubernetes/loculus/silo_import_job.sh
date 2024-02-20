@@ -88,7 +88,7 @@ preprocessing() {
     if [ $exit_code -ne 0 ]; then
       echo "SiloApi command failed with exit code $exit_code, cleaning up and exiting."
 
-      rm -f "$data_dir/data.ndjson"
+      rm -rf "$data_dir"
       rm -f "$base_data_dir/data.ndjson"
 
       exit $exit_code
