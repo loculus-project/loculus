@@ -13,13 +13,9 @@ updates:
         update-types:
           - "minor"
           - "patch"
-    ignore:
-      - dependency-name: change-case
-        update-types:
-          - version-update:semver-minor
-      - dependency-name: "@mui/material"
-        update-types:
-          - version-update:semver-minor
+        exclude-patterns:
+          - "@mui/material"
+          - change-case
   - package-ecosystem: npm
     directory: docs/
     schedule:
