@@ -79,8 +79,20 @@ preprocessing() {
 
     rm -f "$base_data_dir/data.ndjson"
     cp "$data_dir/data.ndjson" "$base_data_dir/data.ndjson"
-
+    
+    set +e
     /app/siloApi --preprocessing
+    exit_code=$?
+    set -e
+
+    if [ $exit_code -ne 0 ]; then
+      echo "SiloApi command failed with exit code $exit_code, cleaning up and exiting."
+
+      rm -rf "$data_dir"
+      rm -f "$base_data_dir/data.ndjson"
+
+      exit $exit_code
+    fi
 
     echo "preprocessing for $current_timestamp done"
   else
