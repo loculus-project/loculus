@@ -14,7 +14,7 @@ import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { routes, navigateToSearchLikePage } from '../../routes.ts';
+import { routes, navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes.ts';
 import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -29,7 +29,7 @@ interface SearchFormProps {
     initialMutationFilter: MutationFilter;
     clientConfig: ClientConfig;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    classOfSearchPage: string;
+    classOfSearchPage: ClassOfSearchPageType;
     group?: string;
 }
 

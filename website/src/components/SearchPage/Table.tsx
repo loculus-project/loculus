@@ -1,12 +1,11 @@
 import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 
-import { routes, navigateToSearchLikePage } from '../../routes.ts';
+import { routes, navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes.ts';
 import type { MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
-
 export type TableSequenceData = {
     [key: string]: string | number | null;
 };
@@ -19,7 +18,7 @@ type TableProps = {
     mutationFilter: MutationFilter;
     page: number;
     orderBy: OrderBy;
-    classOfSearchPage: string;
+    classOfSearchPage: ClassOfSearchPageType;
     group?: string;
 };
 

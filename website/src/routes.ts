@@ -73,9 +73,12 @@ export const routes = {
     notFoundPage: () => `/404`,
     logout: () => '/logout',
 };
+
+export type ClassOfSearchPageType = 'SEARCH' | 'MY_SEQUENCES';
+
 export const navigateToSearchLikePage = (
     organism: string,
-    classOfSearchPage: string,
+    classOfSearchPage: ClassOfSearchPageType,
     group: string | undefined,
     metadataFilter: FilterValue[] = [],
     mutationFilter: MutationFilter = {},
@@ -87,7 +90,8 @@ export const navigateToSearchLikePage = (
     if (paramsString.length < approxMaxUrlLengthForSearch) {
         if (classOfSearchPage === SEARCH) {
             location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, orderBy);
-        } else if (classOfSearchPage === MY_SEQUENCES) {
+        }
+        if (classOfSearchPage === MY_SEQUENCES) {
             location.href = routes.mySequencesPage(organism, group!, metadataFilter, mutationFilter, page, orderBy);
         }
     } else {

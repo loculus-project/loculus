@@ -11,7 +11,6 @@ import { pageSize } from '../../../settings';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { processParametersAndFetchSearch } from '../../../utils/processParametersAndFetchSearch';
 
-
 const group = Astro.params.group!;
 const accessToken = getAccessToken(Astro.locals.session)!;
 const groupsResult = await GroupManagementClient.create().getGroups(accessToken);

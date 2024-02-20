@@ -1,7 +1,7 @@
 import { URLSearchParams } from 'url';
 
 import type { AstroGlobal } from 'astro';
-import { GROUP_FIELD } from '../settings';
+
 import {
     getData,
     getReferenceGenomesSequenceNames,
@@ -12,7 +12,7 @@ import {
 } from './search';
 import { cleanOrganism } from '../components/Navigation/cleanOrganism';
 import { getSchema, getRuntimeConfig, getLapisUrl } from '../config';
-import { hiddenDefaultSearchFilters, pageSize } from '../settings';
+import { GROUP_FIELD, hiddenDefaultSearchFilters, pageSize } from '../settings';
 
 export async function processParametersAndFetchSearch(astro: AstroGlobal, groupForMySequences?: string) {
     const organism = astro.params.organism!;
@@ -37,17 +37,25 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
     };
 
     let hiddenSearchFeatures = hiddenDefaultSearchFilters;
-    if ( groupForMySequences){
-        hiddenSearchFeatures= [
+    if (groupForMySequences !== undefined) {
+        hiddenSearchFeatures = [
             ...hiddenSearchFeatures,
             { name: GROUP_FIELD, filterValue: groupForMySequences, type: 'string' as const, notSearchable: true },
-        ]
+        ];
     }
 
-    const metadataFilter = addHiddenFilters(getMetadataFilters(getSearchParams, organism,
-        groupForMySequences ? {
-            exclude: [GROUP_FIELD]
-        } : {}), hiddenDefaultSearchFilters);
+    const metadataFilter = addHiddenFilters(
+        getMetadataFilters(
+            getSearchParams,
+            organism,
+            groupForMySequences !== undefined
+                ? {
+                      exclude: [GROUP_FIELD],
+                  }
+                : {},
+        ),
+        hiddenSearchFeatures,
+    );
     const mutationFilter = getMutationFilter(astro.url.searchParams);
 
     const pageParam = getSearchParams('page');

@@ -3,7 +3,6 @@ import { ok, Result } from 'neverthrow';
 import type { TableSequenceData } from '../components/SearchPage/Table.tsx';
 import { getReferenceGenomes, getSchema } from '../config.ts';
 import { LapisClient } from '../services/lapisClient.ts';
-import { GROUP_FIELD } from '../settings.ts';
 import type { ProblemDetail } from '../types/backend.ts';
 import type { MetadataFilter, MutationFilter } from '../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../types/lapis.ts';
@@ -76,7 +75,7 @@ export const getData = async (
 export const getMetadataFilters = (
     getSearchParams: (param: string) => string,
     organism: string,
-    options: {exclude? : string[]} = {},
+    options: { exclude?: string[] } = {},
 ): MetadataFilter[] => {
     const schema = getSchema(organism);
     return schema.metadata.flatMap((metadata) => {
