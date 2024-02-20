@@ -289,7 +289,7 @@ const InnerDataUploadForm = ({
                 )
             }
             <div className='flex-col flex gap-8 divide-y'>
-                <div className='grid grid-cols-3 gap-x-16'>
+                <div className='grid sm:grid-cols-3 gap-x-16'>
 <div className=''>
     <h2 className='font-medium text-lg'>Sequence and metadata</h2>
     <p className='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
@@ -312,7 +312,7 @@ const InnerDataUploadForm = ({
 
     </form>
     </div>
-    <div className='grid grid-cols-3 mt-0 pt-10'>
+    <div className='grid sm:grid-cols-3 mt-0 pt-10'>
     <div>
     <h2 className='font-medium text-lg'>Terms of use</h2>
     <p className='text-gray-500 text-sm'>Specify how your data can be used</p>
