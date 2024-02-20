@@ -19,6 +19,7 @@ data:
 
   runtime_config.json: |
     {
+        "name" : "{{ $.Values.name }}",
         "serverSide": {
             "backendUrl": "http://localhost:8079",
             "lapisUrls": {{- include "loculus.generateInternalLapisUrls" . | fromYaml | toJson }},
