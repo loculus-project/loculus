@@ -4,7 +4,7 @@ import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
 import { type ChangeEvent, type FormEvent, useMemo, useState, useRef, useEffect } from 'react';
-
+import DashiconsGroups from '~icons/dashicons/groups';
 import { withLocalizationProvider, withQueryProvider } from './common/withProvider.tsx';
 import { getClientLogger } from '../clientLogger.ts';
 import { useGroupManagementClient } from '../hooks/useGroupOperations.ts';
@@ -21,7 +21,8 @@ import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
-
+import PhDnaLight from '~icons/ph/dna-light';
+import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 type Action = 'submit' | 'revise';
 
 type DataUploadFormProps = {
@@ -35,6 +36,102 @@ type DataUploadFormProps = {
 };
 
 const logger = getClientLogger('DataUploadForm');
+
+const UploadForm= ({setFile, name, title, Icon, fileType}) => {
+    let [myFile, rawSetMyFile] = useState<File | null>(null)
+    const [isDragOver, setIsDragOver] = useState(false);
+    const setMyFile = (file: File | null) => {
+        setFile(file)
+        rawSetMyFile(file)
+    }
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const handleUpload = () => {
+        document.getElementById(name).click()
+    }
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragOver(true);
+        console.log('drag over')
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        const file = e.dataTransfer.files[0] || null;
+        setMyFile(file);
+    };
+    
+    useEffect(() => {
+        const interval = setInterval(() => {
+            
+            // Check if the file is no longer readable - which generally indicates the file has been edited since being
+            // selected in the UI - and clear it.
+            myFile
+                ?.slice(0, 1)
+                .arrayBuffer()
+                .catch(() => {
+                    setMyFile(null);
+                    if (fileInputRef.current) {
+                        fileInputRef.current.value = '';
+                    }
+                });
+        }
+        , 500);
+        return () => clearInterval(interval);
+    }
+    , [myFile]);
+    return(
+    <div className='sm:col-span-4'>
+                    <label for={name} className='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
+                    {!myFile ? 
+                    <div className={`mt-2 flex justify-center rounded-lg border border-dashed  px-6 py-6 border-gray-900/25 h-40
+                    ${isDragOver ? 'bg-green-100' : ''}  `}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    >
+                <div className="text-center">
+                  <Icon className="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
+                  <div className="mt-4 flex text-sm leading-6 text-gray-600">
+                    <label
+                      htmlFor="file-upload"
+                      className="relative cursor-pointer rounded-md bg-white font-semibold text-teal-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-iteal-600 focus-within:ring-offset-2 hover:text-iteal-500"
+                    >
+                      <span onClick={handleUpload}>Upload a file</span>
+                      <input id={name} name={name} type="file" className="sr-only" 
+                      onChange={(event) => {
+                            const file = event.target.files?.[0] || null;
+                            setMyFile(file);
+                      }
+                        }
+                        ref={fileInputRef}
+                      />
+                    </label>
+                    <p className="pl-1">or drag and drop</p>
+                  </div>
+                  <p className="text-xs leading-5 text-gray-600">{fileType}</p>
+                </div>
+              </div>
+              :
+                <div className='h-40 text-center'>
+                    <Icon className='w-12 h-12 text-gray-300 mx-auto my-4' />
+                    <div
+                    className='text-sm text-gray-500 py-5'
+                    >{myFile.name}</div>
+                    <button onClick={() => setMyFile(null)} className='
+                    text-xs text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'>Discard file</button>
+                   
+                </div>
+            }
+
+                </div>)
+}
 
 const InnerDataUploadForm = ({
     accessToken,
@@ -50,6 +147,8 @@ const InnerDataUploadForm = ({
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(undefined);
     const metadataFileInputRef = useRef<HTMLInputElement>(null);
     const sequenceFileInputRef = useRef<HTMLInputElement>(null);
+    // initial license change date is 6 months from now
+    
 
 
     const noGroup = useMemo(
@@ -61,6 +160,7 @@ const InnerDataUploadForm = ({
     const [selectedGroup, setSelectedGroup] = useState<string | undefined>(undefined);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
+    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData(exampleEntries);
@@ -137,22 +237,156 @@ const InnerDataUploadForm = ({
     }, [metadataFile, sequenceFile]);
 
     if (noGroup){
-        return (<p className='text-red-500'>
-        Sequences are submitted on behalf of a group. To submit, please either
-        <a href={routes.userOverviewPage()} className='underline'>
+        return (<div className='mt-6 alert'>
+            <DashiconsGroups className='w-12 h-12 inline-block mr-2' />
+        <div>
+            <p>Sequences can only be submitted to the database by users who are part of a <i>group</i>.</p>
+            <p className='mt-3'>To submit to the database, please either <a href={routes.userOverviewPage()} className='underline'>
             create a group
-        </a> or ask a group administrator to add you to an existing group.
-        
-    </p>)
+        </a> (a group with one member is not a problem!) or ask a group administrator to add you to an existing group.
+        </p>
+    </div></div>) 
     }
 
+    return(
+        <div className='text-left mt-3'>
+            {
+                dateChangeModalOpen && (
+                    <div className='fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50'>
+                        <div className='bg-white p-6 rounded-lg'>
+                            <h2 className='font-medium text-lg'>Change date until which sequences are restricted</h2>
+                            <DatePicker
+                                format='yyyy-MM-dd'
+                                value={restrictedUntil}
+                                label='Restricted Until'
+                                minDate={dateTimeInMonths(0)}
+                                maxDate={dateTimeInMonths(12)}
+                                slotProps={{
+                                    textField: {
+                                        size: 'small',
+                                        margin: 'dense',
+                                    },
+                                }}
+                                onChange={(date: DateTime | null) => (date !== null ? setRestrictedUntil(date) : null)}
+                            />
+                            <div className='flex justify-end gap-4 mt-4'>
+                                <button
+                                    className='px-4 py-2 btn normal-case'
+                                    onClick={() => setDateChangeModalOpen(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className='px-4 py-2 btn normal-case'
+                                    onClick={() => setDateChangeModalOpen(false)}
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+            <div className='flex-col flex gap-8 divide-y'>
+                <div className='grid grid-cols-3'>
+<div className=''>
+    <h2 className='font-medium text-lg'>Sequence and metadata</h2>
+    <p className='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
+    </div>
+    <form className="sm:col-span-2 ">
+        <div className='px-8'>
+            <div className='flex flex-col gap-6 max-w-64'>
+                <div className='sm:col-span-3'>
+                <UploadForm setFile={setSequenceFile} name='sequence_file' title='Sequence file' Icon={PhDnaLight} fileType="FASTA file"/>
+                </div>
+                <div className='sm:col-span-3'>
+                <UploadForm setFile={setMetadataFile} name='metadata_file' title='Metadata file' Icon={MaterialSymbolsLightDataTableOutline} fileType="TSV file"/>
+                </div>
+                </div>
+        </div>
 
+    </form>
+    </div>
+    <div className='grid grid-cols-3 mt-0 pt-10'>
+    <div>
+    <h2 className='font-medium text-lg'>Terms of use</h2>
+    <p className='text-gray-500 text-sm'>Specify how your data can be used</p>
+    </div>
+    <div className=" grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2">
+            <div className="sm:col-span-4 px-8">
+              <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900">
+                Terms of use for these data
+              </label>
+              <div className="mt-2">
+              <div className="mt-6 space-y-2">
+                <div className="flex items-center gap-x-3">
+                  <input
+                    id="push-everything"
+                    name="push-notifications"
+                    type="radio"
+                    className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
+                  />
+                  <label htmlFor="push-everything" className="block text-sm font-medium leading-6 text-gray-900">
+                    Open
+                  </label>
+                </div>
+                <div className="text-xs pl-6 text-gray-500 pb-4">
+                    Anyone can use and share the data (though we believe researchers should exercise scientific etiquette, including the importance of citation). Data will be released to the INSDC databases shortly after submission.  <a href="#" className="text-teal-600">Find out more</a>.
+                </div>
+                
+                <div className="flex items-center gap-x-3">
+                  <input
+                    id="push-email"
+                    name="push-notifications"
+                    type="radio"
+                    className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
+                  />
+                  <label htmlFor="push-email" className="block text-sm font-medium leading-6 text-gray-900">
+                    Restricted
+                  </label>
+                </div>
+                <div className="text-xs pl-6 text-gray-500 mb-4">
+                    Data will be restricted for a period of time, the sequences will be available but there will be limitations on how they can be used by others. <a href="#" className="text-teal-600">Find out more</a>.
+
+                </div>
+                {
+                    true && (
+                        <div className="text-sm pl-6 text-gray-900 mb-4">
+                            Data will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>. <button className="border rounded px-2 py-1 "
+                            onClick={() => setDateChangeModalOpen(true)}
+                            
+                            >Change date</button>
+                            </div>
+                    )
+
+                }
+                
+              </div>
+              </div>
+            </div>
+            </div>
+            
+
+            </div>
+            <div className=" flex items-center justify-end gap-x-6 pt-3">
+        
+        <button
+          type="submit"
+          className="rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+        >
+          Submit sequences
+        </button>
+      </div>
+
+        </div>
+        </div>
+         )
     return (
         <form onSubmit={handleSubmit} className='p-6 space-y-6 max-w-md w-full'>
             {action === 'submit' &&
                  (
                     <div className='flex flex-col gap-3 w-fit'>
-                        <span className='text-gray-700'>Submitting for:</span>
+                        <span className='text-gray-700'>Group:</span>
                         <select
                             id='groupDropdown'
                             name='groupDropdown'
