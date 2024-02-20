@@ -2,37 +2,29 @@
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getAccessToken } from '../../utils/getAccessToken';
+import { GroupManagementClient } from '../../services/groupManagementClient';
+import { routes } from '../../routes';
 
 const { organism } = Astro.params;
 
 const clientConfig = getRuntimeConfig().public;
 const accessToken = getAccessToken(Astro.locals.session)!;
 
-async function fetchGroups() {
-    const response = await fetch(`${clientConfig.backendUrl}/user/groups`, {
-        headers: {
-            Authorization: `Bearer ${accessToken}`,
-        },
-    });
-    if (!response.ok) {
-        throw new Error('Failed to fetch groups');
-    }
-    return response.json();
-}
+const groupsResult = await GroupManagementClient.create().getGroups(accessToken);
 
-const groups = await fetchGroups();
-const groupNames = groups.map((group: any) => group.groupName);
-if (groupNames.length > 0) {
-    return Astro.redirect(routes.mySequencesPage(organism, groupNames[0]));
+let errorMessage = '';
+if (groupsResult.isOk()) {
+    if (groupsResult.value.length > 0) {
+        return Astro.redirect(routes.mySequencesPage(organism, groupsResult.value[0].name));
+    }
+    errorMessage = 'No groups found associated with this account';
+} else {
+    errorMessage = groupsResult.error.detail;
 }
 ---
 
 <BaseLayout title='My Sequences'>
-    {
-        groupNames.length === 0 && (
-            <div>
-                <h1>No groups found associated with this account</h1>
-            </div>
-        )
-    }
+    <div>
+        <h1>{errorMessage}</h1>
+    </div>
 </BaseLayout>

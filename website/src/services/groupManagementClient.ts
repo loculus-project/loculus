@@ -2,6 +2,7 @@ import { groupManagementApi } from './groupManagementApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
+import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
 export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManagementApi> {
     public static create(
@@ -15,5 +16,11 @@ export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManag
             logger,
             'backend',
         );
+    }
+
+    public getGroups(token: string) {
+        return this.call('getAllGroups', {
+            headers: createAuthorizationHeader(token),
+        });
     }
 }
