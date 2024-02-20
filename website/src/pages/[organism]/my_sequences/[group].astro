@@ -11,18 +11,7 @@ import { pageSize } from '../../../settings';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { processParametersAndFetchSearch } from '../../../utils/processParametersAndFetchSearch';
 
-const {
-    cleanedOrganism,
-    organism,
-    data,
-    page,
-    metadataFilter,
-    mutationFilter,
-    referenceGenomesSequenceNames,
-    schema,
-    clientConfig,
-    orderBy,
-} = await processParametersAndFetchSearch(Astro);
+
 const group = Astro.params.group!;
 const accessToken = getAccessToken(Astro.locals.session)!;
 const groupsResult = await GroupManagementClient.create().getGroups(accessToken);
@@ -41,6 +30,19 @@ if (groupExists === false) {
         status: 404,
     });
 }
+
+const {
+    cleanedOrganism,
+    organism,
+    data,
+    page,
+    metadataFilter,
+    mutationFilter,
+    referenceGenomesSequenceNames,
+    schema,
+    clientConfig,
+    orderBy,
+} = await processParametersAndFetchSearch(Astro, group);
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - My sequences`}>

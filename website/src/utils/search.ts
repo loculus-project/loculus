@@ -76,14 +76,14 @@ export const getData = async (
 export const getMetadataFilters = (
     getSearchParams: (param: string) => string,
     organism: string,
-    excludeGroup?: boolean,
+    options: {exclude? : string[]} = {},
 ): MetadataFilter[] => {
     const schema = getSchema(organism);
     return schema.metadata.flatMap((metadata) => {
         if (metadata.notSearchable === true) {
             return [];
         }
-        if (metadata.name === GROUP_FIELD && excludeGroup === true) {
+        if (options.exclude && options.exclude.includes(metadata.name)) {
             return [];
         }
 
