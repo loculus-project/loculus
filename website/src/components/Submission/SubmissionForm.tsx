@@ -1,14 +1,16 @@
 import { type FC } from 'react';
 
+import { DataUploadForm } from './DataUploadForm.tsx';
 import { routes } from '../../routes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { DataUploadForm } from './DataUploadForm.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
 type SubmissionFormProps = {
     accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
+    groupsOfUser: object[];
+
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism, clientConfig, groupsOfUser }) => {

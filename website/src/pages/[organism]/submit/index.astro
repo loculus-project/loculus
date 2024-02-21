@@ -2,10 +2,10 @@
 import { SubmissionForm } from '../../../components/Submission/SubmissionForm';
 import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
 
 
-import { GroupManagementClient } from '../../../services/groupManagementClient';
 
 const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
@@ -17,7 +17,11 @@ const clientConfig = getRuntimeConfig().public;
 
 <BaseLayout title='Submit'>
     <h1 class='title'>Submit sequences</h1>
+    {groupsResult.isOk() ?
     <SubmissionForm accessToken={accessToken} organism={organism} clientConfig={clientConfig} 
         groupsOfUser={groupsResult.value}
     client:load />
+    : <p
+        class='text-red-500'
+    >Failed to load groups</p>}
 </BaseLayout>

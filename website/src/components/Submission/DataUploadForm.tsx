@@ -1,23 +1,17 @@
-import { CircularProgress, TextField } from '@mui/material';
 import { Menu } from '@headlessui/react'
-import Locked from '~icons/fluent-emoji-high-contrast/locked';
-import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
-import IwwaArrowDown from '~icons/iwwa/arrow-down';
-import { DateChangeModal } from './DateChangeModal';
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
-import {  DateTime } from 'luxon';
-import { type ChangeEvent, type FormEvent, useMemo, useState, useRef, useEffect } from 'react';
-import DashiconsGroups from '~icons/dashicons/groups';
-import {  withQueryProvider } from '../common/withProvider.tsx';
-import { getClientLogger } from '../../clientLogger.ts';
+import {  type DateTime } from 'luxon';
+import {  type FormEvent, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { ClipLoader} from 'react-spinners';
+
+import { DateChangeModal } from './DateChangeModal';
+import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
     type DataUseTermsType,
-    dataUseTermsTypes,
     openDataUseTermsType,
     restrictedDataUseTermsType,
 } from '../../types/backend.ts';
@@ -25,10 +19,15 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
-import PhDnaLight from '~icons/ph/dna-light';
-import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
+import {  withQueryProvider } from '../common/withProvider.tsx';
+import DashiconsGroups from '~icons/dashicons/groups';
+import Locked from '~icons/fluent-emoji-high-contrast/locked';
+import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
+import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
-import { set } from 'lodash';
+import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
+import PhDnaLight from '~icons/ph/dna-light';
+
 
 type Action = 'submit' | 'revise';
 
@@ -44,7 +43,7 @@ type DataUploadFormProps = {
 
 const logger = getClientLogger('DataUploadForm');
 
-const GroupSelector = ({groupNames, selectedGroupName, setSelectedGroupName}) => {
+const GroupSelector = ({groupNames, selectedGroupName, setSelectedGroupName}: {groupNames: string[], selectedGroupName: string | undefined, setSelectedGroupName: (groupName: string) => void}) => {
     if(groupNames.length === 1){
         return <div className='mb-4 text-gray-500'>
            Current group: {selectedGroupName}
@@ -79,23 +78,24 @@ const GroupSelector = ({groupNames, selectedGroupName, setSelectedGroupName}) =>
 
 
 
+// disable eslint to allow Icon prop:
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const UploadForm= ({setFile, name, title, Icon, fileType}: {setFile: (file: File | null) => void, name: string, title: string, Icon: React.ElementType, fileType: string}) => {
 
-const UploadForm= ({setFile, name, title, Icon, fileType}) => {
-    let [myFile, rawSetMyFile] = useState<File | null>(null)
+    const [myFile, rawSetMyFile] = useState<File | null>(null)
     const [isDragOver, setIsDragOver] = useState(false);
-    const setMyFile = (file: File | null) => {
+    const setMyFile = useCallback((file: File | null) => {
         setFile(file)
         rawSetMyFile(file)
-    }
+    }, [setFile, rawSetMyFile])
     const fileInputRef = useRef<HTMLInputElement>(null)
     const handleUpload = () => {
-        document.getElementById(name).click()
+        document.getElementById(name)?.click()
     }
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragOver(true);
-        console.log('drag over')
     };
 
     const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
@@ -106,7 +106,7 @@ const UploadForm= ({setFile, name, title, Icon, fileType}) => {
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragOver(false);
-        const file = e.dataTransfer.files[0] || null;
+        const file = e.dataTransfer.files[0];
         setMyFile(file);
     };
     
@@ -128,7 +128,7 @@ const UploadForm= ({setFile, name, title, Icon, fileType}) => {
         , 500);
         return () => clearInterval(interval);
     }
-    , [myFile]);
+    , [myFile, setMyFile]);
     return(
     <div className='sm:col-span-4'>
                     <label  className='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
@@ -195,7 +195,7 @@ const InnerDataUploadForm = ({
 
 
     const noGroup = useMemo(
-        () => groupsOfUser === undefined || groupsOfUser.length === 0,
+        () => groupsOfUser.length === 0,
         [groupsOfUser],
     );
 
@@ -231,7 +231,7 @@ const InnerDataUploadForm = ({
 
         switch (action) {
             case 'submit':
-                const groupName = selectedGroupName ?? groupsOfUser?.[0].groupName;
+                const groupName = selectedGroupName ?? groupsOfUser[0].groupName;
                 if (groupName === undefined) {
                     onError('Please select a group');
                     return;
@@ -306,7 +306,7 @@ const InnerDataUploadForm = ({
             groupNames={groupsOfUser.map((group) => group.groupName)}
             selectedGroupName={selectedGroupName}
             setSelectedGroupName={setSelectedGroupName}
-            organism={organism}
+          
             />
             <div className='flex-col flex gap-8 divide-y'>
                 
@@ -443,135 +443,8 @@ const InnerDataUploadForm = ({
         </div>
         </div>
          )
-    return (
-        <form onSubmit={handleSubmit} className='p-6 space-y-6 max-w-md w-full'>
-            {action === 'submit' &&
-                 (
-                    <div className='flex flex-col gap-3 w-fit'>
-                        <span className='text-gray-700'>Group:</span>
-                        <select
-                            id='groupDropdown'
-                            name='groupDropdown'
-                            value={selectedGroup}
-                            onChange={(event) => setSelectedGroup(event.target.value)}
-                            disabled={false}
-                            className='p-2 border rounded-md'
-                        >
-                            {groupsOfUser!.map((group) => (
-                                <option key={group.groupName} value={group.groupName}>
-                                    {group.groupName}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-                )}
 
-            <TextField
-                variant='outlined'
-                margin='dense'
-                label='Metadata File:'
-                placeholder='Metadata File:'
-                size='small'
-                type='file'
-                inputRef={metadataFileInputRef}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                    const file = event.target.files?.[0] || null;
-                    setMetadataFile(file);
-                }}
-                disabled={false}
-                InputLabelProps={{
-                    shrink: true,
-                }}
-            />
-
-            <TextField
-                variant='outlined'
-                margin='dense'
-                label='Sequences File:'
-                placeholder='Sequences File:'
-                size='small'
-                type='file'
-                inputRef={sequenceFileInputRef}
-                onChange={(event: ChangeEvent<HTMLInputElement>) => {
-                    const file = event.target.files?.[0] || null;
-                    setSequenceFile(file);
-                }}
-                disabled={false}
-                InputLabelProps={{
-                    shrink: true,
-                }}
-            />
-
-            {action === 'submit' && (
-                <>
-                    <div className='flex flex-col gap-3 w-fit'>
-                        <span className='text-gray-700'>Data Use Terms</span>
-                        <select
-                            id='dataUseTermsDropdown'
-                            name='dataUseTermsDropdown'
-                            value={dataUseTermsType}
-                            onChange={(event) => setDataUseTermsType(event.target.value as DataUseTermsType)}
-                            disabled={false}
-                            className='p-2 border rounded-md'
-                        >
-                            {dataUseTermsTypes.map((dataUseTerm) => (
-                                <option key={dataUseTerm} value={dataUseTerm}>
-                                    {dataUseTerm}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <DatePicker
-                        format='yyyy-MM-dd'
-                        disabled={isLoading || dataUseTermsType !== 'RESTRICTED'}
-                        value={restrictedUntil}
-                        label='Restricted Until'
-                        minDate={dateTimeInMonths(0)}
-                        maxDate={dateTimeInMonths(12)}
-                        slotProps={{
-                            textField: {
-                                size: 'small',
-                                margin: 'dense',
-                            },
-                        }}
-                        onChange={(date: DateTime | null) => (date !== null ? setRestrictedUntil(date) : null)}
-                    />
-                </>
-            )}
-
-            <div className='flex gap-4'>
-                {organism.startsWith('dummy-organism') && (
-                    <>
-                        <input
-                            type='number'
-                            className='p-1 border rounded-md w-28 placeholder:text-xs'
-                            placeholder='num of examples'
-                            value={exampleEntries ?? ''}
-                            onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
-                        />
-                        <button type='button' className='px-4 py-2 btn normal-case ' onClick={handleLoadExampleData}>
-                            Load Example Data
-                        </button>
-                    </>
-                )}
-
-                <button
-                    className='px-4 py-2 btn normal-case w-1/5'
-                    disabled={isLoading || (action === 'submit' && noGroup)}
-                    type='submit'
-                >
-                    {isLoading ? <CircularProgress size={20} color='primary' /> : 'Submit'}
-                </button>
-            </div>
-
-            <div className='text-gray-500'>
-                {isLoading
-                    ? 'Uploading files. Please wait. Depending on the size of the files this can take a while'
-                    : ''}
-            </div>
-        </form>
-    );
+    
 };
 
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
