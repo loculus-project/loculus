@@ -167,6 +167,7 @@ const UploadForm = ({
                                     name={name}
                                     type='file'
                                     className='sr-only'
+                                    aria-label={title}
                                     onChange={(event) => {
                                         const file = event.target.files?.[0] || null;
                                         setMyFile(file);
