@@ -254,7 +254,7 @@ const InnerDataUploadForm = ({
     }
 
     return(
-        <div className='text-left mt-3'>
+        <div className='text-left mt-3 max-w-6xl'>
             {
                 dateChangeModalOpen && (
                     <div className='fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50'>
