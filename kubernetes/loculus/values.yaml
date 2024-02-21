@@ -4,7 +4,7 @@ disableBackend: false
 disablePreprocessing: false
 siloImportLimitSeconds: 3600
 accessionPrefix: "LOC_"
-name: "Loculus"
+name: "CoolSite"
 instances:
   dummy-organism:
     schema:

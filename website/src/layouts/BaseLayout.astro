@@ -2,7 +2,10 @@
 import '../styles/base.scss';
 import Navigation from '../components/Navigation/Navigation.astro';
 import OrganismSelector from '../components/Navigation/OrganismSelector.astro';
+import { getRuntimeConfig } from '../config';
 import { navigationItems } from '../routes';
+const runtimeConfig = await getRuntimeConfig();
+const { name: websiteName } = runtimeConfig;
 
 interface Props {
     title: string;
@@ -27,7 +30,7 @@ const { title } = Astro.props;
                         <div class='flex flex-col'>
                             <div class='flex flex-row pb-3'>
                                 <a href='/'><img class='h-8 mr-4' src='/favicon.svg' alt='icon' /></a>
-                                <a href='/' class='fancytitle mr-4'>Loculus</a>
+                                <a href='/' class='fancytitle mr-4'>{websiteName}</a>
                             </div>
                             <OrganismSelector />
                         </div>
