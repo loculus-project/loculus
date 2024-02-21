@@ -12,8 +12,8 @@ type RevisionFormProps = {
     groupsOfUser: object[];
 };
 
-export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, clientConfig }) => {
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback, groupsOfUser } = useErrorFeedbackState();
+export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, clientConfig, groupsOfUser }) => {
+    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     return (
         <div className='flex flex-col items-center'>
