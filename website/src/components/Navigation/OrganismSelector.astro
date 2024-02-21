@@ -13,7 +13,7 @@ const label = organism === undefined ? 'Choose Organism' : organism.displayName;
         {label}
         <span class='text-primary'> <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4 ' /></span>
     </label>
-    <ul tabindex='0' class='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box absolute top-full left-0'>
+    <ul tabindex='0' class='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-btn absolute top-full -left-4'>
         {
             knownOrganisms.map((knownOrganism) => (
                 <li>
