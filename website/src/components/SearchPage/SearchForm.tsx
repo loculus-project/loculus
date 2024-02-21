@@ -1,6 +1,5 @@
 import { CircularProgress } from '@mui/material';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
+
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { type FC, type FormEventHandler, useMemo, useState } from 'react';
@@ -98,7 +97,7 @@ export const SearchForm: FC<SearchFormProps> = ({
 
     return (
         <QueryClientProvider client={queryClient}>
-            <LocalizationProvider dateAdapter={AdapterLuxon}>
+          
                 <div className='text-right -mb-10 md:hidden'>
                     <button onClick={toggleMobileOpen} className='btn btn-xs'>
                         Modify search query
@@ -142,7 +141,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                         </form>
                     </div>
                 </div>
-            </LocalizationProvider>
+           
         </QueryClientProvider>
     );
 };
