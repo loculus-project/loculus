@@ -5,6 +5,10 @@ disablePreprocessing: false
 siloImportLimitSeconds: 3600
 accessionPrefix: "LOC_"
 name: "CoolSite" # TODO: revert before merge
+logo:
+  url: "/favicon.svg"
+  width: 100
+  height: 100
 instances:
   dummy-organism:
     schema:
