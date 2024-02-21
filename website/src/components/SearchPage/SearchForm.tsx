@@ -98,7 +98,7 @@ export const SearchForm: FC<SearchFormProps> = ({
 
     return (
         <QueryClientProvider client={queryClient}>
-            <LocalizationProvider dateAdapter={AdapterLuxon}>
+          
                 <div className='text-right -mb-10 md:hidden'>
                     <button onClick={toggleMobileOpen} className='btn btn-xs'>
                         Modify search query
@@ -142,7 +142,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                         </form>
                     </div>
                 </div>
-            </LocalizationProvider>
+            
         </QueryClientProvider>
     );
 };

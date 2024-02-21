@@ -15,13 +15,3 @@ export function withQueryProvider<Props>(WrappedComponent: FC<Props & JSX.Intrin
     };
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function withLocalizationProvider<Props>(WrappedComponent: FC<Props & JSX.IntrinsicAttributes>) {
-    return (props: Props & JSX.IntrinsicAttributes) => {
-        return (
-            <LocalizationProvider dateAdapter={AdapterLuxon}>
-                <WrappedComponent {...props} />
-            </LocalizationProvider>
-        );
-    };
-}
