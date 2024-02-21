@@ -13,7 +13,6 @@ import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
 export const DEFAULT_GROUP_NAME = 'testGroup';
 
 export const testConfig = {
-    name : "Loculus",
     public: {
         discriminator: 'client',
         backendUrl: 'http://backend.dummy',
