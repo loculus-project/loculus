@@ -73,7 +73,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                             />
                             <span className='label-text'>
                                 I agree to the {/* TODO(862) */}
-                                <a href='#' className='underline'>
+                                <a href='#TODO-MVP' className='underline'>
                                     data use terms
                                 </a>
                                 .

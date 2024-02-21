@@ -68,8 +68,18 @@ describe('SubmitForm', () => {
         await userEvent.click(getByLabelText('Select group'));
 
         await waitFor(() => {
-            expect(getByText('Group1')).toBeInTheDocument();
-            expect(getByText('Group2')).toBeInTheDocument();
+            expect(getByText(testGroups[0].groupName)).toBeInTheDocument();
+            expect(getByText(testGroups[1].groupName)).toBeInTheDocument();
+        });
+    });
+
+    test('should be able to open change date modal', async () => {
+        const { getByText, getByLabelText } = renderSubmissionForm();
+        await userEvent.click(getByLabelText(/Restricted/i));
+        await userEvent.click(getByText('Change date'));
+
+        await waitFor(() => {
+            expect(getByText('Change date until which sequences are restricted')).toBeInTheDocument();
         });
     });
 

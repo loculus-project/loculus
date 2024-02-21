@@ -9,7 +9,12 @@ import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import { type DataUseTermsType, openDataUseTermsType, restrictedDataUseTermsType } from '../../types/backend.ts';
+import {
+    type DataUseTermsType,
+    openDataUseTermsType,
+    restrictedDataUseTermsType,
+    type Group,
+} from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
@@ -29,12 +34,151 @@ type DataUploadFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     action: Action;
-    groupsOfUser: any[]; // figure out what to do here
+    groupsOfUser: Group[];
     onSuccess: () => void;
     onError: (message: string) => void;
 };
 
 const logger = getClientLogger('DataUploadForm');
+
+const DataUseTerms = ({
+    dataUseTermsType,
+    setDataUseTermsType,
+    restrictedUntil,
+    setRestrictedUntil,
+}: {
+    dataUseTermsType: DataUseTermsType;
+    setDataUseTermsType: (dataUseTermsType: DataUseTermsType) => void;
+    restrictedUntil: DateTime;
+    setRestrictedUntil: (restrictedUntil: DateTime) => void;
+}) => {
+    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
+
+    return (
+        <div className='grid sm:grid-cols-3 mt-0 pt-10'>
+            {dateChangeModalOpen && (
+                <DateChangeModal
+                    restrictedUntil={restrictedUntil}
+                    setRestrictedUntil={setRestrictedUntil}
+                    setDateChangeModalOpen={setDateChangeModalOpen}
+                    minDate={dateTimeInMonths(0)}
+                    maxDate={dateTimeInMonths(12)}
+                />
+            )}
+            <div>
+                <h2 className='font-medium text-lg'>Terms of use</h2>
+                <p className='text-gray-500 text-sm'>Specify how your data can be used</p>
+            </div>
+            <div className=' grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
+                <div className='sm:col-span-4 px-8'>
+                    <label htmlFor='username' className='block text-sm font-medium leading-6 text-gray-900'>
+                        Terms of use for these data
+                    </label>
+                    <div className='mt-2'>
+                        <div className='mt-6 space-y-2'>
+                            <div className='flex items-center gap-x-3'>
+                                <input
+                                    id='data-use-open'
+                                    name='data-use'
+                                    onChange={() => setDataUseTermsType(openDataUseTermsType)}
+                                    type='radio'
+                                    checked={dataUseTermsType === openDataUseTermsType}
+                                    className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
+                                />
+                                <label
+                                    htmlFor='data-use-open'
+                                    className='block text-sm font-medium leading-6 text-gray-900'
+                                >
+                                    <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
+                                    Open
+                                </label>
+                            </div>
+                            <div className='text-xs pl-6 text-gray-500 pb-4'>
+                                Anyone can use and share the data (though we believe researchers should exercise
+                                scientific etiquette, including the importance of citation). Data will be released to
+                                the INSDC databases shortly after submission.{' '}
+                                <a href='#TODO-MVP' className='text-teal-600'>
+                                    Find out more
+                                </a>
+                                .
+                            </div>
+
+                            <div className='flex items-center gap-x-3'>
+                                <input
+                                    id='data-use-restricted'
+                                    name='data-use'
+                                    onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
+                                    type='radio'
+                                    checked={dataUseTermsType === restrictedDataUseTermsType}
+                                    className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
+                                />
+                                <label
+                                    htmlFor='data-use-restricted'
+                                    className='block text-sm font-medium leading-6 text-gray-900'
+                                >
+                                    <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
+                                    Restricted
+                                </label>
+                            </div>
+
+                            <div className='text-xs pl-6 text-gray-500 mb-4'>
+                                Data will be restricted for a period of time. The sequences will be available but there
+                                will be limitations on how they can be used by others.{' '}
+                                <a href='#TODO-MVP' className='text-teal-600'>
+                                    Find out more
+                                </a>
+                                .
+                            </div>
+                            {dataUseTermsType === restrictedDataUseTermsType && (
+                                <div className='text-sm pl-6 text-gray-900 mb-4'>
+                                    Data will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
+                                    <button
+                                        className='border rounded px-2 py-1 '
+                                        onClick={() => setDateChangeModalOpen(true)}
+                                    >
+                                        Change date
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const DevExampleData = ({
+    setExampleEntries,
+    exampleEntries,
+    metadataFile,
+    sequenceFile,
+    handleLoadExampleData,
+}: {
+    setExampleEntries: (entries: number) => void;
+    exampleEntries: number | undefined;
+    metadataFile: File | null;
+    sequenceFile: File | null;
+    handleLoadExampleData: () => void;
+}) => {
+    return (
+        <p className='text-gray-800 text-xs mt-5 opacity-50'>
+            Add dev example data
+            <br />
+            <input
+                type='number'
+                value={exampleEntries ?? ''}
+                onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
+                className='w-32'
+            />
+            <button type='button' onClick={handleLoadExampleData} className='border rounded px-2 py-1 '>
+                Load Example Data
+            </button>{' '}
+            <br />
+            {metadataFile && sequenceFile && <span className='text-xs text-gray-500'>Example data loaded</span>}
+        </p>
+    );
+};
 
 const GroupSelector = ({
     groupNames,
@@ -57,16 +201,21 @@ const GroupSelector = ({
                         <IwwaArrowDown className='w-4 h-4 inline-block -mt-0.5' />
                     </span>
                 </Menu.Button>
-                <Menu.Items>
+                <Menu.Items
+                    className={`absolute z-10 bg-white border border-gray-300 divide-y divide-gray-300 min-w-56 rounded mt-2
+                transition-all duration-200 ease-in-out shadow-lg 
+                `}
+                >
                     {groupNames.map((groupName) => (
                         <Menu.Item key={groupName}>
                             {({ active }) => (
                                 <button
                                     className={`${
                                         active ? 'bg-teal-500 text-white' : 'text-gray-900'
-                                    } flex justify-between w-full px-4 py-2 text-sm`}
+                                    } flex  w-full px-4 py-2 text-sm`}
                                     onClick={() => setSelectedGroupName(groupName)}
                                 >
+                                    <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
                                     {groupName}
                                 </button>
                             )}
@@ -78,9 +227,7 @@ const GroupSelector = ({
     );
 };
 
-// disable eslint to allow Icon prop:
-
-const UploadForm = ({
+const UploadComponent = ({
     setFile,
     name,
     title,
@@ -207,9 +354,6 @@ const InnerDataUploadForm = ({
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
-    const metadataFileInputRef = useRef<HTMLInputElement>(null);
-    const sequenceFileInputRef = useRef<HTMLInputElement>(null);
-    // initial license change date is 6 months from now
 
     const noGroup = useMemo(() => groupsOfUser.length === 0, [groupsOfUser]);
 
@@ -219,7 +363,6 @@ const InnerDataUploadForm = ({
     );
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
-    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData(exampleEntries);
@@ -248,10 +391,6 @@ const InnerDataUploadForm = ({
         switch (action) {
             case 'submit':
                 const groupName = selectedGroupName ?? groupsOfUser[0].groupName;
-                if (groupName === undefined) {
-                    onError('Please select a group');
-                    return;
-                }
                 submit({
                     metadataFile,
                     sequenceFile,
@@ -266,34 +405,6 @@ const InnerDataUploadForm = ({
                 break;
         }
     };
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            // Check for files which are no longer readable - which generally indicates the file has been edited since being
-            // selected in the UI - and clear these.
-            metadataFile
-                ?.slice(0, 1)
-                .arrayBuffer()
-                .catch(() => {
-                    setMetadataFile(null);
-                    if (metadataFileInputRef.current) {
-                        metadataFileInputRef.current.value = '';
-                    }
-                });
-
-            sequenceFile
-                ?.slice(0, 1)
-                .arrayBuffer()
-                .catch(() => {
-                    setSequenceFile(null);
-                    if (sequenceFileInputRef.current) {
-                        sequenceFileInputRef.current.value = '';
-                    }
-                });
-        }, 500);
-
-        return () => clearInterval(interval);
-    }, [metadataFile, sequenceFile]);
 
     if (noGroup) {
         return (
@@ -318,15 +429,6 @@ const InnerDataUploadForm = ({
 
     return (
         <div className='text-left mt-3 max-w-6xl'>
-            {dateChangeModalOpen && (
-                <DateChangeModal
-                    restrictedUntil={restrictedUntil}
-                    setRestrictedUntil={setRestrictedUntil}
-                    setDateChangeModalOpen={setDateChangeModalOpen}
-                    minDate={dateTimeInMonths(0)}
-                    maxDate={dateTimeInMonths(12)}
-                />
-            )}
             <GroupSelector
                 groupNames={groupsOfUser.map((group) => group.groupName)}
                 selectedGroupName={selectedGroupName}
@@ -350,41 +452,27 @@ const InnerDataUploadForm = ({
                             )}
                             For more information on the format in which data should be uploaded and the required
                             metadata, please refer to our{' '}
-                            <a href='#' className='text-teal-700'>
+                            <a href='#TODO-MVP' className='text-teal-700'>
                                 help pages
                             </a>
                             .
                         </p>
 
                         {organism.startsWith('dummy-organism') && action === 'submit' && (
-                            <p className='text-gray-800 text-xs mt-5 opacity-50'>
-                                Add dev example data
-                                <br />
-                                <input
-                                    type='number'
-                                    value={exampleEntries ?? ''}
-                                    onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
-                                    className='w-32'
-                                />
-                                <button
-                                    type='button'
-                                    onClick={handleLoadExampleData}
-                                    className='border rounded px-2 py-1 '
-                                >
-                                    Load Example Data
-                                </button>{' '}
-                                <br />
-                                {metadataFile && sequenceFile && (
-                                    <span className='text-xs text-gray-500'>Example data loaded</span>
-                                )}
-                            </p>
+                            <DevExampleData
+                                setExampleEntries={setExampleEntries}
+                                exampleEntries={exampleEntries}
+                                metadataFile={metadataFile}
+                                sequenceFile={sequenceFile}
+                                handleLoadExampleData={handleLoadExampleData}
+                            />
                         )}
                     </div>
                     <form className='sm:col-span-2 '>
                         <div className='px-8'>
                             <div className='flex flex-col gap-6 max-w-64'>
                                 <div className='sm:col-span-3'>
-                                    <UploadForm
+                                    <UploadComponent
                                         setFile={setSequenceFile}
                                         name='sequence_file'
                                         title='Sequence file'
@@ -393,7 +481,7 @@ const InnerDataUploadForm = ({
                                     />
                                 </div>
                                 <div className='sm:col-span-3'>
-                                    <UploadForm
+                                    <UploadComponent
                                         setFile={setMetadataFile}
                                         name='metadata_file'
                                         title='Metadata file'
@@ -406,88 +494,12 @@ const InnerDataUploadForm = ({
                     </form>
                 </div>
                 {action !== 'revise' && (
-                    <div className='grid sm:grid-cols-3 mt-0 pt-10'>
-                        <div>
-                            <h2 className='font-medium text-lg'>Terms of use</h2>
-                            <p className='text-gray-500 text-sm'>Specify how your data can be used</p>
-                        </div>
-                        <div className=' grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
-                            <div className='sm:col-span-4 px-8'>
-                                <label htmlFor='username' className='block text-sm font-medium leading-6 text-gray-900'>
-                                    Terms of use for these data
-                                </label>
-                                <div className='mt-2'>
-                                    <div className='mt-6 space-y-2'>
-                                        <div className='flex items-center gap-x-3'>
-                                            <input
-                                                id='data-use-open'
-                                                name='data-use'
-                                                onChange={() => setDataUseTermsType(openDataUseTermsType)}
-                                                type='radio'
-                                                checked={dataUseTermsType === openDataUseTermsType}
-                                                className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
-                                            />
-                                            <label
-                                                htmlFor='data-use-open'
-                                                className='block text-sm font-medium leading-6 text-gray-900'
-                                            >
-                                                <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                                                Open
-                                            </label>
-                                        </div>
-                                        <div className='text-xs pl-6 text-gray-500 pb-4'>
-                                            Anyone can use and share the data (though we believe researchers should
-                                            exercise scientific etiquette, including the importance of citation). Data
-                                            will be released to the INSDC databases shortly after submission.{' '}
-                                            <a href='#' className='text-teal-600'>
-                                                Find out more
-                                            </a>
-                                            .
-                                        </div>
-
-                                        <div className='flex items-center gap-x-3'>
-                                            <input
-                                                id='data-use-restricted'
-                                                name='data-use'
-                                                onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
-                                                type='radio'
-                                                checked={dataUseTermsType === restrictedDataUseTermsType}
-                                                className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
-                                            />
-                                            <label
-                                                htmlFor='data-use-restricted'
-                                                className='block text-sm font-medium leading-6 text-gray-900'
-                                            >
-                                                <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                                                Restricted
-                                            </label>
-                                        </div>
-
-                                        <div className='text-xs pl-6 text-gray-500 mb-4'>
-                                            Data will be restricted for a period of time. The sequences will be
-                                            available but there will be limitations on how they can be used by others.{' '}
-                                            <a href='#' className='text-teal-600'>
-                                                Find out more
-                                            </a>
-                                            .
-                                        </div>
-                                        {dataUseTermsType === restrictedDataUseTermsType && (
-                                            <div className='text-sm pl-6 text-gray-900 mb-4'>
-                                                Data will be restricted until{' '}
-                                                <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
-                                                <button
-                                                    className='border rounded px-2 py-1 '
-                                                    onClick={() => setDateChangeModalOpen(true)}
-                                                >
-                                                    Change date
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <DataUseTerms
+                        dataUseTermsType={dataUseTermsType}
+                        setDataUseTermsType={setDataUseTermsType}
+                        restrictedUntil={restrictedUntil}
+                        setRestrictedUntil={setRestrictedUntil}
+                    />
                 )}
                 <div className=' flex items-center justify-end gap-x-6 pt-3'>
                     <button

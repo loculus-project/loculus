@@ -1,15 +1,16 @@
 import { type FC } from 'react';
 
+import { DataUploadForm } from './DataUploadForm.tsx';
 import { routes } from '../../routes.ts';
+import { type Group } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { DataUploadForm } from '../Submission/DataUploadForm.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
 type RevisionFormProps = {
     accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
-    groupsOfUser: object[];
+    groupsOfUser: Group[];
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, clientConfig, groupsOfUser }) => {
