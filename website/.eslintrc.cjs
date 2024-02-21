@@ -8,6 +8,7 @@ module.exports = {
   parserOptions: {
     project: 'tsconfig.eslint.json',
     sourceType: 'module',
+    tsConfigRootDir: __dirname,
   },
   plugins: [
     'eslint-plugin-import',

@@ -2,29 +2,29 @@ import { CircularProgress, TextField } from '@mui/material';
 
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
+import { DateChangeModal } from './DateChangeModal';
 
-import {Datepicker} from 'flowbite-react'
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import {  DateTime } from 'luxon';
 import { type ChangeEvent, type FormEvent, useMemo, useState, useRef, useEffect } from 'react';
 import DashiconsGroups from '~icons/dashicons/groups';
-import {  withQueryProvider } from './common/withProvider.tsx';
-import { getClientLogger } from '../clientLogger.ts';
-import { useGroupManagementClient } from '../hooks/useGroupOperations.ts';
-import { routes } from '../routes.ts';
-import { backendApi } from '../services/backendApi.ts';
-import { backendClientHooks } from '../services/serviceHooks.ts';
+import {  withQueryProvider } from '../common/withProvider.tsx';
+import { getClientLogger } from '../../clientLogger.ts';
+import { useGroupManagementClient } from '../../hooks/useGroupOperations.ts';
+import { routes } from '../../routes.ts';
+import { backendApi } from '../../services/backendApi.ts';
+import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
     type DataUseTermsType,
     dataUseTermsTypes,
     openDataUseTermsType,
     restrictedDataUseTermsType,
-} from '../types/backend.ts';
-import type { ClientConfig } from '../types/runtimeConfig.ts';
-import { dateTimeInMonths } from '../utils/DateTimeInMonths.tsx';
-import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
-import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
+} from '../../types/backend.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
+import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
+import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import PhDnaLight from '~icons/ph/dna-light';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
@@ -44,72 +44,6 @@ type DataUploadFormProps = {
 
 const logger = getClientLogger('DataUploadForm');
 
-const DateChangeModal = (
-    {
-        restrictedUntil,
-        setRestrictedUntil,
-        setDateChangeModalOpen,
-        minDate,
-        maxDate,
-    }: {
-        restrictedUntil: DateTime,
-        setRestrictedUntil: (DateTime) => void,
-        setDateChangeModalOpen: (boolean) => void,
-        minDate: DateTime,
-        maxDate: DateTime,
-    },
-    
-) => {
-    const [date, setDate] = useState(restrictedUntil.toJSDate());
-    return (
-        <div className='fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50'>
-            <div className='bg-white p-6 rounded-lg'>
-                <h2 className='font-medium text-lg'>Change date until which sequences are restricted</h2>
-                {//"bg-cyan-700"
-    }
-                <Datepicker value={date}
-                showClearButton={false}
-                showTodayButton={false}
-
-                minDate={minDate.toJSDate()}
-                maxDate={maxDate.toJSDate()}
-
-                 onSelectedDateChanged={(date) => 
-                    {
-                        setDate(date)
-                    
-                    }
-
-                    }
-                    
-
-
-
-
-                inline={true}
-                />
-                <div className='flex justify-end gap-4 mt-4'>
-                    <button
-                        className='px-4 py-2 btn normal-case'
-                        onClick={() => setDateChangeModalOpen(false)}
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        className='px-4 py-2 btn normal-case'
-                        onClick={() => {
-                            setRestrictedUntil(DateTime.fromJSDate(date));
-
-                            
-                            setDateChangeModalOpen(false)}}
-                    >
-                        Save
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
 
 const UploadForm= ({setFile, name, title, Icon, fileType}) => {
     let [myFile, rawSetMyFile] = useState<File | null>(null)

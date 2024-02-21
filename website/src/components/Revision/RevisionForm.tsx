@@ -2,7 +2,7 @@ import { type FC } from 'react';
 
 import { routes } from '../../routes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { DataUploadForm } from '../DataUploadForm.tsx';
+import { DataUploadForm } from '../Submission/DataUploadForm.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
 type RevisionFormProps = {
