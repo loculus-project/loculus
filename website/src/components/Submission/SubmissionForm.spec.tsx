@@ -40,8 +40,8 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
-        await userEvent.upload(getByLabelText(/Sequences File:/i), sequencesFile);
+        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
+        await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
 
         const submitButton = getByText('Submit');
         await userEvent.click(submitButton);
@@ -53,7 +53,7 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
+        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
 
         const submitButton = getByText('Submit');
         await userEvent.click(submitButton);
@@ -117,8 +117,8 @@ describe('SubmitForm', () => {
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
         const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.upload(getByLabelText(/Metadata file:/i), metadataFile);
-        await userEvent.upload(getByLabelText(/Sequence file:/i), sequencesFile);
+        await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
+        await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
 
         const submitButton = getByText('Submit');
         await userEvent.click(submitButton);
