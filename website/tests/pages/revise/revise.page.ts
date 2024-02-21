@@ -21,7 +21,7 @@ export class RevisePage {
     }
 
     public async uploadSequenceData(file: string = sequencesTestFile) {
-        await this.page.getByPlaceholder('Sequences File:').setInputFiles(file);
+        await this.page.getByLabel('Sequence file').setInputFiles(file);
     }
 
     public async submitRevisedData(accessions: Accession[]) {
