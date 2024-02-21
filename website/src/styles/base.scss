@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --animation-btn: 0;
+}
 
 a {
   &:hover {
