@@ -40,13 +40,11 @@ export class SubmitPage {
     }
 
     public async selectRestrictedDataUseTerms() {
-        const dropdownSelector = '#dataUseTermsDropdown';
+        const restrictedSelector = '#data-use-restricted';
 
-        await this.page.waitForSelector(dropdownSelector);
+        await this.page.waitForSelector(restrictedSelector);
 
-        await this.page.selectOption(dropdownSelector, { value: restrictedDataUseTermsType });
+        await this.page.click(restrictedSelector);
 
-        const selectedValue = await this.page.$eval(dropdownSelector, (select) => (select as HTMLSelectElement).value);
-        expect(selectedValue).toBe(restrictedDataUseTermsType);
     }
 }

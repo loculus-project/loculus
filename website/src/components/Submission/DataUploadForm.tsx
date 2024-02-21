@@ -428,7 +428,7 @@ const InnerDataUploadForm = ({
                                                 className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
                                             />
                                             <label
-                                                htmlFor='push-everything'
+                                                htmlFor='data-use-open'
                                                 className='block text-sm font-medium leading-6 text-gray-900'
                                             >
                                                 <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
@@ -455,7 +455,7 @@ const InnerDataUploadForm = ({
                                                 className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
                                             />
                                             <label
-                                                htmlFor='push-email'
+                                                htmlFor='data-use-restricted'
                                                 className='block text-sm font-medium leading-6 text-gray-900'
                                             >
                                                 <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
