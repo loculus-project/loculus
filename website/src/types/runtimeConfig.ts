@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const name = z.string().min(1);
+
 const serviceUrls = z.object({
     backendUrl: z.string(),
     lapisUrls: z.record(z.string(), z.string()),
@@ -17,5 +19,6 @@ export const serverConfig = serviceUrls.merge(
 export const runtimeConfig = z.object({
     public: serviceUrls,
     serverSide: serverConfig,
+    name,
 });
 export type RuntimeConfig = z.infer<typeof runtimeConfig>;
