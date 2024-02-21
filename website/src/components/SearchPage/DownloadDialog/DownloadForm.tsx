@@ -80,7 +80,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                             <>
                                 Yes, include restricted data
                                 <br />({/* TODO(862) */}
-                                <a href='#' className='underline'>
+                                <a href='#TODO-MVP' className='underline'>
                                     What does it mean?
                                 </a>
                                 )

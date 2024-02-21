@@ -5,7 +5,7 @@ import { routes } from '../../routes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
-import { withQueryProvider } from '../common/withProvider.tsx';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import LeaveIcon from '~icons/pepicons-pop/leave-circle-filled';
 
 interface GroupManagerProps {

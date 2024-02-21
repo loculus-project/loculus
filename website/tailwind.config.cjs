@@ -4,7 +4,9 @@ module.exports = {
   theme: {
     extend: {},
   },
-  plugins: [require("daisyui")],
+  plugins: [require("daisyui"),
+  require('flowbite/plugin')],
+  darkMode: 'false',
   daisyui: {
     darkTheme: "customTheme", // name of one of the included themes for dark mode
     base: true, // applies background color and foreground color for root element by default

@@ -21,7 +21,7 @@ export class RevisePage {
     }
 
     public async uploadSequenceData(file: string = sequencesTestFile) {
-        await this.page.getByPlaceholder('Sequences File:').setInputFiles(file);
+        await this.page.getByLabel('Sequence file').setInputFiles(file);
     }
 
     public async submitRevisedData(accessions: Accession[]) {
@@ -35,6 +35,6 @@ export class RevisePage {
 
     private async uploadRevisedMetadata(accessions: Accession[]) {
         writeFileSync(this.temporaryMetadataFile, createModifiedFileContent(accessions).metadataContent);
-        await this.page.getByPlaceholder('Metadata File:').setInputFiles(this.temporaryMetadataFile);
+        await this.page.getByLabel('Metadata file').setInputFiles(this.temporaryMetadataFile);
     }
 }

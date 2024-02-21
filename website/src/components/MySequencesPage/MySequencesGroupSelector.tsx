@@ -7,7 +7,7 @@ type GroupSelectorProps = {
     selectedGroupName: string;
     organism: string;
 };
-export const GroupSelector: FC<GroupSelectorProps> = ({ groupNames, selectedGroupName, organism }) => {
+export const MySequencesGroupSelector: FC<GroupSelectorProps> = ({ groupNames, selectedGroupName, organism }) => {
     return (
         <select
             className='mt-4 select select-bordered'

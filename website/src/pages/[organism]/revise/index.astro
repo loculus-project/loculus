@@ -1,21 +1,31 @@
 ---
-import { RevisionForm } from '../../../components/Revision/RevisionForm';
+import { RevisionForm } from '../../../components/Submission/RevisionForm';
 import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
 
 const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
 
+const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
+
 const clientConfig = getRuntimeConfig().public;
 ---
 
-<BaseLayout title='Revise'>
-    <h1 class='title'>Revision Page</h1>
-
-    Note: each sequence entry needs to have the associated accession as a metadata field. Furthermore, the sequence
-    entry that should be revised needs to be already released. If the latter does not hold, delete the accession version
-    or submit an edited version.
-
-    <RevisionForm accessToken={accessToken} organism={organism} clientConfig={clientConfig} client:only='react' />
+<BaseLayout title='Submit'>
+    <h1 class='title'>Revise sequences</h1>
+    {
+        groupsResult.isOk() ? (
+            <RevisionForm
+                accessToken={accessToken}
+                organism={organism}
+                clientConfig={clientConfig}
+                groupsOfUser={groupsResult.value}
+                client:load
+            />
+        ) : (
+            <p class='text-red-500'>Failed to load groups</p>
+        )
+    }
 </BaseLayout>

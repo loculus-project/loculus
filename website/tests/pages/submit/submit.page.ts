@@ -17,7 +17,7 @@ export class SubmitPage {
     public readonly dataUseTermsDropdown: Locator;
 
     constructor(public readonly page: Page) {
-        this.submitButton = page.getByRole('button', { name: 'Submit' });
+        this.submitButton = page.getByRole('button', { name: 'submit' });
         this.dataUseTermsDropdown = page.locator('#dataUseTermsDropdown');
     }
 
@@ -26,27 +26,24 @@ export class SubmitPage {
     }
 
     public async uploadMetadata() {
-        await this.page.getByPlaceholder('Metadata File:').setInputFiles(metadataTestFile);
+        await this.page.getByLabel('Metadata file').setInputFiles(metadataTestFile);
     }
     public async uploadCompressedMetadata() {
-        await this.page.getByPlaceholder('Metadata File:').setInputFiles(compressedMetadataTestFile);
+        await this.page.getByLabel('Metadata file').setInputFiles(compressedMetadataTestFile);
     }
 
     public async uploadSequenceData() {
-        await this.page.getByPlaceholder('Sequences File:').setInputFiles(sequencesTestFile);
+        await this.page.getByLabel('Sequence file').setInputFiles(sequencesTestFile);
     }
     public async uploadCompressedSequenceData() {
-        await this.page.getByPlaceholder('Sequences File:').setInputFiles(compressedSequencesTestFile);
+        await this.page.getByLabel('Sequence file').setInputFiles(compressedSequencesTestFile);
     }
 
     public async selectRestrictedDataUseTerms() {
-        const dropdownSelector = '#dataUseTermsDropdown';
+        const restrictedSelector = '#data-use-restricted';
 
-        await this.page.waitForSelector(dropdownSelector);
+        await this.page.waitForSelector(restrictedSelector);
 
-        await this.page.selectOption(dropdownSelector, { value: restrictedDataUseTermsType });
-
-        const selectedValue = await this.page.$eval(dropdownSelector, (select) => (select as HTMLSelectElement).value);
-        expect(selectedValue).toBe(restrictedDataUseTermsType);
+        await this.page.click(restrictedSelector);
     }
 }

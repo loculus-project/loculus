@@ -14,7 +14,7 @@ import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
-import { withQueryProvider } from '../common/withProvider.tsx';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type EditPageProps = {
     organism: string;

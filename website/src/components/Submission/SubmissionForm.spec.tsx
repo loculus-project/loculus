@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
-import { mockRequest, testAccessToken, testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { mockRequest, testAccessToken, testConfig, testOrganism, testGroups } from '../../../vitest.setup.ts';
 import { type ProblemDetail, type SubmissionIdMapping } from '../../types/backend.ts';
 
 vi.mock('../../api', () => ({
@@ -16,7 +16,12 @@ vi.mock('../../api', () => ({
 
 function renderSubmissionForm() {
     return render(
-        <SubmissionForm accessToken={testAccessToken} organism={testOrganism} clientConfig={testConfig.public} />,
+        <SubmissionForm
+            accessToken={testAccessToken}
+            organism={testOrganism}
+            clientConfig={testConfig.public}
+            groupsOfUser={testGroups}
+        />,
     );
 }
 
@@ -35,10 +40,10 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
-        await userEvent.upload(getByLabelText(/Sequences File:/i), sequencesFile);
+        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
+        await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
 
-        const submitButton = getByText('Submit');
+        const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
     });
 
@@ -48,9 +53,9 @@ describe('SubmitForm', () => {
 
         const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
+        await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
 
-        const submitButton = getByText('Submit');
+        const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -58,35 +63,24 @@ describe('SubmitForm', () => {
         });
     });
 
-    test('should select a group if there is more than one', async () => {
-        mockRequest.backend.getGroupsOfUser(200, [{ groupName: 'Group1' }, { groupName: 'Group2' }]);
-
-        const { getByRole } = renderSubmissionForm();
+    test('should have options to select a group if there is more than one', async () => {
+        const { getByText, getByLabelText } = renderSubmissionForm();
+        await userEvent.click(getByLabelText('Select group'));
 
         await waitFor(() => {
-            expect(getByRole('option', { name: 'Group2' })).toBeInTheDocument();
-            expect(getByRole('option', { name: 'Group1' })).toBeInTheDocument();
+            expect(getByText(testGroups[0].groupName)).toBeInTheDocument();
+            expect(getByText(testGroups[1].groupName)).toBeInTheDocument();
         });
     });
 
-    test('should select a restricted data use term', async () => {
-        mockRequest.backend.getGroupsOfUser(200, [{ groupName: 'Group1' }, { groupName: 'Group2' }]);
-
-        const { getByRole } = renderSubmissionForm();
+    test('should be able to open change date modal', async () => {
+        const { getByText, getByLabelText } = renderSubmissionForm();
+        await userEvent.click(getByLabelText(/Restricted/i));
+        await userEvent.click(getByText('Change date'));
 
         await waitFor(() => {
-            expect(getByRole('option', { name: 'OPEN' })).toBeInTheDocument();
-            expect(getByRole('option', { name: 'RESTRICTED' })).toBeInTheDocument();
+            expect(getByText('Change date until which sequences are restricted')).toBeInTheDocument();
         });
-    });
-
-    test('should forbid submitting when there is no group', async () => {
-        mockRequest.backend.submit(200, testResponse);
-        mockRequest.backend.getGroupsOfUser(200, []);
-
-        const { getByText } = renderSubmissionForm();
-
-        await waitFor(() => expect(getByText((text) => text.includes('No group found.'))).toBeInTheDocument());
     });
 
     test('should unexpected error with proper error message', async () => {
@@ -114,10 +108,10 @@ describe('SubmitForm', () => {
     async function submitAndExpectErrorMessageContains(receivedUnexpectedMessageFromBackend: string) {
         const { getByLabelText, getByText } = renderSubmissionForm();
 
-        await userEvent.upload(getByLabelText(/Metadata File:/i), metadataFile);
-        await userEvent.upload(getByLabelText(/Sequences File:/i), sequencesFile);
+        await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
+        await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
 
-        const submitButton = getByText('Submit');
+        const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
 
         await waitFor(() => {

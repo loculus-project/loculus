@@ -66,6 +66,7 @@ If the environment variable LOG_DIR is set, it will also store them in `LOG_DIR/
 - Install node version from `.nvmrc` with `nvm install`
 
 ### General tips
-
+ 
 - Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
+- For VS code, use the ESlint extension which must be configured with `"eslint.workingDirectories": ["./website"],` in the settings.json
 - Tips & Tricks for using icons from MUI  https://mui.com/material-ui/guides/minimizing-bundle-size/

@@ -10,7 +10,7 @@ import { datasetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
-import { withQueryProvider } from '../common/withProvider';
+import { withQueryProvider } from '../common/withQueryProvider';
 
 const logger = getClientLogger('AuthorDetailsForm');
 
