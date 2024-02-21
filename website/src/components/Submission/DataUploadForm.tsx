@@ -2,7 +2,7 @@ import { Menu } from '@headlessui/react';
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
-import { type FormEvent, useMemo, useState, useRef, useEffect, useCallback, type ElementType } from 'react';
+import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementType } from 'react';
 
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
