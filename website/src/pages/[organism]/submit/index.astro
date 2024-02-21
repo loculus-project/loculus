@@ -11,6 +11,11 @@ const accessToken = getAccessToken(Astro.locals.session)!;
 const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 
 const clientConfig = getRuntimeConfig().public;
+
+// Prevent caching to allow back button after user creates group
+Astro.response.headers.append('Cache-Control', 'no-cache, no-store, must-revalidate');
+Astro.response.headers.append('Pragma', 'no-cache');
+Astro.response.headers.append('Expires', '0');
 ---
 
 <BaseLayout title='Submit'>
