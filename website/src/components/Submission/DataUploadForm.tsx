@@ -3,8 +3,7 @@ import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
 import { type FormEvent, useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { ClipLoader } from 'react-spinners';
-
+import reactSpinners from 'react-spinners';
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes.ts';
@@ -23,7 +22,7 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
-
+const {ClipLoader} = reactSpinners;
 type Action = 'submit' | 'revise';
 
 type DataUploadFormProps = {
