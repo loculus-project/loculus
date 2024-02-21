@@ -45,6 +45,5 @@ export class SubmitPage {
         await this.page.waitForSelector(restrictedSelector);
 
         await this.page.click(restrictedSelector);
-
     }
 }
