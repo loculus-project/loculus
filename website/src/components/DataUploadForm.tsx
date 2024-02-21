@@ -91,7 +91,7 @@ const UploadForm= ({setFile, name, title, Icon, fileType}) => {
     , [myFile]);
     return(
     <div className='sm:col-span-4'>
-                    <label for={name} className='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
+                    <label  className='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
                     {!myFile ? 
                     <div className={`mt-2 flex justify-center rounded-lg border border-dashed  px-6 py-6 border-gray-900/25 h-40
                     ${isDragOver ? 'bg-green-100' : ''}  `}
