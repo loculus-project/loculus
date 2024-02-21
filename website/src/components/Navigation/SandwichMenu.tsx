@@ -19,7 +19,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, know
     return (
         <div className='relative'>
             <button
-                className='fixed z-50 bg-transparent border-none cursor-pointer'
+                className='absolute z-50 bg-transparent border-none cursor-pointer'
                 onClick={toggleMenu}
                 style={{ top: `${top}px`, right: `${right}px` }}
             >
