@@ -1,5 +1,7 @@
 import { CircularProgress, TextField } from '@mui/material';
 import "react-datepicker/dist/react-datepicker.css";
+import Locked from '~icons/fluent-emoji-high-contrast/locked';
+import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import DatePicker from "react-datepicker";
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
@@ -326,6 +328,9 @@ const InnerDataUploadForm = ({
                     className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
                   />
                   <label htmlFor="push-everything" className="block text-sm font-medium leading-6 text-gray-900">
+                    <Unlocked 
+                    className="h-4 w-4 inline-block mr-2 -mt-1"
+                    />
                     Open
                   </label>
                 </div>
@@ -342,6 +347,9 @@ const InnerDataUploadForm = ({
                     className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
                   />
                   <label htmlFor="push-email" className="block text-sm font-medium leading-6 text-gray-900">
+                    <Locked
+                    className="h-4 w-4 inline-block mr-2 -mt-1"
+                    />
                     Restricted
                   </label>
                 </div>
