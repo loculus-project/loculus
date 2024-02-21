@@ -1,5 +1,6 @@
 import { CircularProgress, TextField } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers';
+import "react-datepicker/dist/react-datepicker.css";
+import DatePicker from "react-datepicker";
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
@@ -24,6 +25,7 @@ import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 import PhDnaLight from '~icons/ph/dna-light';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
+
 type Action = 'submit' | 'revise';
 
 type DataUploadFormProps = {
@@ -256,20 +258,7 @@ const InnerDataUploadForm = ({
                     <div className='fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50'>
                         <div className='bg-white p-6 rounded-lg'>
                             <h2 className='font-medium text-lg'>Change date until which sequences are restricted</h2>
-                            <DatePicker
-                                format='yyyy-MM-dd'
-                                value={restrictedUntil}
-                                label='Restricted Until'
-                                minDate={dateTimeInMonths(0)}
-                                maxDate={dateTimeInMonths(12)}
-                                slotProps={{
-                                    textField: {
-                                        size: 'small',
-                                        margin: 'dense',
-                                    },
-                                }}
-                                onChange={(date: DateTime | null) => (date !== null ? setRestrictedUntil(date) : null)}
-                            />
+                            <DatePicker selected={startdate} onChange={(date) => setStartDate(date)} />
                             <div className='flex justify-end gap-4 mt-4'>
                                 <button
                                     className='px-4 py-2 btn normal-case'
