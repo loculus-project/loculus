@@ -35,6 +35,6 @@ export class RevisePage {
 
     private async uploadRevisedMetadata(accessions: Accession[]) {
         writeFileSync(this.temporaryMetadataFile, createModifiedFileContent(accessions).metadataContent);
-        await this.page.getByPlaceholder('Metadata File:').setInputFiles(this.temporaryMetadataFile);
+        await this.page.getByLabel('Metadata file').setInputFiles(this.temporaryMetadataFile);
     }
 }
