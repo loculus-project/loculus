@@ -281,7 +281,7 @@ class SubmissionController(
     )
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ResponseStatus(HttpStatus.OK)
     @PostMapping("/approve-processed-data", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun approveProcessedData(
         @PathVariable @Valid
@@ -289,14 +289,12 @@ class SubmissionController(
         @UsernameFromJwt username: String,
         @RequestBody
         body: AccessionVersionsFilterWithApprovalScope,
-    ) {
-        submissionDatabaseService.approveProcessedData(
-            submitter = username,
-            accessionVersionsFilter = body.accessionVersionsFilter,
-            organism = organism,
-            scope = body.scope,
-        )
-    }
+    ): List<AccessionVersion> = submissionDatabaseService.approveProcessedData(
+        submitter = username,
+        accessionVersionsFilter = body.accessionVersionsFilter,
+        organism = organism,
+        scope = body.scope,
+    )
 
     @Operation(description = REVOKE_DESCRIPTION)
     @PostMapping("/revoke", produces = [MediaType.APPLICATION_JSON_VALUE])

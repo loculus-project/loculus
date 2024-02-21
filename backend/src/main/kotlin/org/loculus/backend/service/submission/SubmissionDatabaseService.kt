@@ -227,7 +227,7 @@ class SubmissionDatabaseService(
         accessionVersionsFilter: List<AccessionVersion>?,
         organism: Organism,
         scope: ApproveDataScope,
-    ) {
+    ): List<AccessionVersion> {
         if (accessionVersionsFilter == null) {
             log.info { "approving all sequences by all groups $submitter is member of" }
         } else {
@@ -245,7 +245,9 @@ class SubmissionDatabaseService(
             )
         }
 
-        sequenceEntriesTableProvider.get(organism).let { table ->
+        val table = sequenceEntriesTableProvider.get(organism)
+
+        val accessionVersionsToUpdate =
             table.join(
                 DataUseTermsTable,
                 JoinType.LEFT,
@@ -253,29 +255,34 @@ class SubmissionDatabaseService(
                     (table.accessionColumn eq DataUseTermsTable.accessionColumn) and
                         (DataUseTermsTable.isNewestDataUseTerms)
                 },
-            ).update(
-                where = {
-                    val statusCondition = table.statusIs(AWAITING_APPROVAL)
+            ).select {
+                val statusCondition = table.statusIs(AWAITING_APPROVAL)
 
-                    val accessionCondition = if (accessionVersionsFilter !== null) {
-                        table.accessionVersionIsIn(accessionVersionsFilter)
-                    } else {
-                        table.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(submitter))
-                    }
+                val accessionCondition = if (accessionVersionsFilter !== null) {
+                    table.accessionVersionIsIn(accessionVersionsFilter)
+                } else {
+                    table.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(submitter))
+                }
 
-                    val scopeCondition = if (scope == ApproveDataScope.WITHOUT_WARNINGS) {
-                        not(table.entriesWithWarnings)
-                    } else {
-                        Op.TRUE
-                    }
+                val scopeCondition = if (scope == ApproveDataScope.WITHOUT_WARNINGS) {
+                    not(table.entriesWithWarnings)
+                } else {
+                    Op.TRUE
+                }
 
-                    statusCondition and accessionCondition and scopeCondition
-                },
-            ) {
-                it[table.statusColumn] = APPROVED_FOR_RELEASE.name
-                it[table.releasedAtColumn] = now
+                statusCondition and accessionCondition and scopeCondition
+            }.map {
+                AccessionVersion(it[table.accessionColumn], it[table.versionColumn])
             }
+
+        table.update(where = {
+            table.accessionVersionIsIn(accessionVersionsToUpdate)
+        }) {
+            it[statusColumn] = APPROVED_FOR_RELEASE.name
+            it[releasedAtColumn] = now
         }
+
+        return accessionVersionsToUpdate
     }
 
     fun getLatestVersions(organism: Organism): Map<Accession, Version> {

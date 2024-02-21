@@ -254,7 +254,7 @@ class SubmissionConvenienceClient(
             },
             organism = organism,
         )
-            .andExpect(status().isNoContent)
+            .andExpect(status().isOk)
     }
 
     fun reviseDefaultProcessedSequenceEntries(
