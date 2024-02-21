@@ -2,7 +2,7 @@ import { Menu } from '@headlessui/react';
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
-import { type FormEvent, useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { type FormEvent, useMemo, useState, useRef, useEffect, useCallback, type ElementType } from 'react';
 
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
@@ -238,7 +238,7 @@ const UploadComponent = ({
     setFile: (file: File | null) => void;
     name: string;
     title: string;
-    Icon: React.ElementType;
+    Icon: ElementType;
     fileType: string;
 }) => {
     const [myFile, rawSetMyFile] = useState<File | null>(null);
@@ -286,6 +286,7 @@ const UploadComponent = ({
                     }
                 });
         }, 500);
+
         return () => clearInterval(interval);
     }, [myFile, setMyFile]);
     return (
@@ -355,7 +356,7 @@ const InnerDataUploadForm = ({
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
-    const noGroup = useMemo(() => groupsOfUser.length === 0, [groupsOfUser]);
+    const noGroup = groupsOfUser.length === 0;
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [selectedGroupName, setSelectedGroupName] = useState<string | undefined>(
