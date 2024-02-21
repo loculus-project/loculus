@@ -258,7 +258,11 @@ const InnerDataUploadForm = ({
                     <div className='fixed inset-0 bg-gray-900 bg-opacity-75 flex justify-center items-center z-50'>
                         <div className='bg-white p-6 rounded-lg'>
                             <h2 className='font-medium text-lg'>Change date until which sequences are restricted</h2>
-                            <DatePicker selected={startdate} onChange={(date) => setStartDate(date)} />
+                            <DatePicker selected={restrictedUntil.toJSDate()
+
+                            } onChange={(date) => setRestrictedUntil(DateTime.fromObject(date))}
+                            inline={true}
+                            />
                             <div className='flex justify-end gap-4 mt-4'>
                                 <button
                                     className='px-4 py-2 btn normal-case'
