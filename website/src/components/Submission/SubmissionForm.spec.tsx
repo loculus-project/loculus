@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { getByText, render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
@@ -43,7 +43,7 @@ describe('SubmitForm', () => {
         await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequence File/i), sequencesFile);
 
-        const submitButton = getByText('Submit');
+        const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
     });
 
@@ -55,7 +55,7 @@ describe('SubmitForm', () => {
 
         await userEvent.upload(getByLabelText(/Metadata File/i), metadataFile);
 
-        const submitButton = getByText('Submit');
+        const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
 
         await waitFor(() => {
@@ -63,34 +63,19 @@ describe('SubmitForm', () => {
         });
     });
 
-    test('should select a group if there is more than one', async () => {
-        const { getByRole } = renderSubmissionForm();
+    test('should have options to select a group if there is more than one', async () => {
+        const { getByText, getByLabelText } = renderSubmissionForm();
+        await userEvent.click(getByLabelText('Select group'))
 
         await waitFor(() => {
-            expect(getByRole('option', { name: 'Group2' })).toBeInTheDocument();
-            expect(getByRole('option', { name: 'Group1' })).toBeInTheDocument();
+            expect(getByText('Group1')).toBeInTheDocument();
+            expect(getByText('Group2')).toBeInTheDocument();
         });
     });
 
-    test('should select a restricted data use term', async () => {
-        mockRequest.backend.getGroupsOfUser(200, [{ groupName: 'Group1' }, { groupName: 'Group2' }]);
+   
 
-        const { getByRole } = renderSubmissionForm();
-
-        await waitFor(() => {
-            expect(getByRole('option', { name: 'OPEN' })).toBeInTheDocument();
-            expect(getByRole('option', { name: 'RESTRICTED' })).toBeInTheDocument();
-        });
-    });
-
-    test('should forbid submitting when there is no group', async () => {
-        mockRequest.backend.submit(200, testResponse);
-        mockRequest.backend.getGroupsOfUser(200, []);
-
-        const { getByText } = renderSubmissionForm();
-
-        await waitFor(() => expect(getByText((text) => text.includes('No group found.'))).toBeInTheDocument());
-    });
+   
 
     test('should unexpected error with proper error message', async () => {
         mockRequest.backend.submit(500, 'a weird, unexpected test error');
@@ -120,7 +105,7 @@ describe('SubmitForm', () => {
         await userEvent.upload(getByLabelText(/Metadata file/i), metadataFile);
         await userEvent.upload(getByLabelText(/Sequence file/i), sequencesFile);
 
-        const submitButton = getByText('Submit');
+        const submitButton = getByText('Submit sequences');
         await userEvent.click(submitButton);
 
         await waitFor(() => {

@@ -17,7 +17,7 @@ export class SubmitPage {
     public readonly dataUseTermsDropdown: Locator;
 
     constructor(public readonly page: Page) {
-        this.submitButton = page.getByRole('button', { name: 'Submit' });
+        this.submitButton = page.getByRole('button', { name: 'submit' });
         this.dataUseTermsDropdown = page.locator('#dataUseTermsDropdown');
     }
 
