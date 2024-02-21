@@ -356,7 +356,7 @@ const InnerDataUploadForm = ({
                             .
                         </p>
 
-                        {organism.startsWith('dummy-organism') && action == 'submit' && (
+                        {organism.startsWith('dummy-organism') && action === 'submit' && (
                             <p className='text-gray-800 text-xs mt-5 opacity-50'>
                                 Add dev example data
                                 <br />
