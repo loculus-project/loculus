@@ -1,9 +1,9 @@
 import { CircularProgress, TextField } from '@mui/material';
-
+import { Menu } from '@headlessui/react'
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
+import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import { DateChangeModal } from './DateChangeModal';
-
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import {  DateTime } from 'luxon';
@@ -11,7 +11,7 @@ import { type ChangeEvent, type FormEvent, useMemo, useState, useRef, useEffect 
 import DashiconsGroups from '~icons/dashicons/groups';
 import {  withQueryProvider } from '../common/withProvider.tsx';
 import { getClientLogger } from '../../clientLogger.ts';
-import { useGroupManagementClient } from '../../hooks/useGroupOperations.ts';
+import { ClipLoader} from 'react-spinners';
 import { routes } from '../../routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
@@ -43,6 +43,41 @@ type DataUploadFormProps = {
 };
 
 const logger = getClientLogger('DataUploadForm');
+
+const GroupSelector = ({groupNames, selectedGroupName, setSelectedGroupName}) => {
+    if(groupNames.length === 1){
+        return <div className='mb-4 text-gray-500'>
+           Current group: {selectedGroupName}
+        </div>
+    }
+    return  <div className='mb-4 text-gray-500 text-sm'>
+        <Menu>
+    <Menu.Button>Current group: {selectedGroupName}
+    <span className="text-teal-600 ml-2">
+        <IwwaArrowDown className="w-4 h-4 inline-block -mt-0.5" />
+    </span>
+    </Menu.Button>
+    <Menu.Items>
+        {groupNames.map((groupName) => (
+            <Menu.Item key={groupName}>
+                {({ active }) => (
+                    <button
+                        className={`${
+                            active ? 'bg-teal-500 text-white' : 'text-gray-900'
+                        } flex justify-between w-full px-4 py-2 text-sm`}
+                        onClick={() => setSelectedGroupName(groupName)}
+                    >
+                        {groupName}
+                    </button>
+                )}
+            </Menu.Item>
+        ))}
+    </Menu.Items>
+  </Menu>
+  </div>
+}
+
+
 
 
 const UploadForm= ({setFile, name, title, Icon, fileType}) => {
@@ -152,7 +187,7 @@ const InnerDataUploadForm = ({
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
-    const [exampleEntries, setExampleEntries] = useState<number | undefined>(undefined);
+    const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
     const metadataFileInputRef = useRef<HTMLInputElement>(null);
     const sequenceFileInputRef = useRef<HTMLInputElement>(null);
     // initial license change date is 6 months from now
@@ -165,7 +200,7 @@ const InnerDataUploadForm = ({
     );
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
-    const [selectedGroup, setSelectedGroup] = useState<string | undefined>(undefined);
+    const [selectedGroupName, setSelectedGroupName] = useState<string | undefined>(noGroup ? undefined : groupsOfUser[0].groupName);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
     const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
@@ -196,7 +231,7 @@ const InnerDataUploadForm = ({
 
         switch (action) {
             case 'submit':
-                const groupName = selectedGroup ?? groupsOfUser?.[0].groupName;
+                const groupName = selectedGroupName ?? groupsOfUser?.[0].groupName;
                 if (groupName === undefined) {
                     onError('Please select a group');
                     return;
@@ -267,7 +302,14 @@ const InnerDataUploadForm = ({
                 maxDate={dateTimeInMonths(12)}
                 />
             }
+            <GroupSelector 
+            groupNames={groupsOfUser.map((group) => group.groupName)}
+            selectedGroupName={selectedGroupName}
+            setSelectedGroupName={setSelectedGroupName}
+            organism={organism}
+            />
             <div className='flex-col flex gap-8 divide-y'>
+                
                 <div className='grid sm:grid-cols-3 gap-x-16'>
 <div className=''>
     <h2 className='font-medium text-lg'>Sequence and metadata</h2>
@@ -276,6 +318,23 @@ const InnerDataUploadForm = ({
     <p className='text-gray-800 text-xs mt-5 opacity-50'>
         <MaterialSymbolsInfoOutline className='w-5 h-5 inline-block mr-2' />
         For more information on the format in which data should be uploaded and the required metadata, please refer to our <a href='#' className='text-teal-700'>help pages</a>.</p>
+        {organism.startsWith('dummy-organism') && (
+        <p className='text-gray-800 text-xs mt-5 opacity-50'>
+            Add dev example data<br />
+            <input type='number' value={exampleEntries ?? ''} onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))} 
+            className='w-32'
+            />
+            <button type='button' onClick={handleLoadExampleData}
+            className='border rounded px-2 py-1 '
+            >Load Example Data</button> <br />
+            {metadataFile && sequenceFile && (
+                <span className='text-xs text-gray-500'>Example data loaded</span>
+            )}
+        
+
+        </p>
+        )
+}
     </div>
     <form className="sm:col-span-2 ">
         <div className='px-8'>
@@ -309,6 +368,7 @@ const InnerDataUploadForm = ({
                     name="data-use"
                     onChange={() => setDataUseTermsType(openDataUseTermsType)}
                     type="radio"
+                    checked={dataUseTermsType===openDataUseTermsType}
                     className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
                   />
                   <label htmlFor="push-everything" className="block text-sm font-medium leading-6 text-gray-900">
@@ -328,6 +388,7 @@ const InnerDataUploadForm = ({
                     name="data-use"
                     onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
                     type="radio"
+                    checked={dataUseTermsType===restrictedDataUseTermsType}
                     className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
                   />
                   <label htmlFor="push-email" className="block text-sm font-medium leading-6 text-gray-900">
@@ -366,7 +427,15 @@ const InnerDataUploadForm = ({
         <button
           type="submit"
           className="rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
+          onClick={handleSubmit}
+          disabled={isLoading}
         >
+            {
+                isLoading ? <div className='inline-block mr-2'><ClipLoader color='#fff' size={20} 
+
+                /> 
+               </div>: ''
+            }
           Submit sequences
         </button>
       </div>

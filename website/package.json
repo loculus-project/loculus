@@ -19,6 +19,7 @@
   "dependencies": {
     "@astrojs/node": "^6.1.0",
     "@emotion/react": "^11.11.3",
+    "@headlessui/react": "^1.7.18",
     "@mui/material": "~5.14.20",
     "@mui/x-date-pickers": "^6.19.4",
     "@svgr/core": "^8.1.0",
@@ -42,6 +43,7 @@
     "react-chartjs-2": "^5.2.0",
     "react-confirm-alert": "^3.0.6",
     "react-dom": "^18.2.0",
+    "react-spinners": "^0.13.8",
     "react-tooltip": "^5.26.3",
     "unplugin-icons": "^0.18.5",
     "winston": "^3.11.0",
