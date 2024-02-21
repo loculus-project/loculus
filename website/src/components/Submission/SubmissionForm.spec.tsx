@@ -1,4 +1,4 @@
-import { getByText, render, waitFor } from '@testing-library/react';
+import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
@@ -65,17 +65,13 @@ describe('SubmitForm', () => {
 
     test('should have options to select a group if there is more than one', async () => {
         const { getByText, getByLabelText } = renderSubmissionForm();
-        await userEvent.click(getByLabelText('Select group'))
+        await userEvent.click(getByLabelText('Select group'));
 
         await waitFor(() => {
             expect(getByText('Group1')).toBeInTheDocument();
             expect(getByText('Group2')).toBeInTheDocument();
         });
     });
-
-   
-
-   
 
     test('should unexpected error with proper error message', async () => {
         mockRequest.backend.submit(500, 'a weird, unexpected test error');

@@ -51,7 +51,7 @@ const GroupSelector = ({
     return (
         <div className='mb-4 text-gray-500 text-sm'>
             <Menu>
-                <Menu.Button aria-label="Select group">
+                <Menu.Button aria-label='Select group'>
                     Current group: {selectedGroupName}
                     <span className='text-teal-600 ml-2'>
                         <IwwaArrowDown className='w-4 h-4 inline-block -mt-0.5' />
