@@ -6,7 +6,7 @@ import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
 import { type ChangeEvent, type FormEvent, useMemo, useState, useRef, useEffect } from 'react';
 import DashiconsGroups from '~icons/dashicons/groups';
-import { withLocalizationProvider, withQueryProvider } from './common/withProvider.tsx';
+import {  withQueryProvider } from './common/withProvider.tsx';
 import { getClientLogger } from '../clientLogger.ts';
 import { useGroupManagementClient } from '../hooks/useGroupOperations.ts';
 import { routes } from '../routes.ts';
@@ -512,7 +512,7 @@ const InnerDataUploadForm = ({
     );
 };
 
-export const DataUploadForm = withQueryProvider(withLocalizationProvider(InnerDataUploadForm));
+export const DataUploadForm = withQueryProvider(InnerDataUploadForm);
 
 function useSubmitFiles(
     accessToken: string,
