@@ -30,6 +30,8 @@ fields:
 
 {{/* Generate website config from passed config object */}}
 {{- define "loculus.generateWebsiteConfig" }}
+name: {{ $.Values.name }}
+accessionPrefix: {{ $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 instances:
   {{- range $key, $instance := $.Values.instances }}
@@ -68,6 +70,8 @@ fields:
 
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
+accessionPrefix: {{$.Values.accessionPrefix}}
+name: {{ $.Values.name }}
 instances:
   {{- range $key, $instance := $.Values.instances }}
   {{ $key }}:
