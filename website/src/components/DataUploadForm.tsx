@@ -130,7 +130,7 @@ const UploadForm= ({setFile, name, title, Icon, fileType}) => {
                     className='text-sm text-gray-500 py-5'
                     >{myFile.name}</div>
                     <button onClick={() => setMyFile(null)} className='
-                    text-xs text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'>Discard file</button>
+                    text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'>Discard file</button>
                    
                 </div>
             }
