@@ -146,7 +146,7 @@ const approveProcessedDataEndpoint = makeEndpoint({
             schema: accessionVersionsFilterWithApprovalScope,
         },
     ],
-    response: z.never(),
+    response: z.array(accessionVersion),
     errors: [{ status: 'default', schema: problemDetail }, notAuthorizedError],
 });
 

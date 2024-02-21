@@ -45,7 +45,9 @@ class ApproveProcessedDataEndpointTest(
         val accessionVersions = convenienceClient.prepareDataTo(AWAITING_APPROVAL).getAccessionVersions()
 
         client.approveProcessedSequenceEntries(accessionVersions)
-            .andExpect(status().isNoContent)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
 
         assertThat(
             convenienceClient.getSequenceEntries().statusCounts[APPROVED_FOR_RELEASE],
@@ -55,10 +57,12 @@ class ApproveProcessedDataEndpointTest(
 
     @Test
     fun `WHEN I approve without accession filter or with full scope THEN all data is approved`() {
-        convenienceClient.prepareDataTo(AWAITING_APPROVAL)
+        val approvableSequences = convenienceClient.prepareDataTo(AWAITING_APPROVAL).map { it.accession }
 
         client.approveProcessedSequenceEntries(scope = ApproveDataScope.ALL)
-            .andExpect(status().isNoContent)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("\$[*].accession").value(approvableSequences))
 
         assertThat(
             convenienceClient.getSequenceEntriesOfUserInState(status = APPROVED_FOR_RELEASE),
@@ -210,7 +214,7 @@ class ApproveProcessedDataEndpointTest(
         )
 
         client.approveProcessedSequenceEntries(scope = ApproveDataScope.WITHOUT_WARNINGS)
-            .andExpect(status().isNoContent)
+            .andExpect(status().isOk)
 
         convenienceClient.getSequenceEntryOfUser(accession = accessionOfDataWithWarnings, version = 1)
             .assertStatusIs(AWAITING_APPROVAL)
@@ -218,7 +222,7 @@ class ApproveProcessedDataEndpointTest(
             .assertStatusIs(APPROVED_FOR_RELEASE)
 
         client.approveProcessedSequenceEntries(scope = ApproveDataScope.ALL)
-            .andExpect(status().isNoContent)
+            .andExpect(status().isOk)
 
         convenienceClient.getSequenceEntryOfUser(accession = accessionOfDataWithWarnings, version = 1)
             .assertStatusIs(APPROVED_FOR_RELEASE)
@@ -250,7 +254,7 @@ class ApproveProcessedDataEndpointTest(
                 AccessionVersion(accessionOfSuccessfullyProcessedData, 1),
             ),
         )
-            .andExpect(status().isNoContent)
+            .andExpect(status().isOk)
 
         convenienceClient.getSequenceEntryOfUser(accession = accessionOfDataWithWarnings, version = 1)
             .assertStatusIs(AWAITING_APPROVAL)
