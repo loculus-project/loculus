@@ -344,7 +344,7 @@ const InnerDataUploadForm = ({
                                 <span>
                                     <strong>
                                         For revisions, your metadata file must contain an "accession" column, with the
-                                        accession in the database
+                                        accession in the database. <br />
                                     </strong>
                                 </span>
                             )}
@@ -356,7 +356,7 @@ const InnerDataUploadForm = ({
                             .
                         </p>
 
-                        {organism.startsWith('dummy-organism') && (
+                        {organism.startsWith('dummy-organism') && action == 'submit' && (
                             <p className='text-gray-800 text-xs mt-5 opacity-50'>
                                 Add dev example data
                                 <br />
