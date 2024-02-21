@@ -9,10 +9,11 @@ type RevisionFormProps = {
     accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
+    groupsOfUser: object[];
 };
 
 export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, clientConfig }) => {
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
+    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback, groupsOfUser } = useErrorFeedbackState();
 
     return (
         <div className='flex flex-col items-center'>
@@ -23,6 +24,7 @@ export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, cli
                 clientConfig={clientConfig}
                 action='revise'
                 onError={openErrorFeedback}
+                groupsOfUser={groupsOfUser}
                 onSuccess={() => {
                     window.location.href = routes.userSequenceReviewPage(organism);
                 }}

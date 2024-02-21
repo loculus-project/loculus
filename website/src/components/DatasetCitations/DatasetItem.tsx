@@ -9,7 +9,7 @@ import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
-import { withQueryProvider } from '../common/withProvider';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 const logger = getClientLogger('DatasetItem');
 

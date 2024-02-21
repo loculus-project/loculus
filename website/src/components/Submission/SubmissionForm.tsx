@@ -10,7 +10,6 @@ type SubmissionFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     groupsOfUser: object[];
-
 };
 
 export const SubmissionForm: FC<SubmissionFormProps> = ({ accessToken, organism, clientConfig, groupsOfUser }) => {

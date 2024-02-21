@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, test, vi } from 'vitest';
 
 import { SubmissionForm } from './SubmissionForm';
-import { mockRequest, testAccessToken, testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { mockRequest, testAccessToken, testConfig, testOrganism, testGroups } from '../../../vitest.setup.ts';
 import { type ProblemDetail, type SubmissionIdMapping } from '../../types/backend.ts';
 
 vi.mock('../../api', () => ({
@@ -16,7 +16,12 @@ vi.mock('../../api', () => ({
 
 function renderSubmissionForm() {
     return render(
-        <SubmissionForm accessToken={testAccessToken} organism={testOrganism} clientConfig={testConfig.public} />,
+        <SubmissionForm
+            accessToken={testAccessToken}
+            organism={testOrganism}
+            clientConfig={testConfig.public}
+            groupsOfUser={testGroups}
+        />,
     );
 }
 
@@ -59,8 +64,6 @@ describe('SubmitForm', () => {
     });
 
     test('should select a group if there is more than one', async () => {
-        mockRequest.backend.getGroupsOfUser(200, [{ groupName: 'Group1' }, { groupName: 'Group2' }]);
-
         const { getByRole } = renderSubmissionForm();
 
         await waitFor(() => {

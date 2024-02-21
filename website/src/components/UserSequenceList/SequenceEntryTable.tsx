@@ -20,7 +20,7 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
-import { withQueryProvider } from '../common/withProvider.tsx';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type SequenceTableProps = {
     organism: string;

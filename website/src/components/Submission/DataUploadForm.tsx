@@ -1,25 +1,21 @@
-import { Menu } from '@headlessui/react'
+import { Menu } from '@headlessui/react';
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
-import {  type DateTime } from 'luxon';
-import {  type FormEvent, useMemo, useState, useRef, useEffect, useCallback } from 'react';
-import { ClipLoader} from 'react-spinners';
+import { type DateTime } from 'luxon';
+import { type FormEvent, useMemo, useState, useRef, useEffect, useCallback } from 'react';
+import { ClipLoader } from 'react-spinners';
 
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
 import { routes } from '../../routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
-import {
-    type DataUseTermsType,
-    openDataUseTermsType,
-    restrictedDataUseTermsType,
-} from '../../types/backend.ts';
+import { type DataUseTermsType, openDataUseTermsType, restrictedDataUseTermsType } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
-import {  withQueryProvider } from '../common/withProvider.tsx';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
@@ -27,7 +23,6 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
-
 
 type Action = 'submit' | 'revise';
 
@@ -43,55 +38,77 @@ type DataUploadFormProps = {
 
 const logger = getClientLogger('DataUploadForm');
 
-const GroupSelector = ({groupNames, selectedGroupName, setSelectedGroupName}: {groupNames: string[], selectedGroupName: string | undefined, setSelectedGroupName: (groupName: string) => void}) => {
-    if(groupNames.length === 1){
-        return <div className='mb-4 text-gray-500'>
-           Current group: {selectedGroupName}
-        </div>
+const GroupSelector = ({
+    groupNames,
+    selectedGroupName,
+    setSelectedGroupName,
+}: {
+    groupNames: string[];
+    selectedGroupName: string | undefined;
+    setSelectedGroupName: (groupName: string) => void;
+}) => {
+    if (groupNames.length === 1) {
+        return <div className='mb-4 text-gray-500'>Current group: {selectedGroupName}</div>;
     }
-    return  <div className='mb-4 text-gray-500 text-sm'>
-        <Menu>
-    <Menu.Button>Current group: {selectedGroupName}
-    <span className="text-teal-600 ml-2">
-        <IwwaArrowDown className="w-4 h-4 inline-block -mt-0.5" />
-    </span>
-    </Menu.Button>
-    <Menu.Items>
-        {groupNames.map((groupName) => (
-            <Menu.Item key={groupName}>
-                {({ active }) => (
-                    <button
-                        className={`${
-                            active ? 'bg-teal-500 text-white' : 'text-gray-900'
-                        } flex justify-between w-full px-4 py-2 text-sm`}
-                        onClick={() => setSelectedGroupName(groupName)}
-                    >
-                        {groupName}
-                    </button>
-                )}
-            </Menu.Item>
-        ))}
-    </Menu.Items>
-  </Menu>
-  </div>
-}
-
-
+    return (
+        <div className='mb-4 text-gray-500 text-sm'>
+            <Menu>
+                <Menu.Button>
+                    Current group: {selectedGroupName}
+                    <span className='text-teal-600 ml-2'>
+                        <IwwaArrowDown className='w-4 h-4 inline-block -mt-0.5' />
+                    </span>
+                </Menu.Button>
+                <Menu.Items>
+                    {groupNames.map((groupName) => (
+                        <Menu.Item key={groupName}>
+                            {({ active }) => (
+                                <button
+                                    className={`${
+                                        active ? 'bg-teal-500 text-white' : 'text-gray-900'
+                                    } flex justify-between w-full px-4 py-2 text-sm`}
+                                    onClick={() => setSelectedGroupName(groupName)}
+                                >
+                                    {groupName}
+                                </button>
+                            )}
+                        </Menu.Item>
+                    ))}
+                </Menu.Items>
+            </Menu>
+        </div>
+    );
+};
 
 // disable eslint to allow Icon prop:
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const UploadForm= ({setFile, name, title, Icon, fileType}: {setFile: (file: File | null) => void, name: string, title: string, Icon: React.ElementType, fileType: string}) => {
 
-    const [myFile, rawSetMyFile] = useState<File | null>(null)
+const UploadForm = ({
+    setFile,
+    name,
+    title,
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    Icon,
+    fileType,
+}: {
+    setFile: (file: File | null) => void;
+    name: string;
+    title: string;
+    Icon: React.ElementType;
+    fileType: string;
+}) => {
+    const [myFile, rawSetMyFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
-    const setMyFile = useCallback((file: File | null) => {
-        setFile(file)
-        rawSetMyFile(file)
-    }, [setFile, rawSetMyFile])
-    const fileInputRef = useRef<HTMLInputElement>(null)
+    const setMyFile = useCallback(
+        (file: File | null) => {
+            setFile(file);
+            rawSetMyFile(file);
+        },
+        [setFile, rawSetMyFile],
+    );
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const handleUpload = () => {
-        document.getElementById(name)?.click()
-    }
+        document.getElementById(name)?.click();
+    };
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -109,10 +126,9 @@ const UploadForm= ({setFile, name, title, Icon, fileType}: {setFile: (file: File
         const file = e.dataTransfer.files[0];
         setMyFile(file);
     };
-    
+
     useEffect(() => {
         const interval = setInterval(() => {
-            
             // Check if the file is no longer readable - which generally indicates the file has been edited since being
             // selected in the UI - and clear it.
             myFile
@@ -124,57 +140,61 @@ const UploadForm= ({setFile, name, title, Icon, fileType}: {setFile: (file: File
                         fileInputRef.current.value = '';
                     }
                 });
-        }
-        , 500);
+        }, 500);
         return () => clearInterval(interval);
-    }
-    , [myFile, setMyFile]);
-    return(
-    <div className='sm:col-span-4'>
-                    <label  className='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
-                    {!myFile ? 
-                    <div className={`mt-2 flex justify-center rounded-lg border border-dashed  px-6 py-6 border-gray-900/25 h-40
+    }, [myFile, setMyFile]);
+    return (
+        <div className='sm:col-span-4'>
+            <label className='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
+            {!myFile ? (
+                <div
+                    className={`mt-2 flex justify-center rounded-lg border border-dashed  px-6 py-6 border-gray-900/25 h-40
                     ${isDragOver ? 'bg-green-100' : ''}  `}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    >
-                <div className="text-center">
-                  <Icon className="mx-auto h-12 w-12 text-gray-300" aria-hidden="true" />
-                  <div className="mt-4 flex text-sm leading-6 text-gray-600">
-                    <label
-                      htmlFor="file-upload"
-                      className="relative cursor-pointer rounded-md bg-white font-semibold text-teal-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-iteal-600 focus-within:ring-offset-2 hover:text-iteal-500"
-                    >
-                      <span onClick={handleUpload}>Upload a file</span>
-                      <input id={name} name={name} type="file" className="sr-only" 
-                      onChange={(event) => {
-                            const file = event.target.files?.[0] || null;
-                            setMyFile(file);
-                      }
-                        }
-                        ref={fileInputRef}
-                      />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs leading-5 text-gray-600">{fileType}</p>
+                >
+                    <div className='text-center'>
+                        <Icon className='mx-auto h-12 w-12 text-gray-300' aria-hidden='true' />
+                        <div className='mt-4 flex text-sm leading-6 text-gray-600'>
+                            <label
+                                htmlFor='file-upload'
+                                className='relative cursor-pointer rounded-md bg-white font-semibold text-teal-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-iteal-600 focus-within:ring-offset-2 hover:text-iteal-500'
+                            >
+                                <span onClick={handleUpload}>Upload a file</span>
+                                <input
+                                    id={name}
+                                    name={name}
+                                    type='file'
+                                    className='sr-only'
+                                    onChange={(event) => {
+                                        const file = event.target.files?.[0] || null;
+                                        setMyFile(file);
+                                    }}
+                                    ref={fileInputRef}
+                                />
+                            </label>
+                            <p className='pl-1'>or drag and drop</p>
+                        </div>
+                        <p className='text-xs leading-5 text-gray-600'>{fileType}</p>
+                    </div>
                 </div>
-              </div>
-              :
+            ) : (
                 <div className='h-40 text-center'>
                     <Icon className='w-12 h-12 text-gray-300 mx-auto my-4' />
-                    <div
-                    className='text-sm text-gray-500 py-5'
-                    >{myFile.name}</div>
-                    <button onClick={() => setMyFile(null)} className='
-                    text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'>Discard file</button>
-                   
+                    <div className='text-sm text-gray-500 py-5'>{myFile.name}</div>
+                    <button
+                        onClick={() => setMyFile(null)}
+                        className='
+                    text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                    >
+                        Discard file
+                    </button>
                 </div>
-            }
-
-                </div>)
-}
+            )}
+        </div>
+    );
+};
 
 const InnerDataUploadForm = ({
     accessToken,
@@ -191,16 +211,13 @@ const InnerDataUploadForm = ({
     const metadataFileInputRef = useRef<HTMLInputElement>(null);
     const sequenceFileInputRef = useRef<HTMLInputElement>(null);
     // initial license change date is 6 months from now
-    
 
-
-    const noGroup = useMemo(
-        () => groupsOfUser.length === 0,
-        [groupsOfUser],
-    );
+    const noGroup = useMemo(() => groupsOfUser.length === 0, [groupsOfUser]);
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
-    const [selectedGroupName, setSelectedGroupName] = useState<string | undefined>(noGroup ? undefined : groupsOfUser[0].groupName);
+    const [selectedGroupName, setSelectedGroupName] = useState<string | undefined>(
+        noGroup ? undefined : groupsOfUser[0].groupName,
+    );
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
     const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
@@ -279,172 +296,220 @@ const InnerDataUploadForm = ({
         return () => clearInterval(interval);
     }, [metadataFile, sequenceFile]);
 
-    if (noGroup){
-        return (<div className='mt-6 alert'>
-            <DashiconsGroups className='w-12 h-12 inline-block mr-2' />
-        <div>
-            <p>Sequences can only be submitted to the database by users who are part of a <i>group</i>.</p>
-            <p className='mt-3'>To submit to the database, please either <a href={routes.userOverviewPage()} className='underline'>
-            create a group
-        </a> (a group with one member is not a problem!) or ask a group administrator to add you to an existing group.
-        </p>
-    </div></div>) 
+    if (noGroup) {
+        return (
+            <div className='mt-6 alert'>
+                <DashiconsGroups className='w-12 h-12 inline-block mr-2' />
+                <div>
+                    <p>
+                        Sequences can only be submitted to the database by users who are part of a <i>group</i>.
+                    </p>
+                    <p className='mt-3'>
+                        To submit to the database, please either{' '}
+                        <a href={routes.userOverviewPage()} className='underline'>
+                            create a group
+                        </a>{' '}
+                        (a group with one member is not a problem!) or ask a group administrator to add you to an
+                        existing group.
+                    </p>
+                </div>
+            </div>
+        );
     }
 
-    return(
+    return (
         <div className='text-left mt-3 max-w-6xl'>
-            {
-                dateChangeModalOpen && <DateChangeModal 
-                restrictedUntil={restrictedUntil}
-                setRestrictedUntil={setRestrictedUntil}
-                setDateChangeModalOpen={setDateChangeModalOpen}
-                minDate={dateTimeInMonths(0)}
-                maxDate={dateTimeInMonths(12)}
+            {dateChangeModalOpen && (
+                <DateChangeModal
+                    restrictedUntil={restrictedUntil}
+                    setRestrictedUntil={setRestrictedUntil}
+                    setDateChangeModalOpen={setDateChangeModalOpen}
+                    minDate={dateTimeInMonths(0)}
+                    maxDate={dateTimeInMonths(12)}
                 />
-            }
-            <GroupSelector 
-            groupNames={groupsOfUser.map((group) => group.groupName)}
-            selectedGroupName={selectedGroupName}
-            setSelectedGroupName={setSelectedGroupName}
-          
+            )}
+            <GroupSelector
+                groupNames={groupsOfUser.map((group) => group.groupName)}
+                selectedGroupName={selectedGroupName}
+                setSelectedGroupName={setSelectedGroupName}
             />
             <div className='flex-col flex gap-8 divide-y'>
-                
                 <div className='grid sm:grid-cols-3 gap-x-16'>
-<div className=''>
-    <h2 className='font-medium text-lg'>Sequence and metadata</h2>
-    <p className='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
+                    <div className=''>
+                        <h2 className='font-medium text-lg'>Sequence and metadata</h2>
+                        <p className='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
 
-    <p className='text-gray-800 text-xs mt-5 opacity-50'>
-        <MaterialSymbolsInfoOutline className='w-5 h-5 inline-block mr-2' />
-        For more information on the format in which data should be uploaded and the required metadata, please refer to our <a href='#' className='text-teal-700'>help pages</a>.</p>
-        {organism.startsWith('dummy-organism') && (
-        <p className='text-gray-800 text-xs mt-5 opacity-50'>
-            Add dev example data<br />
-            <input type='number' value={exampleEntries ?? ''} onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))} 
-            className='w-32'
-            />
-            <button type='button' onClick={handleLoadExampleData}
-            className='border rounded px-2 py-1 '
-            >Load Example Data</button> <br />
-            {metadataFile && sequenceFile && (
-                <span className='text-xs text-gray-500'>Example data loaded</span>
-            )}
-        
+                        <p className='text-gray-800 text-xs mt-5 opacity-50'>
+                            <MaterialSymbolsInfoOutline className='w-5 h-5 inline-block mr-2' />
+                            {action === 'revise' && (
+                                <span>
+                                    <strong>
+                                        For revisions, your metadata file must contain an "accession" column, with the
+                                        accession in the database
+                                    </strong>
+                                </span>
+                            )}
+                            For more information on the format in which data should be uploaded and the required
+                            metadata, please refer to our{' '}
+                            <a href='#' className='text-teal-700'>
+                                help pages
+                            </a>
+                            .
+                        </p>
 
-        </p>
-        )
-}
-    </div>
-    <form className="sm:col-span-2 ">
-        <div className='px-8'>
-            <div className='flex flex-col gap-6 max-w-64'>
-                <div className='sm:col-span-3'>
-                <UploadForm setFile={setSequenceFile} name='sequence_file' title='Sequence file' Icon={PhDnaLight} fileType="FASTA file"/>
-                </div>
-                <div className='sm:col-span-3'>
-                <UploadForm setFile={setMetadataFile} name='metadata_file' title='Metadata file' Icon={MaterialSymbolsLightDataTableOutline} fileType="TSV file"/>
-                </div>
-                </div>
-        </div>
-
-    </form>
-    </div>
-    <div className='grid sm:grid-cols-3 mt-0 pt-10'>
-    <div>
-    <h2 className='font-medium text-lg'>Terms of use</h2>
-    <p className='text-gray-500 text-sm'>Specify how your data can be used</p>
-    </div>
-    <div className=" grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2">
-            <div className="sm:col-span-4 px-8">
-              <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900">
-                Terms of use for these data
-              </label>
-              <div className="mt-2">
-              <div className="mt-6 space-y-2">
-                <div className="flex items-center gap-x-3">
-                  <input
-                    id="data-use-open"
-                    name="data-use"
-                    onChange={() => setDataUseTermsType(openDataUseTermsType)}
-                    type="radio"
-                    checked={dataUseTermsType===openDataUseTermsType}
-                    className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
-                  />
-                  <label htmlFor="push-everything" className="block text-sm font-medium leading-6 text-gray-900">
-                    <Unlocked 
-                    className="h-4 w-4 inline-block mr-2 -mt-1"
-                    />
-                    Open
-                  </label>
-                </div>
-                <div className="text-xs pl-6 text-gray-500 pb-4">
-                    Anyone can use and share the data (though we believe researchers should exercise scientific etiquette, including the importance of citation). Data will be released to the INSDC databases shortly after submission.  <a href="#" className="text-teal-600">Find out more</a>.
-                </div>
-                
-                <div className="flex items-center gap-x-3">
-                  <input
-                    id="data-use-restricted"
-                    name="data-use"
-                    onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
-                    type="radio"
-                    checked={dataUseTermsType===restrictedDataUseTermsType}
-                    className="h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600"
-                  />
-                  <label htmlFor="push-email" className="block text-sm font-medium leading-6 text-gray-900">
-                    <Locked
-                    className="h-4 w-4 inline-block mr-2 -mt-1"
-                    />
-                    Restricted
-                  </label>
-                </div>
-                
-                <div className="text-xs pl-6 text-gray-500 mb-4">
-                    Data will be restricted for a period of time. The sequences will be available but there will be limitations on how they can be used by others. <a href="#" className="text-teal-600">Find out more</a>.
-
-                </div>
-                {
-                    dataUseTermsType===restrictedDataUseTermsType  && (
-                        <div className="text-sm pl-6 text-gray-900 mb-4">
-                            Data will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>. <button className="border rounded px-2 py-1 "
-                            onClick={() => setDateChangeModalOpen(true)}
-                            
-                            >Change date</button>
+                        {organism.startsWith('dummy-organism') && (
+                            <p className='text-gray-800 text-xs mt-5 opacity-50'>
+                                Add dev example data
+                                <br />
+                                <input
+                                    type='number'
+                                    value={exampleEntries ?? ''}
+                                    onChange={(event) => setExampleEntries(parseInt(event.target.value, 10))}
+                                    className='w-32'
+                                />
+                                <button
+                                    type='button'
+                                    onClick={handleLoadExampleData}
+                                    className='border rounded px-2 py-1 '
+                                >
+                                    Load Example Data
+                                </button>{' '}
+                                <br />
+                                {metadataFile && sequenceFile && (
+                                    <span className='text-xs text-gray-500'>Example data loaded</span>
+                                )}
+                            </p>
+                        )}
+                    </div>
+                    <form className='sm:col-span-2 '>
+                        <div className='px-8'>
+                            <div className='flex flex-col gap-6 max-w-64'>
+                                <div className='sm:col-span-3'>
+                                    <UploadForm
+                                        setFile={setSequenceFile}
+                                        name='sequence_file'
+                                        title='Sequence file'
+                                        Icon={PhDnaLight}
+                                        fileType='FASTA file'
+                                    />
+                                </div>
+                                <div className='sm:col-span-3'>
+                                    <UploadForm
+                                        setFile={setMetadataFile}
+                                        name='metadata_file'
+                                        title='Metadata file'
+                                        Icon={MaterialSymbolsLightDataTableOutline}
+                                        fileType='TSV file'
+                                    />
+                                </div>
                             </div>
-                    )
+                        </div>
+                    </form>
+                </div>
+                {action !== 'revise' && (
+                    <div className='grid sm:grid-cols-3 mt-0 pt-10'>
+                        <div>
+                            <h2 className='font-medium text-lg'>Terms of use</h2>
+                            <p className='text-gray-500 text-sm'>Specify how your data can be used</p>
+                        </div>
+                        <div className=' grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
+                            <div className='sm:col-span-4 px-8'>
+                                <label htmlFor='username' className='block text-sm font-medium leading-6 text-gray-900'>
+                                    Terms of use for these data
+                                </label>
+                                <div className='mt-2'>
+                                    <div className='mt-6 space-y-2'>
+                                        <div className='flex items-center gap-x-3'>
+                                            <input
+                                                id='data-use-open'
+                                                name='data-use'
+                                                onChange={() => setDataUseTermsType(openDataUseTermsType)}
+                                                type='radio'
+                                                checked={dataUseTermsType === openDataUseTermsType}
+                                                className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
+                                            />
+                                            <label
+                                                htmlFor='push-everything'
+                                                className='block text-sm font-medium leading-6 text-gray-900'
+                                            >
+                                                <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
+                                                Open
+                                            </label>
+                                        </div>
+                                        <div className='text-xs pl-6 text-gray-500 pb-4'>
+                                            Anyone can use and share the data (though we believe researchers should
+                                            exercise scientific etiquette, including the importance of citation). Data
+                                            will be released to the INSDC databases shortly after submission.{' '}
+                                            <a href='#' className='text-teal-600'>
+                                                Find out more
+                                            </a>
+                                            .
+                                        </div>
 
-                }
-                
-              </div>
-              </div>
+                                        <div className='flex items-center gap-x-3'>
+                                            <input
+                                                id='data-use-restricted'
+                                                name='data-use'
+                                                onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
+                                                type='radio'
+                                                checked={dataUseTermsType === restrictedDataUseTermsType}
+                                                className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
+                                            />
+                                            <label
+                                                htmlFor='push-email'
+                                                className='block text-sm font-medium leading-6 text-gray-900'
+                                            >
+                                                <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
+                                                Restricted
+                                            </label>
+                                        </div>
+
+                                        <div className='text-xs pl-6 text-gray-500 mb-4'>
+                                            Data will be restricted for a period of time. The sequences will be
+                                            available but there will be limitations on how they can be used by others.{' '}
+                                            <a href='#' className='text-teal-600'>
+                                                Find out more
+                                            </a>
+                                            .
+                                        </div>
+                                        {dataUseTermsType === restrictedDataUseTermsType && (
+                                            <div className='text-sm pl-6 text-gray-900 mb-4'>
+                                                Data will be restricted until{' '}
+                                                <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
+                                                <button
+                                                    className='border rounded px-2 py-1 '
+                                                    onClick={() => setDateChangeModalOpen(true)}
+                                                >
+                                                    Change date
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div className=' flex items-center justify-end gap-x-6 pt-3'>
+                    <button
+                        type='submit'
+                        className='rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <div className='inline-block mr-2'>
+                                <ClipLoader color='#fff' size={20} />
+                            </div>
+                        ) : (
+                            ''
+                        )}
+                        Submit sequences
+                    </button>
+                </div>
             </div>
-            </div>
-            
-
-            </div>
-            <div className=" flex items-center justify-end gap-x-6 pt-3">
-        
-        <button
-          type="submit"
-          className="rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600"
-          onClick={handleSubmit}
-          disabled={isLoading}
-        >
-            {
-                isLoading ? <div className='inline-block mr-2'><ClipLoader color='#fff' size={20} 
-
-                /> 
-               </div>: ''
-            }
-          Submit sequences
-        </button>
-      </div>
-
         </div>
-        </div>
-         )
-
-    
+    );
 };
 
 export const DataUploadForm = withQueryProvider(InnerDataUploadForm);

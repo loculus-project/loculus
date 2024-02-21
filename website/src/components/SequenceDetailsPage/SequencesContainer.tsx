@@ -11,7 +11,7 @@ import {
     type SequenceType,
     unalignedSequenceSegment,
 } from '../../utils/sequenceTypeHelpers';
-import { withQueryProvider } from '../common/withProvider.tsx';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
     organism: string;

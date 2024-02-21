@@ -252,6 +252,16 @@ const lapisRequestMocks = {
     },
 };
 
+export const testGroups = [
+    {
+        groupName: 'Group1',
+    },
+    {
+        groupName: 'Group2',
+    },
+];
+
+
 export const mockRequest = {
     backend: backendRequestMocks,
     lapis: lapisRequestMocks,

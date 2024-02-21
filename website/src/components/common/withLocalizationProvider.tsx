@@ -1,17 +1,14 @@
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterLuxon } from '@mui/x-date-pickers/AdapterLuxon';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { FC, JSX } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function withQueryProvider<Props>(WrappedComponent: FC<Props & JSX.IntrinsicAttributes>) {
+export function withLocalizationProvider<Props>(WrappedComponent: FC<Props & JSX.IntrinsicAttributes>) {
     return (props: Props & JSX.IntrinsicAttributes) => {
-        const queryClient = new QueryClient();
         return (
-            <QueryClientProvider client={queryClient}>
+            <LocalizationProvider dateAdapter={AdapterLuxon}>
                 <WrappedComponent {...props} />
-            </QueryClientProvider>
+            </LocalizationProvider>
         );
     };
 }
-

@@ -11,7 +11,7 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
-import { withQueryProvider } from '../common/withProvider';
+import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 const logger = getClientLogger('DatasetItemActions');
 
