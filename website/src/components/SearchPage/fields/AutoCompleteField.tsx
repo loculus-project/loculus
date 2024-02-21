@@ -54,7 +54,7 @@ export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFiel
             disabled={isLoading}
             size='small'
             renderInput={(params) => (
-                <TextField {...params} label={field.label} margin='dense' size='small' className='w-60' />
+                <TextField {...params} label={field.label} margin='dense' size='small' className='w-full' />
             )}
             renderOption={(props, option) => (
                 <Box component='li' {...props}>
@@ -70,6 +70,7 @@ export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFiel
             }}
             value={{ option: field.filterValue, count: NaN }}
             autoComplete
+            className='w-full'
         />
     );
 };

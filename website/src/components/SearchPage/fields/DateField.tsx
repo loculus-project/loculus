@@ -1,4 +1,5 @@
 import { DatePicker } from '@mui/x-date-pickers';
+import { Datepicker } from 'flowbite-react';
 import { DateTime } from 'luxon';
 import type { FC } from 'react';
 
@@ -35,19 +36,13 @@ const CustomizedDatePicker: FC<FieldProps & ValueConverter> = ({
     dateToValueConverter,
     valueToDateConverter,
 }) => (
-    <DatePicker
-        format='yyyy-MM-dd'
-        label={field.label}
-        disabled={isLoading}
-        slotProps={{
-            textField: {
-                size: 'small',
-                margin: 'dense',
-            },
-        }}
-        value={valueToDateConverter(field.filterValue)}
-        onChange={(date: DateTime | null) => {
-            return handleFieldChange(field.name, dateToValueConverter(date));
-        }}
+    
+    <Datepicker
+    defaultDate={ new Date() }
+    onSelectedDateChanged={(date) => {
+        // return handleFieldChange(field.name, dateToValueConverter(date));
+        console.log(date);
+    }}
     />
+    
 );
