@@ -20,7 +20,7 @@ export class SubmitPage {
     constructor(public readonly page: Page) {
         this.submitButton = page.getByRole('button', { name: 'submit' });
         this.dataUseTermsDropdown = page.locator('#dataUseTermsDropdown');
-        this.loginButton = page.locator('button', { hasText: 'Log in' });
+        this.loginButton = page.locator('a', { hasText: 'Log in' });
     }
 
     public async goto() {
