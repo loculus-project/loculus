@@ -1,24 +1,20 @@
 ---
+import { getKeycloakClient } from '../../middleware/authMiddleware';
 import IcOutlineLogin from '~icons/ic/outline-login';
-import {getKeycloakClient } from '../../middleware/authMiddleware'
 const keycloakClient = await getKeycloakClient();
 
-
-const loginUrl=keycloakClient.authorizationUrl({
+const loginUrl = keycloakClient.authorizationUrl({
     redirect_uri: Astro.url.toString(),
     scope: 'openid',
     response_type: 'code',
-})
-
-
+});
 ---
+
 <div class='mt-6 alert max-w-4xl mx-auto'>
     <IcOutlineLogin className='w-12 h-12 inline-block mr-2' />
     <div>
         <p>You need to be logged in to submit to the database.</p>
-        <a href={loginUrl } class='btn mt-3 bg-white hover:bg-gray-50'>Login</a>
-        <p class='mt-3'>
-            
-        </p>
+        <a href={loginUrl} class='btn mt-3 bg-white hover:bg-gray-50'>Login</a>
+        <p class='mt-3'></p>
     </div>
 </div>

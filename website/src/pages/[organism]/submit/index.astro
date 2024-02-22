@@ -1,10 +1,10 @@
 ---
 import { SubmissionForm } from '../../../components/Submission/SubmissionForm';
+import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
-import NeedToLogin from '../../../components/common/NeedToLogin.astro'
 const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
 
@@ -31,11 +31,8 @@ Astro.response.headers.append('Expires', '0');
             />
         ) : !accessToken ? (
             <NeedToLogin />
-            
         ) : (
-            <>
-                <p class='text-red-500'>Failed to load groups</p>
-            </>
+            <p class='text-red-500'>Failed to load groups</p>
         )
     }
 </BaseLayout>

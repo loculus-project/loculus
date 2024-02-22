@@ -50,6 +50,13 @@ export async function getKeycloakClient() {
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token = await getTokenFromCookie(context);
+    if (token === undefined) {
+        token = await getTokenFromParams(context);
+        if (token !== undefined) {
+            logger.debug(`Token found in params, setting cookie`);
+            setCookie(context, token);
+        }
+    }
 
     const enforceLogin = shouldMiddlewareEnforceLogin(
         context.url.pathname,
@@ -88,14 +95,9 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     }
 
     if (token === undefined) {
-        token = await getTokenFromParams(context);
-        if (token !== undefined) {
-            logger.debug(`Token found in params, setting cookie`);
-            setCookie(context, token);
-        } else {
             logger.debug(`No token found, redirecting to auth`);
             return redirectToAuth(context);
-        }
+        
     }
 
     const userInfo = await getUserInfo(token);
@@ -250,7 +252,7 @@ const createRedirectWithModifiableHeaders = (url: string) => {
     return new Response(null, { status: redirect.status, headers: redirect.headers });
 };
 
-const redirectToAuth = async (context: APIContext) => {
+export const redirectToAuth = async (context: APIContext) => {
     const currentUrl = context.url;
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 

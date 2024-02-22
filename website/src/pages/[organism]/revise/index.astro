@@ -1,6 +1,6 @@
 ---
-import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { RevisionForm } from '../../../components/Submission/RevisionForm';
+import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
@@ -25,10 +25,9 @@ const clientConfig = getRuntimeConfig().public;
                 groupsOfUser={groupsResult.value}
                 client:load
             />
+        ) : !accessToken ? (
+            <NeedToLogin />
         ) : (
-            !accessToken ? (
-               <NeedToLogin />
-            ) :
             <p class='text-red-500'>Failed to load groups</p>
         )
     }
