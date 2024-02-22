@@ -302,10 +302,10 @@ const UploadComponent = ({
                 >
                     <div className='text-center'>
                         <Icon className='mx-auto h-12 w-12 text-gray-300' aria-hidden='true' />
-                        <div className='mt-4 flex text-sm leading-6 text-gray-600'>
+                        <div className='mt-4  text-sm leading-6 text-gray-600'>
                             <label
                                 htmlFor='file-upload'
-                                className='relative cursor-pointer rounded-md bg-white font-semibold text-teal-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-iteal-600 focus-within:ring-offset-2 hover:text-iteal-500'
+                                className='inline relative cursor-pointer rounded-md bg-white font-semibold text-teal-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-iteal-600 focus-within:ring-offset-2 hover:text-iteal-500'
                             >
                                 <span onClick={handleUpload}>Upload a file</span>
                                 <input
@@ -321,7 +321,7 @@ const UploadComponent = ({
                                     ref={fileInputRef}
                                 />
                             </label>
-                            <p className='pl-1'>or drag and drop</p>
+                            <span className='pl-1'>or drag and drop</span>
                         </div>
                         <p className='text-xs leading-5 text-gray-600'>{fileType}</p>
                     </div>
