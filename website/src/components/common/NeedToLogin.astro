@@ -8,12 +8,17 @@ const loginUrl = keycloakClient.authorizationUrl({
     scope: 'openid',
     response_type: 'code',
 });
+
+let { message } = Astro.params;
+if (message === undefined) {
+    message = 'You need to login to access this page.';
+}
 ---
 
 <div class='mt-6 alert max-w-4xl mx-auto'>
     <IcOutlineLogin className='w-12 h-12 inline-block mr-2' />
     <div>
-        <p>You need to be logged in to submit to the database.</p>
+        <p>{message}</p>
         <a href={loginUrl} class='btn mt-3 bg-white hover:bg-gray-50'>Login</a>
         <p class='mt-3'></p>
     </div>
