@@ -3,7 +3,7 @@ import type { AxiosError } from 'axios';
 import { BackendClient } from '../../src/services/backendClient.ts';
 import { type Accession, unprocessedData, type UnprocessedData } from '../../src/types/backend.ts';
 import { stringifyMaybeAxiosError } from '../../src/utils/stringifyMaybeAxiosError.ts';
-import { backendUrl, dummyOrganism, e2eLogger, getToken, testSequenceEntry } from '../e2e.fixture.ts';
+import { backendUrl, dummyOrganism, e2eLogger, getToken, testSequenceEntryData } from '../e2e.fixture.ts';
 
 export const fakeProcessingPipeline = {
     submit,
@@ -103,7 +103,7 @@ const handleError = (error: unknown): Error => {
 
 const sequenceData = {
     unalignedNucleotideSequences: {
-        main: testSequenceEntry.unaligned,
+        main: testSequenceEntryData.unaligned,
     },
     alignedNucleotideSequences: {
         main: 'N' + 'A'.repeat(29902),
@@ -115,7 +115,7 @@ const sequenceData = {
         E: 'M'.repeat(76),
         M: 'A'.repeat(223),
         N: 'S'.repeat(420),
-        ORF1a: testSequenceEntry.orf1a + 'E'.repeat(4401 - testSequenceEntry.orf1a.length),
+        ORF1a: testSequenceEntryData.orf1a + 'E'.repeat(4401 - testSequenceEntryData.orf1a.length),
         ORF1b: 'R'.repeat(2696),
         ORF3a: 'D'.repeat(276),
         ORF6: 'F'.repeat(62),

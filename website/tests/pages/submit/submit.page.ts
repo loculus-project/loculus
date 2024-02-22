@@ -1,7 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { routes } from '../../../src/routes.ts';
-import { restrictedDataUseTermsType } from '../../../src/types/backend.ts';
 import {
     baseUrl,
     compressedMetadataTestFile,
@@ -10,7 +9,6 @@ import {
     metadataTestFile,
     sequencesTestFile,
 } from '../../e2e.fixture';
-import { expect } from '../../e2e.fixture.ts';
 
 export class SubmitPage {
     public readonly submitButton: Locator;

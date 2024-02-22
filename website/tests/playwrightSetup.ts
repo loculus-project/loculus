@@ -1,8 +1,4 @@
-import isEqual from 'lodash/isEqual.js';
-import sortBy from 'lodash/sortBy.js';
-
 import {
-    accessionPrefix,
     createTestGroupIfNotExistent,
     DEFAULT_GROUP_NAME,
     e2eLogger,
@@ -11,14 +7,13 @@ import {
     testUser,
     testUserPassword,
 } from './e2e.fixture.ts';
-import { AccessionTransformer } from './util/accessionTransformer.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
 import { LapisClient } from '../src/services/lapisClient.ts';
-import { ACCESSION_FIELD, IS_REVOCATION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD } from '../src/settings.ts';
-import { siloVersionStatuses } from '../src/types/lapis.ts';
+import type { AccessionVersion } from '../src/types/backend.ts';
+import { getTestSequences, setTestSequences } from './util/testSequenceProvider.ts';
 
 enum LapisStateBeforeTests {
-    NoSequencesInLapis = 'NoSequencesInLapis',
+    NotCorrectSequencesInLapis = 'NotCorrectSequencesInLapis',
     CorrectSequencesInLapis = 'CorrectSequencesInLapis',
 }
 
@@ -51,10 +46,8 @@ export default async function globalSetupForPlaywright() {
     const lapisState = await checkLapisState(lapisClient);
 
     if (lapisState === LapisStateBeforeTests.CorrectSequencesInLapis) {
-        e2eLogger.info(
-            'Skipping data preparation. ' +
-                'NOTE: data preparation has to be done before on an empty LAPIS. Expected data found.',
-        );
+        const testSequences = getTestSequences();
+        e2eLogger.info('Skipping data preparation. Expected data found. ' + JSON.stringify(testSequences));
         return;
     }
 
@@ -94,113 +87,94 @@ function waitSeconds(seconds: number) {
 }
 
 async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBeforeTests> {
-    const accessionTransformer = new AccessionTransformer(accessionPrefix);
-
     const numberOfSequencesInLapisResult = await lapisClient.call('aggregated', {});
 
     if (numberOfSequencesInLapisResult.isErr() && numberOfSequencesInLapisResult.error.status === 503) {
-        return LapisStateBeforeTests.NoSequencesInLapis;
+        return LapisStateBeforeTests.NotCorrectSequencesInLapis;
     }
 
     if (numberOfSequencesInLapisResult._unsafeUnwrap().data[0].count === 0) {
-        return LapisStateBeforeTests.NoSequencesInLapis;
+        return LapisStateBeforeTests.NotCorrectSequencesInLapis;
     }
 
-    const [singleLatestVersionAccession, revisedAndRevokedAccession, revisedAccession] =
-        accessionTransformer.generateCustomIds([1, 11, 21]);
+    const latestVersionWithoutRevisions = await getLatestVersionWithoutRevisions(lapisClient);
 
-    e2eLogger.info(
-        'Checking LAPIS for sequences with accessions: ' +
-            singleLatestVersionAccession +
-            ', ' +
-            revisedAndRevokedAccession +
-            ', ' +
-            revisedAccession,
-    );
-
-    const fields = [ACCESSION_FIELD, VERSION_FIELD, VERSION_STATUS_FIELD, IS_REVOCATION_FIELD];
-    const [
-        shouldBeLatestVersionResult,
-        // When SILO can process revocation_entries, we expect two versions.
-        shouldBeTwoVersionsAndOneRevokedResult,
-        shouldBeTwoVersionsAndOneRevisedResult,
-    ] = await Promise.all([
-        lapisClient.call('details', { accession: singleLatestVersionAccession, fields }),
-        lapisClient.call('details', { accession: revisedAndRevokedAccession, fields }),
-        lapisClient.call('details', { accession: revisedAccession, fields }),
-    ]);
-
-    const shouldBeLatestVersionAndNotRevoked = sortBy(shouldBeLatestVersionResult._unsafeUnwrap().data, [
-        VERSION_FIELD,
-    ]);
-    const shouldBeTwoVersionsAndOneRevoked = sortBy(shouldBeTwoVersionsAndOneRevokedResult._unsafeUnwrap().data, [
-        VERSION_FIELD,
-    ]);
-    const shouldBeTwoVersionsAndOneRevised = sortBy(shouldBeTwoVersionsAndOneRevisedResult._unsafeUnwrap().data, [
-        VERSION_FIELD,
-    ]);
-
-    const expectedLatestVersions = [
-        {
-            accession: singleLatestVersionAccession,
-            version: 1,
-            versionStatus: siloVersionStatuses.latestVersion,
-            isRevocation: 'false',
-        },
-    ];
-
-    if (!isEqual(shouldBeLatestVersionAndNotRevoked, expectedLatestVersions)) {
-        throw new Error(
-            `Unexpected data in LAPIS. Please check the data preparation. Received: ${JSON.stringify(
-                shouldBeLatestVersionAndNotRevoked,
-            )} Expected: ${JSON.stringify(expectedLatestVersions)}`,
-        );
+    if (latestVersionWithoutRevisions === undefined) {
+        e2eLogger.error('latestVersionWithoutRevisions is undefined');
+        return LapisStateBeforeTests.NotCorrectSequencesInLapis;
     }
 
-    const expectedRevokedVersions = [
-        {
-            accession: revisedAndRevokedAccession,
-            version: 1,
-            versionStatus: siloVersionStatuses.revoked,
-            isRevocation: 'false',
-        },
-        {
-            accession: revisedAndRevokedAccession,
-            version: 2,
-            versionStatus: siloVersionStatuses.latestVersion,
-            isRevocation: 'true',
-        },
-    ];
+    const testSequenceEntry = {
+        accession: `${latestVersionWithoutRevisions.accession}`,
+        version: 1,
+    };
 
-    if (!isEqual(shouldBeTwoVersionsAndOneRevoked, expectedRevokedVersions)) {
-        throw new Error(
-            `Unexpected data in LAPIS. Please check the data preparation. Received: ${JSON.stringify(
-                shouldBeTwoVersionsAndOneRevoked,
-            )} Expected: ${JSON.stringify(expectedRevokedVersions)}`,
-        );
+    const revocationEntryAsLatestVersion = await getRevocationEntryAsLatestVersion(lapisClient);
+
+    if (revocationEntryAsLatestVersion === undefined) {
+        e2eLogger.error('revocationEntryAsLatestVersion is undefined');
+        return LapisStateBeforeTests.NotCorrectSequencesInLapis;
     }
 
-    const expectedRevisedVersions = [
-        {
-            accession: revisedAccession,
-            version: 1,
-            versionStatus: siloVersionStatuses.revised,
-            isRevocation: 'false',
-        },
-        {
-            accession: revisedAccession,
-            version: 2,
-            versionStatus: siloVersionStatuses.latestVersion,
-            isRevocation: 'false',
-        },
-    ];
+    const revocationSequenceEntry = revocationEntryAsLatestVersion;
+    const revokedSequenceEntry = {
+        accession: `${revocationEntryAsLatestVersion.accession}`,
+        version: 1,
+    };
 
-    if (!isEqual(sortBy(shouldBeTwoVersionsAndOneRevised, ['version']), expectedRevisedVersions)) {
-        throw new Error(
-            `Unexpected data in LAPIS. Please check the data preparation. Received: ${JSON.stringify(
-                shouldBeTwoVersionsAndOneRevised,
-            )} Expected: ${JSON.stringify(expectedRevisedVersions)}`,
-        );
+    const revisedEntryAsLatestVersionWhichIsSecondVersion = await getRevisedEntryAsLatestVersion(lapisClient);
+
+    if (revisedEntryAsLatestVersionWhichIsSecondVersion === undefined) {
+        e2eLogger.error('revisedEntryAsLatestVersionWhichIsVersion2 is undefined');
+        return LapisStateBeforeTests.NotCorrectSequencesInLapis;
     }
+
+    const revisedSequenceEntry = revisedEntryAsLatestVersionWhichIsSecondVersion;
+    const deprecatedSequenceEntry = {
+        accession: `${revisedEntryAsLatestVersionWhichIsSecondVersion.accession}`,
+        version: 1,
+    };
+
+    setTestSequences({
+        testSequenceEntry,
+        revokedSequenceEntry,
+        revocationSequenceEntry,
+        deprecatedSequenceEntry,
+        revisedSequenceEntry,
+    });
+
     return LapisStateBeforeTests.CorrectSequencesInLapis;
+}
+
+async function getLatestVersionWithoutRevisions(lapisClient: LapisClient) {
+    const result = await lapisClient.call('details', {
+        versionTo: 1,
+        isRevocation: 'false',
+        limit: 1,
+        versionStatus: 'LATEST_VERSION',
+        fields: ['accession', 'version'],
+    });
+    return result._unsafeUnwrap().data[0] as AccessionVersion | undefined;
+}
+
+async function getRevocationEntryAsLatestVersion(lapisClient: LapisClient) {
+    const result = await lapisClient.call('details', {
+        isRevocation: 'true',
+        version: 2,
+        limit: 1,
+        versionStatus: 'LATEST_VERSION',
+        fields: ['accession', 'version'],
+    });
+    return result._unsafeUnwrap().data[0] as AccessionVersion | undefined;
+}
+
+async function getRevisedEntryAsLatestVersion(lapisClient: LapisClient) {
+    const result = await lapisClient.call('details', {
+        isRevocation: 'false',
+        version: 2,
+        limit: 1,
+        versionStatus: 'LATEST_VERSION',
+        fields: ['accession', 'version'],
+    });
+    return result._unsafeUnwrap().data[0] as AccessionVersion | undefined;
 }

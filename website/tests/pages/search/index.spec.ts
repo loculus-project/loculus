@@ -1,7 +1,9 @@
 import { DateTime } from 'luxon';
 
 import { routes } from '../../../src/routes.ts';
-import { baseUrl, dummyOrganism, expect, test, testSequenceEntry } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture';
+import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
+import { getTestSequences } from '../../util/testSequenceProvider.ts';
 
 test.describe('The search page', () => {
     test('should show the search form with button and a table', async ({ searchPage }) => {
@@ -20,16 +22,22 @@ test.describe('The search page', () => {
     });
 
     test('should search for existing sequence entries', async ({ searchPage }) => {
+        const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
+
         await searchPage.goto();
-        await searchPage.getEmptyAccessionVersionField().fill(testSequenceEntry.name);
+        await searchPage.getEmptyAccessionVersionField().fill(testAccessionVersion);
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
             `${baseUrl}${routes.searchPage(dummyOrganism.key, [
-                { name: 'accessionVersion', type: 'string', filterValue: testSequenceEntry.name },
+                {
+                    name: 'accessionVersion',
+                    type: 'string',
+                    filterValue: testAccessionVersion,
+                },
             ])}`,
         );
-        await expect(searchPage.page.getByText(testSequenceEntry.name, { exact: true })).toBeVisible();
+        await expect(searchPage.page.getByText(testAccessionVersion, { exact: true })).toBeVisible();
         await expect(searchPage.page.getByText('2002-12-15')).toBeVisible();
         await expect(searchPage.page.getByText('B.1.1.7')).toBeVisible();
     });
@@ -45,9 +53,11 @@ test.describe('The search page', () => {
 
     test('should reset the search', async ({ searchPage }) => {
         await searchPage.goto();
-        await searchPage.getEmptyAccessionVersionField().fill(testSequenceEntry.name);
 
-        await expect(searchPage.getFilledAccessionVersionField()).toHaveValue(testSequenceEntry.name);
+        const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
+        await searchPage.getEmptyAccessionVersionField().fill(testAccessionVersion);
+
+        await expect(searchPage.getFilledAccessionVersionField()).toHaveValue(testAccessionVersion);
 
         await searchPage.clickResetButton();
 
