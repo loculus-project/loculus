@@ -95,9 +95,8 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     }
 
     if (token === undefined) {
-            logger.debug(`No token found, redirecting to auth`);
-            return redirectToAuth(context);
-        
+        logger.debug(`No token found, redirecting to auth`);
+        return redirectToAuth(context);
     }
 
     const userInfo = await getUserInfo(token);
