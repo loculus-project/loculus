@@ -60,10 +60,13 @@ export const getAuthUrl = async (redirectUrl: string) => {
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token = await getTokenFromCookie(context);
     if (token === undefined) {
+        logger.debug(`No token found in cookies. Cookies: ${JSON.stringify(context.cookies)}`);
         token = await getTokenFromParams(context);
         if (token !== undefined) {
-            logger.debug(`Token found in params, setting cookie`);
+            logger.info(`Token found in params, setting cookie`);
             setCookie(context, token);
+        } else {
+            logger.debug(`No token found in params`);
         }
     }
 
@@ -72,13 +75,20 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         getConfiguredOrganisms().map((it) => it.key),
     );
     if (!enforceLogin) {
+        logger.debug(`Not enforcing login for path: ${context.url.pathname}`);
         if (token === undefined) {
             context.locals.session = {
                 isLoggedIn: false,
             };
 
+            logger.debug(`No token found, not enforcing login`);
+
             return next();
         }
+
+        logger.debug(
+            `Token found, trying to get user info despite not enforcing login for path: ${context.url.pathname}`,
+        );
 
         const userInfo = await getUserInfo(token);
 
@@ -103,6 +113,8 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         return next();
     }
 
+    logger.debug(`Enforcing login for path: ${context.url.pathname}`);
+
     if (token === undefined) {
         logger.debug(`No token found, redirecting to auth`);
         return redirectToAuth(context);
@@ -110,10 +122,11 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
 
     const userInfo = await getUserInfo(token);
     if (userInfo.isErr()) {
-        logger.debug(`Error getting user info: ${userInfo.error}`);
+        logger.debug(`Failed to get user info, redirecting to auth`);
         return redirectToAuth(context);
     }
 
+    logger.debug(`User authenticated, setting session and continuing`);
     context.locals.session = {
         isLoggedIn: true,
         user: {
@@ -204,7 +217,7 @@ async function verifyToken(accessToken: string) {
 
 async function getUserInfo(token: TokenCookie) {
     return ResultAsync.fromPromise((await getKeycloakClient()).userinfo(token.accessToken), (error) => {
-        logger.error(`Error getting user info: ${error}`);
+        logger.info(`Error getting user info: ${error}`);
         return error;
     });
 }
@@ -231,6 +244,9 @@ async function getTokenFromParams(context: APIContext) {
 }
 
 export function setCookie(context: APIContext, token: TokenCookie) {
+    logger.debug(
+        `Setting cookie for token: ${JSON.stringify(token)}. Cookies before setting: ${JSON.stringify(context.cookies)}`,
+    );
     context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
         httpOnly: true,
         sameSite: 'lax',
@@ -243,20 +259,24 @@ export function setCookie(context: APIContext, token: TokenCookie) {
         secure: false,
         path: '/',
     });
+    logger.debug(`Cookie set. Cookies now: ${JSON.stringify(context.cookies)}`);
 }
 
 function deleteCookie(context: APIContext) {
+    logger.debug(`Deleting cookies. Cookies before deletion: ${JSON.stringify(context.cookies)}`);
     try {
         context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
         context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
     } catch {
-        logger.error(`Error deleting cookie`);
+        logger.info(`Error deleting cookie`);
     }
+    logger.debug(`Cookies after deletion: ${JSON.stringify(context.cookies)}`);
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Basic_concepts#guard
 const createRedirectWithModifiableHeaders = (url: string) => {
     const redirect = Response.redirect(url);
+    logger.debug(`Redirecting to ${url}`);
     return new Response(null, { status: redirect.status, headers: redirect.headers });
 };
 
@@ -264,7 +284,7 @@ const redirectToAuth = async (context: APIContext) => {
     const currentUrl = context.url;
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
-    logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
+    logger.info(`Redirecting to auth with redirect url: ${redirectUrl}, current url: ${currentUrl}`);
     const authUrl = await getAuthUrl(redirectUrl);
 
     deleteCookie(context);
@@ -274,16 +294,20 @@ const redirectToAuth = async (context: APIContext) => {
 function removeTokenCodeFromSearchParams(url: URL) {
     const newUrl = new URL(url.toString());
 
+    logger.debug(
+        `Removing tokenCode from search params. Search params before removal: ${newUrl.searchParams.toString()}`,
+    );
     newUrl.searchParams.delete('code');
     newUrl.searchParams.delete('session_state');
     newUrl.searchParams.delete('iss');
+    logger.debug(`Search params after removal: ${newUrl.searchParams.toString()}`);
 
     return newUrl.toString();
 }
 
 async function refreshTokenViaKeycloak(token: TokenCookie) {
-    const refreshedTokenSet = await (await getKeycloakClient()).refresh(token.refreshToken).catch(() => {
-        logger.error(`Error refreshing token`);
+    const refreshedTokenSet = await (await getKeycloakClient()).refresh(token.refreshToken).catch((error) => {
+        logger.error(`Error refreshing token: ${error.message}`);
         return undefined;
     });
     return extractTokenCookieFromTokenSet(refreshedTokenSet);
@@ -291,7 +315,7 @@ async function refreshTokenViaKeycloak(token: TokenCookie) {
 
 function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined) {
     if (tokenSet === undefined || tokenSet.access_token === undefined || tokenSet.refresh_token === undefined) {
-        logger.error(`Error extracting token cookie from token set`);
+        logger.error(`Could not extract tokens from tokenSet=${JSON.stringify(tokenSet)}`);
         return undefined;
     }
 
