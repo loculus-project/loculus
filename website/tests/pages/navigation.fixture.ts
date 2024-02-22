@@ -9,7 +9,7 @@ export class NavigationFixture {
     }
 
     public async openOrganismNavigation() {
-        await this.page.getByText('Choose Organism').click();
+        await this.page.getByText('Organisms').click();
     }
 
     public async expectTitle(title: string) {
