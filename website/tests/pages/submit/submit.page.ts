@@ -15,10 +15,12 @@ import { expect } from '../../e2e.fixture.ts';
 export class SubmitPage {
     public readonly submitButton: Locator;
     public readonly dataUseTermsDropdown: Locator;
+    public readonly loginButton: Locator;
 
     constructor(public readonly page: Page) {
         this.submitButton = page.getByRole('button', { name: 'submit' });
         this.dataUseTermsDropdown = page.locator('#dataUseTermsDropdown');
+        this.loginButton = page.locator('button', { hasText: 'Log in' });
     }
 
     public async goto() {
