@@ -4,7 +4,7 @@ disableBackend: false
 disablePreprocessing: false
 siloImportLimitSeconds: 3600
 accessionPrefix: "LOC_"
-name: "CoolSite" # TODO: revert before merge
+name: "Loculus"
 logo:
   url: "/favicon.svg"
   width: 100
