@@ -4,6 +4,14 @@ import { dateTimeInMonths } from '../../../src/utils/DateTimeInMonths.tsx';
 import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e2e.fixture';
 
 test.describe('The submit page', () => {
+    test('should ask to login if not logged in', async ({ submitPage }) => {
+        await submitPage.goto();
+
+        await submitPage.loginButton.click();
+
+        await expect(submitPage.page.url()).toContain('authentication');
+    });
+
     test('should upload files and submit', async ({ submitPage, loginAsTestUser }) => {
         await loginAsTestUser();
         await submitPage.goto();
@@ -13,14 +21,6 @@ test.describe('The submit page', () => {
         await submitPage.submitButton.click();
 
         await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
-    });
-
-    test('should ask to login if not logged in', async ({ submitPage }) => {
-        await submitPage.goto();
-
-        await submitPage.loginButton.click();
-
-        await expect(submitPage.page.url()).toContain('authentication');
     });
 
     test('should upload compressed files and submit', async ({ submitPage, loginAsTestUser }) => {
