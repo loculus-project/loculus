@@ -1,5 +1,6 @@
 ---
 import { RevisionForm } from '../../../components/Submission/RevisionForm';
+import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
@@ -16,7 +17,7 @@ const clientConfig = getRuntimeConfig().public;
 <BaseLayout title='Submit'>
     <h1 class='title'>Revise sequences</h1>
     {
-        groupsResult.isOk() ? (
+        groupsResult.isOk() && accessToken ? (
             <RevisionForm
                 accessToken={accessToken}
                 organism={organism}
@@ -24,6 +25,8 @@ const clientConfig = getRuntimeConfig().public;
                 groupsOfUser={groupsResult.value}
                 client:load
             />
+        ) : !accessToken ? (
+            <NeedToLogin />
         ) : (
             <p class='text-red-500'>Failed to load groups</p>
         )

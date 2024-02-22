@@ -4,9 +4,8 @@ function getEnforcedLoginRoutes(configuredOrganisms: string[]) {
     const cacheKey = configuredOrganisms.join('');
     if (!(cacheKey in enforcedLoginRoutesCache)) {
         const organismSpecificRoutes = configuredOrganisms.flatMap((organism) => [
-            new RegExp(`^/${organism}/revise`),
-            new RegExp(`^/${organism}/submit`),
             new RegExp(`^/${organism}/user`),
+            new RegExp(`^/${organism}/my_sequences`),
         ]);
 
         enforcedLoginRoutesCache[cacheKey] = [

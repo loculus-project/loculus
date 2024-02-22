@@ -48,8 +48,24 @@ export async function getKeycloakClient() {
     return _keycloakClient;
 }
 
+export const getAuthUrl = async (redirectUrl: string) => {
+    const authUrl = (await getKeycloakClient()).authorizationUrl({
+        redirect_uri: redirectUrl,
+        scope: 'openid',
+        response_type: 'code',
+    });
+    return authUrl;
+};
+
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token = await getTokenFromCookie(context);
+    if (token === undefined) {
+        token = await getTokenFromParams(context);
+        if (token !== undefined) {
+            logger.debug(`Token found in params, setting cookie`);
+            setCookie(context, token);
+        }
+    }
 
     const enforceLogin = shouldMiddlewareEnforceLogin(
         context.url.pathname,
@@ -88,14 +104,8 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     }
 
     if (token === undefined) {
-        token = await getTokenFromParams(context);
-        if (token !== undefined) {
-            logger.debug(`Token found in params, setting cookie`);
-            setCookie(context, token);
-        } else {
-            logger.debug(`No token found, redirecting to auth`);
-            return redirectToAuth(context);
-        }
+        logger.debug(`No token found, redirecting to auth`);
+        return redirectToAuth(context);
     }
 
     const userInfo = await getUserInfo(token);
@@ -255,11 +265,7 @@ const redirectToAuth = async (context: APIContext) => {
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
-    const authUrl = (await getKeycloakClient()).authorizationUrl({
-        redirect_uri: redirectUrl,
-        scope: 'openid',
-        response_type: 'code',
-    });
+    const authUrl = await getAuthUrl(redirectUrl);
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);

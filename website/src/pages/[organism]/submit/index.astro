@@ -1,10 +1,10 @@
 ---
 import { SubmissionForm } from '../../../components/Submission/SubmissionForm';
+import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
-
 const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
 
@@ -21,7 +21,9 @@ Astro.response.headers.append('Expires', '0');
 <BaseLayout title='Submit'>
     <h1 class='title'>Submit sequences</h1>
     {
-        groupsResult.isOk() ? (
+        !accessToken ? (
+            <NeedToLogin message='You need to be logged in to submit sequences.' />
+        ) : groupsResult.isOk() ? (
             <SubmissionForm
                 accessToken={accessToken}
                 organism={organism}
