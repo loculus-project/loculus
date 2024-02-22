@@ -16,7 +16,6 @@ import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submit/submit.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserSequencePage } from './pages/user/userSequencePage/userSequencePage.ts';
-import { AccessionTransformer } from './util/accessionTransformer.ts';
 import { createGroup } from './util/backendCalls.ts';
 import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
@@ -56,34 +55,12 @@ export const e2eLogger = winston.createLogger({
     transports: [new winston.transports.Console()],
 });
 
-export const accessionPrefix = 'LOC_';
-export const accessionTransformer = new AccessionTransformer(accessionPrefix);
-
 export const backendClient = BackendClient.create(backendUrl, e2eLogger);
 export const groupManagementClient = GroupManagementClient.create(backendUrl, e2eLogger);
 
-export const testSequenceEntry = {
-    name: `${accessionTransformer.generateCustomId(1)}.1`,
-    accession: accessionTransformer.generateCustomId(1),
-    version: 1,
+export const testSequenceEntryData = {
     unaligned: 'A'.repeat(123),
     orf1a: 'QRFEINSA',
-};
-export const revokedSequenceEntry = {
-    accession: accessionTransformer.generateCustomId(11),
-    version: 1,
-};
-export const revocationSequenceEntry = {
-    accession: accessionTransformer.generateCustomId(11),
-    version: 2,
-};
-export const deprecatedSequenceEntry = {
-    accession: accessionTransformer.generateCustomId(21),
-    version: 1,
-};
-export const revisedSequenceEntry = {
-    accession: accessionTransformer.generateCustomId(21),
-    version: 2,
 };
 
 export const testUser = 'testuser';

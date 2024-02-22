@@ -3,14 +3,15 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { routes } from '../../../src/routes.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, dummyOrganism, testSequenceEntry } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 
 export class SequencePage {
+    public readonly notLatestVersionBanner: Locator;
+    public readonly revocationVersionBanner: Locator;
+
     private readonly loadButton: Locator;
     private readonly allVersions: Locator;
     private readonly orf1aButton: Locator;
-    readonly notLatestVersionBanner: Locator;
-    readonly revocationVersionBanner: Locator;
 
     constructor(public readonly page: Page) {
         this.loadButton = this.page.getByRole('button', { name: 'Load sequences' });
@@ -22,7 +23,7 @@ export class SequencePage {
         this.revocationVersionBanner = this.page.getByText('This is a revocation version.');
     }
 
-    public async goto(accessionVersion: AccessionVersion = testSequenceEntry) {
+    public async goto(accessionVersion: AccessionVersion) {
         await this.page.goto(`${baseUrl}${routes.sequencesDetailsPage(dummyOrganism.key, accessionVersion)}`, {
             waitUntil: 'networkidle',
         });
