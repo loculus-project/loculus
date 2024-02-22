@@ -252,7 +252,7 @@ const createRedirectWithModifiableHeaders = (url: string) => {
     return new Response(null, { status: redirect.status, headers: redirect.headers });
 };
 
-export const redirectToAuth = async (context: APIContext) => {
+const redirectToAuth = async (context: APIContext) => {
     const currentUrl = context.url;
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
