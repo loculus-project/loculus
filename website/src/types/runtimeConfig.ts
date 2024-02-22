@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const name = z.string().min(1);
+
 const serviceUrls = z.object({
     backendUrl: z.string(),
     lapisUrls: z.record(z.string(), z.string()),

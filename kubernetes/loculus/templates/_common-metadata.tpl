@@ -31,6 +31,7 @@ fields:
 {{/* Generate website config from passed config object */}}
 {{- define "loculus.generateWebsiteConfig" }}
 name: {{ $.Values.name }}
+logo: {{ $.Values.logo | toYaml | nindent 6 }}
 accessionPrefix: {{ $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 instances:

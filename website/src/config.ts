@@ -18,7 +18,7 @@ function getConfigDir(): string {
     return configDir;
 }
 
-function getWebsiteConfig(): WebsiteConfig {
+export function getWebsiteConfig(): WebsiteConfig {
     if (_config === null) {
         _config = readTypedConfigFile('website_config.json', websiteConfig);
     }

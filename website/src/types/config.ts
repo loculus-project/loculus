@@ -41,7 +41,15 @@ export const instanceConfig = z.object({
 });
 export type InstanceConfig = z.infer<typeof instanceConfig>;
 
+const logoConfig = z.object({
+    url: z.string(),
+    width: z.number(),
+    height: z.number(),
+});
+
 export const websiteConfig = z.object({
     instances: z.record(instanceConfig),
+    name: z.string(),
+    logo: logoConfig,
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
