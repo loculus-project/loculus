@@ -34,6 +34,8 @@ export function getConfiguredOrganisms() {
     return Object.entries(getWebsiteConfig().instances).map(([key, instance]) => ({
         key,
         displayName: instance.schema.instanceName,
+        image: instance.schema.image,
+        description: instance.schema.description,
     }));
 }
 

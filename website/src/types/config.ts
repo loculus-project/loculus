@@ -27,6 +27,8 @@ export type MutationFilter = {
 
 const schema = z.object({
     instanceName: z.string(),
+    image: z.string().optional(),
+    description: z.string().optional(),
     metadata: z.array(metadata),
     tableColumns: z.array(z.string()),
     primaryKey: z.string(),
