@@ -20,7 +20,7 @@ const { name: websiteName } = websiteConfig;
                         href={routes.organismStartPage(key)}
                         class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100'
                     >
-                        <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />
+                        {image !== undefined && <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />}
                         <h3 class='font-semibold text-gray-700'>{displayName}</h3>
                         <p class='text-gray-700 text-sm'>{description}</p>
                     </a>
