@@ -79,7 +79,7 @@
     "eslint-plugin-prefer-arrow": "^1.2.3",
     "eslint-plugin-react": "^7.33.2",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "jsdom": "^23.2.0",
+    "jsdom": "^24.0.0",
     "msw": "^2.2.1",
     "prettier": "3.2.5",
     "prettier-plugin-astro": "^0.13.0",
