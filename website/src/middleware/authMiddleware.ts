@@ -48,6 +48,15 @@ export async function getKeycloakClient() {
     return _keycloakClient;
 }
 
+export const getAuthUrl = async (redirectUrl: string) => {
+    const authUrl = (await getKeycloakClient()).authorizationUrl({
+        redirect_uri: redirectUrl,
+        scope: 'openid',
+        response_type: 'code',
+    });
+    return authUrl;
+};
+
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token = await getTokenFromCookie(context);
     if (token === undefined) {
@@ -256,11 +265,7 @@ const redirectToAuth = async (context: APIContext) => {
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
-    const authUrl = (await getKeycloakClient()).authorizationUrl({
-        redirect_uri: redirectUrl,
-        scope: 'openid',
-        response_type: 'code',
-    });
+    const authUrl = await getAuthUrl(redirectUrl);
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);

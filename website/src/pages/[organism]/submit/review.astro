@@ -10,12 +10,15 @@ const accessToken = getAccessToken(Astro.locals.session)!;
 const clientConfig: ClientConfig = getRuntimeConfig().public;
 ---
 
-accessToken ?
-<BaseLayout title='Current submissions'>
-    <h1 class='title'>Current submissions</h1>
-    <ReviewPage clientConfig={clientConfig} organism={organism} accessToken={accessToken} client:load />
-</BaseLayout>
-:
-<BaseLayout title='Current submissions'>
-    <NeedToLogin />
-</BaseLayout>
+{
+    accessToken ? (
+        <BaseLayout title='Current submissions'>
+            <h1 class='title'>Current submissions</h1>
+            <ReviewPage clientConfig={clientConfig} organism={organism} accessToken={accessToken} client:load />
+        </BaseLayout>
+    ) : (
+        <BaseLayout title='Current submissions'>
+            <NeedToLogin />
+        </BaseLayout>
+    )
+}

@@ -21,7 +21,9 @@ Astro.response.headers.append('Expires', '0');
 <BaseLayout title='Submit'>
     <h1 class='title'>Submit sequences</h1>
     {
-        groupsResult.isOk() && accessToken ? (
+        !accessToken ? (
+            <NeedToLogin />
+        ) : groupsResult.isOk() ? (
             <SubmissionForm
                 accessToken={accessToken}
                 organism={organism}
@@ -29,8 +31,6 @@ Astro.response.headers.append('Expires', '0');
                 groupsOfUser={groupsResult.value}
                 client:load
             />
-        ) : !accessToken ? (
-            <NeedToLogin />
         ) : (
             <p class='text-red-500'>Failed to load groups</p>
         )

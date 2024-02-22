@@ -1,15 +1,14 @@
 ---
-import { getKeycloakClient } from '../../middleware/authMiddleware';
+import { getAuthUrl } from '../../middleware/authMiddleware';
 import IcOutlineLogin from '~icons/ic/outline-login';
-const keycloakClient = await getKeycloakClient();
 
-const loginUrl = keycloakClient.authorizationUrl({
-    redirect_uri: Astro.url.toString(),
-    scope: 'openid',
-    response_type: 'code',
-});
+const loginUrl = getAuthUrl(Astro.url.toString());
 
-let { message } = Astro.params;
+interface Props {
+    message?: string;
+}
+
+let { message } = Astro.props;
 if (message === undefined) {
     message = 'You need to login to access this page.';
 }
