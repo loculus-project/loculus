@@ -14,7 +14,7 @@ cp .env.example .env
 ### Local Development
 
 - Install packages: `npm install`
-- Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh` (need to run from the root of the repository, not the `/website` directory)
+- Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh`
 - Run `npm run start` to start a local development server with hot reloading.
 
 ### Unit Tests
