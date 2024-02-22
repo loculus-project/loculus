@@ -128,6 +128,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     sequenceEntryStatus.status !== hasErrorsStatus &&
                         sequenceEntryStatus.status !== awaitingApprovalStatus,
                 )}
+                data-testid={`${getAccessionVersionString({ ...sequenceEntryStatus })}.edit`}
                 data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
                 onClick={editAccessionVersion}
                 disabled={
