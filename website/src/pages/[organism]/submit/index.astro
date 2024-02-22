@@ -22,9 +22,7 @@ Astro.response.headers.append('Expires', '0');
     <h1 class='title'>Submit sequences</h1>
     {
         !accessToken ? (
-            <NeedToLogin 
-            message="You need to be logged in to submit sequences."
-            />
+            <NeedToLogin message='You need to be logged in to submit sequences.' />
         ) : groupsResult.isOk() ? (
             <SubmissionForm
                 accessToken={accessToken}
