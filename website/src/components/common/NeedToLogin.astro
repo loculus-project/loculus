@@ -2,7 +2,7 @@
 import { getAuthUrl } from '../../middleware/authMiddleware';
 import IcOutlineLogin from '~icons/ic/outline-login';
 
-const loginUrl = await getAuthUrl(Astro.url.toString());
+const loginUrl = await getAuthUrl(Astro.url.toString().replace("http://", "https://"));
 
 interface Props {
     message?: string;
