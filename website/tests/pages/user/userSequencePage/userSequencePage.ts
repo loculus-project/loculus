@@ -33,6 +33,15 @@ export class UserSequencePage {
         await this.page.waitForSelector('text=REVOKE');
     }
 
+    public async gotoUserReviewPage() {
+        await this.page.goto(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`, {
+            waitUntil: 'networkidle',
+        });
+        await this.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
+
+        await this.page.waitForSelector('text=Current submissions');
+    }
+
     public async goToUserPage() {
         await this.page.goto(`${baseUrl}${routes.userOverviewPage()}`, { waitUntil: 'networkidle' });
         await this.page.waitForURL(`${baseUrl}${routes.userOverviewPage()}`);

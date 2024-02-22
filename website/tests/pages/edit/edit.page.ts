@@ -24,7 +24,7 @@ export class EditPage {
         await this.submitButton.click();
         expect(await this.page.isVisible('text=Do you really want to submit?')).toBe(true);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
-        await this.page.waitForURL(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key)}`);
+        await this.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
     }
 
     public async downloadAndVerify(accessionVersion: AccessionVersion) {

@@ -2,6 +2,7 @@ import { type EditPage } from './edit.page.ts';
 import { routes } from '../../../src/routes.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
 import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture';
+import { deleteAllSequencesForUser } from '../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 import type { UserSequencePage } from '../user/userSequencePage/userSequencePage.ts';
 
@@ -12,13 +13,15 @@ test.describe('The edit page', () => {
         async ({ userPage, editPage, loginAsTestUser }) => {
             const { token, groupName } = await loginAsTestUser();
 
+            await deleteAllSequencesForUser(token);
+
             const [erroneousTestSequenceEntry] = await prepareDataToBe('erroneous', token, 1, groupName);
             const [stagedTestSequenceEntry] = await prepareDataToBe('awaitingApproval', token, 1, groupName);
 
             expect(erroneousTestSequenceEntry).toBeDefined();
             expect(stagedTestSequenceEntry).toBeDefined();
 
-            await userPage.gotoUserSequencePage();
+            await userPage.gotoUserReviewPage();
 
             await testEditFlow(editPage, userPage, erroneousTestSequenceEntry);
             await testEditFlow(editPage, userPage, stagedTestSequenceEntry);
@@ -36,6 +39,6 @@ test.describe('The edit page', () => {
 
         await editPage.submit();
 
-        await editPage.page.waitForURL(`${baseUrl}${routes.userSequencesPage(dummyOrganism.key)}`);
+        await editPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
     };
 });
