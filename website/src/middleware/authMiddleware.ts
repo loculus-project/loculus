@@ -58,7 +58,7 @@ export const getAuthUrl = async (redirectUrl: URL) => {
         response_type: 'code',
     });
     const authUrlHttps = authUrl.replace('http://', 'https://');
-    logger.debug(`Auth url: ${authUrlHttps}`);
+    logger.debug(`Final auth url: ${authUrlHttps}`);
     return authUrlHttps;
 };
 
@@ -68,7 +68,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         logger.debug(`No token found in cookies. Cookies: ${JSON.stringify(context.cookies)}`);
         token = await getTokenFromParams(context);
         if (token !== undefined) {
-            logger.info(`Token found in params, setting cookie`);
+            logger.debug(`Token found in params, setting cookie`);
             setCookie(context, token);
         } else {
             logger.debug(`No token found in params`);
@@ -254,7 +254,7 @@ async function getTokenFromParams(context: APIContext) {
 
 export function setCookie(context: APIContext, token: TokenCookie) {
     logger.debug(
-        `Setting cookie for token: ${JSON.stringify(token)}. Cookies before setting: ${JSON.stringify(context.cookies)}`,
+        `Setting cookie for token: ${JSON.stringify(token)}. Cookies before setting: ${JSON.stringify(context.cookies.get(ACCESS_TOKEN_COOKIE))}`,
     );
     context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
         httpOnly: true,
@@ -270,35 +270,34 @@ export function setCookie(context: APIContext, token: TokenCookie) {
         path: '/',
         domain: '.loculus.org',
     });
-    logger.debug(`Cookie set. Cookies now: ${JSON.stringify(context.cookies)}`);
+    logger.debug(`Cookie set. Cookies now: ${JSON.stringify(context.cookies.get(ACCESS_TOKEN_COOKIE))}`);
 }
 
 function deleteCookie(context: APIContext) {
-    logger.debug(`Deleting cookies. Cookies before deletion: ${JSON.stringify(context.cookies)}`);
+    logger.debug(
+        `Deleting cookies. Cookies before deletion: ${JSON.stringify(context.cookies.get(ACCESS_TOKEN_COOKIE))}`,
+    );
     try {
         context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/', domain: '.loculus.org' });
         context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/', domain: '.loculus.org' });
     } catch {
         logger.info(`Error deleting cookie`);
     }
-    logger.debug(`Cookies after deletion: ${JSON.stringify(context.cookies)}`);
+    logger.debug(`Cookies after deletion: ${JSON.stringify(context.cookies.get(ACCESS_TOKEN_COOKIE))}`);
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Basic_concepts#guard
 const createRedirectWithModifiableHeaders = (url: string) => {
     const redirect = Response.redirect(url);
-    logger.debug(`Redirecting to ${url}`);
+    logger.info(`Redirecting to ${url}`);
     return new Response(null, { status: redirect.status, headers: redirect.headers });
 };
 
 const redirectToAuth = async (context: APIContext) => {
     const currentUrl = context.url;
-    const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
-    const authUrl = await getAuthUrl(redirectUrl);
-    logger.info(
-        `Redirecting to auth with redirect url: ${redirectUrl}, current url: ${currentUrl}, auth url: ${authUrl}`,
-    );
+    const authUrl = await getAuthUrl(currentUrl);
+    logger.debug(`Redirecting to auth url: ${authUrl} from current url: ${currentUrl}`);
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);
