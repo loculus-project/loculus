@@ -146,7 +146,7 @@ zitadel:
         Enabled: false
       Database:
         Postgres:
-          Host: preview-postgresql-hl
+          Host: preview-postgresql
           Port: 5432
           Database: zitadel
           MaxOpenConns: 20
