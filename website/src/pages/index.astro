@@ -1,17 +1,31 @@
 ---
-import { getConfiguredOrganisms } from '../config';
+import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { routes } from '../routes';
+const websiteConfig = getWebsiteConfig();
+const { name: websiteName } = websiteConfig;
 ---
 
 <BaseLayout title='Home'>
-    <h1 class='title'>Loculus</h1>
-    <h2 class='font-bold'>Explore the data</h2>
-    {
-        getConfiguredOrganisms().map(({ key, displayName }) => (
-            <p>
-                <a href={routes.organismStartPage(key)}>{displayName}</a>
-            </p>
-        ))
-    }
+    <div class='max-w-6xl mx-auto'>
+        <p class='text-gray-700 my-4'>
+            Welcome to {websiteName}, a system for sharing pathogen genome data.
+        </p>
+        <h2 class='font-semibold text-gray-700 my-3 text-lg'>Explore {websiteName} data!</h2>
+
+        <div class='flex flex-wrap'>
+            {
+                getConfiguredOrganisms().map(({ key, displayName, image, description }) => (
+                    <a
+                        href={routes.organismStartPage(key)}
+                        class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100'
+                    >
+                        {image !== undefined && <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />}
+                        <h3 class='font-semibold text-gray-700'>{displayName}</h3>
+                        <p class='text-gray-700 text-sm'>{description}</p>
+                    </a>
+                ))
+            }
+        </div>
+    </div>
 </BaseLayout>

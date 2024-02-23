@@ -37,9 +37,16 @@ accessionPrefix: {{ $.Values.accessionPrefix }}
 instances:
   {{- range $key, $instance := $.Values.instances }}
   {{ $key }}:
+
     schema:
       {{- with $instance.schema }}
       instanceName: {{ .instanceName }}
+      {{ if .image }}
+      image: {{ .image }}
+      {{ end }}
+      {{ if .description }}
+      description: {{ .description }}
+      {{ end }}
       primaryKey: accessionVersion
       metadata:
         {{ $metadata := concat $commonMetadata .metadata
