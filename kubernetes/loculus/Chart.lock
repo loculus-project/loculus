@@ -1,0 +1,9 @@
+dependencies:
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 12.10.0
+- name: zitadel
+  repository: https://charts.zitadel.com
+  version: 7.8.0
+digest: sha256:df7dba001541f0468e6e7f7f52c09bc20b9fcf9fd77ad36ae4da1eea21499a89
+generated: "2024-02-23T21:18:35.471825947Z"

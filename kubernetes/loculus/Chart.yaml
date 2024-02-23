@@ -2,3 +2,12 @@ apiVersion: v2
 name: loculus
 description: A Helm chart for loculus
 version: 0.1.0
+dependencies:
+  - name: postgresql
+    version: "12.10.0"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: zitadel
+    version: "7.8.0"  # Specify the version you want to use
+    repository: "https://charts.zitadel.com"
+    condition: zitadel.enabled

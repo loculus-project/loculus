@@ -125,3 +125,34 @@ instances:
       genes:
         - name: OPG001
           sequence: MKQYIVLACMCLVAAAMPTSLQQSSSSCTEEENKHHMGIDVIIKVTKQDQTPTNDKICQSVTEVTETEDDEVSEEVVKGDPTTYYTIVGAGLNMNFGFTKCPKISSISESSDGNTVNTRLSSVSPGQGKDSPAITREEALAMIKDCEMSIDIRCSEEEKDSDIKTHPVLGSNISHKKVSYKDIIGSTIVDTKCVKNLEFSVRIGDMCEESSELEVKDGFKYVDGSASEGATDDTSLIDSTKLKACV*
+postgresql:
+  enabled: true
+  primary:
+    pgHbaConfiguration: |
+      host all all all trust
+zitadel:
+  enabled: true
+  zitadel:
+    masterkey: x123456789012345678901234567891y
+    configmapConfig:
+      ExternalSecure: false
+      ExternalDomain: 127.0.0.1.sslip.io
+      TLS:
+        Enabled: false
+      Database:
+        Postgres:
+          Host: db-postgresql
+          Port: 5432
+          Database: zitadel
+          MaxOpenConns: 20
+          MaxIdleConns: 10
+          MaxConnLifetime: 30m
+          MaxConnIdleTime: 5m
+          User:
+            Username: postgres
+            SSL:
+              Mode: disable
+          Admin:
+            Username: postgres
+            SSL:
+              Mode: disable
