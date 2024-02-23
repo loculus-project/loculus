@@ -167,7 +167,7 @@ zitadel:
             SSL:
               Mode: disable
       # All possible options and their defaults: https://github.com/zitadel/zitadel/blob/main/cmd/setup/steps.yaml
-      FirstInstance:
+      DefaultInstance:
         Org:
           Human:
             # use the loginname root@zitadel.localhost
