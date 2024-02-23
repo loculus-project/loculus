@@ -49,7 +49,7 @@ export async function getKeycloakClient() {
 }
 
 export const getAuthUrl = async (redirectUrl: string) => {
-    redirectUrl = removeTokenCodeFromSearchParams(new URL(redirectUrl)).toString().replace('http://', 'https://');
+    // redirectUrl = removeTokenCodeFromSearchParams(new URL(redirectUrl)).toString().replace('http://', 'https://');
     const authUrl = (await getKeycloakClient()).authorizationUrl({
         redirect_uri: redirectUrl,
         scope: 'openid',
@@ -58,10 +58,44 @@ export const getAuthUrl = async (redirectUrl: string) => {
     return authUrl;
 };
 
+async function getValidTokenFromCookies(context: APIContext) {
+    const token = await getTokenFromCookie(context);
+    if (token !== undefined) {
+        const userInfo = await getUserInfo(token);
+
+        if (userInfo.isErr()) {
+            logger.debug(`Cookie token found but could not get user info`);
+            deleteCookie(context);
+            return undefined;
+        }
+        setCookie(context, token);
+        return token;
+    }
+    return undefined;
+}
+
+
+
+async function getValidTokenFromParams(context: APIContext) {
+    const token = await getTokenFromParams(context);
+    if (token !== undefined) {
+        const userInfo = await getUserInfo(token);
+
+        if (userInfo.isErr()) {
+            logger.debug(`Token found in params but could not get user info`);
+            return undefined;
+        }
+
+        return token;
+    }
+    return undefined;
+}
+
+
 export const authMiddleware = defineMiddleware(async (context, next) => {
-    let token = await getTokenFromCookie(context);
+    let token = await getValidTokenFromCookies(context);
     if (token === undefined) {
-        token = await getTokenFromParams(context);
+        token = await getValidTokenFromParams(context);
         if (token !== undefined) {
             logger.debug(`Token found in params, setting cookie`);
             setCookie(context, token);
