@@ -57,7 +57,7 @@ export const getAuthUrl = async (redirectUrl: string) => {
     return authUrl;
 };
 
-async function getValidTokenFromCookies(context: APIContext) {
+async function getValidTokenAndUserInfoFromCookie(context: APIContext) {
     const token = await getTokenFromCookie(context);
     if (token !== undefined) {
         const userInfo = await getUserInfo(token);
@@ -65,33 +65,41 @@ async function getValidTokenFromCookies(context: APIContext) {
         if (userInfo.isErr()) {
             logger.debug(`Cookie token found but could not get user info`);
             deleteCookie(context);
-            return undefined;
+            return {};
         }
-        setCookie(context, token);
-        return token;
+        return {
+            token,
+            userInfo,
+        };
     }
-    return undefined;
+    return {};
 }
 
-async function getValidTokenFromParams(context: APIContext) {
+async function getValidTokenAndUserInfoFromParams(context: APIContext) {
     const token = await getTokenFromParams(context);
     if (token !== undefined) {
         const userInfo = await getUserInfo(token);
 
         if (userInfo.isErr()) {
             logger.debug(`Token found in params but could not get user info`);
-            return undefined;
+            return {};
         }
 
-        return token;
+        return {
+            token,
+            userInfo,
+        };
     }
-    return undefined;
+    return {};
 }
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
-    let token = await getValidTokenFromCookies(context);
+    let { token, userInfo } = await getValidTokenAndUserInfoFromCookie(context);
     if (token === undefined) {
-        token = await getValidTokenFromParams(context);
+        const paramResult = await getValidTokenAndUserInfoFromParams(context);
+        token = paramResult.token;
+        userInfo = paramResult.userInfo;
+
         if (token !== undefined) {
             logger.debug(`Token found in params, setting cookie`);
             setCookie(context, token);
@@ -103,8 +111,6 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         context.url.pathname,
         getConfiguredOrganisms().map((it) => it.key),
     );
-
-    const userInfo = token !== undefined ? await getUserInfo(token) : undefined;
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
         return redirectToAuth(context);
