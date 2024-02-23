@@ -95,6 +95,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         if (token !== undefined) {
             logger.debug(`Token found in params, setting cookie`);
             setCookie(context, token);
+            return createRedirectWithModifiableHeaders(removeTokenCodeFromSearchParams(context.url));
         }
     }
 
