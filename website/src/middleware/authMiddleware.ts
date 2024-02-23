@@ -131,6 +131,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     const userInfo = await getUserInfo(token);
     if (userInfo.isErr()) {
         logger.debug(`Failed to get user info, redirecting to auth`);
+        deleteCookie(context);
         return redirectToAuth(context);
     }
 
@@ -163,7 +164,16 @@ async function getTokenFromCookie(context: APIContext) {
 
     const verifiedTokenResult = await verifyToken(tokenCookie.accessToken);
     if (verifiedTokenResult.isErr() && verifiedTokenResult.error.type === TokenVerificationError.EXPIRED) {
-        return refreshTokenViaKeycloak(tokenCookie);
+        const refreshedToken = await refreshTokenViaKeycloak(tokenCookie).catch((error) => {
+            logger.info(`Error refreshing token: ${error}`);
+            return undefined;
+        });
+        if (refreshedToken === undefined) {
+            deleteCookie(context);
+            return undefined;
+        }
+        setCookie(context, refreshedToken);
+        return refreshedToken;
     }
     if (verifiedTokenResult.isErr()) {
         logger.info(`Error verifying token: ${verifiedTokenResult.error.message}`);
