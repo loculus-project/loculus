@@ -145,6 +145,7 @@ zitadel:
     configmapConfig:
       ExternalSecure: true
       ExternalDomain: "authentication-zitadel.loculus.org"
+      ExternalPort: 443
       TLS:
         Enabled: false
       Database:
