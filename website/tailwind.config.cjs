@@ -21,7 +21,7 @@ module.exports = {
     extend: {
       colors: {
         primary: {...mainTailwindColor, DEFAULT: mainTailwindColor[400]},
-        logoSecondary: mainTailwindColor[600],
+        logoSecondary: '#f3b502',
         main: mainTailwindColor[600],
       }
     },

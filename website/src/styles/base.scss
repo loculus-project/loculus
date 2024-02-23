@@ -17,7 +17,7 @@ a {
 }
 
 .fancytitle{
-  background : linear-gradient(to right, theme('colors.main') 0%, theme('colors.logoSecondary') 50%, theme('colors.main') 100%);
+  background : linear-gradient(to right, theme('colors.main') 15%, theme('colors.logoSecondary') 50%, theme('colors.main') 90%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-decoration: red;
