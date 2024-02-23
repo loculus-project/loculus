@@ -57,13 +57,53 @@ export const getAuthUrl = async (redirectUrl: string) => {
     return authUrl;
 };
 
+async function getValidTokenAndUserInfoFromCookie(context: APIContext) {
+    const token = await getTokenFromCookie(context);
+    if (token !== undefined) {
+        const userInfo = await getUserInfo(token);
+
+        if (userInfo.isErr()) {
+            logger.debug(`Cookie token found but could not get user info`);
+            deleteCookie(context);
+            return {};
+        }
+        return {
+            token,
+            userInfo,
+        };
+    }
+    return {};
+}
+
+async function getValidTokenAndUserInfoFromParams(context: APIContext) {
+    const token = await getTokenFromParams(context);
+    if (token !== undefined) {
+        const userInfo = await getUserInfo(token);
+
+        if (userInfo.isErr()) {
+            logger.debug(`Token found in params but could not get user info`);
+            return {};
+        }
+
+        return {
+            token,
+            userInfo,
+        };
+    }
+    return {};
+}
+
 export const authMiddleware = defineMiddleware(async (context, next) => {
-    let token = await getTokenFromCookie(context);
+    let { token, userInfo } = await getValidTokenAndUserInfoFromCookie(context);
     if (token === undefined) {
-        token = await getTokenFromParams(context);
+        const paramResult = await getValidTokenAndUserInfoFromParams(context);
+        token = paramResult.token;
+        userInfo = paramResult.userInfo;
+
         if (token !== undefined) {
             logger.debug(`Token found in params, setting cookie`);
             setCookie(context, token);
+            return createRedirectWithModifiableHeaders(removeTokenCodeFromSearchParams(context.url));
         }
     }
 
@@ -71,47 +111,27 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         context.url.pathname,
         getConfiguredOrganisms().map((it) => it.key),
     );
-    if (!enforceLogin) {
-        if (token === undefined) {
-            context.locals.session = {
-                isLoggedIn: false,
-            };
 
-            return next();
-        }
+    if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
+        return redirectToAuth(context);
+    }
 
-        const userInfo = await getUserInfo(token);
-
-        if (userInfo.isErr()) {
-            context.locals.session = {
-                isLoggedIn: false,
-            };
-            return next();
-        }
-
+    if (token === undefined || userInfo === undefined) {
         context.locals.session = {
-            isLoggedIn: true,
-            user: {
-                name: userInfo.value.name ?? 'Name not set',
-                username: userInfo.value.preferred_username,
-                email: userInfo.value.email,
-                emailVerified: userInfo.value.email_verified,
-            },
-            token,
+            isLoggedIn: false,
         };
 
         return next();
     }
 
-    if (token === undefined) {
-        logger.debug(`No token found, redirecting to auth`);
-        return redirectToAuth(context);
-    }
-
-    const userInfo = await getUserInfo(token);
     if (userInfo.isErr()) {
+        context.locals.session = {
+            isLoggedIn: false,
+        };
         logger.debug(`Error getting user info: ${userInfo.error}`);
-        return redirectToAuth(context);
+        logger.debug(`Clearing auth cookies.`);
+        deleteCookie(context);
+        return next();
     }
 
     context.locals.session = {
