@@ -72,7 +72,7 @@ async function getValidTokenFromCookies(context: APIContext) {
             deleteCookie(context);
             return undefined;
         }
-
+        setCookie(context, token);
         return token;
     }
     return undefined;
@@ -203,7 +203,6 @@ async function getTokenFromCookie(context: APIContext) {
         if (refreshedToken === undefined) {
             return undefined;
         }
-        setCookie(context, refreshedToken);
         return refreshedToken;
     }
     if (verifiedTokenResult.isErr()) {
