@@ -284,10 +284,10 @@ const createRedirectWithModifiableHeaders = (url: string) => {
 
 const redirectToAuth = async (context: APIContext) => {
     const currentUrl = context.url;
-    const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
+    const redirectUrl = removeTokenCodeFromSearchParams(currentUrl).replace('http://', 'https://');
 
     logger.debug(`Redirecting to auth with redirect url: ${redirectUrl}`);
-    const authUrl = await getAuthUrl(redirectUrl);
+    const authUrl = (await getAuthUrl(redirectUrl)).replace('http://', 'https://');
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);
