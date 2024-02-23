@@ -49,12 +49,15 @@ export async function getKeycloakClient() {
 }
 
 export const getAuthUrl = async (redirectUrl: string) => {
+    logger.debug(`Getting auth url for redirect url: ${redirectUrl}`);
     const authUrl = (await getKeycloakClient()).authorizationUrl({
         redirect_uri: redirectUrl,
         scope: 'openid',
         response_type: 'code',
     });
-    return authUrl.replace('http://', 'https://');
+    const authUrlHttps = authUrl.replace('http://', 'https://');
+    logger.debug(`Auth url: ${authUrlHttps}`);
+    return authUrlHttps;
 };
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
