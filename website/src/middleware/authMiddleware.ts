@@ -49,7 +49,6 @@ export async function getKeycloakClient() {
 }
 
 export const getAuthUrl = async (redirectUrl: string) => {
-    // redirectUrl = removeTokenCodeFromSearchParams(new URL(redirectUrl)).toString().replace('http://', 'https://');
     const authUrl = (await getKeycloakClient()).authorizationUrl({
         redirect_uri: redirectUrl,
         scope: 'openid',
@@ -74,8 +73,6 @@ async function getValidTokenFromCookies(context: APIContext) {
     return undefined;
 }
 
-
-
 async function getValidTokenFromParams(context: APIContext) {
     const token = await getTokenFromParams(context);
     if (token !== undefined) {
@@ -91,7 +88,6 @@ async function getValidTokenFromParams(context: APIContext) {
     return undefined;
 }
 
-
 export const authMiddleware = defineMiddleware(async (context, next) => {
     let token = await getValidTokenFromCookies(context);
     if (token === undefined) {
@@ -106,50 +102,29 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
         context.url.pathname,
         getConfiguredOrganisms().map((it) => it.key),
     );
-    if (!enforceLogin) {
-        if (token === undefined) {
-            context.locals.session = {
-                isLoggedIn: false,
-            };
 
-            return next();
-        }
+    const userInfo = token !== undefined ? await getUserInfo(token) : undefined;
 
-        const userInfo = await getUserInfo(token);
+    if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
+        return redirectToAuth(context);
+    }
 
-        if (userInfo.isErr()) {
-            context.locals.session = {
-                isLoggedIn: false,
-            };
-            logger.debug(`Error getting user info: ${userInfo.error}`);
-            logger.debug(`Clearing auth cookies.`);
-            deleteCookie(context);
-            return next();
-        }
-
+    if (token === undefined || userInfo === undefined) {
         context.locals.session = {
-            isLoggedIn: true,
-            user: {
-                name: userInfo.value.name ?? 'Name not set',
-                username: userInfo.value.preferred_username,
-                email: userInfo.value.email,
-                emailVerified: userInfo.value.email_verified,
-            },
-            token,
+            isLoggedIn: false,
         };
 
         return next();
     }
 
-    if (token === undefined) {
-        logger.debug(`No token found, redirecting to auth`);
-        return redirectToAuth(context);
-    }
-
-    const userInfo = await getUserInfo(token);
     if (userInfo.isErr()) {
+        context.locals.session = {
+            isLoggedIn: false,
+        };
         logger.debug(`Error getting user info: ${userInfo.error}`);
-        return redirectToAuth(context);
+        logger.debug(`Clearing auth cookies.`);
+        deleteCookie(context);
+        return next();
     }
 
     context.locals.session = {
