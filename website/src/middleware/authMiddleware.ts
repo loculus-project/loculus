@@ -39,7 +39,7 @@ export async function getKeycloakClient() {
 
         const issuerUrl = `${originForClient}${realmPath}`;
 
-        logger.info(`Getting keycloak client for issuer url: ${issuerUrl}`);
+        logger.debug(`Getting keycloak client for issuer url: ${issuerUrl}`);
         const keycloakIssuer = await Issuer.discover(issuerUrl);
 
         _keycloakClient = new keycloakIssuer.Client(clientMetadata);
@@ -58,13 +58,9 @@ export const getAuthUrl = async (redirectUrl: string) => {
 };
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
-    let token = await getTokenFromCookie(context);
-    if (token === undefined) {
-        token = await getTokenFromParams(context);
-        if (token !== undefined) {
-            logger.debug(`Token found in params, setting cookie`);
-            setCookie(context, token);
-        }
+    const token = await getTokenFromParamsOrCookie(context);
+    if (token !== undefined) {
+        setCookie(context, token);
     }
 
     const enforceLogin = shouldMiddlewareEnforceLogin(
@@ -104,15 +100,17 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     }
 
     if (token === undefined) {
-        logger.debug(`No token found, redirecting to auth`);
+        logger.debug(`Auth required, but no token found, redirecting to auth`);
         return redirectToAuth(context);
     }
 
     const userInfo = await getUserInfo(token);
     if (userInfo.isErr()) {
-        logger.debug(`Error getting user info: ${userInfo.error}`);
+        logger.debug(`Auth required, but provided token is invalid: ${userInfo.error}`);
         return redirectToAuth(context);
     }
+
+    logger.debug(`Auth required, token is valid, setting session`);
 
     context.locals.session = {
         isLoggedIn: true,
@@ -204,7 +202,7 @@ async function verifyToken(accessToken: string) {
 
 async function getUserInfo(token: TokenCookie) {
     return ResultAsync.fromPromise((await getKeycloakClient()).userinfo(token.accessToken), (error) => {
-        logger.error(`Error getting user info: ${error}`);
+        logger.debug(`Error getting userInfo via token: ${error}`);
         return error;
     });
 }
@@ -222,7 +220,7 @@ async function getTokenFromParams(context: APIContext) {
                 response_type: 'code',
             })
             .catch((error) => {
-                logger.error(`Keycloak callback error: ${error}`);
+                logger.info(`Keycloak callback error: ${error}`);
                 return undefined;
             });
         return extractTokenCookieFromTokenSet(tokenSet);
@@ -230,7 +228,28 @@ async function getTokenFromParams(context: APIContext) {
     return undefined;
 }
 
+async function checkToken(token: TokenCookie) {
+    // Check if token is valid by calling userinfo endpoint
+    const userInfo = await getUserInfo(token);
+    if (userInfo.isErr()) {
+        return undefined;
+    }
+    return token;
+}
+
+async function getTokenFromParamsOrCookie(context: APIContext) {
+    for (const token of [await getTokenFromParams(context), await getTokenFromCookie(context)]) {
+        if (token !== undefined) {
+            const validToken = await checkToken(token);
+            if (validToken !== undefined) {
+                return validToken;
+            }
+        }
+    }
+}
+
 export function setCookie(context: APIContext, token: TokenCookie) {
+    deleteCookie(context);
     context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
         httpOnly: true,
         sameSite: 'lax',
