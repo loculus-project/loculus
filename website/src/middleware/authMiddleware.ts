@@ -158,7 +158,7 @@ async function getTokenFromCookie(context: APIContext) {
         return refreshTokenViaKeycloak(tokenCookie);
     }
     if (verifiedTokenResult.isErr()) {
-        logger.error(`Error verifying token: ${verifiedTokenResult.error.message}`);
+        logger.info(`Error verifying token: ${verifiedTokenResult.error.message}`);
         return undefined;
     }
 
@@ -223,21 +223,25 @@ async function getUserInfo(token: TokenCookie) {
 }
 
 async function getTokenFromParams(context: APIContext) {
+    logger.debug(`Getting token from params`);
     const client = await getKeycloakClient();
 
     const params = client.callbackParams(context.url.toString());
-    logger.info(`Keycloak callback params: ${JSON.stringify(params)}`);
+    logger.debug(`Keycloak callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
-        const redirectUri = removeTokenCodeFromSearchParams(context.url);
-        logger.info(`Keycloak callback redirect uri: ${redirectUri}`);
+        logger.debug(`Code found in params, trying to get token`);
+        const redirectUriHttp = removeTokenCodeFromSearchParams(context.url);
+        const redirectUri = redirectUriHttp.replace('http://', 'https://');
+        logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
         const tokenSet = await client
             .callback(redirectUri, params, {
                 response_type: 'code',
             })
             .catch((error) => {
-                logger.error(`Keycloak callback error: ${error}`);
+                logger.info(`Keycloak callback error: ${error}`);
                 return undefined;
             });
+        logger.debug(`Token set: ${JSON.stringify(tokenSet)}`);
         return extractTokenCookieFromTokenSet(tokenSet);
     }
     return undefined;
@@ -284,8 +288,10 @@ const redirectToAuth = async (context: APIContext) => {
     const currentUrl = context.url;
     const redirectUrl = removeTokenCodeFromSearchParams(currentUrl);
 
-    logger.info(`Redirecting to auth with redirect url: ${redirectUrl}, current url: ${currentUrl}`);
     const authUrl = await getAuthUrl(redirectUrl);
+    logger.info(
+        `Redirecting to auth with redirect url: ${redirectUrl}, current url: ${currentUrl}, auth url: ${authUrl}`,
+    );
 
     deleteCookie(context);
     return createRedirectWithModifiableHeaders(authUrl);
@@ -307,7 +313,7 @@ function removeTokenCodeFromSearchParams(url: URL) {
 
 async function refreshTokenViaKeycloak(token: TokenCookie) {
     const refreshedTokenSet = await (await getKeycloakClient()).refresh(token.refreshToken).catch((error) => {
-        logger.error(`Error refreshing token: ${error.message}`);
+        logger.info(`Error refreshing token: ${error.message}`);
         return undefined;
     });
     return extractTokenCookieFromTokenSet(refreshedTokenSet);
@@ -315,7 +321,7 @@ async function refreshTokenViaKeycloak(token: TokenCookie) {
 
 function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined) {
     if (tokenSet === undefined || tokenSet.access_token === undefined || tokenSet.refresh_token === undefined) {
-        logger.error(`Could not extract tokens from tokenSet=${JSON.stringify(tokenSet)}`);
+        logger.info(`Could not extract tokens from tokenSet=${JSON.stringify(tokenSet)}`);
         return undefined;
     }
 
