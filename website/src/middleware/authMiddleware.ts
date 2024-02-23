@@ -283,8 +283,8 @@ function deleteCookie(context: APIContext) {
         `Deleting cookies. Cookies before deletion: ${JSON.stringify(context.cookies.get(ACCESS_TOKEN_COOKIE))}`,
     );
     try {
-        context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
-        context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
+        context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/', domain: '.loculus.org' });
+        context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/', domain: '.loculus.org' });
     } catch {
         logger.info(`Error deleting cookie`);
     }
