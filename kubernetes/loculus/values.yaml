@@ -131,7 +131,7 @@ postgresql:
     pgHbaConfiguration: |
       host all all all trust
 zitadel:
-  enabled: true
+  enabled: false
   zitadel:
     masterkey: x123456789012345678901234567891y
     configmapConfig:
