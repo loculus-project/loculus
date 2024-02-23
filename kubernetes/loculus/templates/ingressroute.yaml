@@ -56,9 +56,9 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: loculus-keycloak-service
+                name: zitadel
                 port:
-                  number: 8083
+                  number: 8080
   tls:
   - hosts:
     - "{{ $keycloakHost }}"
