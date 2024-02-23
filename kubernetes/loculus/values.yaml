@@ -128,6 +128,7 @@ instances:
 postgresql:
   enabled: true
   nameOverride: zitadel-postgres
+  fullnameOverride: zitadel-postgres
   primary:
     pgHbaConfiguration: |
       host all all all trust
