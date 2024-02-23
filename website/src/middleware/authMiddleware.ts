@@ -49,6 +49,7 @@ export async function getKeycloakClient() {
 }
 
 export const getAuthUrl = async (redirectUrl: string) => {
+    redirectUrl = removeTokenCodeFromSearchParams(new URL(redirectUrl)).toString();
     const authUrl = (await getKeycloakClient()).authorizationUrl({
         redirect_uri: redirectUrl,
         scope: 'openid',
@@ -86,6 +87,9 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             context.locals.session = {
                 isLoggedIn: false,
             };
+            logger.debug(`Error getting user info: ${userInfo.error}`);
+            logger.debug(`Clearing auth cookies.`);
+            deleteCookie(context);
             return next();
         }
 
