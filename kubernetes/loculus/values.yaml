@@ -131,8 +131,13 @@ postgresql:
     pgHbaConfiguration: |
       host all all all trust
 zitadel:
-  enabled: false
+  enabled: true
+  initJob:
+    annotations: []
+  setupJob:
+      annotations: []
   zitadel:
+
     masterkey: x123456789012345678901234567891y
     configmapConfig:
       ExternalSecure: false
@@ -141,7 +146,7 @@ zitadel:
         Enabled: false
       Database:
         Postgres:
-          Host: db-postgresql
+          Host: preview-postgresql-hl
           Port: 5432
           Database: zitadel
           MaxOpenConns: 20
