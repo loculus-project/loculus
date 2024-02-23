@@ -82,7 +82,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                     </div>
 
                     <a
-                        className={`btn loculusGreen ${!agreedToDataUseTerms ? 'btn-disabled' : ''}`}
+                        className={`btn loculusColor ${!agreedToDataUseTerms ? 'btn-disabled' : ''}`}
                         href={downloadUrl}
                         onClick={closeDialog}
                     >

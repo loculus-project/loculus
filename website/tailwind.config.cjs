@@ -1,8 +1,31 @@
 /** @type {import('tailwindcss').Config} */
+const colors = require('tailwindcss/colors')
+const mainTailwindColor = {
+  '50': '#f2f9fd',
+  '100': '#e4f1fa',
+  '200': '#c3e3f4',
+  '300': '#8eceeb',
+  '400': '#52b4de',
+  '500': '#2b9bcc',
+  '600': '#1c7dad',
+  '700': '#18638b',
+  '800': '#185574',
+  '900': '#194761',
+  '950': '#112d40',
+};
+
+
 module.exports = {
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: {...mainTailwindColor, DEFAULT: mainTailwindColor[400]},
+        logoSecondary: '#f3b502',
+        main: mainTailwindColor[600],
+      }
+    },
+    
   },
   plugins: [require("daisyui"),
   require('flowbite/plugin')],
@@ -18,7 +41,7 @@ module.exports = {
     themes: [
       {
         customTheme: {
-          "primary": "#54858c",
+      
           "secondary": "#f000b8",
           "accent": "#1dcdbc",
           "base-100": "#ffffff",

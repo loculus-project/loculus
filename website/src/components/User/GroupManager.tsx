@@ -49,7 +49,7 @@ const InnerGroupManager: FC<GroupManagerProps> = ({ clientConfig, accessToken, u
                         className='p-2 border border-gray-300 rounded mr-2'
                         required
                     />
-                    <button type='submit' className='px-4 py-2 loculusGreen text-white rounded'>
+                    <button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
                         Create Group
                     </button>
                 </div>
