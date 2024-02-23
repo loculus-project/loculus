@@ -97,7 +97,7 @@ const DataUseTerms = ({
                                 Anyone can use and share the data (though we believe researchers should exercise
                                 scientific etiquette, including the importance of citation). Data will be released to
                                 the INSDC databases shortly after submission.{' '}
-                                <a href='#TODO-MVP' className='text-teal-600'>
+                                <a href='#TODO-MVP' className='text-primary-600'>
                                     Find out more
                                 </a>
                                 .
@@ -124,7 +124,7 @@ const DataUseTerms = ({
                             <div className='text-xs pl-6 text-gray-500 mb-4'>
                                 Data will be restricted for a period of time. The sequences will be available but there
                                 will be limitations on how they can be used by others.{' '}
-                                <a href='#TODO-MVP' className='text-teal-600'>
+                                <a href='#TODO-MVP' className='text-primary-600'>
                                     Find out more
                                 </a>
                                 .
@@ -197,7 +197,7 @@ const GroupSelector = ({
             <Menu>
                 <Menu.Button aria-label='Select group'>
                     Current group: {selectedGroupName}
-                    <span className='text-teal-600 ml-2'>
+                    <span className='text-primary-600 ml-2'>
                         <IwwaArrowDown className='w-4 h-4 inline-block -mt-0.5' />
                     </span>
                 </Menu.Button>
@@ -211,7 +211,7 @@ const GroupSelector = ({
                             {({ active }) => (
                                 <button
                                     className={`${
-                                        active ? 'bg-teal-500 text-white' : 'text-gray-900'
+                                        active ? 'bg-primary-500 text-white' : 'text-gray-900'
                                     } flex  w-full px-4 py-2 text-sm`}
                                     onClick={() => setSelectedGroupName(groupName)}
                                 >
@@ -305,7 +305,7 @@ const UploadComponent = ({
                         <div className='mt-4  text-sm leading-6 text-gray-600'>
                             <label
                                 htmlFor='file-upload'
-                                className='inline relative cursor-pointer rounded-md bg-white font-semibold text-teal-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-iteal-600 focus-within:ring-offset-2 hover:text-iteal-500'
+                                className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'
                             >
                                 <span onClick={handleUpload}>Upload a file</span>
                                 <input
@@ -453,7 +453,7 @@ const InnerDataUploadForm = ({
                             )}
                             For more information on the format in which data should be uploaded and the required
                             metadata, please refer to our{' '}
-                            <a href='#TODO-MVP' className='text-teal-700'>
+                            <a href='#TODO-MVP' className='text-primary-700'>
                                 help pages
                             </a>
                             .
@@ -506,7 +506,7 @@ const InnerDataUploadForm = ({
                     <button
                         name='submit'
                         type='submit'
-                        className='rounded-md bg-teal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-600'
+                        className='rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600'
                         onClick={handleSubmit}
                         disabled={isLoading}
                     >

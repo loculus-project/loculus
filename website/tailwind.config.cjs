@@ -1,8 +1,17 @@
 /** @type {import('tailwindcss').Config} */
+const colors = require('tailwindcss/colors')
+const mainTailwindColor = colors.sky
 module.exports = {
   content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        primary: {...mainTailwindColor, DEFAULT: mainTailwindColor[400]},
+        logoSecondary: mainTailwindColor[500],
+        main: mainTailwindColor[700],
+      }
+    },
+    
   },
   plugins: [require("daisyui"),
   require('flowbite/plugin')],
@@ -18,7 +27,7 @@ module.exports = {
     themes: [
       {
         customTheme: {
-          "primary": "#54858c",
+      
           "secondary": "#f000b8",
           "accent": "#1dcdbc",
           "base-100": "#ffffff",

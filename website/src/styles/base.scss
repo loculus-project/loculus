@@ -8,16 +8,16 @@
 
 a {
   &:hover {
-    @apply underline decoration-emerald-700;
+    @apply underline decoration-primary-700;
   }
 }
 
 .fillColor{
-  background-color : #54858c;
+  background-color : theme('colors.main');
 }
 
 .fancytitle{
-  background : linear-gradient(to right, #54858c 0%, #F18805 50%, #54858c 100%);
+  background : linear-gradient(to right, theme('colors.main') 0%, theme('colors.logoSecondary') 50%, theme('colors.main') 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   text-decoration: red;
@@ -27,23 +27,22 @@ a {
 }
 
 .title{
-  background : #54858c ;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-decoration: red;
+
+  color: theme('colors.main');
+
   font-size: 24px;
   font-weight: 600;
   word-break: break-all;
 }
 
 .subtitle{
-  color: #54858c;
+  color: theme('colors.main');
   font-size: 18px;
   font-weight: 400;
 }
 
-.loculusGreen{
-  background: #54858c;
+.loculusColor{
+  background: theme('colors.main');
 }
 
 .offCanvasTransform {
