@@ -49,9 +49,10 @@ export async function getKeycloakClient() {
 }
 
 export const getAuthUrl = async (redirectUrl: string) => {
-    logger.debug(`Getting auth url for redirect url: ${redirectUrl}`);
+    const redirectUrlHttps = redirectUrl.replace('http://', 'https://');
+    logger.debug(`Getting auth url for redirect url: ${redirectUrlHttps}`);
     const authUrl = (await getKeycloakClient()).authorizationUrl({
-        redirect_uri: redirectUrl,
+        redirect_uri: redirectUrlHttps,
         scope: 'openid',
         response_type: 'code',
     });
