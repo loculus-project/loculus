@@ -8,7 +8,7 @@ module.exports = {
       colors: {
         primary: {...mainTailwindColor, DEFAULT: mainTailwindColor[400]},
         logoSecondary: mainTailwindColor[500],
-        main: mainTailwindColor[700],
+        main: mainTailwindColor[600],
       }
     },
     
