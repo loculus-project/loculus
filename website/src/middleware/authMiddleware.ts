@@ -101,6 +101,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             context.locals.session = {
                 isLoggedIn: false,
             };
+            logger.debug(`Token found but could not get user info, not enforcing login`);
             deleteCookie(context);
             return next();
         }
@@ -131,6 +132,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     const userInfo = await getUserInfo(token);
     if (userInfo.isErr()) {
         logger.debug(`Failed to get user info, redirecting to auth`);
+        deleteCookie(context);
         return redirectToAuth(context);
     }
 
