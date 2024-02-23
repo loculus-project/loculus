@@ -62,11 +62,42 @@ export const getAuthUrl = async (redirectUrl: URL) => {
     return authUrlHttps;
 };
 
+async function getValidTokenFromCookies(context: APIContext) {
+    const token = await getTokenFromCookie(context);
+    if (token !== undefined) {
+        const userInfo = await getUserInfo(token);
+
+        if (userInfo.isErr()) {
+            logger.debug(`Cookie token found but could not get user info`);
+            deleteCookie(context);
+            return undefined;
+        }
+
+        return token;
+    }
+    return undefined;
+}
+
+async function getValidTokenFromParams(context: APIContext) {
+    const token = await getTokenFromParams(context);
+    if (token !== undefined) {
+        const userInfo = await getUserInfo(token);
+
+        if (userInfo.isErr()) {
+            logger.debug(`Token found in params but could not get user info`);
+            return undefined;
+        }
+
+        return token;
+    }
+    return undefined;
+}
+
 export const authMiddleware = defineMiddleware(async (context, next) => {
-    let token = await getTokenFromCookie(context);
+    let token = await getValidTokenFromCookies(context);
     if (token === undefined) {
-        logger.debug(`No token found in cookies. Cookies: ${JSON.stringify(context.cookies)}`);
-        token = await getTokenFromParams(context);
+        logger.debug(`No valid token found in cookies. Cookies: ${JSON.stringify(context.cookies)}`);
+        token = await getValidTokenFromParams(context);
         if (token !== undefined) {
             logger.debug(`Token found in params, setting cookie`);
             setCookie(context, token);
@@ -164,12 +195,12 @@ async function getTokenFromCookie(context: APIContext) {
 
     const verifiedTokenResult = await verifyToken(tokenCookie.accessToken);
     if (verifiedTokenResult.isErr() && verifiedTokenResult.error.type === TokenVerificationError.EXPIRED) {
+        deleteCookie(context);
         const refreshedToken = await refreshTokenViaKeycloak(tokenCookie).catch((error) => {
             logger.info(`Error refreshing token: ${error}`);
             return undefined;
         });
         if (refreshedToken === undefined) {
-            deleteCookie(context);
             return undefined;
         }
         setCookie(context, refreshedToken);
