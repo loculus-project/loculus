@@ -50,7 +50,7 @@ export async function getKeycloakClient() {
 
 export const getAuthUrl = async (redirectUrl: string) => {
     const authUrl = (await getKeycloakClient()).authorizationUrl({
-        redirect_uri: redirectUrl,
+        redirect_uri: redirectUrl.replace("http://", "https://"),
         scope: 'openid',
         response_type: 'code',
     });
@@ -235,7 +235,7 @@ async function getTokenFromParams(context: APIContext) {
     const params = client.callbackParams(context.url.toString());
     logger.info(`Keycloak callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
-        const redirectUri = removeTokenCodeFromSearchParams(context.url).replace('http://', 'https://');
+        const redirectUri = removeTokenCodeFromSearchParams(context.url);
         logger.info(`Keycloak callback redirect uri: ${redirectUri}`);
         const tokenSet = await client
             .callback(redirectUri, params, {
