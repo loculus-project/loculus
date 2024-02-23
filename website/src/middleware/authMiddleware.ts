@@ -256,12 +256,14 @@ export function setCookie(context: APIContext, token: TokenCookie) {
         sameSite: 'lax',
         secure: false,
         path: '/',
+        domain: '.loculus.org',
     });
     context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, {
         httpOnly: true,
         sameSite: 'lax',
         secure: false,
         path: '/',
+        domain: '.loculus.org',
     });
     logger.debug(`Cookie set. Cookies now: ${JSON.stringify(context.cookies)}`);
 }
@@ -269,8 +271,8 @@ export function setCookie(context: APIContext, token: TokenCookie) {
 function deleteCookie(context: APIContext) {
     logger.debug(`Deleting cookies. Cookies before deletion: ${JSON.stringify(context.cookies)}`);
     try {
-        context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
-        context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
+        context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/', domain: '.loculus.org' });
+        context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/', domain: '.loculus.org' });
     } catch {
         logger.info(`Error deleting cookie`);
     }
