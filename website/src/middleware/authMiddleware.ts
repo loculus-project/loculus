@@ -49,8 +49,9 @@ export async function getKeycloakClient() {
 }
 
 export const getAuthUrl = async (redirectUrl: string) => {
+    const redirectUri = removeTokenCodeFromSearchParams(new URL(redirectUrl)).replace('http://', 'https://');
     const authUrl = (await getKeycloakClient()).authorizationUrl({
-        redirect_uri: redirectUrl,
+        redirect_uri: redirectUri,
         scope: 'openid',
         response_type: 'code',
     });
