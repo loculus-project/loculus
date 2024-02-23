@@ -101,8 +101,11 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
             context.locals.session = {
                 isLoggedIn: false,
             };
+            deleteCookie(context);
             return next();
         }
+
+        logger.debug(`User authenticated, setting session and continuing`);
 
         context.locals.session = {
             isLoggedIn: true,
@@ -164,6 +167,7 @@ async function getTokenFromCookie(context: APIContext) {
     }
     if (verifiedTokenResult.isErr()) {
         logger.info(`Error verifying token: ${verifiedTokenResult.error.message}`);
+        deleteCookie(context);
         return undefined;
     }
 
@@ -221,6 +225,7 @@ async function verifyToken(accessToken: string) {
 }
 
 async function getUserInfo(token: TokenCookie) {
+    logger.debug(`Getting user info for token: ${JSON.stringify(token)}`);
     return ResultAsync.fromPromise((await getKeycloakClient()).userinfo(token.accessToken), (error) => {
         logger.info(`Error getting user info: ${error}`);
         return error;
