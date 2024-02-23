@@ -102,7 +102,6 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
                 isLoggedIn: false,
             };
             logger.debug(`Token found but could not get user info, not enforcing login`);
-            deleteCookie(context);
             return next();
         }
 
@@ -132,7 +131,6 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     const userInfo = await getUserInfo(token);
     if (userInfo.isErr()) {
         logger.debug(`Failed to get user info, redirecting to auth`);
-        deleteCookie(context);
         return redirectToAuth(context);
     }
 
@@ -285,8 +283,8 @@ function deleteCookie(context: APIContext) {
         `Deleting cookies. Cookies before deletion: ${JSON.stringify(context.cookies.get(ACCESS_TOKEN_COOKIE))}`,
     );
     try {
-        context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/', domain: '.loculus.org' });
-        context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/', domain: '.loculus.org' });
+        context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
+        context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
     } catch {
         logger.info(`Error deleting cookie`);
     }
