@@ -252,7 +252,6 @@ async function getTokenFromParamsOrCookie(context: APIContext) {
 }
 
 export function setCookie(context: APIContext, token: TokenCookie) {
-    deleteCookie(context);
     context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
         httpOnly: true,
         sameSite: 'lax',
@@ -313,7 +312,7 @@ async function refreshTokenViaKeycloak(token: TokenCookie) {
 
 function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined) {
     if (tokenSet === undefined || tokenSet.access_token === undefined || tokenSet.refresh_token === undefined) {
-        logger.error(`Error extracting token cookie from token set`);
+        logger.debug(`Could not extract token cookie from token set`);
         return undefined;
     }
 
