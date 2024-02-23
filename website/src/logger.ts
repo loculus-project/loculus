@@ -26,8 +26,13 @@ export type InstanceLogger = ReturnType<typeof getInstanceLogger>;
 
 export const getInstanceLogger = (instance: string) => {
     return {
+        // Winston uses npm log levels by default
         error: (message: string) => getLogger().error(message, { instance }),
+        warn: (message: string) => getLogger().warn(message, { instance }),
         info: (message: string) => getLogger().info(message, { instance }),
+        http: (message: string) => getLogger().http(message, { instance }),
+        verbose: (message: string) => getLogger().verbose(message, { instance }),
         debug: (message: string) => getLogger().debug(message, { instance }),
+        silly: (message: string) => getLogger().silly(message, { instance }),
     };
 };
