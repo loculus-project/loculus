@@ -57,6 +57,7 @@ spec:
           args:
             - "start"
             - "--import-realm"
+            - "--proxy edge"
             # - "--hostname-debug=true"
           ports:
             - containerPort: 8080
