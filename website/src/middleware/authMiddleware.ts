@@ -239,7 +239,9 @@ async function checkToken(token: TokenCookie) {
 }
 
 async function getTokenFromParamsOrCookie(context: APIContext) {
-    for (const token of [await getTokenFromParams(context), await getTokenFromCookie(context)]) {
+    const tokenProviders = [getTokenFromCookie, getTokenFromParams];
+    for (const tokenProvider of tokenProviders) {
+        const token = await tokenProvider(context);
         if (token !== undefined) {
             const validToken = await checkToken(token);
             if (validToken !== undefined) {
