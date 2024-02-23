@@ -9,8 +9,6 @@ import { getConfiguredOrganisms, getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
-const { decode, verify } = jsonwebtoken;
-
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
 
@@ -21,7 +19,7 @@ enum TokenVerificationError {
 }
 
 export const clientMetadata = {
-    client_id: 'test-cli',
+    client_id: 'test-cli', // TODO: #1100 Replace with actual client id
     response_types: ['code', 'id_token'],
     client_secret: 'someSecret',
     public: true,
@@ -58,6 +56,7 @@ export const getAuthUrl = async (redirectUrl: string) => {
 };
 
 async function getValidTokenAndUserInfoFromCookie(context: APIContext) {
+    logger.debug(`Trying to get token and user info from cookie`);
     const token = await getTokenFromCookie(context);
     if (token !== undefined) {
         const userInfo = await getUserInfo(token);
@@ -65,40 +64,42 @@ async function getValidTokenAndUserInfoFromCookie(context: APIContext) {
         if (userInfo.isErr()) {
             logger.debug(`Cookie token found but could not get user info`);
             deleteCookie(context);
-            return {};
+            return undefined;
         }
+        logger.debug(`Token and valid user info found in cookie`);
         return {
             token,
             userInfo,
         };
     }
-    return {};
+    return undefined;
 }
 
 async function getValidTokenAndUserInfoFromParams(context: APIContext) {
+    logger.debug(`Trying to get token and user info from params`);
     const token = await getTokenFromParams(context);
     if (token !== undefined) {
         const userInfo = await getUserInfo(token);
 
         if (userInfo.isErr()) {
             logger.debug(`Token found in params but could not get user info`);
-            return {};
+            return undefined;
         }
-
+        logger.debug(`Token and valid user info found in params`);
         return {
             token,
             userInfo,
         };
     }
-    return {};
+    return undefined;
 }
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
-    let { token, userInfo } = await getValidTokenAndUserInfoFromCookie(context);
+    let { token, userInfo } = (await getValidTokenAndUserInfoFromCookie(context)) ?? {};
     if (token === undefined) {
         const paramResult = await getValidTokenAndUserInfoFromParams(context);
-        token = paramResult.token;
-        userInfo = paramResult.userInfo;
+        token = paramResult?.token;
+        userInfo = paramResult?.userInfo;
 
         if (token !== undefined) {
             logger.debug(`Token found in params, setting cookie`);
@@ -160,20 +161,23 @@ async function getTokenFromCookie(context: APIContext) {
         refreshToken,
     };
 
-    const verifiedTokenResult = await verifyToken(tokenCookie.accessToken);
+    const verifiedTokenResult = await verifyToken(accessToken);
     if (verifiedTokenResult.isErr() && verifiedTokenResult.error.type === TokenVerificationError.EXPIRED) {
+        logger.debug(`Token expired, trying to refresh`);
         return refreshTokenViaKeycloak(tokenCookie);
     }
     if (verifiedTokenResult.isErr()) {
-        logger.error(`Error verifying token: ${verifiedTokenResult.error.message}`);
+        logger.info(`Error verifying token: ${verifiedTokenResult.error.message}`);
         return undefined;
     }
+    logger.debug(`Token successfully verified, returning it`);
 
     return tokenCookie;
 }
 
 async function verifyToken(accessToken: string) {
-    const tokenHeader = decode(accessToken, { complete: true })?.header;
+    logger.debug(`Verifying token`);
+    const tokenHeader = jsonwebtoken.decode(accessToken, { complete: true })?.header;
     const kid = tokenHeader?.kid;
     if (kid === undefined) {
         return err({
@@ -199,8 +203,9 @@ async function verifyToken(accessToken: string) {
 
     try {
         const signingKey = await jwksClient.getSigningKey(kid);
-        return ok(verify(accessToken, signingKey.getPublicKey()));
+        return ok(jsonwebtoken.verify(accessToken, signingKey.getPublicKey()));
     } catch (error) {
+        logger.debug(`Error verifying token: ${error}`);
         switch ((error as Error).name) {
             case 'TokenExpiredError':
                 return err({
@@ -224,25 +229,25 @@ async function verifyToken(accessToken: string) {
 
 async function getUserInfo(token: TokenCookie) {
     return ResultAsync.fromPromise((await getKeycloakClient()).userinfo(token.accessToken), (error) => {
-        logger.error(`Error getting user info: ${error}`);
+        logger.debug(`Error getting user info: ${error}`);
         return error;
     });
 }
 
-async function getTokenFromParams(context: APIContext) {
+async function getTokenFromParams(context: APIContext): Promise<TokenCookie | undefined> {
     const client = await getKeycloakClient();
 
     const params = client.callbackParams(context.url.toString());
-    logger.info(`Keycloak callback params: ${JSON.stringify(params)}`);
+    logger.debug(`Keycloak callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
         const redirectUri = removeTokenCodeFromSearchParams(context.url);
-        logger.info(`Keycloak callback redirect uri: ${redirectUri}`);
+        logger.debug(`Keycloak callback redirect uri: ${redirectUri}`);
         const tokenSet = await client
             .callback(redirectUri, params, {
                 response_type: 'code',
             })
             .catch((error) => {
-                logger.error(`Keycloak callback error: ${error}`);
+                logger.info(`Keycloak callback error: ${error}`);
                 return undefined;
             });
         return extractTokenCookieFromTokenSet(tokenSet);
@@ -251,6 +256,7 @@ async function getTokenFromParams(context: APIContext) {
 }
 
 export function setCookie(context: APIContext, token: TokenCookie) {
+    logger.debug(`Setting token cookie`);
     context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
         httpOnly: true,
         sameSite: 'lax',
@@ -266,17 +272,19 @@ export function setCookie(context: APIContext, token: TokenCookie) {
 }
 
 function deleteCookie(context: APIContext) {
+    logger.debug(`Deleting token cookie`);
     try {
         context.cookies.delete(ACCESS_TOKEN_COOKIE, { path: '/' });
         context.cookies.delete(REFRESH_TOKEN_COOKIE, { path: '/' });
     } catch {
-        logger.error(`Error deleting cookie`);
+        logger.info(`Error deleting cookie`);
     }
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Basic_concepts#guard
 const createRedirectWithModifiableHeaders = (url: string) => {
     const redirect = Response.redirect(url);
+    logger.debug(`Redirecting to ${url}`);
     return new Response(null, { status: redirect.status, headers: redirect.headers });
 };
 
@@ -291,7 +299,7 @@ const redirectToAuth = async (context: APIContext) => {
     return createRedirectWithModifiableHeaders(authUrl);
 };
 
-function removeTokenCodeFromSearchParams(url: URL) {
+function removeTokenCodeFromSearchParams(url: URL): string {
     const newUrl = new URL(url.toString());
 
     newUrl.searchParams.delete('code');
@@ -301,22 +309,25 @@ function removeTokenCodeFromSearchParams(url: URL) {
     return newUrl.toString();
 }
 
-async function refreshTokenViaKeycloak(token: TokenCookie) {
+async function refreshTokenViaKeycloak(token: TokenCookie): Promise<TokenCookie | undefined> {
     const refreshedTokenSet = await (await getKeycloakClient()).refresh(token.refreshToken).catch(() => {
-        logger.error(`Error refreshing token`);
+        logger.info(`Failed to refresh token`);
         return undefined;
     });
     return extractTokenCookieFromTokenSet(refreshedTokenSet);
 }
 
-function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined) {
-    if (tokenSet === undefined || tokenSet.access_token === undefined || tokenSet.refresh_token === undefined) {
+function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCookie | undefined {
+    const accessToken = tokenSet?.access_token;
+    const refreshToken = tokenSet?.refresh_token;
+
+    if (tokenSet === undefined || accessToken === undefined || refreshToken === undefined) {
         logger.error(`Error extracting token cookie from token set`);
         return undefined;
     }
 
     return {
-        accessToken: tokenSet.access_token,
-        refreshToken: tokenSet.refresh_token,
+        accessToken,
+        refreshToken,
     };
 }
