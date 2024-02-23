@@ -54,7 +54,7 @@ export const getAuthUrl = async (redirectUrl: string) => {
         scope: 'openid',
         response_type: 'code',
     });
-    return authUrl;
+    return authUrl.replace('http://', 'https://');
 };
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
