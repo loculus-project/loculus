@@ -1,119 +1,33 @@
-import argparse
 import dataclasses
 import json
 import logging
-import os
+import subprocess
 import time
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, field
 from tempfile import TemporaryDirectory
-from typing import Annotated, Any, Literal, Optional
+from typing import Any
 
 import requests
-import typer
 from Bio import SeqIO
 
-from .config import Config, load_config_from_yaml
-
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--backend-host",
-    type=str,
-    help="Host address of the Loculus backend",
+from loculus_preprocessing.config import Config, get_config
+from loculus_preprocessing.datatypes import (
+    AccessionVersion,
+    NextcladeResult,
+    ProcessedData,
+    ProcessedEntry,
+    UnprocessedData,
+    UnprocessedEntry,
 )
-parser.add_argument("--keycloak-host", type=str, help="Host address of Keycloak")
-parser.add_argument("--keycloak-user", type=str, help="Keycloak user to use for authentication")
-parser.add_argument(
-    "--keycloak-password",
-    type=str,
-    help="Keycloak password to use for authentication",
-)
-parser.add_argument("--keycloak-token-path", type=str, help="Path to Keycloak token endpoint")
-parser.add_argument("--config-file", type=str, help="Path to config file")
-parser.add_argument("--log-level", type=str, help="Log level")
-parser.add_argument("--keep-tmp-dir", action="store_true", help="Keep tmp dir")
-
-
 
 # Config precedence: CLI args > config file > default
 
-args = parser.parse_args()
 
-logging.basicConfig(level=args.log_level or logging.INFO)
-
-config = Config()
-
-if args.config_file:
-    config = load_config_from_yaml(args.config_file, config)
-
-for key, value in vars(args).items():
-    if value is not None and hasattr(config, key):
-        setattr(config, key, value)
-# Use the final configuration values
-
-logging.getLogger().setLevel(config.log_level)
-
-logging.info("Using config: {}".format(config))
-
-AccessionVersion = str
-
-
-@dataclass
-class UnprocessedData:
-    metadata: Mapping[str, str]
-    unalignedNucleotideSequences: Mapping[str, str]
-
-
-@dataclass
-class UnprocessedEntry:
-    accessionVersion: AccessionVersion  # {accession}.{version}
-    data: UnprocessedData
-
-
-@dataclass
-class ProcessedData:
-    metadata: dict[str, dict[str, Any]]
-    unalignedNucleotideSequences: dict[str, Any]
-    alignedNucleotideSequences: dict[str, Any]
-    nucleotideInsertions: dict[str, Any]
-    alignedAminoAcidSequences: dict[str, Any]
-    aminoAcidInsertions: dict[str, Any]
-
-
-@dataclass
-class AnnotationSource:
-    field: str
-    type: Literal["metadata", "nucleotideSequence"]
-
-
-@dataclass
-class ProcessingAnnotation:
-    source: AnnotationSource
-    message: str
-
-@dataclass
-class Annotation:
-    message: str
-
-
-
-@dataclass
-class ProcessedEntry:
-    accession: int
-    version: int
-    data: ProcessedData
-    errors: list[ProcessingAnnotation] = field(default_factory=list)
-    warnings: list[ProcessingAnnotation] = field(default_factory=list)
-
-
-NextcladeResult = dict[str, dict[str, Any]]
-
-
-def fetch_unprocessed_sequences(n: int) -> Sequence[UnprocessedEntry]:
+def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n}
-    headers = {"Authorization": "Bearer " + get_jwt()}
+    headers = {"Authorization": "Bearer " + get_jwt(config)}
     response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         raise Exception(
@@ -142,7 +56,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 
 
 def run_nextclade(
-    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str
+    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Mapping[AccessionVersion, NextcladeResult]:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         # TODO: Generalize for multiple segments (flu)
@@ -151,20 +65,19 @@ def run_nextclade(
             for sequence in unprocessed:
                 f.write(f">{sequence.accessionVersion}\n")
                 f.write(f"{sequence.data.unalignedNucleotideSequences['main']}\n")
-        command = " ".join(
-            [
-                "nextclade3 run",
-                f"--output-all {result_dir}",
-                f"--input-dataset {dataset_dir}",
-                f"--output-translations {result_dir}/nextclade.cds_translation.{{cds}}.fasta",
-                "--",
-                f"{input_file}",
-            ]
-        )
+        command = [
+            "nextclade3",
+            "run",
+            f"--output-all={result_dir}",
+            f"--input-dataset={dataset_dir}",
+            f"--output-translations={result_dir}/nextclade.cds_translation.{{cds}}.fasta",
+            "--",
+            f"{input_file}",
+        ]
         logging.debug(f"Running nextclade: {command}")
 
         # TODO: Capture stderr and log at DEBUG level
-        exit_code = os.system(command)
+        exit_code = subprocess.run(command).returncode
         if exit_code != 0:
             raise Exception("nextclade failed with exit code {}".format(exit_code))
 
@@ -248,16 +161,18 @@ def run_nextclade(
         return processed
 
 
-def id_from_str(id_str: AccessionVersion) -> int:
-    return int(id_str.split(".")[0])
+def id_from_str(id_str: AccessionVersion) -> str:
+    return id_str.split(".")[0]
 
 
 def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
 
 
-def process(unprocessed: Sequence[UnprocessedEntry], dataset_dir: str) -> Sequence[ProcessedEntry]:
-    nextclade_results = run_nextclade(unprocessed, dataset_dir)
+def process(
+    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
+) -> Sequence[ProcessedEntry]:
+    nextclade_results = run_nextclade(unprocessed, dataset_dir, config)
     processed = [
         ProcessedEntry(
             accession=id_from_str(sequence_id),
@@ -277,13 +192,13 @@ def process(unprocessed: Sequence[UnprocessedEntry], dataset_dir: str) -> Sequen
     return processed
 
 
-def submit_processed_sequences(processed: Sequence[ProcessedEntry]):
+def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Config):
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = "\n".join(json_strings)
     url = config.backend_host.rstrip("/") + "/submit-processed-data"
     headers = {
         "Content-Type": "application/x-ndjson",
-        "Authorization": "Bearer " + get_jwt(),
+        "Authorization": "Bearer " + get_jwt(config),
     }
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:
@@ -295,7 +210,7 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry]):
     logging.info("Processed data submitted successfully")
 
 
-def get_jwt():
+def get_jwt(config: Config):
     url = config.keycloak_host.rstrip("/") + "/" + config.keycloak_token_path.lstrip("/")
     data = {
         "client_id": "test-cli",
@@ -318,55 +233,40 @@ def get_jwt():
             raise Exception(error_msg)
 
 
-def main(
-    backend_host: Annotated[
-        Optional[str],
-        typer.Option(None, help="Host address of the Loculus backend"),
-    ] = None,
-    keycloak_host: Annotated[
-        Optional[str], typer.Option(None, help="Host address of Keycloak")
-    ] = None,
-    keycloak_user: Annotated[
-        Optional[str],
-        typer.Option(None, help="Keycloak user to use for authentication"),
-    ] = None,
-    keycloak_password: Annotated[
-        Optional[str],
-        typer.Option(None, help="Keycloak password to use for authentication"),
-    ] = None,
-    keycloak_token_path: Annotated[
-        Optional[str],
-        typer.Option(None, help="Path to Keycloak token endpoint"),
-    ] = None,
-    config_file: Annotated[Optional[str], typer.Option(None, help="Path to config file")] = None,
-    log_level: Annotated[Optional[str], typer.Option(None, help="Log level")] = None,
-    keep_tmp_dir: Annotated[bool, typer.Option(False, help="Keep tmp dir")] = False,
-):
+def main():
+    logging.basicConfig(level=logging.INFO)
+
+    config = get_config()
+
+    logging.getLogger().setLevel(config.log_level)
+
+    logging.info("Using config: {}".format(config))
+
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
-        dataset_download_command = " ".join(
-            [
-                "nextclade3 dataset get",
-                f"--name {config.nextclade_dataset_name}",
-                f"--output-dir {dataset_dir}",
-            ]
-        )
+        dataset_download_command = [
+            "nextclade3",
+            "dataset",
+            "get",
+            f"--name={config.nextclade_dataset_name}",
+            f"--output-dir={dataset_dir}",
+        ]
 
         logging.debug(f"Downloading Nextclade dataset: {dataset_download_command}")
-        if os.system(dataset_download_command) != 0:
+        if subprocess.run(dataset_download_command).returncode != 0:
             raise Exception("Dataset download failed")
         total_processed = 0
         while True:
             logging.debug("Fetching unprocessed sequences")
-            unprocessed = fetch_unprocessed_sequences(config.batch_size)
+            unprocessed = fetch_unprocessed_sequences(config.batch_size, config)
             if len(unprocessed) == 0:
                 # sleep 1 sec and try again
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
             # Process the sequences, get result as dictionary
-            processed = process(unprocessed, dataset_dir)
+            processed = process(unprocessed, dataset_dir, config)
             # Submit the result
-            submit_processed_sequences(processed)
+            submit_processed_sequences(processed, config)
             total_processed += len(processed)
             logging.info("Processed {} sequences".format(len(processed)))
         logging.info("Total processed sequences: {}".format(total_processed))

@@ -1,2 +1,2 @@
 from .config import *
-from .main import *
+from .prepro import *

@@ -17,4 +17,4 @@ name = "loculus_preprocessing"
 version = "0.1.0"
 
 [project.scripts]
-prepro = "loculus_preprocessing.main:main"
+prepro = "loculus_preprocessing.prepro:main"
