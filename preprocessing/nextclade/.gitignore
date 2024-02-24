@@ -1,7 +1,10 @@
 # Python
 venv/
+__pycache__/
+.mypy_cache/
 
 # Editors
 .idea/
+.vscode/
 
 config.yaml

@@ -7,9 +7,10 @@ import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from tempfile import TemporaryDirectory
-from typing import Any, Literal
+from typing import Annotated, Any, Literal, Optional
 
 import requests
+import typer
 from Bio import SeqIO
 
 from .config import Config, load_config_from_yaml
@@ -21,18 +22,18 @@ parser.add_argument(
     help="Host address of the Loculus backend",
 )
 parser.add_argument("--keycloak-host", type=str, help="Host address of Keycloak")
+parser.add_argument("--keycloak-user", type=str, help="Keycloak user to use for authentication")
 parser.add_argument(
-    "--keycloak-user", type=str, help="Keycloak user to use for authentication"
+    "--keycloak-password",
+    type=str,
+    help="Keycloak password to use for authentication",
 )
-parser.add_argument(
-    "--keycloak-password", type=str, help="Keycloak password to use for authentication"
-)
-parser.add_argument(
-    "--keycloak-token-path", type=str, help="Path to Keycloak token endpoint"
-)
+parser.add_argument("--keycloak-token-path", type=str, help="Path to Keycloak token endpoint")
 parser.add_argument("--config-file", type=str, help="Path to config file")
 parser.add_argument("--log-level", type=str, help="Log level")
 parser.add_argument("--keep-tmp-dir", action="store_true", help="Keep tmp dir")
+
+
 
 # Config precedence: CLI args > config file > default
 
@@ -90,6 +91,11 @@ class ProcessingAnnotation:
     source: AnnotationSource
     message: str
 
+@dataclass
+class Annotation:
+    message: str
+
+
 
 @dataclass
 class ProcessedEntry:
@@ -111,9 +117,7 @@ def fetch_unprocessed_sequences(n: int) -> Sequence[UnprocessedEntry]:
     response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         raise Exception(
-            "Fetching unprocessed data failed. Status code: {}".format(
-                response.status_code
-            ),
+            "Fetching unprocessed data failed. Status code: {}".format(response.status_code),
             response.text,
         )
     return parse_ndjson(response.text)
@@ -127,9 +131,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         json_object = json.loads(json_str)
         unprocessed_data = UnprocessedData(
             metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=json_object["data"][
-                "unalignedNucleotideSequences"
-            ],
+            unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
         )
         entry = UnprocessedEntry(
             accessionVersion=f"{json_object['accession']}.{json_object['version']}",
@@ -207,8 +209,7 @@ def run_nextclade(
                 "unalignedNuc": unprocessed_sequence.data.unalignedNucleotideSequences,
                 "alignedNuc": "N" * config.reference_length,
                 "alignedTranslations": {
-                    gene: "X" * gene_length
-                    for gene, gene_length in config.genes.items()
+                    gene: "X" * gene_length for gene, gene_length in config.genes.items()
                 },
                 "metadata": processed_metadata[unprocessed_sequence.accessionVersion],
             }
@@ -255,9 +256,7 @@ def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
 
 
-def process(
-    unprocessed: Sequence[UnprocessedEntry], dataset_dir: str
-) -> Sequence[ProcessedEntry]:
+def process(unprocessed: Sequence[UnprocessedEntry], dataset_dir: str) -> Sequence[ProcessedEntry]:
     nextclade_results = run_nextclade(unprocessed, dataset_dir)
     processed = [
         ProcessedEntry(
@@ -265,16 +264,10 @@ def process(
             version=version_from_str(sequence_id),
             data=ProcessedData(
                 metadata=nextclade_results[sequence_id]["metadata"],
-                unalignedNucleotideSequences=nextclade_results[sequence_id][
-                    "unalignedNuc"
-                ],
-                alignedNucleotideSequences={
-                    "main": nextclade_results[sequence_id]["alignedNuc"]
-                },
+                unalignedNucleotideSequences=nextclade_results[sequence_id]["unalignedNuc"],
+                alignedNucleotideSequences={"main": nextclade_results[sequence_id]["alignedNuc"]},
                 nucleotideInsertions={"main": []},
-                alignedAminoAcidSequences=nextclade_results[sequence_id][
-                    "alignedTranslations"
-                ],
+                alignedAminoAcidSequences=nextclade_results[sequence_id]["alignedTranslations"],
                 aminoAcidInsertions={gene: [] for gene in config.genes},
             ),
         )
@@ -303,9 +296,7 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry]):
 
 
 def get_jwt():
-    url = (
-        config.keycloak_host.rstrip("/") + "/" + config.keycloak_token_path.lstrip("/")
-    )
+    url = config.keycloak_host.rstrip("/") + "/" + config.keycloak_token_path.lstrip("/")
     data = {
         "client_id": "test-cli",
         "username": config.keycloak_user,
@@ -321,14 +312,36 @@ def get_jwt():
             return response.json()["access_token"]
         else:
             error_msg = (
-                f"Fetching JWT failed with status code {response.status_code}: "
-                f"{response.text}"
+                f"Fetching JWT failed with status code {response.status_code}: " f"{response.text}"
             )
             logging.error(error_msg)
             raise Exception(error_msg)
 
 
-def main():
+def main(
+    backend_host: Annotated[
+        Optional[str],
+        typer.Option(None, help="Host address of the Loculus backend"),
+    ] = None,
+    keycloak_host: Annotated[
+        Optional[str], typer.Option(None, help="Host address of Keycloak")
+    ] = None,
+    keycloak_user: Annotated[
+        Optional[str],
+        typer.Option(None, help="Keycloak user to use for authentication"),
+    ] = None,
+    keycloak_password: Annotated[
+        Optional[str],
+        typer.Option(None, help="Keycloak password to use for authentication"),
+    ] = None,
+    keycloak_token_path: Annotated[
+        Optional[str],
+        typer.Option(None, help="Path to Keycloak token endpoint"),
+    ] = None,
+    config_file: Annotated[Optional[str], typer.Option(None, help="Path to config file")] = None,
+    log_level: Annotated[Optional[str], typer.Option(None, help="Log level")] = None,
+    keep_tmp_dir: Annotated[bool, typer.Option(False, help="Keep tmp dir")] = False,
+):
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         dataset_download_command = " ".join(
             [
