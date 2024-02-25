@@ -175,7 +175,7 @@ export const navigationItems = {
     ],
 };
 
-function topNavigationItems(organism: string | undefined) {
+function topNavigationItems(organism: string | undefined, isLoggedIn: boolean) {
     if (organism === undefined) {
         return [
             {
@@ -187,7 +187,7 @@ function topNavigationItems(organism: string | undefined) {
                 path: routes.organismSelectorPage('submit'),
             },
             {
-                text: 'User',
+                text: isLoggedIn ? 'Account' : 'Login',
                 path: routes.userOverviewPage(),
             },
             {
@@ -211,7 +211,7 @@ function topNavigationItems(organism: string | undefined) {
             path: routes.revisePage(organism),
         },
         {
-            text: 'User',
+            text: isLoggedIn ? 'Account' : 'Login',
             path: routes.userOverviewPage(organism),
         },
         {

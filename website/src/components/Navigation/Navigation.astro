@@ -4,14 +4,16 @@ import { cleanOrganism } from './cleanOrganism';
 import { navigationItems } from '../../routes';
 
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
+
+const isLoggedIn = Astro.locals.session.isLoggedIn;
 ---
 
 <div class='flex justify-end'>
     <div class='subtitle hidden sm:flex sm:z-6 gap-4'>
-        {navigationItems.top(organism?.key).map(({ text, path }) => <a href={path}>{text}</a>)}
+        {navigationItems.top(organism?.key, isLoggedIn).map(({ text, path }) => <a href={path}>{text}</a>)}
     </div>
 
     <div class='sm:hidden fixed z-0'>
-        <SandwichMenu top={16} right={28} organism={organism} knownOrganisms={knownOrganisms} client:load />
+        <SandwichMenu top={16} right={28} organism={organism} knownOrganisms={knownOrganisms} isLoggedIn={isLoggedIn} client:load />
     </div>
 </div>
