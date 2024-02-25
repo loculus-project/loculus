@@ -24,7 +24,7 @@ spec:
       containers:
         {{- if not .Values.disableWebsite }}
         - name: website
-          image: mendhak/http-https-echo
+          image: "mendhak/http-https-echo"
           env:
             - name: HTTP_PORT
               value: 3000
