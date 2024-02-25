@@ -1,4 +1,4 @@
-from . import config, datatypes, prepro
-from .config import *
-from .datatypes import *
-from .prepro import *
+from . import backend as backend
+from . import config as config
+from . import datatypes as datatypes
+from . import prepro as prepro

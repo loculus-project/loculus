@@ -10,6 +10,7 @@ from typing import Any
 import requests
 from Bio import SeqIO
 
+from .backend import get_jwt
 from .config import Config
 from .datatypes import (
     AccessionVersion,
@@ -19,8 +20,6 @@ from .datatypes import (
     UnprocessedData,
     UnprocessedEntry,
 )
-
-# Config precedence: CLI args > config file > default
 
 
 def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
@@ -208,29 +207,6 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
             + f"Data sent in request: {ndjson_string[0:1000]}...\n"
         )
     logging.info("Processed data submitted successfully")
-
-
-def get_jwt(config: Config) -> str:
-    url = config.keycloak_host.rstrip("/") + "/" + config.keycloak_token_path.lstrip("/")
-    data = {
-        "client_id": "test-cli",
-        "username": config.keycloak_user,
-        "password": config.keycloak_password,
-        "grant_type": "password",
-    }
-
-    logging.debug(f"Requesting JWT from {url}")
-
-    with requests.post(url, data=data) as response:
-        if response.ok:
-            logging.debug("JWT fetched successfully.")
-            return response.json()["access_token"]
-        else:
-            error_msg = (
-                f"Fetching JWT failed with status code {response.status_code}: " f"{response.text}"
-            )
-            logging.error(error_msg)
-            raise Exception(error_msg)
 
 
 def run(config: Config) -> None:

@@ -1,6 +1,6 @@
 channels:
-  - conda-forge  # '~/.condarc'
-  - bioconda  # '~/.condarc'
+  - conda-forge
+  - bioconda
 repodata_use_zst: true
 channel_priority: strict
 download_threads: 20

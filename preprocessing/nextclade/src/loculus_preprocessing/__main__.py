@@ -15,5 +15,6 @@ def cli_entry() -> None:
 
     run(config)
 
+
 if __name__ == "__main__":
     cli_entry()

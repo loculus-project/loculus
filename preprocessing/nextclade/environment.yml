@@ -8,5 +8,5 @@ dependencies:
   - nextclade=3.2.1
   - PyYAML
   - requests=2.31
-  - typer=0.9.0
+  - pyjwt=2.8
   - pip
