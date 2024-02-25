@@ -73,20 +73,27 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, know
     );
 };
 
+type IndentLevel = 1 | 2;
+
 type OffCanvasNavItemProps = {
     text: string;
     path: string | false;
-    level: 1 | 2;
+    level: IndentLevel;
     type?: 'small';
 };
 
 const OffCanvasNavItem: FC<OffCanvasNavItemProps> = ({ text, level, path, type }) => {
     const height = type === 'small' ? 'py-1' : 'py-3';
 
+    const indent: { [K in IndentLevel]: string } = {
+        1: 'ml-4',
+        2: 'ml-8',
+    };
+
     return (
         <div>
             <div className='flex items-center'>
-                <div className={`ml-${4 * level} ${height}`}>{path === false ? text : <a href={path}> {text}</a>}</div>
+                <div className={`${indent[level]} ${height}`}>{path === false ? text : <a href={path}> {text}</a>}</div>
             </div>
         </div>
     );
