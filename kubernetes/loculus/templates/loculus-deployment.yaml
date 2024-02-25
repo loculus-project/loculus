@@ -27,7 +27,7 @@ spec:
           image: "mendhak/http-https-echo"
           env:
             - name: HTTP_PORT
-              value: 3000
+              value: "3000"
           imagePullPolicy: Always
           resources:
             requests:
