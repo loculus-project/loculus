@@ -6,16 +6,19 @@ apiVersion: traefik.containo.us/v1alpha1
 kind: IngressRoute
 metadata:
   name: loculus-website-ingressroute
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    link.argocd.argoproj.io/external-link: https://{{ .Values.host }}
 spec:
   entryPoints:
-    - web
     - websecure
   routes:
-  - match: Host(`{{ .Values.host }}`)
-    kind: Rule
-    services:
-    - name: loculus-website-service
-      port: 3000
+    - kind: Rule
+      match: Host(`{{ .Values.host }}`)
+      priority: 10
+      services:
+        - name: loculus-website-service
+          port: 3000
   tls:
     certResolver: myresolver
 ---
