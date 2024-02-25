@@ -9,7 +9,7 @@ const organismIndependentNavigationItems = [
 ];
 
 const organismNavigationItems = [
-    { link: 'Search', title: '[Organism] - Browse' },
+    { link: 'Browse', title: '[Organism] - Browse' },
     { link: 'Submit', title: 'Submit' },
     { link: 'User', title: 'Login' },
     { link: 'Sequence Overview', title: 'Sequences' },
