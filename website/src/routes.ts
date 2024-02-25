@@ -72,6 +72,7 @@ export const routes = {
     },
     notFoundPage: () => `/404`,
     logout: () => '/logout',
+    organismSelectorPage: (redirectTo: string) => `/organism-selector?redirectTo=${redirectTo}`,
 };
 
 export type ClassOfSearchPageType = 'SEARCH' | 'MY_SEQUENCES';
@@ -178,6 +179,14 @@ function topNavigationItems(organism: string | undefined) {
     if (organism === undefined) {
         return [
             {
+                text: 'Browse',
+                path: routes.organismSelectorPage('search'),
+            },
+            {
+                text: 'Submit',
+                path: routes.organismSelectorPage('submit'),
+            },
+            {
                 text: 'User',
                 path: routes.userOverviewPage(),
             },
@@ -190,7 +199,7 @@ function topNavigationItems(organism: string | undefined) {
 
     return [
         {
-            text: 'Search',
+            text: 'Browse',
             path: routes.searchPage(organism),
         },
         {
