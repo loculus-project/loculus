@@ -1,8 +1,8 @@
 ---
-import { getConfiguredOrganisms } from '../config';
-import BaseLayout from '../layouts/BaseLayout.astro';
-import { routes } from '../routes';
-const redirectTo = Astro.url.searchParams.get('redirectTo');
+import { getConfiguredOrganisms } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { routes } from '../../routes';
+const redirectTo = Astro.params.redirectTo;
 
 const purposes: { [key: string]: string } = {
     submit: 'for which you want to submit data',

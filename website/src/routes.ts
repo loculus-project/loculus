@@ -72,7 +72,7 @@ export const routes = {
     },
     notFoundPage: () => `/404`,
     logout: () => '/logout',
-    organismSelectorPage: (redirectTo: string) => `/organism-selector?redirectTo=${redirectTo}`,
+    organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
 };
 
 export type ClassOfSearchPageType = 'SEARCH' | 'MY_SEQUENCES';
