@@ -24,7 +24,10 @@ spec:
       containers:
         {{- if not .Values.disableWebsite }}
         - name: website
-          image: "ghcr.io/loculus-project/website:{{ $dockerTag }}"
+          image: mendhak/http-https-echo
+          env:
+            - name: HTTP_PORT
+              value: 3000
           imagePullPolicy: Always
           resources:
             requests:
