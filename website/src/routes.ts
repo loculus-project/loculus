@@ -1,3 +1,4 @@
+import { cleanOrganism } from './components/Navigation/cleanOrganism.ts';
 import type { AccessionVersion } from './types/backend.ts';
 import type { FilterValue, MutationFilter } from './types/config.ts';
 import type { OrderBy } from './types/lapis.ts';
@@ -214,4 +215,25 @@ function topNavigationItems(organism: string | undefined) {
 
 function withOrganism(organism: string, path: `/${string}`) {
     return `/${organism}${path}`;
+}
+
+function currentOrganism(path: string): string | undefined {
+    const parts = path.split('/');
+    if (parts.length < 2) {
+        return undefined;
+    }
+    // Check it's a known organism
+    return cleanOrganism(parts[1]).organism?.key;
+}
+
+export function switchOrganism(path: string, newOrganism: string) {
+    const currentOrg = currentOrganism(path);
+    if (currentOrg === newOrganism) {
+        return path;
+    }
+    const parts = path.split('/');
+    if (parts.length === 1) {
+        return routes.organismStartPage(newOrganism);
+    }
+    return `/${newOrganism}/${parts[2]}`;
 }

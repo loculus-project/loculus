@@ -1,11 +1,13 @@
 ---
 import { cleanOrganism } from './cleanOrganism';
-import { routes } from '../../routes';
+import { routes, switchOrganism } from '../../routes';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 const { knownOrganisms, organism } = cleanOrganism(Astro.params.organism);
 
 const label = organism === undefined ? 'Organisms' : organism.displayName;
+
+const currentPath = Astro.url.pathname;
 ---
 
 <div class='dropdown dropdown-hover hidden sm:flex relative'>
@@ -17,7 +19,7 @@ const label = organism === undefined ? 'Organisms' : organism.displayName;
         {
             knownOrganisms.map((knownOrganism) => (
                 <li>
-                    <a href={routes.organismStartPage(knownOrganism.key)}>{knownOrganism.displayName}</a>
+                    <a href={switchOrganism(currentPath, knownOrganism.key)}>{knownOrganism.displayName}</a>
                 </li>
             ))
         }
