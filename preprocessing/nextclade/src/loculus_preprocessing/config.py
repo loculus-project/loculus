@@ -5,12 +5,13 @@ import logging
 import os
 from dataclasses import dataclass
 from types import UnionType
-from typing import get_args
+from typing import Type, get_args
 
 import yaml
 
 logger = logging.getLogger(__name__)
 
+# Dataclass types for which we can generate CLI arguments
 CLI_TYPES = [str, int, float, bool]
 
 @dataclass
@@ -50,7 +51,7 @@ def kebab(s: str) -> str:
     """ Convert snake_case to kebab-case """
     return s.replace('_', '-')
 
-def generate_argparse_from_dataclass(config_cls: Config) -> argparse.ArgumentParser:
+def generate_argparse_from_dataclass(config_cls: Type[Config]) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description='Command-line arguments for Config class')
     for field in dataclasses.fields(config_cls):
         field_name = kebab(field.name)

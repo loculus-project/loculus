@@ -10,8 +10,8 @@ from typing import Any
 import requests
 from Bio import SeqIO
 
-from loculus_preprocessing.config import Config, get_config
-from loculus_preprocessing.datatypes import (
+from .config import Config
+from .datatypes import (
     AccessionVersion,
     NextcladeResult,
     ProcessedData,
@@ -192,7 +192,7 @@ def process(
     return processed
 
 
-def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Config):
+def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Config) -> None:
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = "\n".join(json_strings)
     url = config.backend_host.rstrip("/") + "/submit-processed-data"
@@ -210,7 +210,7 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
     logging.info("Processed data submitted successfully")
 
 
-def get_jwt(config: Config):
+def get_jwt(config: Config) -> str:
     url = config.keycloak_host.rstrip("/") + "/" + config.keycloak_token_path.lstrip("/")
     data = {
         "client_id": "test-cli",
@@ -233,15 +233,7 @@ def get_jwt(config: Config):
             raise Exception(error_msg)
 
 
-def main():
-    logging.basicConfig(level=logging.INFO)
-
-    config = get_config()
-
-    logging.getLogger().setLevel(config.log_level)
-
-    logging.info("Using config: {}".format(config))
-
+def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
         dataset_download_command = [
             "nextclade3",
@@ -269,8 +261,3 @@ def main():
             submit_processed_sequences(processed, config)
             total_processed += len(processed)
             logging.info("Processed {} sequences".format(len(processed)))
-        logging.info("Total processed sequences: {}".format(total_processed))
-
-
-if __name__ == "__main__":
-    main()
