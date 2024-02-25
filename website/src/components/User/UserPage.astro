@@ -6,7 +6,7 @@ import { getKeycloakClient } from '../../middleware/authMiddleware';
 import { routes } from '../../routes';
 import { getAccessToken } from '../../utils/getAccessToken';
 const session = Astro.locals.session;
-const username = session.user?.username ?? ''; // Page only accessible if logged in
+const username = session.user!.username; // Page only accessible if logged in
 const name = session.user?.name;
 
 const accessToken = getAccessToken(Astro.locals.session)!;
