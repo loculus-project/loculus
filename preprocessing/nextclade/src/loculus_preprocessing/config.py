@@ -90,7 +90,7 @@ def get_config() -> Config:
         config = load_config_from_yaml(args.config_file, config)
 
     # Use environment variables if available
-    for key, value in config.__dict__.items():
+    for key in config.__dict__.keys():
         env_var = f"PREPROCESSING_{key.upper()}"
         if env_var in os.environ:
             setattr(config, key, os.environ[env_var])

@@ -12,17 +12,17 @@ from .config import Config
 
 
 class JwtCache:
-    def __init__(self):
+    def __init__(self) -> None:
         self.token: str = ""
         self.expiration: dt.datetime = dt.datetime.min
 
-    def get_token(self):
+    def get_token(self) -> str | None:
         # Only use token if it's got more than 5 minutes left
         if self.token and self.expiration > dt.datetime.now() + dt.timedelta(minutes=5):
             return self.token
         return None
 
-    def set_token(self, token, expiration):
+    def set_token(self, token: str, expiration: dt.datetime):
         self.token = token
         self.expiration = expiration
 
@@ -31,9 +31,9 @@ jwt_cache = JwtCache()
 
 
 def get_jwt(config: Config) -> str:
-    if token := jwt_cache.get_token():
+    if cached_token := jwt_cache.get_token():
         logging.debug("Using cached JWT")
-        return token
+        return cached_token
 
     url = config.keycloak_host.rstrip("/") + "/" + config.keycloak_token_path.lstrip("/")
     data = {

@@ -2,7 +2,8 @@
 line-length = 100
 
 [tool.ruff.lint]
-ignore-init-module-imports = true
+# ignore-init-module-imports = true
+select = ["E", "F", "B"]
 
 [build-system]
 requires = ["hatchling"]
