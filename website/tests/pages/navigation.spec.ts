@@ -1,7 +1,7 @@
 import { baseUrl, dummyOrganism, test } from '../e2e.fixture';
 
 const organismIndependentNavigationItems = [
-    { link: 'User', title: 'Login' },
+    { link: 'User', title: 'My account' },
     { link: 'About', title: 'About' },
     { link: 'Api documentation', title: 'Api Docs' },
     { link: 'Governance', title: 'Governance' },
@@ -11,7 +11,7 @@ const organismIndependentNavigationItems = [
 const organismNavigationItems = [
     { link: 'Browse', title: '[Organism] - Browse' },
     { link: 'Submit', title: 'Submit' },
-    { link: 'User', title: 'Login' },
+    { link: 'User', title: 'My account' },
     { link: 'Sequence Overview', title: 'Sequences' },
 ];
 
