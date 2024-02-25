@@ -14,6 +14,13 @@ const isLoggedIn = Astro.locals.session.isLoggedIn;
     </div>
 
     <div class='sm:hidden fixed z-0'>
-        <SandwichMenu top={16} right={28} organism={organism} knownOrganisms={knownOrganisms} isLoggedIn={isLoggedIn} client:load />
+        <SandwichMenu
+            top={16}
+            right={28}
+            organism={organism}
+            knownOrganisms={knownOrganisms}
+            isLoggedIn={isLoggedIn}
+            client:load
+        />
     </div>
 </div>
