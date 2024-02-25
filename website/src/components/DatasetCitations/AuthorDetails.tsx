@@ -42,6 +42,8 @@ export const AuthorDetails: FC<Props> = ({
         return <h1 className='flex text-base'>{displayText}</h1>;
     };
 
+    // TODO: #1108 make dynamic text-${fontsize} class static as required by tailwindcss
+
     const renderPartialDetails = () => (
         <div className='flex flex-col items-center justify-center'>
             <AccountCircleIcon fontSize={fontSize} />
