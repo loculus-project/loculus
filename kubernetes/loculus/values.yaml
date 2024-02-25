@@ -108,9 +108,7 @@ instances:
     preprocessing:
       image: ghcr.io/loculus-project/preprocessing-nextclade
       args:
-        - "python"
-        - "main.py"
-        - "--log-level=DEBUG"
+        - "prepro"
       configFile:
         log_level: DEBUG
         nextclade_dataset_name: nextstrain/mpox/all-clades
