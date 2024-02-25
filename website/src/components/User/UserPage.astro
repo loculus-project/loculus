@@ -6,6 +6,8 @@ import { getKeycloakClient } from '../../middleware/authMiddleware';
 import { routes } from '../../routes';
 import { getAccessToken } from '../../utils/getAccessToken';
 const session = Astro.locals.session;
+const username = session.user?.username ?? ''; // Page only accessible if logged in
+const name = session.user?.name;
 
 const accessToken = getAccessToken(Astro.locals.session)!;
 
@@ -21,9 +23,9 @@ const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
 });
 ---
 
-<BaseLayout title='Login'>
+<BaseLayout title='Account'>
     <div class='flex items-center'>
-        <h1 class='title'>User {session.user?.name}</h1>
+        <h1 class='title'>{name} ({username})</h1>
     </div>
     <div class='my-2 mx-4'>
         <a href={keycloakLogoutUrl}>Logout</a>
@@ -43,21 +45,9 @@ const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
             </>
         )
     }
-    {
-        session.user?.username !== undefined && (
-            <div class='my-2 mx-4'>
-                <a href={routes.datasetsPage(session.user.username)}>Datasets Overview</a>
-            </div>
-        )
-    }
-    {
-        session.user?.username !== undefined && (
-            <GroupManager
-                accessToken={accessToken}
-                clientConfig={clientConfig}
-                username={session.user.username}
-                client:load
-            />
-        )
-    }
+    <div class='my-2 mx-4'>
+        <a href={routes.datasetsPage(username)}>Datasets Overview</a>
+    </div>
+    <GroupManager accessToken={accessToken} clientConfig={clientConfig} username={username} client:load />
 </BaseLayout>
+)
