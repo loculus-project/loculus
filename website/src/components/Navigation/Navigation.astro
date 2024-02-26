@@ -2,15 +2,18 @@
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
 import { navigationItems } from '../../routes';
+import { getAuthUrl } from '../../middleware/authMiddleware';
 
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 
 const isLoggedIn = Astro.locals.session.isLoggedIn;
+
+const loginUrl = await getAuthUrl(Astro.url.toString());
 ---
 
 <div class='flex justify-end'>
     <div class='subtitle hidden sm:flex sm:z-6 gap-4'>
-        {navigationItems.top(organism?.key, isLoggedIn).map(({ text, path }) => <a href={path}>{text}</a>)}
+        {navigationItems.top(organism?.key, isLoggedIn, loginUrl).map(({ text, path }) => <a href={path}>{text}</a>)}
     </div>
 
     <div class='sm:hidden fixed z-0'>
@@ -20,6 +23,7 @@ const isLoggedIn = Astro.locals.session.isLoggedIn;
             organism={organism}
             knownOrganisms={knownOrganisms}
             isLoggedIn={isLoggedIn}
+            loginUrl={loginUrl}
             client:load
         />
     </div>

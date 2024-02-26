@@ -12,9 +12,10 @@ type SandwichMenuProps = {
     organism: Organism | undefined;
     knownOrganisms: Organism[];
     isLoggedIn: boolean;
+    loginUrl: string | undefined;
 };
 
-export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, knownOrganisms, isLoggedIn }) => {
+export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, knownOrganisms, isLoggedIn, loginUrl }) => {
     const { isOpen, toggle: toggleMenu, close: closeMenu } = useOffCanvas();
 
     return (
@@ -49,7 +50,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, know
                                     path={routes.organismStartPage(organism.key)}
                                 />
                             ))}
-                            {navigationItems.top(organism?.key, isLoggedIn).map(({ text, path }) => (
+                            {navigationItems.top(organism?.key, isLoggedIn, loginUrl).map(({ text, path }) => (
                                 <OffCanvasNavItem key={path} text={text} level={1} path={path} />
                             ))}
                         </div>
