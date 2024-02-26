@@ -32,7 +32,10 @@ spec:
             - name: lapis-silo-shared-data
               mountPath: /data
         - name: lapis
-          image: ghcr.io/genspectrum/lapis-v2:latest
+          image: mendhak/http-https-echo
+          env:
+            - name: HTTP_PORT
+              value: 8080
           ports:
             - containerPort: 8080
           args:
