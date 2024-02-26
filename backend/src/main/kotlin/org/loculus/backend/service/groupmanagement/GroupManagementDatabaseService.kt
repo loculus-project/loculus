@@ -1,12 +1,14 @@
 package org.loculus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.exceptions.ExposedSQLException
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
+import org.loculus.backend.api.Address
 import org.loculus.backend.api.Group
 import org.loculus.backend.api.GroupDetails
 import org.loculus.backend.controller.ConflictException
@@ -29,10 +31,18 @@ class GroupManagementDatabaseService(
         return GroupDetails(groupName, users)
     }
 
-    fun createNewGroup(groupName: String, username: String) {
+    fun createNewGroup(group: Group, username: String) {
         try {
             GroupsTable.insert {
-                it[groupNameColumn] = groupName
+                it[groupNameColumn] = group.groupName
+                it[institutionColumn] = group.institution
+                it[addressLine1] = group.address.line1
+                it[addressLine2] = group.address.line2
+                it[addressPostalCode] = group.address.postalCode
+                it[addressState] = group.address.state
+                it[addressCity] = group.address.city
+                it[addressCountry] = group.address.country
+                it[contactEmailColumn] = group.contactEmail
             }
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
@@ -45,14 +55,34 @@ class GroupManagementDatabaseService(
 
         UserGroupsTable.insert {
             it[userNameColumn] = username
-            it[groupNameColumn] = groupName
+            it[groupNameColumn] = group.groupName
         }
     }
 
     fun getGroupsOfUser(username: String): List<Group> {
-        return UserGroupsTable
+        return UserGroupsTable.join(
+            GroupsTable,
+            JoinType.LEFT,
+            additionalConstraint = {
+                (UserGroupsTable.groupNameColumn eq GroupsTable.groupNameColumn)
+            },
+        )
             .select { UserGroupsTable.userNameColumn eq username }
-            .map { Group(it[UserGroupsTable.groupNameColumn]) }
+            .map {
+                Group(
+                    groupName = it[GroupsTable.groupNameColumn],
+                    institution = it[GroupsTable.institutionColumn],
+                    address = Address(
+                        line1 = it[GroupsTable.addressLine1],
+                        line2 = it[GroupsTable.addressLine2],
+                        postalCode = it[GroupsTable.addressPostalCode],
+                        city = it[GroupsTable.addressCity],
+                        state = it[GroupsTable.addressState],
+                        country = it[GroupsTable.addressCountry],
+                    ),
+                    contactEmail = it[GroupsTable.contactEmailColumn],
+                )
+            }
     }
 
     fun addUserToGroup(groupMember: String, groupName: String, usernameToAdd: String) {
@@ -87,6 +117,20 @@ class GroupManagementDatabaseService(
     fun getAllGroups(): List<Group> {
         return GroupsTable
             .selectAll()
-            .map { Group(it[GroupsTable.groupNameColumn]) }
+            .map {
+                Group(
+                    groupName = it[GroupsTable.groupNameColumn],
+                    institution = it[GroupsTable.institutionColumn],
+                    address = Address(
+                        line1 = it[GroupsTable.addressLine1],
+                        line2 = it[GroupsTable.addressLine2],
+                        postalCode = it[GroupsTable.addressPostalCode],
+                        city = it[GroupsTable.addressCity],
+                        state = it[GroupsTable.addressState],
+                        country = it[GroupsTable.addressCountry],
+                    ),
+                    contactEmail = it[GroupsTable.contactEmailColumn],
+                )
+            }
     }
 }

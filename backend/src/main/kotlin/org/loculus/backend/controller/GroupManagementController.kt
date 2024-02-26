@@ -29,9 +29,9 @@ class GroupManagementController(
     fun createNewGroup(
         @UsernameFromJwt username: String,
         @Parameter(
-            description = "The name of the newly created group",
-        ) @RequestBody group: GroupName,
-    ) = groupManagementDatabaseService.createNewGroup(group.groupName, username)
+            description = "Information about the newly created group",
+        ) @RequestBody group: Group,
+    ) = groupManagementDatabaseService.createNewGroup(group, username)
 
     @Operation(description = "Get details of a group that the user is a member of.")
     @ResponseStatus(HttpStatus.OK)
@@ -84,8 +84,4 @@ class GroupManagementController(
             description = "The user name that should be removed from the group.",
         ) @PathVariable usernameToRemove: String,
     ) = groupManagementDatabaseService.removeUserFromGroup(groupMember, groupName, usernameToRemove)
-
-    data class GroupName(
-        val groupName: String,
-    )
 }

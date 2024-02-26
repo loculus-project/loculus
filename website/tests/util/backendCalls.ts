@@ -3,11 +3,13 @@ import {
     type Accession,
     type AccessionVersion,
     deleteAllDataScope,
+    type Group,
     openDataUseTermsType,
 } from '../../src/types/backend.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
 import {
     backendClient,
+    DEFAULT_GROUP,
     DEFAULT_GROUP_NAME,
     dummyOrganism,
     groupManagementClient,
@@ -126,11 +128,8 @@ export const deleteAllSequencesForUser = async (token: string) => {
     }
 };
 
-export const createGroup = async (newGroupName: string = DEFAULT_GROUP_NAME, token: string) => {
-    await groupManagementClient.zodios.createGroup(
-        { groupName: newGroupName },
-        {
-            headers: createAuthorizationHeader(token),
-        },
-    );
+export const createGroup = async (newGroup: Group = DEFAULT_GROUP, token: string) => {
+    await groupManagementClient.zodios.createGroup(newGroup, {
+        headers: createAuthorizationHeader(token),
+    });
 };

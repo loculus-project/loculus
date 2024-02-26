@@ -3,7 +3,6 @@ import z from 'zod';
 
 import { authorizationHeader, conflictError, notAuthorizedError } from './commonApiTypes.ts';
 import { group, groupDetails } from '../types/backend.ts';
-
 const createGroupEndpoint = makeEndpoint({
     method: 'post',
     path: '/groups',
@@ -13,9 +12,7 @@ const createGroupEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: z.object({
-                groupName: z.string(),
-            }),
+            schema: group,
         },
     ],
     response: z.never(),
