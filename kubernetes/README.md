@@ -159,7 +159,9 @@ eyXXXXXX%
 
 This will return a base64 encoded string similar to the one you can see above that starts with `ey` that you can use as `--dockerconfigjson` argument. Make sure not to copy the trailing `%` character that is added by `zsh`.
 
-### How to set up locally on ARM64 macOS (M1, M2, etc.)
+### How to set up on ARM64 macOS (M1, M2, etc.)
+
+**We recommend using GitHub Codespaces if you are using ARM64 macOS, as the approach below is too slow.** 
 
 Using Docker desktop as your container runtime won't work on ARM64 macOS. Instead, you will need to use `colima` to run an AMD64 VM which will host AMD64 docker containers.
 
