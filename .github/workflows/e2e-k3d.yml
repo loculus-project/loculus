@@ -12,7 +12,7 @@ on:
       - ".github/workflows/e2e-test.yml"
 
 concurrency:
-  group: ci-${{ github.ref }}-e2e-k3d
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-e2e-k3d
   cancel-in-progress: true
 
 jobs:

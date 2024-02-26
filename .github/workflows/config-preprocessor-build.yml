@@ -11,7 +11,7 @@ defaults:
     working-directory: ./kubernetes/config-processor
 
 concurrency:
-  group: ci-${{ github.ref }}-config-processor
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-config-processor
   cancel-in-progress: true
 
 jobs:
