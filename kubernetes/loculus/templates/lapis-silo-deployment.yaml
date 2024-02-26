@@ -35,7 +35,7 @@ spec:
           image: mendhak/http-https-echo
           env:
             - name: HTTP_PORT
-              value: 8080
+              value: "8080"
           ports:
             - containerPort: 8080
           args:
