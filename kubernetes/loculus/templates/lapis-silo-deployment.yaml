@@ -38,8 +38,6 @@ spec:
               value: "8080"
           ports:
             - containerPort: 8080
-          args:
-            - "--silo.url=http://localhost:8081"
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /workspace/database_config.yaml
