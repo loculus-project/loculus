@@ -7,7 +7,7 @@ kind: Ingress
 metadata:
   name: loculus-website-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+   # traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   rules:
     - host: "{{ .Values.host }}"
