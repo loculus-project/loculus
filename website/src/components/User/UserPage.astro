@@ -20,7 +20,7 @@ const logoutUrl = new URL(Astro.request.url);
 logoutUrl.pathname = routes.logout();
 
 const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
-    post_logout_redirect_uri: logoutUrl.href.replace('http://', 'https://'),
+    post_logout_redirect_uri: logoutUrl.href,
 });
 ---
 
