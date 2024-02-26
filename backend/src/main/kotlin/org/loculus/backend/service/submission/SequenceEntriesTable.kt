@@ -113,6 +113,8 @@ class SequenceEntriesDataTable(
 
     fun groupIsOneOf(groups: List<Group>) = groupNameColumn inList groups.map { it.groupName }
 
+    fun groupNameIsOneOf(groupNames: List<String>) = groupNameColumn inList groupNames
+
     private val warningWhenNoOrganismWhenSerializing = "Organism is null when de-serializing data. " +
         "This should not happen. " +
         "Please check your code. " +

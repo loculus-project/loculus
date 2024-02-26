@@ -31,7 +31,6 @@ import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.GetSequenceResponse
-import org.loculus.backend.api.Group
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SequenceEntryStatus
@@ -418,10 +417,10 @@ class SubmissionDatabaseService(
         }
 
         val validatedGroupNames = if (groupsFilter == null) {
-            groupManagementDatabaseService.getGroupsOfUser(username)
+            groupManagementDatabaseService.getGroupsOfUser(username).map { it.groupName }
         } else {
             groupManagementPreconditionValidator.validateUserInExistingGroups(groupsFilter, username)
-            groupsFilter.map { Group(it) }
+            groupsFilter
         }
 
         val listOfStatuses = statusesFilter ?: Status.entries
@@ -451,7 +450,7 @@ class SubmissionDatabaseService(
                 .select(
                     where = {
                         table.statusIsOneOf(listOfStatuses) and
-                            table.groupIsOneOf(validatedGroupNames)
+                            table.groupNameIsOneOf(validatedGroupNames)
                     },
                 )
                 .orderBy(table.accessionColumn)

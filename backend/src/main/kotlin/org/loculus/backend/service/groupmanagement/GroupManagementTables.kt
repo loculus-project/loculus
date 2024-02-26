@@ -7,6 +7,14 @@ const val USER_GROUPS_TABLE_NAME = "user_groups_table"
 
 object GroupsTable : Table("groups_table") {
     val groupNameColumn = text("group_name")
+    val institutionColumn = text("institution")
+    val addressLine1 = text("address_line_1")
+    val addressLine2 = text("address_line_2")
+    val addressPostalCode = text("address_postal_code")
+    val addressCity = text("address_city")
+    val addressState = text("address_state")
+    val addressCountry = text("address_country")
+    val contactEmailColumn = text("contact_email")
 
     override val primaryKey = PrimaryKey(groupNameColumn)
 }

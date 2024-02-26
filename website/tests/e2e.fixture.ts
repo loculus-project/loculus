@@ -21,7 +21,7 @@ import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } 
 import { BackendClient } from '../src/services/backendClient';
 import { groupManagementApi } from '../src/services/groupManagementApi.ts';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
-import { type DataUseTerms, openDataUseTermsType } from '../src/types/backend.ts';
+import { type DataUseTerms, type Group, openDataUseTermsType } from '../src/types/backend.ts';
 
 type E2EFixture = {
     searchPage: SearchPage;
@@ -48,6 +48,19 @@ export const lapisUrl = 'http://localhost:8080/dummy-organism';
 const keycloakUrl = 'http://localhost:8083';
 
 export const DEFAULT_GROUP_NAME = 'testGroup';
+export const DEFAULT_GROUP: Group = {
+    groupName: DEFAULT_GROUP_NAME,
+    institution: 'testInstitution',
+    address: {
+        line1: 'testLine1',
+        line2: 'testLine2',
+        city: 'testCity',
+        postalCode: 'testPostalCode',
+        state: 'testState',
+        country: 'testCountry',
+    },
+    contactEmail: 'testContactEmail',
+};
 
 export const e2eLogger = winston.createLogger({
     level: 'info',
@@ -128,7 +141,7 @@ export async function authorize(
 
     const token = await getToken(username, password);
 
-    await createTestGroupIfNotExistent(token.accessToken, groupName);
+    await createTestGroupIfNotExistent(token.accessToken, { ...DEFAULT_GROUP, groupName });
 
     await page.context().addCookies([
         {
@@ -203,9 +216,9 @@ export const test = base.extend<E2EFixture>({
     },
 });
 
-export async function createTestGroupIfNotExistent(token: string, groupName: string = DEFAULT_GROUP_NAME) {
+export async function createTestGroupIfNotExistent(token: string, group: Group = DEFAULT_GROUP) {
     try {
-        await createGroup(groupName, token);
+        await createGroup(group, token);
     } catch (error) {
         const groupDoesAlreadyExist =
             isErrorFromAlias(groupManagementApi, 'createGroup', error) && error.response.status === 409;

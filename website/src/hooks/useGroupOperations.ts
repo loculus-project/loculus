@@ -105,6 +105,16 @@ function callCreateGroup(
             await zodios.createGroup(
                 {
                     groupName,
+                    institution: 'testInstitution',
+                    address: {
+                        line1: 'testLine1',
+                        line2: 'testLine2',
+                        city: 'testCity',
+                        state: 'testState',
+                        postalCode: 'testPostalCode',
+                        country: 'testCountry',
+                    },
+                    contactEmail: 'testContactEmail',
                 },
                 {
                     headers: createAuthorizationHeader(accessToken),
