@@ -37,7 +37,8 @@ spec:
               mountPath: /destination
       containers:
         - name: keycloak
-          image: quay.io/keycloak/keycloak
+          # TODO #1221
+          image: quay.io/keycloak/keycloak:23.0
           env:
             - name: DB_VENDOR
               value: "postgres"

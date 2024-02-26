@@ -1,0 +1,14 @@
+---
+import { GroupCreationForm } from '../../components/User/GroupCreationForm.tsx';
+import { getRuntimeConfig } from '../../config';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getAccessToken } from '../../utils/getAccessToken';
+
+const accessToken = getAccessToken(Astro.locals.session)!;
+
+const clientConfig = getRuntimeConfig().public;
+---
+
+<BaseLayout title='Create Group'>
+    <GroupCreationForm clientConfig={clientConfig} accessToken={accessToken} client:load />
+</BaseLayout>

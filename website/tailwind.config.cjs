@@ -28,7 +28,7 @@ module.exports = {
     
   },
   plugins: [require("daisyui"),
-  require('flowbite/plugin')],
+  require('flowbite/plugin','@tailwindcss/forms')],
   darkMode: 'false',
   daisyui: {
     darkTheme: "customTheme", // name of one of the included themes for dark mode

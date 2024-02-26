@@ -23,4 +23,11 @@ export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManag
             headers: createAuthorizationHeader(token),
         });
     }
+
+    public getGroupDetails(token: string, groupName: string) {
+        return this.call('getGroupDetails', {
+            headers: createAuthorizationHeader(token),
+            params: { groupName },
+        });
+    }
 }

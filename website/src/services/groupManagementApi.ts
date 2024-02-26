@@ -34,10 +34,10 @@ const removeUserFromGroupEndpoint = makeEndpoint({
     response: z.never(),
     errors: [notAuthorizedError],
 });
-const getUsersOfGroupEndpoint = makeEndpoint({
+const getGroupDetailsEndpoint = makeEndpoint({
     method: 'get',
-    path: '/groups/:detailsOfGroupName',
-    alias: 'getUsersOfGroup',
+    path: '/groups/:groupName',
+    alias: 'getGroupDetails',
     parameters: [authorizationHeader],
     response: groupDetails,
     errors: [notAuthorizedError],
@@ -62,7 +62,7 @@ export const groupManagementApi = makeApi([
     createGroupEndpoint,
     addUserToGroupEndpoint,
     removeUserFromGroupEndpoint,
-    getUsersOfGroupEndpoint,
+    getGroupDetailsEndpoint,
     getGroupsOfUserEndpoint,
     getAllGroupsEndpoint,
 ]);

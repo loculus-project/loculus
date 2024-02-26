@@ -59,8 +59,8 @@ export const DEFAULT_GROUP: Group = {
         state: 'testState',
         country: 'testCountry',
     },
-    contactEmail: 'testContactEmail',
-};
+    contactEmail: 'testContactEmail@mail.com',
+} as const;
 
 export const e2eLogger = winston.createLogger({
     level: 'info',

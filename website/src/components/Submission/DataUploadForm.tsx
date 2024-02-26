@@ -417,7 +417,7 @@ const InnerDataUploadForm = ({
                     </p>
                     <p className='mt-3'>
                         To submit to the database, please either{' '}
-                        <a href={routes.userOverviewPage()} className='underline'>
+                        <a href={routes.createGroup()} className='underline'>
                             create a group
                         </a>{' '}
                         (a group with one member is not a problem!) or ask a group administrator to add you to an

@@ -1,6 +1,8 @@
 import { type FC, type FormEvent, useRef, useState } from 'react';
 
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
+import { routes } from '../../routes.ts';
+import type { Address, GroupDetails } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
@@ -12,12 +14,13 @@ type User = {
 };
 
 type GroupPageProps = {
-    groupName: string;
+    prefetchedGroupDetails: GroupDetails;
     clientConfig: ClientConfig;
     accessToken: string;
+    username: string;
 };
 
-const InnerGroupPage: FC<GroupPageProps> = ({ groupName, clientConfig, accessToken }) => {
+const InnerGroupPage: FC<GroupPageProps> = ({ prefetchedGroupDetails, clientConfig, accessToken, username }) => {
     const [newUserName, setNewUserName] = useState<string>('');
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -28,7 +31,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({ groupName, clientConfig, accessTok
         clientConfig,
         accessToken,
         setErrorMessage,
-        groupName,
+        prefetchedGroupDetails,
     });
 
     const handleAddUser = async (e: FormEvent<HTMLFormElement>) => {
@@ -38,9 +41,13 @@ const InnerGroupPage: FC<GroupPageProps> = ({ groupName, clientConfig, accessTok
     };
 
     const handleDeleteUser = async () => {
-        if (userToDelete) {
+        if (userToDelete !== null) {
             await removeFromGroup(userToDelete.name);
-            setUserToDelete(null);
+            if (userToDelete.name === username) {
+                window.location.href = routes.userOverviewPage();
+            } else {
+                setUserToDelete(null);
+            }
         }
     };
 
@@ -64,6 +71,29 @@ const InnerGroupPage: FC<GroupPageProps> = ({ groupName, clientConfig, accessTok
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
             )}
 
+            <h2 className='text-lg font-bold py-4'> Information </h2>
+            <div className='bg-gray-100 p-4 mb-4 rounded'>
+                <table className='w-full'>
+                    <tbody>
+                        <tr>
+                            <td className='text-lg font-bold'>Institution:</td>
+                            <td className='text-lg'>{groupDetails.data?.group.institution}</td>
+                        </tr>
+                        <tr>
+                            <td className='text-lg font-bold'>Contact Email:</td>
+                            <td className='text-lg'>{groupDetails.data?.group.contactEmail}</td>
+                        </tr>
+                        <tr>
+                            <td className='text-lg font-bold'>Address:</td>
+                            <td className='text-lg'>
+                                <PostalAddress address={groupDetails.data?.group.address} />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 className='text-lg font-bold py-4'> Users </h2>
             <form onSubmit={handleAddUser}>
                 <div className='flex mb-4'>
                     <input
@@ -82,8 +112,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({ groupName, clientConfig, accessTok
 
             <div className='flex-1 overflow-y-auto'>
                 <ul>
-                    {!groupDetails.isLoading &&
-                        groupDetails.data &&
+                    {groupDetails.data &&
                         groupDetails.data.users.map((user) => (
                             <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                                 <span className='text-lg'>{user.name}</span>
@@ -104,3 +133,19 @@ const InnerGroupPage: FC<GroupPageProps> = ({ groupName, clientConfig, accessTok
 };
 
 export const GroupPage = withQueryProvider(InnerGroupPage);
+
+const PostalAddress: FC<{ address: Address | undefined }> = ({ address }) => {
+    if (address === undefined) {
+        return '';
+    }
+    return (
+        <div>
+            {address.line1} <br />
+            {address.line2 !== '' ? `${address.line2}` : null}
+            {address.line2 !== '' ? <br /> : null} {address.postalCode} {address.city} <br />
+            {address.state !== '' ? `${address.state}` : null}
+            {address.state !== '' ? <br /> : null}
+            {address.country}
+        </div>
+    );
+};
