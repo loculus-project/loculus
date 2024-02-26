@@ -9,7 +9,7 @@ on:
       - "kubernetes/**"
       - "preprocessing/**"
       - "deploy.py"
-      - ".github/workflows/e2e-test.yml"
+      - ".github/workflows/e2e-k3d.yml"
 
 concurrency:
   group: ci-${{ github.ref }}-e2e-k3d
