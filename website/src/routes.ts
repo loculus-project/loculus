@@ -161,7 +161,11 @@ export const navigationItems = {
             path: routes.aboutPage(),
         },
         {
-            text: 'Api documentation',
+            text: 'Docs',
+            path: 'https://loculus-project.github.io/loculus/',
+        },
+        {
+            text: 'API docs',
             path: routes.apiDocumentationPage(),
         },
         {
