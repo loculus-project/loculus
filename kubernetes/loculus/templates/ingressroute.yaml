@@ -1,25 +1,26 @@
 {{- if eq .Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
 {{- $keycloakHost := printf "authentication-%s" .Values.host }}
-apiVersion: traefik.containo.us/v1alpha1
-kind: IngressRoute
-metadata:
-  name: loculus-website-ingressroute
-  annotations:
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    link.argocd.argoproj.io/external-link: https://{{ .Values.host }}
-spec:
-  entryPoints:
-    - websecure
-    #- web
-  routes:
-    - kind: Rule
-      match: Host(`{{ .Values.host }}`)
-      priority: 10
-      services:
-        - name: loculus-website-service
-          port: 3000
 
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loculus-website-ingress
+spec:
+  rules:
+    - host: "{{ .Values.host }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-website-service
+                port:
+                  number: 3000
+  tls:
+  - hosts:
+    - "{{ .Values.host }}"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
