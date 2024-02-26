@@ -11,7 +11,7 @@ defaults:
     working-directory: ./preprocessing/dummy
 
 concurrency:
-  group: ci-${{ github.ref }}-preprocessing-dummy
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-dummy
   cancel-in-progress: true
 
 jobs:
