@@ -48,7 +48,19 @@ download_data() {
 
   released_data_endpoint="$BACKEND_BASE_URL/get-released-data"
   echo "calling $released_data_endpoint"
+  
+  set +e
   curl -o "$data_dir/data.ndjson" --fail-with-body "$released_data_endpoint" -H "Authorization: Bearer $jwt"
+  exit_code=$?
+  set -e
+
+  if [ $exit_code -ne 0 ]; then
+    echo "Curl command failed with exit code $exit_code, cleaning up and exiting."
+
+    rm -rf "$data_dir"
+
+    exit $exit_code
+  fi
 
   echo "downloaded $(wc -l < "$data_dir/data.ndjson") sequences"
   echo
