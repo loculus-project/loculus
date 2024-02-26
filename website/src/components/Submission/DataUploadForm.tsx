@@ -409,7 +409,7 @@ const InnerDataUploadForm = ({
 
     if (noGroup) {
         return (
-            <div className='mt-6 alert max-w-4xl'>
+            <div className='mt-6 message max-w-4xl'>
                 <DashiconsGroups className='w-12 h-12 inline-block mr-2' />
                 <div>
                     <p>

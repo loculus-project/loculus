@@ -81,3 +81,13 @@ table, tr, td {
   -o-animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
   animation: react-confirm-alert-fadeIn 0.5s 0.2s forwards;
 }
+
+.message{
+  background-color: theme('colors.primary.50');
+  padding: 2rem;
+  gap: 1rem;
+  align-content: flex-start;
+
+  border-radius: 1rem;
+  display:flex
+}
