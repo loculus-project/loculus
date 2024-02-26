@@ -24,7 +24,7 @@ enum LapisStateBeforeTests {
 
 export default async function globalSetupForPlaywright() {
     const secondsToWait = 10;
-    const maxNumberOfRetries = 12;
+    const maxNumberOfRetries = 24;
 
     e2eLogger.info(
         'Setting up E2E tests. In order to test search results, data will be prepared in LAPIS. ' +
@@ -97,6 +97,10 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
     const accessionTransformer = new AccessionTransformer(accessionPrefix);
 
     const numberOfSequencesInLapisResult = await lapisClient.call('aggregated', {});
+
+    if (numberOfSequencesInLapisResult.isErr() && numberOfSequencesInLapisResult.error.status === 503) {
+        return LapisStateBeforeTests.NoSequencesInLapis;
+    }
 
     if (numberOfSequencesInLapisResult._unsafeUnwrap().data[0].count === 0) {
         return LapisStateBeforeTests.NoSequencesInLapis;
