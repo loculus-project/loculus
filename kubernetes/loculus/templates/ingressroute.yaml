@@ -11,7 +11,7 @@ metadata:
 spec:
   entryPoints:
     - websecure
-    - web
+    #- web
   routes:
     - kind: Rule
       match: Host(`{{ .Values.host }}`)
