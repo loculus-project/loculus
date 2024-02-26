@@ -170,7 +170,7 @@ export const navigationItems = {
         },
         {
             text: 'Status',
-            path: routes.statusPage(),
+            path: 'https://app.pulsetic.com/status/bppOB4Gv',
         },
     ],
 };
