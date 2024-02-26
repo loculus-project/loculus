@@ -98,6 +98,10 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
 
     const numberOfSequencesInLapisResult = await lapisClient.call('aggregated', {});
 
+    if (numberOfSequencesInLapisResult.isErr() && numberOfSequencesInLapisResult.error.status === 503) {
+        return LapisStateBeforeTests.NoSequencesInLapis;
+    }
+
     if (numberOfSequencesInLapisResult._unsafeUnwrap().data[0].count === 0) {
         return LapisStateBeforeTests.NoSequencesInLapis;
     }
