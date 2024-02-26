@@ -7,6 +7,7 @@ import type { ProblemDetail } from '../types/backend.ts';
 import type { MetadataFilter, MutationFilter } from '../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes.ts';
+
 export type SearchResponse = {
     data: TableSequenceData[];
     totalCount: number;
@@ -46,7 +47,9 @@ export const getData = async (
 
     const aggregateResult = await lapisClient.call('aggregated', searchFilters);
 
-    if (aggregateResult.isOk() && aggregateResult.value.data[0].count === 0) {
+    const siloDoesNotHaveDataYet = aggregateResult.isErr() && aggregateResult.error.status === 503;
+    const siloIsEmpty = aggregateResult.isOk() && aggregateResult.value.data[0].count === 0;
+    if (siloDoesNotHaveDataYet || siloIsEmpty) {
         return ok({
             data: [],
             totalCount: 0,
