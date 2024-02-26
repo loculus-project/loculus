@@ -56,9 +56,7 @@ download_data() {
 
   if [ $exit_code -ne 0 ]; then
     echo "Curl command failed with exit code $exit_code, cleaning up and exiting."
-
     rm -rf "$data_dir"
-
     exit $exit_code
   fi
 
