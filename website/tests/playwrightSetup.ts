@@ -24,7 +24,7 @@ enum LapisStateBeforeTests {
 
 export default async function globalSetupForPlaywright() {
     const secondsToWait = 10;
-    const maxNumberOfRetries = 12;
+    const maxNumberOfRetries = 24;
 
     e2eLogger.info(
         'Setting up E2E tests. In order to test search results, data will be prepared in LAPIS. ' +
