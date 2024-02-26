@@ -29,6 +29,7 @@ PORTS = [WEBSITE_PORT_MAPPING, BACKEND_PORT_MAPPING, LAPIS_PORT_MAPPING, DATABAS
 parser = argparse.ArgumentParser(description='Manage k3d cluster and helm installations.')
 subparsers = parser.add_subparsers(dest='subcommand', required=True, help='Subcommands')
 parser.add_argument('--dry-run', action='store_true', help='Print commands instead of executing them')
+parser.add_argument('--verbose', action='store_true', help='Print commands that are executed')
 
 cluster_parser = subparsers.add_parser('cluster', help='Start the k3d cluster')
 cluster_parser.add_argument('--dev', action='store_true',
@@ -55,11 +56,12 @@ config_parser = subparsers.add_parser('config', help='Generate config files')
 args = parser.parse_args()
 
 def run_command(command: list[str], **kwargs):
-    if args.dry_run:
+    if args.dry_run or args.verbose:
         if isinstance(command, str):
             print(command)
         else:
             print(" ".join(map(str,command)))
+    if args.dry_run:
         return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
     else:
         return subprocess.run(command, **kwargs)
