@@ -9,7 +9,8 @@ on:
       - "kubernetes/**"
       - "preprocessing/**"
       - "deploy.py"
-      - ".github/workflows/e2e-k3d.yml"
+      - ".github/scripts/**"
+      - ".github/workflows/**"
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-e2e-k3d
