@@ -5,6 +5,7 @@ const organismIndependentNavigationItems = [
     { link: 'About', title: 'About' },
     { link: 'Api docs', title: 'Api Docs' },
     { link: 'Governance', title: 'Governance' },
+    { link: 'Status', title: 'Status' },
 ];
 
 const organismNavigationItems = [
