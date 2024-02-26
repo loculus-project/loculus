@@ -9,6 +9,7 @@ const { knownOrganisms, organism } = cleanOrganism(Astro.params.organism);
 const label = organism === undefined ? 'Organisms' : organism.displayName;
 const firstBitOfUrl = Astro.url.pathname.split('/')[1];
 const isOrganismPage = knownOrganisms.some((knownOrganism: Organism) => knownOrganism.key === firstBitOfUrl);
+const isOrganismSelectorPage = firstBitOfUrl === 'organism-selector';
 const restOfUrl = Astro.url.pathname.split('/').slice(2).join('/');
 ---
 
@@ -23,7 +24,7 @@ const restOfUrl = Astro.url.pathname.split('/').slice(2).join('/');
                 <li>
                     <a
                         href={
-                            isOrganismPage
+                            isOrganismPage || isOrganismSelectorPage
                                 ? `/${knownOrganism.key}/${restOfUrl}`
                                 : routes.organismStartPage(knownOrganism.key)
                         }
