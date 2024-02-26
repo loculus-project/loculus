@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
 import { routes } from '../../../../src/routes.ts';
 import type { AccessionVersion, SequenceEntryStatus } from '../../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, dummyOrganism } from '../../../e2e.fixture';
+import { baseUrl, dummyOrganism, expect } from '../../../e2e.fixture';
 
 export class UserSequencePage {
     private readonly sequenceBoxNames = [
@@ -77,5 +77,23 @@ export class UserSequencePage {
         await this.page.waitForURL(`${baseUrl}${routes.editPage(dummyOrganism.key, accessionToCheck)}`, {
             waitUntil: 'networkidle',
         });
+    }
+
+    public async leaveGroup(uniqueGroupName: string) {
+        const buttonToLeaveGroup = this.getLocatorForButtonToLeaveGroup(uniqueGroupName);
+        await buttonToLeaveGroup.waitFor({ state: 'visible' });
+        await buttonToLeaveGroup.click();
+
+        const confirmButton = this.page.getByRole('button', { name: 'Confirm' });
+        await confirmButton.click();
+    }
+
+    public getLocatorForButtonToLeaveGroup(groupName: string) {
+        return this.page.locator('li').filter({ hasText: groupName }).getByRole('button');
+    }
+
+    public async verifyGroupIsNotPresent(uniqueGroupName: string) {
+        const group = this.page.locator('li').filter({ hasText: uniqueGroupName });
+        await expect(group).not.toBeVisible();
     }
 }

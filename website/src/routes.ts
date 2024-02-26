@@ -10,7 +10,6 @@ export const MY_SEQUENCES = 'MY_SEQUENCES';
 export const routes = {
     aboutPage: () => '/about',
     apiDocumentationPage: () => '/api_documentation',
-    whereYouCreateAGroup: () => '/user',
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
@@ -50,6 +49,7 @@ export const routes = {
         }
         return url;
     },
+    createGroup: () => '/user/createGroup',
     submitPage: (organism: string) => withOrganism(organism, '/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>

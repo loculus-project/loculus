@@ -18,7 +18,7 @@ data class Address(
 )
 
 data class Group(
-    @Schema(description = "The name of the group.", example = "Group 1")
+    @Schema(description = "The name of the group.", example = "Group1")
     val groupName: String,
     @Schema(description = "The name of the institution.", example = "University of Loculus")
     val institution: String,
@@ -32,6 +32,6 @@ data class User(
 )
 
 data class GroupDetails(
-    val groupName: String,
+    val group: Group,
     val users: List<User>,
 )

@@ -207,6 +207,7 @@ export const address = z.object({
     postalCode: z.string(),
     country: z.string(),
 });
+export type Address = z.infer<typeof address>;
 
 export const group = z.object({
     groupName: z.string(),
@@ -217,13 +218,15 @@ export const group = z.object({
 export type Group = z.infer<typeof group>;
 
 export const groupDetails = z.object({
-    groupName: z.string(),
+    group,
     users: z.array(
         z.object({
             name: z.string(),
         }),
     ),
 });
+
+export type GroupDetails = z.infer<typeof groupDetails>;
 
 export const pageQuery = z.object({
     page: z.number(),

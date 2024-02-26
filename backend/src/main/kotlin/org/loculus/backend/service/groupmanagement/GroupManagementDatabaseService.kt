@@ -28,7 +28,29 @@ class GroupManagementDatabaseService(
             username,
         )
 
-        return GroupDetails(groupName, users)
+        return GroupDetails(getDetailsOfGroup(groupName), users)
+    }
+
+    fun getDetailsOfGroup(groupName: String): Group {
+        return GroupsTable
+            .select { GroupsTable.groupNameColumn eq groupName }
+            .map {
+                Group(
+                    groupName = it[GroupsTable.groupNameColumn],
+                    institution = it[GroupsTable.institutionColumn],
+                    address = Address(
+                        line1 = it[GroupsTable.addressLine1],
+                        line2 = it[GroupsTable.addressLine2],
+                        postalCode = it[GroupsTable.addressPostalCode],
+                        city = it[GroupsTable.addressCity],
+                        state = it[GroupsTable.addressState],
+                        country = it[GroupsTable.addressCountry],
+                    ),
+                    contactEmail = it[GroupsTable.contactEmailColumn],
+                )
+            }
+            .firstOrNull()
+            ?: throw IllegalArgumentException("Group $groupName does not exist.")
     }
 
     fun createNewGroup(group: Group, username: String) {
