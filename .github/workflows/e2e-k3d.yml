@@ -9,7 +9,7 @@ on:
       - "kubernetes/**"
       - "preprocessing/**"
       - "deploy.py"
-      - ".github/workflows/e2e-test.yml"
+      - ".github/workflows/e2e-k3d.yml"
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-e2e-k3d
@@ -34,7 +34,7 @@ jobs:
 
       - name: Create k3d cluster
         run: |
-          ./deploy.py cluster
+          ./deploy.py --verbose cluster
 
       - name: Test helm template
         uses: WyriHaximus/github-action-helm3@v4
@@ -82,21 +82,21 @@ jobs:
       - name: Wait for Backend Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
           check-name: Build Backend Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Wait for Website Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
           check-name: Build Website Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy with helm
         uses: WyriHaximus/github-action-helm3@v4
         with:
-          exec: ./deploy.py helm --branch ${{ github.ref_name }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
+          exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ github.sha }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
 
       - name: Wait for the pods to be ready
         run: ./.github/scripts/wait_for_pods_to_be_ready.py

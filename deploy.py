@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
+import os
 import subprocess
 import time
 from pathlib import Path
-import os
+
 import yaml
 
 script_path = Path(__file__).resolve()
@@ -28,6 +29,7 @@ PORTS = [WEBSITE_PORT_MAPPING, BACKEND_PORT_MAPPING, LAPIS_PORT_MAPPING, DATABAS
 parser = argparse.ArgumentParser(description='Manage k3d cluster and helm installations.')
 subparsers = parser.add_subparsers(dest='subcommand', required=True, help='Subcommands')
 parser.add_argument('--dry-run', action='store_true', help='Print commands instead of executing them')
+parser.add_argument('--verbose', action='store_true', help='Print commands that are executed')
 
 cluster_parser = subparsers.add_parser('cluster', help='Start the k3d cluster')
 cluster_parser.add_argument('--dev', action='store_true',
@@ -38,6 +40,7 @@ helm_parser = subparsers.add_parser('helm', help='Install the Helm chart to the 
 helm_parser.add_argument('--dev', action='store_true',
                          help='Set up a development environment for running the website and the backend locally')
 helm_parser.add_argument('--branch', help='Set the branch to deploy with the Helm chart')
+helm_parser.add_argument('--sha', help='Set the commit sha to deploy with the Helm chart')
 helm_parser.add_argument('--dockerconfigjson',
                          help='Set the base64 encoded dockerconfigjson secret for pulling the images')
 helm_parser.add_argument('--uninstall', action='store_true', help='Uninstall installation')
@@ -53,11 +56,12 @@ config_parser = subparsers.add_parser('config', help='Generate config files')
 args = parser.parse_args()
 
 def run_command(command: list[str], **kwargs):
-    if args.dry_run:
+    if args.dry_run or args.verbose:
         if isinstance(command, str):
             print(command)
         else:
             print(" ".join(map(str,command)))
+    if args.dry_run:
         return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
     else:
         return subprocess.run(command, **kwargs)
@@ -140,6 +144,9 @@ def handle_helm():
         '--set', f"branch={branch}",
         '--set', f"dockerconfigjson={docker_config_json}",
     ]
+
+    if args.sha:
+        parameters += ['--set', f"sha={args.sha[:7]}"]
 
     if args.dev:
         parameters += ['--set', "disableBackend=true"]
