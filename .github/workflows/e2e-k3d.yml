@@ -82,14 +82,14 @@ jobs:
       - name: Wait for Backend Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
           check-name: Build Backend Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Wait for Website Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
-          ref: ${{ github.ref }}
+          ref: ${{ github.sha }}
           check-name: Build Website Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
