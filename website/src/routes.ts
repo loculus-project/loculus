@@ -187,7 +187,7 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean) {
                 path: routes.organismSelectorPage('submit'),
             },
             {
-                text: isLoggedIn ? 'Account' : 'Login',
+                text: isLoggedIn ? 'My account' : 'Login',
                 path: routes.userOverviewPage(),
             },
             {
@@ -211,7 +211,7 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean) {
             path: routes.revisePage(organism),
         },
         {
-            text: isLoggedIn ? 'Account' : 'Login',
+            text: isLoggedIn ? 'My account' : 'Login',
             path: routes.userOverviewPage(organism),
         },
         {
