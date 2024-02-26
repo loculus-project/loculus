@@ -34,7 +34,7 @@ jobs:
 
       - name: Create k3d cluster
         run: |
-          ./deploy.py cluster
+          ./deploy.py --verbose cluster
 
       - name: Test helm template
         uses: WyriHaximus/github-action-helm3@v3
@@ -96,7 +96,7 @@ jobs:
       - name: Deploy with helm
         uses: WyriHaximus/github-action-helm3@v3
         with:
-          exec: ./deploy.py helm --branch ${{ github.ref_name }} --sha ${{ github.sha }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
+          exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ github.sha }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
 
       - name: Wait for the pods to be ready
         run: ./.github/scripts/wait_for_pods_to_be_ready.py
