@@ -74,13 +74,13 @@ Check the README of the backend and the website for more information on how to d
 Check whether the services are already deployed (it might take some time to start, especially for the first time):
 
 ```shell
-kubectl get pods -n loculus
+kubectl get pods
 ```
 
 If something goes wrong,
 
 ```shell
-kubectl get events -n loculus
+kubectl get events
 ```
 
 might help to see the reason.
