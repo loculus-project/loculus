@@ -37,7 +37,7 @@ jobs:
           ./deploy.py cluster
 
       - name: Test helm template
-        uses: WyriHaximus/github-action-helm3@v3
+        uses: WyriHaximus/github-action-helm3@v4
         with:
           exec: helm template does-not-matter ./kubernetes/loculus > defaultTemplate.yaml
 
@@ -94,7 +94,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy with helm
-        uses: WyriHaximus/github-action-helm3@v3
+        uses: WyriHaximus/github-action-helm3@v4
         with:
           exec: ./deploy.py helm --branch ${{ github.ref_name }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
 
