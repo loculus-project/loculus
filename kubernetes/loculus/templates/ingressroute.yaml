@@ -6,8 +6,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-website-ingress
-  annotations:
-    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   rules:
     - host: "{{ .Values.host }}"
