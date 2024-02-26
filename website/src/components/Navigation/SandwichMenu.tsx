@@ -35,7 +35,7 @@ export const SandwichMenu: FC<SandwichMenuProps> = ({ top, right, organism, know
                     isOpen ? 'translate-x-0' : 'translate-x-full'
                 }`}
             >
-                <div className='font-bold m-5 flex flex-col justify-between min-h-screen flex-grow'>
+                <div className='font-bold p-5 flex flex-col justify-between min-h-screen max-h-screen overflow-y-auto'>
                     <div>
                         <div className='h-10'>
                             <a href='/'>Loculus</a>
