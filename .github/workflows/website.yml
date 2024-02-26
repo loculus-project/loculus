@@ -11,7 +11,7 @@ defaults:
     working-directory: ./website
 
 concurrency:
-  group: ci-${{ github.ref }}-website
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website
   cancel-in-progress: true
 
 jobs:
