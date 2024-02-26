@@ -5,8 +5,8 @@ channels:
 dependencies:
   - python=3.12
   - biopython=1.83
-  - nextclade=3.0.1
-  - click=8.1
-  - requests=2.31
-  - snakemake=8.2.3
+  - nextclade=3.2.1
   - PyYAML
+  - requests=2.31
+  - pyjwt=2.8
+  - pip
