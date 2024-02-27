@@ -14,7 +14,6 @@ export class ReviewPage {
     public readonly deleteAllButton: Locator;
     public readonly confirmButton: Locator;
 
-
     constructor(public readonly page: Page) {
         this.approveAllButton = page.getByRole('button', { name: 'Release', exact: false });
         this.deleteFirstButton = page.getByRole('button', { name: 'Discard sequences', exact: false });
@@ -71,7 +70,6 @@ export class ReviewPage {
         await this.approveAllButton.click();
         await expect(this.confirmButton).toBeVisible();
         await this.confirmButton.click();
-
     }
 
     public async deleteAll() {
