@@ -123,46 +123,42 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                         <div className='py-1'>
                             {errorCount > 0 && showErrors && (
                                 <Menu.Item>
-                                    {({}) => (
-                                        <button
-                                            className={menuItemClassName}
-                                            onClick={() =>
-                                                displayConfirmationDialog({
-                                                    dialogText:
-                                                        'Are you sure you want to discard all sequences with errors?',
-                                                    onConfirmation: () => {
-                                                        hooks.deleteSequenceEntries({
-                                                            scope: deleteProcessedDataWithErrorsScope.value,
-                                                        });
-                                                    },
-                                                })
-                                            }
-                                        >
-                                            <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                                            Discard {errorCount} sequences with errors
-                                        </button>
-                                    )}
-                                </Menu.Item>
-                            )}
-                            <Menu.Item>
-                                {({}) => (
                                     <button
                                         className={menuItemClassName}
                                         onClick={() =>
                                             displayConfirmationDialog({
-                                                dialogText: `Are you sure you want to discard all ${processedCount + errorCount} processed sequences?`,
+                                                dialogText:
+                                                    'Are you sure you want to discard all sequences with errors?',
                                                 onConfirmation: () => {
                                                     hooks.deleteSequenceEntries({
-                                                        scope: deleteAllDataScope.value,
+                                                        scope: deleteProcessedDataWithErrorsScope.value,
                                                     });
                                                 },
                                             })
                                         }
                                     >
                                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                                        Discard all {processedCount + errorCount} processed sequences
+                                        Discard {errorCount} sequences with errors
                                     </button>
-                                )}
+                                </Menu.Item>
+                            )}
+                            <Menu.Item>
+                                <button
+                                    className={menuItemClassName}
+                                    onClick={() =>
+                                        displayConfirmationDialog({
+                                            dialogText: `Are you sure you want to discard all ${processedCount + errorCount} processed sequences?`,
+                                            onConfirmation: () => {
+                                                hooks.deleteSequenceEntries({
+                                                    scope: deleteAllDataScope.value,
+                                                });
+                                            },
+                                        })
+                                    }
+                                >
+                                    <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
+                                    Discard all {processedCount + errorCount} processed sequences
+                                </button>
                             </Menu.Item>
                         </div>
                     </Menu.Items>
