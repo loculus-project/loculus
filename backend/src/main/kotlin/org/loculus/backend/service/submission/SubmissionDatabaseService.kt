@@ -12,7 +12,6 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
-import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
@@ -92,7 +91,6 @@ class SubmissionDatabaseService(
                 .select(
                     where = { table.statusIs(RECEIVED) and table.isMaxVersion and table.organismIs(organism) },
                 )
-                .orderBy(table.submittedAtColumn to SortOrder.ASC, table.accessionColumn to SortOrder.ASC)
                 .limit(numberOfSequenceEntries)
                 .map {
                     UnprocessedData(
@@ -456,7 +454,7 @@ class SubmissionDatabaseService(
                             table.groupIsOneOf(validatedGroupNames)
                     },
                 )
-                .orderBy(table.submittedAtColumn to SortOrder.ASC, table.accessionColumn to SortOrder.ASC)
+                .orderBy(table.accessionColumn)
 
             if (organism != null) {
                 query.andWhere { table.organismIs(organism) }
