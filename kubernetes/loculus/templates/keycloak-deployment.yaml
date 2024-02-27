@@ -46,8 +46,6 @@ spec:
               value: "admin"
             - name: KC_PROXY
               value: "edge"
-            - name: PROXY_ADDRESS_FORWARDING
-              value: "true"
             - name: KC_HEALTH_ENABLED
               value: "true"
             # - name: KC_LOG_LEVEL
