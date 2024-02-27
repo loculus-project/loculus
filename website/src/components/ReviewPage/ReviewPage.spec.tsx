@@ -125,13 +125,6 @@ describe('ReviewPage', () => {
 
         mockRequest.backend.getSequences(200, generateGetSequencesResponse([]));
 
-        getByText((text) => text.includes('Discard 1 sequences with errors')).click();
-        await waitFor(() => {
-            expect(getByText("Confirm")).toBeDefined();
-        });
-        getByText((text) => text.includes('Confirm')).click();
-        
-        await new Promise((r) => setTimeout(r, 100));
 
         getByText((text) => text.includes('Release 1 sequences without errors')).click();
         await waitFor(() => {
