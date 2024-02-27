@@ -91,6 +91,7 @@ class SubmissionDatabaseService(
                 .select(
                     where = { table.statusIs(RECEIVED) and table.isMaxVersion and table.organismIs(organism) },
                 )
+                .orderBy(table.accessionColumn)
                 .limit(numberOfSequenceEntries)
                 .map {
                     UnprocessedData(
