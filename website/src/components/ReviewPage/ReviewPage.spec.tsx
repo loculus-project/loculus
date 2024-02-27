@@ -114,6 +114,8 @@ describe('ReviewPage', () => {
             expect(getByText(awaitingApprovalTestData.accession)).toBeDefined();
         });
 
+    
+
         getByText('Discard sequences').click();
 
         await waitFor(() => {
@@ -124,7 +126,9 @@ describe('ReviewPage', () => {
         mockRequest.backend.getSequences(200, generateGetSequencesResponse([]));
 
         getByText((text) => text.includes('Discard 1 sequences with errors')).click();
+        getByText((text) => text.includes('Confirm')).click();
         getByText((text) => text.includes('Release 1 sequences without errors')).click();
+        getByText((text) => text.includes('Confirm')).click();
 
         await waitFor(() => {
             expect(getByText('No sequences to review')).toBeDefined();
