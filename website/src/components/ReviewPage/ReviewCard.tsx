@@ -18,15 +18,15 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
-import Edit from '~icons/bxs/edit';
-import Trash from '~icons/bxs/trash';
-import Send from '~icons/fa/send';
+import BiTrash from '~icons/bi/trash';
+import ClarityNoteEditLine from '~icons/clarity/note-edit-line';
 import Note from '~icons/fluent/note-24-filled';
 import QuestionMark from '~icons/fluent/tag-question-mark-24-filled';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import EmptyCircle from '~icons/grommet-icons/empty-circle';
 import TickOutline from '~icons/mdi/tick-outline';
+import WpfPaperPlane from '~icons/wpf/paper-plane';
 
 type ReviewCardProps = {
     sequenceEntryStatus: SequenceEntryStatus;
@@ -103,14 +103,14 @@ const ButtonBar: FC<ButtonBarProps> = ({
         } pl-3 inline-block mr-2 mb-2 text-xl`;
 
     return (
-        <div className='flex space-x-2 mb-auto pt-3.5'>
+        <div className='flex space-x-1 mb-auto pt-3.5'>
             <button
                 className={buttonBarClass(sequenceEntryStatus.status !== awaitingApprovalStatus)}
                 onClick={approveAccessionVersion}
                 data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
                 disabled={sequenceEntryStatus.status !== awaitingApprovalStatus}
             >
-                <Send />
+                <WpfPaperPlane />
             </button>
             <Tooltip
                 id={'approve-tooltip' + sequenceEntryStatus.accession}
@@ -136,7 +136,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     sequenceEntryStatus.status !== awaitingApprovalStatus
                 }
             >
-                <Edit />
+                <ClarityNoteEditLine />
             </button>
             <Tooltip
                 id={'edit-tooltip' + sequenceEntryStatus.accession}
@@ -160,7 +160,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     sequenceEntryStatus.status !== awaitingApprovalStatus
                 }
             >
-                <Trash />
+                <BiTrash />
             </button>
             <Tooltip
                 id={'delete-tooltip' + sequenceEntryStatus.accession}

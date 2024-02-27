@@ -1,3 +1,4 @@
+import { Menu } from '@headlessui/react';
 import { Pagination } from '@mui/material';
 import { type ChangeEvent, type FC, useState } from 'react';
 
@@ -15,8 +16,14 @@ import {
     type SequenceEntryStatus,
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
+import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import BiTrash from '~icons/bi/trash';
+import IwwaArrowDown from '~icons/iwwa/arrow-down';
+import WpfPaperPlane from '~icons/wpf/paper-plane';
+const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
+hover:bg-gray-400 bg-gray-500 text-white text-left mb-1`;
 
 type ReviewPageProps = {
     clientConfig: ClientConfig;
@@ -104,28 +111,77 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     );
 
     const bulkActionButtons = (
-        <div className='flex justify-end'>
-            {errorCount > 0 && showErrors && (
-                <button
-                    className='border rounded-md p-1 bg-gray-500 text-white px-2'
-                    onClick={() => {
-                        hooks.deleteSequenceEntries({
-                            scope: deleteProcessedDataWithErrorsScope.value,
-                        });
-                    }}
-                >
-                    Discard {errorCount} sequences with errors
-                </button>
+        <div className='flex justify-end items-center gap-3'>
+            {processedCount + errorCount > 0 && (
+                <Menu as='div' className='relative inline-block text-left'>
+                    <Menu.Button className='border rounded-md p-1 bg-gray-500 text-white px-2'>
+                        <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
+                        Discard sequences
+                        <IwwaArrowDown className='inline-block ml-1 w-3 h-3 -mt-0.5' />
+                    </Menu.Button>
+                    <Menu.Items className='origin-top-right absolute z-50 bg-white'>
+                        <div className='py-1'>
+                            {errorCount > 0 && showErrors && (
+                                <Menu.Item>
+                                    {({}) => (
+                                        <button
+                                            className={menuItemClassName}
+                                            onClick={() =>
+                                                displayConfirmationDialog({
+                                                    dialogText:
+                                                        'Are you sure you want to discard all sequences with errors?',
+                                                    onConfirmation: () => {
+                                                        hooks.deleteSequenceEntries({
+                                                            scope: deleteProcessedDataWithErrorsScope.value,
+                                                        });
+                                                    },
+                                                })
+                                            }
+                                        >
+                                            <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
+                                            Discard {errorCount} sequences with errors
+                                        </button>
+                                    )}
+                                </Menu.Item>
+                            )}
+                            <Menu.Item>
+                                {({}) => (
+                                    <button
+                                        className={menuItemClassName}
+                                        onClick={() =>
+                                            displayConfirmationDialog({
+                                                dialogText: `Are you sure you want to discard all ${processedCount + errorCount} processed sequences?`,
+                                                onConfirmation: () => {
+                                                    hooks.deleteSequenceEntries({
+                                                        scope: deleteAllDataScope.value,
+                                                    });
+                                                },
+                                            })
+                                        }
+                                    >
+                                        <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
+                                        Discard all {processedCount + errorCount} processed sequences
+                                    </button>
+                                )}
+                            </Menu.Item>
+                        </div>
+                    </Menu.Items>
+                </Menu>
             )}
             {processedCount > 0 && (
                 <button
-                    className='border rounded-md p-1 bg-gray-500 text-white px-2 ml-2'
+                    className='border rounded-md p-1 bg-gray-500 text-white px-2'
                     onClick={() =>
-                        hooks.approveProcessedData({
-                            scope: approveAllDataScope.value,
+                        displayConfirmationDialog({
+                            dialogText: 'Are you sure you want to release all sequences without errors?',
+                            onConfirmation: () =>
+                                hooks.approveProcessedData({
+                                    scope: approveAllDataScope.value,
+                                }),
                         })
                     }
                 >
+                    <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
                     Release {processedCount} sequences without errors
                 </button>
             )}
