@@ -75,7 +75,6 @@ export class ReviewPage {
     public async deleteAll() {
         await expect(this.deleteFirstButton).toBeVisible();
         await this.deleteFirstButton.click();
-        await expect(this.deleteAllButton).toBeVisible();
         await this.deleteAllButton.click();
         await expect(this.confirmButton).toBeVisible();
         await this.confirmButton.click();
