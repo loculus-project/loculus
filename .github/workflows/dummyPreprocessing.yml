@@ -7,45 +7,62 @@ on:
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-dummy
 
-defaults:
-  run:
-    working-directory: ./preprocessing/dummy
-
-concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-dummy
-  cancel-in-progress: true
-
 jobs:
-  dockerImage:
-    name: Build preprocessing-dummy Docker Image
+  build-or-use-cache:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+
+      - name: Generate files hash
+        id: files-hash
+        run: |
+          DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/dummy/**', '.github/workflows/dummyPreprocessing.yml') }})
+          echo "DIR_HASH=$DIR_HASH" >> $GITHUB_ENV
+
+      - name: Setup Docker metadata
+        id: dockerMetadata
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.DIR_HASH }}
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=ref,event=branch
+            type=sha,prefix=commit-
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Docker metadata
-        id: dockerMetadata
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.DOCKER_IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=sha,prefix=commit-
+
+      - name: Check if image exists
+        id: check-image
+        run: |
+          EXISTS=$(docker manifest inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }} > /dev/null 2>&1 && echo "true" || echo "false")
+          echo "CACHE_HIT=$EXISTS" >> $GITHUB_ENV
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push image
+        if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v5
         with:
           context: ./preprocessing/dummy
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=dummy${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=dummy-${{ github.ref }}
+          cache-from: type=gha,scope=preprocessing-dummy-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=preprocessing-dummy-${{ github.ref }}
+
+      - name: Tag and push image if cache hit
+        if: env.CACHE_HIT == 'true'
+        run: |
+          TAGS=(${{ steps.dockerMetadata.outputs.tags }})
+          for TAG in "${TAGS[@]}"; do
+            docker buildx imagetools create --tag $TAG ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}
+          done
