@@ -6,7 +6,7 @@ import { navigationItems } from '../../routes';
 
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 
-const isLoggedIn = Astro.locals.session && Astro.locals.session.isLoggedIn;
+const isLoggedIn = Astro.locals.session.isLoggedIn;
 
 const loginUrl = await getAuthUrl(Astro.url.toString());
 ---
