@@ -24,7 +24,7 @@ spec:
       containers:
         {{- if not .Values.disableWebsite }}
         - name: website
-          image: "{{ if .$.Values.customWebsiteImage }}{{ .$.Values.customWebsiteImage }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
+          image: "{{ if $.Values.customWebsiteImage }}{{ $.Values.customWebsiteImage }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
           imagePullPolicy: Always
           resources:
             requests:
