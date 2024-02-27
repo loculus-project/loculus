@@ -10,11 +10,16 @@ type ReviewPageOverview = {
 
 export class ReviewPage {
     public readonly approveAllButton: Locator;
+    public readonly deleteFirstButton: Locator;
     public readonly deleteAllButton: Locator;
+    public readonly confirmButton: Locator;
+
 
     constructor(public readonly page: Page) {
         this.approveAllButton = page.getByRole('button', { name: 'Release', exact: false });
-        this.deleteAllButton = page.getByRole('button', { name: 'Discard', exact: false });
+        this.deleteFirstButton = page.getByRole('button', { name: 'Discard sequences', exact: false });
+        this.deleteAllButton = page.getByRole('button', { name: 'Discard all', exact: false });
+        this.confirmButton = page.getByRole('button', { name: 'Confirm', exact: false });
     }
 
     public async goto() {
@@ -64,10 +69,17 @@ export class ReviewPage {
     public async approveAll() {
         await expect(this.approveAllButton).toBeVisible();
         await this.approveAllButton.click();
+        await expect(this.confirmButton).toBeVisible();
+        await this.confirmButton.click();
+
     }
 
     public async deleteAll() {
+        await expect(this.deleteFirstButton).toBeVisible();
+        await this.deleteFirstButton.click();
         await expect(this.deleteAllButton).toBeVisible();
         await this.deleteAllButton.click();
+        await expect(this.confirmButton).toBeVisible();
+        await this.confirmButton.click();
     }
 }
