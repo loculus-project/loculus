@@ -91,7 +91,7 @@ class SubmissionDatabaseService(
                 .select(
                     where = { table.statusIs(RECEIVED) and table.isMaxVersion and table.organismIs(organism) },
                 )
-                .orderBy(table.accessionColumn)
+                .orderBy(table.submittedAtColumn, table.accessionColumn)
                 .limit(numberOfSequenceEntries)
                 .map {
                     UnprocessedData(
@@ -455,7 +455,7 @@ class SubmissionDatabaseService(
                             table.groupIsOneOf(validatedGroupNames)
                     },
                 )
-                .orderBy(table.accessionColumn)
+                .orderBy(table.submittedAtColumn, table.accessionColumn)
 
             if (organism != null) {
                 query.andWhere { table.organismIs(organism) }
