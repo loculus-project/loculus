@@ -3,25 +3,26 @@ name: Docs Build Check
 on:
   push:
     paths:
-      - 'docs/**'
+      - "docs/**"
+  workflow_dispatch:
 
 jobs:
   check-docs-build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '20'
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
 
-    - name: Install Dependencies
-      run: npm install
-      working-directory: ./docs
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./docs
 
-    - name: Check Build
-      run: npm run build
-      working-directory: ./docs
+      - name: Check Build
+        run: npm run build
+        working-directory: ./docs

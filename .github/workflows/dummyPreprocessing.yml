@@ -2,6 +2,7 @@ name: preprocessing-dummy
 
 on:
   push:
+  workflow_dispatch:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-dummy

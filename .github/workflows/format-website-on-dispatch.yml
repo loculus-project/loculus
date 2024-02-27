@@ -10,24 +10,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '20'
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
 
-    - name: NPM install and format website
-      working-directory: website
-      run: |
-        npm install
-        npm run format
+      - name: NPM install and format website
+        working-directory: website
+        run: |
+          npm install
+          npm run format
 
-    - name: Commit and Push Changes
-      run: |
-        git config --global user.name 'Loculus bot'
-        git config --global user.email 'bot@loculus.org'
-        git add -A
-        git commit -m "Automated code formatting" || echo "No changes to commit"
-        git push
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name 'Loculus bot'
+          git config --global user.email 'bot@loculus.org'
+          git add -A
+          git commit -m "Automated code formatting" || echo "No changes to commit"
+          git push
