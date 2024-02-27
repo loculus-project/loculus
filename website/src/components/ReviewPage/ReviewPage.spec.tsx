@@ -114,6 +114,8 @@ describe('ReviewPage', () => {
             expect(getByText(awaitingApprovalTestData.accession)).toBeDefined();
         });
 
+        getByText('Discard sequences').click();
+
         await waitFor(() => {
             expect(getByText((text) => text.includes('Discard 1 sequences with errors'))).toBeDefined();
             expect(getByText((text) => text.includes('Release 1 sequences without errors'))).toBeDefined();
