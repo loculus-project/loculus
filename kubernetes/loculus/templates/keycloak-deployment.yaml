@@ -65,6 +65,7 @@ spec:
           args:
             - "start"
             - "--import-realm"
+            - "--features=declarative-user-profile"
           ports:
             - containerPort: 8080
           volumeMounts:
