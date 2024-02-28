@@ -4,10 +4,11 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "website/**"
       - "backend/**"
+      - "keycloak/**"
       - "kubernetes/**"
       - "preprocessing/**"
+      - "website/**"
       - "deploy.py"
       - ".github/scripts/**"
       - ".github/workflows/**"
