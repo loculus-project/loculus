@@ -9,7 +9,7 @@ type ConfirmationDialogProps = {
 
 type DisplayConfirmationProps = {
     dialogText: string;
-    onConfirmation: () => Promise<void>;
+    onConfirmation: () => Promise<void> | void;
 };
 
 export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ dialogText, onConfirmation, onClose }) => {
@@ -25,12 +25,12 @@ export const ConfirmationDialog: FC<ConfirmationDialogProps> = ({ dialogText, on
 
             <div className='flex justify-end gap-4 mt-4'>
                 <form method='dialog'>
-                    <button className='btn btn-error' onClick={onClose}>
+                    <button className='btn loculusColor text-white hover:bg-primary-700' onClick={onClose}>
                         Cancel
                     </button>
                 </form>
                 <form method='dialog'>
-                    <button className='btn loculusColor' onClick={onConfirmation}>
+                    <button className='btn loculusColor text-white hover:bg-primary-700' onClick={onConfirmation}>
                         Confirm
                     </button>
                 </form>
