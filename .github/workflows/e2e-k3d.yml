@@ -86,8 +86,7 @@ jobs:
         with:
           exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ github.sha }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
 
-      - name: Wait for the pods to be ready
-        timeout-minutes: 10
+      - name: Wait for the pods to be ready (timeout 480s)
         run: ./.github/scripts/wait_for_pods_to_be_ready.py
       - name: Sleep for 20 secs
         run: sleep 20
