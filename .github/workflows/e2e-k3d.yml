@@ -9,9 +9,8 @@ on:
       - "kubernetes/**"
       - "preprocessing/**"
       - "deploy.py"
-      # - ".github/scripts/**"
-      # - ".github/workflows/**"
-      # Temporarily disable to save time, reenable before merge
+      - ".github/scripts/**"
+      - ".github/workflows/**"
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-e2e-k3d
