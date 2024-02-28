@@ -62,10 +62,11 @@ spec:
               value: "{{ include "keycloakUrl" . }}"
             - name: KC_HOSTNAME_ADMIN_URL
               value: "{{ include "keycloakUrl" . }}"
+            - name: KC_FEATURES
+              value: "declarative-user-profile"
           args:
             - "start"
             - "--import-realm"
-            - "--features=declarative-user-profile"
           ports:
             - containerPort: 8080
           volumeMounts:
