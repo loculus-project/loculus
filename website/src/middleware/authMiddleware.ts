@@ -4,10 +4,10 @@ import jsonwebtoken from 'jsonwebtoken';
 import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
 import { type BaseClient, Issuer, type TokenSet } from 'openid-client';
-import {routes} from "../routes"
 
 import { getConfiguredOrganisms, getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
+import { routes } from '../routes';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
@@ -48,9 +48,9 @@ export async function getKeycloakClient() {
 }
 
 export const getAuthUrl = async (redirectUrl: string) => {
-    const logout = routes.logout()
-    if(redirectUrl.endsWith(logout)){
-        redirectUrl = redirectUrl.replace(logout, routes.userOverviewPage())
+    const logout = routes.logout();
+    if (redirectUrl.endsWith(logout)) {
+        redirectUrl = redirectUrl.replace(logout, routes.userOverviewPage());
     }
     const authUrl = (await getKeycloakClient()).authorizationUrl({
         redirect_uri: redirectUrl,
