@@ -7,10 +7,6 @@ on:
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/backend
 
-defaults:
-  run:
-    working-directory: ./backend
-
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend
   cancel-in-progress: true
@@ -49,7 +45,7 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/nextclade/**', '.github/workflows/preprocessing-nextclade.yml') }})
+          DIR_HASH=$(echo -n ${{ hashFiles('backend/**', '.github/workflows/backend.yml') }})
           echo "DIR_HASH=$DIR_HASH" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
