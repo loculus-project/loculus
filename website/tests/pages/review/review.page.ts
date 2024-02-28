@@ -17,7 +17,7 @@ export class ReviewPage {
     constructor(public readonly page: Page) {
         this.approveAllButton = page.getByRole('button', { name: 'Release', exact: false });
         this.deleteFirstButton = page.getByRole('button', { name: 'Discard sequences', exact: false });
-        this.deleteAllButton = page.getByRole('button', { name: /Discard all/, exact: false, includeHidden: true });
+        this.deleteAllButton = page.getByRole('button', { name: 'Discard all', exact: false, includeHidden: true });
         this.confirmButton = page.getByRole('button', { name: 'Confirm', exact: false });
     }
 
