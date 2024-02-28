@@ -66,31 +66,7 @@ export default function Register(props: PageProps<Extract<KcContext, { pageId: "
                     </div>
                 </div>
 
-                {
-                    /* University field */
-                }
-                <div
-                    className={clsx(
-                        getClassName("kcFormGroupClass"),
-                        messagesPerField.printIfExists("university", getClassName("kcFormGroupErrorClass"))
-                    )}
-                >
-                    <div className={getClassName("kcLabelWrapperClass")}>
-                        <label htmlFor="university" className={getClassName("kcLabelClass")}>
-                            University
-                        </label>
-                    </div>
-                    <div className={getClassName("kcInputWrapperClass")}>
-                        <input
-                            type="text"
-                            id="university"
-                            className={getClassName("kcInputClass")}
-                            name="university"
-                            defaultValue={""}
-                        />
-                    </div>
-                </div>
-
+                
 
                 <div
                     className={clsx(getClassName("kcFormGroupClass"), messagesPerField.printIfExists("email", getClassName("kcFormGroupErrorClass")))}
