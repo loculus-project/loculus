@@ -24,7 +24,7 @@ spec:
       containers:
         {{- if not .Values.disableWebsite }}
         - name: website
-          image: "ghcr.io/loculus-project/website:{{ $dockerTag }}"
+          image: "{{ if $.Values.customWebsiteImage }}{{ $.Values.customWebsiteImage }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
           imagePullPolicy: Always
           resources:
             requests:
@@ -95,6 +95,7 @@ spec:
 
       imagePullSecrets:
         - name: ghcr-secret
+        - name: custom-website-sealed-secret
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
