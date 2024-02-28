@@ -9,7 +9,7 @@ import type { I18n } from "../i18n";
 
 export default function RegisterUserProfile(props: PageProps<Extract<KcContext, { pageId: "register-user-profile.ftl" }>, I18n>) {
     const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
-
+    const [didAgree, setDidAgree] = useState(false);
     const { getClassName } = useGetClassName({
         doUseDefaultCss,
         classes
@@ -51,6 +51,25 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                         </div>
                     </div>
 
+                    <div>
+                    This database is subject to particular terms of use. Some data is available under the restricted use terms, which state that
+                    you may not publish focal analyses of this data without express permission of the authors.
+                    Do you agree to these terms?
+                    <div>
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        name="terms"
+                        onChange={(e) => {
+                            setDidAgree(e.target.checked);
+                        }}
+                    /> I agree
+</div>
+
+                </div>
+
+                    
+
                     <div id="kc-form-buttons" className={getClassName("kcFormButtonsClass")}>
                         <input
                             className={clsx(
@@ -61,7 +80,7 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                             )}
                             type="submit"
                             value={msgStr("doRegister")}
-                            disabled={!isFormSubmittable}
+                            disabled={!isFormSubmittable || !didAgree}
                         />
                     </div>
                 </div>
