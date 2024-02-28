@@ -1,96 +1,257 @@
-{{- define "keycloakUrl" -}}
-  {{- if eq .Values.environment "server" -}}
-    {{- printf "https://authentication-%s" .Values.host -}}
-  {{- else if .Values.codespaceName -}}
-    {{- printf "https://%s-8083.app.github.dev" .Values.codespaceName -}}
-  {{- else -}}
-    {{- "http://localhost:8083" -}}
-  {{- end -}}
-{{- end -}}
+{{- $keycloakHost := printf "authentication-%s" .Values.host }}
 ---
-
-{{- $dockerTag := include "loculus.dockerTag" .Values }}
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: ConfigMap
 metadata:
-  name: loculus-keycloak
-  annotations:
-    argocd.argoproj.io/sync-options: Replace=true
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: loculus
-      component: keycloak
-  template:
-    metadata:
-      labels:
-        app: loculus
-        component: keycloak
-    spec:
-      initContainers:
-        - name: keycloak-theme-prep
-          image: "ghcr.io/loculus-project/keycloakify:{{ $dockerTag }}"
-          volumeMounts:
-            - name: theme-volume
-              mountPath: /destination
-      containers:
-        - name: keycloak
-          image: quay.io/keycloak/keycloak
-          env:
-            - name: DB_VENDOR
-              value: "postgres"
-            - name: DB_ADDR
-              value: "loculus-keycloak-database-service"
-            - name: DB_DATABASE
-              value: "keycloak"
-            - name: DB_USER
-              value: "postgres"
-            - name: DB_PASSWORD
-              value: "unsecure"
-            - name: KEYCLOAK_ADMIN
-              value: "admin"
-            - name: KEYCLOAK_ADMIN_PASSWORD
-              value: "admin"
-            - name: KC_PROXY
-              value: "edge"
-            - name: PROXY_ADDRESS_FORWARDING
-              value: "true"
-            - name: KC_HEALTH_ENABLED
-              value: "true"
-            - name: KC_HOSTNAME_URL
-              value: "{{ include "keycloakUrl" . }}"
-            - name: KC_HOSTNAME_ADMIN_URL
-              value: "{{ include "keycloakUrl" . }}"
-            - name: KC_FEATURES
-              value: "declarative-user-profile"
-          args:
-            - "start"
-            - "--import-realm"
-          ports:
-            - containerPort: 8080
-          volumeMounts:
-            - name: config-volume
-              mountPath: /opt/keycloak/data/import/
-            - name: theme-volume
-              mountPath: /opt/keycloak/providers/
-          startupProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /health/ready
-              port: 8080
-            initialDelaySeconds: 60
-            periodSeconds: 10
-      volumes:
-        - name: config-volume
-          configMap:
-            name: keycloak-config
-        - name: theme-volume
-          emptyDir: {}
-      imagePullSecrets:
-        - name: ghcr-secret
+  name: keycloak-config
+data:
+  keycloak-config.json: |
+    {
+      "realm": "loculusRealm",
+      "enabled": true,
+      "registrationAllowed": true,
+      "accessTokenLifespan": 36000,
+      "ssoSessionIdleTimeout": 36000,
+      "users": [
+        {{- $browsers := list "firefox" "webkit" "chromium"}}
+        {{- range $_, $browser := $browsers }}
+          {{- range $index, $_ := until 20}}
+        {
+          "username": "testuser_{{$index}}_{{$browser}}",
+          "enabled": true,
+          "email": "testuser_{{$index}}_{{$browser}}@keycloak.org",
+          "firstName": "Test",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "testuser_{{$index}}_{{$browser}}"
+            }
+          ],
+          "realmRoles": [
+            "user",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+          {{ end }}
+        {{ end }}
+        {
+          "username": "testuser",
+          "enabled": true,
+          "email": "testuser@keycloak.org",
+          "firstName": "Test",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "testuser"
+            }
+          ],
+          "realmRoles": [
+            "user",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        {
+          "username": "insdc_ingest_user",
+          "enabled": true,
+          "email": "insdc_ingest_user@keycloak.org",
+          "firstName": "INSDC Ingest",
+          "lastName": "User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "insdc_ingest_user"
+            }
+          ],
+          "realmRoles": [
+            "user",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        {
+          "username": "dummy_preprocessing_pipeline",
+          "enabled": true,
+          "email": "dummy_preprocessing_pipeline@keycloak.org",
+          "firstName": "Dummy",
+          "lastName": "Preprocessing",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "dummy_preprocessing_pipeline"
+            }
+          ],
+          "realmRoles": [
+            "preprocessing_pipeline",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        {
+          "username": "silo_import_job",
+          "enabled": true,
+          "email": "silo_import_job@keycloak.org",
+          "firstName": "SILO",
+          "lastName": "ImportJob",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "silo_import_job"
+            }
+          ],
+          "realmRoles": [
+            "get_released_data",
+            "offline_access"
+          ],
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        {
+          "username": "backend",
+          "enabled": true,
+          "email": "nothing@void.o",
+          "firstName": "Backend",
+          "lastName": "Technical-User",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "backend"
+            }
+          ],
+          "clientRoles": {
+            "realm-management": [
+              "view-users"
+            ],
+            "account": [
+              "manage-account"
+            ]
+          }
+        }
+      ],
+      "roles": {
+        "realm": [
+          {
+            "name": "user",
+            "description": "User privileges"
+          },
+          {
+            "name": "admin",
+            "description": "Administrator privileges"
+          },
+          {
+            "name": "preprocessing_pipeline",
+            "description": "Preprocessing pipeline privileges"
+          },
+          {
+            "name": "get_released_data",
+            "description": "Privileges for getting released data"
+          }
+        ]
+      },
+      "clients": [
+        {
+          "clientId": "test-cli",
+          "enabled": true,
+          "publicClient": true,
+          "directAccessGrantsEnabled": true,
+          "redirectUris": [
+            "*"
+          ]
+        },
+              {
+          
+          "clientId" : "account-console2",
+          "name" : "${client_account-console}",
+          "description" : "",
+          "rootUrl" : "${authBaseUrl}",
+          "adminUrl" : "",
+          "baseUrl" : "/realms/loculusRealm/account/",
+          "surrogateAuthRequired" : false,
+          "enabled" : true,
+          "alwaysDisplayInConsole" : false,
+          "clientAuthenticatorType" : "client-secret",
+          "redirectUris" : [ "/realms/loculusRealm/account/*" ],
+          "webOrigins" : [ "+" ],
+          "notBefore" : 0,
+          "bearerOnly" : false,
+          "consentRequired" : false,
+          "standardFlowEnabled" : true,
+          "implicitFlowEnabled" : false,
+          "directAccessGrantsEnabled" : false,
+          "serviceAccountsEnabled" : false,
+          "publicClient" : true,
+          "frontchannelLogout" : false,
+          "protocol" : "openid-connect",
+          "attributes" : {
+            "oidc.ciba.grant.enabled" : "false",
+            "backchannel.logout.session.required" : "true",
+            "post.logout.redirect.uris" : "+",
+            "oauth2.device.authorization.grant.enabled" : "false",
+            "display.on.consent.screen" : "false",
+            "pkce.code.challenge.method" : "S256",
+            "backchannel.logout.revoke.offline.tokens" : "false"
+          },
+          "authenticationFlowBindingOverrides" : { },
+          "fullScopeAllowed" : false,
+          "nodeReRegistrationTimeout" : 0,
+          "protocolMappers" : [ {
+           
+            "name" : "audience resolve",
+            "protocol" : "openid-connect",
+            "protocolMapper" : "oidc-audience-resolve-mapper",
+            "consentRequired" : false,
+            "config" : { }
+          } ],
+          "defaultClientScopes" : [ "web-origins", "acr", "profile", "roles", "email" ],
+          "optionalClientScopes" : [ "address", "phone", "offline_access", "microprofile-jwt" ]
+        }
+      ],
+      "attributes": {
+        {{- if eq .Values.environment "server" }}
+        "frontendUrl": "https://{{ $keycloakHost }}"
+        {{- else if .Values.codespaceName }}
+        "frontendUrl": "https://{{ .Values.codespaceName }}-8083.app.github.dev"
+        {{- else }}
+        "frontendUrl": "http://localhost:8083"
+        {{- end }}
+      },
+      "loginTheme": "loculus",
+        "identityProviders" : [ {
+        "alias" : "orcid",
+        "providerId" : "orcid",
+        "enabled" : true,
+        "updateProfileFirstLoginMode" : "on",
+        "trustEmail" : false,
+        "storeToken" : false,
+        "addReadTokenRoleOnCreate" : false,
+        "authenticateByDefault" : false,
+        "linkOnly" : false,
+        "firstBrokerLoginFlowAlias" : "first broker login",
+        "config" : {
+          "clientSecret" : "65897b89-a888-427d-8828-1f1dd97bf6c1",
+          "clientId" : "APP-P1P7N7T9YVBHQ4EH"
+        }
+      } ]
+    }
