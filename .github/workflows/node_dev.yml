@@ -3,8 +3,10 @@ name: Dev server test
 on:
   push:
     paths:
-      - 'website/**'
-      - 'deploy.py'
+      - "website/**"
+      - "deploy.py"
+  workflow_dispatch:
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -12,29 +14,28 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-    - uses: azure/setup-helm@v3
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Install yaml package
-      run: pip install PyYAML requests
+      - uses: azure/setup-helm@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install yaml package
+        run: pip install PyYAML requests
 
-    - name: Generate local test config
-      run: ./generate_local_test_config.sh
- 
-    - name: Install dependencies
-      working-directory: website
-      run: |
-        npm install
-        npm install playwright --save-dev
-    
-    - name: Test dev node server
-      working-directory: website
-      run: |
-        npm run start &
-        npx playwright install chromium
-   
-        
-        npx playwright screenshot localhost:3000 test.png
-        sleep 5
-        npx playwright screenshot localhost:3000 test.png
-      
+      - name: Generate local test config
+        run: ./generate_local_test_config.sh
+
+      - name: Install dependencies
+        working-directory: website
+        run: |
+          npm install
+          npm install playwright --save-dev
+
+      - name: Test dev node server
+        working-directory: website
+        run: |
+          npm run start &
+          npx playwright install chromium
+
+
+          npx playwright screenshot localhost:3000 test.png
+          sleep 5
+          npx playwright screenshot localhost:3000 test.png

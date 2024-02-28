@@ -13,27 +13,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v2
-      with:
-        node-version: '20'
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "20"
 
-    - name: Navigate to docs directory
-      run: cd docs
+      - name: Navigate to docs directory
+        run: cd docs
 
-    - name: Install Dependencies
-      run: npm install
-      working-directory: ./docs
+      - name: Install Dependencies
+        run: npm install
+        working-directory: ./docs
 
-    - name: Build Project
-      run: npm run build
-      working-directory: ./docs
+      - name: Build Project
+        run: npm run build
+        working-directory: ./docs
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./docs/dist  # Adjust if your build output directory is different
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/dist # Adjust if your build output directory is different

@@ -2,6 +2,7 @@ name: config-processor-build
 
 on:
   push:
+  workflow_dispatch:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/config-processor
