@@ -1,25 +1,6 @@
-Your theme source files should be located in a keycloak-theme directory somewhere in your src directory OR at the root of your directory.  
-Acceptable directory strucuture:  
+Our directory structure for the different types of theme:
 
 ```txt
-src/
-  keycloak-theme/
-    login/
-    account/
-    email/
-    
-===OR===
-
-src/
-  foo/
-    bar/
-      keycloak-theme/
-        login/
-        account/
-        email/
-
-===OR===
-
 src/
   login/
   account/
