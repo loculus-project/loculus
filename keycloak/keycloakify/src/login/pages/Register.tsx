@@ -22,6 +22,23 @@ export default function Register(props: PageProps<Extract<KcContext, { pageId: "
     return (
         <Template {...{ kcContext, i18n, doUseDefaultCss, classes }} headerNode={msg("registerTitle")}>
             <form id="kc-register-form" className={getClassName("kcFormClass")} action={url.registrationAction} method="post">
+
+            <div>
+                    This database is subject to particular terms of use. Some data is available under the restricted use terms, which state that
+                    you may not publish focal analyses of this data without express permission of the authors.
+                    Do you agree to these terms?
+                    <div>
+                    <input
+                        type="checkbox"
+                        id="terms"
+                        name="terms"
+                        onChange={(e) => {
+                            setDidAgree(e.target.checked);
+                        }}
+                    /> I agree
+</div>
+
+                </div>
                 <div
                     className={clsx(
                         getClassName("kcFormGroupClass"),
@@ -153,22 +170,6 @@ export default function Register(props: PageProps<Extract<KcContext, { pageId: "
                     </>
                 )}
 
-                <div>
-                    This database is subject to particular terms of use. Some data is available under the restricted use terms, which state that
-                    you may not publish focal analyses of this data without express permission of the authors.
-                    Do you agree to these terms?
-                    <div>
-                    <input
-                        type="checkbox"
-                        id="terms"
-                        name="terms"
-                        onChange={(e) => {
-                            setDidAgree(e.target.checked);
-                        }}
-                    /> I agree
-</div>
-
-                </div>
 
 
                 {recaptchaRequired && (
