@@ -111,6 +111,13 @@ jobs:
           name: playwright-report
           path: website/playwright-report/
           retention-days: 30
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: website/test_results/
+          retention-days: 30 # Optional: Adjust according to how long you want to keep the artifact
 
       - name: List running pods
         if: ${{ !cancelled() }}
