@@ -265,13 +265,21 @@ data:
         }
       } ],
     "identityProviderMappers" : [ {
+    "name" : "username mapper",
+    "identityProviderAlias" : "orcid",
+    "identityProviderMapper" : "hardcoded-attribute-idp-mapper",
+    "config" : {
+      "syncMode" : "INHERIT",
+      "attribute" : "username"
+    }
+    },{
       "name" : "orcid",
       "identityProviderAlias" : "orcid",
       "identityProviderMapper" : "orcid-user-attribute-mapper",
       "config" : {
         "syncMode" : "INHERIT",
         "jsonField" : "orcid-identifier",
-        "userAttribute" : "orcid"
+        "userAttribute" : "orcid.path"
       }
     } ]
     }

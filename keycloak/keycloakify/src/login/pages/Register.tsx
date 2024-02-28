@@ -7,6 +7,7 @@ import type { I18n } from "../i18n";
 import { useState } from "react";
 
 export default function Register(props: PageProps<Extract<KcContext, { pageId: "register.ftl" }>, I18n>) {
+// THIS PAGE IS UNUSED, RegisterUserProfile is used instead. But we need to keep this file.
     const [didAgree, setDidAgree] = useState(false);
     const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
 
