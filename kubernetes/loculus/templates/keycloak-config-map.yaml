@@ -236,6 +236,7 @@ data:
         {{- else }}
         "frontendUrl": "http://localhost:8083"
         {{- end }}
+         , "userProfileEnabled" : "true"
       },
       "loginTheme": "loculus",
         "identityProviders" : [ {
