@@ -5,7 +5,7 @@ import type { PageProps } from "keycloakify/login/pages/PageProps";
 import { useGetClassName } from "keycloakify/login/lib/useGetClassName";
 import type { KcContext } from "../kcContext";
 import type { I18n } from "../i18n";
-import orcidLogoUrl from "./assets/orcid-logo.png";
+import orcidLogoUrl from "../assets/orcid-logo.png";
 
 const my_custom_param = new URL(window.location.href).searchParams.get("my_custom_param");
 
