@@ -25,20 +25,6 @@ jobs:
         run: |
           echo "sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
 
-      - name: Checkout External Repository
-        uses: actions/checkout@v4
-        with:
-          repository: "loculus-project/argocd_metadata"
-          token: ${{ secrets.ARGOCD_METADATA_PAT }}
-
-      - name: Modify config.json
-        run: |
-          echo '{
-            "branch" : "main",
-            "number" : 999,
-            "head_short_sha_7": "${{ steps.get_sha.outputs.sha }}"
-          }' > config.json
-
       - name: Wait for Backend Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
@@ -52,6 +38,20 @@ jobs:
           ref: ${{ github.sha }}
           check-name: Build Website Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout External Repository
+        uses: actions/checkout@v4
+        with:
+          repository: "loculus-project/argocd_metadata"
+          token: ${{ secrets.ARGOCD_METADATA_PAT }}
+
+      - name: Modify config.json
+        run: |
+          echo '{
+            "branch" : "main",
+            "number" : 999,
+            "head_short_sha_7": "${{ steps.get_sha.outputs.sha }}"
+          }' > config.json
 
       - name: Commit and Push Changes
         run: |
