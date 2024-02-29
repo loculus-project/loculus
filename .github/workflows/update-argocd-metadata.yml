@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-update-argocd-metadata
+  group: ci-${{ github.run_id }}-update-argocd-metadata
   cancel-in-progress: true
 
 jobs:
