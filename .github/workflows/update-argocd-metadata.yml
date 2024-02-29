@@ -19,24 +19,11 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
+
       - name: Get SHA - length 7
         id: get_sha
         run: |
           echo "sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
-
-      - name: Wait for Backend Docker Image
-        uses: lewagon/wait-on-check-action@v1.3.3
-        with:
-          ref: ${{ github.sha }}
-          check-name: Build Backend Docker Image
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Wait for Website Docker Image
-        uses: lewagon/wait-on-check-action@v1.3.3
-        with:
-          ref: ${{ github.sha }}
-          check-name: Build Website Docker Image
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout External Repository
         uses: actions/checkout@v4
