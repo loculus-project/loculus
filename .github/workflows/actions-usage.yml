@@ -17,5 +17,5 @@ jobs:
           organisation: loculus-project
           gitHubAPIKey: ${{ secrets.ORG_READ }}
           loglevel: error # not required, change to debug if misbehaving
-          raisealarmremainingminutes: 100 # not required, defaults to 100
+          raisealarmremainingminutes: -100000 # not required, defaults to 100
           skipReposWithoutUsage: true
