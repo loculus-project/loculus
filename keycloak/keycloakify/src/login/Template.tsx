@@ -97,7 +97,8 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
                     )}
                     {!(auth !== undefined && auth.showUsername && !auth.showResetCredentials) ? (
                         displayRequiredFields ? (
-                            <div className={getClassName("kcContentWrapperClass")}>
+                            <div className={getClassName("kcContentWrapperClass")}
+                            style={{ paddingBottom: "50px" }}>
                                 <div className={clsx(getClassName("kcLabelWrapperClass"), "subtitle")}>
                                     <span className="subtitle">
                                         <span className="required">*</span>
