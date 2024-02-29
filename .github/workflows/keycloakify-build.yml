@@ -56,8 +56,8 @@ jobs:
           context: ./keycloak/keycloakify
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=keycloakify=${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=keycloakify=${{ github.ref }}
+          cache-from: type=gha,scope=keycloakify-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=keycloakify-${{ github.ref }}
       - name: Tag and push image if cache hit
         if: env.CACHE_HIT == 'true'
         run: |
