@@ -8,6 +8,8 @@
   {{- end -}}
 {{- end -}}
 ---
+
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -26,6 +28,12 @@ spec:
         app: loculus
         component: keycloak
     spec:
+      initContainers:
+        - name: keycloak-theme-prep
+          image: "ghcr.io/loculus-project/keycloakify:{{ $dockerTag }}"
+          volumeMounts:
+            - name: theme-volume
+              mountPath: /destination
       containers:
         - name: keycloak
           image: quay.io/keycloak/keycloak
@@ -50,21 +58,22 @@ spec:
               value: "true"
             - name: KC_HEALTH_ENABLED
               value: "true"
-            # - name: KC_LOG_LEVEL
-            #   value: "DEBUG"
             - name: KC_HOSTNAME_URL
               value: "{{ include "keycloakUrl" . }}"
             - name: KC_HOSTNAME_ADMIN_URL
               value: "{{ include "keycloakUrl" . }}"
+            - name: KC_FEATURES
+              value: "declarative-user-profile"
           args:
             - "start"
             - "--import-realm"
-            # - "--hostname-debug=true"
           ports:
             - containerPort: 8080
           volumeMounts:
             - name: config-volume
               mountPath: /opt/keycloak/data/import/
+            - name: theme-volume
+              mountPath: /opt/keycloak/providers/
           startupProbe:
             httpGet:
               path: /health
@@ -81,3 +90,7 @@ spec:
         - name: config-volume
           configMap:
             name: keycloak-config
+        - name: theme-volume
+          emptyDir: {}
+      imagePullSecrets:
+        - name: ghcr-secret

@@ -1,0 +1,77 @@
+{
+    "name": "loculus-keycloak-theme",
+    "version": "0.0.1",
+    "description": "Adapted from keycloakify-starter",
+    "scripts": {
+        "start": "copy-keycloak-resources-to-public && react-scripts start",
+        "storybook": "copy-keycloak-resources-to-public && start-storybook -p 6006",
+        "build": "react-scripts build && rimraf build/keycloak-resources",
+        "build-keycloak-theme": "yarn build && keycloakify"
+    },
+    "keycloakify": {
+        "themeName": "loculus",
+        "extraThemeProperties": [
+            "foo=bar"
+        ]
+    },
+    "author": "u/garronej",
+    "license": "MIT",
+    "keywords": [],
+    "dependencies": {
+        "evt": "^2.5.7",
+        "keycloakify": "^9.3.0",
+        "react": "18.1.0",
+        "react-dom": "18.1.0"
+    },
+    "devDependencies": {
+        "@storybook/addon-actions": "^6.5.16",
+        "@storybook/addon-essentials": "^6.5.16",
+        "@storybook/addon-interactions": "^6.5.16",
+        "@storybook/addon-links": "^6.5.16",
+        "@storybook/builder-webpack5": "^6.5.16",
+        "@storybook/manager-webpack5": "^6.5.16",
+        "@storybook/node-logger": "^6.5.16",
+        "@storybook/preset-create-react-app": "^4.1.2",
+        "@storybook/react": "^6.5.16",
+        "@storybook/testing-library": "^0.0.13",
+        "@types/node": "^15.3.1",
+        "@types/react": "18.0.9",
+        "@types/react-dom": "18.0.4",
+        "react-scripts": "5.0.1",
+        "rimraf": "^5.0.5",
+        "typescript": "~4.7.0"
+    },
+    "eslintConfig": {
+        "extends": [
+            "react-app",
+            "react-app/jest"
+        ],
+        "rules": {
+            "react-hooks/exhaustive-deps": "off",
+            "@typescript-eslint/no-redeclare": "off",
+            "no-labels": "off"
+        },
+        "overrides": [
+            {
+                "files": [
+                    "**/*.stories.*"
+                ],
+                "rules": {
+                    "import/no-anonymous-default-export": "off"
+                }
+            }
+        ]
+    },
+    "browserslist": {
+        "production": [
+            ">0.2%",
+            "not dead",
+            "not op_mini all"
+        ],
+        "development": [
+            "last 1 chrome version",
+            "last 1 firefox version",
+            "last 1 safari version"
+        ]
+    }
+}

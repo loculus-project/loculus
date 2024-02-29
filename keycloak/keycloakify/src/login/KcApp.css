@@ -1,0 +1,18 @@
+
+.my-color {
+	color: darkblue;
+}
+
+.my-font {
+	font-family: 'Work Sans';
+}
+
+.my-root-class {
+	background: white;
+}
+
+.my-root-class body {
+	background: #efefef;
+	height: auto;
+	min-height: 100%;
+}
