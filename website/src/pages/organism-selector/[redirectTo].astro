@@ -22,9 +22,9 @@ const purpose = purposes[redirectTo!];
 ---
 
 <BaseLayout title='Home'>
-    <div class='max-w-6xl mx-auto'>
-        <p class='text-gray-700 my-4'>
-            Please select an organism {purpose}.
+    <div class='max-w-6xl mx-auto bg-primary-50 p-4 rounded-md'>
+        <p class='text-gray-700 my-4 font-semibold'>
+            Please select the organism {purpose}:
         </p>
 
         <div class='flex flex-wrap'>
@@ -34,7 +34,7 @@ const purpose = purposes[redirectTo!];
                         href={myRoutes[redirectTo!](key)}
                         class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100'
                     >
-                        {image !== undefined && <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />}
+                        {image !== undefined && <img src={image} class='h-20 mx-auto mb-4' alt={displayName} />}
                         <h3 class='font-semibold text-gray-700'>{displayName}</h3>
                         <p class='text-gray-700 text-sm'>{description}</p>
                     </a>
