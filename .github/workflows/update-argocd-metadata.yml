@@ -6,10 +6,6 @@ on:
       - main
   workflow_dispatch:
 
-concurrency:
-  group: ci-${{ github.run_id }}-update-argocd-metadata
-  cancel-in-progress: true
-
 jobs:
   update:
     permissions:
