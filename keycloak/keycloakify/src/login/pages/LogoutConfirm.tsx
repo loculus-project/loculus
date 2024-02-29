@@ -20,6 +20,7 @@ export default function LogoutConfirm(props: PageProps<Extract<KcContext, { page
         <Template {...{ kcContext, i18n, doUseDefaultCss, classes }} displayMessage={false} headerNode={msg("logoutConfirmTitle")}>
             <div id="kc-logout-confirm" className="content-area">
                 <p className="instruction">{msg("logoutConfirmHeader")}</p>
+                Logout
                 <form className="form-actions" action={url.logoutConfirmAction} method="POST">
                     <input type="hidden" name="session_code" value={logoutConfirm.code} />
                     <div className={getClassName("kcFormGroupClass")}>
