@@ -15,7 +15,7 @@ jobs:
         # pass user input as arguments
         with:
           organisation: loculus-project
-          gitHubAPIKey: ${{ secrets.GITHUB_TOKEN }}
+          gitHubAPIKey: ${{ secrets.ORG_READ }}
           loglevel: error # not required, change to debug if misbehaving
           raisealarmremainingminutes: 100 # not required, defaults to 100
           skipReposWithoutUsage: true
