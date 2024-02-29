@@ -52,7 +52,7 @@ export default function LogoutConfirm(props: PageProps<Extract<KcContext, { page
                     )}
                 </div>
 
-                <p style={{ height: "5px" }}>
+                <p style={{ height: "15px" }}>
                     
 
                 </p>
