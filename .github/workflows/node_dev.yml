@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-dev-server
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-node-dev
   cancel-in-progress: true
 
 jobs:
