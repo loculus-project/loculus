@@ -5,6 +5,7 @@ on:
     paths:
       - "website/**"
       - "deploy.py"
+      - generate_local_test_config.sh
       - .github/workflows/node_dev.yml
   workflow_dispatch:
 
@@ -17,7 +18,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        exclude:
+          - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
+
     steps:
       - uses: azure/setup-helm@v4
       - name: Checkout repository
