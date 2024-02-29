@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   dockerImage:
-    name: Build keycloakify Docker Image
+    name: Build keycloakify Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -13,6 +13,7 @@ concurrency:
 
 jobs:
   build-or-use-cache:
+    name: Preprocessing dummy docker image build # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     permissions:
       contents: read
