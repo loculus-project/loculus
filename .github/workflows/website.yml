@@ -54,7 +54,7 @@ jobs:
         run: npm run test
 
   dockerImage:
-    name: Build Website Docker Image
+    name: Build Website Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     permissions:
       contents: read

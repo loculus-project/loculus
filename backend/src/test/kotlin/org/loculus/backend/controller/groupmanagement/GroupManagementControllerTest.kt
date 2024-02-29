@@ -2,6 +2,7 @@ package org.loculus.backend.controller.groupmanagement
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
+import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
 import org.junit.jupiter.api.BeforeEach
@@ -9,8 +10,12 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.keycloak.representations.idm.UserRepresentation
+import org.loculus.backend.api.Address
+import org.loculus.backend.api.Group
+import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
+import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
@@ -24,7 +29,20 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-const val NEW_GROUP = "newGroup"
+const val NEW_GROUP_NAME = "newGroup"
+val NEW_GROUP = Group(
+    groupName = NEW_GROUP_NAME,
+    institution = "newInstitution",
+    address = Address(
+        line1 = "newAddressLine1",
+        line2 = "newAddressLine2",
+        city = "newCity",
+        state = "newState",
+        postalCode = "newPostalCode",
+        country = "newCountry",
+    ),
+    contactEmail = "newEmail",
+)
 
 @EndpointTest
 class GroupManagementControllerTest(
@@ -40,7 +58,7 @@ class GroupManagementControllerTest(
 
     @Test
     fun `GIVEN database preparation WHEN getting groups details THEN I get the default group with the default user`() {
-        client.getDetailsOfGroup(DEFAULT_GROUP_NAME)
+        client.getDetailsOfGroup(DEFAULT_GROUP)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.groupName", `is`(DEFAULT_GROUP_NAME)))
@@ -48,7 +66,7 @@ class GroupManagementControllerTest(
             .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
             .andExpect(jsonPath("\$.users[*].name", hasItem(ALTERNATIVE_DEFAULT_USER_NAME)))
 
-        client.getDetailsOfGroup(ALTERNATIVE_DEFAULT_GROUP_NAME)
+        client.getDetailsOfGroup(ALTERNATIVE_DEFAULT_GROUP)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.groupName", `is`(ALTERNATIVE_DEFAULT_GROUP_NAME)))
@@ -87,7 +105,7 @@ class GroupManagementControllerTest(
         client.getDetailsOfGroup()
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Group $NEW_GROUP does not exist."))
+            .andExpect(jsonPath("\$.detail").value("Group ${NEW_GROUP.groupName} does not exist."))
     }
 
     @Test
@@ -98,7 +116,17 @@ class GroupManagementControllerTest(
         client.getGroupsOfUser()
             .andExpect(status().isOk())
             .andExpect { jsonPath("\$.size()", `is`(1)) }
-            .andExpect { jsonPath("\$[0].groupName", `is`(NEW_GROUP)) }
+            .andExpect { jsonPath("\$[0].groupName", `is`(NEW_GROUP.groupName)) }
+            .andExpect { jsonPath("\$[0].institution", `is`(NEW_GROUP.institution)) }
+            .andExpect { jsonPath("\$[0].address", `is`(NEW_GROUP.address)) }
+            .andExpect { jsonPath("\$[0].contactEmail", `is`(NEW_GROUP.contactEmail)) }
+    }
+
+    @Test
+    fun `WHEN creating a group with invalid fields THEN expect error`() {
+        client.createNewGroupWithBody("{}")
+            .andExpect(status().isBadRequest)
+            .andExpect { jsonPath("\$.detail", containsString("value failed for JSON property groupName")) }
     }
 
     @Test
@@ -148,7 +176,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is not a member of the group $NEW_GROUP. Action not allowed.",
+                    "User $DEFAULT_USER_NAME is not a member of the group ${NEW_GROUP.groupName}. Action not allowed.",
                 ),
             )
     }
@@ -160,7 +188,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group $NEW_GROUP does not exist.",
+                    "Group ${NEW_GROUP.groupName} does not exist.",
                 ),
             )
     }
@@ -175,7 +203,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is already member of the group $NEW_GROUP.",
+                    "User $DEFAULT_USER_NAME is already member of the group ${NEW_GROUP.groupName}.",
                 ),
             )
     }
@@ -206,7 +234,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group $NEW_GROUP " +
+                    "Group ${NEW_GROUP.groupName} " +
                         "does not exist.",
                 ),
             )
@@ -224,7 +252,7 @@ class GroupManagementControllerTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is not a member of the group " +
-                        "$NEW_GROUP. Action not allowed.",
+                        "${NEW_GROUP.groupName}. Action not allowed.",
                 ),
             )
             .andReturn()

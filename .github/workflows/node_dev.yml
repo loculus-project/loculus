@@ -26,7 +26,7 @@ jobs:
           - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
 
     steps:
-      - uses: azure/setup-helm@v3
+      - uses: azure/setup-helm@v4
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install yaml package
@@ -46,8 +46,6 @@ jobs:
         run: |
           npm run start &
           npx playwright install chromium
-
-
           npx playwright screenshot localhost:3000 test.png
           sleep 5
           npx playwright screenshot localhost:3000 test.png

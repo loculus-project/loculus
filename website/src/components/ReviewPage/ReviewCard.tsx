@@ -1,4 +1,4 @@
-import { type FC, Fragment } from 'react';
+import { type FC } from 'react';
 import { Tooltip } from 'react-tooltip';
 
 import { backendClientHooks } from '../../services/serviceHooks.ts';

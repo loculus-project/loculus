@@ -8,6 +8,8 @@ import org.junit.platform.engine.support.descriptor.ClassSource
 import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
+import org.loculus.backend.api.Address
+import org.loculus.backend.api.Group
 import org.loculus.backend.controller.datasetcitations.DatasetCitationsControllerClient
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
@@ -53,8 +55,34 @@ private const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
 
 const val ACCESSION_SEQUENCE_NAME = "accession_sequence"
 const val DEFAULT_GROUP_NAME = "testGroup"
+val DEFAULT_GROUP = Group(
+    groupName = DEFAULT_GROUP_NAME,
+    institution = "testInstitution",
+    address = Address(
+        line1 = "testAddressLine1",
+        line2 = "testAddressLine2",
+        postalCode = "testPostalCode",
+        city = "testCity",
+        state = "testState",
+        country = "testCountry",
+    ),
+    contactEmail = "testEmail",
+)
 const val ALTERNATIVE_DEFAULT_GROUP_NAME = "testGroup2"
 const val ALTERNATIVE_DEFAULT_USER_NAME = "testUser2"
+val ALTERNATIVE_DEFAULT_GROUP = Group(
+    groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
+    institution = "alternativeTestInstitution",
+    address = Address(
+        line1 = "alternativeTestAddressLine1",
+        line2 = "alternativeTestAddressLine2",
+        postalCode = "alternativeTestPostalCode",
+        city = "alternativeTestCity",
+        state = "alternativeTestState",
+        country = "alternativeTestCountry",
+    ),
+    contactEmail = "alternativeTestEmail",
+)
 
 private val log = KotlinLogging.logger { }
 
@@ -115,7 +143,7 @@ class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
             postgres.databaseName,
             "-c",
             clearDatabaseStatement() +
-                createGroupsStatement(listOf(DEFAULT_GROUP_NAME, ALTERNATIVE_DEFAULT_GROUP_NAME)) +
+                createGroupsStatement(listOf(DEFAULT_GROUP, ALTERNATIVE_DEFAULT_GROUP)) +
                 addUsersToGroupStatement(
                     DEFAULT_GROUP_NAME,
                     listOf(DEFAULT_USER_NAME, ALTERNATIVE_DEFAULT_USER_NAME),
@@ -133,9 +161,19 @@ class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
     }
 }
 
-private fun createGroupsStatement(groupNames: List<String>): String {
+private fun createGroupsStatement(groupNames: List<Group>): String {
     return groupNames.joinToString("\n") {
-        "insert into $GROUPS_TABLE_NAME (group_name) values ('$it');"
+        "insert into $GROUPS_TABLE_NAME (group_name, institution, address_line_1, " +
+            "address_line_2, address_city, address_postal_code, address_state, address_country, contact_email) values" +
+            "('${it.groupName}','" +
+            "${it.institution}','" +
+            "${it.address.line1}','" +
+            "${it.address.line2}','" +
+            "${it.address.city}','" +
+            "${it.address.postalCode}','" +
+            "${it.address.state}','" +
+            "${it.address.country}','" +
+            "${it.contactEmail}');"
     } + "\n"
 }
 

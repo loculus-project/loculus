@@ -7,8 +7,13 @@ on:
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-dummy
 
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-dummy
+  cancel-in-progress: true
+
 jobs:
   build-or-use-cache:
+    name: Preprocessing dummy docker image build # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     permissions:
       contents: read

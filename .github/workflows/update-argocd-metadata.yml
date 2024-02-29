@@ -6,6 +6,9 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ci-update-argocd-metadata
+
 jobs:
   update:
     permissions:
@@ -19,10 +22,27 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
+
       - name: Get SHA - length 7
         id: get_sha
         run: |
           echo "sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Wait for Prepro Dummy Docker Image
+        uses: lewagon/wait-on-check-action@v1.3.3
+        with:
+          ref: ${{ github.sha }}
+          check-name: Preprocessing dummy docker image build
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
+
+      - name: Wait for Config Processor Docker Image
+        uses: lewagon/wait-on-check-action@v1.3.3
+        with:
+          ref: ${{ github.sha }}
+          check-name: Build config-processor Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
 
       - name: Wait for Backend Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
@@ -30,6 +50,7 @@ jobs:
           ref: ${{ github.sha }}
           check-name: Build Backend Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
 
       - name: Wait for Website Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
@@ -37,6 +58,23 @@ jobs:
           ref: ${{ github.sha }}
           check-name: Build Website Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
+
+      - name: Wait for Prepro Nextclade Docker Image
+        uses: lewagon/wait-on-check-action@v1.3.3
+        with:
+          ref: ${{ github.sha }}
+          check-name: Build preprocessing-nextclade Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
+
+      - name: Wait for Keycloakify Docker Image
+        uses: lewagon/wait-on-check-action@v1.3.3
+        with:
+          ref: ${{ github.sha }}
+          check-name: Build keycloakify Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
 
       - name: Checkout External Repository
         uses: actions/checkout@v4

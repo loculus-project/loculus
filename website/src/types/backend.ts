@@ -199,8 +199,20 @@ export const problemDetail = z.object({
 });
 export type ProblemDetail = z.infer<typeof problemDetail>;
 
+export const address = z.object({
+    line1: z.string(),
+    line2: z.string().optional(),
+    city: z.string(),
+    state: z.string().optional(),
+    postalCode: z.string(),
+    country: z.string(),
+});
+
 export const group = z.object({
     groupName: z.string(),
+    institution: z.string(),
+    address,
+    contactEmail: z.string(),
 });
 export type Group = z.infer<typeof group>;
 
