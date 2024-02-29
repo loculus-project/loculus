@@ -65,7 +65,7 @@ spec:
             - name: KC_FEATURES
               value: "declarative-user-profile"
           args:
-            - "start-dev"
+            - "start"
             - "--import-realm"
             - "--cache=local"
           ports:
