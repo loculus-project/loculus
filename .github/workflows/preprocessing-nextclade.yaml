@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   dockerImage:
-    name: Build preprocessing-nextclade Docker Image
+    name: Build preprocessing-nextclade Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     permissions:
       contents: read
