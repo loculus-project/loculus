@@ -14,7 +14,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-      - uses: azure/setup-helm@v3
+      - uses: azure/setup-helm@v4
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install yaml package
