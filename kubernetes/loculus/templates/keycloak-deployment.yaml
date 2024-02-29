@@ -67,6 +67,7 @@ spec:
           args:
             - "start"
             - "--import-realm"
+            - "--cache=local"
           ports:
             - containerPort: 8080
           volumeMounts:
