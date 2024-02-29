@@ -34,3 +34,13 @@ updates:
         update-types:
           - "minor"
           - "patch"
+  - package-ecosystem: npm
+    directory: keycloak/keycloakify
+    schedule:
+      interval: monthly
+    groups:
+      - allUpdates:
+          update-types:
+            - "minor"
+            - "patch"
+            - "major"
