@@ -48,5 +48,3 @@ jobs:
           context: ./kubernetes/config-processor
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=config-preprocessor=${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=config-preprocessor=${{ github.ref }}
