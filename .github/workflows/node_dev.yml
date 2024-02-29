@@ -5,14 +5,25 @@ on:
     paths:
       - "website/**"
       - "deploy.py"
+      - generate_local_test_config.sh
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-dev-server
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        exclude:
+          - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
+
     steps:
       - uses: azure/setup-helm@v3
       - name: Checkout repository
