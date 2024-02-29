@@ -4,7 +4,12 @@ on:
   push:
     paths:
       - "docs/**"
+      - .github/workflows/docs-build-check.yml
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-docs-build
+  cancel-in-progress: true
 
 jobs:
   check-docs-build:

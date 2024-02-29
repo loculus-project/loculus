@@ -5,7 +5,12 @@ on:
     paths:
       - "website/**"
       - "deploy.py"
+      - .github/workflows/node_dev.yml
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-node-dev
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -34,8 +39,6 @@ jobs:
         run: |
           npm run start &
           npx playwright install chromium
-
-
           npx playwright screenshot localhost:3000 test.png
           sleep 5
           npx playwright screenshot localhost:3000 test.png
