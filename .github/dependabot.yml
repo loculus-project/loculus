@@ -39,7 +39,7 @@ updates:
     schedule:
       interval: monthly
     groups:
-      - allUpdates:
+      allUpdates:
           update-types:
             - "minor"
             - "patch"
