@@ -32,7 +32,7 @@ const purpose = purposes[redirectTo!];
                 getConfiguredOrganisms().map(({ key, displayName, image, description }) => (
                     <a
                         href={myRoutes[redirectTo!](key)}
-                        class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100'
+                        class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100 bg-white'
                     >
                         {image !== undefined && <img src={image} class='h-20 mx-auto mb-4' alt={displayName} />}
                         <h3 class='font-semibold text-gray-700'>{displayName}</h3>
