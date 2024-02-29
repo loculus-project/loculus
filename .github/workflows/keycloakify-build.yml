@@ -8,7 +8,7 @@ env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/keycloakify
 
 concurrency:
-  group: ci-${{ github.ref }}-keycloak
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-build
   cancel-in-progress: true
 
 jobs:

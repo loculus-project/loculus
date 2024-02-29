@@ -6,6 +6,10 @@ on:
       - main
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-update-argocd-metadata
+  cancel-in-progress: true
+
 jobs:
   update:
     permissions:
