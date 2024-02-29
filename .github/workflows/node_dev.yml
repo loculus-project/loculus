@@ -6,6 +6,7 @@ on:
       - "website/**"
       - "deploy.py"
       - generate_local_test_config.sh
+      - .github/workflows/node_dev.yml
   workflow_dispatch:
 
 concurrency:
