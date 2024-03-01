@@ -50,7 +50,7 @@ const logoConfig = z.object({
 });
 
 export const websiteConfig = z.object({
-    instances: z.record(instanceConfig),
+    organisms: z.record(instanceConfig),
     name: z.string(),
     logo: logoConfig,
 });

@@ -1,7 +1,7 @@
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 {{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
 
-{{- range $key, $instance := $.Values.instances }}
+{{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
 apiVersion: v1
 kind: ConfigMap

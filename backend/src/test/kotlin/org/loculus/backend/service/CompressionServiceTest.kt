@@ -25,7 +25,7 @@ class CompressionServiceTest(
             mapOf("test" to "test"),
             mapOf(segmentName to input),
         )
-        val organism = Organism(backendConfig.instances.keys.first())
+        val organism = Organism(backendConfig.organisms.keys.first())
         val compressed = compressor.compressSequencesInOriginalData(testData, organism)
         val decompressed = compressor.decompressSequencesInOriginalData(compressed, organism)
 

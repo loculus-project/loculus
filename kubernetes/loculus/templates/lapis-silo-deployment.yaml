@@ -1,5 +1,5 @@
 {{- $dockerTag := include "loculus.dockerTag" $.Values }}
-{{- range $key, $_ := $.Values.instances }}
+{{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
