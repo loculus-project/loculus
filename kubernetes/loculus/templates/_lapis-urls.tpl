@@ -1,6 +1,6 @@
 {{/* generates internal LAPIS urls from given config object */}}
 {{ define "loculus.generateInternalLapisUrls" }}
-  {{ range $key, $_ := $.Values.organisms }}
+  {{ range $key, $_ := default $.Values.defaultOrganisms $.Values.organisms }}
     "{{ $key }}": "{{ if not $.Values.disableWebsite }}http://{{ template "loculus.lapisServiceName" $key }}:8080{{ else -}}http://localhost:8080/{{ $key }}{{ end }}"
   {{ end }}
 {{ end }}

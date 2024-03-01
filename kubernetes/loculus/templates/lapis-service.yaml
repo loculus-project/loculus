@@ -1,4 +1,4 @@
-{{- range $key, $_ := $.Values.organisms }}
+{{- range $key, $_ := default $.Values.defaultOrganisms $.Values.organisms }}
 ---
 apiVersion: v1
 kind: Service
