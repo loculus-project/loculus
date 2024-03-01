@@ -1,4 +1,4 @@
-{{- range $key, $values := default $.Values.defaultOrganisms $.Values.organisms }}
+{{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- if $values.preprocessing.configFile }}
 ---
 apiVersion: v1

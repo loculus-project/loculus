@@ -35,7 +35,7 @@ logo: {{ $.Values.logo | toYaml | nindent 6 }}
 accessionPrefix: {{ $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
-  {{- range $key, $instance := default $.Values.defaultOrganisms $.Values.organisms }}
+  {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
 
     schema:
@@ -81,7 +81,7 @@ fields:
 accessionPrefix: {{$.Values.accessionPrefix}}
 name: {{ $.Values.name }}
 organisms:
-  {{- range $key, $instance := default $.Values.defaultOrganisms $.Values.organisms }}
+  {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
     schema:
       {{- with $instance.schema }}

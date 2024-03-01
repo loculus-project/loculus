@@ -8,7 +8,7 @@
     "http://loculus-keycloak-service:8083"
 }}
 {{- if not .Values.disablePreprocessing }}
-{{- range $key, $value := default $.Values.defaultOrganisms $.Values.organisms }}
+{{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
