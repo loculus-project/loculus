@@ -14,7 +14,7 @@ metadata:
     argocd.argoproj.io/sync-options: Replace=true
     reloader.stakater.com/auto: "true"
     argocd-image-updater.argoproj.io/image-list: website=some/image:{{ $websiteImage }}
-    argocd-image-updater.argoproj.io/{{ $websiteImage }}.update-strategy: digest
+    argocd-image-updater.argoproj.io/website.update-strategy: digest
 spec:
   replicas: 1
   selector:
