@@ -19,7 +19,7 @@ fun buildOpenApiSchema(backendConfig: BackendConfig): OpenAPI {
                     Schema<String>()
                         .type("string")
                         .description("valid names of organisms that this $PROJECT_NAME instance supports")
-                        ._enum(backendConfig.instances.keys.toList()),
+                        ._enum(backendConfig.organisms.keys.toList()),
                 )
                 .addSecuritySchemes(
                     "bearerAuth",

@@ -31,7 +31,7 @@ export type Organism = {
 };
 
 export function getConfiguredOrganisms() {
-    return Object.entries(getWebsiteConfig().instances).map(([key, instance]) => ({
+    return Object.entries(getWebsiteConfig().organisms).map(([key, instance]) => ({
         key,
         displayName: instance.schema.instanceName,
         image: instance.schema.image,
@@ -41,10 +41,10 @@ export function getConfiguredOrganisms() {
 
 function getConfig(organism: string): InstanceConfig {
     const websiteConfig = getWebsiteConfig();
-    if (!(organism in websiteConfig.instances)) {
+    if (!(organism in websiteConfig.organisms)) {
         throw new Error(`No configuration for organism ${organism}`);
     }
-    return websiteConfig.instances[organism];
+    return websiteConfig.organisms[organism];
 }
 
 export function getSchema(organism: string): Schema {

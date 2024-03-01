@@ -1,4 +1,4 @@
-{{- range $key, $_ := $.Values.instances }}
+{{- range $key, $_ := $.Values.organisms }}
 ---
 apiVersion: v1
 kind: Service

@@ -1,6 +1,6 @@
 {
     "accessionPrefix": "LOC_",
-    "instances": {
+    "organisms": {
         "dummyOrganism": {
             "referenceGenomes": {
                 "nucleotideSequences": [

@@ -1,4 +1,4 @@
-{{- range $key, $values := .Values.instances }}
+{{- range $key, $values := .Values.organisms }}
 {{- if $values.preprocessing.configFile }}
 ---
 apiVersion: v1

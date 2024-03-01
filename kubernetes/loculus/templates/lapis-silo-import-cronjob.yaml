@@ -2,7 +2,7 @@
 {{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/token" }}
 
 
-{{- range $key, $_ := $.Values.instances }}
+{{- range $key, $_ := $.Values.organisms }}
 ---
 apiVersion: batch/v1
 kind: CronJob

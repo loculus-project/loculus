@@ -25,7 +25,7 @@ class EmptyProcessedDataProviderTest {
     private val underTest = EmptyProcessedDataProvider(
         BackendConfig(
             accessionPrefix = "LOC_",
-            instances = mapOf(
+            organisms = mapOf(
                 DEFAULT_ORGANISM to InstanceConfig(
                     schema = Schema(
                         FIRST_NUCLEOTIDE_SEQUENCE,
