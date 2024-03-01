@@ -3,7 +3,7 @@
 {{- if .Values.customWebsiteImage -}}
   {{- $websiteImage = .Values.customWebsiteImage -}}
 {{- else -}}
-  {{- $websiteImage = printf "ghcr.io/loculus-project/website:%s" .Values.dockerTag -}}
+  {{- $websiteImage = printf "ghcr.io/loculus-project/website:%s" $dockerTag -}}
 {{- end -}}
 ---
 apiVersion: apps/v1
