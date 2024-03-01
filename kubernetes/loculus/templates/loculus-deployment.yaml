@@ -1,4 +1,10 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- $websiteImage := "" -}}
+{{- if .Values.customWebsiteImage -}}
+  {{- $websiteImage = .Values.customWebsiteImage -}}
+{{- else -}}
+  {{- $websiteImage = printf "ghcr.io/loculus-project/website:%s" .Values.dockerTag -}}
+{{- end -}}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -7,6 +13,8 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
     reloader.stakater.com/auto: "true"
+    argocd-image-updater.argoproj.io/image-list: website=some/image:{{ $websiteImage }}
+    argocd-image-updater.argoproj.io/{{ $websiteImage }}.update-strategy: digest
 spec:
   replicas: 1
   selector:
@@ -25,7 +33,7 @@ spec:
       containers:
         {{- if not .Values.disableWebsite }}
         - name: website
-          image: "{{ if $.Values.customWebsiteImage }}{{ $.Values.customWebsiteImage }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
+          image: "{{ $websiteImage }}"
           imagePullPolicy: Always
           resources:
             requests:
