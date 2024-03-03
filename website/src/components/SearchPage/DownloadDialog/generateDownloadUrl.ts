@@ -28,7 +28,7 @@ export const generateDownloadUrl = (
         params.set(IS_REVOCATION_FIELD, 'false');
     }
     if (!option.includeRestricted) {
-        // TODO(#852) Filter for sequences with an open Data Use Term.
+        params.set('dataUseTerms', 'OPEN');
     }
     if (option.dataType.type === 'metadata') {
         params.set('dataFormat', metadataDefaultDownloadDataFormat);
