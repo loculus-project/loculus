@@ -79,11 +79,16 @@ describe('DownloadDialog', () => {
         await checkAgreement();
 
         expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/details?downloadAsFile=true&versionStatus=LATEST_VERSION&isRevocation=false&dataFormat=tsv&field1=value1`,
+            `${defaultLapisUrl}/sample/details?downloadAsFile=true&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&field1=value1`,
         );
 
         await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
         await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
+        expect(getDownloadHref()).toBe(
+            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&dataUseTerms=OPEN&field1=value1`,
+        );
+
+        await userEvent.click(screen.getByLabelText(/include restricted data/));
         expect(getDownloadHref()).toBe(
             `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&field1=value1`,
         );
