@@ -8,10 +8,13 @@ export type DownloadDataType =
     | { type: 'alignedNucleotideSequences'; segment: string | undefined }
     | { type: 'alignedAminoAcidSequences'; gene: string };
 
+export type Compression = 'zstd' | 'gzip' | undefined;
+
 export type DownloadOption = {
     includeOldData: boolean;
     includeRestricted: boolean;
     dataType: DownloadDataType;
+    compression: Compression;
 };
 
 export const generateDownloadUrl = (
@@ -32,6 +35,9 @@ export const generateDownloadUrl = (
     }
     if (option.dataType.type === 'metadata') {
         params.set('dataFormat', metadataDefaultDownloadDataFormat);
+    }
+    if (option.compression !== undefined) {
+        params.set('compression', option.compression);
     }
     for (const { name, filterValue } of metadataFilter) {
         if (filterValue.trim().length > 0) {
