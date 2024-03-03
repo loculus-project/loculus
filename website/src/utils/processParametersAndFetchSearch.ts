@@ -44,18 +44,16 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
         ];
     }
 
-    const metadataFilter = addHiddenFilters(
-        getMetadataFilters(
-            getSearchParams,
-            organism,
-            groupForMySequences !== undefined
-                ? {
-                      exclude: [GROUP_FIELD],
-                  }
-                : {},
-        ),
-        hiddenSearchFeatures,
+    const metadataFilterWithoutHiddenFilters = getMetadataFilters(
+        getSearchParams,
+        organism,
+        groupForMySequences !== undefined
+            ? {
+                  exclude: [GROUP_FIELD],
+              }
+            : {},
     );
+    const metadataFilter = addHiddenFilters(metadataFilterWithoutHiddenFilters, hiddenSearchFeatures);
     const mutationFilter = getMutationFilter(astro.url.searchParams);
 
     const pageParam = getSearchParams('page');
@@ -73,6 +71,7 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
         data,
         page,
         metadataFilter,
+        metadataFilterWithoutHiddenFilters,
         mutationFilter,
         lapisUrl,
         referenceGenomesSequenceNames,
