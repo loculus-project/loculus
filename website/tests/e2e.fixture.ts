@@ -188,6 +188,10 @@ export const test = base.extend<E2EFixture>({
         const reviewPage = new ReviewPage(page);
         await use(reviewPage);
     },
+    userPage: async ({ page }, use) => {
+        const userPage = new UserPage(page);
+        await use(userPage);
+    },
     groupPage: async ({ page }, use) => {
         const groupPage = new GroupPage(page);
         await use(groupPage);
