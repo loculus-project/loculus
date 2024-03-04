@@ -23,7 +23,7 @@ kind: Ingress
 metadata:
   name: loculus-website-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: default-basic-auth@kubernetescrd
+    traefik.ingress.kubernetes.io/router.middlewares: basic-auth@kubernetescrd
 spec:
   rules:
     - host: "{{ .Values.host }}"
