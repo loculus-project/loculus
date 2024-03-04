@@ -37,8 +37,7 @@ spec:
               mountPath: /destination
       containers:
         - name: keycloak
-          # TODO #1221
-          image: quay.io/keycloak/keycloak:23.0
+          image: quay.io/keycloak/keycloak
           env:
             - name: DB_VENDOR
               value: "postgres"
@@ -64,8 +63,6 @@ spec:
               value: "{{ include "keycloakUrl" . }}"
             - name: KC_HOSTNAME_ADMIN_URL
               value: "{{ include "keycloakUrl" . }}"
-            - name: KC_FEATURES
-              value: "declarative-user-profile"
           args:
             - "start"
             - "--import-realm"
