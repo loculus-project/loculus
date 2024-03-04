@@ -56,7 +56,7 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
     };
 
     return (
-        <div className='p-4'>
+        <div className='p-4 max-w-6xl mx-auto'>
             <h2 className='title'>Create a new Group</h2>
 
             {errorMessage !== undefined && (
@@ -64,7 +64,7 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
             )}
 
             <form onSubmit={handleCreateGroup}>
-                <div className='border-b border-gray-900/10 pb-12 max-w-6xl'>
+                <div className='border-b border-gray-900/10 pb-12 '>
                     <p className='mt-1 text-sm leading-6 text-gray-600'>
                         Fill out following form to create a new group.
                     </p>
@@ -134,7 +134,7 @@ const fieldMapping = {
 } as const;
 
 const groupCreationCssClass =
-    'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6';
+    'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:text-sm sm:leading-6';
 
 type LabelledInputContainerProps = PropsWithChildren<{
     label: string;
@@ -210,7 +210,7 @@ const CountryInput = () => (
             name='country'
             required={fieldMapping.country.required}
             autoComplete='country-name'
-            className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6'
+            className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:max-w-xs sm:text-sm sm:leading-6'
         >
             <option>Choose a country...</option>
             {listOfCountries.map((country) => (
