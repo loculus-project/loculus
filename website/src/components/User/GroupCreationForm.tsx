@@ -57,7 +57,7 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
 
     return (
         <div className='p-4 max-w-6xl mx-auto'>
-            <h2 className='title'>Create a new Group</h2>
+            <h2 className='title'>Create a new group</h2>
 
             {errorMessage !== undefined && (
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
