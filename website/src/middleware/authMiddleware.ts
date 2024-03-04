@@ -337,6 +337,9 @@ function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCo
     };
 }
 
-export function urlForKeycloakAccountPage() {
-    return `${getRuntimeConfig().public.keycloakUrl}/realms/loculusRealm/account`;
+export async function urlForKeycloakAccountPage() {
+    const client = await getKeycloakClient();
+    const endsessionUrl = client.endSessionUrl();
+    const host = new URL(endsessionUrl).host;
+    return `https://${host}/loculusRealm/account`;
 }
