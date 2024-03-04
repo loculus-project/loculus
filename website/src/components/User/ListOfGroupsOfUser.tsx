@@ -8,6 +8,7 @@ import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import LeaveIcon from '~icons/pepicons-pop/leave-circle-filled';
+import StreamlineUserMultipleGroup from '~icons/streamline/user-multiple-group';
 
 interface ListOfGroupsOfUserProps {
     clientConfig: ClientConfig;
@@ -40,6 +41,7 @@ const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({
                     groupsOfUser.map((group) => (
                         <li key={group.groupName} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                             <a className='text-lg' href={routes.groupOverviewPage(group.groupName)}>
+                                <StreamlineUserMultipleGroup className='w-6 h-6 inline-block mr-2' />
                                 {group.groupName}
                             </a>
                             <button

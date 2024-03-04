@@ -8,7 +8,7 @@ import {
     dummyOrganism,
     metadataTestFile,
     sequencesTestFile,
-} from '../../e2e.fixture';
+} from '../../e2e.fixture.ts';
 
 export class SubmitPage {
     public readonly submitButton: Locator;
