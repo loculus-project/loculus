@@ -1,7 +1,7 @@
 import { routes } from '../../../src/routes.ts';
 import { restrictedDataUseTermsType } from '../../../src/types/backend.ts';
 import { dateTimeInMonths } from '../../../src/utils/DateTimeInMonths.tsx';
-import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e2e.fixture.ts';
 
 test.describe('The submit page', () => {
     test('should ask to login if not logged in', async ({ submitPage }) => {
