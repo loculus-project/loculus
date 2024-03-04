@@ -197,7 +197,7 @@ const EmailContactInput = () => (
     <TextInput
         className='sm:col-span-4'
         type='email'
-        label='Contact email address of the group'
+        label='Contact email address'
         name='email'
         fieldMappingKey='contactEmail'
     />
