@@ -30,7 +30,6 @@ test.describe('The user sequence page', () => {
         );
         await submitRevisedDataViaApi([sequenceEntryToBeRevised.accession], token);
 
-        await userPage.gotoUserSequencePage();
 
         const sequencesArePresent = await userPage.verifyTableEntries([
             {
