@@ -71,8 +71,8 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
 
                     <div className='mt-5 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6'>
                         <GroupNameInput />
-                        <InstitutionNameInput />
                         <EmailContactInput />
+                        <InstitutionNameInput />
                         <CountryInput />
                         <AddressLineOneInput />
                         <AddressLineTwoInput />
@@ -180,12 +180,12 @@ const TextInput: FC<TextInputProps> = ({ className, label, name, fieldMappingKey
 );
 
 const GroupNameInput = () => (
-    <TextInput className='sm:col-span-6' type='text' label='Group name' name='group-name' fieldMappingKey='groupName' />
+    <TextInput className='sm:col-span-4' type='text' label='Group name' name='group-name' fieldMappingKey='groupName' />
 );
 
 const InstitutionNameInput = () => (
     <TextInput
-        className='sm:col-span-6'
+        className='sm:col-span-4'
         type='text'
         label='Institution'
         name='institution-name'
@@ -197,7 +197,7 @@ const EmailContactInput = () => (
     <TextInput
         className='sm:col-span-4'
         type='email'
-        label='Email address of the group'
+        label='Contact email address of the group'
         name='email'
         fieldMappingKey='contactEmail'
     />
