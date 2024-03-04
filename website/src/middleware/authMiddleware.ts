@@ -338,5 +338,5 @@ function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCo
 }
 
 export function urlForKeycloakAccountPage() {
-    return `${getRuntimeConfig().serverSide.keycloakUrl}/realms/loculusRealm/account`;
+    return `${getRuntimeConfig().public.keycloakUrl}/realms/loculusRealm/account`;
 }
