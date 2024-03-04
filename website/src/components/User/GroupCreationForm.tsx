@@ -180,14 +180,14 @@ const TextInput: FC<TextInputProps> = ({ className, label, name, fieldMappingKey
 );
 
 const GroupNameInput = () => (
-    <TextInput className='sm:col-span-3' type='text' label='Group Name' name='group-name' fieldMappingKey='groupName' />
+    <TextInput className='sm:col-span-6' type='text' label='Group name' name='group-name' fieldMappingKey='groupName' />
 );
 
 const InstitutionNameInput = () => (
     <TextInput
-        className='sm:col-span-3'
+        className='sm:col-span-6'
         type='text'
-        label='Institution name'
+        label='Institution'
         name='institution-name'
         fieldMappingKey='institution'
     />
