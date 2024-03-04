@@ -15,7 +15,6 @@ import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submission/submit.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
-import { UserSequencePage } from './pages/user/userSequencePage/userSequencePage.ts';
 import { createGroup } from './util/backendCalls.ts';
 import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
@@ -29,7 +28,6 @@ type E2EFixture = {
     submitPage: SubmitPage;
     reviewPage: ReviewPage;
     datasetPage: DatasetPage;
-    userPage: UserSequencePage;
     groupPage: GroupPage;
     revisePage: RevisePage;
     editPage: EditPage;
@@ -187,10 +185,6 @@ export const test = base.extend<E2EFixture>({
     reviewPage: async ({ page }, use) => {
         const reviewPage = new ReviewPage(page);
         await use(reviewPage);
-    },
-    userPage: async ({ page }, use) => {
-        const userPage = new UserSequencePage(page);
-        await use(userPage);
     },
     groupPage: async ({ page }, use) => {
         const groupPage = new GroupPage(page);
