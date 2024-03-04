@@ -19,27 +19,27 @@
     "keywords": [],
     "dependencies": {
         "evt": "^2.5.7",
-        "keycloakify": "^9.3.0",
-        "react": "18.1.0",
-        "react-dom": "18.1.0"
+        "keycloakify": "^9.6.0",
+        "react": "18.2.0",
+        "react-dom": "18.2.0"
     },
     "devDependencies": {
         "@storybook/addon-actions": "^6.5.16",
         "@storybook/addon-essentials": "^6.5.16",
         "@storybook/addon-interactions": "^6.5.16",
         "@storybook/addon-links": "^6.5.16",
-        "@storybook/builder-webpack5": "^6.5.16",
+        "@storybook/builder-webpack5": "^7.6.17",
         "@storybook/manager-webpack5": "^6.5.16",
-        "@storybook/node-logger": "^6.5.16",
-        "@storybook/preset-create-react-app": "^4.1.2",
-        "@storybook/react": "^6.5.16",
-        "@storybook/testing-library": "^0.0.13",
-        "@types/node": "^15.3.1",
-        "@types/react": "18.0.9",
-        "@types/react-dom": "18.0.4",
+        "@storybook/node-logger": "^7.6.17",
+        "@storybook/preset-create-react-app": "^7.6.17",
+        "@storybook/react": "^7.6.17",
+        "@storybook/testing-library": "^0.2.2",
+        "@types/node": "^20.11.24",
+        "@types/react": "18.2.62",
+        "@types/react-dom": "18.2.19",
         "react-scripts": "5.0.1",
         "rimraf": "^5.0.5",
-        "typescript": "~4.7.0"
+        "typescript": "~5.3.3"
     },
     "eslintConfig": {
         "extends": [
