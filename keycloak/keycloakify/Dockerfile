@@ -1,7 +1,11 @@
-FROM node:latest as builder
+FROM node:21-bookworm as builder
 
 USER root
 RUN apt-get update && apt-get install -y maven
+
+RUN mvn --version
+
+RUN yarn versions
 
 WORKDIR /app
 COPY package.json yarn.lock ./
@@ -9,7 +13,7 @@ RUN yarn
 COPY . .
 RUN yarn build-keycloak-theme
 
-FROM alpine:latest
+FROM alpine:3.19
 RUN mkdir /output
 COPY --from=builder /app/build_keycloak/target/*.jar /output/
 RUN apk add --no-cache wget curl
