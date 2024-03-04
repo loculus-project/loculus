@@ -26,6 +26,8 @@ We have different testing concepts for the individual parts of the application:
 #### Website
 
 * React components should be covered by unit tests unless they are trivial.
+    * If there is an end-to-end test that covers the component in enough detail, a unit test is not necessary.
+      However, unit tests should be preferred.
 * Astro components, to our knowledge, can't be unit tested. Thus, we have to rely on end-to-end tests for them.
 * End-to-end tests:
     * End-to-end tests should be __expressive__ and cover the most important use cases.
