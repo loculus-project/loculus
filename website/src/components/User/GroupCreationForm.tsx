@@ -73,12 +73,12 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
                         <GroupNameInput />
                         <EmailContactInput />
                         <InstitutionNameInput />
-                        <CountryInput />
                         <AddressLineOneInput />
                         <AddressLineTwoInput />
                         <CityInput />
                         <StateInput />
                         <PostalCodeInput />
+                        <CountryInput />
                     </div>
 
                     <div className='flex justify-end py-8 gap-4 '>
