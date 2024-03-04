@@ -79,12 +79,12 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
                 (error) => <ErrorBox title='Failed loading list of groups' message={error.detail} />,
             )
         }
-        <div class="mt-4">
-        <a
+        <div class='mt-4'>
+            <a
                 href={routes.createGroup()}
                 class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded text-sm'
                 >Create a new group</a
             >
-            </div>
+        </div>
     </div>
 </BaseLayout>

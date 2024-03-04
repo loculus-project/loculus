@@ -12,7 +12,7 @@ export class GroupPage {
     }
 
     public async goToGroupCreationPage() {
-        const linkToNewGroup = this.page.getByRole('link', { name: 'Create a group', exact: false });
+        const linkToNewGroup = this.page.getByRole('link', { name: 'Create a new group', exact: false });
         await linkToNewGroup.click();
     }
 
