@@ -34,7 +34,7 @@ updates:
         update-types:
           - "minor"
           - "patch"
-  - package-ecosystem: npm
+  - package-ecosystem: yarn
     directory: keycloak/keycloakify
     schedule:
       interval: monthly
