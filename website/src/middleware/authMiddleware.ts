@@ -336,3 +336,7 @@ function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCo
         refreshToken,
     };
 }
+
+export function urlForKeycloakAccountPage() {
+    return `${getRuntimeConfig().serverSide.keycloakUrl}/realms/loculusRealm/account`;
+}

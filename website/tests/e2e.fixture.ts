@@ -13,7 +13,7 @@ import { ReviewPage } from './pages/review/review.page.ts';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
 import { SequencePage } from './pages/sequences/sequences.page';
-import { SubmitPage } from './pages/submit/submit.page';
+import { SubmitPage } from './pages/submission/submit.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserSequencePage } from './pages/user/userSequencePage/userSequencePage.ts';
 import { createGroup } from './util/backendCalls.ts';

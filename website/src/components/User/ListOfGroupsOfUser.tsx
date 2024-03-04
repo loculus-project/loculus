@@ -61,7 +61,16 @@ const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({
                         </li>
                     ))
                 ) : (
-                    <p>You are not a member of any group.</p>
+                    <p className='text-gray-600 text-sm'>
+                        You are not currently a member of a group. If you intend to submit sequences, you can{' '}
+                        <a
+                            href={routes.createGroup()}
+                            className='text-primary-500 hover:underline focus:underline active:underline'
+                        >
+                            create a group
+                        </a>
+                        , or you can ask an administrator of an existing group to add you to their group.
+                    </p>
                 )}
             </ul>
         </>

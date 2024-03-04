@@ -2,11 +2,13 @@
 import { ListOfGroupsOfUser } from './ListOfGroupsOfUser.tsx';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getKeycloakClient } from '../../middleware/authMiddleware';
+import { getKeycloakClient, urlForKeycloakAccountPage } from '../../middleware/authMiddleware';
 import { routes } from '../../routes';
 import { GroupManagementClient } from '../../services/groupManagementClient';
 import { getAccessToken } from '../../utils/getAccessToken';
 import ErrorBox from '../common/ErrorBox.astro';
+import DashiconsGroups from '~icons/dashicons/groups';
+import MaterialSymbolsLightPersonOutline from '~icons/material-symbols-light/person-outline';
 
 const session = Astro.locals.session;
 const user = session.user!; // page only accessible if user is logged in
@@ -16,8 +18,6 @@ const name = user.name;
 const accessToken = getAccessToken(Astro.locals.session)!;
 
 const clientConfig = getRuntimeConfig().public;
-
-const organism: string | undefined = Astro.params.organism;
 
 const logoutUrl = new URL(Astro.request.url);
 logoutUrl.pathname = routes.logout();
@@ -30,48 +30,54 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
 ---
 
 <BaseLayout title='My account'>
-    <div class='flex items-center'>
-        <h1 class='title'>{name} ({username})</h1>
-    </div>
-    <div class='my-2 mx-4'>
-        <a href={keycloakLogoutUrl}>Logout</a>
-    </div>
-    {
-        organism !== undefined && (
-            <>
-                <div class='my-2 mx-4'>
-                    <a href={routes.userSequencesPage(organism)}>Sequence Overview</a>
-                </div>
-                <div class='my-2 mx-4'>
-                    <a href={routes.userSequenceReviewPage(organism)}>Sequence Review</a>
-                </div>
-                <div class='my-2 mx-4'>
-                    <a href={routes.mySequencesWithoutGroup(organism)}>My sequences</a>
-                </div>
-            </>
-        )
-    }
-    <div class='my-2 mx-4'>
-        <a href={routes.datasetsPage(username)}>Datasets Overview</a>
-    </div>
-
-    <div class='my-2 mx-4'>
-        <a href={routes.createGroup()}>Create a new Group</a>
-    </div>
-
-    <div class='subtitle py-4'>Groups</div>
-    {
-        groupOfUsersResult.match(
-            (groups) => (
-                <ListOfGroupsOfUser
-                    accessToken={accessToken}
-                    clientConfig={clientConfig}
-                    username={username}
-                    groupsOfUser={groups}
-                    client:load
+    <div class='max-w-4xl mx-auto'>
+        <div class='flex mt-4'>
+            <div class='flex text-gray-500'>
+                <MaterialSymbolsLightPersonOutline
+                    className='-mt-2 -ml-2 mr-2'
+                    style={{
+                        width: '4.5rem',
+                        height: '4.5rem',
+                    }}
                 />
-            ),
-            (error) => <ErrorBox title='Failed loading list of groups' message={error.detail} />,
-        )
-    }
+            </div>
+
+            <div>
+                <h1 class='text-gray-900 text-xl font-semibold'>{name}</h1>
+                <h2 class='text-gray-700 font-semibold'>
+                    {username}
+                </h2>
+            </div>
+        </div>
+
+        <div class='my-2 flex gap-2'>
+            <a
+                href={keycloakLogoutUrl}
+                class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded text-sm'>Logout</a
+            >
+            <a
+                href={urlForKeycloakAccountPage()}
+                class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded text-sm'
+                >Edit email address or password</a
+            >
+        </div>
+
+        <div class='font-bold mt-12 text-lg mb-2 text-primary-700'>
+            <DashiconsGroups className='w-6 h-6 inline-block mr-2' />Groups
+        </div>
+        {
+            groupOfUsersResult.match(
+                (groups) => (
+                    <ListOfGroupsOfUser
+                        accessToken={accessToken}
+                        clientConfig={clientConfig}
+                        username={username}
+                        groupsOfUser={groups}
+                        client:load
+                    />
+                ),
+                (error) => <ErrorBox title='Failed loading list of groups' message={error.detail} />,
+            )
+        }
+    </div>
 </BaseLayout>
