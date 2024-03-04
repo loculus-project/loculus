@@ -341,5 +341,5 @@ export async function urlForKeycloakAccountPage() {
     const client = await getKeycloakClient();
     const endsessionUrl = client.endSessionUrl();
     const host = new URL(endsessionUrl).host;
-    return `https://${host}/loculusRealm/account`;
+    return `https://${host}${realmpath}/account`;
 }
