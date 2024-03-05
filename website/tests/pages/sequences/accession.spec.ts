@@ -1,6 +1,6 @@
 import { routes } from '../../../src/routes.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, dummyOrganism, expect, test, testSequenceEntryData, DEFAULT_GROUP_NAME } from '../../e2e.fixture';
+import { baseUrl, dummyOrganism, expect, test, testSequenceEntryData } from '../../e2e.fixture';
 import { getTestSequences } from '../../util/testSequenceProvider.ts';
 
 test.describe('The detailed sequence page', () => {
@@ -58,8 +58,10 @@ test.describe('The detailed sequence page', () => {
         );
     });
 
-    test('can revoke', async ({ sequencePage }) => {
-        createGroup(DEFAULT_GROUP_NAME);
+    test('can revoke', async ({ sequencePage, loginAsTestUser }) => {
+
+        await loginAsTestUser();
+        
         const testSequences = getTestSequences();
 
         await sequencePage.goto(testSequences.sequenceToRevoke);
