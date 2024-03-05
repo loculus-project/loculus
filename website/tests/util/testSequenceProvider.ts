@@ -6,6 +6,7 @@ export type TestSequenceContainer = {
     revocationSequenceEntry: AccessionVersion;
     deprecatedSequenceEntry: AccessionVersion;
     revisedSequenceEntry: AccessionVersion;
+    sequenceToRevoke: AccessionVersion;
 };
 
 export const getTestSequences = (): TestSequenceContainer => {

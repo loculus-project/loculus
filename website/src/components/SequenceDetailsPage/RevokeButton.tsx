@@ -36,7 +36,7 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({ organism, accessToken
     };
 
     return (
-        <button className='btn btn-sm m-4 bg-red-400' onClick={handleRevokeSequenceEntry}>
+        <button className='btn btn-sm  bg-red-400' onClick={handleRevokeSequenceEntry}>
             Revoke this sequence
         </button>
     );

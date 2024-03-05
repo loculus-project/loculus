@@ -9,6 +9,7 @@ import { GroupManagementClient } from '../../services/groupManagementClient';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type Group } from '../../types/backend.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
+import MdiEye from '~icons/mdi/eye';
 
 interface Props {
     tableData: TableDataEntry[];
@@ -63,12 +64,21 @@ const isMyGroup =
 
 {
     isMyGroup && (
-        <RevokeButton
-            organism={organism}
-            clientConfig={clientConfig}
-            accessionVersion={accessionVersion.split('.')[0]}
-            accessToken={accessToken}
-            client:load
-        />
+        <div class='mt-5'>
+            <hr />
+            <h2 class='text-xl font-bold mt-10 mb-3'>Sequence Management</h2>
+            <div class='text-sm text-gray-400 mb-4 block'>
+                <MdiEye className='w-6 h-6 inline-block mr-2' />
+                Only visible to group members
+            </div>
+
+            <RevokeButton
+                organism={organism}
+                clientConfig={clientConfig}
+                accessionVersion={accessionVersion.split('.')[0]}
+                accessToken={accessToken}
+                client:load
+            />
+        </div>
     )
 }

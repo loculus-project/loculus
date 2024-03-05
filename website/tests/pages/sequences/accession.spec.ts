@@ -57,4 +57,14 @@ test.describe('The detailed sequence page', () => {
             baseUrl + routes.sequencesDetailsPage(dummyOrganism.key, deprecatedVersionString),
         );
     });
+
+    test('can revoke', async ({ sequencePage }) => {
+        const testSequences = getTestSequences();
+
+        await sequencePage.goto(testSequences.sequenceToRevoke);
+
+        await expect(sequencePage.page.getByText(`Revoke this sequence`)).toBeVisible();
+
+        await sequencePage.page.click('text=Revoke this sequence');
+    });
 });
