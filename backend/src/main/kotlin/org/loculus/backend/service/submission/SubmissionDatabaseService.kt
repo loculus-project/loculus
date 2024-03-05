@@ -239,7 +239,7 @@ class SubmissionDatabaseService(
             accessionPreconditionValidator.validateAccessionVersions(
                 submitter,
                 accessionVersionsFilter,
-                listOf(AWAITING_APPROVAL),
+                listOf(AWAITING_APPROVAL, AWAITING_APPROVAL_FOR_REVOCATION),
                 organism,
             )
         }
@@ -255,7 +255,7 @@ class SubmissionDatabaseService(
                         (DataUseTermsTable.isNewestDataUseTerms)
                 },
             ).select {
-                val statusCondition = table.statusIs(AWAITING_APPROVAL)
+                val statusCondition = table.statusIsOneOf(listOf(AWAITING_APPROVAL, AWAITING_APPROVAL_FOR_REVOCATION))
 
                 val accessionCondition = if (accessionVersionsFilter !== null) {
                     table.accessionVersionIsIn(accessionVersionsFilter)

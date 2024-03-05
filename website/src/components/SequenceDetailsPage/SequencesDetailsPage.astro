@@ -1,10 +1,13 @@
 ---
 import DataTable from './DataTable.astro';
+import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
 import { type TableDataEntry } from './getTableData';
 import { getReferenceGenomes, getRuntimeConfig } from '../../config';
 import { routes } from '../../routes.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
+import { getAccessToken } from '../../utils/getAccessToken';
+import {GroupManagementClient} from "../../services/groupManagementClient";
 
 interface Props {
     tableData: TableDataEntry[];
@@ -13,7 +16,9 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 }
 
+
 const { tableData, organism, accessionVersion, dataUseTermsHistory } = Astro.props;
+const group = tableData.find((entry) => entry.name === 'group')?.value;
 
 const runtimeConfig = getRuntimeConfig();
 
@@ -21,7 +26,21 @@ const referenceGenomes = getReferenceGenomes(organism);
 
 const genes = referenceGenomes.genes.map((g) => g.name);
 const nucleotideSegmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name) as [string, ...string[]];
+
+const clientConfig = getRuntimeConfig().public;
+const session = Astro.locals.session;
+let accessToken = null;
+if(session) {
+
+accessToken = getAccessToken(session);
+}
+
+const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
+console.log(groupsResult);
+
+const isMyGroup = accessToken && groupsResult.isOk() && groupsResult.value.some((myGroupItem) => myGroupItem.groupName == group);
 ---
+
 
 <DataTable tableData={tableData} dataUseTermsHistory={dataUseTermsHistory} />
 <div>
@@ -42,3 +61,14 @@ const nucleotideSegmentNames = referenceGenomes.nucleotideSequences.map((s) => s
         nucleotideSegmentNames={nucleotideSegmentNames}
     />
 </div>
+
+{ isMyGroup &&
+<RevokeButton organism={organism}  
+clientConfig={clientConfig}
+accessionVersion={accessionVersion.split('.')[0]}
+accessToken={accessToken}
+client:load
+/>
+}
+
+
