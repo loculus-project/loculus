@@ -39,8 +39,9 @@ updates:
     schedule:
       interval: monthly
     groups:
-      allUpdates:
+      minorAndPatch:
           update-types:
             - "minor"
             - "patch"
-            - "major"
+          exclude-patterns:
+            - "keycloakify"
