@@ -49,10 +49,10 @@ autoClose: false,
 
   return (
     <button 
-      className="btn btn-xs normal-case btn-ghost"
+      className="btn btn-sm m-4 bg-red-400"
       onClick={handleRevokeSequenceEntry}
     >
-      Revoke
+      Revoke this sequence
     </button>
   );
 };
