@@ -28,6 +28,8 @@ jobs:
         run: |
           echo "sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
 
+      # Waits are identical to the e2e-k3d.yml workflow file
+      # Mirror changes to that file
       - name: Wait for Prepro Dummy Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
@@ -75,6 +77,7 @@ jobs:
           check-name: Build keycloakify Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
+      # End of wait block
 
       - name: Checkout External Repository
         uses: actions/checkout@v4
