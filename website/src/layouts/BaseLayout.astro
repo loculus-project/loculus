@@ -1,13 +1,13 @@
 ---
 import '../styles/base.scss';
-import {ToastContainer} from 'react-toastify';
+import { ToastContainer } from 'react-toastify';
 
 import Navigation from '../components/Navigation/Navigation.astro';
 import OrganismSelector from '../components/Navigation/OrganismSelector.astro';
 import { getWebsiteConfig } from '../config';
-
 import 'react-toastify/dist/ReactToastify.css';
 import { navigationItems } from '../routes';
+
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, logo } = websiteConfig;
 
@@ -29,7 +29,7 @@ const { title } = Astro.props;
     </head>
     <body>
         <div class='flex flex-col min-h-screen w-11/12 mx-auto'>
-        <ToastContainer client:load />
+            <ToastContainer client:load />
             <header class='z-30 top-0 bg-white h-fit'>
                 <nav class='flex justify-between items-center p-4'>
                     <div class='flex justify-start'>
