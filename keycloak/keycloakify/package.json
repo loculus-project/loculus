@@ -20,8 +20,8 @@
     "dependencies": {
         "evt": "^2.5.7",
         "keycloakify": "~9.4.4",
-        "react": "18.1.0",
-        "react-dom": "18.1.0"
+        "react": "~18.2.0",
+        "react-dom": "~18.2.0"
     },
     "devDependencies": {
         "@storybook/addon-actions": "^6.5.16",
