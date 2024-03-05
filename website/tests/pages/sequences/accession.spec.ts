@@ -58,13 +58,23 @@ test.describe('The detailed sequence page', () => {
         );
     });
 
-    test('can revoke', async ({ sequencePage, loginAsTestUser }) => {
+    test('can revoke', async ({ sequencePage, loginAsTestUser, userPage }) => {
 
         await loginAsTestUser();
+
+        await userPage.goToUserPage();
+        // capture a screenshot
+        await userPage.page.screenshot({ path: 'userPage.png' });
+
         
         const testSequences = getTestSequences();
 
         await sequencePage.goto(testSequences.sequenceToRevoke);
+        
+
+        await sequencePage.page.evaluate(() => {
+            window.scrollTo(0, document.body.scrollHeight);
+        });
 
         await expect(sequencePage.page.getByText(`Revoke this sequence`)).toBeVisible();
 
