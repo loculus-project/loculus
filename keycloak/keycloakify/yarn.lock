@@ -9837,10 +9837,10 @@ junk@^3.1.0:
   resolved "https://registry.yarnpkg.com/junk/-/junk-3.1.0.tgz#31499098d902b7e98c5d9b9c80f43457a88abfa1"
   integrity sha512-pBxcB3LFc8QVgdggvZWyeys+hnrNWg4OcZIU/1X59k5jQdLBlCsYGRQaz234SqoRLTCgMH00fY0xRJH+F9METQ==
 
-keycloakify@^9.3.0:
-  version "9.3.0"
-  resolved "https://registry.yarnpkg.com/keycloakify/-/keycloakify-9.3.0.tgz#3e0c19654223b514ce3489aa950a05f2589d3a86"
-  integrity sha512-Hwty3nncHxTAYi+krafIvPC4SGnjuOH/c2Fa+sFsPHOL0Y+JXU+8FUikx22rj2ixETGTQSuXzx4FnpAzsNElxg==
+keycloakify@~9.4.0:
+  version "9.4.4"
+  resolved "https://registry.yarnpkg.com/keycloakify/-/keycloakify-9.4.4.tgz#0d602fe9568cac1c3ce9b6a0bc216c9a85a5b2e3"
+  integrity sha512-Qd0zQCwnCu3fO+vMIl1iNXNVX5lvLXCckhq/q0zVuGIgzGRP9zXx8tiC08rLQMbRrLdck9h+BKxg7B/16Vacfg==
   dependencies:
     "@babel/generator" "^7.22.9"
     "@babel/parser" "^7.22.7"
@@ -9852,7 +9852,6 @@ keycloakify@^9.3.0:
     make-fetch-happen "^11.0.3"
     minimal-polyfills "^2.2.2"
     minimist "^1.2.6"
-    path-browserify "^1.0.1"
     react-markdown "^5.0.3"
     recast "^0.23.3"
     rfc4648 "^1.5.2"
