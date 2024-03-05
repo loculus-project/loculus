@@ -41,6 +41,9 @@
         "rimraf": "^5.0.5",
         "typescript": "~5.1.6"
     },
+    "resolutions": {
+        "strip-ansi": "6.0.1"
+    },
     "eslintConfig": {
         "extends": [
             "react-app",
