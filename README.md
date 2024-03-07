@@ -33,10 +33,6 @@ Follow this guide <https://docs.github.com/en/packages/working-with-a-github-pac
 1. Run `export CR_PAT=YOUR_TOKEN` (replace `YOUR_TOKEN` with the token)
 1. Run `echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin` (Not sure what to put as username, just leaving it as `USERNAME` seemed to work)
 
-### ARM macOS
-
-Unfortunately, local development on ARM macOS (M1 and M2 macs) is not currently possible as it requires images which are not built for ARM. You can develop in a GitHub codespace instead.
-
 ## Authorization
 
 ### User management
