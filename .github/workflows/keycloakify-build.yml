@@ -58,7 +58,7 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=keycloakify-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=keycloakify-${{ github.ref }}
-          platform: linux/amd64,linux/arm64
+          platforms: linux/amd64,linux/arm64
       - name: Tag and push image if cache hit
         if: env.CACHE_HIT == 'true'
         run: |
