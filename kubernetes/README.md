@@ -158,31 +158,3 @@ eyXXXXXX%
 ```
 
 This will return a base64 encoded string similar to the one you can see above that starts with `ey` that you can use as `--dockerconfigjson` argument. Make sure not to copy the trailing `%` character that is added by `zsh`.
-
-### How to set up on ARM64 macOS (M1, M2, etc.)
-
-**We recommend using GitHub Codespaces if you are using ARM64 macOS, as the approach below is too slow.** 
-
-Using Docker desktop as your container runtime won't work on ARM64 macOS. Instead, you will need to use `colima` to run an AMD64 VM which will host AMD64 docker containers.
-
-This will be quite slow due to QEMU emulation but it will work nonetheless (you may need to [adjust timeouts](https://github.com/loculus-project/loculus/pull/583).
-
-First, install `colima`:
-
-```shell
-brew install colima
-```
-
-Then, start an AMD64 VM:
-
-```shell
-colima start --cpu 5 --memory 10 --runtime docker -p amd64 --arch x86_64
-```
-
-Colima automatically configures docker to use the VM as its runtime. You can check this with:
-
-```shell
-docker info
-```
-
-Then follow the instructions above to set up the cluster and deploy the Helm chart.
