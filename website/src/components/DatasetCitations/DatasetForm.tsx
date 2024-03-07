@@ -52,18 +52,6 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                     accession,
                     type: DatasetRecordType.loculus,
                 })),
-                ...getAccessionsByType(DatasetRecordType.genbank).map((accession) => ({
-                    accession,
-                    type: DatasetRecordType.genbank,
-                })),
-                ...getAccessionsByType(DatasetRecordType.sra).map((accession) => ({
-                    accession,
-                    type: DatasetRecordType.sra,
-                })),
-                ...getAccessionsByType(DatasetRecordType.gisaid).map((accession) => ({
-                    accession,
-                    type: DatasetRecordType.gisaid,
-                })),
             ],
         };
     };
