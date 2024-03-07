@@ -9,6 +9,8 @@ from typing import Type, get_args
 
 import yaml
 
+from .datatypes import ProcessingSpec
+
 logger = logging.getLogger(__name__)
 
 # Dataclass types for which we can generate CLI arguments
@@ -30,6 +32,7 @@ class Config:
     keep_tmp_dir: bool = False
     reference_length: int = 197209
     batch_size: int = 5
+    processing_spec: dict[str, ProcessingSpec] = dataclasses.field(default_factory=dict)
 
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:
