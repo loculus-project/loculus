@@ -245,7 +245,7 @@ defaultOrganisms:
         - name: "main"
           sequence: "[[URL:https://cov2tree.nyc3.cdn.digitaloceanspaces.com/reference.txt]]"
       genes: []
- ebolavirus-zaire:
+ dummy-organism:
     schema:
       image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Ebola_Virus_-_Electron_Micrograph.tiff/lossy-page1-440px-Ebola_Virus_-_Electron_Micrograph.tiff.jpg"
       instanceName: "Ebolavirus Zaire"
