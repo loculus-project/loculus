@@ -125,7 +125,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                 </FormControl>
                 <h2 className='text-lg font-bold'>Accessions</h2>
                 <FormGroup>
-                    {Object.keys(accessionsInput).map((type) => (
+                    {[DatasetRecordType.loculus].map((type) => (
                         <Accordion defaultExpanded={type === DatasetRecordType.loculus} key={`${type}-accordian`}>
                             <AccordionSummary
                                 expandIcon={<ExpandMoreIcon />}
