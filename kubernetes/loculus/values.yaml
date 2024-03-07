@@ -14,7 +14,6 @@ defaultOrganisms:
     schema:
       instanceName: "Mpox Virus"
       image: "https://cdn.who.int/media/images/default-source/health-topics/monkeypox/12763.tmb-1200v.jpg?sfvrsn=cd044fbd_37"
-      description: "Mpox, formerly monkeypox, is a rare viral disease that occurs mainly in remote parts of Central and West Africa, near tropical rainforests. Recently global outbreaks have occurred."
       metadata:
         - name: collection_date
           type: date
