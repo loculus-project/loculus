@@ -208,7 +208,7 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
         },
         {
             text: 'Submit',
-            path: routes.submissionPage(organism),
+            path: routes.submitPage(organism),
         },
         ...(isLoggedIn
             ? [{ text: 'My account', path: routes.userOverviewPage(organism) }]
