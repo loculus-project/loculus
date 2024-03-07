@@ -50,6 +50,9 @@ class SecurityConfig {
 
     private val getEndpointsThatArePublic = arrayOf(
         "/data-use-terms/*",
+        "/get-dataset",
+        "/get-dataset-records",
+        "get-dataset-cited-by-publication",
     )
 
     @Bean
