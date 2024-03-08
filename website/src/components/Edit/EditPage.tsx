@@ -201,20 +201,17 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
     <>
         <Subtitle title='Metadata' />
         {editedMetadata.map((field) => {
-            field.key = sentenceCase(field.key);
-            return (
-                <EditableDataRow
-                    key={'raw_metadata' + field.key}
-                    row={field}
-                    onChange={(editedRow: Row) =>
-                        setEditedMetadata((prevRows: Row[]) =>
-                            prevRows.map((prevRow) =>
-                                prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-                            ),
-                        )
-                    }
-                />
-            );
+            <EditableDataRow
+                key={'raw_metadata' + field.key}
+                row={field}
+                onChange={(editedRow: Row) =>
+                    setEditedMetadata((prevRows: Row[]) =>
+                        prevRows.map((prevRow) =>
+                            prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+                        ),
+                    )
+                }
+            />;
         })}
     </>
 );
@@ -249,10 +246,7 @@ const ProcessedMetadata: FC<ProcessedMetadataProps> = ({ processedMetadata }) =>
     <>
         <Subtitle title='Metadata' customKey='preprocessing_metadata' />
         {Object.entries(processedMetadata).map(([key, value]) => (
-            <ProcessedDataRow
-                key={'processed' + key}
-                row={{ key: sentenceCase(key), value: displayMetadataField(value) }}
-            />
+            <ProcessedDataRow key={'processed' + key} row={{ key, value: displayMetadataField(value) }} />
         ))}
     </>
 );
