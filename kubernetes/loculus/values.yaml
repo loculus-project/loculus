@@ -33,6 +33,7 @@ defaultOrganisms:
           autocomplete: true
         - name: isolate_name
           type: string
+          generateIndex: true
           autocomplete: true
         - name: release_date
           type: date
