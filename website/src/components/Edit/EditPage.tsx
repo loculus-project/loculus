@@ -200,7 +200,7 @@ type EditableOriginalDataProps = {
 const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata }) => (
     <>
         <Subtitle title='Metadata' />
-        {editedMetadata.map((field) => {
+        {editedMetadata.map((field) => (
             <EditableDataRow
                 key={'raw_metadata' + field.key}
                 row={field}
@@ -211,8 +211,8 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
                         ),
                     )
                 }
-            />;
-        })}
+            />
+        ))}
     </>
 );
 
