@@ -21,6 +21,8 @@ defaultOrganisms:
         - name: clade
           type: string
           required: false
+          generateIndex: true
+          autocomplete: true
         - name: region
           type: string
           generateIndex: true
@@ -35,8 +37,6 @@ defaultOrganisms:
           autocomplete: true
         - name: release_date
           type: date
-          generateIndex: true
-          autocomplete: true
         - name: affiliation
           type: string
           autocomplete: true
