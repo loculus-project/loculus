@@ -66,10 +66,14 @@ def enrich_with_nextclade(
 ) -> dict[AccessionVersion, UnprocessedWithNextclade]:
     unaligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
+    aligned_aminoacid_sequences: dict[AccessionVersion, dict[GeneName, AminoAcidSequence]] = {}
     for entry in unprocessed:
         id = entry.accessionVersion
         unaligned_nucleotide_sequences[id] = entry.data.unalignedNucleotideSequences["main"]
         input_metadata[id] = entry.data.metadata
+        aligned_aminoacid_sequences[id] = {}
+        for gene in config.genes:
+            aligned_aminoacid_sequences[id][gene] = None
 
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         # TODO: Generalize for multiple segments (flu)
@@ -151,9 +155,6 @@ def enrich_with_nextclade(
                 sequence_id: str = aligned_sequence.id
                 aligned_nucleotide_sequences[sequence_id] = str(aligned_sequence.seq)
 
-        aligned_aminoacid_sequences: dict[AccessionVersion, dict[GeneName, AminoAcidSequence]] = {}
-        for sequence_id in aligned_nucleotide_sequences.keys():
-            aligned_aminoacid_sequences[sequence_id] = {}
         for gene in config.genes:
             translation_path = result_dir + f"/nextclade.cds_translation.{gene}.fasta"
             try:
@@ -164,8 +165,6 @@ def enrich_with_nextclade(
                         aligned_aminoacid_sequences[sequence_id][gene] = str(aligned_sequence.seq)
             except FileNotFoundError:
                 # TODO: Add warning to each sequence
-                for id in aligned_aminoacid_sequences.keys():
-                    aligned_aminoacid_sequences[id][gene] = ""
                 logging.info(
                     f"Gene {gene} not found in Nextclade results expected at: {translation_path}"
                 )
@@ -211,6 +210,7 @@ def process_single(
         spec = ProcessingSpec(inputs=spec_dict["inputs"], function=spec_dict["function"])
         input_data = {}
         for arg_name, input_path in spec.inputs.items():
+            input_data[arg_name] = None
             # If field starts with "nextclade.", take from nextclade metadata
             if input_path.startswith("nextclade."):
                 # Remove "nextclade." prefix
@@ -224,6 +224,14 @@ def process_single(
                     )
                     continue
                 input_data[arg_name] = unprocessed.nextcladeMetadata[input_path]
+                continue
+            if input_path not in unprocessed.inputMetadata:
+                errors.append(
+                    ProcessingAnnotation(
+                        source=[AnnotationSource(name=input_path, type="Metadata")],
+                        message=f"Metadata field {input_path} not found",
+                    )
+                )
                 continue
             input_data[arg_name] = unprocessed.inputMetadata[input_path]
         processing_result = ProcessingFunctions.call_function(
