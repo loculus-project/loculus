@@ -1,10 +1,10 @@
-FROM mambaorg/micromamba:1.5.6
+FROM mambaorg/micromamba:1.5.7
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/env.yaml
 COPY --chown=$MAMBA_USER:$MAMBA_USER .mambarc /tmp/.mambarc
 
 RUN micromamba config set extract_threads 1 \
-    && micromamba install -y -n base -f /tmp/env.yaml --platform=linux-64 --rc-file /tmp/.mambarc \
+    && micromamba install -y -n base -f /tmp/env.yaml --rc-file /tmp/.mambarc \
     && micromamba clean --all --yes
 
 COPY --chown=$MAMBA_USER:$MAMBA_USER . /package
