@@ -9,6 +9,6 @@ dependencies:
   - PyYAML
   - requests=2.31
   - pyjwt=2.8
-  - dateutil=2.9
+  - python-dateutil=2.9
   - pytz=2024.1
   - pip
