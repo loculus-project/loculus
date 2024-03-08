@@ -20,8 +20,6 @@ defaultOrganisms:
           required: true
         - name: clade
           type: string
-          generateIndex: true
-          autocomplete: true
           required: false
         - name: region
           type: string
