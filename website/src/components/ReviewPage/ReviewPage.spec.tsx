@@ -118,7 +118,7 @@ describe('ReviewPage', () => {
 
         await waitFor(() => {
             expect(getByText((text) => text.includes('Discard 1 sequence with errors'))).toBeDefined();
-            expect(getByText((text) => text.includes('Release 1 sequence'))).toBeDefined();
+            expect(getByText((text) => text.includes('Release 1 valid sequence'))).toBeDefined();
         });
 
         mockRequest.backend.getSequences(200, generateGetSequencesResponse([]));
