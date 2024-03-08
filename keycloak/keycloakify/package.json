@@ -19,7 +19,7 @@
     "keywords": [],
     "dependencies": {
         "evt": "^2.5.7",
-        "keycloakify": "~9.4.4",
+        "keycloakify": "~9.6.1",
         "react": "~18.2.0",
         "react-dom": "~18.2.0"
     },
