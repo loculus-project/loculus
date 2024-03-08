@@ -1,7 +1,7 @@
 environment: server
 disableWebsite: false
 disableBackend: false
-disablePreprocessing: true
+disablePreprocessing: false
 siloImportLimitSeconds: 3600
 accessionPrefix: "PP_"
 name: "Pathoplexus"
@@ -66,6 +66,40 @@ defaultOrganisms:
         genes:
           OPG001: 247
         batch_size: 100
+        processing_spec:
+          collection_date:
+            function: process_date
+            inputs:
+              date: collection_date
+              release_date: Release date
+          release_date:
+            function: parse_timestamp
+            inputs:
+              timestamp: Release date
+          clade:
+            function: identity
+            inputs:
+              input: nextclade.clade
+          region:
+            function: identity
+            inputs:
+              input: Geographic Region
+          country:
+            function: identity
+            inputs:
+              input: Geographic Location
+          affiliation:
+            function: identity
+            inputs:
+              input: Submitter Affiliation
+          authors:
+            function: identity
+            inputs:
+              input: Submitter Names
+          isolate_name:
+            function: identity
+            inputs:
+              input: Isolate Lineage
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
