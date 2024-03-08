@@ -26,7 +26,6 @@ const getDatasetCitedByEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-dataset-cited-by-publication?datasetId=:datasetId&version=:version',
     alias: 'getDatasetCitedBy',
-    parameters: [authorizationHeader],
     response: citedByResult,
     errors: [notAuthorizedError],
 });
@@ -35,7 +34,6 @@ const getDatasetEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-dataset?datasetId=:datasetId&version=:version',
     alias: 'getDataset',
-    parameters: [authorizationHeader],
     response: datasets,
     errors: [notAuthorizedError],
 });
@@ -44,7 +42,6 @@ const getDatasetRecordsEndpoint = makeEndpoint({
     method: 'get',
     path: '/get-dataset-records?datasetId=:datasetId&version=:version',
     alias: 'getDatasetRecords',
-    parameters: [authorizationHeader],
     response: datasetRecords,
     errors: [notAuthorizedError],
 });

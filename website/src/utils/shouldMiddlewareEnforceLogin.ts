@@ -10,7 +10,7 @@ function getEnforcedLoginRoutes(configuredOrganisms: string[]) {
 
         enforcedLoginRoutesCache[cacheKey] = [
             new RegExp('^/user/?'),
-            new RegExp(`^/datasets/?`),
+            new RegExp(`^/datasets\/?$`),
             ...organismSpecificRoutes,
         ];
     }

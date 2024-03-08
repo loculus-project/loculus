@@ -7,7 +7,6 @@ import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { DatasetCitationClient } from '../../services/datasetCitationClient.ts';
 import type { Dataset } from '../../types/datasetCitation';
-import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
@@ -20,17 +19,14 @@ const datasetClient = DatasetCitationClient.create();
 
 const datasetResponse = (await datasetClient.call('getDataset', {
     params: { datasetId, version },
-    headers: createAuthorizationHeader(accessToken),
 })) as any;
 
 const datasetRecordsResponse = (await datasetClient.call('getDatasetRecords', {
     params: { datasetId, version },
-    headers: createAuthorizationHeader(accessToken),
 })) as any;
 
 const datasetCitedByResponse = (await datasetClient.call('getDatasetCitedBy', {
     params: { datasetId, version },
-    headers: createAuthorizationHeader(accessToken),
 })) as any;
 
 const getDatasetByVersion = (datasetVersions: Dataset[], version: string) => {
