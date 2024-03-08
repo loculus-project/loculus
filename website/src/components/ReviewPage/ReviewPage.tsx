@@ -143,7 +143,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                                         }
                                     >
                                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                                        Discard {errorCount} sequences with errors
+                                        Discard {errorCount} sequence{errorCount > 1 ? 's' : ''} with errors
                                     </button>
                                 </Menu.Item>
                             )}
@@ -183,7 +183,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                     }
                 >
                     <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                    Release {processedCount + revocationCount} valid sequences
+                    Release {processedCount + revocationCount} valid sequence
+                    {processedCount + revocationCount > 1 ? 's' : ''}
                 </button>
             )}
         </div>
