@@ -2,6 +2,12 @@ name: E2E test (on kubernetes)
 
 on:
   workflow_dispatch:
+    inputs:
+      force_all_browsers:
+        description: 'Force testing on all browsers'
+        required: false
+        default: false
+        type: boolean
   push:
     paths:
       - "backend/**"
@@ -27,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
+      ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' || inputs.force_all_browsers && 'true' || 'false' }}
 
     steps:
       - name: Checkout repository
