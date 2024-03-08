@@ -12,6 +12,7 @@ import {
     deleteProcessedDataWithErrorsScope,
     hasErrorsStatus,
     inProcessingStatus,
+    awaitingApprovalForRevocationStatus,
     type PageQuery,
     type SequenceEntryStatus,
 } from '../../types/backend.ts';
@@ -64,12 +65,16 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     const processingCount = hooks.getSequences.data.statusCounts[inProcessingStatus];
     const processedCount = hooks.getSequences.data.statusCounts[awaitingApprovalStatus];
     const errorCount = hooks.getSequences.data.statusCounts[hasErrorsStatus];
+    const revocationCount = hooks.getSequences.data.statusCounts[awaitingApprovalForRevocationStatus];
+
+    const finishedCount = processedCount + errorCount + revocationCount;
+
     const sequences: SequenceEntryStatus[] = hooks.getSequences.data.sequenceEntries;
 
     const controlPanel = (
         <div className='flex flex-col py-2'>
             <div>
-                {processedCount + errorCount} of {total} sequences processed.
+                {finishedCount} of {total} sequences processed.
                 {processingCount > 0 && <span className='loading loading-spinner loading-sm ml-3'> </span>}
             </div>
             <div>
@@ -112,7 +117,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
 
     const bulkActionButtons = (
         <div className='flex justify-end items-center gap-3'>
-            {processedCount + errorCount > 0 && (
+            {finishedCount > 0 && (
                 <Menu as='div' className='relative inline-block text-left'>
                     <Menu.Button className='border rounded-md p-1 bg-gray-500 text-white px-2'>
                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
@@ -147,7 +152,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                                     className={menuItemClassName}
                                     onClick={() =>
                                         displayConfirmationDialog({
-                                            dialogText: `Are you sure you want to discard all ${processedCount + errorCount} processed sequences?`,
+                                            dialogText: `Are you sure you want to discard all ${finishedCount} processed sequences?`,
                                             onConfirmation: () => {
                                                 hooks.deleteSequenceEntries({
                                                     scope: deleteAllDataScope.value,
@@ -157,14 +162,14 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                                     }
                                 >
                                     <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                                    Discard all {processedCount + errorCount} processed sequences
+                                    Discard all {finishedCount} processed sequences
                                 </button>
                             </Menu.Item>
                         </div>
                     </Menu.Items>
                 </Menu>
             )}
-            {processedCount > 0 && (
+            {processedCount + revocationCount > 0 && (
                 <button
                     className='border rounded-md p-1 bg-gray-500 text-white px-2'
                     onClick={() =>
