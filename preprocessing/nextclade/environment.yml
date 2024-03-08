@@ -5,8 +5,10 @@ channels:
 dependencies:
   - python=3.12
   - biopython=1.83
-  - nextclade=3.2.1
+  - nextclade=3.3.1
   - PyYAML
   - requests=2.31
   - pyjwt=2.8
+  - dateutil=2.9
+  - pytz=2024.1
   - pip
