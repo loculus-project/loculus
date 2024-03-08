@@ -6,12 +6,12 @@ on:
     inputs:
       build_arm:
         description: "Build for arm as well"
-        default: "false"
+        default: ""
         required: false
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-nextclade
-  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm == 'true' }} # When to build for arm as well
+  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }} # When to build for arm as well
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-nextclade
@@ -32,7 +32,7 @@ jobs:
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/nextclade/**', '.github/workflows/preprocessing-nextclade.yml') }})
-          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }} env" >> $GITHUB_ENV
+          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
         id: dockerMetadata
