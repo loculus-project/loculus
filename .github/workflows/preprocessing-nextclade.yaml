@@ -6,6 +6,7 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-nextclade
+  BUILD_ARM: ${{ github.ref == 'refs/heads/main' }}
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-nextclade
@@ -26,7 +27,7 @@ jobs:
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/nextclade/**', '.github/workflows/preprocessing-nextclade.yml') }})
-          echo "DIR_HASH=$DIR_HASH" >> $GITHUB_ENV
+          echo "DIR_HASH=$DIR_HASH_$BUILD_ARM" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
         id: dockerMetadata
