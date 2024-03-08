@@ -20,17 +20,19 @@ export default defineConfig({
     globalSetup: './tests/playwrightSetup.ts',
 
     projects: [
+        
         {
             name: 'chromium',
             use: { ...devices['Desktop Chrome'] },
         },
-        {
+        ...process.env.ALL_BROWSERS === 'true' ? [{
             name: 'firefox',
             use: { ...devices['Desktop Firefox'] },
         },
         {
             name: 'webkit',
             use: { ...devices['Desktop Safari'] },
-        },
+        }] : [],
+        
     ],
 });
