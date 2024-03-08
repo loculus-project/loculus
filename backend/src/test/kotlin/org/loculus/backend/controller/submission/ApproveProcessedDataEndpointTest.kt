@@ -157,7 +157,8 @@ class ApproveProcessedDataEndpointTest(
                 jsonPath(
                     "$.detail",
                     containsString(
-                        "Accession versions are in not in one of the states [$AWAITING_APPROVAL, $AWAITING_APPROVAL_FOR_REVOCATION]: " +
+                        "Accession versions are in not in one of the states " +
+                            "[$AWAITING_APPROVAL, $AWAITING_APPROVAL_FOR_REVOCATION]: " +
                             "${accessionVersionNotInCorrectState.first().displayAccessionVersion()} - $IN_PROCESSING",
                     ),
                 ),
