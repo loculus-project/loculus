@@ -2,7 +2,6 @@
 
 This is a keycloak theme, built with keycloakify, and branched from https://github.com/keycloakify/keycloakify-starter
 
-
 To preview in the storybook:
 ```
 yarn # install dependencies (it's like npm install)
