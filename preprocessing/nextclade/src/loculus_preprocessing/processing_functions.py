@@ -11,12 +11,15 @@ from .datatypes import AnnotationSource, ProcessingAnnotation, ProcessingResult
 
 class ProcessingFunctions:
     @staticmethod
-    def check_date(date: str, input_field: str, output_field: str) -> ProcessingResult:
+    def check_date(input_data: dict[str, str], output_field: str) -> ProcessingResult:
         """
         Check that date is complete YYYY-MM-DD
         If not according to format return error
         If in future, return warning
+        Expects input_data to be an ordered dictionary with a single key "date"
         """
+        date = input_data["date"]
+
         # Parse date
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
@@ -25,7 +28,7 @@ class ProcessingFunctions:
             if parsed_date > datetime.now():
                 warnings.append(
                     ProcessingAnnotation(
-                        source=AnnotationSource(field=output_field, type="metadata"),
+                        source=[AnnotationSource(name=output_field, type="Metadata")],
                         message="Date is in the future.",
                     )
                 )
@@ -40,11 +43,29 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=[
                     ProcessingAnnotation(
-                        source=AnnotationSource(field=output_field, type="metadata"),
+                        source=[AnnotationSource(name=output_field, type="Metadata")],
                         message=error_message,
                     )
                 ],
             )
+
+    @staticmethod
+    def identity(input_data: dict[str, str], output_field: str) -> ProcessingResult:
+        """
+        Identity function, takes input_data["input"] and returns it as output
+        """
+        if "input" not in input_data:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        source=[AnnotationSource(name=output_field, type="Metadata")],
+                        message=f"No data found for output field: {output_field}",
+                    )
+                ],
+            )
+        return ProcessingResult(datum=input_data["input"], warnings=[], errors=[])
 
     @classmethod
     def call_function(
@@ -62,7 +83,7 @@ class ProcessingFunctions:
                     warnings=[],
                     errors=[
                         ProcessingAnnotation(
-                            source=AnnotationSource(field=output_field, type="metadata"),
+                            source=[AnnotationSource(name=output_field, type="Metadata")],
                             message="Function did not return ProcessingResult",
                         )
                     ],
@@ -74,7 +95,7 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
-                        source=AnnotationSource(field=output_field, type="metadata"),
+                        source=[AnnotationSource(name=output_field, type="Metadata")],
                         message="Config error: No function matches the given string",
                     )
                 ],

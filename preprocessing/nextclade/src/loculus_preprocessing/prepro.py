@@ -15,11 +15,13 @@ from .config import Config
 from .datatypes import (
     AccessionVersion,
     AminoAcidSequence,
+    AnnotationSource,
     GeneName,
     NucleotideSequence,
     ProcessedData,
     ProcessedEntry,
     ProcessingAnnotation,
+    ProcessingSpec,
     UnprocessedData,
     UnprocessedEntry,
     UnprocessedWithNextclade,
@@ -178,11 +180,11 @@ def enrich_with_nextclade(
     return {
         id: UnprocessedWithNextclade(
             inputMetadata=input_metadata[id],
-            nextcladeMetadata=nextclade_metadata[id],
+            nextcladeMetadata=nextclade_metadata.get(id, None),
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
-            alignedNucleotideSequences=aligned_nucleotide_sequences[id],
+            alignedNucleotideSequences=aligned_nucleotide_sequences.get(id, None),
             nucleotideInsertions=[],
-            alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
+            alignedAminoAcidSequences=aligned_aminoacid_sequences.get(id, {}),
             aminoAcidInsertions={gene: [] for gene in config.genes},
         )
         for id in unaligned_nucleotide_sequences.keys()
@@ -205,16 +207,25 @@ def process_single(
     warnings: list[ProcessingAnnotation] = []
     output_metadata = {}
 
-    for output_field, spec in config.processing_spec.items():
+    for output_field, spec_dict in config.processing_spec.items():
+        spec = ProcessingSpec(inputs=spec_dict["inputs"], function=spec_dict["function"])
         input_data = {}
-        for input_field in spec.inputs:
+        for arg_name, input_path in spec.inputs.items():
             # If field starts with "nextclade.", take from nextclade metadata
-            if input_field.startswith("nextclade."):
+            if input_path.startswith("nextclade."):
                 # Remove "nextclade." prefix
-                input_field = input_field[9:]
-                input_data[input_field] = unprocessed.nextcladeMetadata[input_field]
+                input_path = input_path[10:]
+                if unprocessed.nextcladeMetadata is None:
+                    errors.append(
+                        ProcessingAnnotation(
+                            source=[AnnotationSource(name="main", type="NucleotideSequence")],
+                            message="Nucleotide sequence failed to align",
+                        )
+                    )
+                    continue
+                input_data[arg_name] = unprocessed.nextcladeMetadata[input_path]
                 continue
-            input_data[input_field] = unprocessed.inputMetadata[input_field]
+            input_data[arg_name] = unprocessed.inputMetadata[input_path]
         processing_result = ProcessingFunctions.call_function(
             spec.function, input_data, output_field
         )
@@ -277,6 +288,8 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
     }
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:
+        with open("failed_submission.json", "w") as f:
+            f.write(ndjson_string)
         raise Exception(
             f"Submitting processed data failed. Status code: {response.status_code}\n"
             + f"Response: {response.text}\n"

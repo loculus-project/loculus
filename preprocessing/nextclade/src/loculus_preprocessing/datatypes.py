@@ -9,6 +9,8 @@ AminoAcidSequence = str
 NucleotideInsertion = str
 AminoAcidInsertion = str
 FunctionName = str  # Name of function present in processing_functions
+ArgName = str  # Name of argument present in processing_functions
+InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
 
 
 @dataclass
@@ -23,9 +25,12 @@ class UnprocessedEntry:
     data: UnprocessedData
 
 
+FunctionInputs = dict[ArgName, InputField]
+
+
 @dataclass
 class ProcessingSpec:
-    inputs: list[str]
+    inputs: FunctionInputs
     function: FunctionName
 
 
@@ -33,9 +38,9 @@ class ProcessingSpec:
 @dataclass
 class UnprocessedWithNextclade:
     inputMetadata: dict[str, Any]  # Original user supplied metadata
-    nextcladeMetadata: dict[str, Any]  # Derived metadata produced by Nextclade
+    nextcladeMetadata: dict[str, Any] | None  # Derived metadata produced by Nextclade
     unalignedNucleotideSequences: NucleotideSequence
-    alignedNucleotideSequences: NucleotideSequence
+    alignedNucleotideSequences: NucleotideSequence | None
     nucleotideInsertions: list[NucleotideInsertion]
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence]
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
@@ -53,13 +58,13 @@ class ProcessedData:
 
 @dataclass
 class AnnotationSource:
-    field: str
-    type: Literal["metadata", "nucleotideSequence"]
+    name: str
+    type: Literal["Metadata", "NucleotideSequence"]
 
 
 @dataclass
 class ProcessingAnnotation:
-    source: AnnotationSource
+    source: list[AnnotationSource]
     message: str
 
 
