@@ -23,10 +23,34 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           required: false
+        - name: region
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: country
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: isolate_name
+          type: string
+          autocomplete: true
+        - name: release_date
+          type: date
+          generateIndex: true
+        - name: affiliation
+          type: string
+          autocomplete: true
+          generateIndex: true
+        - name: authors
+          type: string
       website:
         tableColumns:
           - collection_date
+          - release_date
           - clade
+          - region
+          - country
+          - isolate_name
         defaultOrderBy: collection_date
         defaultOrder: descending
       silo:
