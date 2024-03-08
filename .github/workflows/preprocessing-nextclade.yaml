@@ -5,8 +5,9 @@ on:
   workflow_dispatch:
     inputs:
       build_arm:
-        description: "Build for arm as well"
-        default: ""
+        type: boolean
+        description: "Build for ARM as well"
+        default: false
         required: false
 
 env:
