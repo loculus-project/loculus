@@ -174,7 +174,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                     className='border rounded-md p-1 bg-gray-500 text-white px-2'
                     onClick={() =>
                         displayConfirmationDialog({
-                            dialogText: 'Are you sure you want to release all sequences without errors?',
+                            dialogText: 'Are you sure you want to release all valid sequences?',
                             onConfirmation: () =>
                                 hooks.approveProcessedData({
                                     scope: approveAllDataScope.value,
@@ -183,7 +183,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                     }
                 >
                     <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                    Release {processedCount} sequences without errors
+                    Release {processedCount + revocationCount} valid sequences
                 </button>
             )}
         </div>
