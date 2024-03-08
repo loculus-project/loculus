@@ -26,6 +26,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
