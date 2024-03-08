@@ -4,11 +4,15 @@ Each function takes input data and returns output data, warnings and errors
 This makes it easy to test and reason about the code
 """
 
+import logging
 from datetime import datetime
 
 import dateutil.parser as dateutil
+import pytz
 
 from .datatypes import AnnotationSource, ProcessingAnnotation, ProcessingResult
+
+logger = logging.getLogger(__name__)
 
 
 class ProcessingFunctions:
@@ -54,69 +58,93 @@ class ProcessingFunctions:
     @staticmethod
     def process_date(input_data: dict[str, str], output_field) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error"""
-        date = input_data["date"]
+        logger.debug(f"input_data: {input_data}")
+        date_str = input_data["date"]
+        release_date_str = input_data.get("release_date", "")
+        try:
+            release_date = dateutil.parse(release_date_str)
+        except Exception:
+            release_date = None
+        logger.debug(f"release_date: {release_date}")
+        logger.debug(f"date_str: {date_str}")
 
-        if date is None:
-            date=""
+        formats_to_messages = {
+            "%Y-%m-%d": None,
+            "%Y-%m": "Day is missing. Assuming the 1st.",
+            "%Y": "Month and day are missing. Assuming January 1st.",
+        }
 
-        components = date.split("-")
+        warnings = []
+        errors = []
 
-        if len(components) == 0 or date == "":
-            # No date provided
+        if len(date_str) == 0:
             return ProcessingResult(
                 datum=None,
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
                         source=[AnnotationSource(name=output_field, type="Metadata")],
-                        message=f"{output_field} is required. Must not be empty.",
+                        message="Collection date is required",
                     )
                 ],
             )
-        elif len(components) == 1:
-            # Only year is provided
-            return ProcessingResult(
-                datum=f"{date}-01-01",
-                warnings=[
-                    ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
-                        message="Month and day are missing. Assuming January 1st.",
+
+        for fmt, message in formats_to_messages.items():
+            try:
+                parsed_date = datetime.strptime(date_str, fmt).replace(tzinfo=pytz.utc)
+                if fmt == "%Y-%m-%d":
+                    datum = parsed_date.strftime("%Y-%m-%d")
+                elif fmt == "%Y-%m":
+                    datum = f"{parsed_date.strftime('%Y-%m')}-01"
+                elif fmt == "%Y":
+                    datum = f"{parsed_date.strftime('%Y')}-01-01"
+
+                logger.debug(f"parsed_date: {parsed_date}")
+
+                if message:
+                    warnings.append(
+                        ProcessingAnnotation(
+                            source=[AnnotationSource(name=output_field, type="Metadata")],
+                            message=message,
+                        )
                     )
-                ],
-                errors=[],
-            )
-        elif len(components) == 2:
-            # Year and month are provided
-            return ProcessingResult(
-                datum=f"{date}-01",
-                warnings=[
-                    ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
-                        message="Day is missing. Assuming 1st.",
+
+                if parsed_date > datetime.now(tz=pytz.utc):
+                    logger.debug(f"parsed_date: {parsed_date} > {datetime.now(tz=pytz.utc)}")
+                    errors.append(
+                        ProcessingAnnotation(
+                            source=[AnnotationSource(name=output_field, type="Metadata")],
+                            message="Collection date is in the future.",
+                        )
                     )
-                ],
-                errors=[],
-            )
-        elif len(components) == 3:
-            # Full date is provided
-            return ProcessingResult(datum=date, warnings=[], errors=[])
-        else:
-            # Invalid date format
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
-                        message=f"{output_field} is not in the required format YYYY-MM-DD",
+
+                if release_date and parsed_date > release_date:
+                    logger.debug(f"parsed_date: {parsed_date} > release_date: {release_date}")
+                    errors.append(
+                        ProcessingAnnotation(
+                            source=[AnnotationSource(name=output_field, type="Metadata")],
+                            message="Collection date is after release date.",
+                        )
                     )
-                ],
-            )
+
+                return ProcessingResult(datum=datum, warnings=warnings, errors=errors)
+            except ValueError:
+                continue
+
+        # If all parsing attempts fail, it's an unrecognized format
+        return ProcessingResult(
+            datum=None,
+            warnings=[],
+            errors=[
+                ProcessingAnnotation(
+                    source=[AnnotationSource(name=output_field, type="Metadata")],
+                    message="Date format is not recognized.",
+                )
+            ],
+        )
 
     @staticmethod
-    def parse_timestamp(
-        input_data: dict[str, str], output_field: str
-    ) -> ProcessingResult:
+    def parse_timestamp(input_data: dict[str, str], output_field: str) -> ProcessingResult:
         """
         Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string
         """
@@ -182,9 +210,7 @@ class ProcessingFunctions:
                     warnings=[],
                     errors=[
                         ProcessingAnnotation(
-                            source=[
-                                AnnotationSource(name=output_field, type="Metadata")
-                            ],
+                            source=[AnnotationSource(name=output_field, type="Metadata")],
                             message="Function did not return ProcessingResult",
                         )
                     ],
