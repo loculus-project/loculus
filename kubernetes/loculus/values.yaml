@@ -38,6 +38,7 @@ defaultOrganisms:
         - name: release_date
           type: date
           generateIndex: true
+          autocomplete: true
         - name: affiliation
           type: string
           autocomplete: true
