@@ -269,7 +269,7 @@ data:
     "identityProviderAlias" : "orcid",
     "identityProviderMapper" : "hardcoded-attribute-idp-mapper",
     "config" : {
-      "syncMode" : "INHERIT",
+      "syncMode" : "IMPORT",
       "attribute" : "username"
     }
     },{
