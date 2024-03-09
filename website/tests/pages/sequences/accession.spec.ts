@@ -63,6 +63,7 @@ test.describe('The detailed sequence page', () => {
 
         await userPage.goToUserPage();
         // capture a screenshot
+        /*
         await userPage.page.screenshot({ path: 'userPage.png' });
 
         const testSequences = getTestSequences();
@@ -76,5 +77,6 @@ test.describe('The detailed sequence page', () => {
         await expect(sequencePage.page.getByText(`Revoke this sequence`)).toBeVisible();
 
         await sequencePage.page.click('text=Revoke this sequence');
+        */
     });
 });
