@@ -61,7 +61,7 @@ export const getData = async (
         fields: [...config.tableColumns, config.primaryKey],
         limit,
         offset,
-        ...metadataSearchFilters,
+        ...searchFilters,
         orderBy: orderBy !== undefined ? [orderBy] : undefined,
     };
 
