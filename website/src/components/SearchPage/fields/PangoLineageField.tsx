@@ -1,11 +1,16 @@
 import { Checkbox, FormControlLabel } from '@mui/material';
 import { type FC, useState } from 'react';
 
-import { AutoCompleteField } from './AutoCompleteField';
-import type { FieldProps } from './FieldProps';
+import { AutoCompleteField, type AutoCompleteFieldProps } from './AutoCompleteField';
 import { NormalTextField } from './NormalTextField';
 
-export const PangoLineageField: FC<FieldProps> = ({ field, allFields, handleFieldChange, isLoading, lapisUrl }) => {
+export const PangoLineageField: FC<AutoCompleteFieldProps> = ({
+    field,
+    allFields,
+    handleFieldChange,
+    isLoading,
+    lapisUrl,
+}) => {
     const filter = field.filterValue;
     const [includeSubLineages, setIncludeSubLineages] = useState(filter.length > 0 ? filter.endsWith('*') : true);
 

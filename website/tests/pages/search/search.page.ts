@@ -4,7 +4,7 @@ import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 import { routes } from '../../../src/routes.ts';
 import type { FilterValue } from '../../../src/types/config.ts';
 
-export const ACCESSION_VERSION = 'Accession version';
+export const ACCESSION = 'Accession';
 
 export class SearchPage {
     public readonly searchButton: Locator;
@@ -30,12 +30,12 @@ export class SearchPage {
     }
 
     // Note: This only gets a locator when the field is empty
-    public getEmptyAccessionVersionField() {
-        return this.page.getByPlaceholder(ACCESSION_VERSION, { exact: true });
+    public getEmptyAccessionField() {
+        return this.page.getByPlaceholder(ACCESSION, { exact: true });
     }
 
-    public getFilledAccessionVersionField() {
-        return this.page.getByLabel(ACCESSION_VERSION, { exact: true });
+    public getFilledAccessionField() {
+        return this.page.getByLabel(ACCESSION, { exact: true });
     }
 
     public async searchFor(params: FilterValue[]) {
@@ -47,18 +47,12 @@ export class SearchPage {
     }
 
     public async getTableContent() {
-        const tableData: string[][] = [];
-        const rowCount = await this.page.locator('table >> css=tr').count();
-        for (let i = 1; i < rowCount; i++) {
-            const rowCells = this.page.locator(`table >> css=tr:nth-child(${i}) >> css=td`);
-            const cellCount = await rowCells.count();
-            const rowData: string[] = [];
-            for (let j = 0; j < cellCount; j++) {
-                const cellText = await rowCells.nth(j).textContent();
-                rowData.push(cellText ?? '');
-            }
-            tableData.push(rowData);
-        }
-        return tableData;
+        const tableData = await this.page.locator('table >> css=tr').evaluateAll((rows) => {
+            return rows.map((row) => {
+                const cells = Array.from(row.querySelectorAll('td'));
+                return cells.map((cell) => cell.textContent!.trim());
+            });
+        });
+        return tableData.slice(1);
     }
 }

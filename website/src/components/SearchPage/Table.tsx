@@ -2,7 +2,7 @@ import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 
 import { routes, navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes.ts';
-import type { MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
+import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
@@ -15,6 +15,7 @@ type TableProps = {
     schema: Schema;
     data: TableSequenceData[];
     metadataFilter: MetadataFilter[];
+    accessionFilter: AccessionFilter;
     mutationFilter: MutationFilter;
     page: number;
     orderBy: OrderBy;
@@ -27,6 +28,7 @@ export const Table: FC<TableProps> = ({
     data,
     schema,
     metadataFilter,
+    accessionFilter,
     mutationFilter,
     page,
     orderBy,
@@ -43,21 +45,48 @@ export const Table: FC<TableProps> = ({
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
             if (orderBy.type === 'ascending') {
-                navigateToSearchLikePage(organism, classOfSearchPage, group, metadataFilter, mutationFilter, page, {
-                    field,
-                    type: 'descending',
-                });
+                navigateToSearchLikePage(
+                    organism,
+                    classOfSearchPage,
+                    group,
+                    metadataFilter,
+                    accessionFilter,
+                    mutationFilter,
+                    page,
+                    {
+                        field,
+                        type: 'descending',
+                    },
+                );
             } else {
-                navigateToSearchLikePage(organism, classOfSearchPage, group, metadataFilter, mutationFilter, page, {
-                    field,
-                    type: 'ascending',
-                });
+                navigateToSearchLikePage(
+                    organism,
+                    classOfSearchPage,
+                    group,
+                    metadataFilter,
+                    accessionFilter,
+                    mutationFilter,
+                    page,
+                    {
+                        field,
+                        type: 'ascending',
+                    },
+                );
             }
         } else {
-            navigateToSearchLikePage(organism, classOfSearchPage, group, metadataFilter, mutationFilter, page, {
-                field,
-                type: 'ascending',
-            });
+            navigateToSearchLikePage(
+                organism,
+                classOfSearchPage,
+                group,
+                metadataFilter,
+                accessionFilter,
+                mutationFilter,
+                page,
+                {
+                    field,
+                    type: 'ascending',
+                },
+            );
         }
     };
 

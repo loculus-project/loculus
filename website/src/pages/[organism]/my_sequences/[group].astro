@@ -36,6 +36,7 @@ const {
     data,
     page,
     metadataFilter,
+    accessionFilter,
     mutationFilter,
     referenceGenomesSequenceNames,
     schema,
@@ -65,6 +66,7 @@ const {
             <SearchForm
                 organism={organism}
                 filters={metadataFilter}
+                initialAccessionFilter={accessionFilter}
                 initialMutationFilter={mutationFilter}
                 clientConfig={clientConfig}
                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
@@ -86,6 +88,7 @@ const {
                             data={data.data}
                             schema={schema}
                             metadataFilter={metadataFilter}
+                            accessionFilter={accessionFilter}
                             mutationFilter={mutationFilter}
                             page={page}
                             orderBy={orderBy}
@@ -100,6 +103,7 @@ const {
                                 count={Math.ceil(data.totalCount / pageSize)}
                                 page={page}
                                 metadataFilter={metadataFilter}
+                                accessionFilter={accessionFilter}
                                 mutationFilter={mutationFilter}
                                 orderBy={orderBy}
                                 organism={organism}

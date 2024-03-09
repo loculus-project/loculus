@@ -38,6 +38,7 @@ function renderSearchForm(
             <SearchForm
                 organism={testOrganism}
                 filters={searchFormFilters}
+                initialAccessionFilter={{}}
                 initialMutationFilter={{}}
                 clientConfig={clientConfig}
                 classOfSearchPage={SEARCH}

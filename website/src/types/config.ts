@@ -18,6 +18,10 @@ export type MetadataFilter = Metadata & {
 
 export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
 
+export type AccessionFilter = {
+    accession?: string[];
+};
+
 export type MutationFilter = {
     aminoAcidMutationQueries?: string[];
     nucleotideMutationQueries?: string[];

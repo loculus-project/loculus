@@ -8,7 +8,18 @@ import type { MetadataFilter } from '../../../types/config.ts';
 
 const logger = getClientLogger('AutoCompleteField');
 
-export const AutoCompleteField: FC<FieldProps> = ({ field, allFields, handleFieldChange, isLoading, lapisUrl }) => {
+export type AutoCompleteFieldProps = FieldProps & {
+    allFields: MetadataFilter[];
+    lapisUrl: string;
+};
+
+export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({
+    field,
+    allFields,
+    handleFieldChange,
+    isLoading,
+    lapisUrl,
+}) => {
     const [open, setOpen] = useState(false);
 
     const {

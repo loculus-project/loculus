@@ -4,7 +4,7 @@ import type { TableSequenceData } from '../components/SearchPage/Table.tsx';
 import { getReferenceGenomes, getSchema } from '../config.ts';
 import { LapisClient } from '../services/lapisClient.ts';
 import type { ProblemDetail } from '../types/backend.ts';
-import type { MetadataFilter, MutationFilter } from '../types/config.ts';
+import type { AccessionFilter, MetadataFilter, MutationFilter } from '../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes.ts';
 
@@ -22,6 +22,7 @@ export function addHiddenFilters(searchFormFilter: MetadataFilter[], hiddenFilte
 export const getData = async (
     organism: string,
     metadataFilter: MetadataFilter[],
+    accessionFilter: AccessionFilter,
     mutationFilter: MutationFilter,
     offset: number,
     limit: number,
@@ -33,13 +34,16 @@ export const getData = async (
             acc[metadata.name] = metadata.filterValue;
             return acc;
         }, {});
-    const searchFilters = {
+    const searchFilters: Record<string, string | string[]> = {
         ...metadataSearchFilters,
         nucleotideMutations: mutationFilter.nucleotideMutationQueries ?? [],
         aminoAcidMutations: mutationFilter.aminoAcidMutationQueries ?? [],
         nucleotideInsertions: mutationFilter.nucleotideInsertionQueries ?? [],
         aminoAcidInsertions: mutationFilter.aminoAcidInsertionQueries ?? [],
     };
+    if (accessionFilter.accession !== undefined && accessionFilter.accession.length > 0) {
+        searchFilters.accession = accessionFilter.accession;
+    }
 
     const config = getSchema(organism);
 
@@ -124,6 +128,14 @@ export const getOrderBy = (
     return {
         field: sortByField,
         type: orderByTypeValue,
+    };
+};
+
+export const getAccessionFilter = (getSearchParams: (name: string) => string): AccessionFilter => {
+    return {
+        accession: getSearchParams('accession')
+            .split(',')
+            .filter((s) => s !== ''),
     };
 };
 
