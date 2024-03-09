@@ -47,6 +47,7 @@ module.exports = {
       files: ['*'],
       rules: {
         'react/self-closing-comp': 'off',
+        'react/forbid-component-props': 'off', // icons accept a style prop
       },
     },
   ],

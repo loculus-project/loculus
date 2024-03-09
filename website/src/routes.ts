@@ -50,7 +50,8 @@ export const routes = {
         return url;
     },
     createGroup: () => '/user/createGroup',
-    submitPage: (organism: string) => withOrganism(organism, '/submit'),
+    submissionPage: (organism: string) => withOrganism(organism, '/submission'),
+    submitPage: (organism: string) => withOrganism(organism, '/submission/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
         withOrganism(organism, `/user/edit/${accessionVersion.accession}/${accessionVersion.version}`),
@@ -60,7 +61,7 @@ export const routes = {
     },
     groupOverviewPage: (groupName: string) => `/group/${groupName}`,
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
-    userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submit/review`),
+    userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submission/review`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/seq/${accession}/versions`),
     datasetsPage: (username?: string | undefined) => {
         const datasetPagePath = `/datasets` as const;
@@ -207,11 +208,7 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
         },
         {
             text: 'Submit',
-            path: routes.submitPage(organism),
-        },
-        {
-            text: 'Revise',
-            path: routes.revisePage(organism),
+            path: routes.submissionPage(organism),
         },
         ...(isLoggedIn
             ? [{ text: 'My account', path: routes.userOverviewPage(organism) }]

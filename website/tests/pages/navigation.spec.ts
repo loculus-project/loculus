@@ -12,7 +12,6 @@ const organismNavigationItems = [
     { link: 'Browse', title: '[Organism] - Browse' },
     { link: 'Submit', title: 'Submit' },
     { link: 'My account', title: 'My account' },
-    { link: 'Sequence Overview', title: 'Sequences' },
 ];
 
 test.describe('Clicking the navigation links', () => {

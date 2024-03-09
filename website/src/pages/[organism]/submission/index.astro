@@ -1,0 +1,20 @@
+---
+import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { routes } from '../../../routes';
+
+const { organism } = cleanOrganism(Astro.params.organism);
+---
+
+<BaseLayout title='Submit'>
+    <h1 class='title'>Submission portal for {organism!.displayName}</h1>
+
+    <div>
+        <a href={routes.submitPage(organism!.key)}>Make a new submission</a><br />
+        <a href={routes.revisePage(organism!.key)}>Make a revision</a>
+        <br />
+        <a href={routes.userSequenceReviewPage(organism!.key)}>My unreleased sequences</a>
+        <br />
+        <a href={routes.mySequencesWithoutGroup(organism!.key)}>My released sequences</a>
+    </div>
+</BaseLayout>
