@@ -27,11 +27,14 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
 
     if (astro.request.method === 'POST') {
         const formData = await astro.request.text();
-        postParams = new URLSearchParams(formData);
+        const topParams = new URLSearchParams(formData);
+        const searchQueries = new URLSearchParams(topParams.get('searchQuery') ?? '')
+        postParams = new URLSearchParams([...topParams, ...searchQueries]);
+        postParams.delete('searchQuery')
     }
 
     const getSearchParams = (field: string) => {
-        const valueFromGet = astro.url.searchParams.get(field);
+        const valueFromGet = astro.url.searchParams.get(field) ?? '';
         const value = valueFromGet !== '' ? valueFromGet : postParams.get(field);
         return value ?? '';
     };
@@ -54,7 +57,7 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
             : {},
     );
     const metadataFilter = addHiddenFilters(metadataFilterWithoutHiddenFilters, hiddenSearchFeatures);
-    const mutationFilter = getMutationFilter(astro.url.searchParams);
+    const mutationFilter = getMutationFilter(getSearchParams);
 
     const pageParam = getSearchParams('page');
     const page = pageParam !== '' ? Number.parseInt(pageParam, 10) : 1;
