@@ -57,5 +57,4 @@ test.describe('The detailed sequence page', () => {
             baseUrl + routes.sequencesDetailsPage(dummyOrganism.key, deprecatedVersionString),
         );
     });
-
 });
