@@ -3,9 +3,17 @@ name: preprocessing-nextclade
 on:
   push:
   workflow_dispatch:
+    inputs:
+      build_arm:
+        type: boolean
+        description: "Build for ARM as well"
+        default: false
+        required: false
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-nextclade
+  # BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }} # Uncomment once nextclade in bioconda aarch64
+  BUILD_ARM: ${{ github.event.inputs.build_arm }}
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-nextclade
@@ -26,7 +34,7 @@ jobs:
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/nextclade/**', '.github/workflows/preprocessing-nextclade.yml') }})
-          echo "DIR_HASH=$DIR_HASH" >> $GITHUB_ENV
+          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
         id: dockerMetadata
@@ -64,7 +72,7 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=nextclade-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=nextclade-${{ github.ref }}
-          platforms: ${{ github.ref == 'refs/heads/main' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ env.BUILD_ARM && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
 
       - name: Retag and push existing image if cache hit
         if: env.CACHE_HIT == 'true'

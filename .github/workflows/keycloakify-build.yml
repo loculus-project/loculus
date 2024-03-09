@@ -3,9 +3,16 @@ name: keycloakify-build
 on:
   push:
   workflow_dispatch:
+    inputs:
+      build_arm:
+        type: boolean
+        description: "Build for ARM as well"
+        default: false
+        required: false
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/keycloakify
+  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }} # When to build for arm as well
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-build
@@ -31,7 +38,7 @@ jobs:
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('./keycloak/keycloakify/**','.github/workflows/keycloakify-build.yml') }})
-          echo "DIR_HASH=$DIR_HASH" >> $GITHUB_ENV
+          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata
         uses: docker/metadata-action@v5
@@ -58,7 +65,7 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=keycloakify-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=keycloakify-${{ github.ref }}
-          platforms: ${{ github.ref == 'refs/heads/main' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ env.BUILD_ARM && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
       - name: Tag and push image if cache hit
         if: env.CACHE_HIT == 'true'
         run: |
