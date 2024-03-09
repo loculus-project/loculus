@@ -1,9 +1,7 @@
 import type { Page } from '@playwright/test';
 
 import { routes } from '../../../../src/routes.ts';
-import type { AccessionVersion, SequenceEntryStatus } from '../../../../src/types/backend.ts';
-import { getAccessionVersionString } from '../../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, dummyOrganism, expect } from '../../../e2e.fixture.ts';
+import { baseUrl, expect } from '../../../e2e.fixture.ts';
 
 export class UserPage {
     constructor(public readonly page: Page) {}
