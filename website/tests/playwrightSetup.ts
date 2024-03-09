@@ -54,7 +54,7 @@ export default async function globalSetupForPlaywright() {
     e2eLogger.info('No sequences found in LAPIS. Generate data for tests.');
 
     e2eLogger.info('preparing data in backend.');
-    const data = await prepareDataToBe('approvedForRelease', token, 2);
+    const data = await prepareDataToBe('approvedForRelease', token);
     const revokedData = await prepareDataToBe('revoked', token);
     const revisedData = await prepareDataToBe('revisedForRelease', token);
 
@@ -97,7 +97,7 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
         return LapisStateBeforeTests.NotCorrectSequencesInLapis;
     }
 
-    const latestVersionWithoutRevisions = await getLatestVersionsWithoutRevisions(lapisClient);
+    const latestVersionWithoutRevisions = await getLatestVersionWithoutRevisions(lapisClient);
 
     if (latestVersionWithoutRevisions === undefined) {
         e2eLogger.error('latestVersionWithoutRevisions is undefined');
@@ -105,12 +105,7 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
     }
 
     const testSequenceEntry = {
-        accession: `${latestVersionWithoutRevisions[0].accession}`,
-        version: 1,
-    };
-
-    const sequenceToRevoke = {
-        accession: `${latestVersionWithoutRevisions[1].accession}`,
+        accession: `${latestVersionWithoutRevisions.accession}`,
         version: 1,
     };
 
@@ -146,21 +141,20 @@ async function checkLapisState(lapisClient: LapisClient): Promise<LapisStateBefo
         revocationSequenceEntry,
         deprecatedSequenceEntry,
         revisedSequenceEntry,
-        sequenceToRevoke,
     });
 
     return LapisStateBeforeTests.CorrectSequencesInLapis;
 }
 
-async function getLatestVersionsWithoutRevisions(lapisClient: LapisClient) {
+async function getLatestVersionWithoutRevisions(lapisClient: LapisClient) {
     const result = await lapisClient.call('details', {
         versionTo: 1,
         isRevocation: 'false',
-        limit: 2,
+        limit: 1,
         versionStatus: 'LATEST_VERSION',
         fields: ['accession', 'version'],
     });
-    return result._unsafeUnwrap().data as AccessionVersion[] | undefined;
+    return result._unsafeUnwrap().data[0] as AccessionVersion | undefined;
 }
 
 async function getRevocationEntryAsLatestVersion(lapisClient: LapisClient) {
