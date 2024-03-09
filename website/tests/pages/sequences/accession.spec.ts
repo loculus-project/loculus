@@ -62,6 +62,7 @@ test.describe('The detailed sequence page', () => {
         await loginAsTestUser();
 
         await userPage.goToUserPage();
+        await sequencePage.page.click('text=asdasd'); 
         // capture a screenshot
         /*
         await userPage.page.screenshot({ path: 'userPage.png' });
