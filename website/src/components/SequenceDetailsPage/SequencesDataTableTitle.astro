@@ -36,7 +36,7 @@ const { sequenceEntryHistory, organism, accessionVersion } = Astro.props;
                 >
                     {sequenceEntryHistory.map((version) => (
                         <li>
-                            <a href={routes.sequencesDetailsPage( getAccessionVersionString({ ...version }))}>
+                            <a href={routes.sequencesDetailsPage(getAccessionVersionString({ ...version }))}>
                                 {getAccessionVersionString({ ...version })}
 
                                 <p class={`font-bold ${getVersionStatusColor(version.versionStatus)}`}>

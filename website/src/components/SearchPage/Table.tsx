@@ -117,7 +117,7 @@ export const Table: FC<TableProps> = ({
                         {data.map((row, index) => (
                             <tr key={index}>
                                 <td>
-                                    <a href={routes.sequencesDetailsPage( row[primaryKey] as string)}>
+                                    <a href={routes.sequencesDetailsPage(row[primaryKey] as string)}>
                                         {row[primaryKey]}
                                     </a>
                                 </td>

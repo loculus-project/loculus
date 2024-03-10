@@ -13,7 +13,7 @@ const accessionVersion = Astro.params.accessionVersion!;
 
 const organisms = getConfiguredOrganisms();
 let sequenceDetailsTableData;
-let organism: string;
+let organism: string | undefined;
 
 const promises = organisms.map(async ({ key }) => {
     return {
@@ -23,8 +23,6 @@ const promises = organisms.map(async ({ key }) => {
 });
 
 const queries = await Promise.all(promises);
-
-console.log(queries);
 
 for (const query of queries) {
     if (query.result.isOk()) {
@@ -43,53 +41,70 @@ if (sequenceDetailsTableData === undefined) {
 
 if (
     sequenceDetailsTableData.isOk() &&
-    sequenceDetailsTableData.value.type === SequenceDetailsTableResultType.REDIRECT
+    sequenceDetailsTableData.value!.type === SequenceDetailsTableResultType.REDIRECT
 ) {
     return Astro.redirect(sequenceDetailsTableData.value.redirectUrl);
 }
 ---
 
-<BaseLayout title={accessionVersion} overwriteOrganism={organism}>
+<BaseLayout
+    title={sequenceDetailsTableData.isOk() ? accessionVersion : 'Sequence not found'}
+    overwriteOrganism={organism}
+>
     {
         sequenceDetailsTableData.isOk() &&
-            sequenceDetailsTableData.value.type === SequenceDetailsTableResultType.TABLE_DATA && (
+            sequenceDetailsTableData.value!.type === SequenceDetailsTableResultType.TABLE_DATA && (
                 <div slot='banner'>
                     <SequencesBanner
-                        sequenceEntryHistory={sequenceDetailsTableData.value.sequenceEntryHistory}
+                        sequenceEntryHistory={sequenceDetailsTableData.value!.sequenceEntryHistory}
                         accessionVersion={accessionVersion}
                         organism={organism!}
                     />
                 </div>
             )
     }
-
-    <SequencesDataTableTitle
-        accessionVersion={accessionVersion}
-        organism={organism!}
-        sequenceEntryHistory={sequenceDetailsTableData.isOk() &&
-        sequenceDetailsTableData.value.type === SequenceDetailsTableResultType.TABLE_DATA
-            ? sequenceDetailsTableData.value.sequenceEntryHistory
-            : undefined}
-    />
+    {
+        sequenceDetailsTableData.isOk() && (
+            <SequencesDataTableTitle
+                accessionVersion={accessionVersion}
+                organism={organism!}
+                sequenceEntryHistory={
+                    sequenceDetailsTableData.isOk() &&
+                    sequenceDetailsTableData.value!.type === SequenceDetailsTableResultType.TABLE_DATA
+                        ? sequenceDetailsTableData.value!.sequenceEntryHistory
+                        : undefined
+                }
+            />
+        )
+    }
 
     {
         sequenceDetailsTableData.isOk() &&
-        sequenceDetailsTableData.value.type === SequenceDetailsTableResultType.TABLE_DATA ? (
-            isRevocationEntry(sequenceDetailsTableData.value.tableData) ? (
-                <RevocationEntryDataTable
-                    tableData={sequenceDetailsTableData.value.tableData}
-                    dataUseTermsHistory={sequenceDetailsTableData.value.dataUseTermsHistory}
-                />
-            ) : (
-                <SequencesDataPage
-                    tableData={sequenceDetailsTableData.value.tableData}
-                    organism={organism!}
-                    accessionVersion={accessionVersion}
-                    dataUseTermsHistory={sequenceDetailsTableData.value.dataUseTermsHistory}
-                />
+            sequenceDetailsTableData.match!(
+                (data) =>
+                    data.type === SequenceDetailsTableResultType.TABLE_DATA &&
+                    (isRevocationEntry(data.tableData) ? (
+                        <RevocationEntryDataTable
+                            tableData={data.tableData}
+                            dataUseTermsHistory={data.dataUseTermsHistory}
+                        />
+                    ) : (
+                        <SequencesDataPage
+                            tableData={data.tableData}
+                            organism={organism!}
+                            accessionVersion={accessionVersion}
+                            dataUseTermsHistory={data.dataUseTermsHistory}
+                        />
+                    )),
+                () => null,
             )
-        ) : (
-            <ErrorBox title='Sequence entry not found' message='No data found for accession version' />
+    }
+    {
+        !sequenceDetailsTableData.isOk() && (
+            <ErrorBox
+                title='Sequence entry not found'
+                message={'No data found for accession version ' + accessionVersion}
+            />
         )
     }
 </BaseLayout>

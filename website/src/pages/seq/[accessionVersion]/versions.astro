@@ -29,13 +29,13 @@ const promises = organisms.map(async ({ key }) => {
 });
 
 const queries = await Promise.all(promises);
-let versionListResult;
+let versionListResult = queries[0].result;
 let organism: string | undefined;
 
 for (const query of queries) {
     if (query.result.isOk()) {
-        versionListResult = query.result;
-        organism = query.organism;
+        versionListResult = query.result!;
+        organism = query.organism!;
         break;
     }
 }
@@ -55,7 +55,6 @@ for (const query of queries) {
                             <div class='flex flex-row gap-3 justify-start'>
                                 <a
                                     href={routes.sequencesDetailsPage(
-                                        organism,
                                         getAccessionVersionString(extractAccessionVersion(version)),
                                     )}
                                 >
