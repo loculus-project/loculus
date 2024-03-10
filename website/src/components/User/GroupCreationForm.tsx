@@ -20,7 +20,6 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
     const { createGroup } = useGroupCreation({
         clientConfig,
         accessToken,
-        setErrorMessage,
     });
 
     const handleCreateGroup = async (e: FormEvent<HTMLFormElement>) => {
@@ -43,15 +42,17 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
             return false;
         }
 
-        await createGroup({
+        const result = await createGroup({
             groupName,
             institution,
             contactEmail,
             address: { line1, line2, city, postalCode, state, country },
         });
 
-        if (errorMessage === undefined) {
+        if (result.succeeded) {
             window.location.href = routes.groupOverviewPage(groupName);
+        } else {
+            setErrorMessage(result.errorMessage);
         }
     };
 
@@ -212,7 +213,7 @@ const CountryInput = () => (
             autoComplete='country-name'
             className='block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600 sm:max-w-xs sm:text-sm sm:leading-6'
         >
-            <option>Choose a country...</option>
+            <option>{chooseCountry}</option>
             {listOfCountries.map((country) => (
                 <option key={country}>{country}</option>
             ))}
