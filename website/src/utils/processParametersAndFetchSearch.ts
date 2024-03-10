@@ -9,6 +9,7 @@ import {
     getMutationFilter,
     getOrderBy,
     addHiddenFilters,
+    getAccessionFilter,
 } from './search';
 import { cleanOrganism } from '../components/Navigation/cleanOrganism';
 import { getSchema, getRuntimeConfig, getLapisUrl } from '../config';
@@ -57,6 +58,7 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
             : {},
     );
     const metadataFilter = addHiddenFilters(metadataFilterWithoutHiddenFilters, hiddenSearchFeatures);
+    const accessionFilter = getAccessionFilter(getSearchParams);
     const mutationFilter = getMutationFilter(getSearchParams);
 
     const pageParam = getSearchParams('page');
@@ -66,7 +68,7 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
 
     const referenceGenomesSequenceNames = getReferenceGenomesSequenceNames(organism);
 
-    const data = await getData(organism, metadataFilter, mutationFilter, offset, pageSize, orderBy);
+    const data = await getData(organism, metadataFilter, accessionFilter, mutationFilter, offset, pageSize, orderBy);
 
     return {
         organism,
@@ -75,6 +77,7 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
         page,
         metadataFilter,
         metadataFilterWithoutHiddenFilters,
+        accessionFilter,
         mutationFilter,
         lapisUrl,
         referenceGenomesSequenceNames,

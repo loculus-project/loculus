@@ -3,7 +3,16 @@ import type { FC } from 'react';
 
 import type { FieldProps } from './FieldProps';
 
-export const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLoading }) => (
+type NormalTextFieldProps = FieldProps & {
+    multiline?: boolean;
+};
+
+export const NormalTextField: FC<NormalTextFieldProps> = ({
+    field,
+    handleFieldChange,
+    isLoading,
+    multiline = false,
+}) => (
     <TextField
         variant='outlined'
         margin='dense'
@@ -20,5 +29,7 @@ export const NormalTextField: FC<FieldProps> = ({ field, handleFieldChange, isLo
         inputProps={{
             autoComplete: 'off',
         }}
+        multiline={multiline}
+        rows={3}
     />
 );
