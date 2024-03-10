@@ -7,7 +7,7 @@ metadata:
 data:
   keycloak-config.json: |
     {
-      "realm": "loculusRealm",
+      "realm": "loculus",
       "enabled": true,
       "verifyEmail": {{$.Values.verifyEmail}},
       "smtpServer": {
@@ -220,12 +220,12 @@ data:
           "description" : "",
           "rootUrl" : "${authBaseUrl}",
           "adminUrl" : "",
-          "baseUrl" : "/realms/loculusRealm/account/",
+          "baseUrl" : "/realms/loculus/account/",
           "surrogateAuthRequired" : false,
           "enabled" : true,
           "alwaysDisplayInConsole" : false,
           "clientAuthenticatorType" : "client-secret",
-          "redirectUris" : [ "/realms/loculusRealm/account/*" ],
+          "redirectUris" : [ "/realms/loculus/account/*" ],
           "webOrigins" : [ "+" ],
           "notBefore" : 0,
           "bearerOnly" : false,

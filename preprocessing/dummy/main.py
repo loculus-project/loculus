@@ -21,7 +21,7 @@ parser.add_argument("--keycloak-user", type=str, default="dummy_preprocessing_pi
                     help="Keycloak user to use for authentication")
 parser.add_argument("--keycloak-password", type=str, default="dummy_preprocessing_pipeline",
                     help="Keycloak password to use for authentication")
-parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculusRealm/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
+parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculus/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
 
 args = parser.parse_args()
 backendHost = args.backend_host

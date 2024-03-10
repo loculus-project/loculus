@@ -9,7 +9,7 @@ test.describe('The submit page', () => {
 
         await submitPage.loginButton.click();
 
-        expect(submitPage.page.url()).toContain('loculusRealm');
+        expect(submitPage.page.url()).toContain('realms/loculus');
     });
 
     test('should upload files and submit', async ({ submitPage, loginAsTestUser }) => {
