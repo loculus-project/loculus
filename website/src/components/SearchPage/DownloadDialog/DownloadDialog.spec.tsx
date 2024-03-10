@@ -84,13 +84,15 @@ describe('DownloadDialog', () => {
 
         await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
         await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
+        await userEvent.click(screen.getByLabelText(/Gzip/));
         expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&dataUseTerms=OPEN&field1=value1`,
+            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&dataUseTerms=OPEN&compression=gzip&field1=value1`,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
+        await userEvent.click(screen.getByLabelText(/Zstandard/));
         expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&field1=value1`,
+            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&compression=zstd&field1=value1`,
         );
     });
 });

@@ -21,7 +21,7 @@ export const RadioOptionBlock: FC<OptionBlockProps> = ({
     disabled = false,
 }) => {
     return (
-        <div className='max-w-80'>
+        <div className='max-w-80 basis-1/3'>
             {title !== undefined && <h4 className='font-bold'>{title}</h4>}
             {options.map((option, index) => (
                 <div key={index}>

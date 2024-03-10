@@ -13,6 +13,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
     const [includeRestricted, setIncludeRestricted] = useState(0);
     const [includeOldData, setIncludeOldData] = useState(0);
     const [dataType, setDataType] = useState(0);
+    const [compression, setCompression] = useState(0);
     const [unalignedNucleotideSequence, setUnalignedNucleotideSequence] = useState(0);
     const [alignedNucleotideSequence, setAlignedNucleotideSequence] = useState(0);
     const [alignedAminoAcidSequence, setAlignedAminoAcidSequence] = useState(0);
@@ -50,14 +51,17 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
             default:
                 throw new Error(`Invalid state error: DownloadForm dataType=${dataType}`);
         }
+        const compressionOptions = [undefined, 'zstd', 'gzip'] as const;
         onChange({
             dataType: downloadDataType,
             includeOldData: includeOldData === 1,
             includeRestricted: includeRestricted === 1,
+            compression: compressionOptions[compression],
         });
     }, [
         includeRestricted,
         includeOldData,
+        compression,
         dataType,
         unalignedNucleotideSequence,
         alignedNucleotideSequence,
@@ -160,6 +164,13 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                 ]}
                 selected={dataType}
                 onSelect={setDataType}
+            />
+            <RadioOptionBlock
+                name='compression'
+                title='Compression'
+                options={[{ label: <>None</> }, { label: <>Zstandard</> }, { label: <>Gzip</> }]}
+                selected={compression}
+                onSelect={setCompression}
             />
         </div>
     );
