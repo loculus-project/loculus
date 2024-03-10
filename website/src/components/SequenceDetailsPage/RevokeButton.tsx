@@ -1,12 +1,12 @@
 import { type FC } from 'react';
 import { toast } from 'react-toastify';
 
-import { displayConfirmationDialog } from '../ConfirmationDialog';
 import { routes } from '../../routes';
 import { backendClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
+import { displayConfirmationDialog } from '../ConfirmationDialog';
 import { withQueryProvider } from '../common/withQueryProvider';
 
 type RevokeSequenceEntryProps = {
