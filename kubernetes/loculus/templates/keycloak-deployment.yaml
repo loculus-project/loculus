@@ -67,7 +67,7 @@ spec:
               value: "{{ include "keycloakUrl" . }}"
             - name: KC_FEATURES
               value: "declarative-user-profile"
-            - name SMTPPASS
+            - name: SMTPPASS
               valueFrom:
                 secretKeyRef:
                   name: smtp-password
