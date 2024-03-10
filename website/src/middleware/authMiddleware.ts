@@ -118,8 +118,9 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     // Otherwise set token and userInfo to undefined
     let token: TokenCookie | undefined;
     let userInfo;
-    
-    if (await getKeycloakClient() !== undefined) {
+
+    const client = await getKeycloakClient();
+    if (client !== undefined) {
         // Only run this when keycloak up
         const cookieResult = await getValidTokenAndUserInfoFromCookie(context);
         token = cookieResult?.token;
