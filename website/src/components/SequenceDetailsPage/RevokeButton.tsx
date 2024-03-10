@@ -1,7 +1,7 @@
 import { type FC } from 'react';
 import { toast } from 'react-toastify';
 
-import { displayConfirmationDialog } from './ConfirmationDialog';
+import { displayConfirmationDialog } from '../ConfirmationDialog';
 import { routes } from '../../routes';
 import { backendClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
