@@ -9,9 +9,10 @@ const { name: websiteName, logo } = websiteConfig;
 
 interface Props {
     title: string;
+    overwriteOrganism?: string;
 }
 
-const { title } = Astro.props;
+const { title, overwriteOrganism } = Astro.props;
 ---
 
 <html lang='en'>
@@ -42,7 +43,7 @@ const { title } = Astro.props;
                                 >
                                 <a href='/' class='fancytitle mr-4'>{websiteName}</a>
                             </div>
-                            <OrganismSelector />
+                            <OrganismSelector overwriteOrganism={overwriteOrganism} />
                         </div>
                     </div>
                     <Navigation />

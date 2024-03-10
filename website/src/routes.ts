@@ -40,12 +40,12 @@ export const routes = {
             organism,
             `/my_sequences/${group}?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
         ),
-    sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
-        `/${organism}/seq/${getAccessionVersionString(accessionVersion)}`,
-    sequencesVersionsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
-        `/${organism}/seq/${getAccessionVersionString(accessionVersion)}/versions`,
-    sequencesFastaPage: (organism: string, accessionVersion: AccessionVersion | string, download = false) => {
-        let url = `${routes.sequencesDetailsPage(organism, accessionVersion)}.fa`;
+    sequencesDetailsPage: ( accessionVersion: AccessionVersion | string) =>
+        `/seq/${getAccessionVersionString(accessionVersion)}`,
+    sequencesVersionsPage: ( accessionVersion: AccessionVersion | string) =>
+        `/seq/${getAccessionVersionString(accessionVersion)}/versions`,
+    sequencesFastaPage: ( accessionVersion: AccessionVersion | string, download = false) => {
+        let url = `${routes.sequencesDetailsPage( accessionVersion)}.fa`;
         if (download) {
             url += '?download';
         }

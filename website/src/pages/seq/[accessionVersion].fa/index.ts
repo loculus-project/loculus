@@ -1,20 +1,20 @@
 import type { APIRoute } from 'astro';
 import { err, type Result } from 'neverthrow';
 
-import { getReferenceGenomes } from '../../../../config.ts';
-import { routes } from '../../../../routes.ts';
-import { LapisClient } from '../../../../services/lapisClient.ts';
-import type { ProblemDetail } from '../../../../types/backend.ts';
-import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion.ts';
-import { fastaEntryToString, parseFasta } from '../../../../utils/parseFasta.ts';
+import { getConfiguredOrganisms } from '../../../config';
+import { getReferenceGenomes } from '../../../config.ts';
+import { routes } from '../../../routes.ts';
+import { LapisClient } from '../../../services/lapisClient.ts';
+import { type ProblemDetail } from '../../../types/backend.ts';
+import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
+import { fastaEntryToString, parseFasta } from '../../../utils/parseFasta.ts';
 
 export const GET: APIRoute = async ({ params, redirect, request }) => {
     const accessionVersion = params.accessionVersion!;
-    const organism = params.organism!;
 
     const isDownload = new URL(request.url).searchParams.has('download');
 
-    const result = await getSequenceDetailsUnalignedFasta(accessionVersion, organism, isDownload);
+    const result = await getSequenceDetailsUnalignedFasta(accessionVersion, isDownload);
     if (!result.isOk()) {
         return new Response(undefined, {
             status: 404,
@@ -53,7 +53,7 @@ type Redirect = {
     redirectUrl: string;
 };
 
-const getSequenceDetailsUnalignedFasta = async (
+const getSequenceDetailsUnalignedFastaWithOrganism = async (
     accessionVersion: string,
     organism: string,
     isDownload: boolean,
@@ -66,7 +66,7 @@ const getSequenceDetailsUnalignedFasta = async (
         const latestVersionResult = await lapisClient.getLatestAccessionVersion(accession);
         return latestVersionResult.map((latestVersion) => ({
             type: ResultType.REDIRECT,
-            redirectUrl: routes.sequencesFastaPage(organism, latestVersion, isDownload),
+            redirectUrl: routes.sequencesFastaPage(latestVersion, isDownload),
         }));
     }
 
@@ -108,4 +108,18 @@ const getSequenceDetailsUnalignedFasta = async (
         type: ResultType.DATA,
         fasta,
     }));
+};
+
+const getSequenceDetailsUnalignedFasta = async (accessionVersion: string, isDownload: boolean) => {
+    const organisms = getConfiguredOrganisms();
+    const results = await Promise.all(
+        organisms.map((organism) =>
+            getSequenceDetailsUnalignedFastaWithOrganism(accessionVersion, organism.key, isDownload),
+        ),
+    );
+    const firstSuccess = results.find((result) => result.isOk());
+    if (firstSuccess) {
+        return firstSuccess;
+    }
+    return results[0];
 };

@@ -1,17 +1,18 @@
 import { Result } from 'neverthrow';
 
-import { getTableData, type TableDataEntry } from '../../../../components/SequenceDetailsPage/getTableData.ts';
-import { getSchema } from '../../../../config.ts';
-import { routes } from '../../../../routes.ts';
-import { BackendClient } from '../../../../services/backendClient.ts';
-import { LapisClient } from '../../../../services/lapisClient.ts';
-import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../../types/backend.ts';
-import type { SequenceEntryHistory } from '../../../../types/lapis.ts';
-import { parseAccessionVersionFromString } from '../../../../utils/extractAccessionVersion.ts';
+import { getTableData, type TableDataEntry } from '../../../components/SequenceDetailsPage/getTableData.ts';
+import { getSchema } from '../../../config.ts';
+import { routes } from '../../../routes.ts';
+import { BackendClient } from '../../../services/backendClient.ts';
+import { LapisClient } from '../../../services/lapisClient.ts';
+import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../types/backend.ts';
+import type { SequenceEntryHistory } from '../../../types/lapis.ts';
+import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';
 
 export enum SequenceDetailsTableResultType {
     TABLE_DATA = 'tableData',
     REDIRECT = 'redirect',
+    ERROR = 'error',
 }
 
 type TableData = {

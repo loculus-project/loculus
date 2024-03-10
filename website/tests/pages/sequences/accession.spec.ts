@@ -54,7 +54,7 @@ test.describe('The detailed sequence page', () => {
         await linkToDeprecatedVersion.click();
 
         await sequencePage.page.waitForURL(
-            baseUrl + routes.sequencesDetailsPage(dummyOrganism.key, deprecatedVersionString),
+            baseUrl + routes.sequencesDetailsPage( deprecatedVersionString),
         );
     });
 });
