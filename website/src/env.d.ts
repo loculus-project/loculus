@@ -18,6 +18,6 @@ type Session = {
 
 declare namespace App {
     interface Locals {
-        session: Session;
+        session?: Session;
     }
 }

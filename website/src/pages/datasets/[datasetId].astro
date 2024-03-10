@@ -10,10 +10,11 @@ import type { Dataset } from '../../types/datasetCitation';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
-const accessToken = getAccessToken(Astro.locals.session)!;
+const session = Astro.locals.session;
+const accessToken = getAccessToken(session)!;
 const { datasetId = '' } = Astro.params;
 const version = Astro.url.searchParams.get('version')! || '1';
-const username = Astro.locals.session.user?.username;
+const username = session?.user?.username;
 
 const datasetClient = DatasetCitationClient.create();
 

@@ -6,8 +6,9 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
 import { getAccessToken } from '../../../utils/getAccessToken';
 
-const accessToken = getAccessToken(Astro.locals.session)!;
-const username = Astro.locals.session.user!.username!;
+const session = Astro.locals.session!;
+const accessToken = getAccessToken(session)!;
+const username = session.user!.username!;
 const groupName = Astro.params.groupName!;
 const clientConfig = getRuntimeConfig().public;
 

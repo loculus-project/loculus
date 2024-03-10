@@ -10,12 +10,12 @@ import ErrorBox from '../common/ErrorBox.astro';
 import DashiconsGroups from '~icons/dashicons/groups';
 import MaterialSymbolsLightPersonOutline from '~icons/material-symbols-light/person-outline';
 
-const session = Astro.locals.session;
+const session = Astro.locals.session!;
 const user = session.user!; // page only accessible if user is logged in
 const username = user.username!; // all users must have a username
 const name = user.name;
 
-const accessToken = getAccessToken(Astro.locals.session)!;
+const accessToken = getAccessToken(session)!;
 
 const clientConfig = getRuntimeConfig().public;
 
