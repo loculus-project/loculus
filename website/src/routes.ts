@@ -64,7 +64,7 @@ export const routes = {
     groupOverviewPage: (groupName: string) => `/group/${groupName}`,
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
     userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submission/review`),
-    versionPage: (organism: string, accession: string) => withOrganism(organism, `/seq/${accession}/versions`),
+    versionPage: (accession: string) => `/seq/${accession}/versions`,
     datasetsPage: (username?: string | undefined) => {
         const datasetPagePath = `/datasets` as const;
         return username === undefined ? datasetPagePath : datasetPagePath + `?user=${username}`;
