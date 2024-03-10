@@ -22,7 +22,8 @@ const clientConfig = getRuntimeConfig().public;
 const logoutUrl = new URL(Astro.request.url);
 logoutUrl.pathname = routes.logout();
 
-const keycloakLogoutUrl = (await getKeycloakClient()).endSessionUrl({
+const keycloakClient = await getKeycloakClient();
+const keycloakLogoutUrl = keycloakClient!.endSessionUrl({
     post_logout_redirect_uri: logoutUrl.href,
 });
 
