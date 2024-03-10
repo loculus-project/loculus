@@ -53,7 +53,6 @@ if __name__ == "__main__":
     
 
     substitutions = {}
-    # iterate over environment variables and add them to substitutions
     for var in os.environ:
         sub_start = "LOCULUSSUB_"
         if var.startswith(sub_start):
