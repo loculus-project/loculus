@@ -8,7 +8,7 @@
     - name: {{ .name }}-processed
       mountPath: /output
   command: ["python3"]
-  args: ["/app/config-processor.py", "/input", "/output"]
+  args: ["/app/config-processor.py", "/input", "/output", "smtpPassword=$SMTPPASS"]
 {{- end -}}
 
 {{- define "loculus.configVolume" -}}
