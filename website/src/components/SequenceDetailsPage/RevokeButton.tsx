@@ -39,10 +39,12 @@ const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({ organism, accessToken
     return (
         <button
             className='btn btn-sm  bg-red-400'
-            onClick={displayConfirmationDialog({
-                dialogText: 'Are you sure you want to create a revocation for this sequence?',
-                onConfirmation: handleRevokeSequenceEntry,
-            })}
+            onClick={() =>
+                displayConfirmationDialog({
+                    dialogText: 'Are you sure you want to create a revocation for this sequence?',
+                    onConfirmation: handleRevokeSequenceEntry,
+                })
+            }
         >
             Revoke this sequence
         </button>
