@@ -32,18 +32,26 @@ let _keycloakClient: BaseClient | undefined;
 
 const logger = getInstanceLogger('LoginMiddleware');
 
-export async function getKeycloakClient() {
-    if (_keycloakClient === undefined) {
-        const originForClient = getRuntimeConfig().serverSide.keycloakUrl;
-
-        const issuerUrl = `${originForClient}${realmPath}`;
-
-        logger.info(`Getting keycloak client for issuer url: ${issuerUrl}`);
-        const keycloakIssuer = await Issuer.discover(issuerUrl);
-
-        _keycloakClient = new keycloakIssuer.Client(clientMetadata);
+export async function getKeycloakClient(): Promise<BaseClient | undefined> {
+    if (_keycloakClient !== undefined) {
+        return _keycloakClient;
     }
+    const originForClient = getRuntimeConfig().serverSide.keycloakUrl;
 
+    const issuerUrl = `${originForClient}${realmPath}`;
+
+    logger.info(`Getting keycloak client for issuer url: ${issuerUrl}`);
+    try {
+        const keycloakIssuer = await Issuer.discover(issuerUrl);
+        logger.info(`Keycloak issuer discovered: ${keycloakIssuer}`);
+        _keycloakClient = new keycloakIssuer.Client(clientMetadata);
+    } catch (error: any) {
+        if (error.code !== 'ECONNREFUSED') {
+            logger.error(`Error discovering keycloak issuer: ${error}`);
+            throw error;
+        }
+        logger.warn(`Connection refused when trying to discover the keycloak issuer at url: ${issuerUrl}`);
+    }
     return _keycloakClient;
 }
 
@@ -52,7 +60,13 @@ export const getAuthUrl = async (redirectUrl: string) => {
     if (redirectUrl.endsWith(logout)) {
         redirectUrl = redirectUrl.replace(logout, routes.userOverviewPage());
     }
-    const authUrl = (await getKeycloakClient()).authorizationUrl({
+    // Check if keycloak client is up
+    // If not, return a 404 url
+    const keycloakClient = await getKeycloakClient();
+    if (keycloakClient === undefined) {
+        return '/404';
+    }
+    const authUrl = keycloakClient.authorizationUrl({
         redirect_uri: redirectUrl,
         scope: 'openid',
         response_type: 'code',
@@ -66,7 +80,7 @@ async function getValidTokenAndUserInfoFromCookie(context: APIContext) {
     if (token !== undefined) {
         const userInfo = await getUserInfo(token);
 
-        if (userInfo.isErr()) {
+        if (userInfo!.isErr()) {
             logger.debug(`Cookie token found but could not get user info`);
             deleteCookie(context);
             return undefined;
@@ -86,7 +100,7 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext) {
     if (token !== undefined) {
         const userInfo = await getUserInfo(token);
 
-        if (userInfo.isErr()) {
+        if (userInfo!.isErr()) {
             logger.debug(`Token found in params but could not get user info`);
             return undefined;
         }
@@ -100,17 +114,29 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext) {
 }
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
-    let { token, userInfo } = (await getValidTokenAndUserInfoFromCookie(context)) ?? {};
-    if (token === undefined) {
-        const paramResult = await getValidTokenAndUserInfoFromParams(context);
-        token = paramResult?.token;
-        userInfo = paramResult?.userInfo;
+    // Only run this when keycloak up
+    // Otherwise set token and userInfo to undefined
+    let token: TokenCookie | undefined;
+    let userInfo;
+    
+    if (await getKeycloakClient() !== undefined) {
+        // Only run this when keycloak up
+        const cookieResult = await getValidTokenAndUserInfoFromCookie(context);
+        token = cookieResult?.token;
+        userInfo = cookieResult?.userInfo;
+        if (token === undefined) {
+            const paramResult = await getValidTokenAndUserInfoFromParams(context);
+            token = paramResult?.token;
+            userInfo = paramResult?.userInfo;
 
-        if (token !== undefined) {
-            logger.debug(`Token found in params, setting cookie`);
-            setCookie(context, token);
-            return createRedirectWithModifiableHeaders(removeTokenCodeFromSearchParams(context.url));
+            if (token !== undefined) {
+                logger.debug(`Token found in params, setting cookie`);
+                setCookie(context, token);
+                return createRedirectWithModifiableHeaders(removeTokenCodeFromSearchParams(context.url));
+            }
         }
+    } else {
+        logger.warn(`Keycloak client not available, pretending user logged out`);
     }
 
     const enforceLogin = shouldMiddlewareEnforceLogin(
@@ -193,6 +219,13 @@ async function verifyToken(accessToken: string) {
 
     const keycloakClient = await getKeycloakClient();
 
+    if (keycloakClient === undefined) {
+        return err({
+            type: TokenVerificationError.REQUEST_ERROR,
+            message: 'Keycloak client not available',
+        });
+    }
+
     if (keycloakClient.issuer.metadata.jwks_uri === undefined) {
         return err({
             type: TokenVerificationError.REQUEST_ERROR,
@@ -233,7 +266,12 @@ async function verifyToken(accessToken: string) {
 }
 
 async function getUserInfo(token: TokenCookie) {
-    return ResultAsync.fromPromise((await getKeycloakClient()).userinfo(token.accessToken), (error) => {
+    const client = await getKeycloakClient();
+
+    if (client === undefined) {
+        return undefined;
+    }
+    return ResultAsync.fromPromise(client.userinfo(token.accessToken), (error) => {
         logger.debug(`Error getting user info: ${error}`);
         return error;
     });
@@ -241,6 +279,10 @@ async function getUserInfo(token: TokenCookie) {
 
 async function getTokenFromParams(context: APIContext): Promise<TokenCookie | undefined> {
     const client = await getKeycloakClient();
+
+    if (client === undefined) {
+        return undefined;
+    }
 
     const params = client.callbackParams(context.url.toString());
     logger.debug(`Keycloak callback params: ${JSON.stringify(params)}`);
@@ -315,7 +357,11 @@ function removeTokenCodeFromSearchParams(url: URL): string {
 }
 
 async function refreshTokenViaKeycloak(token: TokenCookie): Promise<TokenCookie | undefined> {
-    const refreshedTokenSet = await (await getKeycloakClient()).refresh(token.refreshToken).catch(() => {
+    const client = await getKeycloakClient();
+    if (client === undefined) {
+        return undefined;
+    }
+    const refreshedTokenSet = await client.refresh(token.refreshToken).catch(() => {
         logger.info(`Failed to refresh token`);
         return undefined;
     });
@@ -339,6 +385,9 @@ function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCo
 
 export async function urlForKeycloakAccountPage() {
     const client = await getKeycloakClient();
+    if (client === undefined) {
+        return '/404';
+    }
     const endsessionUrl = client.endSessionUrl();
     const host = new URL(endsessionUrl).host;
     return `https://${host}${realmPath}/account`;
