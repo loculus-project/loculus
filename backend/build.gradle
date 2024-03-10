@@ -4,8 +4,8 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
     id 'org.springframework.boot' version '3.2.3'
     id 'io.spring.dependency-management' version '1.1.4'
-    id 'org.jetbrains.kotlin.jvm' version '1.9.22'
-    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.22'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.23'
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.23'
     id 'org.jlleitschuh.gradle.ktlint' version '12.1.0'
     id 'org.springdoc.openapi-gradle-plugin' version '1.8.0'
 }
@@ -47,7 +47,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-security"
 
-    implementation 'org.apache.commons:commons-compress:1.26.0'
+    implementation 'org.apache.commons:commons-compress:1.26.1'
     implementation 'com.github.luben:zstd-jni:1.5.5-11'
     implementation 'org.tukaani:xz:1.9'
 
@@ -58,7 +58,7 @@ dependencies {
     testImplementation "io.jsonwebtoken:jjwt-impl:0.12.5"
     testImplementation "io.jsonwebtoken:jjwt-jackson:0.12.5"
     testImplementation "com.ninja-squad:springmockk:4.0.2"
-    testImplementation "org.testcontainers:postgresql:1.19.6"
+    testImplementation "org.testcontainers:postgresql:1.19.7"
     testImplementation "org.junit.platform:junit-platform-launcher:1.10.2"
 }
 
