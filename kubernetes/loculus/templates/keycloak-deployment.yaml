@@ -67,11 +67,6 @@ spec:
               value: "{{ include "keycloakUrl" . }}"
             - name: KC_FEATURES
               value: "declarative-user-profile"
-            - name: SMTPPASS
-              valueFrom:
-                secretKeyRef:
-                  name: smtp-password
-                  key: secretKey
           args:
             - "start"
             - "--import-realm"
