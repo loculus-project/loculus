@@ -127,12 +127,20 @@ export const getOrderBy = (
     };
 };
 
-export const getMutationFilter = (searchParams: URLSearchParams): MutationFilter => {
+export const getMutationFilter = (getSearchParams: (name: string) => string): MutationFilter => {
     return {
-        nucleotideMutationQueries: searchParams.get('nucleotideMutations')?.split(','),
-        aminoAcidMutationQueries: searchParams.get('aminoAcidMutations')?.split(','),
-        nucleotideInsertionQueries: searchParams.get('nucleotideInsertions')?.split(','),
-        aminoAcidInsertionQueries: searchParams.get('aminoAcidInsertions')?.split(','),
+        nucleotideMutationQueries: getSearchParams('nucleotideMutations')
+            .split(',')
+            .filter((s) => s !== ''),
+        aminoAcidMutationQueries: getSearchParams('aminoAcidMutations')
+            .split(',')
+            .filter((s) => s !== ''),
+        nucleotideInsertionQueries: getSearchParams('nucleotideInsertions')
+            .split(',')
+            .filter((s) => s !== ''),
+        aminoAcidInsertionQueries: getSearchParams('aminoAcidInsertions')
+            .split(',')
+            .filter((s) => s !== ''),
     };
 };
 
