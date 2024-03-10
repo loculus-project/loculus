@@ -8,9 +8,9 @@
     - name: {{ .name }}-processed
       mountPath: /output
   command: ["python3"]
-  args: ["/app/config-processor.py", "/input", "/output", "smtpPassword=$SMTPPASS"]
+  args: ["/app/config-processor.py", "/input", "/output"]
   env:
-    - name: SMTPPASS
+    - name: LOCULUSSUB_smtpPassword
       valueFrom:
         secretKeyRef:
           name: smtp-password

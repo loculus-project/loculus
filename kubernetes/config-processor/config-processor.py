@@ -3,6 +3,7 @@ import shutil
 import requests
 import re
 
+
 def copy_structure(input_dir, output_dir):
     for root, dirs, files in os.walk(input_dir):
         for dir in dirs:
@@ -49,9 +50,14 @@ if __name__ == "__main__":
     import sys
     input_dir = sys.argv[1]
     output_dir = sys.argv[2]
-    substitution_args = sys.argv[3:]
+    
+
     substitutions = {}
-    for arg in substitution_args:
-        key, value = arg.split("=")
-        substitutions[key] = value
+    # iterate over environment variables and add them to substitutions
+    for var in os.environ:
+        sub_start = "LOCULUSSUB_"
+        if var.startswith(sub_start):
+            key = var[len(sub_start):]
+            value = os.environ[var]
+            substitutions[key] = value
     main(input_dir, output_dir, substitutions)
