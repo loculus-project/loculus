@@ -28,9 +28,9 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
     if (astro.request.method === 'POST') {
         const formData = await astro.request.text();
         const topParams = new URLSearchParams(formData);
-        const searchQueries = new URLSearchParams(topParams.get('searchQuery') ?? '')
+        const searchQueries = new URLSearchParams(topParams.get('searchQuery') ?? '');
         postParams = new URLSearchParams([...topParams, ...searchQueries]);
-        postParams.delete('searchQuery')
+        postParams.delete('searchQuery');
     }
 
     const getSearchParams = (field: string) => {

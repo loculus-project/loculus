@@ -129,10 +129,18 @@ export const getOrderBy = (
 
 export const getMutationFilter = (getSearchParams: (name: string) => string): MutationFilter => {
     return {
-        nucleotideMutationQueries: getSearchParams('nucleotideMutations').split(',').filter(s => s !== ''),
-        aminoAcidMutationQueries: getSearchParams('aminoAcidMutations').split(',').filter(s => s !== ''),
-        nucleotideInsertionQueries: getSearchParams('nucleotideInsertions').split(',').filter(s => s !== ''),
-        aminoAcidInsertionQueries: getSearchParams('aminoAcidInsertions').split(',').filter(s => s !== ''),
+        nucleotideMutationQueries: getSearchParams('nucleotideMutations')
+            .split(',')
+            .filter((s) => s !== ''),
+        aminoAcidMutationQueries: getSearchParams('aminoAcidMutations')
+            .split(',')
+            .filter((s) => s !== ''),
+        nucleotideInsertionQueries: getSearchParams('nucleotideInsertions')
+            .split(',')
+            .filter((s) => s !== ''),
+        aminoAcidInsertionQueries: getSearchParams('aminoAcidInsertions')
+            .split(',')
+            .filter((s) => s !== ''),
     };
 };
 
