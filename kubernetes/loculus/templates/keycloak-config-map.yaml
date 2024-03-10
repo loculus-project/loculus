@@ -21,7 +21,7 @@ data:
         "starttls": "true",
         "auth": "true",
         "user": "{{$.Values.smtp.user}}",
-        "password": "ecf02b281e048e7c973099c9eb62e2b1",
+        "password": "ecf02b281e048e7c973099c9eb62e2b1"
       },
       "registrationAllowed": true,
       "accessTokenLifespan": 36000,
