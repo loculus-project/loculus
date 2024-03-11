@@ -1,6 +1,6 @@
 import { routes } from '../../../src/routes.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, dummyOrganism, expect, test, testSequenceEntryData } from '../../e2e.fixture';
+import { baseUrl, expect, test, testSequenceEntryData } from '../../e2e.fixture';
 import { getTestSequences } from '../../util/testSequenceProvider.ts';
 
 test.describe('The detailed sequence page', () => {

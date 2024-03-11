@@ -10,9 +10,9 @@ import { DatasetCitationClient } from '../../services/datasetCitationClient.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
 
 const clientConfig = getRuntimeConfig().public;
-const accessToken = getAccessToken(Astro.locals.session)!;
-const username = Astro.locals.session.user!.username!;
-const session = Astro.locals.session;
+const session = Astro.locals.session!;
+const accessToken = getAccessToken(session)!;
+const username = session.user!.username!;
 
 const datasetClient = DatasetCitationClient.create();
 
