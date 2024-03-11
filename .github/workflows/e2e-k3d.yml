@@ -25,6 +25,7 @@ jobs:
       checks: read
 
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     env:
       ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}

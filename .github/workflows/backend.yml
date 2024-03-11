@@ -14,6 +14,7 @@ concurrency:
 jobs:
   Tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK
@@ -35,6 +36,7 @@ jobs:
   dockerImage:
     name: Build Backend Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       packages: write
       contents: read
