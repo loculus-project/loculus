@@ -5,11 +5,11 @@ import { routes } from '../../routes';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 const { knownOrganisms, organism: originalOrganism } = cleanOrganism(Astro.params.organism);
-const { overwriteOrganism } = Astro.props;
-const foundOverwriteOrganism = knownOrganisms.find(
-    (knownOrganism: Organism) => knownOrganism.key === overwriteOrganism,
+const { implicitOrganism } = Astro.props;
+const foundimplicitOrganism = knownOrganisms.find(
+    (knownOrganism: Organism) => knownOrganism.key === implicitOrganism,
 );
-const organism = foundOverwriteOrganism || originalOrganism;
+const organism = foundimplicitOrganism || originalOrganism;
 
 const label = organism === undefined ? 'Organisms' : organism.displayName;
 const firstBitOfUrl = Astro.url.pathname.split('/')[1];

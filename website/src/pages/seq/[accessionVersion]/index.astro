@@ -45,11 +45,16 @@ if (
 ) {
     return Astro.redirect(sequenceDetailsTableData.value.redirectUrl);
 }
+
+if (!sequenceDetailsTableData.isOk()){
+    Astro.response.status = 404
+}
+
 ---
 
 <BaseLayout
     title={sequenceDetailsTableData.isOk() ? accessionVersion : 'Sequence not found'}
-    overwriteOrganism={organism}
+    implicitOrganism={organism}
 >
     {
         sequenceDetailsTableData.isOk() &&
