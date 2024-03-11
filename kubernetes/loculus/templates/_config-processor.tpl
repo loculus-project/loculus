@@ -9,7 +9,14 @@
       mountPath: /output
   command: ["python3"]
   args: ["/app/config-processor.py", "/input", "/output"]
-{{- end -}}
+  env:
+    - name: LOCULUSSUB_smtpPassword
+      valueFrom:
+        secretKeyRef:
+          name: smtp-password
+          key: secretKey
+{{- end }}
+
 
 {{- define "loculus.configVolume" -}}
 - name: {{ .name }}

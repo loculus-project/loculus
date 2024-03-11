@@ -1,5 +1,5 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculusRealm/protocol/openid-connect/token" }}
+{{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
 
 
 {{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}

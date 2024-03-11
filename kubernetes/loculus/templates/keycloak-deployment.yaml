@@ -30,6 +30,7 @@ spec:
         component: keycloak
     spec:
       initContainers:
+{{- include "loculus.configProcessor" (dict "name" "keycloak-config" "dockerTag" $dockerTag) | nindent 8 }}
         - name: keycloak-theme-prep
           image: "ghcr.io/loculus-project/keycloakify:{{ $dockerTag }}"
           volumeMounts:
@@ -73,7 +74,7 @@ spec:
           ports:
             - containerPort: 8080
           volumeMounts:
-            - name: config-volume
+            - name: keycloak-config-processed
               mountPath: /opt/keycloak/data/import/
             - name: theme-volume
               mountPath: /opt/keycloak/providers/
@@ -90,9 +91,7 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 10
       volumes:
-        - name: config-volume
-          configMap:
-            name: keycloak-config
+{{ include "loculus.configVolume" (dict "name" "keycloak-config") | nindent 8 }}
         - name: theme-volume
           emptyDir: {}
       imagePullSecrets:

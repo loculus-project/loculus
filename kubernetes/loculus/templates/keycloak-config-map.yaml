@@ -7,8 +7,24 @@ metadata:
 data:
   keycloak-config.json: |
     {
-      "realm": "loculusRealm",
+      "realm": "loculus",
       "enabled": true,
+      "verifyEmail": {{$.Values.auth.verifyEmail}},
+      "resetPasswordAllowed": {{$.Values.auth.resetPasswordAllowed}},
+      "smtpServer": {
+        "host": "{{$.Values.auth.smtp.host}}",
+        "port": "{{$.Values.auth.smtp.port}}",
+        "from": "{{$.Values.auth.smtp.from}}",
+        "fromDisplayName": "{{$.Values.name}}",
+        "replyTo": "{{$.Values.auth.smtp.replyTo}}",
+        "replyToDisplayName": "{{$.Values.name}}",
+        "envelopeFrom": "{{$.Values.auth.smtp.envelopeFrom}}",
+        "ssl": "false",
+        "starttls": "true",
+        "auth": "true",
+        "user": "{{$.Values.auth.smtp.user}}",
+        "password": "[[smtpPassword]]"
+      },
       "registrationAllowed": true,
       "accessTokenLifespan": 36000,
       "ssoSessionIdleTimeout": 36000,
@@ -20,6 +36,7 @@ data:
           "username": "testuser_{{$index}}_{{$browser}}",
           "enabled": true,
           "email": "testuser_{{$index}}_{{$browser}}@keycloak.org",
+          "emailVerified": true,
           "firstName": "Test",
           "lastName": "User",
           "credentials": [
@@ -47,6 +64,7 @@ data:
           "username": "testuser",
           "enabled": true,
           "email": "testuser@keycloak.org",
+          "emailVerified" : true,
           "firstName": "Test",
           "lastName": "User",
           "credentials": [
@@ -72,6 +90,7 @@ data:
           "username": "insdc_ingest_user",
           "enabled": true,
           "email": "insdc_ingest_user@keycloak.org",
+          "emailVerified" : true,
           "firstName": "INSDC Ingest",
           "lastName": "User",
           "credentials": [
@@ -97,6 +116,7 @@ data:
           "username": "dummy_preprocessing_pipeline",
           "enabled": true,
           "email": "dummy_preprocessing_pipeline@keycloak.org",
+          "emailVerified" : true,
           "firstName": "Dummy",
           "lastName": "Preprocessing",
           "credentials": [
@@ -122,6 +142,7 @@ data:
           "username": "silo_import_job",
           "enabled": true,
           "email": "silo_import_job@keycloak.org",
+          "emailVerified": true,
           "firstName": "SILO",
           "lastName": "ImportJob",
           "credentials": [
@@ -147,6 +168,7 @@ data:
           "username": "backend",
           "enabled": true,
           "email": "nothing@void.o",
+          "emailVerified": true,
           "firstName": "Backend",
           "lastName": "Technical-User",
           "attributes": {
@@ -205,12 +227,12 @@ data:
           "description" : "",
           "rootUrl" : "${authBaseUrl}",
           "adminUrl" : "",
-          "baseUrl" : "/realms/loculusRealm/account/",
+          "baseUrl" : "/realms/loculus/account/",
           "surrogateAuthRequired" : false,
           "enabled" : true,
           "alwaysDisplayInConsole" : false,
           "clientAuthenticatorType" : "client-secret",
-          "redirectUris" : [ "/realms/loculusRealm/account/*" ],
+          "redirectUris" : [ "/realms/loculus/account/*" ],
           "webOrigins" : [ "+" ],
           "notBefore" : 0,
           "bearerOnly" : false,

@@ -21,7 +21,7 @@ class Config:
     keycloak_host: str = "http://172.0.0.1:8083"
     keycloak_user: str = "dummy_preprocessing_pipeline"
     keycloak_password: str = "dummy_preprocessing_pipeline"
-    keycloak_token_path: str = "realms/loculusRealm/protocol/openid-connect/token"
+    keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
     nextclade_dataset_name: str = "nextstrain/mpox/all-clades"
     nextclade_dataset_version: str = "2024-01-16--20-31-02Z"
     config_file: str | None = None

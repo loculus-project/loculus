@@ -3,6 +3,7 @@ import shutil
 import requests
 import re
 
+
 def copy_structure(input_dir, output_dir):
     for root, dirs, files in os.walk(input_dir):
         for dir in dirs:
@@ -20,7 +21,12 @@ def replace_url_with_content(file_content):
             file_content = file_content.replace(f"[[URL:{url}]]", response.text)
     return file_content
 
-def process_files(output_dir):
+def make_substitutions(file_content, substitutions):
+    for key, value in substitutions.items():
+        file_content = file_content.replace(f"[[{key}]]", value)
+    return file_content
+
+def process_files(output_dir, substitutions):
     for root, dirs, files in os.walk(output_dir):
         for file in files:
             file_path = os.path.join(root, file)
@@ -28,19 +34,29 @@ def process_files(output_dir):
                 print(f"Processing {file_path}")
                 content = f.read()
                 new_content = replace_url_with_content(content)
+                new_content = make_substitutions(new_content, substitutions)
                 if new_content != content:
                     f.seek(0)
                     f.write(new_content)
                     f.truncate()
 
-def main(input_dir, output_dir):
+def main(input_dir, output_dir, substitutions):
     print(f"Processing {input_dir} to {output_dir}")
     copy_structure(input_dir, output_dir)
     print(f"Copied directory structure from {input_dir} to {output_dir}")
-    process_files(output_dir)
+    process_files(output_dir, substitutions)
 
 if __name__ == "__main__":
     import sys
     input_dir = sys.argv[1]
     output_dir = sys.argv[2]
-    main(input_dir, output_dir)
+    
+
+    substitutions = {}
+    for var in os.environ:
+        sub_start = "LOCULUSSUB_"
+        if var.startswith(sub_start):
+            key = var[len(sub_start):]
+            value = os.environ[var]
+            substitutions[key] = value
+    main(input_dir, output_dir, substitutions)

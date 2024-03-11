@@ -37,7 +37,7 @@ You need to set:
 * the url to fetch the public key for JWT verification 
   (corresponding to the `jwks_uri` value in the `/.well-known/openid-configuration` endpoint of the Keycloak server):
 ```
---spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculusRealm/protocol/openid-connect/certs
+--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://localhost:8083/realms/loculus/protocol/openid-connect/certs
 ```
 
 We use Flyway, so that the service can provision an empty/existing DB without any manual steps in between. On startup scripts in `src/main/resources/db/migration` are executed in order, i.e. `V1__*.sql` before `V2__*.sql` if they didn't run before, so that the DB is always up-to-date. (For more info on the naming convention, see [this](https://www.red-gate.com/blog/database-devops/flyway-naming-patterns-matter) blog post.)

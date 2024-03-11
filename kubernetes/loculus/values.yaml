@@ -123,3 +123,13 @@ defaultOrganisms:
       genes:
         - name: OPG001
           sequence: MKQYIVLACMCLVAAAMPTSLQQSSSSCTEEENKHHMGIDVIIKVTKQDQTPTNDKICQSVTEVTETEDDEVSEEVVKGDPTTYYTIVGAGLNMNFGFTKCPKISSISESSDGNTVNTRLSSVSPGQGKDSPAITREEALAMIKDCEMSIDIRCSEEEKDSDIKTHPVLGSNISHKKVSYKDIIGSTIVDTKCVKNLEFSVRIGDMCEESSELEVKDGFKYVDGSASEGATDDTSLIDSTKLKACV*
+auth:
+  smtp:
+    host: "in-v3.mailjet.com"
+    port: 587
+    user: "fafd505de339dd2e9c3e85ad9981af8a"
+    replyTo: "noreply@loculus.org"
+    from: "noreply@loculus.org"
+    envelopeFrom: "noreply@loculus.org"
+  verifyEmail: true
+  resetPasswordAllowed: true
