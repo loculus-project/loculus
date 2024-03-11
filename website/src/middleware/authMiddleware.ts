@@ -3,11 +3,12 @@ import { defineMiddleware } from 'astro/middleware';
 import jsonwebtoken from 'jsonwebtoken';
 import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
-import { type BaseClient, Issuer, type TokenSet } from 'openid-client';
+import { type BaseClient, type TokenSet } from 'openid-client';
 
-import { getConfiguredOrganisms, getRuntimeConfig } from '../config.ts';
+import { getConfiguredOrganisms } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
-import { routes } from '../routes';
+import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
+import { getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
@@ -19,68 +20,15 @@ enum TokenVerificationError {
     INVALID_TOKEN,
 }
 
-export const clientMetadata = {
-    client_id: 'test-cli', // TODO: #1100 Replace with actual client id
-    response_types: ['code', 'id_token'],
-    client_secret: 'someSecret',
-    public: true,
-};
-
-export const realmPath = '/realms/loculus';
-
-let _keycloakClient: BaseClient | undefined;
-
 const logger = getInstanceLogger('LoginMiddleware');
 
-export async function getKeycloakClient(): Promise<BaseClient | undefined> {
-    if (_keycloakClient !== undefined) {
-        return _keycloakClient;
-    }
-    const originForClient = getRuntimeConfig().serverSide.keycloakUrl;
-
-    const issuerUrl = `${originForClient}${realmPath}`;
-
-    logger.info(`Getting keycloak client for issuer url: ${issuerUrl}`);
-    try {
-        const keycloakIssuer = await Issuer.discover(issuerUrl);
-        logger.info(`Keycloak issuer discovered: ${keycloakIssuer}`);
-        _keycloakClient = new keycloakIssuer.Client(clientMetadata);
-    } catch (error: any) {
-        if (error.code !== 'ECONNREFUSED') {
-            logger.error(`Error discovering keycloak issuer: ${error}`);
-            throw error;
-        }
-        logger.warn(`Connection refused when trying to discover the keycloak issuer at url: ${issuerUrl}`);
-    }
-    return _keycloakClient;
-}
-
-export const getAuthUrl = async (redirectUrl: string) => {
-    const logout = routes.logout();
-    if (redirectUrl.endsWith(logout)) {
-        redirectUrl = redirectUrl.replace(logout, routes.userOverviewPage());
-    }
-    // Check if keycloak client is up
-    // If not, return a 404 url
-    const keycloakClient = await getKeycloakClient();
-    if (keycloakClient === undefined) {
-        return '/404';
-    }
-    const authUrl = keycloakClient.authorizationUrl({
-        redirect_uri: redirectUrl,
-        scope: 'openid',
-        response_type: 'code',
-    });
-    return authUrl;
-};
-
-async function getValidTokenAndUserInfoFromCookie(context: APIContext) {
+async function getValidTokenAndUserInfoFromCookie(context: APIContext, client: BaseClient) {
     logger.debug(`Trying to get token and user info from cookie`);
-    const token = await getTokenFromCookie(context);
+    const token = await getTokenFromCookie(context, client);
     if (token !== undefined) {
-        const userInfo = await getUserInfo(token);
+        const userInfo = await getUserInfo(token, client);
 
-        if (userInfo!.isErr()) {
+        if (userInfo.isErr()) {
             logger.debug(`Cookie token found but could not get user info`);
             deleteCookie(context);
             return undefined;
@@ -94,13 +42,13 @@ async function getValidTokenAndUserInfoFromCookie(context: APIContext) {
     return undefined;
 }
 
-async function getValidTokenAndUserInfoFromParams(context: APIContext) {
+async function getValidTokenAndUserInfoFromParams(context: APIContext, client: BaseClient) {
     logger.debug(`Trying to get token and user info from params`);
-    const token = await getTokenFromParams(context);
+    const token = await getTokenFromParams(context, client);
     if (token !== undefined) {
-        const userInfo = await getUserInfo(token);
+        const userInfo = await getUserInfo(token, client);
 
-        if (userInfo!.isErr()) {
+        if (userInfo.isErr()) {
             logger.debug(`Token found in params but could not get user info`);
             return undefined;
         }
@@ -114,19 +62,17 @@ async function getValidTokenAndUserInfoFromParams(context: APIContext) {
 }
 
 export const authMiddleware = defineMiddleware(async (context, next) => {
-    // Only run this when keycloak up
-    // Otherwise set token and userInfo to undefined
     let token: TokenCookie | undefined;
     let userInfo;
 
-    const client = await getKeycloakClient();
+    const client = await KeycloakClientManager.getClient();
     if (client !== undefined) {
         // Only run this when keycloak up
-        const cookieResult = await getValidTokenAndUserInfoFromCookie(context);
+        const cookieResult = await getValidTokenAndUserInfoFromCookie(context, client);
         token = cookieResult?.token;
         userInfo = cookieResult?.userInfo;
         if (token === undefined) {
-            const paramResult = await getValidTokenAndUserInfoFromParams(context);
+            const paramResult = await getValidTokenAndUserInfoFromParams(context, client);
             token = paramResult?.token;
             userInfo = paramResult?.userInfo;
 
@@ -146,6 +92,10 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     );
 
     if (enforceLogin && (userInfo === undefined || userInfo.isErr())) {
+        if (client === undefined) {
+            logger.error(`Keycloak client not available, cannot redirect to auth`);
+            return context.redirect('/503?service=Authentication');
+        }
         return redirectToAuth(context);
     }
 
@@ -181,7 +131,7 @@ export const authMiddleware = defineMiddleware(async (context, next) => {
     return next();
 });
 
-async function getTokenFromCookie(context: APIContext) {
+async function getTokenFromCookie(context: APIContext, client: BaseClient) {
     const accessToken = context.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
     const refreshToken = context.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
@@ -193,10 +143,10 @@ async function getTokenFromCookie(context: APIContext) {
         refreshToken,
     };
 
-    const verifiedTokenResult = await verifyToken(accessToken);
+    const verifiedTokenResult = await verifyToken(accessToken, client);
     if (verifiedTokenResult.isErr() && verifiedTokenResult.error.type === TokenVerificationError.EXPIRED) {
         logger.debug(`Token expired, trying to refresh`);
-        return refreshTokenViaKeycloak(tokenCookie);
+        return refreshTokenViaKeycloak(tokenCookie, client);
     }
     if (verifiedTokenResult.isErr()) {
         logger.info(`Error verifying token: ${verifiedTokenResult.error.message}`);
@@ -207,7 +157,7 @@ async function getTokenFromCookie(context: APIContext) {
     return tokenCookie;
 }
 
-async function verifyToken(accessToken: string) {
+async function verifyToken(accessToken: string, client: BaseClient) {
     logger.debug(`Verifying token`);
     const tokenHeader = jsonwebtoken.decode(accessToken, { complete: true })?.header;
     const kid = tokenHeader?.kid;
@@ -218,26 +168,15 @@ async function verifyToken(accessToken: string) {
         });
     }
 
-    const keycloakClient = await getKeycloakClient();
-
-    if (keycloakClient === undefined) {
+    if (client.issuer.metadata.jwks_uri === undefined) {
         return err({
             type: TokenVerificationError.REQUEST_ERROR,
-            message: 'Keycloak client not available',
-        });
-    }
-
-    if (keycloakClient.issuer.metadata.jwks_uri === undefined) {
-        return err({
-            type: TokenVerificationError.REQUEST_ERROR,
-            message: `Keycloak client does not contain jwks_uri: ${JSON.stringify(
-                keycloakClient.issuer.metadata.jwks_uri,
-            )}`,
+            message: `Keycloak client does not contain jwks_uri: ${JSON.stringify(client.issuer.metadata.jwks_uri)}`,
         });
     }
 
     const jwksClient = new JwksRsa.JwksClient({
-        jwksUri: keycloakClient.issuer.metadata.jwks_uri,
+        jwksUri: client.issuer.metadata.jwks_uri,
     });
 
     try {
@@ -266,25 +205,14 @@ async function verifyToken(accessToken: string) {
     }
 }
 
-async function getUserInfo(token: TokenCookie) {
-    const client = await getKeycloakClient();
-
-    if (client === undefined) {
-        return undefined;
-    }
+async function getUserInfo(token: TokenCookie, client: BaseClient) {
     return ResultAsync.fromPromise(client.userinfo(token.accessToken), (error) => {
         logger.debug(`Error getting user info: ${error}`);
         return error;
     });
 }
 
-async function getTokenFromParams(context: APIContext): Promise<TokenCookie | undefined> {
-    const client = await getKeycloakClient();
-
-    if (client === undefined) {
-        return undefined;
-    }
-
+async function getTokenFromParams(context: APIContext, client: BaseClient): Promise<TokenCookie | undefined> {
     const params = client.callbackParams(context.url.toString());
     logger.debug(`Keycloak callback params: ${JSON.stringify(params)}`);
     if (params.code !== undefined) {
@@ -303,7 +231,7 @@ async function getTokenFromParams(context: APIContext): Promise<TokenCookie | un
     return undefined;
 }
 
-export function setCookie(context: APIContext, token: TokenCookie) {
+function setCookie(context: APIContext, token: TokenCookie) {
     logger.debug(`Setting token cookie`);
     context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
         httpOnly: true,
@@ -330,9 +258,10 @@ function deleteCookie(context: APIContext) {
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Basic_concepts#guard
+// URL must be absolute, otherwise throws TypeError
 const createRedirectWithModifiableHeaders = (url: string) => {
-    const redirect = Response.redirect(url);
     logger.debug(`Redirecting to ${url}`);
+    const redirect = Response.redirect(url);
     return new Response(null, { status: redirect.status, headers: redirect.headers });
 };
 
@@ -357,11 +286,7 @@ function removeTokenCodeFromSearchParams(url: URL): string {
     return newUrl.toString();
 }
 
-async function refreshTokenViaKeycloak(token: TokenCookie): Promise<TokenCookie | undefined> {
-    const client = await getKeycloakClient();
-    if (client === undefined) {
-        return undefined;
-    }
+async function refreshTokenViaKeycloak(token: TokenCookie, client: BaseClient): Promise<TokenCookie | undefined> {
     const refreshedTokenSet = await client.refresh(token.refreshToken).catch(() => {
         logger.info(`Failed to refresh token`);
         return undefined;
@@ -382,14 +307,4 @@ function extractTokenCookieFromTokenSet(tokenSet: TokenSet | undefined): TokenCo
         accessToken,
         refreshToken,
     };
-}
-
-export async function urlForKeycloakAccountPage() {
-    const client = await getKeycloakClient();
-    if (client === undefined) {
-        return '/404';
-    }
-    const endsessionUrl = client.endSessionUrl();
-    const host = new URL(endsessionUrl).host;
-    return `https://${host}${realmPath}/account`;
 }

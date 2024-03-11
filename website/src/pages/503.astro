@@ -1,0 +1,24 @@
+---
+import { capitalCase } from 'change-case';
+
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const serviceParam = Astro.url.searchParams.get('service');
+
+let service = 'Internal';
+let bodyService = 'internal service you are trying to access';
+if (serviceParam !== null && serviceParam !== '') {
+    service = capitalCase(serviceParam);
+    bodyService = `${service.toLowerCase()} service`;
+}
+---
+
+<BaseLayout title={`${service} Service Unavailable`}>
+    <div class='bc'>
+        <h1 class='title'>{`${service} Service Unavailable`}</h1>
+        <p>
+            The {bodyService} is currently unavailable. Try again later.
+            <a href='/'>Return to start page.</a>
+        </p>
+    </div>
+</BaseLayout>

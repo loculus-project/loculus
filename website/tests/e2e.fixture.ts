@@ -17,11 +17,13 @@ import { SubmitPage } from './pages/submission/submit.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserPage } from './pages/user/userPage/userPage.ts';
 import { createGroup } from './util/backendCalls.ts';
-import { ACCESS_TOKEN_COOKIE, clientMetadata, realmPath, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
 import { groupManagementApi } from '../src/services/groupManagementApi.ts';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
 import { type DataUseTerms, type Group, openDataUseTermsType } from '../src/types/backend.ts';
+import { clientMetadata } from '../src/utils/clientMetadata.ts';
+import { realmPath } from '../src/utils/realmPath.ts';
 
 type E2EFixture = {
     searchPage: SearchPage;
