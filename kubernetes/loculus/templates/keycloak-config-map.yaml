@@ -36,6 +36,7 @@ data:
           "username": "testuser_{{$index}}_{{$browser}}",
           "enabled": true,
           "email": "testuser_{{$index}}_{{$browser}}@keycloak.org",
+          "emailVerified": true,
           "firstName": "Test",
           "lastName": "User",
           "credentials": [
@@ -63,6 +64,7 @@ data:
           "username": "testuser",
           "enabled": true,
           "email": "testuser@keycloak.org",
+          "emailVerified" : true,
           "firstName": "Test",
           "lastName": "User",
           "credentials": [
@@ -88,6 +90,7 @@ data:
           "username": "insdc_ingest_user",
           "enabled": true,
           "email": "insdc_ingest_user@keycloak.org",
+          "emailVerified" : true,
           "firstName": "INSDC Ingest",
           "lastName": "User",
           "credentials": [
@@ -113,6 +116,7 @@ data:
           "username": "dummy_preprocessing_pipeline",
           "enabled": true,
           "email": "dummy_preprocessing_pipeline@keycloak.org",
+          "emailVerified" : true,
           "firstName": "Dummy",
           "lastName": "Preprocessing",
           "credentials": [
@@ -138,6 +142,7 @@ data:
           "username": "silo_import_job",
           "enabled": true,
           "email": "silo_import_job@keycloak.org",
+          "emailVerified": true,
           "firstName": "SILO",
           "lastName": "ImportJob",
           "credentials": [
@@ -163,6 +168,7 @@ data:
           "username": "backend",
           "enabled": true,
           "email": "nothing@void.o",
+          "emailVerified": true,
           "firstName": "Backend",
           "lastName": "Technical-User",
           "attributes": {
