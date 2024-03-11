@@ -46,9 +46,6 @@ if (
     return Astro.redirect(sequenceDetailsTableData.value.redirectUrl);
 }
 
-if (!sequenceDetailsTableData.isOk()) {
-    Astro.response.status = 404;
-}
 ---
 
 <BaseLayout
