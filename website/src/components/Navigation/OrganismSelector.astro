@@ -6,9 +6,7 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 const { knownOrganisms, organism: originalOrganism } = cleanOrganism(Astro.params.organism);
 const { implicitOrganism } = Astro.props;
-const foundimplicitOrganism = knownOrganisms.find(
-    (knownOrganism: Organism) => knownOrganism.key === implicitOrganism,
-);
+const foundimplicitOrganism = knownOrganisms.find((knownOrganism: Organism) => knownOrganism.key === implicitOrganism);
 const organism = foundimplicitOrganism || originalOrganism;
 
 const label = organism === undefined ? 'Organisms' : organism.displayName;
