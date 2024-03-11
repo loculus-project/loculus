@@ -9,6 +9,7 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
+import org.loculus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
@@ -156,7 +157,8 @@ class ApproveProcessedDataEndpointTest(
                 jsonPath(
                     "$.detail",
                     containsString(
-                        "Accession versions are in not in one of the states [$AWAITING_APPROVAL]: " +
+                        "Accession versions are in not in one of the states " +
+                            "[$AWAITING_APPROVAL, $AWAITING_APPROVAL_FOR_REVOCATION]: " +
                             "${accessionVersionNotInCorrectState.first().displayAccessionVersion()} - $IN_PROCESSING",
                     ),
                 ),
