@@ -3,7 +3,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { routes } from '../../../src/routes.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
-import { baseUrl, dummyOrganism } from '../../e2e.fixture';
+import { baseUrl } from '../../e2e.fixture';
 
 export class SequencePage {
     public readonly notLatestVersionBanner: Locator;
