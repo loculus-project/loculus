@@ -34,7 +34,7 @@ def process_files(output_dir, substitutions):
                 print(f"Processing {file_path}")
                 content = f.read()
                 new_content = replace_url_with_content(content)
-                new_content = make_substitutions(content, substitutions)
+                new_content = make_substitutions(new_content, substitutions)
                 if new_content != content:
                     f.seek(0)
                     f.write(new_content)
