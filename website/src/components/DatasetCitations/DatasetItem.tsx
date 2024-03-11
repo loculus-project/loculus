@@ -23,9 +23,7 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
     }
 
     const accessionOutlink = {
-        [DatasetRecordType.loculus]: (acc: string) => `/sequences/${acc}`,
-        [DatasetRecordType.genbank]: (acc: string) => `https://www.ncbi.nlm.nih.gov/nuccore/?term=${acc}`,
-        [DatasetRecordType.sra]: (acc: string) => `https://www.ncbi.nlm.nih.gov/sra/?term=${acc}`,
+        [DatasetRecordType.loculus]: (acc: string) => `/seq/${acc}`,
     };
 
     return (
@@ -41,18 +39,14 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
                     return (
                         <tr key={`accessionData-${index}`}>
                             <td className='text-left'>
-                                {datasetRecord.type !== DatasetRecordType.gisaid ? (
-                                    <Link
-                                        href={accessionOutlink[datasetRecord.type](datasetRecord.accession)}
-                                        target='_blank'
-                                        underline='none'
-                                        sx={{ padding: 0, margin: 0 }}
-                                    >
-                                        {datasetRecord.accession}
-                                    </Link>
-                                ) : (
-                                    datasetRecord.accession
-                                )}
+                                <Link
+                                    href={accessionOutlink[datasetRecord.type](datasetRecord.accession)}
+                                    target='_blank'
+                                    underline='none'
+                                    sx={{ padding: 0, margin: 0 }}
+                                >
+                                    {datasetRecord.accession}
+                                </Link>
                             </td>
                             <td className='text-left'>{datasetRecord.type as string}</td>
                         </tr>

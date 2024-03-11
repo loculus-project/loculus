@@ -1,4 +1,3 @@
-import IconButton from '@mui/material/IconButton';
 import { type FC, useState } from 'react';
 
 import { DatasetForm } from './DatasetForm';
@@ -18,9 +17,13 @@ const DatasetListActionsInner: FC<DatasetListActionsProps> = ({ clientConfig, ac
     return (
         <>
             <div className='pl-2'>
-                <IconButton data-testid='AddIcon' onClick={() => setCreateModalVisible(true)}>
+                <button
+                    data-testid='AddIcon'
+                    className='btn btn-sm btn-circle btn-ghost'
+                    onClick={() => setCreateModalVisible(true)}
+                >
                     <AddBoxIcon fontSize='large' />
-                </IconButton>
+                </button>
             </div>
             <Modal isModalVisible={createModalVisible} setModalVisible={setCreateModalVisible}>
                 <DatasetForm clientConfig={clientConfig} accessToken={accessToken} />

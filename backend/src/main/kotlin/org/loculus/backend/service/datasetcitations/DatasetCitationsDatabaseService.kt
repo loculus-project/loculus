@@ -14,6 +14,7 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.update
+import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.Author
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.Dataset
@@ -22,8 +23,11 @@ import org.loculus.backend.api.DatasetRecord
 import org.loculus.backend.api.ResponseAuthor
 import org.loculus.backend.api.ResponseDataset
 import org.loculus.backend.api.SequenceEntryStatus
+import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedDatasetRecord
 import org.loculus.backend.controller.NotFoundException
+import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
@@ -35,6 +39,7 @@ private val log = KotlinLogging.logger { }
 @Service
 @Transactional
 class DatasetCitationsDatabaseService(
+    private val accessionPreconditionValidator: AccessionPreconditionValidator,
     pool: DataSource,
 ) {
     init {
@@ -48,6 +53,9 @@ class DatasetCitationsDatabaseService(
         datasetDescription: String?,
     ): ResponseDataset {
         log.info { "Create dataset $datasetName, user $username" }
+
+        validateDatasetName(datasetName)
+        validateDatasetRecords(datasetRecords)
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
@@ -88,6 +96,9 @@ class DatasetCitationsDatabaseService(
         datasetDescription: String?,
     ): ResponseDataset {
         log.info { "Update dataset $datasetId, user $username" }
+
+        validateDatasetName(datasetName)
+        validateDatasetRecords(datasetRecords)
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
@@ -453,6 +464,33 @@ class DatasetCitationsDatabaseService(
         AuthorsTable.deleteWhere {
             (AuthorsTable.username eq username) and
                 (AuthorsTable.authorId eq UUID.fromString(authorId))
+        }
+    }
+
+    fun validateDatasetRecords(datasetRecords: List<SubmittedDatasetRecord>) {
+        if (datasetRecords.isEmpty()) {
+            throw UnprocessableEntityException("Dataset must contain at least one record")
+        }
+        val accessionsWithoutVersions = datasetRecords.filter { !it.accession.contains('.') }.map { it.accession }
+        accessionPreconditionValidator.validateAccessions(
+            accessionsWithoutVersions,
+            listOf(APPROVED_FOR_RELEASE),
+        )
+        val accessionsWithVersions = datasetRecords
+            .filter { it.accession.contains('.') }
+            .map {
+                val (accession, version) = it.accession.split('.')
+                AccessionVersion(accession, version.toLong())
+            }
+        accessionPreconditionValidator.validateAccessionVersions(
+            accessionsWithVersions,
+            listOf(APPROVED_FOR_RELEASE),
+        )
+    }
+
+    fun validateDatasetName(name: String) {
+        if (name.isBlank()) {
+            throw UnprocessableEntityException("Dataset name must not be empty")
         }
     }
 }

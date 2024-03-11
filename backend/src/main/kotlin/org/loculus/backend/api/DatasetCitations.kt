@@ -1,11 +1,12 @@
 package org.loculus.backend.api
 
 import io.swagger.v3.oas.annotations.media.Schema
+import org.loculus.backend.utils.Accession
 import java.sql.Timestamp
 import java.util.UUID
 
 data class SubmittedDatasetRecord(
-    val accession: String,
+    val accession: Accession,
     @Schema(
         description = "The type of the accession.",
         type = "string",
@@ -16,7 +17,7 @@ data class SubmittedDatasetRecord(
 
 data class SubmittedDataset(
     val name: String,
-    val description: String,
+    val description: String?,
     val records: List<SubmittedDatasetRecord>,
 )
 
@@ -29,7 +30,7 @@ data class SubmittedDatasetUpdate(
 
 data class DatasetRecord(
     val datasetRecordId: Long,
-    val accession: String,
+    val accession: Accession,
     val type: String,
 )
 

@@ -47,6 +47,21 @@ class AccessionPreconditionValidator(
         }
     }
 
+    fun validateAccessionVersions(accessionVersions: List<AccessionVersionInterface>, statuses: List<Status>) {
+        sequenceEntriesTableProvider.get(organism = null).let { table ->
+            val sequenceEntries = table
+                .slice(
+                    table.accessionColumn,
+                    table.versionColumn,
+                    table.statusColumn,
+                )
+                .select(where = { table.accessionVersionIsIn(accessionVersions) })
+
+            validateAccessionVersionsExist(sequenceEntries, accessionVersions, table)
+            validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
+        }
+    }
+
     fun validateAccessions(
         submitter: String,
         accessions: List<Accession>,
@@ -97,6 +112,32 @@ class AccessionPreconditionValidator(
 
             validateAccessionsExist(sequenceEntries, accessions, table)
             validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
+
+            return sequenceEntries.map {
+                AccessionVersionGroup(
+                    it[table.accessionColumn],
+                    it[table.versionColumn],
+                    it[table.groupNameColumn],
+                )
+            }
+        }
+    }
+
+    fun validateAccessions(accessions: List<Accession>, statuses: List<Status>): List<AccessionVersionGroup> {
+        sequenceEntriesTableProvider.get(organism = null).let { table ->
+            val sequenceEntries = table
+                .slice(
+                    table.accessionColumn,
+                    table.versionColumn,
+                    table.statusColumn,
+                    table.groupNameColumn,
+                )
+                .select(
+                    where = { (table.accessionColumn inList accessions) and table.isMaxVersion },
+                )
+
+            validateAccessionsExist(sequenceEntries, accessions, table)
+            validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
 
             return sequenceEntries.map {
                 AccessionVersionGroup(

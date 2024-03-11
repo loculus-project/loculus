@@ -12,6 +12,7 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedAuthor
 import org.loculus.backend.api.SubmittedAuthorUpdate
 import org.loculus.backend.api.SubmittedDataset
+import org.loculus.backend.api.SubmittedDatasetRecord
 import org.loculus.backend.api.SubmittedDatasetUpdate
 import org.loculus.backend.service.datasetcitations.DatasetCitationsDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
@@ -35,6 +36,12 @@ class DatasetCitationsController(
     @GetMapping("/get-dataset")
     fun getDataset(@RequestParam datasetId: String, @RequestParam version: Long?): List<Dataset> {
         return datasetCitationsService.getDataset(datasetId, version)
+    }
+
+    @Operation(description = "Validate dataset records")
+    @PostMapping("/validate-dataset-records")
+    fun validateDatasetRecords(@RequestBody records: List<SubmittedDatasetRecord>) {
+        return datasetCitationsService.validateDatasetRecords(records)
     }
 
     @Operation(description = "Create a new dataset with the specified data")
