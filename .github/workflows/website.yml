@@ -15,6 +15,7 @@ jobs:
   checks:
     name: Check format and types
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ./website
@@ -33,8 +34,9 @@ jobs:
 
   unitTests:
     name: Unit Tests
-    timeout-minutes: 10
+    timeout-minutes: 15
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: ./website
@@ -56,6 +58,7 @@ jobs:
   dockerImage:
     name: Build Website Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       packages: write
