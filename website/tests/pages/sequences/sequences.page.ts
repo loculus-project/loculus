@@ -24,7 +24,7 @@ export class SequencePage {
     }
 
     public async goto(accessionVersion: AccessionVersion) {
-        await this.page.goto(`${baseUrl}${routes.sequencesDetailsPage(dummyOrganism.key, accessionVersion)}`, {
+        await this.page.goto(`${baseUrl}${routes.sequencesDetailsPage(accessionVersion)}`, {
             waitUntil: 'networkidle',
         });
         await expect(this.page).toHaveTitle(getAccessionVersionString(accessionVersion));

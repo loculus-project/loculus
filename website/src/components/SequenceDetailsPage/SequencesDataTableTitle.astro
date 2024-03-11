@@ -13,7 +13,7 @@ interface Props {
     accessionVersion: string;
 }
 
-const { sequenceEntryHistory, organism, accessionVersion } = Astro.props;
+const { sequenceEntryHistory, accessionVersion } = Astro.props;
 ---
 
 <div class='flex justify-between flex-wrap'>
@@ -25,7 +25,7 @@ const { sequenceEntryHistory, organism, accessionVersion } = Astro.props;
         sequenceEntryHistory !== undefined && sequenceEntryHistory.length > 1 && (
             <div class='dropdown dropdown-hover'>
                 <label tabindex='0' class='btn btn-sm btn-outline py-1'>
-                    <a href={routes.versionPage(organism, accessionVersion)} class='text-sm'>
+                    <a href={routes.versionPage(accessionVersion)} class='text-sm'>
                         All versions
                     </a>
                     <Arrow />
@@ -36,7 +36,7 @@ const { sequenceEntryHistory, organism, accessionVersion } = Astro.props;
                 >
                     {sequenceEntryHistory.map((version) => (
                         <li>
-                            <a href={routes.sequencesDetailsPage(organism, getAccessionVersionString({ ...version }))}>
+                            <a href={routes.sequencesDetailsPage(getAccessionVersionString({ ...version }))}>
                                 {getAccessionVersionString({ ...version })}
 
                                 <p class={`font-bold ${getVersionStatusColor(version.versionStatus)}`}>

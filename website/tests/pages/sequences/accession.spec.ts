@@ -53,8 +53,6 @@ test.describe('The detailed sequence page', () => {
         await expect(linkToDeprecatedVersion).toBeVisible();
         await linkToDeprecatedVersion.click();
 
-        await sequencePage.page.waitForURL(
-            baseUrl + routes.sequencesDetailsPage(dummyOrganism.key, deprecatedVersionString),
-        );
+        await sequencePage.page.waitForURL(baseUrl + routes.sequencesDetailsPage(deprecatedVersionString));
     });
 });

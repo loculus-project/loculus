@@ -1,0 +1,109 @@
+---
+import { getSequenceDetailsTableData, SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
+import RevocationEntryDataTable from '../../../components/SequenceDetailsPage/RevocationEntryDataTable.astro';
+import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.astro';
+import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
+import SequencesDataPage from '../../../components/SequenceDetailsPage/SequencesDetailsPage.astro';
+import { isRevocationEntry } from '../../../components/SequenceDetailsPage/getTableData';
+import ErrorBox from '../../../components/common/ErrorBox.astro';
+import { getConfiguredOrganisms } from '../../../config';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+const accessionVersion = Astro.params.accessionVersion!;
+
+const organisms = getConfiguredOrganisms();
+let sequenceDetailsTableData;
+let organism: string | undefined;
+
+const promises = organisms.map(async ({ key }) => {
+    return {
+        organism: key,
+        result: await getSequenceDetailsTableData(accessionVersion, key),
+    };
+});
+
+const queries = await Promise.all(promises);
+
+for (const query of queries) {
+    if (query.result.isOk()) {
+        sequenceDetailsTableData = query.result;
+        organism = query.organism;
+        break;
+    }
+}
+
+if (sequenceDetailsTableData === undefined) {
+    sequenceDetailsTableData = {
+        isOk: () => false,
+        type: SequenceDetailsTableResultType.ERROR,
+    };
+}
+
+if (
+    sequenceDetailsTableData.isOk() &&
+    sequenceDetailsTableData.value!.type === SequenceDetailsTableResultType.REDIRECT
+) {
+    return Astro.redirect(sequenceDetailsTableData.value.redirectUrl);
+}
+---
+
+<BaseLayout
+    title={sequenceDetailsTableData.isOk() ? accessionVersion : 'Sequence not found'}
+    implicitOrganism={organism}
+>
+    {
+        sequenceDetailsTableData.isOk() &&
+            sequenceDetailsTableData.value!.type === SequenceDetailsTableResultType.TABLE_DATA && (
+                <div slot='banner'>
+                    <SequencesBanner
+                        sequenceEntryHistory={sequenceDetailsTableData.value!.sequenceEntryHistory}
+                        accessionVersion={accessionVersion}
+                    />
+                </div>
+            )
+    }
+    {
+        sequenceDetailsTableData.isOk() && (
+            <SequencesDataTableTitle
+                accessionVersion={accessionVersion}
+                organism={organism!}
+                sequenceEntryHistory={
+                    sequenceDetailsTableData.isOk() &&
+                    sequenceDetailsTableData.value!.type === SequenceDetailsTableResultType.TABLE_DATA
+                        ? sequenceDetailsTableData.value!.sequenceEntryHistory
+                        : undefined
+                }
+            />
+        )
+    }
+
+    {
+        sequenceDetailsTableData.isOk() &&
+            sequenceDetailsTableData.match!(
+                (data) =>
+                    data.type === SequenceDetailsTableResultType.TABLE_DATA &&
+                    (isRevocationEntry(data.tableData) ? (
+                        <RevocationEntryDataTable
+                            tableData={data.tableData}
+                            dataUseTermsHistory={data.dataUseTermsHistory}
+                        />
+                    ) : (
+                        <SequencesDataPage
+                            tableData={data.tableData}
+                            organism={organism!}
+                            accessionVersion={accessionVersion}
+                            dataUseTermsHistory={data.dataUseTermsHistory}
+                        />
+                    )),
+                () => null,
+            )
+    }
+    {
+        !sequenceDetailsTableData.isOk() && (
+            <ErrorBox
+                title='Sequence entry not found'
+                message={'No data found for accession version ' + accessionVersion}
+            />
+        )
+    }
+</BaseLayout>

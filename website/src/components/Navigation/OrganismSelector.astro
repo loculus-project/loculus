@@ -4,7 +4,10 @@ import { type Organism } from '../../config';
 import { routes } from '../../routes';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
-const { knownOrganisms, organism } = cleanOrganism(Astro.params.organism);
+const { knownOrganisms, organism: originalOrganism } = cleanOrganism(Astro.params.organism);
+const { implicitOrganism } = Astro.props;
+const foundimplicitOrganism = knownOrganisms.find((knownOrganism: Organism) => knownOrganism.key === implicitOrganism);
+const organism = foundimplicitOrganism || originalOrganism;
 
 const label = organism === undefined ? 'Organisms' : organism.displayName;
 const firstBitOfUrl = Astro.url.pathname.split('/')[1];

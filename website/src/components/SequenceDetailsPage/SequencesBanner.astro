@@ -7,10 +7,9 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion';
 interface Props {
     sequenceEntryHistory: SequenceEntryHistory;
     accessionVersion: string;
-    organism: string;
 }
 
-const { sequenceEntryHistory, accessionVersion, organism } = Astro.props;
+const { sequenceEntryHistory, accessionVersion } = Astro.props;
 
 const ownHistoryEntry = sequenceEntryHistory.find((entry) => entry.accessionVersion === accessionVersion);
 
@@ -29,10 +28,7 @@ const isLatestVersion = ownHistoryEntry?.versionStatus === siloVersionStatuses.l
                 {latestAccessionVersion !== undefined && (
                     <p>
                         Go to the latest version:
-                        <a
-                            href={routes.sequencesDetailsPage(organism, latestAccessionVersion)}
-                            class='font-bold underline mx-3'
-                        >
+                        <a href={routes.sequencesDetailsPage(latestAccessionVersion)} class='font-bold underline mx-3'>
                             {getAccessionVersionString(latestAccessionVersion)}
                         </a>
                     </p>
