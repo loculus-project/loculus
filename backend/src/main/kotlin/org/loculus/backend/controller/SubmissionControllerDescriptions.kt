@@ -77,7 +77,7 @@ If a filter is applied for a group the user is not a member of, the endpoint wil
 
 const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
 Approve processed accession versions and set the status to 'APPROVED_FOR_RELEASE'.
-This can only be done for accession versions in status 'AWAITING_APPROVAL' that the user submitted themselves.
+This can only be done for accession versions in status 'AWAITING_APPROVAL' or 'AWAITING_APPROVAL_FOR_REVOCATION' that the user submitted themselves.
 """
 
 const val REVOKE_DESCRIPTION = """
