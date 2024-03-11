@@ -3,6 +3,7 @@
 fields:
   - name: accession
     type: string
+    notSearchable: true
   - name: version
     type: int
     notSearchable: true
@@ -10,6 +11,7 @@ fields:
     type: string
   - name: accessionVersion
     type: string
+    notSearchable: true
   - name: isRevocation
     type: string
     notSearchable: true

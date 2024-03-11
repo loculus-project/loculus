@@ -80,7 +80,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                     title='Show sequences with errors'
                     onChange={(e) => setShowErrors(e.target.checked)}
                 />
-                Show Errors
+                Also show entries with errors
             </div>
         </div>
     );

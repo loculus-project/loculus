@@ -43,6 +43,9 @@ a {
 
 .loculusColor{
   background: theme('colors.main');
+  &:hover {
+    background: theme('colors.primary.700');
+  }
 }
 
 .offCanvasTransform {

@@ -2,12 +2,13 @@ import { Pagination as MUIPagination } from '@mui/material';
 import type { FC } from 'react';
 
 import { navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes';
-import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
+import type { AccessionFilter, MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 
 type SearchPaginationProps = {
     count: number;
     metadataFilter: MetadataFilter[];
+    accessionFilter: AccessionFilter;
     mutationFilter: MutationFilter;
     orderBy: OrderBy;
     organism: string;
@@ -19,6 +20,7 @@ type SearchPaginationProps = {
 export const SearchPagination: FC<SearchPaginationProps> = ({
     count,
     metadataFilter,
+    accessionFilter,
     mutationFilter,
     orderBy,
     organism,
@@ -36,6 +38,7 @@ export const SearchPagination: FC<SearchPaginationProps> = ({
                     classOfSearchPage,
                     group,
                     metadataFilter,
+                    accessionFilter,
                     mutationFilter,
                     newPage,
                     orderBy,

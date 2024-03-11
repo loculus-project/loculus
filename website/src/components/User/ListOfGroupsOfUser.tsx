@@ -8,6 +8,7 @@ import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import LeaveIcon from '~icons/pepicons-pop/leave-circle-filled';
+import StreamlineUserMultipleGroup from '~icons/streamline/user-multiple-group';
 
 interface ListOfGroupsOfUserProps {
     clientConfig: ClientConfig;
@@ -40,6 +41,7 @@ const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({
                     groupsOfUser.map((group) => (
                         <li key={group.groupName} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                             <a className='text-lg' href={routes.groupOverviewPage(group.groupName)}>
+                                <StreamlineUserMultipleGroup className='w-6 h-6 inline-block mr-2' />
                                 {group.groupName}
                             </a>
                             <button
@@ -61,7 +63,10 @@ const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({
                         </li>
                     ))
                 ) : (
-                    <p>You are not a member of any group.</p>
+                    <p className='text-gray-600 text-sm'>
+                        You are not currently a member of a group. If you intend to submit sequences, please create a
+                        group or ask an administrator of an existing group to add you to their group.
+                    </p>
                 )}
             </ul>
         </>

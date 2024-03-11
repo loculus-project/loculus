@@ -1,5 +1,5 @@
 import type { AccessionVersion } from './types/backend.ts';
-import type { FilterValue, MutationFilter } from './types/config.ts';
+import type { AccessionFilter, FilterValue, MutationFilter } from './types/config.ts';
 import type { OrderBy } from './types/lapis.ts';
 import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
 
@@ -17,26 +17,28 @@ export const routes = {
     searchPage: <Filter extends FilterValue>(
         organism: string,
         metadataFilter: Filter[] = [],
+        accessionFilter: AccessionFilter = {},
         mutationFilter: MutationFilter = {},
         page: number | undefined = undefined,
         orderBy?: OrderBy,
     ) =>
         withOrganism(
             organism,
-            `/search?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
+            `/search?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
         ),
 
     mySequencesPage: (
         organism: string,
         group: string,
         metadataFilter: FilterValue[] = [],
+        accessionFilter: AccessionFilter = {},
         mutationFilter: MutationFilter = {},
         page: number | undefined = undefined,
         orderBy?: OrderBy,
     ) =>
         withOrganism(
             organism,
-            `/my_sequences/${group}?${buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString()}`,
+            `/my_sequences/${group}?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
         ),
     sequencesDetailsPage: (organism: string, accessionVersion: AccessionVersion | string) =>
         `/${organism}/seq/${getAccessionVersionString(accessionVersion)}`,
@@ -50,7 +52,8 @@ export const routes = {
         return url;
     },
     createGroup: () => '/user/createGroup',
-    submitPage: (organism: string) => withOrganism(organism, '/submit'),
+    submissionPage: (organism: string) => withOrganism(organism, '/submission'),
+    submitPage: (organism: string) => withOrganism(organism, '/submission/submit'),
     revisePage: (organism: string) => withOrganism(organism, '/revise'),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
         withOrganism(organism, `/user/edit/${accessionVersion.accession}/${accessionVersion.version}`),
@@ -60,7 +63,7 @@ export const routes = {
     },
     groupOverviewPage: (groupName: string) => `/group/${groupName}`,
     userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
-    userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submit/review`),
+    userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submission/review`),
     versionPage: (organism: string, accession: string) => withOrganism(organism, `/seq/${accession}/versions`),
     datasetsPage: (username?: string | undefined) => {
         const datasetPagePath = `/datasets` as const;
@@ -82,18 +85,27 @@ export const navigateToSearchLikePage = (
     classOfSearchPage: ClassOfSearchPageType,
     group: string | undefined,
     metadataFilter: FilterValue[] = [],
+    accessionFilter: AccessionFilter = {},
     mutationFilter: MutationFilter = {},
     page?: number,
     orderBy?: OrderBy,
 ) => {
-    const paramsString = buildSearchParams(metadataFilter, mutationFilter, page, orderBy).toString();
+    const paramsString = buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString();
 
     if (paramsString.length < approxMaxUrlLengthForSearch) {
         if (classOfSearchPage === SEARCH) {
-            location.href = routes.searchPage(organism, metadataFilter, mutationFilter, page, orderBy);
+            location.href = routes.searchPage(organism, metadataFilter, accessionFilter, mutationFilter, page, orderBy);
         }
         if (classOfSearchPage === MY_SEQUENCES) {
-            location.href = routes.mySequencesPage(organism, group!, metadataFilter, mutationFilter, page, orderBy);
+            location.href = routes.mySequencesPage(
+                organism,
+                group!,
+                metadataFilter,
+                accessionFilter,
+                mutationFilter,
+                page,
+                orderBy,
+            );
         }
     } else {
         const form = document.createElement('form');
@@ -118,6 +130,7 @@ export const navigateToSearchLikePage = (
 
 const buildSearchParams = <Filter extends FilterValue>(
     metadataFilter: Filter[],
+    accessionFilter: AccessionFilter,
     mutationFilter: MutationFilter,
     page?: number,
     orderBy?: OrderBy,
@@ -128,21 +141,16 @@ const buildSearchParams = <Filter extends FilterValue>(
             params.set(filter.name, filter.filterValue);
         }
     });
-    if (mutationFilter.nucleotideMutationQueries !== undefined && mutationFilter.nucleotideMutationQueries.length > 0) {
-        params.set('nucleotideMutations', mutationFilter.nucleotideMutationQueries.join(','));
-    }
-    if (mutationFilter.aminoAcidMutationQueries !== undefined && mutationFilter.aminoAcidMutationQueries.length > 0) {
-        params.set('aminoAcidMutations', mutationFilter.aminoAcidMutationQueries.join(','));
-    }
-    if (
-        mutationFilter.nucleotideInsertionQueries !== undefined &&
-        mutationFilter.nucleotideInsertionQueries.length > 0
-    ) {
-        params.set('nucleotideInsertions', mutationFilter.nucleotideInsertionQueries.join(','));
-    }
-    if (mutationFilter.aminoAcidInsertionQueries !== undefined && mutationFilter.aminoAcidInsertionQueries.length > 0) {
-        params.set('aminoAcidInsertions', mutationFilter.aminoAcidInsertionQueries.join(','));
-    }
+    const setCommaSeparatedParamsIfNotNotEmpty = (paramName: string, value: string[] | undefined) => {
+        if (value !== undefined && value.length > 0) {
+            params.set(paramName, value.join(','));
+        }
+    };
+    setCommaSeparatedParamsIfNotNotEmpty('accession', accessionFilter.accession);
+    setCommaSeparatedParamsIfNotNotEmpty('nucleotideMutations', mutationFilter.nucleotideMutationQueries);
+    setCommaSeparatedParamsIfNotNotEmpty('aminoAcidMutations', mutationFilter.aminoAcidMutationQueries);
+    setCommaSeparatedParamsIfNotNotEmpty('nucleotideInsertions', mutationFilter.nucleotideInsertionQueries);
+    setCommaSeparatedParamsIfNotNotEmpty('aminoAcidInsertions', mutationFilter.aminoAcidInsertionQueries);
     if (orderBy !== undefined) {
         params.set('orderBy', orderBy.field);
         params.set('order', orderBy.type);
@@ -207,11 +215,7 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
         },
         {
             text: 'Submit',
-            path: routes.submitPage(organism),
-        },
-        {
-            text: 'Revise',
-            path: routes.revisePage(organism),
+            path: routes.submissionPage(organism),
         },
         ...(isLoggedIn
             ? [{ text: 'My account', path: routes.userOverviewPage(organism) }]

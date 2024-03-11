@@ -5,9 +5,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { type FC, type FormEventHandler, useMemo, useState } from 'react';
 
-import { AutoCompleteField } from './fields/AutoCompleteField';
+import { AccessionField } from './fields/AccessionField.tsx';
+import { AutoCompleteField, type AutoCompleteFieldProps } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField';
-import type { FieldProps } from './fields/FieldProps.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
@@ -15,7 +15,7 @@ import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { routes, navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes.ts';
-import type { MetadataFilter, MutationFilter } from '../../types/config.ts';
+import type { AccessionFilter, MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
@@ -26,6 +26,7 @@ const queryClient = new QueryClient();
 interface SearchFormProps {
     organism: string;
     filters: MetadataFilter[];
+    initialAccessionFilter: AccessionFilter;
     initialMutationFilter: MutationFilter;
     clientConfig: ClientConfig;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -38,6 +39,7 @@ const clientLogger = getClientLogger('SearchForm');
 export const SearchForm: FC<SearchFormProps> = ({
     organism,
     filters,
+    initialAccessionFilter,
     initialMutationFilter,
     clientConfig,
     referenceGenomesSequenceNames,
@@ -50,6 +52,7 @@ export const SearchForm: FC<SearchFormProps> = ({
             label: filter.label ?? sentenceCase(filter.name),
         })),
     );
+    const [accessionFilter, setAccessionFilter] = useState<AccessionFilter>(initialAccessionFilter);
     const [mutationFilter, setMutationFilter] = useState<MutationFilter>(initialMutationFilter);
     const [isLoading, setIsLoading] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
@@ -70,7 +73,14 @@ export const SearchForm: FC<SearchFormProps> = ({
         event.preventDefault();
         setIsLoading(true);
         const searchableFieldValues = fieldValues.filter((field) => !(field.notSearchable ?? false));
-        navigateToSearchLikePage(organism, classOfSearchPage, group, searchableFieldValues, mutationFilter);
+        navigateToSearchLikePage(
+            organism,
+            classOfSearchPage,
+            group,
+            searchableFieldValues,
+            accessionFilter,
+            mutationFilter,
+        );
     };
 
     const resetSearch = async () => {
@@ -123,6 +133,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                         </div>
                         <form onSubmit={handleSearch}>
                             <div className='flex flex-col'>
+                                <AccessionField initialValue={initialAccessionFilter} onChange={setAccessionFilter} />
                                 <MutationField
                                     referenceGenomes={referenceGenomesSequenceNames}
                                     value={mutationFilter}
@@ -147,7 +158,7 @@ export const SearchForm: FC<SearchFormProps> = ({
     );
 };
 
-const SearchField: FC<FieldProps> = (props) => {
+const SearchField: FC<AutoCompleteFieldProps> = (props) => {
     const { field } = props;
 
     if (field.notSearchable === true) {

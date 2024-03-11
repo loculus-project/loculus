@@ -26,6 +26,9 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,6 +51,11 @@ jobs:
         with:
           name: default-helm-template
           path: defaultTemplate.yaml
+
+      - name: Deploy with helm
+        uses: WyriHaximus/github-action-helm3@v4
+        with:
+          exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ github.sha }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
 
       - uses: actions/setup-node@v4
         with:
@@ -80,11 +88,6 @@ jobs:
       - name: Install only System Dependencies
         run: cd website && npx playwright install-deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-
-      - name: Deploy with helm
-        uses: WyriHaximus/github-action-helm3@v4
-        with:
-          exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ github.sha }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
 
       # Waits are identical to the update-argocd-metadata.yml file
       # Mirror changes to that file

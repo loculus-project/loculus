@@ -56,14 +56,21 @@ export const useGroupPageHooks = ({
     };
 };
 
-export const useGroupCreation = ({ clientConfig, accessToken, setErrorMessage }: UseGroupOperationsProps) => {
+export const useGroupCreation = ({
+    clientConfig,
+    accessToken,
+}: {
+    clientConfig: ClientConfig;
+    accessToken: string;
+}) => {
     const { zodios } = useGroupManagementClient(clientConfig);
 
     const createGroup = useCallback(
         async (group: Group) => {
-            await callCreateGroup(accessToken, setErrorMessage, zodios)(group);
+            const result = await callCreateGroup(accessToken, zodios)(group);
+            return result;
         },
-        [accessToken, setErrorMessage, zodios],
+        [accessToken, zodios],
     );
 
     return {
@@ -98,19 +105,21 @@ export const useGroupManagementClient = (clientConfig: ClientConfig) => {
     };
 };
 
-function callCreateGroup(
-    accessToken: string,
-    openErrorFeedback: (message: string | undefined) => void,
-    zodios: ZodiosInstance<typeof groupManagementApi>,
-) {
+function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
     return async (group: Group) => {
         try {
             await zodios.createGroup(group, {
                 headers: createAuthorizationHeader(accessToken),
             });
+            return {
+                succeeded: true,
+            };
         } catch (error) {
             const message = `Failed to create group: ${stringifyMaybeAxiosError(error)}`;
-            openErrorFeedback(message);
+            return {
+                succeeded: false,
+                errorMessage: message,
+            };
         }
     };
 }
