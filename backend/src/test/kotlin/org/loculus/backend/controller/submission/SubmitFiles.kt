@@ -32,14 +32,14 @@ object SubmitFiles {
         fun getRevisedMetadataFile(accessions: List<Accession>): MockMultipartFile {
             val fileContent = getFileContent(REVISED_METADATA_FILE_NAME)
 
-            val lines = fileContent.trim().split("\n")
+            val lines = fileContent.trim().split("\n").toMutableList()
             val headerLine = lines.removeFirst()
 
             val revisedLines = lines
                 .map { it.substringAfter('\t') }
                 .zip(accessions)
                 .map { (line, accession) -> "$accession\t$line" }
-                .toList()
+                .toMutableList()
 
             revisedLines.addFirst(headerLine)
 
