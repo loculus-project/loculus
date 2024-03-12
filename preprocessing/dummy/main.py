@@ -2,11 +2,11 @@ import argparse
 import dataclasses
 import json
 import random
-import requests
 import time
-from typing import List
-from typing import Optional
 from dataclasses import dataclass, field
+from typing import List, Optional
+
+import requests
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--backend-host", type=str, default="http://127.0.0.1:8079",
@@ -52,8 +52,8 @@ class Sequence:
     accession: int
     version: int
     data: dict
-    errors: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
-    warnings: Optional[List[ProcessingAnnotation]] = field(default_factory=list)
+    errors: Optional[List[ProcessingAnnotation]] = field(default_factory=list[ProcessingAnnotation])
+    warnings: Optional[List[ProcessingAnnotation]] = field(default_factory=list[ProcessingAnnotation])
 
 
 def fetch_unprocessed_sequences(n: int) -> List[Sequence]:

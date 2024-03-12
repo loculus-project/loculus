@@ -10,14 +10,48 @@ from datetime import datetime
 import dateutil.parser as dateutil
 import pytz
 
-from .datatypes import AnnotationSource, ProcessingAnnotation, ProcessingResult
+from .datatypes import AnnotationSource, ProcessingAnnotation, ProcessingInput, ProcessingResult
 
 logger = logging.getLogger(__name__)
 
 
 class ProcessingFunctions:
+    @classmethod
+    def call_function(
+        cls, function_name, input_data: ProcessingInput, output_field: str
+    ) -> ProcessingResult:
+        if hasattr(cls, function_name):
+            func = getattr(cls, function_name)
+            result = func(input_data, output_field)
+            if isinstance(result, ProcessingResult):
+                return result
+            else:
+                # Handle unexpected case where a called function does not return a ProcessingResult
+                return ProcessingResult(
+                    datum=None,
+                    warnings=[],
+                    errors=[
+                        ProcessingAnnotation(
+                            source=[AnnotationSource(name=output_field, type="Metadata")],
+                            message="Function did not return ProcessingResult",
+                        )
+                    ],
+                )
+        else:
+            # Handle the case where no function matches the given string
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[
+                    ProcessingAnnotation(
+                        source=[AnnotationSource(name=output_field, type="Metadata")],
+                        message="Config error: No function matches the given string",
+                    )
+                ],
+            )
+
     @staticmethod
-    def check_date(input_data: dict[str, str], output_field: str) -> ProcessingResult:
+    def check_date(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
         """
         Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -26,7 +60,13 @@ class ProcessingFunctions:
         """
         date = input_data["date"]
 
-        # Parse date
+        if date is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
+
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
         try:
@@ -56,11 +96,11 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def process_date(input_data: dict[str, str], output_field) -> ProcessingResult:
+    def process_date(input_data: ProcessingInput, output_field) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error"""
         logger.debug(f"input_data: {input_data}")
-        date_str = input_data["date"]
-        release_date_str = input_data.get("release_date", "")
+        date_str = input_data["date"] or ""
+        release_date_str = input_data.get("release_date", "") or ""
         try:
             release_date = dateutil.parse(release_date_str)
         except Exception:
@@ -144,11 +184,18 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def parse_timestamp(input_data: dict[str, str], output_field: str) -> ProcessingResult:
+    def parse_timestamp(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
         """
         Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string
         """
         timestamp = input_data["timestamp"]
+
+        if timestamp is None:
+            return ProcessingResult(
+                datum=None,
+                warnings=[],
+                errors=[],
+            )
 
         # Parse timestamp
         warnings: list[ProcessingAnnotation] = []
@@ -177,7 +224,7 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def identity(input_data: dict[str, str], output_field: str) -> ProcessingResult:
+    def identity(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
         """
         Identity function, takes input_data["input"] and returns it as output
         """
@@ -193,37 +240,3 @@ class ProcessingFunctions:
                 ],
             )
         return ProcessingResult(datum=input_data["input"], warnings=[], errors=[])
-
-    @classmethod
-    def call_function(
-        cls, function_name, input_data: dict[str, str], output_field: str
-    ) -> ProcessingResult:
-        if hasattr(cls, function_name):
-            func = getattr(cls, function_name)
-            result = func(input_data, output_field)
-            if isinstance(result, ProcessingResult):
-                return result
-            else:
-                # Handle unexpected case where a called function does not return a ProcessingResult
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation(
-                            source=[AnnotationSource(name=output_field, type="Metadata")],
-                            message="Function did not return ProcessingResult",
-                        )
-                    ],
-                )
-        else:
-            # Handle the case where no function matches the given string
-            return ProcessingResult(
-                datum=None,
-                warnings=[],
-                errors=[
-                    ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
-                        message="Config error: No function matches the given string",
-                    )
-                ],
-            )
