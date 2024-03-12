@@ -33,7 +33,7 @@ class GroupManagementController(
         ) @RequestBody group: Group,
     ) = groupManagementDatabaseService.createNewGroup(group, username)
 
-    @Operation(description = "Get details of a group that the user is a member of.")
+    @Operation(description = "Get details of a group.")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups/{groupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUsersOfGroup(
@@ -42,7 +42,7 @@ class GroupManagementController(
             description = "The name of the group to get details of.",
         ) @PathVariable groupName: String,
     ): GroupDetails {
-        return groupManagementDatabaseService.getDetailsOfGroup(groupName, username)
+        return groupManagementDatabaseService.getDetailsOfGroup(groupName)
     }
 
     @Operation(description = "Get all groups the user is a member of.")
