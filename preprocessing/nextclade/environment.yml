@@ -6,7 +6,9 @@ dependencies:
   - python=3.12
   - biopython=1.83
   - nextclade=3.3.1
-  - PyYAML
+  - PyYAML=6.0
   - requests=2.31
   - pyjwt=2.8
-  - pip
+  - python-dateutil=2.9
+  - pytz=2024.1
+  - pip=24.0
