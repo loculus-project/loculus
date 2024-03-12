@@ -12,6 +12,7 @@
     "astro": "astro",
     "check-format": "eslint \"src/**/*.{ts,tsx,astro}\" && prettier --ignore-path \"../.gitignore\" --check \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
     "format": "eslint \"src/**/*.{ts,tsx,astro}\" --fix && prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
+    "format-fast": "prettier --ignore-path \"../.gitignore\" --write \"{src,tests}/**/*.{ts,tsx,json,astro}\"",
     "test": "vitest",
     "e2e": "npx playwright test",
     "e2e:headed": "npx playwright test --headed"
