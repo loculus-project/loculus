@@ -96,7 +96,14 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
-          required: false
+        - name: outbreak
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: lineage
+          type: string
+          generateIndex: true
+          autocomplete: true
         - name: ncbi_release_date
           type: date
         - name: country
@@ -117,6 +124,7 @@ defaultOrganisms:
           - collection_date
           - country
           - clade
+          - lineage
           - submitter_affiliation
           - ncbi_release_date
         defaultOrderBy: collection_date
@@ -149,6 +157,14 @@ defaultOrganisms:
             function: identity
             inputs:
               input: nextclade.clade
+          outbreak:
+            function: identity
+            inputs:
+              input: nextclade.outbreak
+          lineage:
+            function: identity
+            inputs:
+              input: nextclade.lineage
           country:
             function: identity
             inputs:
