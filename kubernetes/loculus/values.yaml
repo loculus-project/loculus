@@ -97,10 +97,28 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           required: false
+        - name: ncbi_release_date
+          type: date
+        - name: country
+          type: string
+          required: true
+          generateIndex: true
+          autocomplete: true
+        - name: isolate_name
+          type: string
+        - name: submitter_affiliation
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name : authors
+          type: string
       website:
         tableColumns:
           - collection_date
+          - country
           - clade
+          - submitter_affiliation
+          - ncbi_release_date
         defaultOrderBy: collection_date
         defaultOrder: descending
       silo:
@@ -116,6 +134,36 @@ defaultOrganisms:
         genes:
           OPG001: 247
         batch_size: 100
+        processing_spec:
+          collection_date:
+            function: process_date
+            inputs:
+              date: collection_date
+              release_date: Release date
+          ncbi_release_date:
+            function: parse_timestamp
+            inputs:
+              timestamp: Release date
+          clade:
+            function: identity
+            inputs:
+              input: nextclade.clade
+          country:
+            function: identity
+            inputs:
+              input: Geographic Location
+          submitter_affiliation:
+            function: identity
+            inputs:
+              input: Submitter Affiliation
+          authors:
+            function: identity
+            inputs:
+              input: Submitter Names
+          isolate_name:
+            function: identity
+            inputs:
+              input: Isolate Lineage
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
