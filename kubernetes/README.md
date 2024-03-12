@@ -1,13 +1,14 @@
 # Kubernetes setup
 
-This directory contains a Helm chart to deploy Loculus instances for several purposes. 
+This directory contains a Helm chart to deploy Loculus instances for several purposes.
 The Helm variable `environment` reflects those purposes:
-* `local`: Running locally with ports
-* `server`: Running on a server with domain name
+
+- `local`: Running locally with ports
+- `server`: Running on a server with domain name
 
 ## Deploying on a Kubernetes cluster (e.g. for production)
 
-*For development, follow the k3d instructions lower down the page.*
+_For development, follow the k3d instructions lower down the page._
 
 ### Prerequisites
 
@@ -21,28 +22,28 @@ Create your own configuration, by copying the `loculus/values.yaml` file and edi
 
 Install the Helm chart:
 
-```
+```shell
 helm install loculus kubernetes/loculus -f my-values.yaml
 ```
 
-# Local development/testing with k3d
+## Local development/testing with k3d
 
-## Prerequisites
+### Prerequisites
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
-## Setup for local development
+### Setup for local development
 
-### TLDR
+#### TLDR
 
 ```shell
 ../deploy.py cluster --dev
-../deploy.py helm --dev
+../deploy.py helm --dev --dockerconfigjson $DOCKERCONFIGJSON
 ```
 
 Start the [backend](/backend/README.md) and the [website](/website/README.md) locally.
 
-#### The `deploy.py` script
+##### The `deploy.py` script
 
 The `deploy.py` script wraps the most important `k3d` and `helm` commands.
 Check the help for more information:
@@ -54,7 +55,7 @@ Check the help for more information:
 Basic cluster management should be done with this script.
 Use `kubectl` to interact with the running cluster in full power (e.g. accessing individual pods, getting logs, etc.).
 
-### Details
+#### Details
 
 Create a cluster that doesn't expose the ports of the backend and the website:
 
@@ -62,8 +63,8 @@ Create a cluster that doesn't expose the ports of the backend and the website:
 ../deploy.py cluster --dev
 ```
 
-
 Install the chart with some port forwarding disabled to link to local manual runs of the backend and website:
+
 ```shell
 ../deploy.py helm --dev
 ```
@@ -98,23 +99,11 @@ You can also delete the cluster with:
 ```
 
 With helm based commands you can customise the values yaml file with `--values [file.yaml]`.
-## Argo CD
-
-ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].loculus.org`. Long branch names are shortened, and some special characters are not supported. You can find the exact URL in the ArgoCD UI: https://argocd.k3s.pathoplexus.org/ (login details are on [Slack](https://loculus.slack.com/archives/C05G172HL6L/p1698940904615039).
-
-The preview is intended to simulate the full backend and associated containers. It may be necessary to update this directory when changes are made to how containers need to be deployed.
-
-We do not currently support branch names containing underscores and other characters that can't go in domain names.
-
-### Secrets
-
-For preview instances this repo contains [sealed secrets](https://sealed-secrets.netlify.app/) that allow the loculus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
 
 ## Full deployment for E2E testing
 
 There is a `local` environment intended for E2E testing in GitHub Actions.
 It can also be used locally (though note caveats below for ARM-based mac systems).
-
 
 Create a cluster with ports for all services exposed:
 
@@ -128,13 +117,26 @@ Install the chart to deploy the services:
 ../deploy.py helm --branch [your_branch] --dockerconfigjson [base64 encoded ~/.docker/config.json]
 ```
 
+## Argo CD
+
+ArgoCD will aim to build preview instances for any open PR with the `preview` label. It may take 5 minutes for an instance to appear. The preview will appear at `[branch_name].loculus.org`. Long branch names are shortened, and some special characters are not supported. You can find the exact URL in the ArgoCD UI: https://argocd.k3s.pathoplexus.org/ (login details are on [Slack](https://loculus.slack.com/archives/C05G172HL6L/p1698940904615039).
+
+The preview is intended to simulate the full backend and associated containers. It may be necessary to update this directory when changes are made to how containers need to be deployed.
+
+We do not currently support branch names containing underscores and other characters that can't go in domain names.
+
+### Secrets
+
+For preview instances this repo contains [sealed secrets](https://sealed-secrets.netlify.app/) that allow the loculus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
+
 ## Tips
 
-### How to get dockerconfigjson if ~/.docker/config.json doesn't work
+### How to get dockerconfigjson if `~/.docker/config.json` doesn't work
 
-Your `~/.docker/config.json` may not contain the necessary credentials for the GitHub container registry. E.g. `cat ~/.docker/config.json` may return:
+Your `~/.docker/config.json` may not contain the necessary credentials for the GitHub container registry. This is the case if you get an empty `ghcr.io` value:
 
-```json
+```shell
+$ cat ~/.docker/config.json
 {
   "auths": {
     "ghcr.io": {}
@@ -144,13 +146,13 @@ Your `~/.docker/config.json` may not contain the necessary credentials for the G
 }
 ```
 
-This won't work for the `--dockerconfigjson` argument. Instead, you can use the following command to get the necessary credentials:
+This won't work for the `--dockerconfigjson` argument. Instead, you can use the following command to get the necessary credentials. Make sure to substitute `$YOURGITHUBUSERNAME` and `$YOURGITHUBPAT` with your GitHub username and a personal access token (PAT) with `read:packages` scope.
 
 ```shell
 $ kubectl create secret docker-registry ghcr \
 --docker-server="https://ghcr.io" \
---docker-username=YOURUSERNAME \
---docker-password=ghp_XXXXXXXX \
+--docker-username=$YOURGITHUBUSERNAME \
+--docker-password=$YOURGITHUBPAT \
 -o jsonpath="{.data.\.dockerconfigjson}" \
 --dry-run=client
 
@@ -158,3 +160,23 @@ eyXXXXXX%
 ```
 
 This will return a base64 encoded string similar to the one you can see above that starts with `ey` that you can use as `--dockerconfigjson` argument. Make sure not to copy the trailing `%` character that is added by `zsh`.
+
+### Debugging failed deployments with kubectl
+
+If a deployment fails, you can use `kubectl` to get more information. For example, to see the status of the pods:
+
+```shell
+kubectl get pods
+```
+
+Or to see the events which might give you more information about why a pod failed to start:
+
+```shell
+kubectl get events
+```
+
+### Required resources
+
+If you are on macOS, you need to give Docker Desktop sufficient system resources, otherwise local deployments will fail with warnings such as `node.kubernetes.io/disk-pressure` and `FreeDiskSpaceFailed`.
+
+As of March 2024, you need to give at least 3GB of RAM (6GB recommended) and 75GB of (virtual) disk space (100-150GB recommended). You can do this in the Docker Desktop settings under Resources > Advanced.
