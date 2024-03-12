@@ -1,7 +1,7 @@
 environment: server
 disableWebsite: false
 disableBackend: false
-disablePreprocessing: false
+disablePreprocessing: true
 siloImportLimitSeconds: 3600
 accessionPrefix: "LOC_"
 name: "Loculus"
