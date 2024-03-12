@@ -140,6 +140,7 @@ defaultOrganisms:
             inputs:
               date: collection_date
               release_date: Release date
+            required: true
           ncbi_release_date:
             function: parse_timestamp
             inputs:
@@ -152,6 +153,7 @@ defaultOrganisms:
             function: identity
             inputs:
               input: Geographic Location
+            required: true
           submitter_affiliation:
             function: identity
             inputs:

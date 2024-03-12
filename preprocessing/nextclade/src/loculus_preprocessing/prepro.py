@@ -20,6 +20,7 @@ from .datatypes import (
     ProcessedData,
     ProcessedEntry,
     ProcessingAnnotation,
+    ProcessingInput,
     ProcessingSpec,
     UnprocessedData,
     UnprocessedEntry,
@@ -36,7 +37,9 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         raise Exception(
-            "Fetching unprocessed data failed. Status code: {}".format(response.status_code),
+            "Fetching unprocessed data failed. Status code: {}".format(
+                response.status_code
+            ),
             response.text,
         )
     return parse_ndjson(response.text)
@@ -50,7 +53,9 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         json_object = json.loads(json_str)
         unprocessed_data = UnprocessedData(
             metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
+            unalignedNucleotideSequences=json_object["data"][
+                "unalignedNucleotideSequences"
+            ],
         )
         entry = UnprocessedEntry(
             accessionVersion=f"{json_object['accession']}.{json_object['version']}",
@@ -65,10 +70,14 @@ def enrich_with_nextclade(
 ) -> dict[AccessionVersion, UnprocessedWithNextclade]:
     unaligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
-    aligned_aminoacid_sequences: dict[AccessionVersion, dict[GeneName, AminoAcidSequence]] = {}
+    aligned_aminoacid_sequences: dict[
+        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
+    ] = {}
     for entry in unprocessed:
         id = entry.accessionVersion
-        unaligned_nucleotide_sequences[id] = entry.data.unalignedNucleotideSequences["main"]
+        unaligned_nucleotide_sequences[id] = entry.data.unalignedNucleotideSequences[
+            "main"
+        ]
         input_metadata[id] = entry.data.metadata
         aligned_aminoacid_sequences[id] = {}
         for gene in config.genes:
@@ -114,7 +123,9 @@ def enrich_with_nextclade(
                     aligned_translation = SeqIO.parse(alignedTranslations, "fasta")
                     for aligned_sequence in aligned_translation:
                         sequence_id = aligned_sequence.id
-                        aligned_aminoacid_sequences[sequence_id][gene] = str(aligned_sequence.seq)
+                        aligned_aminoacid_sequences[sequence_id][gene] = str(
+                            aligned_sequence.seq
+                        )
             except FileNotFoundError:
                 # TODO: Add warning to each sequence
                 logging.info(
@@ -150,6 +161,16 @@ def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
 
 
+def nullish(x: Any) -> bool:
+    match x:
+        case None:
+            return True
+        case "":
+            return True
+        case _:
+            return False
+
+
 def process_single(
     id: AccessionVersion, unprocessed: UnprocessedWithNextclade, config: Config
 ) -> ProcessedEntry:
@@ -159,8 +180,12 @@ def process_single(
     output_metadata = {}
 
     for output_field, spec_dict in config.processing_spec.items():
-        spec = ProcessingSpec(inputs=spec_dict["inputs"], function=spec_dict["function"])
-        input_data = {}
+        spec = ProcessingSpec(
+            inputs=spec_dict["inputs"],
+            function=spec_dict["function"],
+            required=spec_dict.get("required", False),
+        )
+        input_data: ProcessingInput = {}
         for arg_name, input_path in spec.inputs.items():
             input_data[arg_name] = None
             # If field starts with "nextclade.", take from nextclade metadata
@@ -170,7 +195,9 @@ def process_single(
                 if unprocessed.nextcladeMetadata is None:
                     errors.append(
                         ProcessingAnnotation(
-                            source=[AnnotationSource(name="main", type="NucleotideSequence")],
+                            source=[
+                                AnnotationSource(name="main", type="NucleotideSequence")
+                            ],
                             message="Nucleotide sequence failed to align",
                         )
                     )
@@ -192,13 +219,22 @@ def process_single(
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
         output_metadata[output_field] = processing_result.datum
+        if nullish(processing_result.datum) and spec.required:
+            logging.warn(
+                f"Metadata field {output_field} is required but nullish: {processing_result.datum}, setting to None"
+            )
+            output_metadata[output_field] = None
+
+    logging.debug(f"Processed {id}: {output_metadata}")
 
     return ProcessedEntry(
         accession=accession_from_str(id),
         version=version_from_str(id),
         data=ProcessedData(
             metadata=output_metadata,
-            unalignedNucleotideSequences={"main": unprocessed.unalignedNucleotideSequences},
+            unalignedNucleotideSequences={
+                "main": unprocessed.unalignedNucleotideSequences
+            },
             alignedNucleotideSequences={"main": unprocessed.alignedNucleotideSequences},
             nucleotideInsertions={"main": unprocessed.nucleotideInsertions},
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
@@ -223,7 +259,9 @@ def process_all(
     return processed_results
 
 
-def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Config) -> None:
+def submit_processed_sequences(
+    processed: Sequence[ProcessedEntry], config: Config
+) -> None:
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = "\n".join(json_strings)
     url = config.backend_host.rstrip("/") + "/submit-processed-data"

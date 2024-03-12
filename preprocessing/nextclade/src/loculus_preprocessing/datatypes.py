@@ -10,6 +10,7 @@ AminoAcidInsertion = str
 FunctionName = str  # Name of function present in processing_functions
 ArgName = str  # Name of argument present in processing_functions
 InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
+ProcessingInput = dict[str, str | None]
 
 
 @dataclass
@@ -31,6 +32,7 @@ FunctionInputs = dict[ArgName, InputField]
 class ProcessingSpec:
     inputs: FunctionInputs
     function: FunctionName
+    required: bool | None
 
 
 # For single segment, need to generalize for multi segments later
@@ -41,7 +43,7 @@ class UnprocessedWithNextclade:
     unalignedNucleotideSequences: NucleotideSequence
     alignedNucleotideSequences: NucleotideSequence | None
     nucleotideInsertions: list[NucleotideInsertion]
-    alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence]
+    alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
 
 
