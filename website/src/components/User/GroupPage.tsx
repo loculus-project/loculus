@@ -93,7 +93,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({ prefetchedGroupDetails, clientConf
                 </table>
             </div>
 
-            {groupDetails.data.users.some((user) => user.name === username) && (
+            {groupDetails.data?.users.some((user) => user.name === username) && (
                 <div>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
                     <form onSubmit={handleAddUser}>

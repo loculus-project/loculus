@@ -13,6 +13,7 @@ import org.loculus.backend.api.Group
 import org.loculus.backend.api.GroupDetails
 import org.loculus.backend.api.User
 import org.loculus.backend.controller.ConflictException
+import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -43,10 +44,10 @@ class GroupManagementDatabaseService(
                     )
                 }
                 .firstOrNull()
-                ?: throw IllegalArgumentException("Group $groupName does not exist."),
+                ?: throw NotFoundException("Group $groupName does not exist."),
             UserGroupsTable
                 .select { UserGroupsTable.groupNameColumn eq groupName }
-                .map { User(it[UserGroupsTable.userNameColumn]) }
+                .map { User(it[UserGroupsTable.userNameColumn]) },
         )
     }
 
