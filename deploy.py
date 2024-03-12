@@ -164,9 +164,11 @@ def handle_helm():
 def get_docker_config_json():
     if args.dockerconfigjson:
         return args.dockerconfigjson
-    else:
-        command = run_command('base64 ~/.docker/config.json', capture_output=True, text=True, shell=True)
-        return command.stdout.replace('\n', '')
+    if os.path.isfile(os.path.expanduser('~/.loculus/dockerconfigjson')):
+        with open(os.path.expanduser('~/.loculus/dockerconfigjson'), 'r') as file:
+            return file.read().replace('\n', '').replace(' ', '').replace('%', '')
+    command = run_command('base64 ~/.docker/config.json', capture_output=True, text=True, shell=True)
+    return command.stdout.replace('\n', '')
 
 
 def handle_helm_upgrade():
