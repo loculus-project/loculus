@@ -6,6 +6,7 @@ import time
 from tempfile import TemporaryDirectory
 from typing import Any, Sequence
 
+import dpath
 import requests
 from Bio import SeqIO
 
@@ -37,9 +38,7 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         raise Exception(
-            "Fetching unprocessed data failed. Status code: {}".format(
-                response.status_code
-            ),
+            "Fetching unprocessed data failed. Status code: {}".format(response.status_code),
             response.text,
         )
     return parse_ndjson(response.text)
@@ -53,9 +52,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
         json_object = json.loads(json_str)
         unprocessed_data = UnprocessedData(
             metadata=json_object["data"]["metadata"],
-            unalignedNucleotideSequences=json_object["data"][
-                "unalignedNucleotideSequences"
-            ],
+            unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],
         )
         entry = UnprocessedEntry(
             accessionVersion=f"{json_object['accession']}.{json_object['version']}",
@@ -75,9 +72,7 @@ def enrich_with_nextclade(
     ] = {}
     for entry in unprocessed:
         id = entry.accessionVersion
-        unaligned_nucleotide_sequences[id] = entry.data.unalignedNucleotideSequences[
-            "main"
-        ]
+        unaligned_nucleotide_sequences[id] = entry.data.unalignedNucleotideSequences["main"]
         input_metadata[id] = entry.data.metadata
         aligned_aminoacid_sequences[id] = {}
         for gene in config.genes:
@@ -123,9 +118,7 @@ def enrich_with_nextclade(
                     aligned_translation = SeqIO.parse(alignedTranslations, "fasta")
                     for aligned_sequence in aligned_translation:
                         sequence_id = aligned_sequence.id
-                        aligned_aminoacid_sequences[sequence_id][gene] = str(
-                            aligned_sequence.seq
-                        )
+                        aligned_aminoacid_sequences[sequence_id][gene] = str(aligned_sequence.seq)
             except FileNotFoundError:
                 # TODO: Add warning to each sequence
                 logging.info(
@@ -191,18 +184,18 @@ def process_single(
             # If field starts with "nextclade.", take from nextclade metadata
             if input_path.startswith("nextclade."):
                 # Remove "nextclade." prefix
-                input_path = input_path[10:]
                 if unprocessed.nextcladeMetadata is None:
                     errors.append(
                         ProcessingAnnotation(
-                            source=[
-                                AnnotationSource(name="main", type="NucleotideSequence")
-                            ],
+                            source=[AnnotationSource(name="main", type="NucleotideSequence")],
                             message="Nucleotide sequence failed to align",
                         )
                     )
                     continue
-                input_data[arg_name] = unprocessed.nextcladeMetadata[input_path]
+                sub_path = input_path[10:]
+                input_data[arg_name] = str(
+                    dpath.get(unprocessed.nextcladeMetadata, sub_path, separator=".", default=None)
+                )
                 continue
             if input_path not in unprocessed.inputMetadata:
                 errors.append(
@@ -232,9 +225,7 @@ def process_single(
         version=version_from_str(id),
         data=ProcessedData(
             metadata=output_metadata,
-            unalignedNucleotideSequences={
-                "main": unprocessed.unalignedNucleotideSequences
-            },
+            unalignedNucleotideSequences={"main": unprocessed.unalignedNucleotideSequences},
             alignedNucleotideSequences={"main": unprocessed.alignedNucleotideSequences},
             nucleotideInsertions={"main": unprocessed.nucleotideInsertions},
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
@@ -259,9 +250,7 @@ def process_all(
     return processed_results
 
 
-def submit_processed_sequences(
-    processed: Sequence[ProcessedEntry], config: Config
-) -> None:
+def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Config) -> None:
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = "\n".join(json_strings)
     url = config.backend_host.rstrip("/") + "/submit-processed-data"

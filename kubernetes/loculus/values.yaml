@@ -160,11 +160,11 @@ defaultOrganisms:
           outbreak:
             function: identity
             inputs:
-              input: nextclade.outbreak
+              input: nextclade.customNodeAttributes.outbreak
           lineage:
             function: identity
             inputs:
-              input: nextclade.lineage
+              input: nextclade.customNodeAttributes.lineage
           country:
             function: identity
             inputs:
