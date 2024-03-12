@@ -32,13 +32,27 @@ helm install loculus kubernetes/loculus -f my-values.yaml
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
+Create a Github personal access token (PAT) with `read:packages` scope. This is needed to pull images from the Github container registry.
+Create a file `~/.loculus/dockerconfigjson` with appropriate credentials so that k3d can pull the private images:
+
+```shell
+mkdir ~/.loculus
+
+kubectl create secret docker-registry ghcr \
+--docker-server="https://ghcr.io" \
+--docker-username=$YOURGITHUBUSERNAME \
+--docker-password=$YOURGITHUBPAT \
+-o jsonpath="{.data.\.dockerconfigjson}" \
+--dry-run=client > ~/.loculus/dockerconfigjson
+```
+
 ### Setup for local development
 
 #### TLDR
 
 ```shell
 ../deploy.py cluster --dev
-../deploy.py helm --dev --dockerconfigjson $DOCKERCONFIGJSON
+../deploy.py helm --dev
 ```
 
 Start the [backend](/backend/README.md) and the [website](/website/README.md) locally.
@@ -130,36 +144,6 @@ We do not currently support branch names containing underscores and other charac
 For preview instances this repo contains [sealed secrets](https://sealed-secrets.netlify.app/) that allow the loculus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
 
 ## Tips
-
-### How to get dockerconfigjson if `~/.docker/config.json` doesn't work
-
-Your `~/.docker/config.json` may not contain the necessary credentials for the GitHub container registry. This is the case if you get an empty `ghcr.io` value:
-
-```shell
-$ cat ~/.docker/config.json
-{
-  "auths": {
-    "ghcr.io": {}
-  },
-  "credsStore": "desktop",
-  "currentContext": "colima"
-}
-```
-
-This won't work for the `--dockerconfigjson` argument. Instead, you can use the following command to get the necessary credentials. Make sure to substitute `$YOURGITHUBUSERNAME` and `$YOURGITHUBPAT` with your GitHub username and a personal access token (PAT) with `read:packages` scope.
-
-```shell
-$ kubectl create secret docker-registry ghcr \
---docker-server="https://ghcr.io" \
---docker-username=$YOURGITHUBUSERNAME \
---docker-password=$YOURGITHUBPAT \
--o jsonpath="{.data.\.dockerconfigjson}" \
---dry-run=client
-
-eyXXXXXX%
-```
-
-This will return a base64 encoded string similar to the one you can see above that starts with `ey` that you can use as `--dockerconfigjson` argument. Make sure not to copy the trailing `%` character that is added by `zsh`.
 
 ### Debugging failed deployments with kubectl
 
