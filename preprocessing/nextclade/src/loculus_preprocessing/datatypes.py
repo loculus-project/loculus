@@ -37,7 +37,7 @@ class ProcessingSpec:
 
 # For single segment, need to generalize for multi segments later
 @dataclass
-class UnprocessedWithNextclade:
+class UnprocessedAfterNextclade:
     inputMetadata: dict[str, Any]  # Original user supplied metadata
     nextcladeMetadata: dict[str, Any] | None  # Derived metadata produced by Nextclade
     unalignedNucleotideSequences: NucleotideSequence
