@@ -94,3 +94,19 @@ table, tr, td {
   border-radius: 1rem;
   display:flex
 }
+
+.mdContainer h1{
+  @apply text-2xl font-semibold text-main break-all;
+}
+
+.mdContainer h2{
+  @apply text-xl font-semibold text-main break-all;
+}
+
+.mdContainer h3{
+  @apply text-lg font-semibold text-main break-all;
+}
+
+.mdContainer p{
+  @apply my-1;
+}
