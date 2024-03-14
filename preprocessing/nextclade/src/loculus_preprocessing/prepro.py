@@ -3,10 +3,10 @@ import json
 import logging
 import subprocess
 import time
-from collections.abc import Mapping, Sequence
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, Sequence
 
+import dpath
 import requests
 from Bio import SeqIO
 
@@ -14,12 +14,21 @@ from .backend import get_jwt
 from .config import Config
 from .datatypes import (
     AccessionVersion,
-    NextcladeResult,
+    AminoAcidSequence,
+    AnnotationSource,
+    AnnotationSourceType,
+    GeneName,
+    NucleotideSequence,
     ProcessedData,
     ProcessedEntry,
+    ProcessingAnnotation,
+    ProcessingInput,
+    ProcessingSpec,
+    UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
 )
+from .processing_functions import ProcessingFunctions
 
 
 def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
@@ -54,16 +63,30 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
     return entries
 
 
-def run_nextclade(
+def enrich_with_nextclade(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
-) -> Mapping[AccessionVersion, NextcladeResult]:
+) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
+    unaligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
+    input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
+    aligned_aminoacid_sequences: dict[
+        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
+    ] = {}
+    for entry in unprocessed:
+        id = entry.accessionVersion
+        unaligned_nucleotide_sequences[id] = entry.data.unalignedNucleotideSequences["main"]
+        input_metadata[id] = entry.data.metadata
+        aligned_aminoacid_sequences[id] = {}
+        for gene in config.genes:
+            aligned_aminoacid_sequences[id][gene] = None
+
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         # TODO: Generalize for multiple segments (flu)
         input_file = result_dir + "/input.fasta"
         with open(input_file, "w") as f:
-            for sequence in unprocessed:
-                f.write(f">{sequence.accessionVersion}\n")
-                f.write(f"{sequence.data.unalignedNucleotideSequences['main']}\n")
+            for id, sequence in unaligned_nucleotide_sequences.items():
+                f.write(f">{id}\n")
+                f.write(f"{sequence}\n")
+
         command = [
             "nextclade3",
             "run",
@@ -82,57 +105,12 @@ def run_nextclade(
 
         logging.debug(f"Nextclade results available in {result_dir}")
 
-        # TODO: Process metadata. For now, just use "date"
-        for unprocessed_sequence in unprocessed:
-            logging.debug(f"Metadata: {unprocessed_sequence.data.metadata}")
-
-        def process_date(date: str) -> str:
-            """Parse date string. If it's incomplete, add 01-01, if year lacks, add 1900"""
-            components = date.split("-")
-
-            if len(components) == 0 or date == "":
-                # No date provided
-                return "1900-01-01"
-            elif len(components) == 1:
-                # Only year is provided
-                return f"{date}-01-01"
-            elif len(components) == 2:
-                # Year and month are provided
-                return f"{date}-01"
-            elif len(components) == 3:
-                # Full date is provided
-                return date
-            else:
-                # Invalid date format
-                raise ValueError("Invalid date format")
-
-        # TODO: Process metadata. For now, just use "date"
-        processed_metadata = {
-            unprocessed_sequence.accessionVersion: {
-                "collection_date": process_date(
-                    unprocessed_sequence.data.metadata["collection_date"]
-                )
-            }
-            for unprocessed_sequence in unprocessed
-        }
-
-        processed: dict[str, dict[str, Any]] = {
-            unprocessed_sequence.accessionVersion: {
-                "unalignedNuc": unprocessed_sequence.data.unalignedNucleotideSequences,
-                "alignedNuc": "N" * config.reference_length,
-                "alignedTranslations": {
-                    gene: "X" * gene_length for gene, gene_length in config.genes.items()
-                },
-                "metadata": processed_metadata[unprocessed_sequence.accessionVersion],
-            }
-            for unprocessed_sequence in unprocessed
-        }
-
+        aligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
         with open(result_dir + "/nextclade.aligned.fasta", "r") as alignedNucs:
             aligned_nuc = SeqIO.parse(alignedNucs, "fasta")
             for aligned_sequence in aligned_nuc:
-                sequence_id = aligned_sequence.id
-                processed[sequence_id]["alignedNuc"] = str(aligned_sequence.seq)
+                sequence_id: str = aligned_sequence.id
+                aligned_nucleotide_sequences[sequence_id] = str(aligned_sequence.seq)
 
         for gene in config.genes:
             translation_path = result_dir + f"/nextclade.cds_translation.{gene}.fasta"
@@ -141,26 +119,35 @@ def run_nextclade(
                     aligned_translation = SeqIO.parse(alignedTranslations, "fasta")
                     for aligned_sequence in aligned_translation:
                         sequence_id = aligned_sequence.id
-                        processed[sequence_id]["alignedTranslations"][gene] = str(
-                            aligned_sequence.seq
-                        )
+                        aligned_aminoacid_sequences[sequence_id][gene] = str(aligned_sequence.seq)
             except FileNotFoundError:
                 # TODO: Add warning to each sequence
-                for id in processed.keys():
-                    processed[id]["alignedTranslations"][gene] = ""
                 logging.info(
                     f"Gene {gene} not found in Nextclade results expected at: {translation_path}"
                 )
 
+        nextclade_metadata: dict[AccessionVersion, dict[str, Any]] = {}
         # TODO: More QC can be lifted from here
         with open(result_dir + "/nextclade.json") as nextclade_json:
             for result in json.load(nextclade_json)["results"]:
                 id = result["seqName"]
-                processed[id]["metadata"].update({"clade": result["clade"]})
-        return processed
+                nextclade_metadata[id] = result
+
+    return {
+        id: UnprocessedAfterNextclade(
+            inputMetadata=input_metadata[id],
+            nextcladeMetadata=nextclade_metadata.get(id, None),
+            unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
+            alignedNucleotideSequences=aligned_nucleotide_sequences.get(id, None),
+            nucleotideInsertions=[],
+            alignedAminoAcidSequences=aligned_aminoacid_sequences.get(id, {}),
+            aminoAcidInsertions={gene: [] for gene in config.genes},
+        )
+        for id in unaligned_nucleotide_sequences.keys()
+    }
 
 
-def id_from_str(id_str: AccessionVersion) -> str:
+def accession_from_str(id_str: AccessionVersion) -> str:
     return id_str.split(".")[0]
 
 
@@ -168,27 +155,112 @@ def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
 
 
-def process(
+def null_per_backend(x: Any) -> bool:
+    match x:
+        case None:
+            return True
+        case "":
+            return True
+        case _:
+            return False
+
+
+def process_single(
+    id: AccessionVersion, unprocessed: UnprocessedAfterNextclade, config: Config
+) -> ProcessedEntry:
+    """Process a single sequence per config"""
+    errors: list[ProcessingAnnotation] = []
+    warnings: list[ProcessingAnnotation] = []
+    output_metadata = {}
+
+    for output_field, spec_dict in config.processing_spec.items():
+        spec = ProcessingSpec(
+            inputs=spec_dict["inputs"],
+            function=spec_dict["function"],
+            required=spec_dict.get("required", False),
+        )
+        input_data: ProcessingInput = {}
+        for arg_name, input_path in spec.inputs.items():
+            input_data[arg_name] = None
+            # If field starts with "nextclade.", take from nextclade metadata
+            NEXTCLADE_PREFIX = "nextclade."
+            if input_path.startswith(NEXTCLADE_PREFIX):
+                # Remove "nextclade." prefix
+                if unprocessed.nextcladeMetadata is None:
+                    errors.append(
+                        ProcessingAnnotation(
+                            source=[
+                                AnnotationSource(
+                                    name="main",
+                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                                )
+                            ],
+                            message="Nucleotide sequence failed to align",
+                        )
+                    )
+                    continue
+                sub_path = input_path[len(NEXTCLADE_PREFIX) :]
+                input_data[arg_name] = str(
+                    dpath.get(
+                        unprocessed.nextcladeMetadata,
+                        sub_path,
+                        separator=".",
+                        default=None,
+                    )
+                )
+                continue
+            if input_path not in unprocessed.inputMetadata:
+                errors.append(
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=f"Metadata field {input_path} not found",
+                    )
+                )
+                continue
+            input_data[arg_name] = unprocessed.inputMetadata[input_path]
+        processing_result = ProcessingFunctions.call_function(
+            spec.function, input_data, output_field
+        )
+        errors.extend(processing_result.errors)
+        warnings.extend(processing_result.warnings)
+        output_metadata[output_field] = processing_result.datum
+        if null_per_backend(processing_result.datum) and spec.required:
+            logging.warn(
+                f"Metadata field {output_field} is required but nullish: "
+                + f"{processing_result.datum}, setting to 'Not provided'"
+            )
+            output_metadata[output_field] = "Not provided"
+
+    logging.debug(f"Processed {id}: {output_metadata}")
+
+    return ProcessedEntry(
+        accession=accession_from_str(id),
+        version=version_from_str(id),
+        data=ProcessedData(
+            metadata=output_metadata,
+            unalignedNucleotideSequences={"main": unprocessed.unalignedNucleotideSequences},
+            alignedNucleotideSequences={"main": unprocessed.alignedNucleotideSequences},
+            nucleotideInsertions={"main": unprocessed.nucleotideInsertions},
+            alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
+            aminoAcidInsertions=unprocessed.aminoAcidInsertions,
+        ),
+        errors=errors,
+        warnings=warnings,
+    )
+
+
+def process_all(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> Sequence[ProcessedEntry]:
-    nextclade_results = run_nextclade(unprocessed, dataset_dir, config)
-    processed = [
-        ProcessedEntry(
-            accession=id_from_str(sequence_id),
-            version=version_from_str(sequence_id),
-            data=ProcessedData(
-                metadata=nextclade_results[sequence_id]["metadata"],
-                unalignedNucleotideSequences=nextclade_results[sequence_id]["unalignedNuc"],
-                alignedNucleotideSequences={"main": nextclade_results[sequence_id]["alignedNuc"]},
-                nucleotideInsertions={"main": []},
-                alignedAminoAcidSequences=nextclade_results[sequence_id]["alignedTranslations"],
-                aminoAcidInsertions={gene: [] for gene in config.genes},
-            ),
-        )
-        for sequence_id in nextclade_results.keys()
-    ]
+    nextclade_results = enrich_with_nextclade(unprocessed, dataset_dir, config)
+    processed_results = []
+    for id, result in nextclade_results.items():
+        processed_single = process_single(id, result, config)
+        processed_results.append(processed_single)
 
-    return processed
+    return processed_results
 
 
 def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Config) -> None:
@@ -201,6 +273,8 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
     }
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:
+        with open("failed_submission.json", "w") as f:
+            f.write(ndjson_string)
         raise Exception(
             f"Submitting processed data failed. Status code: {response.status_code}\n"
             + f"Response: {response.text}\n"
@@ -209,19 +283,24 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
     logging.info("Processed data submitted successfully")
 
 
+def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
+    dataset_download_command = [
+        "nextclade3",
+        "dataset",
+        "get",
+        f"--name={config.nextclade_dataset_name}",
+        f"--output-dir={dataset_dir}",
+    ]
+
+    logging.info(f"Downloading Nextclade dataset: {dataset_download_command}")
+    if subprocess.run(dataset_download_command).returncode != 0:
+        raise Exception("Dataset download failed")
+    logging.info("Nextclade dataset downloaded successfully")
+
+
 def run(config: Config) -> None:
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as dataset_dir:
-        dataset_download_command = [
-            "nextclade3",
-            "dataset",
-            "get",
-            f"--name={config.nextclade_dataset_name}",
-            f"--output-dir={dataset_dir}",
-        ]
-
-        logging.debug(f"Downloading Nextclade dataset: {dataset_download_command}")
-        if subprocess.run(dataset_download_command).returncode != 0:
-            raise Exception("Dataset download failed")
+        download_nextclade_dataset(dataset_dir, config)
         total_processed = 0
         while True:
             logging.debug("Fetching unprocessed sequences")
@@ -232,8 +311,12 @@ def run(config: Config) -> None:
                 time.sleep(1)
                 continue
             # Process the sequences, get result as dictionary
-            processed = process(unprocessed, dataset_dir, config)
+            processed = process_all(unprocessed, dataset_dir, config)
             # Submit the result
-            submit_processed_sequences(processed, config)
+            try:
+                submit_processed_sequences(processed, config)
+            except Exception as e:
+                logging.exception(f"Submitting processed data failed. Traceback: {e}")
+                continue
             total_processed += len(processed)
             logging.info("Processed {} sequences".format(len(processed)))

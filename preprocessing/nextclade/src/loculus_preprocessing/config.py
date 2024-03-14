@@ -5,7 +5,7 @@ import logging
 import os
 from dataclasses import dataclass
 from types import UnionType
-from typing import Type, get_args
+from typing import Any, Type, get_args
 
 import yaml
 
@@ -30,6 +30,7 @@ class Config:
     keep_tmp_dir: bool = False
     reference_length: int = 197209
     batch_size: int = 5
+    processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
 
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:

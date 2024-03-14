@@ -96,11 +96,37 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
-          required: false
+        - name: outbreak
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: lineage
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: ncbi_release_date
+          type: date
+        - name: country
+          type: string
+          required: true
+          generateIndex: true
+          autocomplete: true
+        - name: isolate_name
+          type: string
+        - name: author_affiliation
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: authors
+          type: string
       website:
         tableColumns:
           - collection_date
+          - country
           - clade
+          - lineage
+          - author_affiliation
+          - ncbi_release_date
         defaultOrderBy: collection_date
         defaultOrder: descending
       silo:
@@ -116,6 +142,46 @@ defaultOrganisms:
         genes:
           OPG001: 247
         batch_size: 100
+        processing_spec:
+          collection_date:
+            function: process_date
+            inputs:
+              date: collection_date
+              release_date: ncbi_release_date
+            required: true
+          ncbi_release_date:
+            function: parse_timestamp
+            inputs:
+              timestamp: ncbi_release_date
+          clade:
+            function: identity
+            inputs:
+              input: nextclade.clade
+          outbreak:
+            function: identity
+            inputs:
+              input: nextclade.customNodeAttributes.outbreak
+          lineage:
+            function: identity
+            inputs:
+              input: nextclade.customNodeAttributes.lineage
+          country:
+            function: identity
+            inputs:
+              input: country
+            required: true
+          author_affiliation:
+            function: identity
+            inputs:
+              input: author_affiliation
+          authors:
+            function: identity
+            inputs:
+              input: authors
+          isolate_name:
+            function: identity
+            inputs:
+              input: isolate_name
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
