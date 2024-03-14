@@ -23,9 +23,9 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingInput,
     ProcessingSpec,
+    UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
-    UnprocessedWithNextclade,
 )
 from .processing_functions import ProcessingFunctions
 
@@ -64,7 +64,7 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 
 def enrich_with_nextclade(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
-) -> dict[AccessionVersion, UnprocessedWithNextclade]:
+) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     unaligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
@@ -133,7 +133,7 @@ def enrich_with_nextclade(
                 nextclade_metadata[id] = result
 
     return {
-        id: UnprocessedWithNextclade(
+        id: UnprocessedAfterNextclade(
             inputMetadata=input_metadata[id],
             nextcladeMetadata=nextclade_metadata.get(id, None),
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
@@ -154,7 +154,7 @@ def version_from_str(id_str: AccessionVersion) -> int:
     return int(id_str.split(".")[1])
 
 
-def nullish(x: Any) -> bool:
+def null_per_backend(x: Any) -> bool:
     match x:
         case None:
             return True
@@ -165,7 +165,7 @@ def nullish(x: Any) -> bool:
 
 
 def process_single(
-    id: AccessionVersion, unprocessed: UnprocessedWithNextclade, config: Config
+    id: AccessionVersion, unprocessed: UnprocessedAfterNextclade, config: Config
 ) -> ProcessedEntry:
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
@@ -182,7 +182,8 @@ def process_single(
         for arg_name, input_path in spec.inputs.items():
             input_data[arg_name] = None
             # If field starts with "nextclade.", take from nextclade metadata
-            if input_path.startswith("nextclade."):
+            NEXTCLADE_PREFIX = "nextclade."
+            if input_path.startswith(NEXTCLADE_PREFIX):
                 # Remove "nextclade." prefix
                 if unprocessed.nextcladeMetadata is None:
                     errors.append(
@@ -192,9 +193,14 @@ def process_single(
                         )
                     )
                     continue
-                sub_path = input_path[10:]
+                sub_path = input_path[len(NEXTCLADE_PREFIX) :]
                 input_data[arg_name] = str(
-                    dpath.get(unprocessed.nextcladeMetadata, sub_path, separator=".", default=None)
+                    dpath.get(
+                        unprocessed.nextcladeMetadata,
+                        sub_path,
+                        separator=".",
+                        default=None,
+                    )
                 )
                 continue
             if input_path not in unprocessed.inputMetadata:
@@ -212,9 +218,10 @@ def process_single(
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
         output_metadata[output_field] = processing_result.datum
-        if nullish(processing_result.datum) and spec.required:
+        if null_per_backend(processing_result.datum) and spec.required:
             logging.warn(
-                f"Metadata field {output_field} is required but nullish: {processing_result.datum}, setting to 'Not provided'"
+                f"Metadata field {output_field} is required but nullish: "
+                + f"{processing_result.datum}, setting to 'Not provided'"
             )
             output_metadata[output_field] = "Not provided"
 
@@ -234,8 +241,6 @@ def process_single(
         errors=errors,
         warnings=warnings,
     )
-
-    # Config defines output metadata, which field to take, and how to process it
 
 
 def process_all(
@@ -303,7 +308,6 @@ def run(config: Config) -> None:
             try:
                 submit_processed_sequences(processed, config)
             except Exception as e:
-                # Log full traceback with message: "Submitting processed data failed. Traceback: ..."
                 logging.exception(f"Submitting processed data failed. Traceback: {e}")
                 continue
             total_processed += len(processed)
