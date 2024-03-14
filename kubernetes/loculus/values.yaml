@@ -113,11 +113,11 @@ defaultOrganisms:
           autocomplete: true
         - name: isolate_name
           type: string
-        - name: submitter_affiliation
+        - name: author_affiliation
           type: string
           generateIndex: true
           autocomplete: true
-        - name : authors
+        - name: authors
           type: string
       website:
         tableColumns:
@@ -125,7 +125,7 @@ defaultOrganisms:
           - country
           - clade
           - lineage
-          - submitter_affiliation
+          - author_affiliation
           - ncbi_release_date
         defaultOrderBy: collection_date
         defaultOrder: descending
@@ -147,12 +147,12 @@ defaultOrganisms:
             function: process_date
             inputs:
               date: collection_date
-              release_date: Release date
+              release_date: ncbi_release_date
             required: true
           ncbi_release_date:
             function: parse_timestamp
             inputs:
-              timestamp: Release date
+              timestamp: ncbi_release_date
           clade:
             function: identity
             inputs:
@@ -168,20 +168,20 @@ defaultOrganisms:
           country:
             function: identity
             inputs:
-              input: Geographic Location
+              input: country
             required: true
-          submitter_affiliation:
+          author_affiliation:
             function: identity
             inputs:
-              input: Submitter Affiliation
+              input: author_affiliation
           authors:
             function: identity
             inputs:
-              input: Submitter Names
+              input: authors
           isolate_name:
             function: identity
             inputs:
-              input: Isolate Lineage
+              input: isolate_name
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
