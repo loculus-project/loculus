@@ -1,13 +1,9 @@
 ---
 import BaseLayout from './BaseLayout.astro'
 
-interface Props {
-    title: string;
-}
-
-const { title } = Astro.props;
+const {frontmatter} = Astro.props;
 ---
-<BaseLayout title={title}>
+<BaseLayout title={frontmatter.title}>
     <div class="mdContainer">
     <slot />
     </div>
