@@ -111,10 +111,10 @@ const expectTextInSequenceData = {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
             expect(screen.getByDisplayValue(value)).toBeInTheDocument();
         }),
-    processed: (metadata: Record<string, string>): void =>
+    processed: (metadata: Record<string, string | null>): void =>
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(key + ':')).toBeInTheDocument();
-            expect(screen.getByText(value.toString())).toBeInTheDocument();
+            expect(screen.getByText(value ?? 'null')).toBeInTheDocument();
         }),
     processedMetadata: (metadata: Record<string, MetadataField>): void =>
         Object.entries(metadata).forEach(([key, value]) => {
