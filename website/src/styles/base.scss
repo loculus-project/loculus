@@ -95,6 +95,10 @@ table, tr, td {
   display:flex
 }
 
+.mdContainer{
+  @apply max-w-xl mx-auto;
+}
+
 .mdContainer h1{
   @apply text-2xl font-semibold text-main break-all;
 }
