@@ -26,7 +26,7 @@ class GroupManagementDatabaseService(
 
     fun getDetailsOfGroup(groupName: String): GroupDetails {
         return GroupDetails(
-            GroupsTable
+            group = GroupsTable
                 .select { GroupsTable.groupNameColumn eq groupName }
                 .map {
                     Group(
@@ -45,7 +45,7 @@ class GroupManagementDatabaseService(
                 }
                 .firstOrNull()
                 ?: throw NotFoundException("Group $groupName does not exist."),
-            UserGroupsTable
+            users = UserGroupsTable
                 .select { UserGroupsTable.groupNameColumn eq groupName }
                 .map { User(it[UserGroupsTable.userNameColumn]) },
         )

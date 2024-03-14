@@ -37,7 +37,6 @@ class GroupManagementController(
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups/{groupName}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getUsersOfGroup(
-        @UsernameFromJwt username: String,
         @Parameter(
             description = "The name of the group to get details of.",
         ) @PathVariable groupName: String,
