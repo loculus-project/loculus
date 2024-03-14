@@ -300,6 +300,11 @@ def run(config: Config) -> None:
             # Process the sequences, get result as dictionary
             processed = process_all(unprocessed, dataset_dir, config)
             # Submit the result
-            submit_processed_sequences(processed, config)
+            try:
+                submit_processed_sequences(processed, config)
+            except Exception as e:
+                # Log full traceback with message: "Submitting processed data failed. Traceback: ..."
+                logging.exception(f"Submitting processed data failed. Traceback: {e}")
+                continue
             total_processed += len(processed)
             logging.info("Processed {} sequences".format(len(processed)))
