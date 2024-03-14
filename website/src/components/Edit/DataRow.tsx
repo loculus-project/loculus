@@ -57,7 +57,7 @@ export const ProcessedDataRow: FC<ProcessedDataRowProps> = ({ row }) => (
         <td className={`w-1/4 `}>{row.key}:</td>
         <td />
         <td className='w-full'>
-            <div className='px-3'>{row.value}</div>{' '}
+            <div className='px-3'>{row.value}</div>
         </td>
     </tr>
 );

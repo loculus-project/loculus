@@ -122,7 +122,7 @@ const sequenceData = {
         ORF7a: 'K'.repeat(122),
         ORF7b: 'I'.repeat(44),
         ORF8: 'L'.repeat(122),
-        ORF9b: 'P'.repeat(98),
+        ORF9b: null,
         S: 'V'.repeat(1274),
     },
     aminoAcidInsertions: {

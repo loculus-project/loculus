@@ -167,10 +167,10 @@ export const sequenceEntryToEdit = accessionVersion.merge(
         }),
         processedData: z.object({
             metadata: metadataRecord,
-            unalignedNucleotideSequences: z.record(z.string()),
-            alignedNucleotideSequences: z.record(z.string()),
+            unalignedNucleotideSequences: z.record(z.string().nullable()),
+            alignedNucleotideSequences: z.record(z.string().nullable()),
             nucleotideInsertions: z.record(z.array(z.string())),
-            alignedAminoAcidSequences: z.record(z.string()),
+            alignedAminoAcidSequences: z.record(z.string().nullable()),
             aminoAcidInsertions: z.record(z.array(z.string())),
         }),
     }),

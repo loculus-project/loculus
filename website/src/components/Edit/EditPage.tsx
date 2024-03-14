@@ -265,7 +265,7 @@ const ProcessedSequences: FC<ProcessedSequencesProps> = ({ processedSequenceRows
     <>
         <Subtitle key={`preprocessing_sequences_${sequenceType}`} title={sentenceCase(sequenceType)} />
         {Object.entries(processedSequenceRows[sequenceType]).map(([key, value]) => (
-            <ProcessedDataRow key={`processed_${sequenceType}_${key}`} row={{ key, value }} />
+            <ProcessedDataRow key={`processed_${sequenceType}_${key}`} row={{ key, value: value ?? 'null' }} />
         ))}
     </>
 );
