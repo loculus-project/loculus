@@ -16,6 +16,7 @@ from .datatypes import (
     AccessionVersion,
     AminoAcidSequence,
     AnnotationSource,
+    AnnotationSourceType,
     GeneName,
     NucleotideSequence,
     ProcessedData,
@@ -188,7 +189,12 @@ def process_single(
                 if unprocessed.nextcladeMetadata is None:
                     errors.append(
                         ProcessingAnnotation(
-                            source=[AnnotationSource(name="main", type="NucleotideSequence")],
+                            source=[
+                                AnnotationSource(
+                                    name="main",
+                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                                )
+                            ],
                             message="Nucleotide sequence failed to align",
                         )
                     )
@@ -206,7 +212,9 @@ def process_single(
             if input_path not in unprocessed.inputMetadata:
                 errors.append(
                     ProcessingAnnotation(
-                        source=[AnnotationSource(name=input_path, type="Metadata")],
+                        source=[
+                            AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
+                        ],
                         message=f"Metadata field {input_path} not found",
                     )
                 )

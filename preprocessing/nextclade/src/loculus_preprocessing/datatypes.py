@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Any, Literal
+from enum import StrEnum, unique
+from typing import Any
 
 AccessionVersion = str
 GeneName = str
@@ -9,8 +10,28 @@ NucleotideInsertion = str
 AminoAcidInsertion = str
 FunctionName = str  # Name of function present in processing_functions
 ArgName = str  # Name of argument present in processing_functions
-InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
+InputField = (
+    str  # Name of field in input data, either inputMetadata or NextcladeMetadata
+)
 ProcessingInput = dict[str, str | None]
+
+
+@unique
+class AnnotationSourceType(StrEnum):
+    METADATA = "Metadata"
+    NUCLEOTIDE_SEQUENCE = "NucleotideSequence"
+
+
+@dataclass
+class AnnotationSource:
+    name: str
+    type: AnnotationSourceType
+
+
+@dataclass
+class ProcessingAnnotation:
+    source: list[AnnotationSource]
+    message: str
 
 
 @dataclass
@@ -55,18 +76,6 @@ class ProcessedData:
     nucleotideInsertions: dict[str, Any]
     alignedAminoAcidSequences: dict[str, Any]
     aminoAcidInsertions: dict[str, Any]
-
-
-@dataclass
-class AnnotationSource:
-    name: str
-    type: Literal["Metadata", "NucleotideSequence"]
-
-
-@dataclass
-class ProcessingAnnotation:
-    source: list[AnnotationSource]
-    message: str
 
 
 @dataclass

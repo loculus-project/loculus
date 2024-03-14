@@ -10,7 +10,13 @@ from datetime import datetime
 import dateutil.parser as dateutil
 import pytz
 
-from .datatypes import AnnotationSource, ProcessingAnnotation, ProcessingInput, ProcessingResult
+from .datatypes import (
+    AnnotationSource,
+    AnnotationSourceType,
+    ProcessingAnnotation,
+    ProcessingInput,
+    ProcessingResult,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +28,11 @@ class ProcessingFunctions:
     ) -> ProcessingResult:
         if hasattr(cls, function_name):
             func = getattr(cls, function_name)
-            result = func(input_data, output_field)
+            try:
+                result = func(input_data, output_field)
+            except Exception as e:
+                message = f"Error calling function {function_name} with arguments {input_data}: {e}"
+                logger.exception(message)
             if isinstance(result, ProcessingResult):
                 return result
             else:
@@ -32,7 +42,11 @@ class ProcessingFunctions:
                     warnings=[],
                     errors=[
                         ProcessingAnnotation(
-                            source=[AnnotationSource(name=output_field, type="Metadata")],
+                            source=[
+                                AnnotationSource(
+                                    name=output_field, type=AnnotationSourceType.METADATA
+                                )
+                            ],
                             message="Function did not return ProcessingResult",
                         )
                     ],
@@ -44,8 +58,10 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
-                        message="Config error: No function matches the given string",
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message=f"Config error: No processing function matches: {function_name}",
                     )
                 ],
             )
@@ -74,7 +90,9 @@ class ProcessingFunctions:
             if parsed_date > datetime.now():
                 warnings.append(
                     ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
                         message="Date is in the future.",
                     )
                 )
@@ -89,7 +107,9 @@ class ProcessingFunctions:
                 warnings=warnings,
                 errors=[
                     ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
                         message=error_message,
                     )
                 ],
@@ -123,20 +143,22 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
                         message="Collection date is required",
                     )
                 ],
             )
 
-        for fmt, message in formats_to_messages.items():
+        for format, message in formats_to_messages.items():
             try:
-                parsed_date = datetime.strptime(date_str, fmt).replace(tzinfo=pytz.utc)
-                if fmt == "%Y-%m-%d":
+                parsed_date = datetime.strptime(date_str, format).replace(tzinfo=pytz.utc)
+                if format == "%Y-%m-%d":
                     datum = parsed_date.strftime("%Y-%m-%d")
-                elif fmt == "%Y-%m":
+                elif format == "%Y-%m":
                     datum = f"{parsed_date.strftime('%Y-%m')}-01"
-                elif fmt == "%Y":
+                elif format == "%Y":
                     datum = f"{parsed_date.strftime('%Y')}-01-01"
 
                 logger.debug(f"parsed_date: {parsed_date}")
@@ -144,7 +166,11 @@ class ProcessingFunctions:
                 if message:
                     warnings.append(
                         ProcessingAnnotation(
-                            source=[AnnotationSource(name=output_field, type="Metadata")],
+                            source=[
+                                AnnotationSource(
+                                    name=output_field, type=AnnotationSourceType.METADATA
+                                )
+                            ],
                             message=message,
                         )
                     )
@@ -153,7 +179,11 @@ class ProcessingFunctions:
                     logger.debug(f"parsed_date: {parsed_date} > {datetime.now(tz=pytz.utc)}")
                     errors.append(
                         ProcessingAnnotation(
-                            source=[AnnotationSource(name=output_field, type="Metadata")],
+                            source=[
+                                AnnotationSource(
+                                    name=output_field, type=AnnotationSourceType.METADATA
+                                )
+                            ],
                             message="Collection date is in the future.",
                         )
                     )
@@ -162,7 +192,11 @@ class ProcessingFunctions:
                     logger.debug(f"parsed_date: {parsed_date} > release_date: {release_date}")
                     errors.append(
                         ProcessingAnnotation(
-                            source=[AnnotationSource(name=output_field, type="Metadata")],
+                            source=[
+                                AnnotationSource(
+                                    name=output_field, type=AnnotationSourceType.METADATA
+                                )
+                            ],
                             message="Collection date is after release date.",
                         )
                     )
@@ -177,7 +211,9 @@ class ProcessingFunctions:
             warnings=[],
             errors=[
                 ProcessingAnnotation(
-                    source=[AnnotationSource(name=output_field, type="Metadata")],
+                    source=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
                     message="Date format is not recognized.",
                 )
             ],
@@ -216,7 +252,9 @@ class ProcessingFunctions:
                 datum=None,
                 warnings=[
                     ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
                         message=error_message,
                     )
                 ],
@@ -234,7 +272,9 @@ class ProcessingFunctions:
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
-                        source=[AnnotationSource(name=output_field, type="Metadata")],
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
                         message=f"No data found for output field: {output_field}",
                     )
                 ],
