@@ -3,19 +3,19 @@
     @apply max-w-3xl mx-auto;
   }
   
-  .mdContainer h1{
+  .mdContainer h2{
     @apply text-2xl font-semibold text-main break-all my-3;
   }
   
-  .mdContainer h2{
+  .mdContainer h3{
     @apply text-xl font-semibold text-main break-all my-3;
   }
   
-  .mdContainer h3{
+  .mdContainer h4{
     @apply text-lg font-semibold text-main break-all my-3;
 
   }
   
   .mdContainer p{
-    @apply my-1;
+    @apply my-2;
   }
