@@ -214,9 +214,9 @@ def process_single(
         output_metadata[output_field] = processing_result.datum
         if nullish(processing_result.datum) and spec.required:
             logging.warn(
-                f"Metadata field {output_field} is required but nullish: {processing_result.datum}, setting to None"
+                f"Metadata field {output_field} is required but nullish: {processing_result.datum}, setting to 'Not provided'"
             )
-            output_metadata[output_field] = None
+            output_metadata[output_field] = "Not provided"
 
     logging.debug(f"Processed {id}: {output_metadata}")
 
