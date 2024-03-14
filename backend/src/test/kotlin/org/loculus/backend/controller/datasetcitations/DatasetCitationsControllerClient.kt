@@ -15,10 +15,11 @@ const val MOCK_DATASET_VERSION = 1L
 const val MOCK_DATASET_NAME = "mock-dataset-name"
 const val MOCK_DATASET_DESCRIPTION = "mock-dataset-description"
 const val MOCK_DATASET_RECORDS = "[{ \"accession\": \"mock-sequence-accession.1\", \"type\": \"loculus\" }]"
-const val MOCK_AUTHOR_ID = "mock-author-id"
-const val MOCK_AUTHOR_NAME = "testuser"
-const val MOCK_AUTHOR_AFFILIATION = "mock-author-affiliation"
-const val MOCK_AUTHOR_EMAIL = "mock-author@email.com"
+const val MOCK_USERNAME = "testuser"
+const val MOCK_USER_EMAIL = "testuser@example.com"
+const val MOCK_USER_FIRST_NAME = "Test"
+const val MOCK_USER_LAST_NAME = "User"
+const val MOCK_USER_UNIVERSITY = "Test University"
 
 class DatasetCitationsControllerClient(
     private val mockMvc: MockMvc,
@@ -119,63 +120,16 @@ class DatasetCitationsControllerClient(
     fun getDatasetCitedByPublication(
         datasetId: String = MOCK_DATASET_ID,
         datasetVersion: Long = MOCK_DATASET_VERSION,
-        jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         get("/get-dataset-cited-by-publication")
             .param("datasetId", datasetId)
-            .param("version", datasetVersion.toString())
-            .withAuth(jwt),
+            .param("version", datasetVersion.toString()),
     )
 
-    fun getAuthor(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
+    fun getAuthor(username: String): ResultActions = mockMvc.perform(
         get("/get-author")
-            .withAuth(jwt),
+            .param("username", username),
     )
-
-    fun createAuthor(
-        authorName: String? = MOCK_AUTHOR_NAME,
-        authorAffiliation: String? = MOCK_AUTHOR_AFFILIATION,
-        authorEmail: String? = MOCK_AUTHOR_EMAIL,
-        jwt: String? = jwtForDefaultUser,
-    ): ResultActions = mockMvc.perform(
-        post("/create-author")
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(
-                """{
-                    "name":"$authorName",
-                    "affiliation":"$authorAffiliation",
-                    "email":"$authorEmail"
-                }""",
-            )
-            .withAuth(jwt),
-    )
-
-    fun updateAuthor(
-        authorId: String = MOCK_AUTHOR_ID,
-        authorName: String? = MOCK_AUTHOR_NAME,
-        authorAffiliation: String? = MOCK_AUTHOR_AFFILIATION,
-        authorEmail: String? = MOCK_AUTHOR_EMAIL,
-        jwt: String? = jwtForDefaultUser,
-    ): ResultActions = mockMvc.perform(
-        put("/update-author")
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .param("authorId", authorId)
-            .content(
-                """{
-                    "name":"$authorName",
-                    "affiliation":"$authorAffiliation",
-                    "email":"$authorEmail"
-                }""",
-            )
-            .withAuth(jwt),
-    )
-
-    fun deleteAuthor(authorId: String = MOCK_AUTHOR_ID, jwt: String? = jwtForDefaultUser): ResultActions =
-        mockMvc.perform(
-            delete("/delete-author")
-                .param("authorId", authorId)
-                .withAuth(jwt),
-        )
 
     fun validateDatasetRecords(datasetRecords: String, jwt: String? = jwtForDefaultUser): ResultActions =
         mockMvc.perform(

@@ -52,7 +52,8 @@ class SecurityConfig {
         "/data-use-terms/*",
         "/get-dataset",
         "/get-dataset-records",
-        "get-dataset-cited-by-publication",
+        "/get-dataset-cited-by-publication",
+        "/get-author",
     )
 
     @Bean

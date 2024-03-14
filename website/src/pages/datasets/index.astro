@@ -7,7 +7,9 @@ import { ErrorFeedback } from '../../components/ErrorFeedback';
 import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { DatasetCitationClient } from '../../services/datasetCitationClient.ts';
+import { KeycloakClientManager } from '../../utils/KeycloakClientManager';
 import { getAccessToken } from '../../utils/getAccessToken';
+import { urlForKeycloakAccountPage } from '../../utils/urlForKeycloakAccountPage';
 
 const clientConfig = getRuntimeConfig().public;
 const session = Astro.locals.session!;
@@ -18,27 +20,36 @@ const datasetClient = DatasetCitationClient.create();
 
 const datasetsResponse = await datasetClient.getDatasetsOfUser(accessToken);
 const userCitedByResponse = await datasetClient.getUserCitedBy(username, accessToken);
-const authorResponse = await datasetClient.getAuthor(accessToken);
+const authorResponse = await datasetClient.getAuthor(username);
+
+const keycloakClient = await KeycloakClientManager.getClient();
+const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/personal-info';
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>
     <div class='flex flex-col justify-center items-center'>
         <div class='flex flex-row justify-center w-5/6 divide-x'>
             <div class='w-3/4 flex flex-col justify-start'>
-                <AuthorDetails
-                    displayFullDetails
-                    clientConfig={clientConfig}
-                    accessToken={accessToken}
-                    fontSize={120}
-                    client:load
-                    name={session.user?.name}
-                    email={session.user?.email}
-                    emailVerified={session.user?.emailVerified}
-                    {...authorResponse.match<{ authorId: string | undefined; affiliation?: string | undefined }>(
-                        (ok) => ok,
-                        () => ({ authorId: undefined, affiliation: undefined }),
-                    )}
-                />
+                {
+                    authorResponse.match(
+                        (authorProfile) => (
+                            <AuthorDetails
+                                displayFullDetails
+                                firstName={authorProfile.firstName}
+                                lastName={authorProfile.lastName}
+                                emailDomain={authorProfile.emailDomain}
+                                university={authorProfile.university}
+                                editAccountUrl={editAccountUrl}
+                            />
+                        ),
+                        (error) => (
+                            <ErrorFeedback
+                                message={'Error while fetching author profile: ' + JSON.stringify(error)}
+                                client:load
+                            />
+                        ),
+                    )
+                }
                 <hr />
                 <div class='flex justify-start'>
                     <div>

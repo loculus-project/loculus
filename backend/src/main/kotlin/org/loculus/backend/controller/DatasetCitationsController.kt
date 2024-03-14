@@ -2,18 +2,16 @@ package org.loculus.backend.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
-import org.loculus.backend.api.Author
+import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
 import org.loculus.backend.api.Dataset
 import org.loculus.backend.api.DatasetRecord
-import org.loculus.backend.api.ResponseAuthor
 import org.loculus.backend.api.ResponseDataset
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.api.SubmittedAuthor
-import org.loculus.backend.api.SubmittedAuthorUpdate
 import org.loculus.backend.api.SubmittedDataset
 import org.loculus.backend.api.SubmittedDatasetRecord
 import org.loculus.backend.api.SubmittedDatasetUpdate
+import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.datasetcitations.DatasetCitationsDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.springframework.validation.annotation.Validated
@@ -31,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController
 class DatasetCitationsController(
     private val datasetCitationsService: DatasetCitationsDatabaseService,
     private val submissionDatabaseService: SubmissionDatabaseService,
+    private val keycloakAdapter: KeycloakAdapter,
 ) {
     @Operation(description = "Get a dataset")
     @GetMapping("/get-dataset")
@@ -110,42 +109,11 @@ class DatasetCitationsController(
 
     @Operation(description = "Get an author")
     @GetMapping("/get-author")
-    fun getAuthor(@UsernameFromJwt username: String): Author {
-        return datasetCitationsService.getAuthor(username)
-    }
-
-    @Operation(description = "Create a new author with the specified data")
-    @PostMapping("/create-author")
-    fun createAuthor(@UsernameFromJwt username: String, @RequestBody body: SubmittedAuthor): ResponseAuthor {
-        return datasetCitationsService.createAuthor(
-            username,
-            body.name,
-            body.email,
-            body.emailVerified,
-            body.affiliation,
-        )
-    }
-
-    @Operation(description = "Update an author with the specified data")
-    @PutMapping("/update-author")
-    fun updateAuthor(
-        @UsernameFromJwt username: String,
-        @RequestParam authorId: String,
-        @RequestBody body: SubmittedAuthorUpdate,
-    ): ResponseAuthor {
-        return datasetCitationsService.updateAuthor(
-            username,
-            authorId,
-            body.name,
-            body.email,
-            body.emailVerified,
-            body.affiliation,
-        )
-    }
-
-    @Operation(description = "Delete an author")
-    @DeleteMapping("/delete-author")
-    fun deleteAuthor(@UsernameFromJwt username: String, @RequestParam authorId: String) {
-        return datasetCitationsService.deleteAuthor(username, authorId)
+    fun getAuthor(@RequestParam username: String): AuthorProfile {
+        val keycloakUser = keycloakAdapter.getUsersWithName(username).firstOrNull()
+        if (keycloakUser == null) {
+            throw NotFoundException("Author profile $username does not exist")
+        }
+        return datasetCitationsService.transformKeycloakUserToAuthorProfile(keycloakUser)
     }
 }

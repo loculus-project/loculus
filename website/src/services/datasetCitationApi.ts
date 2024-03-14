@@ -2,7 +2,7 @@ import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
 import { authorizationHeader, notAuthorizedError } from './commonApiTypes.ts';
-import { author, datasets, datasetRecords, citedByResult } from '../types/datasetCitation.ts';
+import { authorProfile, datasets, datasetRecords, citedByResult } from '../types/datasetCitation.ts';
 
 const getDatasetsOfUserEndpoint = makeEndpoint({
     method: 'get',
@@ -155,56 +155,9 @@ const deleteDatasetEndpoint = makeEndpoint({
 
 const getAuthorEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-author',
+    path: '/get-author?username=:username',
     alias: 'getAuthor',
-    parameters: [authorizationHeader],
-    response: author,
-    errors: [notAuthorizedError],
-});
-
-const createAuthorEndpoint = makeEndpoint({
-    method: 'post',
-    path: '/create-author',
-    alias: 'createAuthor',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'data',
-            type: 'Body',
-            schema: z.object({
-                name: z.string(),
-                affiliation: z.string().optional(),
-                email: z.string().optional(),
-                emailVerified: z.boolean().optional(),
-            }),
-        },
-    ],
-    response: z.object({
-        authorId: z.string(),
-    }),
-    errors: [notAuthorizedError],
-});
-
-const updateAuthorEndpoint = makeEndpoint({
-    method: 'put',
-    path: '/update-author?authorId=:authorId',
-    alias: 'updateAuthor',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'data',
-            type: 'Body',
-            schema: z.object({
-                name: z.string(),
-                affiliation: z.string().optional(),
-                email: z.string().optional(),
-                emailVerified: z.boolean().optional(),
-            }),
-        },
-    ],
-    response: z.object({
-        authorId: z.string(),
-    }),
+    response: authorProfile,
     errors: [notAuthorizedError],
 });
 
@@ -220,6 +173,4 @@ export const datasetCitationApi = makeApi([
     updateDatasetEndpoint,
     deleteDatasetEndpoint,
     getAuthorEndpoint,
-    createAuthorEndpoint,
-    updateAuthorEndpoint,
 ]);
