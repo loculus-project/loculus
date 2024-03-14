@@ -1,11 +1,12 @@
 ---
 import '../styles/mdcontainer.scss';
-import BaseLayout from './BaseLayout.astro'
+import BaseLayout from './BaseLayout.astro';
 
-const {frontmatter} = Astro.props;
+const { frontmatter } = Astro.props;
 ---
+
 <BaseLayout title={frontmatter.title}>
-    <div class="mdContainer">
-    <slot />
+    <div class='mdContainer'>
+        <slot />
     </div>
 </BaseLayout>
