@@ -11,7 +11,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-public class DatasetValidationEndpointsTest(
+class DatasetValidationEndpointsTest(
     @Autowired private val client: DatasetCitationsControllerClient,
     @Autowired private val submissionConvenienceClient: SubmissionConvenienceClient,
 ) {
@@ -43,6 +43,22 @@ public class DatasetValidationEndpointsTest(
 
     @Test
     fun `WHEN calling validate dataset records with invalid status accessions THEN returns unprocessable entity`() {
+        val accessionJson = """[{"accession": "ABCD.EF", "type": "loculus"}]"""
+        client.validateDatasetRecords(datasetRecords = accessionJson)
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString(
+                        "Accession versions must be integers",
+                    ),
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN calling validate dataset records with invalid accession format THEN returns unprocessable entity`() {
         val accessions = submissionConvenienceClient.prepareDefaultSequenceEntriesToInProcessing()
         val invalidAccession = accessions.first().accession
         val accessionJson = """[{"accession": "$invalidAccession", "type": "loculus"}]"""
@@ -56,6 +72,25 @@ public class DatasetValidationEndpointsTest(
                     containsString(
                         "Accession versions are in not in one of the states [APPROVED_FOR_RELEASE]",
                     ),
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN calling validate dataset with duplicate accessions THEN returns unprocessable entity`() {
+        val accessions = submissionConvenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val validAccession = accessions.first().accession
+        val accessionJson = """[
+            {"accession": "$validAccession", "type": "loculus"},
+            {"accession": "$validAccession", "type": "loculus"}
+        ]"""
+        client.validateDatasetRecords(datasetRecords = accessionJson)
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString("Dataset must not contain duplicate accessions"),
                 ),
             )
     }

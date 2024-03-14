@@ -44,7 +44,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
         (type: DatasetRecordType) => {
             const accessions = accessionsInput[type];
             return accessions
-                .split(',')
+                .split(/[,\s]/)
                 .map((accession) => accession.trim())
                 .filter(Boolean);
         },
@@ -62,7 +62,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                 return;
             }
             validateDatasetRecords(datasetRecords);
-        }, 2000);
+        }, 1000);
         return () => clearTimeout(validationDelay);
     }, [accessionsInput, getAccessionsByType, validateDatasetRecords]);
 
@@ -179,7 +179,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                             htmlFor='dataset-description'
                             className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                         >
-                            {`Comma-separated list of ${type} accessions *`}
+                            {`List of ${type} accessions delimited by comma, newline, or space *`}
                         </label>
                         <textarea
                             id={`${type}-accession-input`}
@@ -188,7 +188,6 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                             onChange={(event: any) => {
                                 setAccessionInput(event.target.value, type as DatasetRecordType);
                             }}
-                            maxLength={1000}
                             rows={4}
                             cols={40}
                         />

@@ -177,13 +177,11 @@ class DatasetCitationsControllerClient(
                 .withAuth(jwt),
         )
 
-    fun validateDatasetRecords(
-        datasetRecords: String = MOCK_DATASET_RECORDS,
-        jwt: String? = jwtForDefaultUser,
-    ): ResultActions = mockMvc.perform(
-        post("/validate-dataset-records")
-            .contentType(MediaType.APPLICATION_JSON_VALUE)
-            .content(datasetRecords)
-            .withAuth(jwt),
-    )
+    fun validateDatasetRecords(datasetRecords: String, jwt: String? = jwtForDefaultUser): ResultActions =
+        mockMvc.perform(
+            post("/validate-dataset-records")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(datasetRecords)
+                .withAuth(jwt),
+        )
 }

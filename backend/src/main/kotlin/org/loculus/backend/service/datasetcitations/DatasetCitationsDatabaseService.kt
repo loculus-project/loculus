@@ -471,17 +471,28 @@ class DatasetCitationsDatabaseService(
         if (datasetRecords.isEmpty()) {
             throw UnprocessableEntityException("Dataset must contain at least one record")
         }
+
+        val uniqueAccessions = datasetRecords.map { it.accession }.toSet()
+        if (uniqueAccessions.size != datasetRecords.size) {
+            throw UnprocessableEntityException("Dataset must not contain duplicate accessions")
+        }
+
         val accessionsWithoutVersions = datasetRecords.filter { !it.accession.contains('.') }.map { it.accession }
         accessionPreconditionValidator.validateAccessions(
             accessionsWithoutVersions,
             listOf(APPROVED_FOR_RELEASE),
         )
-        val accessionsWithVersions = datasetRecords
-            .filter { it.accession.contains('.') }
-            .map {
-                val (accession, version) = it.accession.split('.')
-                AccessionVersion(accession, version.toLong())
-            }
+        val accessionsWithVersions = try {
+            datasetRecords
+                .filter { it.accession.contains('.') }
+                .map {
+                    val (accession, version) = it.accession.split('.')
+                    AccessionVersion(accession, version.toLong())
+                }
+        } catch (e: NumberFormatException) {
+            throw UnprocessableEntityException("Accession versions must be integers")
+        }
+
         accessionPreconditionValidator.validateAccessionVersions(
             accessionsWithVersions,
             listOf(APPROVED_FOR_RELEASE),
