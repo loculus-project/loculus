@@ -1,4 +1,4 @@
-import {routes} from "./routes.ts"
+import { routes } from './routes.ts';
 export const bottomNavigationItems = [
     {
         text: 'About',
@@ -20,4 +20,4 @@ export const bottomNavigationItems = [
         text: 'Status',
         path: routes.statusPage(),
     },
-]
+];
