@@ -62,7 +62,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                     />
                     <KeyValueComponent
                         accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
-                        keyName={sequenceEntryStatus.accession}
+                        keyName={getAccessionVersionString(sequenceEntryStatus)}
                         value={sequenceEntryStatus.submissionId}
                     />
                     {data !== undefined && <MetadataList data={data} isLoading={isLoading} />}
