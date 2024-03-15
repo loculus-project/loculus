@@ -1,24 +1,14 @@
-import Accordion from '@mui/material/Accordion';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import FormControl from '@mui/material/FormControl';
-import FormGroup from '@mui/material/FormGroup';
-import FormHelperText from '@mui/material/FormHelperText';
-import TextField from '@mui/material/TextField';
-import { type FC, type FormEvent, useState } from 'react';
+import { AxiosError } from 'axios';
+import { type FC, type FormEvent, useState, useEffect, useCallback } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
 import { datasetCitationClientHooks } from '../../services/serviceHooks';
 import { DatasetRecordType, type Dataset, type DatasetRecord } from '../../types/datasetCitation';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { serializeRecordsToAccessionsInput, validateAccessionByType } from '../../utils/parseAccessionInput';
+import { serializeRecordsToAccessionsInput } from '../../utils/parseAccessionInput';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
-import CheckIcon from '~icons/ic/baseline-check-circle-outline';
-import ErrorIcon from '~icons/ic/baseline-error';
-import ExpandMoreIcon from '~icons/ic/baseline-expand-more';
 
 const logger = getClientLogger('DatasetForm');
 
@@ -31,10 +21,50 @@ type DatasetFormProps = {
 
 export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, editDataset, editDatasetRecords }) => {
     const [datasetName, setDatasetName] = useState(editDataset?.name ?? '');
+    const [datasetNameValidation, setDatasetNameValidation] = useState('');
     const [datasetDescription, setDatasetDescription] = useState(editDataset?.description ?? '');
     const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editDatasetRecords));
-    const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
-    const { createDataset, updateDataset, isLoading } = useActionHooks(clientConfig, accessToken, openErrorFeedback);
+    const [datasetRecordValidation, setDatasetRecordValidation] = useState('');
+
+    const {
+        errorMessage: serverErrorMessage,
+        isErrorOpen,
+        openErrorFeedback,
+        closeErrorFeedback,
+    } = useErrorFeedbackState();
+
+    const { createDataset, updateDataset, validateDatasetRecords, isLoading } = useActionHooks(
+        clientConfig,
+        accessToken,
+        openErrorFeedback,
+        setDatasetRecordValidation,
+    );
+
+    const getAccessionsByType = useCallback(
+        (type: DatasetRecordType) => {
+            const accessions = accessionsInput[type];
+            return accessions
+                .split(/[,\s]/)
+                .map((accession) => accession.trim())
+                .filter(Boolean);
+        },
+        [accessionsInput],
+    );
+
+    useEffect(() => {
+        const validationDelay = setTimeout(async () => {
+            const datasetRecords = getAccessionsByType(DatasetRecordType.loculus).map((accession) => ({
+                accession,
+                type: DatasetRecordType.loculus,
+            }));
+            if (datasetRecords.length === 0) {
+                setDatasetRecordValidation('');
+                return;
+            }
+            validateDatasetRecords(datasetRecords);
+        }, 1000);
+        return () => clearTimeout(validationDelay);
+    }, [accessionsInput, getAccessionsByType, validateDatasetRecords]);
 
     const setAccessionInput = (accessionInput: string, type: DatasetRecordType) => {
         setAccessionsInput((prevState) => ({
@@ -52,18 +82,6 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                     accession,
                     type: DatasetRecordType.loculus,
                 })),
-                ...getAccessionsByType(DatasetRecordType.genbank).map((accession) => ({
-                    accession,
-                    type: DatasetRecordType.genbank,
-                })),
-                ...getAccessionsByType(DatasetRecordType.sra).map((accession) => ({
-                    accession,
-                    type: DatasetRecordType.sra,
-                })),
-                ...getAccessionsByType(DatasetRecordType.gisaid).map((accession) => ({
-                    accession,
-                    type: DatasetRecordType.gisaid,
-                })),
             ],
         };
     };
@@ -71,6 +89,14 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
         const dataset = getDatasetFromInput();
+        if (dataset.name === '') {
+            setDatasetNameValidation('Dataset name is required');
+            return;
+        }
+        if (getAccessionsByType(DatasetRecordType.loculus).length === 0) {
+            setDatasetRecordValidation('At least one Loculus accession is required');
+            return;
+        }
         if (editDataset !== undefined) {
             updateDataset({
                 datasetId: editDataset.datasetId,
@@ -82,119 +108,112 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
         return;
     };
 
-    const getAccessionsByType = (type: DatasetRecordType) => {
-        const accessions = accessionsInput[type];
-        return accessions
-            .split(',')
-            .map((accession) => accession.trim())
-            .filter(Boolean);
+    const getTextAreaStyles = (validationMessage: string = '') => {
+        if (validationMessage === '') {
+            return 'block w-full p-4 text-gray-900 border border-gray-300 rounded-lg bg-gray-50 text-base focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500';
+        }
+        return 'block w-full p-4 text-gray-900 border border-red-300 rounded-lg bg-gray-50 text-base focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:border-red-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500';
     };
 
-    const renderAccessionStatus = (accession: string, type: DatasetRecordType) => {
-        const status = validateAccessionByType(accession, type);
-        return status ? <CheckIcon /> : <ErrorIcon />;
+    const getInputFieldStyles = (validationMessage: string = '') => {
+        if (validationMessage === '') {
+            return 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500';
+        }
+        return 'bg-gray-50 border border-red-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-red-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500';
     };
 
     return (
         <div className='flex flex-col items-center  overflow-auto-y w-full'>
-            <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
+            <ManagedErrorFeedback message={serverErrorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex justify-start items-center py-5'>
                 <h1 className='text-xl font-semibold py-4'>{`${editDataset ? 'Edit' : 'Create'} Dataset`}</h1>
             </div>
             <div className='space-y-6 max-w-md w-full'>
-                <FormControl variant='outlined' fullWidth>
-                    <TextField
+                <div className='mb-6'>
+                    <label
+                        htmlFor='dataset-name'
+                        className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
+                    >
+                        Dataset name *
+                    </label>
+                    <input
+                        type='text'
                         id='dataset-name'
-                        className='text'
-                        onInput={(e) => {
-                            setDatasetName((e.target as HTMLInputElement).value);
-                        }}
-                        label='Enter a name for your dataset'
-                        variant='outlined'
-                        placeholder=''
-                        size='small'
+                        className={getInputFieldStyles(datasetNameValidation)}
                         value={datasetName}
-                        inputProps={{ maxLength: 255 }}
+                        onChange={(e) => {
+                            setDatasetName((e.target as HTMLInputElement).value);
+                            setDatasetNameValidation('');
+                        }}
+                        maxLength={255}
                         required
                     />
-                </FormControl>
-                <FormControl variant='outlined' fullWidth>
-                    <TextField
+                    <div className='pb-6 max-w-md w-full'>
+                        <p className='text-red-500 text-sm italic'>{datasetNameValidation}</p>
+                    </div>
+                </div>
+
+                <div className='mb-6'>
+                    <label
+                        htmlFor='dataset-description'
+                        className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
+                    >
+                        Optional dataset description
+                    </label>
+                    <input
+                        type='text'
                         id='dataset-description'
-                        className='text'
-                        onInput={(e) => {
+                        className={getInputFieldStyles()}
+                        value={datasetDescription}
+                        onChange={(e) => {
                             setDatasetDescription((e.target as HTMLInputElement).value);
                         }}
-                        label='Enter an optional description'
-                        variant='outlined'
-                        placeholder=''
-                        size='small'
-                        multiline
-                        value={datasetDescription}
-                        rows={2}
-                        inputProps={{ maxLength: 255 }}
+                        maxLength={255}
                     />
-                </FormControl>
+                </div>
                 <h2 className='text-lg font-bold'>Accessions</h2>
-                <FormGroup>
-                    {Object.keys(accessionsInput).map((type) => (
-                        <Accordion defaultExpanded={type === DatasetRecordType.loculus} key={`${type}-accordian`}>
-                            <AccordionSummary
-                                expandIcon={<ExpandMoreIcon />}
-                                aria-controls={`${type}-content`}
-                                id={`${type}-header`}
-                            >
-                                {`${type}`}
-                            </AccordionSummary>
-                            <AccordionDetails>
-                                <div className='mb-4' key={`${type}-input-field`}>
-                                    <FormControl variant='outlined' fullWidth>
-                                        <TextField
-                                            id={`${type}-accession-input`}
-                                            label={`${type} accessions`}
-                                            fullWidth
-                                            multiline
-                                            rows={4}
-                                            variant='outlined'
-                                            margin='none'
-                                            size='small'
-                                            value={accessionsInput[type as DatasetRecordType]}
-                                            onChange={(event: any) =>
-                                                setAccessionInput(event.target.value, type as DatasetRecordType)
-                                            }
-                                            inputProps={{ maxLength: 1000 }}
-                                        />
-                                        <FormHelperText id='outlined-weight-helper-text'>
-                                            {`Enter a list of comma-separated ${type} accessions.`}
-                                        </FormHelperText>
-                                    </FormControl>
-                                </div>
-                            </AccordionDetails>
-                        </Accordion>
-                    ))}
-                </FormGroup>
-                <div className='p-6 space-y-6 max-w-md w-full'>
-                    <div>
-                        {Object.values(DatasetRecordType).map((type) =>
-                            getAccessionsByType(type as DatasetRecordType).map((accession) => (
-                                <div key={accession} className='flex flex-row justify-between'>
-                                    <div>{accession}</div>
-                                    {renderAccessionStatus(accession, type as DatasetRecordType)}
-                                </div>
-                            )),
-                        )}
+
+                {Object.keys(accessionsInput).map((type) => (
+                    <div className='mb-6' key={`${type}-input-field`}>
+                        <label
+                            htmlFor='dataset-description'
+                            className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
+                        >
+                            {`List of ${type} accessions delimited by comma, newline, or space *`}
+                        </label>
+                        <textarea
+                            id={`${type}-accession-input`}
+                            className={getTextAreaStyles(datasetRecordValidation)}
+                            value={accessionsInput[type as DatasetRecordType]}
+                            onChange={(event: any) => {
+                                setAccessionInput(event.target.value, type as DatasetRecordType);
+                            }}
+                            rows={4}
+                            cols={40}
+                        />
                     </div>
-                    <FormHelperText id='outlined-weight-helper-text'>Validated accessions</FormHelperText>
+                ))}
+                <div className='pb-6 max-w-md w-full'>
+                    <p className='text-red-500 text-sm italic'>{datasetRecordValidation}</p>
                 </div>
             </div>
-            <Button className='flex items-center' variant='outlined' disabled={isLoading} onClick={handleSubmit}>
+            <button
+                className='flex items-center btn loculusColor text-white hover:bg-primary-700'
+                disabled={isLoading || datasetRecordValidation !== '' || datasetNameValidation !== ''}
+                onClick={handleSubmit}
+            >
                 {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}
-            </Button>
+            </button>
         </div>
     );
 };
 
-function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErrorFeedback: (message: string) => void) {
+function useActionHooks(
+    clientConfig: ClientConfig,
+    accessToken: string,
+    openErrorFeedback: (message: string) => void,
+    setDatasetRecordValidation: (message: string) => void,
+) {
     const hooks = datasetCitationClientHooks(clientConfig);
     const create = hooks.useCreateDataset(
         { headers: createAuthorizationHeader(accessToken) },
@@ -204,10 +223,15 @@ function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErr
                 const redirectUrl = `/datasets/${response.datasetId}?version=${response.datasetVersion}`;
                 location.href = redirectUrl;
             },
-            onError: async (error) => {
-                const message = `Failed to create dataset. Error: '${JSON.stringify(error)})}'`;
-                await logger.info(message);
-                openErrorFeedback(message);
+            onError: async (error: unknown) => {
+                await logger.info(`Failed to create dataset. Error: '${JSON.stringify(error)})}'`);
+                if (error instanceof AxiosError) {
+                    if (error.response?.data !== undefined) {
+                        openErrorFeedback(
+                            `Failed to create dataset. ${error.response.data?.title}. ${error.response.data?.detail}`,
+                        );
+                    }
+                }
             },
         },
     );
@@ -220,15 +244,36 @@ function useActionHooks(clientConfig: ClientConfig, accessToken: string, openErr
                 location.href = redirectUrl;
             },
             onError: async (error) => {
-                const message = `Failed to update dataset with datasetId. Error: '${JSON.stringify(error)})}'`;
-                await logger.info(message);
-                openErrorFeedback(message);
+                await logger.info(`Failed to update dataset. Error: '${JSON.stringify(error)})}'`);
+                if (error instanceof AxiosError) {
+                    if (error.response?.data !== undefined) {
+                        openErrorFeedback(
+                            `Failed to update dataset. ${error.response.data?.title}. ${error.response.data?.detail}`,
+                        );
+                    }
+                }
+            },
+        },
+    );
+    const validateRecords = hooks.useValidateDatasetRecords(
+        { headers: createAuthorizationHeader(accessToken) },
+        {
+            onSuccess: async () => {
+                setDatasetRecordValidation('');
+            },
+            onError: async (error) => {
+                await logger.info(`Failed to validate dataset records. Error: '${JSON.stringify(error)})}'`);
+                if (error instanceof AxiosError && error.response?.data !== undefined) {
+                    const message = `${error.response.data.title}. ${error.response.data.detail}`;
+                    setDatasetRecordValidation(message);
+                }
             },
         },
     );
     return {
         createDataset: create.mutate,
         updateDataset: update.mutate,
+        validateDatasetRecords: validateRecords.mutate,
         isLoading: create.isLoading || update.isLoading,
     };
 }

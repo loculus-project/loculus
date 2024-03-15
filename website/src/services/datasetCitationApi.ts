@@ -46,6 +46,31 @@ const getDatasetRecordsEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
+const validateDatasetRecords = makeEndpoint({
+    method: 'post',
+    path: '/validate-dataset-records',
+    alias: 'validateDatasetRecords',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z
+                .array(
+                    z.object({
+                        accession: z.string().optional(),
+                        type: z.string().optional(),
+                    }),
+                )
+                .optional(),
+        },
+    ],
+    response: z.object({
+        valid: z.boolean(),
+    }),
+    errors: [notAuthorizedError],
+});
+
 const createDatasetEndpoint = makeEndpoint({
     method: 'post',
     path: '/create-dataset',
@@ -189,6 +214,7 @@ export const datasetCitationApi = makeApi([
     getDatasetCitedByEndpoint,
     getDatasetEndpoint,
     getDatasetRecordsEndpoint,
+    validateDatasetRecords,
     createDatasetEndpoint,
     createDatasetDOIEndpoint,
     updateDatasetEndpoint,

@@ -2,9 +2,6 @@ import z from 'zod';
 
 export enum DatasetRecordType {
     loculus = 'Loculus',
-    genbank = 'GenBank',
-    sra = 'SRA',
-    gisaid = 'GISAID',
 }
 
 export const datasetRecord = z.object({

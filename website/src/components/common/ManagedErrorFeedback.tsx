@@ -1,4 +1,5 @@
 import Button from '@mui/material/Button';
+import Portal from '@mui/material/Portal';
 import Snackbar from '@mui/material/Snackbar';
 import { type FC, useState } from 'react';
 
@@ -15,14 +16,16 @@ export const ManagedErrorFeedback: FC<ErrorFeedbackProps> = ({ message, open, on
         </Button>
     );
     return (
-        <Snackbar
-            className='whitespace-pre-line'
-            open={open}
-            anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
-            message={message}
-            action={action}
-            onClose={onClose}
-        />
+        <Portal>
+            <Snackbar
+                className='whitespace-pre-line'
+                open={open}
+                anchorOrigin={{ horizontal: 'center', vertical: 'top' }}
+                message={message}
+                action={action}
+                onClose={onClose}
+            />
+        </Portal>
     );
 };
 
