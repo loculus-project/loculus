@@ -2,7 +2,8 @@ import type { FC } from 'react';
 
 import type { Organism } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { navigationItems, routes } from '../../routes.ts';
+import { routes } from '../../routes.ts';
+import {navigationItems} from "../../utils/navigationItems"
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 
