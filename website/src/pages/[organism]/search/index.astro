@@ -83,7 +83,7 @@ const {
                         </div>
                     </div>
                 ),
-                (error) => <ErrorBox title='Failed searching sequences' message={error.detail} />,
+                (error) => <ErrorBox title='Failed searching sequences'>{error.detail}</ErrorBox>,
             )
         }
     </div>

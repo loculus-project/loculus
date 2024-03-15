@@ -80,7 +80,7 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
                         client:load
                     />
                 ),
-                (error) => <ErrorBox title='Failed loading list of groups' message={error.detail} />,
+                (error) => <ErrorBox title='Failed loading list of groups'>{error.detail}</ErrorBox>,
             )
         }
         <div class='mt-4'>

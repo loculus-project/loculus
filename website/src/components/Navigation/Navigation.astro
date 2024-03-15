@@ -4,7 +4,7 @@ import { cleanOrganism } from './cleanOrganism';
 import { navigationItems } from '../../routes/navigationItems';
 import { getAuthUrl } from '../../utils/getAuthUrl';
 
-const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
+const { organism } = cleanOrganism(Astro.params.organism);
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
@@ -17,14 +17,6 @@ const loginUrl = await getAuthUrl(Astro.url.toString());
     </div>
 
     <div class='sm:hidden fixed z-0'>
-        <SandwichMenu
-            top={16}
-            right={28}
-            organism={organism}
-            knownOrganisms={knownOrganisms}
-            isLoggedIn={isLoggedIn}
-            loginUrl={loginUrl}
-            client:load
-        />
+        <SandwichMenu top={16} right={28} organism={organism} isLoggedIn={isLoggedIn} loginUrl={loginUrl} client:load />
     </div>
 </div>

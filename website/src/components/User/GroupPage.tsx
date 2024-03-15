@@ -93,41 +93,43 @@ const InnerGroupPage: FC<GroupPageProps> = ({ prefetchedGroupDetails, clientConf
                 </table>
             </div>
 
-            <h2 className='text-lg font-bold py-4'> Users </h2>
-            <form onSubmit={handleAddUser}>
-                <div className='flex mb-4'>
-                    <input
-                        type='text'
-                        value={newUserName}
-                        onChange={(e) => setNewUserName(e.target.value.trim())}
-                        placeholder='Enter new user name'
-                        className='p-2 border border-gray-300 rounded mr-2'
-                        required
-                    />
-                    <button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
-                        Add User
-                    </button>
+            {(groupDetails.data?.users.some((user) => user.name === username) ?? false) && (
+                <div>
+                    <h2 className='text-lg font-bold py-4'> Users </h2>
+                    <form onSubmit={handleAddUser}>
+                        <div className='flex mb-4'>
+                            <input
+                                type='text'
+                                value={newUserName}
+                                onChange={(e) => setNewUserName(e.target.value.trim())}
+                                placeholder='Enter new user name'
+                                className='p-2 border border-gray-300 rounded mr-2'
+                                required
+                            />
+                            <button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
+                                Add User
+                            </button>
+                        </div>
+                    </form>
+                    <div className='flex-1 overflow-y-auto'>
+                        <ul>
+                            {groupDetails.data?.users.map((user) => (
+                                <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
+                                    <span className='text-lg'>{user.name}</span>
+                                    <button
+                                        onClick={() => handleOpenConfirmationDialog(user)}
+                                        className='px-2 py-1 bg-red-500 text-white rounded'
+                                        title='Remove user from group'
+                                        aria-label={`Remove User ${user.name}`}
+                                    >
+                                        <DeleteIcon className='w-4 h-4' />
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
-            </form>
-
-            <div className='flex-1 overflow-y-auto'>
-                <ul>
-                    {groupDetails.data &&
-                        groupDetails.data.users.map((user) => (
-                            <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
-                                <span className='text-lg'>{user.name}</span>
-                                <button
-                                    onClick={() => handleOpenConfirmationDialog(user)}
-                                    className='px-2 py-1 bg-red-500 text-white rounded'
-                                    title='Remove user from group'
-                                    aria-label={`Remove User ${user.name}`}
-                                >
-                                    <DeleteIcon className='w-4 h-4' />
-                                </button>
-                            </li>
-                        ))}
-                </ul>
-            </div>
+            )}
         </div>
     );
 };

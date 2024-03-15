@@ -69,7 +69,7 @@ for (const query of queries) {
                     ));
                 },
                 (error) => {
-                    return <ErrorBox title='Request for sequence history failed' message={error.detail} />;
+                    return <ErrorBox title='Request for sequence history failed'>{error.detail}</ErrorBox>;
                 },
             )
         }
