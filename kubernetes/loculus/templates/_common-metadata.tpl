@@ -25,6 +25,8 @@ fields:
     type: timestamp
   - name: dataUseTerms
     type: string
+    generateIndex: true
+    autocomplete: true
   - name: versionStatus
     type: string
     notSearchable: true
