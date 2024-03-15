@@ -11,7 +11,9 @@ import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.Group
 import org.loculus.backend.api.GroupDetails
+import org.loculus.backend.api.User
 import org.loculus.backend.controller.ConflictException
+import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,35 +24,31 @@ class GroupManagementDatabaseService(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
 ) {
 
-    fun getDetailsOfGroup(groupName: String, username: String): GroupDetails {
-        val users = groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(
-            groupName,
-            username,
+    fun getDetailsOfGroup(groupName: String): GroupDetails {
+        return GroupDetails(
+            group = GroupsTable
+                .select { GroupsTable.groupNameColumn eq groupName }
+                .map {
+                    Group(
+                        groupName = it[GroupsTable.groupNameColumn],
+                        institution = it[GroupsTable.institutionColumn],
+                        address = Address(
+                            line1 = it[GroupsTable.addressLine1],
+                            line2 = it[GroupsTable.addressLine2],
+                            postalCode = it[GroupsTable.addressPostalCode],
+                            city = it[GroupsTable.addressCity],
+                            state = it[GroupsTable.addressState],
+                            country = it[GroupsTable.addressCountry],
+                        ),
+                        contactEmail = it[GroupsTable.contactEmailColumn],
+                    )
+                }
+                .firstOrNull()
+                ?: throw NotFoundException("Group $groupName does not exist."),
+            users = UserGroupsTable
+                .select { UserGroupsTable.groupNameColumn eq groupName }
+                .map { User(it[UserGroupsTable.userNameColumn]) },
         )
-
-        return GroupDetails(getDetailsOfGroup(groupName), users)
-    }
-
-    fun getDetailsOfGroup(groupName: String): Group {
-        return GroupsTable
-            .select { GroupsTable.groupNameColumn eq groupName }
-            .map {
-                Group(
-                    groupName = it[GroupsTable.groupNameColumn],
-                    institution = it[GroupsTable.institutionColumn],
-                    address = Address(
-                        line1 = it[GroupsTable.addressLine1],
-                        line2 = it[GroupsTable.addressLine2],
-                        postalCode = it[GroupsTable.addressPostalCode],
-                        city = it[GroupsTable.addressCity],
-                        state = it[GroupsTable.addressState],
-                        country = it[GroupsTable.addressCountry],
-                    ),
-                    contactEmail = it[GroupsTable.contactEmailColumn],
-                )
-            }
-            .firstOrNull()
-            ?: throw IllegalArgumentException("Group $groupName does not exist.")
     }
 
     fun createNewGroup(group: Group, username: String) {

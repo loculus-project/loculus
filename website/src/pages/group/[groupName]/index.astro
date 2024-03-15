@@ -1,6 +1,7 @@
 ---
 import { GroupPage } from '../../../components/User/GroupPage';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
+import NeedToLogin from '../../../components/common/NeedToLogin.astro';
 import { getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { GroupManagementClient } from '../../../services/groupManagementClient';
@@ -8,7 +9,7 @@ import { getAccessToken } from '../../../utils/getAccessToken';
 
 const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;
-const username = session.user!.username!;
+const username = session.user?.username ?? '';
 const groupName = Astro.params.groupName!;
 const clientConfig = getRuntimeConfig().public;
 
@@ -20,17 +21,21 @@ const groupDetailsResult = await GroupManagementClient.create().getGroupDetails(
         <h1 class='title'>Group: {groupName}</h1>
     </div>
     {
-        groupDetailsResult.match(
-            (groupDetails) => (
-                <GroupPage
-                    prefetchedGroupDetails={groupDetails}
-                    accessToken={accessToken}
-                    clientConfig={clientConfig}
-                    username={username}
-                    client:load
-                />
-            ),
-            () => <ErrorBox message='Failed to fetch group details, sorry for the inconvenience!' />,
+        !accessToken ? (
+            <NeedToLogin message='You need to be logged in to view group information.' />
+        ) : (
+            groupDetailsResult.match(
+                (groupDetails) => (
+                    <GroupPage
+                        prefetchedGroupDetails={groupDetails}
+                        accessToken={accessToken}
+                        clientConfig={clientConfig}
+                        username={username}
+                        client:load
+                    />
+                ),
+                () => <ErrorBox message='Failed to fetch group details, sorry for the inconvenience!' />,
+            )
         )
     }
 </BaseLayout>

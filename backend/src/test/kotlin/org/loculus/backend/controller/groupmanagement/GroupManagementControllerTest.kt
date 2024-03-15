@@ -109,7 +109,7 @@ class GroupManagementControllerTest(
     }
 
     @Test
-    fun `WHEN I query details of a non-existing group THEN to find no group`() {
+    fun `WHEN I query details of a non-existing group THEN expect error that group does not exist`() {
         client.getDetailsOfGroup()
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
