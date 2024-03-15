@@ -1,20 +1,24 @@
 ---
-import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
+import DangerousTwoToneIcon from '~icons/material-symbols/error-outline';
+import WarningTwoToneIcon from '~icons/material-symbols/warning-outline';
 
 interface Props {
     title?: string;
-    message: string;
+    level?: 'error' | 'warning';
 }
 
-const { title, message } = Astro.props;
+const { title, level = 'error' } = Astro.props;
 ---
 
 <div>
-    <div class='alert alert-error my-8'>
-        <DangerousTwoToneIcon />
+    <div class:list={['my-8', 'alert', { 'alert-error': level === 'error', 'alert-warning': level === 'warning' }]}>
+        {level === 'error' && <DangerousTwoToneIcon />}
+        {level === 'warning' && <WarningTwoToneIcon />}
         <div class='grid-flow-row'>
             <p class='text-lg font-bold'>{title}</p>
-            <p>{message}</p>
+            <p>
+                <slot />
+            </p>
         </div>
     </div>
 </div>
