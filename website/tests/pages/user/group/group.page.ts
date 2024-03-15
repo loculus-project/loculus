@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-import { routes } from '../../../../src/routes.ts';
+import { routes } from '../../../../src/routes/routes.ts';
 import { baseUrl, DEFAULT_GROUP, expect } from '../../../e2e.fixture';
 
 export class GroupPage {

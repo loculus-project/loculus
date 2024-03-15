@@ -3,7 +3,7 @@ import { unlinkSync, writeFileSync } from 'fs';
 import type { Locator, Page } from '@playwright/test';
 import { v4 as uuid } from 'uuid';
 
-import { routes } from '../../../src/routes.ts';
+import { routes } from '../../../src/routes/routes.ts';
 import type { Accession } from '../../../src/types/backend.ts';
 import { baseUrl, dummyOrganism, sequencesTestFile } from '../../e2e.fixture';
 import { createModifiedFileContent } from '../../util/createFileContent.ts';

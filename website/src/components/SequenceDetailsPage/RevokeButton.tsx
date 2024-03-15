@@ -1,7 +1,7 @@
 import { type FC } from 'react';
 import { toast } from 'react-toastify';
 
-import { routes } from '../../routes';
+import { routes } from '../../routes/routes';
 import { backendClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';

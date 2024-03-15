@@ -1,7 +1,7 @@
 import { type FC, useState } from 'react';
 
 import { useRemoveFromGroup } from '../../hooks/useGroupOperations.ts';
-import { routes } from '../../routes.ts';
+import { routes } from '../../routes/routes.ts';
 import type { Group } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';

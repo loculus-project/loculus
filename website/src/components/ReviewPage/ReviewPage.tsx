@@ -4,7 +4,7 @@ import { type ChangeEvent, type FC, useState } from 'react';
 
 import { ReviewCard } from './ReviewCard.tsx';
 import { useSubmissionOperations } from '../../hooks/useSubmissionOperations.ts';
-import { routes } from '../../routes.ts';
+import { routes } from '../../routes/routes.ts';
 import {
     approveAllDataScope,
     awaitingApprovalStatus,

@@ -1,7 +1,7 @@
 import { type FC, type FormEvent, useRef, useState } from 'react';
 
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
-import { routes } from '../../routes.ts';
+import { routes } from '../../routes/routes.ts';
 import type { Address, GroupDetails } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';

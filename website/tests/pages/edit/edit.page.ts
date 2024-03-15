@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 
-import { routes } from '../../../src/routes.ts';
+import { routes } from '../../../src/routes/routes.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl, dummyOrganism, expect } from '../../e2e.fixture';

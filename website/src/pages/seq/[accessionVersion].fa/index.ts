@@ -3,7 +3,7 @@ import { err, type Result } from 'neverthrow';
 
 import { getConfiguredOrganisms } from '../../../config';
 import { getReferenceGenomes } from '../../../config.ts';
-import { routes } from '../../../routes.ts';
+import { routes } from '../../../routes/routes.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import { type ProblemDetail } from '../../../types/backend.ts';
 import { parseAccessionVersionFromString } from '../../../utils/extractAccessionVersion.ts';

@@ -1,6 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 
-import { routes } from '../../../src/routes.ts';
+import { routes } from '../../../src/routes/routes.ts';
 import {
     baseUrl,
     compressedMetadataTestFile,

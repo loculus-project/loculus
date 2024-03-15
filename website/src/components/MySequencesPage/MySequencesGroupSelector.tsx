@@ -1,6 +1,6 @@
 import { type FC } from 'react';
 
-import { routes } from '../../routes';
+import { routes } from '../../routes/routes';
 
 type GroupSelectorProps = {
     groupNames: string[];

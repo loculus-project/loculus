@@ -1,7 +1,7 @@
 import { type FC } from 'react';
 
 import { DataUploadForm } from './DataUploadForm.tsx';
-import { routes } from '../../routes.ts';
+import { routes } from '../../routes/routes.ts';
 import { type Group } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
