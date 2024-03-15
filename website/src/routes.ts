@@ -2,6 +2,7 @@ import type { AccessionVersion } from './types/backend.ts';
 import type { AccessionFilter, FilterValue, MutationFilter } from './types/config.ts';
 import type { OrderBy } from './types/lapis.ts';
 import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
+import {bottomNavigationItems } from './utils/bottomNavigationItems.js'
 
 const approxMaxUrlLengthForSearch = 1900;
 export const SEARCH = 'SEARCH';
@@ -163,28 +164,7 @@ const buildSearchParams = <Filter extends FilterValue>(
 
 export const navigationItems = {
     top: topNavigationItems,
-    bottom: [
-        {
-            text: 'About',
-            path: routes.aboutPage(),
-        },
-        {
-            text: 'Docs',
-            path: 'https://loculus-project.github.io/loculus/',
-        },
-        {
-            text: 'API docs',
-            path: routes.apiDocumentationPage(),
-        },
-        {
-            text: 'Governance',
-            path: routes.governancePage(),
-        },
-        {
-            text: 'Status',
-            path: routes.statusPage(),
-        },
-    ],
+    bottom: bottomNavigationItems
 };
 
 function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string | undefined) {
