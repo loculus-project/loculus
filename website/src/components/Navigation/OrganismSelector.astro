@@ -16,7 +16,7 @@ const isOrganismSelectorPage = firstBitOfUrl === 'organism-selector';
 const restOfUrl = Astro.url.pathname.split('/').slice(2).join('/');
 ---
 
-<div class='dropdown dropdown-hover hidden sm:flex relative'>
+<div class='dropdown dropdown-hover flex relative'>
     <label tabindex='0' class='py-1 block text-gray-900 cursor-pointer'>
         {label}
         <span class='text-primary'> <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4 ' /></span>
