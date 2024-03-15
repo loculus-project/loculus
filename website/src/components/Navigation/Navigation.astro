@@ -1,8 +1,8 @@
 ---
 import { SandwichMenu } from './SandwichMenu.tsx';
 import { cleanOrganism } from './cleanOrganism';
-import { getAuthUrl } from '../../utils/getAuthUrl';
 import { navigationItems } from '../../routes/navigationItems';
+import { getAuthUrl } from '../../utils/getAuthUrl';
 
 const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
 

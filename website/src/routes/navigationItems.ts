@@ -1,5 +1,5 @@
 import { bottomNavigationItems } from './bottomNavigationItems.ts';
-import { routes } from './routes';
+import { routes } from './routes.ts';
 export const navigationItems = {
     top: topNavigationItems,
     bottom: bottomNavigationItems,

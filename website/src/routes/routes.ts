@@ -1,7 +1,7 @@
-import type { AccessionVersion } from './types/backend.ts';
-import type { AccessionFilter, FilterValue, MutationFilter } from './types/config.ts';
-import type { OrderBy } from './types/lapis.ts';
-import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
+import type { AccessionVersion } from '../types/backend.ts';
+import type { AccessionFilter, FilterValue, MutationFilter } from '../types/config.ts';
+import type { OrderBy } from '../types/lapis.ts';
+import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
 
 const approxMaxUrlLengthForSearch = 1900;
 export const SEARCH = 'SEARCH';

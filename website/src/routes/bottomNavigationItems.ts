@@ -1,4 +1,4 @@
-import {routes} from "../routes/routes.ts"
+import {routes} from "./routes.ts"
 export const bottomNavigationItems = [
     {
         text: 'About',
