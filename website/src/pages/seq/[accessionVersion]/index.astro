@@ -100,10 +100,7 @@ if (
     }
     {
         !sequenceDetailsTableData.isOk() && (
-            <ErrorBox
-                title='Sequence entry not found'
-                message={'No data found for accession version ' + accessionVersion}
-            />
+            <ErrorBox title='Sequence entry not found'>No data found for accession version {accessionVersion}</ErrorBox>
         )
     }
 </BaseLayout>

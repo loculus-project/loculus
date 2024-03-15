@@ -34,7 +34,7 @@ const groupDetailsResult = await GroupManagementClient.create().getGroupDetails(
                         client:load
                     />
                 ),
-                () => <ErrorBox message='Failed to fetch group details, sorry for the inconvenience!' />,
+                () => <ErrorBox>Failed to fetch group details, sorry for the inconvenience!</ErrorBox>,
             )
         )
     }

@@ -9,6 +9,7 @@ import { GroupManagementClient } from '../../services/groupManagementClient';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { type Group } from '../../types/backend.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
+import ErrorBox from '../common/ErrorBox.astro';
 import MdiEye from '~icons/mdi/eye';
 
 interface Props {
@@ -20,6 +21,7 @@ interface Props {
 
 const { tableData, organism, accessionVersion, dataUseTermsHistory } = Astro.props;
 const group = tableData.find((entry) => entry.name === 'group')?.value;
+const isRestricted = tableData.find((entry) => entry.name === 'dataUseTerms')?.value === 'RESTRICTED';
 
 const runtimeConfig = getRuntimeConfig();
 
@@ -42,6 +44,17 @@ const isMyGroup =
     groupsResult.value.some((myGroupItem: Group) => myGroupItem.groupName === group);
 ---
 
+{
+    isRestricted && (
+        <ErrorBox title='Restricted sequence' level='warning'>
+            This sequence is only available under the Restricted Use Terms. If you make use of this data, you must
+            follow the{' '}
+            <a href='#TODO-MVP' class='underline'>
+                terms of use.
+            </a>
+        </ErrorBox>
+    )
+}
 <DataTable tableData={tableData} dataUseTermsHistory={dataUseTermsHistory} />
 <div>
     <a
