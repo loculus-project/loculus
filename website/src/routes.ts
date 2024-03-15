@@ -1,8 +1,8 @@
 import type { AccessionVersion } from './types/backend.ts';
 import type { AccessionFilter, FilterValue, MutationFilter } from './types/config.ts';
 import type { OrderBy } from './types/lapis.ts';
+import { bottomNavigationItems } from './utils/bottomNavigationItems.js';
 import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
-import {bottomNavigationItems } from './utils/bottomNavigationItems.js'
 
 const approxMaxUrlLengthForSearch = 1900;
 export const SEARCH = 'SEARCH';
@@ -164,7 +164,7 @@ const buildSearchParams = <Filter extends FilterValue>(
 
 export const navigationItems = {
     top: topNavigationItems,
-    bottom: bottomNavigationItems
+    bottom: bottomNavigationItems,
 };
 
 function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string | undefined) {
