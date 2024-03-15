@@ -94,7 +94,7 @@ describe('ReviewPage', () => {
 
         await waitFor(() => {
             expect(getByText(receivedTestData.submissionId)).toBeDefined();
-            expect(getByText(receivedTestData.accession)).toBeDefined();
+            expect(getByText(`${receivedTestData.accession}.${receivedTestData.version}`)).toBeDefined();
         });
     });
 
@@ -110,8 +110,10 @@ describe('ReviewPage', () => {
         const { getByText } = renderReviewPage();
 
         await waitFor(() => {
-            expect(getByText(erroneousTestData.accession)).toBeDefined();
-            expect(getByText(awaitingApprovalTestData.accession)).toBeDefined();
+            expect(getByText(`${erroneousTestData.accession}.${erroneousTestData.version}`)).toBeDefined();
+            expect(
+                getByText(`${awaitingApprovalTestData.accession}.${awaitingApprovalTestData.version}`),
+            ).toBeDefined();
         });
 
         getByText('Discard sequences').click();
