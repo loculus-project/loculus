@@ -1,4 +1,5 @@
 import { bottomNavigationItems } from './bottomNavigationItems.js';
+import {routes} from '../routes'
 export const navigationItems = {
     top: topNavigationItems,
     bottom: bottomNavigationItems,
