@@ -6,7 +6,7 @@ import Navigation from '../components/Navigation/Navigation.astro';
 import OrganismSelector from '../components/Navigation/OrganismSelector.astro';
 import { getWebsiteConfig } from '../config';
 import 'react-toastify/dist/ReactToastify.css';
-import { navigationItems } from '../routes';
+import { navigationItems } from '../utils/navigationItems';
 
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, logo } = websiteConfig;
