@@ -161,7 +161,6 @@ const buildSearchParams = <Filter extends FilterValue>(
     return params;
 };
 
-
 function withOrganism(organism: string, path: `/${string}`) {
     return `/${organism}${path}`;
 }

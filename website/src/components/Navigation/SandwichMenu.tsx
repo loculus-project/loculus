@@ -3,7 +3,7 @@ import type { FC } from 'react';
 import type { Organism } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { routes } from '../../routes.ts';
-import {navigationItems} from "../../utils/navigationItems"
+import { navigationItems } from '../../utils/navigationItems';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
 
