@@ -1,0 +1,25 @@
+
+.mdContainer{
+    @apply max-w-3xl mx-auto;
+  }
+  
+  .mdContainer h1{
+    @apply text-2xl font-semibold text-main break-all my-3;
+  }
+  
+  .mdContainer h2{
+    @apply text-xl font-semibold text-main break-all my-3;
+  }
+  
+  .mdContainer h3{
+    @apply text-lg font-semibold text-main break-all my-3;
+
+  }
+  
+  .mdContainer p{
+    @apply my-2;
+  }
+
+  .mdContainer a{
+    @apply text-main underline hover:font-semibold;
+  }
