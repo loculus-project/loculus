@@ -2,7 +2,7 @@ import { Result } from 'neverthrow';
 
 import { getTableData, type TableDataEntry } from '../../../components/SequenceDetailsPage/getTableData.ts';
 import { getSchema } from '../../../config.ts';
-import { routes } from '../../../routes.ts';
+import { routes } from '../../../routes/routes.ts';
 import { BackendClient } from '../../../services/backendClient.ts';
 import { LapisClient } from '../../../services/lapisClient.ts';
 import type { DataUseTermsHistoryEntry, ProblemDetail } from '../../../types/backend.ts';

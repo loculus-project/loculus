@@ -1,4 +1,4 @@
-import { routes } from '../../../src/routes.ts';
+import { routes } from '../../../src/routes/routes.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl, expect, test, testSequenceEntryData } from '../../e2e.fixture';
 import { getTestSequences } from '../../util/testSequenceProvider.ts';

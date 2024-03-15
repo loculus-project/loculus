@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 
 import { shouldMiddlewareEnforceLogin } from './shouldMiddlewareEnforceLogin';
 import { testOrganism } from '../../vitest.setup.ts';
-import { routes } from '../routes.ts';
+import { routes } from '../routes/routes.ts';
 
 const otherOrganism = 'otherOrganism';
 const configuredOrganisms = [testOrganism, otherOrganism];

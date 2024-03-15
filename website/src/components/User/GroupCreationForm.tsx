@@ -2,7 +2,7 @@ import { type ComponentProps, type FC, type FormEvent, type PropsWithChildren, u
 
 import { listOfCountries } from './listOfCountries.ts';
 import { useGroupCreation } from '../../hooks/useGroupOperations.ts';
-import { routes } from '../../routes.ts';
+import { routes } from '../../routes/routes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';

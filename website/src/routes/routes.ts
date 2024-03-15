@@ -1,7 +1,7 @@
-import type { AccessionVersion } from './types/backend.ts';
-import type { AccessionFilter, FilterValue, MutationFilter } from './types/config.ts';
-import type { OrderBy } from './types/lapis.ts';
-import { getAccessionVersionString } from './utils/extractAccessionVersion.ts';
+import type { AccessionVersion } from '../types/backend.ts';
+import type { AccessionFilter, FilterValue, MutationFilter } from '../types/config.ts';
+import type { OrderBy } from '../types/lapis.ts';
+import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
 
 const approxMaxUrlLengthForSearch = 1900;
 export const SEARCH = 'SEARCH';
@@ -160,72 +160,6 @@ const buildSearchParams = <Filter extends FilterValue>(
     }
     return params;
 };
-
-export const navigationItems = {
-    top: topNavigationItems,
-    bottom: [
-        {
-            text: 'About',
-            path: routes.aboutPage(),
-        },
-        {
-            text: 'Docs',
-            path: 'https://loculus-project.github.io/loculus/',
-        },
-        {
-            text: 'API docs',
-            path: routes.apiDocumentationPage(),
-        },
-        {
-            text: 'Governance',
-            path: routes.governancePage(),
-        },
-        {
-            text: 'Status',
-            path: routes.statusPage(),
-        },
-    ],
-};
-
-function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, loginUrl: string | undefined) {
-    if (organism === undefined) {
-        return [
-            {
-                text: 'Browse',
-                path: routes.organismSelectorPage('search'),
-            },
-            {
-                text: 'Submit',
-                path: routes.organismSelectorPage('submit'),
-            },
-            ...(isLoggedIn
-                ? [{ text: 'My account', path: routes.userOverviewPage() }]
-                : [{ text: 'Login', path: loginUrl! }]),
-            {
-                text: 'Datasets',
-                path: routes.datasetsPage(),
-            },
-        ];
-    }
-
-    return [
-        {
-            text: 'Browse',
-            path: routes.searchPage(organism),
-        },
-        {
-            text: 'Submit',
-            path: routes.submissionPage(organism),
-        },
-        ...(isLoggedIn
-            ? [{ text: 'My account', path: routes.userOverviewPage(organism) }]
-            : [{ text: 'Login', path: loginUrl! }]),
-        {
-            text: 'Datasets',
-            path: routes.datasetsPage(),
-        },
-    ];
-}
 
 function withOrganism(organism: string, path: `/${string}`) {
     return `/${organism}${path}`;

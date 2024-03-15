@@ -1,4 +1,4 @@
-import { routes } from '../../../src/routes.ts';
+import { routes } from '../../../src/routes/routes.ts';
 import { restrictedDataUseTermsType } from '../../../src/types/backend.ts';
 import { dateTimeInMonths } from '../../../src/utils/DateTimeInMonths.tsx';
 import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e2e.fixture.ts';

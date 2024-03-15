@@ -1,7 +1,7 @@
 import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 
-import { routes, navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes.ts';
+import { routes, navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes/routes.ts';
 import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';

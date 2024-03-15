@@ -1,7 +1,7 @@
 ---
 import { cleanOrganism } from './cleanOrganism';
 import { type Organism } from '../../config';
-import { routes } from '../../routes';
+import { routes } from '../../routes/routes';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 const { knownOrganisms, organism: originalOrganism } = cleanOrganism(Astro.params.organism);

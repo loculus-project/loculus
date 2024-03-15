@@ -6,7 +6,7 @@ import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementT
 
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
-import { routes } from '../../routes.ts';
+import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {

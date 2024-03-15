@@ -1,4 +1,4 @@
-import { routes } from '../../../src/routes.ts';
+import { routes } from '../../../src/routes/routes.ts';
 import { baseUrl, dummyOrganism, test, testSequenceCount } from '../../e2e.fixture';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
