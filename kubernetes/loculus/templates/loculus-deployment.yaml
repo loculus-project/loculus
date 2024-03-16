@@ -81,33 +81,33 @@ spec:
           env:
            {{- if .Values.externalDatabase.urlSealedSecret }}
             - name: EXTERNAL_DB_URL
-             valueFrom:
+              valueFrom:
                secretKeyRef:
                  name: externaldb-url
                  key: url
            {{- else }}
             - name: EXTERNAL_DB_URL
-             value: "jdbc:postgresql://localhost/loculus"
+              value: "jdbc:postgresql://localhost/loculus"
            {{- end }}
            {{- if .Values.externalDatabase.usernameSealedSecret }}
             - name: EXTERNAL_DB_USERNAME
-             valueFrom:
+              valueFrom:
                secretKeyRef:
                  name: externaldb-username
                  key: username
            {{- else }}
             - name: EXTERNAL_DB_USERNAME
-             value: "postgres"
+              value: "postgres"
            {{- end }}
            {{- if .Values.externalDatabase.passwordSealedSecret }}
             - name: EXTERNAL_DB_PASSWORD
-             valueFrom:
+              valueFrom:
                secretKeyRef:
                  name: externaldb-password
                  key: password
            {{- else }}
             - name: EXTERNAL_DB_PASSWORD
-             value: "password"
+              value: "password"
            {{- end }}
           volumeMounts:
             - name: loculus-backend-config-processed
