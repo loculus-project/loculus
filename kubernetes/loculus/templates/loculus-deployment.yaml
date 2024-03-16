@@ -70,8 +70,8 @@ spec:
             - containerPort: 8079
           args:
             - "--spring.datasource.url={{ if .Values.externalDatabaseUrl }}{{ .Values.externalDatabaseUrl }}{{ else }}jdbc:postgresql://localhost:5432/loculus{{ end }}"
-            - "--spring.datasource.username=postgres"
-            - "--spring.datasource.password=unsecure"
+            - "--spring.datasource.username={{ if .Values.externalDatabaseUsername }}{{ .Values.externalDatabaseUsername }}{{ else }}postgres{{ end }}"
+            - "--spring.datasource.password={{ if .Values.externalDatabasePassword }}{{ .Values.externalDatabasePassword }}{{ else }}unsecure{{ end }}"
             - "--keycloak.user=backend"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"
