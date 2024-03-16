@@ -14,7 +14,7 @@ create table groups_table (
 
 create table sequence_entries (
     accession text not null,
-    version bigint not null default 1,
+    version bigint not null,
     organism text not null,
     submission_id text not null,
     submitter text not null,
