@@ -1,8 +1,5 @@
 environment: server
-externalDatabaseUrl: ""
 externalDatabaseUrl: "" # External database URL, leave empty to use the internal database
-externalDatabaseUsername: "postgres"
-externalDatabasePassword: "unsecure"
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
