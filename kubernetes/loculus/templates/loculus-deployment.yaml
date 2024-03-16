@@ -109,21 +109,6 @@ spec:
             - "--keycloak.client=test-cli"
             - "--keycloak.url=http://loculus-keycloak-service:8083"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
-            - name: EXTERNAL_DB_URL
-              valueFrom:
-                secretKeyRef:
-                  name: externaldb-url
-                  key: url
-            - name: EXTERNAL_DB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: externaldb-username
-                  key: username
-            - name: EXTERNAL_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: externaldb-password
-                  key: password
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
