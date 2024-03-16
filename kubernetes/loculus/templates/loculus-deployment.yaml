@@ -69,15 +69,30 @@ spec:
           ports:
             - containerPort: 8079
           args:
-            - "--spring.datasource.url={{ if .Values.externalDatabaseUrl }}{{ .Values.externalDatabaseUrl }}{{ else }}jdbc:postgresql://localhost:5432/loculus{{ end }}"
-            - "--spring.datasource.username={{ if .Values.externalDatabaseUsername }}{{ .Values.externalDatabaseUsername }}{{ else }}postgres{{ end }}"
-            - "--spring.datasource.password={{ if .Values.externalDatabasePassword }}{{ .Values.externalDatabasePassword }}{{ else }}unsecure{{ end }}"
+            - "--spring.datasource.url=$(EXTERNAL_DB_URL)"
+            - "--spring.datasource.username=$(EXTERNAL_DB_USERNAME)"
+            - "--spring.datasource.password=$(EXTERNAL_DB_PASSWORD)"
             - "--keycloak.user=backend"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"
             - "--keycloak.client=test-cli"
             - "--keycloak.url=http://loculus-keycloak-service:8083"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+            - name: EXTERNAL_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: externaldb-url
+                  key: url
+            - name: EXTERNAL_DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: externaldb-username
+                  key: username
+            - name: EXTERNAL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: externaldb-password
+                  key: password
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
