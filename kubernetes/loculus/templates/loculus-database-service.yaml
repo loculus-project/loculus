@@ -1,9 +1,10 @@
+{{- if not .Values.externalDatabaseUrl }}
 apiVersion: v1
 kind: Service
 metadata:
   name: loculus-database-service
 spec:
-  {{- if not .Values.externalDatabaseUrl }}
+  
   {{- template "loculus.serviceType"}}
   selector:
     app: loculus
@@ -16,4 +17,4 @@ spec:
       {{- end }}
       protocol: TCP
       name: http
-  {{- end }}
+{{- end }}
