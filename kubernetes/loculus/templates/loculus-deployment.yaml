@@ -82,6 +82,7 @@ spec:
             - name: loculus-backend-config-processed
               mountPath: /config
         {{- end }}
+        {{- if not .Values.externalDatabaseUrl }}
         - name: database
           image: postgres:latest
           ports:
@@ -93,6 +94,7 @@ spec:
               value: "unsecure"
             - name: POSTGRES_DB
               value: "loculus"
+        {{- end }}
 
       imagePullSecrets:
         - name: ghcr-secret

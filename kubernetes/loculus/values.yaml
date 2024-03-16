@@ -1,4 +1,5 @@
 environment: server
+externalDatabaseUrl: ""
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
