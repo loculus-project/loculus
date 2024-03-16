@@ -16,13 +16,13 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
                 text: 'Submit',
                 path: routes.organismSelectorPage('submit'),
             },
-            ...(isLoggedIn
-                ? [{ text: 'My account', path: routes.userOverviewPage() }]
-                : [{ text: 'Login', path: loginUrl! }]),
             {
                 text: 'Datasets',
                 path: routes.datasetsPage(),
             },
+            ...(isLoggedIn
+                ? [{ text: 'My account', path: routes.userOverviewPage() }]
+                : [{ text: 'Login', path: loginUrl! }]),
         ];
     }
 
@@ -35,12 +35,12 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
             text: 'Submit',
             path: routes.submissionPage(organism),
         },
-        ...(isLoggedIn
-            ? [{ text: 'My account', path: routes.userOverviewPage(organism) }]
-            : [{ text: 'Login', path: loginUrl! }]),
         {
             text: 'Datasets',
             path: routes.datasetsPage(),
         },
+        ...(isLoggedIn
+            ? [{ text: 'My account', path: routes.userOverviewPage(organism) }]
+            : [{ text: 'Login', path: loginUrl! }]),
     ];
 }
