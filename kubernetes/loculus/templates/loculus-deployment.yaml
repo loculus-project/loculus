@@ -72,7 +72,7 @@ spec:
             - "--spring.datasource.url=$(EXTERNAL_DB_URL)"
             - "--spring.datasource.username=$(EXTERNAL_DB_USERNAME)"
             - "--spring.datasource.password=$(EXTERNAL_DB_PASSWORD)"
-           env:
+          env:
            {{- if .Values.externalDatabase.urlSealedSecret }}
            - name: EXTERNAL_DB_URL
              valueFrom:
