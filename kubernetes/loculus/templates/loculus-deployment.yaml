@@ -69,9 +69,9 @@ spec:
           ports:
             - containerPort: 8079
           args:
-            - "--spring.datasource.url=$(EXTERNAL_DB_URL)"
-            - "--spring.datasource.username=$(EXTERNAL_DB_USERNAME)"
-            - "--spring.datasource.password=$(EXTERNAL_DB_PASSWORD)"
+            - "--spring.datasource.url=$(DB_URL)"
+            - "--spring.datasource.username=$(DB_USERNAME)"
+            - "--spring.datasource.password=$(DB_PASSWORD)"
             - "--keycloak.user=backend"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"
@@ -80,33 +80,33 @@ spec:
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
           env:
            {{- if .Values.externalDatabase.urlSealedSecret }}
-            - name: EXTERNAL_DB_URL
+            - name: DB_URL
               valueFrom:
                secretKeyRef:
                  name: externaldb-url
                  key: url
            {{- else }}
-            - name: EXTERNAL_DB_URL
-              value: "jdbc:postgresql://localhost/loculus"
+            - name: DB_URL
+              value: "jdbc:postgresql://localhost:5432/loculus"
            {{- end }}
            {{- if .Values.externalDatabase.usernameSealedSecret }}
-            - name: EXTERNAL_DB_USERNAME
+            - name: DB_USERNAME
               valueFrom:
                secretKeyRef:
                  name: externaldb-username
                  key: username
            {{- else }}
-            - name: EXTERNAL_DB_USERNAME
+            - name: DB_USERNAME
               value: "postgres"
            {{- end }}
            {{- if .Values.externalDatabase.passwordSealedSecret }}
-            - name: EXTERNAL_DB_PASSWORD
+            - name: DB_PASSWORD
               valueFrom:
                secretKeyRef:
                  name: externaldb-password
                  key: password
            {{- else }}
-            - name: EXTERNAL_DB_PASSWORD
+            - name: DB_PASSWORD
               value: "password"
            {{- end }}
           volumeMounts:
