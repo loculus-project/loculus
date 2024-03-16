@@ -184,7 +184,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is not a member of the group ${NEW_GROUP.groupName}. Action not allowed.",
+                    "User $DEFAULT_USER_NAME is not a member of group(s) ${NEW_GROUP.groupName}. Action not allowed.",
                 ),
             )
     }
@@ -196,7 +196,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group ${NEW_GROUP.groupName} does not exist.",
+                    "Group(s) ${NEW_GROUP.groupName} do not exist.",
                 ),
             )
     }
@@ -242,8 +242,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group ${NEW_GROUP.groupName} " +
-                        "does not exist.",
+                    "Group(s) ${NEW_GROUP.groupName} do not exist.",
                 ),
             )
             .andReturn()
@@ -259,7 +258,7 @@ class GroupManagementControllerTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is not a member of the group " +
+                    "User $DEFAULT_USER_NAME is not a member of group(s) " +
                         "${NEW_GROUP.groupName}. Action not allowed.",
                 ),
             )

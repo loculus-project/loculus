@@ -373,7 +373,7 @@ class SubmissionDatabaseService(
     ): Sequence<SequenceEntryVersionToEdit> {
         log.info { "streaming $numberOfSequenceEntries submissions that need edit by $submitter" }
 
-        groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, submitter)
+        groupManagementPreconditionValidator.validateUserInExistingGroup(groupName, submitter)
 
         sequenceEntriesTableProvider.get(organism).let { table ->
             return table.slice(

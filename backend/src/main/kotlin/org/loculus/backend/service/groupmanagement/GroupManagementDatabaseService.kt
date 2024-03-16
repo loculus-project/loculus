@@ -108,7 +108,7 @@ class GroupManagementDatabaseService(
     fun addUserToGroup(groupMember: String, groupName: String, usernameToAdd: String) {
         groupManagementPreconditionValidator.validateThatUserExists(usernameToAdd)
 
-        groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, groupMember)
+        groupManagementPreconditionValidator.validateUserInExistingGroup(groupName, groupMember)
 
         try {
             UserGroupsTable.insert {
@@ -126,7 +126,7 @@ class GroupManagementDatabaseService(
     }
 
     fun removeUserFromGroup(groupMember: String, groupName: String, usernameToRemove: String) {
-        groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, groupMember)
+        groupManagementPreconditionValidator.validateUserInExistingGroup(groupName, groupMember)
 
         UserGroupsTable.deleteWhere {
             (userNameColumn eq usernameToRemove) and

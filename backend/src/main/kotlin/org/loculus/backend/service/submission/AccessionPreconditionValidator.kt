@@ -216,7 +216,7 @@ class AccessionPreconditionValidator(
 
         groupsOfSequenceEntries.forEach { (groupName, accessionList) ->
             try {
-                groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, submitter)
+                groupManagementPreconditionValidator.validateUserInExistingGroup(groupName, submitter)
             } catch (error: ForbiddenException) {
                 throw ForbiddenException(
                     error.message + " Affected AccessionVersions: " + accessionList.map {

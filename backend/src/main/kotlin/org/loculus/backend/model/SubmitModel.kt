@@ -135,7 +135,7 @@ class SubmitModel(
 
     private fun uploadData(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
-            groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(
+            groupManagementPreconditionValidator.validateUserInExistingGroup(
                 submissionParams.groupName,
                 submissionParams.username,
             )

@@ -2,7 +2,6 @@ package org.loculus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
-import org.loculus.backend.api.User
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.service.KeycloakAdapter
@@ -15,23 +14,8 @@ class GroupManagementPreconditionValidator(
 ) {
 
     @Transactional
-    fun validateUserInExistingGroupAndReturnUserList(groupName: String, groupMember: String): List<User> {
-        if (GroupsTable
-                .select { GroupsTable.groupNameColumn eq groupName }
-                .firstOrNull() == null
-        ) {
-            throw NotFoundException("Group $groupName does not exist.")
-        }
-
-        val users = UserGroupsTable
-            .select { UserGroupsTable.groupNameColumn eq groupName }
-            .map { User(it[UserGroupsTable.userNameColumn]) }
-
-        if (users.none { it.name == groupMember }) {
-            throw ForbiddenException("User $groupMember is not a member of the group $groupName. Action not allowed.")
-        }
-
-        return users
+    fun validateUserInExistingGroup(groupName: String, groupMember: String) {
+        validateUserInExistingGroups(listOf(groupName), groupMember)
     }
 
     @Transactional
@@ -44,7 +28,7 @@ class GroupManagementPreconditionValidator(
         val nonExistingGroups = groupNames.toSet() - existingGroups
 
         if (nonExistingGroups.isNotEmpty()) {
-            throw NotFoundException("Groups ${nonExistingGroups.joinToString()} do not exist.")
+            throw NotFoundException("Group(s) ${nonExistingGroups.joinToString()} do not exist.")
         }
 
         val userGroups = UserGroupsTable
@@ -59,7 +43,7 @@ class GroupManagementPreconditionValidator(
 
         if (missingGroups.isNotEmpty()) {
             throw ForbiddenException(
-                "User $groupMember is not a member of groups ${missingGroups.joinToString()}. Action not allowed.",
+                "User $groupMember is not a member of group(s) ${missingGroups.joinToString()}. Action not allowed.",
             )
         }
     }

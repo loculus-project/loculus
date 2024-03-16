@@ -136,7 +136,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         client.submitEditedSequenceEntryVersion(editedDataFromWrongSubmitter, jwt = generateJwtFor(nonExistingUser))
             .andExpect(status().isForbidden)
             .andExpect(
-                jsonPath("\$.detail", containsString("is not a member of the group")),
+                jsonPath("\$.detail", containsString("is not a member of group")),
             )
 
         convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)

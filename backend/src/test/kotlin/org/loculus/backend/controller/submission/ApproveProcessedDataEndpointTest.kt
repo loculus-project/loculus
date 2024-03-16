@@ -81,7 +81,7 @@ class ApproveProcessedDataEndpointTest(
             .andExpect(
                 jsonPath(
                     "$.detail",
-                    containsString("is not a member of the group"),
+                    containsString("is not a member of group"),
                 ),
             )
             .andExpect(
