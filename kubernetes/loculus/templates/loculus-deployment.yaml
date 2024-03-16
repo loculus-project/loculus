@@ -74,33 +74,33 @@ spec:
             - "--spring.datasource.password=$(EXTERNAL_DB_PASSWORD)"
           env:
            {{- if .Values.externalDatabase.urlSealedSecret }}
-           - name: EXTERNAL_DB_URL
+            - name: EXTERNAL_DB_URL
              valueFrom:
                secretKeyRef:
                  name: externaldb-url
                  key: url
            {{- else }}
-           - name: EXTERNAL_DB_URL
+            - name: EXTERNAL_DB_URL
              value: "jdbc:postgresql://localhost/loculus"
            {{- end }}
            {{- if .Values.externalDatabase.usernameSealedSecret }}
-           - name: EXTERNAL_DB_USERNAME
+            - name: EXTERNAL_DB_USERNAME
              valueFrom:
                secretKeyRef:
                  name: externaldb-username
                  key: username
            {{- else }}
-           - name: EXTERNAL_DB_USERNAME
+            - name: EXTERNAL_DB_USERNAME
              value: "postgres"
            {{- end }}
            {{- if .Values.externalDatabase.passwordSealedSecret }}
-           - name: EXTERNAL_DB_PASSWORD
+            - name: EXTERNAL_DB_PASSWORD
              valueFrom:
                secretKeyRef:
                  name: externaldb-password
                  key: password
            {{- else }}
-           - name: EXTERNAL_DB_PASSWORD
+            - name: EXTERNAL_DB_PASSWORD
              value: "password"
            {{- end }}
             - "--keycloak.user=backend"
