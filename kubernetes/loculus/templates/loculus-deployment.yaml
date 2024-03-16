@@ -72,6 +72,12 @@ spec:
             - "--spring.datasource.url=$(EXTERNAL_DB_URL)"
             - "--spring.datasource.username=$(EXTERNAL_DB_USERNAME)"
             - "--spring.datasource.password=$(EXTERNAL_DB_PASSWORD)"
+            - "--keycloak.user=backend"
+            - "--keycloak.password=backend"
+            - "--keycloak.realm=loculus"
+            - "--keycloak.client=test-cli"
+            - "--keycloak.url=http://loculus-keycloak-service:8083"
+            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
           env:
            {{- if .Values.externalDatabase.urlSealedSecret }}
             - name: EXTERNAL_DB_URL
@@ -103,12 +109,6 @@ spec:
             - name: EXTERNAL_DB_PASSWORD
              value: "password"
            {{- end }}
-            - "--keycloak.user=backend"
-            - "--keycloak.password=backend"
-            - "--keycloak.realm=loculus"
-            - "--keycloak.client=test-cli"
-            - "--keycloak.url=http://loculus-keycloak-service:8083"
-            - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
