@@ -107,8 +107,8 @@ def enrich_with_nextclade(
         logging.debug(f"Nextclade results available in {result_dir}")
 
         aligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
-        with open(result_dir + "/nextclade.aligned.fasta") as alignedNucs:
-            aligned_nuc = SeqIO.parse(alignedNucs, "fasta")
+        with open(result_dir + "/nextclade.aligned.fasta") as aligned_nucs:
+            aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
             for aligned_sequence in aligned_nuc:
                 sequence_id: str = aligned_sequence.id
                 aligned_nucleotide_sequences[sequence_id] = str(aligned_sequence.seq)
@@ -116,8 +116,8 @@ def enrich_with_nextclade(
         for gene in config.genes:
             translation_path = result_dir + f"/nextclade.cds_translation.{gene}.fasta"
             try:
-                with open(translation_path) as alignedTranslations:
-                    aligned_translation = SeqIO.parse(alignedTranslations, "fasta")
+                with open(translation_path) as aligned_translations:
+                    aligned_translation = SeqIO.parse(aligned_translations, "fasta")
                     for aligned_sequence in aligned_translation:
                         sequence_id = aligned_sequence.id
                         aligned_aminoacid_sequences[sequence_id][gene] = str(aligned_sequence.seq)
@@ -184,8 +184,8 @@ def process_single(
         for arg_name, input_path in spec.inputs.items():
             input_data[arg_name] = None
             # If field starts with "nextclade.", take from nextclade metadata
-            NEXTCLADE_PREFIX = "nextclade."
-            if input_path.startswith(NEXTCLADE_PREFIX):
+            nextclade_prefix = "nextclade."
+            if input_path.startswith(nextclade_prefix):
                 # Remove "nextclade." prefix
                 if unprocessed.nextcladeMetadata is None:
                     errors.append(
@@ -200,7 +200,7 @@ def process_single(
                         )
                     )
                     continue
-                sub_path = input_path[len(NEXTCLADE_PREFIX) :]
+                sub_path = input_path[len(nextclade_prefix) :]
                 input_data[arg_name] = str(
                     dpath.get(
                         unprocessed.nextcladeMetadata,
