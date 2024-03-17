@@ -137,14 +137,14 @@ def enrich_with_nextclade(
     return {
         id: UnprocessedAfterNextclade(
             inputMetadata=input_metadata[id],
-            nextcladeMetadata=nextclade_metadata.get(id, None),
+            nextcladeMetadata=nextclade_metadata.get(id),
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
-            alignedNucleotideSequences=aligned_nucleotide_sequences.get(id, None),
+            alignedNucleotideSequences=aligned_nucleotide_sequences.get(id),
             nucleotideInsertions=[],
             alignedAminoAcidSequences=aligned_aminoacid_sequences.get(id, {}),
             aminoAcidInsertions={gene: [] for gene in config.genes},
         )
-        for id in unaligned_nucleotide_sequences.keys()
+        for id in unaligned_nucleotide_sequences
     }
 
 
