@@ -287,7 +287,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     );
 
     const reviewCards = (
-        <div className='flex flex-col gap-2 py-4'>
+        <div className='flex flex-col gap-2 py-4 divide-y divide-gray-200'>
             {sequences.map((sequence) => {
                 return (
                     <div key={sequence.accession}>
@@ -322,9 +322,20 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
         <>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className={hooks.getSequences.isLoading ? 'opacity-50 pointer-events-none' : ''}>
-                <div className='flex sm:justify-between items-bottom flex-col md:flex-row gap-5'>
-                    {controlPanel}
-                    {bulkActionButtons}
+                <div className='sticky top-0 z-10'>
+                    <div className='flex sm:justify-between items-bottom flex-col md:flex-row gap-5 bg-white pb-1'>
+                        {controlPanel}
+                        {bulkActionButtons}
+                    </div>
+                    {
+                        // shadow like gradient
+                    }
+                    <div
+                        className='h-2 w-full'
+                        style={{
+                            background: 'linear-gradient(0deg, rgba(255, 255, 255, 0) 0%,rgba(100, 100, 100, .2) 80%)',
+                        }}
+                    ></div>
                 </div>
                 {reviewCards}
                 {pagination}
