@@ -433,7 +433,7 @@ class SubmissionDatabaseService(
         val listOfStatuses = statusesFilter ?: Status.entries
 
         sequenceEntriesTableProvider.get(organism).let { table ->
-            val query = table
+            val baseQuery = table
                 .join(
                     DataUseTermsTable,
                     JoinType.LEFT,
@@ -456,30 +456,33 @@ class SubmissionDatabaseService(
                 )
                 .select(
                     where = {
-                        table.statusIsOneOf(listOfStatuses) and
-                            table.groupNameIsOneOf(validatedGroupNames)
+                        table.groupNameIsOneOf(validatedGroupNames)
                     },
                 )
                 .orderBy(table.accessionColumn)
 
             if (organism != null) {
-                query.andWhere { table.organismIs(organism) }
+                baseQuery.andWhere { table.organismIs(organism) }
             }
 
-            val statusCounts: Map<Status, Int> = listOfStatuses.associateWith { status ->
-                query.count { it[table.statusColumn] == status.name }
+            val statusCounts: Map<Status, Int> = Status.entries.associateWith { status ->
+                baseQuery.count { it[table.statusColumn] == status.name }
+            }
+
+            val filteredQuery = baseQuery.andWhere {
+                table.statusIsOneOf(listOfStatuses)
             }
 
             if (warningsFilter == WarningsFilter.EXCLUDE_WARNINGS) {
-                query.andWhere {
+                filteredQuery.andWhere {
                     not(table.entriesWithWarnings)
                 }
             }
 
             val pagedQuery = if (page != null && size != null) {
-                query.limit(size, (page * size).toLong())
+                filteredQuery.limit(size, (page * size).toLong())
             } else {
-                query
+                filteredQuery
             }
 
             return GetSequenceResponse(
