@@ -41,8 +41,33 @@ spec:
           # TODO #1221
           image: quay.io/keycloak/keycloak:23.0
           env:
-            - name: DB_VENDOR
-              value: "postgres"
+            {{- if .Values.keycloakDatabase.addrSealedSecret }}
+            - name: DB_ADDR
+              valueFrom:
+                secretKeyRef:
+                  name: externaldb-credentials
+                  key: keycloak-db-addr
+            - name: KC_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: externaldb-credentials
+                  key: keycloak-db-port            
+            - name: DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: externaldb-credentials
+                  key: keycloak-db-database
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: externaldb-credentials
+                  key: keycloak-db-username
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: externaldb-credentials
+                  key: keycloak-db-password
+            {{- else }}
             - name: DB_ADDR
               value: "loculus-keycloak-database-service"
             - name: DB_DATABASE
@@ -51,6 +76,9 @@ spec:
               value: "postgres"
             - name: DB_PASSWORD
               value: "unsecure"
+            {{- end }}
+            - name: DB_VENDOR
+              value: "postgres"
             - name: KEYCLOAK_ADMIN
               value: "admin"
             - name: KEYCLOAK_ADMIN_PASSWORD
