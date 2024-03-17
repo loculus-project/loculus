@@ -24,13 +24,14 @@ export function useSubmissionOperations(
     pageQuery: PageQuery,
 ) {
     const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
-    const [includedStatuses, setIncludedStatuses] = useState<string[]>([
+    const allRelevantStatuses = [
         receivedStatus,
         inProcessingStatus,
         hasErrorsStatus,
         awaitingApprovalStatus,
         awaitingApprovalForRevocationStatus,
-    ]);
+    ];
+    const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
     const useGetSequences = hooks.useGetSequences(
         {
             headers: createAuthorizationHeader(accessToken),
@@ -38,6 +39,7 @@ export function useSubmissionOperations(
                 organism,
             },
             queries: {
+                initialStatusesFilter: allRelevantStatuses.join(','),
                 statusesFilter: includedStatuses.join(','),
                 page: pageQuery.page - 1,
                 size: pageQuery.size,
