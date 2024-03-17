@@ -77,7 +77,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                 {finishedCount} of {total} sequences processed.
                 {processingCount > 0 && <span className='loading loading-spinner loading-sm ml-3'> </span>}
             </div>
-            <div class={"hidden" /*TODO: unhide after #1161*/ } >
+            <div class={'hidden' /* TODO: unhide after #1161*/}>
                 <input
                     className='mr-3'
                     type='checkbox'
