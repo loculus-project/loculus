@@ -232,7 +232,7 @@ def process_single(
         if null_per_backend(processing_result.datum) and spec.required:
             logging.warn(
                 f"Metadata field {output_field} is required but nullish: "
-                + f"{processing_result.datum}, setting to 'Not provided'"
+                f"{processing_result.datum}, setting to 'Not provided'"
             )
             output_metadata[output_field] = "Not provided"
 
@@ -278,11 +278,12 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
     if not response.ok:
         with open("failed_submission.json", "w") as f:
             f.write(ndjson_string)
-        raise Exception(
+        msg = (
             f"Submitting processed data failed. Status code: {response.status_code}\n"
-            + f"Response: {response.text}\n"
-            + f"Data sent in request: {ndjson_string[0:1000]}...\n"
+            f"Response: {response.text}\n"
+            f"Data sent in request: {ndjson_string[0:1000]}...\n"
         )
+        raise Exception(msg)
     logging.info("Processed data submitted successfully")
 
 

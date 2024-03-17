@@ -16,6 +16,7 @@ select = [
     "C4",
     "DTZ",
     "EM",
+    "ISC",
 ]
 preview = true
 

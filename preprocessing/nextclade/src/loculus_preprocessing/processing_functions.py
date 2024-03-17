@@ -98,7 +98,7 @@ class ProcessingFunctions:
         except ValueError as e:
             error_message = (
                 f"Date is {date} which is not in the required format YYYY-MM-DD. "
-                + f"Parsing error: {e}"
+                f"Parsing error: {e}"
             )
             return ProcessingResult(
                 datum=None,
@@ -243,7 +243,7 @@ class ProcessingFunctions:
         except ValueError as e:
             error_message = (
                 f"Timestamp is {timestamp} which is not in parseable YYYY-MM-DD. "
-                + f"Parsing error: {e}"
+                f"Parsing error: {e}"
             )
             return ProcessingResult(
                 datum=None,

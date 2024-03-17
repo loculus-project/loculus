@@ -54,7 +54,7 @@ def get_jwt(config: Config) -> str:
             return token
         else:
             error_msg = (
-                f"Fetching JWT failed with status code {response.status_code}: " f"{response.text}"
+                f"Fetching JWT failed with status code {response.status_code}: {response.text}"
             )
             logging.error(error_msg)
             raise Exception(error_msg)
