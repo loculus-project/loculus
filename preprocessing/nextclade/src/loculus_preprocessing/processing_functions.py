@@ -154,12 +154,13 @@ class ProcessingFunctions:
         for format, message in formats_to_messages.items():
             try:
                 parsed_date = datetime.strptime(date_str, format).replace(tzinfo=pytz.utc)
-                if format == "%Y-%m-%d":
-                    datum = parsed_date.strftime("%Y-%m-%d")
-                elif format == "%Y-%m":
-                    datum = f"{parsed_date.strftime('%Y-%m')}-01"
-                elif format == "%Y":
-                    datum = f"{parsed_date.strftime('%Y')}-01-01"
+                match format:
+                    case "%Y-%m-%d":
+                        datum = parsed_date.strftime("%Y-%m-%d")
+                    case "%Y-%m":
+                        datum = f"{parsed_date.strftime('%Y-%m')}-01"
+                    case "%Y":
+                        datum = f"{parsed_date.strftime('%Y')}-01-01"
 
                 logger.debug(f"parsed_date: {parsed_date}")
 
