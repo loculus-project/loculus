@@ -24,11 +24,13 @@ export function useSubmissionOperations(
     pageQuery: PageQuery,
 ) {
     const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
-    const allRelevantStatuses = [receivedStatus,
+    const allRelevantStatuses = [
+        receivedStatus,
         inProcessingStatus,
         hasErrorsStatus,
         awaitingApprovalStatus,
-        awaitingApprovalForRevocationStatus];
+        awaitingApprovalForRevocationStatus,
+    ];
     const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
     const useGetSequences = hooks.useGetSequences(
         {
