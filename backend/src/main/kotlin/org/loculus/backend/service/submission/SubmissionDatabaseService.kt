@@ -450,7 +450,7 @@ class SubmissionDatabaseService(
                 .select(
                     where = {
                         table.statusIsNotOneOf(listOf(APPROVED_FOR_RELEASE)) and
-                        table.groupNameIsOneOf(validatedGroupNames)
+                            table.groupNameIsOneOf(validatedGroupNames)
                     },
                 )
                 .orderBy(table.accessionColumn)
