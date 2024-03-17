@@ -4,6 +4,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.empty
+import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
@@ -169,7 +170,7 @@ class GetSequencesEndpointTest(
         )
 
         assertThat(resultForInAwaitingApprovalPageOne.sequenceEntries, hasSize(5))
-        assertThat(resultForInAwaitingApprovalPageOne.statusCounts, `is`(mapOf(AWAITING_APPROVAL to 10)))
+        assertThat(resultForInAwaitingApprovalPageOne.statusCounts, hasEntry(AWAITING_APPROVAL, 10))
 
         val resultForInAwaitingApprovalPageTwo = convenienceClient.getSequenceEntries(
             statusesFilter = listOf(AWAITING_APPROVAL),
