@@ -52,9 +52,8 @@ def get_jwt(config: Config) -> str:
             expiration = dt.datetime.fromtimestamp(decoded.get("exp", 0), tz=pytz.UTC)
             jwt_cache.set_token(token, expiration)
             return token
-        else:
-            error_msg = (
-                f"Fetching JWT failed with status code {response.status_code}: {response.text}"
-            )
-            logging.error(error_msg)
-            raise Exception(error_msg)
+        error_msg = (
+            f"Fetching JWT failed with status code {response.status_code}: {response.text}"
+        )
+        logging.error(error_msg)
+        raise Exception(error_msg)

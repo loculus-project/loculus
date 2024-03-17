@@ -34,36 +34,34 @@ class ProcessingFunctions:
                 logger.exception(message)
             if isinstance(result, ProcessingResult):
                 return result
-            else:
-                # Handle unexpected case where a called function does not return a ProcessingResult
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation(
-                            source=[
-                                AnnotationSource(
-                                    name=output_field, type=AnnotationSourceType.METADATA
-                                )
-                            ],
-                            message="Function did not return ProcessingResult",
-                        )
-                    ],
-                )
-        else:
-            # Handle the case where no function matches the given string
+            # Handle unexpected case where a called function does not return a ProcessingResult
             return ProcessingResult(
                 datum=None,
                 warnings=[],
                 errors=[
                     ProcessingAnnotation(
                         source=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                            AnnotationSource(
+                                name=output_field, type=AnnotationSourceType.METADATA
+                            )
                         ],
-                        message=f"Config error: No processing function matches: {function_name}",
+                        message="Function did not return ProcessingResult",
                     )
                 ],
             )
+        # Handle the case where no function matches the given string
+        return ProcessingResult(
+            datum=None,
+            warnings=[],
+            errors=[
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    message=f"Config error: No processing function matches: {function_name}",
+                )
+            ],
+        )
 
     @staticmethod
     def check_date(input_data: ProcessingInput, output_field: str) -> ProcessingResult:

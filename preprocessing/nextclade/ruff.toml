@@ -17,6 +17,11 @@ select = [
     "DTZ",
     "EM",
     "ISC",
+    "ICN",
+    "PIE",
+    "Q",
+    "RSE",
+    "RET",
 ]
 preview = true
 
