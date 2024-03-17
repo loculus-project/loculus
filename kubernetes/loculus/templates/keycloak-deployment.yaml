@@ -42,6 +42,7 @@ spec:
           image: quay.io/keycloak/keycloak:23.0
           env:
             {{- if .Values.keycloakDatabase.urlSealedSecret }}
+            {{- if .Values.keycloakDatabase.addrSealedSecret }}
             - name: DB_VENDOR
               valueFrom:
                 secretKeyRef:
@@ -52,10 +53,12 @@ spec:
                 secretKeyRef:
                   name: externaldb-credentials
                   key: keycloak-db-addr
+                  key: keycloak-db-addr
             - name: DB_DATABASE
               valueFrom:
                 secretKeyRef:
                   name: externaldb-credentials
+                  key: keycloak-db-database
                   key: keycloak-db-database
             - name: DB_USER
               valueFrom:

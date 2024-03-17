@@ -1,10 +1,12 @@
 environment: server
 externalDatabase:
-  urlSealedSecret: ""
+  addrSealedSecret: ""
+  databaseSealedSecret: ""
   usernameSealedSecret: ""
   passwordSealedSecret: ""
 keycloakDatabase:
-  urlSealedSecret: ""
+  addrSealedSecret: ""
+  databaseSealedSecret: ""
   usernameSealedSecret: ""
   passwordSealedSecret: ""
 disableWebsite: false
