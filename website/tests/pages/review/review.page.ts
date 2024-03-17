@@ -58,7 +58,7 @@ export class ReviewPage {
     public async waitForTotalSequencesFulfillPredicate(
         predicate: (totalSequenceCount: number) => boolean,
         retries: number = 10,
-        delayInSeconds: number = 3,
+        delayInSeconds: number = 1,
     ) {
         for (let i = 0; i < retries; i++) {
             await new Promise((resolve) => setTimeout(resolve, delayInSeconds * 1000));
