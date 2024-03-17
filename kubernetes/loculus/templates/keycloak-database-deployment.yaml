@@ -1,3 +1,4 @@
+{{- if not .Values.keycloakDatabase.urlSealedSecret }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,3 +30,4 @@ spec:
               value: "unsecure"
             - name: POSTGRES_DB
               value: "keycloak"
+{{- end }}
