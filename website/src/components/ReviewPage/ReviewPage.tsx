@@ -327,9 +327,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                         {controlPanel}
                         {bulkActionButtons}
                     </div>
-                    {
-                        // shadow like gradient
-                    }
                     <div
                         className='h-2 w-full'
                         style={{
