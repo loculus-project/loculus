@@ -84,8 +84,8 @@ class ProcessingFunctions:
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
         try:
-            parsed_date = datetime.strptime(date, "%Y-%m-%d")
-            if parsed_date > datetime.now():
+            parsed_date = datetime.strptime(date, "%Y-%m-%d").astimezone(pytz.utc)
+            if parsed_date > datetime.now(tz=pytz.utc):
                 warnings.append(
                     ProcessingAnnotation(
                         source=[

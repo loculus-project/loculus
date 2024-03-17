@@ -4,6 +4,7 @@ import datetime as dt
 import logging
 
 import jwt
+import pytz
 import requests
 
 from .config import Config
@@ -16,7 +17,7 @@ class JwtCache:
 
     def get_token(self) -> str | None:
         # Only use token if it's got more than 5 minutes left
-        if self.token and self.expiration > dt.datetime.now() + dt.timedelta(minutes=5):
+        if self.token and self.expiration > dt.datetime.now(tz=pytz.UTC) + dt.timedelta(minutes=5):
             return self.token
         return None
 
@@ -48,7 +49,7 @@ def get_jwt(config: Config) -> str:
             logging.debug("JWT fetched successfully.")
             token = response.json()["access_token"]
             decoded = jwt.decode(token, options={"verify_signature": False})
-            expiration = dt.datetime.fromtimestamp(decoded.get("exp", 0))
+            expiration = dt.datetime.fromtimestamp(decoded.get("exp", 0), tz=pytz.UTC)
             jwt_cache.set_token(token, expiration)
             return token
         else:
