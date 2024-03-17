@@ -2,6 +2,6 @@ target-version = "py312"
 line-length = 100
 
 [lint]
-select = ["E", "F", "B", "UP", "SIM"]
+select = ["E", "F", "B", "UP", "SIM", "I"]
 
 # ignore-init-module-imports = trueselect = ["E", "F", "B"]

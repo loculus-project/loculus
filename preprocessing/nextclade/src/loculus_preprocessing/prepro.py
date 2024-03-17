@@ -3,9 +3,9 @@ import json
 import logging
 import subprocess
 import time
+from collections.abc import Sequence
 from tempfile import TemporaryDirectory
 from typing import Any
-from collections.abc import Sequence
 
 import dpath
 import requests
