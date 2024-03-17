@@ -33,15 +33,15 @@ export class ReviewPage {
     public async getReviewPageOverview(): Promise<ReviewPageOverview> {
         if (
             await this.page
-                .getByText('You do not currently have any unreleased sequences', { exact: false })
+                .getByText('You do not currently have any unreleased sequences awaiting review.', { exact: false })
                 .isVisible()
         ) {
             return { processed: 0, total: 0 };
         }
 
-        await this.page.waitForSelector(':text("sequences processed.")');
+        await this.page.waitForSelector(':text("sequences processed")');
 
-        const infoText = await this.page.$eval(':text("sequences processed.")', (element) => element.textContent);
+        const infoText = await this.page.$eval(':text("sequences processed")', (element) => element.textContent);
 
         const matchResult = infoText?.match(/(\d+) of (\d+) sequences processed/) ?? null;
 
