@@ -84,7 +84,7 @@ def enrich_with_nextclade(
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         # TODO: Generalize for multiple segments (flu)
         input_file = result_dir + "/input.fasta"
-        with open(input_file, "w") as f:
+        with open(input_file, "w", encoding="utf-8") as f:
             for id, sequence in unaligned_nucleotide_sequences.items():
                 f.write(f">{id}\n")
                 f.write(f"{sequence}\n")
@@ -101,7 +101,7 @@ def enrich_with_nextclade(
         logging.debug(f"Running nextclade: {command}")
 
         # TODO: Capture stderr and log at DEBUG level
-        exit_code = subprocess.run(command).returncode  # noqa: S603
+        exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
         if exit_code != 0:
             msg = f"nextclade failed with exit code {exit_code}"
             raise Exception(msg)
@@ -109,7 +109,7 @@ def enrich_with_nextclade(
         logging.debug(f"Nextclade results available in {result_dir}")
 
         aligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
-        with open(result_dir + "/nextclade.aligned.fasta") as aligned_nucs:
+        with open(result_dir + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
             aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
             for aligned_sequence in aligned_nuc:
                 sequence_id: str = aligned_sequence.id
@@ -118,7 +118,7 @@ def enrich_with_nextclade(
         for gene in config.genes:
             translation_path = result_dir + f"/nextclade.cds_translation.{gene}.fasta"
             try:
-                with open(translation_path) as aligned_translations:
+                with open(translation_path, encoding="utf-8") as aligned_translations:
                     aligned_translation = SeqIO.parse(aligned_translations, "fasta")
                     for aligned_sequence in aligned_translation:
                         sequence_id = aligned_sequence.id
@@ -131,7 +131,7 @@ def enrich_with_nextclade(
 
         nextclade_metadata: dict[AccessionVersion, dict[str, Any]] = {}
         # TODO: More QC can be lifted from here
-        with open(result_dir + "/nextclade.json") as nextclade_json:
+        with open(result_dir + "/nextclade.json", encoding="utf-8") as nextclade_json:
             for result in json.load(nextclade_json)["results"]:
                 id = result["seqName"]
                 nextclade_metadata[id] = result
@@ -276,7 +276,7 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
     }
     response = requests.post(url, data=ndjson_string, headers=headers, timeout=10)
     if not response.ok:
-        with open("failed_submission.json", "w") as f:
+        with open("failed_submission.json", "w", encoding="utf-8") as f:
             f.write(ndjson_string)
         msg = (
             f"Submitting processed data failed. Status code: {response.status_code}\n"
@@ -297,7 +297,7 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     ]
 
     logging.info(f"Downloading Nextclade dataset: {dataset_download_command}")
-    if subprocess.run(dataset_download_command).returncode != 0:  # noqa: S603
+    if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
         msg = "Dataset download failed"
         raise Exception(msg)
     logging.info("Nextclade dataset downloaded successfully")

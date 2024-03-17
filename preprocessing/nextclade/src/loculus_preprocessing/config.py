@@ -35,7 +35,7 @@ class Config:
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:
     config = copy.deepcopy(config)
-    with open(config_file) as file:
+    with open(config_file, encoding="utf-8") as file:
         yaml_config = yaml.safe_load(file)
         logging.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
