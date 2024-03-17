@@ -39,8 +39,9 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     headers = {"Authorization": "Bearer " + get_jwt(config)}
     response = requests.post(url, data=params, headers=headers, timeout=10)
     if not response.ok:
+        msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
         raise Exception(
-            f"Fetching unprocessed data failed. Status code: {response.status_code}",
+            msg,
             response.text,
         )
     return parse_ndjson(response.text)
@@ -102,7 +103,8 @@ def enrich_with_nextclade(
         # TODO: Capture stderr and log at DEBUG level
         exit_code = subprocess.run(command).returncode  # noqa: S603
         if exit_code != 0:
-            raise Exception(f"nextclade failed with exit code {exit_code}")
+            msg = f"nextclade failed with exit code {exit_code}"
+            raise Exception(msg)
 
         logging.debug(f"Nextclade results available in {result_dir}")
 
@@ -295,7 +297,8 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
 
     logging.info(f"Downloading Nextclade dataset: {dataset_download_command}")
     if subprocess.run(dataset_download_command).returncode != 0:  # noqa: S603
-        raise Exception("Dataset download failed")
+        msg = "Dataset download failed"
+        raise Exception(msg)
     logging.info("Nextclade dataset downloaded successfully")
 
 
