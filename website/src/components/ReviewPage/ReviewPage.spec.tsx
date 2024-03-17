@@ -83,7 +83,7 @@ describe('ReviewPage', () => {
         const { getByText } = renderReviewPage();
 
         await waitFor(() => {
-            expect(getByText('You do not currently have any unreleased sequences')).toBeDefined();
+            expect(getByText('You do not currently have any unreleased sequences awaiting review.')).toBeDefined();
         });
     });
 
@@ -132,7 +132,7 @@ describe('ReviewPage', () => {
         getByText((text) => text.includes('Confirm')).click();
 
         await waitFor(() => {
-            expect(getByText('You do not currently have any unreleased sequences')).toBeDefined();
+            expect(getByText('You do not currently have any unreleased sequences awaiting review.')).toBeDefined();
         });
     });
 
@@ -151,7 +151,7 @@ describe('ReviewPage', () => {
         const { getByText } = renderReviewPage();
 
         await waitFor(() => {
-            expect(getByText((text) => text.includes('2 of 4 sequences processed.'))).toBeDefined();
+            expect(getByText((text) => text.includes('2 of 4 sequences processed'))).toBeDefined();
         });
     });
 });
