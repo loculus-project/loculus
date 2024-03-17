@@ -15,6 +15,7 @@ import {
     awaitingApprovalForRevocationStatus,
     type PageQuery,
     type SequenceEntryStatus,
+    receivedStatus,
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -34,9 +35,30 @@ type ReviewPageProps = {
 
 const pageSizeOptions = [10, 20, 50, 100] as const;
 
+const NumberAndVisibility = ({ text, number, setVisibility, visibilityEnabled }) =>
+{
+    // checkbox number, text
+    return <div className='flex items-center gap-2 text-sm text-grat-500'>
+       <label> <input
+
+            type='checkbox'
+            checked={visibilityEnabled}
+            onChange={() => setVisibility(!visibilityEnabled)}
+            className='mr-2'
+        />
+        {number} {text}</label>
+    </div>
+
+
+
+
+}
+
 const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessToken }) => {
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
     const [showErrors, setShowErrors] = useState(true);
+    const [showUnprocessed, setShowUnprocessed] = useState(true);
+    const [showValid, setShowValid] = useState(false);
     const [pageQuery, setPageQuery] = useState<PageQuery>({ page: 1, size: pageSizeOptions[2] });
 
     const hooks = useSubmissionOperations(organism, clientConfig, accessToken, openErrorFeedback, pageQuery);
@@ -66,8 +88,36 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     const processedCount = hooks.getSequences.data.statusCounts[awaitingApprovalStatus];
     const errorCount = hooks.getSequences.data.statusCounts[hasErrorsStatus];
     const revocationCount = hooks.getSequences.data.statusCounts[awaitingApprovalForRevocationStatus];
+    const receivedCount = hooks.getSequences.data.statusCounts[receivedStatus];
+    
 
     const finishedCount = processedCount + errorCount + revocationCount;
+    const unfinishedCount = receivedCount + processingCount;
+    const validCount = processedCount + revocationCount;
+
+    const categoryInfo = [
+        {
+            text: "sequences still awaiting processing",
+            number: unfinishedCount,
+            setVisibility: setShowUnprocessed,
+            visibilityEnabled: showUnprocessed,
+        },
+        {
+            text: "valid sequences",
+            number: validCount,
+            setVisibility: setShowValid,
+            visibilityEnabled: showValid,
+        },
+        {
+            text: "sequences with errors",
+            number: errorCount,
+            setVisibility: setShowErrors,
+            visibilityEnabled: showErrors,
+        }
+        
+    ]
+
+
 
     const sequences: SequenceEntryStatus[] = hooks.getSequences.data.sequenceEntries;
 
@@ -78,14 +128,11 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                 {processingCount > 0 && <span className='loading loading-spinner loading-sm ml-3'> </span>}
             </div>
             <div>
-                <input
-                    className='mr-3'
-                    type='checkbox'
-                    checked={showErrors}
-                    title='Show sequences with errors'
-                    onChange={(e) => setShowErrors(e.target.checked)}
-                />
-                Also show entries with errors
+               {
+                     categoryInfo.map((info) => {
+                          return <NumberAndVisibility {...info} />
+                     })
+               }
             </div>
         </div>
     );
@@ -193,9 +240,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     const reviewCards = (
         <div className='flex flex-col gap-2 py-4'>
             {sequences.map((sequence) => {
-                if (!showErrors && sequence.status === hasErrorsStatus) {
-                    return null;
-                }
                 return (
                     <div key={sequence.accession}>
                         <ReviewCard
