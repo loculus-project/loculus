@@ -1,5 +1,4 @@
-"""
-Module to define pure functions for processing data
+"""Module to define pure functions for processing data
 Each function takes input data and returns output data, warnings and errors
 This makes it easy to test and reason about the code
 """
@@ -68,8 +67,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def check_date(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
-        """
-        Check that date is complete YYYY-MM-DD
+        """Check that date is complete YYYY-MM-DD
         If not according to format return error
         If in future, return warning
         Expects input_data to be an ordered dictionary with a single key "date"
@@ -222,9 +220,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def parse_timestamp(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
-        """
-        Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string
-        """
+        """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
 
         if timestamp is None:
@@ -264,9 +260,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def identity(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
-        """
-        Identity function, takes input_data["input"] and returns it as output
-        """
+        """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
             return ProcessingResult(
                 datum=None,

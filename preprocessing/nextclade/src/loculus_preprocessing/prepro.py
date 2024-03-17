@@ -1,7 +1,7 @@
 import dataclasses
 import json
 import logging
-import subprocess
+import subprocess  # noqa: S404
 import time
 from collections.abc import Sequence
 from tempfile import TemporaryDirectory
@@ -37,7 +37,7 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n}
     headers = {"Authorization": "Bearer " + get_jwt(config)}
-    response = requests.post(url, data=params, headers=headers)
+    response = requests.post(url, data=params, headers=headers, timeout=10)
     if not response.ok:
         raise Exception(
             f"Fetching unprocessed data failed. Status code: {response.status_code}",
@@ -100,7 +100,7 @@ def enrich_with_nextclade(
         logging.debug(f"Running nextclade: {command}")
 
         # TODO: Capture stderr and log at DEBUG level
-        exit_code = subprocess.run(command).returncode
+        exit_code = subprocess.run(command).returncode  # noqa: S603
         if exit_code != 0:
             raise Exception(f"nextclade failed with exit code {exit_code}")
 
@@ -272,7 +272,7 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
         "Content-Type": "application/x-ndjson",
         "Authorization": "Bearer " + get_jwt(config),
     }
-    response = requests.post(url, data=ndjson_string, headers=headers)
+    response = requests.post(url, data=ndjson_string, headers=headers, timeout=10)
     if not response.ok:
         with open("failed_submission.json", "w") as f:
             f.write(ndjson_string)
@@ -294,7 +294,7 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     ]
 
     logging.info(f"Downloading Nextclade dataset: {dataset_download_command}")
-    if subprocess.run(dataset_download_command).returncode != 0:
+    if subprocess.run(dataset_download_command).returncode != 0:  # noqa: S603
         raise Exception("Dataset download failed")
     logging.info("Nextclade dataset downloaded successfully")
 

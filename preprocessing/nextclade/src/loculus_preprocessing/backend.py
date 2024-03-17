@@ -1,6 +1,4 @@
-"""
-Functions to interface with the backend
-"""
+"""Functions to interface with the backend"""
 
 import datetime as dt
 import logging
@@ -45,7 +43,7 @@ def get_jwt(config: Config) -> str:
 
     logging.debug(f"Requesting JWT from {url}")
 
-    with requests.post(url, data=data) as response:
+    with requests.post(url, data=data, timeout=10) as response:
         if response.ok:
             logging.debug("JWT fetched successfully.")
             token = response.json()["access_token"]
