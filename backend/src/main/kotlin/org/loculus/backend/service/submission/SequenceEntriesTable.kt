@@ -6,7 +6,6 @@ import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.notInList
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
@@ -105,8 +104,6 @@ class SequenceEntriesDataTable(
     fun statusIs(status: Status) = statusColumn eq status.name
 
     fun statusIsOneOf(statuses: List<Status>) = statusColumn inList statuses.map { it.name }
-
-    fun statusIsNotOneOf(statuses: List<Status>) = statusColumn notInList statuses.map { it.name }
 
     fun accessionVersionEquals(accessionVersion: AccessionVersionInterface) =
         (accessionColumn eq accessionVersion.accession) and
