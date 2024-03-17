@@ -3,6 +3,10 @@ externalDatabase:
   urlSealedSecret: ""
   usernameSealedSecret: ""
   passwordSealedSecret: ""
+keycloakDatabase:
+  urlSealedSecret: ""
+  usernameSealedSecret: ""
+  passwordSealedSecret: ""
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
