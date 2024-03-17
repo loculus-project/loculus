@@ -41,9 +41,7 @@ class ProcessingFunctions:
                 errors=[
                     ProcessingAnnotation(
                         source=[
-                            AnnotationSource(
-                                name=output_field, type=AnnotationSourceType.METADATA
-                            )
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
                         message="Function did not return ProcessingResult",
                     )
