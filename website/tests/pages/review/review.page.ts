@@ -31,7 +31,11 @@ export class ReviewPage {
     }
 
     public async getReviewPageOverview(): Promise<ReviewPageOverview> {
-        if (await this.page.getByText('No sequences to review', { exact: false }).isVisible()) {
+        if (
+            await this.page
+                .getByText('You do not currently have any unreleased sequences', { exact: false })
+                .isVisible()
+        ) {
             return { processed: 0, total: 0 };
         }
 
