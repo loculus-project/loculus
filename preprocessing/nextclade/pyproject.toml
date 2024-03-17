@@ -1,9 +1,11 @@
-[tool.ruff]
-line-length = 100
+# Basic package config to make it installable
+[project]
+name = "loculus_preprocessing"
+version = "0.1.0"
+requires-python = ">=3.12"
 
-[tool.ruff.lint]
-# ignore-init-module-imports = true
-select = ["E", "F", "B"]
+[project.scripts]
+prepro = "loculus_preprocessing.__main__:cli_entry"
 
 [build-system]
 requires = ["hatchling"]
@@ -11,11 +13,3 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/loculus_preprocessing"]
-
-# Basic package config to make it installable
-[project]
-name = "loculus_preprocessing"
-version = "0.1.0"
-
-[project.scripts]
-prepro = "loculus_preprocessing.__main__:cli_entry"

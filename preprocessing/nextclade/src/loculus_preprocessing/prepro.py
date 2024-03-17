@@ -4,7 +4,8 @@ import logging
 import subprocess
 import time
 from tempfile import TemporaryDirectory
-from typing import Any, Sequence
+from typing import Any
+from collections.abc import Sequence
 
 import dpath
 import requests
@@ -39,7 +40,7 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         raise Exception(
-            "Fetching unprocessed data failed. Status code: {}".format(response.status_code),
+            f"Fetching unprocessed data failed. Status code: {response.status_code}",
             response.text,
         )
     return parse_ndjson(response.text)
@@ -101,12 +102,12 @@ def enrich_with_nextclade(
         # TODO: Capture stderr and log at DEBUG level
         exit_code = subprocess.run(command).returncode
         if exit_code != 0:
-            raise Exception("nextclade failed with exit code {}".format(exit_code))
+            raise Exception(f"nextclade failed with exit code {exit_code}")
 
         logging.debug(f"Nextclade results available in {result_dir}")
 
         aligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
-        with open(result_dir + "/nextclade.aligned.fasta", "r") as alignedNucs:
+        with open(result_dir + "/nextclade.aligned.fasta") as alignedNucs:
             aligned_nuc = SeqIO.parse(alignedNucs, "fasta")
             for aligned_sequence in aligned_nuc:
                 sequence_id: str = aligned_sequence.id
@@ -319,4 +320,4 @@ def run(config: Config) -> None:
                 logging.exception(f"Submitting processed data failed. Traceback: {e}")
                 continue
             total_processed += len(processed)
-            logging.info("Processed {} sequences".format(len(processed)))
+            logging.info(f"Processed {len(processed)} sequences")

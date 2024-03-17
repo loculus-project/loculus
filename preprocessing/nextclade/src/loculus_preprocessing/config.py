@@ -5,7 +5,7 @@ import logging
 import os
 from dataclasses import dataclass
 from types import UnionType
-from typing import Any, Type, get_args
+from typing import Any, get_args
 
 import yaml
 
@@ -35,7 +35,7 @@ class Config:
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:
     config = copy.deepcopy(config)
-    with open(config_file, "r") as file:
+    with open(config_file) as file:
         yaml_config = yaml.safe_load(file)
         logging.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
@@ -56,7 +56,7 @@ def kebab(s: str) -> str:
     return s.replace("_", "-")
 
 
-def generate_argparse_from_dataclass(config_cls: Type[Config]) -> argparse.ArgumentParser:
+def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Command-line arguments for Config class")
     for field in dataclasses.fields(config_cls):
         field_name = kebab(field.name)
