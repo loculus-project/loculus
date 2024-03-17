@@ -50,7 +50,6 @@ const NumberAndVisibility = ({
     setVisibility: (value: boolean) => void;
     visibilityEnabled: boolean;
 }) => {
-    // checkbox number, text
     return (
         <div className='flex items-center gap-3 text-sm text-gray-600'>
             <label>
@@ -113,8 +112,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     }
 
     if (hooks.getSequences.isLoading) {
-        // Type checking doesn't seem to understand how to handle the ref, so we need to..
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition, @typescript-eslint/strict-boolean-expressions
         if (oldSequenceData) {
             sequencesData = oldSequenceData;
         } else {
