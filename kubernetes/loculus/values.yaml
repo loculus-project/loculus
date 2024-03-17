@@ -1,4 +1,8 @@
 environment: server
+externalDatabase:
+  urlSealedSecret: ""
+  usernameSealedSecret: ""
+  passwordSealedSecret: ""
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false

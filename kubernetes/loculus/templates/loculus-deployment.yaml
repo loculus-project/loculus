@@ -69,19 +69,51 @@ spec:
           ports:
             - containerPort: 8079
           args:
-            - "--spring.datasource.url=jdbc:postgresql://localhost:5432/loculus"
-            - "--spring.datasource.username=postgres"
-            - "--spring.datasource.password=unsecure"
+            - "--spring.datasource.url=$(DB_URL)"
+            - "--spring.datasource.username=$(DB_USERNAME)"
+            - "--spring.datasource.password=$(DB_PASSWORD)"
             - "--keycloak.user=backend"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"
             - "--keycloak.client=test-cli"
             - "--keycloak.url=http://loculus-keycloak-service:8083"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+          env:
+           {{- if .Values.externalDatabase.urlSealedSecret }}
+            - name: DB_URL
+              valueFrom:
+               secretKeyRef:
+                 name: externaldb-credentials
+                 key: url
+           {{- else }}
+            - name: DB_URL
+              value: "jdbc:postgresql://localhost:5432/loculus"
+           {{- end }}
+           {{- if .Values.externalDatabase.usernameSealedSecret }}
+            - name: DB_USERNAME
+              valueFrom:
+               secretKeyRef:
+                 name: externaldb-credentials
+                 key: username
+           {{- else }}
+            - name: DB_USERNAME
+              value: "postgres"
+           {{- end }}
+           {{- if .Values.externalDatabase.passwordSealedSecret }}
+            - name: DB_PASSWORD
+              valueFrom:
+               secretKeyRef:
+                 name: externaldb-credentials
+                 key: password
+           {{- else }}
+            - name: DB_PASSWORD
+              value: "password"
+           {{- end }}
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
         {{- end }}
+        {{- if not .Values.externalDatabaseUrl }}
         - name: database
           image: postgres:latest
           ports:
@@ -93,6 +125,7 @@ spec:
               value: "unsecure"
             - name: POSTGRES_DB
               value: "loculus"
+        {{- end }}
 
       imagePullSecrets:
         - name: ghcr-secret
