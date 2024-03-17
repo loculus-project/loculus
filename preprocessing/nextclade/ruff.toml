@@ -23,6 +23,9 @@ select = [
     "RSE",
     "RET",
     "PL",
+    "FURB",
+    "LOG",
+    "RUF",
 ]
 preview = true
 
