@@ -255,6 +255,8 @@ class SubmissionController(
         )
         @RequestParam(required = false)
         statusesFilter: List<Status>?,
+        @RequestParam(required = false)
+        initialStatusesFilter: List<Status>?,
         @UsernameFromJwt username: String,
         @RequestParam(required = false, defaultValue = "INCLUDE_WARNINGS")
         warningsFilter: WarningsFilter,
@@ -275,6 +277,7 @@ class SubmissionController(
         organism,
         groupsFilter,
         statusesFilter,
+        initialStatusesFilter,
         warningsFilter,
         page,
         size,

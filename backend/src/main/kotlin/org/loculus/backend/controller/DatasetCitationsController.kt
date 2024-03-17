@@ -98,7 +98,7 @@ class DatasetCitationsController(
     @GetMapping("/get-user-cited-by-dataset")
     fun getUserCitedByDataset(@UsernameFromJwt username: String): CitedBy {
         val statusFilter = listOf(APPROVED_FOR_RELEASE)
-        val userSequences = submissionDatabaseService.getSequences(username, null, null, statusFilter)
+        val userSequences = submissionDatabaseService.getSequences(username, null, null, statusFilter, statusFilter)
         return datasetCitationsService.getUserCitedByDataset(userSequences.sequenceEntries)
     }
 
