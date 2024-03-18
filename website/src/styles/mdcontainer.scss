@@ -32,11 +32,28 @@
   @apply ml-4 my-1;
 }
 
-.mdContainer ul {
+.mdContainer > ul {
   @apply list-disc list-inside my-2;
 }
 
-.mdContainer ul li {
+.mdContainer > ul > li {
   @apply ml-4 my-1;
 }
+
+.mdContainer > ul > li > ul {
+  @apply list-circle my-2;
+}
+
+.mdContainer > ul > li > ul > li {
+  @apply ml-8 my-1;
+}
+
+.mdContainer > ul > li > ul > li > ul {
+  @apply list-square my-2;
+}
+
+.mdContainer > ul > li > ul > li > ul > li {
+  @apply ml-12 my-1;
+}
+
 
