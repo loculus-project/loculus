@@ -17,7 +17,6 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
-import org.loculus.backend.model.UploadType
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
@@ -123,8 +122,47 @@ class UploadDatabaseService(
             "mapping and copying sequences with UploadId $uploadId and uploadType: $submissionParams.uploadType"
         }
 
+        val mapAndCopySql = """
+            INSERT INTO sequence_entries (
+                accession,
+                version,
+                organism,
+                submission_id,
+                submitter,
+                group_name,
+                submitted_at,
+                original_data,
+                status
+            )
+            SELECT
+                m.accession,
+                m.version,
+                m.organism,
+                m.submission_id,
+                m.submitter,
+                m.group_name,
+                m.uploaded_at,
+                jsonb_build_object(
+                    'metadata', m.metadata,
+                    'unalignedNucleotideSequences', jsonb_object_agg(s.segment_name, s.compressed_sequence_data)
+                ),
+                '${Status.RECEIVED.name}'
+            FROM
+                metadata_upload_aux_table m
+            JOIN
+                sequence_upload_aux_table s ON m.upload_id = s.upload_id AND m.submission_id = s.submission_id
+            WHERE m.upload_id = ?
+            GROUP BY
+                m.upload_id,
+                m.organism,
+                m.submission_id,
+                m.submitter,
+                m.group_name,
+                m.uploaded_at
+            RETURNING accession, version, submission_id;
+        """.trimIndent()
         val insertionResult = exec(
-            generateMapAndCopyStatement(submissionParams.uploadType),
+            mapAndCopySql,
             listOf(
                 Pair(VarCharColumnType(), uploadId),
             ),
@@ -221,70 +259,9 @@ class UploadDatabaseService(
                 },
             ) {
                 it[accessionColumn] = accession
+                it[versionColumn] = 1
             }
         }
-    }
-
-    private fun generateMapAndCopyStatement(uploadType: UploadType): String {
-        val commonColumns = StringBuilder().apply {
-            append("accession,")
-            if (uploadType == UploadType.REVISION) {
-                append("version,")
-            }
-            append(
-                """
-                    organism,
-                    submission_id,
-                    submitter,
-                    group_name,
-                    submitted_at,
-                    original_data,
-                    status
-                """,
-            )
-        }.toString()
-
-        val specificColumns = if (uploadType == UploadType.ORIGINAL) {
-            """
-            m.accession,
-            """.trimIndent()
-        } else {
-            """
-            m.accession,
-            m.version,
-            """.trimIndent()
-        }
-
-        return """
-        INSERT INTO sequence_entries (
-        $commonColumns
-        )
-        SELECT
-            $specificColumns
-            m.organism,
-            m.submission_id,
-            m.submitter,
-            m.group_name,
-            m.uploaded_at,
-            jsonb_build_object(
-                'metadata', m.metadata,
-                'unalignedNucleotideSequences', jsonb_object_agg(s.segment_name, s.compressed_sequence_data)
-            ),
-            '${Status.RECEIVED.name}' 
-        FROM
-            metadata_upload_aux_table m
-        JOIN
-            sequence_upload_aux_table s ON m.upload_id = s.upload_id AND m.submission_id = s.submission_id
-        WHERE m.upload_id = ?
-        GROUP BY
-            m.upload_id,
-            m.organism,
-            m.submission_id,
-            m.submitter,
-            m.group_name,
-            m.uploaded_at
-        RETURNING accession, version, submission_id;
-        """.trimIndent()
     }
 
     fun getNextSequenceNumbers(numberOfNewEntries: Int) = transaction {
