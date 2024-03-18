@@ -172,7 +172,10 @@ def parse_nextclade_tsv(
             with contextlib.suppress(Exception):
                 aa_ins_split = row["aaInsertions"].split(",")
             for ins in aa_ins_split:
-                gene, pos, aa = ins.split(":")
+                try:
+                    gene, pos, aa = ins.split(":")
+                except ValueError:
+                    continue
                 aa_ins[gene].append(f"{pos}:{aa}")
             amino_acid_insertions[id] = aa_ins
     return nucleotide_insertions, amino_acid_insertions
