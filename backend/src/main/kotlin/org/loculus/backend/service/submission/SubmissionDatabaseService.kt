@@ -91,6 +91,7 @@ class SubmissionDatabaseService(
                     where = { table.statusIs(RECEIVED) and table.isMaxVersion and table.organismIs(organism) },
                 )
                 .limit(numberOfSequenceEntries)
+                .orderBy(table.accessionColumn)
                 .map {
                     UnprocessedData(
                         it[table.accessionColumn],
@@ -274,9 +275,11 @@ class SubmissionDatabaseService(
                 AccessionVersion(it[table.accessionColumn], it[table.versionColumn])
             }
 
-        table.update(where = {
-            table.accessionVersionIsIn(accessionVersionsToUpdate)
-        }) {
+        table.update(
+            where = {
+                table.accessionVersionIsIn(accessionVersionsToUpdate)
+            },
+        ) {
             it[statusColumn] = APPROVED_FOR_RELEASE.name
             it[releasedAtColumn] = now
         }
@@ -317,10 +320,14 @@ class SubmissionDatabaseService(
     fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> {
         return sequenceEntriesTableProvider.get(organism).let { table ->
 
-            table.join(DataUseTermsTable, JoinType.LEFT, additionalConstraint = {
-                (table.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                    (DataUseTermsTable.isNewestDataUseTerms)
-            })
+            table.join(
+                DataUseTermsTable,
+                JoinType.LEFT,
+                additionalConstraint = {
+                    (table.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                        (DataUseTermsTable.isNewestDataUseTerms)
+                },
+            )
                 .slice(
                     table.accessionColumn,
                     table.versionColumn,
