@@ -8,6 +8,8 @@ import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DeleteIcon from '~icons/ci/user-remove';
+import DashiconsGroups from '~icons/dashicons/groups';
+import DashiconsPlus from '~icons/dashicons/plus';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 
 type GroupPageProps = {
@@ -96,18 +98,24 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             </label>
                             <ul
                                 tabIndex={0}
-                                className='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-btn absolute top-full -left-4 min-w-56'
+                                className='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-btn absolute top-full -left-4 min-w-60'
                             >
                                 {userGroupNames.map(
                                     (name: string) =>
                                         name !== groupName && (
                                             <li key={name}>
-                                                <a href={routes.groupOverviewPage(name)}>{name}</a>
+                                                <a href={routes.groupOverviewPage(name)}>
+                                                    <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
+                                                    {name}
+                                                </a>
                                             </li>
                                         ),
                                 )}
                                 <li>
-                                    <a href={routes.createGroup()}>Create a new group...</a>
+                                    <a href={routes.createGroup()}>
+                                        <DashiconsPlus className='w-6 h-6 inline-block mr-2' />
+                                        Create a new group...
+                                    </a>
                                 </li>
                             </ul>
                         </div>
