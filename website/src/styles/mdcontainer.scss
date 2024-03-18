@@ -31,12 +31,39 @@
 .mdContainer ol li {
   @apply ml-4 my-1;
 }
-
-.mdContainer ul {
-  @apply list-disc list-inside my-2;
+/* Level 1 - Direct children of .mdContainer */
+.mdContainer > ul {
+  list-style-type: disc;
+  margin: 8px 0;
+  padding-left: 0;
 }
 
-.mdContainer ul li {
-  @apply ml-4 my-1;
+.mdContainer > ul > li {
+  margin-left: 16px;
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 
+/* Level 2 - UL nested within LI of the first level UL */
+.mdContainer > ul > li > ul {
+  list-style-type: circle;
+  margin: 8px 0;
+}
+
+.mdContainer > ul > li > ul > li {
+  margin-left: 32px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+/* Level 3 - UL nested within LI of the second level UL */
+.mdContainer > ul > li > ul > li > ul {
+  list-style-type: square;
+  margin: 8px 0;
+}
+
+.mdContainer > ul > li > ul > li > ul > li {
+  margin-left: 48px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
