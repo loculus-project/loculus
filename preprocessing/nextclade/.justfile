@@ -1,5 +1,9 @@
 all: ruff_format ruff_check run_mypy
 
+r: ruff
+
+ruff: ruff_check ruff_format
+
 ruff_format:
     ruff format
 
