@@ -11,7 +11,7 @@ def cli_entry() -> None:
 
     logging.getLogger().setLevel(config.log_level)
 
-    logging.info("Using config: {}".format(config))
+    logging.info(f"Using config: {config}")
 
     run(config)
 

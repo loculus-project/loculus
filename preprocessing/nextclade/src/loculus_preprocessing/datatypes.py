@@ -1,3 +1,4 @@
+# ruff: noqa: N815
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
 from typing import Any
@@ -10,9 +11,7 @@ NucleotideInsertion = str
 AminoAcidInsertion = str
 FunctionName = str  # Name of function present in processing_functions
 ArgName = str  # Name of argument present in processing_functions
-InputField = (
-    str  # Name of field in input data, either inputMetadata or NextcladeMetadata
-)
+InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
 ProcessingInput = dict[str, str | None]
 
 

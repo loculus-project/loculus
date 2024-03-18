@@ -1,10 +1,11 @@
 import dataclasses
 import json
 import logging
-import subprocess
+import subprocess  # noqa: S404
 import time
+from collections.abc import Sequence
 from tempfile import TemporaryDirectory
-from typing import Any, Sequence
+from typing import Any
 
 import dpath
 import requests
@@ -36,10 +37,11 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
     params = {"numberOfSequenceEntries": n}
     headers = {"Authorization": "Bearer " + get_jwt(config)}
-    response = requests.post(url, data=params, headers=headers)
+    response = requests.post(url, data=params, headers=headers, timeout=10)
     if not response.ok:
+        msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
         raise Exception(
-            "Fetching unprocessed data failed. Status code: {}".format(response.status_code),
+            msg,
             response.text,
         )
     return parse_ndjson(response.text)
@@ -82,7 +84,7 @@ def enrich_with_nextclade(
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
         # TODO: Generalize for multiple segments (flu)
         input_file = result_dir + "/input.fasta"
-        with open(input_file, "w") as f:
+        with open(input_file, "w", encoding="utf-8") as f:
             for id, sequence in unaligned_nucleotide_sequences.items():
                 f.write(f">{id}\n")
                 f.write(f"{sequence}\n")
@@ -99,15 +101,16 @@ def enrich_with_nextclade(
         logging.debug(f"Running nextclade: {command}")
 
         # TODO: Capture stderr and log at DEBUG level
-        exit_code = subprocess.run(command).returncode
+        exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
         if exit_code != 0:
-            raise Exception("nextclade failed with exit code {}".format(exit_code))
+            msg = f"nextclade failed with exit code {exit_code}"
+            raise Exception(msg)
 
         logging.debug(f"Nextclade results available in {result_dir}")
 
         aligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
-        with open(result_dir + "/nextclade.aligned.fasta", "r") as alignedNucs:
-            aligned_nuc = SeqIO.parse(alignedNucs, "fasta")
+        with open(result_dir + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
+            aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
             for aligned_sequence in aligned_nuc:
                 sequence_id: str = aligned_sequence.id
                 aligned_nucleotide_sequences[sequence_id] = str(aligned_sequence.seq)
@@ -115,8 +118,8 @@ def enrich_with_nextclade(
         for gene in config.genes:
             translation_path = result_dir + f"/nextclade.cds_translation.{gene}.fasta"
             try:
-                with open(translation_path) as alignedTranslations:
-                    aligned_translation = SeqIO.parse(alignedTranslations, "fasta")
+                with open(translation_path, encoding="utf-8") as aligned_translations:
+                    aligned_translation = SeqIO.parse(aligned_translations, "fasta")
                     for aligned_sequence in aligned_translation:
                         sequence_id = aligned_sequence.id
                         aligned_aminoacid_sequences[sequence_id][gene] = str(aligned_sequence.seq)
@@ -128,7 +131,7 @@ def enrich_with_nextclade(
 
         nextclade_metadata: dict[AccessionVersion, dict[str, Any]] = {}
         # TODO: More QC can be lifted from here
-        with open(result_dir + "/nextclade.json") as nextclade_json:
+        with open(result_dir + "/nextclade.json", encoding="utf-8") as nextclade_json:
             for result in json.load(nextclade_json)["results"]:
                 id = result["seqName"]
                 nextclade_metadata[id] = result
@@ -136,14 +139,14 @@ def enrich_with_nextclade(
     return {
         id: UnprocessedAfterNextclade(
             inputMetadata=input_metadata[id],
-            nextcladeMetadata=nextclade_metadata.get(id, None),
+            nextcladeMetadata=nextclade_metadata.get(id),
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
-            alignedNucleotideSequences=aligned_nucleotide_sequences.get(id, None),
+            alignedNucleotideSequences=aligned_nucleotide_sequences.get(id),
             nucleotideInsertions=[],
             alignedAminoAcidSequences=aligned_aminoacid_sequences.get(id, {}),
             aminoAcidInsertions={gene: [] for gene in config.genes},
         )
-        for id in unaligned_nucleotide_sequences.keys()
+        for id in unaligned_nucleotide_sequences
     }
 
 
@@ -183,8 +186,8 @@ def process_single(
         for arg_name, input_path in spec.inputs.items():
             input_data[arg_name] = None
             # If field starts with "nextclade.", take from nextclade metadata
-            NEXTCLADE_PREFIX = "nextclade."
-            if input_path.startswith(NEXTCLADE_PREFIX):
+            nextclade_prefix = "nextclade."
+            if input_path.startswith(nextclade_prefix):
                 # Remove "nextclade." prefix
                 if unprocessed.nextcladeMetadata is None:
                     errors.append(
@@ -199,7 +202,7 @@ def process_single(
                         )
                     )
                     continue
-                sub_path = input_path[len(NEXTCLADE_PREFIX) :]
+                sub_path = input_path[len(nextclade_prefix) :]
                 input_data[arg_name] = str(
                     dpath.get(
                         unprocessed.nextcladeMetadata,
@@ -229,7 +232,7 @@ def process_single(
         if null_per_backend(processing_result.datum) and spec.required:
             logging.warn(
                 f"Metadata field {output_field} is required but nullish: "
-                + f"{processing_result.datum}, setting to 'Not provided'"
+                f"{processing_result.datum}, setting to 'Not provided'"
             )
             output_metadata[output_field] = "Not provided"
 
@@ -271,15 +274,16 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
         "Content-Type": "application/x-ndjson",
         "Authorization": "Bearer " + get_jwt(config),
     }
-    response = requests.post(url, data=ndjson_string, headers=headers)
+    response = requests.post(url, data=ndjson_string, headers=headers, timeout=10)
     if not response.ok:
-        with open("failed_submission.json", "w") as f:
+        with open("failed_submission.json", "w", encoding="utf-8") as f:
             f.write(ndjson_string)
-        raise Exception(
+        msg = (
             f"Submitting processed data failed. Status code: {response.status_code}\n"
-            + f"Response: {response.text}\n"
-            + f"Data sent in request: {ndjson_string[0:1000]}...\n"
+            f"Response: {response.text}\n"
+            f"Data sent in request: {ndjson_string[0:1000]}...\n"
         )
+        raise Exception(msg)
     logging.info("Processed data submitted successfully")
 
 
@@ -293,8 +297,9 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     ]
 
     logging.info(f"Downloading Nextclade dataset: {dataset_download_command}")
-    if subprocess.run(dataset_download_command).returncode != 0:
-        raise Exception("Dataset download failed")
+    if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
+        msg = "Dataset download failed"
+        raise Exception(msg)
     logging.info("Nextclade dataset downloaded successfully")
 
 
@@ -319,4 +324,4 @@ def run(config: Config) -> None:
                 logging.exception(f"Submitting processed data failed. Traceback: {e}")
                 continue
             total_processed += len(processed)
-            logging.info("Processed {} sequences".format(len(processed)))
+            logging.info(f"Processed {len(processed)} sequences")

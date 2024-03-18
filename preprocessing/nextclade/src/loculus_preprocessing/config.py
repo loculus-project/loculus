@@ -5,7 +5,7 @@ import logging
 import os
 from dataclasses import dataclass
 from types import UnionType
-from typing import Any, Type, get_args
+from typing import Any, get_args
 
 import yaml
 
@@ -35,7 +35,7 @@ class Config:
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:
     config = copy.deepcopy(config)
-    with open(config_file, "r") as file:
+    with open(config_file, encoding="utf-8") as file:
         yaml_config = yaml.safe_load(file)
         logging.debug(f"Loaded config from {config_file}: {yaml_config}")
     for key, value in yaml_config.items():
@@ -56,14 +56,14 @@ def kebab(s: str) -> str:
     return s.replace("_", "-")
 
 
-def generate_argparse_from_dataclass(config_cls: Type[Config]) -> argparse.ArgumentParser:
+def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Command-line arguments for Config class")
     for field in dataclasses.fields(config_cls):
         field_name = kebab(field.name)
         field_type = base_type(field.type)
         if field_type not in CLI_TYPES:
             continue
-        if field_type == bool:  # Special case for boolean flags
+        if field_type is bool:  # Special case for boolean flags
             parser.add_argument(f"--{field_name}", action="store_true")
             parser.add_argument(
                 f"--no-{field_name}", dest=field_name.replace("-", "_"), action="store_false"
@@ -91,7 +91,7 @@ def get_config() -> Config:
         config = load_config_from_yaml(args.config_file, config)
 
     # Use environment variables if available
-    for key in config.__dict__.keys():
+    for key in config.__dict__:
         env_var = f"PREPROCESSING_{key.upper()}"
         if env_var in os.environ:
             setattr(config, key, os.environ[env_var])

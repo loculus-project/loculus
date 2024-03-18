@@ -1,5 +1,4 @@
-"""
-Module to define pure functions for processing data
+"""Module to define pure functions for processing data
 Each function takes input data and returns output data, warnings and errors
 This makes it easy to test and reason about the code
 """
@@ -35,24 +34,7 @@ class ProcessingFunctions:
                 logger.exception(message)
             if isinstance(result, ProcessingResult):
                 return result
-            else:
-                # Handle unexpected case where a called function does not return a ProcessingResult
-                return ProcessingResult(
-                    datum=None,
-                    warnings=[],
-                    errors=[
-                        ProcessingAnnotation(
-                            source=[
-                                AnnotationSource(
-                                    name=output_field, type=AnnotationSourceType.METADATA
-                                )
-                            ],
-                            message="Function did not return ProcessingResult",
-                        )
-                    ],
-                )
-        else:
-            # Handle the case where no function matches the given string
+            # Handle unexpected case where a called function does not return a ProcessingResult
             return ProcessingResult(
                 datum=None,
                 warnings=[],
@@ -61,15 +43,27 @@ class ProcessingFunctions:
                         source=[
                             AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
                         ],
-                        message=f"Config error: No processing function matches: {function_name}",
+                        message="Function did not return ProcessingResult",
                     )
                 ],
             )
+        # Handle the case where no function matches the given string
+        return ProcessingResult(
+            datum=None,
+            warnings=[],
+            errors=[
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                    ],
+                    message=f"Config error: No processing function matches: {function_name}",
+                )
+            ],
+        )
 
     @staticmethod
     def check_date(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
-        """
-        Check that date is complete YYYY-MM-DD
+        """Check that date is complete YYYY-MM-DD
         If not according to format return error
         If in future, return warning
         Expects input_data to be an ordered dictionary with a single key "date"
@@ -86,8 +80,8 @@ class ProcessingFunctions:
         warnings: list[ProcessingAnnotation] = []
         errors: list[ProcessingAnnotation] = []
         try:
-            parsed_date = datetime.strptime(date, "%Y-%m-%d")
-            if parsed_date > datetime.now():
+            parsed_date = datetime.strptime(date, "%Y-%m-%d").astimezone(pytz.utc)
+            if parsed_date > datetime.now(tz=pytz.utc):
                 warnings.append(
                     ProcessingAnnotation(
                         source=[
@@ -100,7 +94,7 @@ class ProcessingFunctions:
         except ValueError as e:
             error_message = (
                 f"Date is {date} which is not in the required format YYYY-MM-DD. "
-                + f"Parsing error: {e}"
+                f"Parsing error: {e}"
             )
             return ProcessingResult(
                 datum=None,
@@ -154,12 +148,13 @@ class ProcessingFunctions:
         for format, message in formats_to_messages.items():
             try:
                 parsed_date = datetime.strptime(date_str, format).replace(tzinfo=pytz.utc)
-                if format == "%Y-%m-%d":
-                    datum = parsed_date.strftime("%Y-%m-%d")
-                elif format == "%Y-%m":
-                    datum = f"{parsed_date.strftime('%Y-%m')}-01"
-                elif format == "%Y":
-                    datum = f"{parsed_date.strftime('%Y')}-01-01"
+                match format:
+                    case "%Y-%m-%d":
+                        datum = parsed_date.strftime("%Y-%m-%d")
+                    case "%Y-%m":
+                        datum = f"{parsed_date.strftime('%Y-%m')}-01"
+                    case "%Y":
+                        datum = f"{parsed_date.strftime('%Y')}-01-01"
 
                 logger.debug(f"parsed_date: {parsed_date}")
 
@@ -221,9 +216,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def parse_timestamp(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
-        """
-        Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string
-        """
+        """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
 
         if timestamp is None:
@@ -246,7 +239,7 @@ class ProcessingFunctions:
         except ValueError as e:
             error_message = (
                 f"Timestamp is {timestamp} which is not in parseable YYYY-MM-DD. "
-                + f"Parsing error: {e}"
+                f"Parsing error: {e}"
             )
             return ProcessingResult(
                 datum=None,
@@ -263,9 +256,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def identity(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
-        """
-        Identity function, takes input_data["input"] and returns it as output
-        """
+        """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
             return ProcessingResult(
                 datum=None,
