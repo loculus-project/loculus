@@ -71,7 +71,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             <dialog ref={dialogRef} className='modal'>
                 <ConfirmationDialog
                     onConfirmation={handleDeleteUser}
-                    dialogText={`Do you really want to remove the user ${userToDelete}?`}
+                    dialogText={
+                        userToDelete === username
+                            ? `Do you really want to leave ${groupName}?`
+                            : `Do you really want to remove ${userToDelete} from ${groupName}?`
+                    }
                 />
             </dialog>
 
