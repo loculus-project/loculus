@@ -60,7 +60,7 @@ export class GroupPage {
     }
 
     public async verifyGroupIsPresent(groupName: string) {
-        const newGroupEntry = this.page.getByText(groupName);
+        const newGroupEntry = this.page.locator('ul').getByText(groupName);
         await expect(newGroupEntry).toBeVisible();
     }
 
@@ -96,6 +96,15 @@ export class GroupPage {
         const buttonToRemoveUserFromGroup = this.getLocatorForButtonToRemoveUser(uniqueUserName);
         await buttonToRemoveUserFromGroup.waitFor({ state: 'visible' });
         await buttonToRemoveUserFromGroup.click();
+
+        const confirmButton = this.page.getByRole('button', { name: 'Confirm' });
+        await confirmButton.click();
+    }
+
+    public async leaveGroup() {
+        const leaveButton = this.page.getByRole('button', { name: 'Leave Group' });
+        await leaveButton.waitFor({ state: 'visible' });
+        await leaveButton.click();
 
         const confirmButton = this.page.getByRole('button', { name: 'Confirm' });
         await confirmButton.click();
