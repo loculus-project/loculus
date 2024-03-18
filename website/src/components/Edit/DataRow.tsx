@@ -5,16 +5,17 @@ import WarningAmberIcon from '~icons/ic/baseline-warning-amber';
 import DangerousTwoToneIcon from '~icons/ic/twotone-dangerous';
 
 type EditableRowProps = {
+    label?: string;
     row: Row;
     onChange: (editedRow: Row) => void;
 };
 
-export const EditableDataRow: FC<EditableRowProps> = ({ row, onChange }) => {
+export const EditableDataRow: FC<EditableRowProps> = ({ label, row, onChange }) => {
     const colorClassName = row.errors.length > 0 ? 'text-red-600' : row.warnings.length > 0 ? 'text-yellow-600' : '';
 
     return (
         <tr>
-            <td className={`w-1/4  ${colorClassName}`}>{row.key}:</td>
+            <td className={`w-1/4  ${colorClassName}`}>{label ?? row.key}:</td>
             <td className='pr-3 text-right '>
                 <ErrorAndWarningIcons row={row} />
             </td>
@@ -49,12 +50,13 @@ const ErrorAndWarningIcons: FC<ErrorAndWarningIconsProps> = ({ row }) => {
 };
 
 type ProcessedDataRowProps = {
+    label?: string;
     row: KeyValuePair;
 };
 
-export const ProcessedDataRow: FC<ProcessedDataRowProps> = ({ row }) => (
+export const ProcessedDataRow: FC<ProcessedDataRowProps> = ({ label, row }) => (
     <tr>
-        <td className={`w-1/4 `}>{row.key}:</td>
+        <td className={`w-1/4 `}>{label ?? row.key}:</td>
         <td />
         <td className='w-full'>
             <div className='px-3'>{row.value}</div>
