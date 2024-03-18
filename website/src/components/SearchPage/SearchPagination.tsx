@@ -1,4 +1,4 @@
-import { Pagination as MUIPagination } from '@mui/material';
+import MUIPagination from '@mui/material/Pagination';
 import type { FC } from 'react';
 
 import { navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes/routes';

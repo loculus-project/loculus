@@ -1,4 +1,7 @@
-import { Autocomplete, Box, Chip, TextField } from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Chip from '@mui/material/Chip';
+import TextField from '@mui/material/TextField';
 import { type FC, useMemo, useState } from 'react';
 import * as React from 'react';
 

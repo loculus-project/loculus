@@ -1,5 +1,5 @@
 import { Menu } from '@headlessui/react';
-import { Pagination } from '@mui/material';
+import Pagination from '@mui/material/Pagination';
 import { type ChangeEvent, type FC, useState } from 'react';
 
 import { ReviewCard } from './ReviewCard.tsx';

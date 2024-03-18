@@ -1,4 +1,6 @@
-import { Autocomplete, Box, createFilterOptions, TextField } from '@mui/material';
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import TextField from '@mui/material/TextField';
 import { type FC, useEffect, useMemo, useState } from 'react';
 
 import type { FieldProps } from './FieldProps';

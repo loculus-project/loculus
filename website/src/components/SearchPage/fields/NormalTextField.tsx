@@ -1,4 +1,4 @@
-import { TextField } from '@mui/material';
+import TextField from '@mui/material/TextField';
 import type { FC } from 'react';
 
 import type { FieldProps } from './FieldProps';
