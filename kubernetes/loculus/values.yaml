@@ -240,7 +240,7 @@ defaultOrganisms:
       configFile:
         log_level: DEBUG
         nextclade_dataset_name: nextstrain/ebola/zaire
-        nextclade_dataset_server: raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
         genes:
           NP: 253
         batch_size: 100
