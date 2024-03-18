@@ -23,3 +23,20 @@
   .mdContainer a{
     @apply text-main underline hover:font-semibold;
   }
+
+.mdContainer ol {
+  @apply list-decimal list-inside my-2;
+}
+
+.mdContainer ol li {
+  @apply ml-4 my-1;
+}
+
+.mdContainer ul {
+  @apply list-disc list-inside my-2;
+}
+
+.mdContainer ul li {
+  @apply ml-4 my-1;
+}
+
