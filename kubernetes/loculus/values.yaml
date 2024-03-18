@@ -148,7 +148,7 @@ defaultOrganisms:
       configFile:
         log_level: DEBUG
         nextclade_dataset_name: nextstrain/mpox/all-clades
-        nextclade_dataset_version: 2024-01-16--20-31-02Z
+        nextclade_dataset_tag: 2024-01-16--20-31-02Z
         genes:
           OPG001: 247
         batch_size: 100

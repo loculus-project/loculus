@@ -297,8 +297,8 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
         f"--output-dir={dataset_dir}",
     ]
 
-    if config.nextclade_dataset_version is not None:
-        dataset_download_command.append(f"--version={config.nextclade_dataset_version}")
+    if config.nextclade_dataset_tag is not None:
+        dataset_download_command.append(f"--tag={config.nextclade_dataset_tag}")
 
     logging.info(f"Downloading Nextclade dataset: {dataset_download_command}")
     if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
