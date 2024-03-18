@@ -64,6 +64,8 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         }
     };
 
+    const userIsGroupMember = groupDetails.data?.users.some((user) => user.name === username) ?? false;
+
     return (
         <div className='flex flex-col h-full p-4'>
             <dialog ref={dialogRef} className='modal'>
@@ -77,41 +79,48 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
             )}
 
-            <div className='flex items-center'>
+            {userIsGroupMember ? (
+                <div className='flex items-center'>
+                    <h1 className='flex flex-row gap-4 title flex-grow'>
+                        <label className='py-1 block title'>Group:</label>
+                        <div className='dropdown dropdown-hover hidden sm:flex relative'>
+                            <label tabIndex={0} className='py-1 block cursor-pointer title'>
+                                {groupName}
+                                <span className='text-primary'>
+                                    <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4 ' />
+                                </span>
+                            </label>
+                            <ul
+                                tabIndex={0}
+                                className='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-btn absolute top-full -left-4 min-w-56'
+                            >
+                                {userGroupNames.map(
+                                    (name: string) =>
+                                        name !== groupName && (
+                                            <li key={name}>
+                                                <a href={routes.groupOverviewPage(name)}>{name}</a>
+                                            </li>
+                                        ),
+                                )}
+                                <li>
+                                    <a href={routes.createGroup()}>Create a new group...</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </h1>
+                    <button
+                        onClick={() => handleOpenConfirmationDialog(username)}
+                        className='object-right p-2 bg-red-500 text-white rounded'
+                    >
+                        Leave Group
+                    </button>
+                </div>
+            ) : (
                 <h1 className='flex flex-row gap-4 title flex-grow'>
-                    <label className='py-1 block title'>Group:</label>
-                    <div className='dropdown dropdown-hover hidden sm:flex relative'>
-                        <label tabIndex={0} className='py-1 block cursor-pointer title'>
-                            {groupName}
-                            <span className='text-primary'>
-                                <IwwaArrowDown className='inline-block -mt-1 ml-1 h-4 w-4 ' />
-                            </span>
-                        </label>
-                        <ul
-                            tabIndex={0}
-                            className='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-btn absolute top-full -left-4 min-w-56'
-                        >
-                            {userGroupNames.map(
-                                (name: string) =>
-                                    name !== groupName && (
-                                        <li key={name}>
-                                            <a href={routes.groupOverviewPage(name)}>{name}</a>
-                                        </li>
-                                    ),
-                            )}
-                            <li>
-                                <a href={routes.createGroup()}>Create a new group...</a>
-                            </li>
-                        </ul>
-                    </div>
+                    <label className='block title'>Group:</label>
+                    {groupName}
                 </h1>
-                <button
-                    onClick={() => handleOpenConfirmationDialog(username)}
-                    className='object-right p-2 bg-red-500 text-white rounded'
-                >
-                    Leave Group
-                </button>
-            </div>
+            )}
 
             <h2 className='text-lg font-bold py-4'> Information </h2>
             <div className='bg-gray-100 p-4 mb-4 rounded'>
@@ -135,7 +144,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </table>
             </div>
 
-            {(groupDetails.data?.users.some((user) => user.name === username) ?? false) && (
+            {userIsGroupMember && (
                 <>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
                     <form onSubmit={handleAddUser}>
