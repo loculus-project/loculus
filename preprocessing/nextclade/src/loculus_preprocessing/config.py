@@ -23,10 +23,11 @@ class Config:
     keycloak_password: str = "dummy_preprocessing_pipeline"
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
     nextclade_dataset_name: str = "nextstrain/mpox/all-clades"
-    nextclade_dataset_version: str = "2024-01-16--20-31-02Z"
+    nextclade_dataset_tag: str | None = None
+    nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
     config_file: str | None = None
     log_level: str = "DEBUG"
-    genes: dict[str, int] = dataclasses.field(default_factory=dict)
+    genes: list[str] = dataclasses.field(default_factory=list)
     keep_tmp_dir: bool = False
     reference_length: int = 197209
     batch_size: int = 5
