@@ -1,3 +1,5 @@
+import contextlib
+import csv
 import dataclasses
 import json
 import logging
@@ -15,10 +17,12 @@ from .backend import get_jwt
 from .config import Config
 from .datatypes import (
     AccessionVersion,
+    AminoAcidInsertion,
     AminoAcidSequence,
     AnnotationSource,
     AnnotationSourceType,
     GeneName,
+    NucleotideInsertion,
     NucleotideSequence,
     ProcessedData,
     ProcessedEntry,
@@ -129,12 +133,8 @@ def enrich_with_nextclade(
                     f"Gene {gene} not found in Nextclade results expected at: {translation_path}"
                 )
 
-        nextclade_metadata: dict[AccessionVersion, dict[str, Any]] = {}
-        # TODO: More QC can be lifted from here
-        with open(result_dir + "/nextclade.json", encoding="utf-8") as nextclade_json:
-            for result in json.load(nextclade_json)["results"]:
-                id = result["seqName"]
-                nextclade_metadata[id] = result
+        nextclade_metadata = parse_nextclade_json(result_dir)
+        nucleotide_insertions, amino_acid_insertions = parse_nextclade_tsv(result_dir, config)
 
     return {
         id: UnprocessedAfterNextclade(
@@ -142,12 +142,49 @@ def enrich_with_nextclade(
             nextcladeMetadata=nextclade_metadata.get(id),
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
             alignedNucleotideSequences=aligned_nucleotide_sequences.get(id),
-            nucleotideInsertions=[],
+            nucleotideInsertions=nucleotide_insertions.get(id, []),
             alignedAminoAcidSequences=aligned_aminoacid_sequences.get(id, {}),
-            aminoAcidInsertions={gene: [] for gene in config.genes},
+            aminoAcidInsertions=amino_acid_insertions[id],
         )
         for id in unaligned_nucleotide_sequences
     }
+
+
+def parse_nextclade_tsv(
+    result_dir: str, config: Config
+) -> tuple[
+    dict[AccessionVersion, list[NucleotideInsertion]],
+    dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]],
+]:
+    nucleotide_insertions: dict[AccessionVersion, list[NucleotideInsertion]] = {}
+    amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]] = {}
+    with open(result_dir + "/nextclade.tsv", encoding="utf-8") as nextclade_tsv:
+        reader = csv.DictReader(nextclade_tsv, delimiter="\t")
+        for row in reader:
+            id = row["seqName"]
+
+            nuc_ins_str = []
+            with contextlib.suppress(Exception):
+                nuc_ins_str = list(row["insertions"].split(","))
+            nucleotide_insertions[id] = nuc_ins_str
+
+            aa_ins: dict[str, list[str]] = {gene: [] for gene in config.genes}
+            with contextlib.suppress(Exception):
+                aa_ins_split = row["aaInsertions"].split(",")
+            for ins in aa_ins_split:
+                gene, pos, aa = ins.split(":")
+                aa_ins[gene].append(f"{pos}:{aa}")
+            amino_acid_insertions[id] = aa_ins
+    return nucleotide_insertions, amino_acid_insertions
+
+
+def parse_nextclade_json(result_dir) -> dict[AccessionVersion, dict[str, Any]]:
+    nextclade_metadata = {}
+    with open(result_dir + "/nextclade.json", encoding="utf-8") as nextclade_json:
+        for result in json.load(nextclade_json)["results"]:
+            id = result["seqName"]
+            nextclade_metadata[id] = result
+    return nextclade_metadata
 
 
 def accession_from_str(id_str: AccessionVersion) -> str:
