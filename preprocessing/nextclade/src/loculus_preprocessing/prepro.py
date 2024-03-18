@@ -213,12 +213,12 @@ def process_single(
                 )
                 continue
             if input_path not in unprocessed.inputMetadata:
-                errors.append(
+                warnings.append(
                     ProcessingAnnotation(
                         source=[
                             AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
                         ],
-                        message=f"Metadata field {input_path} not found",
+                        message=f"Metadata field '{input_path}' not found in input",
                     )
                 )
                 continue
