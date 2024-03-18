@@ -1,4 +1,5 @@
-import { Box, Modal } from '@mui/material';
+import Box from '@mui/material/Box';
+import Modal from '@mui/material/Modal';
 import type { FC } from 'react';
 
 const style = {
