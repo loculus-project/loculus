@@ -77,6 +77,7 @@ const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datase
                                 dataset={dataset}
                                 datasetRecords={datasetRecordsResponse.value}
                                 citedByData={datasetCitedByResponse.value}
+                                isAdminView={dataset.createdBy === username}
                                 client:load
                             />
                         ) : (

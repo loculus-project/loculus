@@ -1,4 +1,3 @@
-import Button from '@mui/material/Button';
 import { type FC, useState } from 'react';
 
 import { DatasetForm } from './DatasetForm';
@@ -52,60 +51,30 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
             <div className='flex-row items-center justify-between w-full'>
                 <div className='flex justify-start items-center pt-4 pb-8'>
                     <div className='pr-2'>
-                        <Button
-                            sx={{
-                                'backgroundColor': 'whitesmoke',
-                                'color': 'black',
-                                'fontWeight': 'bold',
-                                '&:hover': {
-                                    backgroundColor: 'whitesmoke',
-                                },
-                            }}
-                            onClick={() => setExportModalVisible(true)}
-                            variant='contained'
-                        >
+                        <button className='btn' onClick={() => setExportModalVisible(true)}>
                             Export
-                        </Button>
+                        </button>
                     </div>
                     <div className='px-2'>
                         {isAdminView ? (
-                            <Button
-                                sx={{
-                                    'backgroundColor': 'whitesmoke',
-                                    'color': 'black',
-                                    'fontWeight': 'bold',
-                                    '&:hover': {
-                                        backgroundColor: 'whitesmoke',
-                                    },
-                                }}
-                                onClick={() => setEditModalVisible(true)}
-                                variant='contained'
-                            >
+                            <button className='btn' onClick={() => setEditModalVisible(true)}>
                                 Edit
-                            </Button>
+                            </button>
                         ) : null}
                     </div>
                     <div className='px-2'>
                         {isAdminView ? (
-                            <Button
-                                sx={{
-                                    'backgroundColor': 'whitesmoke',
-                                    'color': 'black',
-                                    'fontWeight': 'bold',
-                                    '&:hover': {
-                                        backgroundColor: 'whitesmoke',
-                                    },
-                                }}
+                            <button
+                                className='btn'
                                 onClick={() =>
                                     displayConfirmationDialog({
                                         dialogText: `Are you sure you want to delete this dataset version?`,
                                         onConfirmation: handleDeleteDataset,
                                     })
                                 }
-                                variant='contained'
                             >
                                 Delete
-                            </Button>
+                            </button>
                         ) : null}
                     </div>
                 </div>
