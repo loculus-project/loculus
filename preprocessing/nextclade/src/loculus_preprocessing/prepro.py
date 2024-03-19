@@ -1,4 +1,3 @@
-import contextlib
 import csv
 import dataclasses
 import json
@@ -163,17 +162,16 @@ def parse_nextclade_tsv(
         for row in reader:
             id = row["seqName"]
 
-            nuc_ins_str = []
-            with contextlib.suppress(Exception):
-                nuc_ins_str = list(row["insertions"].split(","))
-            nucleotide_insertions[id] = nuc_ins_str
+            nuc_ins_str = list(row["insertions"].split(","))
+            nucleotide_insertions[id] = [] if nuc_ins_str == [""] else nuc_ins_str
 
             aa_ins: dict[str, list[str]] = {gene: [] for gene in config.genes}
-            with contextlib.suppress(Exception):
-                aa_ins_split = row["aaInsertions"].split(",")
+            aa_ins_split = row["aaInsertions"].split(",")
             for ins in aa_ins_split:
-                gene, pos, aa = ins.split(":")
-                aa_ins[gene].append(f"{pos}:{aa}")
+                if not ins:
+                    continue
+                gene, val = ins.split(":", maxsplit=1)
+                aa_ins[gene].append(val)
             amino_acid_insertions[id] = aa_ins
     return nucleotide_insertions, amino_acid_insertions
 
