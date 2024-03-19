@@ -223,12 +223,75 @@ defaultOrganisms:
           autocomplete: true
         - name: authors
           type: string
+        - name: submitter_country
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: division
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: insdc_accession_base
+          type: string
+        - name: insdc_version
+          type: string
+        - name: insdc_accession_full
+          type: string
+        - name: bioprojects
+          type: string
+        - name: biosample_accession
+          type: string
+        - name: ncbi_completeness
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: ncbi_host_name
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: ncbi_host_tax_id
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: ncbi_is_lab_host
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: ncbi_length
+          type: string
+        - name: ncbi_protein_count
+          type: string
+        - name: ncbi_update_date
+          type: date
+        - name: ncbi_sourcedb
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: ncbi_virus_name
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: ncbi_virus_tax_id
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: isolate_source
+          type: string
+          generateIndex: true
+          autocomplete: true
+        - name: sra_accessions
+          type: string
       website:
         tableColumns:
           - collection_date
           - country
+          - division
+          - submitter_country
           - author_affiliation
           - ncbi_release_date
+          - insdc_accession_full
+          - ncbi_length
+          - ncbi_host_name
         defaultOrderBy: collection_date
         defaultOrder: descending
       silo:
@@ -280,6 +343,82 @@ defaultOrganisms:
             function: identity
             inputs:
               input: isolate_name
+          submitter_country:
+            function: identity
+            inputs:
+              input: submitter_country
+          division:
+            function: identity
+            inputs:
+              input: division
+          insdc_accession_base:
+            function: identity
+            inputs:
+              input: insdc_accession_base
+          insdc_version:
+            function: identity
+            inputs:
+              input: insdc_version
+          insdc_accession_full:
+            function: identity
+            inputs:
+              input: insdc_accession_full
+          bioprojects:
+            function: identity
+            inputs:
+              input: bioprojects
+          biosample_accession:
+            function: identity
+            inputs:
+              input: biosample_accession
+          ncbi_completeness:
+            function: identity
+            inputs:
+              input: ncbi_completeness
+          ncbi_host_name:
+            function: identity
+            inputs:
+              input: ncbi_host_name
+          ncbi_host_tax_id:
+            function: identity
+            inputs:
+              input: ncbi_host_tax_id
+          ncbi_is_lab_host:
+            function: identity
+            inputs:
+              input: ncbi_is_lab_host
+          ncbi_length:
+            function: identity
+            inputs:
+              input: ncbi_length
+          ncbi_protein_count:
+            function: identity
+            inputs:
+              input: ncbi_protein_count
+          ncbi_update_date:
+            function: parse_timestamp
+            inputs:
+              timestamp: ncbi_update_date
+          ncbi_sourcedb:
+            function: identity
+            inputs:
+              input: ncbi_sourcedb
+          ncbi_virus_name:
+            function: identity
+            inputs:
+              input: ncbi_virus_name
+          ncbi_virus_tax_id:
+            function: identity
+            inputs:
+              input: ncbi_virus_tax_id
+          isolate_source:
+            function: identity
+            inputs:
+              input: isolate_source
+          sra_accessions:
+            function: identity
+            inputs:
+              input: sra_accessions
     referenceGenomes:
       nucleotideSequences:
         - name: "main"

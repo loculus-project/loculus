@@ -6,9 +6,9 @@ rename:
   ncbi_isolate_name: isolate_name
   ncbi_isolate_source: isolate_source
   ncbi_sra_accessions: sra_accessions
-  ncbi_submitter_affiliation: submitter_affiliation
+  ncbi_submitter_affiliation: author_affiliation
   ncbi_submitter_country: submitter_country
-  ncbi_submitter_names: submitter_names
+  ncbi_submitter_names: authors
 keep:
   - division
   - country
