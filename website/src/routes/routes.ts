@@ -58,7 +58,7 @@ export const routes = {
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
         withOrganism(organism, `/user/edit/${accessionVersion.accession}/${accessionVersion.version}`),
     userOverviewPage: (organism?: string | undefined) => {
-        const userPagePath = `/user` as const;
+        const userPagePath = `/user`;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
     groupOverviewPage: (groupName: string) => `/group/${groupName}`,
@@ -66,7 +66,7 @@ export const routes = {
     userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submission/review`),
     versionPage: (accession: string) => `/seq/${accession}/versions`,
     datasetsPage: (username?: string | undefined) => {
-        const datasetPagePath = `/datasets` as const;
+        const datasetPagePath = `/datasets`;
         return username === undefined ? datasetPagePath : datasetPagePath + `?user=${username}`;
     },
     datasetPage: (datasetId: string, datasetVersion: string, username?: string | undefined) => {
