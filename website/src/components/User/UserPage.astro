@@ -1,6 +1,5 @@
 ---
 import { ListOfGroupsOfUser } from './ListOfGroupsOfUser.tsx';
-import { getRuntimeConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
 import { GroupManagementClient } from '../../services/groupManagementClient';
@@ -17,8 +16,6 @@ const username = user.username!; // all users must have a username
 const name = user.name;
 
 const accessToken = getAccessToken(session)!;
-
-const clientConfig = getRuntimeConfig().public;
 
 const logoutUrl = new URL(Astro.request.url);
 logoutUrl.pathname = routes.logout();
@@ -71,15 +68,7 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
         </div>
         {
             groupOfUsersResult.match(
-                (groups) => (
-                    <ListOfGroupsOfUser
-                        accessToken={accessToken}
-                        clientConfig={clientConfig}
-                        username={username}
-                        groupsOfUser={groups}
-                        client:load
-                    />
-                ),
+                (groups) => <ListOfGroupsOfUser groupsOfUser={groups} client:load />,
                 (error) => <ErrorBox title='Failed loading list of groups'>{error.detail}</ErrorBox>,
             )
         }

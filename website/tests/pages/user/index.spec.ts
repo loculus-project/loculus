@@ -16,10 +16,11 @@ test.describe('The user page', () => {
         await groupPage.goToGroupCreationPage();
         const uniqueGroupName = v4();
         await groupPage.createGroup(uniqueGroupName);
+        await userPage.goToUserPage();
         await groupPage.verifyGroupIsPresent(uniqueGroupName);
 
-        await userPage.goToUserPage();
-        await userPage.leaveGroup(uniqueGroupName);
+        await groupPage.goToGroupPage(uniqueGroupName);
+        await groupPage.leaveGroup();
 
         await userPage.verifyGroupIsNotPresent(uniqueGroupName);
     });

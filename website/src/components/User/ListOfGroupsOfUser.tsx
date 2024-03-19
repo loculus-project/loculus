@@ -1,35 +1,17 @@
 import { type FC, useState } from 'react';
 
-import { useRemoveFromGroup } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { Group } from '../../types/backend.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import LeaveIcon from '~icons/pepicons-pop/leave-circle-filled';
 import StreamlineUserMultipleGroup from '~icons/streamline/user-multiple-group';
 
 interface ListOfGroupsOfUserProps {
-    clientConfig: ClientConfig;
-    accessToken: string;
-    username: string;
     groupsOfUser: Group[];
 }
 
-const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({
-    clientConfig,
-    accessToken,
-    username,
-    groupsOfUser,
-}) => {
+const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({ groupsOfUser }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-
-    const { removeFromGroup } = useRemoveFromGroup({
-        clientConfig,
-        accessToken,
-        setErrorMessage,
-    });
 
     return (
         <>
@@ -44,22 +26,6 @@ const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({
                                 <StreamlineUserMultipleGroup className='w-6 h-6 inline-block mr-2' />
                                 {group.groupName}
                             </a>
-                            <button
-                                onClick={() =>
-                                    displayConfirmationDialog({
-                                        dialogText: `Are you sure you want to leave group ${group.groupName}?`,
-                                        onConfirmation: async () => {
-                                            await removeFromGroup(group.groupName, username);
-                                            window.location.reload();
-                                        },
-                                    })
-                                }
-                                className='px-2 py-1 bg-red-500 text-white rounded'
-                                title='Leave group'
-                                aria-label={`Leave group ${group.groupName}`}
-                            >
-                                <LeaveIcon className='w-4 h-4' />
-                            </button>
                         </li>
                     ))
                 ) : (
