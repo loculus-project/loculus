@@ -1,0 +1,4 @@
+rerun-incomplete: true
+printshellcmds: true
+cores: all
+configfile: config/snakemake.yaml

@@ -1,0 +1,119 @@
+TAXON_ID = config["taxon_id"]
+BRANCH = "main"
+NUMBER_OF_SAMPLES = 500
+
+ALL_FIELDS = ",".join(config["all_fields"])
+COLUMN_MAPPING = config["column_mapping"]
+
+
+def rename_columns(input_file, output_file):
+    with open(input_file, "r") as f:
+        header = f.readline().strip().split("\t")
+        header = [COLUMN_MAPPING.get(h, h) for h in header]
+        with open(output_file, "w") as g:
+            g.write("\t".join(header) + "\n")
+            for line in f:
+                g.write(line)
+
+
+rule all:
+    input:
+        "data/sequences.fasta",
+        "data/metadata.tsv",
+
+
+rule fetch_ncbi_dataset_package:
+    output:
+        dataset_package="results/ncbi_dataset.zip",
+    retries: 5
+    shell:
+        """
+        datasets download virus genome taxon {TAXON_ID} \
+            --no-progressbar \
+            --filename {output.dataset_package}
+        """
+
+
+rule extract_ncbi_dataset_sequences:
+    input:
+        dataset_package="results/ncbi_dataset.zip",
+    output:
+        ncbi_dataset_sequences="results/sequences.fasta",
+    shell:
+        """
+        unzip -jp {input.dataset_package} \
+            ncbi_dataset/data/genomic.fna \
+        | seqkit seq -i -w0 \
+        > {output.ncbi_dataset_sequences}
+        """
+
+
+rule format_ncbi_dataset_report:
+    input:
+        dataset_package="results/ncbi_dataset.zip",
+    output:
+        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
+    params:
+        fields_to_include=ALL_FIELDS,
+    shell:
+        """
+        dataformat tsv virus-genome \
+            --package {input.dataset_package} \
+            --fields {params.fields_to_include:q} \
+            > {output.ncbi_dataset_tsv}
+        """
+
+
+rule rename_columns:
+    input:
+        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
+    output:
+        ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+    run:
+        rename_columns(input.ncbi_dataset_tsv, output.ncbi_dataset_tsv)
+
+
+rule prepare_metadata:
+    input:
+        metadata="results/metadata_post_rename.tsv",
+        config="config/prepare.yaml",
+    output:
+        metadata="results/metadata_post_prepare.tsv",
+    shell:
+        """
+        python scripts/prepare_metadata.py \
+            --config-file {input.config} \
+            --input {input.metadata} \
+            --output {output.metadata}
+        """
+
+
+rule submit_to_loculus:
+    input:
+        metadata="results/metadata_post_prepare.tsv",
+        sequences="results/sequences.fasta",
+        config="config/submit.yaml",
+    output:
+        submitted=touch("results/submitted"),
+    params:
+        branch=BRANCH,
+    shell:
+        """
+        python scripts/submit_to_loculus.py \
+            --mode submit \
+            --metadata {input.metadata} \
+            --sequences {input.sequences} \
+            --config-file {input.config} \
+        """
+
+
+rule approve:
+    input:
+        submitted="results/submitted",
+        config="config/submit.yaml",
+    shell:
+        """
+        python scripts/submit_to_loculus.py \
+            --mode approve \
+            --config-file {input.config} \
+        """
