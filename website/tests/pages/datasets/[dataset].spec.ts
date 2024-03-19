@@ -36,18 +36,36 @@ test.describe('The dataset item page', () => {
         await expect(datasetPage.page.getByText('Sequences')).toBeVisible();
     });
 
-    test('export functionality allows downloading file', async ({ datasetPage }) => {
+    test('export functionality allows downloading JSON file', async ({ datasetPage }) => {
         await datasetPage.gotoDetail(testDatasetName);
         await expect(datasetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
         await datasetPage.page.getByRole('button', { name: 'Export' }).click();
         await datasetPage.waitForLoad();
 
+        await datasetPage.page.getByTestId('json-radio').waitFor();
+        await datasetPage.page.getByTestId('json-radio').click();
         await expect(datasetPage.page.getByRole('button', { name: 'Download' })).toBeVisible();
         const [download] = await Promise.all([
             datasetPage.page.waitForEvent('download'),
             datasetPage.page.getByRole('button', { name: 'Download' }).click(),
         ]);
         expect(download.suggestedFilename()).toBe(`${testDatasetName}.json`);
+    });
+
+    test('export functionality allows downloading TSV file', async ({ datasetPage }) => {
+        await datasetPage.gotoDetail(testDatasetName);
+        await expect(datasetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
+        await datasetPage.page.getByRole('button', { name: 'Export' }).click();
+        await datasetPage.waitForLoad();
+
+        await datasetPage.page.getByTestId('tsv-radio').waitFor();
+        await datasetPage.page.getByTestId('tsv-radio').click();
+        await expect(datasetPage.page.getByRole('button', { name: 'Download' })).toBeVisible();
+        const [download] = await Promise.all([
+            datasetPage.page.waitForEvent('download'),
+            datasetPage.page.getByRole('button', { name: 'Download' }).click(),
+        ]);
+        expect(download.suggestedFilename()).toBe(`${testDatasetName}.tsv`);
     });
 
     test('delete functionality can be cancelled', async ({ datasetPage }) => {
