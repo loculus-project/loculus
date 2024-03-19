@@ -75,9 +75,9 @@ data class AuthorProfile(
     val lastName: String,
     val emailDomain: String,
     @Schema(
-        description = "The university affiliated with the author.",
+        description = "The university the author is affiliated with.",
         type = "string",
-        example = "Professor at University of Example",
+        example = "University of Example",
     )
     val university: String?,
 )
