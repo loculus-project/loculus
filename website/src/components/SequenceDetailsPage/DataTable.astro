@@ -12,24 +12,24 @@ interface Props {
 const { tableData, dataUseTermsHistory } = Astro.props;
 ---
 
-<div class='mt-6'>
-    <table class='table-auto'>
-        <tbody>
+<div class='mt-2'>
+    <table class='min-w-full'>
+        <tbody class='bg-white'>
             {
                 tableData.map(({ label, name, value }) => (
                     <tr>
-                        <td class='font-semibold pr-4 align-top w-1/4'>
-                            <div class='flex flex-row'>{label}:</div>
+                        <td class='py-1 whitespace-nowrap text-sm font-medium text-gray-900 text-right w-32'>
+                            {label}
                         </td>
-                        <td class='break-normal'>
-                            <div class='flex flex-row gap-3'>
+                        <td class='px-4 py-1 whitespace-normal text-sm text-gray-600'>
+                            <div class='flex items-center gap-3'>
                                 {value}{' '}
-                                {name === DATA_USE_TERMS_FIELD ? (
+                                {name === DATA_USE_TERMS_FIELD && (
                                     <DataUseTermsHistoryModal
                                         dataUseTermsHistory={dataUseTermsHistory}
                                         client:only='react'
                                     />
-                                ) : null}
+                                )}
                             </div>
                         </td>
                     </tr>
