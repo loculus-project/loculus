@@ -1,0 +1,101 @@
+taxon_id: 186538
+group_name: insdc_ingest_group
+user_name: insdc_ingest_user
+all_fields:
+  - accession
+  - bioprojects
+  - biosample-acc
+  - completeness
+  - gene-count
+  - geo-location
+  - geo-region
+  - host-common-name
+  - host-infraspecific-breed
+  - host-infraspecific-cultivar
+  - host-infraspecific-ecotype
+  - host-infraspecific-isolate
+  - host-infraspecific-sex
+  - host-infraspecific-strain
+  - host-name
+  - host-pangolin
+  - host-tax-id
+  - is-annotated
+  - is-complete
+  - is-lab-host
+  - is-vaccine-strain
+  - isolate-collection-date
+  - isolate-lineage
+  - isolate-lineage-source
+  - lab-host
+  - length
+  - matpeptide-count
+  - mol-type
+  - nucleotide-completeness
+  - protein-count
+  - purpose-of-sampling
+  - release-date
+  - sourcedb
+  - sra-accs
+  - submitter-affiliation
+  - submitter-country
+  - submitter-names
+  - update-date
+  - virus-common-name
+  - virus-infraspecific-breed
+  - virus-infraspecific-cultivar
+  - virus-infraspecific-ecotype
+  - virus-infraspecific-isolate
+  - virus-infraspecific-sex
+  - virus-infraspecific-strain
+  - virus-name
+  - virus-pangolin
+  - virus-tax-id
+column_mapping:
+  Accession: genbank_accession
+  BioProjects: bioprojects
+  BioSample accession: biosample_accession
+  Completeness: ncbi_completeness
+  Gene count: ncbi_gene_count
+  Geographic Location: ncbi_geo_location
+  Geographic Region: ncbi_geo_region
+  Host Common Name: ncbi_host_common_name
+  Host Infraspecific Names Breed: ncbi_host_breed
+  Host Infraspecific Names Cultivar: ncbi_host_cultivar
+  Host Infraspecific Names Ecotype: ncbi_host_ecotype
+  Host Infraspecific Names Isolate: ncbi_host_isolate
+  Host Infraspecific Names Sex: ncbi_host_sex
+  Host Infraspecific Names Strain: ncbi_host_strain
+  Host Name: ncbi_host_name
+  Host Pangolin Classification: ncbi_host_pangolin
+  Host Taxonomic ID: ncbi_host_tax_id
+  Is Annotated: ncbi_is_annotated
+  Is Complete: ncbi_is_complete
+  Is Lab Host: ncbi_is_lab_host
+  Is Vaccine Strain: ncbi_is_vaccine_strain
+  Isolate Collection date: ncbi_collection_date
+  Isolate Lineage: ncbi_isolate_name
+  Isolate Lineage source: ncbi_isolate_source
+  Lab Host: ncbi_lab_host
+  Length: ncbi_length
+  Mature peptide count: ncbi_mature_peptide_count
+  Molecule type: ncbi_mol_type
+  Nucleotide completeness: ncbi_nucleotide_completeness
+  Protein count: ncbi_protein_count
+  Purpose of Sampling: ncbi_purpose_of_sampling
+  Release date: ncbi_release_date
+  Source database: ncbi_sourcedb
+  SRA Accessions: ncbi_sra_accessions
+  Submitter Affiliation: ncbi_submitter_affiliation
+  Submitter Country: ncbi_submitter_country
+  Submitter Names: ncbi_submitter_names
+  Update date: ncbi_update_date
+  Virus Common Name: ncbi_virus_common_name
+  Virus Infraspecific Names Breed: ncbi_virus_breed
+  Virus Infraspecific Names Cultivar: ncbi_virus_cultivar
+  Virus Infraspecific Names Ecotype: ncbi_virus_ecotype
+  Virus Infraspecific Names Isolate: ncbi_virus_isolate
+  Virus Infraspecific Names Sex: ncbi_virus
+  Virus Infraspecific Names Strain: ncbi_virus_strain
+  Virus Name: ncbi_virus_name
+  Virus Pangolin Classification: ncbi_virus_pangolin
+  Virus Taxonomic ID: ncbi_virus_tax_id
