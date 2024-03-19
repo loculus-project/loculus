@@ -301,6 +301,8 @@ defaultOrganisms:
           type: string
         - name: stop_codons
           type: string
+        - name: metadata_hash
+          type: string
       website:
         tableColumns:
           - collection_date
@@ -479,6 +481,10 @@ defaultOrganisms:
             function: identity
             inputs:
               input: sra_accessions
+          metadata_hash:
+            function: identity
+            inputs:
+              input: metadata_hash
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
