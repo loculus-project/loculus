@@ -23,16 +23,17 @@ class Config:
     rename: dict[str, str]
     keep: list[str]
 
+
 def hash_row_with_columns(row: pd.Series) -> str:
-    # Concatenate sorted column names with their values to ensure the hash is independent of column order
     items = sorted((f"{col}_{val}" for col, val in row.items()))
-    row_string = ''.join(items)
+    row_string = "".join(items)
     return hashlib.sha256(row_string.encode()).hexdigest()
 
+
 @click.command()
-@click.option('--config-file', required=True, type=click.Path(exists=True))
-@click.option('--input', required=True, type=click.Path(exists=True))
-@click.option('--output', required=True, type=click.Path())
+@click.option("--config-file", required=True, type=click.Path(exists=True))
+@click.option("--input", required=True, type=click.Path(exists=True))
+@click.option("--output", required=True, type=click.Path())
 def main(config_file: str, input: str, output: str):
     with open(config_file) as file:
         config = Config(**yaml.safe_load(file))
@@ -56,5 +57,6 @@ def main(config_file: str, input: str, output: str):
     df["metadata_hash"] = df.apply(hash_row_with_columns, axis=1)
     df.to_csv(output, sep="\t", index=False)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

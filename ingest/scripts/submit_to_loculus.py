@@ -130,17 +130,6 @@ def approve(config: Config):
     response = requests.get(url, headers=headers)
     response.raise_for_status()
 
-    # logging.info(f"Response: {response.json()}")
-
-    # # Get sequences to approve
-    # # Roughly of this shape:  {'accession': '182', 'version': 1, 'status': 'AWAITING_APPROVAL', 'isRevocation': False},
-    # to_approve = []
-    # for sequence in response.json()["sequenceEntries"]:
-    #     # Get sequences where status is AWAITING_APPROVAL
-    #     # Approve them by adding them to list with {'accession': '182', 'version': 1}
-    #     if sequence['status'] == 'AWAITING_APPROVAL':
-    #         to_approve.append({'accession': sequence['accession'], 'version': sequence['version']})
-
     payload = {"scope": "ALL"}
 
     url = f"{organism_url(config)}/approve-processed-data"
