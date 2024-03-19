@@ -1,0 +1,5 @@
+snakemake
+pandas
+PyYAML
+click
+requests

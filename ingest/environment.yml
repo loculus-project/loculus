@@ -1,0 +1,8 @@
+name: loculus-ingest
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12
+  - pip=24.0
+  - ncbi-datasets-cli
