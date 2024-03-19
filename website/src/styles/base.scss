@@ -94,3 +94,7 @@ table, tr, td {
   border-radius: 1rem;
   display:flex
 }
+
+* {
+  @apply break-words;
+}
