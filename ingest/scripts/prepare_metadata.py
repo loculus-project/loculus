@@ -13,8 +13,6 @@ import click
 import pandas as pd
 import yaml
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 @dataclass
 class Config:
@@ -34,7 +32,9 @@ def hash_row_with_columns(row: pd.Series) -> str:
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
-def main(config_file: str, input: str, output: str):
+@click.option("--log-level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]))
+def main(config_file: str, input: str, output: str, log_level: str) -> None:
+    logging.basicConfig(level=log_level)
     with open(config_file) as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config[key] for key in Config.__annotations__}

@@ -1,6 +1,7 @@
 TAXON_ID = config["taxon_id"]
 ALL_FIELDS = ",".join(config["all_fields"])
 COLUMN_MAPPING = config["column_mapping"]
+LOG_LEVEL = config.get("log_level", "INFO")
 
 
 def rename_columns(input_file, output_file):
@@ -76,12 +77,15 @@ rule prepare_metadata:
         config="config/config.yaml",
     output:
         metadata="results/metadata_post_prepare.tsv",
+    params:
+        log_level=LOG_LEVEL,
     shell:
         """
         python scripts/prepare_metadata.py \
             --config-file {input.config} \
             --input {input.metadata} \
-            --output {output.metadata}
+            --output {output.metadata} \
+            --log-level {params.log_level} \
         """
 
 
@@ -92,6 +96,8 @@ rule submit_to_loculus:
         config="config/config.yaml",
     output:
         submitted=touch("results/submitted"),
+    params:
+        log_level=LOG_LEVEL,
     shell:
         """
         python scripts/submit_to_loculus.py \
@@ -99,6 +105,7 @@ rule submit_to_loculus:
             --metadata {input.metadata} \
             --sequences {input.sequences} \
             --config-file {input.config} \
+            --log-level {params.log_level} \
         """
 
 
@@ -106,9 +113,12 @@ rule approve:
     input:
         submitted="results/submitted",
         config="config/config.yaml",
+    params:
+        log_level=LOG_LEVEL,
     shell:
         """
         python scripts/submit_to_loculus.py \
             --mode approve \
             --config-file {input.config} \
+            --log-level {params.log_level} \
         """

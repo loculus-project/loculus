@@ -1,10 +1,12 @@
 import logging
 from dataclasses import dataclass
+from time import sleep
 
 import click
 import requests
 import yaml
 
+logging.basicConfig(level=logging.DEBUG)
 
 @dataclass
 class Config:
@@ -137,6 +139,8 @@ def approve(config: Config):
     response = requests.post(url, headers=headers, json=payload)
     response.raise_for_status()
 
+    return response.json()
+
 
 # %%
 
@@ -191,11 +195,12 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file):
         logging.info("Submission complete")
 
     if mode == "approve":
-        logging.info("Approving sequences")
-        response = approve(config)
-        logging.debug(f"Approved: {response}")
+        while True:
+            logging.info("Approving sequences")
+            response = approve(config)
+            logging.debug(f"Approved: {response}")
+            sleep(10)
 
-        logging.info("Approving sequences complete")
 
 
 if __name__ == "__main__":

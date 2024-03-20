@@ -1,3 +1,4 @@
+log_level: DEBUG
 compound_country_field: ncbi_geo_location
 fasta_id_field: genbank_accession
 rename:
