@@ -1,11 +1,14 @@
 package org.loculus.backend.controller.datasetcitations
 
+import com.jayway.jsonpath.JsonPath
 import org.hamcrest.CoreMatchers.containsString
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.DatasetCitationsConstants
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -144,6 +147,36 @@ class DatasetValidationEndpointsTest(
                 jsonPath(
                     "\$.detail",
                     containsString("Dataset must contain at least one record"),
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN calling create dataset DOI after exceeding rate limit THEN return 429 Too Many Requests`() {
+        val accessions = submissionConvenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val validAccession = accessions.first().accession
+        val accessionJson = """[{"accession": "$validAccession", "type": "loculus"}]"""
+
+        fun createDatasetWithDOI(accessions: String): ResultActions {
+            val datasetResult = client.createDataset(datasetRecords = accessions)
+                .andExpect(status().isOk)
+                .andReturn()
+            val datasetId = JsonPath.read<String>(datasetResult.response.contentAsString, "$.datasetId")
+            return client.createDatasetDOI(datasetId)
+        }
+
+        for (i in 1..DatasetCitationsConstants.DOI_WEEKLY_RATE_LIMIT) {
+            createDatasetWithDOI(accessionJson)
+                .andExpect(status().isOk)
+        }
+        createDatasetWithDOI(accessionJson)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                ).value(
+                    "User exceeded limit of ${DatasetCitationsConstants.DOI_WEEKLY_RATE_LIMIT} DOIs created per week.",
                 ),
             )
     }

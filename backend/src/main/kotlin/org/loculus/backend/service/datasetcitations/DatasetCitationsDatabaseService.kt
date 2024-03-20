@@ -1,6 +1,7 @@
 package org.loculus.backend.service.datasetcitations
 
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
@@ -273,10 +274,8 @@ class DatasetCitationsDatabaseService(
         }
     }
 
-    fun createDatasetDOI(username: String, datasetId: String, version: Long): ResponseDataset {
-        log.info { "Create DOI for dataset $datasetId, version $version, user $username" }
-
-        val datasetDOI = "${DatasetCitationsConstants.DOI_PREFIX}/$datasetId.$version"
+    fun validateCreateDatasetDOI(username: String, datasetId: String, version: Long) {
+        log.info { "Validate create DOI for dataset $datasetId, version $version, user $username" }
 
         if (DatasetsTable
                 .select {
@@ -288,6 +287,29 @@ class DatasetCitationsDatabaseService(
         ) {
             throw NotFoundException("Dataset $datasetId, version $version does not exist")
         }
+
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).toJavaLocalDateTime()
+        val sevenDaysAgo = LocalDateTime.parse(now.minusDays(7).toString())
+        val count = DatasetsTable
+            .select {
+                (DatasetsTable.createdBy eq username) and
+                    (DatasetsTable.createdAt greaterEq sevenDaysAgo) and
+                    (DatasetsTable.datasetDOI neq "")
+            }
+            .count()
+        if (count >= DatasetCitationsConstants.DOI_WEEKLY_RATE_LIMIT) {
+            throw UnprocessableEntityException(
+                "User exceeded limit of ${DatasetCitationsConstants.DOI_WEEKLY_RATE_LIMIT} DOIs created per week.",
+            )
+        }
+    }
+
+    fun createDatasetDOI(username: String, datasetId: String, version: Long): ResponseDataset {
+        log.info { "Create DOI for dataset $datasetId, version $version, user $username" }
+
+        validateCreateDatasetDOI(username, datasetId, version)
+
+        val datasetDOI = "${DatasetCitationsConstants.DOI_PREFIX}/$datasetId.$version"
 
         DatasetsTable.update(
             {

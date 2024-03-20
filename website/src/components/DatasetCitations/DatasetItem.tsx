@@ -1,4 +1,4 @@
-import Link from '@mui/material/Link';
+import { AxiosError } from 'axios';
 import { type FC } from 'react';
 
 import { CitationPlot } from './CitationPlot';
@@ -39,14 +39,9 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
                     return (
                         <tr key={`accessionData-${index}`}>
                             <td className='text-left'>
-                                <Link
-                                    href={accessionOutlink[datasetRecord.type](datasetRecord.accession)}
-                                    target='_blank'
-                                    underline='none'
-                                    sx={{ padding: 0, margin: 0 }}
-                                >
+                                <a href={accessionOutlink[datasetRecord.type](datasetRecord.accession)} target='_blank'>
                                     {datasetRecord.accession}
-                                </Link>
+                                </a>
                             </td>
                             <td className='text-left'>{datasetRecord.type as string}</td>
                         </tr>
@@ -110,10 +105,8 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
         }
 
         return (
-            <Link
-                className='mr-4'
-                component='button'
-                underline='none'
+            <a
+                className='mr-4 cursor-pointer font-medium text-blue-600 dark:text-blue-500 hover:underline'
                 onClick={() =>
                     displayConfirmationDialog({
                         dialogText: `Are you sure you want to create a DOI for this version of your dataset?`,
@@ -122,7 +115,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                 }
             >
                 Generate a DOI
-            </Link>
+            </a>
         );
     };
 
@@ -154,9 +147,13 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                     {dataset.datasetDOI === undefined || dataset.datasetDOI === null ? (
                         <p className='text'>Cited By 0</p>
                     ) : (
-                        <Link href={getCrossRefUrl()} target='_blank' underline='none'>
+                        <a
+                            className='mr-4 cursor-pointer font-medium text-blue-600 dark:text-blue-500 hover:underline'
+                            href={getCrossRefUrl()}
+                            target='_blank'
+                        >
                             Cited By 0
-                        </Link>
+                        </a>
                     )}
                 </div>
                 <div className='flex flex-row'>
@@ -189,9 +186,14 @@ function useCreateDatasetDOIAction(
                 location.reload();
             },
             onError: async (error) => {
-                const message = `Failed to create dataset DOI with error: '${JSON.stringify(error)})}'`;
-                await logger.info(message);
-                onError(message);
+                await logger.info(`Failed to create dataset DOI with error: '${JSON.stringify(error)})}'`);
+                if (error instanceof AxiosError) {
+                    if (error.response?.data !== undefined) {
+                        onError(
+                            `Failed to update dataset. ${error.response.data?.title}. ${error.response.data?.detail}`,
+                        );
+                    }
+                }
             },
         },
     );
