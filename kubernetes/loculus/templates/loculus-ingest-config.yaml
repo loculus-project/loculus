@@ -18,6 +18,6 @@ data:
     {{- $values.ingest.configFile | toYaml | nindent 4 }}
     organism: {{ $key }}
     backend_url: {{ $backendHost }}
-    keycloak_url: {{ $keycloakHost }}
+    keycloak_token_url: {{ $keycloakHost }}
 {{- end }}
 {{- end }}
