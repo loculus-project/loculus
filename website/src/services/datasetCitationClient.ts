@@ -31,9 +31,7 @@ export class DatasetCitationClient extends ZodiosWrapperClient<typeof datasetCit
         });
     }
 
-    public getAuthor(accessToken: string) {
-        return this.call('getAuthor', {
-            headers: createAuthorizationHeader(accessToken),
-        });
+    public getAuthor(username: string) {
+        return this.call('getAuthor', { params: { username } });
     }
 }

@@ -41,6 +41,8 @@ const getDatasetByVersion = (datasetVersions: Dataset[], version: string) => {
 };
 
 const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datasetResponse.value, version) : undefined;
+
+const authorResponse = dataset !== undefined ? await datasetClient.getAuthor(dataset.createdBy) : undefined;
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-item-container'>
@@ -49,7 +51,23 @@ const dataset = datasetResponse.value !== undefined ? getDatasetByVersion(datase
             dataset !== undefined ? (
                 <div class='flex flex-row items-left'>
                     <div class='w-1/6 flex flex-col justify-start items-center'>
-                        <AuthorDetails displayFullDetails={false} name={dataset.createdBy} fontSize={60} />
+                        {authorResponse !== undefined
+                            ? authorResponse.match(
+                                  (authorProfile) => (
+                                      <AuthorDetails
+                                          displayFullDetails={false}
+                                          firstName={authorProfile.firstName}
+                                          lastName={authorProfile.lastName}
+                                      />
+                                  ),
+                                  (error) => (
+                                      <ErrorFeedback
+                                          message={'Error while fetching author profile: ' + JSON.stringify(error)}
+                                          client:load
+                                      />
+                                  ),
+                              )
+                            : null}
                     </div>
                     <div class='w-5/6 pl-6'>
                         {datasetRecordsResponse.value !== undefined ? (

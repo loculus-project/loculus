@@ -136,13 +136,6 @@ class CitationEndpointsTest(
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
             Scenario({ jwt, client -> client.getUserCitedByDataset(jwt = jwt) }, false),
-            Scenario({ jwt, client ->
-                client.getDatasetCitedByPublication(
-                    MOCK_DATASET_ID,
-                    MOCK_DATASET_VERSION,
-                    jwt = jwt,
-                )
-            }, false),
         )
     }
 }

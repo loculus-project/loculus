@@ -69,50 +69,17 @@ data class CitedBy(
     val citations: MutableList<Long>,
 )
 
-data class Author(
-    val authorId: UUID,
-    val name: String,
+data class AuthorProfile(
+    val username: String,
+    val firstName: String,
+    val lastName: String,
+    val emailDomain: String,
     @Schema(
-        description = "The affiliation of the author.",
+        description = "The university the author is affiliated with.",
         type = "string",
-        example = "Professor at University of Example",
+        example = "University of Example",
     )
-    val affiliation: String,
-    val email: String,
-    val emailVerified: Boolean,
-    val username: String?,
-    val createdAt: Timestamp,
-    val createdBy: String,
-    val updatedAt: Timestamp,
-    val updatedBy: String?,
-)
-
-data class SubmittedAuthor(
-    val name: String,
-    @Schema(
-        description = "The affiliation of the author.",
-        type = "string",
-        example = "Professor at University of Example",
-    )
-    val affiliation: String,
-    val email: String,
-    val emailVerified: Boolean,
-)
-
-data class SubmittedAuthorUpdate(
-    val name: String,
-    @Schema(
-        description = "The affiliation of the author.",
-        type = "string",
-        example = "Professor at University of Example",
-    )
-    val affiliation: String,
-    val email: String,
-    val emailVerified: Boolean,
-)
-
-data class ResponseAuthor(
-    val authorId: String,
+    val university: String?,
 )
 
 object DatasetCitationsConstants {

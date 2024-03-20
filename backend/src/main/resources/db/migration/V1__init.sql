@@ -109,20 +109,3 @@ create table dataset_to_records (
             references datasets(dataset_id, dataset_version)
             on delete cascade
 );
-
-
-create table authors (
-    author_id uuid not null,
-    name text not null,
-    affiliation text not null,
-    email text not null,
-    username text,
-    email_verified boolean not null default false,
-    is_public boolean not null default false,
-    created_at timestamp not null,
-    created_by text not null,
-    updated_at timestamp not null,
-    updated_by text,
-
-    primary key (author_id)
-);
