@@ -489,6 +489,7 @@ defaultOrganisms:
     ingest:
       args:
         - snakemake
+        - approve
       image: ghcr.io/loculus-project/ingest
       configFile:
         compound_country_field: ncbi_geo_location
