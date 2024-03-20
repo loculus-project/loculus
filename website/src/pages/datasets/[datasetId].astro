@@ -95,6 +95,7 @@ const authorResponse = dataset !== undefined ? await datasetClient.getAuthor(dat
                                 dataset={dataset}
                                 datasetRecords={datasetRecordsResponse.value}
                                 citedByData={datasetCitedByResponse.value}
+                                isAdminView={dataset.createdBy === username}
                                 client:load
                             />
                         ) : (

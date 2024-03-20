@@ -63,6 +63,7 @@ type DatasetItemProps = {
     dataset: Dataset;
     datasetRecords: DatasetRecord[];
     citedByData: CitedByResult;
+    isAdminView?: boolean;
 };
 
 const DatasetItemInner: FC<DatasetItemProps> = ({
@@ -71,6 +72,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     dataset,
     datasetRecords,
     citedByData,
+    isAdminView = false,
 }) => {
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
@@ -98,6 +100,32 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
         return dateObj.toLocaleDateString('en-US');
     };
 
+    const renderDOI = () => {
+        if (dataset.datasetDOI !== undefined && dataset.datasetDOI !== null) {
+            return dataset.datasetDOI;
+        }
+
+        if (!isAdminView) {
+            return 'N/A';
+        }
+
+        return (
+            <Link
+                className='mr-4'
+                component='button'
+                underline='none'
+                onClick={() =>
+                    displayConfirmationDialog({
+                        dialogText: `Are you sure you want to create a DOI for this dataset and version?`,
+                        onConfirmation: handleCreateDOI,
+                    })
+                }
+            >
+                Generate a DOI
+            </Link>
+        );
+    };
+
     return (
         <div className='flex flex-col items-left'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
@@ -119,23 +147,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>DOI</p>
-                    {dataset.datasetDOI === undefined || dataset.datasetDOI === null ? (
-                        <Link
-                            className='mr-4'
-                            component='button'
-                            underline='none'
-                            onClick={() =>
-                                displayConfirmationDialog({
-                                    dialogText: `Are you sure you want to create a DOI for this dataset and version?`,
-                                    onConfirmation: handleCreateDOI,
-                                })
-                            }
-                        >
-                            Generate a DOI
-                        </Link>
-                    ) : (
-                        dataset.datasetDOI
-                    )}
+                    {renderDOI()}
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Total citations</p>
