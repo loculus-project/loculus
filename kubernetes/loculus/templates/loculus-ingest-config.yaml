@@ -7,7 +7,7 @@
     "http://loculus-keycloak-service:8083"
 }}
 {{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
-{{- if $values.ingest.configFile }}
+{{- if $values.ingest }}
 ---
 apiVersion: v1
 kind: ConfigMap
