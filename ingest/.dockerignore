@@ -1,5 +1,7 @@
 .snakemake/
+.git/
 data/
 results/
+result/
 .DS_Store
 .ruff_cache
