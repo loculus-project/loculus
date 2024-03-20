@@ -7,7 +7,7 @@
     "http://loculus-keycloak-service:8083"
 }}
 {{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
-{{- if $values.ingest }}
+{{- if $values.ingest.configFile }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -15,7 +15,7 @@ metadata:
   name: loculus-ingest-config-{{ $key }}
 data:
   config.yaml: |
-    {{- $values.ingest | toYaml | nindent 4 -}}
+    {{- $values.ingest.configFile | toYaml | nindent 4 -}}
     organism: {{ $key }}
     backend-url: {{ $backendHost }}
     keycloak-url: {{ $keycloakHost }}
