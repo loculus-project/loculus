@@ -46,11 +46,11 @@ const authorResponse = dataset !== undefined ? await datasetClient.getAuthor(dat
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-item-container'>
-    <div class='flex flex-col justify-start'>
+    <div class='flex flex-col justify-center max-w-7xl'>
         {
             dataset !== undefined ? (
                 <div class='flex flex-row items-left'>
-                    <div class='w-1/6 flex flex-col justify-start items-center'>
+                    <div class='w-1/5 flex flex-col justify-start items-center'>
                         {authorResponse !== undefined
                             ? authorResponse.match(
                                   (authorProfile) => (
@@ -69,7 +69,7 @@ const authorResponse = dataset !== undefined ? await datasetClient.getAuthor(dat
                               )
                             : null}
                     </div>
-                    <div class='w-5/6 pl-6'>
+                    <div class='w-4/5 pl-6'>
                         {datasetRecordsResponse.value !== undefined ? (
                             <DatasetItemActions
                                 clientConfig={clientConfig}

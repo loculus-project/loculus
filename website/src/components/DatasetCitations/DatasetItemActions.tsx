@@ -63,7 +63,7 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
                         ) : null}
                     </div>
                     <div className='px-2'>
-                        {isAdminView ? (
+                        {isAdminView && (dataset.datasetDOI === null || dataset.datasetDOI === undefined) ? (
                             <button
                                 className='btn'
                                 onClick={() =>
