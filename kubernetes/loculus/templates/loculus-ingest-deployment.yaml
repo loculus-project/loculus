@@ -33,7 +33,7 @@ spec:
       {{- if $value.ingest.configFile }}
           volumeMounts:
             - name: loculus-ingest-config-volume-{{ $key }}
-              mountPath: /package/config/config.yaml
+              mountPath: /package/config/config2.yaml
       volumes:
         - name: loculus-ingest-config-volume-{{ $key }}
           configMap:
