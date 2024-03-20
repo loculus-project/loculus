@@ -15,7 +15,7 @@ metadata:
   name: loculus-ingest-config-{{ $key }}
 data:
   config.yaml: |
-    {{- $values.ingest.configFile | toYaml | nindent 4 -}}
+    {{- $values.ingest.configFile | toYaml | nindent 4 }}
     organism: {{ $key }}
     backend-url: {{ $backendHost }}
     keycloak-url: {{ $keycloakHost }}
