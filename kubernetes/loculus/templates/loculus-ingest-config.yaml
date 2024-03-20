@@ -1,0 +1,23 @@
+{{ $backendHost := .Values.disableBackend | ternary
+    "http://host.k3d.internal:8079"
+    "http://loculus-backend-service:8079"
+}}
+{{- $keycloakHost := .Values.environment | eq "server" | ternary
+    (printf "https://authentication-%s" $.Values.host)
+    "http://loculus-keycloak-service:8083"
+}}
+{{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- if $values.ingest }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-ingest-config-{{ $key }}
+data:
+  ingest-config.yaml: |
+    {{- $values.ingest | toYaml | nindent 4 -}}
+    organism: {{ $key }}
+    backend-url: {{ $backendHost }}
+    keycloak-url: {{ $keycloakHost }}
+{{- end }}
+{{- end }}
