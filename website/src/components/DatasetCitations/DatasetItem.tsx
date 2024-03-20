@@ -27,11 +27,11 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
     };
 
     return (
-        <table className='table-auto w-full'>
+        <table className='table-auto w-full max-w-xl'>
             <thead>
                 <tr>
-                    <th className='w-1/10 text-left font-medium'>Accession</th>
-                    <th className='w-1/10 text-left font-medium'>Source</th>
+                    <th className='w-1/2 text-left font-medium'>Accession</th>
+                    <th className='w-1/2 text-left font-medium'>Source</th>
                 </tr>
             </thead>
             <tbody>
@@ -102,7 +102,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
 
     const renderDOI = () => {
         if (dataset.datasetDOI !== undefined && dataset.datasetDOI !== null) {
-            return dataset.datasetDOI;
+            return `https://doi.org/${dataset.datasetDOI}`;
         }
 
         if (!isAdminView) {
@@ -116,7 +116,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                 underline='none'
                 onClick={() =>
                     displayConfirmationDialog({
-                        dialogText: `Are you sure you want to create a DOI for this dataset and version?`,
+                        dialogText: `Are you sure you want to create a DOI for this version of your dataset?`,
                         onConfirmation: handleCreateDOI,
                     })
                 }

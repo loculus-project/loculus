@@ -251,8 +251,23 @@ class DatasetCitationsDatabaseService(
     fun deleteDataset(username: String, datasetId: String, version: Long) {
         log.info { "Delete dataset $datasetId, version $version, user $username" }
 
+        val datasetUuid = UUID.fromString(datasetId)
+
+        val datasetDOI = DatasetsTable
+            .select {
+                (DatasetsTable.datasetId eq datasetUuid) and
+                    (DatasetsTable.datasetVersion eq version) and
+                    (DatasetsTable.createdBy eq username)
+            }
+            .singleOrNull()
+            ?.get(DatasetsTable.datasetDOI)
+
+        if (datasetDOI != null) {
+            throw UnprocessableEntityException("Dataset $datasetId, version $version has a DOI and cannot be deleted")
+        }
+
         DatasetsTable.deleteWhere {
-            (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
+            (DatasetsTable.datasetId eq datasetUuid) and
                 (DatasetsTable.datasetVersion eq version) and
                 (DatasetsTable.createdBy eq username)
         }

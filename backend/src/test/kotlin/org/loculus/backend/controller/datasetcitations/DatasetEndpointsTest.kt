@@ -137,9 +137,6 @@ class DatasetEndpointsTest(@Autowired private val client: DatasetCitationsContro
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$[0].datasetDOI").isString)
-
-        client.deleteDataset(datasetId)
-            .andExpect(status().isOk)
     }
 
     @Test
@@ -173,7 +170,32 @@ class DatasetEndpointsTest(@Autowired private val client: DatasetCitationsContro
     }
 
     @Test
-    fun `WHEN calling delete dataset THEN returns deleted`() {
+    fun `WHEN calling delete dataset on dataset version with a DOI THEN returns unprocessable entity`() {
+        val datasetResult = client.createDataset()
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.datasetId").isString)
+            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andReturn()
+
+        val datasetId = JsonPath.read<String>(datasetResult.response.contentAsString, "$.datasetId")
+
+        client.createDatasetDOI(datasetId)
+            .andExpect(status().isOk)
+
+        client.deleteDataset(datasetId, 1)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString("Dataset $datasetId, version 1 has a DOI and cannot be deleted"),
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN calling delete dataset on dataset without a DOI THEN returns deleted`() {
         val datasetResult = client.createDataset()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
