@@ -36,7 +36,9 @@ def hash_row_with_columns(row: pd.Series) -> str:
 @click.option("--output", required=True, type=click.Path())
 def main(config_file: str, input: str, output: str):
     with open(config_file) as file:
-        config = Config(**yaml.safe_load(file))
+        full_config = yaml.safe_load(file)
+        relevant_config = {key: full_config[key] for key in Config.__annotations__}
+        config = Config(**relevant_config)
     logging.debug(config)
     df = pd.read_csv(input, sep="\t").sort_values(by=config.compound_country_field)
     logging.debug(df.columns)

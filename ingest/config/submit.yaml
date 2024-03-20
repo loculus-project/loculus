@@ -1,7 +1,0 @@
-group_name: insdc_ingest_group
-username : insdc_ingest_user
-password : insdc_ingest_user
-backend_url : https://backend-main.loculus.org/
-organism: ebola-zaire
-keycloak_token_url : https://authentication-main.loculus.org/realms/loculus/protocol/openid-connect/token
-keycloak_client_id : test-cli

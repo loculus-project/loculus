@@ -1,7 +1,4 @@
 TAXON_ID = config["taxon_id"]
-BRANCH = "main"
-NUMBER_OF_SAMPLES = 500
-
 ALL_FIELDS = ",".join(config["all_fields"])
 COLUMN_MAPPING = config["column_mapping"]
 
@@ -76,7 +73,7 @@ rule rename_columns:
 rule prepare_metadata:
     input:
         metadata="results/metadata_post_rename.tsv",
-        config="config/prepare.yaml",
+        config="config/config.yaml",
     output:
         metadata="results/metadata_post_prepare.tsv",
     shell:
@@ -92,11 +89,9 @@ rule submit_to_loculus:
     input:
         metadata="results/metadata_post_prepare.tsv",
         sequences="results/sequences.fasta",
-        config="config/submit.yaml",
+        config="config/config.yaml",
     output:
         submitted=touch("results/submitted"),
-    params:
-        branch=BRANCH,
     shell:
         """
         python scripts/submit_to_loculus.py \
@@ -110,7 +105,7 @@ rule submit_to_loculus:
 rule approve:
     input:
         submitted="results/submitted",
-        config="config/submit.yaml",
+        config="config/config.yaml",
     shell:
         """
         python scripts/submit_to_loculus.py \

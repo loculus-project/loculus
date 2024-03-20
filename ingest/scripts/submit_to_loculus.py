@@ -173,7 +173,9 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file):
     """
     logging.basicConfig(level=log_level)
     with open(config_file) as file:
-        config = Config(**yaml.safe_load(file))
+        full_config = yaml.safe_load(file)
+        relevant_config = {key: full_config[key] for key in Config.__annotations__}
+        config = Config(**relevant_config)
 
     if mode == "submit":
         logging.info("Submitting to Loculus")

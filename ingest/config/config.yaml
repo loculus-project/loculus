@@ -1,6 +1,34 @@
+compound_country_field: ncbi_geo_location
+fasta_id_field: genbank_accession
+rename:
+  genbank_accession: insdc_accession_full
+  ncbi_collection_date: collection_date
+  ncbi_isolate_name: isolate_name
+  ncbi_isolate_source: isolate_source
+  ncbi_sra_accessions: sra_accessions
+  ncbi_submitter_affiliation: author_affiliation
+  ncbi_submitter_country: submitter_country
+  ncbi_submitter_names: authors
+keep:
+  - division
+  - country
+  - submissionId
+  - insdc_accession_base
+  - insdc_version
+  - bioprojects
+  - biosample_accession
+  - ncbi_completeness
+  - ncbi_host_name
+  - ncbi_host_tax_id
+  - ncbi_is_lab_host
+  - ncbi_length
+  - ncbi_protein_count
+  - ncbi_release_date
+  - ncbi_update_date
+  - ncbi_sourcedb
+  - ncbi_virus_name
+  - ncbi_virus_tax_id
 taxon_id: 186538
-group_name: insdc_ingest_group
-user_name: insdc_ingest_user
 all_fields:
   - accession
   - bioprojects
@@ -99,3 +127,10 @@ column_mapping:
   Virus Name: ncbi_virus_name
   Virus Pangolin Classification: ncbi_virus_pangolin
   Virus Taxonomic ID: ncbi_virus_tax_id
+group_name: insdc_ingest_group
+username : insdc_ingest_user
+password : insdc_ingest_user
+keycloak_client_id : test-cli
+backend_url : https://backend-ingest.loculus.org/
+keycloak_token_url : https://authentication-ingest.loculus.org/realms/loculus/protocol/openid-connect/token
+organism: ebola-zaire
