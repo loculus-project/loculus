@@ -14,7 +14,7 @@ kind: ConfigMap
 metadata:
   name: loculus-ingest-config-{{ $key }}
 data:
-  ingest-config.yaml: |
+  config.yaml: |
     {{- $values.ingest | toYaml | nindent 4 -}}
     organism: {{ $key }}
     backend-url: {{ $backendHost }}
