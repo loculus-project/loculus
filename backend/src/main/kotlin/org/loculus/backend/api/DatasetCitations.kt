@@ -84,4 +84,5 @@ data class AuthorProfile(
 
 object DatasetCitationsConstants {
     const val DOI_PREFIX = "placeholder"
+    const val DOI_WEEKLY_RATE_LIMIT = 7
 }
