@@ -71,6 +71,14 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
 
+      - name: Wait for Ingest Docker Image
+        uses: lewagon/wait-on-check-action@v1.3.3
+        with:
+          ref: ${{ github.sha }}
+          check-name: Build ingest Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
+
       - name: Wait for Keycloakify Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
