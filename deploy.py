@@ -46,6 +46,8 @@ helm_parser.add_argument('--dockerconfigjson',
 helm_parser.add_argument('--uninstall', action='store_true', help='Uninstall installation')
 helm_parser.add_argument('--enablePreprocessing', action='store_true',
                          help='Include deployment of preprocessing pipelines')
+helm_parser.add_argument('--enableIngest', action='store_true',
+                         help='Include deployment of ingest pipelines')
 helm_parser.add_argument('--values', help='Values file for helm chart',
                          default=HELM_VALUES_FILE)
 
@@ -154,6 +156,9 @@ def handle_helm():
 
     if not args.enablePreprocessing:
         parameters += ['--set', "disablePreprocessing=true"]
+
+    if not args.enableIngest:
+        parameters += ['--set', "disableIngest=true"]
     
     if get_codespace_name():
         parameters += ['--set', "codespaceName="+get_codespace_name()]
