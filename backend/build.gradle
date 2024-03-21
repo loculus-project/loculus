@@ -51,6 +51,8 @@ dependencies {
     implementation 'com.github.luben:zstd-jni:1.5.5-11'
     implementation 'org.tukaani:xz:1.9'
 
+    implementation("org.redundent:kotlin-xml-builder:1.8.0")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude group: "org.mockito"
     }

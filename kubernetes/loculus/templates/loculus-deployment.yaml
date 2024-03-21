@@ -69,14 +69,17 @@ spec:
           ports:
             - containerPort: 8079
           args:
-            - "--spring.datasource.url=$(DB_URL)"
-            - "--spring.datasource.username=$(DB_USERNAME)"
-            - "--spring.datasource.password=$(DB_PASSWORD)"
-            - "--keycloak.user=backend"
+            - "--crossref.password=$(CROSSREF_PASSWORD)"
+            - "--crossref.url=$(CROSSREF_URL)"
+            - "--crossref.username=$(CROSSREF_USERNAME)"
+            - "--keycloak.client=test-cli"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"
-            - "--keycloak.client=test-cli"
             - "--keycloak.url=http://loculus-keycloak-service:8083"
+            - "--keycloak.user=backend"
+            - "--spring.datasource.password=$(DB_PASSWORD)"
+            - "--spring.datasource.url=$(DB_URL)"
+            - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
           env:
            {{- if .Values.externalDatabase.urlSealedSecret }}
