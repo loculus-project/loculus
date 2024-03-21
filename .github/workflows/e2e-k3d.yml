@@ -124,11 +124,25 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
 
+      # TODO: This image is technically not required for the e2e test
+      # But it's required for wait_for_pods_to_be_ready.py
+      # Because that script checks for presence of all pods
       - name: Wait for Prepro Nextclade Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
           ref: ${{ github.sha }}
           check-name: Build preprocessing-nextclade Docker Image
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 2
+
+      # TODO: This image is technically not required for the e2e test
+      # But it's required for wait_for_pods_to_be_ready.py
+      # Because that script checks for presence of all pods
+      - name: Wait for Ingest Docker Image
+        uses: lewagon/wait-on-check-action@v1.3.3
+        with:
+          ref: ${{ github.sha }}
+          check-name: Build ingest Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
 
