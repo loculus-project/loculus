@@ -15,23 +15,48 @@ import { urlForKeycloakAccountPage } from '../../utils/urlForKeycloakAccountPage
 const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;
 
-const username = session.user?.username ?? '';
-const websiteConfig = getWebsiteConfig();
-const websiteName = websiteConfig.name;
-const clientConfig = getRuntimeConfig().public;
-const datasetClient = DatasetCitationClient.create();
-const keycloakClient = await KeycloakClientManager.getClient();
+let datasetsResponse,
+    userCitedByResponse,
+    authorResponse,
+    editAccountUrl,
+    websiteName,
+    clientConfig,
+    username,
+    websiteConfig,
+    datasetClient,
+    keycloakClient;
 
-const datasetsResponse = await datasetClient.getDatasetsOfUser(accessToken);
-const userCitedByResponse = await datasetClient.getUserCitedBy(username, accessToken);
-const authorResponse = await datasetClient.getAuthor(username);
-const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/personal-info';
+if (accessToken) {
+    username = session.user?.username ?? '';
+    websiteConfig = getWebsiteConfig();
+    websiteName = websiteConfig.name;
+    clientConfig = getRuntimeConfig().public;
+    datasetClient = DatasetCitationClient.create();
+    keycloakClient = await KeycloakClientManager.getClient();
+
+    datasetsResponse = await datasetClient.getDatasetsOfUser(accessToken);
+    userCitedByResponse = await datasetClient.getUserCitedBy(username, accessToken);
+    authorResponse = await datasetClient.getAuthor(username);
+    editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/personal-info';
+}
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>
     <div class='flex flex-col justify-center items-center'>
         {
-            !accessToken ? (
+            !(
+                accessToken &&
+                username &&
+                websiteName &&
+                clientConfig &&
+                datasetClient &&
+                keycloakClient &&
+                websiteConfig &&
+                authorResponse &&
+                datasetsResponse &&
+                userCitedByResponse &&
+                editAccountUrl
+            ) ? (
                 <NeedToLogin message='You need to be logged in to create new datasets.' />
             ) : (
                 <div class='flex flex-row justify-center w-5/6 divide-x max-w-7xl'>
