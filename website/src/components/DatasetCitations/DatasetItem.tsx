@@ -157,8 +157,13 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                     )}
                 </div>
                 <div className='flex flex-row'>
-                    <p className='mr-0 w-[120px] text-gray-500 text-right'></p>
-                    <CitationPlot citedByData={citedByData} />
+                    <p className='mr-0 w-[120px]'></p>
+                    <div className='ml-4'>
+                        <CitationPlot citedByData={citedByData} />
+                        <p className='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
+                            Number of times this dataset has been cited by a publication
+                        </p>
+                    </div>
                 </div>
             </div>
             <div className='flex flex-col my-4'>
