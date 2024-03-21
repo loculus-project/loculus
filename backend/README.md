@@ -66,8 +66,15 @@ Check the deployment for how to run the image.
 
 ### Run tests and lints
 
+The tests use Testcontainers to start a PostgreSQL database. This requires Docker or a Docker-API compatible container runtime to be installed, and the user executing the test needs the necessary permissions to use it. See [the documentation of the Testcontainers](https://java.testcontainers.org/supported_docker_environment/) for details.
+
 ```bash
 ./gradlew test
+```
+
+### Run linter
+
+```bash
 ./gradlew ktlintCheck
 ```
 
