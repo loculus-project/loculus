@@ -67,7 +67,7 @@ class AccessionPreconditionValidator(
         accessions: List<Accession>,
         statuses: List<Status>,
         organism: Organism,
-    ): List<AccessionVersionGroup> {
+    ) {
         sequenceEntriesTableProvider.get(organism).let { table ->
             val sequenceEntries = table
                 .slice(
@@ -86,18 +86,10 @@ class AccessionPreconditionValidator(
             validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
             validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
             validateOrganism(sequenceEntries, organism, table)
-
-            return sequenceEntries.map {
-                AccessionVersionGroup(
-                    it[table.accessionColumn],
-                    it[table.versionColumn],
-                    it[table.groupNameColumn],
-                )
-            }
         }
     }
 
-    fun validateAccessions(submitter: String, accessions: List<Accession>): List<AccessionVersionGroup> {
+    fun validateAccessions(submitter: String, accessions: List<Accession>) {
         sequenceEntriesTableProvider.get(organism = null).let { table ->
             val sequenceEntries = table
                 .slice(
@@ -112,14 +104,6 @@ class AccessionPreconditionValidator(
 
             validateAccessionsExist(sequenceEntries, accessions, table)
             validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
-
-            return sequenceEntries.map {
-                AccessionVersionGroup(
-                    it[table.accessionColumn],
-                    it[table.versionColumn],
-                    it[table.groupNameColumn],
-                )
-            }
         }
     }
 
@@ -216,7 +200,7 @@ class AccessionPreconditionValidator(
 
         groupsOfSequenceEntries.forEach { (groupName, accessionList) ->
             try {
-                groupManagementPreconditionValidator.validateUserInExistingGroupAndReturnUserList(groupName, submitter)
+                groupManagementPreconditionValidator.validateUserInExistingGroup(groupName, submitter)
             } catch (error: ForbiddenException) {
                 throw ForbiddenException(
                     error.message + " Affected AccessionVersions: " + accessionList.map {

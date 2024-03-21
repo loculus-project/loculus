@@ -60,7 +60,7 @@ class SubmitEndpointTest(
         )
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail", containsString("Group nonExistingGroup does not exist")))
+            .andExpect(jsonPath("\$.detail", containsString("Group(s) nonExistingGroup do not exist")))
     }
 
     @Test
@@ -78,7 +78,7 @@ class SubmitEndpointTest(
                 jsonPath(
                     "\$.detail",
                     containsString(
-                        "User $otherUser is not a member of the group " +
+                        "User $otherUser is not a member of group(s) " +
                             "$DEFAULT_GROUP_NAME. Action not allowed.",
                     ),
                 ),

@@ -48,6 +48,7 @@ class UploadDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
     private val generateAccessionFromNumberService: GenerateAccessionFromNumberService,
+    private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
 ) {
 
     fun batchInsertMetadataInAuxTable(
@@ -204,23 +205,31 @@ class UploadDatabaseService(
                 .select { uploadIdColumn eq uploadId }
                 .map { it[accessionColumn]!! }
 
-        val existingAccessionVersions = accessionPreconditionValidator.validateAccessions(
+        accessionPreconditionValidator.validateAccessions(
             username,
             accessions,
             listOf(Status.APPROVED_FOR_RELEASE),
             organism,
         )
 
-        existingAccessionVersions.forEach { (accession, oldMaxVersion, groupName) ->
-
-            MetadataUploadAuxTable.update(
-                {
-                    (accessionColumn eq accession) and (uploadIdColumn eq uploadId)
-                },
-            ) {
-                it[versionColumn] = oldMaxVersion + 1
-                it[groupNameColumn] = groupName
-            }
+        val updateSql = """
+            UPDATE metadata_upload_aux_table m
+            SET
+                version = sequence_entries.version + 1,
+                group_name = sequence_entries.group_name
+            FROM sequence_entries
+            WHERE
+                m.upload_id = ?
+                AND m.accession = sequence_entries.accession
+                AND ${sequenceEntriesTableProvider.get(organism).isMaxVersion}
+        """.trimIndent()
+        transaction {
+            exec(
+                updateSql,
+                listOf(
+                    Pair(VarCharColumnType(), uploadId),
+                ),
+            )
         }
     }
 

@@ -55,7 +55,7 @@ class ReviseEndpointTest(
         )
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail", containsString("Group nonExistingGroup does not exist")))
+            .andExpect(jsonPath("\$.detail", containsString("Group(s) nonExistingGroup do not exist")))
     }
 
     @Test
@@ -73,7 +73,7 @@ class ReviseEndpointTest(
                 jsonPath(
                     "\$.detail",
                     containsString(
-                        "User $otherUser is not a member of the group " +
+                        "User $otherUser is not a member of group(s) " +
                             "$DEFAULT_GROUP_NAME. Action not allowed.",
                     ),
                 ),
@@ -177,7 +177,7 @@ class ReviseEndpointTest(
                 jsonPath(
                     "\$.detail",
                     containsString(
-                        "User $notSubmitter is not a member of the group " +
+                        "User $notSubmitter is not a member of group(s) " +
                             "$DEFAULT_GROUP_NAME. Action not allowed.",
                     ),
                 ),

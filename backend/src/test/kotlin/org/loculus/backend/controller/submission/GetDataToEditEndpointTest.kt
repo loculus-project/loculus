@@ -146,7 +146,7 @@ class GetDataToEditEndpointTest(
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail", containsString("is not a member of the group")),
+                jsonPath("\$.detail", containsString("is not a member of group")),
             )
     }
 
@@ -170,7 +170,7 @@ class GetDataToEditEndpointTest(
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail", containsString("is not a member of the group")),
+                jsonPath("\$.detail", containsString("is not a member of group")),
             )
     }
 
