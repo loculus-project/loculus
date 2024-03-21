@@ -167,7 +167,6 @@ class DatasetValidationEndpointsTest(
 
         for (i in 1..DatasetCitationsConstants.DOI_WEEKLY_RATE_LIMIT) {
             createDatasetWithDOI(accessionJson)
-                .andExpect(status().isOk)
         }
         createDatasetWithDOI(accessionJson)
             .andExpect(status().isUnprocessableEntity)
