@@ -4,89 +4,104 @@ import { CitationPlot } from '../../components/DatasetCitations/CitationPlot';
 import { DatasetList } from '../../components/DatasetCitations/DatasetList';
 import { DatasetListActions } from '../../components/DatasetCitations/DatasetListActions';
 import { ErrorFeedback } from '../../components/ErrorFeedback';
-import { getRuntimeConfig } from '../../config';
+import NeedToLogin from '../../components/common/NeedToLogin.astro';
+import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { DatasetCitationClient } from '../../services/datasetCitationClient.ts';
 import { KeycloakClientManager } from '../../utils/KeycloakClientManager';
 import { getAccessToken } from '../../utils/getAccessToken';
 import { urlForKeycloakAccountPage } from '../../utils/urlForKeycloakAccountPage';
 
-const clientConfig = getRuntimeConfig().public;
 const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;
-const username = session.user!.username!;
 
+const username = session.user?.username ?? '';
+const websiteConfig = getWebsiteConfig();
+const websiteName = websiteConfig.name;
+const clientConfig = getRuntimeConfig().public;
 const datasetClient = DatasetCitationClient.create();
+const keycloakClient = await KeycloakClientManager.getClient();
 
 const datasetsResponse = await datasetClient.getDatasetsOfUser(accessToken);
 const userCitedByResponse = await datasetClient.getUserCitedBy(username, accessToken);
 const authorResponse = await datasetClient.getAuthor(username);
-
-const keycloakClient = await KeycloakClientManager.getClient();
 const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/personal-info';
 ---
 
 <BaseLayout title='Datasets' data-testid='datasets-list-container'>
     <div class='flex flex-col justify-center items-center'>
-        <div class='flex flex-row justify-center w-5/6 divide-x max-w-7xl'>
-            <div class='w-3/4 flex flex-col justify-start'>
-                {
-                    authorResponse.match(
-                        (authorProfile) => (
-                            <AuthorDetails
-                                displayFullDetails
-                                firstName={authorProfile.firstName}
-                                lastName={authorProfile.lastName}
-                                emailDomain={authorProfile.emailDomain}
-                                university={authorProfile.university}
-                                editAccountUrl={editAccountUrl}
-                            />
-                        ),
-                        (error) => (
-                            <ErrorFeedback
-                                message={'Error while fetching author profile: ' + JSON.stringify(error)}
-                                client:load
-                            />
-                        ),
-                    )
-                }
-                <hr />
-                <div class='flex justify-start'>
-                    <div>
-                        <div class='flex justify-start items-center py-5'>
-                            <h1 class='text-2xl font-semibold'>Datasets</h1>
-                            <DatasetListActions clientConfig={clientConfig} accessToken={accessToken} client:load />
-                        </div>
-                        <div>
-                            {
-                                datasetsResponse.match(
-                                    (datasets) => <DatasetList datasets={datasets} username={username} client:load />,
-                                    (error) => (
-                                        <ErrorFeedback
-                                            message={'Error while fetching datasets: ' + JSON.stringify(error)}
-                                            client:load
-                                        />
-                                    ),
-                                )
-                            }
+        {
+            !accessToken ? (
+                <NeedToLogin message='You need to be logged in to create new datasets.' />
+            ) : (
+                <div class='flex flex-row justify-center w-5/6 divide-x max-w-7xl'>
+                    <div class='w-3/4 flex flex-col justify-start'>
+                        {authorResponse.match(
+                            (authorProfile) => (
+                                <AuthorDetails
+                                    displayFullDetails
+                                    firstName={authorProfile.firstName}
+                                    lastName={authorProfile.lastName}
+                                    emailDomain={authorProfile.emailDomain}
+                                    university={authorProfile.university}
+                                    editAccountUrl={editAccountUrl}
+                                />
+                            ),
+                            (error) => (
+                                <ErrorFeedback
+                                    message={'Error while fetching author profile: ' + JSON.stringify(error)}
+                                    client:load
+                                />
+                            ),
+                        )}
+                        <hr />
+                        <div class='flex justify-start'>
+                            <div class='w-11/12'>
+                                <div class='flex justify-start items-center py-8'>
+                                    <h1 class='text-2xl font-semibold'>Datasets</h1>
+                                    <DatasetListActions
+                                        clientConfig={clientConfig}
+                                        accessToken={accessToken}
+                                        client:load
+                                    />
+                                </div>
+                                <div>
+                                    {datasetsResponse.match(
+                                        (datasets) => (
+                                            <DatasetList datasets={datasets} username={username} client:load />
+                                        ),
+                                        (error) => (
+                                            <ErrorFeedback
+                                                message={'Error while fetching datasets: ' + JSON.stringify(error)}
+                                                client:load
+                                            />
+                                        ),
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    <div class='w-1/4 flex flex-col justify-start items-start pl-4'>
+                        <span class='text-xl'>Cited By</span>
+                        {userCitedByResponse.match(
+                            (citedByData) => (
+                                <div>
+                                    <CitationPlot citedByData={citedByData} client:load />
+                                    <p class='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
+                                        Number of times your sequences appear in {websiteName} datasets
+                                    </p>
+                                </div>
+                            ),
+                            (error) => (
+                                <ErrorFeedback
+                                    message={'Error while fetching datasets: ' + JSON.stringify(error)}
+                                    client:load
+                                />
+                            ),
+                        )}
+                    </div>
                 </div>
-            </div>
-            <div class='w-1/4 flex flex-col justify-start items-start pl-4'>
-                <span class='text-xl'>Cited By</span>
-                {
-                    userCitedByResponse.match(
-                        (citedByData) => <CitationPlot citedByData={citedByData} client:load />,
-                        (error) => (
-                            <ErrorFeedback
-                                message={'Error while fetching datasets: ' + JSON.stringify(error)}
-                                client:load
-                            />
-                        ),
-                    )
-                }
-            </div>
-        </div>
+            )
+        }
     </div>
 </BaseLayout>
