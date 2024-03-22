@@ -1,6 +1,8 @@
 ---
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { toHeaderMap, type TableDataEntry } from './getTableData';
+
+import { NucSubBadge, AaSubBadge } from './MutationBadge';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 
 interface Props {
@@ -11,6 +13,32 @@ interface Props {
 const { tableData, dataUseTermsHistory } = Astro.props;
 const headerMap = toHeaderMap(tableData);
 ---
+
+<div>
+    <NucSubBadge sub={{ ref: 'A', pos: 23, qry: 'C' }} />
+    ,
+    <NucSubBadge sub={{ ref: 'G', pos: 4567, qry: 'T' }} />
+    ,
+    <NucSubBadge sub={{ ref: 'T', pos: 4567, qry: 'A' }} />
+    ,
+    <NucSubBadge sub={{ ref: 'G', pos: 4567, qry: 'A' }} />
+    ,
+    <NucSubBadge sub={{ ref: 'A', pos: 4567, qry: '-' }} />
+    ,
+    <NucSubBadge sub={{ ref: 'A', pos: 4567, qry: 'N' }} />
+    ,
+    <NucSubBadge sub={{ ref: 'A', pos: 4567, qry: 'W' }} />
+</div>
+
+<div>
+    <AaSubBadge sub={{ gene: 'ORF1a', ref: 'E', pos: 3641, qry: 'K' }} />
+    ,
+    <AaSubBadge sub={{ gene: 'S', ref: 'D', pos: 456, qry: 'Y' }} />
+    ,
+    <AaSubBadge sub={{ gene: 'S', ref: 'M', pos: 789, qry: '-' }} />
+    ,
+    <AaSubBadge sub={{ gene: 'S', ref: 'M', pos: 789, qry: '*' }} />
+</div>
 
 <div class='mt-2'>
     <div>
@@ -61,4 +89,3 @@ const headerMap = toHeaderMap(tableData);
             ))
         }
     </div>
-</div>
