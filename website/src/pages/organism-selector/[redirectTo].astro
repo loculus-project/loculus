@@ -5,7 +5,7 @@ import { routes } from '../../routes/routes';
 const redirectTo = Astro.params.redirectTo;
 
 const purposes: { [key: string]: string } = {
-    submit: 'for which you want to submit data',
+    submission: 'for which you want to submit data',
     search: 'for which you want to browse data',
 };
 
@@ -14,7 +14,7 @@ interface Routes {
 }
 
 const myRoutes: Routes = {
-    submit: routes.submitPage,
+    submission: routes.submissionPage,
     search: routes.searchPage,
 };
 
@@ -22,7 +22,7 @@ const purpose = purposes[redirectTo!];
 ---
 
 <BaseLayout title='Home'>
-    <div class='max-w-6xl mx-auto'>
+    <div class='max-w-4xl mx-auto'>
         <p class='text-gray-700 my-4'>
             Please select an organism {purpose}.
         </p>

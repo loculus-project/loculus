@@ -4,17 +4,46 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { routes } from '../../../routes/routes';
 
 const { organism } = cleanOrganism(Astro.params.organism);
+
+const options = [
+    {
+        title: 'Submit',
+        description: 'Upload new sequences.',
+        route: routes.submitPage(organism!.key),
+    },
+    {
+        title: 'Revise',
+        description: 'Upload revisions for existing sequences.',
+        route: routes.revisePage(organism!.key),
+    },
+    {
+        title: 'Review',
+        description: 'Review your unreleased submissions.',
+        route: routes.userSequenceReviewPage(organism!.key),
+    },
+    {
+        title: 'View',
+        description: "View your group's released sequences.",
+        route: routes.mySequencesWithoutGroup(organism!.key),
+    },
+];
 ---
 
 <BaseLayout title='Submit'>
     <h1 class='title'>Submission portal for {organism!.displayName}</h1>
-
-    <div>
-        <a href={routes.submitPage(organism!.key)}>Make a new submission</a><br />
-        <a href={routes.revisePage(organism!.key)}>Make a revision</a>
-        <br />
-        <a href={routes.userSequenceReviewPage(organism!.key)}>My unreleased sequences</a>
-        <br />
-        <a href={routes.mySequencesWithoutGroup(organism!.key)}>My released sequences</a>
+    <div class='max-w-2xl mx-auto p-8'>
+        <div class='flex flex-wrap'>
+            {
+                options.map((option) => (
+                    <a
+                        href={option.route}
+                        class='block rounded border border-gray-300 p-8 m-2 w-64 text-center hover:bg-gray-100'
+                    >
+                        <h3 class='font-semibold text-gray-700'>{option.title}</h3>
+                        <p class='text-gray-700 text-sm'>{option.description}</p>
+                    </a>
+                ))
+            }
+        </div>
     </div>
 </BaseLayout>
