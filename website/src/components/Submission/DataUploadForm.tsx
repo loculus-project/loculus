@@ -493,13 +493,14 @@ const InnerDataUploadForm = ({
                         onClick={handleSubmit}
                         disabled={isLoading}
                     >
-                        {isLoading ? (
-                            <div className='inline-block mr-2'>
+                            <div className='inline-block mr-2 w-4 h-4'>
+                            {isLoading ? (
                                 <span className='loading loading-spinner loading-sm' />
+                                ) : (
+                                    ''
+                                )}
                             </div>
-                        ) : (
-                            ''
-                        )}
+                       
                         Submit sequences
                     </button>
                 </div>
