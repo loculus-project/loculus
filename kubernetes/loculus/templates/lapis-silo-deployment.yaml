@@ -22,6 +22,12 @@ spec:
     spec:
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
+        - name: clear-data-init-container
+          image: busybox
+          command: ['sh', '-c', 'rm -rf /data/*']
+          volumeMounts:
+            - name: lapis-silo-shared-data
+              mountPath: /data
       containers:
         - name: silo
           image: ghcr.io/genspectrum/lapis-silo:latest
