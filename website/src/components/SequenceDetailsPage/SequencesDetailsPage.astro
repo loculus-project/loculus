@@ -43,55 +43,56 @@ const isMyGroup =
     groupsResult.isOk() &&
     groupsResult.value.some((myGroupItem: Group) => myGroupItem.groupName === group);
 ---
+<div class="mx-auto max-w-full md:max-w-2xl"
+    {
+        isRestricted && (
+            <ErrorBox title='Restricted sequence' level='warning'>
+                This sequence is only available under the Restricted Use Terms. If you make use of this data, you must
+                follow the{' '}
+                <a href='#TODO-MVP' class='underline'>
+                    terms of use.
+                </a>
+            </ErrorBox>
+        )
+    }
+    <DataTable tableData={tableData} dataUseTermsHistory={dataUseTermsHistory} />
+    <div>
+        <a
+            class='mt-4 inline-block text-blue-600 hover:text-blue-800'
+            href={routes.sequencesFastaPage(accessionVersion) + '?download'}
+        >
+            Download FASTA
+        </a>
+    </div>
+    <div class='mt-10'>
+        <SequencesContainer
+            client:load
+            organism={organism}
+            accessionVersion={accessionVersion}
+            clientConfig={runtimeConfig.public}
+            genes={genes}
+            nucleotideSegmentNames={nucleotideSegmentNames}
+        />
+    </div>
 
-{
-    isRestricted && (
-        <ErrorBox title='Restricted sequence' level='warning'>
-            This sequence is only available under the Restricted Use Terms. If you make use of this data, you must
-            follow the{' '}
-            <a href='#TODO-MVP' class='underline'>
-                terms of use.
-            </a>
-        </ErrorBox>
-    )
-}
-<DataTable tableData={tableData} dataUseTermsHistory={dataUseTermsHistory} />
-<div>
-    <a
-        class='mt-4 inline-block text-blue-600 hover:text-blue-800'
-        href={routes.sequencesFastaPage(accessionVersion) + '?download'}
-    >
-        Download FASTA
-    </a>
-</div>
-<div class='mt-10'>
-    <SequencesContainer
-        client:load
-        organism={organism}
-        accessionVersion={accessionVersion}
-        clientConfig={runtimeConfig.public}
-        genes={genes}
-        nucleotideSegmentNames={nucleotideSegmentNames}
-    />
-</div>
+    {
+        isMyGroup && (
+            <div class='mt-5'>
+                <hr />
+                <h2 class='text-xl font-bold mt-10 mb-3'>Sequence Management</h2>
+                <div class='text-sm text-gray-400 mb-4 block'>
+                    <MdiEye className='w-6 h-6 inline-block mr-2' />
+                    Only visible to group members
+                </div>
 
-{
-    isMyGroup && (
-        <div class='mt-5'>
-            <hr />
-            <h2 class='text-xl font-bold mt-10 mb-3'>Sequence Management</h2>
-            <div class='text-sm text-gray-400 mb-4 block'>
-                <MdiEye className='w-6 h-6 inline-block mr-2' />
-                Only visible to group members
+                <RevokeButton
+                    organism={organism}
+                    clientConfig={clientConfig}
+                    accessionVersion={accessionVersion.split('.')[0]}
+                    accessToken={accessToken}
+                    client:load
+                />
             </div>
-
-            <RevokeButton
-                organism={organism}
-                clientConfig={clientConfig}
-                accessionVersion={accessionVersion.split('.')[0]}
-                accessToken={accessToken}
-                client:load
-            />
-        </div>
-    )
-}
+        )
+    }
+</div>
