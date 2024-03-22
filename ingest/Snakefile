@@ -100,6 +100,7 @@ rule submit_to_loculus:
         log_level=LOG_LEVEL,
     shell:
         """
+        sleep 120
         python scripts/submit_to_loculus.py \
             --mode submit \
             --metadata {input.metadata} \
