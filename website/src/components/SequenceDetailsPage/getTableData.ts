@@ -4,7 +4,7 @@ import { err, Result } from 'neverthrow';
 
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, Schema } from '../../types/config.ts';
+import type { Metadata, Schema, CustomDisplay } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -14,7 +14,7 @@ import {
     type SequenceEntryHistoryEntry,
 } from '../../types/lapis.ts';
 
-export type TableDataEntry = { label: string; name: string; value: string | number };
+export type TableDataEntry = { label: string; name: string; value: string | number; customDisplay?: CustomDisplay };
 
 export async function getTableData(
     accessionVersion: string,
@@ -99,6 +99,7 @@ function toTableData(config: Schema) {
         const data: TableDataEntry[] = config.metadata.map((metadata) => ({
             label: metadata.displayName ?? sentenceCase(metadata.name),
             name: metadata.name,
+            customDisplay: metadata.customDisplay,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),
         }));
         data.push(

@@ -27,6 +27,8 @@ fields:
     type: string
     generateIndex: true
     autocomplete: true
+    customDisplay:
+      type: dataUseTerms
   - name: versionStatus
     type: string
     notSearchable: true

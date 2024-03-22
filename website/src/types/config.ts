@@ -3,7 +3,7 @@ import z from 'zod';
 import { orderByType } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
-const customDisplay = z.object({
+export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
 });
@@ -16,6 +16,8 @@ export const metadata = z.object({
     notSearchable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
 });
+
+export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
 
 export type MetadataFilter = Metadata & {
