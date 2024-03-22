@@ -9,6 +9,7 @@ import java.io.PrintWriter
 import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
+import java.time.LocalDate
 import java.util.UUID
 
 @ConfigurationProperties(prefix = "crossref")
@@ -20,7 +21,9 @@ data class CrossRefProperties(
 
 @Component
 class CrossRefService(private val crossRefProperties: CrossRefProperties) {
-    fun generateCrossRefXML(): String {
+    fun generateCrossRefXML(data: Map<String, Any>): String {
+        val now = LocalDate.now()
+
         val crossRef = xml("doi_batch") {
             attribute("version", "5.3.1")
             attribute("xmlns", "http://www.crossref.org/schema/5.3.1")
@@ -32,103 +35,46 @@ class CrossRefService(private val crossRefProperties: CrossRefProperties) {
 
             "head" {
                 "doi_batch_id" { -UUID.randomUUID().toString() }
-                "timestamp" { -System.currentTimeMillis() }
-                "depositor" {
-                    "depositor_name" { -"Alex Morales" }
-                    "email_address" { -"alex@moralestapia.com" }
-                }
-                "registrant" { -"University of Toronto" }
+                "timestamp" { -System.currentTimeMillis().toString() }
             }
 
             "body" {
                 "database" {
-                    "database_metadata" {
-                        "contributors" {
-                            "organization" {
-                                attribute("contributor_role", "author")
-                                attribute("sequence", "first")
-
-                                -"The Loculus Project"
-                            }
-                        }
-                        "titles" {
-                            "title" { -"Test Dummy Organism Database" }
-                        }
-                        "database_date" {
-                            "creation_date" {
-                                "month" { -"01" }
-                                "day" { -"01" }
-                                "year" { -"2024" }
-                            }
-                            "publication_date" {
-                                "month" { -"01" }
-                                "day" { -"01" }
-                                "year" { -"2024" }
-                            }
-                            "update_date" {
-                                "month" { -"01" }
-                                "day" { -"01" }
-                                "year" { -"2024" }
-                            }
-                        }
-                        "publisher" {
-                            "publisher_name" { -"The Loculus Project" }
-                            "publisher_place" { -"CH" }
-                        }
-                        "institution" {
-                            "institution_name" { -"The Loculus Project, Institution" }
-                            "institution_department" { -"The Loculus Project, Institution -> Department" }
-                        }
-                    }
+                    "database_metadata" { "titles" { "title" { -(data["databaseTitle"] as String) } } }
                     "dataset" {
                         "contributors" {
                             "organization" {
                                 attribute("contributor_role", "author")
                                 attribute("sequence", "first")
 
-                                -"University of Toronto"
+                                -(data["organizations"] as Array<String>)[0]
                             }
                             "person_name" {
                                 attribute("contributor_role", "author")
                                 attribute("sequence", "first")
 
-                                "given_name" { -"Alex" }
-                                "surname" { -"Morales" }
+                                "given_name" { -(data["contributors"] as Array<Array<String>>)[0][0] }
+                                "surname" { -(data["contributors"] as Array<Array<String>>)[0][1] }
                             }
                         }
-                        "titles" {
-                            "title" { -"Test Dataset SRA" }
-                        }
+                        "titles" { "title" { -(data["datasetTitle"] as String) } }
                         "database_date" {
-                            "creation_date" {
-                                "month" { -"03" }
-                                "day" { -"18" }
-                                "year" { -"2024" }
-                            }
                             "publication_date" {
-                                "month" { -"03" }
-                                "day" { -"18" }
-                                "year" { -"2024" }
-                            }
-                            "update_date" {
-                                "month" { -"03" }
-                                "day" { -"18" }
-                                "year" { -"2024" }
+                                "month" { -now.format(DateTimeFormatterMM) }
+                                "day" { -now.format(DateTimeFormatterdd) }
+                                "year" { -now.format(DateTimeFormatteryyyy) }
                             }
                         }
-                        "description" { -"A small dataset with a few SRA libraries" }
-                        "format" { -UUID.randomUUID().toString() }
-                        "archive_locations" { -"" }
                         "doi_data" {
-                            "doi" { -"10.1186/s44330-024-00001-8" }
-                            "resource" { -"https://data.crossref.org/" }
+                            "doi" { -(data["DOI"] as String) }
+                            "resource" { -(data["URL"] as String) }
                         }
                     }
                 }
             }
         }
 
-        return crossRef.toString()
+        return crossRef.toString(PrintOptions(pretty = false))
     }
 
     fun postCrossRefXML(XML: String) {
