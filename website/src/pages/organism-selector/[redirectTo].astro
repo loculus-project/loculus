@@ -1,12 +1,19 @@
 ---
+import { NeedAGroup } from '../../components/common/NeedAGroup.tsx';
+import NeedToLogin from '../../components/common/NeedToLogin.astro';
 import { getConfiguredOrganisms } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { routes } from '../../routes/routes';
+import { GroupManagementClient } from '../../services/groupManagementClient';
+import { getAccessToken } from '../../utils/getAccessToken';
+
 const redirectTo = Astro.params.redirectTo;
+const accessToken = getAccessToken(Astro.locals.session)!;
+const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 
 const purposes: { [key: string]: string } = {
-    submission: 'for which you want to submit data',
-    search: 'for which you want to browse data',
+    submission: 'to submit data',
+    search: 'to browse data',
 };
 
 interface Routes {
@@ -19,27 +26,38 @@ const myRoutes: Routes = {
 };
 
 const purpose = purposes[redirectTo!];
+
+// Prevent caching to allow back button after user creates group
+Astro.response.headers.append('Cache-Control', 'no-cache, no-store, must-revalidate');
+Astro.response.headers.append('Pragma', 'no-cache');
+Astro.response.headers.append('Expires', '0');
+
+const requiresLogin = redirectTo === 'submission';
+const requiresGroup = redirectTo === 'submission';
 ---
 
 <BaseLayout title='Home'>
     <div class='max-w-4xl mx-auto'>
-        <p class='text-gray-700 my-4'>
-            Please select an organism {purpose}.
-        </p>
-
-        <div class='flex flex-wrap'>
-            {
-                getConfiguredOrganisms().map(({ key, displayName, image, description }) => (
-                    <a
-                        href={myRoutes[redirectTo!](key)}
-                        class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100'
-                    >
-                        {image !== undefined && <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />}
-                        <h3 class='font-semibold text-gray-700'>{displayName}</h3>
-                        <p class='text-gray-700 text-sm'>{description}</p>
-                    </a>
-                ))
-            }
-        </div>
+        {
+            !accessToken && requiresLogin ? (
+                <NeedToLogin message={`You need to be logged in to an account ${purpose}.`} />
+            ) : requiresGroup && (!groupsResult.isOk() || groupsResult.value.length === 0) ? (
+                <NeedAGroup />
+            ) : (
+                <div>
+                    <p class='text-gray-700 my-4'>Please select the organism for which you want to {purpose}:</p>
+                    <div class='flex flex-wrap'>
+                        {getConfiguredOrganisms().map(({ key, displayName }) => (
+                            <a
+                                href={myRoutes[redirectTo!](key)}
+                                class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100'
+                            >
+                                <h3 class='font-semibold text-gray-700'>{displayName}</h3>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )
+        }
     </div>
 </BaseLayout>
