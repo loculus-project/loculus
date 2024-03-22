@@ -13,8 +13,7 @@ interface Props {
 const { tableData, dataUseTermsHistory } = Astro.props;
 ---
 
-<div class="mt-2">
-
+<div class='mt-2'>
     <div>
         <NucSubBadge sub={{ ref: 'A', pos: 23, qry: 'C' }} />
         ,
@@ -41,10 +40,8 @@ const { tableData, dataUseTermsHistory } = Astro.props;
         <AaSubBadge sub={{ gene: 'S', ref: 'M', pos: 789, qry: '*' }} />
     </div>
 
-
-
-    <table class="min-w-full">
-        <tbody class="bg-white">
+    <table class='min-w-full'>
+        <tbody class='bg-white'>
             {
                 tableData.map(({ label, name, value }) => (
                     <tr>
