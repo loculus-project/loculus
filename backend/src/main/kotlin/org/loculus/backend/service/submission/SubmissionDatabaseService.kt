@@ -414,7 +414,6 @@ class SubmissionDatabaseService(
         organism: Organism?,
         groupsFilter: List<String>?,
         statusesFilter: List<Status>?,
-        statusesInitialFilter: List<Status>?,
         warningsFilter: WarningsFilter? = null,
         page: Int? = null,
         size: Int? = null,
