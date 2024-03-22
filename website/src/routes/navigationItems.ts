@@ -14,7 +14,7 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
             },
             {
                 text: 'Submit',
-                path: routes.organismSelectorPage('submit'),
+                path: routes.organismSelectorPage('submission'),
             },
             {
                 text: 'Datasets',

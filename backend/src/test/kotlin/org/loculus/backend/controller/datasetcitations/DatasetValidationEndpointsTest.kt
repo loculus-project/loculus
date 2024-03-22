@@ -130,6 +130,27 @@ class DatasetValidationEndpointsTest(
     }
 
     @Test
+    fun `WHEN updating dataset with no changes THEN returns unprocessable entity`() {
+        val accessions = submissionConvenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease()
+        val validAccession = accessions.first().accession
+        val accessionJson = """[{"accession": "$validAccession", "type": "loculus"}]"""
+        val datasetResult = client.createDataset(datasetRecords = accessionJson)
+            .andExpect(status().isOk)
+            .andReturn()
+        val datasetId = JsonPath.read<String>(datasetResult.response.contentAsString, "$.datasetId")
+
+        client.updateDataset(datasetId = datasetId, datasetRecords = accessionJson)
+            .andExpect(status().isUnprocessableEntity())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.detail",
+                    containsString("Dataset update must contain at least one change"),
+                ),
+            )
+    }
+
+    @Test
     fun `WHEN writing dataset with missing records THEN returns unprocessable entity`() {
         client.createDataset(datasetRecords = "[]")
             .andExpect(status().isUnprocessableEntity())

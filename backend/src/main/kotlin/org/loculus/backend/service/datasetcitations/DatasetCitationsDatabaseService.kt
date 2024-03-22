@@ -115,14 +115,22 @@ class DatasetCitationsDatabaseService(
             throw NotFoundException("Dataset $datasetId does not exist")
         }
 
-        val version = maxVersion + 1
+        validateUpdateDatasetHasChanges(
+            oldDataset = getDataset(datasetId, maxVersion).first(),
+            oldDatasetRecords = getDatasetRecords(datasetId, maxVersion),
+            newDatasetName = datasetName,
+            newDatasetRecords = datasetRecords,
+            newDatasetDescription = datasetDescription,
+        )
+
+        val newVersion = maxVersion + 1
 
         val insertedSet = DatasetsTable
             .insert {
                 it[DatasetsTable.datasetId] = datasetUUID
                 it[DatasetsTable.name] = datasetName
                 it[DatasetsTable.description] = datasetDescription ?: ""
-                it[DatasetsTable.datasetVersion] = version
+                it[DatasetsTable.datasetVersion] = newVersion
                 it[DatasetsTable.createdAt] = now
                 it[DatasetsTable.createdBy] = username
             }
@@ -145,7 +153,7 @@ class DatasetCitationsDatabaseService(
 
             DatasetToRecordsTable
                 .insert {
-                    it[DatasetToRecordsTable.datasetVersion] = version
+                    it[DatasetToRecordsTable.datasetVersion] = newVersion
                     it[DatasetToRecordsTable.datasetId] = insertedSet[DatasetsTable.datasetId]
                     it[DatasetToRecordsTable.datasetRecordId] = datasetRecordId
                 }
@@ -446,6 +454,21 @@ class DatasetCitationsDatabaseService(
     fun validateDatasetName(name: String) {
         if (name.isBlank()) {
             throw UnprocessableEntityException("Dataset name must not be empty")
+        }
+    }
+
+    fun validateUpdateDatasetHasChanges(
+        oldDataset: Dataset,
+        oldDatasetRecords: List<DatasetRecord>,
+        newDatasetName: String,
+        newDatasetRecords: List<SubmittedDatasetRecord>,
+        newDatasetDescription: String?,
+    ) {
+        if (oldDataset.name == newDatasetName &&
+            oldDataset.description == newDatasetDescription &&
+            oldDatasetRecords.map { it.accession }.toSet() == newDatasetRecords.map { it.accession }.toSet()
+        ) {
+            throw UnprocessableEntityException("Dataset update must contain at least one change")
         }
     }
 

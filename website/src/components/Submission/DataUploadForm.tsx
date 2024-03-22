@@ -6,7 +6,6 @@ import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementT
 
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
-import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -19,6 +18,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
+import { NeedAGroup } from '../common/NeedAGroup.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
@@ -408,24 +408,7 @@ const InnerDataUploadForm = ({
     };
 
     if (noGroup) {
-        return (
-            <div className='mt-6 message max-w-4xl'>
-                <DashiconsGroups className='w-12 h-12 inline-block mr-2' />
-                <div>
-                    <p>
-                        Sequences can only be submitted to the database by users who are part of a <i>group</i>.
-                    </p>
-                    <p className='mt-3'>
-                        To submit to the database, please either{' '}
-                        <a href={routes.createGroup()} className='underline'>
-                            create a group
-                        </a>{' '}
-                        (a group with one member is not a problem!) or ask a group administrator to add you to an
-                        existing group.
-                    </p>
-                </div>
-            </div>
-        );
+        return <NeedAGroup />;
     }
 
     return (
