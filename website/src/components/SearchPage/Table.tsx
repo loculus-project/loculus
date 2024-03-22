@@ -98,38 +98,50 @@ export const Table: FC<TableProps> = ({
         );
 
     return (
-        <div className='w-full overflow-x-auto'>
+        <div className='w-full overflow-x-auto text-sm'>
             {data.length !== 0 ? (
-                <table className='table'>
+                <table className='w-full text-left border-collapse'>
                     <thead>
                         <tr>
-                            <th onClick={() => handleSort(primaryKey)} className='cursor-pointer'>
+                            <th
+                                onClick={() => handleSort(primaryKey)}
+                                className='px-2 py-3 pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer'
+                            >
                                 {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
                             </th>
                             {columns.map((c) => (
-                                <th key={c.field} onClick={() => handleSort(c.field)} className='cursor-pointer'>
+                                <th
+                                    key={c.field}
+                                    onClick={() => handleSort(c.field)}
+                                    className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6'
+                                >
                                     {c.headerName} {orderBy.field === c.field && orderIcon}
                                 </th>
                             ))}
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className='bg-white'>
                         {data.map((row, index) => (
-                            <tr key={index}>
-                                <td>
-                                    <a href={routes.sequencesDetailsPage(row[primaryKey] as string)}>
+                            <tr key={index} className='hover:bg-primary-100 border-gray-100 '>
+                                <td className='px-2  whitespace-nowrap    text-primary-900 pl-6'>
+                                    <a
+                                        href={routes.sequencesDetailsPage(row[primaryKey] as string)}
+                                        className='text-primary-900 hover:text-primary-800'
+                                    >
                                         {row[primaryKey]}
                                     </a>
                                 </td>
                                 {columns.map((c) => (
-                                    <td key={`${index}-${c.field}`}>{row[c.field]}</td>
+                                    <td key={`${index}-${c.field}`} className='px-2 py-2  text-primary-900  last:pr-6'>
+                                        {row[c.field]}
+                                    </td>
                                 ))}
                             </tr>
                         ))}
                     </tbody>
                 </table>
             ) : (
-                <div className='flex justify-center font-bold text-xl mb-5'>No Data</div>
+                <div className='flex justify-center font-bold text-xl my-8'>No Data</div>
             )}
         </div>
     );

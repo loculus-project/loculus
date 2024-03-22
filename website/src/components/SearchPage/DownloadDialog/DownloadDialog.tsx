@@ -44,7 +44,10 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
     return (
         <>
-            <button className='btn' onClick={openDialog}>
+            <button
+                className='rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500'
+                onClick={openDialog}
+            >
                 Download
             </button>
 
