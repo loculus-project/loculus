@@ -14,7 +14,7 @@ export interface AaSub extends NucSub {
     gene: string; // TODO: more generally, this might need to be CDS name or even a pair of (gene, CDS)
 }
 
-export const NucSubBadge = ({ sub, className, ...rest }: { sub: NucSub; className: string }) => {
+export const NucSubBadge = ({ sub, className, ...rest }: { sub: NucSub; className?: string }) => {
     const { ref, pos, qry } = sub;
 
     const style = useMemo(() => {
@@ -35,18 +35,18 @@ export const NucSubBadge = ({ sub, className, ...rest }: { sub: NucSub; classNam
 
     return (
         <span className={classNames('font-mono text-xs', className)} {...rest}>
-            <span className='px-[4px] py-[2px] rounded-s-[3px]' style={style.ref}>
+            <span className="px-[4px] py-[2px] rounded-s-[3px]" style={style.ref}>
                 {ref}
             </span>
-            <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
-            <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
+            <span className="px-[4px] py-[2px] bg-gray-200">{pos + 1}</span>
+            <span className="px-[4px] py-[2px] rounded-e-[3px]" style={style.qry}>
                 {qry}
             </span>
         </span>
     );
 };
 
-export const AaSubBadge = ({ sub, className, ...rest }: { sub: AaSub; className: string }) => {
+export const AaSubBadge = ({ sub, className, ...rest }: { sub: AaSub; className?: string }) => {
     const { gene, ref, pos, qry } = sub;
 
     const style = useMemo(() => {
@@ -71,14 +71,14 @@ export const AaSubBadge = ({ sub, className, ...rest }: { sub: AaSub; className:
 
     return (
         <span className={classNames('font-mono text-xs', className)} {...rest}>
-            <span className='px-[4px] py-[2px] rounded-s-[3px]' style={style.gene}>
+            <span className="px-[4px] py-[2px] rounded-s-[3px]" style={style.gene}>
                 {gene}:
             </span>
-            <span className='px-[4px] py-[2px]' style={style.ref}>
+            <span className="px-[4px] py-[2px]" style={style.ref}>
                 {ref}
             </span>
-            <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
-            <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
+            <span className="px-[4px] py-[2px] bg-gray-200">{pos + 1}</span>
+            <span className="px-[4px] py-[2px] rounded-e-[3px]" style={style.qry}>
                 {qry}
             </span>
         </span>
