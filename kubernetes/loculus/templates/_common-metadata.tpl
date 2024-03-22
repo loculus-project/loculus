@@ -82,14 +82,9 @@ fields:
     {{- end }}
     {{- if .customDisplay }}
     customDisplay:
-      {{- range .customDisplay }}
-      {{ .name }}: {{ .value }}
-      {{- end }}
+      type: {{ .customDisplay.type }}
+      url: {{ .customDisplay.url }}
     {{- end }}
-    {{- if .description }}
-    {{- end }}
-    {{- if .required }}
-    {{- if .description }}
 {{- end}}
 {{- end}}
 
