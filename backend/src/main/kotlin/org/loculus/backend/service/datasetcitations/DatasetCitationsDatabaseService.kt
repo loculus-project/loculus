@@ -7,13 +7,16 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersion
@@ -335,62 +338,60 @@ class DatasetCitationsDatabaseService(
         )
     }
 
-    fun getUserCitedByDataset(accessions: List<SequenceEntryStatus>): CitedBy {
+    fun getUserCitedByDataset(userAccessions: List<SequenceEntryStatus>): CitedBy {
         log.info { "Get user cited by dataset" }
-        data class EnrichedDatasetRecord(
+
+        data class DatasetWithAccession(
             val accession: String,
             val datasetId: UUID,
             val datasetVersion: Long,
             val createdAt: Timestamp,
         )
 
-        val selectedDatasetRecords = DatasetRecordsTable
+        val userAccessionStrings = userAccessions.flatMap {
+            listOf(it.accession.plus('.').plus(it.version), it.accession)
+        }
+
+        val maxDatasetVersion = DatasetsTable.datasetVersion.max().alias("max_version")
+        val maxVersionPerDataset = DatasetsTable
+            .slice(DatasetsTable.datasetId, maxDatasetVersion)
+            .selectAll()
+            .groupBy(DatasetsTable.datasetId)
+            .alias("maxVersionPerDataset")
+
+        val latestDatasetWithUserAccession = DatasetRecordsTable
             .innerJoin(DatasetToRecordsTable)
             .innerJoin(DatasetsTable)
-            .select(
-                where = {
-                    DatasetRecordsTable.accession inList accessions.map { it.accession.plus('.').plus(it.version) }
+            .join(
+                maxVersionPerDataset,
+                JoinType.INNER,
+                additionalConstraint = {
+                    (DatasetToRecordsTable.datasetId eq maxVersionPerDataset[DatasetsTable.datasetId]) and
+                        (DatasetToRecordsTable.datasetVersion eq maxVersionPerDataset[maxDatasetVersion])
                 },
             )
+            .select {
+                (DatasetRecordsTable.accession inList userAccessionStrings)
+            }
             .map {
-                EnrichedDatasetRecord(
+                DatasetWithAccession(
                     it[DatasetRecordsTable.accession],
-                    it[DatasetsTable.datasetId],
-                    it[DatasetsTable.datasetVersion],
+                    it[DatasetToRecordsTable.datasetId],
+                    it[DatasetToRecordsTable.datasetVersion],
                     Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
                 )
             }
-
-        val datasetMap = mutableMapOf<String, MutableList<Dataset>>()
-
-        for (record in selectedDatasetRecords) {
-            val accession = record.accession
-            val datasetList = datasetMap.computeIfAbsent(accession) { mutableListOf() }
-
-            val dataset = Dataset(
-                record.datasetId,
-                record.datasetVersion,
-                "",
-                record.createdAt,
-                "",
-                "",
-                "",
-            )
-
-            if (!datasetList.contains(dataset)) {
-                datasetList.add(dataset)
-            }
-        }
-        val uniqueLatestDatasets = datasetMap.values
-            .mapNotNull { datasets -> datasets.maxByOrNull { it.datasetVersion } }
-            .toSet()
 
         val citedBy = CitedBy(
             mutableListOf(),
             mutableListOf(),
         )
-        for (dataset in uniqueLatestDatasets) {
-            val year = dataset.createdAt.toLocalDateTime().year.toLong()
+
+        val uniqueDatasetIds = latestDatasetWithUserAccession.map { it.datasetId.toString() }.toSet()
+        for (datasetId in uniqueDatasetIds) {
+            val year = latestDatasetWithUserAccession
+                .first { it.datasetId.toString() == datasetId }
+                .createdAt.toLocalDateTime().year.toLong()
             if (citedBy.years.contains(year)) {
                 val index = citedBy.years.indexOf(year)
                 while (index >= citedBy.citations.size) {
@@ -402,6 +403,7 @@ class DatasetCitationsDatabaseService(
                 citedBy.citations.add(1)
             }
         }
+
         return citedBy
     }
 
