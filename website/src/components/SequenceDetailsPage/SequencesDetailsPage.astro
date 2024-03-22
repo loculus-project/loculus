@@ -43,7 +43,7 @@ const isMyGroup =
     groupsResult.isOk() &&
     groupsResult.value.some((myGroupItem: Group) => myGroupItem.groupName === group);
 ---
-<div class="mx-auto max-w-full md:max-w-2xl"
+<div class="mx-auto max-w-full md:max-w-2xl">
     {
         isRestricted && (
             <ErrorBox title='Restricted sequence' level='warning'>
