@@ -218,7 +218,7 @@ class SubmissionDatabaseService(
             val selectedSequence = selectedSequenceEntries.first()
             if (selectedSequence[table.statusColumn] != Status.IN_PROCESSING.name) {
                 throw UnprocessableEntityException(
-                    "Accession version $accessionVersion is in not in state $Status.IN_PROCESSING " +
+                    "Accession version $accessionVersion is in not in state ${Status.IN_PROCESSING} " +
                         "(was ${selectedSequence[table.statusColumn]})",
                 )
             }
