@@ -17,10 +17,15 @@ import {
     type SequenceEntryStatus,
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
+import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { DateChangeModal } from '../Submission/DateChangeModal.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
+import BiPencil from '~icons/bi/pencil';
 import BiTrash from '~icons/bi/trash';
+import Locked from '~icons/fluent-emoji-high-contrast/locked';
+import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
 const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
@@ -38,6 +43,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
     const [showErrors, setShowErrors] = useState(true);
     const [pageQuery, setPageQuery] = useState<PageQuery>({ page: 1, size: pageSizeOptions[2] });
+    const [dateChangeModalOpen, setDateChangeModalOpen] = useState(false);
+    const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
     const hooks = useSubmissionOperations(organism, clientConfig, accessToken, openErrorFeedback, pageQuery);
 
@@ -70,6 +77,26 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     const finishedCount = processedCount + errorCount + revocationCount;
 
     const sequences: SequenceEntryStatus[] = hooks.getSequences.data.sequenceEntries;
+
+    const dataUseTermsCounts = sequences.reduce(
+        (counts, seq) => {
+            counts.open += seq.dataUseTerms.type === "OPEN" ? 1 : 0;
+            counts.restricted += seq.dataUseTerms.type === "RESTRICTED" ? 1 : 0;
+            return counts;
+        },
+        { open: 0, restricted: 0 },
+    );
+
+    const onRestrictedDateChange = (value) => {
+        setRestrictedUntil(value);
+        displayConfirmationDialog({
+            dialogText: `Are you sure you want to restrict access to all sequences until ${restrictedUntil.toFormat('yyyy-MM-dd')}?`,
+            onConfirmation: () => {
+                // TODO: send request
+                console.log("restricting access!");
+            },
+        });
+    };
 
     const controlPanel = (
         <div className='flex flex-col py-2'>
@@ -118,6 +145,43 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     const bulkActionButtons = (
         <div className='flex justify-end items-center gap-3'>
             {finishedCount > 0 && (
+                <>
+                <Menu as='div' className='relative inline-block text-left'>
+                    <Menu.Button className='border rounded-md p-1 bg-gray-500 text-white px-2'>
+                        <BiPencil className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
+                        Modify Terms of Use
+                        <IwwaArrowDown className='inline-block ml-1 w-3 h-3 -mt-0.5' />
+                    </Menu.Button>
+                    <Menu.Items className='origin-top-right absolute z-50 bg-white'>
+                        <div className='py-1'>
+                            {dataUseTermsCounts.restricted > 0 && (
+                                <Menu.Item>
+                                    <button
+                                        className={menuItemClassName}
+                                        onClick={() => displayConfirmationDialog({
+                                            dialogText: 'Are you sure you want to open access for all sequences?',
+                                            onConfirmation: () => {},
+                                        })}
+                                    >
+                                        <Unlocked className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
+                                        Open access for {dataUseTermsCounts.restricted} restriced sequence{dataUseTermsCounts.restricted > 1 ? 's' : ''}
+                                    </button>
+                                </Menu.Item>
+                            )}
+                            {dataUseTermsCounts.open > 0 && (
+                                <Menu.Item>
+                                    <button
+                                        className={menuItemClassName}
+                                        onClick={() => setDateChangeModalOpen(true)}
+                                    >
+                                        <Locked className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
+                                        Restrict access for {dataUseTermsCounts.open} open sequence{dataUseTermsCounts.open > 1 ? 's' : ''}
+                                    </button>
+                                </Menu.Item>
+                            )}
+                        </div>
+                    </Menu.Items>
+                </Menu>
                 <Menu as='div' className='relative inline-block text-left'>
                     <Menu.Button className='border rounded-md p-1 bg-gray-500 text-white px-2'>
                         <BiTrash className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
@@ -168,6 +232,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                         </div>
                     </Menu.Items>
                 </Menu>
+                </>
             )}
             {processedCount + revocationCount > 0 && (
                 <button
@@ -230,6 +295,15 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             {controlPanel}
             {bulkActionButtons}
+            {dateChangeModalOpen && (
+                <DateChangeModal
+                    restrictedUntil={restrictedUntil}
+                    setRestrictedUntil={onRestrictedDateChange}
+                    setDateChangeModalOpen={setDateChangeModalOpen}
+                    minDate={dateTimeInMonths(0)}
+                    maxDate={dateTimeInMonths(12)}
+                />
+            )}
             {reviewCards}
             {pagination}
         </>
