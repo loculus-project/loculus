@@ -5,6 +5,7 @@ import { referenceGenomes } from './referencesGenomes.ts';
 
 export const metadata = z.object({
     name: z.string(),
+    displayName: z.string().optional(),
     type: z.enum(['string', 'date', 'int', 'float', 'pango_lineage', 'timestamp']),
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),

@@ -97,7 +97,7 @@ function toTableData(config: Schema) {
         aminoAcidInsertions: InsertionCount[];
     }): TableDataEntry[] => {
         const data: TableDataEntry[] = config.metadata.map((metadata) => ({
-            label: sentenceCase(metadata.name),
+            label: metadata.displayName ?? sentenceCase(metadata.name),
             name: metadata.name,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),
         }));

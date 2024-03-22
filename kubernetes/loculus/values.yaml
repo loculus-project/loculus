@@ -207,9 +207,11 @@ defaultOrganisms:
       description: "Ebolavirus Zaire"
       metadata:
         - name: collection_date
+          displayName: Collection date
           type: date
           required: true
         - name: ncbi_release_date
+          displayName: NCBI release date
           type: date
         - name: country
           type: string
@@ -217,14 +219,18 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
         - name: isolate_name
+          displayName: Isolate name
           type: string
         - name: author_affiliation
+          displayName: Author affiliation
           type: string
           generateIndex: true
           autocomplete: true
         - name: authors
+          displayName: Authors
           type: string
         - name: submitter_country
+          displayName: Submitter country
           type: string
           generateIndex: true
           autocomplete: true
