@@ -244,6 +244,7 @@ defaultOrganisms:
           type: string
         - name: insdc_accession_full
           type: string
+          displayName: INSDC accession
           customDisplay:
             type: link
             url: "https://www.ncbi.nlm.nih.gov/nuccore/{{value}}"
