@@ -1,5 +1,6 @@
 ---
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
+import { NucSubBadge, AaSubBadge } from './MutationBadge';
 import { type TableDataEntry } from './getTableData';
 import { DATA_USE_TERMS_FIELD } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
@@ -12,9 +13,38 @@ interface Props {
 const { tableData, dataUseTermsHistory } = Astro.props;
 ---
 
-<div class='mt-2'>
-    <table class='min-w-full'>
-        <tbody class='bg-white'>
+<div class="mt-2">
+
+    <div>
+        <NucSubBadge sub={{ ref: 'A', pos: 23, qry: 'C' }} />
+        ,
+        <NucSubBadge sub={{ ref: 'G', pos: 4567, qry: 'T' }} />
+        ,
+        <NucSubBadge sub={{ ref: 'T', pos: 4567, qry: 'A' }} />
+        ,
+        <NucSubBadge sub={{ ref: 'G', pos: 4567, qry: 'A' }} />
+        ,
+        <NucSubBadge sub={{ ref: 'A', pos: 4567, qry: '-' }} />
+        ,
+        <NucSubBadge sub={{ ref: 'A', pos: 4567, qry: 'N' }} />
+        ,
+        <NucSubBadge sub={{ ref: 'A', pos: 4567, qry: 'W' }} />
+    </div>
+
+    <div>
+        <AaSubBadge sub={{ gene: 'ORF1a', ref: 'E', pos: 3641, qry: 'K' }} />
+        ,
+        <AaSubBadge sub={{ gene: 'S', ref: 'D', pos: 456, qry: 'Y' }} />
+        ,
+        <AaSubBadge sub={{ gene: 'S', ref: 'M', pos: 789, qry: '-' }} />
+        ,
+        <AaSubBadge sub={{ gene: 'S', ref: 'M', pos: 789, qry: '*' }} />
+    </div>
+
+
+
+    <table class="min-w-full">
+        <tbody class="bg-white">
             {
                 tableData.map(({ label, name, value }) => (
                     <tr>
