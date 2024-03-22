@@ -77,6 +77,19 @@ fields:
     {{- if .notSearchable }}
     notSearchable: {{ .notSearchable }}
     {{- end }}
+    {{- if .displayName }}
+    displayName: {{ .displayName }}
+    {{- end }}
+    {{- if .customDisplay }}
+    customDisplay:
+      {{- range .customDisplay }}
+      {{ .name }}: {{ .value }}
+      {{- end }}
+    {{- end }}
+    {{- if .description }}
+    {{- end }}
+    {{- if .required }}
+    {{- if .description }}
 {{- end}}
 {{- end}}
 
