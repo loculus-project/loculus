@@ -62,7 +62,7 @@ class CitationEndpointsTest(
     @Test
     fun `WHEN calling get user cited by dataset of non-existing user THEN returns empty results`() {
         every {
-            submissionDatabaseService.getSequences(any(), any(), any(), any(), any())
+            submissionDatabaseService.getSequences(any(), any(), any(), any())
         } returns GetSequenceResponse(sequenceEntries = emptyList(), statusCounts = emptyMap())
 
         client.getUserCitedByDataset()
@@ -88,7 +88,7 @@ class CitationEndpointsTest(
     @Test
     fun `WHEN calling get dataset cited by publication of existing dataset THEN returns results`() {
         every {
-            submissionDatabaseService.getSequences(any(), any(), any(), any(), any())
+            submissionDatabaseService.getSequences(any(), any(), any(), any())
         } returns GetSequenceResponse(
             sequenceEntries = listOf(
                 SequenceEntryStatus(

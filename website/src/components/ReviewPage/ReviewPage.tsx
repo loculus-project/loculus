@@ -24,7 +24,7 @@ import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedEr
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
-import MdiEye from '~icons/mdi/eye';
+import LucideFilter from '~icons/lucide/filter';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
 const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
 hover:bg-primary-500 bg-primary-600 text-white text-left mb-1`;
@@ -127,7 +127,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
         // this is not expected to happen, but it's here to satisfy the type checker
     }
 
-    const total = Object.values(sequencesData.statusCounts).reduce((acc: number, count: number) => acc + count, 0);
     const processingCount = sequencesData.statusCounts[inProcessingStatus];
     const processedCount = sequencesData.statusCounts[awaitingApprovalStatus];
     const errorCount = sequencesData.statusCounts[hasErrorsStatus];
@@ -136,6 +135,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
 
     const finishedCount = processedCount + errorCount + revocationCount;
     const unfinishedCount = receivedCount + processingCount;
+
+    const total = finishedCount + unfinishedCount;
     const validCount = processedCount + revocationCount;
 
     if (total === 0) {
@@ -178,7 +179,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                 {finishedCount} of {total} sequences processed
             </div>
             <div className='border border-gray-200 rounded-md p-3 mt-3 flex gap-3'>
-                <MdiEye className='w-4 h-4 mr-1.5 inline-block text-gray-500 mt-0.5' />
+                <LucideFilter className='w-4 h-4 mr-1.5 inline-block text-gray-500 mt-0.5' />
                 {categoryInfo.map((info) => {
                     return <NumberAndVisibility {...info} />;
                 })}

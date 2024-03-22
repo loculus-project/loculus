@@ -432,7 +432,6 @@ class SubmissionDatabaseService(
         }
 
         val listOfStatuses = statusesFilter ?: Status.entries
-        val listOfInitialStatuses = statusesInitialFilter ?: Status.entries
 
         sequenceEntriesTableProvider.get(organism).let { table ->
             val baseQuery = table
@@ -458,8 +457,7 @@ class SubmissionDatabaseService(
                 )
                 .select(
                     where = {
-                        table.statusIsOneOf(listOfInitialStatuses) and
-                            table.groupNameIsOneOf(validatedGroupNames)
+                        table.groupNameIsOneOf(validatedGroupNames)
                     },
                 )
                 .orderBy(table.accessionColumn)

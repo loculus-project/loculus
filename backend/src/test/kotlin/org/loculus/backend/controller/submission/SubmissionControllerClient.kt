@@ -86,7 +86,6 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         organism: String = DEFAULT_ORGANISM,
         groupsFilter: List<String>? = null,
         statusesFilter: List<Status>? = null,
-        initialStatusesFilter: List<Status>? = null,
         warningsFilter: WarningsFilter? = null,
         jwt: String? = jwtForDefaultUser,
         page: Int? = null,
@@ -97,7 +96,6 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
                 .withAuth(jwt)
                 .param("groupsFilter", groupsFilter?.joinToString { it })
                 .param("statusesFilter", statusesFilter?.joinToString { it.name })
-                .param("initialStatusesFilter", initialStatusesFilter?.joinToString { it.name })
                 .param("warningsFilter", warningsFilter?.name)
                 .param("page", page?.toString())
                 .param("size", size?.toString()),
