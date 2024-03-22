@@ -1,7 +1,6 @@
 ---
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { type TableDataEntry } from './getTableData';
-import { DATA_USE_TERMS_FIELD } from '../../settings';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 
 interface Props {
@@ -16,19 +15,33 @@ const { tableData, dataUseTermsHistory } = Astro.props;
     <table class='min-w-full'>
         <tbody class='bg-white'>
             {
-                tableData.map(({ label, name, value }) => (
+                tableData.map(({ label, value, customDisplay }) => (
                     <tr>
                         <td class='py-1 whitespace-nowrap text-sm font-medium text-gray-900 text-right w-32'>
                             {label}
                         </td>
                         <td class='px-4 py-1 whitespace-normal text-sm text-gray-600'>
                             <div class='flex items-center gap-3'>
-                                {value}{' '}
-                                {name === DATA_USE_TERMS_FIELD && (
-                                    <DataUseTermsHistoryModal
-                                        dataUseTermsHistory={dataUseTermsHistory}
-                                        client:only='react'
-                                    />
+                                {customDisplay === undefined && value}
+                                {customDisplay !== undefined &&
+                                    customDisplay.type === 'link' &&
+                                    customDisplay.url !== undefined && (
+                                        <a
+                                            href={customDisplay.url.replaceAll('{{value}}', value.toString())}
+                                            target='_blank'
+                                            class='underline'
+                                        >
+                                            {value}
+                                        </a>
+                                    )}
+                                {customDisplay !== undefined && customDisplay.type === 'dataUseTerms' && (
+                                    <>
+                                        {value}{' '}
+                                        <DataUseTermsHistoryModal
+                                            dataUseTermsHistory={dataUseTermsHistory}
+                                            client:only='react'
+                                        />
+                                    </>
                                 )}
                             </div>
                         </td>

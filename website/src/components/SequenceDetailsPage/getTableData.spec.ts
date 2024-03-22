@@ -75,16 +75,19 @@ describe('getTableData', () => {
                     label: 'Metadata field1',
                     name: 'metadataField1',
                     value: 'N/A',
+                    customDisplay: undefined,
                 },
                 {
                     label: 'Metadata field2',
                     name: 'metadataField2',
                     value: 'N/A',
+                    customDisplay: undefined,
                 },
                 {
                     label: 'Timestamp field',
                     name: 'timestampField',
                     value: 'N/A',
+                    customDisplay: undefined,
                 },
                 {
                     label: 'Nucleotide substitutions',

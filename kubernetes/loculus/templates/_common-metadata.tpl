@@ -27,6 +27,8 @@ fields:
     type: string
     generateIndex: true
     autocomplete: true
+    customDisplay:
+      type: dataUseTerms
   - name: versionStatus
     type: string
     notSearchable: true
@@ -76,6 +78,14 @@ fields:
     {{- end }}
     {{- if .notSearchable }}
     notSearchable: {{ .notSearchable }}
+    {{- end }}
+    {{- if .displayName }}
+    displayName: {{ .displayName }}
+    {{- end }}
+    {{- if .customDisplay }}
+    customDisplay:
+      type: {{ .customDisplay.type }}
+      url: {{ .customDisplay.url }}
     {{- end }}
 {{- end}}
 {{- end}}
