@@ -275,7 +275,7 @@ const UploadComponent = ({
     useEffect(() => {
         const interval = setInterval(() => {
             // Check if the file is no longer readable - which generally indicates the file has been edited since being
-            // selected in the UI - and clear it.
+            // selected in the UI - and if so clear it.
             myFile
                 ?.slice(0, 1)
                 .arrayBuffer()
