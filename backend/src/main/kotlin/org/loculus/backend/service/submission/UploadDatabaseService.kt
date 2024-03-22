@@ -132,8 +132,7 @@ class UploadDatabaseService(
                 submitter,
                 group_name,
                 submitted_at,
-                original_data,
-                status
+                original_data
             )
             SELECT
                 m.accession,
@@ -146,8 +145,7 @@ class UploadDatabaseService(
                 jsonb_build_object(
                     'metadata', m.metadata,
                     'unalignedNucleotideSequences', jsonb_object_agg(s.segment_name, s.compressed_sequence_data)
-                ),
-                '${Status.RECEIVED.name}'
+                )
             FROM
                 metadata_upload_aux_table m
             JOIN
