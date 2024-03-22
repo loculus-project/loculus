@@ -10,4 +10,29 @@ spec:
   resources:
     requests:
       storage: 1Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clear-pvc-data-{{ $key }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: clear-data
+        image: alpine:latest
+        command: ["/bin/sh"]
+        args: ["-c", "rm -rf /mnt/*"]
+        volumeMounts:
+        - name: volume-to-clear
+          mountPath: /mnt
+      volumes:
+      - name: volume-to-clear
+        persistentVolumeClaim:
+          claimName: lapis-silo-shared-data-{{ $key }}
+      restartPolicy: Never
+  backoffLimit: 4
 {{- end }}
