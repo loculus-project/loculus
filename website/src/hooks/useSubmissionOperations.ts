@@ -1,6 +1,6 @@
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
@@ -24,13 +24,14 @@ export function useSubmissionOperations(
     pageQuery: PageQuery,
 ) {
     const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
-    const includedStatuses = [
+    const allRelevantStatuses = [
         receivedStatus,
         inProcessingStatus,
-        awaitingApprovalStatus,
         hasErrorsStatus,
+        awaitingApprovalStatus,
         awaitingApprovalForRevocationStatus,
     ];
+    const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
     const useGetSequences = hooks.useGetSequences(
         {
             headers: createAuthorizationHeader(accessToken),
@@ -38,6 +39,7 @@ export function useSubmissionOperations(
                 organism,
             },
             queries: {
+                initialStatusesFilter: allRelevantStatuses.join(','),
                 statusesFilter: includedStatuses.join(','),
                 page: pageQuery.page - 1,
                 size: pageQuery.size,
@@ -72,6 +74,8 @@ export function useSubmissionOperations(
         deleteSequenceEntries: useDeleteSequenceEntries.mutate,
         approveProcessedData: useApproveProcessedData.mutate,
         getSequences: useGetSequences,
+        includedStatuses,
+        setIncludedStatuses,
     };
 }
 
