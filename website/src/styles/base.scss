@@ -96,5 +96,5 @@ table, tr, td {
 }
 
 * {
-  @apply break-words;
+  overflow-wrap:anywhere;
 }
