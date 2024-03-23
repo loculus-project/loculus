@@ -1,5 +1,5 @@
 import { approveProcessedData, revokeReleasedData, submitRevisedDataViaApi, submitViaApi } from './backendCalls.ts';
-import { fakeProcessingPipeline, type PreprocessingOptions } from './preprocessingPipeline.ts';
+import { fakeProcessingPipeline, type processingOptions } from './processingPipeline.ts';
 import type { AccessionVersion } from '../../src/types/backend.ts';
 import { extractAccessionVersion } from '../../src/utils/extractAccessionVersion.ts';
 import { DEFAULT_GROUP_NAME, testSequenceCount } from '../e2e.fixture.ts';
@@ -45,7 +45,7 @@ const prepareDataToHaveErrors = async (
 ) => {
     const sequenceEntries = await prepareDataToBeProcessing(numberOfSequenceEntries, token, groupName);
 
-    const options: PreprocessingOptions[] = sequenceEntries
+    const options: processingOptions[] = sequenceEntries
         .map(extractAccessionVersion)
         .map((sequence) => ({ ...sequence, error: true }));
     await fakeProcessingPipeline.submit(options);
@@ -60,7 +60,7 @@ const prepareDataToBeAwaitingApproval = async (
 ) => {
     const sequenceEntries = await prepareDataToBeProcessing(numberOfSequenceEntries, token, groupName);
 
-    const options: PreprocessingOptions[] = sequenceEntries.map((sequence) => ({ ...sequence, error: false }));
+    const options: processingOptions[] = sequenceEntries.map((sequence) => ({ ...sequence, error: false }));
     await fakeProcessingPipeline.submit(options);
 
     return sequenceEntries;
@@ -105,7 +105,7 @@ const prepareDataToBeRevisedForRelease = async (
 
     await fakeProcessingPipeline.query(absurdlyManySoThatAllSequencesAreInProcessing);
 
-    const options: PreprocessingOptions[] = submittedRevisionAccessionVersion.map((sequence) => ({
+    const options: processingOptions[] = submittedRevisionAccessionVersion.map((sequence) => ({
         accession: sequence.accession,
         version: sequence.version,
         error: false,

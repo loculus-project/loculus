@@ -135,7 +135,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                         ? 'Release this sequence entry'
                         : sequenceEntryStatus.status === hasErrorsStatus
                           ? 'You need to fix the errors before releasing this sequence entry'
-                          : 'Still awaiting preprocessing'
+                          : 'Still awaiting processing'
                 }
             />
             {sequenceEntryStatus.status !== awaitingApprovalForRevocationStatus && (
@@ -160,7 +160,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                 content={
                     sequenceEntryStatus.status !== hasErrorsStatus &&
                     sequenceEntryStatus.status !== awaitingApprovalStatus
-                        ? 'Cannot edit. Wait for preprocessing!'
+                        ? 'Cannot edit. Wait for processing!'
                         : 'Edit this sequence entry'
                 }
             />
@@ -187,7 +187,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     sequenceEntryStatus.status !== hasErrorsStatus &&
                     sequenceEntryStatus.status !== awaitingApprovalStatus &&
                     sequenceEntryStatus.status !== awaitingApprovalForRevocationStatus
-                        ? 'Cannot discard. Wait for preprocessing.'
+                        ? 'Cannot discard. Wait for processing.'
                         : 'Discard this sequence entry'
                 }
             />
