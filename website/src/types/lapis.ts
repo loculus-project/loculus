@@ -1,6 +1,7 @@
 import z, { type ZodTypeAny } from 'zod';
 
 import { accessionVersion, type ProblemDetail } from './backend.ts';
+import { parseUnixTimestamp } from '../utils/parseUnixTimestamp.ts';
 
 export const orderByType = z.enum(['ascending', 'descending']);
 export type OrderByType = z.infer<typeof orderByType>;
@@ -77,13 +78,19 @@ export type SiloVersionStatus = z.infer<typeof siloVersionStatusSchema>;
 
 export const siloBooleanWorkaround = z.enum(['true', 'false']).transform((value) => value === 'true');
 
-export const sequenceEntryHistoryEntry = accessionVersion.merge(
-    z.object({
-        accessionVersion: z.string(),
-        versionStatus: siloVersionStatusSchema,
-        isRevocation: siloBooleanWorkaround,
-    }),
-);
+export const sequenceEntryHistoryEntry = accessionVersion
+    .merge(
+        z.object({
+            accessionVersion: z.string(),
+            versionStatus: siloVersionStatusSchema,
+            isRevocation: siloBooleanWorkaround,
+            submittedAt: z.number(),
+        }),
+    )
+    .transform((raw) => ({
+        ...raw,
+        submittedAt: parseUnixTimestamp(raw.submittedAt),
+    }));
 
 export type SequenceEntryHistoryEntry = z.infer<typeof sequenceEntryHistoryEntry>;
 
