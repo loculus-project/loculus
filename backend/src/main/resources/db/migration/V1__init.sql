@@ -60,11 +60,10 @@ select
     end as status
 from
     sequence_entries se
-    left join (
-        select *
-        from sequence_entries_preprocessed_data
-        where pipeline_version = 1
-    ) sepd on se.accession = sepd.accession and se.version = sepd.version;
+    left join sequence_entries_preprocessed_data sepd on
+        se.accession = sepd.accession
+        and se.version = sepd.version
+        and sepd.pipeline_version = 1;
 
 create table metadata_upload_aux_table (
     accession text,
