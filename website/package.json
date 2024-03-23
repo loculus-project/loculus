@@ -6,6 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "start-server": "astro build && astro preview --port 3000",
+    "check": "npm run check-types && npm run check-format",
     "check-types": "astro check && tsc --noEmit",
     "build": "astro build",
     "preview": "astro preview",

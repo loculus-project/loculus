@@ -24,11 +24,12 @@ export class KeycloakClientManager {
             this.logger.info(`Keycloak issuer discovered: ${keycloakIssuer}`);
             this._keycloakClient = new keycloakIssuer.Client(clientMetadata);
         } catch (error: any) {
-            if (error.code !== 'ECONNREFUSED') {
-                this.logger.error(`Error discovering keycloak issuer: ${error}`);
-                throw error;
+            if (error.code === 'ECONNREFUSED') {
+                this.logger.warn(`Connection refused when trying to discover the keycloak issuer at url: ${issuerUrl}`);
+                return undefined;
             }
-            this.logger.warn(`Connection refused when trying to discover the keycloak issuer at url: ${issuerUrl}`);
+            this.logger.error(`Error discovering keycloak issuer: ${error}`);
+            return undefined;
         }
 
         return this._keycloakClient;
