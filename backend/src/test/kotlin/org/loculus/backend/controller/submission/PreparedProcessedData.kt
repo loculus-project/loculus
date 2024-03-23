@@ -6,10 +6,10 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import org.loculus.backend.api.GeneName
 import org.loculus.backend.api.Insertion
-import org.loculus.backend.api.PreprocessingAnnotation
-import org.loculus.backend.api.PreprocessingAnnotationSource
-import org.loculus.backend.api.PreprocessingAnnotationSourceType
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingAnnotation
+import org.loculus.backend.api.ProcessingAnnotationSource
+import org.loculus.backend.api.ProcessingAnnotationSourceType
 import org.loculus.backend.api.SegmentName
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.utils.Accession
@@ -358,19 +358,19 @@ object PreparedProcessedData {
     fun withErrors(accession: Accession) = defaultSuccessfulSubmittedData.copy(
         accession = accession,
         errors = listOf(
-            PreprocessingAnnotation(
+            ProcessingAnnotation(
                 source = listOf(
-                    PreprocessingAnnotationSource(
-                        PreprocessingAnnotationSourceType.Metadata,
+                    ProcessingAnnotationSource(
+                        ProcessingAnnotationSourceType.Metadata,
                         "host",
                     ),
                 ),
                 "Not this kind of host",
             ),
-            PreprocessingAnnotation(
+            ProcessingAnnotation(
                 source = listOf(
-                    PreprocessingAnnotationSource(
-                        PreprocessingAnnotationSourceType.NucleotideSequence,
+                    ProcessingAnnotationSource(
+                        ProcessingAnnotationSourceType.NucleotideSequence,
                         MAIN_SEGMENT,
                     ),
                 ),
@@ -382,19 +382,19 @@ object PreparedProcessedData {
     fun withWarnings(accession: Accession) = defaultSuccessfulSubmittedData.copy(
         accession = accession,
         warnings = listOf(
-            PreprocessingAnnotation(
+            ProcessingAnnotation(
                 source = listOf(
-                    PreprocessingAnnotationSource(
-                        PreprocessingAnnotationSourceType.Metadata,
+                    ProcessingAnnotationSource(
+                        ProcessingAnnotationSourceType.Metadata,
                         "host",
                     ),
                 ),
                 "Not this kind of host",
             ),
-            PreprocessingAnnotation(
+            ProcessingAnnotation(
                 source = listOf(
-                    PreprocessingAnnotationSource(
-                        PreprocessingAnnotationSourceType.NucleotideSequence,
+                    ProcessingAnnotationSource(
+                        ProcessingAnnotationSourceType.NucleotideSequence,
                         MAIN_SEGMENT,
                     ),
                 ),

@@ -11,7 +11,7 @@ import java.util.Date
 val keyPair: KeyPair = Jwts.SIG.RS256.keyPair().build()
 
 val jwtForDefaultUser = generateJwtFor(DEFAULT_USER_NAME)
-val jwtForProcessingPipeline = generateJwtFor("preprocessing_pipeline", listOf("preprocessing_pipeline"))
+val jwtForProcessingPipeline = generateJwtFor("processing_pipeline", listOf("processing_pipeline"))
 val jwtForGetReleasedData = generateJwtFor("silo_import_job", listOf("get_released_data"))
 
 fun generateJwtFor(username: String, roles: List<String> = emptyList()): String = Jwts.builder()

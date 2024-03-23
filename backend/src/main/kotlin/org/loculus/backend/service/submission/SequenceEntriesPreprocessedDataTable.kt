@@ -10,9 +10,9 @@ import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.PreprocessingAnnotation
-import org.loculus.backend.api.PreprocessingStatus
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingAnnotation
+import org.loculus.backend.api.ProcessingStatus
 import org.loculus.backend.service.jacksonObjectMapper
 import org.loculus.backend.service.jacksonSerializableJsonb
 import org.springframework.stereotype.Service
@@ -20,20 +20,20 @@ import org.springframework.stereotype.Service
 private val logger = KotlinLogging.logger { }
 
 @Service
-class SequenceEntriesPreprocessedDataTableProvider(private val compressionService: CompressionService) {
+class SequenceEntriesProcessedDataTableProvider(private val compressionService: CompressionService) {
 
-    private val cachedTables: MutableMap<Organism?, SequenceEntriesPreprocessedDataTable> = mutableMapOf()
+    private val cachedTables: MutableMap<Organism?, SequenceEntriesProcessedDataTable> = mutableMapOf()
 
-    fun get(organism: Organism?): SequenceEntriesPreprocessedDataTable {
+    fun get(organism: Organism?): SequenceEntriesProcessedDataTable {
         return cachedTables.getOrPut(organism) {
-            SequenceEntriesPreprocessedDataTable(compressionService, organism)
+            SequenceEntriesProcessedDataTable(compressionService, organism)
         }
     }
 }
 
-const val SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME = "sequence_entries_preprocessed_data"
+const val SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME = "sequence_entries_processed_data"
 
-class SequenceEntriesPreprocessedDataTable(
+class SequenceEntriesProcessedDataTable(
     compressionService: CompressionService,
     organism: Organism? = null,
 ) : Table(
@@ -43,8 +43,8 @@ class SequenceEntriesPreprocessedDataTable(
     val versionColumn = long("version")
     val pipelineVersion = long("pipeline_version")
     val processedDataColumn = serializeProcessedData(compressionService, organism).nullable()
-    val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
-    val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
+    val errorsColumn = jacksonSerializableJsonb<List<ProcessingAnnotation>>("errors").nullable()
+    val warningsColumn = jacksonSerializableJsonb<List<ProcessingAnnotation>>("warnings").nullable()
     val processingStatusColumn = varchar("processing_status", 255)
     val startedProcessingAtColumn = datetime("started_processing_at").nullable()
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
@@ -55,7 +55,7 @@ class SequenceEntriesPreprocessedDataTable(
         (accessionColumn eq accessionVersion.accession) and
             (versionColumn eq accessionVersion.version)
 
-    fun statusIs(status: PreprocessingStatus) = processingStatusColumn eq status.name
+    fun statusIs(status: ProcessingStatus) = processingStatusColumn eq status.name
 
     private val warningWhenNoOrganismWhenSerializing = "Organism is null when de-serializing data. " +
         "This should not happen. " +

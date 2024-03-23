@@ -42,12 +42,12 @@
     CREATING_REVOKE --> AWAITING_APPROVAL_FOR_REVOCATION
     AWAITING_APPROVAL_FOR_REVOCATION --> is_approved
 
-    RECEIVED --> IN_PROCESSING : preprocessing starts
+    RECEIVED --> IN_PROCESSING : processing starts
     IN_PROCESSING --> is_error
     is_error --> HAS_ERRORS : data contain error(s)
     HAS_ERRORS --> RECEIVED : user edits data
     AWAITING_APPROVAL --> RECEIVED : user edits data
-    is_error --> AWAITING_APPROVAL : preprocessing successful
+    is_error --> AWAITING_APPROVAL : processing successful
     AWAITING_APPROVAL --> is_approved
     is_approved --> APPROVED_FOR_RELEASE : user approves \nor automatic approval\n via 'release_directly'
     is_approved --> DELETION : user rejects

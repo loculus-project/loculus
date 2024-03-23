@@ -53,7 +53,7 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I submit successfully preprocessed data THEN the sequence entry is in status processed`() {
+    fun `WHEN I submit successfully processed data THEN the sequence entry is in status processed`() {
         val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
 
         submissionControllerClient.submitProcessedData(
@@ -113,7 +113,7 @@ class SubmitProcessedDataEndpointTest(
     }
 
     @Test
-    fun `WHEN I submit preprocessed data without insertions THEN the missing keys of the reference will be added`() {
+    fun `WHEN I submit processed data without insertions THEN the missing keys of the reference will be added`() {
         val accessions = prepareExtractedSequencesInDatabase(organism = OTHER_ORGANISM).map { it.accession }
 
         val dataWithoutInsertions = PreparedProcessedData.successfullyProcessedOtherOrganismData(

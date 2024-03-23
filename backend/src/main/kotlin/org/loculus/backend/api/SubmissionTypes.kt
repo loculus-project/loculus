@@ -95,12 +95,12 @@ data class SubmittedProcessedData(
     override val version: Version,
     val data: ProcessedData,
     @Schema(description = "The processing failed due to these errors.")
-    val errors: List<PreprocessingAnnotation>? = null,
+    val errors: List<ProcessingAnnotation>? = null,
     @Schema(
         description =
         "Issues where data is not necessarily wrong, but the submitter might want to look into those warnings.",
     )
-    val warnings: List<PreprocessingAnnotation>? = null,
+    val warnings: List<ProcessingAnnotation>? = null,
 ) : AccessionVersionInterface
 
 data class SequenceEntryVersionToEdit(
@@ -109,13 +109,13 @@ data class SequenceEntryVersionToEdit(
     val status: Status,
     val processedData: ProcessedData,
     val originalData: OriginalData,
-    @Schema(description = "The preprocessing will be considered failed if this is not empty")
-    val errors: List<PreprocessingAnnotation>? = null,
+    @Schema(description = "The processing will be considered failed if this is not empty")
+    val errors: List<ProcessingAnnotation>? = null,
     @Schema(
         description =
         "Issues where data is not necessarily wrong, but the user might want to look into those warnings.",
     )
-    val warnings: List<PreprocessingAnnotation>? = null,
+    val warnings: List<ProcessingAnnotation>? = null,
 ) : AccessionVersionInterface
 
 typealias SegmentName = String
@@ -186,17 +186,17 @@ class InsertionDeserializer : JsonDeserializer<Insertion>() {
     }
 }
 
-data class PreprocessingAnnotation(
-    val source: List<PreprocessingAnnotationSource>,
+data class ProcessingAnnotation(
+    val source: List<ProcessingAnnotationSource>,
     @Schema(description = "A descriptive message that helps the submitter to fix the issue") val message: String,
 )
 
-data class PreprocessingAnnotationSource(
-    val type: PreprocessingAnnotationSourceType,
+data class ProcessingAnnotationSource(
+    val type: ProcessingAnnotationSourceType,
     @Schema(description = "Field or sequence segment name") val name: String,
 )
 
-enum class PreprocessingAnnotationSourceType {
+enum class ProcessingAnnotationSourceType {
     Metadata,
     NucleotideSequence,
 }
@@ -266,7 +266,7 @@ enum class Status {
     }
 }
 
-enum class PreprocessingStatus {
+enum class ProcessingStatus {
     IN_PROCESSING,
     HAS_ERRORS,
     FINISHED,

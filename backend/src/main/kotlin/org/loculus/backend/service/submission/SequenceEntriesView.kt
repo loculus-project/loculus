@@ -19,8 +19,8 @@ import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Group
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
-import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingAnnotation
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonObjectMapper
@@ -64,8 +64,8 @@ class SequenceEntriesView(
     val releasedAtColumn = datetime("released_at").nullable()
     val statusColumn = varchar("status", 255)
     val isRevocationColumn = bool("is_revocation").default(false)
-    val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
-    val warningsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("warnings").nullable()
+    val errorsColumn = jacksonSerializableJsonb<List<ProcessingAnnotation>>("errors").nullable()
+    val warningsColumn = jacksonSerializableJsonb<List<ProcessingAnnotation>>("warnings").nullable()
 
     override val primaryKey = PrimaryKey(accessionColumn, versionColumn)
 

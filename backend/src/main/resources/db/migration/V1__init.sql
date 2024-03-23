@@ -29,7 +29,7 @@ create table sequence_entries (
 
 create index on sequence_entries (submitter);
 
-create table sequence_entries_preprocessed_data (
+create table sequence_entries_processed_data (
     accession text not null,
     version bigint not null,
     pipeline_version bigint not null,
@@ -60,7 +60,7 @@ select
     end as status
 from
     sequence_entries se
-    left join sequence_entries_preprocessed_data sepd on
+    left join sequence_entries_processed_data sepd on
         se.accession = sepd.accession
         and se.version = sepd.version
         and sepd.pipeline_version = 1;
