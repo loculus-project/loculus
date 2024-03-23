@@ -31,13 +31,13 @@ class SequenceEntriesProcessedDataTableProvider(private val compressionService: 
     }
 }
 
-const val SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME = "sequence_entries_processed_data"
+const val SEQUENCE_ENTRIES_PROCESSED_DATA_TABLE_NAME = "sequence_entries_processed_data"
 
 class SequenceEntriesProcessedDataTable(
     compressionService: CompressionService,
     organism: Organism? = null,
 ) : Table(
-    SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME,
+    SEQUENCE_ENTRIES_PROCESSED_DATA_TABLE_NAME,
 ) {
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
