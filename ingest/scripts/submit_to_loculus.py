@@ -116,8 +116,8 @@ def submit(metadata, sequences, config: Config):
 
 def approve(config: Config):
     """
-    Get sequences that were preprocessed successfully and approve them.
-    1. Get the ids of the sequences that were preprocessed successfully
+    Get sequences that were processed successfully and approve them.
+    1. Get the ids of the sequences that were processed successfully
         /ORGANISM/get-sequences
     2. Approve the sequences
     """

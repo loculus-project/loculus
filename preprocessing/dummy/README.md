@@ -1,10 +1,10 @@
-# Dummy Preprocessing Pipeline
+# Dummy Processing Pipeline
 
-This preprocessing pipeline is for demonstration and test purposes. 
+This processing pipeline is for demonstration and test purposes.
 It returns fixed SARS-CoV-2 sequences and the metadata that was provided by the submitter.
 As lineage, it returns randomly A.1, A.1.1, or A.2.
 
-It shows the easiest possible implementation of a preprocessing pipeline.
+It shows the easiest possible implementation of a processing pipeline.
 Note that a real-world implementation needs to validate the data.
 
 This is also supposed to be used for local testing.
@@ -29,19 +29,19 @@ python main.py
 Build the image:
 
 ```bash
-docker build -t loculus-dummy-preprocessing .
+docker build -t loculus-dummy-processing .
 ```
 
 Run on Mac and Windows:
 
 ```bash
-docker run --rm loculus-dummy-preprocessing --backend-host http://host.docker.internal
+docker run --rm loculus-dummy-processing --backend-host http://host.docker.internal
 ```
 
 Run on Linux:
 
 ```bash
-docker run --rm --network host loculus-dummy-preprocessing
+docker run --rm --network host loculus-dummy-processing
 ```
 
 Run with `--help` to see available options.

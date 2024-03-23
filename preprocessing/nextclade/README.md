@@ -1,6 +1,6 @@
-# Rudimentary SARS-CoV-2 Preprocessing Pipeline
+# Rudimentary SARS-CoV-2 Processing Pipeline
 
-This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`.
+This SARS-CoV-2 processing pipeline is only for demonstration purposes. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`.
 
 ## Overview
 

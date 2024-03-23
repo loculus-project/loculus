@@ -247,7 +247,7 @@ type ProcessedMetadataProps = {
 };
 const ProcessedMetadata: FC<ProcessedMetadataProps> = ({ processedMetadata }) => (
     <>
-        <Subtitle title='Metadata' customKey='preprocessing_metadata' />
+        <Subtitle title='Metadata' customKey='processing_metadata' />
         {Object.entries(processedMetadata).map(([key, value]) => (
             <ProcessedDataRow
                 label={sentenceCase(key)}
@@ -264,7 +264,7 @@ type ProcessedSequencesProps = {
 };
 const ProcessedSequences: FC<ProcessedSequencesProps> = ({ processedSequenceRows, sequenceType }) => (
     <>
-        <Subtitle key={`preprocessing_sequences_${sequenceType}`} title={sentenceCase(sequenceType)} />
+        <Subtitle key={`processing_sequences_${sequenceType}`} title={sentenceCase(sequenceType)} />
         {Object.entries(processedSequenceRows[sequenceType]).map(([key, value]) => (
             <ProcessedDataRow key={`processed_${sequenceType}_${key}`} row={{ key, value: value ?? 'null' }} />
         ))}
