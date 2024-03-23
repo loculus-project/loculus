@@ -78,24 +78,6 @@ export const useGroupCreation = ({
     };
 };
 
-export const useRemoveFromGroup = ({
-    clientConfig,
-    accessToken,
-    setErrorMessage,
-    refetchGroups,
-}: UseGroupOperationsProps & { refetchGroups?: () => void }) => {
-    const { zodios } = useGroupManagementClient(clientConfig);
-    const removeFromGroup = useCallback(
-        async (groupName: string, username: string) => {
-            await callRemoveFromGroup(accessToken, setErrorMessage, zodios, refetchGroups)(groupName, username);
-        },
-        [accessToken, setErrorMessage, zodios, refetchGroups],
-    );
-    return {
-        removeFromGroup,
-    };
-};
-
 export const useGroupManagementClient = (clientConfig: ClientConfig) => {
     const zodios = useMemo(() => new Zodios(clientConfig.backendUrl, groupManagementApi), [clientConfig]);
     const zodiosHooks = useMemo(() => new ZodiosHooks('loculus', zodios), [zodios]);
