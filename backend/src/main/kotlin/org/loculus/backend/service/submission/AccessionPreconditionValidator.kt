@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class AccessionPreconditionValidator(
-    private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
+    private val sequenceEntriesViewProvider: SequenceEntriesViewProvider,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
 ) {
 
@@ -28,7 +28,7 @@ class AccessionPreconditionValidator(
         statuses: List<Status>,
         organism: Organism,
     ) {
-        sequenceEntriesTableProvider.get(organism).let { table ->
+        sequenceEntriesViewProvider.get(organism).let { table ->
             val sequenceEntries = table
                 .slice(
                     table.accessionColumn,
@@ -48,7 +48,7 @@ class AccessionPreconditionValidator(
     }
 
     fun validateAccessionVersions(accessionVersions: List<AccessionVersionInterface>, statuses: List<Status>) {
-        sequenceEntriesTableProvider.get(organism = null).let { table ->
+        sequenceEntriesViewProvider.get(organism = null).let { table ->
             val sequenceEntries = table
                 .slice(
                     table.accessionColumn,
@@ -68,7 +68,7 @@ class AccessionPreconditionValidator(
         statuses: List<Status>,
         organism: Organism,
     ) {
-        sequenceEntriesTableProvider.get(organism).let { table ->
+        sequenceEntriesViewProvider.get(organism).let { table ->
             val sequenceEntries = table
                 .slice(
                     table.accessionColumn,
@@ -90,7 +90,7 @@ class AccessionPreconditionValidator(
     }
 
     fun validateAccessions(submitter: String, accessions: List<Accession>) {
-        sequenceEntriesTableProvider.get(organism = null).let { table ->
+        sequenceEntriesViewProvider.get(organism = null).let { table ->
             val sequenceEntries = table
                 .slice(
                     table.accessionColumn,
@@ -108,7 +108,7 @@ class AccessionPreconditionValidator(
     }
 
     fun validateAccessions(accessions: List<Accession>, statuses: List<Status>): List<AccessionVersionGroup> {
-        sequenceEntriesTableProvider.get(organism = null).let { table ->
+        sequenceEntriesViewProvider.get(organism = null).let { table ->
             val sequenceEntries = table
                 .slice(
                     table.accessionColumn,
@@ -136,7 +136,7 @@ class AccessionPreconditionValidator(
     private fun validateAccessionVersionsExist(
         sequenceEntries: Query,
         accessionVersions: List<AccessionVersionInterface>,
-        table: SequenceEntriesDataTable,
+        table: SequenceEntriesView,
     ) {
         if (sequenceEntries.count() == accessionVersions.size.toLong()) {
             return
@@ -158,7 +158,7 @@ class AccessionPreconditionValidator(
     private fun validateSequenceEntriesAreInStates(
         sequenceEntries: Query,
         statuses: List<Status>,
-        table: SequenceEntriesDataTable,
+        table: SequenceEntriesView,
     ) {
         val sequenceEntriesNotInStatuses = sequenceEntries
             .filter {
@@ -186,7 +186,7 @@ class AccessionPreconditionValidator(
     private fun validateUserIsAllowedToEditSequenceEntries(
         sequenceEntries: Query,
         submitter: String,
-        table: SequenceEntriesDataTable,
+        table: SequenceEntriesView,
     ) {
         val groupsOfSequenceEntries = sequenceEntries
             .groupBy(
@@ -214,7 +214,7 @@ class AccessionPreconditionValidator(
     private fun validateAccessionsExist(
         sequenceEntries: Query,
         accessions: List<Accession>,
-        table: SequenceEntriesDataTable,
+        table: SequenceEntriesView,
     ) {
         if (sequenceEntries.count() == accessions.size.toLong()) {
             return
@@ -232,7 +232,7 @@ class AccessionPreconditionValidator(
         throw UnprocessableEntityException("Accessions $accessionsNotFound do not exist")
     }
 
-    private fun validateOrganism(sequenceEntryVersions: Query, organism: Organism, table: SequenceEntriesDataTable) {
+    private fun validateOrganism(sequenceEntryVersions: Query, organism: Organism, table: SequenceEntriesView) {
         val accessionVersionsByOtherOrganisms =
             sequenceEntryVersions.filter { it[table.organismColumn] != organism.name }
                 .groupBy(
