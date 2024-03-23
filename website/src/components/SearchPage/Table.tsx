@@ -37,9 +37,12 @@ export const Table: FC<TableProps> = ({
 }) => {
     const primaryKey = schema.primaryKey;
 
+    const maxLengths = schema.metadata.map((m) => m.truncateColumnTo ?? 100);
+
     const columns = schema.tableColumns.map((field) => ({
         field,
-        headerName: capitalCase(field),
+        headerName: schema.metadata.find((m) => m.name === field)?.displayName ?? capitalCase(field),
+        maxLength: maxLengths[schema.metadata.findIndex((m) => m.name === field)],
     }));
 
     const handleSort = (field: string) => {
@@ -105,7 +108,7 @@ export const Table: FC<TableProps> = ({
                         <tr>
                             <th
                                 onClick={() => handleSort(primaryKey)}
-                                className='px-2 py-3 pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer'
+                                className='px-2 py-3 pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-center'
                             >
                                 {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
                             </th>
@@ -113,7 +116,7 @@ export const Table: FC<TableProps> = ({
                                 <th
                                     key={c.field}
                                     onClick={() => handleSort(c.field)}
-                                    className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6'
+                                    className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-center'
                                 >
                                     {c.headerName} {orderBy.field === c.field && orderIcon}
                                 </th>
@@ -132,8 +135,17 @@ export const Table: FC<TableProps> = ({
                                     </a>
                                 </td>
                                 {columns.map((c) => (
-                                    <td key={`${index}-${c.field}`} className='px-2 py-2  text-primary-900  last:pr-6'>
-                                        {row[c.field]}
+                                    <td key={`${index}-${c.field}`} className='px-2 py-2  text-primary-900  last:pr-6'
+                                    title={
+                                        typeof row[c.field] === 'string' && row[c.field].length > c.maxLength
+                                            ? row[c.field]
+                                            : ''
+                                    }>
+                                        {typeof row[c.field] === 'string' && row[c.field].length > c.maxLength
+                                            ? `${row[c.field].slice(0, c.maxLength)}...`
+                                            : row[c.field]
+                                    }
+
                                     </td>
                                 ))}
                             </tr>

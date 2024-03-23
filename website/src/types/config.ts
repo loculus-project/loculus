@@ -15,6 +15,7 @@ export const metadata = z.object({
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
+    truncateColumnTo: z.number().optional(),
 });
 
 export type CustomDisplay = z.infer<typeof customDisplay>;
