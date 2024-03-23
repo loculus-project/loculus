@@ -102,7 +102,7 @@ export class GroupPage {
     }
 
     public async leaveGroup() {
-        const leaveButton = this.page.getByRole('button', { name: 'Leave Group' });
+        const leaveButton = this.page.getByRole('button', { name: 'Leave group' });
         await leaveButton.waitFor({ state: 'visible' });
         await leaveButton.click();
 

@@ -84,7 +84,7 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
 
                     <div className='flex justify-end py-8 gap-4 '>
                         <button type='submit' className='btn btn-primary px-4 py-2 loculusColor text-white rounded'>
-                            Create Group
+                            Create group
                         </button>
                     </div>
                 </div>

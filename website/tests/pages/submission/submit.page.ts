@@ -18,7 +18,7 @@ export class SubmitPage {
     constructor(public readonly page: Page) {
         this.submitButton = page.getByRole('button', { name: 'submit' });
         this.dataUseTermsDropdown = page.locator('#dataUseTermsDropdown');
-        this.loginButton = page.locator('a', { hasText: 'Log in' });
+        this.loginButton = page.locator('a', { hasText: 'Login or register' });
     }
 
     public async goto() {
