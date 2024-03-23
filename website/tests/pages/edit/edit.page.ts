@@ -2,7 +2,6 @@ import type { Page } from '@playwright/test';
 
 import { routes } from '../../../src/routes/routes.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
-import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl, dummyOrganism, expect } from '../../e2e.fixture';
 
 export class EditPage {
@@ -25,28 +24,5 @@ export class EditPage {
         expect(await this.page.isVisible('text=Do you really want to submit?')).toBe(true);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
         await this.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
-    }
-
-    public async downloadAndVerify(accessionVersion: AccessionVersion) {
-        const downloadPromise = this.page.waitForEvent('download');
-        expect(await this.downloadButton.isVisible()).toBeTruthy();
-        await this.downloadButton.click();
-        const download = await downloadPromise;
-
-        expect(download.suggestedFilename()).toContain(getAccessionVersionString(accessionVersion));
-        const downloadStream = await download.createReadStream();
-        expect(downloadStream).toBeDefined();
-
-        let downloadData = Buffer.from([]);
-        downloadStream.on('data', (chunk) => {
-            downloadData = Buffer.concat([downloadData, chunk]);
-        });
-
-        await new Promise<void>((resolve) => {
-            downloadStream.on('end', resolve);
-        });
-
-        expect(downloadData.toString()).toContain(`>${getAccessionVersionString(accessionVersion)}
-ACTG`);
     }
 }
