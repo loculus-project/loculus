@@ -1,5 +1,4 @@
 import { sentenceCase } from 'change-case';
-import { DateTime, FixedOffsetZone } from 'luxon';
 import { err, Result } from 'neverthrow';
 
 import { type LapisClient } from '../../services/lapisClient.ts';
@@ -13,6 +12,7 @@ import {
     type SequenceEntryHistory,
     type SequenceEntryHistoryEntry,
 } from '../../types/lapis.ts';
+import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
 export type TableDataEntry = { label: string; name: string; value: string | number; customDisplay?: CustomDisplay };
 
@@ -145,7 +145,7 @@ function mapValueToDisplayedValue(value: undefined | null | string | number, met
     }
 
     if (metadata.type === 'timestamp' && typeof value === 'number') {
-        return DateTime.fromSeconds(value, { zone: FixedOffsetZone.utcInstance }).toFormat('yyyy-MM-dd TTT');
+        return parseUnixTimestamp(value);
     }
 
     return value;

@@ -9,6 +9,7 @@ import {
     ACCESSION_FIELD,
     ACCESSION_VERSION_FIELD,
     IS_REVOCATION_FIELD,
+    SUBMITTED_AT_FIELD,
     VERSION_FIELD,
     VERSION_STATUS_FIELD,
 } from '../settings.ts';
@@ -96,11 +97,11 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
                 VERSION_FIELD,
                 VERSION_STATUS_FIELD,
                 IS_REVOCATION_FIELD,
+                SUBMITTED_AT_FIELD,
             ],
             orderBy: [{ field: VERSION_FIELD, type: 'ascending' }],
         };
         const result = await this.call('details', request);
-
         const createSequenceHistoryProblemDetail = (detail: string): ProblemDetail => ({
             type: 'about:blank',
             title: 'Could not get sequence entry history',
