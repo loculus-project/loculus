@@ -43,7 +43,7 @@ class ResponseLogger : OncePerRequestFilter() {
         try {
             filterChain.doFilter(request, response)
 
-            log.info { "${request.requestURL} - Responding with status ${response.status}" }
+            log.info { "${request.method} ${request.requestURL} - Responding with status ${response.status}" }
         } finally {
             MDC.clear()
         }

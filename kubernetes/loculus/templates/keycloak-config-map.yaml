@@ -37,8 +37,8 @@ data:
           "enabled": true,
           "email": "testuser_{{$index}}_{{$browser}}@keycloak.org",
           "emailVerified": true,
-          "firstName": "Test",
-          "lastName": "User",
+          "firstName": "{{$index}}_{{$browser}}",
+          "lastName": "TestUser",
           "credentials": [
             {
               "type": "password",

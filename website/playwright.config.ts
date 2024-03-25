@@ -14,7 +14,7 @@ export default defineConfig({
     workers: process.env.CI ? 1 : undefined,
     reporter: [['html', { open: 'never' }]],
     use: {
-        trace: 'on-first-retry',
+        trace: 'retain-on-failure',
         screenshot: 'only-on-failure',
     },
     globalSetup: './tests/playwrightSetup.ts',
