@@ -3,6 +3,7 @@ import { type FC, useMemo, useRef, useState } from 'react';
 import { ActiveDownloadFilters } from './ActiveDownloadFilters.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadOption, generateDownloadUrl } from './generateDownloadUrl.ts';
+import { routes } from '../../../routes/routes.ts';
 import type { FilterValue, MutationFilter } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
@@ -76,7 +77,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                             />
                             <span className='label-text'>
                                 I agree to the {/* TODO(862) */}
-                                <a href='#TODO-MVP' className='underline'>
+                                <a href={routes.datauseTermsPage()} className='underline'>
                                     data use terms
                                 </a>
                                 .

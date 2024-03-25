@@ -1,0 +1,17 @@
+---
+import '../styles/mdcontainer.scss';
+import BaseLayout from './BaseLayout.astro';
+import DocMenu from '../components/Navigation/DocMenu.astro';
+
+const { frontmatter } = Astro.props;
+---
+
+<BaseLayout title={frontmatter.title}>
+    <div class='flex justify-between max-w-5xl mx-auto items-start gap-10'>
+        <DocMenu />
+        <div class='mdContainer text-gray-700 leading-relaxed'>
+            <h1>{frontmatter.title}</h1>
+            <slot />
+        </div>
+    </div></BaseLayout
+>

@@ -2,6 +2,7 @@ import { type FC, useEffect, useState } from 'react';
 
 import { DropdownOptionBlock, RadioOptionBlock } from './OptionBlock.tsx';
 import type { DownloadDataType, DownloadOption } from './generateDownloadUrl.ts';
+import { routes } from '../../../routes/routes.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadFormProps = {
@@ -84,7 +85,7 @@ export const DownloadForm: FC<DownloadFormProps> = ({ referenceGenomesSequenceNa
                             <>
                                 Yes, include restricted data
                                 <br />({/* TODO(862) */}
-                                <a href='#TODO-MVP' className='underline'>
+                                <a href={routes.datauseTermsPage()} className='underline'>
                                     What does it mean?
                                 </a>
                                 )
