@@ -10,7 +10,7 @@ Additional documentation for development is available in each folder's README. T
 
 - Backend code is in `backend`, see [`backend/README.md`](/backend/README.md)
 - Frontend code is in `website`, see [`website/README.md`](/website/README.md)
-- Sequence and metadata processing pipeline is in [`preprocessing`](/preprocessing) folder, see [`preprocessing/specification.md`](/preprocessing/specification.md)
+- Sequence and metadata processing pipeline is in [`processing`](/processing) folder, see [`processing/specification.md`](/processing/specification.md)
 - Deployment code is in `kubernetes`, see [`kubernetes/README.md`](/kubernetes/README.md).
   Check this for local development setup instructions.
 - Authorization is performed by our own keycloak instance. See config in [`keycloak-image`](kubernetes/loculus/templates/keycloak-deployment.yaml) and [`realm-config`](kubernetes/loculus/templates/keycloak-config-map.yaml). The keycloak login theme is built with a custom [keycloakify](keycloak/keycloakify) build.

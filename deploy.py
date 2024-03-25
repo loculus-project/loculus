@@ -44,8 +44,8 @@ helm_parser.add_argument('--sha', help='Set the commit sha to deploy with the He
 helm_parser.add_argument('--dockerconfigjson',
                          help='Set the base64 encoded dockerconfigjson secret for pulling the images')
 helm_parser.add_argument('--uninstall', action='store_true', help='Uninstall installation')
-helm_parser.add_argument('--enablePreprocessing', action='store_true',
-                         help='Include deployment of preprocessing pipelines')
+helm_parser.add_argument('--enableProcessing', action='store_true',
+                         help='Include deployment of processing pipelines')
 helm_parser.add_argument('--enableIngest', action='store_true',
                          help='Include deployment of ingest pipelines')
 helm_parser.add_argument('--values', help='Values file for helm chart',
@@ -154,8 +154,8 @@ def handle_helm():
         parameters += ['--set', "disableBackend=true"]
         parameters += ['--set', "disableWebsite=true"]
 
-    if not args.enablePreprocessing:
-        parameters += ['--set', "disablePreprocessing=true"]
+    if not args.enableProcessing:
+        parameters += ['--set', "disableProcessing=true"]
 
     if not args.enableIngest:
         parameters += ['--set', "disableIngest=true"]

@@ -1,0 +1,12 @@
+{{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- if $values.processing.configFile }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-processing-config-{{ $key }}
+data:
+  processing-config.yaml: |
+    {{- $values.processing.configFile | toYaml | nindent 4 -}}
+{{- end }}
+{{- end }}

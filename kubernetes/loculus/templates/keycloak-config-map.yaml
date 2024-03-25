@@ -113,20 +113,20 @@ data:
           }
         },
         {
-          "username": "dummy_preprocessing_pipeline",
+          "username": "dummy_processing_pipeline",
           "enabled": true,
-          "email": "dummy_preprocessing_pipeline@keycloak.org",
+          "email": "dummy_processing_pipeline@keycloak.org",
           "emailVerified" : true,
           "firstName": "Dummy",
-          "lastName": "Preprocessing",
+          "lastName": "Processing",
           "credentials": [
             {
               "type": "password",
-              "value": "dummy_preprocessing_pipeline"
+              "value": "dummy_processing_pipeline"
             }
           ],
           "realmRoles": [
-            "preprocessing_pipeline",
+            "processing_pipeline",
             "offline_access"
           ],
           "attributes": {
@@ -201,8 +201,8 @@ data:
             "description": "Administrator privileges"
           },
           {
-            "name": "preprocessing_pipeline",
-            "description": "Preprocessing pipeline privileges"
+            "name": "processing_pipeline",
+            "description": "Processing pipeline privileges"
           },
           {
             "name": "get_released_data",

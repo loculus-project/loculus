@@ -1,4 +1,4 @@
-name: preprocessing-dummy
+name: processing-dummy
 
 on:
   push:
@@ -11,16 +11,16 @@ on:
         required: false
 
 env:
-  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-dummy
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/processing-dummy
   BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }} # When to build for arm as well
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-dummy
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-processing-dummy
   cancel-in-progress: true
 
 jobs:
   build-or-use-cache:
-    name: Preprocessing dummy docker image build # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
+    name: Processing dummy docker image build # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -32,7 +32,7 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/dummy/**', '.github/workflows/dummyPreprocessing.yml') }})
+          DIR_HASH=$(echo -n ${{ hashFiles('processing/dummy/**', '.github/workflows/dummyProcessing.yml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
@@ -66,11 +66,11 @@ jobs:
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v5
         with:
-          context: ./preprocessing/dummy
+          context: ./processing/dummy
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=preprocessing-dummy-${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=preprocessing-dummy-${{ github.ref }}
+          cache-from: type=gha,scope=processing-dummy-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=processing-dummy-${{ github.ref }}
           platforms: ${{ env.BUILD_ARM && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
 
       - name: Tag and push image if cache hit

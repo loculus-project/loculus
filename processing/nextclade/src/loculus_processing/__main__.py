@@ -1,7 +1,7 @@
 import logging
 
 from .config import get_config
-from .prepro import run
+from .pro import run
 
 
 def cli_entry() -> None:

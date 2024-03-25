@@ -25,7 +25,7 @@ The following diagram shows the sequence of events.
 
 ### Processing & Editing
 
-The data will be processed by a processing pipeline (see [processing pipeline specification](../../preprocessing/specification.md)). If the data contain errors, the user has to review the errors and edit the data (sequence data can be downloaded as _fasta_ file to ease editing).
+The data will be processed by a processing pipeline (see [processing pipeline specification](../../processing/specification.md)). If the data contain errors, the user has to review the errors and edit the data (sequence data can be downloaded as _fasta_ file to ease editing).
 
 The edited data will be processed again.
 If the data do not contain errors, they will be staged unless the user selected the "release directly"-mode.

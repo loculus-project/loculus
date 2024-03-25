@@ -7,13 +7,13 @@
     (printf "https://authentication-%s" $.Values.host)
     "http://loculus-keycloak-service:8083"
 }}
-{{- if not .Values.disablePreprocessing }}
+{{- if not .Values.disableProcessing }}
 {{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus-preprocessing-{{ $key }}
+  name: loculus-processing-{{ $key }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
     reloader.stakater.com/auto: "true"
@@ -22,41 +22,41 @@ spec:
   selector:
     matchLabels:
       app: loculus
-      component: loculus-preprocessing-{{ $key }}
+      component: loculus-processing-{{ $key }}
   template:
     metadata:
       labels:
         app: loculus
-        component: loculus-preprocessing-{{ $key }}
+        component: loculus-processing-{{ $key }}
     spec:
       containers:
-        - name: preprocessing-{{ $key }}
-          image: {{ $value.preprocessing.image}}:{{ $dockerTag }}
+        - name: processing-{{ $key }}
+          image: {{ $value.processing.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
           args:
-            {{- range $arg := $value.preprocessing.args }}
+            {{- range $arg := $value.processing.args }}
             - "{{ $arg }}"
             {{- end }}
             - "--backend-host={{ $backendHost }}/{{ $key }}"
             - "--keycloak-host={{ $keycloakHost }}"
-            {{- if $value.preprocessing.warnings }}
+            {{- if $value.processing.warnings }}
             - "--withWarnings"
             {{- end }}
-            {{- if $value.preprocessing.errors }}
+            {{- if $value.processing.errors }}
             - "--withErrors"
             {{- end }}
-            {{- if $value.preprocessing.randomWarnError }}
+            {{- if $value.processing.randomWarnError }}
             - "--randomWarnError"
             {{- end }}
-      {{- if $value.preprocessing.configFile }}
-            - "--config=/etc/config/preprocessing-config.yaml"
+      {{- if $value.processing.configFile }}
+            - "--config=/etc/config/processing-config.yaml"
           volumeMounts:
-            - name: loculus-preprocessing-config-volume-{{ $key }}
+            - name: loculus-processing-config-volume-{{ $key }}
               mountPath: /etc/config
       volumes:
-        - name: loculus-preprocessing-config-volume-{{ $key }}
+        - name: loculus-processing-config-volume-{{ $key }}
           configMap:
-            name: loculus-preprocessing-config-{{ $key }}
+            name: loculus-processing-config-{{ $key }}
       {{- end }}
       imagePullSecrets:
         - name: ghcr-secret

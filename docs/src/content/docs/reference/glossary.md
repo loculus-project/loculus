@@ -9,7 +9,7 @@ description: Glossary of terms used in Loculus
 
 **Submission ID**: When users upload sequence entries, they have to provide a submission ID to link the entries in the metadata file and the FASTA file. Each submission ID must be unique within the submission, but re-use across submissions is acceptable.
 
-**Processing pipeline**: A processing pipeline takes submitter-provided data for a specific organism, adds alignments, translations, and annotations, and identifies errors both in metadata and sequences. See [Processing Pipeline: Specification](../preprocessing/specification.md) for details.
+**Processing pipeline**: A processing pipeline takes submitter-provided data for a specific organism, adds alignments, translations, and annotations, and identifies errors both in metadata and sequences. See [Processing Pipeline: Specification](../processing/specification.md) for details.
 
 **Nucleotide sequence and amino acid sequences**: Users upload unaligned nucleotide sequences. The processing pipeline aligns the sequences against an organism-specific reference genome and translates them to amino acid sequences.
 
