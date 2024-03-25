@@ -1,0 +1,25 @@
+---
+const docsPages = await Astro.glob('../../pages/docs/**/*.mdx');
+---
+
+<nav
+    class='docs-menu bg-white border rounded-lg overflow-hidden sticky mt-5'
+    style={{
+        minWidth: '290px',
+    }}
+>
+    <ul class='list-none m-0 p-0'>
+        {
+            docsPages.map((page) => (
+                <li class='border-b border-gray-200 last:border-0'>
+                    <a
+                        href={page.url}
+                        class='block p-4 text-primary-600 hover:bg-blue-50 transition-colors duration-150 ease-in-out'
+                    >
+                        {page.frontmatter.title}
+                    </a>
+                </li>
+            ))
+        }
+    </ul>
+</nav>
