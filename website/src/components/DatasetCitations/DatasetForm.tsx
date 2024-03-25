@@ -126,10 +126,10 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
         <div className='flex flex-col items-center  overflow-auto-y w-full'>
             <ManagedErrorFeedback message={serverErrorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex justify-start items-center py-5'>
-                <h1 className='text-xl font-semibold py-4'>{`${editDataset ? 'Edit' : 'Create'} Dataset`}</h1>
+                <h1 className='text-xl font-semibold py-4'>{`${editDataset ? 'Edit' : 'Create a'} Dataset`}</h1>
             </div>
-            <div className='space-y-6 max-w-md w-full'>
-                <div className='mb-6'>
+            <div className='max-w-md w-full'>
+                <div>
                     <label
                         htmlFor='dataset-name'
                         className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
@@ -158,7 +158,7 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                         htmlFor='dataset-description'
                         className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                     >
-                        Optional dataset description
+                        Optional description
                     </label>
                     <input
                         type='text'
@@ -171,7 +171,6 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                         maxLength={255}
                     />
                 </div>
-                <h2 className='text-lg font-bold'>Accessions</h2>
 
                 {Object.keys(accessionsInput).map((type) => (
                     <div className='mb-6' key={`${type}-input-field`}>

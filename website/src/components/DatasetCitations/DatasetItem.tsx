@@ -92,7 +92,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
             return 'N/A';
         }
         const dateObj = new Date(date);
-        return dateObj.toLocaleDateString('en-US');
+        return dateObj.toISOString().split('T')[0];
     };
 
     const renderDOI = () => {
@@ -106,7 +106,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
 
         return (
             <a
-                className='mr-4 cursor-pointer font-medium text-blue-600 dark:text-blue-500 hover:underline'
+                className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
                 onClick={() =>
                     displayConfirmationDialog({
                         dialogText: `Are you sure you want to create a DOI for this version of your dataset?`,
@@ -148,7 +148,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                         <p className='text'>Cited By 0</p>
                     ) : (
                         <a
-                            className='mr-4 cursor-pointer font-medium text-blue-600 dark:text-blue-500 hover:underline'
+                            className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
                             href={getCrossRefUrl()}
                             target='_blank'
                         >
