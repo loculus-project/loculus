@@ -117,8 +117,8 @@ cleanup_output_data() {
   echo "cleaning up output data dir $output_data_dir"
   cd $output_data_dir || exit
 
-  if [ -n "$(ls -d */ 2>/dev/null)" ]; then
-    directories=$(ls -dt */)
+  if [ -n "$(ls -d -- */ 2>/dev/null)" ]; then
+    directories=$(ls -dt -- */)
     if [ "$(echo "$directories" | wc -l)" -gt 1 ]; then
       newest_dir=$(echo "$directories" | head -n 1)
       echo "$directories" | tail -n +2 | xargs rm -r

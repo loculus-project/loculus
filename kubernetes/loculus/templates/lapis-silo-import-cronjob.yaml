@@ -54,10 +54,10 @@ spec:
                   subPath: pangolineage_alias.json
                 - name: lapis-silo-database-config-processed
                   mountPath: /app/preprocessing_config.yaml
-                  subPath: preprocessing_config.yaml
+                  subPath: silo_preprocessing_config.yaml
                 - name: lapis-silo-database-config-processed
                   mountPath: /app/database_config.yaml
-                  subPath: database_config.yaml
+                  subPath: silo_database_config.yaml
                 - name: lapis-silo-shared-data
                   mountPath: /preprocessing/output
                 - name: lapis-silo-input-data-cache

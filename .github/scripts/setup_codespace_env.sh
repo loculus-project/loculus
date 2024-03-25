@@ -15,7 +15,7 @@ echo "Docker is up and running!"
 
 ./deploy.py config
 
-cd website
+cd website || exit
 cp .env.example .env
 npm install
 
