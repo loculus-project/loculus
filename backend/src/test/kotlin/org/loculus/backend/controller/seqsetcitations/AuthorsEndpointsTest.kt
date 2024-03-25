@@ -1,4 +1,4 @@
-package org.loculus.backend.controller.datasetcitations
+package org.loculus.backend.controller.seqsetcitations
 
 import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
@@ -14,7 +14,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
 class AuthorsEndpointsTest(
-    @Autowired private val client: DatasetCitationsControllerClient,
+    @Autowired private val client: SeqSetCitationsControllerClient,
 ) {
 
     @MockkBean

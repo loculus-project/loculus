@@ -1,14 +1,14 @@
 import Snackbar from '@mui/material/Snackbar';
 import { type FC, useState } from 'react';
 
-import type { Dataset, DatasetRecord } from '../../types/datasetCitation';
+import type { SeqSet, SeqSetRecord } from '../../types/seqSetCitation';
 
-type ExportDatasetProps = {
-    dataset: Dataset;
-    datasetRecords: DatasetRecord[];
+type ExportSeqSetProps = {
+    seqSet: SeqSet;
+    seqSetRecords: SeqSetRecord[];
 };
 
-export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, datasetRecords }) => {
+export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) => {
     const [isDownloading, setIsDownloading] = useState(false);
     const [isCopyAlertOpen, setIsCopyAlertOpen] = useState(false);
     const [selectedDownload, setSelectedDownload] = useState(0);
@@ -19,61 +19,61 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, datasetRecords 
         return dateObj.getFullYear();
     };
 
-    const getDatasetURL = () => {
-        return dataset.datasetDOI === null || dataset.datasetDOI === undefined
+    const getSeqSetURL = () => {
+        return seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined
             ? window.location.href
-            : `https://doi.org/10.62599/${dataset.datasetDOI}`;
+            : `https://doi.org/10.62599/${seqSet.seqSetDOI}`;
     };
 
-    const downloadJSONDataset = () => {
+    const downloadJSONSeqSet = () => {
         const exportData = {
-            dataset,
-            sequences: datasetRecords,
+            seqSet,
+            sequences: seqSetRecords,
         };
         const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportData));
         const hiddenLink = document.createElement('a');
         hiddenLink.href = dataStr;
-        hiddenLink.download = `${dataset.name}.json`;
+        hiddenLink.download = `${seqSet.name}.json`;
         hiddenLink.click();
     };
 
-    const downloadTSVDataset = () => {
-        const headers = [...Object.keys(dataset), 'accessions'];
-        const datasetString = Object.values(dataset).join('\t');
-        const accessionsString = datasetRecords.map((record) => record.accession).join(', ');
-        const tsv = [headers.join('\t'), datasetString + '\t' + accessionsString].join('\r\n');
+    const downloadTSVSeqSet = () => {
+        const headers = [...Object.keys(seqSet), 'accessions'];
+        const seqSetString = Object.values(seqSet).join('\t');
+        const accessionsString = seqSetRecords.map((record) => record.accession).join(', ');
+        const tsv = [headers.join('\t'), seqSetString + '\t' + accessionsString].join('\r\n');
         const dataStr = 'data:text/tsv;charset=utf-8,' + encodeURIComponent(tsv);
         const hiddenLink = document.createElement('a');
         hiddenLink.href = dataStr;
-        hiddenLink.download = `${dataset.name}.tsv`;
+        hiddenLink.download = `${seqSet.name}.tsv`;
         hiddenLink.click();
     };
 
-    const downloadDataset = () => {
+    const downloadSeqSet = () => {
         setIsDownloading(true);
         if (selectedDownload === 0) {
-            downloadJSONDataset();
+            downloadJSONSeqSet();
         } else if (selectedDownload === 1) {
-            downloadTSVDataset();
+            downloadTSVSeqSet();
         }
         setIsDownloading(false);
     };
 
     const getBibtex = () => {
-        return `@online{${dataset.name.replace(/\s/g, '_')},
-    author = {${dataset.createdBy}},
-    title = {${dataset.name}},
-    year = {${formatYear(dataset.createdAt)}},
-    url = {${getDatasetURL()}},${dataset.datasetDOI === null || dataset.datasetDOI === undefined ? '' : `\n\tdoi = {${dataset.datasetDOI}},`}
+        return `@online{${seqSet.name.replace(/\s/g, '_')},
+    author = {${seqSet.createdBy}},
+    title = {${seqSet.name}},
+    year = {${formatYear(seqSet.createdAt)}},
+    url = {${getSeqSetURL()}},${seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined ? '' : `\n\tdoi = {${seqSet.seqSetDOI}},`}
 }`;
     };
 
     const getMLACitation = () => {
-        return `${dataset.createdBy}. ${dataset.name}, ${formatYear(dataset.createdAt)}. ${getDatasetURL()}`;
+        return `${seqSet.createdBy}. ${seqSet.name}, ${formatYear(seqSet.createdAt)}. ${getSeqSetURL()}`;
     };
 
     const getAPACitation = () => {
-        return `${dataset.createdBy} (${formatYear(dataset.createdAt)}). ${dataset.name} (${dataset.datasetVersion}). ${getDatasetURL()}`;
+        return `${seqSet.createdBy} (${formatYear(seqSet.createdAt)}). ${seqSet.name} (${seqSet.seqSetVersion}). ${getSeqSetURL()}`;
     };
 
     const getSelectedCitationText = () => {
@@ -140,7 +140,7 @@ export const ExportDataset: FC<ExportDatasetProps> = ({ dataset, datasetRecords 
                         </div>
                     </div>
                     <div className='pb-8 pt-4'>
-                        <button className='btn' onClick={downloadDataset} disabled={isDownloading}>
+                        <button className='btn' onClick={downloadSeqSet} disabled={isDownloading}>
                             Download
                         </button>
                     </div>

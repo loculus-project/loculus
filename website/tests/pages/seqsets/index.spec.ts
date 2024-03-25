@@ -1,11 +1,11 @@
 import { expect, test, authorize } from '../../e2e.fixture';
-import { DatasetPage } from './dataset.page';
+import { SeqSetPage } from './seqset.page';
 
 test.describe.configure({ mode: 'serial' });
-let testDatasetManager: DatasetPage;
-const testDatasetName = 'Test Dataset 1';
+let testSeqSetManager: SeqSetPage;
+const testSeqSetName = 'Test SeqSet 1';
 
-test.describe('The datasets list page', () => {
+test.describe('The seqSets list page', () => {
     test.beforeEach(async ({ loginAsTestUser }) => {
         await loginAsTestUser();
     });
@@ -13,40 +13,40 @@ test.describe('The datasets list page', () => {
     test.beforeAll(async ({ browser }) => {
         const page = await browser.newPage();
         await authorize(page);
-        testDatasetManager = new DatasetPage(page);
-        await testDatasetManager.createTestDataset(testDatasetName);
+        testSeqSetManager = new SeqSetPage(page);
+        await testSeqSetManager.createTestSeqSet(testSeqSetName);
     });
 
     test.afterAll(async () => {
-        await testDatasetManager.deleteTestDataset(testDatasetName);
+        await testSeqSetManager.deleteTestSeqSet(testSeqSetName);
     });
 
-    test('successfully creates test dataset in beforeAll', async () => {
-        await expect(testDatasetManager.page.getByText(testDatasetName)).toBeVisible();
+    test('successfully creates test seqSet in beforeAll', async () => {
+        await expect(testSeqSetManager.page.getByText(testSeqSetName)).toBeVisible();
     });
 
-    test('displays create dataset icon and opens modal on click', async ({ datasetPage }) => {
-        await datasetPage.gotoList();
-        await expect(datasetPage.page.getByTestId('AddIcon')).toBeVisible();
+    test('displays create seqSet icon and opens modal on click', async ({ seqSetPage }) => {
+        await seqSetPage.gotoList();
+        await expect(seqSetPage.page.getByTestId('AddIcon')).toBeVisible();
 
         await expect(async () => {
-            await datasetPage.page.getByTestId('AddIcon').click();
-            await datasetPage.waitForLoad();
-            await expect(datasetPage.page.getByText('Create Dataset')).toBeVisible();
+            await seqSetPage.page.getByTestId('AddIcon').click();
+            await seqSetPage.waitForLoad();
+            await expect(seqSetPage.page.getByText('Create SeqSet')).toBeVisible();
         }).toPass();
     });
 
-    test('displays list of datasets in table', async ({ datasetPage }) => {
-        await datasetPage.gotoList();
-        await expect(datasetPage.page.getByRole('table')).toBeVisible();
+    test('displays list of seqSets in table', async ({ seqSetPage }) => {
+        await seqSetPage.gotoList();
+        await expect(seqSetPage.page.getByRole('table')).toBeVisible();
     });
 
-    test('displays dataset details on clicking row', async ({ datasetPage }) => {
-        await datasetPage.gotoList();
+    test('displays seqSet details on clicking row', async ({ seqSetPage }) => {
+        await seqSetPage.gotoList();
         await expect(async () => {
-            await datasetPage.page.getByText(testDatasetName).first().click();
-            await datasetPage.waitForLoad();
-            await expect(datasetPage.page.getByRole('heading', { name: testDatasetName })).toBeVisible();
+            await seqSetPage.page.getByText(testSeqSetName).first().click();
+            await seqSetPage.waitForLoad();
+            await expect(seqSetPage.page.getByRole('heading', { name: testSeqSetName })).toBeVisible();
         }).toPass();
     });
 });

@@ -12,22 +12,22 @@ import { visuallyHidden } from '@mui/utils';
 import { type FC, type MouseEvent, type ChangeEvent, useState, useMemo } from 'react';
 
 import { routes } from '../../routes/routes';
-import type { Dataset } from '../../types/datasetCitation';
+import type { SeqSet } from '../../types/seqSetCitation';
 
 type Order = 'asc' | 'desc';
 
-interface DatasetListHeadProps {
-    onRequestSort: (event: MouseEvent<unknown>, property: keyof Dataset) => void;
+interface SeqSetListHeadProps {
+    onRequestSort: (event: MouseEvent<unknown>, property: keyof SeqSet) => void;
     order: Order;
     orderBy: string;
     rowCount: number;
 }
 
-const DatasetListHead = (props: DatasetListHeadProps) => {
+const SeqSetListHead = (props: SeqSetListHeadProps) => {
     const { order, orderBy, onRequestSort } = props;
 
     interface HeadCell {
-        id: keyof Dataset;
+        id: keyof SeqSet;
         label: string;
     }
 
@@ -41,16 +41,16 @@ const DatasetListHead = (props: DatasetListHeadProps) => {
             label: 'Name',
         },
         {
-            id: 'datasetVersion',
+            id: 'seqSetVersion',
             label: 'Version',
         },
         {
-            id: 'datasetDOI',
-            label: 'Dataset DOI',
+            id: 'seqSetDOI',
+            label: 'DOI',
         },
     ];
 
-    const createSortHandler = (property: keyof Dataset) => (event: MouseEvent<unknown>) => {
+    const createSortHandler = (property: keyof SeqSet) => (event: MouseEvent<unknown>) => {
         onRequestSort(event, property);
     };
 
@@ -83,25 +83,25 @@ const DatasetListHead = (props: DatasetListHeadProps) => {
     );
 };
 
-type DatasetListProps = {
-    datasets: Dataset[];
+type SeqSetListProps = {
+    seqSets: SeqSet[];
     username: string;
 };
 
-export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
+export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
     const [order, setOrder] = useState<Order>('desc');
-    const [orderBy, setOrderBy] = useState<keyof Dataset>('createdAt');
+    const [orderBy, setOrderBy] = useState<keyof SeqSet>('createdAt');
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
 
-    const handleRequestSort = (_: MouseEvent<unknown>, property: keyof Dataset) => {
+    const handleRequestSort = (_: MouseEvent<unknown>, property: keyof SeqSet) => {
         const isAsc = orderBy === property && order === 'asc';
         setOrder(isAsc ? 'desc' : 'asc');
         setOrderBy(property);
     };
 
-    const handleClick = (_: MouseEvent<unknown>, datasetId: string, datasetVersion: string) => {
-        window.location.href = routes.datasetPage(datasetId, datasetVersion, username);
+    const handleClick = (_: MouseEvent<unknown>, seqSetId: string, seqSetVersion: string) => {
+        window.location.href = routes.seqSetPage(seqSetId, seqSetVersion, username);
     };
 
     const handleChangePage = (_: unknown, newPage: number) => {
@@ -139,13 +139,13 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
     };
 
     // Avoid a layout jump when reaching the last page with empty rows.
-    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - datasets.length) : 0;
+    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - seqSets.length) : 0;
 
     const visibleRows = useMemo(() => {
-        return (datasets as any)
+        return (seqSets as any)
             .sort(getComparator(order, orderBy))
             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-    }, [datasets, order, orderBy, page, rowsPerPage]);
+    }, [seqSets, order, orderBy, page, rowsPerPage]);
 
     const maxCellLength = 25;
     const truncateCell = (cell: string | undefined | null) => {
@@ -168,35 +168,35 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
             <Paper sx={{ width: '100%', mb: 2 }}>
                 <TableContainer>
                     <Table sx={{ minWidth: 750 }} aria-labelledby='tableTitle' size='medium'>
-                        <DatasetListHead
+                        <SeqSetListHead
                             order={order}
                             orderBy={orderBy}
                             onRequestSort={handleRequestSort}
-                            rowCount={datasets.length}
+                            rowCount={seqSets.length}
                         />
                         <TableBody>
-                            {visibleRows.map((row: Dataset, index: number) => {
+                            {visibleRows.map((row: SeqSet, index: number) => {
                                 const labelId = `table-row-${index}`;
                                 return (
                                     <TableRow
                                         id={labelId}
                                         hover
                                         onClick={(event) =>
-                                            handleClick(event, row.datasetId, row.datasetVersion.toString())
+                                            handleClick(event, row.seqSetId, row.seqSetVersion.toString())
                                         }
                                         role='checkbox'
                                         tabIndex={-1}
-                                        key={row.datasetId}
+                                        key={row.seqSetId}
                                         sx={{ cursor: 'pointer' }}
                                     >
                                         <TableCell align='left'>{formatDate(row.createdAt)}</TableCell>
                                         <TableCell align='left'>{truncateCell(row.name)}</TableCell>
                                         <TableCell component='th' scope='row'>
-                                            {row.datasetVersion}
+                                            {row.seqSetVersion}
                                         </TableCell>
                                         <TableCell align='left'>
-                                            {row.datasetDOI !== undefined
-                                                ? truncateCell(row.datasetDOI as string)
+                                            {row.seqSetDOI !== undefined
+                                                ? truncateCell(row.seqSetDOI as string)
                                                 : 'N/A'}
                                         </TableCell>
                                     </TableRow>
@@ -210,13 +210,13 @@ export const DatasetList: FC<DatasetListProps> = ({ datasets, username }) => {
                         </TableBody>
                     </Table>
                 </TableContainer>
-                {datasets.length === 0 ? (
-                    <p className='px-8 py-8'> You have no datasets yet. </p>
+                {seqSets.length === 0 ? (
+                    <p className='px-8 py-8'> You have no SeqSets yet. </p>
                 ) : (
                     <TablePagination
                         rowsPerPageOptions={[5, 10, 25]}
                         component='div'
-                        count={datasets.length}
+                        count={seqSets.length}
                         rowsPerPage={rowsPerPage}
                         page={page}
                         onPageChange={handleChangePage}

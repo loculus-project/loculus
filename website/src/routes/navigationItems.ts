@@ -17,8 +17,8 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
                 path: routes.organismSelectorPage('submission'),
             },
             {
-                text: 'Datasets',
-                path: routes.datasetsPage(),
+                text: 'SeqSets',
+                path: routes.seqSetsPage(),
             },
             ...(isLoggedIn
                 ? [{ text: 'My account', path: routes.userOverviewPage() }]
@@ -36,8 +36,8 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
             path: routes.submissionPage(organism),
         },
         {
-            text: 'Datasets',
-            path: routes.datasetsPage(),
+            text: 'SeqSets',
+            path: routes.seqSetsPage(),
         },
         ...(isLoggedIn
             ? [{ text: 'My account', path: routes.userOverviewPage(organism) }]

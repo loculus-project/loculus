@@ -3,28 +3,28 @@ import { AxiosError } from 'axios';
 import { type FC, type FormEvent, useState, useEffect, useCallback } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
-import { datasetCitationClientHooks } from '../../services/serviceHooks';
-import { DatasetRecordType, type Dataset, type DatasetRecord } from '../../types/datasetCitation';
+import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
+import { SeqSetRecordType, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { serializeRecordsToAccessionsInput } from '../../utils/parseAccessionInput';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
-const logger = getClientLogger('DatasetForm');
+const logger = getClientLogger('SeqSetForm');
 
-type DatasetFormProps = {
+type SeqSetFormProps = {
     clientConfig: ClientConfig;
     accessToken: string;
-    editDataset?: Dataset;
-    editDatasetRecords?: DatasetRecord[];
+    editSeqSet?: SeqSet;
+    editSeqSetRecords?: SeqSetRecord[];
 };
 
-export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, editDataset, editDatasetRecords }) => {
-    const [datasetName, setDatasetName] = useState(editDataset?.name ?? '');
-    const [datasetNameValidation, setDatasetNameValidation] = useState('');
-    const [datasetDescription, setDatasetDescription] = useState(editDataset?.description ?? '');
-    const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editDatasetRecords));
-    const [datasetRecordValidation, setDatasetRecordValidation] = useState('');
+export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, editSeqSet, editSeqSetRecords }) => {
+    const [seqSetName, setSeqSetName] = useState(editSeqSet?.name ?? '');
+    const [seqSetNameValidation, setSeqSetNameValidation] = useState('');
+    const [seqSetDescription, setSeqSetDescription] = useState(editSeqSet?.description ?? '');
+    const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editSeqSetRecords));
+    const [seqSetRecordValidation, setSeqSetRecordValidation] = useState('');
 
     const {
         errorMessage: serverErrorMessage,
@@ -33,15 +33,15 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
         closeErrorFeedback,
     } = useErrorFeedbackState();
 
-    const { createDataset, updateDataset, validateDatasetRecords, isLoading } = useActionHooks(
+    const { createSeqSet, updateSeqSet, validateSeqSetRecords, isLoading } = useActionHooks(
         clientConfig,
         accessToken,
         openErrorFeedback,
-        setDatasetRecordValidation,
+        setSeqSetRecordValidation,
     );
 
     const getAccessionsByType = useCallback(
-        (type: DatasetRecordType) => {
+        (type: SeqSetRecordType) => {
             const accessions = accessionsInput[type];
             return accessions
                 .split(/[,\s]/)
@@ -53,34 +53,34 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
 
     useEffect(() => {
         const validationDelay = setTimeout(async () => {
-            const datasetRecords = getAccessionsByType(DatasetRecordType.loculus).map((accession) => ({
+            const seqSetRecords = getAccessionsByType(SeqSetRecordType.loculus).map((accession) => ({
                 accession,
-                type: DatasetRecordType.loculus,
+                type: SeqSetRecordType.loculus,
             }));
-            if (datasetRecords.length === 0) {
-                setDatasetRecordValidation('');
+            if (seqSetRecords.length === 0) {
+                setSeqSetRecordValidation('');
                 return;
             }
-            validateDatasetRecords(datasetRecords);
+            validateSeqSetRecords(seqSetRecords);
         }, 1000);
         return () => clearTimeout(validationDelay);
-    }, [accessionsInput, getAccessionsByType, validateDatasetRecords]);
+    }, [accessionsInput, getAccessionsByType, validateSeqSetRecords]);
 
-    const setAccessionInput = (accessionInput: string, type: DatasetRecordType) => {
+    const setAccessionInput = (accessionInput: string, type: SeqSetRecordType) => {
         setAccessionsInput((prevState) => ({
             ...prevState,
             [type]: accessionInput,
         }));
     };
 
-    const getDatasetFromInput = () => {
+    const getSeqSetFromInput = () => {
         return {
-            name: datasetName,
-            description: datasetDescription,
+            name: seqSetName,
+            description: seqSetDescription,
             records: [
-                ...getAccessionsByType(DatasetRecordType.loculus).map((accession) => ({
+                ...getAccessionsByType(SeqSetRecordType.loculus).map((accession) => ({
                     accession,
-                    type: DatasetRecordType.loculus,
+                    type: SeqSetRecordType.loculus,
                 })),
             ],
         };
@@ -88,22 +88,22 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
 
     const handleSubmit = async (event: FormEvent) => {
         event.preventDefault();
-        const dataset = getDatasetFromInput();
-        if (dataset.name === '') {
-            setDatasetNameValidation('Dataset name is required');
+        const seqSet = getSeqSetFromInput();
+        if (seqSet.name === '') {
+            setSeqSetNameValidation('SeqSet name is required');
             return;
         }
-        if (getAccessionsByType(DatasetRecordType.loculus).length === 0) {
-            setDatasetRecordValidation('At least one Loculus accession is required');
+        if (getAccessionsByType(SeqSetRecordType.loculus).length === 0) {
+            setSeqSetRecordValidation('At least one Loculus accession is required');
             return;
         }
-        if (editDataset !== undefined) {
-            updateDataset({
-                datasetId: editDataset.datasetId,
-                ...dataset,
+        if (editSeqSet !== undefined) {
+            updateSeqSet({
+                seqSetId: editSeqSet.seqSetId,
+                ...seqSet,
             });
         } else {
-            createDataset(dataset);
+            createSeqSet(seqSet);
         }
         return;
     };
@@ -126,47 +126,47 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
         <div className='flex flex-col items-center  overflow-auto-y w-full'>
             <ManagedErrorFeedback message={serverErrorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex justify-start items-center py-5'>
-                <h1 className='text-xl font-semibold py-4'>{`${editDataset ? 'Edit' : 'Create'} Dataset`}</h1>
+                <h1 className='text-xl font-semibold py-4'>{`${editSeqSet ? 'Edit' : 'Create'} SeqSet`}</h1>
             </div>
             <div className='space-y-6 max-w-md w-full'>
                 <div className='mb-6'>
                     <label
-                        htmlFor='dataset-name'
+                        htmlFor='seqSet-name'
                         className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                     >
-                        Dataset name *
+                        SeqSet name *
                     </label>
                     <input
                         type='text'
-                        id='dataset-name'
-                        className={getInputFieldStyles(datasetNameValidation)}
-                        value={datasetName}
+                        id='seqSet-name'
+                        className={getInputFieldStyles(seqSetNameValidation)}
+                        value={seqSetName}
                         onChange={(e) => {
-                            setDatasetName((e.target as HTMLInputElement).value);
-                            setDatasetNameValidation('');
+                            setSeqSetName((e.target as HTMLInputElement).value);
+                            setSeqSetNameValidation('');
                         }}
                         maxLength={255}
                         required
                     />
                     <div className='pb-6 max-w-md w-full'>
-                        <p className='text-red-500 text-sm italic'>{datasetNameValidation}</p>
+                        <p className='text-red-500 text-sm italic'>{seqSetNameValidation}</p>
                     </div>
                 </div>
 
                 <div className='mb-6'>
                     <label
-                        htmlFor='dataset-description'
+                        htmlFor='seqSet-description'
                         className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                     >
-                        Optional dataset description
+                        Optional description
                     </label>
                     <input
                         type='text'
-                        id='dataset-description'
+                        id='seqSet-description'
                         className={getInputFieldStyles()}
-                        value={datasetDescription}
+                        value={seqSetDescription}
                         onChange={(e) => {
-                            setDatasetDescription((e.target as HTMLInputElement).value);
+                            setSeqSetDescription((e.target as HTMLInputElement).value);
                         }}
                         maxLength={255}
                     />
@@ -176,17 +176,17 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                 {Object.keys(accessionsInput).map((type) => (
                     <div className='mb-6' key={`${type}-input-field`}>
                         <label
-                            htmlFor='dataset-description'
+                            htmlFor='seqSet-description'
                             className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                         >
                             {`List of ${type} accessions delimited by comma, newline, or space *`}
                         </label>
                         <textarea
                             id={`${type}-accession-input`}
-                            className={getTextAreaStyles(datasetRecordValidation)}
-                            value={accessionsInput[type as DatasetRecordType]}
+                            className={getTextAreaStyles(seqSetRecordValidation)}
+                            value={accessionsInput[type as SeqSetRecordType]}
                             onChange={(event: any) => {
-                                setAccessionInput(event.target.value, type as DatasetRecordType);
+                                setAccessionInput(event.target.value, type as SeqSetRecordType);
                             }}
                             rows={4}
                             cols={40}
@@ -194,12 +194,12 @@ export const DatasetForm: FC<DatasetFormProps> = ({ clientConfig, accessToken, e
                     </div>
                 ))}
                 <div className='pb-6 max-w-md w-full'>
-                    <p className='text-red-500 text-sm italic'>{datasetRecordValidation}</p>
+                    <p className='text-red-500 text-sm italic'>{seqSetRecordValidation}</p>
                 </div>
             </div>
             <button
                 className='flex items-center btn loculusColor text-white hover:bg-primary-700'
-                disabled={isLoading || datasetRecordValidation !== '' || datasetNameValidation !== ''}
+                disabled={isLoading || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
                 onClick={handleSubmit}
             >
                 {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}
@@ -212,68 +212,68 @@ function useActionHooks(
     clientConfig: ClientConfig,
     accessToken: string,
     openErrorFeedback: (message: string) => void,
-    setDatasetRecordValidation: (message: string) => void,
+    setSeqSetRecordValidation: (message: string) => void,
 ) {
-    const hooks = datasetCitationClientHooks(clientConfig);
-    const create = hooks.useCreateDataset(
+    const hooks = seqSetCitationClientHooks(clientConfig);
+    const create = hooks.useCreateSeqSet(
         { headers: createAuthorizationHeader(accessToken) },
         {
             onSuccess: async (response) => {
-                await logger.info(`Successfully created dataset with datasetId: ${response.datasetId}`);
-                const redirectUrl = `/datasets/${response.datasetId}?version=${response.datasetVersion}`;
+                await logger.info(`Successfully created seqSet with seqSetId: ${response.seqSetId}`);
+                const redirectUrl = `/seqsets/${response.seqSetId}?version=${response.seqSetVersion}`;
                 location.href = redirectUrl;
             },
             onError: async (error: unknown) => {
-                await logger.info(`Failed to create dataset. Error: '${JSON.stringify(error)})}'`);
+                await logger.info(`Failed to create seqSet. Error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError) {
                     if (error.response?.data !== undefined) {
                         openErrorFeedback(
-                            `Failed to create dataset. ${error.response.data?.title}. ${error.response.data?.detail}`,
+                            `Failed to create seqSet. ${error.response.data?.title}. ${error.response.data?.detail}`,
                         );
                     }
                 }
             },
         },
     );
-    const update = hooks.useUpdateDataset(
+    const update = hooks.useUpdateSeqSet(
         { headers: createAuthorizationHeader(accessToken) },
         {
             onSuccess: async (response) => {
-                await logger.info(`Successfully updated dataset with datasetId: ${response.datasetId}`);
-                const redirectUrl = `/datasets/${response.datasetId}?version=${response.datasetVersion}`;
+                await logger.info(`Successfully updated seqSet with seqSetId: ${response.seqSetId}`);
+                const redirectUrl = `/seqsets/${response.seqSetId}?version=${response.seqSetVersion}`;
                 location.href = redirectUrl;
             },
             onError: async (error) => {
-                await logger.info(`Failed to update dataset. Error: '${JSON.stringify(error)})}'`);
+                await logger.info(`Failed to update seqSet. Error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError) {
                     if (error.response?.data !== undefined) {
                         openErrorFeedback(
-                            `Failed to update dataset. ${error.response.data?.title}. ${error.response.data?.detail}`,
+                            `Failed to update seqSet. ${error.response.data?.title}. ${error.response.data?.detail}`,
                         );
                     }
                 }
             },
         },
     );
-    const validateRecords = hooks.useValidateDatasetRecords(
+    const validateRecords = hooks.useValidateSeqSetRecords(
         { headers: createAuthorizationHeader(accessToken) },
         {
             onSuccess: async () => {
-                setDatasetRecordValidation('');
+                setSeqSetRecordValidation('');
             },
             onError: async (error) => {
-                await logger.info(`Failed to validate dataset records. Error: '${JSON.stringify(error)})}'`);
+                await logger.info(`Failed to validate seqSet records. Error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError && error.response?.data !== undefined) {
                     const message = `${error.response.data.title}. ${error.response.data.detail}`;
-                    setDatasetRecordValidation(message);
+                    setSeqSetRecordValidation(message);
                 }
             },
         },
     );
     return {
-        createDataset: create.mutate,
-        updateDataset: update.mutate,
-        validateDatasetRecords: validateRecords.mutate,
+        createSeqSet: create.mutate,
+        updateSeqSet: update.mutate,
+        validateSeqSetRecords: validateRecords.mutate,
         isLoading: create.isLoading || update.isLoading,
     };
 }

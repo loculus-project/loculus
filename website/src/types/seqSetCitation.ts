@@ -1,27 +1,27 @@
 import z from 'zod';
 
-export enum DatasetRecordType {
+export enum SeqSetRecordType {
     loculus = 'Loculus',
 }
 
-export const datasetRecord = z.object({
+export const seqSetRecord = z.object({
     accession: z.string(),
-    type: z.nativeEnum(DatasetRecordType),
+    type: z.nativeEnum(SeqSetRecordType),
 });
-export type DatasetRecord = z.infer<typeof datasetRecord>;
-export const datasetRecords = z.array(datasetRecord);
+export type SeqSetRecord = z.infer<typeof seqSetRecord>;
+export const seqSetRecords = z.array(seqSetRecord);
 
-export const dataset = z.object({
-    datasetId: z.string(),
-    datasetDOI: z.string().nullish(),
-    datasetVersion: z.number(),
+export const seqSet = z.object({
+    seqSetId: z.string(),
+    seqSetDOI: z.string().nullish(),
+    seqSetVersion: z.number(),
     name: z.string(),
     description: z.string().optional(),
     createdAt: z.string(),
     createdBy: z.string(),
 });
-export const datasets = z.array(dataset);
-export type Dataset = z.infer<typeof dataset>;
+export const seqSets = z.array(seqSet);
+export type SeqSet = z.infer<typeof seqSet>;
 
 export const citedByResult = z.object({
     years: z.array(z.number()),

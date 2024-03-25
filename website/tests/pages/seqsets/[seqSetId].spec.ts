@@ -1,11 +1,11 @@
 import { authorize, expect, test } from '../../e2e.fixture';
-import { DatasetPage } from './dataset.page';
+import { SeqSetPage } from './seqset.page';
 
 test.describe.configure({ mode: 'serial' });
-let testDatasetManager: DatasetPage;
-const testDatasetName = 'Test Dataset 2';
+let testSeqSetManager: SeqSetPage;
+const testSeqSetName = 'Test SeqSet 2';
 
-test.describe('The dataset item page', () => {
+test.describe('The seqSet item page', () => {
     test.beforeEach(async ({ loginAsTestUser }) => {
         await loginAsTestUser();
     });
@@ -13,89 +13,89 @@ test.describe('The dataset item page', () => {
     test.beforeAll(async ({ browser }) => {
         const page = await browser.newPage();
         await authorize(page);
-        testDatasetManager = new DatasetPage(page);
-        await testDatasetManager.createTestDataset(testDatasetName);
+        testSeqSetManager = new SeqSetPage(page);
+        await testSeqSetManager.createTestSeqSet(testSeqSetName);
     });
 
     test.afterAll(async () => {
-        await testDatasetManager.deleteTestDataset(testDatasetName);
+        await testSeqSetManager.deleteTestSeqSet(testSeqSetName);
     });
 
-    test('displays layout correctly', async ({ datasetPage }) => {
-        await datasetPage.gotoDetail(testDatasetName);
+    test('displays layout correctly', async ({ seqSetPage }) => {
+        await seqSetPage.gotoDetail(testSeqSetName);
 
-        // Dataset action buttons
-        await expect(datasetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
-        await expect(datasetPage.page.getByRole('button', { name: 'Edit' })).toBeVisible();
-        await expect(datasetPage.page.getByRole('button', { name: 'Delete' })).toBeVisible();
+        // SeqSet action buttons
+        await expect(seqSetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
+        await expect(seqSetPage.page.getByRole('button', { name: 'Edit' })).toBeVisible();
+        await expect(seqSetPage.page.getByRole('button', { name: 'Delete' })).toBeVisible();
 
-        // Dataset details
-        await expect(datasetPage.page.getByRole('heading', { name: testDatasetName })).toBeVisible();
-        await expect(datasetPage.page.getByText('Created date')).toBeVisible();
-        await expect(datasetPage.page.getByText('Version', { exact: true })).toBeVisible();
-        await expect(datasetPage.page.getByText('Sequences')).toBeVisible();
+        // SeqSet details
+        await expect(seqSetPage.page.getByRole('heading', { name: testSeqSetName })).toBeVisible();
+        await expect(seqSetPage.page.getByText('Created date')).toBeVisible();
+        await expect(seqSetPage.page.getByText('Version', { exact: true })).toBeVisible();
+        await expect(seqSetPage.page.getByText('Sequences')).toBeVisible();
     });
 
-    test('export functionality allows downloading JSON file', async ({ datasetPage }) => {
-        await datasetPage.gotoDetail(testDatasetName);
-        await expect(datasetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
-        await datasetPage.page.getByRole('button', { name: 'Export' }).click();
-        await datasetPage.waitForLoad();
+    test('export functionality allows downloading JSON file', async ({ seqSetPage }) => {
+        await seqSetPage.gotoDetail(testSeqSetName);
+        await expect(seqSetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
+        await seqSetPage.page.getByRole('button', { name: 'Export' }).click();
+        await seqSetPage.waitForLoad();
 
-        await datasetPage.page.getByTestId('json-radio').waitFor();
-        await datasetPage.page.getByTestId('json-radio').click();
-        await expect(datasetPage.page.getByRole('button', { name: 'Download' })).toBeVisible();
+        await seqSetPage.page.getByTestId('json-radio').waitFor();
+        await seqSetPage.page.getByTestId('json-radio').click();
+        await expect(seqSetPage.page.getByRole('button', { name: 'Download' })).toBeVisible();
         const [download] = await Promise.all([
-            datasetPage.page.waitForEvent('download'),
-            datasetPage.page.getByRole('button', { name: 'Download' }).click(),
+            seqSetPage.page.waitForEvent('download'),
+            seqSetPage.page.getByRole('button', { name: 'Download' }).click(),
         ]);
-        expect(download.suggestedFilename()).toBe(`${testDatasetName}.json`);
+        expect(download.suggestedFilename()).toBe(`${testSeqSetName}.json`);
     });
 
-    test('export functionality allows downloading TSV file', async ({ datasetPage }) => {
-        await datasetPage.gotoDetail(testDatasetName);
-        await expect(datasetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
-        await datasetPage.page.getByRole('button', { name: 'Export' }).click();
-        await datasetPage.waitForLoad();
+    test('export functionality allows downloading TSV file', async ({ seqSetPage }) => {
+        await seqSetPage.gotoDetail(testSeqSetName);
+        await expect(seqSetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
+        await seqSetPage.page.getByRole('button', { name: 'Export' }).click();
+        await seqSetPage.waitForLoad();
 
-        await datasetPage.page.getByTestId('tsv-radio').waitFor();
-        await datasetPage.page.getByTestId('tsv-radio').click();
-        await expect(datasetPage.page.getByRole('button', { name: 'Download' })).toBeVisible();
+        await seqSetPage.page.getByTestId('tsv-radio').waitFor();
+        await seqSetPage.page.getByTestId('tsv-radio').click();
+        await expect(seqSetPage.page.getByRole('button', { name: 'Download' })).toBeVisible();
         const [download] = await Promise.all([
-            datasetPage.page.waitForEvent('download'),
-            datasetPage.page.getByRole('button', { name: 'Download' }).click(),
+            seqSetPage.page.waitForEvent('download'),
+            seqSetPage.page.getByRole('button', { name: 'Download' }).click(),
         ]);
-        expect(download.suggestedFilename()).toBe(`${testDatasetName}.tsv`);
+        expect(download.suggestedFilename()).toBe(`${testSeqSetName}.tsv`);
     });
 
-    test('delete functionality can be cancelled', async ({ datasetPage }) => {
-        await datasetPage.gotoDetail(testDatasetName);
-        await expect(datasetPage.page.getByRole('button', { name: 'Delete' })).toBeVisible();
-        await datasetPage.page.getByRole('button', { name: 'Delete' }).click();
-        await datasetPage.waitForLoad();
+    test('delete functionality can be cancelled', async ({ seqSetPage }) => {
+        await seqSetPage.gotoDetail(testSeqSetName);
+        await expect(seqSetPage.page.getByRole('button', { name: 'Delete' })).toBeVisible();
+        await seqSetPage.page.getByRole('button', { name: 'Delete' }).click();
+        await seqSetPage.waitForLoad();
 
         await expect(async () => {
-            await datasetPage.page.getByRole('button', { name: 'Cancel' }).click();
-            await datasetPage.waitForLoad();
-            await expect(datasetPage.page.getByRole('heading', { name: testDatasetName })).toBeVisible();
+            await seqSetPage.page.getByRole('button', { name: 'Cancel' }).click();
+            await seqSetPage.waitForLoad();
+            await expect(seqSetPage.page.getByRole('heading', { name: testSeqSetName })).toBeVisible();
         }).toPass();
     });
 
-    test('edit functionality updates dataset and increases version', async ({ datasetPage }) => {
-        const editDatasetName = 'Updated dataset name';
-        await datasetPage.gotoDetail(testDatasetName);
-        await expect(datasetPage.page.getByRole('button', { name: 'Edit' })).toBeVisible();
-        await datasetPage.page.getByRole('button', { name: 'Edit' }).click();
-        await datasetPage.waitForLoad();
+    test('edit functionality updates seqSet and increases version', async ({ seqSetPage }) => {
+        const editSeqSetName = 'Updated seqSet name';
+        await seqSetPage.gotoDetail(testSeqSetName);
+        await expect(seqSetPage.page.getByRole('button', { name: 'Edit' })).toBeVisible();
+        await seqSetPage.page.getByRole('button', { name: 'Edit' }).click();
+        await seqSetPage.waitForLoad();
 
         await expect(async () => {
-            await expect(datasetPage.page.getByText('Edit Dataset')).toBeVisible();
-            await datasetPage.page.locator('#dataset-name').fill(editDatasetName);
-            await datasetPage.page.getByRole('button', { name: 'Save' }).click();
-            await datasetPage.waitForLoad();
-            await expect(datasetPage.page.getByText(editDatasetName)).toBeVisible();
+            await expect(seqSetPage.page.getByText('Edit SeqSet')).toBeVisible();
+            await seqSetPage.page.locator('#seqSet-name').fill(editSeqSetName);
+            await seqSetPage.page.getByRole('button', { name: 'Save' }).click();
+            await seqSetPage.waitForLoad();
+            await expect(seqSetPage.page.getByText(editSeqSetName)).toBeVisible();
         }).toPass();
 
-        await datasetPage.deleteTestDataset(editDatasetName);
+        await seqSetPage.deleteTestSeqSet(editSeqSetName);
     });
 });

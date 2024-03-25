@@ -1,4 +1,4 @@
-package org.loculus.backend.service.datasetcitations
+package org.loculus.backend.service.seqsetcitations
 
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
@@ -22,13 +22,13 @@ import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AuthorProfile
 import org.loculus.backend.api.CitedBy
-import org.loculus.backend.api.Dataset
-import org.loculus.backend.api.DatasetCitationsConstants
-import org.loculus.backend.api.DatasetRecord
-import org.loculus.backend.api.ResponseDataset
+import org.loculus.backend.api.ResponseSeqSet
+import org.loculus.backend.api.SeqSet
+import org.loculus.backend.api.SeqSetCitationsConstants
+import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
-import org.loculus.backend.api.SubmittedDatasetRecord
+import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
@@ -42,7 +42,7 @@ private val log = KotlinLogging.logger { }
 
 @Service
 @Transactional
-class DatasetCitationsDatabaseService(
+class SeqSetCitationsDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     pool: DataSource,
 ) {
@@ -50,301 +50,301 @@ class DatasetCitationsDatabaseService(
         Database.connect(pool)
     }
 
-    fun createDataset(
+    fun createSeqSet(
         username: String,
-        datasetName: String,
-        datasetRecords: List<SubmittedDatasetRecord>,
-        datasetDescription: String?,
-    ): ResponseDataset {
-        log.info { "Create dataset $datasetName, user $username" }
+        seqSetName: String,
+        seqSetRecords: List<SubmittedSeqSetRecord>,
+        seqSetDescription: String?,
+    ): ResponseSeqSet {
+        log.info { "Create seqSet $seqSetName, user $username" }
 
-        validateDatasetName(datasetName)
-        validateDatasetRecords(datasetRecords)
+        validateSeqSetName(seqSetName)
+        validateSeqSetRecords(seqSetRecords)
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val insertedSet = DatasetsTable
+        val insertedSet = SeqSetsTable
             .insert {
-                it[DatasetsTable.name] = datasetName
-                it[DatasetsTable.description] = datasetDescription ?: ""
-                it[DatasetsTable.datasetVersion] = 1
-                it[DatasetsTable.createdAt] = now
-                it[DatasetsTable.createdBy] = username
+                it[SeqSetsTable.name] = seqSetName
+                it[SeqSetsTable.description] = seqSetDescription ?: ""
+                it[SeqSetsTable.seqSetVersion] = 1
+                it[SeqSetsTable.createdAt] = now
+                it[SeqSetsTable.createdBy] = username
             }
 
-        for (record in datasetRecords) {
-            val insertedRecord = DatasetRecordsTable
+        for (record in seqSetRecords) {
+            val insertedRecord = SeqSetRecordsTable
                 .insert {
-                    it[DatasetRecordsTable.accession] = record.accession
-                    it[DatasetRecordsTable.type] = record.type
+                    it[SeqSetRecordsTable.accession] = record.accession
+                    it[SeqSetRecordsTable.type] = record.type
                 }
-            DatasetToRecordsTable
+            SeqSetToRecordsTable
                 .insert {
-                    it[DatasetToRecordsTable.datasetRecordId] = insertedRecord[DatasetRecordsTable.datasetRecordId]
-                    it[DatasetToRecordsTable.datasetId] = insertedSet[DatasetsTable.datasetId]
-                    it[DatasetToRecordsTable.datasetVersion] = 1
+                    it[SeqSetToRecordsTable.seqSetRecordId] = insertedRecord[SeqSetRecordsTable.seqSetRecordId]
+                    it[SeqSetToRecordsTable.seqSetId] = insertedSet[SeqSetsTable.seqSetId]
+                    it[SeqSetToRecordsTable.seqSetVersion] = 1
                 }
         }
 
-        return ResponseDataset(
-            insertedSet[DatasetsTable.datasetId].toString(),
-            insertedSet[DatasetsTable.datasetVersion],
+        return ResponseSeqSet(
+            insertedSet[SeqSetsTable.seqSetId].toString(),
+            insertedSet[SeqSetsTable.seqSetVersion],
         )
     }
 
-    fun updateDataset(
+    fun updateSeqSet(
         username: String,
-        datasetId: String,
-        datasetName: String,
-        datasetRecords: List<SubmittedDatasetRecord>,
-        datasetDescription: String?,
-    ): ResponseDataset {
-        log.info { "Update dataset $datasetId, user $username" }
+        seqSetId: String,
+        seqSetName: String,
+        seqSetRecords: List<SubmittedSeqSetRecord>,
+        seqSetDescription: String?,
+    ): ResponseSeqSet {
+        log.info { "Update seqSet $seqSetId, user $username" }
 
-        validateDatasetName(datasetName)
-        validateDatasetRecords(datasetRecords)
+        validateSeqSetName(seqSetName)
+        validateSeqSetRecords(seqSetRecords)
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        val datasetUUID = UUID.fromString(datasetId)
+        val seqSetUUID = UUID.fromString(seqSetId)
 
-        val maxVersion = DatasetsTable
-            .slice(DatasetsTable.datasetVersion.max())
-            .select { DatasetsTable.datasetId eq datasetUUID and (DatasetsTable.createdBy eq username) }
+        val maxVersion = SeqSetsTable
+            .slice(SeqSetsTable.seqSetVersion.max())
+            .select { SeqSetsTable.seqSetId eq seqSetUUID and (SeqSetsTable.createdBy eq username) }
             .firstOrNull()
-            ?.get(DatasetsTable.datasetVersion.max())
+            ?.get(SeqSetsTable.seqSetVersion.max())
 
         if (maxVersion == null) {
-            throw NotFoundException("Dataset $datasetId does not exist")
+            throw NotFoundException("SeqSet $seqSetId does not exist")
         }
 
-        validateUpdateDatasetHasChanges(
-            oldDataset = getDataset(datasetId, maxVersion).first(),
-            oldDatasetRecords = getDatasetRecords(datasetId, maxVersion),
-            newDatasetName = datasetName,
-            newDatasetRecords = datasetRecords,
-            newDatasetDescription = datasetDescription,
+        validateUpdateSeqSetHasChanges(
+            oldSeqSet = getSeqSet(seqSetId, maxVersion).first(),
+            oldSeqSetRecords = getSeqSetRecords(seqSetId, maxVersion),
+            newSeqSetName = seqSetName,
+            newSeqSetRecords = seqSetRecords,
+            newSeqSetDescription = seqSetDescription,
         )
 
         val newVersion = maxVersion + 1
 
-        val insertedSet = DatasetsTable
+        val insertedSet = SeqSetsTable
             .insert {
-                it[DatasetsTable.datasetId] = datasetUUID
-                it[DatasetsTable.name] = datasetName
-                it[DatasetsTable.description] = datasetDescription ?: ""
-                it[DatasetsTable.datasetVersion] = newVersion
-                it[DatasetsTable.createdAt] = now
-                it[DatasetsTable.createdBy] = username
+                it[SeqSetsTable.seqSetId] = seqSetUUID
+                it[SeqSetsTable.name] = seqSetName
+                it[SeqSetsTable.description] = seqSetDescription ?: ""
+                it[SeqSetsTable.seqSetVersion] = newVersion
+                it[SeqSetsTable.createdAt] = now
+                it[SeqSetsTable.createdBy] = username
             }
 
-        for (record in datasetRecords) {
-            val existingRecord = DatasetRecordsTable
-                .select { DatasetRecordsTable.accession eq record.accession }
+        for (record in seqSetRecords) {
+            val existingRecord = SeqSetRecordsTable
+                .select { SeqSetRecordsTable.accession eq record.accession }
                 .singleOrNull()
 
-            val datasetRecordId = if (existingRecord == null) {
-                val insertedRecord = DatasetRecordsTable
+            val seqSetRecordId = if (existingRecord == null) {
+                val insertedRecord = SeqSetRecordsTable
                     .insert {
-                        it[DatasetRecordsTable.accession] = record.accession
-                        it[DatasetRecordsTable.type] = record.type
+                        it[SeqSetRecordsTable.accession] = record.accession
+                        it[SeqSetRecordsTable.type] = record.type
                     }
-                insertedRecord[DatasetRecordsTable.datasetRecordId]
+                insertedRecord[SeqSetRecordsTable.seqSetRecordId]
             } else {
-                existingRecord[DatasetRecordsTable.datasetRecordId]
+                existingRecord[SeqSetRecordsTable.seqSetRecordId]
             }
 
-            DatasetToRecordsTable
+            SeqSetToRecordsTable
                 .insert {
-                    it[DatasetToRecordsTable.datasetVersion] = newVersion
-                    it[DatasetToRecordsTable.datasetId] = insertedSet[DatasetsTable.datasetId]
-                    it[DatasetToRecordsTable.datasetRecordId] = datasetRecordId
+                    it[SeqSetToRecordsTable.seqSetVersion] = newVersion
+                    it[SeqSetToRecordsTable.seqSetId] = insertedSet[SeqSetsTable.seqSetId]
+                    it[SeqSetToRecordsTable.seqSetRecordId] = seqSetRecordId
                 }
         }
 
-        return ResponseDataset(
-            insertedSet[DatasetsTable.datasetId].toString(),
-            insertedSet[DatasetsTable.datasetVersion],
+        return ResponseSeqSet(
+            insertedSet[SeqSetsTable.seqSetId].toString(),
+            insertedSet[SeqSetsTable.seqSetVersion],
         )
     }
 
-    fun getDataset(datasetId: String, version: Long?): List<Dataset> {
-        log.info { "Get dataset $datasetId, version $version" }
+    fun getSeqSet(seqSetId: String, version: Long?): List<SeqSet> {
+        log.info { "Get seqSet $seqSetId, version $version" }
 
-        val query = DatasetsTable
+        val query = SeqSetsTable
             .select {
-                DatasetsTable.datasetId eq UUID.fromString(datasetId)
+                SeqSetsTable.seqSetId eq UUID.fromString(seqSetId)
             }
 
         if (version != null) {
-            query.andWhere { DatasetsTable.datasetVersion eq version }
+            query.andWhere { SeqSetsTable.seqSetVersion eq version }
         }
 
         if (query.empty()) {
-            throw NotFoundException("Dataset $datasetId, version $version does not exist")
+            throw NotFoundException("SeqSet $seqSetId, version $version does not exist")
         }
 
         return query.map { row ->
-            Dataset(
-                row[DatasetsTable.datasetId],
-                row[DatasetsTable.datasetVersion],
-                row[DatasetsTable.name],
-                Timestamp.valueOf(row[DatasetsTable.createdAt].toJavaLocalDateTime()),
-                row[DatasetsTable.createdBy],
-                row[DatasetsTable.description],
-                row[DatasetsTable.datasetDOI],
+            SeqSet(
+                row[SeqSetsTable.seqSetId],
+                row[SeqSetsTable.seqSetVersion],
+                row[SeqSetsTable.name],
+                Timestamp.valueOf(row[SeqSetsTable.createdAt].toJavaLocalDateTime()),
+                row[SeqSetsTable.createdBy],
+                row[SeqSetsTable.description],
+                row[SeqSetsTable.seqSetDOI],
             )
         }
     }
 
-    fun getDatasetRecords(datasetId: String, version: Long?): List<DatasetRecord> {
-        log.info { "Get dataset records for dataset $datasetId, version $version" }
+    fun getSeqSetRecords(seqSetId: String, version: Long?): List<SeqSetRecord> {
+        log.info { "Get seqSet records for seqSet $seqSetId, version $version" }
 
         var selectedVersion = version
 
-        val datasetUuid = UUID.fromString(datasetId)
+        val seqSetUuid = UUID.fromString(seqSetId)
 
         if (selectedVersion == null) {
-            selectedVersion = DatasetsTable
-                .slice(DatasetsTable.datasetVersion.max())
-                .select { DatasetsTable.datasetId eq datasetUuid }
-                .singleOrNull()?.get(DatasetsTable.datasetVersion)
+            selectedVersion = SeqSetsTable
+                .slice(SeqSetsTable.seqSetVersion.max())
+                .select { SeqSetsTable.seqSetId eq seqSetUuid }
+                .singleOrNull()?.get(SeqSetsTable.seqSetVersion)
         }
         if (selectedVersion == null) {
-            throw NotFoundException("Dataset $datasetId does not exist")
+            throw NotFoundException("SeqSet $seqSetId does not exist")
         }
 
-        if (DatasetToRecordsTable
+        if (SeqSetToRecordsTable
                 .select {
-                    (DatasetToRecordsTable.datasetId eq datasetUuid) and
-                        (DatasetToRecordsTable.datasetVersion eq selectedVersion)
+                    (SeqSetToRecordsTable.seqSetId eq seqSetUuid) and
+                        (SeqSetToRecordsTable.seqSetVersion eq selectedVersion)
                 }
                 .empty()
         ) {
-            throw NotFoundException("Dataset $datasetId, version $selectedVersion does not exist")
+            throw NotFoundException("SeqSet $seqSetId, version $selectedVersion does not exist")
         }
 
-        val selectedDatasetRecords = DatasetToRecordsTable
-            .innerJoin(DatasetRecordsTable)
+        val selectedSeqSetRecords = SeqSetToRecordsTable
+            .innerJoin(SeqSetRecordsTable)
             .select {
-                (DatasetToRecordsTable.datasetId eq datasetUuid) and
-                    (DatasetToRecordsTable.datasetVersion eq selectedVersion)
+                (SeqSetToRecordsTable.seqSetId eq seqSetUuid) and
+                    (SeqSetToRecordsTable.seqSetVersion eq selectedVersion)
             }
             .map {
-                DatasetRecord(
-                    it[DatasetRecordsTable.datasetRecordId],
-                    it[DatasetRecordsTable.accession],
-                    it[DatasetRecordsTable.type],
+                SeqSetRecord(
+                    it[SeqSetRecordsTable.seqSetRecordId],
+                    it[SeqSetRecordsTable.accession],
+                    it[SeqSetRecordsTable.type],
                 )
             }
 
-        return selectedDatasetRecords
+        return selectedSeqSetRecords
     }
 
-    fun getDatasets(username: String): List<Dataset> {
-        log.info { "Get datasets for user $username" }
+    fun getSeqSets(username: String): List<SeqSet> {
+        log.info { "Get seqSets for user $username" }
 
-        val selectedDatasets = DatasetsTable
-            .select { DatasetsTable.createdBy eq username }
+        val selectedSeqSets = SeqSetsTable
+            .select { SeqSetsTable.createdBy eq username }
 
-        return selectedDatasets.map {
-            Dataset(
-                it[DatasetsTable.datasetId],
-                it[DatasetsTable.datasetVersion],
-                it[DatasetsTable.name],
-                Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
-                it[DatasetsTable.createdBy],
-                it[DatasetsTable.description],
-                it[DatasetsTable.datasetDOI],
+        return selectedSeqSets.map {
+            SeqSet(
+                it[SeqSetsTable.seqSetId],
+                it[SeqSetsTable.seqSetVersion],
+                it[SeqSetsTable.name],
+                Timestamp.valueOf(it[SeqSetsTable.createdAt].toJavaLocalDateTime()),
+                it[SeqSetsTable.createdBy],
+                it[SeqSetsTable.description],
+                it[SeqSetsTable.seqSetDOI],
             )
         }
     }
 
-    fun deleteDataset(username: String, datasetId: String, version: Long) {
-        log.info { "Delete dataset $datasetId, version $version, user $username" }
+    fun deleteSeqSet(username: String, seqSetId: String, version: Long) {
+        log.info { "Delete seqSet $seqSetId, version $version, user $username" }
 
-        val datasetUuid = UUID.fromString(datasetId)
+        val seqSetUuid = UUID.fromString(seqSetId)
 
-        val datasetDOI = DatasetsTable
+        val seqSetDOI = SeqSetsTable
             .select {
-                (DatasetsTable.datasetId eq datasetUuid) and
-                    (DatasetsTable.datasetVersion eq version) and
-                    (DatasetsTable.createdBy eq username)
+                (SeqSetsTable.seqSetId eq seqSetUuid) and
+                    (SeqSetsTable.seqSetVersion eq version) and
+                    (SeqSetsTable.createdBy eq username)
             }
             .singleOrNull()
-            ?.get(DatasetsTable.datasetDOI)
+            ?.get(SeqSetsTable.seqSetDOI)
 
-        if (datasetDOI != null) {
-            throw UnprocessableEntityException("Dataset $datasetId, version $version has a DOI and cannot be deleted")
+        if (seqSetDOI != null) {
+            throw UnprocessableEntityException("SeqSet $seqSetId, version $version has a DOI and cannot be deleted")
         }
 
-        DatasetsTable.deleteWhere {
-            (DatasetsTable.datasetId eq datasetUuid) and
-                (DatasetsTable.datasetVersion eq version) and
-                (DatasetsTable.createdBy eq username)
+        SeqSetsTable.deleteWhere {
+            (SeqSetsTable.seqSetId eq seqSetUuid) and
+                (SeqSetsTable.seqSetVersion eq version) and
+                (SeqSetsTable.createdBy eq username)
         }
     }
 
-    fun validateCreateDatasetDOI(username: String, datasetId: String, version: Long) {
-        log.info { "Validate create DOI for dataset $datasetId, version $version, user $username" }
+    fun validateCreateSeqSetDOI(username: String, seqSetId: String, version: Long) {
+        log.info { "Validate create DOI for seqSet $seqSetId, version $version, user $username" }
 
-        if (DatasetsTable
+        if (SeqSetsTable
                 .select {
-                    (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
-                        (DatasetsTable.datasetVersion eq version) and
-                        (DatasetsTable.createdBy eq username)
+                    (SeqSetsTable.seqSetId eq UUID.fromString(seqSetId)) and
+                        (SeqSetsTable.seqSetVersion eq version) and
+                        (SeqSetsTable.createdBy eq username)
                 }
                 .empty()
         ) {
-            throw NotFoundException("Dataset $datasetId, version $version does not exist")
+            throw NotFoundException("SeqSet $seqSetId, version $version does not exist")
         }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).toJavaLocalDateTime()
         val sevenDaysAgo = LocalDateTime.parse(now.minusDays(7).toString())
-        val count = DatasetsTable
+        val count = SeqSetsTable
             .select {
-                (DatasetsTable.createdBy eq username) and
-                    (DatasetsTable.createdAt greaterEq sevenDaysAgo) and
-                    (DatasetsTable.datasetDOI neq "")
+                (SeqSetsTable.createdBy eq username) and
+                    (SeqSetsTable.createdAt greaterEq sevenDaysAgo) and
+                    (SeqSetsTable.seqSetDOI neq "")
             }
             .count()
-        if (count >= DatasetCitationsConstants.DOI_WEEKLY_RATE_LIMIT) {
+        if (count >= SeqSetCitationsConstants.DOI_WEEKLY_RATE_LIMIT) {
             throw UnprocessableEntityException(
-                "User exceeded limit of ${DatasetCitationsConstants.DOI_WEEKLY_RATE_LIMIT} DOIs created per week.",
+                "User exceeded limit of ${SeqSetCitationsConstants.DOI_WEEKLY_RATE_LIMIT} DOIs created per week.",
             )
         }
     }
 
-    fun createDatasetDOI(username: String, datasetId: String, version: Long): ResponseDataset {
-        log.info { "Create DOI for dataset $datasetId, version $version, user $username" }
+    fun createSeqSetDOI(username: String, seqSetId: String, version: Long): ResponseSeqSet {
+        log.info { "Create DOI for seqSet $seqSetId, version $version, user $username" }
 
-        validateCreateDatasetDOI(username, datasetId, version)
+        validateCreateSeqSetDOI(username, seqSetId, version)
 
-        val datasetDOI = "${DatasetCitationsConstants.DOI_PREFIX}/$datasetId.$version"
+        val seqSetDOI = "${SeqSetCitationsConstants.DOI_PREFIX}/$seqSetId.$version"
 
-        DatasetsTable.update(
+        SeqSetsTable.update(
             {
-                (DatasetsTable.datasetId eq UUID.fromString(datasetId)) and
-                    (DatasetsTable.datasetVersion eq version) and
-                    (DatasetsTable.createdBy eq username)
+                (SeqSetsTable.seqSetId eq UUID.fromString(seqSetId)) and
+                    (SeqSetsTable.seqSetVersion eq version) and
+                    (SeqSetsTable.createdBy eq username)
             },
         ) {
-            it[DatasetsTable.datasetDOI] = datasetDOI
+            it[SeqSetsTable.seqSetDOI] = seqSetDOI
         }
 
-        return ResponseDataset(
-            datasetId,
+        return ResponseSeqSet(
+            seqSetId,
             version,
         )
     }
 
-    fun getUserCitedByDataset(userAccessions: List<SequenceEntryStatus>): CitedBy {
-        log.info { "Get user cited by dataset" }
+    fun getUserCitedBySeqSet(userAccessions: List<SequenceEntryStatus>): CitedBy {
+        log.info { "Get user cited by seqSet" }
 
-        data class DatasetWithAccession(
+        data class SeqSetWithAccession(
             val accession: String,
-            val datasetId: UUID,
-            val datasetVersion: Long,
+            val seqSetId: UUID,
+            val seqSetVersion: Long,
             val createdAt: Timestamp,
         )
 
@@ -352,33 +352,33 @@ class DatasetCitationsDatabaseService(
             listOf(it.accession.plus('.').plus(it.version), it.accession)
         }
 
-        val maxDatasetVersion = DatasetsTable.datasetVersion.max().alias("max_version")
-        val maxVersionPerDataset = DatasetsTable
-            .slice(DatasetsTable.datasetId, maxDatasetVersion)
+        val maxSeqSetVersion = SeqSetsTable.seqSetVersion.max().alias("max_version")
+        val maxVersionPerSeqSet = SeqSetsTable
+            .slice(SeqSetsTable.seqSetId, maxSeqSetVersion)
             .selectAll()
-            .groupBy(DatasetsTable.datasetId)
-            .alias("maxVersionPerDataset")
+            .groupBy(SeqSetsTable.seqSetId)
+            .alias("maxVersionPerSeqSet")
 
-        val latestDatasetWithUserAccession = DatasetRecordsTable
-            .innerJoin(DatasetToRecordsTable)
-            .innerJoin(DatasetsTable)
+        val latestSeqSetWithUserAccession = SeqSetRecordsTable
+            .innerJoin(SeqSetToRecordsTable)
+            .innerJoin(SeqSetsTable)
             .join(
-                maxVersionPerDataset,
+                maxVersionPerSeqSet,
                 JoinType.INNER,
                 additionalConstraint = {
-                    (DatasetToRecordsTable.datasetId eq maxVersionPerDataset[DatasetsTable.datasetId]) and
-                        (DatasetToRecordsTable.datasetVersion eq maxVersionPerDataset[maxDatasetVersion])
+                    (SeqSetToRecordsTable.seqSetId eq maxVersionPerSeqSet[SeqSetsTable.seqSetId]) and
+                        (SeqSetToRecordsTable.seqSetVersion eq maxVersionPerSeqSet[maxSeqSetVersion])
                 },
             )
             .select {
-                (DatasetRecordsTable.accession inList userAccessionStrings)
+                (SeqSetRecordsTable.accession inList userAccessionStrings)
             }
             .map {
-                DatasetWithAccession(
-                    it[DatasetRecordsTable.accession],
-                    it[DatasetToRecordsTable.datasetId],
-                    it[DatasetToRecordsTable.datasetVersion],
-                    Timestamp.valueOf(it[DatasetsTable.createdAt].toJavaLocalDateTime()),
+                SeqSetWithAccession(
+                    it[SeqSetRecordsTable.accession],
+                    it[SeqSetToRecordsTable.seqSetId],
+                    it[SeqSetToRecordsTable.seqSetVersion],
+                    Timestamp.valueOf(it[SeqSetsTable.createdAt].toJavaLocalDateTime()),
                 )
             }
 
@@ -387,10 +387,10 @@ class DatasetCitationsDatabaseService(
             mutableListOf(),
         )
 
-        val uniqueDatasetIds = latestDatasetWithUserAccession.map { it.datasetId.toString() }.toSet()
-        for (datasetId in uniqueDatasetIds) {
-            val year = latestDatasetWithUserAccession
-                .first { it.datasetId.toString() == datasetId }
+        val uniqueSeqSetIds = latestSeqSetWithUserAccession.map { it.seqSetId.toString() }.toSet()
+        for (seqSetId in uniqueSeqSetIds) {
+            val year = latestSeqSetWithUserAccession
+                .first { it.seqSetId.toString() == seqSetId }
                 .createdAt.toLocalDateTime().year.toLong()
             if (citedBy.years.contains(year)) {
                 val index = citedBy.years.indexOf(year)
@@ -407,11 +407,11 @@ class DatasetCitationsDatabaseService(
         return citedBy
     }
 
-    fun getDatasetCitedByPublication(datasetId: String, version: Long): CitedBy {
+    fun getSeqSetCitedByPublication(seqSetId: String, version: Long): CitedBy {
         // TODO: implement after registering to CrossRef API
         // https://github.com/orgs/loculus-project/projects/3/views/1?pane=issue&itemId=50282833
 
-        log.info { "Get dataset cited by publication for datasetId $datasetId, version $version" }
+        log.info { "Get seqSet cited by publication for seqSetId $seqSetId, version $version" }
 
         val citedBy = CitedBy(
             mutableListOf(),
@@ -421,23 +421,23 @@ class DatasetCitationsDatabaseService(
         return citedBy
     }
 
-    fun validateDatasetRecords(datasetRecords: List<SubmittedDatasetRecord>) {
-        if (datasetRecords.isEmpty()) {
-            throw UnprocessableEntityException("Dataset must contain at least one record")
+    fun validateSeqSetRecords(seqSetRecords: List<SubmittedSeqSetRecord>) {
+        if (seqSetRecords.isEmpty()) {
+            throw UnprocessableEntityException("SeqSet must contain at least one record")
         }
 
-        val uniqueAccessions = datasetRecords.map { it.accession }.toSet()
-        if (uniqueAccessions.size != datasetRecords.size) {
-            throw UnprocessableEntityException("Dataset must not contain duplicate accessions")
+        val uniqueAccessions = seqSetRecords.map { it.accession }.toSet()
+        if (uniqueAccessions.size != seqSetRecords.size) {
+            throw UnprocessableEntityException("SeqSet must not contain duplicate accessions")
         }
 
-        val accessionsWithoutVersions = datasetRecords.filter { !it.accession.contains('.') }.map { it.accession }
+        val accessionsWithoutVersions = seqSetRecords.filter { !it.accession.contains('.') }.map { it.accession }
         accessionPreconditionValidator.validateAccessions(
             accessionsWithoutVersions,
             listOf(APPROVED_FOR_RELEASE),
         )
         val accessionsWithVersions = try {
-            datasetRecords
+            seqSetRecords
                 .filter { it.accession.contains('.') }
                 .map {
                     val (accession, version) = it.accession.split('.')
@@ -453,24 +453,24 @@ class DatasetCitationsDatabaseService(
         )
     }
 
-    fun validateDatasetName(name: String) {
+    fun validateSeqSetName(name: String) {
         if (name.isBlank()) {
-            throw UnprocessableEntityException("Dataset name must not be empty")
+            throw UnprocessableEntityException("SeqSet name must not be empty")
         }
     }
 
-    fun validateUpdateDatasetHasChanges(
-        oldDataset: Dataset,
-        oldDatasetRecords: List<DatasetRecord>,
-        newDatasetName: String,
-        newDatasetRecords: List<SubmittedDatasetRecord>,
-        newDatasetDescription: String?,
+    fun validateUpdateSeqSetHasChanges(
+        oldSeqSet: SeqSet,
+        oldSeqSetRecords: List<SeqSetRecord>,
+        newSeqSetName: String,
+        newSeqSetRecords: List<SubmittedSeqSetRecord>,
+        newSeqSetDescription: String?,
     ) {
-        if (oldDataset.name == newDatasetName &&
-            oldDataset.description == newDatasetDescription &&
-            oldDatasetRecords.map { it.accession }.toSet() == newDatasetRecords.map { it.accession }.toSet()
+        if (oldSeqSet.name == newSeqSetName &&
+            oldSeqSet.description == newSeqSetDescription &&
+            oldSeqSetRecords.map { it.accession }.toSet() == newSeqSetRecords.map { it.accession }.toSet()
         ) {
-            throw UnprocessableEntityException("Dataset update must contain at least one change")
+            throw UnprocessableEntityException("SeqSet update must contain at least one change")
         }
     }
 

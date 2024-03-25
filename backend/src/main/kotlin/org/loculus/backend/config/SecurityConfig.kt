@@ -50,9 +50,9 @@ class SecurityConfig {
 
     private val getEndpointsThatArePublic = arrayOf(
         "/data-use-terms/*",
-        "/get-dataset",
-        "/get-dataset-records",
-        "/get-dataset-cited-by-publication",
+        "/get-seqset",
+        "/get-seqset-records",
+        "/get-seqset-cited-by-publication",
         "/get-author",
     )
 

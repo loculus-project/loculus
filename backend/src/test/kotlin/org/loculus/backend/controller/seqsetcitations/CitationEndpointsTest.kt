@@ -1,4 +1,4 @@
-package org.loculus.backend.controller.datasetcitations
+package org.loculus.backend.controller.seqsetcitations
 
 import com.jayway.jsonpath.JsonPath
 import com.ninjasquad.springmockk.MockkBean
@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
 class CitationEndpointsTest(
-    @Autowired private val client: DatasetCitationsControllerClient,
+    @Autowired private val client: SeqSetCitationsControllerClient,
 
 ) {
     @MockkBean
@@ -60,12 +60,12 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN calling get user cited by dataset of non-existing user THEN returns empty results`() {
+    fun `WHEN calling get user cited by seqSet of non-existing user THEN returns empty results`() {
         every {
             submissionDatabaseService.getSequences(any(), any(), any(), any())
         } returns GetSequenceResponse(sequenceEntries = emptyList(), statusCounts = emptyMap())
 
-        client.getUserCitedByDataset()
+        client.getUserCitedBySeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.years").isArray)
@@ -75,8 +75,8 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN calling get dataset cited by publication of non-existing dataset THEN returns empty results`() {
-        client.getDatasetCitedByPublication()
+    fun `WHEN calling get seqSet cited by publication of non-existing seqSet THEN returns empty results`() {
+        client.getSeqSetCitedByPublication()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.years").isArray)
@@ -86,7 +86,7 @@ class CitationEndpointsTest(
     }
 
     @Test
-    fun `WHEN calling get dataset cited by publication of existing dataset THEN returns results`() {
+    fun `WHEN calling get seqSet cited by publication of existing seqSet THEN returns results`() {
         every {
             submissionDatabaseService.getSequences(any(), any(), any(), any())
         } returns GetSequenceResponse(
@@ -104,14 +104,14 @@ class CitationEndpointsTest(
             statusCounts = mapOf(Status.APPROVED_FOR_RELEASE to 1),
         )
 
-        val datasetResult = client.createDataset()
+        val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.datasetId").isString)
-            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
             .andReturn()
 
-        client.getUserCitedByDataset()
+        client.getUserCitedBySeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.years").isArray)
@@ -121,21 +121,21 @@ class CitationEndpointsTest(
             .andExpect(jsonPath("\$.citations").isNotEmpty)
             .andExpect(jsonPath("\$.citations[0]").value(1))
 
-        val datasetId = JsonPath.read<String>(datasetResult.response.contentAsString, "$.datasetId")
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
 
-        client.deleteDataset(datasetId)
+        client.deleteSeqSet(seqSetId)
             .andExpect(status().isOk)
     }
 
     companion object {
         data class Scenario(
-            val testFunction: (String?, DatasetCitationsControllerClient) -> ResultActions,
+            val testFunction: (String?, SeqSetCitationsControllerClient) -> ResultActions,
             val isModifying: Boolean,
         )
 
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
-            Scenario({ jwt, client -> client.getUserCitedByDataset(jwt = jwt) }, false),
+            Scenario({ jwt, client -> client.getUserCitedBySeqSet(jwt = jwt) }, false),
         )
     }
 }

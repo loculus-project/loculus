@@ -1,4 +1,4 @@
-package org.loculus.backend.controller.datasetcitations
+package org.loculus.backend.controller.seqsetcitations
 
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.withAuth
@@ -10,120 +10,120 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
 
-const val MOCK_DATASET_ID = "e302e770-e198-4a8f-9145-b536e3590656"
-const val MOCK_DATASET_VERSION = 1L
-const val MOCK_DATASET_NAME = "mock-dataset-name"
-const val MOCK_DATASET_DESCRIPTION = "mock-dataset-description"
-const val MOCK_DATASET_RECORDS = "[{ \"accession\": \"mock-sequence-accession.1\", \"type\": \"loculus\" }]"
+const val MOCK_SEQSET_ID = "e302e770-e198-4a8f-9145-b536e3590656"
+const val MOCK_SEQSET_VERSION = 1L
+const val MOCK_SEQSET_NAME = "mock-seqset-name"
+const val MOCK_SEQSET_DESCRIPTION = "mock-seqset-description"
+const val MOCK_SEQSET_RECORDS = "[{ \"accession\": \"mock-sequence-accession.1\", \"type\": \"loculus\" }]"
 const val MOCK_USERNAME = "testuser"
 const val MOCK_USER_EMAIL = "testuser@example.com"
 const val MOCK_USER_FIRST_NAME = "Test"
 const val MOCK_USER_LAST_NAME = "User"
 const val MOCK_USER_UNIVERSITY = "Test University"
 
-class DatasetCitationsControllerClient(
+class SeqSetCitationsControllerClient(
     private val mockMvc: MockMvc,
 ) {
 
-    fun createDataset(
-        datasetName: String = MOCK_DATASET_NAME,
-        datasetDescription: String? = MOCK_DATASET_DESCRIPTION,
-        datasetRecords: String? = MOCK_DATASET_RECORDS,
+    fun createSeqSet(
+        seqSetName: String = MOCK_SEQSET_NAME,
+        seqSetDescription: String? = MOCK_SEQSET_DESCRIPTION,
+        seqSetRecords: String? = MOCK_SEQSET_RECORDS,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
-        post("/create-dataset")
+        post("/create-seqset")
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .content(
                 """{
-                    "name": "$datasetName",
-                    "description": "$datasetDescription",
-                    "records": $datasetRecords
+                    "name": "$seqSetName",
+                    "description": "$seqSetDescription",
+                    "records": $seqSetRecords
                 }""",
             )
             .withAuth(jwt),
     )
 
-    fun getDataset(
-        datasetId: String = MOCK_DATASET_ID,
-        datasetVersion: Long? = MOCK_DATASET_VERSION,
+    fun getSeqSet(
+        seqSetId: String = MOCK_SEQSET_ID,
+        seqSetVersion: Long? = MOCK_SEQSET_VERSION,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
-        get("/get-dataset")
-            .param("datasetId", datasetId)
-            .param("version", datasetVersion.toString())
+        get("/get-seqset")
+            .param("seqSetId", seqSetId)
+            .param("version", seqSetVersion.toString())
             .withAuth(jwt),
     )
 
-    fun updateDataset(
-        datasetId: String = MOCK_DATASET_ID,
-        datasetName: String? = MOCK_DATASET_NAME,
-        datasetDescription: String? = MOCK_DATASET_DESCRIPTION,
-        datasetRecords: String? = MOCK_DATASET_RECORDS,
+    fun updateSeqSet(
+        seqSetId: String = MOCK_SEQSET_ID,
+        seqSetName: String? = MOCK_SEQSET_NAME,
+        seqSetDescription: String? = MOCK_SEQSET_DESCRIPTION,
+        seqSetRecords: String? = MOCK_SEQSET_RECORDS,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
-        put("/update-dataset")
+        put("/update-seqset")
             .contentType(MediaType.APPLICATION_JSON_VALUE)
             .content(
                 """{
-                    "datasetId":"$datasetId",
-                    "name":"$datasetName",
-                    "description": "$datasetDescription",
-                    "records": $datasetRecords
+                    "seqSetId":"$seqSetId",
+                    "name":"$seqSetName",
+                    "description": "$seqSetDescription",
+                    "records": $seqSetRecords
                 }""",
             )
             .withAuth(jwt),
     )
 
-    fun getDatasetsOfUser(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
-        get("/get-datasets-of-user")
+    fun getSeqSetsOfUser(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
+        get("/get-seqsets-of-user")
             .withAuth(jwt),
     )
 
-    fun getDatasetRecords(
-        datasetId: String = MOCK_DATASET_ID,
-        datasetVersion: Long? = MOCK_DATASET_VERSION,
+    fun getSeqSetRecords(
+        seqSetId: String = MOCK_SEQSET_ID,
+        seqSetVersion: Long? = MOCK_SEQSET_VERSION,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
-        get("/get-dataset-records")
-            .param("datasetId", datasetId)
-            .param("version", datasetVersion.toString())
+        get("/get-seqset-records")
+            .param("seqSetId", seqSetId)
+            .param("version", seqSetVersion.toString())
             .withAuth(jwt),
     )
 
-    fun deleteDataset(
-        datasetId: String = MOCK_DATASET_ID,
-        datasetVersion: Long? = MOCK_DATASET_VERSION,
+    fun deleteSeqSet(
+        seqSetId: String = MOCK_SEQSET_ID,
+        seqSetVersion: Long? = MOCK_SEQSET_VERSION,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
-        delete("/delete-dataset")
-            .param("datasetId", datasetId)
-            .param("version", datasetVersion.toString())
+        delete("/delete-seqset")
+            .param("seqSetId", seqSetId)
+            .param("version", seqSetVersion.toString())
             .withAuth(jwt),
     )
 
-    fun createDatasetDOI(
-        datasetId: String = MOCK_DATASET_ID,
-        datasetVersion: Long? = MOCK_DATASET_VERSION,
+    fun createSeqSetDOI(
+        seqSetId: String = MOCK_SEQSET_ID,
+        seqSetVersion: Long? = MOCK_SEQSET_VERSION,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
-        post("/create-dataset-doi")
-            .param("datasetId", datasetId)
-            .param("version", datasetVersion.toString())
+        post("/create-seqset-doi")
+            .param("seqSetId", seqSetId)
+            .param("version", seqSetVersion.toString())
             .withAuth(jwt),
     )
 
-    fun getUserCitedByDataset(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
-        get("/get-user-cited-by-dataset")
+    fun getUserCitedBySeqSet(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
+        get("/get-user-cited-by-seqset")
             .withAuth(jwt),
     )
 
-    fun getDatasetCitedByPublication(
-        datasetId: String = MOCK_DATASET_ID,
-        datasetVersion: Long = MOCK_DATASET_VERSION,
+    fun getSeqSetCitedByPublication(
+        seqSetId: String = MOCK_SEQSET_ID,
+        seqSetVersion: Long = MOCK_SEQSET_VERSION,
     ): ResultActions = mockMvc.perform(
-        get("/get-dataset-cited-by-publication")
-            .param("datasetId", datasetId)
-            .param("version", datasetVersion.toString()),
+        get("/get-seqset-cited-by-publication")
+            .param("seqSetId", seqSetId)
+            .param("version", seqSetVersion.toString()),
     )
 
     fun getAuthor(username: String): ResultActions = mockMvc.perform(
@@ -131,11 +131,10 @@ class DatasetCitationsControllerClient(
             .param("username", username),
     )
 
-    fun validateDatasetRecords(datasetRecords: String, jwt: String? = jwtForDefaultUser): ResultActions =
-        mockMvc.perform(
-            post("/validate-dataset-records")
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content(datasetRecords)
-                .withAuth(jwt),
-        )
+    fun validateSeqSetRecords(seqSetRecords: String, jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
+        post("/validate-seqset-records")
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(seqSetRecords)
+            .withAuth(jwt),
+    )
 }
