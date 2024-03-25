@@ -98,7 +98,7 @@ const DataUseTerms = ({
                                 Anyone can use and share the data (though we believe researchers should exercise
                                 scientific etiquette, including the importance of citation). Data will be released to
                                 the INSDC databases shortly after submission.{' '}
-                                <a href='/docs/data-use-terms' className='text-primary-600'>
+                                <a href={routes.datauseTermsPage()} className='text-primary-600'>
                                     Find out more
                                 </a>
                                 .
