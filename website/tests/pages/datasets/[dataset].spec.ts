@@ -1,4 +1,4 @@
-import { expect, test, authorize } from '../../e2e.fixture';
+import { authorize, expect, test } from '../../e2e.fixture';
 import { DatasetPage } from './dataset.page';
 
 test.describe.configure({ mode: 'serial' });
@@ -32,7 +32,7 @@ test.describe('The dataset item page', () => {
         // Dataset details
         await expect(datasetPage.page.getByRole('heading', { name: testDatasetName })).toBeVisible();
         await expect(datasetPage.page.getByText('Created date')).toBeVisible();
-        await expect(datasetPage.page.getByText('Version')).toBeVisible();
+        await expect(datasetPage.page.getByText('Version', { exact: true })).toBeVisible();
         await expect(datasetPage.page.getByText('Sequences')).toBeVisible();
     });
 
@@ -77,7 +77,7 @@ test.describe('The dataset item page', () => {
         await expect(async () => {
             await datasetPage.page.getByRole('button', { name: 'Cancel' }).click();
             await datasetPage.waitForLoad();
-            await expect(datasetPage.page.getByText(testDatasetName)).toBeVisible();
+            await expect(datasetPage.page.getByRole('heading', { name: testDatasetName })).toBeVisible();
         }).toPass();
     });
 

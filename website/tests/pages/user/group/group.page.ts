@@ -82,6 +82,7 @@ export class GroupPage {
         await expect(buttonToAddUserToGroup).toBeVisible();
         await expect(fieldToAddUserToGroup).toBeVisible();
         await fieldToAddUserToGroup.fill(uniqueUserName);
+        await expect(fieldToAddUserToGroup).toHaveValue(uniqueUserName);
 
         await buttonToAddUserToGroup.click();
 
