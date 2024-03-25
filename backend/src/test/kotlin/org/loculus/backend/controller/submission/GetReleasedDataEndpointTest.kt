@@ -146,7 +146,7 @@ class GetReleasedDataEndpointTest(
     }
 
     @Test
-    fun `GIVEN preprocessing pipeline submitted with missing metadata fields THEN fields are filled with null`() {
+    fun `GIVEN processing pipeline submitted with missing metadata fields THEN fields are filled with null`() {
         val absentFields = listOf("dateSubmitted", "division", "host", "age", "sex", "qc")
 
         val accessVersions = convenienceClient.prepareDefaultSequenceEntriesToInProcessing()

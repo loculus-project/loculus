@@ -33,8 +33,8 @@ import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
-import org.loculus.backend.api.PreprocessingStatus
 import org.loculus.backend.api.ProcessedData
+import org.loculus.backend.api.ProcessingStatus
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.SequenceEntryVersionToEdit
 import org.loculus.backend.api.Status
@@ -72,7 +72,7 @@ class SubmissionDatabaseService(
     pool: DataSource,
     private val entriesViewProvider: SequenceEntriesViewProvider,
     private val entriesTableProvider: SequenceEntriesTableProvider,
-    private val preprocessingTableProvider: SequenceEntriesPreprocessedDataTableProvider,
+    private val processingTableProvider: SequenceEntriesProcessedDataTableProvider,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
 ) {
 
@@ -113,14 +113,14 @@ class SubmissionDatabaseService(
     }
 
     private fun updateStatusToProcessing(organism: Organism, sequenceEntries: List<UnprocessedData>) {
-        preprocessingTableProvider.get(organism).let { table ->
+        processingTableProvider.get(organism).let { table ->
             val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
             table.batchInsert(sequenceEntries) {
                 this[table.accessionColumn] = it.accession
                 this[table.versionColumn] = it.version
                 this[table.pipelineVersion] = 1
-                this[table.processingStatusColumn] = PreprocessingStatus.IN_PROCESSING.name
+                this[table.processingStatusColumn] = ProcessingStatus.IN_PROCESSING.name
                 this[table.startedProcessingAtColumn] = now
             }
         }
@@ -148,18 +148,18 @@ class SubmissionDatabaseService(
         val submittedWarnings = submittedProcessedData.warnings.orEmpty()
 
         val (newStatus, processedData) = when {
-            submittedErrors.isEmpty() -> PreprocessingStatus.FINISHED to validateProcessedData(
+            submittedErrors.isEmpty() -> ProcessingStatus.FINISHED to validateProcessedData(
                 submittedProcessedData,
                 organism,
             )
-            else -> PreprocessingStatus.HAS_ERRORS to submittedProcessedData.data
+            else -> ProcessingStatus.HAS_ERRORS to submittedProcessedData.data
         }
 
-        val numberInserted = preprocessingTableProvider.get(organism).let { table ->
+        val numberInserted = processingTableProvider.get(organism).let { table ->
             table.update(
                 where = {
                     table.accessionVersionEquals(submittedProcessedData) and
-                        table.statusIs(PreprocessingStatus.IN_PROCESSING)
+                        table.statusIs(ProcessingStatus.IN_PROCESSING)
                 },
             ) {
                 it[processingStatusColumn] = newStatus.name
@@ -680,7 +680,7 @@ class SubmissionDatabaseService(
             organism,
         )
 
-        preprocessingTableProvider.get(organism).let { table ->
+        processingTableProvider.get(organism).let { table ->
             table.deleteWhere {
                 table.accessionVersionEquals(editedAccessionVersion)
             }
@@ -738,9 +738,9 @@ class SubmissionDatabaseService(
             Clock.System.now().toEpochMilliseconds() - timeToStaleInSeconds * 1000,
         ).toLocalDateTime(TimeZone.UTC)
 
-        preprocessingTableProvider.get(null).let { table ->
+        processingTableProvider.get(null).let { table ->
             val numberDeleted = table.deleteWhere {
-                table.statusIs(PreprocessingStatus.IN_PROCESSING) and
+                table.statusIs(ProcessingStatus.IN_PROCESSING) and
                     table.startedProcessingAtColumn.less(
                         staleDateTime,
                     )

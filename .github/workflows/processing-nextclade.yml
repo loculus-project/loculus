@@ -1,4 +1,4 @@
-name: preprocessing-nextclade
+name: processing-nextclade
 
 on:
   push:
@@ -11,16 +11,16 @@ on:
         required: false
 
 env:
-  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-nextclade
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/processing-nextclade
   BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }}
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-nextclade
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-processing-nextclade
   cancel-in-progress: true
 
 jobs:
   dockerImage:
-    name: Build preprocessing-nextclade Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
+    name: Build processing-nextclade Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -33,7 +33,7 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/nextclade/**', '.github/workflows/preprocessing-nextclade.yml') }})
+          DIR_HASH=$(echo -n ${{ hashFiles('processing/nextclade/**', '.github/workflows/processing-nextclade.yml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
@@ -67,7 +67,7 @@ jobs:
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v5
         with:
-          context: ./preprocessing/nextclade
+          context: ./processing/nextclade
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=nextclade-${{ github.ref }}

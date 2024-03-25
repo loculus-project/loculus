@@ -3,7 +3,7 @@ import { getSequenceDetailsTableData, SequenceDetailsTableResultType } from './g
 import RevocationEntryDataTable from '../../../components/SequenceDetailsPage/RevocationEntryDataTable.astro';
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.astro';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
-import SequencesDataPage from '../../../components/SequenceDetailsPage/SequencesDetailsPage.astro';
+import SequencesDetailsPage from '../../../components/SequenceDetailsPage/SequencesDetailsPage.astro';
 import { isRevocationEntry } from '../../../components/SequenceDetailsPage/getTableData';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
 import { getConfiguredOrganisms } from '../../../config';
@@ -88,7 +88,7 @@ if (
                             dataUseTermsHistory={data.dataUseTermsHistory}
                         />
                     ) : (
-                        <SequencesDataPage
+                        <SequencesDetailsPage
                             tableData={data.tableData}
                             organism={organism!}
                             accessionVersion={accessionVersion}

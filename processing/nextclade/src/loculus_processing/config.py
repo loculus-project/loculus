@@ -19,8 +19,8 @@ CLI_TYPES = [str, int, float, bool]
 class Config:
     backend_host: str = "http://127.0.0.1:8079"
     keycloak_host: str = "http://172.0.0.1:8083"
-    keycloak_user: str = "dummy_preprocessing_pipeline"
-    keycloak_password: str = "dummy_preprocessing_pipeline"
+    keycloak_user: str = "dummy_processing_pipeline"
+    keycloak_password: str = "dummy_processing_pipeline"
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
     nextclade_dataset_name: str = "nextstrain/mpox/all-clades"
     nextclade_dataset_tag: str | None = None
@@ -77,7 +77,7 @@ def generate_argparse_from_dataclass(config_cls: type[Config]) -> argparse.Argum
 def get_config() -> Config:
     # Config precedence: CLI args > ENV variables > config file > default
 
-    env_log_level = os.environ.get("PREPROCESSING_LOG_LEVEL")
+    env_log_level = os.environ.get("PROCESSING_LOG_LEVEL")
     if env_log_level:
         logging.basicConfig(level=env_log_level)
 
@@ -93,7 +93,7 @@ def get_config() -> Config:
 
     # Use environment variables if available
     for key in config.__dict__:
-        env_var = f"PREPROCESSING_{key.upper()}"
+        env_var = f"PROCESSING_{key.upper()}"
         if env_var in os.environ:
             setattr(config, key, os.environ[env_var])
 

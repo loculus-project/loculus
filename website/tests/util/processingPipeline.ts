@@ -10,14 +10,14 @@ export const fakeProcessingPipeline = {
     query,
 };
 
-export type PreprocessingOptions = {
+export type ProcessingOptions = {
     accession: Accession;
     version: number;
     error: boolean;
 };
 
-async function submit(preprocessingOptions: PreprocessingOptions[]) {
-    const body = preprocessingOptions
+async function submit(processingOptions: ProcessingOptions[]) {
+    const body = processingOptions
         .map(({ accession, version, error }) => {
             return {
                 accession,
@@ -42,7 +42,7 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
         .map((data) => JSON.stringify(data))
         .join('\n');
 
-    const jwt = await getJwtTokenForPreprocessingPipeline();
+    const jwt = await getJwtTokenForProcessingPipeline();
 
     const response = await BackendClient.create(backendUrl, e2eLogger).call('submitProcessedData', body, {
         params: { organism: dummyOrganism.key },
@@ -54,9 +54,9 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
     }
 }
 
-async function getJwtTokenForPreprocessingPipeline(
-    username: string = 'dummy_preprocessing_pipeline',
-    password: string = 'dummy_preprocessing_pipeline',
+async function getJwtTokenForProcessingPipeline(
+    username: string = 'dummy_processing_pipeline',
+    password: string = 'dummy_processing_pipeline',
 ): Promise<string> {
     const token = await getToken(username, password);
 
@@ -64,7 +64,7 @@ async function getJwtTokenForPreprocessingPipeline(
 }
 
 async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]> {
-    const jwt = await getJwtTokenForPreprocessingPipeline();
+    const jwt = await getJwtTokenForProcessingPipeline();
 
     const response = await BackendClient.create(backendUrl, e2eLogger).call('extractUnprocessedData', undefined, {
         params: { organism: dummyOrganism.key },

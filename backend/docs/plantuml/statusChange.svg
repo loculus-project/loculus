@@ -1,1 +1,267 @@
-<?xml version="1.0" encoding="us-ascii" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="956px" preserveAspectRatio="none" style="width:795px;height:956px;background:#FFFFFF;" version="1.1" viewBox="0 0 795 956" width="795px" zoomAndPan="magnify"><defs/><g><g id="INITIAL_DATA"><rect fill="#F0F8FF" height="50.6211" rx="12.5" ry="12.5" style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="151" x="21.5" y="21.13"/><line style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" x1="21.5" x2="172.5" y1="47.6183" y2="47.6183"/><text fill="#0000FF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="72" x="61" y="39.6652">initial data</text><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="131" x="26.5" y="64.2198">new unprocessed data</text></g><g id="REVISION_DATA"><rect fill="#F0F8FF" height="78.8867" rx="12.5" ry="12.5" style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="232" x="227" y="7"/><line style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" x1="227" x2="459" y1="33.4883" y2="33.4883"/><text fill="#0000FF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="88" x="299" y="25.5352">revision data</text><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="150" x="232" y="50.0898">already existing sequence</text><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="212" x="232" y="64.2227">with status APPROVED_FOR_RELEASE</text><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="145" x="232" y="78.3555">+ new unprocessed data</text></g><g id="REVOKED_DATA"><rect fill="#F0F8FF" height="64.7539" rx="12.5" ry="12.5" style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="232" x="518" y="400.35"/><line style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" x1="518" x2="750" y1="426.8383" y2="426.8383"/><text fill="#0000FF" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="106" x="581" y="418.8852">revocation data</text><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="150" x="523" y="443.4398">already existing sequence</text><text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing" textLength="212" x="523" y="457.5727">with status APPROVED_FOR_RELEASE</text></g><rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="291" x="459.5" y="678.57"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="281" x="464.5" y="703.861">AWAITING_APPROVAL_FOR_REVOCATION</text><rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="76" x="181" y="283.35"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66" x="186" y="308.641">RECEIVED</text><rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="117" x="160.5" y="412.73"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="107" x="165.5" y="438.021">IN_PROCESSING</text><rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="99" x="269.5" y="678.57"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="89" x="274.5" y="703.861">HAS_ERRORS</text><rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="183" x="112.5" y="910.57"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="173" x="117.5" y="935.861">APPROVED_FOR_RELEASE</text><rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5" style="stroke:#181818;stroke-width:0.5;" width="158" x="10" y="678.57"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="148" x="15" y="703.861">AWAITING_APPROVAL</text><rect fill="#90EE90" height="42.9766" rx="12.5" ry="12.5" style="stroke:#008000;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="180" x="7" y="171.13"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="170" x="12" y="189.6652">entry with new accession</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="99" x="49.5" y="206.1534">will be created</text><rect fill="#90EE90" height="59.4648" rx="12.5" ry="12.5" style="stroke:#008000;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="242" x="222" y="162.89"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="197" x="244.5" y="181.4252">entry with existing accession</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="228" x="231" y="197.9134">and incremented version number</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="99" x="295.5" y="214.4017">will be created</text><rect fill="#90EE90" height="59.4648" rx="12.5" ry="12.5" style="stroke:#008000;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="276" x="496" y="542.11"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="201" x="533.5" y="560.6452">entry with existing accession,</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="202" x="533" y="577.1334">incremented version number,</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="262" x="505" y="593.6217">and is_revocation=true will be created</text><rect fill="#CD5C5C" height="40" rx="12.5" ry="12.5" style="stroke:#FF0000;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="148" x="331" y="910.57"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="138" x="336" y="935.861">entry will be deleted</text><g id="elem_is_error"><polygon fill="#F1F1F1" points="219,559.84,231,571.84,219,583.84,207,571.84,219,559.84" style="stroke:#181818;stroke-width:0.5;"/></g><g id="elem_is_approved"><polygon fill="#F1F1F1" points="304,779.57,316,791.57,304,803.57,292,791.57,304,779.57" style="stroke:#181818;stroke-width:0.5;"/></g><!--link INITIAL_DATA to CREATING_SUBMIT--><g id="link_INITIAL_DATA_CREATING_SUBMIT"><path d="M97,72.23 C97,100.08 97,138.81 97,164.89 " fill="none" id="INITIAL_DATA-to-CREATING_SUBMIT" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="97,170.89,101,161.89,97,165.89,93,161.89,97,170.89" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="113" x="98" y="129.4584">initial submission</text></g><!--link CREATING_SUBMIT to RECEIVED--><g id="link_CREATING_SUBMIT_RECEIVED"><path d="M120.52,214.58 C142.68,234.33 171.1305,259.6883 192.7105,278.9183 " fill="none" id="CREATING_SUBMIT-to-RECEIVED" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="197.19,282.91,193.1319,273.9361,193.4571,279.5836,187.8096,279.9088,197.19,282.91" style="stroke:#181818;stroke-width:1.0;"/></g><!--link REVISION_DATA to CREATING_REVISE--><g id="link_REVISION_DATA_CREATING_REVISE"><path d="M343,86.08 C343,110.1 343,134.49 343,156.49 " fill="none" id="REVISION_DATA-to-CREATING_REVISE" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="343,162.49,347,153.49,343,157.49,339,153.49,343,162.49" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="136" x="344" y="129.4584">user initiates revision</text></g><!--link CREATING_REVISE to RECEIVED--><g id="link_CREATING_REVISE_RECEIVED"><path d="M309.77,222.76 C287.96,241.88 264.5614,262.3943 245.4814,279.1243 " fill="none" id="CREATING_REVISE-to-RECEIVED" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="240.97,283.08,250.3742,280.154,244.7295,279.7836,245.0999,274.1389,240.97,283.08" style="stroke:#181818;stroke-width:1.0;"/></g><!--link REVOKED_DATA to CREATING_REVOKE--><g id="link_REVOKED_DATA_CREATING_REVOKE"><path d="M634,465.53 C634,488.63 634,513.63 634,536.01 " fill="none" id="REVOKED_DATA-to-CREATING_REVOKE" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="634,542.01,638,533.01,634,537.01,630,533.01,634,542.01" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="152" x="635" y="508.6784">user initiates revocation</text></g><!--link CREATING_REVOKE to AWAITING_APPROVAL_FOR_REVOCATION--><g id="link_CREATING_REVOKE_AWAITING_APPROVAL_FOR_REVOCATION"><path d="M627.27,601.77 C621.82,625.23 615.6396,651.8061 610.8796,672.2661 " fill="none" id="CREATING_REVOKE-to-AWAITING_APPROVAL_FOR_REVOCATION" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="609.52,678.11,615.4553,670.2505,610.653,673.2401,607.6634,668.4377,609.52,678.11" style="stroke:#181818;stroke-width:1.0;"/></g><!--link AWAITING_APPROVAL_FOR_REVOCATION to is_approved--><g id="link_AWAITING_APPROVAL_FOR_REVOCATION_is_approved"><path d="M540.8,718.98 C465.17,741.84 351.3832,776.2433 318.4132,786.2133 " fill="none" id="AWAITING_APPROVAL_FOR_REVOCATION-to-is_approved" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="312.67,787.95,322.4425,789.1737,317.456,786.5027,320.1269,781.5162,312.67,787.95" style="stroke:#181818;stroke-width:1.0;"/></g><!--link RECEIVED to IN_PROCESSING--><g id="link_RECEIVED_IN_PROCESSING"><path d="M219,323.7 C219,347.78 219,382.65 219,406.62 " fill="none" id="RECEIVED-to-IN_PROCESSING" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="219,412.62,223,403.62,219,407.62,215,403.62,219,412.62" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="129" x="220" y="366.9184">preprocessing starts</text></g><!--link IN_PROCESSING to is_error--><g id="link_IN_PROCESSING_is_error"><path d="M219,453.08 C219,482.02 219,529.67 219,553.23 " fill="none" id="IN_PROCESSING-to-is_error" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="219,559.23,223,550.23,219,554.23,215,550.23,219,559.23" style="stroke:#181818;stroke-width:1.0;"/></g><!--link is_error to HAS_ERRORS--><g id="link_is_error_HAS_ERRORS"><path d="M224.1,579.19 C238.58,597.27 276.6865,644.7891 299.6765,673.4591 " fill="none" id="is_error-to-HAS_ERRORS" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="303.43,678.14,300.9203,668.6163,300.302,674.2392,294.6791,673.621,303.43,678.14" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="127" x="279" y="645.1384">data contain error(s)</text></g><!--link HAS_ERRORS to RECEIVED--><g id="link_HAS_ERRORS_RECEIVED"><path d="M368.84,684.13 C386.57,676.69 404.69,665.41 415,648.57 C484.78,534.61 445.81,454.08 358,353.35 C332.7,324.32 295.0315,313.3939 263.4015,308.5739 " fill="none" id="HAS_ERRORS-to-RECEIVED" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="257.47,307.67,265.7647,312.9802,262.4129,308.4232,266.9699,305.0715,257.47,307.67" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="93" x="449" y="508.6784">user edits data</text></g><!--link AWAITING_APPROVAL to RECEIVED--><g id="link_AWAITING_APPROVAL_RECEIVED"><path d="M85.59,678.18 C83.75,665.01 82.19,647.21 84,631.57 C96.19,526.22 94.63,494.73 143,400.35 C158.03,371.03 178.6208,346.4014 195.7608,328.0814 " fill="none" id="AWAITING_APPROVAL-to-RECEIVED" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="199.86,323.7,190.7903,327.5393,196.444,327.3512,196.6321,333.0049,199.86,323.7" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="93" x="106" y="508.6784">user edits data</text></g><!--link is_error to AWAITING_APPROVAL--><g id="link_is_error_AWAITING_APPROVAL"><path d="M209.28,574.47 C185.99,578.92 126.85,593.61 99,631.57 C89.2,644.93 87.1481,657.9604 87.3181,672.1504 " fill="none" id="is_error-to-AWAITING_APPROVAL" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="87.39,678.15,91.2819,669.1027,87.3301,673.1504,83.2825,669.1986,87.39,678.15" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="160" x="100" y="645.1384">preprocessing successful</text></g><!--link AWAITING_APPROVAL to is_approved--><g id="link_AWAITING_APPROVAL_is_approved"><path d="M134.86,718.98 C187.64,741.32 264.8445,774.0014 290.5745,784.8914 " fill="none" id="AWAITING_APPROVAL-to-is_approved" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="296.1,787.23,289.3709,780.0384,291.4954,785.2812,286.2527,787.4057,296.1,787.23" style="stroke:#181818;stroke-width:1.0;"/></g><!--link is_approved to APPROVED_FOR_RELEASE--><g id="link_is_approved_APPROVED_FOR_RELEASE"><path d="M294.37,794.46 C276.94,798.42 240.31,809.3 222,833.57 C205.15,855.91 202.4598,883.3305 202.7398,904.2705 " fill="none" id="is_approved-to-APPROVED_FOR_RELEASE" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="202.82,910.27,206.6993,901.2173,202.7531,905.2704,198.7,901.3243,202.82,910.27" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="88" x="246" y="847.1384">user approves</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="138" x="223" y="862.4489">or automatic approval</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="126" x="231" y="877.7595">via 'release_directly'</text></g><!--link is_approved to DELETION--><g id="link_is_approved_DELETION"><path d="M311.96,795.92 C324.95,801.77 350.79,815 366,833.57 C384.69,856.39 393.9532,883.5571 399.2632,904.3171 " fill="none" id="is_approved-to-DELETION" style="stroke:#181818;stroke-width:1.0;"/><polygon fill="#181818" points="400.75,910.13,402.395,900.4195,399.511,905.2859,394.6445,902.4019,400.75,910.13" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="73" x="392" y="862.1384">user rejects</text></g><!--SRC=[hLLHRzCm47xlhpYDXu7O-07Tc1JQ015ZdP8oNf0YDpbQezGfjjEjGlllN1odiPjsgnXzYkppztrtzzqL0631SmHShlG6SbIPv2lDIp4Oq1MS0XUhIaFED3C7IZED4Dr4qoYuJiV1D02cu8GBhZahJDm9l685pt1ML7XHS873xTUxlDGQymkD3zgSmX-3MlzSp248l8TAh6IPeLAOTmBgtwCZ9GxleYIQt7HQ9AwveWnU8iP37G8h9B9y0_Z0bUPY3Wf_LoWoFFJWdkk54LWf26vluybTE4u_Jk8q3g_380aFlNjxEF6Tf2TV2D7DkSoO_fUilQItg4VcxCGVbV9ZQoiRQD9HJcR1zu1iSFCfRI383mt4tMGKJAbENX56OKGadYzJUZKAauGWdFFFGPA6SJo9awVV7zHzG5oR3SlgqhjvZE8mCA79jmzVewbf4WejDqsTwYwph6unlViXwB0eO8QGKSsfEzI_WiyNUYuHHTF0xjDsS1-PSLEuIxRjeCl8H4wpJNnBYYIVhL6QeH7LSeRolqeYapmlwOme3-ivWrQoIZkllzUIflPbGiVKvTfOdi86CCS26y18v9o9cCR6u4dxqKSZUIXbAU7oCbkKD85NL_ujMz5ehoa_9y2QI4ic5E-Cv2tPy_EhdgU6qAvTLSsMt9JHlDmDh1zxRlUNfeTjBJI4Ig6q13IYq6vLdy16UmI3tTtG8wWDiO_0jhL7KSVN64SjX-U239BJYLPlezxSUck4bAuaseLizg1cKhSjSWCji360kTwweRxfTX0XraiQib9enWMOcDVgZNdZXBbLRUk5ETUg-rFe9NlC8qzM7w6NRsLcz6TLF47f5jHoRArkQFPirbQU3LGquoIALRfSaWyoUyuA6lqrPt0gQHwPmZJd4ZDTR4xtCcq7sg9B_4NHQl0N]--></g></svg>
+<?xml version="1.0" encoding="us-ascii" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    contentStyleType="text/css" height="956px" preserveAspectRatio="none"
+    style="width:795px;height:956px;background:#FFFFFF;" version="1.1" viewBox="0 0 795 956"
+    width="795px" zoomAndPan="magnify">
+    <defs />
+    <g>
+        <g id="INITIAL_DATA">
+            <rect fill="#F0F8FF" height="50.6211" rx="12.5" ry="12.5"
+                style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="151"
+                x="21.5" y="21.13" />
+            <line style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" x1="21.5"
+                x2="172.5" y1="47.6183" y2="47.6183" />
+            <text fill="#0000FF" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+                textLength="72" x="61" y="39.6652">initial data</text>
+            <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing"
+                textLength="131" x="26.5" y="64.2198">new unprocessed data</text>
+        </g>
+        <g id="REVISION_DATA">
+            <rect fill="#F0F8FF" height="78.8867" rx="12.5" ry="12.5"
+                style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="232"
+                x="227" y="7" />
+            <line style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" x1="227"
+                x2="459" y1="33.4883" y2="33.4883" />
+            <text fill="#0000FF" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+                textLength="88" x="299" y="25.5352">revision data</text>
+            <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing"
+                textLength="150" x="232" y="50.0898">already existing sequence</text>
+            <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing"
+                textLength="212" x="232" y="64.2227">with status APPROVED_FOR_RELEASE</text>
+            <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing"
+                textLength="145" x="232" y="78.3555">+ new unprocessed data</text>
+        </g>
+        <g id="REVOKED_DATA">
+            <rect fill="#F0F8FF" height="64.7539" rx="12.5" ry="12.5"
+                style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="232"
+                x="518" y="400.35" />
+            <line style="stroke:#0000FF;stroke-width:1.0;stroke-dasharray:1.0,3.0;" x1="518"
+                x2="750" y1="426.8383" y2="426.8383" />
+            <text fill="#0000FF" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+                textLength="106" x="581" y="418.8852">revocation data</text>
+            <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing"
+                textLength="150" x="523" y="443.4398">already existing sequence</text>
+            <text fill="#000000" font-family="sans-serif" font-size="12" lengthAdjust="spacing"
+                textLength="212" x="523" y="457.5727">with status APPROVED_FOR_RELEASE</text>
+        </g>
+        <rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5"
+            style="stroke:#181818;stroke-width:0.5;" width="291" x="459.5" y="678.57" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="281" x="464.5" y="703.861">AWAITING_APPROVAL_FOR_REVOCATION</text>
+        <rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5"
+            style="stroke:#181818;stroke-width:0.5;" width="76" x="181" y="283.35" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="66" x="186" y="308.641">RECEIVED</text>
+        <rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5"
+            style="stroke:#181818;stroke-width:0.5;" width="117" x="160.5" y="412.73" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="107" x="165.5" y="438.021">IN_PROCESSING</text>
+        <rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5"
+            style="stroke:#181818;stroke-width:0.5;" width="99" x="269.5" y="678.57" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="89" x="274.5" y="703.861">HAS_ERRORS</text>
+        <rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5"
+            style="stroke:#181818;stroke-width:0.5;" width="183" x="112.5" y="910.57" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="173" x="117.5" y="935.861">APPROVED_FOR_RELEASE</text>
+        <rect fill="#F1F1F1" height="40" rx="12.5" ry="12.5"
+            style="stroke:#181818;stroke-width:0.5;" width="158" x="10" y="678.57" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="148" x="15" y="703.861">AWAITING_APPROVAL</text>
+        <rect fill="#90EE90" height="42.9766" rx="12.5" ry="12.5"
+            style="stroke:#008000;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="180" x="7"
+            y="171.13" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="170" x="12" y="189.6652">entry with new accession</text>
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="99" x="49.5" y="206.1534">will be created</text>
+        <rect fill="#90EE90" height="59.4648" rx="12.5" ry="12.5"
+            style="stroke:#008000;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="242" x="222"
+            y="162.89" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="197" x="244.5" y="181.4252">entry with existing accession</text>
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="228" x="231" y="197.9134">and incremented version number</text>
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="99" x="295.5" y="214.4017">will be created</text>
+        <rect fill="#90EE90" height="59.4648" rx="12.5" ry="12.5"
+            style="stroke:#008000;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="276" x="496"
+            y="542.11" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="201" x="533.5" y="560.6452">entry with existing accession,</text>
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="202" x="533" y="577.1334">incremented version number,</text>
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="262" x="505" y="593.6217">and is_revocation=true will be created</text>
+        <rect fill="#CD5C5C" height="40" rx="12.5" ry="12.5"
+            style="stroke:#FF0000;stroke-width:1.0;stroke-dasharray:1.0,3.0;" width="148" x="331"
+            y="910.57" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="138" x="336" y="935.861">entry will be deleted</text>
+        <g id="elem_is_error">
+            <polygon fill="#F1F1F1" points="219,559.84,231,571.84,219,583.84,207,571.84,219,559.84"
+                style="stroke:#181818;stroke-width:0.5;" />
+        </g>
+        <g id="elem_is_approved">
+            <polygon fill="#F1F1F1" points="304,779.57,316,791.57,304,803.57,292,791.57,304,779.57"
+                style="stroke:#181818;stroke-width:0.5;" />
+        </g><!--link
+        INITIAL_DATA to CREATING_SUBMIT-->
+        <g id="link_INITIAL_DATA_CREATING_SUBMIT">
+            <path d="M97,72.23 C97,100.08 97,138.81 97,164.89 " fill="none"
+                id="INITIAL_DATA-to-CREATING_SUBMIT" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818" points="97,170.89,101,161.89,97,165.89,93,161.89,97,170.89"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="113" x="98" y="129.4584">initial submission</text>
+        </g><!--link
+        CREATING_SUBMIT to RECEIVED-->
+        <g id="link_CREATING_SUBMIT_RECEIVED">
+            <path d="M120.52,214.58 C142.68,234.33 171.1305,259.6883 192.7105,278.9183 " fill="none"
+                id="CREATING_SUBMIT-to-RECEIVED" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="197.19,282.91,193.1319,273.9361,193.4571,279.5836,187.8096,279.9088,197.19,282.91"
+                style="stroke:#181818;stroke-width:1.0;" />
+        </g><!--link
+        REVISION_DATA to CREATING_REVISE-->
+        <g id="link_REVISION_DATA_CREATING_REVISE">
+            <path d="M343,86.08 C343,110.1 343,134.49 343,156.49 " fill="none"
+                id="REVISION_DATA-to-CREATING_REVISE" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818" points="343,162.49,347,153.49,343,157.49,339,153.49,343,162.49"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="136" x="344" y="129.4584">user initiates revision</text>
+        </g><!--link
+        CREATING_REVISE to RECEIVED-->
+        <g id="link_CREATING_REVISE_RECEIVED">
+            <path d="M309.77,222.76 C287.96,241.88 264.5614,262.3943 245.4814,279.1243 " fill="none"
+                id="CREATING_REVISE-to-RECEIVED" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="240.97,283.08,250.3742,280.154,244.7295,279.7836,245.0999,274.1389,240.97,283.08"
+                style="stroke:#181818;stroke-width:1.0;" />
+        </g><!--link
+        REVOKED_DATA to CREATING_REVOKE-->
+        <g id="link_REVOKED_DATA_CREATING_REVOKE">
+            <path d="M634,465.53 C634,488.63 634,513.63 634,536.01 " fill="none"
+                id="REVOKED_DATA-to-CREATING_REVOKE" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818" points="634,542.01,638,533.01,634,537.01,630,533.01,634,542.01"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="152" x="635" y="508.6784">user initiates revocation</text>
+        </g><!--link
+        CREATING_REVOKE to AWAITING_APPROVAL_FOR_REVOCATION-->
+        <g id="link_CREATING_REVOKE_AWAITING_APPROVAL_FOR_REVOCATION">
+            <path d="M627.27,601.77 C621.82,625.23 615.6396,651.8061 610.8796,672.2661 " fill="none"
+                id="CREATING_REVOKE-to-AWAITING_APPROVAL_FOR_REVOCATION"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="609.52,678.11,615.4553,670.2505,610.653,673.2401,607.6634,668.4377,609.52,678.11"
+                style="stroke:#181818;stroke-width:1.0;" />
+        </g><!--link
+        AWAITING_APPROVAL_FOR_REVOCATION to is_approved-->
+        <g id="link_AWAITING_APPROVAL_FOR_REVOCATION_is_approved">
+            <path d="M540.8,718.98 C465.17,741.84 351.3832,776.2433 318.4132,786.2133 " fill="none"
+                id="AWAITING_APPROVAL_FOR_REVOCATION-to-is_approved"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="312.67,787.95,322.4425,789.1737,317.456,786.5027,320.1269,781.5162,312.67,787.95"
+                style="stroke:#181818;stroke-width:1.0;" />
+        </g><!--link
+        RECEIVED to IN_PROCESSING-->
+        <g id="link_RECEIVED_IN_PROCESSING">
+            <path d="M219,323.7 C219,347.78 219,382.65 219,406.62 " fill="none"
+                id="RECEIVED-to-IN_PROCESSING" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818" points="219,412.62,223,403.62,219,407.62,215,403.62,219,412.62"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="129" x="220" y="366.9184">processing starts</text>
+        </g><!--link
+        IN_PROCESSING to is_error-->
+        <g id="link_IN_PROCESSING_is_error">
+            <path d="M219,453.08 C219,482.02 219,529.67 219,553.23 " fill="none"
+                id="IN_PROCESSING-to-is_error" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818" points="219,559.23,223,550.23,219,554.23,215,550.23,219,559.23"
+                style="stroke:#181818;stroke-width:1.0;" />
+        </g><!--link
+        is_error to HAS_ERRORS-->
+        <g id="link_is_error_HAS_ERRORS">
+            <path d="M224.1,579.19 C238.58,597.27 276.6865,644.7891 299.6765,673.4591 " fill="none"
+                id="is_error-to-HAS_ERRORS" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="303.43,678.14,300.9203,668.6163,300.302,674.2392,294.6791,673.621,303.43,678.14"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="127" x="279" y="645.1384">data contain error(s)</text>
+        </g><!--link
+        HAS_ERRORS to RECEIVED-->
+        <g id="link_HAS_ERRORS_RECEIVED">
+            <path
+                d="M368.84,684.13 C386.57,676.69 404.69,665.41 415,648.57 C484.78,534.61 445.81,454.08 358,353.35 C332.7,324.32 295.0315,313.3939 263.4015,308.5739 "
+                fill="none" id="HAS_ERRORS-to-RECEIVED" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="257.47,307.67,265.7647,312.9802,262.4129,308.4232,266.9699,305.0715,257.47,307.67"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="93" x="449" y="508.6784">user edits data</text>
+        </g><!--link
+        AWAITING_APPROVAL to RECEIVED-->
+        <g id="link_AWAITING_APPROVAL_RECEIVED">
+            <path
+                d="M85.59,678.18 C83.75,665.01 82.19,647.21 84,631.57 C96.19,526.22 94.63,494.73 143,400.35 C158.03,371.03 178.6208,346.4014 195.7608,328.0814 "
+                fill="none" id="AWAITING_APPROVAL-to-RECEIVED"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="199.86,323.7,190.7903,327.5393,196.444,327.3512,196.6321,333.0049,199.86,323.7"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="93" x="106" y="508.6784">user edits data</text>
+        </g><!--link
+        is_error to AWAITING_APPROVAL-->
+        <g id="link_is_error_AWAITING_APPROVAL">
+            <path
+                d="M209.28,574.47 C185.99,578.92 126.85,593.61 99,631.57 C89.2,644.93 87.1481,657.9604 87.3181,672.1504 "
+                fill="none" id="is_error-to-AWAITING_APPROVAL"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="87.39,678.15,91.2819,669.1027,87.3301,673.1504,83.2825,669.1986,87.39,678.15"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="160" x="100" y="645.1384">processing successful</text>
+        </g><!--link
+        AWAITING_APPROVAL to is_approved-->
+        <g id="link_AWAITING_APPROVAL_is_approved">
+            <path d="M134.86,718.98 C187.64,741.32 264.8445,774.0014 290.5745,784.8914 " fill="none"
+                id="AWAITING_APPROVAL-to-is_approved" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="296.1,787.23,289.3709,780.0384,291.4954,785.2812,286.2527,787.4057,296.1,787.23"
+                style="stroke:#181818;stroke-width:1.0;" />
+        </g><!--link
+        is_approved to APPROVED_FOR_RELEASE-->
+        <g id="link_is_approved_APPROVED_FOR_RELEASE">
+            <path
+                d="M294.37,794.46 C276.94,798.42 240.31,809.3 222,833.57 C205.15,855.91 202.4598,883.3305 202.7398,904.2705 "
+                fill="none" id="is_approved-to-APPROVED_FOR_RELEASE"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="202.82,910.27,206.6993,901.2173,202.7531,905.2704,198.7,901.3243,202.82,910.27"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="88" x="246" y="847.1384">user approves</text>
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="138" x="223" y="862.4489">or automatic approval</text>
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="126" x="231" y="877.7595">via 'release_directly'</text>
+        </g><!--link
+        is_approved to DELETION-->
+        <g id="link_is_approved_DELETION">
+            <path
+                d="M311.96,795.92 C324.95,801.77 350.79,815 366,833.57 C384.69,856.39 393.9532,883.5571 399.2632,904.3171 "
+                fill="none" id="is_approved-to-DELETION" style="stroke:#181818;stroke-width:1.0;" />
+            <polygon fill="#181818"
+                points="400.75,910.13,402.395,900.4195,399.511,905.2859,394.6445,902.4019,400.75,910.13"
+                style="stroke:#181818;stroke-width:1.0;" />
+            <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+                textLength="73" x="392" y="862.1384">user rejects</text>
+        </g><!--SRC=[hLLHRzCm47xlhpYDXu7O-07Tc1JQ015ZdP8oNf0YDpbQezGfjjEjGlllN1odiPjsgnXzYkppztrtzzqL0631SmHShlG6SbIPv2lDIp4Oq1MS0XUhIaFED3C7IZED4Dr4qoYuJiV1D02cu8GBhZahJDm9l685pt1ML7XHS873xTUxlDGQymkD3zgSmX-3MlzSp248l8TAh6IPeLAOTmBgtwCZ9GxleYIQt7HQ9AwveWnU8iP37G8h9B9y0_Z0bUPY3Wf_LoWoFFJWdkk54LWf26vluybTE4u_Jk8q3g_380aFlNjxEF6Tf2TV2D7DkSoO_fUilQItg4VcxCGVbV9ZQoiRQD9HJcR1zu1iSFCfRI383mt4tMGKJAbENX56OKGadYzJUZKAauGWdFFFGPA6SJo9awVV7zHzG5oR3SlgqhjvZE8mCA79jmzVewbf4WejDqsTwYwph6unlViXwB0eO8QGKSsfEzI_WiyNUYuHHTF0xjDsS1-PSLEuIxRjeCl8H4wpJNnBYYIVhL6QeH7LSeRolqeYapmlwOme3-ivWrQoIZkllzUIflPbGiVKvTfOdi86CCS26y18v9o9cCR6u4dxqKSZUIXbAU7oCbkKD85NL_ujMz5ehoa_9y2QI4ic5E-Cv2tPy_EhdgU6qAvTLSsMt9JHlDmDh1zxRlUNfeTjBJI4Ig6q13IYq6vLdy16UmI3tTtG8wWDiO_0jhL7KSVN64SjX-U239BJYLPlezxSUck4bAuaseLizg1cKhSjSWCji360kTwweRxfTX0XraiQib9enWMOcDVgZNdZXBbLRUk5ETUg-rFe9NlC8qzM7w6NRsLcz6TLF47f5jHoRArkQFPirbQU3LGquoIALRfSaWyoUyuA6lqrPt0gQHwPmZJd4ZDTR4xtCcq7sg9B_4NHQl0N]-->
+    </g>
+</svg>

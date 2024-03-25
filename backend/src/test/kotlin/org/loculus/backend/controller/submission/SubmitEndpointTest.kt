@@ -120,7 +120,7 @@ class SubmitEndpointTest(
     }
 
     @Test
-    fun `GIVEN fasta data with unknown segment THEN data is accepted to let the preprocessing pipeline verify it`() {
+    fun `GIVEN fasta data with unknown segment THEN data is accepted to let the processing pipeline verify it`() {
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
                 content = """

@@ -1,1 +1,307 @@
-<?xml version="1.0" encoding="us-ascii" standalone="no"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="1198px" preserveAspectRatio="none" style="width:1114px;height:1198px;background:#FFFFFF;" version="1.1" viewBox="0 0 1114 1198" width="1114px" zoomAndPan="magnify"><defs/><g><rect fill="none" height="149.5078" style="stroke:#000000;stroke-width:1.5;" width="1088" x="10" y="113.7988"/><rect fill="none" height="614.5215" style="stroke:#000000;stroke-width:1.5;" width="1098" x="10" y="312.6172"/><rect fill="none" height="97.2422" style="stroke:#000000;stroke-width:1.5;" width="587" x="104" y="512.791"/><rect fill="none" height="136.5527" style="stroke:#000000;stroke-width:1.5;" width="568" x="530" y="624.0332"/><line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="109" x2="109" y1="67.4883" y2="1120.002"/><line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="362.5" x2="362.5" y1="67.4883" y2="1120.002"/><line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="603" x2="603" y1="67.4883" y2="1120.002"/><line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="1053" x2="1053" y1="67.4883" y2="1120.002"/><rect fill="#E0FFFF" height="30.4883" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="179" x="20" y="36"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="165" x="27" y="56.5352">Loculus Frontend / User</text><rect fill="#E0FFFF" height="30.4883" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="179" x="20" y="1119.002"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="165" x="27" y="1139.5371">Loculus Frontend / User</text><rect fill="#90EE90" height="30.4883" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="186" x="269.5" y="36"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="172" x="276.5" y="56.5352">(Pre-)Processing Pipeline</text><rect fill="#90EE90" height="30.4883" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="186" x="269.5" y="1119.002"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="172" x="276.5" y="1139.5371">(Pre-)Processing Pipeline</text><rect fill="#FFA500" height="30.4883" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="127" x="540" y="36"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113" x="547" y="56.5352">Loculus Backend</text><rect fill="#FFA500" height="30.4883" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="127" x="540" y="1119.002"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113" x="547" y="1139.5371">Loculus Backend</text><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="63" x="1019" y="64.5352">Database</text><path d="M1035.5,15 C1035.5,5 1053.5,5 1053.5,5 C1053.5,5 1071.5,5 1071.5,15 L1071.5,41 C1071.5,51 1053.5,51 1053.5,51 C1053.5,51 1035.5,51 1035.5,41 L1035.5,15 " fill="#E2E2F0" style="stroke:#181818;stroke-width:1.5;"/><path d="M1035.5,15 C1035.5,25 1053.5,25 1053.5,25 C1053.5,25 1071.5,25 1071.5,15 " fill="none" style="stroke:#181818;stroke-width:1.5;"/><text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="63" x="1019" y="1132.5371">Database</text><path d="M1035.5,1145.4902 C1035.5,1135.4902 1053.5,1135.4902 1053.5,1135.4902 C1053.5,1135.4902 1071.5,1135.4902 1071.5,1145.4902 L1071.5,1171.4902 C1071.5,1181.4902 1053.5,1181.4902 1053.5,1181.4902 C1053.5,1181.4902 1035.5,1181.4902 1035.5,1171.4902 L1035.5,1145.4902 " fill="#E2E2F0" style="stroke:#181818;stroke-width:1.5;"/><path d="M1035.5,1145.4902 C1035.5,1155.4902 1053.5,1155.4902 1053.5,1155.4902 C1053.5,1155.4902 1071.5,1155.4902 1071.5,1145.4902 " fill="none" style="stroke:#181818;stroke-width:1.5;"/><polygon fill="#181818" points="591.5,94.7988,601.5,98.7988,591.5,102.7988,595.5,98.7988" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="98.7988" y2="98.7988"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="178" x="116.5" y="94.0566">submit initial sequence data</text><path d="M10,113.7988 L72,113.7988 L72,121.1094 L62,131.1094 L10,131.1094 L10,113.7988 " fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;"/><rect fill="none" height="149.5078" style="stroke:#000000;stroke-width:1.5;" width="1088" x="10" y="113.7988"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="17" x="25" y="127.3672">alt</text><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="219" x="87" y="126.4336">[Sequence and Metadata Files are valid]</text><polygon fill="#181818" points="120.5,148.4199,110.5,152.4199,120.5,156.4199,116.5,152.4199" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="114.5" x2="602.5" y1="152.4199" y2="152.4199"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="161" x="126.5" y="147.6777">response with accessions</text><polygon fill="#181818" points="1041.5,177.7305,1051.5,181.7305,1041.5,185.7305,1045.5,181.7305" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="181.7305" y2="181.7305"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="166" x="610.5" y="176.9883">Store initial sequence data</text><polygon fill="#181818" points="1041.5,207.041,1051.5,211.041,1041.5,215.041,1045.5,211.041" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="211.041" y2="211.041"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="149" x="610.5" y="206.2988">set status to 'RECEIVED'</text><line style="stroke:#000000;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="10" x2="1098" y1="220.041" y2="220.041"/><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="230" x="15" y="230.6758">[Sequence and Metadata Files are invalid]</text><polygon fill="#181818" points="120.5,251.3066,110.5,255.3066,120.5,259.3066,116.5,255.3066" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="114.5" x2="602.5" y1="255.3066" y2="255.3066"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="122" x="126.5" y="250.5645">response with error</text><path d="M114,275.3066 L114,300.3066 L524,300.3066 L524,285.3066 L514,275.3066 L114,275.3066 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M514,275.3066 L514,285.3066 L524,285.3066 L514,275.3066 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="389" x="120" y="292.875">In the following we assume initial raw sequence data are valid</text><path d="M10,312.6172 L84,312.6172 L84,319.9277 L74,329.9277 L10,329.9277 L10,312.6172 " fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;"/><rect fill="none" height="614.5215" style="stroke:#000000;stroke-width:1.5;" width="1098" x="10" y="312.6172"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="29" x="25" y="326.1855">loop</text><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="155" x="99" y="325.252">[until no processing errors]</text><polygon fill="#181818" points="591.5,347.2383,601.5,351.2383,591.5,355.2383,595.5,351.2383" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="362.5" x2="597.5" y1="351.2383" y2="351.2383"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="217" x="369.5" y="346.4961">Query initial/edited sequence data</text><polygon fill="#181818" points="1041.5,376.5488,1051.5,380.5488,1041.5,384.5488,1045.5,380.5488" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="380.5488" y2="380.5488"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="217" x="610.5" y="375.8066">Query initial/edited sequence data</text><polygon fill="#181818" points="1041.5,405.8594,1051.5,409.8594,1041.5,413.8594,1045.5,409.8594" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="409.8594" y2="409.8594"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="386" x="610.5" y="405.1172">Set status from 'RECEIVED'/'HAS_ERRORS' to 'IN_PROCESSING'</text><polygon fill="#181818" points="614.5,435.1699,604.5,439.1699,614.5,443.1699,610.5,439.1699" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="608.5" x2="1052.5" y1="439.1699" y2="439.1699"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="176" x="620.5" y="434.4277">initial/edited sequence data</text><polygon fill="#181818" points="373.5,464.4805,363.5,468.4805,373.5,472.4805,369.5,468.4805" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="367.5" x2="602.5" y1="468.4805" y2="468.4805"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="176" x="379.5" y="463.7383">initial/edited sequence data</text><polygon fill="#181818" points="591.5,493.791,601.5,497.791,591.5,501.791,595.5,497.791" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="362.5" x2="597.5" y1="497.791" y2="497.791"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="206" x="369.5" y="493.0488">submit processed sequence data</text><path d="M104,512.791 L166,512.791 L166,520.1016 L156,530.1016 L104,530.1016 L104,512.791 " fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;"/><rect fill="none" height="97.2422" style="stroke:#000000;stroke-width:1.5;" width="587" x="104" y="512.791"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="17" x="119" y="526.3594">alt</text><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="137" x="181" y="525.4258">[validation errors occur]</text><polygon fill="#181818" points="373.5,547.4121,363.5,551.4121,373.5,555.4121,369.5,551.4121" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="367.5" x2="602.5" y1="551.4121" y2="551.4121"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="195" x="379.5" y="546.6699">response with validation errors</text><path d="M114,564.4121 L114,604.4121 L681,604.4121 L681,574.4121 L671,564.4121 L114,564.4121 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><path d="M671,564.4121 L671,574.4121 L681,574.4121 L671,564.4121 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="546" x="120" y="581.9805">Validation error are probably only redeemable by changing the pre-processing pipeline</text><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="380" x="120" y="597.291">In the following we assume that no validation error occurred</text><path d="M530,624.0332 L592,624.0332 L592,631.3438 L582,641.3438 L530,641.3438 L530,624.0332 " fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;"/><rect fill="none" height="136.5527" style="stroke:#000000;stroke-width:1.5;" width="568" x="530" y="624.0332"/><text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold" lengthAdjust="spacing" textLength="17" x="545" y="637.6016">alt</text><text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold" lengthAdjust="spacing" textLength="294" x="607" y="636.668">[processed sequence data contain processing errors]</text><polygon fill="#181818" points="1041.5,658.6543,1051.5,662.6543,1041.5,666.6543,1045.5,662.6543" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="662.6543" y2="662.6543"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="266" x="610.5" y="657.9121">Store processed sequence data with errors</text><polygon fill="#181818" points="1041.5,687.9648,1051.5,691.9648,1041.5,695.9648,1045.5,691.9648" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="691.9648" y2="691.9648"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="170" x="610.5" y="687.2227">set status to 'HAS_ERRORS'</text><line style="stroke:#000000;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="530" x2="1098" y1="700.9648" y2="700.9648"/><polygon fill="#181818" points="1041.5,719.2754,1051.5,723.2754,1041.5,727.2754,1045.5,723.2754" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="723.2754" y2="723.2754"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="287" x="610.5" y="718.5332">Store processed sequence data without errors</text><polygon fill="#181818" points="1041.5,748.5859,1051.5,752.5859,1041.5,756.5859,1045.5,752.5859" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="752.5859" y2="752.5859"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="225" x="610.5" y="747.8438">set status to 'AWAITING_APPROVAL'</text><polygon fill="#181818" points="591.5,784.8965,601.5,788.8965,591.5,792.8965,595.5,788.8965" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="788.8965" y2="788.8965"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="269" x="116.5" y="784.1543">query processed sequence data with errors</text><line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="151.5" y1="818.207" y2="818.207"/><line style="stroke:#181818;stroke-width:1.0;" x1="151.5" x2="151.5" y1="818.207" y2="831.207"/><line style="stroke:#181818;stroke-width:1.0;" x1="110.5" x2="151.5" y1="831.207" y2="831.207"/><polygon fill="#181818" points="120.5,827.207,110.5,831.207,120.5,835.207,116.5,831.207" style="stroke:#181818;stroke-width:1.0;"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="239" x="116.5" y="813.4648">address errors and edit sequence data</text><polygon fill="#181818" points="591.5,856.5176,601.5,860.5176,591.5,864.5176,595.5,860.5176" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="860.5176" y2="860.5176"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="181" x="116.5" y="855.7754">submit edited sequence data</text><polygon fill="#181818" points="1041.5,885.8281,1051.5,889.8281,1041.5,893.8281,1045.5,889.8281" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="889.8281" y2="889.8281"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="169" x="610.5" y="885.0859">store edited sequence data</text><polygon fill="#181818" points="1041.5,915.1387,1051.5,919.1387,1041.5,923.1387,1045.5,919.1387" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="919.1387" y2="919.1387"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="149" x="610.5" y="914.3965">set status to 'RECEIVED'</text><polygon fill="#181818" points="591.5,951.4492,601.5,955.4492,591.5,959.4492,595.5,955.4492" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="955.4492" y2="955.4492"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="199" x="116.5" y="950.707">Query processed sequence data</text><polygon fill="#181818" points="1041.5,980.7598,1051.5,984.7598,1041.5,988.7598,1045.5,984.7598" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="984.7598" y2="984.7598"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="199" x="610.5" y="980.0176">Query processed sequence data</text><polygon fill="#181818" points="614.5,1010.0703,604.5,1014.0703,614.5,1018.0703,610.5,1014.0703" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="608.5" x2="1052.5" y1="1014.0703" y2="1014.0703"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="158" x="620.5" y="1009.3281">processed sequence data</text><polygon fill="#181818" points="120.5,1039.3809,110.5,1043.3809,120.5,1047.3809,116.5,1043.3809" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="114.5" x2="602.5" y1="1043.3809" y2="1043.3809"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="158" x="126.5" y="1038.6387">processed sequence data</text><polygon fill="#181818" points="591.5,1068.6914,601.5,1072.6914,591.5,1076.6914,595.5,1072.6914" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="1072.6914" y2="1072.6914"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="212" x="116.5" y="1067.9492">approve processed sequence data</text><polygon fill="#181818" points="1041.5,1098.002,1051.5,1102.002,1041.5,1106.002,1045.5,1102.002" style="stroke:#181818;stroke-width:1.0;"/><line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="1102.002" y2="1102.002"/><text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="426" x="610.5" y="1097.2598">set status from 'AWAITING_APPROVAL' to 'APPROVED_FOR_RELEASE'</text><!--SRC=[fLLDSvim4BtxL-mu1zf3nlSSEkCFadh6ZHretQD7XasiAPQ89EBnl-zADY0JGqBBWG59x-tksmy10EHC6Pxmd0a3muLCYgpGSA-aC2XI6C4lZMe8JCDpkNQpu2yxCpqoCO0cmPULmjklAoKJr9gB5rZn73Ckq57azVg9v44XNc4ftPYmv0zPTDZjwHjkbeg95tIWb1csPHfXE3j_kQEpoS1jLnxVVYlXTw2BxPuRu88RpZBG-5gWID1nEHJB3CJbAYFq3pJCxi8zpr03KmXlBEEfEssVqZKoKvgy0uKwbu9yEt2p0vQum6dX6ceskOFOI29kT-iAHAC1RPWXfOo480gduNmTpW9t7ZEo_L4SNFIE19MIwcH1f4vd8Gs2ika4-LpXpfnp0MQ7y2opJ1viuW_aZDR5levLiSDbl9SIMt-iYLDECobpA8JX6Itw1UNyqeCg56_BJ_zJWUfOcXvXoWscdrFxtv5ndITIP-zbQXHy7yURC8gMKHou9CuVDwjeEGtZUFxu45ICimdS-c7qSuEGjHmVW3yIyDm_vzrMsxQBN0gPeQe_PmTaaXIgEjEGodVnikRU4LrGT1UW_wmRFAxGoEoMRRCZI44lXIdYdluHjaT8TZHhh0AsXdCQRPue-NcoNR7JKVHcnuojt6P89sd8UfEkAdz_mNR1u4Bhbdn0Gc8mBgvqIaiMwbdKHbcFWKwIndJo2hqEXMRK__aX2zFVbV7lyVmdjTTclA9UMuyNWIzkJNJr_dXrOw2FDZvDFLLPcbAHwx8px82s_TZMZLrtMPzPf9salH2TjqnLZEqtxbENOeFMITi5iEFGi_19xbhyDa1x42mdp1ls2KCtn_xxkZkLe_iBPvlxPRI9maKuZiDWy1S0]--></g></svg>
+<?xml version="1.0" encoding="us-ascii" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+    contentStyleType="text/css" height="1198px" preserveAspectRatio="none"
+    style="width:1114px;height:1198px;background:#FFFFFF;" version="1.1" viewBox="0 0 1114 1198"
+    width="1114px" zoomAndPan="magnify">
+    <defs />
+    <g>
+        <rect fill="none" height="149.5078" style="stroke:#000000;stroke-width:1.5;" width="1088"
+            x="10" y="113.7988" />
+        <rect fill="none" height="614.5215" style="stroke:#000000;stroke-width:1.5;" width="1098"
+            x="10" y="312.6172" />
+        <rect fill="none" height="97.2422" style="stroke:#000000;stroke-width:1.5;" width="587"
+            x="104" y="512.791" />
+        <rect fill="none" height="136.5527" style="stroke:#000000;stroke-width:1.5;" width="568"
+            x="530" y="624.0332" />
+        <line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="109" x2="109"
+            y1="67.4883" y2="1120.002" />
+        <line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="362.5"
+            x2="362.5" y1="67.4883" y2="1120.002" />
+        <line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="603" x2="603"
+            y1="67.4883" y2="1120.002" />
+        <line style="stroke:#181818;stroke-width:0.5;stroke-dasharray:5.0,5.0;" x1="1053" x2="1053"
+            y1="67.4883" y2="1120.002" />
+        <rect fill="#E0FFFF" height="30.4883" rx="2.5" ry="2.5"
+            style="stroke:#181818;stroke-width:0.5;" width="179" x="20" y="36" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="165" x="27" y="56.5352">Loculus Frontend / User</text>
+        <rect fill="#E0FFFF" height="30.4883" rx="2.5" ry="2.5"
+            style="stroke:#181818;stroke-width:0.5;" width="179" x="20" y="1119.002" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="165" x="27" y="1139.5371">Loculus Frontend / User</text>
+        <rect fill="#90EE90" height="30.4883" rx="2.5" ry="2.5"
+            style="stroke:#181818;stroke-width:0.5;" width="186" x="269.5" y="36" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="172" x="276.5" y="56.5352">Processing Pipeline</text>
+        <rect fill="#90EE90" height="30.4883" rx="2.5" ry="2.5"
+            style="stroke:#181818;stroke-width:0.5;" width="186" x="269.5" y="1119.002" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="172" x="276.5" y="1139.5371">Processing Pipeline</text>
+        <rect fill="#FFA500" height="30.4883" rx="2.5" ry="2.5"
+            style="stroke:#181818;stroke-width:0.5;" width="127" x="540" y="36" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="113" x="547" y="56.5352">Loculus Backend</text>
+        <rect fill="#FFA500" height="30.4883" rx="2.5" ry="2.5"
+            style="stroke:#181818;stroke-width:0.5;" width="127" x="540" y="1119.002" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="113" x="547" y="1139.5371">Loculus Backend</text>
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="63" x="1019" y="64.5352">Database</text>
+        <path
+            d="M1035.5,15 C1035.5,5 1053.5,5 1053.5,5 C1053.5,5 1071.5,5 1071.5,15 L1071.5,41 C1071.5,51 1053.5,51 1053.5,51 C1053.5,51 1035.5,51 1035.5,41 L1035.5,15 "
+            fill="#E2E2F0" style="stroke:#181818;stroke-width:1.5;" />
+        <path d="M1035.5,15 C1035.5,25 1053.5,25 1053.5,25 C1053.5,25 1071.5,25 1071.5,15 "
+            fill="none" style="stroke:#181818;stroke-width:1.5;" />
+        <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing"
+            textLength="63" x="1019" y="1132.5371">Database</text>
+        <path
+            d="M1035.5,1145.4902 C1035.5,1135.4902 1053.5,1135.4902 1053.5,1135.4902 C1053.5,1135.4902 1071.5,1135.4902 1071.5,1145.4902 L1071.5,1171.4902 C1071.5,1181.4902 1053.5,1181.4902 1053.5,1181.4902 C1053.5,1181.4902 1035.5,1181.4902 1035.5,1171.4902 L1035.5,1145.4902 "
+            fill="#E2E2F0" style="stroke:#181818;stroke-width:1.5;" />
+        <path
+            d="M1035.5,1145.4902 C1035.5,1155.4902 1053.5,1155.4902 1053.5,1155.4902 C1053.5,1155.4902 1071.5,1155.4902 1071.5,1145.4902 "
+            fill="none" style="stroke:#181818;stroke-width:1.5;" />
+        <polygon fill="#181818" points="591.5,94.7988,601.5,98.7988,591.5,102.7988,595.5,98.7988"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="98.7988"
+            y2="98.7988" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="178" x="116.5" y="94.0566">submit initial sequence data</text>
+        <path d="M10,113.7988 L72,113.7988 L72,121.1094 L62,131.1094 L10,131.1094 L10,113.7988 "
+            fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;" />
+        <rect fill="none" height="149.5078" style="stroke:#000000;stroke-width:1.5;" width="1088"
+            x="10" y="113.7988" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold"
+            lengthAdjust="spacing" textLength="17" x="25" y="127.3672">alt</text>
+        <text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold"
+            lengthAdjust="spacing" textLength="219" x="87" y="126.4336">[Sequence and Metadata Files
+            are valid]</text>
+        <polygon fill="#181818" points="120.5,148.4199,110.5,152.4199,120.5,156.4199,116.5,152.4199"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="114.5" x2="602.5" y1="152.4199"
+            y2="152.4199" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="161" x="126.5" y="147.6777">response with accessions</text>
+        <polygon fill="#181818"
+            points="1041.5,177.7305,1051.5,181.7305,1041.5,185.7305,1045.5,181.7305"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="181.7305"
+            y2="181.7305" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="166" x="610.5" y="176.9883">Store initial sequence data</text>
+        <polygon fill="#181818" points="1041.5,207.041,1051.5,211.041,1041.5,215.041,1045.5,211.041"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="211.041"
+            y2="211.041" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="149" x="610.5" y="206.2988">set status to 'RECEIVED'</text>
+        <line style="stroke:#000000;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="10" x2="1098"
+            y1="220.041" y2="220.041" />
+        <text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold"
+            lengthAdjust="spacing" textLength="230" x="15" y="230.6758">[Sequence and Metadata Files
+            are invalid]</text>
+        <polygon fill="#181818" points="120.5,251.3066,110.5,255.3066,120.5,259.3066,116.5,255.3066"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="114.5" x2="602.5" y1="255.3066"
+            y2="255.3066" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="122" x="126.5" y="250.5645">response with error</text>
+        <path
+            d="M114,275.3066 L114,300.3066 L524,300.3066 L524,285.3066 L514,275.3066 L114,275.3066 "
+            fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;" />
+        <path d="M514,275.3066 L514,285.3066 L524,285.3066 L514,275.3066 " fill="#FEFFDD"
+            style="stroke:#181818;stroke-width:0.5;" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="389" x="120" y="292.875">In the following we assume initial raw sequence
+            data are valid</text>
+        <path d="M10,312.6172 L84,312.6172 L84,319.9277 L74,329.9277 L10,329.9277 L10,312.6172 "
+            fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;" />
+        <rect fill="none" height="614.5215" style="stroke:#000000;stroke-width:1.5;" width="1098"
+            x="10" y="312.6172" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold"
+            lengthAdjust="spacing" textLength="29" x="25" y="326.1855">loop</text>
+        <text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold"
+            lengthAdjust="spacing" textLength="155" x="99" y="325.252">[until no processing errors]</text>
+        <polygon fill="#181818" points="591.5,347.2383,601.5,351.2383,591.5,355.2383,595.5,351.2383"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="362.5" x2="597.5" y1="351.2383"
+            y2="351.2383" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="217" x="369.5" y="346.4961">Query initial/edited sequence data</text>
+        <polygon fill="#181818"
+            points="1041.5,376.5488,1051.5,380.5488,1041.5,384.5488,1045.5,380.5488"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="380.5488"
+            y2="380.5488" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="217" x="610.5" y="375.8066">Query initial/edited sequence data</text>
+        <polygon fill="#181818"
+            points="1041.5,405.8594,1051.5,409.8594,1041.5,413.8594,1045.5,409.8594"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="409.8594"
+            y2="409.8594" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="386" x="610.5" y="405.1172">Set status from 'RECEIVED'/'HAS_ERRORS' to
+            'IN_PROCESSING'</text>
+        <polygon fill="#181818" points="614.5,435.1699,604.5,439.1699,614.5,443.1699,610.5,439.1699"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="608.5"
+            x2="1052.5" y1="439.1699" y2="439.1699" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="176" x="620.5" y="434.4277">initial/edited sequence data</text>
+        <polygon fill="#181818" points="373.5,464.4805,363.5,468.4805,373.5,472.4805,369.5,468.4805"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="367.5"
+            x2="602.5" y1="468.4805" y2="468.4805" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="176" x="379.5" y="463.7383">initial/edited sequence data</text>
+        <polygon fill="#181818" points="591.5,493.791,601.5,497.791,591.5,501.791,595.5,497.791"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="362.5" x2="597.5" y1="497.791"
+            y2="497.791" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="206" x="369.5" y="493.0488">submit processed sequence data</text>
+        <path d="M104,512.791 L166,512.791 L166,520.1016 L156,530.1016 L104,530.1016 L104,512.791 "
+            fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;" />
+        <rect fill="none" height="97.2422" style="stroke:#000000;stroke-width:1.5;" width="587"
+            x="104" y="512.791" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold"
+            lengthAdjust="spacing" textLength="17" x="119" y="526.3594">alt</text>
+        <text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold"
+            lengthAdjust="spacing" textLength="137" x="181" y="525.4258">[validation errors occur]</text>
+        <polygon fill="#181818" points="373.5,547.4121,363.5,551.4121,373.5,555.4121,369.5,551.4121"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="367.5" x2="602.5" y1="551.4121"
+            y2="551.4121" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="195" x="379.5" y="546.6699">response with validation errors</text>
+        <path
+            d="M114,564.4121 L114,604.4121 L681,604.4121 L681,574.4121 L671,564.4121 L114,564.4121 "
+            fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;" />
+        <path d="M671,564.4121 L671,574.4121 L681,574.4121 L671,564.4121 " fill="#FEFFDD"
+            style="stroke:#181818;stroke-width:0.5;" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="546" x="120" y="581.9805">Validation error are probably only redeemable by
+            changing the processing pipeline</text>
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="380" x="120" y="597.291">In the following we assume that no validation error
+            occurred</text>
+        <path
+            d="M530,624.0332 L592,624.0332 L592,631.3438 L582,641.3438 L530,641.3438 L530,624.0332 "
+            fill="#EEEEEE" style="stroke:#000000;stroke-width:1.5;" />
+        <rect fill="none" height="136.5527" style="stroke:#000000;stroke-width:1.5;" width="568"
+            x="530" y="624.0332" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" font-weight="bold"
+            lengthAdjust="spacing" textLength="17" x="545" y="637.6016">alt</text>
+        <text fill="#000000" font-family="sans-serif" font-size="11" font-weight="bold"
+            lengthAdjust="spacing" textLength="294" x="607" y="636.668">[processed sequence data
+            contain processing errors]</text>
+        <polygon fill="#181818"
+            points="1041.5,658.6543,1051.5,662.6543,1041.5,666.6543,1045.5,662.6543"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="662.6543"
+            y2="662.6543" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="266" x="610.5" y="657.9121">Store processed sequence data with errors</text>
+        <polygon fill="#181818"
+            points="1041.5,687.9648,1051.5,691.9648,1041.5,695.9648,1045.5,691.9648"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="691.9648"
+            y2="691.9648" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="170" x="610.5" y="687.2227">set status to 'HAS_ERRORS'</text>
+        <line style="stroke:#000000;stroke-width:1.0;stroke-dasharray:2.0,2.0;" x1="530" x2="1098"
+            y1="700.9648" y2="700.9648" />
+        <polygon fill="#181818"
+            points="1041.5,719.2754,1051.5,723.2754,1041.5,727.2754,1045.5,723.2754"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="723.2754"
+            y2="723.2754" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="287" x="610.5" y="718.5332">Store processed sequence data without errors</text>
+        <polygon fill="#181818"
+            points="1041.5,748.5859,1051.5,752.5859,1041.5,756.5859,1045.5,752.5859"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="752.5859"
+            y2="752.5859" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="225" x="610.5" y="747.8438">set status to 'AWAITING_APPROVAL'</text>
+        <polygon fill="#181818" points="591.5,784.8965,601.5,788.8965,591.5,792.8965,595.5,788.8965"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="788.8965"
+            y2="788.8965" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="269" x="116.5" y="784.1543">query processed sequence data with errors</text>
+        <line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="151.5" y1="818.207"
+            y2="818.207" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="151.5" x2="151.5" y1="818.207"
+            y2="831.207" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="110.5" x2="151.5" y1="831.207"
+            y2="831.207" />
+        <polygon fill="#181818" points="120.5,827.207,110.5,831.207,120.5,835.207,116.5,831.207"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="239" x="116.5" y="813.4648">address errors and edit sequence data</text>
+        <polygon fill="#181818" points="591.5,856.5176,601.5,860.5176,591.5,864.5176,595.5,860.5176"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="860.5176"
+            y2="860.5176" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="181" x="116.5" y="855.7754">submit edited sequence data</text>
+        <polygon fill="#181818"
+            points="1041.5,885.8281,1051.5,889.8281,1041.5,893.8281,1045.5,889.8281"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="889.8281"
+            y2="889.8281" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="169" x="610.5" y="885.0859">store edited sequence data</text>
+        <polygon fill="#181818"
+            points="1041.5,915.1387,1051.5,919.1387,1041.5,923.1387,1045.5,919.1387"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="919.1387"
+            y2="919.1387" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="149" x="610.5" y="914.3965">set status to 'RECEIVED'</text>
+        <polygon fill="#181818" points="591.5,951.4492,601.5,955.4492,591.5,959.4492,595.5,955.4492"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="955.4492"
+            y2="955.4492" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="199" x="116.5" y="950.707">Query processed sequence data</text>
+        <polygon fill="#181818"
+            points="1041.5,980.7598,1051.5,984.7598,1041.5,988.7598,1045.5,984.7598"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="984.7598"
+            y2="984.7598" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="199" x="610.5" y="980.0176">Query processed sequence data</text>
+        <polygon fill="#181818"
+            points="614.5,1010.0703,604.5,1014.0703,614.5,1018.0703,610.5,1014.0703"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="608.5" x2="1052.5" y1="1014.0703"
+            y2="1014.0703" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="158" x="620.5" y="1009.3281">processed sequence data</text>
+        <polygon fill="#181818"
+            points="120.5,1039.3809,110.5,1043.3809,120.5,1047.3809,116.5,1043.3809"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="114.5" x2="602.5" y1="1043.3809"
+            y2="1043.3809" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="158" x="126.5" y="1038.6387">processed sequence data</text>
+        <polygon fill="#181818"
+            points="591.5,1068.6914,601.5,1072.6914,591.5,1076.6914,595.5,1072.6914"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="109.5" x2="597.5" y1="1072.6914"
+            y2="1072.6914" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="212" x="116.5" y="1067.9492">approve processed sequence data</text>
+        <polygon fill="#181818"
+            points="1041.5,1098.002,1051.5,1102.002,1041.5,1106.002,1045.5,1102.002"
+            style="stroke:#181818;stroke-width:1.0;" />
+        <line style="stroke:#181818;stroke-width:1.0;" x1="603.5" x2="1047.5" y1="1102.002"
+            y2="1102.002" />
+        <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing"
+            textLength="426" x="610.5" y="1097.2598">set status from 'AWAITING_APPROVAL' to
+            'APPROVED_FOR_RELEASE'</text><!--SRC=[fLLDSvim4BtxL-mu1zf3nlSSEkCFadh6ZHretQD7XasiAPQ89EBnl-zADY0JGqBBWG59x-tksmy10EHC6Pxmd0a3muLCYgpGSA-aC2XI6C4lZMe8JCDpkNQpu2yxCpqoCO0cmPULmjklAoKJr9gB5rZn73Ckq57azVg9v44XNc4ftPYmv0zPTDZjwHjkbeg95tIWb1csPHfXE3j_kQEpoS1jLnxVVYlXTw2BxPuRu88RpZBG-5gWID1nEHJB3CJbAYFq3pJCxi8zpr03KmXlBEEfEssVqZKoKvgy0uKwbu9yEt2p0vQum6dX6ceskOFOI29kT-iAHAC1RPWXfOo480gduNmTpW9t7ZEo_L4SNFIE19MIwcH1f4vd8Gs2ika4-LpXpfnp0MQ7y2opJ1viuW_aZDR5levLiSDbl9SIMt-iYLDECobpA8JX6Itw1UNyqeCg56_BJ_zJWUfOcXvXoWscdrFxtv5ndITIP-zbQXHy7yURC8gMKHou9CuVDwjeEGtZUFxu45ICimdS-c7qSuEGjHmVW3yIyDm_vzrMsxQBN0gPeQe_PmTaaXIgEjEGodVnikRU4LrGT1UW_wmRFAxGoEoMRRCZI44lXIdYdluHjaT8TZHhh0AsXdCQRPue-NcoNR7JKVHcnuojt6P89sd8UfEkAdz_mNR1u4Bhbdn0Gc8mBgvqIaiMwbdKHbcFWKwIndJo2hqEXMRK__aX2zFVbV7lyVmdjTTclA9UMuyNWIzkJNJr_dXrOw2FDZvDFLLPcbAHwx8px82s_TZMZLrtMPzPf9salH2TjqnLZEqtxbENOeFMITi5iEFGi_19xbhyDa1x42mdp1ls2KCtn_xxkZkLe_iBPvlxPRI9maKuZiDWy1S0]-->
+    </g>
+</svg>

@@ -28,16 +28,16 @@ A group is a set of users that share access to the same sequence entries.
 The group name must exist and the submitting user must be member of the group.
 """
 const val EXTRACT_UNPROCESSED_DATA_DESCRIPTION = """
-Extract unprocessed accession versions. This is supposed to be used as input for the preprocessing pipeline.
+Extract unprocessed accession versions. This is supposed to be used as input for the processing pipeline.
 Returns a stream of NDJSON and sets the status of each accession version to 'IN_PROCESSING'.
 """
 const val EXTRACT_UNPROCESSED_DATA_RESPONSE_DESCRIPTION = """
-Sequence data as input for the preprocessing pipeline.
+Sequence data as input for the processing pipeline.
 The schema is to be understood per line of the NDJSON stream.
 """
 
 const val SUBMIT_EDITED_DATA_DESCRIPTION = """
-Submit edited data for an accession version that corrects errors found by the preprocessing pipeline 
+Submit edited data for an accession version that corrects errors found by the processing pipeline 
 or the user themselves. This will set the status of the accession version to
 'RECEIVED' and it will be processed by the next pipeline run.
 """

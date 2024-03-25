@@ -31,11 +31,11 @@ jobs:
 
       # Waits are identical to the e2e-k3d.yml workflow file
       # Mirror changes to that file
-      - name: Wait for Prepro Dummy Docker Image
+      - name: Wait for Dummy Processor Docker Image
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
           ref: ${{ github.sha }}
-          check-name: Preprocessing dummy docker image build
+          check-name: Processing dummy docker image build
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
 
@@ -67,7 +67,7 @@ jobs:
         uses: lewagon/wait-on-check-action@v1.3.3
         with:
           ref: ${{ github.sha }}
-          check-name: Build preprocessing-nextclade Docker Image
+          check-name: Build processing-nextclade Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
 

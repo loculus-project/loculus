@@ -1,6 +1,6 @@
 @startuml
     participant "Loculus Frontend / User" as frontend #LightCyan
-    participant "(Pre-)Processing Pipeline" as processing #LightGreen
+    participant "Processing Pipeline" as processing #LightGreen
     participant "Loculus Backend" as backend #Orange
     database "Database" as DB
 
@@ -29,7 +29,7 @@
         alt validation errors occur
             backend -> processing: response with validation errors
              note right of frontend
-                  Validation error are probably only redeemable by changing the pre-processing pipeline
+                  Validation error are probably only redeemable by changing the processing pipeline
                   In the following we assume that no validation error occurred
                end note
         end loop

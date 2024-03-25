@@ -1,24 +1,24 @@
-# Preprocessing Pipeline: Specification
+# Processing Pipeline: Specification
 
 ## Introduction
 
-The preprocessing pipeline prepares the data uploaded by the submitters for release. It is a separate program and communicates with the core Loculus backend server through an HTTP interface that we specify in this document. The pipeline can have organism-specific logic and different pipelines can be used for different Loculus instances.
+The processing pipeline prepares the data uploaded by the submitters for release. It is a separate program and communicates with the core Loculus backend server through an HTTP interface that we specify in this document. The pipeline can have organism-specific logic and different pipelines can be used for different Loculus instances.
 
 **Note:** The requirements levels (must, should, can, etc.) in this document currently ARE NOT consistent with [RFC 2119](https://www.ietf.org/rfc/rfc2119.txt).
 
 ### Tasks
 
-In following, we list a series of tasks that the preprocessing pipeline would usually perform. Hereby, the developers of a preprocessing pipeline has much flexibility in deciding how and to which extent the pipeline does the tasks. The only rule is that the output of the pipeline has to conform to the format expected by the Loculus backend. For example, a preprocessing pipeline can be very "generous and intelligent" and accept a wide range of values for a date (e.g., it may map "Christmas 2020" to "2020-12-25") or be very restrictive and throw an error for any value that does not follow the ISO-8601 format.
+In following, we list a series of tasks that the processing pipeline would usually perform. Hereby, the developers of a processing pipeline has much flexibility in deciding how and to which extent the pipeline does the tasks. The only rule is that the output of the pipeline has to conform to the format expected by the Loculus backend. For example, a processing pipeline can be very "generous and intelligent" and accept a wide range of values for a date (e.g., it may map "Christmas 2020" to "2020-12-25") or be very restrictive and throw an error for any value that does not follow the ISO-8601 format.
 
-**Parsing:** The preprocessing pipeline receives the input data as strings and transforms them into the right format. For example, assuming there is a field `age` of type `integer`, given an input `{"age": "2"}` the preprocessing pipeline should transform it to `{"age": 2}` (simple type conversion). In another case, assuming there is a field `sequencingDate` of type `date`, the preprocessing pipeline might transform `{"sequencingDate": "30 August 2023"}` to the expected format of `{"sequencingDate": "2023-08-30"}`.
+**Parsing:** The processing pipeline receives the input data as strings and transforms them into the right format. For example, assuming there is a field `age` of type `integer`, given an input `{"age": "2"}` the processing pipeline should transform it to `{"age": 2}` (simple type conversion). In another case, assuming there is a field `sequencingDate` of type `date`, the processing pipeline might transform `{"sequencingDate": "30 August 2023"}` to the expected format of `{"sequencingDate": "2023-08-30"}`.
 
-**Validation:** The preprocessing pipeline checks the input data and emits errors or warnings. As mentioned above, the only constraint is that the output of the preprocessing pipeline conforms to the right (technical) format. Otherwise, a pipeline may be generous (e.g., allow every value in the "country" field) or be more restrictive (e.g., only allow a fixed set of values in the "country" field).
+**Validation:** The processing pipeline checks the input data and emits errors or warnings. As mentioned above, the only constraint is that the output of the processing pipeline conforms to the right (technical) format. Otherwise, a pipeline may be generous (e.g., allow every value in the "country" field) or be more restrictive (e.g., only allow a fixed set of values in the "country" field).
 
-**Alignment and translations:** The submitter only provides unaligned nucleotide sequences. To allow searching by nucleotide and amino acid mutations, the preprocessing pipeline must perform the alignment and compute the translations to amino acid sequences. 
+**Alignment and translations:** The submitter only provides unaligned nucleotide sequences. To allow searching by nucleotide and amino acid mutations, the processing pipeline must perform the alignment and compute the translations to amino acid sequences.
 
-**Annotation:** The preprocessing pipeline can add annotations such as clade/lineage classifications.
+**Annotation:** The processing pipeline can add annotations such as clade/lineage classifications.
 
-**Quality control (QC):** The preprocessing pipeline should check the quality of the sequences (and the metadata).
+**Quality control (QC):** The processing pipeline should check the quality of the sequences (and the metadata).
 
 ### Glossary
 
@@ -26,18 +26,18 @@ In following, we list a series of tasks that the preprocessing pipeline would us
 - **Organism instance:** one organism-specific instance with a fixed set of possible metadata and a fixed reference genome
 - **Organism instance schema:** the definition of the accepted metadata fields and information about the reference genome (names of the segments and genes/peptides). Each organism instance has a schema.
 - **Backend:** The backend server is developed by the Loculus team. The same backend software is used across Loculus and organism instances. To support different organisms and metadata fields, it can be configured through a configuration file.
-- **Preprocessing pipeline:** The preprocessing pipeline takes unpreprocessed data and generates preprocessed data. The Loculus team provides reference implementations but Loculus can be used with other implementations as long as they follow the specification detailed in this document.
+- **Processing pipeline:** The processing pipeline takes unprocessed data and generates processed data. The Loculus team provides reference implementations but Loculus can be used with other implementations as long as they follow the specification detailed in this document.
 - **LAPIS and SILO:** the data querying engine and API used by Loculus.
 - **Sequence entry:** A sequence entry consists of a genome sequence (or sequences if the organisms has a segmented genome) and associated metadata. It is the main entity of the Loculus application. Users submit sequence entries and search for sequence entries. Each sequence entry has its own accession. Changes to sequence entries are versioned, meaning that a sequence entry can have multiple versions.
-- **Unpreprocessed data:** sequence entries as provided by the submitters
-- **Preprocessed data:** sequence entries after being processed by the preprocessing pipeline. The preprocessed data must be consistent with the organism instance schema and will be passed to LAPIS and SILO.
+- **Unprocessed data:** sequence entries as provided by the submitters
+- **Processed data:** sequence entries after being processed by the processing pipeline. The processed data must be consistent with the organism instance schema and will be passed to LAPIS and SILO.
 - **Nucleotide sequence segment:** A nucleotide sequence consists of one or multiple segments. If there is only a single segment (e.g., as in SARS-CoV-2), the segment name should be `main`. For multi-segmented sequences, the segment names must match the corresponding reference genomes.
 
 ## Workflow overview
 
-1. The preprocessing pipeline calls the backend and receives some unpreprocessed data.
-2. The preprocessing pipeline performs its tasks on the data.
-3. The preprocessing pipeline sends the backend the preprocessed data along with a list of errors and warnings.
+1. The processing pipeline calls the backend and receives some unprocessed data.
+2. The processing pipeline performs its tasks on the data.
+3. The processing pipeline sends the backend the processed data along with a list of errors and warnings.
 
 Sequence entry versions without an error will be released. Sequence entry versions with an error will not be released and require fixing by the submitter. Sequence entry versions without an error but with a warning will be released. The warning will be shown to the submitter (and maybe also to other users).
 
@@ -45,9 +45,9 @@ Sequence entry versions without an error will be released. Sequence entry versio
 
 Also see the Swagger UI available in the backend at `<backendUrl>/swagger-ui/index.html`.
 
-### Pulling unpreprocessed data
+### Pulling unprocessed data
 
-To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequenceEntries` (integer). This returns a response in [NDJSON](http://ndjson.org/) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
+To retrieve unprocessed data, the processing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequenceEntries` (integer). This returns a response in [NDJSON](http://ndjson.org/) containing at most the specified number of sequence entries. If there are no entries that require processing, an empty file is returned.
 
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 
@@ -58,7 +58,7 @@ In the unprocessed NDJSON, each line contains a sequence entry represented as a 
 
 The `metadata` field contains a flat JSON object in which all values are strings. The fields and values correspond to the columns and values as provided by the submitter.
 
-The primary key is `[accession,version]`. The preprocessing pipeline must be able to handle getting the same sequence entry twice with different versions.
+The primary key is `[accession,version]`. The processing pipeline must be able to handle getting the same sequence entry twice with different versions.
 
 One JSON object has the following fields:
 
@@ -73,9 +73,9 @@ One JSON object has the following fields:
 }
 ```
 
-### Returning preprocessed data
+### Returning processed data
 
-To send back the preprocessed data, the preprocessing pipeline sends a POST request to the backend's `/submit-processed-data` endpoint with NDJSON in the request body.
+To send back the processed data, the processing pipeline sends a POST request to the backend's `/submit-processed-data` endpoint with NDJSON in the request body.
 
 In the NDJSON, each row contains a sequence entry version and a list of errors and a list of warnings represented as a JSON object. One JSON object has the following fields:
 

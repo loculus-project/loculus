@@ -43,7 +43,7 @@ class SecurityConfig {
         "/*/get-released-data",
     )
 
-    private val endpointsForPreprocessingPipeline = arrayOf(
+    private val endpointsForProcessingPipeline = arrayOf(
         "/*/extract-unprocessed-data",
         "/*/submit-processed-data",
     )
@@ -74,7 +74,7 @@ class SecurityConfig {
                 ).permitAll()
                 auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
                 auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority("preprocessing_pipeline")
+                auth.requestMatchers(*endpointsForProcessingPipeline).hasAuthority("processing_pipeline")
                 auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority("get_released_data")
                 auth.anyRequest().authenticated()
             }
