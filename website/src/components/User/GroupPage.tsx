@@ -122,7 +122,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </h1>
                     <button
                         onClick={() => handleOpenConfirmationDialog(username)}
-                        className='object-right p-2 loculusColor text-white rounded'
+                        className='object-right p-2 loculusColor text-white rounded px-4'
                     >
                         Leave group
                     </button>
