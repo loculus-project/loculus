@@ -6,7 +6,7 @@ import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
 
-import { DatasetPage } from './pages/datasets/dataset.page';
+import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { EditPage } from './pages/edit/edit.page';
 import { NavigationFixture } from './pages/navigation.fixture';
 import { ReviewPage } from './pages/review/review.page.ts';
@@ -30,7 +30,7 @@ type E2EFixture = {
     sequencePage: SequencePage;
     submitPage: SubmitPage;
     reviewPage: ReviewPage;
-    datasetPage: DatasetPage;
+    seqSetPage: SeqSetPage;
     userPage: UserPage;
     groupPage: GroupPage;
     revisePage: RevisePage;
@@ -198,9 +198,9 @@ export const test = base.extend<E2EFixture>({
         const groupPage = new GroupPage(page);
         await use(groupPage);
     },
-    datasetPage: async ({ page }, use) => {
-        const datasetPage = new DatasetPage(page);
-        await use(datasetPage);
+    seqSetPage: async ({ page }, use) => {
+        const seqSetPage = new SeqSetPage(page);
+        await use(seqSetPage);
     },
     revisePage: async ({ page }, use) => {
         const revisePage = new RevisePage(page);

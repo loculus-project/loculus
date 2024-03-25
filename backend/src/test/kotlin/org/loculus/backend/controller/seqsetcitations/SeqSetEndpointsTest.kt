@@ -1,4 +1,4 @@
-package org.loculus.backend.controller.datasetcitations
+package org.loculus.backend.controller.seqsetcitations
 
 import com.jayway.jsonpath.JsonPath
 import com.ninjasquad.springmockk.MockkBean
@@ -21,7 +21,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class DatasetEndpointsTest(@Autowired private val client: DatasetCitationsControllerClient) {
+class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControllerClient) {
     @MockkBean
     lateinit var accessionPreconditionValidator: AccessionPreconditionValidator
 
@@ -51,60 +51,51 @@ class DatasetEndpointsTest(@Autowired private val client: DatasetCitationsContro
     }
 
     @Test
-    fun `WHEN calling get dataset of non-existing id and version THEN returns not found`() {
-        client.getDataset(MOCK_DATASET_ID, MOCK_DATASET_VERSION)
+    fun `WHEN calling get seqSet of non-existing id and version THEN returns not found`() {
+        client.getSeqSet(MOCK_SEQSET_ID, MOCK_SEQSET_VERSION)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                    containsString("Dataset $MOCK_DATASET_ID, version $MOCK_DATASET_VERSION does not exist"),
+                    containsString("SeqSet $MOCK_SEQSET_ID, version $MOCK_SEQSET_VERSION does not exist"),
                 ),
             )
     }
 
     @Test
-    fun `WHEN calling get datasets of user THEN returns empty results`() {
-        client.getDatasetsOfUser()
+    fun `WHEN calling create seqSet THEN returns created`() {
+        val result = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$").isArray)
-            .andExpect(jsonPath("\$").isEmpty)
-    }
-
-    @Test
-    fun `WHEN calling create dataset THEN returns created`() {
-        val result = client.createDataset()
-            .andExpect(status().isOk)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.datasetId").isString)
-            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
             .andReturn()
 
-        val datasetId = JsonPath.read<String>(result.response.contentAsString, "$.datasetId")
+        val seqSetId = JsonPath.read<String>(result.response.contentAsString, "$.seqSetId")
 
-        client.getDataset(datasetId, 1)
+        client.getSeqSet(seqSetId, 1)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$[0].datasetId").value(datasetId))
-            .andExpect(jsonPath("\$[0].datasetVersion").value(1))
+            .andExpect(jsonPath("\$[0].seqSetId").value(seqSetId))
+            .andExpect(jsonPath("\$[0].seqSetVersion").value(1))
 
-        client.deleteDataset(datasetId)
+        client.deleteSeqSet(seqSetId)
             .andExpect(status().isOk)
     }
 
     @Test
-    fun `WHEN calling create dataset with records THEN returns created`() {
-        val result = client.createDataset()
+    fun `WHEN calling create seqSet with records THEN returns created`() {
+        val result = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.datasetId").isString)
-            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
             .andReturn()
 
-        val datasetId = JsonPath.read<String>(result.response.contentAsString, "$.datasetId")
+        val seqSetId = JsonPath.read<String>(result.response.contentAsString, "$.seqSetId")
 
-        client.getDatasetRecords(datasetId, 1)
+        client.getSeqSetRecords(seqSetId, 1)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$").isArray)
@@ -112,126 +103,126 @@ class DatasetEndpointsTest(@Autowired private val client: DatasetCitationsContro
             .andExpect(jsonPath("\$[0].accession").value("mock-sequence-accession.1"))
             .andExpect(jsonPath("\$[0].type").value("loculus"))
 
-        client.deleteDataset(datasetId)
+        client.deleteSeqSet(seqSetId)
             .andExpect(status().isOk)
     }
 
     @Test
-    fun `WHEN calling create dataset DOI THEN returns dataset with new DOI`() {
-        val datasetResult = client.createDataset()
+    fun `WHEN calling create seqSet DOI THEN returns seqSet with new DOI`() {
+        val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.datasetId").isString)
-            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
             .andReturn()
 
-        val datasetId = JsonPath.read<String>(datasetResult.response.contentAsString, "$.datasetId")
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
 
-        client.createDatasetDOI(datasetId)
+        client.createSeqSetDOI(seqSetId)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.datasetId").isString)
-            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
 
-        client.getDataset(datasetId, 1)
+        client.getSeqSet(seqSetId, 1)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$[0].datasetDOI").isString)
+            .andExpect(jsonPath("\$[0].seqSetDOI").isString)
     }
 
     @Test
-    fun `WHEN calling update dataset THEN returns updated dataset`() {
-        val datasetResult = client.createDataset()
+    fun `WHEN calling update seqSet THEN returns updated seqSet`() {
+        val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.datasetId").isString)
-            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
             .andReturn()
 
-        val datasetId = JsonPath.read<String>(datasetResult.response.contentAsString, "$.datasetId")
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
 
-        val newDatasetName = "new dataset name"
-        client.updateDataset(datasetId, newDatasetName)
+        val newSeqSetName = "new seqSet name"
+        client.updateSeqSet(seqSetId, newSeqSetName)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.datasetId").isString)
-            .andExpect(jsonPath("\$.datasetVersion").value(2))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(2))
 
-        client.getDataset(datasetId, 2)
+        client.getSeqSet(seqSetId, 2)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$[0].name").value(newDatasetName))
+            .andExpect(jsonPath("\$[0].name").value(newSeqSetName))
 
-        client.deleteDataset(datasetId, 1)
+        client.deleteSeqSet(seqSetId, 1)
             .andExpect(status().isOk)
 
-        client.deleteDataset(datasetId, 2)
+        client.deleteSeqSet(seqSetId, 2)
             .andExpect(status().isOk)
     }
 
     @Test
-    fun `WHEN calling delete dataset on dataset version with a DOI THEN returns unprocessable entity`() {
-        val datasetResult = client.createDataset()
+    fun `WHEN calling delete seqSet on seqSet version with a DOI THEN returns unprocessable entity`() {
+        val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.datasetId").isString)
-            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
             .andReturn()
 
-        val datasetId = JsonPath.read<String>(datasetResult.response.contentAsString, "$.datasetId")
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
 
-        client.createDatasetDOI(datasetId)
+        client.createSeqSetDOI(seqSetId)
             .andExpect(status().isOk)
 
-        client.deleteDataset(datasetId, 1)
+        client.deleteSeqSet(seqSetId, 1)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                    containsString("Dataset $datasetId, version 1 has a DOI and cannot be deleted"),
+                    containsString("SeqSet $seqSetId, version 1 has a DOI and cannot be deleted"),
                 ),
             )
     }
 
     @Test
-    fun `WHEN calling delete dataset on dataset without a DOI THEN returns deleted`() {
-        val datasetResult = client.createDataset()
+    fun `WHEN calling delete seqSet on seqSet without a DOI THEN returns deleted`() {
+        val seqSetResult = client.createSeqSet()
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.datasetId").isString)
-            .andExpect(jsonPath("\$.datasetVersion").value(1))
+            .andExpect(jsonPath("\$.seqSetId").isString)
+            .andExpect(jsonPath("\$.seqSetVersion").value(1))
             .andReturn()
 
-        val datasetId = JsonPath.read<String>(datasetResult.response.contentAsString, "$.datasetId")
+        val seqSetId = JsonPath.read<String>(seqSetResult.response.contentAsString, "$.seqSetId")
 
-        client.deleteDataset(datasetId)
+        client.deleteSeqSet(seqSetId)
             .andExpect(status().isOk)
 
-        client.getDataset(datasetId, 1)
+        client.getSeqSet(seqSetId, 1)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
-                jsonPath("\$.detail", containsString("Dataset $datasetId, version 1 does not exist")),
+                jsonPath("\$.detail", containsString("SeqSet $seqSetId, version 1 does not exist")),
             )
     }
 
     companion object {
         data class Scenario(
-            val testFunction: (String?, DatasetCitationsControllerClient) -> ResultActions,
+            val testFunction: (String?, SeqSetCitationsControllerClient) -> ResultActions,
             val isModifying: Boolean,
         )
 
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
-            Scenario({ jwt, client -> client.createDataset(MOCK_DATASET_NAME, jwt = jwt) }, true),
-            Scenario({ jwt, client -> client.updateDataset(MOCK_DATASET_ID, MOCK_DATASET_NAME, jwt = jwt) }, true),
-            Scenario({ jwt, client -> client.getDatasetsOfUser(jwt = jwt) }, false),
-            Scenario({ jwt, client -> client.deleteDataset(MOCK_DATASET_ID, jwt = jwt) }, true),
+            Scenario({ jwt, client -> client.createSeqSet(MOCK_SEQSET_NAME, jwt = jwt) }, true),
+            Scenario({ jwt, client -> client.updateSeqSet(MOCK_SEQSET_ID, MOCK_SEQSET_NAME, jwt = jwt) }, true),
+            Scenario({ jwt, client -> client.getSeqSetsOfUser(jwt = jwt) }, false),
+            Scenario({ jwt, client -> client.deleteSeqSet(MOCK_SEQSET_ID, jwt = jwt) }, true),
             Scenario({ jwt, client ->
-                client.createDatasetDOI(
-                    MOCK_DATASET_ID,
-                    MOCK_DATASET_VERSION,
+                client.createSeqSetDOI(
+                    MOCK_SEQSET_ID,
+                    MOCK_SEQSET_VERSION,
                     jwt = jwt,
                 )
             }, true),

@@ -1,25 +1,25 @@
-import { datasetCitationApi } from './datasetCitationApi.ts';
+import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
-export class DatasetCitationClient extends ZodiosWrapperClient<typeof datasetCitationApi> {
+export class SeqSetCitationClient extends ZodiosWrapperClient<typeof seqSetCitationApi> {
     public static create(
         backendUrl: string = getRuntimeConfig().serverSide.backendUrl,
         logger = getInstanceLogger('serverSideBackendClient'),
     ) {
-        return new DatasetCitationClient(
+        return new SeqSetCitationClient(
             backendUrl,
-            datasetCitationApi,
+            seqSetCitationApi,
             (axiosError) => axiosError.data,
             logger,
             'backend',
         );
     }
 
-    public getDatasetsOfUser(accessToken: string) {
-        return this.call('getDatasetsOfUser', {
+    public getSeqSetsOfUser(accessToken: string) {
+        return this.call('getSeqSetsOfUser', {
             headers: createAuthorizationHeader(accessToken),
         });
     }

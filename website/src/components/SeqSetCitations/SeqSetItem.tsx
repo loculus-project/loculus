@@ -3,27 +3,27 @@ import { type FC } from 'react';
 
 import { CitationPlot } from './CitationPlot';
 import { getClientLogger } from '../../clientLogger';
-import { datasetCitationClientHooks } from '../../services/serviceHooks';
-import { type DatasetRecord, type Dataset, type CitedByResult, DatasetRecordType } from '../../types/datasetCitation';
+import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
+import { type SeqSetRecord, type SeqSet, type CitedByResult, SeqSetRecordType } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
-const logger = getClientLogger('DatasetItem');
+const logger = getClientLogger('SeqSetItem');
 
-type DatasetRecordsTableProps = {
-    datasetRecords: DatasetRecord[];
+type SeqSetRecordsTableProps = {
+    seqSetRecords: SeqSetRecord[];
 };
 
-const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) => {
-    if (datasetRecords.length === 0) {
+const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords }) => {
+    if (seqSetRecords.length === 0) {
         return null;
     }
 
     const accessionOutlink = {
-        [DatasetRecordType.loculus]: (acc: string) => `/seq/${acc}`,
+        [SeqSetRecordType.loculus]: (acc: string) => `/seq/${acc}`,
     };
 
     return (
@@ -35,15 +35,15 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
                 </tr>
             </thead>
             <tbody>
-                {datasetRecords.map((datasetRecord, index) => {
+                {seqSetRecords.map((seqSetRecord, index) => {
                     return (
                         <tr key={`accessionData-${index}`}>
                             <td className='text-left'>
-                                <a href={accessionOutlink[datasetRecord.type](datasetRecord.accession)} target='_blank'>
-                                    {datasetRecord.accession}
+                                <a href={accessionOutlink[seqSetRecord.type](seqSetRecord.accession)} target='_blank'>
+                                    {seqSetRecord.accession}
                                 </a>
                             </td>
-                            <td className='text-left'>{datasetRecord.type as string}</td>
+                            <td className='text-left'>{seqSetRecord.type as string}</td>
                         </tr>
                     );
                 })}
@@ -52,39 +52,39 @@ const DatasetRecordsTable: FC<DatasetRecordsTableProps> = ({ datasetRecords }) =
     );
 };
 
-type DatasetItemProps = {
+type SeqSetItemProps = {
     clientConfig: ClientConfig;
     accessToken: string;
-    dataset: Dataset;
-    datasetRecords: DatasetRecord[];
+    seqSet: SeqSet;
+    seqSetRecords: SeqSetRecord[];
     citedByData: CitedByResult;
     isAdminView?: boolean;
 };
 
-const DatasetItemInner: FC<DatasetItemProps> = ({
+const SeqSetItemInner: FC<SeqSetItemProps> = ({
     clientConfig,
     accessToken,
-    dataset,
-    datasetRecords,
+    seqSet,
+    seqSetRecords,
     citedByData,
     isAdminView = false,
 }) => {
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
-    const { mutate: createDatasetDOI } = useCreateDatasetDOIAction(
+    const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
         accessToken,
-        dataset.datasetId,
-        dataset.datasetVersion,
+        seqSet.seqSetId,
+        seqSet.seqSetVersion,
         openErrorFeedback,
     );
 
     const handleCreateDOI = async () => {
-        createDatasetDOI(undefined);
+        createSeqSetDOI(undefined);
     };
 
     const getCrossRefUrl = () => {
-        return `https://search.crossref.org/search/works?from_ui=yes&q=${dataset.datasetDOI}`;
+        return `https://search.crossref.org/search/works?from_ui=yes&q=${seqSet.seqSetDOI}`;
     };
 
     const formatDate = (date?: string) => {
@@ -96,8 +96,8 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
     };
 
     const renderDOI = () => {
-        if (dataset.datasetDOI !== undefined && dataset.datasetDOI !== null) {
-            return `https://doi.org/${dataset.datasetDOI}`;
+        if (seqSet.seqSetDOI !== undefined && seqSet.seqSetDOI !== null) {
+            return `https://doi.org/${seqSet.seqSetDOI}`;
         }
 
         if (!isAdminView) {
@@ -109,7 +109,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                 className='mr-4 cursor-pointer font-medium text-blue-600 dark:text-blue-500 hover:underline'
                 onClick={() =>
                     displayConfirmationDialog({
-                        dialogText: `Are you sure you want to create a DOI for this version of your dataset?`,
+                        dialogText: `Are you sure you want to create a DOI for this version of your seqSet?`,
                         onConfirmation: handleCreateDOI,
                     })
                 }
@@ -123,20 +123,20 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
         <div className='flex flex-col items-left'>
             <ManagedErrorFeedback message={errorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div>
-                <h1 className='text-2xl font-semibold pb-4'>{dataset.name}</h1>
+                <h1 className='text-2xl font-semibold pb-4'>{seqSet.name}</h1>
             </div>
             <div className='flex flex-col'>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Description</p>
-                    <p className='text'>{dataset.description ?? 'N/A'}</p>
+                    <p className='text'>{seqSet.description ?? 'N/A'}</p>
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Version</p>
-                    <p className='text'>{dataset.datasetVersion}</p>
+                    <p className='text'>{seqSet.seqSetVersion}</p>
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Created date</p>
-                    <p className='text'>{formatDate(dataset.createdAt)}</p>
+                    <p className='text'>{formatDate(seqSet.createdAt)}</p>
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>DOI</p>
@@ -144,7 +144,7 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Total citations</p>
-                    {dataset.datasetDOI === undefined || dataset.datasetDOI === null ? (
+                    {seqSet.seqSetDOI === undefined || seqSet.seqSetDOI === null ? (
                         <p className='text'>Cited By 0</p>
                     ) : (
                         <a
@@ -161,41 +161,41 @@ const DatasetItemInner: FC<DatasetItemProps> = ({
                     <div className='ml-4'>
                         <CitationPlot citedByData={citedByData} />
                         <p className='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
-                            Number of times this dataset has been cited by a publication
+                            Number of times this seqSet has been cited by a publication
                         </p>
                     </div>
                 </div>
             </div>
             <div className='flex flex-col my-4'>
                 <p className='text-xl py-4 font-semibold'>Sequences</p>
-                <DatasetRecordsTable datasetRecords={datasetRecords} />
+                <SeqSetRecordsTable seqSetRecords={seqSetRecords} />
             </div>
         </div>
     );
 };
 
-function useCreateDatasetDOIAction(
+function useCreateSeqSetDOIAction(
     clientConfig: ClientConfig,
     accessToken: string,
-    datasetId: string,
-    datasetVersion: number,
+    seqSetId: string,
+    seqSetVersion: number,
     onError: (message: string) => void,
 ) {
-    return datasetCitationClientHooks(clientConfig).useCreateDatasetDOI(
-        { headers: createAuthorizationHeader(accessToken), params: { datasetId, datasetVersion } },
+    return seqSetCitationClientHooks(clientConfig).useCreateSeqSetDOI(
+        { headers: createAuthorizationHeader(accessToken), params: { seqSetId, seqSetVersion } },
         {
             onSuccess: async () => {
                 await logger.info(
-                    `Successfully created dataset DOI for datasetId: ${datasetId}, version ${datasetVersion}`,
+                    `Successfully created seqSet DOI for seqSetId: ${seqSetId}, version ${seqSetVersion}`,
                 );
                 location.reload();
             },
             onError: async (error) => {
-                await logger.info(`Failed to create dataset DOI with error: '${JSON.stringify(error)})}'`);
+                await logger.info(`Failed to create seqSet DOI with error: '${JSON.stringify(error)})}'`);
                 if (error instanceof AxiosError) {
                     if (error.response?.data !== undefined) {
                         onError(
-                            `Failed to update dataset. ${error.response.data?.title}. ${error.response.data?.detail}`,
+                            `Failed to update seqSet. ${error.response.data?.title}. ${error.response.data?.detail}`,
                         );
                     }
                 }
@@ -204,4 +204,4 @@ function useCreateDatasetDOIAction(
     );
 }
 
-export const DatasetItem = withQueryProvider(DatasetItemInner);
+export const SeqSetItem = withQueryProvider(SeqSetItemInner);

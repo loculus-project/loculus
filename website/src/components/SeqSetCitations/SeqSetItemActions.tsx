@@ -1,48 +1,48 @@
 import { type FC, useState } from 'react';
 
-import { DatasetForm } from './DatasetForm';
-import { ExportDataset } from './ExportDataset';
+import { ExportSeqSet } from './ExportSeqSet';
+import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
-import { datasetCitationClientHooks } from '../../services/serviceHooks';
-import type { DatasetRecord, Dataset } from '../../types/datasetCitation';
+import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
+import type { SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 import Modal from '../common/Modal';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
-const logger = getClientLogger('DatasetItemActions');
+const logger = getClientLogger('SeqSetItemActions');
 
-type DatasetItemActionsProps = {
+type SeqSetItemActionsProps = {
     clientConfig: ClientConfig;
     accessToken: string;
-    dataset: Dataset;
-    datasetRecords: DatasetRecord[];
+    seqSet: SeqSet;
+    seqSetRecords: SeqSetRecord[];
     isAdminView?: boolean;
 };
 
-const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
+const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     clientConfig,
     accessToken,
-    dataset,
-    datasetRecords,
+    seqSet,
+    seqSetRecords,
     isAdminView = false,
 }) => {
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
-    const { mutate: deleteDataset } = useDeleteDatasetAction(
+    const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
         accessToken,
-        dataset.datasetId,
-        dataset.datasetVersion,
+        seqSet.seqSetId,
+        seqSet.seqSetVersion,
         openErrorFeedback,
     );
 
-    const handleDeleteDataset = async () => {
-        deleteDataset(undefined);
+    const handleDeleteSeqSet = async () => {
+        deleteSeqSet(undefined);
     };
 
     return (
@@ -63,13 +63,13 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
                         ) : null}
                     </div>
                     <div className='px-2'>
-                        {isAdminView && (dataset.datasetDOI === null || dataset.datasetDOI === undefined) ? (
+                        {isAdminView && (seqSet.seqSetDOI === null || seqSet.seqSetDOI === undefined) ? (
                             <button
                                 className='btn'
                                 onClick={() =>
                                     displayConfirmationDialog({
-                                        dialogText: `Are you sure you want to delete this dataset version?`,
-                                        onConfirmation: handleDeleteDataset,
+                                        dialogText: `Are you sure you want to delete this seqSet version?`,
+                                        onConfirmation: handleDeleteSeqSet,
                                     })
                                 }
                             >
@@ -80,38 +80,36 @@ const DatasetItemActionsInner: FC<DatasetItemActionsProps> = ({
                 </div>
             </div>
             <Modal isModalVisible={editModalVisible} setModalVisible={setEditModalVisible}>
-                <DatasetForm
+                <SeqSetForm
                     clientConfig={clientConfig}
                     accessToken={accessToken}
-                    editDataset={dataset}
-                    editDatasetRecords={datasetRecords}
+                    editSeqSet={seqSet}
+                    editSeqSetRecords={seqSetRecords}
                 />
             </Modal>
             <Modal isModalVisible={exportModalVisible} setModalVisible={setExportModalVisible}>
-                <ExportDataset dataset={dataset} datasetRecords={datasetRecords} />
+                <ExportSeqSet seqSet={seqSet} seqSetRecords={seqSetRecords} />
             </Modal>
         </div>
     );
 };
 
-function useDeleteDatasetAction(
+function useDeleteSeqSetAction(
     clientConfig: ClientConfig,
     accessToken: string,
-    datasetId: string,
-    datasetVersion: number,
+    seqSetId: string,
+    seqSetVersion: number,
     onError: (message: string) => void,
 ) {
-    return datasetCitationClientHooks(clientConfig).useDeleteDataset(
-        { headers: createAuthorizationHeader(accessToken), params: { datasetId, datasetVersion } },
+    return seqSetCitationClientHooks(clientConfig).useDeleteSeqSet(
+        { headers: createAuthorizationHeader(accessToken), params: { seqSetId, seqSetVersion } },
         {
             onSuccess: async () => {
-                await logger.info(
-                    `Successfully deleted dataset with datasetId: ${datasetId}, version ${datasetVersion}`,
-                );
-                window.location.href = '/datasets';
+                await logger.info(`Successfully deleted seqSet with seqSetId: ${seqSetId}, version ${seqSetVersion}`);
+                window.location.href = '/seqSets';
             },
             onError: async (error) => {
-                const message = `Failed to delete dataset with error: '${JSON.stringify(error)})}'`;
+                const message = `Failed to delete seqSet with error: '${JSON.stringify(error)})}'`;
                 await logger.info(message);
                 onError(message);
             },
@@ -119,4 +117,4 @@ function useDeleteDatasetAction(
     );
 }
 
-export const DatasetItemActions = withQueryProvider(DatasetItemActionsInner);
+export const SeqSetItemActions = withQueryProvider(SeqSetItemActionsInner);

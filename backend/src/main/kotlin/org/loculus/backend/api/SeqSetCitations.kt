@@ -5,7 +5,7 @@ import org.loculus.backend.utils.Accession
 import java.sql.Timestamp
 import java.util.UUID
 
-data class SubmittedDatasetRecord(
+data class SubmittedSeqSetRecord(
     val accession: Accession,
     @Schema(
         description = "The type of the accession.",
@@ -15,48 +15,48 @@ data class SubmittedDatasetRecord(
     val type: String,
 )
 
-data class SubmittedDataset(
+data class SubmittedSeqSet(
     val name: String,
     val description: String?,
-    val records: List<SubmittedDatasetRecord>,
+    val records: List<SubmittedSeqSetRecord>,
 )
 
-data class SubmittedDatasetUpdate(
-    val datasetId: String,
+data class SubmittedSeqSetUpdate(
+    val seqSetId: String,
     val name: String,
     val description: String,
-    val records: List<SubmittedDatasetRecord>,
+    val records: List<SubmittedSeqSetRecord>,
 )
 
-data class DatasetRecord(
-    val datasetRecordId: Long,
+data class SeqSetRecord(
+    val seqSetRecordId: Long,
     val accession: Accession,
     val type: String,
 )
 
-data class Dataset(
-    val datasetId: UUID,
-    val datasetVersion: Long,
+data class SeqSet(
+    val seqSetId: UUID,
+    val seqSetVersion: Long,
     val name: String,
     val createdAt: Timestamp,
     val createdBy: String,
     val description: String?,
     @Schema(
-        description = "The DOI of the dataset.",
+        description = "The DOI of the seqSet.",
         type = "string",
         example = "10.1234/5678",
     )
-    val datasetDOI: String?,
+    val seqSetDOI: String?,
 )
 
-data class ResponseDataset(
-    val datasetId: String,
-    val datasetVersion: Long,
+data class ResponseSeqSet(
+    val seqSetId: String,
+    val seqSetVersion: Long,
 )
 
 data class CitedBy(
     @Schema(
-        description = "The years in which the dataset or sequence was cited.",
+        description = "The years in which the seqSet or sequence was cited.",
         type = "array",
         example = "[2000, 2001, 2002]",
     )
@@ -82,7 +82,7 @@ data class AuthorProfile(
     val university: String?,
 )
 
-object DatasetCitationsConstants {
+object SeqSetCitationsConstants {
     const val DOI_PREFIX = "placeholder"
     const val DOI_WEEKLY_RATE_LIMIT = 7
 }

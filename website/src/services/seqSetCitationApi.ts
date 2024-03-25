@@ -2,54 +2,54 @@ import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
 import { authorizationHeader, notAuthorizedError } from './commonApiTypes.ts';
-import { authorProfile, datasets, datasetRecords, citedByResult } from '../types/datasetCitation.ts';
+import { authorProfile, seqSets, seqSetRecords, citedByResult } from '../types/seqSetCitation.ts';
 
-const getDatasetsOfUserEndpoint = makeEndpoint({
+const getSeqSetsOfUserEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-datasets-of-user',
-    alias: 'getDatasetsOfUser',
+    path: '/get-seqsets-of-user',
+    alias: 'getSeqSetsOfUser',
     parameters: [authorizationHeader],
-    response: datasets,
+    response: seqSets,
     errors: [notAuthorizedError],
 });
 
 const getUserCitedByEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-user-cited-by-dataset?username=:username',
+    path: '/get-user-cited-by-seqset?username=:username',
     alias: 'getUserCitedBy',
     parameters: [authorizationHeader],
     response: citedByResult,
     errors: [notAuthorizedError],
 });
 
-const getDatasetCitedByEndpoint = makeEndpoint({
+const getSeqSetCitedByEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-dataset-cited-by-publication?datasetId=:datasetId&version=:version',
-    alias: 'getDatasetCitedBy',
+    path: '/get-seqset-cited-by-publication?seqSetId=:seqSetId&version=:version',
+    alias: 'getSeqSetCitedBy',
     response: citedByResult,
     errors: [notAuthorizedError],
 });
 
-const getDatasetEndpoint = makeEndpoint({
+const getSeqSetEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-dataset?datasetId=:datasetId&version=:version',
-    alias: 'getDataset',
-    response: datasets,
+    path: '/get-seqset?seqSetId=:seqSetId&version=:version',
+    alias: 'getSeqSet',
+    response: seqSets,
     errors: [notAuthorizedError],
 });
 
-const getDatasetRecordsEndpoint = makeEndpoint({
+const getSeqSetRecordsEndpoint = makeEndpoint({
     method: 'get',
-    path: '/get-dataset-records?datasetId=:datasetId&version=:version',
-    alias: 'getDatasetRecords',
-    response: datasetRecords,
+    path: '/get-seqset-records?seqSetId=:seqSetId&version=:version',
+    alias: 'getSeqSetRecords',
+    response: seqSetRecords,
     errors: [notAuthorizedError],
 });
 
-const validateDatasetRecords = makeEndpoint({
+const validateSeqSetRecords = makeEndpoint({
     method: 'post',
-    path: '/validate-dataset-records',
-    alias: 'validateDatasetRecords',
+    path: '/validate-seqset-records',
+    alias: 'validateSeqSetRecords',
     parameters: [
         authorizationHeader,
         {
@@ -71,10 +71,10 @@ const validateDatasetRecords = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-const createDatasetEndpoint = makeEndpoint({
+const createSeqSetEndpoint = makeEndpoint({
     method: 'post',
-    path: '/create-dataset',
-    alias: 'createDataset',
+    path: '/create-seqset',
+    alias: 'createSeqSet',
     parameters: [
         authorizationHeader,
         {
@@ -95,35 +95,35 @@ const createDatasetEndpoint = makeEndpoint({
         },
     ],
     response: z.object({
-        datasetId: z.string(),
-        datasetVersion: z.number(),
+        seqSetId: z.string(),
+        seqSetVersion: z.number(),
     }),
     errors: [notAuthorizedError],
 });
 
-const createDatasetDOIEndpoint = makeEndpoint({
+const createSeqSetDOIEndpoint = makeEndpoint({
     method: 'post',
-    path: '/create-dataset-doi?datasetId=:datasetId&version=:datasetVersion',
-    alias: 'createDatasetDOI',
+    path: '/create-seqset-doi?seqSetId=:seqSetId&version=:seqSetVersion',
+    alias: 'createSeqSetDOI',
     parameters: [authorizationHeader],
     response: z.object({
-        datasetId: z.string(),
-        datasetVersion: z.number(),
+        seqSetId: z.string(),
+        seqSetVersion: z.number(),
     }),
     errors: [notAuthorizedError],
 });
 
-const updateDatasetEndpoint = makeEndpoint({
+const updateSeqSetEndpoint = makeEndpoint({
     method: 'put',
-    path: '/update-dataset',
-    alias: 'updateDataset',
+    path: '/update-seqset',
+    alias: 'updateSeqSet',
     parameters: [
         authorizationHeader,
         {
             name: 'data',
             type: 'Body',
             schema: z.object({
-                datasetId: z.string(),
+                seqSetId: z.string(),
                 name: z.string(),
                 description: z.string().optional(),
                 records: z
@@ -138,16 +138,16 @@ const updateDatasetEndpoint = makeEndpoint({
         },
     ],
     response: z.object({
-        datasetId: z.string(),
-        datasetVersion: z.number(),
+        seqSetId: z.string(),
+        seqSetVersion: z.number(),
     }),
     errors: [notAuthorizedError],
 });
 
-const deleteDatasetEndpoint = makeEndpoint({
+const deleteSeqSetEndpoint = makeEndpoint({
     method: 'delete',
-    path: '/delete-dataset?datasetId=:datasetId&version=:datasetVersion',
-    alias: 'deleteDataset',
+    path: '/delete-seqset?seqSetId=:seqSetId&version=:seqSetVersion',
+    alias: 'deleteSeqSet',
     parameters: [authorizationHeader],
     response: z.never(),
     errors: [notAuthorizedError],
@@ -161,16 +161,16 @@ const getAuthorEndpoint = makeEndpoint({
     errors: [notAuthorizedError],
 });
 
-export const datasetCitationApi = makeApi([
-    getDatasetsOfUserEndpoint,
+export const seqSetCitationApi = makeApi([
+    getSeqSetsOfUserEndpoint,
     getUserCitedByEndpoint,
-    getDatasetCitedByEndpoint,
-    getDatasetEndpoint,
-    getDatasetRecordsEndpoint,
-    validateDatasetRecords,
-    createDatasetEndpoint,
-    createDatasetDOIEndpoint,
-    updateDatasetEndpoint,
-    deleteDatasetEndpoint,
+    getSeqSetCitedByEndpoint,
+    getSeqSetEndpoint,
+    getSeqSetRecordsEndpoint,
+    validateSeqSetRecords,
+    createSeqSetEndpoint,
+    createSeqSetDOIEndpoint,
+    updateSeqSetEndpoint,
+    deleteSeqSetEndpoint,
     getAuthorEndpoint,
 ]);

@@ -1,16 +1,16 @@
-import { type DatasetRecord, DatasetRecordType } from '../types/datasetCitation';
+import { type SeqSetRecord, SeqSetRecordType } from '../types/seqSetCitation';
 
-const getAccessionsByType = (type: string, records: DatasetRecord[]): string[] => {
+const getAccessionsByType = (type: string, records: SeqSetRecord[]): string[] => {
     return records.filter((record) => record.type === type).map((record) => record.accession);
 };
 
-export const serializeRecordsToAccessionsInput = (records?: DatasetRecord[], delimiter = ',') => {
+export const serializeRecordsToAccessionsInput = (records?: SeqSetRecord[], delimiter = ',') => {
     if (!records || records.length === 0) {
         return {
-            [DatasetRecordType.loculus]: '',
+            [SeqSetRecordType.loculus]: '',
         };
     }
     return {
-        [DatasetRecordType.loculus]: getAccessionsByType(DatasetRecordType.loculus, records).join(`${delimiter} `),
+        [SeqSetRecordType.loculus]: getAccessionsByType(SeqSetRecordType.loculus, records).join(`${delimiter} `),
     };
 };
