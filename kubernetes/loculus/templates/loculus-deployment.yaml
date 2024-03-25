@@ -69,9 +69,12 @@ spec:
           ports:
             - containerPort: 8079
           args:
-            - "--crossref.password=$(CROSSREF_PASSWORD)"
-            - "--crossref.url=$(CROSSREF_URL)"
+            - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
+            - "--crossref.test-endpoint=$(CROSSREF_TEST_ENDPOINT)"
+            - "--crossref.live-endpoint=$(CROSSREF_LIVE_ENDPOINT)"
             - "--crossref.username=$(CROSSREF_USERNAME)"
+            - "--crossref.test-password=$(CROSSREF_TEST_PASSWORD)"
+            - "--crossref.live-password=$(CROSSREF_TEST_PASSWORD)"
             - "--keycloak.client=test-cli"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"
@@ -82,6 +85,27 @@ spec:
             - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
           env:
+          {{- if .Values.crossRef.usernameSealedSecret }}
+            - name: CROSSREF_USERNAME
+              valueFrom:
+               secretKeyRef:
+                 name: externaldb-credentials
+                 key: crossref-username
+           {{- end }}
+           {{- if .Values.crossRef.testPasswordSealedSecret }}
+            - name: CROSSREF_TEST_PASSWORD
+              valueFrom:
+               secretKeyRef:
+                 name: externaldb-credentials
+                 key: crossref-test-password
+           {{- end }}
+           {{- if .Values.crossRef.livePasswordSealedSecret }}
+            - name: CROSSREF_LIVE_PASSWORD
+              valueFrom:
+               secretKeyRef:
+                 name: externaldb-credentials
+                 key: crossref-live-password
+           {{- end }}
            {{- if .Values.externalDatabase.urlSealedSecret }}
             - name: DB_URL
               valueFrom:

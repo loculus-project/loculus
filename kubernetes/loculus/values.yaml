@@ -9,6 +9,13 @@ keycloakDatabase:
   usernameSealedSecret: ""
   passwordSealedSecret: ""
   portSealedSecret: ""
+crossRef:
+  DOIPrefix: "10.62599"
+  testEndpoint: "https://test.crossref.org"
+  liveEndpoint: "https://doi.crossref.org"
+  usernameSealedSecret: ""
+  testPasswordSealedSecret: ""
+  livePasswordSealedSecret: ""
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false

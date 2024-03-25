@@ -14,9 +14,9 @@ import java.util.UUID
 
 @ConfigurationProperties(prefix = "crossref")
 data class CrossRefProperties(
-    val username: String?,
-    val password: String?,
-    val url: String?,
+    val endpoint: String,
+    val username: String,
+    val password: String,
 )
 
 @Component
@@ -88,7 +88,7 @@ class CrossRefService(private val crossRefProperties: CrossRefProperties) {
             ),
         )
 
-        val connection = URI(crossRefProperties.url).toURL().openConnection() as HttpURLConnection
+        val connection = URI(crossRefProperties.endpoint).toURL().openConnection() as HttpURLConnection
         connection.requestMethod = "POST"
         connection.doOutput = true
 
