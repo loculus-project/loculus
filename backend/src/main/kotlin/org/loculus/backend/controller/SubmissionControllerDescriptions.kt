@@ -58,11 +58,6 @@ On accession version that cannot be written to the database, e.g. if the accessi
  pipeline submits invalid data. Rolls back the whole transaction.
 """
 
-const val GET_DATA_TO_EDIT_DESCRIPTION = """
-Get processed sequence data with errors to edit as a stream of NDJSON.
-This returns all sequence entries of the user that have the status 'HAS_ERRORS'.
-"""
-
 const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
 Get processed sequence data with errors to edit for a single accession version.
 The accession version must be in status 'HAS_ERRORS' or 'AWAITING_APPROVAL'.

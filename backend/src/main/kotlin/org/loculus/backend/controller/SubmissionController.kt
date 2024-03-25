@@ -192,30 +192,6 @@ class SubmissionController(
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
-    @Operation(description = GET_DATA_TO_EDIT_DESCRIPTION)
-    @GetMapping("/get-data-to-edit", produces = [MediaType.APPLICATION_NDJSON_VALUE])
-    fun getDataToEdit(
-        @PathVariable @Valid
-        organism: Organism,
-        @UsernameFromJwt username: String,
-        @Parameter(
-            description = GROUP_DESCRIPTION,
-        ) @RequestParam groupName: String,
-        @Max(
-            value = MAX_EXTRACTED_SEQUENCE_ENTRIES,
-            message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
-        )
-        numberOfSequenceEntries: Int,
-    ): ResponseEntity<StreamingResponseBody> {
-        val headers = HttpHeaders()
-        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-
-        val entries = submissionDatabaseService.streamDataToEdit(username, groupName, numberOfSequenceEntries, organism)
-        val streamBody = stream { entries }
-
-        return ResponseEntity(streamBody, headers, HttpStatus.OK)
-    }
-
     @Operation(description = GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION)
     @GetMapping("/get-data-to-edit/{accession}/{version}", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun getSequenceEntryVersionToEdit(

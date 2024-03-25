@@ -56,8 +56,6 @@ import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
 import javax.sql.DataSource
-import kotlin.sequences.Sequence
-import kotlin.sequences.forEach
 
 private val log = KotlinLogging.logger { }
 
@@ -152,6 +150,7 @@ class SubmissionDatabaseService(
                 submittedProcessedData,
                 organism,
             )
+
             else -> PreprocessingStatus.HAS_ERRORS to submittedProcessedData.data
         }
 
@@ -365,50 +364,6 @@ class SubmissionDatabaseService(
                             DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
                             it[DataUseTermsTable.restrictedUntilColumn],
                         ),
-                    )
-                }
-                .asSequence()
-        }
-    }
-
-    fun streamDataToEdit(
-        submitter: String,
-        groupName: String,
-        numberOfSequenceEntries: Int,
-        organism: Organism,
-    ): Sequence<SequenceEntryVersionToEdit> {
-        log.info { "streaming $numberOfSequenceEntries submissions that need edit by $submitter" }
-
-        groupManagementPreconditionValidator.validateUserInExistingGroup(groupName, submitter)
-
-        entriesViewProvider.get(organism).let { view ->
-            return view.slice(
-                view.accessionColumn,
-                view.versionColumn,
-                view.statusColumn,
-                view.processedDataColumn,
-                view.originalDataColumn,
-                view.errorsColumn,
-                view.warningsColumn,
-            )
-                .select(
-                    where = {
-                        view.statusIs(Status.HAS_ERRORS) and
-                            view.isMaxVersion and
-                            view.groupIs(groupName) and
-                            view.organismIs(organism)
-                    },
-                )
-                .limit(numberOfSequenceEntries)
-                .map { row ->
-                    SequenceEntryVersionToEdit(
-                        row[view.accessionColumn],
-                        row[view.versionColumn],
-                        Status.fromString(row[view.statusColumn]),
-                        row[view.processedDataColumn]!!,
-                        row[view.originalDataColumn]!!,
-                        row[view.errorsColumn],
-                        row[view.warningsColumn],
                     )
                 }
                 .asSequence()
@@ -649,10 +604,12 @@ class SubmissionDatabaseService(
                         DeleteSequenceScope.PROCESSED_WITH_ERRORS -> {
                             view.statusIs(Status.HAS_ERRORS)
                         }
+
                         DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> {
                             view.statusIs(Status.AWAITING_APPROVAL) and
                                 view.entriesWithWarnings
                         }
+
                         DeleteSequenceScope.ALL -> view.statusIsOneOf(listOfDeletableStatuses)
                     }
 
