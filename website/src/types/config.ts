@@ -3,12 +3,21 @@ import z from 'zod';
 import { orderByType } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
+export const customDisplay = z.object({
+    type: z.string(),
+    url: z.string().optional(),
+});
+
 export const metadata = z.object({
     name: z.string(),
+    displayName: z.string().optional(),
     type: z.enum(['string', 'date', 'int', 'float', 'pango_lineage', 'timestamp']),
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
+    customDisplay: customDisplay.optional(),
 });
+
+export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
 
 export type MetadataFilter = Metadata & {

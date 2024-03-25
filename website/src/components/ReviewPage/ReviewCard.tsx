@@ -51,7 +51,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
     const { isLoading, data } = useGetMetadataAndAnnotations(organism, clientConfig, accessToken, sequenceEntryStatus);
 
     return (
-        <div className='p-3 border rounded-md shadow-lg relative transition-all duration-500'>
+        <div className='px-3 py-2   relative transition-all duration-500'>
             <div className='flex'>
                 <div className='flex flex-grow flex-wrap '>
                     <StatusIcon

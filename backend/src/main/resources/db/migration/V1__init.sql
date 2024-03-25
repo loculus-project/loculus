@@ -20,21 +20,50 @@ create table sequence_entries (
     submitter text not null,
     group_name text not null,
     submitted_at timestamp not null,
-    started_processing_at timestamp,
-    finished_processing_at timestamp,
     released_at timestamp,
-    status text not null,
     is_revocation boolean not null default false,
     original_data jsonb,
-    processed_data jsonb,
-    errors jsonb,
-    warnings jsonb,
     primary key (accession, version),
     foreign key (group_name) references groups_table(group_name)
 );
 
 create index on sequence_entries (submitter);
-create index on sequence_entries (status);
+
+create table sequence_entries_preprocessed_data (
+    accession text not null,
+    version bigint not null,
+    pipeline_version bigint not null,
+    processed_data jsonb,
+    errors jsonb,
+    warnings jsonb,
+    processing_status text not null,
+    started_processing_at timestamp not null,
+    finished_processing_at timestamp,
+    primary key (accession, version, pipeline_version)
+);
+
+create view sequence_entries_view as
+select
+    se.*,
+    sepd.started_processing_at,
+    sepd.finished_processing_at,
+    sepd.processed_data,
+    sepd.errors,
+    sepd.warnings,
+    case
+        when se.released_at is not null then 'APPROVED_FOR_RELEASE'
+        when se.is_revocation then 'AWAITING_APPROVAL_FOR_REVOCATION'
+        when sepd.processing_status = 'IN_PROCESSING' then 'IN_PROCESSING'
+        when sepd.processing_status = 'HAS_ERRORS' then 'HAS_ERRORS'
+        when sepd.processing_status = 'FINISHED' then 'AWAITING_APPROVAL'
+        else 'RECEIVED'
+    end as status
+from
+    sequence_entries se
+    left join sequence_entries_preprocessed_data sepd on
+        se.accession = sepd.accession
+        and se.version = sepd.version
+        and sepd.pipeline_version = 1;
 
 create table metadata_upload_aux_table (
     accession text,

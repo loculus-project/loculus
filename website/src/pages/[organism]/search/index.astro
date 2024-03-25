@@ -44,16 +44,20 @@ const {
             data.match(
                 (data) => (
                     <div class='flex-1'>
-                        <DownloadDialog
-                            metadataFilter={metadataFilterWithoutHiddenFilters}
-                            mutationFilter={mutationFilter}
-                            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                            lapisUrl={lapisUrl}
-                            client:load
-                        />
-                        <div class='mt-4 mb-1'>
-                            Search returned {data.totalCount.toLocaleString()}
-                            sequence{data.totalCount === 1 ? '' : 's'}
+                        <div class=' text-sm text-gray-800 mb-6 justify-between flex px-6 items-baseline'>
+                            <div class='mt-auto'>
+                                Search returned {data.totalCount.toLocaleString()}
+                                sequence{data.totalCount === 1 ? '' : 's'}
+                            </div>
+                            <div>
+                                <DownloadDialog
+                                    metadataFilter={metadataFilterWithoutHiddenFilters}
+                                    mutationFilter={mutationFilter}
+                                    referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                    lapisUrl={lapisUrl}
+                                    client:load
+                                />
+                            </div>
                         </div>
                         <Table
                             organism={organism}

@@ -1,11 +1,5 @@
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
-import {
-    type Accession,
-    type AccessionVersion,
-    deleteAllDataScope,
-    type Group,
-    openDataUseTermsType,
-} from '../../src/types/backend.ts';
+import { type Accession, type AccessionVersion, type Group, openDataUseTermsType } from '../../src/types/backend.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
 import {
     backendClient,
@@ -111,21 +105,6 @@ export const revokeReleasedData = async (accessions: Accession[], token: string)
     }
 
     return accessionVersions;
-};
-
-export const deleteAllSequencesForUser = async (token: string) => {
-    const body = {
-        scope: deleteAllDataScope.value,
-    };
-
-    const response = await backendClient.call('deleteSequences', body, {
-        params: { organism: dummyOrganism.key },
-        headers: createAuthorizationHeader(token),
-    });
-
-    if (response.isErr()) {
-        throw new Error(`Unexpected error while deleting: ${JSON.stringify(response.error)}`);
-    }
 };
 
 export const createGroup = async (newGroup: Group = DEFAULT_GROUP, token: string) => {

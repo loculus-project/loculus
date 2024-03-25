@@ -62,7 +62,6 @@ export const routes = {
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
     groupOverviewPage: (groupName: string) => `/group/${groupName}`,
-    userSequencesPage: (organism: string) => withOrganism(organism, `/user/seq`),
     userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submission/review`),
     versionPage: (accession: string) => `/seq/${accession}/versions`,
     datasetsPage: (username?: string | undefined) => {
@@ -73,7 +72,6 @@ export const routes = {
         const datasetPagePath = `/datasets/${datasetId}?version=${datasetVersion}`;
         return username === undefined ? datasetPagePath : datasetPagePath + `&user=${username}`;
     },
-    notFoundPage: () => `/404`,
     logout: () => '/logout',
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
 };

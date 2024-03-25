@@ -16,19 +16,6 @@ export class UserPage {
         await this.page.waitForURL(`${baseUrl}/logout`);
     }
 
-    public async leaveGroup(uniqueGroupName: string) {
-        const buttonToLeaveGroup = this.getLocatorForButtonToLeaveGroup(uniqueGroupName);
-        await buttonToLeaveGroup.waitFor({ state: 'visible' });
-        await buttonToLeaveGroup.click();
-
-        const confirmButton = this.page.getByRole('button', { name: 'Confirm' });
-        await confirmButton.click();
-    }
-
-    public getLocatorForButtonToLeaveGroup(groupName: string) {
-        return this.page.locator('li').filter({ hasText: groupName }).getByRole('button');
-    }
-
     public async verifyGroupIsNotPresent(uniqueGroupName: string) {
         const group = this.page.locator('li').filter({ hasText: uniqueGroupName });
         await expect(group).not.toBeVisible();

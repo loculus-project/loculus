@@ -266,6 +266,12 @@ enum class Status {
     }
 }
 
+enum class PreprocessingStatus {
+    IN_PROCESSING,
+    HAS_ERRORS,
+    FINISHED,
+}
+
 enum class SiloVersionStatus {
     REVOKED,
     REVISED,

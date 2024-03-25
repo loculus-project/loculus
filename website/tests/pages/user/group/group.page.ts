@@ -55,10 +55,6 @@ export class GroupPage {
         await createGroupButton.click();
     }
 
-    public getLocatorForButtonToLeaveGroup(groupName: string) {
-        return this.page.locator('li').filter({ hasText: groupName }).getByRole('button');
-    }
-
     public async verifyGroupIsPresent(groupName: string) {
         const newGroupEntry = this.page.locator('ul').getByText(groupName);
         await expect(newGroupEntry).toBeVisible();
@@ -86,6 +82,7 @@ export class GroupPage {
         await expect(buttonToAddUserToGroup).toBeVisible();
         await expect(fieldToAddUserToGroup).toBeVisible();
         await fieldToAddUserToGroup.fill(uniqueUserName);
+        await expect(fieldToAddUserToGroup).toHaveValue(uniqueUserName);
 
         await buttonToAddUserToGroup.click();
 
@@ -102,7 +99,7 @@ export class GroupPage {
     }
 
     public async leaveGroup() {
-        const leaveButton = this.page.getByRole('button', { name: 'Leave Group' });
+        const leaveButton = this.page.getByRole('button', { name: 'Leave group' });
         await leaveButton.waitFor({ state: 'visible' });
         await leaveButton.click();
 

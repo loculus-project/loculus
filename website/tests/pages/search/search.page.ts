@@ -42,10 +42,6 @@ export class SearchPage {
         await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key, params)}`);
     }
 
-    public async clickTableHeader(headerLabel: string) {
-        await this.page.locator(`th:has-text("${headerLabel}")`).click();
-    }
-
     public async getTableContent() {
         const tableData = await this.page.locator('table >> css=tr').evaluateAll((rows) => {
             return rows.map((row) => {
