@@ -12,19 +12,19 @@ class CrossRefServiceTest(
 
     @Test
     fun `POST a metadata request to CrossRef's test endpoint`() {
-x        println("POST a metadata request to CrossRef's test endpoint")
+        println("POST a metadata request to CrossRef's test endpoint")
 
-        val xml = crossRefService.generateCrossRefXML(mapOf(
-            "databaseTitle" to "Pathoplexus Database",
-            "organizations" to arrayOf("pathoplexus.org"),
-            "contributors" to arrayOf(arrayOf("Pathoplexus", "Contributor")),
-            "datasetTitle" to "Pathoplexus Dataset",
-            "DOI" to "10.62599/XXXX",
-            "URL" to "https://pathoplexus.org/"
-        ))
+        // val xml = crossRefService.generateCrossRefXML(mapOf(
+        //     "databaseTitle" to "Pathoplexus Database",
+        //     "organizations" to arrayOf("pathoplexus.org"),
+        //     "contributors" to arrayOf(arrayOf("Pathoplexus", "Contributor")),
+        //     "datasetTitle" to "Pathoplexus Dataset",
+        //     "DOI" to "10.62599/XXXX",
+        //     "URL" to "https://pathoplexus.org/"
+        // ))
 
-        println("xml")
-        println(xml as String)
+        // println("xml")
+        // println(xml as String)
 
         assertEquals(true, false)
     }
