@@ -60,7 +60,7 @@ download_data() {
   echo "calling $released_data_endpoint"
   
   set +e
-  curl -o "$current_input_data_dir/data.ndjson" --fail-with-body "$released_data_endpoint" -H "Authorization: Bearer $jwt"
+  curl -o "$current_input_data_dir/unsorted_data.ndjson" --fail-with-body "$released_data_endpoint" -H "Authorization: Bearer $jwt"
   exit_code=$?
   set -e
 
@@ -73,6 +73,17 @@ download_data() {
   echo "downloaded $(wc -l < "$current_input_data_dir/data.ndjson") sequences"
   echo
 
+  echo "Sorting downloaded data.ndjson"
+
+  time sort -s -o "$current_input_data_dir/data.ndjson" "$current_input_data_dir/unsorted_data.ndjson"
+  exit_code=$?
+  if [ $exit_code -ne 0 ]; then
+    echo "Sort command failed, cleaning up input dir and exiting."
+    rm -rf "$current_input_data_dir"
+    exit $exit_code
+  fi
+
+
   echo "checking for old input data dir $old_input_data_dir"
   if [[ "$old_input_data_dir" =~ ^[0-9]+$ ]]; then
     old_hash=$(md5sum < "$current_input_data_dir/data.ndjson" | awk '{print $1}')
@@ -83,11 +94,11 @@ download_data() {
     echo "new hash: $new_hash"
     if [ "$new_hash" = "$old_hash" ]; then
       echo "Hashes are equal, skipping preprocessing"
-      echo "Move last timestamp dir to current timestamp dir"
-      mv "$old_input_data_dir" "$current_input_data_dir"
+      echo "Deleting input data dir $current_input_data_dir"
+      rm -rf "$current_input_data_dir"
       exit 0
     else
-      echo "Hashes are unequal, deleting old data input dir"
+      echo "Hashes are unequal, deleting old input data dir"
       rm -rf "$old_input_data_dir:?}"
     fi
   fi
