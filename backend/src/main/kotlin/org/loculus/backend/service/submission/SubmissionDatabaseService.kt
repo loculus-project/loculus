@@ -12,6 +12,7 @@ import mu.KotlinLogging
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
@@ -349,6 +350,7 @@ class SubmissionDatabaseService(
                 .select(
                     where = { view.statusIs(Status.APPROVED_FOR_RELEASE) and view.organismIs(organism) },
                 )
+                .orderBy(view.accessionColumn to SortOrder.ASC, view.versionColumn to SortOrder.ASC)
                 .map {
                     RawProcessedData(
                         accession = it[view.accessionColumn],
@@ -523,13 +525,15 @@ class SubmissionDatabaseService(
                             view.isMaxVersion and
                             view.statusIs(Status.AWAITING_APPROVAL_FOR_REVOCATION)
                     },
-                ).map {
+                )
+                .orderBy(view.accessionColumn)
+                .map {
                     SubmissionIdMapping(
                         it[view.accessionColumn],
                         it[view.versionColumn],
                         it[view.submissionIdColumn],
                     )
-                }.sortedBy { it.accession }
+                }
         }
     }
 
