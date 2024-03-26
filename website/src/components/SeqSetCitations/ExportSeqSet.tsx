@@ -103,7 +103,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
                 autoHideDuration={2000}
                 message='Copied to clipboard'
             />
-            <div className='flex flex-col justify-around max-w-md w-2/4'>
+            <div className='flex flex-col justify-around max-w-lg w-2/4'>
                 <div>
                     <div className='flex'>
                         <div className='flex items-center me-4'>
@@ -204,6 +204,7 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
                         rows={5}
                         cols={40}
                         value={getSelectedCitationText()}
+                        readOnly
                     />
                 </div>
                 <div className='pb-8'>

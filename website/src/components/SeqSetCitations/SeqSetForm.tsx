@@ -126,15 +126,15 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
         <div className='flex flex-col items-center  overflow-auto-y w-full'>
             <ManagedErrorFeedback message={serverErrorMessage} open={isErrorOpen} onClose={closeErrorFeedback} />
             <div className='flex justify-start items-center py-5'>
-                <h1 className='text-xl font-semibold py-4'>{`${editSeqSet ? 'Edit' : 'Create'} SeqSet`}</h1>
+                <h1 className='text-xl font-semibold py-4'>{`${editSeqSet ? 'Edit' : 'Create a'} SeqSet`}</h1>
             </div>
-            <div className='space-y-6 max-w-md w-full'>
-                <div className='mb-6'>
+            <div className='max-w-lg w-full'>
+                <div>
                     <label
                         htmlFor='seqSet-name'
                         className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                     >
-                        SeqSet name *
+                        * SeqSet name
                     </label>
                     <input
                         type='text'
@@ -171,15 +171,13 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                         maxLength={255}
                     />
                 </div>
-                <h2 className='text-lg font-bold'>Accessions</h2>
-
                 {Object.keys(accessionsInput).map((type) => (
                     <div className='mb-6' key={`${type}-input-field`}>
                         <label
                             htmlFor='seqSet-description'
                             className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                         >
-                            {`List of ${type} accessions delimited by comma, newline, or space *`}
+                            {`* List of ${type} accessions seperated by comma, newline, or space`}
                         </label>
                         <textarea
                             id={`${type}-accession-input`}
