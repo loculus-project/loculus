@@ -12,8 +12,12 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsChangeRequest
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.controller.DEFAULT_GROUP_NAME
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -46,6 +50,7 @@ class DataUseTermsControllerTest(
     @Test
     fun `GIVEN open submission WHEN getting data use terms THEN return history with one OPEN entry`() {
         val firstAccession = submissionConvenienceClient.submitDefaultFiles().first().accession
+
         client.getDataUseTerms(firstAccession)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -121,6 +126,44 @@ class DataUseTermsControllerTest(
                 .andExpect(content().contentType(testCase.expectedContentType))
                 .andExpect(jsonPath("\$.detail", containsString(testCase.expectedDetailContains)))
         }
+    }
+
+    @Test
+    fun `WHEN I want to change data use terms of an entry of another group THEN is forbidden`() {
+        val accessions = submissionConvenienceClient
+            .submitDefaultFiles(username = DEFAULT_USER_NAME, groupName = DEFAULT_GROUP_NAME)
+            .map { it.accession }
+
+        client.changeDataUseTerms(
+            DataUseTermsChangeRequest(
+                accessions = accessions,
+                newDataUseTerms = DataUseTerms.Open,
+            ),
+            jwt = generateJwtFor("user that is not a member of the group"),
+        )
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.detail", containsString("not a member of group(s) testGroup")))
+    }
+
+    @Test
+    fun `WHEN superuser changes data use terms of an entry of other group THEN is successful`() {
+        val accessions = submissionConvenienceClient
+            .submitDefaultFiles(username = DEFAULT_USER_NAME, groupName = DEFAULT_GROUP_NAME)
+            .map { it.accession }
+
+        client.changeDataUseTerms(
+            DataUseTermsChangeRequest(
+                accessions = accessions,
+                newDataUseTerms = DataUseTerms.Open,
+            ),
+            jwt = jwtForSuperUser,
+        )
+            .andExpect(status().isNoContent)
+
+        client.getDataUseTerms(accession = accessions.first())
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
+            .andExpect(jsonPath("\$[0].dataUseTerms.type").value(DataUseTermsType.OPEN.name))
     }
 
     companion object {

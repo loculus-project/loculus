@@ -25,6 +25,8 @@ import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
+import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.model.ReleasedDataModel
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.model.SubmitModel
@@ -35,7 +37,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -70,7 +71,7 @@ class SubmissionController(
     fun submit(
         @PathVariable @Valid
         organism: Organism,
-        @UsernameFromJwt username: String,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(description = GROUP_DESCRIPTION) @RequestParam groupName: String,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
@@ -85,7 +86,7 @@ class SubmissionController(
     ): List<SubmissionIdMapping> {
         val params = SubmissionParams.OriginalSubmissionParams(
             organism,
-            username,
+            authenticatedUser,
             metadataFile,
             sequenceFile,
             groupName,
@@ -100,7 +101,7 @@ class SubmissionController(
     fun revise(
         @PathVariable @Valid
         organism: Organism,
-        @UsernameFromJwt username: String,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter(
             description = REVISED_METADATA_FILE_DESCRIPTION,
         ) @RequestParam metadataFile: MultipartFile,
@@ -110,7 +111,7 @@ class SubmissionController(
     ): List<SubmissionIdMapping> {
         val params = SubmissionParams.RevisionSubmissionParams(
             organism,
-            username,
+            authenticatedUser,
             metadataFile,
             sequenceFile,
         )
@@ -198,9 +199,9 @@ class SubmissionController(
         organism: Organism,
         @PathVariable accession: Accession,
         @PathVariable version: Long,
-        @UsernameFromJwt username: String,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
     ): SequenceEntryVersionToEdit = submissionDatabaseService.getSequenceEntryVersionToEdit(
-        username,
+        authenticatedUser,
         AccessionVersion(accession, version),
         organism,
     )
@@ -211,9 +212,9 @@ class SubmissionController(
     fun submitEditedData(
         @PathVariable @Valid
         organism: Organism,
-        @UsernameFromJwt username: String,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestBody accessionVersion: UnprocessedData,
-    ) = submissionDatabaseService.submitEditedData(username, accessionVersion, organism)
+    ) = submissionDatabaseService.submitEditedData(authenticatedUser, accessionVersion, organism)
 
     @Operation(description = GET_SEQUENCES_DESCRIPTION)
     @GetMapping("/get-sequences", produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -230,7 +231,7 @@ class SubmissionController(
         )
         @RequestParam(required = false)
         statusesFilter: List<Status>?,
-        @UsernameFromJwt username: String,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam(required = false, defaultValue = "INCLUDE_WARNINGS")
         warningsFilter: WarningsFilter,
         @Parameter(
@@ -246,7 +247,7 @@ class SubmissionController(
         @RequestParam(required = false)
         size: Int?,
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
-        username,
+        authenticatedUser,
         organism,
         groupsFilter,
         statusesFilter,
@@ -261,11 +262,11 @@ class SubmissionController(
     fun approveProcessedData(
         @PathVariable @Valid
         organism: Organism,
-        @UsernameFromJwt username: String,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestBody
         body: AccessionVersionsFilterWithApprovalScope,
     ): List<AccessionVersion> = submissionDatabaseService.approveProcessedData(
-        submitter = username,
+        authenticatedUser = authenticatedUser,
         accessionVersionsFilter = body.accessionVersionsFilter,
         organism = organism,
         scope = body.scope,
@@ -277,8 +278,8 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @RequestBody body: Accessions,
-        @UsernameFromJwt username: String,
-    ): List<SubmissionIdMapping> = submissionDatabaseService.revoke(body.accessions, username, organism)
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+    ): List<SubmissionIdMapping> = submissionDatabaseService.revoke(body.accessions, authenticatedUser, organism)
 
     @Operation(description = DELETE_SEQUENCES_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)
@@ -288,12 +289,12 @@ class SubmissionController(
     fun deleteSequence(
         @PathVariable @Valid
         organism: Organism,
-        @UsernameFromJwt username: String,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestBody
         body: AccessionVersionsFilterWithDeletionScope,
     ): List<AccessionVersion> = submissionDatabaseService.deleteSequenceEntryVersions(
         body.accessionVersionsFilter,
-        username,
+        authenticatedUser,
         organism,
         body.scope,
     )
@@ -309,8 +310,3 @@ class SubmissionController(
         }
     }
 }
-
-@Target(AnnotationTarget.VALUE_PARAMETER)
-@Retention(AnnotationRetention.RUNTIME)
-@AuthenticationPrincipal(expression = "claims[preferred_username]")
-annotation class UsernameFromJwt

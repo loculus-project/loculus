@@ -15,6 +15,7 @@ import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
@@ -53,14 +54,14 @@ class UploadDatabaseService(
 
     fun batchInsertMetadataInAuxTable(
         uploadId: String,
-        username: String,
+        authenticatedUser: AuthenticatedUser,
         groupName: String,
         submittedOrganism: Organism,
         uploadedMetadataBatch: List<MetadataEntry>,
         uploadedAt: LocalDateTime,
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedMetadataBatch) {
-            this[submitterColumn] = username
+            this[submitterColumn] = authenticatedUser.username
             this[groupNameColumn] = groupName
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
@@ -72,14 +73,14 @@ class UploadDatabaseService(
 
     fun batchInsertRevisedMetadataInAuxTable(
         uploadId: String,
-        submitter: String,
+        authenticatedUser: AuthenticatedUser,
         submittedOrganism: Organism,
         uploadedRevisedMetadataBatch: List<RevisionEntry>,
         uploadedAt: LocalDateTime,
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedRevisedMetadataBatch) {
             this[accessionColumn] = it.accession
-            this[submitterColumn] = submitter
+            this[submitterColumn] = authenticatedUser.username
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
             this[metadataColumn] = it.metadata
@@ -180,7 +181,7 @@ class UploadDatabaseService(
 
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             dataUseTermsDatabaseService.setNewDataUseTerms(
-                submissionParams.username,
+                submissionParams.authenticatedUser,
                 insertionResult.map { it.accession },
                 submissionParams.dataUseTerms,
             )
@@ -196,7 +197,11 @@ class UploadDatabaseService(
         SequenceUploadAuxTable.deleteWhere { sequenceUploadIdColumn eq uploadId }
     }
 
-    fun associateRevisedDataWithExistingSequenceEntries(uploadId: String, organism: Organism, username: String) {
+    fun associateRevisedDataWithExistingSequenceEntries(
+        uploadId: String,
+        organism: Organism,
+        authenticatedUser: AuthenticatedUser,
+    ) {
         val accessions =
             MetadataUploadAuxTable
                 .slice(accessionColumn)
@@ -204,7 +209,7 @@ class UploadDatabaseService(
                 .map { it[accessionColumn]!! }
 
         accessionPreconditionValidator.validateAccessions(
-            username,
+            authenticatedUser,
             accessions,
             listOf(Status.APPROVED_FOR_RELEASE),
             organism,
@@ -231,7 +236,7 @@ class UploadDatabaseService(
         }
     }
 
-    fun generateNewAccessionsForOriginalUpload(uploadId: String, organism: Organism, username: String) {
+    fun generateNewAccessionsForOriginalUpload(uploadId: String, organism: Organism) {
         val submissionIds =
             MetadataUploadAuxTable
                 .slice(submissionIdColumn)
@@ -251,12 +256,7 @@ class UploadDatabaseService(
         val submissionIdToAccessionMap = submissionIds.zip(nextAccessions)
 
         log.info {
-            "Generated ${submissionIdToAccessionMap.size} new accessions for original upload with UploadId " +
-                "$uploadId: ${submissionIdToAccessionMap.joinToString(
-                    limit = 10,
-                ){
-                    it.toString()
-                } }"
+            "Generated ${submissionIdToAccessionMap.size} new accessions for original upload with UploadId $uploadId:"
         }
 
         submissionIdToAccessionMap.forEach { (submissionId, accession) ->

@@ -5,22 +5,23 @@ import io.mockk.every
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.Matchers.containsInAnyOrder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
 import org.keycloak.representations.idm.UserRepresentation
-import org.loculus.backend.api.Address
-import org.loculus.backend.api.Group
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
-import org.loculus.backend.controller.submission.DEFAULT_USER_NAME
+import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.service.KeycloakAdapter
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -28,21 +29,6 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
-
-const val NEW_GROUP_NAME = "newGroup"
-val NEW_GROUP = Group(
-    groupName = NEW_GROUP_NAME,
-    institution = "newInstitution",
-    address = Address(
-        line1 = "newAddressLine1",
-        line2 = "newAddressLine2",
-        city = "newCity",
-        state = "newState",
-        postalCode = "newPostalCode",
-        country = "newCountry",
-    ),
-    contactEmail = "newEmail",
-)
 
 @EndpointTest
 class GroupManagementControllerTest(
@@ -82,6 +68,41 @@ class GroupManagementControllerTest(
             .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
     }
 
+    @Test
+    fun `GIVEN I created a group WHEN I query my groups THEN returns created group`() {
+        val jwtForAnotherUser = generateJwtFor("another user")
+
+        client.createNewGroup(group = NEW_GROUP, jwt = jwtForAnotherUser)
+            .andExpect(status().isNoContent)
+
+        client.getGroupsOfUser(jwt = jwtForAnotherUser)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.size()", `is`(1)))
+            .andExpect(jsonPath("\$.[0].groupName").value(NEW_GROUP.groupName))
+            .andExpect(jsonPath("\$.[0].institution").value(NEW_GROUP.institution))
+            .andExpect(jsonPath("\$.[0].address.line1").value(NEW_GROUP.address.line1))
+            .andExpect(jsonPath("\$.[0].address.line2").value(NEW_GROUP.address.line2))
+            .andExpect(jsonPath("\$.[0].address.city").value(NEW_GROUP.address.city))
+            .andExpect(jsonPath("\$.[0].address.state").value(NEW_GROUP.address.state))
+            .andExpect(jsonPath("\$.[0].address.postalCode").value(NEW_GROUP.address.postalCode))
+            .andExpect(jsonPath("\$.[0].address.country").value(NEW_GROUP.address.country))
+            .andExpect(jsonPath("\$.[0].contactEmail").value(NEW_GROUP.contactEmail))
+    }
+
+    @Test
+    fun `WHEN superuser queries groups of user THEN returns all groups`() {
+        client.getGroupsOfUser(jwt = jwtForSuperUser)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath(
+                    "\$.[*].groupName",
+                    containsInAnyOrder(DEFAULT_GROUP_NAME, ALTERNATIVE_DEFAULT_GROUP_NAME),
+                ),
+            )
+    }
+
     @ParameterizedTest
     @MethodSource("authorizationTestCases")
     fun `GIVEN invalid authorization token WHEN performing action THEN returns 401 Unauthorized`(scenario: Scenario) {
@@ -117,11 +138,11 @@ class GroupManagementControllerTest(
     }
 
     @Test
-    fun `GIVEN a group is created WHEN groups of the user are queried THEN expect that the group is returned`() {
+    fun `GIVEN a group is created WHEN all groups are queried THEN expect that the group is returned`() {
         client.createNewGroup()
             .andExpect(status().isNoContent)
 
-        client.getGroupsOfUser()
+        client.getAllGroups()
             .andExpect(status().isOk())
             .andExpect { jsonPath("\$.size()", `is`(1)) }
             .andExpect { jsonPath("\$[0].groupName", `is`(NEW_GROUP.groupName)) }
@@ -175,11 +196,11 @@ class GroupManagementControllerTest(
     }
 
     @Test
-    fun `GIVEN a non-member tries to remove another user THEN the action is forbidden`() {
+    fun `WHEN a non-member tries to remove another user THEN the action is forbidden`() {
         client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
             .andExpect(status().isNoContent)
 
-        client.addUserToGroup(DEFAULT_USER_NAME)
+        client.removeUserFromGroup(ALTERNATIVE_DEFAULT_USER_NAME, jwt = jwtForDefaultUser)
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -190,7 +211,46 @@ class GroupManagementControllerTest(
     }
 
     @Test
-    fun `GIVEN a non-exisiting group WHEN a user is added THEN expect to find no group`() {
+    fun `WHEN a non-member tries to add another user THEN the action is forbidden`() {
+        client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
+            .andExpect(status().isNoContent)
+
+        client.addUserToGroup(DEFAULT_USER_NAME, jwt = jwtForDefaultUser)
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "User $DEFAULT_USER_NAME is not a member of group(s) ${NEW_GROUP.groupName}. Action not allowed.",
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN a superusers removes a user from a group THEN user is removed`() {
+        client.createNewGroup().andExpect(status().isNoContent)
+
+        client.removeUserFromGroup(DEFAULT_USER_NAME, jwt = jwtForSuperUser)
+            .andExpect(status().isNoContent)
+
+        client.getDetailsOfGroup()
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.users.size()", `is`(0)))
+    }
+
+    @Test
+    fun `WHEN a superusers adds a user to a group THEN user is added`() {
+        client.createNewGroup().andExpect(status().isNoContent)
+
+        client.addUserToGroup("another user", jwt = jwtForSuperUser)
+            .andExpect(status().isNoContent)
+
+        client.getDetailsOfGroup()
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.users.size()", `is`(2)))
+    }
+
+    @Test
+    fun `GIVEN a non-existing group WHEN a user is added THEN expect to find no group`() {
         client.addUserToGroup(DEFAULT_USER_NAME)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -273,11 +333,12 @@ class GroupManagementControllerTest(
 
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
-            Scenario({ jwt, client -> client.createNewGroup(jwt = jwt) }, true),
-            Scenario({ jwt, client -> client.getDetailsOfGroup(jwt = jwt) }, false),
-            Scenario({ jwt, client -> client.getGroupsOfUser(jwt = jwt) }, false),
-            Scenario({ jwt, client -> client.addUserToGroup(DEFAULT_USER_NAME, jwt = jwt) }, true),
-            Scenario({ jwt, client -> client.removeUserFromGroup(DEFAULT_USER_NAME, jwt = jwt) }, true),
+            Scenario({ jwt, client -> client.createNewGroup(jwt = jwt) }, isModifying = true),
+            Scenario({ jwt, client -> client.getDetailsOfGroup(jwt = jwt) }, isModifying = false),
+            Scenario({ jwt, client -> client.getGroupsOfUser(jwt = jwt) }, isModifying = false),
+            Scenario({ jwt, client -> client.getAllGroups(jwt = jwt) }, isModifying = false),
+            Scenario({ jwt, client -> client.addUserToGroup(DEFAULT_USER_NAME, jwt = jwt) }, isModifying = true),
+            Scenario({ jwt, client -> client.removeUserFromGroup(DEFAULT_USER_NAME, jwt = jwt) }, isModifying = true),
         )
     }
 }

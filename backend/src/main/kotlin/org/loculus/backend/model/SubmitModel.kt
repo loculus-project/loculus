@@ -10,6 +10,7 @@ import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.SubmissionIdMapping
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.DuplicateKeyException
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -37,14 +38,14 @@ const val UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE = "23505"
 
 interface SubmissionParams {
     val organism: Organism
-    val username: String
+    val authenticatedUser: AuthenticatedUser
     val metadataFile: MultipartFile
     val sequenceFile: MultipartFile
     val uploadType: UploadType
 
     data class OriginalSubmissionParams(
         override val organism: Organism,
-        override val username: String,
+        override val authenticatedUser: AuthenticatedUser,
         override val metadataFile: MultipartFile,
         override val sequenceFile: MultipartFile,
         val groupName: String,
@@ -55,13 +56,14 @@ interface SubmissionParams {
 
     data class RevisionSubmissionParams(
         override val organism: Organism,
-        override val username: String,
+        override val authenticatedUser: AuthenticatedUser,
         override val metadataFile: MultipartFile,
         override val sequenceFile: MultipartFile,
     ) : SubmissionParams {
         override val uploadType: UploadType = UploadType.REVISION
     }
 }
+
 enum class UploadType {
     ORIGINAL,
     REVISION,
@@ -115,14 +117,13 @@ class SubmitModel(
                 uploadDatabaseService.associateRevisedDataWithExistingSequenceEntries(
                     uploadId,
                     submissionParams.organism,
-                    submissionParams.username,
+                    submissionParams.authenticatedUser,
                 )
             } else if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
                 log.info { "Generating new accessions for uploaded sequence data with uploadId $uploadId" }
                 uploadDatabaseService.generateNewAccessionsForOriginalUpload(
                     uploadId,
                     submissionParams.organism,
-                    submissionParams.username,
                 )
             }
 
@@ -135,9 +136,9 @@ class SubmitModel(
 
     private fun uploadData(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
-            groupManagementPreconditionValidator.validateUserInExistingGroup(
+            groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
                 submissionParams.groupName,
-                submissionParams.username,
+                submissionParams.authenticatedUser,
             )
             dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(submissionParams.dataUseTerms)
         }
@@ -221,25 +222,26 @@ class SubmitModel(
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertMetadataInAuxTable(
-                                uploadId,
-                                submissionParams.username,
-                                submissionParams.groupName,
-                                submissionParams.organism,
-                                batch,
-                                now,
+                                uploadId = uploadId,
+                                authenticatedUser = submissionParams.authenticatedUser,
+                                groupName = submissionParams.groupName,
+                                submittedOrganism = submissionParams.organism,
+                                uploadedMetadataBatch = batch,
+                                uploadedAt = now,
                             )
                         }
                 }
+
                 is SubmissionParams.RevisionSubmissionParams -> {
                     revisionEntryStreamAsSequence(metadataStream)
                         .chunked(batchSize)
                         .forEach { batch ->
                             uploadDatabaseService.batchInsertRevisedMetadataInAuxTable(
-                                uploadId,
-                                submissionParams.username,
-                                submissionParams.organism,
-                                batch,
-                                now,
+                                uploadId = uploadId,
+                                authenticatedUser = submissionParams.authenticatedUser,
+                                submittedOrganism = submissionParams.organism,
+                                uploadedRevisedMetadataBatch = batch,
+                                uploadedAt = now,
                             )
                         }
                 }
@@ -286,11 +288,13 @@ class SubmitModel(
             }
         }
 
+        val allowedCompressionFormats = expectedFileType.getCompressedExtensions()
+            .filter { it.key != CompressionAlgorithm.NONE }
+            .flatMap { it.value }.joinToString(", .")
         throw BadRequestException(
             "${expectedFileType.displayName} has wrong extension. Must be " +
                 ".${expectedFileType.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-                ".${expectedFileType.getCompressedExtensions().filter { it.key != CompressionAlgorithm.NONE }
-                    .flatMap { it.value }.joinToString(", .")} for compressed submissions",
+                ".$allowedCompressionFormats for compressed submissions",
         )
     }
 

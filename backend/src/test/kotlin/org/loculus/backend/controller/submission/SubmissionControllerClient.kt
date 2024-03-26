@@ -27,8 +27,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
-const val DEFAULT_USER_NAME = "testuser"
-
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun submit(
         metadataFile: MockMultipartFile,
@@ -130,16 +128,16 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     }
 
     fun approveProcessedSequenceEntries(
-        listOfSequencesToApprove: List<AccessionVersionInterface>? = null,
+        scope: ApproveDataScope,
+        accessionVersionsFilter: List<AccessionVersionInterface>? = null,
         organism: String = DEFAULT_ORGANISM,
-        scope: ApproveDataScope = ApproveDataScope.ALL,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/approve-processed-data", organism = organism))
             .contentType(MediaType.APPLICATION_JSON)
             .content(
                 """{
-                    "accessionVersionsFilter": ${serialize(listOfSequencesToApprove)},
+                    "accessionVersionsFilter": ${serialize(accessionVersionsFilter)},
                     "scope": "$scope"
                 }""",
             )
@@ -164,8 +162,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         )
 
     fun deleteSequenceEntries(
-        listOfAccessionVersionsToDelete: List<AccessionVersion>? = null,
-        scope: DeleteSequenceScope = DeleteSequenceScope.ALL,
+        scope: DeleteSequenceScope,
+        accessionVersionsFilter: List<AccessionVersionInterface>? = null,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
@@ -175,7 +173,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .content(
                 """
                     {
-                        "accessionVersionsFilter": ${serialize(listOfAccessionVersionsToDelete)},
+                        "accessionVersionsFilter": ${serialize(accessionVersionsFilter)},
                         "scope": "$scope"
                     }
                 """.trimMargin(),

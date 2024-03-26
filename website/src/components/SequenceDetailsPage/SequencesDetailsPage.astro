@@ -7,7 +7,6 @@ import { getReferenceGenomes, getRuntimeConfig } from '../../config';
 import { routes } from '../../routes/routes.ts';
 import { GroupManagementClient } from '../../services/groupManagementClient';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import { type Group } from '../../types/backend.ts';
 import { getAccessToken } from '../../utils/getAccessToken';
 import ErrorBox from '../common/ErrorBox.astro';
 import MdiEye from '~icons/mdi/eye';
@@ -34,14 +33,12 @@ const clientConfig = getRuntimeConfig().public;
 const session = Astro.locals.session;
 const accessToken = getAccessToken(session);
 
-const groupsResult =
-    accessToken !== undefined ? await GroupManagementClient.create().getGroupsOfUser(accessToken) : undefined;
-
 const isMyGroup =
     accessToken !== undefined &&
-    groupsResult !== undefined &&
-    groupsResult.isOk() &&
-    groupsResult.value.some((myGroupItem: Group) => myGroupItem.groupName === group);
+    (await GroupManagementClient.create().getGroupsOfUser(accessToken)).match(
+        (groups) => groups.some((myGroupItem) => myGroupItem.groupName === group),
+        () => false,
+    );
 ---
 
 {

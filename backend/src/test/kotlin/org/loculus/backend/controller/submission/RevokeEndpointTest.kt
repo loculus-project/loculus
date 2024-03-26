@@ -4,12 +4,15 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
+import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -44,7 +47,7 @@ class RevokeEndpointTest(
             .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
             .andExpect(jsonPath("\$[0].version").value(2))
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 2)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
             .assertStatusIs(AWAITING_APPROVAL)
     }
 
@@ -89,6 +92,26 @@ class RevokeEndpointTest(
             .andExpect(
                 jsonPath("\$.detail", containsString("is not a member of group")),
             )
+    }
+
+    @Test
+    fun `WHEN superuser revokes entries of other group THEN revocation version is created`() {
+        val accessions = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease(
+                username = DEFAULT_USER_NAME,
+                groupName = DEFAULT_GROUP_NAME,
+            )
+            .map { it.accession }
+
+        client.revokeSequenceEntries(accessions, jwt = jwtForSuperUser)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
+            .andExpect(jsonPath("\$[0].version").value(2))
+
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
+            .assertStatusIs(AWAITING_APPROVAL)
     }
 
     @Test

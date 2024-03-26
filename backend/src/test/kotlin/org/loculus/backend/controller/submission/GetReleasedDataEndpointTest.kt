@@ -16,6 +16,7 @@ import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectNdjsonAndGetContent

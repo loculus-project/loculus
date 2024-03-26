@@ -4,11 +4,14 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.controller.DEFAULT_GROUP_NAME
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jwtForSuperUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -33,14 +36,14 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     fun `GIVEN a sequence entry has errors WHEN I submit edited data THEN the status changes to RECEIVED`() {
         val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
         val editedData = generateUnprocessedData(accessions.first())
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.RECEIVED)
     }
 
@@ -48,7 +51,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN the status changes to RECEIVED`() {
         val accessions = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL).map { it.accession }
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
 
         val editedData = generateUnprocessedData(accessions.first())
@@ -56,7 +59,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         client.submitEditedSequenceEntryVersion(editedData)
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.RECEIVED)
     }
 
@@ -64,11 +67,11 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     fun `WHEN a version does not exist THEN it returns an unprocessable entity error`() {
         val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
         val editedDataWithNonExistingVersion = generateUnprocessedData(accessions.first(), version = 2)
-        val sequenceString = getAccessionVersion(editedDataWithNonExistingVersion)
+        val sequenceString = editedDataWithNonExistingVersion.displayAccessionVersion()
 
         client.submitEditedSequenceEntryVersion(editedDataWithNonExistingVersion)
             .andExpect(status().isUnprocessableEntity)
@@ -82,7 +85,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     fun `WHEN an accession does not exist THEN it returns an unprocessable entity error`() {
         val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
         val nonExistingAccession = "nonExistingAccession"
@@ -97,7 +100,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
                 ),
             )
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
@@ -105,7 +108,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     fun `WHEN submitting data for wrong organism THEN it returns an unprocessable entity error`() {
         val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
         val editedData = generateUnprocessedData(accessions.first())
@@ -119,7 +122,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
                 ),
             )
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
@@ -127,7 +130,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     fun `WHEN a sequence entry does not belong to a user THEN it returns an forbidden error`() {
         val accessions = convenienceClient.prepareDataTo(Status.HAS_ERRORS).map { it.accession }
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
         val editedDataFromWrongSubmitter = generateUnprocessedData(accessions.first())
@@ -139,8 +142,22 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
                 jsonPath("\$.detail", containsString("is not a member of group")),
             )
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
+    }
+
+    @Test
+    fun `WHEN superuser submits edited data for entry of other group THEN accepts data`() {
+        val accessionVersion = convenienceClient
+            .prepareDataTo(Status.HAS_ERRORS, username = DEFAULT_USER_NAME, groupName = DEFAULT_GROUP_NAME)
+            .first()
+
+        val editedData = generateUnprocessedData(accessionVersion.accession, accessionVersion.version)
+        client.submitEditedSequenceEntryVersion(editedData, jwt = jwtForSuperUser)
+            .andExpect(status().isNoContent)
+
+        convenienceClient.getSequenceEntry(accession = accessionVersion.accession, version = accessionVersion.version)
+            .assertStatusIs(Status.RECEIVED)
     }
 
     private fun generateUnprocessedData(accession: String, version: Long = 1) = UnprocessedData(
@@ -148,7 +165,4 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
         version = version,
         data = emptyOriginalData,
     )
-
-    private fun getAccessionVersion(unprocessedData: UnprocessedData) =
-        "${unprocessedData.accession}.${unprocessedData.version}"
 }

@@ -5,6 +5,7 @@ import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.empty
 import org.hamcrest.Matchers.hasEntry
+import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
@@ -21,11 +22,13 @@ import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
@@ -119,6 +122,58 @@ class GetSequencesEndpointTest(
                 ),
             )
         }
+    }
+
+    @Test
+    fun `WHEN superuser queries data of groups THEN returns sequence entries`() {
+        val defaultGroupData = convenienceClient.submitDefaultFiles(
+            username = DEFAULT_USER_NAME,
+            groupName = DEFAULT_GROUP_NAME,
+        )
+        val otherGroupData = convenienceClient.submitDefaultFiles(
+            username = DEFAULT_USER_NAME,
+            groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
+        )
+        val accessionVersions = defaultGroupData + otherGroupData
+
+        client.getSequenceEntries(
+            groupsFilter = listOf(DEFAULT_GROUP_NAME, ALTERNATIVE_DEFAULT_GROUP_NAME),
+            jwt = jwtForSuperUser,
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.statusCounts.RECEIVED").value(accessionVersions.size))
+            .andExpect(
+                jsonPath("\$.sequenceEntries.[*].accession", hasItem(defaultGroupData.first().accession)),
+            )
+            .andExpect(
+                jsonPath("\$.sequenceEntries.[*].accession", hasItem(otherGroupData.first().accession)),
+            )
+    }
+
+    @Test
+    fun `WHEN superuser queries sequences without groupsFilter THEN returns sequence entries`() {
+        val defaultGroupData = convenienceClient.submitDefaultFiles(
+            username = DEFAULT_USER_NAME,
+            groupName = DEFAULT_GROUP_NAME,
+        )
+        val otherGroupData = convenienceClient.submitDefaultFiles(
+            username = DEFAULT_USER_NAME,
+            groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
+        )
+        val accessionVersions = defaultGroupData + otherGroupData
+
+        client.getSequenceEntries(
+            groupsFilter = null,
+            jwt = jwtForSuperUser,
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.statusCounts.RECEIVED").value(accessionVersions.size))
+            .andExpect(
+                jsonPath("\$.sequenceEntries.[*].accession", hasItem(defaultGroupData.first().accession)),
+            )
+            .andExpect(
+                jsonPath("\$.sequenceEntries.[*].accession", hasItem(otherGroupData.first().accession)),
+            )
     }
 
     @Test

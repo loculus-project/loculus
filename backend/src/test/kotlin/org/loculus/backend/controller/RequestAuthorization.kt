@@ -1,7 +1,9 @@
 package org.loculus.backend.controller
 
 import io.jsonwebtoken.Jwts
-import org.loculus.backend.controller.submission.DEFAULT_USER_NAME
+import org.loculus.backend.auth.Roles.GET_RELEASED_DATA
+import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
+import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder
 import java.security.KeyPair
 import java.time.Instant
@@ -11,8 +13,9 @@ import java.util.Date
 val keyPair: KeyPair = Jwts.SIG.RS256.keyPair().build()
 
 val jwtForDefaultUser = generateJwtFor(DEFAULT_USER_NAME)
-val jwtForProcessingPipeline = generateJwtFor("preprocessing_pipeline", listOf("preprocessing_pipeline"))
-val jwtForGetReleasedData = generateJwtFor("silo_import_job", listOf("get_released_data"))
+val jwtForProcessingPipeline = generateJwtFor("preprocessing_pipeline", listOf(PREPROCESSING_PIPELINE))
+val jwtForGetReleasedData = generateJwtFor("silo_import_job", listOf(GET_RELEASED_DATA))
+val jwtForSuperUser = generateJwtFor(SUPER_USER_NAME, listOf(SUPER_USER))
 
 fun generateJwtFor(username: String, roles: List<String> = emptyList()): String = Jwts.builder()
     .expiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))

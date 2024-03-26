@@ -4,6 +4,7 @@ import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.hasSize
+import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -14,12 +15,15 @@ import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
+import org.loculus.backend.controller.SUPER_USER_NAME
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
@@ -81,6 +85,28 @@ class ReviseEndpointTest(
     }
 
     @Test
+    fun `WHEN superuser submits on behalf of other group THEN revised versions are created`() {
+        val accessions = convenienceClient
+            .prepareDataTo(APPROVED_FOR_RELEASE, username = DEFAULT_USER_NAME, groupName = DEFAULT_GROUP_NAME)
+            .map { it.accession }
+
+        client.reviseSequenceEntries(
+            DefaultFiles.getRevisedMetadataFile(accessions),
+            DefaultFiles.sequencesFile,
+            jwt = jwtForSuperUser,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(DefaultFiles.NUMBER_OF_SEQUENCES))
+            .andExpect(jsonPath("\$[0].submissionId").value("custom0"))
+            .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
+            .andExpect(jsonPath("\$[0].version").value(2))
+
+        val sequenceEntry = convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
+        assertThat(sequenceEntry.submitter, `is`(SUPER_USER_NAME))
+    }
+
+    @Test
     fun `GIVEN entries with status 'APPROVED_FOR_RELEASE' THEN there is a revised version and returns HeaderIds`() {
         val accessions = convenienceClient.prepareDataTo(APPROVED_FOR_RELEASE).map { it.accession }
 
@@ -95,9 +121,9 @@ class ReviseEndpointTest(
             .andExpect(jsonPath("\$[0].accession").value(accessions.first()))
             .andExpect(jsonPath("\$[0].version").value(2))
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 2)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 2)
             .assertStatusIs(RECEIVED)
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(APPROVED_FOR_RELEASE)
 
         val result = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)

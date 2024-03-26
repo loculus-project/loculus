@@ -43,6 +43,7 @@ import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -228,22 +229,22 @@ class SubmissionDatabaseService(
     }
 
     fun approveProcessedData(
-        submitter: String,
+        authenticatedUser: AuthenticatedUser,
         accessionVersionsFilter: List<AccessionVersion>?,
         organism: Organism,
         scope: ApproveDataScope,
     ): List<AccessionVersion> {
         if (accessionVersionsFilter == null) {
-            log.info { "approving all sequences by all groups $submitter is member of" }
+            log.info { "approving all sequences by all groups ${authenticatedUser.username} is member of" }
         } else {
-            log.info { "approving ${accessionVersionsFilter.size} sequences by $submitter" }
+            log.info { "approving ${accessionVersionsFilter.size} sequences by ${authenticatedUser.username}" }
         }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         if (accessionVersionsFilter != null) {
             accessionPreconditionValidator.validateAccessionVersions(
-                submitter,
+                authenticatedUser,
                 accessionVersionsFilter,
                 listOf(Status.AWAITING_APPROVAL),
                 organism,
@@ -268,8 +269,10 @@ class SubmissionDatabaseService(
 
                 val accessionCondition = if (accessionVersionsFilter !== null) {
                     view.accessionVersionIsIn(accessionVersionsFilter)
+                } else if (authenticatedUser.isSuperUser) {
+                    Op.TRUE
                 } else {
-                    view.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(submitter))
+                    view.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(authenticatedUser))
                 }
 
                 val scopeCondition = if (scope == ApproveDataScope.WITHOUT_WARNINGS) {
@@ -373,7 +376,7 @@ class SubmissionDatabaseService(
     }
 
     fun getSequences(
-        username: String,
+        authenticatedUser: AuthenticatedUser,
         organism: Organism?,
         groupsFilter: List<String>?,
         statusesFilter: List<Status>?,
@@ -382,20 +385,29 @@ class SubmissionDatabaseService(
         size: Int? = null,
     ): GetSequenceResponse {
         log.info {
-            "getting sequence for user $username (groupFilter: $groupsFilter in statuses $statusesFilter)." +
+            "getting sequence for user ${authenticatedUser.username} " +
+                "(groupFilter: $groupsFilter in statuses $statusesFilter)." +
                 " Page $page of size $size "
-        }
-
-        val validatedGroupNames = if (groupsFilter == null) {
-            groupManagementDatabaseService.getGroupsOfUser(username).map { it.groupName }
-        } else {
-            groupManagementPreconditionValidator.validateUserInExistingGroups(groupsFilter, username)
-            groupsFilter
         }
 
         val listOfStatuses = statusesFilter ?: Status.entries
 
         entriesViewProvider.get(organism).let { view ->
+            val groupCondition = if (groupsFilter != null) {
+                groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroups(
+                    groupsFilter,
+                    authenticatedUser,
+                )
+                view.groupNameIsOneOf(groupsFilter)
+            } else if (authenticatedUser.isSuperUser) {
+                Op.TRUE
+            } else {
+                val groupsOfUser = groupManagementDatabaseService
+                    .getGroupsOfUser(authenticatedUser)
+                    .map { it.groupName }
+                view.groupNameIsOneOf(groupsOfUser)
+            }
+
             val baseQuery = view
                 .join(
                     DataUseTermsTable,
@@ -412,6 +424,7 @@ class SubmissionDatabaseService(
                     view.statusColumn,
                     view.isRevocationColumn,
                     view.groupNameColumn,
+                    view.submitterColumn,
                     view.organismColumn,
                     view.submittedAtColumn,
                     DataUseTermsTable.dataUseTermsTypeColumn,
@@ -419,7 +432,7 @@ class SubmissionDatabaseService(
                 )
                 .select(
                     where = {
-                        view.groupNameIsOneOf(validatedGroupNames)
+                        groupCondition
                     },
                 )
                 .orderBy(view.accessionColumn)
@@ -452,12 +465,13 @@ class SubmissionDatabaseService(
                 sequenceEntries = pagedQuery
                     .map { row ->
                         SequenceEntryStatus(
-                            row[view.accessionColumn],
-                            row[view.versionColumn],
-                            Status.fromString(row[view.statusColumn]),
-                            row[view.groupNameColumn],
-                            row[view.isRevocationColumn],
-                            row[view.submissionIdColumn],
+                            accession = row[view.accessionColumn],
+                            version = row[view.versionColumn],
+                            status = Status.fromString(row[view.statusColumn]),
+                            group = row[view.groupNameColumn],
+                            submitter = row[view.submitterColumn],
+                            isRevocation = row[view.isRevocationColumn],
+                            submissionId = row[view.submissionIdColumn],
                             dataUseTerms = DataUseTerms.fromParameters(
                                 DataUseTermsType.fromString(row[DataUseTermsTable.dataUseTermsTypeColumn]),
                                 row[DataUseTermsTable.restrictedUntilColumn],
@@ -469,11 +483,15 @@ class SubmissionDatabaseService(
         }
     }
 
-    fun revoke(accessions: List<Accession>, username: String, organism: Organism): List<SubmissionIdMapping> {
+    fun revoke(
+        accessions: List<Accession>,
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+    ): List<SubmissionIdMapping> {
         log.info { "revoking ${accessions.size} sequences" }
 
         accessionPreconditionValidator.validateAccessions(
-            username,
+            authenticatedUser,
             accessions,
             listOf(Status.APPROVED_FOR_RELEASE),
             organism,
@@ -539,14 +557,18 @@ class SubmissionDatabaseService(
 
     fun deleteSequenceEntryVersions(
         accessionVersionsFilter: List<AccessionVersion>?,
-        submitter: String,
+        authenticatedUser: AuthenticatedUser,
         organism: Organism,
         scope: DeleteSequenceScope,
     ): List<AccessionVersion> {
         if (accessionVersionsFilter == null) {
-            log.info { "deleting all sequences of all groups $submitter is member of in the scope $scope" }
+            log.info {
+                "deleting all sequences of all groups ${authenticatedUser.username} is member of in the scope $scope"
+            }
         } else {
-            log.info { "deleting ${accessionVersionsFilter.size} sequences by $submitter in scope $scope" }
+            log.info {
+                "deleting ${accessionVersionsFilter.size} sequences by ${authenticatedUser.username} in scope $scope"
+            }
         }
 
         val listOfDeletableStatuses = listOf(
@@ -557,7 +579,7 @@ class SubmissionDatabaseService(
 
         if (accessionVersionsFilter != null) {
             accessionPreconditionValidator.validateAccessionVersions(
-                submitter,
+                authenticatedUser,
                 accessionVersionsFilter,
                 listOfDeletableStatuses,
                 organism,
@@ -576,8 +598,10 @@ class SubmissionDatabaseService(
                 ).select {
                     val accessionCondition = if (accessionVersionsFilter != null) {
                         table.accessionVersionIsIn(accessionVersionsFilter)
+                    } else if (authenticatedUser.isSuperUser) {
+                        Op.TRUE
                     } else {
-                        table.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(submitter))
+                        table.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(authenticatedUser))
                     }
 
                     val scopeCondition = when (scope) {
@@ -607,11 +631,15 @@ class SubmissionDatabaseService(
         return sequenceEntriesToDelete
     }
 
-    fun submitEditedData(submitter: String, editedAccessionVersion: UnprocessedData, organism: Organism) {
+    fun submitEditedData(
+        authenticatedUser: AuthenticatedUser,
+        editedAccessionVersion: UnprocessedData,
+        organism: Organism,
+    ) {
         log.info { "edited sequence entry submitted $editedAccessionVersion" }
 
         accessionPreconditionValidator.validateAccessionVersions(
-            submitter,
+            authenticatedUser,
             listOf(editedAccessionVersion),
             listOf(Status.AWAITING_APPROVAL, Status.HAS_ERRORS),
             organism,
@@ -625,16 +653,17 @@ class SubmissionDatabaseService(
     }
 
     fun getSequenceEntryVersionToEdit(
-        submitter: String,
+        authenticatedUser: AuthenticatedUser,
         accessionVersion: AccessionVersion,
         organism: Organism,
     ): SequenceEntryVersionToEdit {
         log.info {
-            "Getting sequence entry ${accessionVersion.displayAccessionVersion()} by $submitter to edit"
+            "Getting sequence entry ${accessionVersion.displayAccessionVersion()} " +
+                "by ${authenticatedUser.username} to edit"
         }
 
         accessionPreconditionValidator.validateAccessionVersions(
-            submitter,
+            authenticatedUser,
             listOf(accessionVersion),
             listOf(Status.HAS_ERRORS, Status.AWAITING_APPROVAL),
             organism,
