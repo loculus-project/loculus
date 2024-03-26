@@ -41,13 +41,10 @@ get_token() {
   echo
 }
 
-delete_all() {
-  echo "Deleting all input and output data"
-
+delete_all_input() {
+  echo "Deleting all input data"
   rm -f "$base_data_dir/data.ndjson"
   rm -rf "$current_input_data_dir"
-  rm -rf "$output_data_dir"
-
   echo
 }
 
@@ -79,7 +76,7 @@ download_data() {
   exit_code=$?
   if [ $exit_code -ne 0 ]; then
     echo "Sort command failed, cleaning up input dir and exiting."
-    rm -rf "$current_input_data_dir"
+    delete_all_input
     exit $exit_code
   fi
 
@@ -87,8 +84,6 @@ download_data() {
   echo "checking for old input data dir $old_input_data_dir"
   if [[ "$old_input_data_dir" =~ ^[0-9]+$ ]]; then
     old_hash=$(md5sum < "$current_input_data_dir/data.ndjson" | awk '{print $1}')
-
-
     new_hash=$(md5sum < "$current_input_data_dir/data.ndjson" | awk '{print $1}')
     echo "old hash: $old_hash"
     echo "new hash: $new_hash"
@@ -120,17 +115,14 @@ preprocessing() {
 
     if [ $exit_code -ne 0 ]; then
       echo "SiloApi command failed with exit code $exit_code, cleaning  up and exiting."
-
-      delete_all
-
+      delete_all_input
       exit $exit_code
     fi
 
     echo "preprocessing for $current_timestamp done"
   else
-    echo "empty data.ndjson, deleting all input and output"
-
-    delete_all
+    echo "empty data.ndjson, deleting all input"
+    delete_all_input
 
   fi
   echo
