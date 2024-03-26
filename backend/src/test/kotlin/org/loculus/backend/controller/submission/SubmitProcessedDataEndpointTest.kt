@@ -138,7 +138,7 @@ class SubmitProcessedDataEndpointTest(
             Status.AWAITING_APPROVAL,
         )
 
-        submissionControllerClient.getSequenceEntryThatHasErrors(
+        submissionControllerClient.getSequenceEntryToEdit(
             accession = accessions.first(),
             version = 1,
             organism = OTHER_ORGANISM,
@@ -180,7 +180,7 @@ class SubmitProcessedDataEndpointTest(
             Status.AWAITING_APPROVAL,
         )
 
-        submissionControllerClient.getSequenceEntryThatHasErrors(
+        submissionControllerClient.getSequenceEntryToEdit(
             accession = accessions.first(),
             version = 1,
         )

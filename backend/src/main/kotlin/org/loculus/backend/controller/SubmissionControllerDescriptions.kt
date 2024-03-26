@@ -72,7 +72,7 @@ If a filter is applied for a group the user is not a member of, the endpoint wil
 
 const val APPROVE_PROCESSED_DATA_DESCRIPTION = """
 Approve processed accession versions and set the status to 'APPROVED_FOR_RELEASE'.
-This can only be done for accession versions in status 'AWAITING_APPROVAL' or 'AWAITING_APPROVAL_FOR_REVOCATION' that the user submitted themselves.
+This can only be done for accession versions in status 'AWAITING_APPROVAL' that the user is allowed to edit.
 """
 
 const val REVOKE_DESCRIPTION = """
@@ -81,14 +81,6 @@ Creates a new revocation version and stages it for confirmation.
 If successfully, this returns the accessions, versions and status of the revocation versions.
 If any of the given sequence entries do not exist, or do not have the latest version in status 'APPROVED_FOR_RELEASE', 
 or the given user has no right to the sequence entry, this will return an error and roll back the whole transaction.
-"""
-
-const val CONFIRM_REVOCATION_DESCRIPTION = """
-Confirm revocation of existing sequence entries. 
-This will set the status 'AWAITING_APPROVAL_FOR_REVOCATION' of the revocation version to 
-'APPROVED_FOR_RELEASE'. If any of the given accession versions do not exist, or do not have the latest version in status 
-'AWAITING_APPROVAL_FOR_REVOCATION', or the given user has no right to the sequence entry, this will return an error and roll back the 
-whole transaction.
 """
 
 const val REVISE_RESPONSE_DESCRIPTION = """

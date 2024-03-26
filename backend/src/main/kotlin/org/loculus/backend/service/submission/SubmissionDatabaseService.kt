@@ -245,7 +245,7 @@ class SubmissionDatabaseService(
             accessionPreconditionValidator.validateAccessionVersions(
                 submitter,
                 accessionVersionsFilter,
-                listOf(Status.AWAITING_APPROVAL, Status.AWAITING_APPROVAL_FOR_REVOCATION),
+                listOf(Status.AWAITING_APPROVAL),
                 organism,
             )
         }
@@ -263,7 +263,7 @@ class SubmissionDatabaseService(
                 },
             ).select {
                 val statusCondition = view.statusIsOneOf(
-                    listOf(Status.AWAITING_APPROVAL, Status.AWAITING_APPROVAL_FOR_REVOCATION),
+                    listOf(Status.AWAITING_APPROVAL),
                 )
 
                 val accessionCondition = if (accessionVersionsFilter !== null) {
@@ -523,7 +523,7 @@ class SubmissionDatabaseService(
                     where = {
                         (view.accessionColumn inList accessions) and
                             view.isMaxVersion and
-                            view.statusIs(Status.AWAITING_APPROVAL_FOR_REVOCATION)
+                            view.statusIs(Status.AWAITING_APPROVAL)
                     },
                 )
                 .orderBy(view.accessionColumn)
@@ -534,29 +534,6 @@ class SubmissionDatabaseService(
                         it[view.submissionIdColumn],
                     )
                 }
-        }
-    }
-
-    fun confirmRevocation(accessionVersions: List<AccessionVersion>, username: String, organism: Organism) {
-        log.info { "Confirming revocation for ${accessionVersions.size} sequence entries" }
-
-        accessionPreconditionValidator.validateAccessionVersions(
-            username,
-            accessionVersions,
-            listOf(Status.AWAITING_APPROVAL_FOR_REVOCATION),
-            organism,
-        )
-
-        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-
-        entriesTableProvider.get(organism).let { table ->
-            table.update(
-                where = {
-                    table.accessionVersionIsIn(accessionVersions)
-                },
-            ) {
-                it[releasedAtColumn] = now
-            }
         }
     }
 
@@ -576,7 +553,6 @@ class SubmissionDatabaseService(
             Status.RECEIVED,
             Status.AWAITING_APPROVAL,
             Status.HAS_ERRORS,
-            Status.AWAITING_APPROVAL_FOR_REVOCATION,
         )
 
         if (accessionVersionsFilter != null) {
@@ -673,6 +649,7 @@ class SubmissionDatabaseService(
                 view.originalDataColumn,
                 view.errorsColumn,
                 view.warningsColumn,
+                view.isRevocationColumn,
             )
                 .select(
                     where = {
@@ -681,6 +658,12 @@ class SubmissionDatabaseService(
                 )
 
             return selectedSequenceEntries.first().let {
+                if (it[view.isRevocationColumn]) {
+                    throw UnprocessableEntityException(
+                        "Accession version ${accessionVersion.displayAccessionVersion()} is a revocation.",
+                    )
+                }
+
                 SequenceEntryVersionToEdit(
                     it[view.accessionColumn],
                     it[view.versionColumn],

@@ -16,7 +16,6 @@
     }
 
     ' status states
-    state AWAITING_APPROVAL_FOR_REVOCATION
     state RECEIVED
     state IN_PROCESSING
     state HAS_ERRORS
@@ -39,8 +38,7 @@
     CREATING_REVISE --> RECEIVED
 
     REVOKED_DATA --> CREATING_REVOKE : user initiates revocation
-    CREATING_REVOKE --> AWAITING_APPROVAL_FOR_REVOCATION
-    AWAITING_APPROVAL_FOR_REVOCATION --> is_approved
+    CREATING_REVOKE --> AWAITING_APPROVAL
 
     RECEIVED --> IN_PROCESSING : preprocessing starts
     IN_PROCESSING --> is_error

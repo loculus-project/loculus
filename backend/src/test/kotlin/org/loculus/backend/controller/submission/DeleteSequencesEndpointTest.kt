@@ -5,7 +5,6 @@ import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.not
 import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers
 import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
@@ -53,6 +52,9 @@ class DeleteSequencesEndpointTest(
         testScenario: TestScenario,
     ) {
         convenienceClient.prepareDataTo(testScenario.statusAfterPreparation)
+        if (testScenario.statusAfterPreparation == Status.AWAITING_APPROVAL) {
+            convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
+        }
 
         val accessionVersionsToDelete = convenienceClient.getSequenceEntriesOfUserInState(
             status = testScenario.statusAfterPreparation,
@@ -98,8 +100,7 @@ class DeleteSequencesEndpointTest(
             },
         )
 
-        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.AWAITING_APPROVAL}, " +
-            "${Status.HAS_ERRORS}, ${Status.AWAITING_APPROVAL_FOR_REVOCATION}]"
+        val listOfAllowedStatuses = "[${Status.RECEIVED}, ${Status.AWAITING_APPROVAL}, ${Status.HAS_ERRORS}]"
         val errorString = "Accession versions are in not in one of the states $listOfAllowedStatuses: " +
             accessionVersionsToDelete.sortedWith(AccessionVersionComparator).joinToString(", ") {
                 "${it.accession}.${it.version} - ${it.status}"
@@ -144,7 +145,7 @@ class DeleteSequencesEndpointTest(
 
         assertThat(
             convenienceClient.getSequenceEntries().sequenceEntries,
-            Matchers.hasSize(erroneousSequences.size + approvableSequences.size),
+            hasSize(erroneousSequences.size + approvableSequences.size),
         )
 
         client.deleteSequenceEntries(scope = DeleteSequenceScope.ALL)
@@ -288,10 +289,6 @@ class DeleteSequencesEndpointTest(
             ),
             TestScenario(
                 Status.AWAITING_APPROVAL,
-                true,
-            ),
-            TestScenario(
-                Status.AWAITING_APPROVAL_FOR_REVOCATION,
                 true,
             ),
         )

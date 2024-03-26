@@ -37,7 +37,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(ConstraintViolationException::class, BadRequestException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     fun handleBadRequestException(e: Exception): ResponseEntity<ProblemDetail> {
-        log.warn(e) { "Caught ${e.javaClass}: ${e.message}" }
+        log.info { "Caught ${e.javaClass}: ${e.message}" }
 
         return responseEntity(
             HttpStatus.BAD_REQUEST,
@@ -57,7 +57,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
         ],
     )
     fun handleUnauthorizedException(e: Exception): ResponseEntity<Void> {
-        log.warn(e) { "Caught ${e.javaClass}: ${e.message}" }
+        log.info { "Caught ${e.javaClass}: ${e.message}" }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
     }
@@ -69,7 +69,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     )
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
     fun handleUnprocessableEntityException(e: Exception): ResponseEntity<ProblemDetail> {
-        log.warn(e) { "Caught unprocessable entity exception: ${e.message}" }
+        log.info { "Caught unprocessable entity exception: ${e.message}" }
 
         return responseEntity(
             HttpStatus.UNPROCESSABLE_ENTITY,
@@ -80,7 +80,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(ConflictException::class)
     @ResponseStatus(HttpStatus.CONFLICT)
     fun handleConflictException(e: Exception): ResponseEntity<ProblemDetail> {
-        log.warn(e) { "Caught conflict exception: ${e.message}" }
+        log.info { "Caught conflict exception: ${e.message}" }
 
         return responseEntity(
             HttpStatus.CONFLICT,
@@ -91,7 +91,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(NotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     fun handleNotFoundException(e: NotFoundException): ResponseEntity<ProblemDetail> {
-        log.warn(e) { "Caught not found exception: ${e.message}" }
+        log.info { "Caught not found exception: ${e.message}" }
 
         return responseEntity(
             HttpStatus.NOT_FOUND,
@@ -102,7 +102,7 @@ class ExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(ForbiddenException::class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     fun handleForbiddenException(e: ForbiddenException): ResponseEntity<ProblemDetail> {
-        log.warn(e) { "Caught forbidden exception: ${e.message}" }
+        log.info { "Caught forbidden exception: ${e.message}" }
 
         return responseEntity(
             HttpStatus.FORBIDDEN,

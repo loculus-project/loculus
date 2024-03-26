@@ -2,6 +2,7 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DeleteSequenceScope
@@ -27,6 +28,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multi
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
 const val DEFAULT_USER_NAME = "testuser"
+
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun submit(
         metadataFile: MockMultipartFile,
@@ -102,7 +104,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         )
     }
 
-    fun getSequenceEntryThatHasErrors(
+    fun getSequenceEntryToEdit(
         accession: Accession,
         version: Long,
         organism: String = DEFAULT_ORGANISM,
@@ -128,7 +130,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     }
 
     fun approveProcessedSequenceEntries(
-        listOfSequencesToApprove: List<AccessionVersion>? = null,
+        listOfSequencesToApprove: List<AccessionVersionInterface>? = null,
         organism: String = DEFAULT_ORGANISM,
         scope: ApproveDataScope = ApproveDataScope.ALL,
         jwt: String? = jwtForDefaultUser,
@@ -136,7 +138,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         post(addOrganismToPath("/approve-processed-data", organism = organism))
             .contentType(MediaType.APPLICATION_JSON)
             .content(
-                """{"accessionVersionsFilter": ${createAccessionVersionsFilterBodyString(listOfSequencesToApprove)},
+                """{
+                    "accessionVersionsFilter": ${serialize(listOfSequencesToApprove)},
                     "scope": "$scope"
                 }""",
             )
@@ -151,17 +154,6 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         post(addOrganismToPath("/revoke", organism = organism))
             .contentType(MediaType.APPLICATION_JSON)
             .content("""{"accessions":${objectMapper.writeValueAsString(listOfSequenceEntriesToRevoke)}}""")
-            .withAuth(jwt),
-    )
-
-    fun confirmRevocation(
-        listOfSequencesToConfirm: List<AccessionVersion>,
-        organism: String = DEFAULT_ORGANISM,
-        jwt: String? = jwtForDefaultUser,
-    ): ResultActions = mockMvc.perform(
-        post(addOrganismToPath("/confirm-revocation", organism = organism))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"accessionVersions":${objectMapper.writeValueAsString(listOfSequencesToConfirm)}}""")
             .withAuth(jwt),
     )
 
@@ -181,10 +173,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt)
             .contentType(MediaType.APPLICATION_JSON)
             .content(
-                """{"accessionVersionsFilter":${createAccessionVersionsFilterBodyString(
-                    listOfAccessionVersionsToDelete,
-                )},
-                    "scope": "$scope"}
+                """
+                    {
+                        "accessionVersionsFilter": ${serialize(listOfAccessionVersionsToDelete)},
+                        "scope": "$scope"
+                    }
                 """.trimMargin(),
             ),
     )
@@ -201,12 +194,10 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
-    private fun createAccessionVersionsFilterBodyString(
-        listOfSequencesToApprove: List<AccessionVersion>? = null,
-    ): String {
+    private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String {
         return if (listOfSequencesToApprove != null) {
             objectMapper.writeValueAsString(
-                listOfSequencesToApprove,
+                listOfSequencesToApprove.map { AccessionVersion(it.accession, it.version) },
             )
         } else {
             "null"

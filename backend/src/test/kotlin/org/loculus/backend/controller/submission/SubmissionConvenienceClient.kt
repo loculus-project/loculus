@@ -146,9 +146,9 @@ class SubmissionConvenienceClient(
     }
 
     fun prepareRevokedSequenceEntries(organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
-        val accessionVersions = prepareDataTo(Status.AWAITING_APPROVAL_FOR_REVOCATION, organism = organism)
-        confirmRevocation(accessionVersions, organism = organism)
-        return accessionVersions
+        val accessionVersions = prepareDataTo(Status.APPROVED_FOR_RELEASE, organism = organism)
+        val revocationVersions = revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism)
+        return approveProcessedSequenceEntries(revocationVersions, organism = organism)
     }
 
     fun extractUnprocessedData(
@@ -205,12 +205,12 @@ class SubmissionConvenienceClient(
             ?: error("Did not find $accession.$version for $userName")
     }
 
-    fun getSequenceEntryThatHasErrors(
+    fun getSequenceEntryToEdit(
         accession: Accession,
         version: Long,
         userName: String = DEFAULT_USER_NAME,
     ): SequenceEntryVersionToEdit = deserializeJsonResponse(
-        client.getSequenceEntryThatHasErrors(
+        client.getSequenceEntryToEdit(
             accession = accession,
             version = version,
             jwt = generateJwtFor(userName),
@@ -244,17 +244,15 @@ class SubmissionConvenienceClient(
     fun approveProcessedSequenceEntries(
         listOfSequencesToApprove: List<AccessionVersionInterface>,
         organism: String = DEFAULT_ORGANISM,
-    ) {
-        client.approveProcessedSequenceEntries(
-            listOfSequencesToApprove.map {
-                AccessionVersion(
-                    it.accession,
-                    it.version,
+    ): List<AccessionVersion> {
+        return deserializeJsonResponse(
+            client
+                .approveProcessedSequenceEntries(
+                    listOfSequencesToApprove,
+                    organism = organism,
                 )
-            },
-            organism = organism,
+                .andExpect(status().isOk),
         )
-            .andExpect(status().isOk)
     }
 
     fun reviseDefaultProcessedSequenceEntries(
@@ -276,14 +274,6 @@ class SubmissionConvenienceClient(
     ): List<SubmissionIdMapping> =
         deserializeJsonResponse(client.revokeSequenceEntries(listOfAccessionsToRevoke, organism = organism))
 
-    fun confirmRevocation(
-        listOfSequencesToConfirm: List<AccessionVersionInterface>,
-        organism: String = DEFAULT_ORGANISM,
-    ) {
-        client.confirmRevocation(listOfSequencesToConfirm.map { AccessionVersion(it.accession, it.version) }, organism)
-            .andExpect(status().isNoContent)
-    }
-
     fun prepareDataTo(status: Status, organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
         return when (status) {
             Status.RECEIVED -> submitDefaultFiles(organism = organism)
@@ -291,9 +281,7 @@ class SubmissionConvenienceClient(
             Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(organism = organism)
             Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(organism = organism)
             Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(organism = organism)
-            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation(
-                organism = organism,
-            )
+            else -> throw Exception("Test issue: No data preparation defined for status $status")
         }
     }
 

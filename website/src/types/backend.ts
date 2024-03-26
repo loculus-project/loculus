@@ -5,7 +5,6 @@ export const inProcessingStatus = 'IN_PROCESSING';
 export const hasErrorsStatus = 'HAS_ERRORS';
 export const awaitingApprovalStatus = 'AWAITING_APPROVAL';
 export const approvedForReleaseStatus = 'APPROVED_FOR_RELEASE';
-export const awaitingApprovalForRevocationStatus = 'AWAITING_APPROVAL_FOR_REVOCATION';
 
 export const sequenceEntryStatusNames = z.union([
     z.literal(receivedStatus),
@@ -13,7 +12,6 @@ export const sequenceEntryStatusNames = z.union([
     z.literal(hasErrorsStatus),
     z.literal(awaitingApprovalStatus),
     z.literal(approvedForReleaseStatus),
-    z.literal(awaitingApprovalForRevocationStatus),
 ]);
 export type SequenceEntryStatusNames = z.infer<typeof sequenceEntryStatusNames>;
 const statusThatAllowsEditing = z.union([z.literal(hasErrorsStatus), z.literal(awaitingApprovalStatus)]);
@@ -53,10 +51,6 @@ export const accessionVersion = z.object({
     version: z.number(),
 });
 export type AccessionVersion = z.infer<typeof accessionVersion>;
-
-export const accessionVersionsObject = z.object({
-    accessionVersions: z.array(accessionVersion),
-});
 
 export const accessionVersionsFilter = z.object({
     accessionVersionsFilter: z.array(accessionVersion).optional(),

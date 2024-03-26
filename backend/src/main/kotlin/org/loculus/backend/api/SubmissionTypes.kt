@@ -250,10 +250,6 @@ enum class Status {
 
     @JsonProperty("APPROVED_FOR_RELEASE")
     APPROVED_FOR_RELEASE,
-
-    @JsonProperty("AWAITING_APPROVAL_FOR_REVOCATION")
-    AWAITING_APPROVAL_FOR_REVOCATION,
-
     ;
 
     companion object {
