@@ -65,18 +65,19 @@ download_data() {
 
   echo "checking for last timestamp dir $last_timestamp_dir"
   if [[ "$last_timestamp_dir" =~ ^[0-9]+$ ]]; then
-    last_number_of_sequences=$(wc -l < "$base_data_dir/$last_timestamp_dir/data.ndjson")
+    old_hash=$(md5sum < "$base_data_dir/$last_timestamp_dir/data.ndjson" | awk '{print $1}')
 
-    echo "old data file $last_timestamp_dir has $last_number_of_sequences lines"
-    new_number_of_sequences=$(wc -l < "$data_dir/data.ndjson")
-    echo "new data file '$data_dir/data.ndjson' has $new_number_of_sequences lines"
-    echo
-    if [ "$last_number_of_sequences" -eq "$new_number_of_sequences" ]; then
-      echo "last data.ndjson has same line count, deleting current data dir"
-      rm -rf "$data_dir"
+
+    new_hash=$(md5sum < "$data_dir/data.ndjson" | awk '{print $1}')
+    echo "old hash: $old_hash"
+    echo "new hash: $new_hash"
+    if [ "$new_hash" = "$old_hash" ]; then
+      echo "Hashes are equal, skipping preprocessing"
+      echo "Move last timestamp dir to current timestamp dir"
+      mv "$base_data_dir/$last_timestamp_dir" "$data_dir"
       exit 0
     else
-      echo "last data.ndjson has less line count, deleting older data dir"
+      echo "Hashes are unequal, deleting old data dir"
       rm -rf "${base_data_dir}/${last_timestamp_dir:?}"
     fi
   fi
@@ -91,7 +92,7 @@ preprocessing() {
     cp "$data_dir/data.ndjson" "$base_data_dir/data.ndjson"
     
     set +e
-    /app/siloApi --preprocessing
+    time /app/siloApi --preprocessing
     exit_code=$?
     set -e
 
@@ -117,8 +118,8 @@ cleanup_output_data() {
   echo "cleaning up output data dir $output_data_dir"
   cd $output_data_dir || exit
 
-  if [ -n "$(ls -d */ 2>/dev/null)" ]; then
-    directories=$(ls -dt */)
+  if [ -n "$(ls -d -- */ 2>/dev/null)" ]; then
+    directories=$(ls -dt -- */)
     if [ "$(echo "$directories" | wc -l)" -gt 1 ]; then
       newest_dir=$(echo "$directories" | head -n 1)
       echo "$directories" | tail -n +2 | xargs rm -r
