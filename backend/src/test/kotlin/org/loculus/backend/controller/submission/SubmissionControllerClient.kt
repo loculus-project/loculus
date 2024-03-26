@@ -114,18 +114,6 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .param("groupName", groupName),
     )
 
-    fun getNumberOfSequenceEntriesThatHaveErrors(
-        numberOfSequenceEntries: Int,
-        organism: String = DEFAULT_ORGANISM,
-        groupName: String = DEFAULT_GROUP_NAME,
-        jwt: String? = jwtForDefaultUser,
-    ): ResultActions = mockMvc.perform(
-        get(addOrganismToPath("/get-data-to-edit", organism = organism))
-            .withAuth(jwt)
-            .param("groupName", groupName)
-            .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
-    )
-
     fun submitEditedSequenceEntryVersion(
         editedData: UnprocessedData,
         organism: String = DEFAULT_ORGANISM,

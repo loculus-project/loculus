@@ -122,7 +122,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </h1>
                     <button
                         onClick={() => handleOpenConfirmationDialog(username)}
-                        className='object-right p-2 bg-red-500 text-white rounded'
+                        className='object-right p-2 loculusColor text-white rounded px-4'
                     >
                         Leave group
                     </button>
@@ -181,7 +181,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                     <span className='text-lg'>{user.name}</span>
                                     <button
                                         onClick={() => handleOpenConfirmationDialog(user.name)}
-                                        className='px-2 py-1 bg-red-500 text-white rounded'
+                                        className='px-2 py-1 loculusColor text-white rounded'
                                         title='Remove user from group'
                                         aria-label={`Remove User ${user.name}`}
                                     >

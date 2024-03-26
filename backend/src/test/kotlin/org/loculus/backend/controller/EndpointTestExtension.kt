@@ -10,9 +10,9 @@ import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.Group
-import org.loculus.backend.controller.datasetcitations.DatasetCitationsControllerClient
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerClient
 import org.loculus.backend.controller.submission.DEFAULT_USER_NAME
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
@@ -43,7 +43,7 @@ import org.testcontainers.containers.PostgreSQLContainer
     SubmissionConvenienceClient::class,
     GroupManagementControllerClient::class,
     DataUseTermsControllerClient::class,
-    DatasetCitationsControllerClient::class,
+    SeqSetCitationsControllerClient::class,
     PublicJwtKeyConfig::class,
 )
 annotation class EndpointTest(

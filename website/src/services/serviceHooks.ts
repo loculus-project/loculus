@@ -2,8 +2,8 @@ import { Zodios } from '@zodios/core';
 import { ZodiosHooks, type ZodiosHooksInstance } from '@zodios/react';
 
 import { backendApi } from './backendApi.ts';
-import { datasetCitationApi } from './datasetCitationApi.ts';
 import { lapisApi } from './lapisApi.ts';
+import { seqSetCitationApi } from './seqSetCitationApi.ts';
 import type { LapisBaseRequest } from '../types/lapis.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { fastaEntries } from '../utils/parseFasta.ts';
@@ -70,6 +70,6 @@ function getSequenceHook(
     return hooks.useAlignedAminoAcidSequences(request, { params: { gene: sequenceType.name } });
 }
 
-export function datasetCitationClientHooks(clientConfig: ClientConfig) {
-    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, datasetCitationApi));
+export function seqSetCitationClientHooks(clientConfig: ClientConfig) {
+    return new ZodiosHooks('loculus', new Zodios(clientConfig.backendUrl, seqSetCitationApi));
 }

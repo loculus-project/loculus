@@ -6,6 +6,7 @@ import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementT
 
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
+import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -97,7 +98,7 @@ const DataUseTerms = ({
                                 Anyone can use and share the data (though we believe researchers should exercise
                                 scientific etiquette, including the importance of citation). Data will be released to
                                 the INSDC databases shortly after submission.{' '}
-                                <a href='#TODO-MVP' className='text-primary-600'>
+                                <a href={routes.datauseTermsPage()} className='text-primary-600'>
                                     Find out more
                                 </a>
                                 .
@@ -124,7 +125,7 @@ const DataUseTerms = ({
                             <div className='text-xs pl-6 text-gray-500 mb-4'>
                                 Data will be restricted for a period of time. The sequences will be available but there
                                 will be limitations on how they can be used by others.{' '}
-                                <a href='#TODO-MVP' className='text-primary-600'>
+                                <a href={routes.datauseTermsPage()} className='text-primary-600'>
                                     Find out more
                                 </a>
                                 .

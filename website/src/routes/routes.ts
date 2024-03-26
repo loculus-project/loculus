@@ -64,16 +64,17 @@ export const routes = {
     groupOverviewPage: (groupName: string) => `/group/${groupName}`,
     userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submission/review`),
     versionPage: (accession: string) => `/seq/${accession}/versions`,
-    datasetsPage: (username?: string | undefined) => {
-        const datasetPagePath = `/datasets`;
-        return username === undefined ? datasetPagePath : datasetPagePath + `?user=${username}`;
+    seqSetsPage: (username?: string | undefined) => {
+        const seqSetPagePath = `/seqsets`;
+        return username === undefined ? seqSetPagePath : seqSetPagePath + `?user=${username}`;
     },
-    datasetPage: (datasetId: string, datasetVersion: string, username?: string | undefined) => {
-        const datasetPagePath = `/datasets/${datasetId}?version=${datasetVersion}`;
-        return username === undefined ? datasetPagePath : datasetPagePath + `&user=${username}`;
+    seqSetPage: (seqSetId: string, seqSetVersion: string, username?: string | undefined) => {
+        const seqSetPagePath = `/seqsets/${seqSetId}?version=${seqSetVersion}`;
+        return username === undefined ? seqSetPagePath : seqSetPagePath + `&user=${username}`;
     },
     logout: () => '/logout',
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
+    datauseTermsPage: () => '/docs/data-use-terms',
 };
 
 export type ClassOfSearchPageType = 'SEARCH' | 'MY_SEQUENCES';
