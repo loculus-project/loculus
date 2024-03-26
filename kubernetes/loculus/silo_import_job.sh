@@ -57,7 +57,7 @@ download_data() {
   echo "calling $released_data_endpoint"
   
   set +e
-  curl -o "$current_input_data_dir/unsorted_data.ndjson" --fail-with-body "$released_data_endpoint" -H "Authorization: Bearer $jwt"
+  curl -o "$current_input_data_dir/data.ndjson" --fail-with-body "$released_data_endpoint" -H "Authorization: Bearer $jwt"
   exit_code=$?
   set -e
 
@@ -71,15 +71,6 @@ download_data() {
   echo
 
   echo "Sorting downloaded data.ndjson"
-
-  time sort -s -o "$current_input_data_dir/data.ndjson" "$current_input_data_dir/unsorted_data.ndjson"
-  exit_code=$?
-  if [ $exit_code -ne 0 ]; then
-    echo "Sort command failed, cleaning up input dir and exiting."
-    delete_all_input
-    exit $exit_code
-  fi
-
 
   echo "checking for old input data dir $old_input_data_dir"
   if [[ "$old_input_data_dir" =~ ^[0-9]+$ ]]; then
