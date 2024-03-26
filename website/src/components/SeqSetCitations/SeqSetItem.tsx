@@ -1,5 +1,6 @@
+import MUIPagination from '@mui/material/Pagination';
 import { AxiosError } from 'axios';
-import { type FC } from 'react';
+import { type FC, useState } from 'react';
 
 import { CitationPlot } from './CitationPlot';
 import { getClientLogger } from '../../clientLogger';
@@ -37,7 +38,7 @@ const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords }) => {
             <tbody>
                 {seqSetRecords.map((seqSetRecord, index) => {
                     return (
-                        <tr key={`accessionData-${index}`}>
+                        <tr key={`accessionData-${index}`} className='hover:bg-primary-100 border-gray-100'>
                             <td className='text-left'>
                                 <a href={accessionOutlink[seqSetRecord.type](seqSetRecord.accession)} target='_blank'>
                                     {seqSetRecord.accession}
@@ -70,6 +71,8 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
     isAdminView = false,
 }) => {
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
+    const [page, setPage] = useState(1);
+    const sequencesPerPage = 10;
 
     const { mutate: createSeqSetDOI } = useCreateSeqSetDOIAction(
         clientConfig,
@@ -92,7 +95,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
             return 'N/A';
         }
         const dateObj = new Date(date);
-        return dateObj.toLocaleDateString('en-US');
+        return dateObj.toISOString().split('T')[0];
     };
 
     const renderDOI = () => {
@@ -106,7 +109,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
 
         return (
             <a
-                className='mr-4 cursor-pointer font-medium text-blue-600 dark:text-blue-500 hover:underline'
+                className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
                 onClick={() =>
                     displayConfirmationDialog({
                         dialogText: `Are you sure you want to create a DOI for this version of your seqSet?`,
@@ -117,6 +120,14 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                 Generate a DOI
             </a>
         );
+    };
+
+    const getMaxPages = () => {
+        return Math.ceil(seqSetRecords.length / sequencesPerPage);
+    };
+
+    const getPaginatedSeqSetRecords = () => {
+        return seqSetRecords.slice((page - 1) * sequencesPerPage, page * sequencesPerPage);
     };
 
     return (
@@ -139,6 +150,10 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <p className='text'>{formatDate(seqSet.createdAt)}</p>
                 </div>
                 <div className='flex flex-row py-1.5'>
+                    <p className='mr-8 w-[120px] text-gray-500 text-right'>Size</p>
+                    <p className='text'>{`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}</p>
+                </div>
+                <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>DOI</p>
                     {renderDOI()}
                 </div>
@@ -148,7 +163,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                         <p className='text'>Cited By 0</p>
                     ) : (
                         <a
-                            className='mr-4 cursor-pointer font-medium text-blue-600 dark:text-blue-500 hover:underline'
+                            className='mr-4 cursor-pointer font-medium text-blue-600 hover:text-blue-800'
                             href={getCrossRefUrl()}
                             target='_blank'
                         >
@@ -166,9 +181,22 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     </div>
                 </div>
             </div>
-            <div className='flex flex-col my-4'>
-                <p className='text-xl py-4 font-semibold'>Sequences</p>
-                <SeqSetRecordsTable seqSetRecords={seqSetRecords} />
+            <div className='flex flex-col my-4 max-w-xl'>
+                <p className='text-xl my-4 font-semibold'>Sequences</p>
+                <SeqSetRecordsTable seqSetRecords={getPaginatedSeqSetRecords()} />
+                {getMaxPages() > 1 ? (
+                    <MUIPagination
+                        className='my-4 w-full flex justify-center'
+                        page={page}
+                        count={getMaxPages()}
+                        color='primary'
+                        variant='outlined'
+                        shape='rounded'
+                        onChange={(_, newPage) => {
+                            setPage(newPage);
+                        }}
+                    />
+                ) : null}
             </div>
         </div>
     );

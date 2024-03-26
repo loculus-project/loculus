@@ -42,7 +42,7 @@ const getSeqSetByVersion = (seqSetVersions: SeqSet[], version: string) => {
 
 const seqSet = seqSetResponse.value !== undefined ? getSeqSetByVersion(seqSetResponse.value, version) : undefined;
 
-const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSet.createdBy) : undefined;
+const authorResponse = seqSet !== undefined ? ((await seqSetClient.getAuthor(seqSet.createdBy)) as any) : undefined;
 ---
 
 <BaseLayout title='SeqSets' data-testid='seqSets-item-container'>
@@ -51,30 +51,33 @@ const authorResponse = seqSet !== undefined ? await seqSetClient.getAuthor(seqSe
             seqSet !== undefined ? (
                 <div class='flex flex-row items-left'>
                     <div class='w-1/5 flex flex-col justify-start items-center'>
-                        {authorResponse !== undefined
-                            ? authorResponse.match(
-                                  (authorProfile) => (
-                                      <AuthorDetails
-                                          displayFullDetails={false}
-                                          firstName={authorProfile.firstName}
-                                          lastName={authorProfile.lastName}
-                                      />
-                                  ),
-                                  (error) => (
-                                      <ErrorFeedback
-                                          message={'Error while fetching author profile: ' + JSON.stringify(error)}
-                                          client:load
-                                      />
-                                  ),
-                              )
-                            : null}
+                        {authorResponse.value !== undefined ? (
+                            <AuthorDetails
+                                displayFullDetails={false}
+                                firstName={authorResponse.value.firstName}
+                                lastName={authorResponse.value.lastName}
+                            />
+                        ) : (
+                            <ErrorFeedback
+                                message={'Error while fetching author profile: ' + JSON.stringify(authorResponse.error)}
+                                client:load
+                            />
+                        )}
                     </div>
                     <div class='w-4/5 pl-6'>
                         {seqSetRecordsResponse.value !== undefined ? (
                             <SeqSetItemActions
                                 clientConfig={clientConfig}
                                 accessToken={accessToken}
-                                seqSet={seqSet}
+                                seqSet={{
+                                    ...seqSet,
+                                    createdBy:
+                                        authorResponse?.value !== undefined
+                                            ? [authorResponse.value?.firstName, authorResponse.value?.lastName]
+                                                  .filter((name) => name !== null)
+                                                  .join(' ')
+                                            : seqSet.createdBy,
+                                }}
                                 seqSetRecords={seqSetRecordsResponse.value}
                                 isAdminView={seqSet.createdBy === username}
                                 client:only='react'
