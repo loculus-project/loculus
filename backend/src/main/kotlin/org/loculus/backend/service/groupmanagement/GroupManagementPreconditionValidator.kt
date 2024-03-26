@@ -2,6 +2,7 @@ package org.loculus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.select
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.service.KeycloakAdapter
@@ -13,13 +14,17 @@ class GroupManagementPreconditionValidator(
     private val keycloakAdapter: KeycloakAdapter,
 ) {
 
-    @Transactional
-    fun validateUserInExistingGroup(groupName: String, groupMember: String) {
-        validateUserInExistingGroups(listOf(groupName), groupMember)
+    @Transactional(readOnly = true)
+    fun validateUserIsAllowedToModifyGroup(groupName: String, authenticatedUser: AuthenticatedUser) {
+        validateUserIsAllowedToModifyGroups(listOf(groupName), authenticatedUser)
     }
 
-    @Transactional
-    fun validateUserInExistingGroups(groupNames: List<String>, groupMember: String) {
+    @Transactional(readOnly = true)
+    fun validateUserIsAllowedToModifyGroups(groupNames: List<String>, authenticatedUser: AuthenticatedUser) {
+        if (authenticatedUser.isSuperUser) {
+            return
+        }
+
         val existingGroups = GroupsTable
             .select { GroupsTable.groupNameColumn inList groupNames }
             .map { it[GroupsTable.groupNameColumn] }
@@ -31,10 +36,11 @@ class GroupManagementPreconditionValidator(
             throw NotFoundException("Group(s) ${nonExistingGroups.joinToString()} do not exist.")
         }
 
+        val username = authenticatedUser.username
         val userGroups = UserGroupsTable
             .select {
                 (UserGroupsTable.groupNameColumn inList existingGroups) and
-                    (UserGroupsTable.userNameColumn eq groupMember)
+                    (UserGroupsTable.userNameColumn eq username)
             }
             .map { it[UserGroupsTable.groupNameColumn] }
             .toSet()
@@ -43,7 +49,7 @@ class GroupManagementPreconditionValidator(
 
         if (missingGroups.isNotEmpty()) {
             throw ForbiddenException(
-                "User $groupMember is not a member of group(s) ${missingGroups.joinToString()}. Action not allowed.",
+                "User $username is not a member of group(s) ${missingGroups.joinToString()}. Action not allowed.",
             )
         }
     }

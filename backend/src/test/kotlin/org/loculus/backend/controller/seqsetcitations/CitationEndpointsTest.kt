@@ -92,13 +92,14 @@ class CitationEndpointsTest(
         } returns GetSequenceResponse(
             sequenceEntries = listOf(
                 SequenceEntryStatus(
-                    "mock-sequence-accession",
-                    1L,
-                    Status.APPROVED_FOR_RELEASE,
-                    "mock-group",
-                    false,
-                    "mock-submission-id",
-                    DataUseTerms.Open,
+                    accession = "mock-sequence-accession",
+                    version = 1L,
+                    status = Status.APPROVED_FOR_RELEASE,
+                    group = "mock-group",
+                    submitter = "mock-submitter",
+                    isRevocation = false,
+                    submissionId = "mock-submission-id",
+                    dataUseTerms = DataUseTerms.Open,
                 ),
             ),
             statusCounts = mapOf(Status.APPROVED_FOR_RELEASE to 1),

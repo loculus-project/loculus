@@ -11,6 +11,8 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSet
 import org.loculus.backend.api.SubmittedSeqSetRecord
 import org.loculus.backend.api.SubmittedSeqSetUpdate
+import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.service.seqsetcitations.SeqSetCitationsDatabaseService
 import org.loculus.backend.service.submission.SubmissionDatabaseService
@@ -45,15 +47,21 @@ class SeqSetCitationsController(
 
     @Operation(description = "Create a new SeqSet with the specified data")
     @PostMapping("/create-seqset")
-    fun createSeqSet(@UsernameFromJwt username: String, @RequestBody body: SubmittedSeqSet): ResponseSeqSet {
-        return seqSetCitationsService.createSeqSet(username, body.name, body.records, body.description)
+    fun createSeqSet(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestBody body: SubmittedSeqSet,
+    ): ResponseSeqSet {
+        return seqSetCitationsService.createSeqSet(authenticatedUser, body.name, body.records, body.description)
     }
 
     @Operation(description = "Update a SeqSet with the specified data")
     @PutMapping("/update-seqset")
-    fun updateSeqSet(@UsernameFromJwt username: String, @RequestBody body: SubmittedSeqSetUpdate): ResponseSeqSet {
+    fun updateSeqSet(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestBody body: SubmittedSeqSetUpdate,
+    ): ResponseSeqSet {
         return seqSetCitationsService.updateSeqSet(
-            username,
+            authenticatedUser,
             body.seqSetId,
             body.name,
             body.records,
@@ -63,8 +71,8 @@ class SeqSetCitationsController(
 
     @Operation(description = "Get a list of SeqSets created by the logged-in user")
     @GetMapping("/get-seqsets-of-user")
-    fun getSeqSets(@UsernameFromJwt username: String): List<SeqSet> {
-        return seqSetCitationsService.getSeqSets(username)
+    fun getSeqSets(@HiddenParam authenticatedUser: AuthenticatedUser): List<SeqSet> {
+        return seqSetCitationsService.getSeqSets(authenticatedUser)
     }
 
     @Operation(description = "Get records for a SeqSet")
@@ -75,25 +83,29 @@ class SeqSetCitationsController(
 
     @Operation(description = "Delete a SeqSet")
     @DeleteMapping("/delete-seqset")
-    fun deleteSeqSet(@UsernameFromJwt username: String, @RequestParam seqSetId: String, @RequestParam version: Long) {
-        return seqSetCitationsService.deleteSeqSet(username, seqSetId, version)
+    fun deleteSeqSet(
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestParam seqSetId: String,
+        @RequestParam version: Long,
+    ) {
+        return seqSetCitationsService.deleteSeqSet(authenticatedUser, seqSetId, version)
     }
 
     @Operation(description = "Create and associate a DOI to a SeqSet version")
     @PostMapping("/create-seqset-doi")
     fun createSeqSetDOI(
-        @UsernameFromJwt username: String,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam seqSetId: String,
         @RequestParam version: Long,
     ): ResponseSeqSet {
-        return seqSetCitationsService.createSeqSetDOI(username, seqSetId, version)
+        return seqSetCitationsService.createSeqSetDOI(authenticatedUser, seqSetId, version)
     }
 
     @Operation(description = "Get count of user sequences cited by SeqSets")
     @GetMapping("/get-user-cited-by-seqset")
-    fun getUserCitedBySeqSet(@UsernameFromJwt username: String): CitedBy {
+    fun getUserCitedBySeqSet(@HiddenParam authenticatedUser: AuthenticatedUser): CitedBy {
         val statusFilter = listOf(APPROVED_FOR_RELEASE)
-        val userSequences = submissionDatabaseService.getSequences(username, null, null, statusFilter)
+        val userSequences = submissionDatabaseService.getSequences(authenticatedUser, null, null, statusFilter)
         return seqSetCitationsService.getUserCitedBySeqSet(userSequences.sequenceEntries)
     }
 
@@ -107,9 +119,8 @@ class SeqSetCitationsController(
     @GetMapping("/get-author")
     fun getAuthor(@RequestParam username: String): AuthorProfile {
         val keycloakUser = keycloakAdapter.getUsersWithName(username).firstOrNull()
-        if (keycloakUser == null) {
-            throw NotFoundException("Author profile $username does not exist")
-        }
+            ?: throw NotFoundException("Author profile $username does not exist")
+
         return seqSetCitationsService.transformKeycloakUserToAuthorProfile(keycloakUser)
     }
 }

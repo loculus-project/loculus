@@ -1,6 +1,7 @@
 package org.loculus.backend.controller.groupmanagement
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.loculus.backend.api.Address
 import org.loculus.backend.api.Group
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.withAuth
@@ -11,6 +12,21 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delet
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put
+
+const val NEW_GROUP_NAME = "newGroup"
+val NEW_GROUP = Group(
+    groupName = NEW_GROUP_NAME,
+    institution = "newInstitution",
+    address = Address(
+        line1 = "newAddressLine1",
+        line2 = "newAddressLine2",
+        city = "newCity",
+        state = "newState",
+        postalCode = "newPostalCode",
+        country = "newCountry",
+    ),
+    contactEmail = "newEmail",
+)
 
 class GroupManagementControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun createNewGroup(group: Group = NEW_GROUP, jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
@@ -33,8 +49,11 @@ class GroupManagementControllerClient(private val mockMvc: MockMvc, private val 
     )
 
     fun getGroupsOfUser(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
-        get("/groups")
-            .withAuth(jwt),
+        get("/user/groups").withAuth(jwt),
+    )
+
+    fun getAllGroups(jwt: String? = jwtForDefaultUser): ResultActions = mockMvc.perform(
+        get("/groups").withAuth(jwt),
     )
 
     fun addUserToGroup(

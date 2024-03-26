@@ -211,6 +211,7 @@ data class SequenceEntryStatus(
     override val version: Version,
     val status: Status,
     val group: String,
+    val submitter: String,
     val isRevocation: Boolean = false,
     val submissionId: String,
     val dataUseTerms: DataUseTerms,

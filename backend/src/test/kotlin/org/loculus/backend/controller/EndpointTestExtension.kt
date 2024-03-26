@@ -13,7 +13,6 @@ import org.loculus.backend.api.Group
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerClient
-import org.loculus.backend.controller.submission.DEFAULT_USER_NAME
 import org.loculus.backend.controller.submission.SubmissionControllerClient
 import org.loculus.backend.controller.submission.SubmissionConvenienceClient
 import org.loculus.backend.service.datauseterms.DATA_USE_TERMS_TABLE_NAME
@@ -69,8 +68,12 @@ val DEFAULT_GROUP = Group(
     ),
     contactEmail = "testEmail",
 )
+
+const val DEFAULT_USER_NAME = "testuser"
+const val SUPER_USER_NAME = "test_superuser"
 const val ALTERNATIVE_DEFAULT_GROUP_NAME = "testGroup2"
 const val ALTERNATIVE_DEFAULT_USER_NAME = "testUser2"
+
 val ALTERNATIVE_DEFAULT_GROUP = Group(
     groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
     institution = "alternativeTestInstitution",

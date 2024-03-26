@@ -5,12 +5,15 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
+import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jwtForSuperUser
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -40,7 +43,7 @@ class GetDataToEditEndpointTest(
 
         convenienceClient.submitProcessedData(PreparedProcessedData.withErrors(firstAccession))
 
-        convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
+        convenienceClient.getSequenceEntry(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
         val editedData = convenienceClient.getSequenceEntryToEdit(
@@ -137,6 +140,26 @@ class GetDataToEditEndpointTest(
             .andExpect(
                 jsonPath("\$.detail", containsString("is not a member of group")),
             )
+    }
+
+    @Test
+    fun `WHEN superuser get data to edit of other user THEN is successfully get data`() {
+        val accessionVersion = convenienceClient
+            .prepareDataTo(
+                Status.AWAITING_APPROVAL,
+                username = DEFAULT_USER_NAME,
+                groupName = DEFAULT_GROUP_NAME,
+            )
+            .first()
+
+        client.getSequenceEntryToEdit(
+            accession = accessionVersion.accession,
+            version = accessionVersion.version,
+            jwt = jwtForSuperUser,
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("\$.accession").value(accessionVersion.accession))
+            .andExpect(jsonPath("\$.version").value(accessionVersion.version))
     }
 
     @Test
