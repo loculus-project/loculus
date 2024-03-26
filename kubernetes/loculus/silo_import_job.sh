@@ -85,6 +85,7 @@ download_data() {
 }
 
 preprocessing() {
+  # TODO: #1489  Remove emptiness test once https://github.com/GenSpectrum/LAPIS-SILO/issues/244 fixed
   if [ -s "$data_dir/data.ndjson" ]; then
     echo "data.ndjson is not empty, starting preprocessing"
 
