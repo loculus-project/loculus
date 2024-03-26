@@ -70,11 +70,9 @@ spec:
             - containerPort: 8079
           args:
             - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
-            - "--crossref.test-endpoint=$(CROSSREF_TEST_ENDPOINT)"
-            - "--crossref.live-endpoint=$(CROSSREF_LIVE_ENDPOINT)"
+            - "--crossref.endpoint=$(CROSSREF_TEST_ENDPOINT)"
             - "--crossref.username=$(CROSSREF_USERNAME)"
-            - "--crossref.test-password=$(CROSSREF_TEST_PASSWORD)"
-            - "--crossref.live-password=$(CROSSREF_TEST_PASSWORD)"
+            - "--crossref.password=$(CROSSREF_TEST_PASSWORD)"
             - "--keycloak.client=test-cli"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"

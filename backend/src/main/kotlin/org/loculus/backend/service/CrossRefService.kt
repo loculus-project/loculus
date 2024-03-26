@@ -1,5 +1,6 @@
 package org.loculus.backend.service
 
+import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.stereotype.Component
@@ -10,17 +11,22 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.UUID
 
 @ConfigurationProperties(prefix = "crossref")
 data class CrossRefProperties(
     val endpoint: String,
     val username: String,
-    val password: String,
+    val password: String
 )
 
 @Component
 class CrossRefService(private val crossRefProperties: CrossRefProperties) {
+    val dateTimeFormatterMM = DateTimeFormatter.ofPattern("MM")
+    val dateTimeFormatterdd = DateTimeFormatter.ofPattern("dd")
+    val dateTimeFormatteryyyy = DateTimeFormatter.ofPattern("yyyy")
+
     fun generateCrossRefXML(data: Map<String, Any>): String {
         // Timestamp used to fill the publication date, assumed to be the moment the xml is generated
         val now = LocalDate.now()
@@ -56,23 +62,23 @@ class CrossRefService(private val crossRefProperties: CrossRefProperties) {
                                 attribute("contributor_role", "author")
                                 attribute("sequence", "first")
 
-                                -(data["organizations"] as Array<String>)[0]
+                                -((data["organizations"] as Array<*>)[0] as String)
                             }
                             "person_name" {
                                 attribute("contributor_role", "author")
                                 attribute("sequence", "first")
 
-                                "given_name" { -(data["contributors"] as Array<Array<String>>)[0][0] }
-                                "surname" { -(data["contributors"] as Array<Array<String>>)[0][1] }
+                                "given_name" { -(((data["contributors"] as Array<*>)[0] as Array<*>)[0] as String) }
+                                "surname" { -(((data["contributors"] as Array<*>)[0] as Array<*>)[1] as String) }
                             }
                         }
                         // Name of this particular dataset
                         "titles" { "title" { -(data["datasetTitle"] as String) } }
                         "database_date" {
                             "publication_date" {
-                                "month" { -now.format(DateTimeFormatterMM) }
-                                "day" { -now.format(DateTimeFormatterdd) }
-                                "year" { -now.format(DateTimeFormatteryyyy) }
+                                "month" { -now.format(dateTimeFormatterMM) }
+                                "day" { -now.format(dateTimeFormatterdd) }
+                                "year" { -now.format(dateTimeFormatteryyyy) }
                             }
                         }
                         "doi_data" {
