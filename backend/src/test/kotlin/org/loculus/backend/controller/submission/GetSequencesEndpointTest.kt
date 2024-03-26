@@ -10,11 +10,9 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
-import org.loculus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.loculus.backend.api.Status.HAS_ERRORS
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
@@ -197,7 +195,6 @@ class GetSequencesEndpointTest(
                     AWAITING_APPROVAL to 10,
                     HAS_ERRORS to 10,
                     APPROVED_FOR_RELEASE to 0,
-                    AWAITING_APPROVAL_FOR_REVOCATION to 0,
                 ),
             ),
         )
@@ -241,45 +238,31 @@ class GetSequencesEndpointTest(
             ),
             Scenario(
                 setupDescription = "I submitted sequence entries that have been successfully processed",
-                prepareDatabase = {
-                    it.prepareDataTo(AWAITING_APPROVAL).map { entry -> entry.accession }
-                },
+                prepareDatabase = { it.prepareDataTo(AWAITING_APPROVAL).map { entry -> entry.accession } },
                 expectedStatus = AWAITING_APPROVAL,
                 expectedIsRevocation = false,
             ),
             Scenario(
                 setupDescription = "I submitted, processed and approved sequence entries",
-                prepareDatabase = {
-                    val accessionVersions = it.prepareDataTo(AWAITING_APPROVAL)
-                    it.approveProcessedSequenceEntries(listOf(accessionVersions.first()))
-                    accessionVersions.map { entry -> entry.accession }
-                },
+                prepareDatabase = { it.prepareDataTo(APPROVED_FOR_RELEASE).map { entry -> entry.accession } },
                 expectedStatus = APPROVED_FOR_RELEASE,
                 expectedIsRevocation = false,
             ),
             Scenario(
                 setupDescription = "I submitted a revocation",
                 prepareDatabase = {
-                    val accessionVersions = it.prepareDataTo(AWAITING_APPROVAL)
-                    it.approveProcessedSequenceEntries(listOf(accessionVersions.first()))
+                    val accessionVersions = it.prepareDataTo(APPROVED_FOR_RELEASE)
                     val accessions = accessionVersions.map { entry -> entry.accession }
-                    it.revokeSequenceEntries(listOf(accessions.first()))
+                    it.revokeSequenceEntries(accessions)
                     accessions
                 },
-                expectedStatus = AWAITING_APPROVAL_FOR_REVOCATION,
+                expectedStatus = AWAITING_APPROVAL,
                 expectedIsRevocation = true,
                 expectedVersion = 2,
             ),
             Scenario(
                 setupDescription = "I approved a revocation",
-                prepareDatabase = {
-                    val accessionVersions = it.prepareDataTo(AWAITING_APPROVAL)
-                    it.approveProcessedSequenceEntries(listOf(accessionVersions.first()))
-                    val accessions = accessionVersions.map { entry -> entry.accession }
-                    it.revokeSequenceEntries(listOf(accessions.first()))
-                    it.confirmRevocation(listOf(AccessionVersion(accessions.first(), 2)))
-                    accessions
-                },
+                prepareDatabase = { it.prepareRevokedSequenceEntries().map { entry -> entry.accession } },
                 expectedStatus = APPROVED_FOR_RELEASE,
                 expectedIsRevocation = true,
                 expectedVersion = 2,

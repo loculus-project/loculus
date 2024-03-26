@@ -9,7 +9,6 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
-import org.loculus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
@@ -53,6 +52,21 @@ class ApproveProcessedDataEndpointTest(
         assertThat(
             convenienceClient.getSequenceEntries().statusCounts[APPROVED_FOR_RELEASE],
             `is`(NUMBER_OF_SEQUENCES),
+        )
+    }
+
+    @Test
+    fun `GIVEN revoked sequence entries awaiting approval THEN their status should be APPROVED_FOR_RELEASE`() {
+        val accessionVersions = convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
+
+        client.approveProcessedSequenceEntries(accessionVersions)
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("\$[*].accession").value(accessionVersions.map { it.accession }))
+
+        assertThat(
+            convenienceClient.getSequenceEntries().statusCounts[APPROVED_FOR_RELEASE],
+            `is`(2 * NUMBER_OF_SEQUENCES),
         )
     }
 
@@ -158,7 +172,7 @@ class ApproveProcessedDataEndpointTest(
                     "$.detail",
                     containsString(
                         "Accession versions are in not in one of the states " +
-                            "[$AWAITING_APPROVAL, $AWAITING_APPROVAL_FOR_REVOCATION]: " +
+                            "[$AWAITING_APPROVAL]: " +
                             "${accessionVersionNotInCorrectState.first().displayAccessionVersion()} - $IN_PROCESSING",
                     ),
                 ),

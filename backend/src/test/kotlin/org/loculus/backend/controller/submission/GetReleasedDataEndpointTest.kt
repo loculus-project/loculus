@@ -220,7 +220,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.reviseAndProcessDefaultSequenceEntries(preparedSubmissions.map { it.accession })
 
         val revokedSequences = convenienceClient.revokeSequenceEntries(preparedSubmissions.map { it.accession })
-        convenienceClient.confirmRevocation(revokedSequences)
+        convenienceClient.approveProcessedSequenceEntries(revokedSequences)
 
         convenienceClient.reviseAndProcessDefaultSequenceEntries(revokedSequences.map { it.accession })
 

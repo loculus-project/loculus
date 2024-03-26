@@ -11,7 +11,6 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.loculus.backend.api.AccessionVersion
-import org.loculus.backend.api.AccessionVersions
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
 import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
 import org.loculus.backend.api.Accessions
@@ -280,16 +279,6 @@ class SubmissionController(
         @RequestBody body: Accessions,
         @UsernameFromJwt username: String,
     ): List<SubmissionIdMapping> = submissionDatabaseService.revoke(body.accessions, username, organism)
-
-    @Operation(description = CONFIRM_REVOCATION_DESCRIPTION)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PostMapping("/confirm-revocation")
-    fun confirmRevocation(
-        @PathVariable @Valid
-        organism: Organism,
-        @UsernameFromJwt username: String,
-        @RequestBody body: AccessionVersions,
-    ) = submissionDatabaseService.confirmRevocation(body.accessionVersions, username, organism)
 
     @Operation(description = DELETE_SEQUENCES_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)

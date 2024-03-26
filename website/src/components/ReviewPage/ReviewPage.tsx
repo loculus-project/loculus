@@ -10,13 +10,12 @@ import {
     awaitingApprovalStatus,
     deleteAllDataScope,
     deleteProcessedDataWithErrorsScope,
+    type GetSequencesResponse,
     hasErrorsStatus,
     inProcessingStatus,
-    awaitingApprovalForRevocationStatus,
     type PageQuery,
-    type SequenceEntryStatus,
-    type GetSequencesResponse,
     receivedStatus,
+    type SequenceEntryStatus,
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
@@ -26,6 +25,7 @@ import BiTrash from '~icons/bi/trash';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import LucideFilter from '~icons/lucide/filter';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
+
 const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
 hover:bg-primary-500 bg-primary-600 text-white text-left mb-1`;
 
@@ -56,7 +56,7 @@ const NumberAndVisibility = ({
                 <input
                     type='checkbox'
                     checked={visibilityEnabled}
-                    onChange={() => setVisibility(visibilityEnabled === false)}
+                    onChange={() => setVisibility(!visibilityEnabled)}
                     className='mr-2 text-gray-400'
                 />
                 <span className=' inline-block font-semibold '>{countNumber} </span>&nbsp;
@@ -76,9 +76,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     const showErrors = hooks.includedStatuses.includes(hasErrorsStatus);
     const showUnprocessed =
         hooks.includedStatuses.includes(inProcessingStatus) && hooks.includedStatuses.includes(receivedStatus);
-    const showValid =
-        hooks.includedStatuses.includes(awaitingApprovalStatus) &&
-        hooks.includedStatuses.includes(awaitingApprovalForRevocationStatus);
+    const showValid = hooks.includedStatuses.includes(awaitingApprovalStatus);
 
     const setAStatus = (status: string, value: boolean) => {
         hooks.setIncludedStatuses((prev) => {
@@ -97,7 +95,6 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
 
     const setShowValid = (value: boolean) => {
         setAStatus(awaitingApprovalStatus, value);
-        setAStatus(awaitingApprovalForRevocationStatus, value);
     };
 
     const handleSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
@@ -130,14 +127,13 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
     const processingCount = sequencesData.statusCounts[inProcessingStatus];
     const processedCount = sequencesData.statusCounts[awaitingApprovalStatus];
     const errorCount = sequencesData.statusCounts[hasErrorsStatus];
-    const revocationCount = sequencesData.statusCounts[awaitingApprovalForRevocationStatus];
     const receivedCount = sequencesData.statusCounts[receivedStatus];
 
-    const finishedCount = processedCount + errorCount + revocationCount;
+    const finishedCount = processedCount + errorCount;
     const unfinishedCount = receivedCount + processingCount;
 
     const total = finishedCount + unfinishedCount;
-    const validCount = processedCount + revocationCount;
+    const validCount = processedCount;
 
     if (total === 0) {
         return (
@@ -266,7 +262,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                     </Menu.Items>
                 </Menu>
             )}
-            {processedCount + revocationCount > 0 && (
+            {processedCount > 0 && (
                 <button
                     className='border rounded-md p-1 bg-primary-600 text-white px-2'
                     onClick={() =>
@@ -280,8 +276,8 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                     }
                 >
                     <WpfPaperPlane className='inline-block w-4 h-4 -mt-0.5 mr-1.5' />
-                    Release {processedCount + revocationCount} valid sequence
-                    {processedCount + revocationCount > 1 ? 's' : ''}
+                    Release {processedCount} valid sequence
+                    {processedCount > 1 ? 's' : ''}
                 </button>
             )}
         </div>

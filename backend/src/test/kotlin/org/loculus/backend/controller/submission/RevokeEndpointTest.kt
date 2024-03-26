@@ -3,7 +3,7 @@ package org.loculus.backend.controller.submission
 import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
-import org.loculus.backend.api.Status.AWAITING_APPROVAL_FOR_REVOCATION
+import org.loculus.backend.api.Status.AWAITING_APPROVAL
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
@@ -34,7 +34,7 @@ class RevokeEndpointTest(
     }
 
     @Test
-    fun `GIVEN entries with 'APPROVED_FOR_RELEASE' THEN the status changes to 'AWAITING_APPROVAL_FOR_REVOCATION'`() {
+    fun `GIVEN entries with 'APPROVED_FOR_RELEASE' THEN returns revocation version in status AWAITING_APPROVAL`() {
         val accessions = convenienceClient.prepareDefaultSequenceEntriesToApprovedForRelease().map { it.accession }
 
         client.revokeSequenceEntries(accessions)
@@ -45,7 +45,7 @@ class RevokeEndpointTest(
             .andExpect(jsonPath("\$[0].version").value(2))
 
         convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 2)
-            .assertStatusIs(AWAITING_APPROVAL_FOR_REVOCATION)
+            .assertStatusIs(AWAITING_APPROVAL)
     }
 
     @Test

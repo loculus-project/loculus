@@ -26,7 +26,7 @@ class GetDataToEditEndpointTest(
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse {
-            client.getSequenceEntryThatHasErrors(
+            client.getSequenceEntryToEdit(
                 "ShouldNotMatterAtAll",
                 1,
                 jwt = it,
@@ -43,7 +43,7 @@ class GetDataToEditEndpointTest(
         convenienceClient.getSequenceEntryOfUser(accession = firstAccession, version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
 
-        val editedData = convenienceClient.getSequenceEntryThatHasErrors(
+        val editedData = convenienceClient.getSequenceEntryToEdit(
             accession = firstAccession,
             version = 1,
         )
@@ -57,7 +57,7 @@ class GetDataToEditEndpointTest(
     fun `WHEN I query data for a non-existent accession THEN refuses request with not found`() {
         val nonExistentAccession = "DefinitelyNotExisting"
 
-        client.getSequenceEntryThatHasErrors(nonExistentAccession, 1)
+        client.getSequenceEntryToEdit(nonExistentAccession, 1)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -74,9 +74,9 @@ class GetDataToEditEndpointTest(
             organism = DEFAULT_ORGANISM,
         ).first().accession
 
-        client.getSequenceEntryThatHasErrors(firstAccession, 1, organism = DEFAULT_ORGANISM)
+        client.getSequenceEntryToEdit(firstAccession, 1, organism = DEFAULT_ORGANISM)
             .andExpect(status().isOk)
-        client.getSequenceEntryThatHasErrors(firstAccession, 1, organism = OTHER_ORGANISM)
+        client.getSequenceEntryToEdit(firstAccession, 1, organism = OTHER_ORGANISM)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -94,7 +94,7 @@ class GetDataToEditEndpointTest(
 
         convenienceClient.prepareDataTo(Status.HAS_ERRORS)
 
-        client.getSequenceEntryThatHasErrors("1", nonExistentAccessionVersion)
+        client.getSequenceEntryToEdit("1", nonExistentAccessionVersion)
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -108,7 +108,7 @@ class GetDataToEditEndpointTest(
     fun `WHEN I query a sequence entry that has a wrong state THEN refuses request with unprocessable entity`() {
         val firstAccession = convenienceClient.prepareDataTo(Status.IN_PROCESSING).first().accession
 
-        client.getSequenceEntryThatHasErrors(
+        client.getSequenceEntryToEdit(
             accession = firstAccession,
             version = 1,
         )
@@ -127,7 +127,7 @@ class GetDataToEditEndpointTest(
         val firstAccession = convenienceClient.prepareDataTo(Status.HAS_ERRORS).first().accession
 
         val userNameThatDoesNotHavePermissionToQuery = "theOneWhoMustNotBeNamed"
-        client.getSequenceEntryThatHasErrors(
+        client.getSequenceEntryToEdit(
             accession = firstAccession,
             version = 1,
             jwt = generateJwtFor(userNameThatDoesNotHavePermissionToQuery),
@@ -137,5 +137,15 @@ class GetDataToEditEndpointTest(
             .andExpect(
                 jsonPath("\$.detail", containsString("is not a member of group")),
             )
+    }
+
+    @Test
+    fun `GIVEN revocation version awaiting approval THEN throws unprocessable entity error`() {
+        val accessionVersion = convenienceClient.prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation()
+            .first()
+
+        client.getSequenceEntryToEdit(accessionVersion.accession, accessionVersion.version)
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(jsonPath("\$.detail", containsString("is a revocation")))
     }
 }
