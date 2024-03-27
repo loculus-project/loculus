@@ -7,6 +7,7 @@ import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '..
 import type { OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
+
 export type TableSequenceData = {
     [key: string]: string | number | null;
 };
@@ -143,7 +144,7 @@ export const Table: FC<TableProps> = ({
                                         data-tooltip-content={
                                             typeof row[c.field] === 'string' &&
                                             row[c.field]!.toString().length > c.maxLength
-                                                ? row[c.field]
+                                                ? row[c.field]!.toString()
                                                 : ''
                                         }
                                         data-tooltip-id='table-tip'
