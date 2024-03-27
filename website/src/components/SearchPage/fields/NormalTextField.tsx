@@ -7,6 +7,7 @@ type NormalTextFieldProps = FieldProps & {
     multiline?: boolean;
     onFocus?: () => void;
     onBlur?: () => void;
+    inputRef?: React.RefObject<HTMLInputElement>;
 };
 
 export const NormalTextField: FC<NormalTextFieldProps> = ({
@@ -16,6 +17,7 @@ export const NormalTextField: FC<NormalTextFieldProps> = ({
     multiline = false,
     onFocus,
     onBlur,
+    inputRef,
 }) => (
     <TextField
         variant='outlined'
@@ -37,5 +39,6 @@ export const NormalTextField: FC<NormalTextFieldProps> = ({
         rows={3}
         onFocus={onFocus}
         onBlur={onBlur}
+        inputRef={inputRef}
     />
 );

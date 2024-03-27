@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react';
+import { type FC, useState, useRef } from 'react';
 
 import { NormalTextField } from './NormalTextField.tsx';
 import type { AccessionFilter } from '../../../types/config.ts';
@@ -11,6 +11,7 @@ type AccessionFieldProps = {
 export const AccessionField: FC<AccessionFieldProps> = ({ initialValue, onChange }) => {
     const [textValue, setTextValue] = useState((initialValue.accession ?? []).sort().join('\n'));
     const [isFocused, setIsFocused] = useState(false);
+    const fieldRef = useRef<HTMLInputElement>(null);
 
     return (
         <NormalTextField
@@ -38,11 +39,15 @@ export const AccessionField: FC<AccessionFieldProps> = ({ initialValue, onChange
                 onChange({ accession: uniqueAccessions });
             }}
             isLoading={false}
-            multiline={
-                textValue.split('\n').length > 1 || isFocused
-            }
-            onFocus={() => setIsFocused(true)}
+            multiline={textValue.split('\n').length > 1 || isFocused}
+            onFocus={() => {
+                setIsFocused(true);
+                if (fieldRef.current) {
+                    setTimeout(() => fieldRef.current?.focus(), 10); // When we change to multiline we lose focus - so we need to add it back
+                }
+            }}
             onBlur={() => setIsFocused(false)}
+            inputRef={fieldRef}
         />
     );
 };
