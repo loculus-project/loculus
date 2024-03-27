@@ -61,7 +61,7 @@ class ExtractUnprocessedDataEndpointTest(
 
     @Test
     fun `WHEN extracting unprocessed data THEN only previously not extracted sequence entries are returned`() {
-        val firstAccession = convenienceClient.submitDefaultFiles().first().accession
+        val firstAccession = convenienceClient.submitDefaultFiles().submissionIdMappings.first().accession
 
         val result7 = client.extractUnprocessedData(7)
         val responseBody7 = result7.expectNdjsonAndGetContent<UnprocessedData>()
@@ -97,7 +97,9 @@ class ExtractUnprocessedDataEndpointTest(
     @Test
     fun `GIVEN sequence entries for multiple organisms THEN it should only return entries for that organism`() {
         val defaultOrganismEntries = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
+            .submissionIdMappings
         val otherOrganismEntries = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)
+            .submissionIdMappings
 
         val result = client.extractUnprocessedData(
             defaultOrganismEntries.size + otherOrganismEntries.size,

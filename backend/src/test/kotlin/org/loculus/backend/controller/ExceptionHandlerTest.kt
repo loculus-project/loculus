@@ -28,7 +28,7 @@ private val validRoute = addOrganismToPath("submit")
 private val validRequest: MockHttpServletRequestBuilder = multipart(validRoute)
     .file("sequenceFile", "sequences".toByteArray())
     .file("metadataFile", "metadata".toByteArray())
-    .param("groupName", "groupName")
+    .param("groupId", "5")
     .param("dataUseTermsType", DataUseTermsType.OPEN.name)
     .withAuth()
 
@@ -126,7 +126,7 @@ class ExceptionHandlerWithMockedModelTest(@Autowired val mockMvc: MockMvc) {
             multipart("/unknownOrganism/submit")
                 .file("sequenceFile", "sequences".toByteArray())
                 .file("metadataFile", "metadata".toByteArray())
-                .param("groupName", "groupName")
+                .param("groupId", "5")
                 .param("dataUseTermsType", DataUseTermsType.OPEN.name)
                 .withAuth(),
         )

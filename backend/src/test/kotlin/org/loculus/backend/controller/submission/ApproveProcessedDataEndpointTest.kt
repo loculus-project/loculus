@@ -11,8 +11,6 @@ import org.loculus.backend.api.ApproveDataScope.WITHOUT_WARNINGS
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
 import org.loculus.backend.api.Status.IN_PROCESSING
-import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -296,12 +294,10 @@ class ApproveProcessedDataEndpointTest(
             .prepareDataTo(
                 AWAITING_APPROVAL,
                 username = DEFAULT_USER_NAME,
-                groupName = DEFAULT_GROUP_NAME,
             ) +
             convenienceClient.prepareDataTo(
                 AWAITING_APPROVAL,
                 username = DEFAULT_USER_NAME,
-                groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
             )
 
         client.approveProcessedSequenceEntries(scope = ALL, jwt = jwtForSuperUser)
@@ -317,7 +313,6 @@ class ApproveProcessedDataEndpointTest(
         val accessionVersions = convenienceClient.prepareDataTo(
             AWAITING_APPROVAL,
             username = DEFAULT_USER_NAME,
-            groupName = DEFAULT_GROUP_NAME,
         )
 
         client.approveProcessedSequenceEntries(

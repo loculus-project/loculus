@@ -4,7 +4,6 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -97,10 +96,7 @@ class RevokeEndpointTest(
     @Test
     fun `WHEN superuser revokes entries of other group THEN revocation version is created`() {
         val accessions = convenienceClient
-            .prepareDefaultSequenceEntriesToApprovedForRelease(
-                username = DEFAULT_USER_NAME,
-                groupName = DEFAULT_GROUP_NAME,
-            )
+            .prepareDefaultSequenceEntriesToApprovedForRelease(username = DEFAULT_USER_NAME)
             .map { it.accession }
 
         client.revokeSequenceEntries(accessions, jwt = jwtForSuperUser)

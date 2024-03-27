@@ -1,5 +1,7 @@
 package org.loculus.backend.controller.submission
 
+import com.ninjasquad.springmockk.MockkBean
+import io.mockk.every
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.containsString
@@ -8,9 +10,11 @@ import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.keycloak.representations.idm.UserRepresentation
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
@@ -20,7 +24,6 @@ import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_USER_NAME
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -28,8 +31,11 @@ import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
+import org.loculus.backend.service.KeycloakAdapter
 import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -37,9 +43,17 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
 class GetSequencesEndpointTest(
-    @Autowired val client: SubmissionControllerClient,
-    @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired private val client: SubmissionControllerClient,
+    @Autowired private val convenienceClient: SubmissionConvenienceClient,
+    @Autowired private val groupManagementClient: GroupManagementControllerClient,
 ) {
+    @MockkBean
+    lateinit var keycloakAdapter: KeycloakAdapter
+
+    @BeforeEach
+    fun setup() {
+        every { keycloakAdapter.getUsersWithName(any()) } returns listOf(UserRepresentation())
+    }
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
@@ -47,8 +61,11 @@ class GetSequencesEndpointTest(
     }
 
     @Test
-    fun `GIVEN data submitted from a group member THEN another group member sees the data`() {
-        convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME)
+    fun `GIVEN data submitted by a group member THEN another group member sees the data`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+        groupManagementClient.addUserToGroup(groupId, ALTERNATIVE_DEFAULT_USER_NAME).andExpect(status().isNoContent)
+
+        convenienceClient.submitDefaultFiles(username = DEFAULT_USER_NAME, groupId = groupId)
 
         val sequencesOfUser = convenienceClient.getSequenceEntries(
             username = DEFAULT_USER_NAME,
@@ -65,11 +82,14 @@ class GetSequencesEndpointTest(
 
     @Test
     fun `GIVEN data submitted to a group WHEN querying another group THEN only shows entries of the given group`() {
-        convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME, DEFAULT_GROUP_NAME)
+        val firstGroupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val anotherGroupId = groupManagementClient.createNewGroup().andGetGroupId()
+
+        convenienceClient.submitDefaultFiles(DEFAULT_USER_NAME, groupId = firstGroupId)
 
         val sequencesOfUser = convenienceClient.getSequenceEntries(
             username = DEFAULT_USER_NAME,
-            groupsFilter = listOf(ALTERNATIVE_DEFAULT_GROUP_NAME),
+            groupIdsFilter = listOf(anotherGroupId),
         ).sequenceEntries
 
         assertThat(sequencesOfUser, hasSize(0))
@@ -77,10 +97,10 @@ class GetSequencesEndpointTest(
 
     @Test
     fun `WHEN querying for a non-existing group THEN expect an error that the group is not found`() {
-        val nonExistingGroup = "a-non-existing-group-that-does-not-exist-in-the-database-and-never-will"
+        val nonExistingGroup = 123456789
 
         client.getSequenceEntries(
-            groupsFilter = listOf(nonExistingGroup),
+            groupIdsFilter = listOf(nonExistingGroup),
         )
             .andExpect(status().isNotFound)
             .andExpect(
@@ -91,7 +111,9 @@ class GetSequencesEndpointTest(
     @Test
     fun `GIVEN some sequence entries in the database THEN only shows entries of the requested organism`() {
         val defaultOrganismData = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
+            .submissionIdMappings
         val otherOrganismData = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)
+            .submissionIdMappings
 
         val sequencesOfUser = convenienceClient.getSequenceEntries(
             username = DEFAULT_USER_NAME,
@@ -110,8 +132,10 @@ class GetSequencesEndpointTest(
 
     @Test
     fun `WHEN querying sequences of an existing group that you're not a member of THEN this is forbidden`() {
+        val groupIdOfDefaultUser = groupManagementClient.createNewGroup().andGetGroupId()
+
         client.getSequenceEntries(
-            groupsFilter = listOf(ALTERNATIVE_DEFAULT_GROUP_NAME),
+            groupIdsFilter = listOf(groupIdOfDefaultUser),
             jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME),
         ).andExpect(status().isForbidden).andExpect {
             jsonPath(
@@ -126,18 +150,21 @@ class GetSequencesEndpointTest(
 
     @Test
     fun `WHEN superuser queries data of groups THEN returns sequence entries`() {
+        val firstGroupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val secondGroupId = groupManagementClient.createNewGroup().andGetGroupId()
+
         val defaultGroupData = convenienceClient.submitDefaultFiles(
             username = DEFAULT_USER_NAME,
-            groupName = DEFAULT_GROUP_NAME,
-        )
+            groupId = firstGroupId,
+        ).submissionIdMappings
         val otherGroupData = convenienceClient.submitDefaultFiles(
             username = DEFAULT_USER_NAME,
-            groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
-        )
+            groupId = secondGroupId,
+        ).submissionIdMappings
         val accessionVersions = defaultGroupData + otherGroupData
 
         client.getSequenceEntries(
-            groupsFilter = listOf(DEFAULT_GROUP_NAME, ALTERNATIVE_DEFAULT_GROUP_NAME),
+            groupIdsFilter = listOf(firstGroupId, secondGroupId),
             jwt = jwtForSuperUser,
         )
             .andExpect(status().isOk)
@@ -152,18 +179,21 @@ class GetSequencesEndpointTest(
 
     @Test
     fun `WHEN superuser queries sequences without groupsFilter THEN returns sequence entries`() {
+        val firstGroupId = groupManagementClient.createNewGroup().andGetGroupId()
+        val secondGroupId = groupManagementClient.createNewGroup().andGetGroupId()
+
         val defaultGroupData = convenienceClient.submitDefaultFiles(
             username = DEFAULT_USER_NAME,
-            groupName = DEFAULT_GROUP_NAME,
-        )
+            groupId = firstGroupId,
+        ).submissionIdMappings
         val otherGroupData = convenienceClient.submitDefaultFiles(
             username = DEFAULT_USER_NAME,
-            groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
-        )
+            groupId = secondGroupId,
+        ).submissionIdMappings
         val accessionVersions = defaultGroupData + otherGroupData
 
         client.getSequenceEntries(
-            groupsFilter = null,
+            groupIdsFilter = null,
             jwt = jwtForSuperUser,
         )
             .andExpect(status().isOk)
@@ -180,17 +210,15 @@ class GetSequencesEndpointTest(
     fun `GIVEN data in many statuses WHEN querying sequences for a certain one THEN return only those sequences`() {
         convenienceClient.prepareDataTo(AWAITING_APPROVAL)
 
-        val sequencesInAwaitingApproval = convenienceClient.getSequenceEntries(
-            username = ALTERNATIVE_DEFAULT_USER_NAME,
-            statusesFilter = listOf(AWAITING_APPROVAL),
-        ).sequenceEntries
+        val sequencesInAwaitingApproval = convenienceClient
+            .getSequenceEntries(statusesFilter = listOf(AWAITING_APPROVAL))
+            .sequenceEntries
 
         assertThat(sequencesInAwaitingApproval, hasSize(10))
 
-        val sequencesInProcessing = convenienceClient.getSequenceEntries(
-            username = ALTERNATIVE_DEFAULT_USER_NAME,
-            statusesFilter = listOf(IN_PROCESSING),
-        ).sequenceEntries
+        val sequencesInProcessing = convenienceClient
+            .getSequenceEntries(statusesFilter = listOf(IN_PROCESSING))
+            .sequenceEntries
 
         assertThat(sequencesInProcessing, hasSize(0))
     }
@@ -275,7 +303,7 @@ class GetSequencesEndpointTest(
         fun provideStatusScenarios() = listOf(
             Scenario(
                 setupDescription = "I submitted sequence entries",
-                prepareDatabase = { it.submitDefaultFiles().map { entry -> entry.accession } },
+                prepareDatabase = { it.submitDefaultFiles().submissionIdMappings.map { entry -> entry.accession } },
                 expectedStatus = RECEIVED,
                 expectedIsRevocation = false,
             ),

@@ -15,8 +15,6 @@ import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.DeleteSequenceScope.ALL
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
-import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -219,7 +217,7 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting sequence entry of wrong organism THEN throws an unprocessableEntity error`() {
-        val accessionVersion = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)[0]
+        val accessionVersion = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM).submissionIdMappings[0]
 
         client.deleteSequenceEntries(
             scope = ALL,
@@ -235,7 +233,7 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting accession versions not from the submitter THEN throws forbidden error`() {
-        val accessionVersions = convenienceClient.submitDefaultFiles()
+        val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
 
         val notSubmitter = "theOneWhoMustNotBeNamed"
         client.deleteSequenceEntries(
@@ -255,12 +253,10 @@ class DeleteSequencesEndpointTest(
         val accessionVersions = convenienceClient
             .submitDefaultFiles(
                 username = DEFAULT_USER_NAME,
-                groupName = DEFAULT_GROUP_NAME,
-            ) +
+            ).submissionIdMappings +
             convenienceClient.submitDefaultFiles(
                 username = DEFAULT_USER_NAME,
-                groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
-            )
+            ).submissionIdMappings
 
         client.deleteSequenceEntries(scope = ALL, jwt = jwtForSuperUser)
             .andExpect(status().isOk)
@@ -272,10 +268,11 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN superuser deletes entries of other user THEN is successfully deleted`() {
-        val accessionVersions = convenienceClient.submitDefaultFiles(
-            username = DEFAULT_USER_NAME,
-            groupName = DEFAULT_GROUP_NAME,
-        )
+        val accessionVersions = convenienceClient
+            .submitDefaultFiles(
+                username = DEFAULT_USER_NAME,
+            )
+            .submissionIdMappings
 
         client.deleteSequenceEntries(
             scope = ALL,

@@ -34,7 +34,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
-                SequenceEntriesView.groupNameColumn,
+                SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
             )
@@ -72,7 +72,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
-                SequenceEntriesView.groupNameColumn,
+                SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
             )
@@ -95,7 +95,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
-                SequenceEntriesView.groupNameColumn,
+                SequenceEntriesView.groupIdColumn,
             )
             .select(
                 where = {
@@ -114,7 +114,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.statusColumn,
-                SequenceEntriesView.groupNameColumn,
+                SequenceEntriesView.groupIdColumn,
             )
             .select(
                 where = {
@@ -129,7 +129,7 @@ class AccessionPreconditionValidator(
             AccessionVersionGroup(
                 it[SequenceEntriesView.accessionColumn],
                 it[SequenceEntriesView.versionColumn],
-                it[SequenceEntriesView.groupNameColumn],
+                it[SequenceEntriesView.groupIdColumn],
             )
         }
     }
@@ -190,16 +190,16 @@ class AccessionPreconditionValidator(
         val groupsOfSequenceEntries = sequenceEntries
             .groupBy(
                 {
-                    it[SequenceEntriesView.groupNameColumn]
+                    it[SequenceEntriesView.groupIdColumn]
                 },
                 {
                     AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn])
                 },
             )
 
-        groupsOfSequenceEntries.forEach { (groupName, accessionList) ->
+        groupsOfSequenceEntries.forEach { (groupId, accessionList) ->
             try {
-                groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupName, authenticatedUser)
+                groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupId, authenticatedUser)
             } catch (error: ForbiddenException) {
                 throw ForbiddenException(
                     error.message + " Affected AccessionVersions: " + accessionList.map {
@@ -259,6 +259,6 @@ class AccessionPreconditionValidator(
     data class AccessionVersionGroup(
         override val accession: Accession,
         override val version: Version,
-        val groupName: String,
+        val groupId: Int,
     ) : AccessionVersionInterface
 }

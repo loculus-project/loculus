@@ -74,7 +74,7 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @Parameter(description = GROUP_DESCRIPTION) @RequestParam groupName: String,
+        @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
         @Parameter(description = "Data Use terms under which data is released.")
@@ -91,7 +91,7 @@ class SubmissionController(
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            groupName,
+            groupId,
             DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil),
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
@@ -248,10 +248,10 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @Parameter(
-            description = "Filter by group name. If not provided, all groups are considered.",
+            description = "Filter by group ids. If not provided, all groups are considered.",
         )
         @RequestParam(required = false)
-        groupsFilter: List<String>?,
+        groupIdsFilter: List<Int>?,
         @Parameter(
             description = "Filter by status. If not provided, all statuses are considered.",
         )
@@ -275,7 +275,7 @@ class SubmissionController(
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
-        groupsFilter,
+        groupIdsFilter,
         statusesFilter,
         warningsFilter,
         page,

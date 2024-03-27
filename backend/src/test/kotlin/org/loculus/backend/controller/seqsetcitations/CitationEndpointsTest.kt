@@ -46,7 +46,7 @@ class CitationEndpointsTest(
             AccessionPreconditionValidator.AccessionVersionGroup(
                 accession = "MOCK_ACCESSION",
                 version = 1,
-                groupName = "MOCK_GROUP",
+                groupId = 123,
             ),
         )
     }
@@ -95,7 +95,7 @@ class CitationEndpointsTest(
                     accession = "mock-sequence-accession",
                     version = 1L,
                     status = Status.APPROVED_FOR_RELEASE,
-                    group = "mock-group",
+                    groupId = 123,
                     submitter = "mock-submitter",
                     isRevocation = false,
                     submissionId = "mock-submission-id",
