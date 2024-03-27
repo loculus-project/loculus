@@ -16,13 +16,14 @@ import org.loculus.backend.utils.AccessionComparator
 import org.loculus.backend.utils.AccessionVersionComparator
 import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 @Component
 class AccessionPreconditionValidator(
     private val sequenceEntriesViewProvider: SequenceEntriesViewProvider,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
 ) {
-
+    @Transactional(readOnly = true)
     fun validateAccessionVersions(
         authenticatedUser: AuthenticatedUser,
         accessionVersions: List<AccessionVersionInterface>,
@@ -48,6 +49,7 @@ class AccessionPreconditionValidator(
         }
     }
 
+    @Transactional(readOnly = true)
     fun validateAccessionVersions(accessionVersions: List<AccessionVersionInterface>, statuses: List<Status>) {
         sequenceEntriesViewProvider.get(organism = null).let { table ->
             val sequenceEntries = table
@@ -63,6 +65,7 @@ class AccessionPreconditionValidator(
         }
     }
 
+    @Transactional(readOnly = true)
     fun validateAccessions(
         authenticatedUser: AuthenticatedUser,
         accessions: List<Accession>,
@@ -90,6 +93,7 @@ class AccessionPreconditionValidator(
         }
     }
 
+    @Transactional(readOnly = true)
     fun validateAccessions(authenticatedUser: AuthenticatedUser, accessions: List<Accession>) {
         sequenceEntriesViewProvider.get(organism = null).let { table ->
             val sequenceEntries = table
@@ -108,6 +112,7 @@ class AccessionPreconditionValidator(
         }
     }
 
+    @Transactional(readOnly = true)
     fun validateAccessions(accessions: List<Accession>, statuses: List<Status>): List<AccessionVersionGroup> {
         sequenceEntriesViewProvider.get(organism = null).let { table ->
             val sequenceEntries = table

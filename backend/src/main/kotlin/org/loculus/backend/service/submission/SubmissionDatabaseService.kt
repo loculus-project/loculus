@@ -254,44 +254,34 @@ class SubmissionDatabaseService(
         val view = entriesViewProvider.get(organism)
         val table = entriesTableProvider.get(organism)
 
-        val accessionVersionsToUpdate =
-            view.join(
-                DataUseTermsTable,
-                JoinType.LEFT,
-                additionalConstraint = {
-                    (view.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                        (DataUseTermsTable.isNewestDataUseTerms)
+        val statusCondition = view.statusIsOneOf(listOf(Status.AWAITING_APPROVAL))
+
+        val accessionCondition = if (accessionVersionsFilter !== null) {
+            view.accessionVersionIsIn(accessionVersionsFilter)
+        } else if (authenticatedUser.isSuperUser) {
+            Op.TRUE
+        } else {
+            view.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(authenticatedUser))
+        }
+
+        val scopeCondition = if (scope == ApproveDataScope.WITHOUT_WARNINGS) {
+            not(view.entriesWithWarnings)
+        } else {
+            Op.TRUE
+        }
+
+        val accessionVersionsToUpdate = view
+            .select { statusCondition and accessionCondition and scopeCondition }
+            .map { AccessionVersion(it[view.accessionColumn], it[view.versionColumn]) }
+
+        for (accessionVersionsChunk in accessionVersionsToUpdate.chunked(1000)) {
+            table.update(
+                where = {
+                    table.accessionVersionIsIn(accessionVersionsChunk)
                 },
-            ).select {
-                val statusCondition = view.statusIsOneOf(
-                    listOf(Status.AWAITING_APPROVAL),
-                )
-
-                val accessionCondition = if (accessionVersionsFilter !== null) {
-                    view.accessionVersionIsIn(accessionVersionsFilter)
-                } else if (authenticatedUser.isSuperUser) {
-                    Op.TRUE
-                } else {
-                    view.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(authenticatedUser))
-                }
-
-                val scopeCondition = if (scope == ApproveDataScope.WITHOUT_WARNINGS) {
-                    not(view.entriesWithWarnings)
-                } else {
-                    Op.TRUE
-                }
-
-                statusCondition and accessionCondition and scopeCondition
-            }.map {
-                AccessionVersion(it[view.accessionColumn], it[view.versionColumn])
+            ) {
+                it[releasedAtColumn] = now
             }
-
-        table.update(
-            where = {
-                table.accessionVersionIsIn(accessionVersionsToUpdate)
-            },
-        ) {
-            it[releasedAtColumn] = now
         }
 
         return accessionVersionsToUpdate
@@ -586,46 +576,34 @@ class SubmissionDatabaseService(
             )
         }
 
-        val sequenceEntriesToDelete = entriesTableProvider.get(organism).let { table ->
-            entriesViewProvider.get(organism).let { view ->
-                table.join(
-                    view,
-                    JoinType.INNER,
-                    additionalConstraint = {
-                        (table.accessionColumn eq view.accessionColumn) and
-                            (table.versionColumn eq view.versionColumn)
-                    },
-                ).select {
-                    val accessionCondition = if (accessionVersionsFilter != null) {
-                        table.accessionVersionIsIn(accessionVersionsFilter)
-                    } else if (authenticatedUser.isSuperUser) {
-                        Op.TRUE
-                    } else {
-                        table.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(authenticatedUser))
-                    }
-
-                    val scopeCondition = when (scope) {
-                        DeleteSequenceScope.PROCESSED_WITH_ERRORS -> {
-                            view.statusIs(Status.HAS_ERRORS)
-                        }
-
-                        DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> {
-                            view.statusIs(Status.AWAITING_APPROVAL) and
-                                view.entriesWithWarnings
-                        }
-
-                        DeleteSequenceScope.ALL -> view.statusIsOneOf(listOfDeletableStatuses)
-                    }
-
-                    accessionCondition and scopeCondition
-                }.map {
-                    AccessionVersion(it[table.accessionColumn], it[table.versionColumn])
+        val sequenceEntriesToDelete = entriesViewProvider
+            .get(organism)
+            .let { view ->
+                val accessionCondition = if (accessionVersionsFilter != null) {
+                    view.accessionVersionIsIn(accessionVersionsFilter)
+                } else if (authenticatedUser.isSuperUser) {
+                    Op.TRUE
+                } else {
+                    view.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(authenticatedUser))
                 }
-            }
-        }
 
-        entriesTableProvider.get(organism).deleteWhere {
-            accessionVersionIsIn(sequenceEntriesToDelete)
+                val scopeCondition = when (scope) {
+                    DeleteSequenceScope.PROCESSED_WITH_ERRORS -> view.statusIs(Status.HAS_ERRORS)
+                    DeleteSequenceScope.PROCESSED_WITH_WARNINGS -> view.statusIs(Status.AWAITING_APPROVAL) and
+                        view.entriesWithWarnings
+
+                    DeleteSequenceScope.ALL -> view.statusIsOneOf(listOfDeletableStatuses)
+                }
+
+                view.slice(view.accessionColumn, view.versionColumn)
+                    .select { accessionCondition and scopeCondition }
+                    .map { AccessionVersion(it[view.accessionColumn], it[view.versionColumn]) }
+            }
+
+        entriesTableProvider.get(organism).let { table ->
+            for (accessionVersionsChunk in sequenceEntriesToDelete.chunked(1000)) {
+                table.deleteWhere { accessionVersionIsIn(accessionVersionsChunk) }
+            }
         }
 
         return sequenceEntriesToDelete
