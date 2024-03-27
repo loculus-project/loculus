@@ -83,7 +83,7 @@ fields:
     displayName: {{ .displayName }}
     {{- end }}
     {{- if .truncateColumnDisplayTo }}
-    truncateColumnTo: {{ .truncateColumnTo }}
+    truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
     {{- end }}
     {{- if .customDisplay }}
     customDisplay:

@@ -1,5 +1,6 @@
 import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
+import { Tooltip } from 'react-tooltip';
 
 import { routes, navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes/routes.ts';
 import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
@@ -37,12 +38,12 @@ export const Table: FC<TableProps> = ({
 }) => {
     const primaryKey = schema.primaryKey;
 
-    const maxLengths = schema.metadata.map((m) => m.truncateColumnTo ?? 100);
+    const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));
 
     const columns = schema.tableColumns.map((field) => ({
         field,
         headerName: schema.metadata.find((m) => m.name === field)?.displayName ?? capitalCase(field),
-        maxLength: maxLengths[schema.metadata.findIndex((m) => m.name === field)],
+        maxLength: maxLengths[field],
     }));
 
     const handleSort = (field: string) => {
@@ -102,13 +103,14 @@ export const Table: FC<TableProps> = ({
 
     return (
         <div className='w-full overflow-x-auto text-sm'>
+            <Tooltip id='table-tip' />
             {data.length !== 0 ? (
                 <table className='w-full text-left border-collapse'>
                     <thead>
                         <tr>
                             <th
                                 onClick={() => handleSort(primaryKey)}
-                                className='px-2 py-3 pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-center'
+                                className='px-2 py-3 pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
                             >
                                 {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
                             </th>
@@ -116,7 +118,7 @@ export const Table: FC<TableProps> = ({
                                 <th
                                     key={c.field}
                                     onClick={() => handleSort(c.field)}
-                                    className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-center'
+                                    className='px-2 py-3 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer last:pr-6 text-left'
                                 >
                                     {c.headerName} {orderBy.field === c.field && orderIcon}
                                 </th>
@@ -135,17 +137,19 @@ export const Table: FC<TableProps> = ({
                                     </a>
                                 </td>
                                 {columns.map((c) => (
-                                    <td key={`${index}-${c.field}`} className='px-2 py-2  text-primary-900  last:pr-6'
-                                    title={
-                                        typeof row[c.field] === 'string' && row[c.field].length > c.maxLength
-                                            ? row[c.field]
-                                            : ''
-                                    }>
+                                    <td
+                                        key={`${index}-${c.field}`}
+                                        className='px-2 py-2  text-primary-900  last:pr-6'
+                                        data-tooltip-content={
+                                            typeof row[c.field] === 'string' && row[c.field].length > c.maxLength
+                                                ? row[c.field]
+                                                : ''
+                                        }
+                                        data-tooltip-id='table-tip'
+                                    >
                                         {typeof row[c.field] === 'string' && row[c.field].length > c.maxLength
                                             ? `${row[c.field].slice(0, c.maxLength)}...`
-                                            : row[c.field]
-                                    }
-
+                                            : row[c.field]}
                                     </td>
                                 ))}
                             </tr>
