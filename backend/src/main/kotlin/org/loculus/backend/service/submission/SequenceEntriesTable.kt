@@ -26,7 +26,7 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     val submissionIdColumn = varchar("submission_id", 255)
     val submitterColumn = varchar("submitter", 255)
     val approverColumn = varchar("approver", 255)
-    val groupNameColumn = varchar("group_name", 255)
+    val groupIdColumn = integer("group_id")
     val submittedAtColumn = datetime("submitted_at")
     val releasedAtColumn = datetime("released_at").nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
@@ -50,4 +50,6 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
         Pair(accessionColumn, versionColumn) inList accessionVersions.toPairs()
 
     fun organismIs(organism: Organism) = organismColumn eq organism.name
+
+    fun groupIsOneOf(groupIds: List<Int>) = SequenceEntriesView.groupIdColumn inList groupIds
 }

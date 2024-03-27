@@ -12,6 +12,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.greaterThan
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesPattern
 import org.hamcrest.Matchers.not
@@ -44,6 +45,7 @@ private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf(
     "releasedAt",
     "submissionId",
     "submittedAt",
+    "groupId",
 )
 
 @EndpointTest
@@ -98,7 +100,7 @@ class GetReleasedDataEndpointTest(
                 "accessionVersion" to TextNode("$id.$version"),
                 "isRevocation" to TextNode("false"),
                 "submitter" to TextNode(DEFAULT_USER_NAME),
-                "group" to TextNode(DEFAULT_GROUP_NAME),
+                "groupName" to TextNode(DEFAULT_GROUP_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
                 "dataUseTerms" to TextNode("OPEN"),
             )
@@ -113,6 +115,7 @@ class GetReleasedDataEndpointTest(
                     "submittedAt" -> expectIsTimestampWithCurrentYear(value)
                     "releasedAt" -> expectIsTimestampWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
+                    "groupId" -> assertThat(value.intValue(), greaterThan(0))
                     else -> assertThat(value, `is`(expectedMetadata[key]))
                 }
             }
@@ -199,7 +202,8 @@ class GetReleasedDataEndpointTest(
                 "submittedAt" -> expectIsTimestampWithCurrentYear(value)
                 "releasedAt" -> expectIsTimestampWithCurrentYear(value)
                 "submitter" -> assertThat(value, `is`(TextNode(DEFAULT_USER_NAME)))
-                "group" -> assertThat(value, `is`(TextNode(DEFAULT_GROUP_NAME)))
+                "groupName" -> assertThat(value, `is`(TextNode(DEFAULT_GROUP_NAME)))
+                "groupId" -> assertThat(value.intValue(), `is`(greaterThan(0)))
                 "accession", "version", "accessionVersion", "submissionId" -> {}
                 "dataUseTerms" -> assertThat(value, `is`(TextNode("OPEN")))
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))

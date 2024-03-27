@@ -48,7 +48,7 @@ interface SubmissionParams {
         override val authenticatedUser: AuthenticatedUser,
         override val metadataFile: MultipartFile,
         override val sequenceFile: MultipartFile,
-        val groupName: String,
+        val groupId: Int,
         val dataUseTerms: DataUseTerms,
     ) : SubmissionParams {
         override val uploadType: UploadType = UploadType.ORIGINAL
@@ -137,7 +137,7 @@ class SubmitModel(
     private fun uploadData(uploadId: String, submissionParams: SubmissionParams, batchSize: Int) {
         if (submissionParams is SubmissionParams.OriginalSubmissionParams) {
             groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(
-                submissionParams.groupName,
+                submissionParams.groupId,
                 submissionParams.authenticatedUser,
             )
             dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(submissionParams.dataUseTerms)
@@ -224,7 +224,7 @@ class SubmitModel(
                             uploadDatabaseService.batchInsertMetadataInAuxTable(
                                 uploadId = uploadId,
                                 authenticatedUser = submissionParams.authenticatedUser,
-                                groupName = submissionParams.groupName,
+                                groupId = submissionParams.groupId,
                                 submittedOrganism = submissionParams.organism,
                                 uploadedMetadataBatch = batch,
                                 uploadedAt = now,

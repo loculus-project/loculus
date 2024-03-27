@@ -17,8 +17,11 @@ fields:
     notSearchable: true
   - name: submitter
     type: string
-  - name: group
+  - name: groupId
+    type: int
+  - name: groupName
     type: string
+    generateIndex: true
   - name: submittedAt
     type: timestamp
   - name: releasedAt

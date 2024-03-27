@@ -13,7 +13,6 @@ import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.HAS_ERRORS
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -23,6 +22,8 @@ import org.loculus.backend.controller.assertStatusIs
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
@@ -37,8 +38,8 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 class ReviseEndpointTest(
     @Autowired val client: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
+    @Autowired val groupManagementClient: GroupManagementControllerClient,
 ) {
-
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
@@ -51,43 +52,11 @@ class ReviseEndpointTest(
     }
 
     @Test
-    fun `WHEN submitting on behalf of a non-existing group THEN expect that the group is not found`() {
-        client.submit(
-            DefaultFiles.dummyRevisedMetadataFile,
-            DefaultFiles.sequencesFile,
-            groupName = "nonExistingGroup",
-        )
-            .andExpect(status().isNotFound)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail", containsString("Group(s) nonExistingGroup do not exist")))
-    }
-
-    @Test
-    fun `WHEN submitting on behalf of a group that the user is not a member of THEN expect it is forbidden`() {
-        val otherUser = "otherUser"
-
-        client.submit(
-            DefaultFiles.dummyRevisedMetadataFile,
-            DefaultFiles.sequencesFile,
-            jwt = generateJwtFor(otherUser),
-        )
-            .andExpect(status().isForbidden)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(
-                jsonPath(
-                    "\$.detail",
-                    containsString(
-                        "User $otherUser is not a member of group(s) " +
-                            "$DEFAULT_GROUP_NAME. Action not allowed.",
-                    ),
-                ),
-            )
-    }
-
-    @Test
     fun `WHEN superuser submits on behalf of other group THEN revised versions are created`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+
         val accessions = convenienceClient
-            .prepareDataTo(APPROVED_FOR_RELEASE, username = DEFAULT_USER_NAME, groupName = DEFAULT_GROUP_NAME)
+            .prepareDataTo(APPROVED_FOR_RELEASE, username = DEFAULT_USER_NAME, groupId = groupId)
             .map { it.accession }
 
         client.reviseSequenceEntries(
@@ -202,10 +171,7 @@ class ReviseEndpointTest(
             .andExpect(
                 jsonPath(
                     "\$.detail",
-                    containsString(
-                        "User $notSubmitter is not a member of group(s) " +
-                            "$DEFAULT_GROUP_NAME. Action not allowed.",
-                    ),
+                    containsString("User $notSubmitter is not a member of group(s)"),
                 ),
             )
     }
@@ -406,7 +372,6 @@ class ReviseEndpointTest(
                     "Unprocessable Entity",
                     "A row in metadata file contains no accession",
                 ),
-
             )
         }
     }

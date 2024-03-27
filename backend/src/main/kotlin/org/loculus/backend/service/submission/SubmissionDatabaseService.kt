@@ -54,6 +54,7 @@ import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
+import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.utils.Accession
@@ -305,7 +306,7 @@ class SubmissionDatabaseService(
         } else if (authenticatedUser.isSuperUser) {
             Op.TRUE
         } else {
-            SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(authenticatedUser))
+            SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
         }
 
         val scopeCondition = if (scope == ApproveDataScope.WITHOUT_WARNINGS) {
@@ -388,7 +389,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.isRevocationColumn,
                 SequenceEntriesView.processedDataColumn,
                 SequenceEntriesView.submitterColumn,
-                SequenceEntriesView.groupNameColumn,
+                SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.submittedAtColumn,
                 SequenceEntriesView.releasedAtColumn,
                 SequenceEntriesView.submissionIdColumn,
@@ -412,7 +413,8 @@ class SubmissionDatabaseService(
                     version = it[SequenceEntriesView.versionColumn],
                     isRevocation = it[SequenceEntriesView.isRevocationColumn],
                     submitter = it[SequenceEntriesView.submitterColumn],
-                    group = it[SequenceEntriesView.groupNameColumn],
+                    groupId = it[SequenceEntriesView.groupIdColumn],
+                    groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
                     submissionId = it[SequenceEntriesView.submissionIdColumn],
                     processedData = when (val processedData = it[SequenceEntriesView.processedDataColumn]) {
                         null -> emptyProcessedDataProvider.provide(organism)
@@ -432,7 +434,7 @@ class SubmissionDatabaseService(
     fun getSequences(
         authenticatedUser: AuthenticatedUser,
         organism: Organism?,
-        groupsFilter: List<String>?,
+        groupIdsFilter: List<Int>?,
         statusesFilter: List<Status>?,
         warningsFilter: WarningsFilter? = null,
         page: Int? = null,
@@ -440,25 +442,22 @@ class SubmissionDatabaseService(
     ): GetSequenceResponse {
         log.info {
             "getting sequence for user ${authenticatedUser.username} " +
-                "(groupFilter: $groupsFilter in statuses $statusesFilter)." +
+                "(groupFilter: $groupIdsFilter in statuses $statusesFilter)." +
                 " Page $page of size $size "
         }
 
         val listOfStatuses = statusesFilter ?: Status.entries
 
-        val groupCondition = if (groupsFilter != null) {
+        val groupCondition = if (groupIdsFilter != null) {
             groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroups(
-                groupsFilter,
+                groupIdsFilter,
                 authenticatedUser,
             )
-            SequenceEntriesView.groupNameIsOneOf(groupsFilter)
+            SequenceEntriesView.groupIsOneOf(groupIdsFilter)
         } else if (authenticatedUser.isSuperUser) {
             Op.TRUE
         } else {
-            val groupsOfUser = groupManagementDatabaseService
-                .getGroupsOfUser(authenticatedUser)
-                .map { it.groupName }
-            SequenceEntriesView.groupNameIsOneOf(groupsOfUser)
+            SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
         }
 
         val baseQuery = SequenceEntriesView
@@ -476,7 +475,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.submissionIdColumn,
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.isRevocationColumn,
-                SequenceEntriesView.groupNameColumn,
+                SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.organismColumn,
                 SequenceEntriesView.submittedAtColumn,
@@ -521,7 +520,7 @@ class SubmissionDatabaseService(
                         accession = row[SequenceEntriesView.accessionColumn],
                         version = row[SequenceEntriesView.versionColumn],
                         status = Status.fromString(row[SequenceEntriesView.statusColumn]),
-                        group = row[SequenceEntriesView.groupNameColumn],
+                        groupId = row[SequenceEntriesView.groupIdColumn],
                         submitter = row[SequenceEntriesView.submitterColumn],
                         isRevocation = row[SequenceEntriesView.isRevocationColumn],
                         submissionId = row[SequenceEntriesView.submissionIdColumn],
@@ -556,7 +555,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.versionColumn.plus(1),
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
-                SequenceEntriesTable.groupNameColumn,
+                SequenceEntriesTable.groupIdColumn,
                 dateTimeParam(now),
                 booleanParam(true),
                 SequenceEntriesTable.organismColumn,
@@ -571,7 +570,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesTable.versionColumn,
                 SequenceEntriesTable.submissionIdColumn,
                 SequenceEntriesTable.submitterColumn,
-                SequenceEntriesTable.groupNameColumn,
+                SequenceEntriesTable.groupIdColumn,
                 SequenceEntriesTable.submittedAtColumn,
                 SequenceEntriesTable.isRevocationColumn,
                 SequenceEntriesTable.organismColumn,
@@ -589,7 +588,7 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.isRevocationColumn,
-                SequenceEntriesView.groupNameColumn,
+                SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.submissionIdColumn,
             )
             .select(
@@ -645,7 +644,7 @@ class SubmissionDatabaseService(
         } else if (authenticatedUser.isSuperUser) {
             Op.TRUE
         } else {
-            SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupsOfUser(authenticatedUser))
+            SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
         }
 
         val scopeCondition = when (scope) {
@@ -832,7 +831,8 @@ data class RawProcessedData(
     override val version: Version,
     val isRevocation: Boolean,
     val submitter: String,
-    val group: String,
+    val groupId: Int,
+    val groupName: String,
     val submittedAt: LocalDateTime,
     val releasedAt: LocalDateTime,
     val submissionId: String,

@@ -223,7 +223,7 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN I submitted invalid data and errors THEN the sequence entry is in status has errors`() {
-        val accessions = convenienceClient.submitDefaultFiles().map { it.accession }
+        val accessions = convenienceClient.submitDefaultFiles().submissionIdMappings.map { it.accession }
         convenienceClient.extractUnprocessedData(1)
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.withWrongDateFormat(accessions.first()).copy(

@@ -1,5 +1,6 @@
 package org.loculus.backend.model
 
+import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.TextNode
 import kotlinx.datetime.Clock
@@ -56,7 +57,8 @@ class ReleasedDataModel(
             ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
             ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
             ("submitter" to TextNode(rawProcessedData.submitter)) +
-            ("group" to TextNode(rawProcessedData.group)) +
+            ("groupId" to IntNode(rawProcessedData.groupId)) +
+            ("groupName" to TextNode(rawProcessedData.groupName)) +
             ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
             ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +

@@ -33,14 +33,14 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         metadataFile: MockMultipartFile,
         sequencesFile: MockMultipartFile,
         organism: String = DEFAULT_ORGANISM,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int,
         dataUseTerm: DataUseTerms = DataUseTerms.Open,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/submit", organism = organism))
             .file(sequencesFile)
             .file(metadataFile)
-            .param("groupName", groupName)
+            .param("groupId", groupId.toString())
             .param("dataUseTermsType", dataUseTerm.type.name)
             .param(
                 "restrictedUntil",
@@ -90,7 +90,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
 
     fun getSequenceEntries(
         organism: String = DEFAULT_ORGANISM,
-        groupsFilter: List<String>? = null,
+        groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
         warningsFilter: WarningsFilter? = null,
         jwt: String? = jwtForDefaultUser,
@@ -100,7 +100,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         return mockMvc.perform(
             get(addOrganismToPath("/get-sequences", organism = organism))
                 .withAuth(jwt)
-                .param("groupsFilter", groupsFilter?.joinToString { it })
+                .param("groupIdsFilter", groupIdsFilter?.joinToString { it.toString() })
                 .param("statusesFilter", statusesFilter?.joinToString { it.name })
                 .param("warningsFilter", warningsFilter?.name)
                 .param("page", page?.toString())

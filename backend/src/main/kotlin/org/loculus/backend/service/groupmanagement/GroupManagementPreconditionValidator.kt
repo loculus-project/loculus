@@ -15,22 +15,22 @@ class GroupManagementPreconditionValidator(
 ) {
 
     @Transactional(readOnly = true)
-    fun validateUserIsAllowedToModifyGroup(groupName: String, authenticatedUser: AuthenticatedUser) {
-        validateUserIsAllowedToModifyGroups(listOf(groupName), authenticatedUser)
+    fun validateUserIsAllowedToModifyGroup(groupId: Int, authenticatedUser: AuthenticatedUser) {
+        validateUserIsAllowedToModifyGroups(listOf(groupId), authenticatedUser)
     }
 
     @Transactional(readOnly = true)
-    fun validateUserIsAllowedToModifyGroups(groupNames: List<String>, authenticatedUser: AuthenticatedUser) {
+    fun validateUserIsAllowedToModifyGroups(groupIds: List<Int>, authenticatedUser: AuthenticatedUser) {
         if (authenticatedUser.isSuperUser) {
             return
         }
 
         val existingGroups = GroupsTable
-            .select { GroupsTable.groupNameColumn inList groupNames }
-            .map { it[GroupsTable.groupNameColumn] }
+            .select { GroupsTable.id inList groupIds }
+            .map { it[GroupsTable.id].value }
             .toSet()
 
-        val nonExistingGroups = groupNames.toSet() - existingGroups
+        val nonExistingGroups = groupIds.toSet() - existingGroups
 
         if (nonExistingGroups.isNotEmpty()) {
             throw NotFoundException("Group(s) ${nonExistingGroups.joinToString()} do not exist.")
@@ -39,10 +39,10 @@ class GroupManagementPreconditionValidator(
         val username = authenticatedUser.username
         val userGroups = UserGroupsTable
             .select {
-                (UserGroupsTable.groupNameColumn inList existingGroups) and
+                (UserGroupsTable.groupIdColumn inList existingGroups) and
                     (UserGroupsTable.userNameColumn eq username)
             }
-            .map { it[UserGroupsTable.groupNameColumn] }
+            .map { it[UserGroupsTable.groupIdColumn] }
             .toSet()
 
         val missingGroups = existingGroups - userGroups

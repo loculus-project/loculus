@@ -37,7 +37,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
             AccessionPreconditionValidator.AccessionVersionGroup(
                 accession = "MOCK_ACCESSION",
                 version = 1,
-                groupName = "MOCK_GROUP",
+                groupId = 123,
             ),
         )
     }

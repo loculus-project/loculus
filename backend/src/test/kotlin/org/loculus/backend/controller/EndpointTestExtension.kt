@@ -9,7 +9,7 @@ import org.junit.platform.engine.support.descriptor.MethodSource
 import org.junit.platform.launcher.TestExecutionListener
 import org.junit.platform.launcher.TestPlan
 import org.loculus.backend.api.Address
-import org.loculus.backend.api.Group
+import org.loculus.backend.api.NewGroup
 import org.loculus.backend.controller.datauseterms.DataUseTermsControllerClient
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.seqsetcitations.SeqSetCitationsControllerClient
@@ -56,7 +56,7 @@ private const val SPRING_DATASOURCE_PASSWORD = "spring.datasource.password"
 
 const val ACCESSION_SEQUENCE_NAME = "accession_sequence"
 const val DEFAULT_GROUP_NAME = "testGroup"
-val DEFAULT_GROUP = Group(
+val DEFAULT_GROUP = NewGroup(
     groupName = DEFAULT_GROUP_NAME,
     institution = "testInstitution",
     address = Address(
@@ -75,7 +75,7 @@ const val SUPER_USER_NAME = "test_superuser"
 const val ALTERNATIVE_DEFAULT_GROUP_NAME = "testGroup2"
 const val ALTERNATIVE_DEFAULT_USER_NAME = "testUser2"
 
-val ALTERNATIVE_DEFAULT_GROUP = Group(
+val ALTERNATIVE_DEFAULT_GROUP = NewGroup(
     groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
     institution = "alternativeTestInstitution",
     address = Address(
@@ -147,13 +147,7 @@ class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
             "-d",
             postgres.databaseName,
             "-c",
-            clearDatabaseStatement() +
-                createGroupsStatement(listOf(DEFAULT_GROUP, ALTERNATIVE_DEFAULT_GROUP)) +
-                addUsersToGroupStatement(
-                    DEFAULT_GROUP_NAME,
-                    listOf(DEFAULT_USER_NAME, ALTERNATIVE_DEFAULT_USER_NAME),
-                ) +
-                addUsersToGroupStatement(ALTERNATIVE_DEFAULT_GROUP_NAME, listOf(DEFAULT_USER_NAME)),
+            clearDatabaseStatement(),
         )
     }
 
@@ -164,22 +158,6 @@ class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
         System.clearProperty(SPRING_DATASOURCE_USERNAME)
         System.clearProperty(SPRING_DATASOURCE_PASSWORD)
     }
-}
-
-private fun createGroupsStatement(groupNames: List<Group>): String {
-    return groupNames.joinToString("\n") {
-        "insert into $GROUPS_TABLE_NAME (group_name, institution, address_line_1, " +
-            "address_line_2, address_city, address_postal_code, address_state, address_country, contact_email) values" +
-            "('${it.groupName}','" +
-            "${it.institution}','" +
-            "${it.address.line1}','" +
-            "${it.address.line2}','" +
-            "${it.address.city}','" +
-            "${it.address.postalCode}','" +
-            "${it.address.state}','" +
-            "${it.address.country}','" +
-            "${it.contactEmail}');"
-    } + "\n"
 }
 
 private fun clearDatabaseStatement(): String {
@@ -194,10 +172,4 @@ private fun clearDatabaseStatement(): String {
         truncate $SEQUENCE_UPLOAD_TABLE_NAME;
         truncate table $DATA_USE_TERMS_TABLE_NAME cascade;
     """
-}
-
-private fun addUsersToGroupStatement(groupName: String, userNames: List<String>): String {
-    return userNames.joinToString("\n") {
-        "insert into $USER_GROUPS_TABLE_NAME (group_name, user_name) values ('$groupName', '$it');"
-    } + "\n"
 }
