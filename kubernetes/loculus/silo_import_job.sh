@@ -11,7 +11,7 @@ old_input_data_dir="$input_data_dir"/$(ls -1 "$input_data_dir" | sort -n | grep 
 
 new_input_data="$new_input_data_dir/data.ndjson"
 old_input_data="$old_input_data_dir/data.ndjson"
-silo_input_data="$silo_input_data/data.ndjson"
+silo_input_data="$input_data_dir/data.ndjson"
 
 get_token() {
   if [ -z "$KEYCLOAK_TOKEN_URL" ]; then
@@ -158,6 +158,10 @@ main() {
   echo "Script started at: $(date)"
 
   # cleanup at start in case we fail later
+
+  ls -l /preprocessing/input
+  ls -l /preprocessing/output
+
   cleanup_output_data
   get_token
   download_data
