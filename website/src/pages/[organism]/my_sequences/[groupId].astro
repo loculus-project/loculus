@@ -11,10 +11,15 @@ import { pageSize } from '../../../settings';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { processParametersAndFetchSearch } from '../../../utils/processParametersAndFetchSearch';
 
-const group = Astro.params.group!;
+const groupId = parseInt(Astro.params.groupId!, 10);
+if (isNaN(groupId)) {
+    return new Response(undefined, {
+        status: 404,
+    });
+}
 const accessToken = getAccessToken(Astro.locals.session)!;
 const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
-if (groupsResult.isOk() === false) {
+if (groupsResult.isErr()) {
     return new Response(undefined, {
         status: 500,
         message: 'Failed to get groups',
@@ -22,9 +27,8 @@ if (groupsResult.isOk() === false) {
 }
 const groups = groupsResult.value;
 
-const groupNames = groups.map((group: { groupName: string }) => group.groupName);
-const groupExists = groupNames.includes(group);
-if (groupExists === false) {
+const group = groups.find((group) => group.groupId === groupId);
+if (group === undefined) {
     return new Response(undefined, {
         status: 404,
     });
@@ -42,11 +46,11 @@ const {
     schema,
     clientConfig,
     orderBy,
-} = await processParametersAndFetchSearch(Astro, group);
+} = await processParametersAndFetchSearch(Astro, groupId);
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - My sequences`}>
-    <MySequencesGroupSelector groupNames={groupNames} selectedGroupName={group} organism={organism} client:load />
+    <MySequencesGroupSelector groups={groups} selectedGroupId={group.groupId} organism={organism} client:load />
     <h1 class='title'>Released sequences</h1>
 
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -59,7 +63,7 @@ const {
                 clientConfig={clientConfig}
                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                 classOfSearchPage={MY_SEQUENCES}
-                group={group}
+                groupId={group.groupId}
                 client:only='react'
             />
         </div>
@@ -81,7 +85,7 @@ const {
                             page={page}
                             orderBy={orderBy}
                             classOfSearchPage={MY_SEQUENCES}
-                            group={group}
+                            groupId={group.groupId}
                             client:load
                         />
 
@@ -96,7 +100,7 @@ const {
                                 orderBy={orderBy}
                                 organism={organism}
                                 classOfSearchPage={MY_SEQUENCES}
-                                group={group}
+                                groupId={group.groupId}
                             />
                         </div>
                     </div>

@@ -19,7 +19,7 @@ interface Props {
 }
 
 const { tableData, organism, accessionVersion, dataUseTermsHistory } = Astro.props;
-const group = tableData.find((entry) => entry.name === 'group')?.value;
+const groupId = tableData.find((entry) => entry.name === 'groupId')?.value;
 const isRestricted = tableData.find((entry) => entry.name === 'dataUseTerms')?.value === 'RESTRICTED';
 
 const runtimeConfig = getRuntimeConfig();
@@ -36,7 +36,7 @@ const accessToken = getAccessToken(session);
 const isMyGroup =
     accessToken !== undefined &&
     (await GroupManagementClient.create().getGroupsOfUser(accessToken)).match(
-        (groups) => groups.some((myGroupItem) => myGroupItem.groupName === group),
+        (groups) => groups.some((myGroupItem) => myGroupItem.groupId === groupId),
         () => false,
     );
 ---

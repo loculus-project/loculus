@@ -182,22 +182,22 @@ const DevExampleData = ({
 };
 
 const GroupSelector = ({
-    groupNames,
-    selectedGroupName,
-    setSelectedGroupName,
+    groups,
+    selectedGroup,
+    setSelectedGroup,
 }: {
-    groupNames: string[];
-    selectedGroupName: string | undefined;
-    setSelectedGroupName: (groupName: string) => void;
+    groups: Group[];
+    selectedGroup: Group | undefined;
+    setSelectedGroup: (group: Group) => void;
 }) => {
-    if (groupNames.length === 1) {
-        return <div className='mb-4 text-gray-500'>Current group: {selectedGroupName}</div>;
+    if (groups.length === 1) {
+        return <div className='mb-4 text-gray-500'>Current group: {selectedGroup?.groupName}</div>;
     }
     return (
         <div className='mb-4 text-gray-500 text-sm'>
             <Menu>
                 <Menu.Button aria-label='Select group'>
-                    Current group: {selectedGroupName}
+                    Current group: {selectedGroup?.groupName}
                     <span className='text-primary-600 ml-2'>
                         <IwwaArrowDown className='w-4 h-4 inline-block -mt-0.5' />
                     </span>
@@ -207,17 +207,17 @@ const GroupSelector = ({
                 transition-all duration-200 ease-in-out shadow-lg 
                 `}
                 >
-                    {groupNames.map((groupName) => (
-                        <Menu.Item key={groupName}>
+                    {groups.map((group) => (
+                        <Menu.Item key={group.groupId}>
                             {({ active }) => (
                                 <button
                                     className={`${
                                         active ? 'bg-primary-500 text-white' : 'text-gray-900'
                                     } flex  w-full px-4 py-2 text-sm`}
-                                    onClick={() => setSelectedGroupName(groupName)}
+                                    onClick={() => setSelectedGroup(group)}
                                 >
                                     <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
-                                    {groupName}
+                                    {group.groupName}
                                 </button>
                             )}
                         </Menu.Item>
@@ -360,9 +360,7 @@ const InnerDataUploadForm = ({
     const noGroup = groupsOfUser.length === 0;
 
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
-    const [selectedGroupName, setSelectedGroupName] = useState<string | undefined>(
-        noGroup ? undefined : groupsOfUser[0].groupName,
-    );
+    const [selectedGroup, setSelectedGroup] = useState<Group | undefined>(noGroup ? undefined : groupsOfUser[0]);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -392,11 +390,11 @@ const InnerDataUploadForm = ({
 
         switch (action) {
             case 'submit':
-                const groupName = selectedGroupName ?? groupsOfUser[0].groupName;
+                const groupId = selectedGroup?.groupId ?? groupsOfUser[0].groupId;
                 submit({
                     metadataFile,
                     sequenceFile,
-                    groupName,
+                    groupId,
                     dataUseTermsType,
                     restrictedUntil:
                         dataUseTermsType === restrictedDataUseTermsType ? restrictedUntil.toFormat('yyyy-MM-dd') : null,
@@ -414,11 +412,7 @@ const InnerDataUploadForm = ({
 
     return (
         <div className='text-left mt-3 max-w-6xl'>
-            <GroupSelector
-                groupNames={groupsOfUser.map((group) => group.groupName)}
-                selectedGroupName={selectedGroupName}
-                setSelectedGroupName={setSelectedGroupName}
-            />
+            <GroupSelector groups={groupsOfUser} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} />
             <div className='flex-col flex gap-8 divide-y'>
                 <div className='grid sm:grid-cols-3 gap-x-16'>
                     <div className=''>

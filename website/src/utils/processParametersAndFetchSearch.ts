@@ -3,19 +3,19 @@ import { URLSearchParams } from 'url';
 import type { AstroGlobal } from 'astro';
 
 import {
+    addHiddenFilters,
+    getAccessionFilter,
     getData,
-    getReferenceGenomesSequenceNames,
     getMetadataFilters,
     getMutationFilter,
     getOrderBy,
-    addHiddenFilters,
-    getAccessionFilter,
+    getReferenceGenomesSequenceNames,
 } from './search';
 import { cleanOrganism } from '../components/Navigation/cleanOrganism';
-import { getSchema, getRuntimeConfig, getLapisUrl } from '../config';
-import { GROUP_FIELD, hiddenDefaultSearchFilters, pageSize } from '../settings';
+import { getLapisUrl, getRuntimeConfig, getSchema } from '../config';
+import { GROUP_ID_FIELD, hiddenDefaultSearchFilters, pageSize } from '../settings';
 
-export async function processParametersAndFetchSearch(astro: AstroGlobal, groupForMySequences?: string) {
+export async function processParametersAndFetchSearch(astro: AstroGlobal, groupIdForMySequences?: number) {
     const organism = astro.params.organism!;
     const { organism: cleanedOrganism } = cleanOrganism(organism);
     if (cleanedOrganism === undefined) {
@@ -41,19 +41,24 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupF
     };
 
     let hiddenSearchFeatures = hiddenDefaultSearchFilters;
-    if (groupForMySequences !== undefined) {
+    if (groupIdForMySequences !== undefined) {
         hiddenSearchFeatures = [
             ...hiddenSearchFeatures,
-            { name: GROUP_FIELD, filterValue: groupForMySequences, type: 'string' as const, notSearchable: true },
+            {
+                name: GROUP_ID_FIELD,
+                filterValue: groupIdForMySequences.toString(),
+                type: 'string' as const,
+                notSearchable: true,
+            },
         ];
     }
 
     const metadataFilterWithoutHiddenFilters = getMetadataFilters(
         getSearchParams,
         organism,
-        groupForMySequences !== undefined
+        groupIdForMySequences !== undefined
             ? {
-                  exclude: [GROUP_FIELD],
+                  exclude: [GROUP_ID_FIELD],
               }
             : {},
     );

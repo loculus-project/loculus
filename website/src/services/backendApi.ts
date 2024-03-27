@@ -109,9 +109,9 @@ const getSequencesEndpoint = makeEndpoint({
     parameters: [
         authorizationHeader,
         {
-            name: 'groupsFilter',
+            name: 'groupIdsFilter',
             type: 'Query',
-            schema: z.string().optional(),
+            schema: z.string().optional(), // comma separated list of group ids (numbers)
         },
         {
             name: 'statusesFilter',

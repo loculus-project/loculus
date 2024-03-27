@@ -2,6 +2,7 @@ import { groupManagementApi } from './groupManagementApi.ts';
 import { ZodiosWrapperClient } from './zodiosWrapperClient.ts';
 import { getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
+import type { NewGroup } from '../types/backend.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 
 export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManagementApi> {
@@ -24,10 +25,14 @@ export class GroupManagementClient extends ZodiosWrapperClient<typeof groupManag
         });
     }
 
-    public getGroupDetails(token: string, groupName: string) {
+    public getGroupDetails(token: string, groupId: number) {
         return this.call('getGroupDetails', {
             headers: createAuthorizationHeader(token),
-            params: { groupName },
+            params: { groupId },
         });
+    }
+
+    public createGroup(token: string, data: NewGroup) {
+        return this.call('createGroup', data, { headers: createAuthorizationHeader(token) });
     }
 }

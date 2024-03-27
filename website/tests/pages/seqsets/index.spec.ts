@@ -22,7 +22,7 @@ test.describe('The seqSets list page', () => {
     });
 
     test('successfully creates test seqSet in beforeAll', async () => {
-        await expect(testSeqSetManager.page.getByText(testSeqSetName)).toBeVisible();
+        await expect(testSeqSetManager.page.getByRole('heading', { name: testSeqSetName })).toBeVisible();
     });
 
     test('displays create seqSet icon and opens modal on click', async ({ seqSetPage }) => {
