@@ -46,6 +46,7 @@ get_token() {
   echo
 }
 
+delete_all_input () {
   echo "Deleting all input data"
   rm -f "$silo_input_data"
   rm -rf "$new_input_data_dir"
@@ -53,7 +54,6 @@ get_token() {
 }
 
 download_data() {
-
   mkdir -p "$new_input_data_dir"
   echo  "created $new_input_data_dir"
 
