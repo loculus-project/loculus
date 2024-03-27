@@ -141,14 +141,16 @@ export const Table: FC<TableProps> = ({
                                         key={`${index}-${c.field}`}
                                         className='px-2 py-2  text-primary-900  last:pr-6'
                                         data-tooltip-content={
-                                            typeof row[c.field] === 'string' && row[c.field].length > c.maxLength
+                                            typeof row[c.field] === 'string' &&
+                                            row[c.field]!.toString().length > c.maxLength
                                                 ? row[c.field]
                                                 : ''
                                         }
                                         data-tooltip-id='table-tip'
                                     >
-                                        {typeof row[c.field] === 'string' && row[c.field].length > c.maxLength
-                                            ? `${row[c.field].slice(0, c.maxLength)}...`
+                                        {typeof row[c.field] === 'string' &&
+                                        row[c.field]!.toString().length > c.maxLength
+                                            ? `${row[c.field]?.toString().slice(0, c.maxLength)}…`
                                             : row[c.field]}
                                     </td>
                                 ))}
