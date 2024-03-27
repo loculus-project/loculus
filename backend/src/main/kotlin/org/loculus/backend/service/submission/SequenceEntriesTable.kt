@@ -11,30 +11,11 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Group
-import org.loculus.backend.api.Organism
 import org.loculus.backend.api.toPairs
-import org.springframework.stereotype.Service
-
-@Service
-class SequenceEntriesTableProvider(private val compressionService: CompressionService) {
-
-    private val cachedTables: MutableMap<Organism?, SequenceEntriesTable> = mutableMapOf()
-
-    fun get(organism: Organism?): SequenceEntriesTable {
-        return cachedTables.getOrPut(organism) {
-            SequenceEntriesTable(compressionService, organism)
-        }
-    }
-}
 
 const val SEQUENCE_ENTRIES_TABLE_NAME = "sequence_entries"
 
-class SequenceEntriesTable(
-    compressionService: CompressionService,
-    organism: Organism? = null,
-) : Table(
-    SEQUENCE_ENTRIES_TABLE_NAME,
-) {
+object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
     val organismColumn = varchar("organism", 255)
