@@ -157,11 +157,13 @@ main() {
   echo "----------------------------------------"
   echo "Script started at: $(date)"
 
-  # cleanup at start in case we fail later
-
-  ls -l /preprocessing/input
+  echo "Current content of input data dir: $input_data_dir"
+  ls -l $input_data_dir
+  echo "Current content of output data dir: /preprocessing/output"
   ls -l /preprocessing/output
+  echo
 
+  # cleanup at start in case we fail later
   cleanup_output_data
   get_token
   download_data
