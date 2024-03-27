@@ -4,7 +4,7 @@ import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 import { routes } from '../../../src/routes/routes.ts';
 import type { FilterValue } from '../../../src/types/config.ts';
 
-export const ACCESSION = 'Accession';
+export const ACCESSION = 'Accession(s)';
 
 export class SearchPage {
     public readonly searchButton: Locator;
