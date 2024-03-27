@@ -10,7 +10,8 @@ export const IS_REVOCATION_FIELD = 'isRevocation';
 export const SUBMITTED_AT_FIELD = 'submittedAt';
 export const RELEASED_AT_FIELD = 'releasedAt';
 export const SUBMITTER_FIELD = 'submitter';
-export const GROUP_FIELD = 'group';
+export const GROUP_NAME_FIELD = 'groupName';
+export const GROUP_ID_FIELD = 'groupId';
 export const DATA_USE_TERMS_FIELD = 'dataUseTerms';
 
 export const hiddenDefaultSearchFilters = [

@@ -178,7 +178,7 @@ export const uploadFiles = z.object({
 
 export const submitFiles = uploadFiles.merge(
     z.object({
-        groupName: z.string(),
+        groupId: z.number(),
         dataUseTermsType: z.enum(dataUseTermsTypes),
         restrictedUntil: z.string().nullable(),
     }),
@@ -203,11 +203,16 @@ export const address = z.object({
 });
 export type Address = z.infer<typeof address>;
 
-export const group = z.object({
+export const newGroup = z.object({
     groupName: z.string(),
     institution: z.string(),
     address,
     contactEmail: z.string(),
+});
+export type NewGroup = z.infer<typeof newGroup>;
+
+export const group = newGroup.extend({
+    groupId: z.number(),
 });
 export type Group = z.infer<typeof group>;
 

@@ -74,7 +74,8 @@ Data use terms apply to all versions of one accession and are persisted in an ex
 
 To revoke a sequence entry that has been released (i.e., the status is APPROVED_FOR_RELEASE),
 the user calls the `/revoke` endpoint and sends accessions.
-For each revoked sequence entry, the user has to be part of the group for which the entry was initially submitted. Then a new row in the "sequenceEntries" table is created.
+For each revoked sequence entry, the user has to be a member of the group for which the entry was initially submitted.
+Then a new row in the "sequenceEntries" table is created.
 The unpreprocessed data are empty. The "revoked" flag is set to true.
 The new rows have an incremented version number  (see diagram in the "Initial submission" section).
 

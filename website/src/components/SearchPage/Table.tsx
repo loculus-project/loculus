@@ -22,7 +22,7 @@ type TableProps = {
     page: number;
     orderBy: OrderBy;
     classOfSearchPage: ClassOfSearchPageType;
-    group?: string;
+    groupId?: number;
 };
 
 export const Table: FC<TableProps> = ({
@@ -35,7 +35,7 @@ export const Table: FC<TableProps> = ({
     page,
     orderBy,
     classOfSearchPage,
-    group,
+    groupId,
 }) => {
     const primaryKey = schema.primaryKey;
 
@@ -53,7 +53,7 @@ export const Table: FC<TableProps> = ({
                 navigateToSearchLikePage(
                     organism,
                     classOfSearchPage,
-                    group,
+                    groupId,
                     metadataFilter,
                     accessionFilter,
                     mutationFilter,
@@ -67,7 +67,7 @@ export const Table: FC<TableProps> = ({
                 navigateToSearchLikePage(
                     organism,
                     classOfSearchPage,
-                    group,
+                    groupId,
                     metadataFilter,
                     accessionFilter,
                     mutationFilter,
@@ -82,7 +82,7 @@ export const Table: FC<TableProps> = ({
             navigateToSearchLikePage(
                 organism,
                 classOfSearchPage,
-                group,
+                groupId,
                 metadataFilter,
                 accessionFilter,
                 mutationFilter,

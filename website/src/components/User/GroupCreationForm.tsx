@@ -50,7 +50,7 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
         });
 
         if (result.succeeded) {
-            window.location.href = routes.groupOverviewPage(groupName);
+            window.location.href = routes.groupOverviewPage(result.group.groupId);
         } else {
             setErrorMessage(result.errorMessage);
         }

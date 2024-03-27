@@ -10,14 +10,20 @@ import { getAccessToken } from '../../../utils/getAccessToken';
 const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;
 const username = session.user?.username ?? '';
-const groupName = Astro.params.groupName!;
+const groupId = parseInt(Astro.params.groupId!, 10);
 const clientConfig = getRuntimeConfig().public;
 
+if (isNaN(groupId)) {
+    return new Response(undefined, {
+        status: 404,
+    });
+}
+
 const groupManagementClient = GroupManagementClient.create();
-const groupDetailsResult = await groupManagementClient.getGroupDetails(accessToken, groupName);
+const groupDetailsResult = await groupManagementClient.getGroupDetails(accessToken, groupId);
 const userGroupsResponse = await groupManagementClient.getGroupsOfUser(accessToken);
-const userGroupNames = userGroupsResponse.match(
-    (groups) => groups.map((group) => group.groupName),
+const userGroups = userGroupsResponse.match(
+    (groups) => groups,
     () => [],
 );
 ---
@@ -34,8 +40,7 @@ const userGroupNames = userGroupsResponse.match(
                         accessToken={accessToken}
                         clientConfig={clientConfig}
                         username={username}
-                        groupName={groupName}
-                        userGroupNames={userGroupNames}
+                        userGroups={userGroups}
                         client:load
                     />
                 ),

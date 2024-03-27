@@ -14,7 +14,7 @@ import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { routes, navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes/routes.ts';
+import { type ClassOfSearchPageType, navigateToSearchLikePage, routes } from '../../routes/routes.ts';
 import type { AccessionFilter, MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -31,7 +31,7 @@ interface SearchFormProps {
     clientConfig: ClientConfig;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     classOfSearchPage: ClassOfSearchPageType;
-    group?: string;
+    groupId?: number;
 }
 
 const clientLogger = getClientLogger('SearchForm');
@@ -44,7 +44,7 @@ export const SearchForm: FC<SearchFormProps> = ({
     clientConfig,
     referenceGenomesSequenceNames,
     classOfSearchPage,
-    group,
+    groupId,
 }) => {
     const [fieldValues, setFieldValues] = useState<(MetadataFilter & { label: string })[]>(
         filters.map((filter) => ({
@@ -76,7 +76,7 @@ export const SearchForm: FC<SearchFormProps> = ({
         navigateToSearchLikePage(
             organism,
             classOfSearchPage,
-            group,
+            groupId,
             searchableFieldValues,
             accessionFilter,
             mutationFilter,

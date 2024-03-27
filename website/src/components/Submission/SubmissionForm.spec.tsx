@@ -15,6 +15,7 @@ vi.mock('../../api', () => ({
 }));
 
 const group: Group = {
+    groupId: 1,
     groupName: testGroups[0].groupName,
     institution: 'institution',
     address: {

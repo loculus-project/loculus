@@ -29,7 +29,7 @@ export const routes = {
 
     mySequencesPage: (
         organism: string,
-        group: string,
+        groupId: number,
         metadataFilter: FilterValue[] = [],
         accessionFilter: AccessionFilter = {},
         mutationFilter: MutationFilter = {},
@@ -38,7 +38,7 @@ export const routes = {
     ) =>
         withOrganism(
             organism,
-            `/my_sequences/${group}?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
+            `/my_sequences/${groupId}?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
         ),
     sequencesDetailsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}`,
@@ -61,7 +61,7 @@ export const routes = {
         const userPagePath = `/user`;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
-    groupOverviewPage: (groupName: string) => `/group/${groupName}`,
+    groupOverviewPage: (groupId: number) => `/group/${groupId}`,
     userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submission/review`),
     versionPage: (accession: string) => `/seq/${accession}/versions`,
     seqSetsPage: (username?: string | undefined) => {
@@ -82,7 +82,7 @@ export type ClassOfSearchPageType = 'SEARCH' | 'MY_SEQUENCES';
 export const navigateToSearchLikePage = (
     organism: string,
     classOfSearchPage: ClassOfSearchPageType,
-    group: string | undefined,
+    groupId: number | undefined,
     metadataFilter: FilterValue[] = [],
     accessionFilter: AccessionFilter = {},
     mutationFilter: MutationFilter = {},
@@ -98,7 +98,7 @@ export const navigateToSearchLikePage = (
         if (classOfSearchPage === MY_SEQUENCES) {
             location.href = routes.mySequencesPage(
                 organism,
-                group!,
+                groupId!,
                 metadataFilter,
                 accessionFilter,
                 mutationFilter,
@@ -117,7 +117,7 @@ export const navigateToSearchLikePage = (
         };
         form.method = 'POST';
         form.action =
-            classOfSearchPage === SEARCH ? routes.searchPage(organism) : routes.mySequencesPage(organism, group!);
+            classOfSearchPage === SEARCH ? routes.searchPage(organism) : routes.mySequencesPage(organism, groupId!);
 
         addField('searchQuery', paramsString);
         addField('organism', organism);
