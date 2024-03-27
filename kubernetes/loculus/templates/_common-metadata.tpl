@@ -73,7 +73,7 @@ fields:
 {{- range . }}
   - name: {{ .name }}
     type: {{ .type }}
-    {{- if .generateIndex }}
+    {{- if .autocomplete }}
     autocomplete: {{ .autocomplete }}
     {{- end }}
     {{- if .notSearchable }}
