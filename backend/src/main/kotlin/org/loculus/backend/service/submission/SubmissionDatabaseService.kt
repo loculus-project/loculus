@@ -71,7 +71,6 @@ class SubmissionDatabaseService(
     private val objectMapper: ObjectMapper,
     pool: DataSource,
     private val entriesViewProvider: SequenceEntriesViewProvider,
-    private val entriesTableProvider: SequenceEntriesTableProvider,
     private val preprocessingTableProvider: SequenceEntriesPreprocessedDataTableProvider,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
 ) {
@@ -252,7 +251,6 @@ class SubmissionDatabaseService(
         }
 
         val view = entriesViewProvider.get(organism)
-        val table = entriesTableProvider.get(organism)
 
         val statusCondition = view.statusIsOneOf(listOf(Status.AWAITING_APPROVAL))
 
@@ -275,9 +273,9 @@ class SubmissionDatabaseService(
             .map { AccessionVersion(it[view.accessionColumn], it[view.versionColumn]) }
 
         for (accessionVersionsChunk in accessionVersionsToUpdate.chunked(1000)) {
-            table.update(
+            SequenceEntriesTable.update(
                 where = {
-                    table.accessionVersionIsIn(accessionVersionsChunk)
+                    SequenceEntriesTable.accessionVersionIsIn(accessionVersionsChunk)
                 },
             ) {
                 it[releasedAtColumn] = now
@@ -488,35 +486,33 @@ class SubmissionDatabaseService(
         )
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
-        entriesTableProvider.get(organism).let { table ->
-            table.insert(
-                table.slice(
-                    table.accessionColumn,
-                    table.versionColumn.plus(1),
-                    table.submissionIdColumn,
-                    table.submitterColumn,
-                    table.groupNameColumn,
-                    dateTimeParam(now),
-                    booleanParam(true),
-                    table.organismColumn,
-                ).select(
-                    where = {
-                        (table.accessionColumn inList accessions) and
-                            table.isMaxVersion
-                    },
-                ),
-                columns = listOf(
-                    table.accessionColumn,
-                    table.versionColumn,
-                    table.submissionIdColumn,
-                    table.submitterColumn,
-                    table.groupNameColumn,
-                    table.submittedAtColumn,
-                    table.isRevocationColumn,
-                    table.organismColumn,
-                ),
-            )
-        }
+        SequenceEntriesTable.insert(
+            SequenceEntriesTable.slice(
+                SequenceEntriesTable.accessionColumn,
+                SequenceEntriesTable.versionColumn.plus(1),
+                SequenceEntriesTable.submissionIdColumn,
+                SequenceEntriesTable.submitterColumn,
+                SequenceEntriesTable.groupNameColumn,
+                dateTimeParam(now),
+                booleanParam(true),
+                SequenceEntriesTable.organismColumn,
+            ).select(
+                where = {
+                    (SequenceEntriesTable.accessionColumn inList accessions) and
+                        SequenceEntriesTable.isMaxVersion
+                },
+            ),
+            columns = listOf(
+                SequenceEntriesTable.accessionColumn,
+                SequenceEntriesTable.versionColumn,
+                SequenceEntriesTable.submissionIdColumn,
+                SequenceEntriesTable.submitterColumn,
+                SequenceEntriesTable.groupNameColumn,
+                SequenceEntriesTable.submittedAtColumn,
+                SequenceEntriesTable.isRevocationColumn,
+                SequenceEntriesTable.organismColumn,
+            ),
+        )
 
         entriesViewProvider.get(organism).let { view ->
             return view
@@ -600,10 +596,8 @@ class SubmissionDatabaseService(
                     .map { AccessionVersion(it[view.accessionColumn], it[view.versionColumn]) }
             }
 
-        entriesTableProvider.get(organism).let { table ->
-            for (accessionVersionsChunk in sequenceEntriesToDelete.chunked(1000)) {
-                table.deleteWhere { accessionVersionIsIn(accessionVersionsChunk) }
-            }
+        for (accessionVersionsChunk in sequenceEntriesToDelete.chunked(1000)) {
+            SequenceEntriesTable.deleteWhere { accessionVersionIsIn(accessionVersionsChunk) }
         }
 
         return sequenceEntriesToDelete

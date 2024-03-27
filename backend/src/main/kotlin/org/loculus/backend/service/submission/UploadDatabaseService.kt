@@ -49,7 +49,6 @@ class UploadDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
     private val generateAccessionFromNumberService: GenerateAccessionFromNumberService,
-    private val sequenceEntriesTableProvider: SequenceEntriesTableProvider,
 ) {
 
     fun batchInsertMetadataInAuxTable(
@@ -224,7 +223,7 @@ class UploadDatabaseService(
             WHERE
                 m.upload_id = ?
                 AND m.accession = sequence_entries.accession
-                AND ${sequenceEntriesTableProvider.get(organism).isMaxVersion}
+                AND ${SequenceEntriesTable.isMaxVersion}
         """.trimIndent()
         transaction {
             exec(
