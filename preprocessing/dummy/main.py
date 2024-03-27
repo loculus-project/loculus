@@ -165,10 +165,10 @@ def main():
         print("Started in watch mode - waiting 10 seconds before fetching data.")
         time.sleep(10)
 
-    if args.maxSequences and args.maxSequences < 5:
+    if args.maxSequences and args.maxSequences < 100:
         sequences_to_fetch = args.maxSequences
     else:
-        sequences_to_fetch = 5
+        sequences_to_fetch = 100
 
     while True:
         unprocessed = fetch_unprocessed_sequences(sequences_to_fetch)
