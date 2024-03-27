@@ -5,6 +5,8 @@ import type { FieldProps } from './FieldProps';
 
 type NormalTextFieldProps = FieldProps & {
     multiline?: boolean;
+    onFocus?: () => void;
+    onBlur?: () => void;
 };
 
 export const NormalTextField: FC<NormalTextFieldProps> = ({
@@ -12,6 +14,8 @@ export const NormalTextField: FC<NormalTextFieldProps> = ({
     handleFieldChange,
     isLoading,
     multiline = false,
+    onFocus,
+    onBlur,
 }) => (
     <TextField
         variant='outlined'
@@ -31,5 +35,7 @@ export const NormalTextField: FC<NormalTextFieldProps> = ({
         }}
         multiline={multiline}
         rows={3}
+        onFocus={onFocus}
+        onBlur={onBlur}
     />
 );

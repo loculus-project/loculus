@@ -10,12 +10,13 @@ type AccessionFieldProps = {
 
 export const AccessionField: FC<AccessionFieldProps> = ({ initialValue, onChange }) => {
     const [textValue, setTextValue] = useState((initialValue.accession ?? []).sort().join('\n'));
+    const [isFocused, setIsFocused] = useState(false);
 
     return (
         <NormalTextField
             field={{
                 type: 'string',
-                label: 'Accession',
+                label: 'Accession(s)',
                 autocomplete: false,
                 name: 'accession',
                 notSearchable: false,
@@ -37,7 +38,11 @@ export const AccessionField: FC<AccessionFieldProps> = ({ initialValue, onChange
                 onChange({ accession: uniqueAccessions });
             }}
             isLoading={false}
-            multiline
+            multiline={
+                textValue.split('\n').length > 1 || isFocused
+            }
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
         />
     );
 };
