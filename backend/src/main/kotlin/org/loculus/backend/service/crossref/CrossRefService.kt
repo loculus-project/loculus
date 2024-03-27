@@ -1,5 +1,7 @@
 package org.loculus.backend.service.crossref
 
+import mu.KotlinLogging
+import org.jsoup.Jsoup
 import org.redundent.kotlin.xml.PrintOptions
 import org.redundent.kotlin.xml.xml
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -11,14 +13,17 @@ import java.net.HttpURLConnection
 import java.net.URI
 import java.net.URLEncoder
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+private val log = KotlinLogging.logger { }
+
 @ConfigurationProperties(prefix = "crossref")
 data class CrossRefServiceProperties(
-    val endpoint: String?,
-    val username: String?,
-    val password: String?,
+    val endpoint: String,
+    val username: String,
+    val password: String,
 )
 
 @Service
@@ -29,9 +34,8 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
 
     fun generateCrossRefXML(data: Map<String, Any>): String {
         // Timestamp used to fill the publication date, assumed to be the moment the xml is generated
-        val doi_batch_id = data["DOIBatchID"] as String? ?: UUID.randomUUID().toString()
-        val timestamp = data["timestamp"] as String? ?: System.currentTimeMillis().toString()
-        val now = LocalDate.now()
+        val doiBatchID = data["DOIBatchID"] as String? ?: UUID.randomUUID().toString()
+        val now = data["now"] as LocalDate? ?: LocalDate.now()
 
         val crossRef = xml("doi_batch") {
             // All these attributes are needed for the xml to parse correctly
@@ -47,8 +51,8 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
                 // The doi_batch_id gets ignored and the actual one is assigned after the equest is processed through
                 // CrossRef's queue. Because of this, presumably, the doi_batch_id is not sent back when a request to
                 // the service is successful. For this, one would have to query the equest queue and retrieve it from there
-                "doi_batch_id" { -doi_batch_id }
-                "timestamp" { -timestamp }
+                "doi_batch_id" { -doiBatchID }
+                "timestamp" { -now.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli().toString() }
             }
 
             "body" {
@@ -101,8 +105,8 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
             crossRef.toString(PrintOptions(pretty = false))
     }
 
-    fun postCrossRefXML(XML: String) {
-        // This is needed as per their API specification
+    fun postCrossRefXML(XML: String): String {
+        // This is needed per their API specification
         val formData = mapOf(
             "operation" to "doQueryUpload",
             "login_id" to crossRefServiceProperties.username,
@@ -114,7 +118,9 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
             ),
         )
 
-        val connection = URI(crossRefServiceProperties.endpoint).toURL().openConnection() as HttpURLConnection
+        val connection = URI(
+            crossRefServiceProperties.endpoint + "/servlet/deposit",
+        ).toURL().openConnection() as HttpURLConnection
         connection.requestMethod = "POST"
         connection.doOutput = true
 
@@ -168,13 +174,19 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
             // CrossRef's API response is quite vague, they always give you back a 200 status,
             // and the only noticeable difference between a successful response vs. a failed one
             // is the presence of a "SUCCESS" or "FAILURE" string in it.
-            if (response.contains("FAILURE")) {
-                throw RuntimeException("DOI creation request failed. \"FAILURE\" present in the response")
+
+            val doc = Jsoup.parse(response)
+            val text = doc.select("h2").text()
+
+            if (text == "SUCCESS") {
+                log.debug { "DOI creation successful for XML: " + XML }
             } else {
-                // Please advice on how to instantiate the logging service and use it ...
+                throw RuntimeException("DOI creation request failed. \"FAILURE\" present in the response")
             }
+
+            return text
         } else {
-            throw RuntimeException("DOI creation request returned a " + responseCode.toString() + "response status")
+            throw RuntimeException("DOI creation request returned a " + responseCode.toString() + " response status")
         }
     }
 }
