@@ -35,10 +35,6 @@ data class SubmissionIdMapping(
 
 fun <T : AccessionVersionInterface> List<T>.toPairs() = map { Pair(it.accession, it.version) }
 
-data class AccessionVersions(
-    val accessionVersions: List<AccessionVersion>,
-)
-
 @Schema(
     description = "If set to 'INCLUDE_WARNINGS', sequence entries with warnings are included in the response." +
         " If set to 'EXCLUDE_WARNINGS', sequence entries with warnings are not included in the response. " +
@@ -93,7 +89,7 @@ data class AccessionVersionsFilterWithApprovalScope(
 data class SubmittedProcessedData(
     override val accession: Accession,
     override val version: Version,
-    val data: ProcessedData,
+    val data: ProcessedData<GeneticSequence>,
     @Schema(description = "The processing failed due to these errors.")
     val errors: List<PreprocessingAnnotation>? = null,
     @Schema(
@@ -107,8 +103,8 @@ data class SequenceEntryVersionToEdit(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
-    val processedData: ProcessedData,
-    val originalData: OriginalData,
+    val processedData: ProcessedData<GeneticSequence>,
+    val originalData: OriginalData<GeneticSequence>,
     @Schema(description = "The preprocessing will be considered failed if this is not empty")
     val errors: List<PreprocessingAnnotation>? = null,
     @Schema(
@@ -120,11 +116,10 @@ data class SequenceEntryVersionToEdit(
 
 typealias SegmentName = String
 typealias GeneName = String
-typealias NucleotideSequence = String
-typealias AminoAcidSequence = String
+typealias GeneticSequence = String
 typealias MetadataMap = Map<String, JsonNode>
 
-data class ProcessedData(
+data class ProcessedData<SequenceType>(
     @Schema(
         example = """{"date": "2020-01-01", "country": "Germany", "age": 42, "qc": 0.95}""",
         description = "Key value pairs of metadata, correctly typed",
@@ -134,12 +129,12 @@ data class ProcessedData(
         example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
-    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>,
+    val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
     @Schema(
         example = """{"segment1": "ACTG", "segment2": "GTCA"}""",
         description = "The key is the segment name, the value is the aligned nucleotide sequence",
     )
-    val alignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>,
+    val alignedNucleotideSequences: Map<SegmentName, SequenceType?>,
     @Schema(
         example = """{"segment1": ["123:GTCA", "345:AAAA"], "segment2": ["123:GTCA", "345:AAAA"]}""",
         description = "The key is the segment name, the value is a list of nucleotide insertions",
@@ -149,7 +144,7 @@ data class ProcessedData(
         example = """{"gene1": "NRNR", "gene2": "NRNR"}""",
         description = "The key is the gene name, the value is the amino acid sequence",
     )
-    val alignedAminoAcidSequences: Map<GeneName, AminoAcidSequence?>,
+    val alignedAminoAcidSequences: Map<GeneName, SequenceType?>,
     @Schema(
         example = """{"gene1": ["123:RRN", "345:NNN"], "gene2": ["123:NNR", "345:RN"]}""",
         description = "The key is the gene name, the value is a list of amino acid insertions",
@@ -220,10 +215,10 @@ data class SequenceEntryStatus(
 data class UnprocessedData(
     @Schema(example = "123") override val accession: Accession,
     @Schema(example = "1") override val version: Version,
-    val data: OriginalData,
+    val data: OriginalData<GeneticSequence>,
 ) : AccessionVersionInterface
 
-data class OriginalData(
+data class OriginalData<SequenceType>(
     @Schema(
         example = "{\"date\": \"2020-01-01\", \"country\": \"Germany\"}",
         description = "Key value pairs of metadata, as submitted in the metadata file",
@@ -233,7 +228,7 @@ data class OriginalData(
         example = "{\"segment1\": \"ACTG\", \"segment2\": \"GTCA\"}",
         description = "The key is the segment name, the value is the nucleotide sequence",
     )
-    val unalignedNucleotideSequences: Map<SegmentName, NucleotideSequence?>,
+    val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
 )
 
 enum class Status {

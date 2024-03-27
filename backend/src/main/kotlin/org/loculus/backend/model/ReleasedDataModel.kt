@@ -10,6 +10,7 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
@@ -25,7 +26,7 @@ private val log = KotlinLogging.logger { }
 @Service
 class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabaseService) {
     @Transactional(readOnly = true)
-    fun getReleasedData(organism: Organism): Sequence<ProcessedData> {
+    fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
         log.info { "fetching released submissions" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
@@ -39,7 +40,7 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
-    ): ProcessedData {
+    ): ProcessedData<GeneticSequence> {
         val siloVersionStatus = computeSiloVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val currentDataUseTermsType = computeDataUseTerm(rawProcessedData)

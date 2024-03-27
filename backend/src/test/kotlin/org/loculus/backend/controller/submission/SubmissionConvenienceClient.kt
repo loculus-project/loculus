@@ -8,6 +8,7 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
@@ -345,7 +346,7 @@ class SubmissionConvenienceClient(
     }
 
     fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
-        client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData>()
+        client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =

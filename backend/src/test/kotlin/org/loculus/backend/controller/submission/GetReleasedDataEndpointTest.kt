@@ -12,6 +12,7 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.matchesPattern
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
 import org.loculus.backend.api.Status
@@ -60,7 +61,7 @@ class GetReleasedDataEndpointTest(
     fun `GIVEN no sequence entries in database THEN returns empty response`() {
         val response = submissionControllerClient.getReleasedData()
 
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData>()
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
         assertThat(responseBody, `is`(emptyList()))
     }
 
@@ -70,7 +71,7 @@ class GetReleasedDataEndpointTest(
 
         val response = submissionControllerClient.getReleasedData()
 
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData>()
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
         assertThat(responseBody.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
 
@@ -122,7 +123,8 @@ class GetReleasedDataEndpointTest(
             latestVersion5,
         ) = prepareRevokedAndRevocationAndRevisedVersions()
 
-        val response = submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData>()
+        val response =
+            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
         assertThat(
             response.findAccessionVersionStatus(accession, revokedVersion1),
@@ -163,7 +165,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.approveProcessedSequenceEntries(accessVersions)
 
         val firstSequenceEntry =
-            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData>()[0]
+            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()[0]
 
         for (absentField in absentFields) {
             assertThat(firstSequenceEntry.metadata[absentField], `is`(NullNode.instance))
@@ -175,7 +177,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.prepareRevokedSequenceEntries()
 
         val revocationEntry = submissionControllerClient.getReleasedData()
-            .expectNdjsonAndGetContent<ProcessedData>()
+            .expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
             .find { it.metadata["isRevocation"]!!.asBoolean() }!!
 
         for ((key, value) in revocationEntry.metadata) {
@@ -243,7 +245,10 @@ class GetReleasedDataEndpointTest(
     }
 }
 
-private fun List<ProcessedData>.findAccessionVersionStatus(accession: Accession, version: Version): String {
+private fun List<ProcessedData<GeneticSequence>>.findAccessionVersionStatus(
+    accession: Accession,
+    version: Version,
+): String {
     val processedData =
         find { it.metadata["accession"]?.asText() == accession && it.metadata["version"]?.asLong() == version }
             ?: error("Could not find accession version $accession.$version")
