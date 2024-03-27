@@ -1,7 +1,6 @@
 package org.loculus.backend.config
 
-import org.loculus.backend.api.AminoAcidSequence
-import org.loculus.backend.api.NucleotideSequence
+import org.loculus.backend.api.GeneticSequence
 
 data class ReferenceGenome(
     val nucleotideSequences: List<ReferenceSequence>,
@@ -19,11 +18,11 @@ data class ReferenceGenome(
         return "ReferenceGenome(nucleotideSequences=[$nucleotideSequencesString], genes=[$genesString])"
     }
 
-    fun getNucleotideSegmentReference(segmentName: String): NucleotideSequence? = nucleotideSequences
+    fun getNucleotideSegmentReference(segmentName: String): GeneticSequence? = nucleotideSequences
         .find { it.name == segmentName }
         ?.sequence
 
-    fun getAminoAcidGeneReference(gene: String): AminoAcidSequence? = genes
+    fun getAminoAcidGeneReference(gene: String): GeneticSequence? = genes
         .find { it.name == gene }
         ?.sequence
 

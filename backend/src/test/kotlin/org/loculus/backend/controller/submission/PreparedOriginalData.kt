@@ -1,5 +1,6 @@
 package org.loculus.backend.controller.submission
 
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.OriginalData
 
 val defaultOriginalData = OriginalData(
@@ -13,4 +14,4 @@ val defaultOriginalData = OriginalData(
     mapOf("main" to "ACTG"),
 )
 
-val emptyOriginalData = OriginalData(metadata = emptyMap(), unalignedNucleotideSequences = emptyMap())
+val emptyOriginalData = OriginalData<GeneticSequence>(metadata = emptyMap(), unalignedNucleotideSequences = emptyMap())

@@ -1,8 +1,5 @@
 package org.loculus.backend.service.submission
 
-import com.fasterxml.jackson.module.kotlin.readValue
-import mu.KotlinLogging
-import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
@@ -10,7 +7,6 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.json.exists
-import org.jetbrains.exposed.sql.json.jsonb
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
@@ -23,34 +19,14 @@ import org.loculus.backend.api.PreprocessingAnnotation
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.toPairs
-import org.loculus.backend.service.jacksonObjectMapper
 import org.loculus.backend.service.jacksonSerializableJsonb
-import org.springframework.stereotype.Service
-
-private val logger = KotlinLogging.logger { }
-
-@Service
-class SequenceEntriesViewProvider(private val compressionService: CompressionService) {
-
-    private val cachedTables: MutableMap<Organism?, SequenceEntriesView> = mutableMapOf()
-
-    fun get(organism: Organism?): SequenceEntriesView {
-        return cachedTables.getOrPut(organism) {
-            SequenceEntriesView(compressionService, organism)
-        }
-    }
-}
 
 const val SEQUENCE_ENTRIES_VIEW_NAME = "sequence_entries_view"
 
-class SequenceEntriesView(
-    compressionService: CompressionService,
-    organism: Organism? = null,
-) : Table(
-    SEQUENCE_ENTRIES_VIEW_NAME,
-) {
-    val originalDataColumn = serializeOriginalData(compressionService, organism).nullable()
-    val processedDataColumn = serializeProcessedData(compressionService, organism).nullable()
+object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
+    val originalDataColumn = jacksonSerializableJsonb<OriginalData<CompressedSequence>>("original_data").nullable()
+    val processedDataColumn =
+        jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()
 
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
@@ -102,78 +78,4 @@ class SequenceEntriesView(
     fun groupIsOneOf(groups: List<Group>) = groupNameColumn inList groups.map { it.groupName }
 
     fun groupNameIsOneOf(groupNames: List<String>) = groupNameColumn inList groupNames
-
-    private val warningWhenNoOrganismWhenSerializing = "Organism is null when de-serializing data. " +
-        "This should not happen. " +
-        "Please check your code. " +
-        "Data will be written without compression. " +
-        "If this is unintentional data can become corrupted. "
-
-    private fun serializeOriginalData(
-        compressionService: CompressionService,
-        organism: Organism?,
-    ): Column<OriginalData> {
-        return jsonb(
-            "original_data",
-            { originalData ->
-                jacksonObjectMapper.writeValueAsString(
-                    if (organism == null) {
-                        logger.warn { warningWhenNoOrganismWhenSerializing }
-                        originalData
-                    } else {
-                        compressionService.compressSequencesInOriginalData(
-                            originalData,
-                            organism,
-                        )
-                    },
-                )
-            },
-            { string ->
-                val originalData = jacksonObjectMapper.readValue(string) as OriginalData
-                if (organism == null) {
-                    logger.warn { warningWhenNoOrganismWhenSerializing }
-                    originalData
-                } else {
-                    compressionService.decompressSequencesInOriginalData(
-                        originalData,
-                        organism,
-                    )
-                }
-            },
-        )
-    }
-
-    private fun serializeProcessedData(
-        compressionService: CompressionService,
-        organism: Organism?,
-    ): Column<ProcessedData> {
-        return jsonb(
-            "processed_data",
-            { processedData ->
-                jacksonObjectMapper.writeValueAsString(
-                    if (organism == null) {
-                        logger.warn { warningWhenNoOrganismWhenSerializing }
-                        processedData
-                    } else {
-                        compressionService.compressSequencesInProcessedData(
-                            processedData,
-                            organism,
-                        )
-                    },
-                )
-            },
-            { string ->
-                val processedData = jacksonObjectMapper.readValue(string) as ProcessedData
-                if (organism == null) {
-                    logger.warn { warningWhenNoOrganismWhenSerializing }
-                    processedData
-                } else {
-                    compressionService.decompressSequencesInProcessedData(
-                        jacksonObjectMapper.readValue(string) as ProcessedData,
-                        organism,
-                    )
-                }
-            },
-        )
-    }
 }

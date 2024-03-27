@@ -144,7 +144,7 @@ class UploadDatabaseService(
                 m.uploaded_at,
                 jsonb_build_object(
                     'metadata', m.metadata,
-                    'unalignedNucleotideSequences', jsonb_object_agg(s.segment_name, s.compressed_sequence_data)
+                    'unalignedNucleotideSequences', jsonb_object_agg(s.segment_name, s.compressed_sequence_data::jsonb)
                 )
             FROM
                 metadata_upload_aux_table m

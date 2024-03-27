@@ -7,6 +7,7 @@ import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.Status.AWAITING_APPROVAL
@@ -167,7 +168,7 @@ class SubmissionJourneyTest(
         )
     }
 
-    private fun getAccessionVersionsOfProcessedData(processedData: List<ProcessedData>) = processedData
+    private fun getAccessionVersionsOfProcessedData(processedData: List<ProcessedData<GeneticSequence>>) = processedData
         .map { it.metadata }
         .map { it["accessionVersion"]!!.asText() }
 
