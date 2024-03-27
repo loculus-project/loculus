@@ -135,10 +135,12 @@ cleanup_output_data() {
 
     if [ -n "$(ls -d -- */ 2>/dev/null)" ]; then
       directories=$(ls -dt -- */)
-      if [ "$(echo "$directories" | wc -l)" -gt 1 ]; then
-        newest_dir=$(echo "$directories" | head -n 1)
-        echo "$directories" | tail -n +3 | xargs rm -r
-        echo "Kept: $newest_dir"
+      dir_num_to_keep=1
+      dir_num_to_keep_plus_one=$((dir_num_to_keep + 1))
+      if [ "$(echo "$directories" | wc -l)" -gt $dir_num_to_keep ]; then
+        dirs_to_keep=$(echo "$directories" | head -n $dir_num_to_keep)
+        echo "$directories" | tail -n "+$dir_num_to_keep_plus_one" | xargs rm -r
+        echo "Kept: $dirs_to_keep"
       else
         echo "No directories to delete."
       fi
