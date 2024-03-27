@@ -61,7 +61,7 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
     }
@@ -75,7 +75,7 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = accession, version = version)
+        convenienceClient.getSequenceEntry(accession = accession, version = version)
             .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
@@ -107,7 +107,7 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
     }
@@ -130,7 +130,7 @@ class SubmitProcessedDataEndpointTest(
             organism = OTHER_ORGANISM,
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(
+        convenienceClient.getSequenceEntry(
             accession = accessions.first(),
             version = 1,
             organism = OTHER_ORGANISM,
@@ -138,7 +138,7 @@ class SubmitProcessedDataEndpointTest(
             Status.AWAITING_APPROVAL,
         )
 
-        submissionControllerClient.getSequenceEntryThatHasErrors(
+        submissionControllerClient.getSequenceEntryToEdit(
             accession = accessions.first(),
             version = 1,
             organism = OTHER_ORGANISM,
@@ -176,11 +176,11 @@ class SubmitProcessedDataEndpointTest(
             ),
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
             Status.AWAITING_APPROVAL,
         )
 
-        submissionControllerClient.getSequenceEntryThatHasErrors(
+        submissionControllerClient.getSequenceEntryToEdit(
             accession = accessions.first(),
             version = 1,
         )
@@ -206,7 +206,7 @@ class SubmitProcessedDataEndpointTest(
 
         prepareExtractedSequencesInDatabase()
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
@@ -217,7 +217,7 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedData(PreparedProcessedData.withErrors(accessions.first()))
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
@@ -232,7 +232,7 @@ class SubmitProcessedDataEndpointTest(
             ),
         ).andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.HAS_ERRORS)
     }
 
@@ -243,7 +243,7 @@ class SubmitProcessedDataEndpointTest(
         submissionControllerClient.submitProcessedData(PreparedProcessedData.withWarnings(accessions.first()))
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 
@@ -261,7 +261,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.detail").value(invalidDataScenario.expectedErrorMessage))
 
-        val sequenceStatus = convenienceClient.getSequenceEntryOfUser(
+        val sequenceStatus = convenienceClient.getSequenceEntry(
             accession = accessions.first(),
             version = 1,
         )
@@ -282,7 +282,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.detail").value("Accession version $nonExistentAccession.1 does not exist"))
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1).assertStatusIs(
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
             Status.IN_PROCESSING,
         )
     }
@@ -306,7 +306,7 @@ class SubmitProcessedDataEndpointTest(
                 ),
             )
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessions.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.IN_PROCESSING)
     }
 
@@ -315,7 +315,7 @@ class SubmitProcessedDataEndpointTest(
         val accessionsNotInProcessing = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL).map { it.accession }
         val accessionsInProcessing = convenienceClient.prepareDataTo(Status.IN_PROCESSING).map { it.accession }
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessionsNotInProcessing.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessionsNotInProcessing.first(), version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
 
         submissionControllerClient.submitProcessedData(
@@ -331,9 +331,9 @@ class SubmitProcessedDataEndpointTest(
                 ),
             )
 
-        convenienceClient.getSequenceEntryOfUser(accession = accessionsInProcessing.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessionsInProcessing.first(), version = 1)
             .assertStatusIs(Status.IN_PROCESSING)
-        convenienceClient.getSequenceEntryOfUser(accession = accessionsNotInProcessing.first(), version = 1)
+        convenienceClient.getSequenceEntry(accession = accessionsNotInProcessing.first(), version = 1)
             .assertStatusIs(Status.AWAITING_APPROVAL)
     }
 

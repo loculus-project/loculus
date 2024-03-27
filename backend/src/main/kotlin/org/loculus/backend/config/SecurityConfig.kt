@@ -3,6 +3,8 @@ package org.loculus.backend.config
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
+import org.loculus.backend.auth.Roles.GET_RELEASED_DATA
+import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -74,8 +76,8 @@ class SecurityConfig {
                 ).permitAll()
                 auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
                 auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority("preprocessing_pipeline")
-                auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority("get_released_data")
+                auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
+                auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
                 auth.anyRequest().authenticated()
             }
             .oauth2ResourceServer { oauth2 ->
@@ -125,9 +127,8 @@ fun getRoles(jwt: Jwt): List<String> {
         }
     }
 
-    val defaultRoles = emptyList<String>()
     return when (realmAccess["roles"]) {
-        null -> defaultRoles
+        null -> emptyList()
         is List<*> -> (realmAccess["roles"] as List<*>).filterIsInstance<String>()
         else -> {
             log.debug { "Ignoring value of roles in jwt because type was not List<*>" }

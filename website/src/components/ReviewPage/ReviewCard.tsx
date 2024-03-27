@@ -4,7 +4,6 @@ import { Tooltip } from 'react-tooltip';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
     awaitingApprovalStatus,
-    awaitingApprovalForRevocationStatus,
     type DataUseTerms,
     hasErrorsStatus,
     inProcessingStatus,
@@ -66,7 +65,7 @@ export const ReviewCard: FC<ReviewCardProps> = ({
                         value={sequenceEntryStatus.submissionId}
                     />
                     {data !== undefined && <MetadataList data={data} isLoading={isLoading} />}
-                    {sequenceEntryStatus.status === awaitingApprovalForRevocationStatus && (
+                    {sequenceEntryStatus.isRevocation && (
                         <KeyValueComponent
                             accessionVersion={getAccessionVersionString(sequenceEntryStatus)}
                             keyName='Revocation entry'
@@ -114,31 +113,24 @@ const ButtonBar: FC<ButtonBarProps> = ({
     return (
         <div className='flex space-x-1 mb-auto pt-3.5'>
             <button
-                className={buttonBarClass(
-                    sequenceEntryStatus.status !== awaitingApprovalStatus &&
-                        sequenceEntryStatus.status !== awaitingApprovalForRevocationStatus,
-                )}
+                className={buttonBarClass(sequenceEntryStatus.status !== awaitingApprovalStatus)}
                 onClick={approveAccessionVersion}
                 data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
-                disabled={
-                    sequenceEntryStatus.status !== awaitingApprovalStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalForRevocationStatus
-                }
+                disabled={sequenceEntryStatus.status !== awaitingApprovalStatus}
             >
                 <WpfPaperPlane />
             </button>
             <Tooltip
                 id={'approve-tooltip' + sequenceEntryStatus.accession}
                 content={
-                    sequenceEntryStatus.status === awaitingApprovalStatus ||
-                    sequenceEntryStatus.status === awaitingApprovalForRevocationStatus
+                    sequenceEntryStatus.status === awaitingApprovalStatus
                         ? 'Release this sequence entry'
                         : sequenceEntryStatus.status === hasErrorsStatus
                           ? 'You need to fix the errors before releasing this sequence entry'
                           : 'Still awaiting preprocessing'
                 }
             />
-            {sequenceEntryStatus.status !== awaitingApprovalForRevocationStatus && (
+            {!sequenceEntryStatus.isRevocation && (
                 <button
                     className={buttonBarClass(
                         sequenceEntryStatus.status !== hasErrorsStatus &&
@@ -168,15 +160,13 @@ const ButtonBar: FC<ButtonBarProps> = ({
             <button
                 className={buttonBarClass(
                     sequenceEntryStatus.status !== hasErrorsStatus &&
-                        sequenceEntryStatus.status !== awaitingApprovalStatus &&
-                        sequenceEntryStatus.status !== awaitingApprovalForRevocationStatus,
+                        sequenceEntryStatus.status !== awaitingApprovalStatus,
                 )}
                 onClick={deleteAccessionVersion}
                 data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
                 disabled={
                     sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalForRevocationStatus
+                    sequenceEntryStatus.status !== awaitingApprovalStatus
                 }
             >
                 <BiTrash />
@@ -185,8 +175,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                 id={'delete-tooltip' + sequenceEntryStatus.accession}
                 content={
                     sequenceEntryStatus.status !== hasErrorsStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalStatus &&
-                    sequenceEntryStatus.status !== awaitingApprovalForRevocationStatus
+                    sequenceEntryStatus.status !== awaitingApprovalStatus
                         ? 'Cannot discard. Wait for preprocessing.'
                         : 'Discard this sequence entry'
                 }

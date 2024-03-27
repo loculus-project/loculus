@@ -6,6 +6,7 @@ import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -20,6 +21,7 @@ import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.generateJwtFor
@@ -65,8 +67,10 @@ class SubmissionConvenienceClient(
 
     fun prepareDefaultSequenceEntriesToInProcessing(
         organism: String = DEFAULT_ORGANISM,
+        username: String = DEFAULT_USER_NAME,
+        groupName: String = DEFAULT_GROUP_NAME,
     ): List<AccessionVersionInterface> {
-        submitDefaultFiles(organism = organism)
+        submitDefaultFiles(organism = organism, username = username, groupName = groupName)
         return extractUnprocessedData(organism = organism).getAccessionVersions()
     }
 
@@ -85,8 +89,13 @@ class SubmissionConvenienceClient(
             .andExpect(status().isNoContent)
     }
 
-    fun prepareDefaultSequenceEntriesToHasErrors(organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
-        val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(organism = organism)
+    fun prepareDefaultSequenceEntriesToHasErrors(
+        organism: String = DEFAULT_ORGANISM,
+        username: String = DEFAULT_USER_NAME,
+        groupName: String = DEFAULT_GROUP_NAME,
+    ): List<AccessionVersionInterface> {
+        val accessionVersions =
+            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupName = groupName)
         submitProcessedData(
             accessionVersions.map {
                 PreparedProcessedData.withErrors(accession = it.accession)
@@ -98,8 +107,11 @@ class SubmissionConvenienceClient(
 
     private fun prepareDefaultSequenceEntriesToAwaitingApproval(
         organism: String = DEFAULT_ORGANISM,
+        username: String = DEFAULT_USER_NAME,
+        groupName: String = DEFAULT_GROUP_NAME,
     ): List<AccessionVersionInterface> {
-        val accessionVersions = prepareDefaultSequenceEntriesToInProcessing(organism = organism)
+        val accessionVersions =
+            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupName = groupName)
         submitProcessedData(
             *accessionVersions.map {
                 when (organism) {
@@ -118,12 +130,19 @@ class SubmissionConvenienceClient(
 
     fun prepareDefaultSequenceEntriesToApprovedForRelease(
         organism: String = DEFAULT_ORGANISM,
+        username: String = DEFAULT_USER_NAME,
+        groupName: String = DEFAULT_GROUP_NAME,
     ): List<AccessionVersionInterface> {
-        val accessionVersions = prepareDefaultSequenceEntriesToAwaitingApproval(organism = organism)
+        val accessionVersions = prepareDefaultSequenceEntriesToAwaitingApproval(
+            organism = organism,
+            username = username,
+            groupName = groupName,
+        )
 
         approveProcessedSequenceEntries(
             accessionVersions.map { AccessionVersion(it.accession, it.version) },
             organism = organism,
+            username = username,
         )
         return accessionVersions
     }
@@ -140,15 +159,21 @@ class SubmissionConvenienceClient(
 
     fun prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation(
         organism: String = DEFAULT_ORGANISM,
+        username: String = DEFAULT_USER_NAME,
+        groupName: String = DEFAULT_GROUP_NAME,
     ): List<SubmissionIdMapping> {
-        val accessionVersions = prepareDefaultSequenceEntriesToApprovedForRelease(organism = organism)
-        return revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism)
+        val accessionVersions = prepareDefaultSequenceEntriesToApprovedForRelease(
+            organism = organism,
+            username = username,
+            groupName = groupName,
+        )
+        return revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism, username = username)
     }
 
     fun prepareRevokedSequenceEntries(organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
-        val accessionVersions = prepareDataTo(Status.AWAITING_APPROVAL_FOR_REVOCATION, organism = organism)
-        confirmRevocation(accessionVersions, organism = organism)
-        return accessionVersions
+        val accessionVersions = prepareDataTo(Status.APPROVED_FOR_RELEASE, organism = organism)
+        val revocationVersions = revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism)
+        return approveProcessedSequenceEntries(revocationVersions, organism = organism)
     }
 
     fun extractUnprocessedData(
@@ -185,10 +210,10 @@ class SubmissionConvenienceClient(
         statusesFilter = listOf(status),
     ).sequenceEntries
 
-    fun getSequenceEntryOfUser(accessionVersion: AccessionVersion, userName: String = DEFAULT_USER_NAME) =
-        getSequenceEntryOfUser(accessionVersion.accession, accessionVersion.version, userName)
+    fun getSequenceEntry(accessionVersion: AccessionVersionInterface, userName: String = DEFAULT_USER_NAME) =
+        getSequenceEntry(accessionVersion.accession, accessionVersion.version, userName)
 
-    fun getSequenceEntryOfUser(
+    fun getSequenceEntry(
         accession: Accession,
         version: Long,
         userName: String = DEFAULT_USER_NAME,
@@ -205,12 +230,12 @@ class SubmissionConvenienceClient(
             ?: error("Did not find $accession.$version for $userName")
     }
 
-    fun getSequenceEntryThatHasErrors(
+    fun getSequenceEntryToEdit(
         accession: Accession,
         version: Long,
         userName: String = DEFAULT_USER_NAME,
     ): SequenceEntryVersionToEdit = deserializeJsonResponse(
-        client.getSequenceEntryThatHasErrors(
+        client.getSequenceEntryToEdit(
             accession = accession,
             version = version,
             jwt = generateJwtFor(userName),
@@ -242,19 +267,20 @@ class SubmissionConvenienceClient(
     }
 
     fun approveProcessedSequenceEntries(
-        listOfSequencesToApprove: List<AccessionVersionInterface>,
+        accessionVersionsFilter: List<AccessionVersionInterface>,
         organism: String = DEFAULT_ORGANISM,
-    ) {
-        client.approveProcessedSequenceEntries(
-            listOfSequencesToApprove.map {
-                AccessionVersion(
-                    it.accession,
-                    it.version,
+        username: String = DEFAULT_USER_NAME,
+    ): List<AccessionVersion> {
+        return deserializeJsonResponse(
+            client
+                .approveProcessedSequenceEntries(
+                    scope = ApproveDataScope.ALL,
+                    accessionVersionsFilter = accessionVersionsFilter,
+                    organism = organism,
+                    jwt = generateJwtFor(username),
                 )
-            },
-            organism = organism,
+                .andExpect(status().isOk),
         )
-            .andExpect(status().isOk)
     }
 
     fun reviseDefaultProcessedSequenceEntries(
@@ -273,27 +299,48 @@ class SubmissionConvenienceClient(
     fun revokeSequenceEntries(
         listOfAccessionsToRevoke: List<Accession>,
         organism: String = DEFAULT_ORGANISM,
-    ): List<SubmissionIdMapping> =
-        deserializeJsonResponse(client.revokeSequenceEntries(listOfAccessionsToRevoke, organism = organism))
+        username: String = DEFAULT_USER_NAME,
+    ): List<SubmissionIdMapping> = deserializeJsonResponse(
+        client.revokeSequenceEntries(
+            listOfAccessionsToRevoke,
+            organism = organism,
+            jwt = generateJwtFor(username),
+        ),
+    )
 
-    fun confirmRevocation(
-        listOfSequencesToConfirm: List<AccessionVersionInterface>,
+    fun prepareDataTo(
+        status: Status,
         organism: String = DEFAULT_ORGANISM,
-    ) {
-        client.confirmRevocation(listOfSequencesToConfirm.map { AccessionVersion(it.accession, it.version) }, organism)
-            .andExpect(status().isNoContent)
-    }
-
-    fun prepareDataTo(status: Status, organism: String = DEFAULT_ORGANISM): List<AccessionVersionInterface> {
+        username: String = DEFAULT_USER_NAME,
+        groupName: String = DEFAULT_GROUP_NAME,
+    ): List<AccessionVersionInterface> {
         return when (status) {
-            Status.RECEIVED -> submitDefaultFiles(organism = organism)
-            Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing(organism = organism)
-            Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(organism = organism)
-            Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(organism = organism)
-            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(organism = organism)
-            Status.AWAITING_APPROVAL_FOR_REVOCATION -> prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation(
+            Status.RECEIVED -> submitDefaultFiles(organism = organism, username = username, groupName = groupName)
+            Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing(
                 organism = organism,
+                username = username,
+                groupName = groupName,
             )
+
+            Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(
+                organism = organism,
+                username = username,
+                groupName = groupName,
+            )
+
+            Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(
+                organism = organism,
+                username = username,
+                groupName = groupName,
+            )
+
+            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(
+                organism = organism,
+                username = username,
+                groupName = groupName,
+            )
+
+            else -> throw Exception("Test issue: No data preparation defined for status $status")
         }
     }
 

@@ -2,6 +2,7 @@ package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.loculus.backend.api.AccessionVersion
+import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DeleteSequenceScope
@@ -26,7 +27,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 
-const val DEFAULT_USER_NAME = "testuser"
 class SubmissionControllerClient(private val mockMvc: MockMvc, private val objectMapper: ObjectMapper) {
     fun submit(
         metadataFile: MockMultipartFile,
@@ -102,7 +102,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         )
     }
 
-    fun getSequenceEntryThatHasErrors(
+    fun getSequenceEntryToEdit(
         accession: Accession,
         version: Long,
         organism: String = DEFAULT_ORGANISM,
@@ -128,15 +128,16 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     }
 
     fun approveProcessedSequenceEntries(
-        listOfSequencesToApprove: List<AccessionVersion>? = null,
+        scope: ApproveDataScope,
+        accessionVersionsFilter: List<AccessionVersionInterface>? = null,
         organism: String = DEFAULT_ORGANISM,
-        scope: ApproveDataScope = ApproveDataScope.ALL,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/approve-processed-data", organism = organism))
             .contentType(MediaType.APPLICATION_JSON)
             .content(
-                """{"accessionVersionsFilter": ${createAccessionVersionsFilterBodyString(listOfSequencesToApprove)},
+                """{
+                    "accessionVersionsFilter": ${serialize(accessionVersionsFilter)},
                     "scope": "$scope"
                 }""",
             )
@@ -154,17 +155,6 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
-    fun confirmRevocation(
-        listOfSequencesToConfirm: List<AccessionVersion>,
-        organism: String = DEFAULT_ORGANISM,
-        jwt: String? = jwtForDefaultUser,
-    ): ResultActions = mockMvc.perform(
-        post(addOrganismToPath("/confirm-revocation", organism = organism))
-            .contentType(MediaType.APPLICATION_JSON)
-            .content("""{"accessionVersions":${objectMapper.writeValueAsString(listOfSequencesToConfirm)}}""")
-            .withAuth(jwt),
-    )
-
     fun getReleasedData(organism: String = DEFAULT_ORGANISM, jwt: String? = jwtForGetReleasedData): ResultActions =
         mockMvc.perform(
             get(addOrganismToPath("/get-released-data", organism = organism))
@@ -172,8 +162,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         )
 
     fun deleteSequenceEntries(
-        listOfAccessionVersionsToDelete: List<AccessionVersion>? = null,
-        scope: DeleteSequenceScope = DeleteSequenceScope.ALL,
+        scope: DeleteSequenceScope,
+        accessionVersionsFilter: List<AccessionVersionInterface>? = null,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
@@ -181,10 +171,11 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt)
             .contentType(MediaType.APPLICATION_JSON)
             .content(
-                """{"accessionVersionsFilter":${createAccessionVersionsFilterBodyString(
-                    listOfAccessionVersionsToDelete,
-                )},
-                    "scope": "$scope"}
+                """
+                    {
+                        "accessionVersionsFilter": ${serialize(accessionVersionsFilter)},
+                        "scope": "$scope"
+                    }
                 """.trimMargin(),
             ),
     )
@@ -201,12 +192,10 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
-    private fun createAccessionVersionsFilterBodyString(
-        listOfSequencesToApprove: List<AccessionVersion>? = null,
-    ): String {
+    private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String {
         return if (listOfSequencesToApprove != null) {
             objectMapper.writeValueAsString(
-                listOfSequencesToApprove,
+                listOfSequencesToApprove.map { AccessionVersion(it.accession, it.version) },
             )
         } else {
             "null"

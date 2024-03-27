@@ -8,6 +8,7 @@ import org.jetbrains.exposed.sql.select
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsHistoryEntry
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.utils.Accession
@@ -21,11 +22,15 @@ class DataUseTermsDatabaseService(
     private val dataUseTermsPreconditionValidator: DataUseTermsPreconditionValidator,
 ) {
 
-    fun setNewDataUseTerms(username: String, accessions: List<Accession>, newDataUseTerms: DataUseTerms) {
+    fun setNewDataUseTerms(
+        authenticatedUser: AuthenticatedUser,
+        accessions: List<Accession>,
+        newDataUseTerms: DataUseTerms,
+    ) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         accessionPreconditionValidator.validateAccessions(
-            submitter = username,
+            authenticatedUser = authenticatedUser,
             accessions = accessions,
         )
 
@@ -40,7 +45,7 @@ class DataUseTermsDatabaseService(
                 is DataUseTerms.Restricted -> newDataUseTerms.restrictedUntil
                 else -> null
             }
-            this[DataUseTermsTable.userNameColumn] = username
+            this[DataUseTermsTable.userNameColumn] = authenticatedUser.username
         }
     }
 

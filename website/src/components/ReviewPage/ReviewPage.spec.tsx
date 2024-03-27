@@ -6,7 +6,6 @@ import { openDataUseTerms } from '../../../tests/e2e.fixture.ts';
 import { mockRequest, testAccessToken, testConfig, testOrganism } from '../../../vitest.setup.ts';
 import {
     approvedForReleaseStatus,
-    awaitingApprovalForRevocationStatus,
     awaitingApprovalStatus,
     hasErrorsStatus,
     inProcessingStatus,
@@ -62,7 +61,6 @@ const emptyStatusCounts = {
     [hasErrorsStatus]: 0,
     [awaitingApprovalStatus]: 0,
     [approvedForReleaseStatus]: 0,
-    [awaitingApprovalForRevocationStatus]: 0,
 };
 
 const generateGetSequencesResponse = (sequenceEntries: SequenceEntryStatus[]) => {

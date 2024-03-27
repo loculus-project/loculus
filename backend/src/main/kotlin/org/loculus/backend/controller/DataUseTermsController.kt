@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.loculus.backend.api.DataUseTermsChangeRequest
+import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.auth.HiddenParam
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.utils.Accession
 import org.springframework.http.HttpStatus
@@ -27,11 +29,11 @@ class DataUseTermsController(
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @PutMapping("/data-use-terms", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun setNewDataUseTerms(
-        @UsernameFromJwt username: String,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
         @Parameter @RequestBody
         request: DataUseTermsChangeRequest,
     ) = dataUseTermsDatabaseService.setNewDataUseTerms(
-        username,
+        authenticatedUser,
         request.accessions,
         request.newDataUseTerms,
     )

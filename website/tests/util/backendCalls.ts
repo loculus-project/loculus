@@ -92,8 +92,8 @@ export const revokeReleasedData = async (accessions: Accession[], token: string)
     );
 
     const confirmationResponse = await backendClient.call(
-        'confirmRevocation',
-        { accessionVersions },
+        'approveProcessedData',
+        { scope: 'ALL', accessionVersionsFilter: accessionVersions },
         {
             params: { organism: dummyOrganism.key },
             headers: createAuthorizationHeader(token),

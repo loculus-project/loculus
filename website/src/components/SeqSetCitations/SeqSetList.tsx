@@ -160,7 +160,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
 
     const formatDate = (date: string) => {
         const dateObj = new Date(date);
-        return dateObj.toLocaleDateString('en-US');
+        return dateObj.toISOString().split('T')[0];
     };
 
     return (

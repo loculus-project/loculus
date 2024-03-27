@@ -10,7 +10,6 @@ import {
     inProcessingStatus,
     type PageQuery,
     receivedStatus,
-    awaitingApprovalForRevocationStatus,
 } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
@@ -24,13 +23,7 @@ export function useSubmissionOperations(
     pageQuery: PageQuery,
 ) {
     const hooks = useMemo(() => backendClientHooks(clientConfig), [clientConfig]);
-    const allRelevantStatuses = [
-        receivedStatus,
-        inProcessingStatus,
-        hasErrorsStatus,
-        awaitingApprovalStatus,
-        awaitingApprovalForRevocationStatus,
-    ];
+    const allRelevantStatuses = [receivedStatus, inProcessingStatus, hasErrorsStatus, awaitingApprovalStatus];
     const [includedStatuses, setIncludedStatuses] = useState<string[]>(allRelevantStatuses);
     const useGetSequences = hooks.useGetSequences(
         {

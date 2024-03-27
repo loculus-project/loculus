@@ -16,6 +16,7 @@ import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
+import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -220,7 +221,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.reviseAndProcessDefaultSequenceEntries(preparedSubmissions.map { it.accession })
 
         val revokedSequences = convenienceClient.revokeSequenceEntries(preparedSubmissions.map { it.accession })
-        convenienceClient.confirmRevocation(revokedSequences)
+        convenienceClient.approveProcessedSequenceEntries(revokedSequences)
 
         convenienceClient.reviseAndProcessDefaultSequenceEntries(revokedSequences.map { it.accession })
 

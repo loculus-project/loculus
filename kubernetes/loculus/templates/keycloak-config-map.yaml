@@ -35,7 +35,7 @@ data:
         {
           "username": "testuser_{{$index}}_{{$browser}}",
           "enabled": true,
-          "email": "testuser_{{$index}}_{{$browser}}@keycloak.org",
+          "email": "testuser_{{$index}}_{{$browser}}@void.o",
           "emailVerified": true,
           "firstName": "{{$index}}_{{$browser}}",
           "lastName": "TestUser",
@@ -63,7 +63,7 @@ data:
         {
           "username": "testuser",
           "enabled": true,
-          "email": "testuser@keycloak.org",
+          "email": "testuser@void.o",
           "emailVerified" : true,
           "firstName": "Test",
           "lastName": "User",
@@ -89,7 +89,7 @@ data:
         {
           "username": "insdc_ingest_user",
           "enabled": true,
-          "email": "insdc_ingest_user@keycloak.org",
+          "email": "insdc_ingest_user@void.o",
           "emailVerified" : true,
           "firstName": "INSDC Ingest",
           "lastName": "User",
@@ -115,7 +115,7 @@ data:
         {
           "username": "dummy_preprocessing_pipeline",
           "enabled": true,
-          "email": "dummy_preprocessing_pipeline@keycloak.org",
+          "email": "dummy_preprocessing_pipeline@void.o",
           "emailVerified" : true,
           "firstName": "Dummy",
           "lastName": "Preprocessing",
@@ -139,9 +139,35 @@ data:
           }
         },
         {
+          "username": "superuser",
+          "enabled": true,
+          "email": "superuser@void.o",
+          "emailVerified" : true,
+          "firstName": "Dummy",
+          "lastName": "SuperUser",
+          "credentials": [
+            {
+              "type": "password",
+              "value": "superuser"
+            }
+          ],
+          "realmRoles": [
+            "super_user",
+            "offline_access"
+          ],
+          "attributes": {
+            "university": "University of Test"
+          },
+          "clientRoles": {
+            "account": [
+              "manage-account"
+            ]
+          }
+        },
+        {
           "username": "silo_import_job",
           "enabled": true,
-          "email": "silo_import_job@keycloak.org",
+          "email": "silo_import_job@void.o",
           "emailVerified": true,
           "firstName": "SILO",
           "lastName": "ImportJob",
@@ -207,6 +233,10 @@ data:
           {
             "name": "get_released_data",
             "description": "Privileges for getting released data"
+          },
+          {
+            "name": "super_user",
+            "description": "Privileges for curators to modify sequence entries of any user"
           }
         ]
       },

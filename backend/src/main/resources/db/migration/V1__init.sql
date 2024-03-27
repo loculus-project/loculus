@@ -52,7 +52,7 @@ select
     sepd.warnings,
     case
         when se.released_at is not null then 'APPROVED_FOR_RELEASE'
-        when se.is_revocation then 'AWAITING_APPROVAL_FOR_REVOCATION'
+        when se.is_revocation then 'AWAITING_APPROVAL'
         when sepd.processing_status = 'IN_PROCESSING' then 'IN_PROCESSING'
         when sepd.processing_status = 'HAS_ERRORS' then 'HAS_ERRORS'
         when sepd.processing_status = 'FINISHED' then 'AWAITING_APPROVAL'

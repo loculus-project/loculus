@@ -32,7 +32,7 @@ test.describe('The seqSets list page', () => {
         await expect(async () => {
             await seqSetPage.page.getByTestId('AddIcon').click();
             await seqSetPage.waitForLoad();
-            await expect(seqSetPage.page.getByText('Create SeqSet')).toBeVisible();
+            await expect(seqSetPage.page.getByText('Create a SeqSet')).toBeVisible();
         }).toPass();
     });
 

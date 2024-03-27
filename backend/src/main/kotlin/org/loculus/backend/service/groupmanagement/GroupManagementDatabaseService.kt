@@ -12,6 +12,7 @@ import org.loculus.backend.api.Address
 import org.loculus.backend.api.Group
 import org.loculus.backend.api.GroupDetails
 import org.loculus.backend.api.User
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ConflictException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
@@ -51,7 +52,7 @@ class GroupManagementDatabaseService(
         )
     }
 
-    fun createNewGroup(group: Group, username: String) {
+    fun createNewGroup(group: Group, authenticatedUser: AuthenticatedUser) {
         try {
             GroupsTable.insert {
                 it[groupNameColumn] = group.groupName
@@ -74,41 +75,47 @@ class GroupManagementDatabaseService(
         }
 
         UserGroupsTable.insert {
-            it[userNameColumn] = username
+            it[userNameColumn] = authenticatedUser.username
             it[groupNameColumn] = group.groupName
         }
     }
 
-    fun getGroupsOfUser(username: String): List<Group> {
-        return UserGroupsTable.join(
-            GroupsTable,
-            JoinType.LEFT,
-            additionalConstraint = {
-                (UserGroupsTable.groupNameColumn eq GroupsTable.groupNameColumn)
-            },
-        )
-            .select { UserGroupsTable.userNameColumn eq username }
-            .map {
-                Group(
-                    groupName = it[GroupsTable.groupNameColumn],
-                    institution = it[GroupsTable.institutionColumn],
-                    address = Address(
-                        line1 = it[GroupsTable.addressLine1],
-                        line2 = it[GroupsTable.addressLine2],
-                        postalCode = it[GroupsTable.addressPostalCode],
-                        city = it[GroupsTable.addressCity],
-                        state = it[GroupsTable.addressState],
-                        country = it[GroupsTable.addressCountry],
-                    ),
-                    contactEmail = it[GroupsTable.contactEmailColumn],
-                )
-            }
+    fun getGroupsOfUser(authenticatedUser: AuthenticatedUser): List<Group> {
+        val groupsQuery = when (authenticatedUser.isSuperUser) {
+            true -> GroupsTable.selectAll()
+            false ->
+                UserGroupsTable
+                    .join(
+                        GroupsTable,
+                        JoinType.LEFT,
+                        additionalConstraint = {
+                            (UserGroupsTable.groupNameColumn eq GroupsTable.groupNameColumn)
+                        },
+                    )
+                    .select { UserGroupsTable.userNameColumn eq authenticatedUser.username }
+        }
+
+        return groupsQuery.map {
+            Group(
+                groupName = it[GroupsTable.groupNameColumn],
+                institution = it[GroupsTable.institutionColumn],
+                address = Address(
+                    line1 = it[GroupsTable.addressLine1],
+                    line2 = it[GroupsTable.addressLine2],
+                    postalCode = it[GroupsTable.addressPostalCode],
+                    city = it[GroupsTable.addressCity],
+                    state = it[GroupsTable.addressState],
+                    country = it[GroupsTable.addressCountry],
+                ),
+                contactEmail = it[GroupsTable.contactEmailColumn],
+            )
+        }
     }
 
-    fun addUserToGroup(groupMember: String, groupName: String, usernameToAdd: String) {
+    fun addUserToGroup(authenticatedUser: AuthenticatedUser, groupName: String, usernameToAdd: String) {
         groupManagementPreconditionValidator.validateThatUserExists(usernameToAdd)
 
-        groupManagementPreconditionValidator.validateUserInExistingGroup(groupName, groupMember)
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupName, authenticatedUser)
 
         try {
             UserGroupsTable.insert {
@@ -125,8 +132,8 @@ class GroupManagementDatabaseService(
         }
     }
 
-    fun removeUserFromGroup(groupMember: String, groupName: String, usernameToRemove: String) {
-        groupManagementPreconditionValidator.validateUserInExistingGroup(groupName, groupMember)
+    fun removeUserFromGroup(authenticatedUser: AuthenticatedUser, groupName: String, usernameToRemove: String) {
+        groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupName, authenticatedUser)
 
         UserGroupsTable.deleteWhere {
             (userNameColumn eq usernameToRemove) and

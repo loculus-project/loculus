@@ -106,12 +106,12 @@ class ExtractUnprocessedDataEndpointTest(
         val responseBody = result.expectNdjsonAndGetContent<UnprocessedData>()
         assertThat(responseBody, hasSize(otherOrganismEntries.size))
 
-        convenienceClient.getSequenceEntryOfUser(
+        convenienceClient.getSequenceEntry(
             accession = defaultOrganismEntries.first().accession,
             version = 1,
             organism = DEFAULT_ORGANISM,
         ).assertStatusIs(RECEIVED)
-        convenienceClient.getSequenceEntryOfUser(
+        convenienceClient.getSequenceEntry(
             accession = otherOrganismEntries.first().accession,
             version = 1,
             organism = OTHER_ORGANISM,

@@ -2,6 +2,17 @@
 
 set -e
 
+input_data_dir="/preprocessing/input"
+
+current_timestamp=$(date +%s)
+new_input_data_dir="$input_data_dir/$current_timestamp"
+
+old_input_data_dir="$input_data_dir"/$(ls -1 "$input_data_dir" | sort -n | grep -E '^[0-9]+$' | tail -n 1)
+
+new_input_data="$new_input_data_dir/data.ndjson"
+old_input_data="$old_input_data_dir/data.ndjson"
+silo_input_data="$input_data_dir/data.ndjson"
+
 get_token() {
   if [ -z "$KEYCLOAK_TOKEN_URL" ]; then
     echo "KEYCLOAK_TOKEN_URL is not set"
@@ -35,113 +46,128 @@ get_token() {
   echo
 }
 
+delete_all_input () {
+  echo "Deleting all input data"
+  rm -f "$silo_input_data"
+  rm -rf "$new_input_data_dir"
+  echo
+}
+
 download_data() {
-  base_data_dir="/preprocessing/input"
-  last_timestamp_dir=$(ls -1 "$base_data_dir" | sort -n | grep -E '^[0-9]+$' | tail -n 1)
-
-  current_timestamp=$(date +%s)
-  echo "checking for current timestamp $current_timestamp"
-
-  data_dir="$base_data_dir/$current_timestamp"
-  mkdir -p "$data_dir"
-  echo  "created $data_dir"
+  mkdir -p "$new_input_data_dir"
+  echo  "created $new_input_data_dir"
 
   released_data_endpoint="$BACKEND_BASE_URL/get-released-data"
   echo "calling $released_data_endpoint"
   
   set +e
-  curl -o "$data_dir/data.ndjson" --fail-with-body "$released_data_endpoint" -H "Authorization: Bearer $jwt"
+  curl -o "$new_input_data" --fail-with-body "$released_data_endpoint" -H "Authorization: Bearer $jwt"
   exit_code=$?
   set -e
 
   if [ $exit_code -ne 0 ]; then
     echo "Curl command failed with exit code $exit_code, cleaning up and exiting."
-    rm -rf "$data_dir"
+    rm -rf "$new_input_data_dir"
     exit $exit_code
   fi
 
-  echo "downloaded $(wc -l < "$data_dir/data.ndjson") sequences"
+  echo "downloaded $(wc -l < "$new_input_data") sequences"
   echo
 
-  echo "checking for last timestamp dir $last_timestamp_dir"
-  if [[ "$last_timestamp_dir" =~ ^[0-9]+$ ]]; then
-    last_number_of_sequences=$(wc -l < "$base_data_dir/$last_timestamp_dir/data.ndjson")
-
-    echo "old data file $last_timestamp_dir has $last_number_of_sequences lines"
-    new_number_of_sequences=$(wc -l < "$data_dir/data.ndjson")
-    echo "new data file '$data_dir/data.ndjson' has $new_number_of_sequences lines"
-    echo
-    if [ "$last_number_of_sequences" -eq "$new_number_of_sequences" ]; then
-      echo "last data.ndjson has same line count, deleting current data dir"
-      rm -rf "$data_dir"
+  echo "checking for old input data dir $old_input_data_dir"
+  if [[ -f "$old_input_data" ]]; then
+    old_hash=$(md5sum < "$old_input_data" | awk '{print $1}')
+    new_hash=$(md5sum < "$new_input_data" | awk '{print $1}')
+    echo "old hash: $old_hash"
+    echo "new hash: $new_hash"
+    if [ "$new_hash" = "$old_hash" ]; then
+      echo "Hashes are equal, skipping preprocessing"
+      echo "Deleting input data dir $new_input_data_dir"
+      rm -rf "$new_input_data_dir"
       exit 0
     else
-      echo "last data.ndjson has less line count, deleting older data dir"
-      rm -rf "${base_data_dir}/${last_timestamp_dir:?}"
+      echo "Hashes are unequal, deleting old input data dir"
+      rm -rf "$old_input_data_dir:?}"
     fi
+  else
+    echo "No old input data dir found"
   fi
   echo
 }
 
 preprocessing() {
-  if [ -s "$data_dir/data.ndjson" ]; then
+  # TODO: #1489  Remove emptiness test once https://github.com/GenSpectrum/LAPIS-SILO/issues/244 fixed
+  if [ -s "$new_input_data_dir" ]; then
     echo "data.ndjson is not empty, starting preprocessing"
 
-    rm -f "$base_data_dir/data.ndjson"
-    cp "$data_dir/data.ndjson" "$base_data_dir/data.ndjson"
+    rm -f "$silo_input_data"
+
+    # This is necessary because silo preprocessing expects the input data to be in a specific magic location
+    # At /preprocessing/input/data.ndjson
+    cp "$new_input_data" "$silo_input_data"
     
     set +e
-    /app/siloApi --preprocessing
+    time /app/siloApi --preprocessing
     exit_code=$?
     set -e
 
     if [ $exit_code -ne 0 ]; then
       echo "SiloApi command failed with exit code $exit_code, cleaning up and exiting."
-
-      rm -rf "$data_dir"
-      rm -f "$base_data_dir/data.ndjson"
-
+      delete_all_input # Delete input so that we don't skip preprocessing next time due to hash equality
       exit $exit_code
     fi
 
     echo "preprocessing for $current_timestamp done"
   else
-    echo "skipping empty data.ndjson, deleting directory"
-    rm -rf "$data_dir"
+    echo "empty data.ndjson, deleting all input"
+    delete_all_input
+
   fi
   echo
 }
 
+# Potential race condition: silo might not release non-current dir if it's still being used
 cleanup_output_data() {
-  output_data_dir="/preprocessing/output"
-  echo "cleaning up output data dir $output_data_dir"
-  cd $output_data_dir || exit
+  for dir_type in "input" "output"; do
+    dir="/preprocessing/$dir_type"
+    echo "Removing all but the most recent $dir_type directory in $dir"
+    cd $dir || exit
 
-  if [ -n "$(ls -d */ 2>/dev/null)" ]; then
-    directories=$(ls -dt */)
-    if [ "$(echo "$directories" | wc -l)" -gt 1 ]; then
-      newest_dir=$(echo "$directories" | head -n 1)
-      echo "$directories" | tail -n +2 | xargs rm -r
-      echo "Kept: $newest_dir"
+    if [ -n "$(ls -d -- */ 2>/dev/null)" ]; then
+      directories=$(ls -dt -- */)
+      dir_num_to_keep=1
+      dir_num_to_keep_plus_one=$((dir_num_to_keep + 1))
+      if [ "$(echo "$directories" | wc -l)" -gt $dir_num_to_keep ]; then
+        dirs_to_keep=$(echo "$directories" | head -n $dir_num_to_keep)
+        echo "$directories" | tail -n "+$dir_num_to_keep_plus_one" | xargs rm -r
+        echo "Kept: $dirs_to_keep"
+      else
+        echo "No directories to delete."
+      fi
     else
-      echo "No directories to delete."
+      echo "No directories found."
     fi
-  else
-    echo "No directories found."
-  fi
 
-  cd - > /dev/null || exit
-  echo
+    cd - > /dev/null || exit
+    echo
+  done
 }
 
 main() {
   echo "----------------------------------------"
   echo "Script started at: $(date)"
 
+  echo "Current content of input data dir: $input_data_dir"
+  ls -l $input_data_dir
+  echo "Current content of output data dir: /preprocessing/output"
+  ls -l /preprocessing/output
+  echo
+
+  # cleanup at start in case we fail later
+  cleanup_output_data
   get_token
   download_data
   preprocessing
-  cleanup_output_data
 
   echo "done"
   echo "----------------------------------------"

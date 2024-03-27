@@ -15,12 +15,14 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
+import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.model.SubmitModel.AcceptedFileTypes.metadataFileTypes
@@ -83,6 +85,19 @@ class SubmitEndpointTest(
                     ),
                 ),
             )
+    }
+
+    @Test
+    fun `WHEN superuser submits on behalf of some group THEN is accepted`() {
+        submissionControllerClient.submit(
+            DefaultFiles.metadataFile,
+            DefaultFiles.sequencesFile,
+            jwt = jwtForSuperUser,
+            groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("\$.length()").value(NUMBER_OF_SEQUENCES))
     }
 
     @ParameterizedTest(name = "GIVEN {0} THEN data is accepted and submitted")
@@ -227,8 +242,10 @@ class SubmitEndpointTest(
                     "Bad Request",
                     "${metadataFileTypes.displayName} has wrong extension. Must be " +
                         ".${metadataFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-                        ".${metadataFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
-                            .flatMap { it.value }.joinToString(", .")} for compressed submissions",
+                        ".${
+                            metadataFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
+                                .flatMap { it.value }.joinToString(", .")
+                        } for compressed submissions",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),
@@ -240,8 +257,10 @@ class SubmitEndpointTest(
                     "Bad Request",
                     "${sequenceFileTypes.displayName} has wrong extension. Must be " +
                         ".${sequenceFileTypes.validExtensions.joinToString(", .")} for uncompressed submissions or " +
-                        ".${sequenceFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
-                            .flatMap { it.value }.joinToString(", .")} for compressed submissions",
+                        ".${
+                            sequenceFileTypes.getCompressedExtensions().filterKeys { it != CompressionAlgorithm.NONE }
+                                .flatMap { it.value }.joinToString(", .")
+                        } for compressed submissions",
                     DEFAULT_ORGANISM,
                     DataUseTerms.Open,
                 ),

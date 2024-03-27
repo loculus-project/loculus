@@ -7,7 +7,6 @@ import {
     accessionVersion,
     accessionVersionsFilterWithApprovalScope,
     accessionVersionsFilterWithDeletionScope,
-    accessionVersionsObject,
     dataUseTermsHistoryEntry,
     getSequencesResponse,
     problemDetail,
@@ -166,22 +165,6 @@ const deleteSequencesEndpoint = makeEndpoint({
     errors: [{ status: 'default', schema: problemDetail }, notAuthorizedError],
 });
 
-const confirmRevocationEndpoint = makeEndpoint({
-    method: 'post',
-    path: withOrganismPathSegment('/confirm-revocation'),
-    alias: 'confirmRevocation',
-    parameters: [
-        authorizationHeader,
-        {
-            name: 'accessionVersions',
-            type: 'Body',
-            schema: accessionVersionsObject,
-        },
-    ],
-    response: z.never(),
-    errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
-});
-
 const extractUnprocessedDataEndpoint = makeEndpoint({
     method: 'post',
     path: withOrganismPathSegment('/extract-unprocessed-data'),
@@ -234,7 +217,6 @@ export const backendApi = makeApi([
     getSequencesEndpoint,
     approveProcessedDataEndpoint,
     deleteSequencesEndpoint,
-    confirmRevocationEndpoint,
     extractUnprocessedDataEndpoint,
     submitProcessedDataEndpoint,
     getDataUseTermsHistoryEndpoint,

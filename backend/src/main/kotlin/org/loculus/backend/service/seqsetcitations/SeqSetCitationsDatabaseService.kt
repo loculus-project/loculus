@@ -29,6 +29,7 @@ import org.loculus.backend.api.SeqSetRecord
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status.APPROVED_FOR_RELEASE
 import org.loculus.backend.api.SubmittedSeqSetRecord
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
@@ -51,12 +52,12 @@ class SeqSetCitationsDatabaseService(
     }
 
     fun createSeqSet(
-        username: String,
+        authenticatedUser: AuthenticatedUser,
         seqSetName: String,
         seqSetRecords: List<SubmittedSeqSetRecord>,
         seqSetDescription: String?,
     ): ResponseSeqSet {
-        log.info { "Create seqSet $seqSetName, user $username" }
+        log.info { "Create seqSet $seqSetName, user ${authenticatedUser.username}" }
 
         validateSeqSetName(seqSetName)
         validateSeqSetRecords(seqSetRecords)
@@ -69,7 +70,7 @@ class SeqSetCitationsDatabaseService(
                 it[SeqSetsTable.description] = seqSetDescription ?: ""
                 it[SeqSetsTable.seqSetVersion] = 1
                 it[SeqSetsTable.createdAt] = now
-                it[SeqSetsTable.createdBy] = username
+                it[SeqSetsTable.createdBy] = authenticatedUser.username
             }
 
         for (record in seqSetRecords) {
@@ -93,12 +94,13 @@ class SeqSetCitationsDatabaseService(
     }
 
     fun updateSeqSet(
-        username: String,
+        authenticatedUser: AuthenticatedUser,
         seqSetId: String,
         seqSetName: String,
         seqSetRecords: List<SubmittedSeqSetRecord>,
         seqSetDescription: String?,
     ): ResponseSeqSet {
+        val username = authenticatedUser.username
         log.info { "Update seqSet $seqSetId, user $username" }
 
         validateSeqSetName(seqSetName)
@@ -241,7 +243,8 @@ class SeqSetCitationsDatabaseService(
         return selectedSeqSetRecords
     }
 
-    fun getSeqSets(username: String): List<SeqSet> {
+    fun getSeqSets(authenticatedUser: AuthenticatedUser): List<SeqSet> {
+        val username = authenticatedUser.username
         log.info { "Get seqSets for user $username" }
 
         val selectedSeqSets = SeqSetsTable
@@ -260,7 +263,8 @@ class SeqSetCitationsDatabaseService(
         }
     }
 
-    fun deleteSeqSet(username: String, seqSetId: String, version: Long) {
+    fun deleteSeqSet(authenticatedUser: AuthenticatedUser, seqSetId: String, version: Long) {
+        val username = authenticatedUser.username
         log.info { "Delete seqSet $seqSetId, version $version, user $username" }
 
         val seqSetUuid = UUID.fromString(seqSetId)
@@ -315,7 +319,8 @@ class SeqSetCitationsDatabaseService(
         }
     }
 
-    fun createSeqSetDOI(username: String, seqSetId: String, version: Long): ResponseSeqSet {
+    fun createSeqSetDOI(authenticatedUser: AuthenticatedUser, seqSetId: String, version: Long): ResponseSeqSet {
+        val username = authenticatedUser.username
         log.info { "Create DOI for seqSet $seqSetId, version $version, user $username" }
 
         validateCreateSeqSetDOI(username, seqSetId, version)

@@ -7,6 +7,7 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
+import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.UnprocessableEntityException
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
@@ -15,15 +16,16 @@ import org.loculus.backend.utils.AccessionComparator
 import org.loculus.backend.utils.AccessionVersionComparator
 import org.loculus.backend.utils.Version
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 
 @Component
 class AccessionPreconditionValidator(
     private val sequenceEntriesViewProvider: SequenceEntriesViewProvider,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
 ) {
-
+    @Transactional(readOnly = true)
     fun validateAccessionVersions(
-        submitter: String,
+        authenticatedUser: AuthenticatedUser,
         accessionVersions: List<AccessionVersionInterface>,
         statuses: List<Status>,
         organism: Organism,
@@ -42,11 +44,12 @@ class AccessionPreconditionValidator(
 
             validateAccessionVersionsExist(sequenceEntries, accessionVersions, table)
             validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
-            validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
+            validateUserIsAllowedToEditSequenceEntries(sequenceEntries, authenticatedUser, table)
             validateOrganism(sequenceEntries, organism, table)
         }
     }
 
+    @Transactional(readOnly = true)
     fun validateAccessionVersions(accessionVersions: List<AccessionVersionInterface>, statuses: List<Status>) {
         sequenceEntriesViewProvider.get(organism = null).let { table ->
             val sequenceEntries = table
@@ -62,8 +65,9 @@ class AccessionPreconditionValidator(
         }
     }
 
+    @Transactional(readOnly = true)
     fun validateAccessions(
-        submitter: String,
+        authenticatedUser: AuthenticatedUser,
         accessions: List<Accession>,
         statuses: List<Status>,
         organism: Organism,
@@ -84,12 +88,13 @@ class AccessionPreconditionValidator(
 
             validateAccessionsExist(sequenceEntries, accessions, table)
             validateSequenceEntriesAreInStates(sequenceEntries, statuses, table)
-            validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
+            validateUserIsAllowedToEditSequenceEntries(sequenceEntries, authenticatedUser, table)
             validateOrganism(sequenceEntries, organism, table)
         }
     }
 
-    fun validateAccessions(submitter: String, accessions: List<Accession>) {
+    @Transactional(readOnly = true)
+    fun validateAccessions(authenticatedUser: AuthenticatedUser, accessions: List<Accession>) {
         sequenceEntriesViewProvider.get(organism = null).let { table ->
             val sequenceEntries = table
                 .slice(
@@ -103,10 +108,11 @@ class AccessionPreconditionValidator(
                 )
 
             validateAccessionsExist(sequenceEntries, accessions, table)
-            validateUserIsAllowedToEditSequenceEntries(sequenceEntries, submitter, table)
+            validateUserIsAllowedToEditSequenceEntries(sequenceEntries, authenticatedUser, table)
         }
     }
 
+    @Transactional(readOnly = true)
     fun validateAccessions(accessions: List<Accession>, statuses: List<Status>): List<AccessionVersionGroup> {
         sequenceEntriesViewProvider.get(organism = null).let { table ->
             val sequenceEntries = table
@@ -185,9 +191,13 @@ class AccessionPreconditionValidator(
 
     private fun validateUserIsAllowedToEditSequenceEntries(
         sequenceEntries: Query,
-        submitter: String,
+        authenticatedUser: AuthenticatedUser,
         table: SequenceEntriesView,
     ) {
+        if (authenticatedUser.isSuperUser) {
+            return
+        }
+
         val groupsOfSequenceEntries = sequenceEntries
             .groupBy(
                 {
@@ -200,7 +210,7 @@ class AccessionPreconditionValidator(
 
         groupsOfSequenceEntries.forEach { (groupName, accessionList) ->
             try {
-                groupManagementPreconditionValidator.validateUserInExistingGroup(groupName, submitter)
+                groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroup(groupName, authenticatedUser)
             } catch (error: ForbiddenException) {
                 throw ForbiddenException(
                     error.message + " Affected AccessionVersions: " + accessionList.map {
