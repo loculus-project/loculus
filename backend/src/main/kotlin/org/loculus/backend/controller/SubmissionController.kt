@@ -10,10 +10,12 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
 import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
 import org.loculus.backend.api.Accessions
+import org.loculus.backend.api.CompressionFormat
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.GetSequenceResponse
@@ -202,13 +204,16 @@ class SubmissionController(
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReleasedData(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
+        @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        if (compression != null) {
+            headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
+        }
 
-        val streamBody = stream { releasedDataModel.getReleasedData(organism) }
+        val streamBody = stream(compression) { releasedDataModel.getReleasedData(organism) }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
@@ -320,14 +325,22 @@ class SubmissionController(
         body.scope,
     )
 
-    private fun <T> stream(sequenceProvider: () -> Sequence<T>) = StreamingResponseBody { outputStream ->
-        try {
-            iteratorStreamer.streamAsNdjson(sequenceProvider(), outputStream)
-        } catch (e: Exception) {
-            log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
-            outputStream.write(
-                "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
-            )
+    private fun <T> stream(compressionFormat: CompressionFormat? = null, sequenceProvider: () -> Sequence<T>) =
+        StreamingResponseBody { responseBodyStream ->
+            val outputStream = when (compressionFormat) {
+                CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
+                null -> responseBodyStream
+            }
+
+            outputStream.use { stream ->
+                try {
+                    iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
+                } catch (e: Exception) {
+                    log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
+                    stream.write(
+                        "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
+                    )
+                }
+            }
         }
-    }
 }

@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import org.springframework.core.convert.converter.Converter
+import org.springframework.stereotype.Component
 
 data class Accessions(
     val accessions: List<Accession>,
@@ -268,4 +270,16 @@ enum class SiloVersionStatus {
     REVOKED,
     REVISED,
     LATEST_VERSION,
+}
+
+enum class CompressionFormat(val compressionName: String) {
+    ZSTD("zstd"),
+}
+
+@Component
+class CompressionFormatConverter : Converter<String, CompressionFormat> {
+    override fun convert(source: String): CompressionFormat {
+        return CompressionFormat.entries.firstOrNull { it.compressionName.equals(source, ignoreCase = true) }
+            ?: throw IllegalArgumentException("Unknown compression: $source")
+    }
 }
