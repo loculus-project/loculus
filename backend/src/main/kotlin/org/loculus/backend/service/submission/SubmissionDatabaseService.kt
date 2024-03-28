@@ -28,6 +28,7 @@ import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
@@ -92,8 +93,10 @@ class SubmissionDatabaseService(
 
         val currentProcessingPipelineVersion = getCurrentProcessingPipelineVersion()
         if (pipelineVersion < currentProcessingPipelineVersion) {
-            throw UnprocessableEntityException("The processing pipeline version $pipelineVersion is not accepted " +
-                    "anymore. The current pipeline version is $currentProcessingPipelineVersion.")
+            throw UnprocessableEntityException(
+                "The processing pipeline version $pipelineVersion is not accepted " +
+                    "anymore. The current pipeline version is $currentProcessingPipelineVersion.",
+            )
         }
         val unprocessedEntries = fetchUnprocessedEntries(organism, numberOfSequenceEntries, pipelineVersion)
         updateStatusToProcessing(unprocessedEntries, pipelineVersion)
@@ -125,11 +128,13 @@ class SubmissionDatabaseService(
         return table
             .slice(table.accessionColumn, table.versionColumn, table.originalDataColumn)
             .select {
-                exists(
-                    CurrentProcessingPipelineTable.select {
-                        CurrentProcessingPipelineTable.versionColumn lessEq pipelineVersion
-                    },
-                ) and
+                table.organismIs(organism) and
+                    not(table.isRevocationColumn) and
+                    exists(
+                        CurrentProcessingPipelineTable.select {
+                            CurrentProcessingPipelineTable.versionColumn lessEq pipelineVersion
+                        },
+                    ) and
                     notExists(
                         preprocessing.select {
                             (table.accessionColumn eq preprocessing.accessionColumn) and
@@ -790,7 +795,7 @@ class SubmissionDatabaseService(
         """.trimIndent()
         var newVersion: Long? = null
         transaction {
-            exec(sql) { rs ->
+            exec(sql, explicitStatementType = StatementType.SELECT) { rs ->
                 if (rs.next()) {
                     newVersion = rs.getLong("version")
                 }

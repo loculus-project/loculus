@@ -10,7 +10,7 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.Group
+import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
@@ -48,5 +48,5 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     fun accessionVersionIsIn(accessionVersions: List<AccessionVersionInterface>) =
         Pair(accessionColumn, versionColumn) inList accessionVersions.toPairs()
 
-    fun groupIsOneOf(groups: List<Group>) = groupNameColumn inList groups.map { it.groupName }
+    fun organismIs(organism: Organism) = organismColumn eq organism.name
 }

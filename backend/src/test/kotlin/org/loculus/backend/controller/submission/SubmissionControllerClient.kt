@@ -58,7 +58,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
             .withAuth(jwt)
-            .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
+            .param("numberOfSequenceEntries", numberOfSequenceEntries.toString())
+            .param("pipelineVersion", "1"),
     )
 
     fun submitProcessedData(
@@ -77,6 +78,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         jwt: String? = jwtForProcessingPipeline,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/submit-processed-data", organism = organism))
+            .param("pipelineVersion", "1")
             .contentType(MediaType.APPLICATION_NDJSON_VALUE)
             .withAuth(jwt)
             .content(submittedProcessedData),
