@@ -147,6 +147,7 @@ defaultOrganisms:
       args:
         - "prepro"
       configFile:
+        version: 1
         log_level: DEBUG
         nextclade_dataset_name: nextstrain/mpox/all-clades
         nextclade_dataset_tag: 2024-01-16--20-31-02Z
@@ -334,6 +335,7 @@ defaultOrganisms:
       args:
         - "prepro"
       configFile:
+        version: 1
         log_level: DEBUG
         nextclade_dataset_name: nextstrain/ebola/zaire
         nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
