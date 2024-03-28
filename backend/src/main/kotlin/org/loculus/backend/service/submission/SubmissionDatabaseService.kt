@@ -20,11 +20,14 @@ import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
+import org.jetbrains.exposed.sql.exists
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
+import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
@@ -79,11 +82,15 @@ class SubmissionDatabaseService(
         Database.connect(pool)
     }
 
-    fun streamUnprocessedSubmissions(numberOfSequenceEntries: Int, organism: Organism): Sequence<UnprocessedData> {
+    fun streamUnprocessedSubmissions(
+        numberOfSequenceEntries: Int,
+        organism: Organism,
+        pipelineVersion: Long,
+    ): Sequence<UnprocessedData> {
         log.info { "streaming unprocessed submissions. Requested $numberOfSequenceEntries sequence entries." }
 
-        val unprocessedEntries = fetchUnprocessedEntries(organism, numberOfSequenceEntries)
-        updateStatusToProcessing(unprocessedEntries)
+        val unprocessedEntries = fetchUnprocessedEntries(organism, numberOfSequenceEntries, pipelineVersion)
+        updateStatusToProcessing(unprocessedEntries, pipelineVersion)
 
         log.info {
             "streaming ${unprocessedEntries.size} of $numberOfSequenceEntries requested unprocessed submissions"
@@ -91,46 +98,56 @@ class SubmissionDatabaseService(
         return unprocessedEntries.asSequence()
     }
 
-    private fun fetchUnprocessedEntries(organism: Organism, numberOfSequenceEntries: Int): List<UnprocessedData> {
-        return SequenceEntriesView
-            .slice(
-                SequenceEntriesView.accessionColumn,
-                SequenceEntriesView.versionColumn,
-                SequenceEntriesView.originalDataColumn,
-            )
-            .select(
-                where = {
-                    SequenceEntriesView.statusIs(Status.RECEIVED) and SequenceEntriesView.isMaxVersion and
-                        SequenceEntriesView.organismIs(organism)
-                },
-            )
+    private fun fetchUnprocessedEntries(
+        organism: Organism,
+        numberOfSequenceEntries: Int,
+        pipelineVersion: Long,
+    ): List<UnprocessedData> {
+        val table = SequenceEntriesTable
+        val preprocessing = SequenceEntriesPreprocessedDataTable
+        return table
+            .slice(table.accessionColumn, table.versionColumn, table.originalDataColumn)
+            .select {
+                exists(
+                    CurrentProcessingPipelineTable.select {
+                        CurrentProcessingPipelineTable.versionColumn lessEq pipelineVersion
+                    },
+                ) and
+                    notExists(
+                        preprocessing.select {
+                            (table.accessionColumn eq preprocessing.accessionColumn) and
+                                (table.versionColumn eq preprocessing.versionColumn) and
+                                (preprocessing.pipelineVersionColumn eq pipelineVersion)
+                        },
+                    )
+            }
+            .orderBy(table.accessionColumn)
             .limit(numberOfSequenceEntries)
-            .orderBy(SequenceEntriesView.accessionColumn)
             .map {
                 UnprocessedData(
-                    accession = it[SequenceEntriesView.accessionColumn],
-                    version = it[SequenceEntriesView.versionColumn],
-                    data = compressionService.decompressSequencesInOriginalData(
-                        it[SequenceEntriesView.originalDataColumn]!!,
+                    it[table.accessionColumn],
+                    it[table.versionColumn],
+                    compressionService.decompressSequencesInOriginalData(
+                        it[table.originalDataColumn]!!,
                         organism,
                     ),
                 )
             }
     }
 
-    private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>) {
+    private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>, pipelineVersion: Long) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         SequenceEntriesPreprocessedDataTable.batchInsert(sequenceEntries) {
             this[SequenceEntriesPreprocessedDataTable.accessionColumn] = it.accession
             this[SequenceEntriesPreprocessedDataTable.versionColumn] = it.version
-            this[SequenceEntriesPreprocessedDataTable.pipelineVersion] = 1
+            this[SequenceEntriesPreprocessedDataTable.pipelineVersionColumn] = pipelineVersion
             this[SequenceEntriesPreprocessedDataTable.processingStatusColumn] = PreprocessingStatus.IN_PROCESSING.name
             this[SequenceEntriesPreprocessedDataTable.startedProcessingAtColumn] = now
         }
     }
 
-    fun updateProcessedData(inputStream: InputStream, organism: Organism) {
+    fun updateProcessedData(inputStream: InputStream, organism: Organism, pipelineVersion: Long) {
         log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
@@ -141,11 +158,15 @@ class SubmissionDatabaseService(
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
 
-            insertProcessedDataWithStatus(submittedProcessedData, organism)
+            insertProcessedDataWithStatus(submittedProcessedData, organism, pipelineVersion)
         }
     }
 
-    private fun insertProcessedDataWithStatus(submittedProcessedData: SubmittedProcessedData, organism: Organism) {
+    private fun insertProcessedDataWithStatus(
+        submittedProcessedData: SubmittedProcessedData,
+        organism: Organism,
+        pipelineVersion: Long,
+    ) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         val submittedErrors = submittedProcessedData.errors.orEmpty()
@@ -160,11 +181,13 @@ class SubmissionDatabaseService(
             else -> PreprocessingStatus.HAS_ERRORS to submittedProcessedData.data
         }
 
+        val table = SequenceEntriesPreprocessedDataTable
         val numberInserted =
-            SequenceEntriesPreprocessedDataTable.update(
+            table.update(
                 where = {
-                    SequenceEntriesPreprocessedDataTable.accessionVersionEquals(submittedProcessedData) and
-                        SequenceEntriesPreprocessedDataTable.statusIs(PreprocessingStatus.IN_PROCESSING)
+                    table.accessionVersionEquals(submittedProcessedData) and
+                        table.statusIs(PreprocessingStatus.IN_PROCESSING) and
+                        (table.pipelineVersionColumn eq pipelineVersion)
                 },
             ) {
                 it[processingStatusColumn] = newStatus.name
@@ -175,7 +198,7 @@ class SubmissionDatabaseService(
             }
 
         if (numberInserted != 1) {
-            throwInsertFailedException(submittedProcessedData)
+            throwInsertFailedException(submittedProcessedData, pipelineVersion)
         }
     }
 
@@ -203,29 +226,38 @@ class SubmissionDatabaseService(
         }
     }
 
-    private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData): String {
-        val selectedSequenceEntries = SequenceEntriesView
+    private fun throwInsertFailedException(
+        submittedProcessedData: SubmittedProcessedData,
+        pipelineVersion: Long,
+    ): String {
+        val preprocessing = SequenceEntriesPreprocessedDataTable
+        val selectedSequenceEntries = preprocessing
             .slice(
-                SequenceEntriesView.accessionColumn,
-                SequenceEntriesView.versionColumn,
-                SequenceEntriesView.statusColumn,
+                preprocessing.accessionColumn,
+                preprocessing.versionColumn,
+                preprocessing.processingStatusColumn,
+                preprocessing.pipelineVersionColumn,
             )
-            .select(where = { SequenceEntriesView.accessionVersionEquals(submittedProcessedData) })
+            .select(where = { preprocessing.accessionVersionEquals(submittedProcessedData) })
 
         val accessionVersion = submittedProcessedData.displayAccessionVersion()
-        if (selectedSequenceEntries.count() == 0L) {
-            throw UnprocessableEntityException("Accession version $accessionVersion does not exist")
-        }
-
-        val selectedSequence = selectedSequenceEntries.first()
-        if (selectedSequence[SequenceEntriesView.statusColumn] != Status.IN_PROCESSING.name) {
+        if (selectedSequenceEntries.all {
+                it[preprocessing.processingStatusColumn] != PreprocessingStatus.IN_PROCESSING.name
+            }
+        ) {
             throw UnprocessableEntityException(
-                "Accession version $accessionVersion is in not in state ${Status.IN_PROCESSING} " +
-                    "(was ${selectedSequence[SequenceEntriesView.statusColumn]})",
+                "Accession version $accessionVersion does not exist or is not awaiting any processing results",
             )
         }
-
-        throw RuntimeException("Update processed data: Unexpected error for accession versions $accessionVersion")
+        if (selectedSequenceEntries.all { it[preprocessing.pipelineVersionColumn] != pipelineVersion }) {
+            throw UnprocessableEntityException(
+                "Accession version $accessionVersion is not awaiting processing results of version " +
+                    "$pipelineVersion (anymore)",
+            )
+        }
+        throw IllegalStateException(
+            "Update processed data: Unexpected error for accession versions $accessionVersion",
+        )
     }
 
     fun approveProcessedData(
@@ -694,6 +726,60 @@ class SubmissionDatabaseService(
             statusIs(PreprocessingStatus.IN_PROCESSING) and startedProcessingAtColumn.less(staleDateTime)
         }
         log.info { "Cleaning up $numberDeleted stale sequences in processing" }
+    }
+
+    fun useNewerProcessingPipelineIfPossible(): Long? {
+        val sql = """
+            update current_processing_pipeline
+            set
+                version = newest.version,
+                started_using_at = now()
+            from
+                (
+                    select max(pipeline_version) as version
+                    from
+                        ( -- Newer pipeline versions...
+                            select distinct pipeline_version
+                            from sequence_entries_preprocessed_data
+                            where pipeline_version > (select version from current_processing_pipeline)
+                        ) as newer
+                    where
+                        not exists( -- ...for which no sequence exists...
+                            select
+                            from
+                                ( -- ...that was processed successfully with the current version...
+                                    select accession, version
+                                    from sequence_entries_preprocessed_data
+                                    where
+                                        pipeline_version = (select version from current_processing_pipeline)
+                                        and processing_status = 'FINISHED'
+                                ) as successful
+                            where
+                                -- ...but not successfully with the newer version.
+                                not exists(
+                                    select
+                                    from sequence_entries_preprocessed_data this
+                                    where
+                                        this.pipeline_version = newer.pipeline_version
+                                        and this.accession = successful.accession
+                                        and this.version = successful.version
+                                        and this.processing_status = 'FINISHED'
+                                )
+                        )
+                ) as newest
+            where
+                newest.version is not null
+            returning newest.version;
+        """.trimIndent()
+        var newVersion: Long? = null
+        transaction {
+            exec(sql) { rs ->
+                if (rs.next()) {
+                    newVersion = rs.getLong("version")
+                }
+            }
+        }
+        return newVersion
     }
 }
 
