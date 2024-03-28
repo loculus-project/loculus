@@ -44,12 +44,12 @@ spec:
       {{- if $processingConfig.configFile }}
             - "--config=/etc/config/preprocessing-config.yaml"
           volumeMounts:
-            - name: loculus-preprocessing-config-volume-{{ $organism }}
+            - name: preprocessing-config-volume-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
               mountPath: /etc/config
       volumes:
-        - name: loculus-preprocessing-config-volume-{{ $organism }}
+        - name: preprocessing-config-volume-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
           configMap:
-            name: loculus-preprocessing-config-{{ $organism }}
+            name: loculus-preprocessing-config-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
       {{- end }}
       imagePullSecrets:
         - name: ghcr-secret
