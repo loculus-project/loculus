@@ -16,9 +16,10 @@ const logger = getClientLogger('SeqSetItem');
 
 type SeqSetRecordsTableProps = {
     seqSetRecords: SeqSetRecord[];
+    sortByKey?: keyof SeqSetRecord;
 };
 
-const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords }) => {
+const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords, sortByKey = 'isFocal' }) => {
     if (seqSetRecords.length === 0) {
         return null;
     }
@@ -27,16 +28,23 @@ const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords }) => {
         [SeqSetRecordType.loculus]: (acc: string) => `/seq/${acc}`,
     };
 
+    const sortedSeqRecords = seqSetRecords.sort((a: SeqSetRecord, b: SeqSetRecord) => {
+        const x = a[sortByKey];
+        const y = b[sortByKey];
+        return x > y ? -1 : x < y ? 1 : 0;
+    });
+
     return (
-        <table className='table-auto w-full max-w-xl'>
+        <table className='table-auto w-full '>
             <thead>
                 <tr>
-                    <th className='w-1/2 text-left font-medium'>Accession</th>
-                    <th className='w-1/2 text-left font-medium'>Source</th>
+                    <th className='w-1/3 text-left font-medium'>Accession</th>
+                    <th className='w-1/3 text-left font-medium'>Source</th>
+                    <th className='w-1/3 text-left font-medium'>Context</th>
                 </tr>
             </thead>
             <tbody>
-                {seqSetRecords.map((seqSetRecord, index) => {
+                {sortedSeqRecords.map((seqSetRecord, index) => {
                     return (
                         <tr key={`accessionData-${index}`} className='hover:bg-primary-100 border-gray-100'>
                             <td className='text-left'>
@@ -45,6 +53,7 @@ const SeqSetRecordsTable: FC<SeqSetRecordsTableProps> = ({ seqSetRecords }) => {
                                 </a>
                             </td>
                             <td className='text-left'>{seqSetRecord.type as string}</td>
+                            <td className='text-left'>{seqSetRecord.isFocal === true ? 'Focal' : 'Background'}</td>
                         </tr>
                     );
                 })}
@@ -139,19 +148,19 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
             <div className='flex flex-col'>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Description</p>
-                    <p className='text'>{seqSet.description ?? 'N/A'}</p>
+                    <p className='text max-w-lg'>{seqSet.description ?? 'N/A'}</p>
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Version</p>
-                    <p className='text'>{seqSet.seqSetVersion}</p>
+                    <p className='text max-w-lg'>{seqSet.seqSetVersion}</p>
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Created date</p>
-                    <p className='text'>{formatDate(seqSet.createdAt)}</p>
+                    <p className='text max-w-lg'>{formatDate(seqSet.createdAt)}</p>
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>Size</p>
-                    <p className='text'>{`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}</p>
+                    <p className='text max-w-lg'>{`${seqSetRecords.length} sequence${seqSetRecords.length === 1 ? '' : 's'}`}</p>
                 </div>
                 <div className='flex flex-row py-1.5'>
                     <p className='mr-8 w-[120px] text-gray-500 text-right'>DOI</p>
@@ -176,7 +185,7 @@ const SeqSetItemInner: FC<SeqSetItemProps> = ({
                     <div className='ml-4'>
                         <CitationPlot citedByData={citedByData} />
                         <p className='text-sm text-center text-gray-500 my-4 ml-8 max-w-64'>
-                            Number of times this seqSet has been cited by a publication
+                            Number of times this SeqSet has been cited by a publication
                         </p>
                     </div>
                 </div>

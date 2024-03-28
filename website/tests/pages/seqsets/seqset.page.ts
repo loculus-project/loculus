@@ -29,7 +29,8 @@ export class SeqSetPage {
         await this.page.getByTestId('AddIcon').click();
         await this.page.locator('#seqSet-name').fill(seqSetName);
         await this.page.locator('#seqSet-description').fill(testSeqSet.description);
-        await this.page.locator('#Loculus-accession-input').fill(testSeqSet.loculusAccessions);
+        await this.page.locator('#loculus-focal-accession-input').fill(testSeqSet.focalLoculusAccessions);
+        await this.page.locator('#loculus-background-accession-input').fill(testSeqSet.backgroundLoculusAccessions);
         await this.page.getByRole('button', { name: 'Save' }).click();
         await this.waitForLoad();
     }

@@ -2,6 +2,7 @@ import Snackbar from '@mui/material/Snackbar';
 import { type FC, useState } from 'react';
 
 import type { SeqSet, SeqSetRecord } from '../../types/seqSetCitation';
+import { serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 
 type ExportSeqSetProps = {
     seqSet: SeqSet;
@@ -38,10 +39,14 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
     };
 
     const downloadTSVSeqSet = () => {
-        const headers = [...Object.keys(seqSet), 'accessions'];
+        const headers = [...Object.keys(seqSet), 'focalAccessions', 'backgroundAccessions'];
         const seqSetString = Object.values(seqSet).join('\t');
-        const accessionsString = seqSetRecords.map((record) => record.accession).join(', ');
-        const tsv = [headers.join('\t'), seqSetString + '\t' + accessionsString].join('\r\n');
+        const focalAccessionsString = serializeSeqSetRecords(seqSetRecords, true);
+        const backgroundAccessionsString = serializeSeqSetRecords(seqSetRecords, false);
+        const tsv = [
+            headers.join('\t'),
+            seqSetString + '\t' + focalAccessionsString + '\t' + backgroundAccessionsString,
+        ].join('\r\n');
         const dataStr = 'data:text/tsv;charset=utf-8,' + encodeURIComponent(tsv);
         const hiddenLink = document.createElement('a');
         hiddenLink.href = dataStr;
