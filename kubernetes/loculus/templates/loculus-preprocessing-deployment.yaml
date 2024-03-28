@@ -3,17 +3,18 @@
     "http://host.k3d.internal:8079"
     "http://loculus-backend-service:8079"
 }}
-{{- $keycloakHost := .Values.environment | eq "server" | ternary
+{{- $organismcloakHost := .Values.environment | eq "server" | ternary
     (printf "https://authentication-%s" $.Values.host)
     "http://loculus-keycloak-service:8083"
 }}
 {{- if not .Values.disablePreprocessing }}
-{{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- range $organism, $organismConfig := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus-preprocessing-{{ $key }}
+  name: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
     reloader.stakater.com/auto: "true"
@@ -22,43 +23,36 @@ spec:
   selector:
     matchLabels:
       app: loculus
-      component: loculus-preprocessing-{{ $key }}
+      component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
   template:
     metadata:
       labels:
         app: loculus
-        component: loculus-preprocessing-{{ $key }}
+        component: loculus-preprocessing-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
     spec:
       containers:
-        - name: preprocessing-{{ $key }}
-          image: {{ $value.preprocessing.image}}:{{ $dockerTag }}
+        - name: preprocessing-{{ $organism }}
+          image: {{ $processingConfig.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
           args:
-            {{- range $arg := $value.preprocessing.args }}
+            {{- range $arg := $processingConfig.args }}
             - "{{ $arg }}"
             {{- end }}
-            - "--backend-host={{ $backendHost }}/{{ $key }}"
-            - "--keycloak-host={{ $keycloakHost }}"
-            {{- if $value.preprocessing.warnings }}
-            - "--withWarnings"
-            {{- end }}
-            {{- if $value.preprocessing.errors }}
-            - "--withErrors"
-            {{- end }}
-            {{- if $value.preprocessing.randomWarnError }}
-            - "--randomWarnError"
-            {{- end }}
-      {{- if $value.preprocessing.configFile }}
+            - "--backend-host={{ $backendHost }}/{{ $organism }}"
+            - "--keycloak-host={{ $organismcloakHost }}"
+            - "--pipeline-version={{ $processingConfig.version }}"
+      {{- if $processingConfig.configFile }}
             - "--config=/etc/config/preprocessing-config.yaml"
           volumeMounts:
-            - name: loculus-preprocessing-config-volume-{{ $key }}
+            - name: loculus-preprocessing-config-volume-{{ $organism }}
               mountPath: /etc/config
       volumes:
-        - name: loculus-preprocessing-config-volume-{{ $key }}
+        - name: loculus-preprocessing-config-volume-{{ $organism }}
           configMap:
-            name: loculus-preprocessing-config-{{ $key }}
+            name: loculus-preprocessing-config-{{ $organism }}
       {{- end }}
       imagePullSecrets:
         - name: ghcr-secret
+{{- end }}
 {{- end }}
 {{- end }}
