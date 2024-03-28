@@ -32,6 +32,7 @@ class Config:
     reference_length: int = 197209
     batch_size: int = 5
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
+    version: int = 1
 
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:
