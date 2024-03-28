@@ -38,7 +38,7 @@ from .processing_functions import ProcessingFunctions
 def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
-    params = {"numberOfSequenceEntries": n}
+    params = {"numberOfSequenceEntries": n, "pipelineVersion": config.version}
     headers = {"Authorization": "Bearer " + get_jwt(config)}
     response = requests.post(url, data=params, headers=headers, timeout=10)
     if not response.ok:
@@ -309,7 +309,8 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
         "Content-Type": "application/x-ndjson",
         "Authorization": "Bearer " + get_jwt(config),
     }
-    response = requests.post(url, data=ndjson_string, headers=headers, timeout=10)
+    params = {"pipelineVersion": config.version}
+    response = requests.post(url, data=ndjson_string, headers=headers, params=params, timeout=10)
     if not response.ok:
         with open("failed_submission.json", "w", encoding="utf-8") as f:
             f.write(ndjson_string)
