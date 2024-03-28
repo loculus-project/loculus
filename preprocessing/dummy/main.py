@@ -22,7 +22,7 @@ parser.add_argument("--keycloak-user", type=str, default="dummy_preprocessing_pi
 parser.add_argument("--keycloak-password", type=str, default="dummy_preprocessing_pipeline",
                     help="Keycloak password to use for authentication")
 parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculus/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
-parser.add_argument("--pipelineVersion", type=int, default=1)
+parser.add_argument("--pipeline-version", type=int, default=1)
 
 args = parser.parse_args()
 backendHost = args.backend_host
@@ -34,7 +34,7 @@ keycloakHost = args.keycloak_host
 keycloakUser = args.keycloak_user
 keycloakPassword = args.keycloak_password
 keycloakTokenPath = args.keycloak_token_path
-pipelineVersion = args.pipelineVersion
+pipeline_version = args.pipeline_version
 
 
 @dataclass
@@ -62,7 +62,7 @@ def fetch_unprocessed_sequences(n: int) -> List[Sequence]:
     url = backendHost + "/extract-unprocessed-data"
     params = {
         "numberOfSequenceEntries": n,
-        "pipelineVersion": pipelineVersion
+        "pipelineVersion": pipeline_version
     }
     headers = {'Authorization': 'Bearer ' + get_jwt()}
     response = requests.post(url, data=params, headers=headers)
@@ -141,7 +141,7 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
 def submit_processed_sequences(processed: List[Sequence]):
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = '\n'.join(json_strings)
-    url = backendHost + "/submit-processed-data?pipelineVersion=" + str(pipelineVersion)
+    url = backendHost + "/submit-processed-data?pipelineVersion=" + str(pipeline_version)
     headers = {'Content-Type': 'application/x-ndjson', 'Authorization': 'Bearer ' + get_jwt()}
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:

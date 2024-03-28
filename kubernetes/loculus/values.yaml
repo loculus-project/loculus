@@ -62,12 +62,20 @@ defaultOrganisms:
         dateToSortBy: date
         partitionBy: pango_lineage
     preprocessing:
-      image: ghcr.io/loculus-project/preprocessing-dummy
-      args:
-        - "--watch"
-      warnings: true
-      errors: true
-      randomWarnError: true
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-dummy
+        args:
+          - "--watch"
+          - "--withWarnings"
+          - "--withErrors"
+          - "--randomWarnError"
+      - version: 2
+        image: ghcr.io/loculus-project/preprocessing-dummy
+        args:
+          - "--watch"
+          - "--withWarnings"
+          - "--withErrors"
+          - "--randomWarnError"
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
@@ -146,57 +154,108 @@ defaultOrganisms:
       silo:
         dateToSortBy: collection_date
     preprocessing:
-      image: ghcr.io/loculus-project/preprocessing-nextclade
-      args:
-        - "prepro"
-      configFile:
-        version: 1
-        log_level: DEBUG
-        nextclade_dataset_name: nextstrain/mpox/all-clades
-        nextclade_dataset_tag: 2024-01-16--20-31-02Z
-        genes:
-          OPG001: 247
-        batch_size: 100
-        processing_spec:
-          collection_date:
-            function: process_date
-            inputs:
-              date: collection_date
-              release_date: ncbi_release_date
-            required: true
-          ncbi_release_date:
-            function: parse_timestamp
-            inputs:
-              timestamp: ncbi_release_date
-          clade:
-            function: identity
-            inputs:
-              input: nextclade.clade
-          outbreak:
-            function: identity
-            inputs:
-              input: nextclade.customNodeAttributes.outbreak
-          lineage:
-            function: identity
-            inputs:
-              input: nextclade.customNodeAttributes.lineage
-          country:
-            function: identity
-            inputs:
-              input: country
-            required: true
-          author_affiliation:
-            function: identity
-            inputs:
-              input: author_affiliation
-          authors:
-            function: identity
-            inputs:
-              input: authors
-          isolate_name:
-            function: identity
-            inputs:
-              input: isolate_name
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - "prepro"
+        configFile:
+          log_level: DEBUG
+          nextclade_dataset_name: nextstrain/mpox/all-clades
+          nextclade_dataset_tag: 2024-01-16--20-31-02Z
+          genes:
+            OPG001: 247
+          batch_size: 100
+          processing_spec:
+            collection_date:
+              function: process_date
+              inputs:
+                date: collection_date
+                release_date: ncbi_release_date
+              required: true
+            ncbi_release_date:
+              function: parse_timestamp
+              inputs:
+                timestamp: ncbi_release_date
+            clade:
+              function: identity
+              inputs:
+                input: nextclade.clade
+            outbreak:
+              function: identity
+              inputs:
+                input: nextclade.customNodeAttributes.outbreak
+            lineage:
+              function: identity
+              inputs:
+                input: nextclade.customNodeAttributes.lineage
+            country:
+              function: identity
+              inputs:
+                input: country
+              required: true
+            author_affiliation:
+              function: identity
+              inputs:
+                input: author_affiliation
+            authors:
+              function: identity
+              inputs:
+                input: authors
+            isolate_name:
+              function: identity
+              inputs:
+                input: isolate_name
+      - version: 2
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - "prepro"
+        configFile:
+          log_level: DEBUG
+          nextclade_dataset_name: nextstrain/mpox/all-clades
+          nextclade_dataset_tag: 2024-01-16--20-31-02Z
+          genes:
+            OPG001: 247
+          batch_size: 100
+          processing_spec:
+            collection_date:
+              function: process_date
+              inputs:
+                date: collection_date
+                release_date: ncbi_release_date
+              required: true
+            ncbi_release_date:
+              function: parse_timestamp
+              inputs:
+                timestamp: ncbi_release_date
+            clade:
+              function: identity
+              inputs:
+                input: nextclade.clade
+            outbreak:
+              function: identity
+              inputs:
+                input: nextclade.customNodeAttributes.outbreak
+            lineage:
+              function: identity
+              inputs:
+                input: nextclade.customNodeAttributes.lineage
+            country:
+              function: identity
+              inputs:
+                input: country
+              required: true
+            author_affiliation:
+              function: identity
+              inputs:
+                input: author_affiliation
+            authors:
+              function: identity
+              inputs:
+                input: authors
+            isolate_name:
+              function: identity
+              inputs:
+                input: isolate_name
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
@@ -335,173 +394,340 @@ defaultOrganisms:
       silo:
         dateToSortBy: collection_date
     preprocessing:
-      image: ghcr.io/loculus-project/preprocessing-nextclade
-      args:
-        - "prepro"
-      configFile:
-        version: 1
-        log_level: DEBUG
-        nextclade_dataset_name: nextstrain/ebola/zaire
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-        genes:
-          - NP
-          - VP35
-          - VP40
-          - GP
-          - sGP
-          - ssGP
-          - VP30
-          - VP24
-          - L
-        batch_size: 100
-        processing_spec:
-          total_snps:
-            function: identity
-            inputs:
-              input: nextclade.totalSubstitutions
-          total_inserted_nucs:
-            function: identity
-            inputs:
-              input: nextclade.totalInsertions
-          total_deleted_nucs:
-            function: identity
-            inputs:
-              input: nextclade.totalDeletions
-          total_ambiguous_nucs:
-            function: identity
-            inputs:
-              input: nextclade.totalNonACGTNs
-          total_unknown_nucs:
-            function: identity
-            inputs:
-              input: nextclade.totalMissing
-          total_frame_shifts:
-            function: identity
-            inputs:
-              input: nextclade.totalFrameShifts
-          frame_shifts:
-            function: identity
-            inputs:
-              input: nextclade.frameShifts
-          completeness:
-            function: identity
-            inputs:
-              input: nextclade.coverage
-          total_stop_codons:
-            function: identity
-            inputs:
-              input: nextclade.qc.stopCodons.totalStopCodons
-          stop_codons:
-            function: identity
-            inputs:
-              input: nextclade.qc.stopCodons.stopCodons
-          collection_date:
-            function: process_date
-            inputs:
-              date: collection_date
-              release_date: ncbi_release_date
-            required: true
-          ncbi_release_date:
-            function: parse_timestamp
-            inputs:
-              timestamp: ncbi_release_date
-          country:
-            function: identity
-            inputs:
-              input: country
-            required: true
-          author_affiliation:
-            function: identity
-            inputs:
-              input: author_affiliation
-          authors:
-            function: identity
-            inputs:
-              input: authors
-          isolate_name:
-            function: identity
-            inputs:
-              input: isolate_name
-          submitter_country:
-            function: identity
-            inputs:
-              input: submitter_country
-          division:
-            function: identity
-            inputs:
-              input: division
-          insdc_accession_base:
-            function: identity
-            inputs:
-              input: insdc_accession_base
-          insdc_version:
-            function: identity
-            inputs:
-              input: insdc_version
-          insdc_accession_full:
-            function: identity
-            inputs:
-              input: insdc_accession_full
-          bioprojects:
-            function: identity
-            inputs:
-              input: bioprojects
-          biosample_accession:
-            function: identity
-            inputs:
-              input: biosample_accession
-          ncbi_completeness:
-            function: identity
-            inputs:
-              input: ncbi_completeness
-          ncbi_host_name:
-            function: identity
-            inputs:
-              input: ncbi_host_name
-          ncbi_host_tax_id:
-            function: identity
-            inputs:
-              input: ncbi_host_tax_id
-          ncbi_is_lab_host:
-            function: identity
-            inputs:
-              input: ncbi_is_lab_host
-          ncbi_length:
-            function: identity
-            inputs:
-              input: ncbi_length
-          ncbi_protein_count:
-            function: identity
-            inputs:
-              input: ncbi_protein_count
-          ncbi_update_date:
-            function: parse_timestamp
-            inputs:
-              timestamp: ncbi_update_date
-          ncbi_sourcedb:
-            function: identity
-            inputs:
-              input: ncbi_sourcedb
-          ncbi_virus_name:
-            function: identity
-            inputs:
-              input: ncbi_virus_name
-          ncbi_virus_tax_id:
-            function: identity
-            inputs:
-              input: ncbi_virus_tax_id
-          isolate_source:
-            function: identity
-            inputs:
-              input: isolate_source
-          sra_accessions:
-            function: identity
-            inputs:
-              input: sra_accessions
-          metadata_hash:
-            function: identity
-            inputs:
-              input: metadata_hash
+      - version: 1
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - "prepro"
+        configFile:
+          log_level: DEBUG
+          nextclade_dataset_name: nextstrain/ebola/zaire
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+          genes:
+            - NP
+            - VP35
+            - VP40
+            - GP
+            - sGP
+            - ssGP
+            - VP30
+            - VP24
+            - L
+          batch_size: 100
+          processing_spec:
+            total_snps:
+              function: identity
+              inputs:
+                input: nextclade.totalSubstitutions
+            total_inserted_nucs:
+              function: identity
+              inputs:
+                input: nextclade.totalInsertions
+            total_deleted_nucs:
+              function: identity
+              inputs:
+                input: nextclade.totalDeletions
+            total_ambiguous_nucs:
+              function: identity
+              inputs:
+                input: nextclade.totalNonACGTNs
+            total_unknown_nucs:
+              function: identity
+              inputs:
+                input: nextclade.totalMissing
+            total_frame_shifts:
+              function: identity
+              inputs:
+                input: nextclade.totalFrameShifts
+            frame_shifts:
+              function: identity
+              inputs:
+                input: nextclade.frameShifts
+            completeness:
+              function: identity
+              inputs:
+                input: nextclade.coverage
+            total_stop_codons:
+              function: identity
+              inputs:
+                input: nextclade.qc.stopCodons.totalStopCodons
+            stop_codons:
+              function: identity
+              inputs:
+                input: nextclade.qc.stopCodons.stopCodons
+            collection_date:
+              function: process_date
+              inputs:
+                date: collection_date
+                release_date: ncbi_release_date
+              required: true
+            ncbi_release_date:
+              function: parse_timestamp
+              inputs:
+                timestamp: ncbi_release_date
+            country:
+              function: identity
+              inputs:
+                input: country
+              required: true
+            author_affiliation:
+              function: identity
+              inputs:
+                input: author_affiliation
+            authors:
+              function: identity
+              inputs:
+                input: authors
+            isolate_name:
+              function: identity
+              inputs:
+                input: isolate_name
+            submitter_country:
+              function: identity
+              inputs:
+                input: submitter_country
+            division:
+              function: identity
+              inputs:
+                input: division
+            insdc_accession_base:
+              function: identity
+              inputs:
+                input: insdc_accession_base
+            insdc_version:
+              function: identity
+              inputs:
+                input: insdc_version
+            insdc_accession_full:
+              function: identity
+              inputs:
+                input: insdc_accession_full
+            bioprojects:
+              function: identity
+              inputs:
+                input: bioprojects
+            biosample_accession:
+              function: identity
+              inputs:
+                input: biosample_accession
+            ncbi_completeness:
+              function: identity
+              inputs:
+                input: ncbi_completeness
+            ncbi_host_name:
+              function: identity
+              inputs:
+                input: ncbi_host_name
+            ncbi_host_tax_id:
+              function: identity
+              inputs:
+                input: ncbi_host_tax_id
+            ncbi_is_lab_host:
+              function: identity
+              inputs:
+                input: ncbi_is_lab_host
+            ncbi_length:
+              function: identity
+              inputs:
+                input: ncbi_length
+            ncbi_protein_count:
+              function: identity
+              inputs:
+                input: ncbi_protein_count
+            ncbi_update_date:
+              function: parse_timestamp
+              inputs:
+                timestamp: ncbi_update_date
+            ncbi_sourcedb:
+              function: identity
+              inputs:
+                input: ncbi_sourcedb
+            ncbi_virus_name:
+              function: identity
+              inputs:
+                input: ncbi_virus_name
+            ncbi_virus_tax_id:
+              function: identity
+              inputs:
+                input: ncbi_virus_tax_id
+            isolate_source:
+              function: identity
+              inputs:
+                input: isolate_source
+            sra_accessions:
+              function: identity
+              inputs:
+                input: sra_accessions
+            metadata_hash:
+              function: identity
+              inputs:
+                input: metadata_hash
+      - version: 2
+        image: ghcr.io/loculus-project/preprocessing-nextclade
+        args:
+          - "prepro"
+        configFile:
+          log_level: DEBUG
+          nextclade_dataset_name: nextstrain/ebola/zaire
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
+          genes:
+            - NP
+            - VP35
+            - VP40
+            - GP
+            - sGP
+            - ssGP
+            - VP30
+            - VP24
+            - L
+          batch_size: 100
+          processing_spec:
+            total_snps:
+              function: identity
+              inputs:
+                input: nextclade.totalSubstitutions
+            total_inserted_nucs:
+              function: identity
+              inputs:
+                input: nextclade.totalInsertions
+            total_deleted_nucs:
+              function: identity
+              inputs:
+                input: nextclade.totalDeletions
+            total_ambiguous_nucs:
+              function: identity
+              inputs:
+                input: nextclade.totalNonACGTNs
+            total_unknown_nucs:
+              function: identity
+              inputs:
+                input: nextclade.totalMissing
+            total_frame_shifts:
+              function: identity
+              inputs:
+                input: nextclade.totalFrameShifts
+            frame_shifts:
+              function: identity
+              inputs:
+                input: nextclade.frameShifts
+            completeness:
+              function: identity
+              inputs:
+                input: nextclade.coverage
+            total_stop_codons:
+              function: identity
+              inputs:
+                input: nextclade.qc.stopCodons.totalStopCodons
+            stop_codons:
+              function: identity
+              inputs:
+                input: nextclade.qc.stopCodons.stopCodons
+            collection_date:
+              function: process_date
+              inputs:
+                date: collection_date
+                release_date: ncbi_release_date
+              required: true
+            ncbi_release_date:
+              function: parse_timestamp
+              inputs:
+                timestamp: ncbi_release_date
+            country:
+              function: identity
+              inputs:
+                input: country
+              required: true
+            author_affiliation:
+              function: identity
+              inputs:
+                input: author_affiliation
+            authors:
+              function: identity
+              inputs:
+                input: authors
+            isolate_name:
+              function: identity
+              inputs:
+                input: isolate_name
+            submitter_country:
+              function: identity
+              inputs:
+                input: submitter_country
+            division:
+              function: identity
+              inputs:
+                input: division
+            insdc_accession_base:
+              function: identity
+              inputs:
+                input: insdc_accession_base
+            insdc_version:
+              function: identity
+              inputs:
+                input: insdc_version
+            insdc_accession_full:
+              function: identity
+              inputs:
+                input: insdc_accession_full
+            bioprojects:
+              function: identity
+              inputs:
+                input: bioprojects
+            biosample_accession:
+              function: identity
+              inputs:
+                input: biosample_accession
+            ncbi_completeness:
+              function: identity
+              inputs:
+                input: ncbi_completeness
+            ncbi_host_name:
+              function: identity
+              inputs:
+                input: ncbi_host_name
+            ncbi_host_tax_id:
+              function: identity
+              inputs:
+                input: ncbi_host_tax_id
+            ncbi_is_lab_host:
+              function: identity
+              inputs:
+                input: ncbi_is_lab_host
+            ncbi_length:
+              function: identity
+              inputs:
+                input: ncbi_length
+            ncbi_protein_count:
+              function: identity
+              inputs:
+                input: ncbi_protein_count
+            ncbi_update_date:
+              function: parse_timestamp
+              inputs:
+                timestamp: ncbi_update_date
+            ncbi_sourcedb:
+              function: identity
+              inputs:
+                input: ncbi_sourcedb
+            ncbi_virus_name:
+              function: identity
+              inputs:
+                input: ncbi_virus_name
+            ncbi_virus_tax_id:
+              function: identity
+              inputs:
+                input: ncbi_virus_tax_id
+            isolate_source:
+              function: identity
+              inputs:
+                input: isolate_source
+            sra_accessions:
+              function: identity
+              inputs:
+                input: sra_accessions
+            metadata_hash:
+              function: identity
+              inputs:
+                input: metadata_hash
     ingest:
       args:
         - snakemake
