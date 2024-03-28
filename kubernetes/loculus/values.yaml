@@ -226,6 +226,7 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          truncateColumnDisplayTo: 15
         - name: authors
           displayName: Authors
           type: string
