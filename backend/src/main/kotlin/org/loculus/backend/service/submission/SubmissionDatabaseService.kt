@@ -27,6 +27,7 @@ import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.notExists
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
@@ -89,6 +90,11 @@ class SubmissionDatabaseService(
     ): Sequence<UnprocessedData> {
         log.info { "streaming unprocessed submissions. Requested $numberOfSequenceEntries sequence entries." }
 
+        val currentProcessingPipelineVersion = getCurrentProcessingPipelineVersion()
+        if (pipelineVersion < currentProcessingPipelineVersion) {
+            throw UnprocessableEntityException("The processing pipeline version $pipelineVersion is not accepted " +
+                    "anymore. The current pipeline version is $currentProcessingPipelineVersion.")
+        }
         val unprocessedEntries = fetchUnprocessedEntries(organism, numberOfSequenceEntries, pipelineVersion)
         updateStatusToProcessing(unprocessedEntries, pipelineVersion)
 
@@ -96,6 +102,17 @@ class SubmissionDatabaseService(
             "streaming ${unprocessedEntries.size} of $numberOfSequenceEntries requested unprocessed submissions"
         }
         return unprocessedEntries.asSequence()
+    }
+
+    private fun getCurrentProcessingPipelineVersion(): Long {
+        val table = CurrentProcessingPipelineTable
+        return table
+            .slice(table.versionColumn)
+            .selectAll()
+            .map {
+                it[table.versionColumn]
+            }
+            .first()
     }
 
     private fun fetchUnprocessedEntries(
