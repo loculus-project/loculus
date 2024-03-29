@@ -18,6 +18,7 @@ create table sequence_entries (
     organism text not null,
     submission_id text not null,
     submitter text not null,
+    approver text,
     group_name text not null,
     submitted_at timestamp not null,
     released_at timestamp,

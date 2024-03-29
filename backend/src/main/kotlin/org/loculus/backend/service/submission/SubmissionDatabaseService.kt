@@ -278,6 +278,7 @@ class SubmissionDatabaseService(
                 },
             ) {
                 it[releasedAtColumn] = now
+                it[approverColumn] = authenticatedUser.username
             }
         }
 
