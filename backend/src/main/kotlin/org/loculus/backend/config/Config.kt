@@ -7,11 +7,17 @@ import org.loculus.backend.api.Organism
 data class BackendConfig(
     val organisms: Map<String, InstanceConfig>,
     val accessionPrefix: String,
+    val dataUseTermsUrls: DataUseTermsUrls?,
 ) {
     fun getInstanceConfig(organism: Organism) = organisms[organism.name] ?: throw IllegalArgumentException(
         "Organism: ${organism.name} not found in backend config. Available organisms: ${organisms.keys}",
     )
 }
+
+data class DataUseTermsUrls(
+    val open: String,
+    val restricted: String,
+)
 
 data class InstanceConfig(
     val schema: Schema,

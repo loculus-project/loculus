@@ -32,6 +32,11 @@ fields:
   - name: versionStatus
     type: string
     notSearchable: true
+  {{- if $.Values.dataUseTermsUrls }}
+  - name: dataUseTermsUrl
+    type: string
+    notSearchable: true
+  {{- end}}
 {{- end}}
 
 {{/* Generate website config from passed config object */}}
@@ -97,6 +102,8 @@ fields:
 {{- define "loculus.generateBackendConfig" }}
 accessionPrefix: {{$.Values.accessionPrefix}}
 name: {{ $.Values.name }}
+dataUseTermsUrls:
+  {{$.Values.dataUseTermsUrls | toYaml | nindent 2}}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:

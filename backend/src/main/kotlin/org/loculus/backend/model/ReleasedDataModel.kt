@@ -14,6 +14,7 @@ import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
@@ -24,7 +25,10 @@ import org.springframework.transaction.annotation.Transactional
 private val log = KotlinLogging.logger { }
 
 @Service
-class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabaseService) {
+class ReleasedDataModel(
+    private val submissionDatabaseService: SubmissionDatabaseService,
+    private val backendConfig: BackendConfig,
+) {
     @Transactional(readOnly = true)
     fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
         log.info { "fetching released submissions" }
@@ -45,7 +49,7 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
 
         val currentDataUseTermsType = computeDataUseTerm(rawProcessedData)
 
-        val metadata = rawProcessedData.processedData.metadata +
+        var metadata = rawProcessedData.processedData.metadata +
             ("accession" to TextNode(rawProcessedData.accession)) +
             ("version" to LongNode(rawProcessedData.version)) +
             (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)) +
@@ -57,6 +61,15 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
             ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTermsType.name))
+
+        if (backendConfig.dataUseTermsUrls != null) {
+            val url = if (rawProcessedData.dataUseTerms == DataUseTerms.Open) {
+                backendConfig.dataUseTermsUrls.open
+            } else {
+                backendConfig.dataUseTermsUrls.restricted
+            }
+            metadata += ("dataUseTermsUrl" to TextNode(url))
+        }
 
         return ProcessedData(
             metadata = metadata,
