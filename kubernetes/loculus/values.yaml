@@ -15,6 +15,9 @@ disablePreprocessing: false
 disableIngest: false
 siloImportLimitSeconds: 3600
 accessionPrefix: "LOC_"
+dataUseTermsUrls:
+  open: https://#TODO-MVP/open
+  restricted: https://#TODO-MVP/restricted
 name: "Loculus"
 logo:
   url: "/favicon.svg"
