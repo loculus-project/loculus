@@ -147,3 +147,10 @@ create table seqset_to_records (
             references seqsets(seqset_id, seqset_version)
             on delete cascade
 );
+
+create table audit_log (
+    id bigserial primary key,
+    username text,
+    timestamp timestamp not null default now(),
+    description text not null
+);

@@ -16,6 +16,7 @@ import org.loculus.backend.api.Organism
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmissionIdMapping
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.SubmissionId
 import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
@@ -49,6 +50,7 @@ class UploadDatabaseService(
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
     private val generateAccessionFromNumberService: GenerateAccessionFromNumberService,
+    private val auditLogger: AuditLogger,
 ) {
 
     fun batchInsertMetadataInAuxTable(
@@ -185,6 +187,12 @@ class UploadDatabaseService(
                 submissionParams.dataUseTerms,
             )
         }
+
+        auditLogger.log(
+            submissionParams.authenticatedUser.username,
+            "Submitted or revised ${insertionResult.size} sequences: " +
+                insertionResult.joinToString { it.displayAccessionVersion() },
+        )
 
         return@transaction insertionResult
     }
