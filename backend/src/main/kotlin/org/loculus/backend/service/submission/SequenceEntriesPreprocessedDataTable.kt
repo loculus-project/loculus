@@ -15,7 +15,7 @@ const val SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME = "sequence_entries_prep
 object SequenceEntriesPreprocessedDataTable : Table(SEQUENCE_ENTRIES_PREPROCESSED_DATA_TABLE_NAME) {
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
-    val pipelineVersion = long("pipeline_version")
+    val pipelineVersionColumn = long("pipeline_version")
     val processedDataColumn =
         jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()
     val errorsColumn = jacksonSerializableJsonb<List<PreprocessingAnnotation>>("errors").nullable()
@@ -24,7 +24,7 @@ object SequenceEntriesPreprocessedDataTable : Table(SEQUENCE_ENTRIES_PREPROCESSE
     val startedProcessingAtColumn = datetime("started_processing_at").nullable()
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
 
-    override val primaryKey = PrimaryKey(accessionColumn, versionColumn, pipelineVersion)
+    override val primaryKey = PrimaryKey(accessionColumn, versionColumn, pipelineVersionColumn)
 
     fun accessionVersionEquals(accessionVersion: AccessionVersionInterface) =
         (accessionColumn eq accessionVersion.accession) and

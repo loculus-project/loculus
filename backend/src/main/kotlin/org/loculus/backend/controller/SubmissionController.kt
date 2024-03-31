@@ -49,7 +49,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
-import java.util.UUID
+import java.util.*
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 private val log = KotlinLogging.logger { }
@@ -128,6 +128,7 @@ class SubmissionController(
             ),
         ],
     )
+    @ApiResponse(responseCode = "422", description = EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE)
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun extractUnprocessedData(
         @PathVariable @Valid
@@ -138,12 +139,22 @@ class SubmissionController(
             message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
         )
         numberOfSequenceEntries: Int,
+        @RequestParam
+        pipelineVersion: Long,
     ): ResponseEntity<StreamingResponseBody> {
+        val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion()
+        if (pipelineVersion < currentProcessingPipelineVersion) {
+            throw UnprocessableEntityException(
+                "The processing pipeline version $pipelineVersion is not accepted " +
+                    "anymore. The current pipeline version is $currentProcessingPipelineVersion.",
+            )
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-
-        val streamBody =
-            stream { submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism) }
+        val streamBody = stream {
+            submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
+        }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
@@ -157,6 +168,14 @@ class SubmissionController(
                 ),
             ],
         ),
+        parameters = [
+            Parameter(
+                name = "pipelineVersion",
+                description = "Version of the processing pipeline",
+                required = true,
+                schema = Schema(implementation = Int::class),
+            ),
+        ],
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "400", description = "On invalid NDJSON line. Rolls back the whole transaction.")
@@ -165,8 +184,10 @@ class SubmissionController(
     fun submitProcessedData(
         @PathVariable @Valid
         organism: Organism,
+        @RequestParam
+        pipelineVersion: Long,
         request: HttpServletRequest,
-    ) = submissionDatabaseService.updateProcessedData(request.inputStream, organism)
+    ) = submissionDatabaseService.updateProcessedData(request.inputStream, organism, pipelineVersion)
 
     @Operation(description = GET_RELEASED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)

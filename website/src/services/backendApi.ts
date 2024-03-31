@@ -176,6 +176,11 @@ const extractUnprocessedDataEndpoint = makeEndpoint({
             type: 'Query',
             schema: z.number(),
         },
+        {
+            name: 'pipelineVersion',
+            type: 'Query',
+            schema: z.number(),
+        },
     ],
     response: z.union([z.string(), unprocessedData]),
     errors: [notAuthorizedError],
@@ -191,6 +196,11 @@ const submitProcessedDataEndpoint = makeEndpoint({
             name: 'data',
             type: 'Body',
             schema: z.string(),
+        },
+        {
+            name: 'pipelineVersion',
+            type: 'Query',
+            schema: z.number(),
         },
     ],
     response: z.never(),

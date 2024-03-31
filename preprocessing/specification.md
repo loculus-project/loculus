@@ -47,7 +47,7 @@ Also see the Swagger UI available in the backend at `<backendUrl>/swagger-ui/ind
 
 ### Pulling unpreprocessed data
 
-To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequenceEntries` (integer). This returns a response in [NDJSON](http://ndjson.org/) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
+To retrieve unpreprocessed data, the preprocessing pipeline sends a POST request to the backend's `/extract-unprocessed-data` with the request parameter `numberOfSequenceEntries` (integer) and `pipelineVersion` (integer). This returns a response in [NDJSON](http://ndjson.org/) containing at most the specified number of sequence entries. If there are no entries that require preprocessing, an empty file is returned.
 
 In the unprocessed NDJSON, each line contains a sequence entry represented as a JSON object and looks as follows:
 
@@ -73,9 +73,11 @@ One JSON object has the following fields:
 }
 ```
 
+If the pipeline is outdated (i.e., its version is below the currently used pipeline version), the backend will respond with a `422` error.
+
 ### Returning preprocessed data
 
-To send back the preprocessed data, the preprocessing pipeline sends a POST request to the backend's `/submit-processed-data` endpoint with NDJSON in the request body.
+To send back the preprocessed data, the preprocessing pipeline sends a POST request to the backend's `/submit-processed-data` endpoint with the request parameter `pipelineVersion` (integer) and the data as NDJSON in the request body.
 
 In the NDJSON, each row contains a sequence entry version and a list of errors and a list of warnings represented as a JSON object. One JSON object has the following fields:
 
@@ -157,3 +159,7 @@ SARS-CoV-2 amino acid sequences:
 
 This is not yet specified.
 TODO https://github.com/loculus-project/loculus/issues/823
+
+## Reprocessing
+
+The backend accepts processed data from pipelines that have the current or newer version. It will automatically switch to a newer pipeline version if the newer version has successfully processed all sequences that had also been successfully processed by the current version.
