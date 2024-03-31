@@ -36,6 +36,10 @@ Sequence data as input for the preprocessing pipeline.
 The schema is to be understood per line of the NDJSON stream.
 """
 
+const val EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE = """
+The processing pipeline is outdated (i.e., the version is lower than the current version).
+"""
+
 const val SUBMIT_EDITED_DATA_DESCRIPTION = """
 Submit edited data for an accession version that corrects errors found by the preprocessing pipeline 
 or the user themselves. This will set the status of the accession version to
@@ -54,8 +58,9 @@ returned by the processing pipeline, so that it can technically be used for rele
 """
 
 const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
-On accession version that cannot be written to the database, e.g. if the accession does not exist or processing
- pipeline submits invalid data. Rolls back the whole transaction.
+The submitted data cannot be written to the database, e.g. if the accession does not exist, if the processing pipeline
+ is outdated (i.e., the pipeline version is lower than the current one) or if the processing pipeline submits invalid
+ data. Rolls back the whole transaction.
 """
 
 const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """

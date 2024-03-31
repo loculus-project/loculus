@@ -12,6 +12,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.addOrganismToPath
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForGetReleasedData
@@ -54,29 +55,34 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
         jwt: String? = jwtForProcessingPipeline,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
             .withAuth(jwt)
-            .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
+            .param("numberOfSequenceEntries", numberOfSequenceEntries.toString())
+            .param("pipelineVersion", pipelineVersion.toString()),
     )
 
     fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
         jwt: String? = jwtForProcessingPipeline,
     ): ResultActions {
         val stringContent = submittedProcessedData.joinToString("\n") { objectMapper.writeValueAsString(it) }
 
-        return submitProcessedDataRaw(stringContent, organism, jwt)
+        return submitProcessedDataRaw(stringContent, organism, pipelineVersion, jwt)
     }
 
     fun submitProcessedDataRaw(
         submittedProcessedData: String,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
         jwt: String? = jwtForProcessingPipeline,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/submit-processed-data", organism = organism))
+            .param("pipelineVersion", pipelineVersion.toString())
             .contentType(MediaType.APPLICATION_NDJSON_VALUE)
             .withAuth(jwt)
             .content(submittedProcessedData),

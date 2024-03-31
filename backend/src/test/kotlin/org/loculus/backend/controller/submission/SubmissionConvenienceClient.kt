@@ -22,6 +22,7 @@ import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectNdjsonAndGetContent
@@ -78,15 +79,21 @@ class SubmissionConvenienceClient(
     fun submitProcessedData(
         submittedProcessedData: List<SubmittedProcessedData>,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
     ) {
-        submitProcessedData(*submittedProcessedData.toTypedArray(), organism = organism)
+        submitProcessedData(
+            *submittedProcessedData.toTypedArray(),
+            organism = organism,
+            pipelineVersion = pipelineVersion,
+        )
     }
 
     fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
     ) {
-        client.submitProcessedData(*submittedProcessedData, organism = organism)
+        client.submitProcessedData(*submittedProcessedData, organism = organism, pipelineVersion = pipelineVersion)
             .andExpect(status().isNoContent)
     }
 
@@ -180,7 +187,8 @@ class SubmissionConvenienceClient(
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
         organism: String = DEFAULT_ORGANISM,
-    ) = client.extractUnprocessedData(numberOfSequenceEntries, organism)
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
+    ) = client.extractUnprocessedData(numberOfSequenceEntries, organism, pipelineVersion)
         .expectNdjsonAndGetContent<UnprocessedData>()
 
     fun getSequenceEntries(

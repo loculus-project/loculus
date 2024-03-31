@@ -280,7 +280,13 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Accession version $nonExistentAccession.1 does not exist"))
+            .andExpect(
+                jsonPath("\$.detail")
+                    .value(
+                        "Accession version $nonExistentAccession.1 does not exist or is not awaiting " +
+                            "any processing results",
+                    ),
+            )
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
             Status.IN_PROCESSING,
@@ -302,7 +308,8 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Accession version ${accessions.first()}.$nonExistentVersion does not exist",
+                    "Accession version ${accessions.first()}.$nonExistentVersion does not exist " +
+                        "or is not awaiting any processing results",
                 ),
             )
 
@@ -327,7 +334,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession version ${accessionsNotInProcessing.first()}.1 " +
-                        "is in not in state IN_PROCESSING (was AWAITING_APPROVAL)",
+                        "does not exist or is not awaiting any processing results",
                 ),
             )
 

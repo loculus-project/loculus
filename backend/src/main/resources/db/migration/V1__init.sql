@@ -12,6 +12,14 @@ create table groups_table (
     contact_email varchar(255) not null
 );
 
+create table current_processing_pipeline (
+    version bigint primary key,
+    started_using_at timestamp not null
+);
+
+insert into current_processing_pipeline (version, started_using_at)
+values (1, now());
+
 create table sequence_entries (
     accession text not null,
     version bigint not null,
@@ -64,7 +72,7 @@ from
     left join sequence_entries_preprocessed_data sepd on
         se.accession = sepd.accession
         and se.version = sepd.version
-        and sepd.pipeline_version = 1;
+        and sepd.pipeline_version = (select version from current_processing_pipeline);
 
 create table metadata_upload_aux_table (
     accession text,
