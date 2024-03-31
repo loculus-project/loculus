@@ -52,6 +52,7 @@ import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
+import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
@@ -77,6 +78,7 @@ class SubmissionDatabaseService(
     pool: DataSource,
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
     private val compressionService: CompressionService,
+    private val auditLogger: AuditLogger,
 ) {
 
     init {
@@ -160,15 +162,22 @@ class SubmissionDatabaseService(
         log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
+        val accessionVersions = mutableListOf<String>()
         reader.lineSequence().forEach { line ->
             val submittedProcessedData = try {
                 objectMapper.readValue<SubmittedProcessedData>(line)
             } catch (e: JacksonException) {
                 throw BadRequestException("Failed to deserialize NDJSON line: ${e.message}", e)
             }
+            accessionVersions.add(submittedProcessedData.displayAccessionVersion())
 
             insertProcessedDataWithStatus(submittedProcessedData, organism, pipelineVersion)
         }
+
+        auditLogger.log(
+            "<pipeline version $pipelineVersion>",
+            "Processed ${accessionVersions.size} sequences: ${accessionVersions.joinToString()}",
+        )
     }
 
     private fun insertProcessedDataWithStatus(
@@ -309,6 +318,10 @@ class SubmissionDatabaseService(
             .select { statusCondition and accessionCondition and scopeCondition }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
+        if (accessionVersionsToUpdate.isEmpty()) {
+            return emptyList()
+        }
+
         for (accessionVersionsChunk in accessionVersionsToUpdate.chunked(1000)) {
             SequenceEntriesTable.update(
                 where = {
@@ -319,6 +332,12 @@ class SubmissionDatabaseService(
                 it[approverColumn] = authenticatedUser.username
             }
         }
+
+        auditLogger.log(
+            authenticatedUser.username,
+            "Approved ${accessionVersionsToUpdate.size} sequences: " +
+                accessionVersionsToUpdate.joinToString { it.displayAccessionVersion() },
+        )
 
         return accessionVersionsToUpdate
     }
@@ -559,6 +578,12 @@ class SubmissionDatabaseService(
             ),
         )
 
+        auditLogger.log(
+            authenticatedUser.username,
+            "Revoked ${accessions.size} sequences: " +
+                accessions.joinToString(),
+        )
+
         return SequenceEntriesView
             .slice(
                 SequenceEntriesView.accessionColumn,
@@ -645,6 +670,12 @@ class SubmissionDatabaseService(
             SequenceEntriesTable.deleteWhere { accessionVersionIsIn(accessionVersionsChunk) }
         }
 
+        auditLogger.log(
+            authenticatedUser.username,
+            "Delete ${sequenceEntriesToDelete.size} " +
+                "unreleased sequences: " + sequenceEntriesToDelete.joinToString { it.displayAccessionVersion() },
+        )
+
         return sequenceEntriesToDelete
     }
 
@@ -665,6 +696,12 @@ class SubmissionDatabaseService(
         SequenceEntriesPreprocessedDataTable.deleteWhere {
             accessionVersionEquals(editedAccessionVersion)
         }
+
+        auditLogger.log(
+            authenticatedUser.username,
+            "Edited sequence: " +
+                editedAccessionVersion.displayAccessionVersion(),
+        )
     }
 
     fun getSequenceEntryVersionToEdit(

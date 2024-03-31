@@ -15,6 +15,7 @@ import org.loculus.backend.api.User
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ConflictException
 import org.loculus.backend.controller.NotFoundException
+import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 class GroupManagementDatabaseService(
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
+    private val auditLogger: AuditLogger,
 ) {
 
     fun getDetailsOfGroup(groupName: String): GroupDetails {
@@ -78,6 +80,8 @@ class GroupManagementDatabaseService(
             it[userNameColumn] = authenticatedUser.username
             it[groupNameColumn] = group.groupName
         }
+
+        auditLogger.log(authenticatedUser.username, "Created group: ${group.groupName}")
     }
 
     fun getGroupsOfUser(authenticatedUser: AuthenticatedUser): List<Group> {
@@ -122,6 +126,7 @@ class GroupManagementDatabaseService(
                 it[userNameColumn] = usernameToAdd
                 it[groupNameColumn] = groupName
             }
+            auditLogger.log(authenticatedUser.username, "Added $usernameToAdd to group $groupName")
         } catch (e: ExposedSQLException) {
             if (e.sqlState == UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE) {
                 throw ConflictException(
@@ -139,6 +144,7 @@ class GroupManagementDatabaseService(
             (userNameColumn eq usernameToRemove) and
                 (groupNameColumn eq groupName)
         }
+        auditLogger.log(authenticatedUser.username, "Removed $usernameToRemove from group $groupName")
     }
 
     fun getAllGroups(): List<Group> {
