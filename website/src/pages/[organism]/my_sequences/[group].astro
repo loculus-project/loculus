@@ -46,20 +46,10 @@ const {
 ---
 
 <BaseLayout title={`${cleanedOrganism.displayName} - My sequences`}>
-    <h1 class='title'>Viewing sequences for group {group}</h1>
-    {
-        groupNames.length > 1 && (
-            <>
-                Choose group:
-                <MySequencesGroupSelector
-                    groupNames={groupNames}
-                    selectedGroupName={group}
-                    organism={organism}
-                    client:load
-                />
-            </>
-        )
-    }
+    <h1 class='title'>
+        Viewing sequences for
+        <MySequencesGroupSelector groupNames={groupNames} selectedGroupName={group} organism={organism} client:load />
+    </h1>
 
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         <div class='md:w-72'>
