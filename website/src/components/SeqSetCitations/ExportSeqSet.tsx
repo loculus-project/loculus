@@ -1,5 +1,5 @@
-import Snackbar from '@mui/material/Snackbar';
 import { type FC, useState } from 'react';
+import { toast } from 'react-toastify';
 
 import type { SeqSet, SeqSetRecord } from '../../types/seqSetCitation';
 
@@ -10,7 +10,6 @@ type ExportSeqSetProps = {
 
 export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) => {
     const [isDownloading, setIsDownloading] = useState(false);
-    const [isCopyAlertOpen, setIsCopyAlertOpen] = useState(false);
     const [selectedDownload, setSelectedDownload] = useState(0);
     const [selectedCitation, setSelectedCitation] = useState(0);
 
@@ -87,9 +86,12 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
     };
 
     const copyToClipboard = async () => {
-        setIsCopyAlertOpen(true);
         const citationText = getSelectedCitationText();
         await navigator.clipboard.writeText(citationText);
+        toast.success('Copied to clipboard', {
+            position: 'bottom-center',
+            autoClose: 2000,
+        });
     };
 
     return (
@@ -97,12 +99,6 @@ export const ExportSeqSet: FC<ExportSeqSetProps> = ({ seqSet, seqSetRecords }) =
             <div className='flex justify-start items-center py-5'>
                 <h1 className='text-xl font-semibold'>Export</h1>
             </div>
-            <Snackbar
-                open={isCopyAlertOpen}
-                onClose={() => setIsCopyAlertOpen(false)}
-                autoHideDuration={2000}
-                message='Copied to clipboard'
-            />
             <div className='flex flex-col justify-around max-w-lg w-2/4'>
                 <div>
                     <div className='flex'>

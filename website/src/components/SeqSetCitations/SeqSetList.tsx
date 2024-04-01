@@ -1,18 +1,10 @@
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import TableSortLabel from '@mui/material/TableSortLabel';
-import { visuallyHidden } from '@mui/utils';
-import { type FC, type MouseEvent, type ChangeEvent, useState, useMemo } from 'react';
+import MUIPagination from '@mui/material/Pagination';
+import { type FC, type MouseEvent, useState, useMemo } from 'react';
 
 import { routes } from '../../routes/routes';
 import type { SeqSet } from '../../types/seqSetCitation';
+import MdiTriangle from '~icons/mdi/triangle';
+import MdiTriangleDown from '~icons/mdi/triangle-down';
 
 type Order = 'asc' | 'desc';
 
@@ -55,31 +47,32 @@ const SeqSetListHead = (props: SeqSetListHeadProps) => {
     };
 
     return (
-        <TableHead sx={{ backgroundColor: 'whitesmoke' }}>
-            <TableRow>
-                {headCells.map((headCell) => (
-                    <TableCell
+        <thead className='bg-gray-100'>
+            <tr>
+                {headCells.map((headCell, index) => (
+                    <th
                         key={headCell.id}
-                        align='left'
-                        padding='normal'
-                        sortDirection={orderBy === headCell.id ? order : false}
+                        className={`px-2 py-5 text-xs w-1/12 font-medium tracking-wider uppercase ${index === 0 ? 'pl-6' : 'last:pr-6 text-left'}`}
                     >
-                        <TableSortLabel
-                            active={orderBy === headCell.id}
-                            direction={orderBy === headCell.id ? order : 'asc'}
+                        <span
+                            className={`cursor-pointer ${orderBy === headCell.id ? 'active' : ''}`}
                             onClick={createSortHandler(headCell.id)}
                         >
                             {headCell.label}
                             {orderBy === headCell.id ? (
-                                <Box component='span' sx={visuallyHidden}>
-                                    {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                                </Box>
+                                <span>
+                                    {order === 'desc' ? (
+                                        <MdiTriangleDown className='w-3 h-3 ml-1 inline' />
+                                    ) : (
+                                        <MdiTriangle className='w-3 h-3 ml-1 inline' />
+                                    )}
+                                </span>
                             ) : null}
-                        </TableSortLabel>
-                    </TableCell>
+                        </span>
+                    </th>
                 ))}
-            </TableRow>
-        </TableHead>
+            </tr>
+        </thead>
     );
 };
 
@@ -91,8 +84,8 @@ type SeqSetListProps = {
 export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<keyof SeqSet>('createdAt');
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [page, setPage] = useState(1);
+    const rowsPerPage = 5;
 
     const handleRequestSort = (_: MouseEvent<unknown>, property: keyof SeqSet) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -108,9 +101,8 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
         setPage(newPage);
     };
 
-    const handleChangeRowsPerPage = (event: ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
+    const getMaxPages = () => {
+        return Math.ceil(seqSets.length / rowsPerPage);
     };
 
     const getComparator = <Key extends keyof any>(
@@ -139,12 +131,10 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
     };
 
     // Avoid a layout jump when reaching the last page with empty rows.
-    const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - seqSets.length) : 0;
+    const emptyRows = page > 1 ? Math.max(0, page * rowsPerPage - seqSets.length) : 0;
 
     const visibleRows = useMemo(() => {
-        return (seqSets as any)
-            .sort(getComparator(order, orderBy))
-            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+        return (seqSets as any).sort(getComparator(order, orderBy)).slice((page - 1) * rowsPerPage, page * rowsPerPage);
     }, [seqSets, order, orderBy, page, rowsPerPage]);
 
     const maxCellLength = 25;
@@ -164,66 +154,58 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
     };
 
     return (
-        <Box sx={{ width: '100%' }}>
-            <Paper sx={{ width: '100%', mb: 2 }}>
-                <TableContainer>
-                    <Table sx={{ minWidth: 750 }} aria-labelledby='tableTitle' size='medium'>
-                        <SeqSetListHead
-                            order={order}
-                            orderBy={orderBy}
-                            onRequestSort={handleRequestSort}
-                            rowCount={seqSets.length}
-                        />
-                        <TableBody>
-                            {visibleRows.map((row: SeqSet, index: number) => {
-                                const labelId = `table-row-${index}`;
-                                return (
-                                    <TableRow
-                                        id={labelId}
-                                        hover
-                                        onClick={(event) =>
-                                            handleClick(event, row.seqSetId, row.seqSetVersion.toString())
-                                        }
-                                        role='checkbox'
-                                        tabIndex={-1}
-                                        key={row.seqSetId}
-                                        sx={{ cursor: 'pointer' }}
-                                    >
-                                        <TableCell align='left'>{formatDate(row.createdAt)}</TableCell>
-                                        <TableCell align='left'>{truncateCell(row.name)}</TableCell>
-                                        <TableCell component='th' scope='row'>
-                                            {row.seqSetVersion}
-                                        </TableCell>
-                                        <TableCell align='left'>
-                                            {row.seqSetDOI !== undefined
-                                                ? truncateCell(row.seqSetDOI as string)
-                                                : 'N/A'}
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
-                            {emptyRows > 0 ? (
-                                <TableRow sx={{ height: 53 * emptyRows }}>
-                                    <TableCell colSpan={6} />
-                                </TableRow>
-                            ) : null}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-                {seqSets.length === 0 ? (
-                    <p className='px-8 py-8'> You have no SeqSets yet. </p>
-                ) : (
-                    <TablePagination
-                        rowsPerPageOptions={[5, 10, 25]}
-                        component='div'
-                        count={seqSets.length}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={handleChangePage}
-                        onRowsPerPageChange={handleChangeRowsPerPage}
+        <div className='shadow-md'>
+            <table className='w-full text-left border-collapse'>
+                {seqSets.length > 0 ? (
+                    <SeqSetListHead
+                        order={order}
+                        orderBy={orderBy}
+                        onRequestSort={handleRequestSort}
+                        rowCount={seqSets.length}
                     />
-                )}
-            </Paper>
-        </Box>
+                ) : null}
+
+                <tbody className='bg-white'>
+                    {visibleRows.map((row: SeqSet, index: number) => {
+                        const labelId = `table-row-${index}`;
+                        return (
+                            <tr
+                                id={labelId}
+                                className='hover:bg-primary-100 border-gray-100 cursor-pointer'
+                                onClick={(event) => handleClick(event, row.seqSetId, row.seqSetVersion.toString())}
+                                key={row.seqSetId}
+                            >
+                                <td className='px-2 whitespace-nowrap text-primary-900 pl-6'>
+                                    {formatDate(row.createdAt)}
+                                </td>
+                                <td className='px-2 py-2 text-primary-900 last:pr-6'>{truncateCell(row.name)}</td>
+                                <td className='px-2 py-2 text-primary-900 last:pr-6'>{row.seqSetVersion}</td>
+                                <td className='px-2 py-2 text-primary-900 last:pr-6'>
+                                    {row.seqSetDOI !== undefined ? truncateCell(row.seqSetDOI as string) : 'N/A'}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                    {emptyRows > 0 ? (
+                        <tr style={{ height: 40 * emptyRows }}>
+                            <td colSpan={8} />
+                        </tr>
+                    ) : null}
+                </tbody>
+            </table>
+            {seqSets.length === 0 ? (
+                <p className='px-8 py-8'> You have no SeqSets yet. </p>
+            ) : (
+                <MUIPagination
+                    className='py-4 w-full flex justify-center'
+                    page={page}
+                    count={getMaxPages()}
+                    color='primary'
+                    variant='outlined'
+                    shape='rounded'
+                    onChange={handleChangePage}
+                />
+            )}
+        </div>
     );
 };
