@@ -5,12 +5,12 @@ import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
 
-import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { EditPage } from './pages/edit/edit.page';
 import { NavigationFixture } from './pages/navigation.fixture';
 import { ReviewPage } from './pages/review/review.page.ts';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
+import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submission/submit.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
