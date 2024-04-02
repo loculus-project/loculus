@@ -114,7 +114,7 @@ export const SearchForm: FC<SearchFormProps> = ({
             fieldValues.map((field) => {
                 if (field.grouped === true) {
                     return (
-                        <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md'>
+                        <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
                             <h3 className='text-gray-500 text-sm mb-1'>{field.label}</h3>
 
                             {field.groupedFields.map((groupedField) => (
