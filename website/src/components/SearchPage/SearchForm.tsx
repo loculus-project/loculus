@@ -157,7 +157,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                 className={`${
                     isMobileOpen ? 'translate-y-0' : 'translate-y-full'
                 } fixed bottom-0 left-0 w-full bg-white h-4/5 rounded-t-lg overflow-auto offCanvasTransform
-                      md:translate-y-0 md:static md:h-auto md:overflow-visible`}
+                      md:translate-y-0 md:static md:h-auto md:overflow-visible md:min-w-72`}
             >
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <div className='flex'>
