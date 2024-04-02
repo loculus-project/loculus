@@ -10,6 +10,7 @@ import {
     testUserPassword,
 } from './e2e.fixture.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
+import { getTestSequences, setTestSequences } from './util/testSequenceProvider.ts';
 import { LapisClient } from '../src/services/lapisClient.ts';
 import type { AccessionVersion } from '../src/types/backend.ts';
 import { getTestSequences, setTestSequences } from './util/testSequenceProvider.ts';
@@ -75,6 +76,7 @@ export default async function globalSetupForPlaywright() {
                 .join(', '),
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _ of Array(maxNumberOfRetries)) {
         e2eLogger.info('waiting for sequences in LAPIS...');
         await waitSeconds(secondsToWait);

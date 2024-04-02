@@ -1,5 +1,5 @@
-import { authorize, expect, test } from '../../e2e.fixture';
 import { SeqSetPage } from './seqset.page';
+import { authorize, expect, test } from '../../e2e.fixture';
 
 test.describe.configure({ mode: 'serial' });
 let testSeqSetManager: SeqSetPage;
