@@ -10,6 +10,8 @@ import type { MetadataFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
+const searchButtonText = 'Search sequences';
+
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),
     getLapisUrl: vi.fn().mockReturnValue('lapis.dummy.url'),
@@ -19,7 +21,7 @@ const queryClient = new QueryClient();
 
 const defaultSearchFormFilters = [
     { name: 'field1', type: 'string' as const, label: 'Field 1', autocomplete: false, filterValue: '' },
-    { name: 'field2', type: 'date' as const, autocomplete: false, filterValue: '' },
+    { name: 'field2', type: 'date' as const, autocomplete: false, filterValue: '', label: 'Field 2' },
     { name: 'field3', type: 'pango_lineage' as const, label: 'Field 3', autocomplete: true, filterValue: '' },
 ];
 
@@ -60,8 +62,8 @@ describe('SearchForm', () => {
     test('should render the form with all fields that are searchable', async () => {
         renderSearchForm();
 
-        expect(screen.getByPlaceholderText('Field 1')).toBeDefined();
-        expect(screen.getByLabelText('Field2')).toBeDefined();
+        expect(screen.getByLabelText('Field 1')).toBeDefined();
+        expect(screen.getByText('Field 2')).toBeDefined();
         expect(screen.getByLabelText('Field 3')).toBeDefined();
     });
 
@@ -69,9 +71,9 @@ describe('SearchForm', () => {
         renderSearchForm();
 
         const filterValue = 'test';
-        await userEvent.type(screen.getByPlaceholderText('Field 1'), filterValue);
+        await userEvent.type(screen.getByLabelText('Field 1'), filterValue);
 
-        const searchButton = screen.getByRole('button', { name: 'Search' });
+        const searchButton = screen.getByRole('button', { name: searchButtonText });
         await userEvent.click(searchButton);
 
         expect(window.location.href).toBe(
@@ -91,7 +93,7 @@ describe('SearchForm', () => {
             },
         ]);
 
-        expect(screen.getByPlaceholderText('Field 1')).toBeDefined();
+        expect(screen.getByLabelText('Field 1')).toBeDefined();
         expect(screen.queryByPlaceholderText('NotSearchable')).not.toBeInTheDocument();
     });
 
@@ -105,13 +107,18 @@ describe('SearchForm', () => {
             },
         ]);
 
-        const timestampField = screen.getByLabelText('Timestamp field');
+        const timestampLabel = screen.getByText('Timestamp field');
+        const timestampField = timestampLabel.nextElementSibling?.getElementsByTagName('input')[0];
+        if (!timestampField) {
+            throw new Error('Timestamp field not found');
+        }
         expect(timestampField).toHaveValue('2024-01-25');
 
-        await userEvent.type(timestampField, '2024-01-26');
-        await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+        await userEvent.type(timestampField, '2025');
 
-        expect(window.location.href).toContain(`${timestampFieldName}=1706233600`);
+        await userEvent.click(screen.getByRole('button', { name: searchButtonText }));
+
+        expect(window.location.href).toContain(`${timestampFieldName}=1737769600`);
     });
 
     test('should display dates of date fields', async () => {
@@ -123,13 +130,17 @@ describe('SearchForm', () => {
                 filterValue: '2024-01-25',
             },
         ]);
-
-        const dateField = screen.getByLabelText('Date field');
+        const dateLabel = screen.getByText('Date field');
+        const dateField = dateLabel.nextElementSibling?.getElementsByTagName('input')[0];
+        if (!dateField) {
+            throw new Error('Date field not found');
+        }
         expect(dateField).toHaveValue('2024-01-25');
 
-        await userEvent.type(dateField, '2024-01-26');
-        await userEvent.click(screen.getByRole('button', { name: 'Search' }));
+        await userEvent.type(dateField, '2025');
 
-        expect(window.location.href).toContain(`${dateFieldName}=2024-01-26`);
+        await userEvent.click(screen.getByRole('button', { name: 'Search sequences' }));
+
+        expect(window.location.href).toContain(`${dateFieldName}=2025-01-25`);
     });
 });
