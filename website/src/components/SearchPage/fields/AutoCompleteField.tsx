@@ -72,7 +72,10 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, allFields
         <Combobox value={field.filterValue} onChange={(value) => handleFieldChange(field.name, value)}>
             <div className='relative'>
                 <Combobox.Input
-                    className='w-full py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+                    className='w-full py-2 pl-3  text-sm leading-5
+        text-gray-900 border border-gray-300 rounded-md focus:outline-none
+         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+         pr-30'
                     displayValue={(value: string) => value}
                     onChange={(event) => setQuery(event.target.value)}
                     onFocus={handleOpen}
@@ -81,7 +84,7 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, allFields
                 />
                 {(field.filterValue !== '' || query !== '') && (
                     <button
-                        className='absolute inset-y-0 right-8 flex items-center pr-2'
+                        className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                         onClick={() => {
                             setQuery('');
                             handleFieldChange(field.name, '');
