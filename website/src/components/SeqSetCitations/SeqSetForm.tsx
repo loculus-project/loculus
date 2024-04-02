@@ -1,4 +1,3 @@
-import CircularProgress from '@mui/material/CircularProgress';
 import { AxiosError } from 'axios';
 import { type FC, type FormEvent, useState, useEffect, useCallback } from 'react';
 
@@ -200,7 +199,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                 disabled={isLoading || seqSetRecordValidation !== '' || seqSetNameValidation !== ''}
                 onClick={handleSubmit}
             >
-                {isLoading ? <CircularProgress size={20} color='primary' /> : 'Save'}
+                {isLoading ? <span className='loading loading-spinner loading-sm mr-2 relative top-1' /> : 'Save'}
             </button>
         </div>
     );
