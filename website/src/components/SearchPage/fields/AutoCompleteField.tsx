@@ -1,12 +1,24 @@
-import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
-import Box from '@mui/material/Box';
-import TextField from '@mui/material/TextField';
-import { type FC, useEffect, useMemo, useState } from 'react';
+import { Combobox } from '@headlessui/react';
+import { type FC, useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 
 import type { FieldProps } from './FieldProps';
+import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import type { MetadataFilter } from '../../../types/config.ts';
+
+const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
+    <TextField
+        ref={ref}
+        value={props.value}
+        onChange={props.onChange}
+        onFocus={props.onFocus}
+        disabled={props.disabled}
+        autoComplete='off'
+        placeholder={props.placeholder ?? ''}
+        label={props.placeholder ?? ''}
+    />
+));
 
 const logger = getClientLogger('AutoCompleteField');
 
@@ -15,15 +27,9 @@ export type AutoCompleteFieldProps = FieldProps & {
     lapisUrl: string;
 };
 
-export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({
-    field,
-    allFields,
-    handleFieldChange,
-    isLoading,
-    lapisUrl,
-}) => {
-    const [open, setOpen] = useState(false);
-
+export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, allFields, handleFieldChange, lapisUrl }) => {
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const [query, setQuery] = useState('');
     const {
         data,
         isLoading: isOptionListLoading,
@@ -40,7 +46,9 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({
     const handleOpen = () => {
         const otherFieldsFilter = getOtherFieldsFilter(allFields, field);
         mutate({ fields: [field.name], ...otherFieldsFilter });
-        setOpen(true);
+        if (buttonRef.current) {
+            buttonRef.current.click();
+        }
     };
 
     const options = useMemo(
@@ -52,38 +60,103 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({
         [data, field.name],
     );
 
+    const filteredOptions = useMemo(
+        () =>
+            query === ''
+                ? options
+                : options.filter((option) => option.option.toLowerCase().includes(query.toLowerCase())),
+        [options, query],
+    );
+
     return (
-        <Autocomplete
-            filterOptions={createFilterOptions({
-                matchFrom: 'any',
-                limit: 200,
-            })}
-            open={open}
-            onOpen={handleOpen}
-            onClose={() => setOpen(false)}
-            options={options}
-            loading={isOptionListLoading}
-            getOptionLabel={(option) => option.option}
-            disabled={isLoading}
-            size='small'
-            renderInput={(params) => (
-                <TextField {...params} label={field.label} margin='dense' size='small' className='w-60' />
-            )}
-            renderOption={(props, option) => (
-                <Box component='li' {...props}>
-                    {option.option} ({option.count.toLocaleString()})
-                </Box>
-            )}
-            isOptionEqualToValue={(option, value) => option.option === value.option}
-            onChange={(_, value) => {
-                return handleFieldChange(field.name, value?.option.toString() ?? '');
-            }}
-            onInputChange={(_, value) => {
-                return handleFieldChange(field.name, value);
-            }}
-            value={{ option: field.filterValue, count: NaN }}
-            autoComplete
-        />
+        <Combobox value={field.filterValue} onChange={(value) => handleFieldChange(field.name, value)}>
+            <div className='relative'>
+                <Combobox.Input
+                    className='w-full py-2 pl-3  text-sm leading-5
+        text-gray-900 border border-gray-300 rounded-md focus:outline-none
+         focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+         pr-30'
+                    displayValue={(value: string) => value}
+                    onChange={(event) => setQuery(event.target.value)}
+                    onFocus={handleOpen}
+                    placeholder={field.label}
+                    as={CustomInput}
+                />
+                {(field.filterValue !== '' || query !== '') && (
+                    <button
+                        className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
+                        onClick={() => {
+                            setQuery('');
+                            handleFieldChange(field.name, '');
+                        }}
+                    >
+                        <svg className='w-5 h-5 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
+                            <path
+                                fillRule='evenodd'
+                                d='M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z'
+                                clipRule='evenodd'
+                            />
+                        </svg>
+                    </button>
+                )}
+                <Combobox.Button
+                    className='absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none'
+                    ref={buttonRef}
+                >
+                    <svg className='w-5 h-5 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
+                        <path d='M7 7l3-3 3 3m0 6l-3 3-3-3' />
+                    </svg>
+                </Combobox.Button>
+
+                <Combobox.Options
+                    className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm
+          min-h-32
+          '
+                >
+                    {isOptionListLoading ? (
+                        <div className='px-4 py-2 text-gray-500'>Loading...</div>
+                    ) : filteredOptions.length === 0 ? (
+                        <div className='px-4 py-2 text-gray-500'>No options available</div>
+                    ) : (
+                        filteredOptions.map((option) => (
+                            <Combobox.Option
+                                key={option.option}
+                                className={({ active }) =>
+                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                    }`
+                                }
+                                value={option.option}
+                            >
+                                {({ selected, active }) => (
+                                    <>
+                                        <span className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}>
+                                            {option.option}
+                                        </span>
+                                        <span className='inline-block ml-1'>({option.count.toLocaleString()})</span>
+                                        {selected && (
+                                            <span
+                                                className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                                                    active ? 'text-white' : 'text-blue-500'
+                                                }`}
+                                            >
+                                                <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>
+                                                    <path
+                                                        fillRule='evenodd'
+                                                        d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                                                        clipRule='evenodd'
+                                                    />
+                                                </svg>
+                                            </span>
+                                        )}
+                                    </>
+                                )}
+                            </Combobox.Option>
+                        ))
+                    )}
+                </Combobox.Options>
+            </div>
+        </Combobox>
     );
 };
 
