@@ -98,3 +98,12 @@ table, tr, td {
 * {
   @apply break-words;
 }
+
+.rs-input{
+  background: transparent; //overwrites the datepicker search element background which is otherwise white
+}
+
+.rs-picker input{
+  text-transform: lowercase;
+
+}

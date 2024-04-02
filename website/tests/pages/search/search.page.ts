@@ -29,12 +29,7 @@ export class SearchPage {
         await this.resetButton.click();
     }
 
-    // Note: This only gets a locator when the field is empty
-    public getEmptyAccessionField() {
-        return this.page.getByPlaceholder(ACCESSION, { exact: true });
-    }
-
-    public getFilledAccessionField() {
+    public getAccessionField() {
         return this.page.getByLabel(ACCESSION, { exact: true });
     }
 
