@@ -17,11 +17,15 @@ fields:
     notSearchable: true
   - name: submitter
     type: string
+    generateIndex: true
+    autocomplete: true
   - name: groupId
     type: int
+    autocomplete: true
   - name: groupName
     type: string
     generateIndex: true
+    autocomplete: true
   - name: submittedAt
     type: timestamp
   - name: releasedAt
