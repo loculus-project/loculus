@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-const colors = require('tailwindcss/colors');
+
 const mainTailwindColor = {
     50: '#f2f9fd',
     100: '#e4f1fa',
@@ -15,7 +15,7 @@ const mainTailwindColor = {
 };
 
 module.exports = {
-    content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}'],
+    content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}', 'node_modules/flowbite-react/lib/esm/**/*.js'],
     theme: {
         extend: {
             colors: {
@@ -25,7 +25,12 @@ module.exports = {
             },
         },
     },
-    plugins: [require('daisyui'), require('flowbite/plugin', '@tailwindcss/forms')],
+    plugins: [
+        require('daisyui'),
+        require('flowbite/plugin', '@tailwindcss/forms')({
+            strategy: 'class',
+        }),
+    ],
     darkMode: 'false',
     daisyui: {
         darkTheme: 'customTheme', // name of one of the included themes for dark mode

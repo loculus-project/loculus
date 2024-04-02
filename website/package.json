@@ -48,6 +48,7 @@
         "react-dom": "^18.2.0",
         "react-toastify": "^10.0.5",
         "react-tooltip": "^5.26.3",
+        "rsuite": "^5.58.1",
         "unplugin-icons": "^0.18.5",
         "winston": "^3.13.0",
         "zod": "^3.22.4"

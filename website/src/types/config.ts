@@ -3,6 +3,8 @@ import z from 'zod';
 import { orderByType } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
+export const metadataPossibleTypes = ['string', 'date', 'int', 'float', 'pango_lineage', 'timestamp'] as const;
+
 export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
@@ -11,7 +13,7 @@ export const customDisplay = z.object({
 export const metadata = z.object({
     name: z.string(),
     displayName: z.string().optional(),
-    type: z.enum(['string', 'date', 'int', 'float', 'pango_lineage', 'timestamp']),
+    type: z.enum(metadataPossibleTypes),
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
@@ -24,6 +26,17 @@ export type Metadata = z.infer<typeof metadata>;
 export type MetadataFilter = Metadata & {
     filterValue: string;
     label?: string;
+    fieldGroup?: string;
+    grouped?: false;
+};
+
+export type GroupedMetadataFilter = {
+    name: string;
+    groupedFields: MetadataFilter[];
+    type: Metadata['type'];
+    grouped: true;
+    label?: string;
+    displayName?: string;
 };
 
 export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
