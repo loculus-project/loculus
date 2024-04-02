@@ -1,0 +1,20 @@
+{
+    "name": "Loculus",
+    "serverSide": {
+        "backendUrl": "https://backend-main.loculus.org",
+        "lapisUrls": {
+            "dummy-organism": "https://lapis-main.loculus.org/dummy-organism",
+            "ebola-zaire": "https://lapis-main.loculus.org/ebola-zaire",
+            "mpox": "https://lapis-main.loculus.org/mpox"
+        },
+        "keycloakUrl": "https://authentication-main.loculus.org"
+    },
+    "public": {
+        "backendUrl": "https://backend-main.loculus.org",
+        "lapisUrls": {
+            "dummy-organism": "https://lapis-main.loculus.org/dummy-organism",
+            "ebola-zaire": "https://lapis-main.loculus.org/ebola-zaire",
+            "mpox": "https://lapis-main.loculus.org/mpox"
+        }
+    }
+}
