@@ -47,6 +47,7 @@ const CustomizedDatePicker: FC<FieldProps & ValueConverter> = ({
                 </label>
                 <DatePicker
                     name={field.name}
+                    placeholder='yyyy-mm-dd'
                     defaultValue={field.filterValue ? valueToDateConverter(field.filterValue) : undefined}
                     onChange={(value) => {
                         if (value && isNaN(value.getTime())) {

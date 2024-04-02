@@ -262,11 +262,11 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
     for (const filter of filters) {
         if (filter.fieldGroup !== undefined) {
             if (!groupsMap.has(filter.fieldGroup)) {
-                  const fieldForGroup: GroupedMetadataFilter = {
-                      name: filter.fieldGroup,
-                      groupedFields: [],
-                      type: filter.type,
-                      grouped: true,
+                const fieldForGroup: GroupedMetadataFilter = {
+                    name: filter.fieldGroup,
+                    groupedFields: [],
+                    type: filter.type,
+                    grouped: true,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);
