@@ -102,3 +102,8 @@ table, tr, td {
 .rs-input{
   background: transparent; //overwrites the datepicker search element background which is otherwise white
 }
+
+.rs-picker input{
+  text-transform: lowercase;
+
+}
