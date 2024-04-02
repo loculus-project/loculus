@@ -16,6 +16,7 @@ updates:
         exclude-patterns:
           - "@mui/material"
           - change-case
+          - flowbite-react # Due to https://github.com/themesberg/flowbite-react/issues/1343
   - package-ecosystem: npm
     directory: docs/
     schedule:
