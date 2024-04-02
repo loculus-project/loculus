@@ -1,4 +1,4 @@
-import {defineConfig} from 'astro/config';
+import { defineConfig } from 'astro/config';
 import node from '@astrojs/node';
 import tailwind from '@astrojs/tailwind';
 import Icons from 'unplugin-icons/vite';
@@ -20,6 +20,6 @@ export default defineConfig({
         optimizeDeps: {
             exclude: ['fsevents', 'msw/node', 'msw'],
         },
-        plugins: [Icons({compiler: 'jsx', jsx: 'react'})],
+        plugins: [Icons({ compiler: 'jsx', jsx: 'react' })],
     },
 });
