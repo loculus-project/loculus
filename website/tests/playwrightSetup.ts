@@ -11,10 +11,9 @@ import {
 } from './e2e.fixture.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
 import { getTestSequences, setTestSequences } from './util/testSequenceProvider.ts';
+import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
 import { LapisClient } from '../src/services/lapisClient.ts';
 import type { AccessionVersion } from '../src/types/backend.ts';
-import { getTestSequences, setTestSequences } from './util/testSequenceProvider.ts';
-import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
 
 enum LapisStateBeforeTests {
     NotCorrectSequencesInLapis = 'NotCorrectSequencesInLapis',
