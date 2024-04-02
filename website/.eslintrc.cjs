@@ -24,7 +24,7 @@ module.exports = {
             version: 'detect', // React version. "detect" automatically picks the version you have installed.
         },
     },
-    ignorePatterns: ['dist', '.eslintrc.cjs'],
+    ignorePatterns: ['dist', '.eslintrc.cjs', 'tailwind.config.cjs', 'astro.config.mjs'],
     overrides: [
         {
             // Define the configuration for `.astro` file.
