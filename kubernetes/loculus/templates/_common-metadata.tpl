@@ -21,7 +21,6 @@ fields:
     autocomplete: true
   - name: groupId
     type: int
-    generateIndex: true
     autocomplete: true
   - name: groupName
     type: string
