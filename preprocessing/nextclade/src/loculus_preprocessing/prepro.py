@@ -43,7 +43,7 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     response = requests.post(url, data=params, headers=headers, timeout=10)
     if not response.ok:
         if response.status_code == 422:
-            print("{}. Sleeping for a while.".format(response.text))
+            logging.debug(f"{response.text}.\nSleeping for a while.")
             time.sleep(60 * 10)
             return []
         msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
