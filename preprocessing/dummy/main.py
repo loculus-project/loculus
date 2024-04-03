@@ -68,8 +68,9 @@ def fetch_unprocessed_sequences(n: int) -> List[Sequence]:
     response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         if response.status_code == 422:
-            print("{}. Sleeping for a while.".format(response.text)
+            print("{}. Sleeping for a while.".format(response.text))
             time.sleep(60 * 10)
+            return []
         raise Exception("Fetching unprocessed data failed. Status code: {}".format(response.status_code), response.text)
     return parse_ndjson(response.text)
 

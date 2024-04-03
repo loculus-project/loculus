@@ -42,6 +42,10 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     headers = {"Authorization": "Bearer " + get_jwt(config)}
     response = requests.post(url, data=params, headers=headers, timeout=10)
     if not response.ok:
+        if response.status_code == 422:
+            print("{}. Sleeping for a while.".format(response.text))
+            time.sleep(60 * 10)
+            return []
         msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
         raise Exception(
             msg,
