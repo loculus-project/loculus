@@ -10,6 +10,12 @@ rename:
   ncbi_submitter_affiliation: author_affiliation
   ncbi_submitter_country: submitter_country
   ncbi_submitter_names: authors
+  ncbi_host_name: host_name
+  ncbi_host_tax_id: host_taxon_id
+  ncbi_virus_name: virus_name
+  ncbi_virus_taxon_id: virus_taxon_id
+  ncbi_release_date: insdc_release_date
+  ncbi_update_date: insdc_update_date
 keep:
   - division
   - country

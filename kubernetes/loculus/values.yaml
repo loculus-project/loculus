@@ -273,8 +273,8 @@ defaultOrganisms:
           displayName: Collection date
           type: date
           required: true
-        - name: ncbi_release_date
-          displayName: NCBI release date
+        - name: insdc_release_date
+          displayName: INSDC release date
           type: date
         - name: country
           type: string
@@ -320,11 +320,11 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
-        - name: ncbi_host_name
+        - name: host_name
           type: string
           generateIndex: true
           autocomplete: true
-        - name: ncbi_host_tax_id
+        - name: host_taxon_id
           type: integer
           autocomplete: true
         - name: ncbi_is_lab_host
@@ -335,17 +335,17 @@ defaultOrganisms:
           type: integer
         - name: ncbi_protein_count
           type: integer
-        - name: ncbi_update_date
+        - name: insdc_update_date
           type: date
         - name: ncbi_sourcedb
           type: string
           generateIndex: true
           autocomplete: true
-        - name: ncbi_virus_name
+        - name: virus_name
           type: string
           generateIndex: true
           autocomplete: true
-        - name: ncbi_virus_tax_id
+        - name: virus_taxon_id
           type: integer
           autocomplete: true
         - name: isolate_source
@@ -454,7 +454,7 @@ defaultOrganisms:
                 date: collection_date
                 release_date: ncbi_release_date
               required: true
-            ncbi_release_date:
+            insdc_release_date:
               function: parse_timestamp
               inputs:
                 timestamp: ncbi_release_date
@@ -509,16 +509,16 @@ defaultOrganisms:
               function: identity
               inputs:
                 input: ncbi_completeness
-            ncbi_host_name:
+            host_name:
               function: identity
               inputs:
-                input: ncbi_host_name
-            ncbi_host_tax_id:
+                input: host_name
+            host_taxon_id:
               function: identity
               args:
                 type: int
               inputs:
-                input: ncbi_host_tax_id
+                input: host_taxon_id
             ncbi_is_lab_host:
               function: identity
               inputs:
@@ -535,24 +535,24 @@ defaultOrganisms:
                 type: int
               inputs:
                 input: ncbi_protein_count
-            ncbi_update_date:
+            insdc_update_date:
               function: parse_timestamp
               inputs:
-                timestamp: ncbi_update_date
+                timestamp: insdc_update_date
             ncbi_sourcedb:
               function: identity
               inputs:
                 input: ncbi_sourcedb
-            ncbi_virus_name:
+            virus_name:
               function: identity
               inputs:
-                input: ncbi_virus_name
-            ncbi_virus_tax_id:
+                input: virus_name
+            virus_tax_id:
               function: identity
               args:
                 type: int
               inputs:
-                input: ncbi_virus_tax_id
+                input: virus_tax_id
             isolate_source:
               function: identity
               inputs:
