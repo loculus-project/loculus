@@ -106,21 +106,21 @@ rule submit_to_loculus:
             --metadata {input.metadata} \
             --sequences {input.sequences} \
             --config-file {input.config} \
-            --log-level {params.log_level} \
+            --log-level {params.log_level}
         sleep 100 
         python scripts/submit_to_loculus.py \
             --mode submit \
             --metadata {input.metadata} \
             --sequences {input.sequences} \
             --config-file {input.config} \
-            --log-level {params.log_level} \
+            --log-level {params.log_level}
         sleep 300 
         python scripts/submit_to_loculus.py \
             --mode submit \
             --metadata {input.metadata} \
             --sequences {input.sequences} \
             --config-file {input.config} \
-            --log-level {params.log_level} \
+            --log-level {params.log_level}
         """
 
 
