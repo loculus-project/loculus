@@ -12,6 +12,7 @@ import pytz
 from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FunctionArgs,
     ProcessingAnnotation,
     ProcessingInput,
     ProcessingResult,
@@ -23,14 +24,17 @@ logger = logging.getLogger(__name__)
 class ProcessingFunctions:
     @classmethod
     def call_function(
-        cls, function_name, input_data: ProcessingInput, output_field: str
+        cls, function_name: str, args: FunctionArgs, input_data: ProcessingInput, output_field: str
     ) -> ProcessingResult:
         if hasattr(cls, function_name):
             func = getattr(cls, function_name)
             try:
-                result = func(input_data, output_field)
+                result = func(input_data, output_field, args=args)
             except Exception as e:
-                message = f"Error calling function {function_name} with arguments {input_data}: {e}"
+                message = (
+                    f"Error calling function {function_name}"
+                    f"with input {input_data} and args {args}: {e}"
+                )
                 logger.exception(message)
             if isinstance(result, ProcessingResult):
                 return result
@@ -255,7 +259,9 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def identity(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
+    def identity(
+        input_data: ProcessingInput, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
             return ProcessingResult(
@@ -270,4 +276,13 @@ class ProcessingFunctions:
                     )
                 ],
             )
-        return ProcessingResult(datum=input_data["input"], warnings=[], errors=[])
+        datum = input_data["input"]
+        if args and "type" in args:
+            match args["type"]:
+                case "int":
+                    datum = int(datum)
+                case "float":
+                    datum = float(datum)
+                case _:
+                    pass
+        return ProcessingResult(datum=datum, warnings=[], errors=[])

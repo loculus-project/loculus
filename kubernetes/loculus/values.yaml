@@ -583,26 +583,38 @@ defaultOrganisms:
           processing_spec:
             total_snps:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalSubstitutions
             total_inserted_nucs:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalInsertions
             total_deleted_nucs:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalDeletions
             total_ambiguous_nucs:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalNonACGTNs
             total_unknown_nucs:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalMissing
             total_frame_shifts:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalFrameShifts
             frame_shifts:
@@ -611,10 +623,14 @@ defaultOrganisms:
                 input: nextclade.frameShifts
             completeness:
               function: identity
+              args:
+                type: float
               inputs:
                 input: nextclade.coverage
             total_stop_codons:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.qc.stopCodons.totalStopCodons
             stop_codons:
@@ -662,6 +678,8 @@ defaultOrganisms:
                 input: insdc_accession_base
             insdc_version:
               function: identity
+              args:
+                type: int
               inputs:
                 input: insdc_version
             insdc_accession_full:
@@ -686,6 +704,8 @@ defaultOrganisms:
                 input: ncbi_host_name
             ncbi_host_tax_id:
               function: identity
+              args:
+                type: int
               inputs:
                 input: ncbi_host_tax_id
             ncbi_is_lab_host:
@@ -694,10 +714,14 @@ defaultOrganisms:
                 input: ncbi_is_lab_host
             ncbi_length:
               function: identity
+              args:
+                type: int
               inputs:
                 input: ncbi_length
             ncbi_protein_count:
               function: identity
+              args:
+                type: int
               inputs:
                 input: ncbi_protein_count
             ncbi_update_date:
@@ -714,6 +738,8 @@ defaultOrganisms:
                 input: ncbi_virus_name
             ncbi_virus_tax_id:
               function: identity
+              args:
+                type: int
               inputs:
                 input: ncbi_virus_tax_id
             isolate_source:

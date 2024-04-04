@@ -220,6 +220,7 @@ def process_single(
             inputs=spec_dict["inputs"],
             function=spec_dict["function"],
             required=spec_dict.get("required", False),
+            args=spec_dict.get("args", {}),
         )
         input_data: ProcessingInput = {}
         for arg_name, input_path in spec.inputs.items():
@@ -263,7 +264,7 @@ def process_single(
                 continue
             input_data[arg_name] = unprocessed.inputMetadata[input_path]
         processing_result = ProcessingFunctions.call_function(
-            spec.function, input_data, output_field
+            spec.function, spec.args, input_data, output_field
         )
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)

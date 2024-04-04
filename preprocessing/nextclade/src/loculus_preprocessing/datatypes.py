@@ -11,6 +11,7 @@ NucleotideInsertion = str
 AminoAcidInsertion = str
 FunctionName = str  # Name of function present in processing_functions
 ArgName = str  # Name of argument present in processing_functions
+ArgValue = str  # Name of argument present in processing_functions
 InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
 ProcessingInput = dict[str, str | None]
 
@@ -46,6 +47,7 @@ class UnprocessedEntry:
 
 
 FunctionInputs = dict[ArgName, InputField]
+FunctionArgs = dict[ArgName, ArgValue]
 
 
 @dataclass
@@ -53,6 +55,7 @@ class ProcessingSpec:
     inputs: FunctionInputs
     function: FunctionName
     required: bool | None
+    args: FunctionArgs
 
 
 # For single segment, need to generalize for multi segments later
