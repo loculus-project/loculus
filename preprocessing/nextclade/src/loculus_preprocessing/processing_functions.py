@@ -66,7 +66,9 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def check_date(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
+    def check_date(
+        input_data: ProcessingInput, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
         If in future, return warning
@@ -114,7 +116,9 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def process_date(input_data: ProcessingInput, output_field) -> ProcessingResult:
+    def process_date(
+        input_data: ProcessingInput, output_field, args: FunctionArgs = None
+    ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error"""
         logger.debug(f"input_data: {input_data}")
         date_str = input_data["date"] or ""
@@ -219,7 +223,9 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def parse_timestamp(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
+    def parse_timestamp(
+        input_data: ProcessingInput, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
 
