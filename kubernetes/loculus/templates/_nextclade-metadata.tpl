@@ -3,6 +3,8 @@
 fields:
   - name: length
     type: integer
+  - name: sequence_hash
+    type: string
   - name: total_snps
     type: integer
   - name: total_inserted_nucs

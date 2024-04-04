@@ -1,10 +1,12 @@
 import csv
 import dataclasses
+import http.client
 import json
 import logging
 import subprocess  # noqa: S404
 import time
 from collections.abc import Sequence
+from hashlib import md5
 from tempfile import TemporaryDirectory
 from typing import Any
 
@@ -42,7 +44,7 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     headers = {"Authorization": "Bearer " + get_jwt(config)}
     response = requests.post(url, data=params, headers=headers, timeout=10)
     if not response.ok:
-        if response.status_code == 422:
+        if response.status_code == http.client.UNPROCESSABLE_ENTITY:
             logging.debug(f"{response.text}.\nSleeping for a while.")
             time.sleep(60 * 10)
             return []
@@ -214,7 +216,10 @@ def process_single(
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     output_metadata = {
-        "length": len(unprocessed.unalignedNucleotideSequences)
+        "length": len(unprocessed.unalignedNucleotideSequences),
+        "sequence_hash": md5(
+            unprocessed.unalignedNucleotideSequences.encode(), usedforsecurity=False
+        ),
     }
 
     for output_field, spec_dict in config.processing_spec.items():

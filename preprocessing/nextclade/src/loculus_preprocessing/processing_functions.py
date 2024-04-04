@@ -14,6 +14,7 @@ from .datatypes import (
     AnnotationSourceType,
     FunctionArgs,
     ProcessingAnnotation,
+    ProcessingDatum,
     ProcessingInput,
     ProcessingResult,
 )
@@ -282,13 +283,17 @@ class ProcessingFunctions:
                     )
                 ],
             )
-        datum = input_data["input"]
+        input_datum = input_data["input"]
+        if not input_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+
+        output_datum: ProcessingDatum
         if args and "type" in args:
             match args["type"]:
                 case "int":
-                    datum = int(datum)
+                    output_datum = int(input_datum)
                 case "float":
-                    datum = float(datum)
+                    output_datum = float(input_datum)
                 case _:
-                    pass
-        return ProcessingResult(datum=datum, warnings=[], errors=[])
+                    output_datum = input_datum
+        return ProcessingResult(datum=output_datum, warnings=[], errors=[])

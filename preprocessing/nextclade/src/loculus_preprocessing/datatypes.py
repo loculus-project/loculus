@@ -14,6 +14,7 @@ ArgName = str  # Name of argument present in processing_functions
 ArgValue = str  # Name of argument present in processing_functions
 InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
 ProcessingInput = dict[str, str | None]
+ProcessingDatum = str | int | float | None
 
 
 @unique
@@ -47,7 +48,7 @@ class UnprocessedEntry:
 
 
 FunctionInputs = dict[ArgName, InputField]
-FunctionArgs = dict[ArgName, ArgValue]
+FunctionArgs = dict[ArgName, ArgValue] | None
 
 
 @dataclass
@@ -96,6 +97,6 @@ class ProcessedEntry:
 
 @dataclass
 class ProcessingResult:
-    datum: str | None
+    datum: ProcessingDatum
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)
