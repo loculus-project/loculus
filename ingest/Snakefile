@@ -1,3 +1,20 @@
+import yaml
+
+with open("config/defaults.yaml") as f:
+    defaults = yaml.safe_load(f)
+
+# Merge configs, using defaults only as fallback
+# Write to results/config.yaml
+merged_config = config
+for key, value in defaults.items():
+    if not key in config:
+        config[key] = value
+
+config = merged_config
+
+with open("results/config.yaml", "w") as f:
+    f.write(yaml.dump(merged_config))
+
 TAXON_ID = config["taxon_id"]
 ALL_FIELDS = ",".join(config["all_fields"])
 COLUMN_MAPPING = config["column_mapping"]
@@ -16,8 +33,7 @@ def rename_columns(input_file, output_file):
 
 rule all:
     input:
-        "data/sequences.fasta",
-        "data/metadata.tsv",
+        "results/approve.touch",
 
 
 rule fetch_ncbi_dataset_package:
@@ -74,7 +90,7 @@ rule rename_columns:
 rule prepare_metadata:
     input:
         metadata="results/metadata_post_rename.tsv",
-        config="config/config.yaml",
+        config="results/config.yaml",
     output:
         metadata="results/metadata_post_prepare.tsv",
     params:
@@ -93,7 +109,7 @@ rule submit_to_loculus:
     input:
         metadata="results/metadata_post_prepare.tsv",
         sequences="results/sequences.fasta",
-        config="config/config.yaml",
+        config="results/config.yaml",
     output:
         submitted=touch("results/submitted"),
     params:
@@ -127,7 +143,9 @@ rule submit_to_loculus:
 rule approve:
     input:
         submitted="results/submitted",
-        config="config/config.yaml",
+        config="results/config.yaml",
+    output:
+        temp(touch("results/approve.touch")),
     params:
         log_level=LOG_LEVEL,
     shell:
