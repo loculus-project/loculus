@@ -1,6 +1,8 @@
 {{/* Defines standard nextclade metadata fields */}}
 {{- define "loculus.nextcladeMetadata" }}
 fields:
+  - name: length
+    type: integer
   - name: total_snps
     type: integer
   - name: total_inserted_nucs

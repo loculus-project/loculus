@@ -213,7 +213,9 @@ def process_single(
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
-    output_metadata = {}
+    output_metadata = {
+        "length": len(unprocessed.unalignedNucleotideSequences)
+    }
 
     for output_field, spec_dict in config.processing_spec.items():
         spec = ProcessingSpec(
