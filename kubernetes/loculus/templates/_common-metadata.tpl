@@ -28,8 +28,10 @@ fields:
     autocomplete: true
   - name: submittedAt
     type: timestamp
+    displayName: Date submitted
   - name: releasedAt
     type: timestamp
+    displayName: Date released
   - name: dataUseTerms
     type: string
     generateIndex: true
