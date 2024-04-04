@@ -4,10 +4,10 @@ name: {{ $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
 accessionPrefix: {{ $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
+{{- $nextcladeMetadata := (include "loculus.nextcladeMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
-
     schema:
       {{- with $instance.schema }}
       instanceName: {{ .instanceName }}
@@ -19,10 +19,10 @@ organisms:
       {{ end }}
       primaryKey: accessionVersion
       metadata:
-        {{ $metadata := concat $commonMetadata .metadata
+        {{ $metadata := concat $commonMetadata .metadata $nextcladeMetadata
             | include "loculus.generateWebsiteMetadata"
             | fromYaml
-         }}
+        }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
       {{- end }}

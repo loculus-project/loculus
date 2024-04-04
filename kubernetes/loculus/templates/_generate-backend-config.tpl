@@ -11,7 +11,11 @@ organisms:
       {{- with $instance.schema }}
       instanceName: {{ .instanceName }}
       metadata:
-        {{ $metadata := include "loculus.generateBackendMetadata" .metadata | fromYaml }}
+        {{- $nextcladeMetadata := (include "loculus.nextcladeMetadata" . | fromYaml).fields }}
+        {{ $metadata := concat .metadata $nextcladeMetadata 
+          | include "loculus.generateBackendMetadata"
+          | fromYaml 
+        }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:
