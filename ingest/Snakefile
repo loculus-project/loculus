@@ -62,6 +62,19 @@ rule extract_ncbi_dataset_sequences:
         """
 
 
+rule calculate_sequence_hashes:
+    input:
+        sequences="results/sequences.fasta",
+    output:
+        sequence_hashes="results/sequence_hashes.tsv",
+    shell:
+        """
+        python scripts/calculate_sequence_hashes.py \
+            --input {input.sequences} \
+            --output {output.sequence_hashes}
+        """
+
+
 rule format_ncbi_dataset_report:
     input:
         dataset_package="results/ncbi_dataset.zip",
@@ -105,11 +118,42 @@ rule prepare_metadata:
         """
 
 
-rule submit_to_loculus:
+rule download_hashes:
+    input:
+        config="results/config.yaml",
+    output:
+        hashes="results/hashes.tsv",
+    shell:
+        """
+        python scripts/download_hashes.py \
+            --config-file {input.config} \
+            --output {output.hashes} \
+        """
+
+
+rule compare_hashes:
+    input:
+        hashes="results/hashes.tsv",
+        metadata="results/metadata_post_prepare.tsv",
+    output:
+        to_submit="results/to_submit.tsv",
+        to_revise="results/to_revise.tsv",
+    shell:
+        """
+        python scripts/compare_hashes.py \
+            --config-file {input.config} \
+            --metadata {input.metadata} \
+            --to-submit {output.to_submit} \
+            --to-revise {output.to_revise} \
+        """
+
+
+rule submit:
     input:
         metadata="results/metadata_post_prepare.tsv",
         sequences="results/sequences.fasta",
         config="results/config.yaml",
+        to_submit="results/to_revise.ts",
     output:
         submitted=touch("results/submitted"),
     params:
@@ -122,20 +166,30 @@ rule submit_to_loculus:
             --metadata {input.metadata} \
             --sequences {input.sequences} \
             --config-file {input.config} \
+            --to-submit {input.to_submit} \
             --log-level {params.log_level}
-        sleep 100 
+        """
+
+
+rule revise:
+    input:
+        metadata="results/metadata_post_prepare.tsv",
+        sequences="results/sequences.fasta",
+        config="results/config.yaml",
+        to_revise="results/to_revise.tsv",
+    output:
+        submitted=touch("results/submitted"),
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        sleep 0
         python scripts/submit_to_loculus.py \
-            --mode submit \
+            --mode revise \
             --metadata {input.metadata} \
             --sequences {input.sequences} \
             --config-file {input.config} \
-            --log-level {params.log_level}
-        sleep 300 
-        python scripts/submit_to_loculus.py \
-            --mode submit \
-            --metadata {input.metadata} \
-            --sequences {input.sequences} \
-            --config-file {input.config} \
+            --to-revise {input.to_revise} \
             --log-level {params.log_level}
         """
 
