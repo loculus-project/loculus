@@ -1,6 +1,7 @@
 ---
 import DataTable from './DataTable.astro';
 import { RevokeButton } from './RevokeButton';
+import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import { SequencesContainer } from './SequencesContainer';
 import { type TableDataEntry } from './getTableData';
 import { getReferenceGenomes, getRuntimeConfig } from '../../config';
@@ -82,6 +83,14 @@ const isMyGroup =
                 Only visible to group members
             </div>
 
+            <EditDataUseTermsButton
+                organism={organism}
+                clientConfig={clientConfig}
+                accessionVersion={accessionVersion.split('.')[0]}
+                accessToken={accessToken}
+                client:load
+            />
+
             <RevokeButton
                 organism={organism}
                 clientConfig={clientConfig}
@@ -89,6 +98,7 @@ const isMyGroup =
                 accessToken={accessToken}
                 client:load
             />
+
         </div>
     )
 }
