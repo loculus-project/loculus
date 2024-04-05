@@ -723,6 +723,7 @@ class SubmissionDatabaseService(
         val selectedSequenceEntry = SequenceEntriesView.slice(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
+            SequenceEntriesView.groupIdColumn,
             SequenceEntriesView.statusColumn,
             SequenceEntriesView.processedDataColumn,
             SequenceEntriesView.originalDataColumn,
@@ -747,6 +748,7 @@ class SubmissionDatabaseService(
             accession = selectedSequenceEntry[SequenceEntriesView.accessionColumn],
             version = selectedSequenceEntry[SequenceEntriesView.versionColumn],
             status = Status.fromString(selectedSequenceEntry[SequenceEntriesView.statusColumn]),
+            groupId = selectedSequenceEntry[SequenceEntriesView.groupIdColumn],
             processedData = compressionService.decompressSequencesInProcessedData(
                 selectedSequenceEntry[SequenceEntriesView.processedDataColumn]!!,
                 organism,
