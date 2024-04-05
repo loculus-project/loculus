@@ -105,6 +105,7 @@ data class SequenceEntryVersionToEdit(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
+    val groupId: Int,
     val processedData: ProcessedData<GeneticSequence>,
     val originalData: OriginalData<GeneticSequence>,
     @Schema(description = "The preprocessing will be considered failed if this is not empty")
