@@ -29,6 +29,11 @@ export class ZodiosWrapperClient<Api extends ZodiosEndpointDefinitions> {
         this.zodios = new Zodios(url, api);
     }
 
+    /**
+     *
+     * @param method An alias as defined in makeEndpoint()
+     * @param args Arguments such as params and headers; it's best to ask TypeScript/your IDE for the available options
+     */
     public async call<Method extends ZodiosMethods<Api>>(
         method: Method,
         ...args: ZodiosMethod<Api, Method>['parameters']
