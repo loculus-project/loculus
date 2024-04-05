@@ -13,7 +13,6 @@ export const routes = {
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
-    mySequencesWithoutGroup: (organism: string) => `/${organism}/my_sequences`,
     searchPage: <Filter extends FilterValue>(
         organism: string,
         metadataFilter: Filter[] = [],
@@ -38,7 +37,7 @@ export const routes = {
     ) =>
         withOrganism(
             organism,
-            `/my_sequences/${groupId}?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
+            `/submission/${groupId}/released?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
         ),
     sequencesDetailsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}`,
@@ -52,17 +51,19 @@ export const routes = {
         return url;
     },
     createGroup: () => '/user/createGroup',
-    submissionPage: (organism: string) => withOrganism(organism, '/submission'),
-    submitPage: (organism: string) => withOrganism(organism, '/submission/submit'),
-    revisePage: (organism: string) => withOrganism(organism, '/revise'),
+    submissionPageWithoutGroup: (organism: string) => withOrganism(organism, '/submission'),
+    submissionPage: (organism: string, groupId: number) => withOrganism(organism, `/submission/${groupId}`),
+    submitPage: (organism: string, groupId: number) => withOrganism(organism, `/submission/${groupId}/submit`),
+    revisePage: (organism: string, groupId: number) => withOrganism(organism, `/submission/${groupId}/revise`),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
-        withOrganism(organism, `/user/edit/${accessionVersion.accession}/${accessionVersion.version}`),
+        withOrganism(organism, `/submission/edit/${accessionVersion.accession}/${accessionVersion.version}`),
     userOverviewPage: (organism?: string | undefined) => {
         const userPagePath = `/user`;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
     groupOverviewPage: (groupId: number) => `/group/${groupId}`,
-    userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submission/review`),
+    userSequenceReviewPage: (organism: string, groupId: number) =>
+        withOrganism(organism, `/submission/${groupId}/review`),
     versionPage: (accession: string) => `/seq/${accession}/versions`,
     seqSetsPage: (username?: string | undefined) => {
         const seqSetPagePath = `/seqsets`;

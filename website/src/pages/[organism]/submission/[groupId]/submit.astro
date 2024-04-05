@@ -1,0 +1,35 @@
+---
+import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
+import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
+import { getRuntimeConfig } from '../../../../config';
+import { getAccessToken } from '../../../../utils/getAccessToken';
+import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
+
+const organism = Astro.params.organism!;
+
+const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
+
+const clientConfig = getRuntimeConfig().public;
+
+// Prevent caching to allow back button after user creates group
+Astro.response.headers.append('Cache-Control', 'no-cache, no-store, must-revalidate');
+Astro.response.headers.append('Pragma', 'no-cache');
+Astro.response.headers.append('Expires', '0');
+---
+
+<SubmissionPageWrapper title='Submit sequences' organism={organism} groupsResult={groupsResult}>
+    {
+        groupsResult.match(
+            ({ currentGroup: group }) => (
+                <SubmissionForm
+                    accessToken={getAccessToken(Astro.locals.session)!}
+                    organism={organism}
+                    clientConfig={clientConfig}
+                    group={group}
+                    client:load
+                />
+            ),
+            () => undefined,
+        )
+    }
+</SubmissionPageWrapper>

@@ -146,7 +146,7 @@ function useSubmitEditedSequence(
         {
             onSuccess: async () => {
                 await logger.info('Successfully submitted edited data ' + getAccessionVersionString(reviewData));
-                location.href = routes.userSequenceReviewPage(organism);
+                location.href = routes.userSequenceReviewPage(organism, reviewData.groupId);
             },
             onError: async (error) => {
                 const message = `Failed to submit edited data for ${getAccessionVersionString(

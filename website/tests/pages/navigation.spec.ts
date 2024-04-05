@@ -10,7 +10,7 @@ const organismIndependentNavigationItems = [
 
 const organismNavigationItems = [
     { link: 'Browse', title: '[Organism] - Browse' },
-    { link: 'Submit', title: 'Submit' },
+    { link: 'Submit', title: 'Submission portal' },
     { link: 'My account', title: 'My account' },
 ];
 

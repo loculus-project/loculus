@@ -1,4 +1,3 @@
-import { Menu } from '@headlessui/react';
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
@@ -19,12 +18,9 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
-import { NeedAGroup } from '../common/NeedAGroup.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import DashiconsGroups from '~icons/dashicons/groups';
 import Locked from '~icons/fluent-emoji-high-contrast/locked';
 import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
-import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
@@ -35,7 +31,7 @@ type DataUploadFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     action: Action;
-    groupsOfUser: Group[];
+    group: Group;
     onSuccess: () => void;
     onError: (message: string) => void;
 };
@@ -181,53 +177,6 @@ const DevExampleData = ({
     );
 };
 
-const GroupSelector = ({
-    groups,
-    selectedGroup,
-    setSelectedGroup,
-}: {
-    groups: Group[];
-    selectedGroup: Group | undefined;
-    setSelectedGroup: (group: Group) => void;
-}) => {
-    if (groups.length === 1) {
-        return <div className='mb-4 text-gray-500'>Current group: {selectedGroup?.groupName}</div>;
-    }
-    return (
-        <div className='mb-4 text-gray-500 text-sm'>
-            <Menu>
-                <Menu.Button aria-label='Select group'>
-                    Current group: {selectedGroup?.groupName}
-                    <span className='text-primary-600 ml-2'>
-                        <IwwaArrowDown className='w-4 h-4 inline-block -mt-0.5' />
-                    </span>
-                </Menu.Button>
-                <Menu.Items
-                    className={`absolute z-10 bg-white border border-gray-300 divide-y divide-gray-300 min-w-56 rounded mt-2
-                transition-all duration-200 ease-in-out shadow-lg 
-                `}
-                >
-                    {groups.map((group) => (
-                        <Menu.Item key={group.groupId}>
-                            {({ active }) => (
-                                <button
-                                    className={`${
-                                        active ? 'bg-primary-500 text-white' : 'text-gray-900'
-                                    } flex  w-full px-4 py-2 text-sm`}
-                                    onClick={() => setSelectedGroup(group)}
-                                >
-                                    <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
-                                    {group.groupName}
-                                </button>
-                            )}
-                        </Menu.Item>
-                    ))}
-                </Menu.Items>
-            </Menu>
-        </div>
-    );
-};
-
 const UploadComponent = ({
     setFile,
     name,
@@ -351,16 +300,13 @@ const InnerDataUploadForm = ({
     action,
     onSuccess,
     onError,
-    groupsOfUser,
+    group,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
-    const noGroup = groupsOfUser.length === 0;
-
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
-    const [selectedGroup, setSelectedGroup] = useState<Group | undefined>(noGroup ? undefined : groupsOfUser[0]);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -390,7 +336,7 @@ const InnerDataUploadForm = ({
 
         switch (action) {
             case 'submit':
-                const groupId = selectedGroup?.groupId ?? groupsOfUser[0].groupId;
+                const groupId = group.groupId;
                 submit({
                     metadataFile,
                     sequenceFile,
@@ -406,13 +352,8 @@ const InnerDataUploadForm = ({
         }
     };
 
-    if (noGroup) {
-        return <NeedAGroup />;
-    }
-
     return (
         <div className='text-left mt-3 max-w-6xl'>
-            <GroupSelector groups={groupsOfUser} selectedGroup={selectedGroup} setSelectedGroup={setSelectedGroup} />
             <div className='flex-col flex gap-8 divide-y'>
                 <div className='grid sm:grid-cols-3 gap-x-16'>
                     <div className=''>
