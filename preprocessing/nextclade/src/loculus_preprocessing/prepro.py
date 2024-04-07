@@ -307,7 +307,8 @@ def process_all(
 
 
 def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Config) -> None:
-    json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
+    json_strings = [json.dumps(dataclasses.asdict(sequence), indent=1) for sequence in processed]
+    logging.debug(json_strings)
     ndjson_string = "\n".join(json_strings)
     url = config.backend_host.rstrip("/") + "/submit-processed-data"
     headers = {
