@@ -369,7 +369,7 @@ defaultOrganisms:
         - name: frame_shifts
           type: string
         - name: completeness
-          type: float
+          type: string
         - name: total_stop_codons
           type: int
         - name: stop_codons
