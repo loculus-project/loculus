@@ -292,8 +292,12 @@ class ProcessingFunctions:
             match args["type"]:
                 case "int":
                     output_datum = int(input_datum)
+                    logging.debug(f"Cast to int: {output_datum}")
                 case "float":
                     output_datum = float(input_datum)
+                    logging.debug(f"Cast to float: {output_datum}")
                 case _:
                     output_datum = input_datum
+        else:
+            output_datum = input_datum
         return ProcessingResult(datum=output_datum, warnings=[], errors=[])
