@@ -455,7 +455,7 @@ defaultOrganisms:
             completeness:
               function: identity
               args:
-                type: float
+                type: str
               inputs:
                 input: nextclade.coverage
             total_stop_codons:
