@@ -119,10 +119,25 @@ rule prepare_metadata:
 
 
 rule download_hashes:
+    """Download metadata and sequence hashes of all previously submitted sequences 
+    Potentially done via: 
+    - curl to /get-released-data
+    - jq filtering to ingest user
+    - jq subsetting to hashes
+    - jq output as tsv
+
+    Only look at the higest loculus version
+
+    Output needs to contain:
+    - insdc base accession (no version) 
+    - loculus accession
+    - metadata hash of highest version
+    - sequence hash of highest version
+    """
     input:
         config="results/config.yaml",
     output:
-        hashes="results/hashes.tsv",
+        hashes="results/released_hashes.tsv",
     shell:
         """
         python scripts/download_hashes.py \
@@ -133,15 +148,17 @@ rule download_hashes:
 
 rule compare_hashes:
     input:
-        hashes="results/hashes.tsv",
+        old_hashes="results/released_hashes.tsv",
         metadata="results/metadata_post_prepare.tsv",
+        sequence_hashes="results/sequence_hashes.tsv",
     output:
         to_submit="results/to_submit.tsv",
         to_revise="results/to_revise.tsv",
     shell:
         """
         python scripts/compare_hashes.py \
-            --config-file {input.config} \
+            --old-hashes {input.old_hashes} \
+            --sequence-hashes {input.metadata} \
             --metadata {input.metadata} \
             --to-submit {output.to_submit} \
             --to-revise {output.to_revise} \
@@ -153,7 +170,7 @@ rule submit:
         metadata="results/metadata_post_prepare.tsv",
         sequences="results/sequences.fasta",
         config="results/config.yaml",
-        to_submit="results/to_revise.ts",
+        to_submit="results/to_revise.tsv",
     output:
         submitted=touch("results/submitted"),
     params:

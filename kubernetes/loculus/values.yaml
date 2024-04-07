@@ -205,57 +205,6 @@ defaultOrganisms:
               function: identity
               inputs:
                 input: isolate_name
-      - version: 2
-        image: ghcr.io/loculus-project/preprocessing-nextclade
-        args:
-          - "prepro"
-        configFile:
-          log_level: DEBUG
-          nextclade_dataset_name: nextstrain/mpox/all-clades
-          nextclade_dataset_tag: 2024-01-16--20-31-02Z
-          genes:
-            OPG001: 247
-          batch_size: 100
-          processing_spec:
-            collection_date:
-              function: process_date
-              inputs:
-                date: collection_date
-                release_date: ncbi_release_date
-              required: true
-            ncbi_release_date:
-              function: parse_timestamp
-              inputs:
-                timestamp: ncbi_release_date
-            clade:
-              function: identity
-              inputs:
-                input: nextclade.clade
-            outbreak:
-              function: identity
-              inputs:
-                input: nextclade.customNodeAttributes.outbreak
-            lineage:
-              function: identity
-              inputs:
-                input: nextclade.customNodeAttributes.lineage
-            country:
-              function: identity
-              inputs:
-                input: country
-              required: true
-            author_affiliation:
-              function: identity
-              inputs:
-                input: author_affiliation
-            authors:
-              function: identity
-              inputs:
-                input: authors
-            isolate_name:
-              function: identity
-              inputs:
-                input: isolate_name
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
