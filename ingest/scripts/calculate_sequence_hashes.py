@@ -1,10 +1,3 @@
-"""Script to rename fields and transform values prior to submission to Loculus"""
-
-# Needs to be configurable via yaml file
-# Start off with a simple mapping
-# Add transformations that can be applied to certain fields
-# Like separation of country into country and division
-
 import hashlib
 import logging
 
