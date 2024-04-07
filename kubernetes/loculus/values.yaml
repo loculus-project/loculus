@@ -305,7 +305,7 @@ defaultOrganisms:
         - name: insdc_accession_base
           type: string
         - name: insdc_version
-          type: integer
+          type: int
         - name: insdc_accession_full
           type: string
           displayName: INSDC accession
@@ -325,16 +325,16 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
         - name: ncbi_host_tax_id
-          type: integer
+          type: int
           autocomplete: true
         - name: ncbi_is_lab_host
           type: string
           generateIndex: true
           autocomplete: true
         - name: ncbi_length
-          type: integer
+          type: int
         - name: ncbi_protein_count
-          type: integer
+          type: int
         - name: ncbi_update_date
           type: date
         - name: ncbi_sourcedb
@@ -346,7 +346,7 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
         - name: ncbi_virus_tax_id
-          type: integer
+          type: int
           autocomplete: true
         - name: isolate_source
           type: string
@@ -355,23 +355,23 @@ defaultOrganisms:
         - name: sra_accessions
           type: string
         - name: total_snps
-          type: integer
+          type: int
         - name: total_inserted_nucs
-          type: integer
+          type: int
         - name: total_deleted_nucs
-          type: integer
+          type: int
         - name: total_ambiguous_nucs
-          type: integer
+          type: int
         - name: total_unknown_nucs
-          type: integer
+          type: int
         - name: total_frame_shifts
-          type: integer
+          type: int
         - name: frame_shifts
           type: string
         - name: completeness
           type: float
         - name: total_stop_codons
-          type: integer
+          type: int
         - name: stop_codons
           type: string
         - name: metadata_hash

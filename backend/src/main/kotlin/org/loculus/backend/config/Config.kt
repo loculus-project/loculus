@@ -33,7 +33,7 @@ enum class MetadataType {
     @JsonProperty("string")
     STRING,
 
-    @JsonProperty("integer")
+    @JsonProperty("int")
     INTEGER,
 
     @JsonProperty("float")
