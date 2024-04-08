@@ -267,7 +267,7 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     groupedFields: [],
                     type: filter.type,
                     grouped: true,
-                    displayName: filter.displayName,
+                    displayName: filter.fieldGroupDisplayName,
                     label: filter.label
                 };
                 fieldList.push(fieldForGroup);
