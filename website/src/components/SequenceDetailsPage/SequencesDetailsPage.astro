@@ -1,7 +1,6 @@
 ---
 import DataTable from './DataTable.astro';
 import { RevokeButton } from './RevokeButton';
-import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import { SequencesContainer } from './SequencesContainer';
 import { type TableDataEntry } from './getTableData';
 import { getReferenceGenomes, getRuntimeConfig } from '../../config';
@@ -9,6 +8,7 @@ import { routes } from '../../routes/routes.ts';
 import { GroupManagementClient } from '../../services/groupManagementClient';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { getAccessToken } from '../../utils/getAccessToken';
+import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import ErrorBox from '../common/ErrorBox.astro';
 import MdiEye from '~icons/mdi/eye';
 
@@ -22,6 +22,9 @@ interface Props {
 const { tableData, organism, accessionVersion, dataUseTermsHistory } = Astro.props;
 const groupId = tableData.find((entry) => entry.name === 'groupId')?.value;
 const isRestricted = tableData.find((entry) => entry.name === 'dataUseTerms')?.value === 'RESTRICTED';
+
+dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
+const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
 
 const runtimeConfig = getRuntimeConfig();
 
@@ -83,13 +86,15 @@ const isMyGroup =
                 Only visible to group members
             </div>
 
-            <EditDataUseTermsButton
-                organism={organism}
-                clientConfig={clientConfig}
-                accessionVersion={accessionVersion.split('.')[0]}
-                accessToken={accessToken}
-                client:load
-            />
+            {currentDataUseTerms.type === 'RESTRICTED' && (
+                <EditDataUseTermsButton
+                    clientConfig={clientConfig}
+                    accessionVersion={accessionVersion.split('.')[0]}
+                    accessToken={accessToken}
+                    dataUseTerms={currentDataUseTerms}
+                    client:load
+                />
+            )}
 
             <RevokeButton
                 organism={organism}
@@ -98,7 +103,6 @@ const isMyGroup =
                 accessToken={accessToken}
                 client:load
             />
-
         </div>
     )
 }

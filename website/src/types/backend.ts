@@ -88,11 +88,15 @@ export const dataUseTermsTypes = [restrictedDataUseTermsType, openDataUseTermsTy
 
 export type DataUseTermsType = typeof openDataUseTermsType | typeof restrictedDataUseTermsType;
 
+export const restrictedDataUseTerms = z.object({
+    type: z.literal(restrictedDataUseTermsType),
+    restrictedUntil: z.string(),
+});
+
+export type RestrictedDataUseTerms = z.infer<typeof restrictedDataUseTerms>;
+
 export const dataUseTerms = z.union([
-    z.object({
-        type: z.literal(restrictedDataUseTermsType),
-        restrictedUntil: z.string(),
-    }),
+    restrictedDataUseTerms,
     z.object({
         type: z.literal(openDataUseTermsType),
     }),
