@@ -51,6 +51,7 @@ export const SearchForm: FC<SearchFormProps> = ({
         fieldList.map((filter) => ({
             ...filter,
             label: filter.label ?? filter.displayName ?? sentenceCase(filter.name),
+            isVisible: true,
         })),
     );
     const [accessionFilter, setAccessionFilter] = useState<AccessionFilter>(initialAccessionFilter);
@@ -114,6 +115,9 @@ export const SearchForm: FC<SearchFormProps> = ({
     const fields = useMemo(
         () =>
             fieldValues.map((field) => {
+                if (!field.isVisible) {
+                    return null;
+                }
                 if (field.grouped === true) {
                     return (
                         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
@@ -202,7 +206,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                                 value={mutationFilter}
                                 onChange={setMutationFilter}
                             />
-                            {fields.filter((field) => field.props.field.isVisible !== false)}
+                            {fields}
                         </div>
                         <div className='sticky bottom-0 z-10'>
                             <div
@@ -217,7 +221,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                 </div>
             </div>
 
-            <Transition appear show={isCustomizeModalOpen} as={Fragment}>
+            <Transition appear show={isCustomizeModalOpen}>
                 <Dialog
                     as='div'
                     className='fixed inset-0 z-10 overflow-y-auto'
