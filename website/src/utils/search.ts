@@ -102,6 +102,7 @@ export const getMetadataFilters = (
                 fieldGroup: metadata.name,
                 fieldGroupDisplayName: metadata.displayName,
             };
+
             const metadataTo = {
                 ...metadata,
                 name: `${metadata.name}To`,
