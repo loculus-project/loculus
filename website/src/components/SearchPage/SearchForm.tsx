@@ -1,7 +1,8 @@
 import CircularProgress from '@mui/material/CircularProgress';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { type FC, type FormEventHandler, useMemo, useState, useCallback } from 'react';
+import { type FC, type FormEventHandler, useMemo, useState, useCallback, type Fragment } from 'react';
+import { Dialog, Transition } from '@headlessui/react';
 
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField, type AutoCompleteFieldProps } from './fields/AutoCompleteField';
@@ -56,6 +57,7 @@ export const SearchForm: FC<SearchFormProps> = ({
     const [mutationFilter, setMutationFilter] = useState<MutationFilter>(initialMutationFilter);
     const [isLoading, setIsLoading] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
+    const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
 
     const handleFieldChange = useCallback(
         (metadataName: string, filter: string) => {
@@ -145,6 +147,21 @@ export const SearchForm: FC<SearchFormProps> = ({
         [fieldValues, handleFieldChange, isLoading, lapisUrl, flattenedFieldValues],
     );
 
+    const toggleCustomizeModal = () => {
+        setIsCustomizeModalOpen(!isCustomizeModalOpen);
+    };
+
+    const handleFieldVisibilityChange = (fieldName: string, isVisible: boolean) => {
+        setFieldValues((prev) =>
+            prev.map((field) => {
+                if (field.name === fieldName) {
+                    return { ...field, isVisible };
+                }
+                return field;
+            }),
+        );
+    };
+
     return (
         <QueryClientProvider client={queryClient}>
             <div className='text-right -mb-10 md:hidden'>
@@ -169,6 +186,14 @@ export const SearchForm: FC<SearchFormProps> = ({
                             <SandwichIcon isOpen />
                         </button>
                     </div>
+                    <div className='mt-4 mb-2'>
+                        <button
+                            className='text-sm underline text-blue-600 hover:text-blue-800 focus:outline-none'
+                            onClick={toggleCustomizeModal}
+                        >
+                            Customize
+                        </button>
+                    </div>
                     <form onSubmit={handleSearch}>
                         <div className='flex flex-col'>
                             <AccessionField initialValue={initialAccessionFilter} onChange={setAccessionFilter} />
@@ -177,7 +202,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                                 value={mutationFilter}
                                 onChange={setMutationFilter}
                             />
-                            {fields}
+                            {fields.filter((field) => field.props.field.isVisible !== false)}
                         </div>
                         <div className='sticky bottom-0 z-10'>
                             <div
@@ -191,6 +216,52 @@ export const SearchForm: FC<SearchFormProps> = ({
                     </form>
                 </div>
             </div>
+
+            <Transition appear show={isCustomizeModalOpen} as={Fragment}>
+                <Dialog
+                    as='div'
+                    className='fixed inset-0 z-10 overflow-y-auto'
+                    onClose={toggleCustomizeModal}
+                >
+                    <div className='min-h-screen px-4 text-center'>
+                        <Dialog.Overlay className='fixed inset-0 bg-black opacity-30' />
+
+                        <span className='inline-block h-screen align-middle' aria-hidden='true'>
+                            &#8203;
+                        </span>
+
+                        <div className='inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl'>
+                            <Dialog.Title as='h3' className='text-lg font-medium leading-6 text-gray-900'>
+                                Customize Search Options
+                            </Dialog.Title>
+
+                            <div className='mt-4'>
+                                {flattenedFieldValues.map((field) => (
+                                    <div key={field.name} className='flex items-center mb-2'>
+                                        <input
+                                            type='checkbox'
+                                            checked={field.isVisible !== false}
+                                            onChange={(e) => handleFieldVisibilityChange(field.name, e.target.checked)}
+                                            className='form-checkbox h-5 w-5 text-blue-600'
+                                        />
+                                        <span className='ml-2 text-gray-700'>{field.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className='mt-6'>
+                                <button
+                                    type='button'
+                                    className='inline-flex justify-center px-4 py-2 text-sm font-medium text-blue-900 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500'
+                                    onClick={toggleCustomizeModal}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition>
         </QueryClientProvider>
     );
 };
