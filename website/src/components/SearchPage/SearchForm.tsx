@@ -1,8 +1,8 @@
+import { Dialog, Transition } from '@headlessui/react';
 import CircularProgress from '@mui/material/CircularProgress';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { type FC, type FormEventHandler, useMemo, useState, useCallback, type Fragment } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
+import { type FC, type FormEventHandler, useMemo, useState, useCallback } from 'react';
 
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField, type AutoCompleteFieldProps } from './fields/AutoCompleteField';
@@ -54,6 +54,8 @@ export const SearchForm: FC<SearchFormProps> = ({
             isVisible: true,
         })),
     );
+
+    const alwaysPresentFieldNames = ['Accession', 'Mutation'];
     const [accessionFilter, setAccessionFilter] = useState<AccessionFilter>(initialAccessionFilter);
     const [mutationFilter, setMutationFilter] = useState<MutationFilter>(initialMutationFilter);
     const [isLoading, setIsLoading] = useState(false);
@@ -115,7 +117,7 @@ export const SearchForm: FC<SearchFormProps> = ({
     const fields = useMemo(
         () =>
             fieldValues.map((field) => {
-                if (!field.isVisible) {
+                if (field.isVisible !== true) {
                     return null;
                 }
                 if (field.grouped === true) {
@@ -222,11 +224,7 @@ export const SearchForm: FC<SearchFormProps> = ({
             </div>
 
             <Transition appear show={isCustomizeModalOpen}>
-                <Dialog
-                    as='div'
-                    className='fixed inset-0 z-10 overflow-y-auto'
-                    onClose={toggleCustomizeModal}
-                >
+                <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={toggleCustomizeModal}>
                     <div className='min-h-screen px-4 text-center'>
                         <Dialog.Overlay className='fixed inset-0 bg-black opacity-30' />
 
@@ -240,17 +238,35 @@ export const SearchForm: FC<SearchFormProps> = ({
                             </Dialog.Title>
 
                             <div className='mt-4'>
-                                {flattenedFieldValues.map((field) => (
-                                    <div key={field.name} className='flex items-center mb-2'>
-                                        <input
-                                            type='checkbox'
-                                            checked={field.isVisible !== false}
-                                            onChange={(e) => handleFieldVisibilityChange(field.name, e.target.checked)}
-                                            className='form-checkbox h-5 w-5 text-blue-600'
-                                        />
-                                        <span className='ml-2 text-gray-700'>{field.label}</span>
-                                    </div>
-                                ))}
+                                {alwaysPresentFieldNames.map((fieldName) => {
+                                    return (
+                                        <div key={fieldName} className='flex items-center mb-2'>
+                                            <input
+                                                type='checkbox'
+                                                checked
+                                                disabled
+                                                className='form-checkbox h-5 w-5 text-gray-300'
+                                            />
+                                            <span className='ml-2 text-gray-700'>{fieldName}</span>
+                                        </div>
+                                    );
+                                })}
+
+                                {fieldValues
+                                    .filter((field) => field.notSearchable !== true)
+                                    .map((field) => (
+                                        <div key={field.name} className='flex items-center mb-2'>
+                                            <input
+                                                type='checkbox'
+                                                checked={field.isVisible !== false}
+                                                onChange={(e) =>
+                                                    handleFieldVisibilityChange(field.name, e.target.checked)
+                                                }
+                                                className='form-checkbox h-5 w-5 text-blue-600'
+                                            />
+                                            <span className='ml-2 text-gray-700'>{field.label}</span>
+                                        </div>
+                                    ))}
                             </div>
 
                             <div className='mt-6'>

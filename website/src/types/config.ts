@@ -28,6 +28,7 @@ export type MetadataFilter = Metadata & {
     label?: string;
     fieldGroup?: string;
     grouped?: false;
+    isVisible?: boolean;
 };
 
 export type GroupedMetadataFilter = {
@@ -37,6 +38,8 @@ export type GroupedMetadataFilter = {
     grouped: true;
     label?: string;
     displayName?: string;
+    isVisible?: boolean;
+    notSearchable?: boolean;
 };
 
 export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
