@@ -18,6 +18,7 @@ export const metadata = z.object({
     notSearchable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
     truncateColumnDisplayTo: z.number().optional(),
+    initiallyVisible: z.boolean().optional(),
 });
 
 export type CustomDisplay = z.infer<typeof customDisplay>;
@@ -40,6 +41,7 @@ export type GroupedMetadataFilter = {
     displayName?: string;
     isVisible?: boolean;
     notSearchable?: boolean;
+    initiallyVisible?: boolean;
 };
 
 export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;

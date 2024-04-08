@@ -273,6 +273,7 @@ defaultOrganisms:
           displayName: Collection date
           type: date
           required: true
+          initiallyVisible: true
         - name: ncbi_release_date
           displayName: NCBI release date
           type: date
@@ -281,6 +282,7 @@ defaultOrganisms:
           required: true
           generateIndex: true
           autocomplete: true
+          initiallyVisible: true
         - name: isolate_name
           displayName: Isolate name
           type: string

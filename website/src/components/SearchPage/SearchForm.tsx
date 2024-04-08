@@ -51,7 +51,7 @@ export const SearchForm: FC<SearchFormProps> = ({
         fieldList.map((filter) => ({
             ...filter,
             label: filter.label ?? filter.displayName ?? sentenceCase(filter.name),
-            isVisible: true,
+            isVisible: filter.initiallyVisible ?? false,
         })),
     );
 
@@ -157,7 +157,24 @@ export const SearchForm: FC<SearchFormProps> = ({
         setIsCustomizeModalOpen(!isCustomizeModalOpen);
     };
 
+    const clearValues = (possiblyGroupedFieldName: string) => {
+        const fieldInQuestion = fieldValues.find((field) => field.name === possiblyGroupedFieldName);
+        if (fieldInQuestion === undefined) {
+            return;
+        }
+
+        if (fieldInQuestion.grouped === true) {
+            for (const groupedField of fieldInQuestion.groupedFields) {
+                handleFieldChange(groupedField.name, '');
+            }
+        } else {
+            handleFieldChange(possiblyGroupedFieldName, '');
+        }
+    }
     const handleFieldVisibilityChange = (fieldName: string, isVisible: boolean) => {
+        if (isVisible === false) {
+            clearValues(fieldName);
+        }
         setFieldValues((prev) =>
             prev.map((field) => {
                 if (field.name === fieldName) {
@@ -358,6 +375,7 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     groupedFields: [],
                     type: filter.type,
                     grouped: true,
+                    initiallyVisible: filter.initiallyVisible,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);
