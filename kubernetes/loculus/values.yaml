@@ -900,4 +900,4 @@ auth:
     envelopeFrom: "noreply@loculus.org"
   verifyEmail: true
   resetPasswordAllowed: true
-devMode: true # TODO: remove this from default Values
+devMode: true # TODO https://github.com/loculus-project/loculus/issues/1568: remove this from default Values
