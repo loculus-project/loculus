@@ -26,7 +26,7 @@ val defaultProcessedData = ProcessedData(
         "region" to TextNode("Europe"),
         "country" to TextNode("Spain"),
         "age" to IntNode(42),
-        "qc" to DoubleNode(0.9),
+        "qc" to DoubleNode(0.987654321),
         "pangoLineage" to TextNode("XBB.1.5"),
         "division" to NullNode.instance,
         "dateSubmitted" to NullNode.instance,

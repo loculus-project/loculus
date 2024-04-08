@@ -39,9 +39,6 @@ enum class MetadataType {
     @JsonProperty("float")
     FLOAT,
 
-    @JsonProperty("double")
-    DOUBLE,
-
     @JsonProperty("number")
     NUMBER,
 
