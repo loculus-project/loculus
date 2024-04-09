@@ -21,8 +21,10 @@ export class SubmitPage {
         this.loginButton = page.locator('a', { hasText: 'Login or register' });
     }
 
-    public async goto() {
-        await this.page.goto(`${baseUrl}${routes.submitPage(dummyOrganism.key)}`, { waitUntil: 'networkidle' });
+    public async goto(groupId: number) {
+        await this.page.goto(`${baseUrl}${routes.submitPage(dummyOrganism.key, groupId)}`, {
+            waitUntil: 'networkidle',
+        });
     }
 
     public async uploadMetadata() {

@@ -16,8 +16,10 @@ export class RevisePage {
         this.submitButton = page.getByRole('button', { name: 'Submit' });
     }
 
-    public async goto() {
-        await this.page.goto(`${baseUrl}${routes.revisePage(dummyOrganism.key)}`, { waitUntil: 'networkidle' });
+    public async goto(groupId: number) {
+        await this.page.goto(`${baseUrl}${routes.revisePage(dummyOrganism.key, groupId)}`, {
+            waitUntil: 'networkidle',
+        });
     }
 
     public async uploadSequenceData(file: string = sequencesTestFile) {

@@ -24,8 +24,8 @@ export class ReviewPage {
         this.confirmButton = page.getByRole('button', { name: 'Confirm', exact: false });
     }
 
-    public async goto() {
-        await this.page.goto(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`, {
+    public async goto(groupId: number) {
+        await this.page.goto(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`, {
             waitUntil: 'networkidle',
         });
     }

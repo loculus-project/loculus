@@ -19,10 +19,10 @@ export class EditPage {
         });
     }
 
-    public async submit() {
+    public async submit(groupId: number) {
         await this.submitButton.click();
         expect(await this.page.isVisible('text=Do you really want to submit?')).toBe(true);
         await this.page.getByRole('button', { name: 'Confirm' }).click();
-        await this.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
+        await this.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
     }
 }

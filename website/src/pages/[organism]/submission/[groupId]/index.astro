@@ -1,0 +1,68 @@
+---
+import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
+import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
+import { routes } from '../../../../routes/routes';
+import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
+import F7Arrow2Circlepath from '~icons/f7/arrow-2-circlepath';
+import GgCheckO from '~icons/gg/check-o';
+import IcOutlineUpload from '~icons/ic/outline-upload';
+import MdiViewListOutline from '~icons/mdi/view-list-outline';
+
+const { organism } = cleanOrganism(Astro.params.organism);
+const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
+---
+
+<SubmissionPageWrapper title='Submission portal' organism={organism!.key} groupsResult={groupsResult}>
+    {
+        groupsResult.match(
+            ({ currentGroup: group }) => {
+                const options = [
+                    {
+                        title: 'Submit',
+                        description: 'Upload new sequences.',
+                        route: routes.submitPage(organism!.key, group.groupId),
+                        icon: IcOutlineUpload,
+                    },
+                    {
+                        title: 'Revise',
+                        description: 'Upload revisions for existing sequences.',
+                        route: routes.revisePage(organism!.key, group.groupId),
+                        icon: F7Arrow2Circlepath,
+                    },
+                    {
+                        title: 'Review',
+                        description: "Review your group's unreleased submissions.",
+                        route: routes.userSequenceReviewPage(organism!.key, group.groupId),
+                        icon: GgCheckO,
+                    },
+                    {
+                        title: 'View',
+                        description: "View your group's released sequences.",
+                        route: routes.mySequencesPage(organism!.key, group.groupId),
+                        icon: MdiViewListOutline,
+                    },
+                ];
+
+                return (
+                    <div class='max-w-2xl mx-auto p-8'>
+                        <div class='flex flex-wrap'>
+                            {options.map((option) => (
+                                <a
+                                    href={option.route}
+                                    class='block rounded border border-gray-300 p-8 m-2 w-64 text-center hover:bg-gray-100 hover:no-underline'
+                                >
+                                    <h3 class='font-semibold text-gray-700 mb-3'>
+                                        <option.icon className='inline-block w-5 h-5 mr-1.5' />
+                                        {option.title}
+                                    </h3>
+                                    <p class='text-gray-700 text-sm'>{option.description}</p>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                );
+            },
+            () => undefined,
+        )
+    }
+</SubmissionPageWrapper>
