@@ -90,7 +90,7 @@ jobs:
 
       - name: Build Docker Image For Branch
         if: env.CACHE_HIT == 'false'
-        uses: gradle/actions/setup-gradle@v321
+        uses: gradle/actions/setup-gradle@v3
         env:
           USER: ${{ github.actor }}
           TOKEN: "${{ secrets.GITHUB_TOKEN }}"
