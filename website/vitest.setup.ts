@@ -6,7 +6,7 @@ import { http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
-import type { GetSequencesResponse, SequenceEntryToEdit, SubmissionIdMapping } from './src/types/backend.ts';
+import type { GetSequencesResponse, Group, SequenceEntryToEdit, SubmissionIdMapping } from './src/types/backend.ts';
 import type { DetailsResponse, InsertionsResponse, LapisError, MutationsResponse } from './src/types/lapis.ts';
 import type { RuntimeConfig } from './src/types/runtimeConfig.ts';
 
@@ -118,9 +118,13 @@ const backendRequestMocks = {
     getSequences: (
         statusCode: number = 200,
         response: GetSequencesResponse = { sequenceEntries: [], statusCounts: {} },
+        callback?: (request: Request) => void,
     ) => {
         testServer.use(
-            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-sequences`, () => {
+            http.get(`${testConfig.serverSide.backendUrl}/${testOrganism}/get-sequences`, ({ request }) => {
+                if (callback !== undefined) {
+                    callback(request);
+                }
                 return new Response(JSON.stringify(response), {
                     status: statusCode,
                 });
@@ -254,12 +258,30 @@ const lapisRequestMocks = {
     },
 };
 
-export const testGroups = [
+export const testGroups: Group[] = [
     {
+        groupId: 1,
         groupName: 'Group1',
+        institution: 'Institution 1',
+        contactEmail: 'group1@institution1.org',
+        address: {
+            line1: '',
+            city: '',
+            postalCode: '',
+            country: 'Switzerland',
+        },
     },
     {
+        groupId: 1,
         groupName: 'Group2',
+        institution: 'Institution 2',
+        contactEmail: 'group2@institution2.org',
+        address: {
+            line1: '',
+            city: '',
+            postalCode: '',
+            country: 'Switzerland',
+        },
     },
 ];
 

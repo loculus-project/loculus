@@ -294,6 +294,7 @@ class SubmissionController(
     ): List<AccessionVersion> = submissionDatabaseService.approveProcessedData(
         authenticatedUser = authenticatedUser,
         accessionVersionsFilter = body.accessionVersionsFilter,
+        groupIdsFilter = body.groupIdsFilter,
         organism = organism,
         scope = body.scope,
     )
@@ -321,6 +322,7 @@ class SubmissionController(
     ): List<AccessionVersion> = submissionDatabaseService.deleteSequenceEntryVersions(
         body.accessionVersionsFilter,
         authenticatedUser,
+        body.groupIdsFilter,
         organism,
         body.scope,
     )

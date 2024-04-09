@@ -56,7 +56,7 @@ const prepareDataToBeAwaitingApproval = async (token: string, groupId: number) =
 const prepareDataToBeApprovedForRelease = async (token: string, groupId: number) => {
     const sequenceEntries = await prepareDataToBeAwaitingApproval(token, groupId);
 
-    await approveProcessedData(sequenceEntries, token);
+    await approveProcessedData(sequenceEntries, token, groupId);
 
     return sequenceEntries;
 };
@@ -67,6 +67,7 @@ const prepareDataToBeRevoked = async (token: string, groupId: number) => {
     return revokeReleasedData(
         sequenceEntries.map((entry) => entry.accession),
         token,
+        groupId,
     );
 };
 
@@ -87,7 +88,7 @@ const prepareDataToBeRevisedForRelease = async (token: string, groupId: number) 
     }));
     await fakeProcessingPipeline.submit(options);
 
-    await approveProcessedData(submittedRevisionAccessionVersion, token);
+    await approveProcessedData(submittedRevisionAccessionVersion, token, groupId);
 
     return submittedRevisionAccessionVersion;
 };

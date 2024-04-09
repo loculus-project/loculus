@@ -61,6 +61,7 @@ export const approveProcessedDataWithoutWarningsScope = z.literal('WITHOUT_WARNI
 
 export const accessionVersionsFilterWithApprovalScope = accessionVersionsFilter.merge(
     z.object({
+        groupIdsFilter: z.array(z.number()),
         scope: z.union([approveAllDataScope, approveProcessedDataWithoutWarningsScope]),
     }),
 );
@@ -72,6 +73,7 @@ export const deleteProcessedDataWithWarningsScope = z.literal('PROCESSED_WITH_WA
 
 export const accessionVersionsFilterWithDeletionScope = accessionVersionsFilter.merge(
     z.object({
+        groupIdsFilter: z.array(z.number()),
         scope: z.union([
             deleteAllDataScope,
             deleteProcessedAndRevocationConfirmationDataScope,
