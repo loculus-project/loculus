@@ -157,6 +157,7 @@ export type UnprocessedData = z.infer<typeof unprocessedData>;
 export const sequenceEntryToEdit = accessionVersion.merge(
     z.object({
         status: statusThatAllowsEditing,
+        groupId: z.number(),
         errors: z.array(processingAnnotation).nullable(),
         warnings: z.array(processingAnnotation).nullable(),
         originalData: z.object({

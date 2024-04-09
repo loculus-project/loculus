@@ -1,10 +1,10 @@
 ---
-import { ReviewPage } from '../../../components/ReviewPage/ReviewPage';
-import NeedToLogin from '../../../components/common/NeedToLogin.astro';
-import { getRuntimeConfig } from '../../../config';
-import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { type ClientConfig } from '../../../types/runtimeConfig';
-import { getAccessToken } from '../../../utils/getAccessToken';
+import { ReviewPage } from '../../../../components/ReviewPage/ReviewPage';
+import NeedToLogin from '../../../../components/common/NeedToLogin.astro';
+import { getRuntimeConfig } from '../../../../config';
+import BaseLayout from '../../../../layouts/BaseLayout.astro';
+import { type ClientConfig } from '../../../../types/runtimeConfig';
+import { getAccessToken } from '../../../../utils/getAccessToken';
 const organism = Astro.params.organism!;
 const accessToken = getAccessToken(Astro.locals.session)!;
 const clientConfig: ClientConfig = getRuntimeConfig().public;

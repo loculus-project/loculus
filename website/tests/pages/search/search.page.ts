@@ -12,7 +12,7 @@ export class SearchPage {
     public readonly resetButton: Locator;
 
     constructor(public readonly page: Page) {
-        this.searchButton = page.getByRole('button', { name: 'Search' });
+        this.searchButton = page.getByRole('button', { name: 'Search sequences' });
         this.resetButton = page.getByRole('button', { name: 'reset' });
         this.table = page.getByRole('table');
     }
