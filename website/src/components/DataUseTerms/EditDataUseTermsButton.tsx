@@ -21,7 +21,7 @@ import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 type EditDataUseTermsButtonProps = {
     accessToken: string;
     clientConfig: ClientConfig;
-    accessionVersion: string;
+    accessionVersion: string[];
     dataUseTerms: RestrictedDataUseTerms;
 };
 
@@ -158,7 +158,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                         onClick={() => {
                             closeDialog();
                             useSetDataUseTerms.mutate({
-                                accessions: [accessionVersion],
+                                accessions: accessionVersion,
                                 newDataUseTerms: {
                                     type: dataUseTermsType,
                                     restrictedUntil: newRestrictedDate.toFormat('yyyy-MM-dd'),
