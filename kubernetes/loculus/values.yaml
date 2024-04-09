@@ -901,3 +901,13 @@ auth:
   verifyEmail: true
   resetPasswordAllowed: true
 devMode: true # TODO https://github.com/loculus-project/loculus/issues/1568: remove this from default Values
+secrets:
+  - name: my-raw-secret
+    type: raw
+    data:
+      username: admin
+      password: secret
+  - name: my-sealed-secret
+    type: sealed
+    data:
+      apikey: somesecurekey
