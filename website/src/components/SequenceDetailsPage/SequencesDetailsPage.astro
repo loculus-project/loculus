@@ -21,10 +21,10 @@ interface Props {
 
 const { tableData, organism, accessionVersion, dataUseTermsHistory } = Astro.props;
 const groupId = tableData.find((entry) => entry.name === 'groupId')?.value;
-const isRestricted = tableData.find((entry) => entry.name === 'dataUseTerms')?.value === 'RESTRICTED';
 
 dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
 const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
+const isRestricted = currentDataUseTerms.type === 'RESTRICTED';
 
 const runtimeConfig = getRuntimeConfig();
 
