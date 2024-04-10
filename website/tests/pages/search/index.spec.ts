@@ -25,6 +25,11 @@ test.describe('The search page', () => {
         const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
 
         await searchPage.goto();
+        // click on the accession field
+        await searchPage.getAccessionField().click();
+        // type the accession
+        // sleep 1 second
+        await searchPage.page.waitForTimeout(1000);
         await searchPage.getAccessionField().fill(testAccessionVersion);
         // sleep 1 second
         await searchPage.page.waitForTimeout(1000);
