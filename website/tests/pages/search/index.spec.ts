@@ -70,7 +70,10 @@ test.describe('The search page', () => {
         for (let i = 0; i < 1000; i++) {
             query += `\ndoesnotexist${i}`;
         }
+        await searchPage.getAccessionField().click();
+        await searchPage.page.waitForTimeout(100);
         await searchPage.getAccessionField().fill(query);
+        await searchPage.page.waitForTimeout(100);
         await searchPage.clickSearchButton();
 
         const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
