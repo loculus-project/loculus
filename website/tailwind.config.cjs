@@ -15,7 +15,10 @@ const mainTailwindColor = {
 };
 
 module.exports = {
-    content: ['./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}', 'node_modules/flowbite-react/lib/esm/**/*.js'],
+    content: [
+        './src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}',
+        'node_modules/flowbite-react/lib/esm/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}',
+    ],
     theme: {
         extend: {
             colors: {

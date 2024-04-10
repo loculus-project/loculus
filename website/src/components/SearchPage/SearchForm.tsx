@@ -123,7 +123,9 @@ export const SearchForm: FC<SearchFormProps> = ({
                 if (field.grouped === true) {
                     return (
                         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                            <h3 className='text-gray-500 text-sm mb-1'>{field.label}</h3>
+                            <h3 className='text-gray-500 text-sm mb-1'>
+                                {field.displayName !== undefined ? field.displayName : field.label}
+                            </h3>
 
                             {field.groupedFields.map((groupedField) => (
                                 <SearchField
@@ -321,6 +323,8 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     groupedFields: [],
                     type: filter.type,
                     grouped: true,
+                    displayName: filter.fieldGroupDisplayName,
+                    label: filter.label,
                     initiallyVisible: filter.initiallyVisible,
                 };
                 fieldList.push(fieldForGroup);

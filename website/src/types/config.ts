@@ -29,6 +29,7 @@ export type MetadataFilter = Metadata & {
     label?: string;
     fieldGroup?: string;
     grouped?: false;
+    fieldGroupDisplayName?: string;
     isVisible?: boolean;
 };
 
