@@ -202,9 +202,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <div className='flex'>
                         <h2 className='text-lg font-semibold flex-1 md:hidden'>Search query</h2>
-                        <div
-                            className='flex items-center justify-between w-full mb-2 text-primary-700'
-                        >
+                        <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
                             <button className='underline' onClick={toggleCustomizeModal}>
                                 Customize fields
                             </button>
