@@ -88,7 +88,7 @@ const isMyGroup =
                 Only visible to group members
             </div>
 
-            {currentDataUseTerms.type === 'RESTRICTED' && (
+            {isRestricted && (
                 <EditDataUseTermsButton
                     clientConfig={clientConfig}
                     accessToken={accessToken}
