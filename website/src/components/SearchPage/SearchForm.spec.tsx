@@ -10,6 +10,16 @@ import type { MetadataFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
+global.ResizeObserver = class FakeResizeObserver {
+    // This is needed or we get a test failure: https://github.com/tailwindlabs/headlessui/discussions/2414
+    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-empty-function
+    observe() {}
+    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-empty-function
+    disconnect() {}
+    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-empty-function
+    unobserve() {}
+};
+
 const searchButtonText = 'Search sequences';
 
 vi.mock('../../config', () => ({
@@ -166,5 +176,24 @@ describe('SearchForm', () => {
         await userEvent.click(screen.getByRole('button', { name: 'Search sequences' }));
 
         expect(window.location.href).toContain(`${dateFieldName}=2025-01-25`);
+    });
+
+    test('toggle field visibility', async () => {
+        renderSearchForm();
+
+        expect(screen.getByLabelText('Field 1')).toBeVisible();
+
+        const customizeButton = screen.getByRole('button', { name: 'Customize fields' });
+        await userEvent.click(customizeButton);
+
+        const field1Checkbox = screen.getByRole('checkbox', { name: 'Field 1' });
+        expect(field1Checkbox).toBeChecked();
+
+        await userEvent.click(field1Checkbox);
+
+        const closeButton = screen.getByRole('button', { name: 'Close' });
+        await userEvent.click(closeButton);
+
+        expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 });

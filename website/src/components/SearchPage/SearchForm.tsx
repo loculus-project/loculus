@@ -202,21 +202,22 @@ export const SearchForm: FC<SearchFormProps> = ({
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <div className='flex'>
                         <h2 className='text-lg font-semibold flex-1 md:hidden'>Search query</h2>
-                        <button className='underline' onClick={resetSearch}>
-                            Reset
-                        </button>
+                        <div // justify between
+                            className='flex items-center justify-between w-full mb-2 text-primary-700'
+                        >
+                            <button className='underline' onClick={toggleCustomizeModal}>
+                                Customize fields
+                            </button>
+
+                            <button className='underline' onClick={resetSearch}>
+                                Reset
+                            </button>
+                        </div>
                         <button className='ml-4 md:hidden' onClick={closeOnMobile}>
                             <SandwichIcon isOpen />
                         </button>
                     </div>
-                    <div className='mt-4 mb-2'>
-                        <button
-                            className='text-sm underline text-blue-600 hover:text-blue-800 focus:outline-none'
-                            onClick={toggleCustomizeModal}
-                        >
-                            Customize
-                        </button>
-                    </div>
+
                     <form onSubmit={handleSearch}>
                         <div className='flex flex-col'>
                             <AccessionField initialValue={initialAccessionFilter} onChange={setAccessionFilter} />
