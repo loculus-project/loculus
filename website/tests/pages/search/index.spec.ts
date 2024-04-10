@@ -26,7 +26,12 @@ test.describe('The search page', () => {
 
         await searchPage.goto();
         await searchPage.getAccessionField().fill(testAccessionVersion);
+        // sleep 1 second
+        await searchPage.page.waitForTimeout(1000);
         await searchPage.clickSearchButton();
+        // log the current URL
+        console.log(await searchPage.page.url());
+        
 
         await searchPage.page.waitForURL(
             `${baseUrl}${routes.searchPage(dummyOrganism.key, [
