@@ -25,18 +25,12 @@ test.describe('The search page', () => {
         const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
 
         await searchPage.goto();
-        // click on the accession field
         await searchPage.getAccessionField().click();
-        // type the accession
-        // sleep 1 second
         await searchPage.page.waitForTimeout(1000);
         await searchPage.getAccessionField().fill(testAccessionVersion);
-        // sleep 1 second
+
         await searchPage.page.waitForTimeout(1000);
         await searchPage.clickSearchButton();
-        // log the current URL
-        console.log(await searchPage.page.url());
-        
 
         await searchPage.page.waitForURL(
             `${baseUrl}${routes.searchPage(dummyOrganism.key, [
@@ -100,7 +94,13 @@ test.describe('The search page', () => {
         await searchPage.goto();
 
         const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
+
+        await searchPage.getAccessionField().click();
+
+        await searchPage.page.waitForTimeout(100);
         await searchPage.getAccessionField().fill(testAccessionVersion);
+
+        await searchPage.page.waitForTimeout(100);
 
         await expect(searchPage.getAccessionField()).toHaveValue(testAccessionVersion);
 
