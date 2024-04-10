@@ -37,6 +37,7 @@ export const defaultReviewData: SequenceEntryToEdit = {
     accession: '1',
     version: 1,
     status: 'HAS_ERRORS',
+    groupId: 1,
     errors: [
         {
             source: [

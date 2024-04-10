@@ -5,7 +5,7 @@ import { baseUrl, dummyOrganism, expect, test, testSequenceCount } from '../../e
 
 test.describe('The submit page', () => {
     test('should ask to login if not logged in', async ({ submitPage }) => {
-        await submitPage.goto();
+        await submitPage.goto(1);
 
         await submitPage.loginButton.click();
 
@@ -13,31 +13,31 @@ test.describe('The submit page', () => {
     });
 
     test('should upload files and submit', async ({ submitPage, loginAsTestUser }) => {
-        await loginAsTestUser();
-        await submitPage.goto();
+        const { groupId } = await loginAsTestUser();
+        await submitPage.goto(groupId);
 
         await Promise.all([submitPage.uploadSequenceData(), submitPage.uploadMetadata()]);
 
         await submitPage.submitButton.click();
 
-        await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
+        await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
     });
 
     test('should upload compressed files and submit', async ({ submitPage, loginAsTestUser }) => {
-        await loginAsTestUser();
-        await submitPage.goto();
+        const { groupId } = await loginAsTestUser();
+        await submitPage.goto(groupId);
 
         await Promise.all([submitPage.uploadCompressedSequenceData(), submitPage.uploadCompressedMetadata()]);
 
         await submitPage.submitButton.click();
 
-        await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
+        await submitPage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
     });
 
     test('should set data use terms', async ({ submitPage, loginAsTestUser }) => {
         test.skip();
-        await loginAsTestUser();
-        await submitPage.goto();
+        const { groupId } = await loginAsTestUser();
+        await submitPage.goto(groupId);
 
         await Promise.all([submitPage.uploadSequenceData(), submitPage.uploadMetadata()]);
         await submitPage.selectRestrictedDataUseTerms();

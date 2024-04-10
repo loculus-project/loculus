@@ -48,7 +48,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-security"
 
     implementation 'org.apache.commons:commons-compress:1.26.1'
-    implementation 'com.github.luben:zstd-jni:1.5.6-1'
+    implementation 'com.github.luben:zstd-jni:1.5.6-2'
     implementation 'org.tukaani:xz:1.9'
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {

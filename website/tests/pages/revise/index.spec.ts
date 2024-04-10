@@ -8,10 +8,10 @@ test.describe('The revise page', () => {
 
         const sequenceEntries = await prepareDataToBe('approvedForRelease', token, groupId);
 
-        await revisePage.goto();
+        await revisePage.goto(groupId);
 
         await revisePage.submitRevisedData(sequenceEntries.map((entry) => entry.accession));
 
-        await revisePage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key)}`);
+        await revisePage.page.waitForURL(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
     });
 });

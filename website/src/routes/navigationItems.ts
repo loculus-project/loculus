@@ -33,7 +33,7 @@ function topNavigationItems(organism: string | undefined, isLoggedIn: boolean, l
         },
         {
             text: 'Submit',
-            path: routes.submissionPage(organism),
+            path: routes.submissionPageWithoutGroup(organism),
         },
         {
             text: 'SeqSets',

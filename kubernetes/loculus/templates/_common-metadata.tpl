@@ -36,6 +36,8 @@ fields:
     type: string
     generateIndex: true
     autocomplete: true
+    displayName: Data use terms
+    initiallyVisible: true
     customDisplay:
       type: dataUseTerms
   - name: versionStatus
@@ -92,6 +94,9 @@ fields:
     {{- end }}
     {{- if .notSearchable }}
     notSearchable: {{ .notSearchable }}
+    {{- end }}
+    {{- if .initiallyVisible }}
+    initiallyVisible: {{ .initiallyVisible }}
     {{- end }}
     {{- if .displayName }}
     displayName: {{ .displayName }}

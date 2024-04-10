@@ -29,141 +29,143 @@ data:
       "accessTokenLifespan": 36000,
       "ssoSessionIdleTimeout": 36000,
       "users": [
-        {{- $browsers := list "firefox" "webkit" "chromium"}}
-        {{- range $_, $browser := $browsers }}
-          {{- range $index, $_ := until 20}}
-        {
-          "username": "testuser_{{$index}}_{{$browser}}",
-          "enabled": true,
-          "email": "testuser_{{$index}}_{{$browser}}@void.o",
-          "emailVerified": true,
-          "firstName": "{{$index}}_{{$browser}}",
-          "lastName": "TestUser",
-          "credentials": [
-            {
-              "type": "password",
-              "value": "testuser_{{$index}}_{{$browser}}"
+        {{ if $.Values.devMode }}
+          {{- $browsers := list "firefox" "webkit" "chromium"}}
+          {{- range $_, $browser := $browsers }}
+            {{- range $index, $_ := until 20}}
+          {
+            "username": "testuser_{{$index}}_{{$browser}}",
+            "enabled": true,
+            "email": "testuser_{{$index}}_{{$browser}}@void.o",
+            "emailVerified": true,
+            "firstName": "{{$index}}_{{$browser}}",
+            "lastName": "TestUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser_{{$index}}_{{$browser}}"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
             }
-          ],
-          "realmRoles": [
-            "user",
-            "offline_access"
-          ],
-          "attributes": {
-            "university": "University of Test"
           },
-          "clientRoles": {
-            "account": [
-              "manage-account"
-            ]
-          }
-        },
+            {{ end }}
           {{ end }}
+          {
+            "username": "testuser",
+            "enabled": true,
+            "email": "testuser@void.o",
+            "emailVerified" : true,
+            "firstName": "Test",
+            "lastName": "User",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "testuser"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "insdc_ingest_user",
+            "enabled": true,
+            "email": "insdc_ingest_user@void.o",
+            "emailVerified" : true,
+            "firstName": "INSDC Ingest",
+            "lastName": "User",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "insdc_ingest_user"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "dummy_preprocessing_pipeline",
+            "enabled": true,
+            "email": "dummy_preprocessing_pipeline@void.o",
+            "emailVerified" : true,
+            "firstName": "Dummy",
+            "lastName": "Preprocessing",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "dummy_preprocessing_pipeline"
+              }
+            ],
+            "realmRoles": [
+              "preprocessing_pipeline",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
+          {
+            "username": "superuser",
+            "enabled": true,
+            "email": "superuser@void.o",
+            "emailVerified" : true,
+            "firstName": "Dummy",
+            "lastName": "SuperUser",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "superuser"
+              }
+            ],
+            "realmRoles": [
+              "super_user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
         {{ end }}
-        {
-          "username": "testuser",
-          "enabled": true,
-          "email": "testuser@void.o",
-          "emailVerified" : true,
-          "firstName": "Test",
-          "lastName": "User",
-          "credentials": [
-            {
-              "type": "password",
-              "value": "testuser"
-            }
-          ],
-          "realmRoles": [
-            "user",
-            "offline_access"
-          ],
-          "attributes": {
-            "university": "University of Test"
-          },
-          "clientRoles": {
-            "account": [
-              "manage-account"
-            ]
-          }
-        },
-        {
-          "username": "insdc_ingest_user",
-          "enabled": true,
-          "email": "insdc_ingest_user@void.o",
-          "emailVerified" : true,
-          "firstName": "INSDC Ingest",
-          "lastName": "User",
-          "credentials": [
-            {
-              "type": "password",
-              "value": "insdc_ingest_user"
-            }
-          ],
-          "realmRoles": [
-            "user",
-            "offline_access"
-          ],
-          "attributes": {
-            "university": "University of Test"
-          },
-          "clientRoles": {
-            "account": [
-              "manage-account"
-            ]
-          }
-        },
-        {
-          "username": "dummy_preprocessing_pipeline",
-          "enabled": true,
-          "email": "dummy_preprocessing_pipeline@void.o",
-          "emailVerified" : true,
-          "firstName": "Dummy",
-          "lastName": "Preprocessing",
-          "credentials": [
-            {
-              "type": "password",
-              "value": "dummy_preprocessing_pipeline"
-            }
-          ],
-          "realmRoles": [
-            "preprocessing_pipeline",
-            "offline_access"
-          ],
-          "attributes": {
-            "university": "University of Test"
-          },
-          "clientRoles": {
-            "account": [
-              "manage-account"
-            ]
-          }
-        },
-        {
-          "username": "superuser",
-          "enabled": true,
-          "email": "superuser@void.o",
-          "emailVerified" : true,
-          "firstName": "Dummy",
-          "lastName": "SuperUser",
-          "credentials": [
-            {
-              "type": "password",
-              "value": "superuser"
-            }
-          ],
-          "realmRoles": [
-            "super_user",
-            "offline_access"
-          ],
-          "attributes": {
-            "university": "University of Test"
-          },
-          "clientRoles": {
-            "account": [
-              "manage-account"
-            ]
-          }
-        },
         {
           "username": "silo_import_job",
           "enabled": true,
