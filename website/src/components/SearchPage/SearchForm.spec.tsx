@@ -20,9 +20,30 @@ vi.mock('../../config', () => ({
 const queryClient = new QueryClient();
 
 const defaultSearchFormFilters = [
-    { name: 'field1', type: 'string' as const, label: 'Field 1', autocomplete: false, filterValue: '' },
-    { name: 'field2', type: 'date' as const, autocomplete: false, filterValue: '', label: 'Field 2' },
-    { name: 'field3', type: 'pango_lineage' as const, label: 'Field 3', autocomplete: true, filterValue: '' },
+    {
+        name: 'field1',
+        type: 'string' as const,
+        label: 'Field 1',
+        autocomplete: false,
+        filterValue: '',
+        initiallyVisible: true,
+    },
+    {
+        name: 'field2',
+        type: 'date' as const,
+        autocomplete: false,
+        filterValue: '',
+        label: 'Field 2',
+        initiallyVisible: true,
+    },
+    {
+        name: 'field3',
+        type: 'pango_lineage' as const,
+        label: 'Field 3',
+        autocomplete: true,
+        filterValue: '',
+        initiallyVisible: true,
+    },
 ];
 
 const defaultReferenceGenomesSequenceNames = {
@@ -90,6 +111,7 @@ describe('SearchForm', () => {
                 autocomplete: false,
                 filterValue: '',
                 notSearchable: true,
+                initiallyVisible: true,
             },
         ]);
 
@@ -104,6 +126,7 @@ describe('SearchForm', () => {
                 name: timestampFieldName,
                 type: 'timestamp' as const,
                 filterValue: '1706147200',
+                initiallyVisible: true,
             },
         ]);
 
@@ -128,6 +151,7 @@ describe('SearchForm', () => {
                 name: dateFieldName,
                 type: 'date' as const,
                 filterValue: '2024-01-25',
+                initiallyVisible: true,
             },
         ]);
         const dateLabel = screen.getByText('Date field');

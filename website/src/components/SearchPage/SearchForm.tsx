@@ -170,7 +170,7 @@ export const SearchForm: FC<SearchFormProps> = ({
         } else {
             handleFieldChange(possiblyGroupedFieldName, '');
         }
-    }
+    };
     const handleFieldVisibilityChange = (fieldName: string, isVisible: boolean) => {
         if (isVisible === false) {
             clearValues(fieldName);
