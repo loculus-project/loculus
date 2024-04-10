@@ -1,6 +1,5 @@
 import { Dialog, Transition } from '@headlessui/react';
 
-// Define props types for CheckboxField
 interface CheckboxFieldProps {
     label: string;
     checked: boolean;
@@ -23,7 +22,6 @@ const CheckboxField: React.FC<CheckboxFieldProps> = ({ label, checked, onChange,
     </div>
 );
 
-// Define props types for CustomizeModal
 interface FieldValue {
     name: string;
     label: string;
