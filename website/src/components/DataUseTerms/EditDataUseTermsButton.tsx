@@ -4,19 +4,13 @@ import { type FC, useState, useRef } from 'react';
 import { toast } from 'react-toastify';
 
 import { withQueryProvider } from './../common/withQueryProvider';
+import DataUseTermsSelector from './DataUseTermsSelector';
 import { backendClientHooks } from '../../services/serviceHooks';
-import {
-    type RestrictedDataUseTerms,
-    type DataUseTermsType,
-    openDataUseTermsType,
-    restrictedDataUseTermsType,
-} from '../../types/backend.ts';
+import { type RestrictedDataUseTerms, type DataUseTermsType, restrictedDataUseTermsType } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
 import { datePickerTheme } from '../Submission/DateChangeModal';
-import Locked from '~icons/fluent-emoji-high-contrast/locked';
-import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 
 type EditDataUseTermsButtonProps = {
     accessToken: string;
@@ -82,57 +76,10 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                 <div className='mt-2'>
                     <div className='mt-6 space-y-2'>
                         <div className='flex flex-col items-center gap-x-3'>
-                            <div>
-                                <input
-                                    id='data-use-open'
-                                    name='data-use'
-                                    onChange={() => setDataUseTermsType(openDataUseTermsType)}
-                                    type='radio'
-                                    checked={dataUseTermsType === openDataUseTermsType}
-                                    className='h-4 w-4 p-2 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
-                                />
-                                <label
-                                    htmlFor='data-use-open'
-                                    className='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'
-                                >
-                                    <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                                    Open
-                                </label>
-                                <div className='text-xs pl-8 text-gray-500 pb-4'>
-                                    Anyone can use and share the data (though we believe researchers should exercise
-                                    scientific etiquette, including the importance of citation). Data will be released
-                                    to the INSDC databases shortly after submission.{' '}
-                                    <a href='#TODO-MVP' className='text-primary-600'>
-                                        Find out more
-                                    </a>
-                                    .
-                                </div>
-                            </div>
-                            <div>
-                                <input
-                                    id='data-use-restricted'
-                                    name='data-use'
-                                    onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
-                                    type='radio'
-                                    checked={dataUseTermsType === restrictedDataUseTermsType}
-                                    className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
-                                />
-                                <label
-                                    htmlFor='data-use-restricted'
-                                    className='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'
-                                >
-                                    <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                                    Restricted
-                                </label>
-                                <div className='text-xs pl-8 text-gray-500 mb-4'>
-                                    Data will be restricted for a period of time. The sequences will be available but
-                                    there will be limitations on how they can be used by others.{' '}
-                                    <a href='#TODO-MVP' className='text-primary-600'>
-                                        Find out more
-                                    </a>
-                                    .
-                                </div>
-                            </div>
+                            <DataUseTermsSelector
+                                dataUseTermsType={dataUseTermsType}
+                                setDataUseTermsType={setDataUseTermsType}
+                            />
                         </div>
                         {dataUseTermsType === restrictedDataUseTermsType && (
                             <>

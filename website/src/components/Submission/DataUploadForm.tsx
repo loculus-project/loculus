@@ -5,7 +5,7 @@ import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementT
 
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
-import { routes } from '../../routes/routes.ts';
+import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -19,8 +19,6 @@ import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import Locked from '~icons/fluent-emoji-high-contrast/locked';
-import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
@@ -73,59 +71,10 @@ const DataUseTerms = ({
                     </label>
                     <div className='mt-2'>
                         <div className='mt-6 space-y-2'>
-                            <div className='flex items-center gap-x-3'>
-                                <input
-                                    id='data-use-open'
-                                    name='data-use'
-                                    onChange={() => setDataUseTermsType(openDataUseTermsType)}
-                                    type='radio'
-                                    checked={dataUseTermsType === openDataUseTermsType}
-                                    className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
-                                />
-                                <label
-                                    htmlFor='data-use-open'
-                                    className='block text-sm font-medium leading-6 text-gray-900'
-                                >
-                                    <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                                    Open
-                                </label>
-                            </div>
-                            <div className='text-xs pl-6 text-gray-500 pb-4'>
-                                Anyone can use and share the data (though we believe researchers should exercise
-                                scientific etiquette, including the importance of citation). Data will be released to
-                                the INSDC databases shortly after submission.{' '}
-                                <a href={routes.datauseTermsPage()} className='text-primary-600'>
-                                    Find out more
-                                </a>
-                                .
-                            </div>
-
-                            <div className='flex items-center gap-x-3'>
-                                <input
-                                    id='data-use-restricted'
-                                    name='data-use'
-                                    onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
-                                    type='radio'
-                                    checked={dataUseTermsType === restrictedDataUseTermsType}
-                                    className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
-                                />
-                                <label
-                                    htmlFor='data-use-restricted'
-                                    className='block text-sm font-medium leading-6 text-gray-900'
-                                >
-                                    <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                                    Restricted
-                                </label>
-                            </div>
-
-                            <div className='text-xs pl-6 text-gray-500 mb-4'>
-                                Data will be restricted for a period of time. The sequences will be available but there
-                                will be limitations on how they can be used by others.{' '}
-                                <a href={routes.datauseTermsPage()} className='text-primary-600'>
-                                    Find out more
-                                </a>
-                                .
-                            </div>
+                            <DataUseTermsSelector
+                                dataUseTermsType={dataUseTermsType}
+                                setDataUseTermsType={setDataUseTermsType}
+                            />
                             {dataUseTermsType === restrictedDataUseTermsType && (
                                 <div className='text-sm pl-6 text-gray-900 mb-4'>
                                     Data will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
