@@ -1,24 +1,30 @@
 ---
 import { ReviewPage } from '../../../../components/ReviewPage/ReviewPage';
-import NeedToLogin from '../../../../components/common/NeedToLogin.astro';
+import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { getRuntimeConfig } from '../../../../config';
-import BaseLayout from '../../../../layouts/BaseLayout.astro';
 import { type ClientConfig } from '../../../../types/runtimeConfig';
 import { getAccessToken } from '../../../../utils/getAccessToken';
+import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
+
 const organism = Astro.params.organism!;
-const accessToken = getAccessToken(Astro.locals.session)!;
+const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
+
 const clientConfig: ClientConfig = getRuntimeConfig().public;
 ---
 
-{
-    accessToken ? (
-        <BaseLayout title='Current submissions'>
-            <h1 class='title'>Current submissions</h1>
-            <ReviewPage clientConfig={clientConfig} organism={organism} accessToken={accessToken} client:load />
-        </BaseLayout>
-    ) : (
-        <BaseLayout title='Current submissions'>
-            <NeedToLogin />
-        </BaseLayout>
-    )
-}
+<SubmissionPageWrapper title='Review current submissions' organism={organism} groupsResult={groupsResult}>
+    {
+        groupsResult.match(
+            ({ currentGroup: group }) => (
+                <ReviewPage
+                    clientConfig={clientConfig}
+                    organism={organism}
+                    group={group}
+                    accessToken={getAccessToken(Astro.locals.session)!}
+                    client:load
+                />
+            ),
+            () => undefined,
+        )
+    }
+</SubmissionPageWrapper>

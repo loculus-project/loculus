@@ -48,9 +48,14 @@ export const submitRevisedDataViaApi = async (accessions: Accession[], token: st
     return response.value;
 };
 
-export const approveProcessedData = async (accessionVersions: AccessionVersion[], token: string): Promise<void> => {
+export const approveProcessedData = async (
+    accessionVersions: AccessionVersion[],
+    token: string,
+    groupId: number,
+): Promise<void> => {
     const body = {
         accessionVersionsFilter: accessionVersions,
+        groupIdsFilter: [groupId],
         scope: 'ALL' as const,
     };
 
@@ -64,7 +69,11 @@ export const approveProcessedData = async (accessionVersions: AccessionVersion[]
     }
 };
 
-export const revokeReleasedData = async (accessions: Accession[], token: string): Promise<AccessionVersion[]> => {
+export const revokeReleasedData = async (
+    accessions: Accession[],
+    token: string,
+    groupId: number,
+): Promise<AccessionVersion[]> => {
     const body = {
         accessions,
     };
@@ -83,7 +92,11 @@ export const revokeReleasedData = async (accessions: Accession[], token: string)
 
     const confirmationResponse = await backendClient.call(
         'approveProcessedData',
-        { scope: 'ALL', accessionVersionsFilter: accessionVersions },
+        {
+            scope: 'ALL',
+            accessionVersionsFilter: accessionVersions,
+            groupIdsFilter: [groupId],
+        },
         {
             params: { organism: dummyOrganism.key },
             headers: createAuthorizationHeader(token),

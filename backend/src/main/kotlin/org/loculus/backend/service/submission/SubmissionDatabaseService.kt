@@ -276,9 +276,24 @@ class SubmissionDatabaseService(
         )
     }
 
+    private fun getGroupCondition(groupIdsFilter: List<Int>?, authenticatedUser: AuthenticatedUser): Op<Boolean> {
+        return if (groupIdsFilter != null) {
+            groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroups(
+                groupIdsFilter,
+                authenticatedUser,
+            )
+            SequenceEntriesView.groupIsOneOf(groupIdsFilter)
+        } else if (authenticatedUser.isSuperUser) {
+            Op.TRUE
+        } else {
+            SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
+        }
+    }
+
     fun approveProcessedData(
         authenticatedUser: AuthenticatedUser,
         accessionVersionsFilter: List<AccessionVersion>?,
+        groupIdsFilter: List<Int>?,
         organism: Organism,
         scope: ApproveDataScope,
     ): List<AccessionVersion> {
@@ -315,8 +330,10 @@ class SubmissionDatabaseService(
             Op.TRUE
         }
 
+        val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
+
         val accessionVersionsToUpdate = SequenceEntriesView
-            .select { statusCondition and accessionCondition and scopeCondition }
+            .select { statusCondition and accessionCondition and scopeCondition and groupCondition }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
         if (accessionVersionsToUpdate.isEmpty()) {
@@ -448,17 +465,7 @@ class SubmissionDatabaseService(
 
         val listOfStatuses = statusesFilter ?: Status.entries
 
-        val groupCondition = if (groupIdsFilter != null) {
-            groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroups(
-                groupIdsFilter,
-                authenticatedUser,
-            )
-            SequenceEntriesView.groupIsOneOf(groupIdsFilter)
-        } else if (authenticatedUser.isSuperUser) {
-            Op.TRUE
-        } else {
-            SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
-        }
+        val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
         val baseQuery = SequenceEntriesView
             .join(
@@ -611,6 +618,7 @@ class SubmissionDatabaseService(
     fun deleteSequenceEntryVersions(
         accessionVersionsFilter: List<AccessionVersion>?,
         authenticatedUser: AuthenticatedUser,
+        groupIdsFilter: List<Int>?,
         organism: Organism,
         scope: DeleteSequenceScope,
     ): List<AccessionVersion> {
@@ -655,9 +663,11 @@ class SubmissionDatabaseService(
             DeleteSequenceScope.ALL -> SequenceEntriesView.statusIsOneOf(listOfDeletableStatuses)
         }
 
+        val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
+
         val sequenceEntriesToDelete = SequenceEntriesView
             .slice(SequenceEntriesView.accessionColumn, SequenceEntriesView.versionColumn)
-            .select { accessionCondition and scopeCondition }
+            .select { accessionCondition and scopeCondition and groupCondition }
             .map {
                 AccessionVersion(
                     it[SequenceEntriesView.accessionColumn],
