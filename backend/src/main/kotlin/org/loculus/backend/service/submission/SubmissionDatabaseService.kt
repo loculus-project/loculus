@@ -279,8 +279,8 @@ class SubmissionDatabaseService(
     private fun getGroupCondition(groupIdsFilter: List<Int>?, authenticatedUser: AuthenticatedUser): Op<Boolean> {
         return if (groupIdsFilter != null) {
             groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroups(
-                    groupIdsFilter,
-                    authenticatedUser,
+                groupIdsFilter,
+                authenticatedUser,
             )
             SequenceEntriesView.groupIsOneOf(groupIdsFilter)
         } else if (authenticatedUser.isSuperUser) {
@@ -616,11 +616,11 @@ class SubmissionDatabaseService(
     }
 
     fun deleteSequenceEntryVersions(
-            accessionVersionsFilter: List<AccessionVersion>?,
-            authenticatedUser: AuthenticatedUser,
-            groupIdsFilter: List<Int>?,
-            organism: Organism,
-            scope: DeleteSequenceScope,
+        accessionVersionsFilter: List<AccessionVersion>?,
+        authenticatedUser: AuthenticatedUser,
+        groupIdsFilter: List<Int>?,
+        organism: Organism,
+        scope: DeleteSequenceScope,
     ): List<AccessionVersion> {
         if (accessionVersionsFilter == null) {
             log.info {
