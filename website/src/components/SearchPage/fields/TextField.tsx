@@ -73,7 +73,6 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             placeholder: '',
             label: label !== undefined ? label : '',
         };
-        // "left-1" - leave this comment in to ensure tailwind maintains left-1 in the build
         return <FloatingLabel {...inputProps} variant='outlined' type='text' />;
     }
     const refTextArea = ref as ForwardedRef<HTMLTextAreaElement>;

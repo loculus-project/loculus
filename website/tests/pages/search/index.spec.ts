@@ -51,8 +51,12 @@ test.describe('The search page', () => {
         const previousAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
 
         const query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
+        await searchPage.getAccessionField().click();
+        await searchPage.page.waitForTimeout(100);
         await searchPage.getAccessionField().fill(query);
+        await searchPage.page.waitForTimeout(100);
         await searchPage.clickSearchButton();
+        await searchPage.page.waitForTimeout(100);
 
         const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
 
