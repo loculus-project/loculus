@@ -100,13 +100,16 @@ export const getMetadataFilters = (
                 displayName: 'From',
                 filterValue: getSearchParams(`${metadata.name}From`),
                 fieldGroup: metadata.name,
+                fieldGroupDisplayName: metadata.displayName,
             };
+
             const metadataTo = {
                 ...metadata,
                 name: `${metadata.name}To`,
                 displayName: 'To',
                 filterValue: getSearchParams(`${metadata.name}To`),
                 fieldGroup: metadata.name,
+                fieldGroupDisplayName: metadata.displayName,
             };
             return [metadataFrom, metadataTo];
         }
