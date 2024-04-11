@@ -54,6 +54,9 @@ fields:
 {{- define "loculus.generateWebsiteConfig" }}
 name: {{ $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
+{{ if $.Values.bannerMessage }}
+bannerMessage: {{ $.Values.bannerMessage }}
+{{ end }}
 accessionPrefix: {{ $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:

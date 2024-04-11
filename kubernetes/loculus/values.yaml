@@ -909,3 +909,4 @@ auth:
   verifyEmail: true
   resetPasswordAllowed: true
 devMode: true # TODO https://github.com/loculus-project/loculus/issues/1568: remove this from default Values
+bannerMessage: "This is a development environment. Data will not be persisted."
