@@ -26,6 +26,10 @@ export const routes = {
             organism,
             `/search?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
         ),
+    metadataTemplate: (organism : string) => withOrganism(
+        organism, 
+        `/submission/template`
+    ),
 
     mySequencesPage: (
         organism: string,
