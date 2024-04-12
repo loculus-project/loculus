@@ -15,7 +15,8 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-
+import { getSchema } from '../../config.ts';
+import {type InputField} from '../../types/config.ts'
 type EditPageProps = {
     organism: string;
     clientConfig: ClientConfig;
@@ -26,6 +27,7 @@ type EditPageProps = {
 const logger = getClientLogger('EditPage');
 
 const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, accessToken }: EditPageProps) => {
+    const {inputFields} = getSchema(organism)
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
 
@@ -98,6 +100,7 @@ const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, 
                     <EditableOriginalData
                         editedMetadata={editedMetadata.filter(({ key }) => key !== ACCESSION_FIELD)}
                         setEditedMetadata={setEditedMetadata}
+                        inputFields={inputFields}
                     />
                     <EditableOriginalSequences
                         editedSequences={editedSequences}
@@ -196,15 +199,25 @@ const Subtitle: FC<SubtitleProps> = ({ title, bold, customKey }) => (
 type EditableOriginalDataProps = {
     editedMetadata: Row[];
     setEditedMetadata: Dispatch<SetStateAction<Row[]>>;
+    inputFields: InputField[];
 };
-const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata }) => (
+const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, setEditedMetadata, inputFields }) => (
     <>
         <Subtitle title='Metadata' />
-        {editedMetadata.map((field) => {
+        {inputFields.map((inputField) => {
+            const field = editedMetadata.find(
+                x=> x.key == inputField.name
+            )
+
+            if (field===undefined){
+                // TODO: construct a row with an empty value
+            }
+
+        
             return (
                 <EditableDataRow
-                    label={sentenceCase(field.key)}
-                    key={'raw_metadata' + field.key}
+                    label={inputField.displayName && sentenceCase(inputField.name)}
+                    key={'raw_metadata' + inputField.name}
                     row={field}
                     onChange={(editedRow: Row) =>
                         setEditedMetadata((prevRows: Row[]) =>

@@ -28,6 +28,11 @@ defaultOrganisms:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       instanceName: "Test Dummy Organism"
+      inputFields:
+        - name: date
+          displayName: Date
+        - name: region
+          displayName: Region
       metadata:
         - name: date
           type: date

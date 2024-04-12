@@ -22,7 +22,13 @@ export const metadata = z.object({
     initiallyVisible: z.boolean().optional(),
 });
 
-export type CustomDisplay = z.infer<typeof customDisplay>;
+export const inputField = z.object({
+    name: z.string(),
+    displayName: z.string().optional(),})
+
+
+    export type InputField = z.infer<typeof inputField>;
+    export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
 
 export type MetadataFilter = Metadata & {
@@ -64,6 +70,7 @@ const schema = z.object({
     image: z.string().optional(),
     description: z.string().optional(),
     metadata: z.array(metadata),
+    inputFields: z.array(inputField),
     tableColumns: z.array(z.string()),
     primaryKey: z.string(),
     defaultOrderBy: z.string(),
