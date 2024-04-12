@@ -205,12 +205,20 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
     <>
         <Subtitle title='Metadata' />
         {inputFields.map((inputField) => {
-            const field = editedMetadata.find(
-                x=> x.key == inputField.name
+            let field
+            field = editedMetadata.find(
+                editedMetadataField=> editedMetadataField.key == inputField.name
             )
 
             if (field===undefined){
-                // TODO: construct a row with an empty value
+                field = {
+                    key: inputField.name,
+                    value: "",
+                    initialValue: "",
+                    warnings: [],
+                    errors: []
+                }
+                
             }
 
         
@@ -221,12 +229,24 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
                     row={field}
                     onChange={(editedRow: Row) =>
                         setEditedMetadata((prevRows: Row[]) =>
-                            prevRows.map((prevRow) =>
-                                prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-                            ),
+                            {
+                             
+                                const relevantOldRow = prevRows.find( oldRow => oldRow.key === editedRow.key)
+                                
+                                if (relevantOldRow !== undefined){
+                                    return prevRows.map((prevRow) =>
+                                        prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+                                    )
+                                }
+                                else{
+                                    return [...prevRows, editedRow]
+                                }
+                            }
                         )
                     }
-                />
+                    />
+                                    
+
             );
         })}
     </>
@@ -248,9 +268,9 @@ const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedS
                         prevRows.map((prevRow) =>
                             prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
                         ),
-                    )
+                     )
                 }
-            />
+            />  
         ))}
     </>
 );
