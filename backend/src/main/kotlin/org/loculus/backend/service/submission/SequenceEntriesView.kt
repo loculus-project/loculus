@@ -19,6 +19,7 @@ import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.toPairs
 import org.loculus.backend.service.jacksonSerializableJsonb
+import org.loculus.backend.service.submission.SequenceEntriesView.accessionColumn
 
 const val SEQUENCE_ENTRIES_VIEW_NAME = "sequence_entries_view"
 
@@ -50,10 +51,8 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
         val subQueryTable = alias("subQueryTable")
         return wrapAsExpression(
             subQueryTable
-                .slice(subQueryTable[versionColumn].max())
-                .select {
-                    subQueryTable[accessionColumn] eq accessionColumn
-                },
+                .select(subQueryTable[versionColumn].max())
+                .where { subQueryTable[accessionColumn] eq accessionColumn },
         )
     }
 

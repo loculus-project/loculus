@@ -2,7 +2,6 @@ package org.loculus.backend.service.submission
 
 import org.jetbrains.exposed.sql.Query
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
@@ -30,7 +29,7 @@ class AccessionPreconditionValidator(
         organism: Organism,
     ) {
         val sequenceEntries = SequenceEntriesView
-            .slice(
+            .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
@@ -38,7 +37,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
             )
-            .select(where = { SequenceEntriesView.accessionVersionIsIn(accessionVersions) })
+            .where { SequenceEntriesView.accessionVersionIsIn(accessionVersions) }
 
         validateAccessionVersionsExist(sequenceEntries, accessionVersions)
         validateSequenceEntriesAreInStates(sequenceEntries, statuses)
@@ -49,12 +48,12 @@ class AccessionPreconditionValidator(
     @Transactional(readOnly = true)
     fun validateAccessionVersions(accessionVersions: List<AccessionVersionInterface>, statuses: List<Status>) {
         val sequenceEntries = SequenceEntriesView
-            .slice(
+            .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.statusColumn,
             )
-            .select(where = { SequenceEntriesView.accessionVersionIsIn(accessionVersions) })
+            .where { SequenceEntriesView.accessionVersionIsIn(accessionVersions) }
 
         validateAccessionVersionsExist(sequenceEntries, accessionVersions)
         validateSequenceEntriesAreInStates(sequenceEntries, statuses)
@@ -68,7 +67,7 @@ class AccessionPreconditionValidator(
         organism: Organism,
     ) {
         val sequenceEntries = SequenceEntriesView
-            .slice(
+            .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
@@ -76,11 +75,7 @@ class AccessionPreconditionValidator(
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.organismColumn,
             )
-            .select(
-                where = {
-                    (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion
-                },
-            )
+            .where { (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion }
 
         validateAccessionsExist(sequenceEntries, accessions)
         validateSequenceEntriesAreInStates(sequenceEntries, statuses)
@@ -91,17 +86,13 @@ class AccessionPreconditionValidator(
     @Transactional(readOnly = true)
     fun validateAccessions(authenticatedUser: AuthenticatedUser, accessions: List<Accession>) {
         val sequenceEntries = SequenceEntriesView
-            .slice(
+            .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submitterColumn,
                 SequenceEntriesView.groupIdColumn,
             )
-            .select(
-                where = {
-                    (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion
-                },
-            )
+            .where { (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion }
 
         validateAccessionsExist(sequenceEntries, accessions)
         validateUserIsAllowedToEditSequenceEntries(sequenceEntries, authenticatedUser)
@@ -110,17 +101,13 @@ class AccessionPreconditionValidator(
     @Transactional(readOnly = true)
     fun validateAccessions(accessions: List<Accession>, statuses: List<Status>): List<AccessionVersionGroup> {
         val sequenceEntries = SequenceEntriesView
-            .slice(
+            .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.statusColumn,
                 SequenceEntriesView.groupIdColumn,
             )
-            .select(
-                where = {
-                    (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion
-                },
-            )
+            .where { (SequenceEntriesView.accessionColumn inList accessions) and SequenceEntriesView.isMaxVersion }
 
         validateAccessionsExist(sequenceEntries, accessions)
         validateSequenceEntriesAreInStates(sequenceEntries, statuses)
