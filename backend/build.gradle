@@ -70,13 +70,3 @@ tasks.named('test') {
         showExceptions true
     }
 }
-
-tasks.named('bootBuildImage') {
-    environment["BP_JVM_VERSION"] = "21"
-
-    // https://paketo.io/docs/howto/configuration/
-    environment["BPE_SPRING_PROFILES_ACTIVE"] = "docker"
-
-    // To enable aarch64 images
-    builder = "dashaun/builder:tiny"
-}
