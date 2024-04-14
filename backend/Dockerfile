@@ -42,4 +42,4 @@ COPY --from=build /app/build/libs/*.jar /app/spring-boot-application.jar
 EXPOSE 8079
 
 # CMD ["java", "-jar", "spring-boot-application.jar"]
-ENTRYPOINT ["java", "-jar", "spring-boot-application.jar"]
+ENTRYPOINT ["java", "-Ddebug", "-jar", "spring-boot-application.jar", "--spring.profiles.active=docker"]
