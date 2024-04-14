@@ -11,7 +11,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
 const clientConfig = getRuntimeConfig().public;
 ---
 
-<SubmissionPageWrapper title='Revise sequences' organism={organism} groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Revise sequences' groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (

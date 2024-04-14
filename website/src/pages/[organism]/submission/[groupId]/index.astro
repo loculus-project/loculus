@@ -12,7 +12,7 @@ const { organism } = cleanOrganism(Astro.params.organism);
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 ---
 
-<SubmissionPageWrapper title='Submission portal' organism={organism!.key} groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Submission portal' groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => {

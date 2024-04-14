@@ -1,6 +1,6 @@
 import { type FC } from 'react';
 
-import { routes } from '../../routes/routes';
+import { SubmissionRouteUtils } from '../../routes/SubmissionRoute.ts';
 import type { Group } from '../../types/backend.ts';
 import DashiconsGroups from '~icons/dashicons/groups';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -8,10 +8,11 @@ import IwwaArrowDown from '~icons/iwwa/arrow-down';
 type GroupSelectorProps = {
     groups: Group[];
     selectedGroupId: number;
-    organism: string;
+    pathname: string;
+    search: string;
 };
 
-export const SubmissionGroupSelector: FC<GroupSelectorProps> = ({ groups, selectedGroupId, organism }) => {
+export const SubmissionGroupSelector: FC<GroupSelectorProps> = ({ groups, selectedGroupId, pathname, search }) => {
     const selectedGroup = groups.find((group) => group.groupId === selectedGroupId);
 
     if (selectedGroup === undefined) {
@@ -39,9 +40,11 @@ export const SubmissionGroupSelector: FC<GroupSelectorProps> = ({ groups, select
                     {groups.map((group) => (
                         <li key={group.groupId}>
                             <a
-                                onClick={() => {
-                                    location.href = routes.mySequencesPage(organism, group.groupId);
-                                }}
+                                href={(() => {
+                                    const currentRoute = SubmissionRouteUtils.parseToRoute(pathname, search)!;
+                                    const newRoute = { ...currentRoute, groupId: group.groupId };
+                                    return SubmissionRouteUtils.toUrl(newRoute);
+                                })()}
                             >
                                 {group.groupName}
                             </a>

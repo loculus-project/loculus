@@ -29,7 +29,7 @@ const {
 } = await processParametersAndFetchSearch(Astro, group.groupId);
 ---
 
-<SubmissionPageWrapper title='Released sequences' organism={organism} groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Released sequences' groupsResult={groupsResult}>
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         <div class='md:w-72'>
             <SearchForm
