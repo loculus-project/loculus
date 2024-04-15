@@ -86,5 +86,6 @@ export const websiteConfig = z.object({
     organisms: z.record(instanceConfig),
     name: z.string(),
     logo: logoConfig,
+    bannerMessage: z.string().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
