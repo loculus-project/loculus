@@ -15,12 +15,14 @@ import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
+import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.booleanParam
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.json.extract
 import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
@@ -31,6 +33,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.AccessionVersionOriginalMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
@@ -770,6 +773,47 @@ class SubmissionDatabaseService(
             errors = selectedSequenceEntry[SequenceEntriesView.errorsColumn],
             warnings = selectedSequenceEntry[SequenceEntriesView.warningsColumn],
         )
+    }
+
+    fun streamOriginalMetadata(
+        authenticatedUser: AuthenticatedUser,
+        organism: Organism,
+        groupIdsFilter: List<Int>?,
+        statusesFilter: List<Status>?,
+        fields: List<String>?,
+    ): Sequence<AccessionVersionOriginalMetadata> {
+        val organismCondition = SequenceEntriesView.organismIs(organism)
+        val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
+        val statusCondition = if (statusesFilter != null) {
+            SequenceEntriesView.statusIsOneOf(statusesFilter)
+        } else {
+            Op.TRUE
+        }
+        val conditions = organismCondition and groupCondition and statusCondition
+
+        val originalMetadata = SequenceEntriesView.originalDataColumn
+            .extract<Map<String, String>>("metadata")
+            .alias("original_metadata")
+
+        return SequenceEntriesView
+            .select(
+                originalMetadata,
+                SequenceEntriesView.accessionColumn,
+                SequenceEntriesView.versionColumn,
+            )
+            .where(conditions)
+            .fetchSize(streamBatchSize)
+            .asSequence()
+            .map {
+                val metadata = it[originalMetadata]
+                val selectedMetadata = fields?.associateWith { field -> metadata[field] }
+                    ?: metadata
+                AccessionVersionOriginalMetadata(
+                    it[SequenceEntriesView.accessionColumn],
+                    it[SequenceEntriesView.versionColumn],
+                    selectedMetadata,
+                )
+            }
     }
 
     fun cleanUpStaleSequencesInProcessing(timeToStaleInSeconds: Long) {

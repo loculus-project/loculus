@@ -283,6 +283,53 @@ class SubmissionController(
         size,
     )
 
+    @Operation(description = "Retrieve original metadata of submitted accession versions.")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponse(
+        responseCode = "200",
+        description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
+    )
+    @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getOriginalMetadata(
+        @PathVariable @Valid
+        organism: Organism,
+        @Parameter(
+            description = "The metadata fields that should be returned. If not provided, all fields are returned.",
+        )
+        @RequestParam(required = false)
+        fields: List<String>?,
+        @Parameter(
+            description = "Filter by group ids. If not provided, all groups are considered.",
+        )
+        @RequestParam(required = false)
+        groupIdsFilter: List<Int>?,
+        @Parameter(
+            description = "Filter by status. If not provided, all statuses are considered.",
+        )
+        @RequestParam(required = false)
+        statusesFilter: List<Status>?,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestParam compression: CompressionFormat?,
+    ): ResponseEntity<StreamingResponseBody> {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        if (compression != null) {
+            headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
+        }
+
+        val streamBody = streamTransactioned(compression) {
+            submissionDatabaseService.streamOriginalMetadata(
+                authenticatedUser,
+                organism,
+                groupIdsFilter?.takeIf { it.isNotEmpty() },
+                statusesFilter?.takeIf { it.isNotEmpty() },
+                fields?.takeIf { it.isNotEmpty() },
+            )
+        }
+
+        return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
+
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)
     @PostMapping("/approve-processed-data", consumes = [MediaType.APPLICATION_JSON_VALUE])
