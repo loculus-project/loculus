@@ -48,6 +48,7 @@ import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.auth.AuthenticatedUser
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.BadRequestException
 import org.loculus.backend.controller.ProcessingValidationException
 import org.loculus.backend.controller.UnprocessableEntityException
@@ -58,6 +59,7 @@ import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseServic
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.io.BufferedReader
@@ -79,6 +81,7 @@ class SubmissionDatabaseService(
     private val emptyProcessedDataProvider: EmptyProcessedDataProvider,
     private val compressionService: CompressionService,
     private val auditLogger: AuditLogger,
+    @Value("\${${BackendSpringProperty.STREAM_BATCH_SIZE}}") private val streamBatchSize: Int,
 ) {
 
     init {
@@ -92,13 +95,11 @@ class SubmissionDatabaseService(
     ): Sequence<UnprocessedData> {
         log.info { "streaming unprocessed submissions. Requested $numberOfSequenceEntries sequence entries." }
 
-        val unprocessedEntries = fetchUnprocessedEntries(organism, numberOfSequenceEntries, pipelineVersion)
-        updateStatusToProcessing(unprocessedEntries, pipelineVersion)
-
-        log.info {
-            "streaming ${unprocessedEntries.size} of $numberOfSequenceEntries requested unprocessed submissions"
-        }
-        return unprocessedEntries.asSequence()
+        return fetchUnprocessedEntriesAndUpdateToInProcessing(
+            organism,
+            numberOfSequenceEntries,
+            pipelineVersion,
+        )
     }
 
     fun getCurrentProcessingPipelineVersion(): Long {
@@ -111,13 +112,14 @@ class SubmissionDatabaseService(
             .first()
     }
 
-    private fun fetchUnprocessedEntries(
+    private fun fetchUnprocessedEntriesAndUpdateToInProcessing(
         organism: Organism,
         numberOfSequenceEntries: Int,
         pipelineVersion: Long,
-    ): List<UnprocessedData> {
+    ): Sequence<UnprocessedData> {
         val table = SequenceEntriesTable
         val preprocessing = SequenceEntriesPreprocessedDataTable
+
         return table
             .select(table.accessionColumn, table.versionColumn, table.originalDataColumn)
             .where {
@@ -133,16 +135,24 @@ class SubmissionDatabaseService(
             }
             .orderBy(table.accessionColumn)
             .limit(numberOfSequenceEntries)
-            .map {
-                UnprocessedData(
-                    it[table.accessionColumn],
-                    it[table.versionColumn],
-                    compressionService.decompressSequencesInOriginalData(
-                        it[table.originalDataColumn]!!,
-                        organism,
-                    ),
-                )
+            .fetchSize(streamBatchSize)
+            .asSequence()
+            .chunked(streamBatchSize)
+            .map { chunk ->
+                val chunkOfUnprocessedData = chunk.map {
+                    UnprocessedData(
+                        it[table.accessionColumn],
+                        it[table.versionColumn],
+                        compressionService.decompressSequencesInOriginalData(
+                            it[table.originalDataColumn]!!,
+                            organism,
+                        ),
+                    )
+                }
+                updateStatusToProcessing(chunkOfUnprocessedData, pipelineVersion)
+                chunkOfUnprocessedData
             }
+            .flatten()
     }
 
     private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>, pipelineVersion: Long) {
@@ -422,6 +432,8 @@ class SubmissionDatabaseService(
                 SequenceEntriesView.accessionColumn to SortOrder.ASC,
                 SequenceEntriesView.versionColumn to SortOrder.ASC,
             )
+            .fetchSize(streamBatchSize)
+            .asSequence()
             .map {
                 RawProcessedData(
                     accession = it[SequenceEntriesView.accessionColumn],
@@ -443,7 +455,6 @@ class SubmissionDatabaseService(
                     ),
                 )
             }
-            .asSequence()
     }
 
     fun getSequences(

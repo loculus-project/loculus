@@ -11,6 +11,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
 import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
@@ -51,7 +52,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
-import java.util.*
+import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 private val log = KotlinLogging.logger { }
@@ -154,7 +155,7 @@ class SubmissionController(
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        val streamBody = stream {
+        val streamBody = streamTransactioned {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -213,7 +214,7 @@ class SubmissionController(
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val streamBody = stream(compression) { releasedDataModel.getReleasedData(organism) }
+        val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
@@ -327,14 +328,17 @@ class SubmissionController(
         body.scope,
     )
 
-    private fun <T> stream(compressionFormat: CompressionFormat? = null, sequenceProvider: () -> Sequence<T>) =
-        StreamingResponseBody { responseBodyStream ->
-            val outputStream = when (compressionFormat) {
-                CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
-                null -> responseBodyStream
-            }
+    private fun <T> streamTransactioned(
+        compressionFormat: CompressionFormat? = null,
+        sequenceProvider: () -> Sequence<T>,
+    ) = StreamingResponseBody { responseBodyStream ->
+        val outputStream = when (compressionFormat) {
+            CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
+            null -> responseBodyStream
+        }
 
-            outputStream.use { stream ->
+        outputStream.use { stream ->
+            transaction {
                 try {
                     iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
                 } catch (e: Exception) {
@@ -345,4 +349,5 @@ class SubmissionController(
                 }
             }
         }
+    }
 }
