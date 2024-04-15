@@ -308,12 +308,12 @@ class SubmissionDatabaseService(
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         if (accessionVersionsFilter != null) {
-            accessionPreconditionValidator.validateAccessionVersions(
-                authenticatedUser,
-                accessionVersionsFilter,
-                listOf(Status.AWAITING_APPROVAL),
-                organism,
-            )
+            accessionPreconditionValidator.validate {
+                thatAccessionVersionsExist(accessionVersionsFilter)
+                    .andThatOrganismIs(organism)
+                    .andThatSequenceEntriesAreInStates(listOf(Status.AWAITING_APPROVAL))
+                    .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+            }
         }
 
         val statusCondition = SequenceEntriesView.statusIsOneOf(listOf(Status.AWAITING_APPROVAL))
@@ -541,12 +541,12 @@ class SubmissionDatabaseService(
     ): List<SubmissionIdMapping> {
         log.info { "revoking ${accessions.size} sequences" }
 
-        accessionPreconditionValidator.validateAccessions(
-            authenticatedUser,
-            accessions,
-            listOf(Status.APPROVED_FOR_RELEASE),
-            organism,
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionsExist(accessions)
+                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
+                .andThatOrganismIs(organism)
+        }
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         SequenceEntriesTable.insert(
@@ -630,12 +630,12 @@ class SubmissionDatabaseService(
         )
 
         if (accessionVersionsFilter != null) {
-            accessionPreconditionValidator.validateAccessionVersions(
-                authenticatedUser,
-                accessionVersionsFilter,
-                listOfDeletableStatuses,
-                organism,
-            )
+            accessionPreconditionValidator.validate {
+                thatAccessionVersionsExist(accessionVersionsFilter)
+                    .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                    .andThatSequenceEntriesAreInStates(listOfDeletableStatuses)
+                    .andThatOrganismIs(organism)
+            }
         }
 
         val accessionCondition = if (accessionVersionsFilter != null) {
@@ -686,12 +686,12 @@ class SubmissionDatabaseService(
     ) {
         log.info { "edited sequence entry submitted $editedAccessionVersion" }
 
-        accessionPreconditionValidator.validateAccessionVersions(
-            authenticatedUser,
-            listOf(editedAccessionVersion),
-            listOf(Status.AWAITING_APPROVAL, Status.HAS_ERRORS),
-            organism,
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionVersionExists(editedAccessionVersion)
+                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                .andThatSequenceEntriesAreInStates(listOf(Status.AWAITING_APPROVAL, Status.HAS_ERRORS))
+                .andThatOrganismIs(organism)
+        }
 
         SequenceEntriesPreprocessedDataTable.deleteWhere {
             accessionVersionEquals(editedAccessionVersion)
@@ -714,12 +714,12 @@ class SubmissionDatabaseService(
                 "by ${authenticatedUser.username} to edit"
         }
 
-        accessionPreconditionValidator.validateAccessionVersions(
-            authenticatedUser,
-            listOf(accessionVersion),
-            listOf(Status.HAS_ERRORS, Status.AWAITING_APPROVAL),
-            organism,
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionVersionExists(accessionVersion)
+                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                .andThatSequenceEntriesAreInStates(listOf(Status.HAS_ERRORS, Status.AWAITING_APPROVAL))
+                .andThatOrganismIs(organism)
+        }
 
         val selectedSequenceEntry = SequenceEntriesView.select(
             SequenceEntriesView.accessionColumn,

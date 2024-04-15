@@ -436,10 +436,10 @@ class SeqSetCitationsDatabaseService(
         }
 
         val accessionsWithoutVersions = seqSetRecords.filter { !it.accession.contains('.') }.map { it.accession }
-        accessionPreconditionValidator.validateAccessions(
-            accessionsWithoutVersions,
-            listOf(APPROVED_FOR_RELEASE),
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionsExist(accessionsWithoutVersions)
+                .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
+        }
         val accessionsWithVersions = try {
             seqSetRecords
                 .filter { it.accession.contains('.') }
@@ -451,10 +451,10 @@ class SeqSetCitationsDatabaseService(
             throw UnprocessableEntityException("Accession versions must be integers")
         }
 
-        accessionPreconditionValidator.validateAccessionVersions(
-            accessionsWithVersions,
-            listOf(APPROVED_FOR_RELEASE),
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionVersionsExist(accessionsWithVersions)
+                .andThatSequenceEntriesAreInStates(listOf(APPROVED_FOR_RELEASE))
+        }
     }
 
     fun validateSeqSetName(name: String) {
