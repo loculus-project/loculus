@@ -2,6 +2,7 @@ package org.loculus.backend.controller.submission
 
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.hasItem
 import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
@@ -221,6 +222,34 @@ class ApproveProcessedDataEndpointTest(
             organism = OTHER_ORGANISM,
         )
             .assertStatusIs(AWAITING_APPROVAL)
+    }
+
+    @Test
+    fun `GIVEN multiple organisms WHEN I approve all sequences THEN approved only sequences of that organism`() {
+        val defaultOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = DEFAULT_ORGANISM)
+        val otherOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = OTHER_ORGANISM)
+
+        client.approveProcessedSequenceEntries(
+            scope = ALL,
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.[*]", hasSize<List<*>>(otherOrganismData.size)))
+            .andExpect(jsonPath("$.[*].accession", hasItem(otherOrganismData.first().accession)))
+
+        convenienceClient.getSequenceEntry(
+            accession = defaultOrganismData.first().accession,
+            version = 1,
+            organism = DEFAULT_ORGANISM,
+        )
+            .assertStatusIs(AWAITING_APPROVAL)
+        convenienceClient.getSequenceEntry(
+            accession = otherOrganismData.first().accession,
+            version = 1,
+            organism = OTHER_ORGANISM,
+        )
+            .assertStatusIs(APPROVED_FOR_RELEASE)
     }
 
     @Test
