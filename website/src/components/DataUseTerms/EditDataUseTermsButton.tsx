@@ -52,11 +52,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                     position: 'top-center',
                     autoClose: false,
                 }),
-            onSuccess: () =>
-                toast.success('The use terms for this sequence will be updated within a few minutes.', {
-                    position: 'top-center',
-                    autoClose: false,
-                }),
+            onSuccess: () => location.reload(),
         },
     );
 

@@ -26,6 +26,11 @@ const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as nu
 dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
 const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
 
+const dataUseTermsIndex = tableData.findIndex((entry) => entry.name === 'dataUseTerms');
+if (dataUseTermsIndex !== -1) {
+    tableData[dataUseTermsIndex].value = currentDataUseTerms.type;
+}
+
 const isRestricted = currentDataUseTerms.type === 'RESTRICTED';
 
 const runtimeConfig = getRuntimeConfig();
