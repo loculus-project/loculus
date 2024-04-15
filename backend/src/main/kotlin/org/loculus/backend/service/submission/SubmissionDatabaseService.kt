@@ -13,8 +13,6 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
@@ -27,7 +25,6 @@ import org.jetbrains.exposed.sql.kotlin.datetime.dateTimeParam
 import org.jetbrains.exposed.sql.max
 import org.jetbrains.exposed.sql.not
 import org.jetbrains.exposed.sql.notExists
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -334,9 +331,13 @@ class SubmissionDatabaseService(
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
+        val organismCondition = SequenceEntriesView.organismIs(organism)
+
         val accessionVersionsToUpdate = SequenceEntriesView
             .selectAll()
-            .where { statusCondition and accessionCondition and scopeCondition and groupCondition }
+            .where {
+                statusCondition and accessionCondition and scopeCondition and groupCondition and organismCondition
+            }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
         if (accessionVersionsToUpdate.isEmpty()) {
@@ -655,10 +656,11 @@ class SubmissionDatabaseService(
         }
 
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
+        val organismCondition = SequenceEntriesView.organismIs(organism)
 
         val sequenceEntriesToDelete = SequenceEntriesView
             .select(SequenceEntriesView.accessionColumn, SequenceEntriesView.versionColumn)
-            .where { accessionCondition and scopeCondition and groupCondition }
+            .where { accessionCondition and scopeCondition and groupCondition and organismCondition }
             .map {
                 AccessionVersion(
                     it[SequenceEntriesView.accessionColumn],
