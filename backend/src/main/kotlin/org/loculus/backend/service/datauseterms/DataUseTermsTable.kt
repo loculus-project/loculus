@@ -8,7 +8,6 @@ import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.kotlin.datetime.date
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
 
 const val DATA_USE_TERMS_TABLE_NAME = "data_use_terms_table"
@@ -26,10 +25,8 @@ object DataUseTermsTable : Table(DATA_USE_TERMS_TABLE_NAME) {
         val subQueryTable = alias("subQueryTable")
         return wrapAsExpression(
             subQueryTable
-                .slice(subQueryTable[changeDateColumn].max())
-                .select {
-                    subQueryTable[accessionColumn] eq accessionColumn
-                },
+                .select(subQueryTable[changeDateColumn].max())
+                .where { subQueryTable[accessionColumn] eq accessionColumn },
         )
     }
 }

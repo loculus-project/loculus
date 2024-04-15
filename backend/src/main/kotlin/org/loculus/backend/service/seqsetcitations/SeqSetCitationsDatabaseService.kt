@@ -15,7 +15,6 @@ import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.update
 import org.keycloak.representations.idm.UserRepresentation
@@ -36,7 +35,7 @@ import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.sql.Timestamp
-import java.util.UUID
+import java.util.*
 import javax.sql.DataSource
 
 private val log = KotlinLogging.logger { }
@@ -111,8 +110,8 @@ class SeqSetCitationsDatabaseService(
         val seqSetUUID = UUID.fromString(seqSetId)
 
         val maxVersion = SeqSetsTable
-            .slice(SeqSetsTable.seqSetVersion.max())
-            .select { SeqSetsTable.seqSetId eq seqSetUUID and (SeqSetsTable.createdBy eq username) }
+            .select(SeqSetsTable.seqSetVersion.max())
+            .where { SeqSetsTable.seqSetId eq seqSetUUID and (SeqSetsTable.createdBy eq username) }
             .firstOrNull()
             ?.get(SeqSetsTable.seqSetVersion.max())
 
@@ -142,7 +141,8 @@ class SeqSetCitationsDatabaseService(
 
         for (record in seqSetRecords) {
             val existingRecord = SeqSetRecordsTable
-                .select { SeqSetRecordsTable.accession eq record.accession }
+                .selectAll()
+                .where { SeqSetRecordsTable.accession eq record.accession }
                 .singleOrNull()
 
             val seqSetRecordId = if (existingRecord == null) {
@@ -174,9 +174,8 @@ class SeqSetCitationsDatabaseService(
         log.info { "Get seqSet $seqSetId, version $version" }
 
         val query = SeqSetsTable
-            .select {
-                SeqSetsTable.seqSetId eq UUID.fromString(seqSetId)
-            }
+            .selectAll()
+            .where { SeqSetsTable.seqSetId eq UUID.fromString(seqSetId) }
 
         if (version != null) {
             query.andWhere { SeqSetsTable.seqSetVersion eq version }
@@ -208,8 +207,8 @@ class SeqSetCitationsDatabaseService(
 
         if (selectedVersion == null) {
             selectedVersion = SeqSetsTable
-                .slice(SeqSetsTable.seqSetVersion.max())
-                .select { SeqSetsTable.seqSetId eq seqSetUuid }
+                .select(SeqSetsTable.seqSetVersion.max())
+                .where { SeqSetsTable.seqSetId eq seqSetUuid }
                 .singleOrNull()?.get(SeqSetsTable.seqSetVersion)
         }
         if (selectedVersion == null) {
@@ -217,7 +216,7 @@ class SeqSetCitationsDatabaseService(
         }
 
         if (SeqSetToRecordsTable
-                .select {
+                .selectAll().where {
                     (SeqSetToRecordsTable.seqSetId eq seqSetUuid) and
                         (SeqSetToRecordsTable.seqSetVersion eq selectedVersion)
                 }
@@ -228,7 +227,8 @@ class SeqSetCitationsDatabaseService(
 
         val selectedSeqSetRecords = SeqSetToRecordsTable
             .innerJoin(SeqSetRecordsTable)
-            .select {
+            .selectAll()
+            .where {
                 (SeqSetToRecordsTable.seqSetId eq seqSetUuid) and
                     (SeqSetToRecordsTable.seqSetVersion eq selectedVersion)
             }
@@ -248,7 +248,8 @@ class SeqSetCitationsDatabaseService(
         log.info { "Get seqSets for user $username" }
 
         val selectedSeqSets = SeqSetsTable
-            .select { SeqSetsTable.createdBy eq username }
+            .selectAll()
+            .where { SeqSetsTable.createdBy eq username }
 
         return selectedSeqSets.map {
             SeqSet(
@@ -270,9 +271,9 @@ class SeqSetCitationsDatabaseService(
         val seqSetUuid = UUID.fromString(seqSetId)
 
         val seqSetDOI = SeqSetsTable
-            .select {
-                (SeqSetsTable.seqSetId eq seqSetUuid) and
-                    (SeqSetsTable.seqSetVersion eq version) and
+            .selectAll()
+            .where {
+                (SeqSetsTable.seqSetId eq seqSetUuid) and (SeqSetsTable.seqSetVersion eq version) and
                     (SeqSetsTable.createdBy eq username)
             }
             .singleOrNull()
@@ -293,9 +294,9 @@ class SeqSetCitationsDatabaseService(
         log.info { "Validate create DOI for seqSet $seqSetId, version $version, user $username" }
 
         if (SeqSetsTable
-                .select {
-                    (SeqSetsTable.seqSetId eq UUID.fromString(seqSetId)) and
-                        (SeqSetsTable.seqSetVersion eq version) and
+                .selectAll()
+                .where {
+                    (SeqSetsTable.seqSetId eq UUID.fromString(seqSetId)) and (SeqSetsTable.seqSetVersion eq version) and
                         (SeqSetsTable.createdBy eq username)
                 }
                 .empty()
@@ -306,9 +307,9 @@ class SeqSetCitationsDatabaseService(
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC).toJavaLocalDateTime()
         val sevenDaysAgo = LocalDateTime.parse(now.minusDays(7).toString())
         val count = SeqSetsTable
-            .select {
-                (SeqSetsTable.createdBy eq username) and
-                    (SeqSetsTable.createdAt greaterEq sevenDaysAgo) and
+            .selectAll()
+            .where {
+                (SeqSetsTable.createdBy eq username) and (SeqSetsTable.createdAt greaterEq sevenDaysAgo) and
                     (SeqSetsTable.seqSetDOI neq "")
             }
             .count()
@@ -359,8 +360,7 @@ class SeqSetCitationsDatabaseService(
 
         val maxSeqSetVersion = SeqSetsTable.seqSetVersion.max().alias("max_version")
         val maxVersionPerSeqSet = SeqSetsTable
-            .slice(SeqSetsTable.seqSetId, maxSeqSetVersion)
-            .selectAll()
+            .select(SeqSetsTable.seqSetId, maxSeqSetVersion)
             .groupBy(SeqSetsTable.seqSetId)
             .alias("maxVersionPerSeqSet")
 
@@ -375,9 +375,8 @@ class SeqSetCitationsDatabaseService(
                         (SeqSetToRecordsTable.seqSetVersion eq maxVersionPerSeqSet[maxSeqSetVersion])
                 },
             )
-            .select {
-                (SeqSetRecordsTable.accession inList userAccessionStrings)
-            }
+            .selectAll()
+            .where { (SeqSetRecordsTable.accession inList userAccessionStrings) }
             .map {
                 SeqSetWithAccession(
                     it[SeqSetRecordsTable.accession],

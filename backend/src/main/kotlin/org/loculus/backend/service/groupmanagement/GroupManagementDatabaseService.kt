@@ -6,7 +6,6 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.Address
 import org.loculus.backend.api.Group
@@ -101,7 +100,8 @@ class GroupManagementDatabaseService(
                             (UserGroupsTable.groupIdColumn eq GroupsTable.id)
                         },
                     )
-                    .select { UserGroupsTable.userNameColumn eq authenticatedUser.username }
+                    .selectAll()
+                    .where { UserGroupsTable.userNameColumn eq authenticatedUser.username }
         }
 
         return groupsQuery.map {

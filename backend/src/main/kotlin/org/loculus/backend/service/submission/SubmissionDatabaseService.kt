@@ -13,6 +13,8 @@ import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
 import org.jetbrains.exposed.sql.SortOrder
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
+import org.jetbrains.exposed.sql.SqlExpressionBuilder.inList
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.and
@@ -105,8 +107,7 @@ class SubmissionDatabaseService(
     fun getCurrentProcessingPipelineVersion(): Long {
         val table = CurrentProcessingPipelineTable
         return table
-            .slice(table.versionColumn)
-            .selectAll()
+            .select(table.versionColumn)
             .map {
                 it[table.versionColumn]
             }
@@ -121,12 +122,12 @@ class SubmissionDatabaseService(
         val table = SequenceEntriesTable
         val preprocessing = SequenceEntriesPreprocessedDataTable
         return table
-            .slice(table.accessionColumn, table.versionColumn, table.originalDataColumn)
-            .select {
+            .select(table.accessionColumn, table.versionColumn, table.originalDataColumn)
+            .where {
                 table.organismIs(organism) and
                     not(table.isRevocationColumn) and
                     notExists(
-                        preprocessing.select {
+                        preprocessing.selectAll().where {
                             (table.accessionColumn eq preprocessing.accessionColumn) and
                                 (table.versionColumn eq preprocessing.versionColumn) and
                                 (preprocessing.pipelineVersionColumn eq pipelineVersion)
@@ -232,8 +233,9 @@ class SubmissionDatabaseService(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
     ) {
-        val resultRow = SequenceEntriesView.slice(SequenceEntriesView.organismColumn)
-            .select(where = { SequenceEntriesView.accessionVersionEquals(submittedProcessedData) })
+        val resultRow = SequenceEntriesView
+            .select(SequenceEntriesView.organismColumn)
+            .where { SequenceEntriesView.accessionVersionEquals(submittedProcessedData) }
             .firstOrNull() ?: return
 
         if (resultRow[SequenceEntriesView.organismColumn] != organism.name) {
@@ -248,13 +250,13 @@ class SubmissionDatabaseService(
     private fun throwInsertFailedException(submittedProcessedData: SubmittedProcessedData, pipelineVersion: Long) {
         val preprocessing = SequenceEntriesPreprocessedDataTable
         val selectedSequenceEntries = preprocessing
-            .slice(
+            .select(
                 preprocessing.accessionColumn,
                 preprocessing.versionColumn,
                 preprocessing.processingStatusColumn,
                 preprocessing.pipelineVersionColumn,
             )
-            .select(where = { preprocessing.accessionVersionEquals(submittedProcessedData) })
+            .where { preprocessing.accessionVersionEquals(submittedProcessedData) }
 
         val accessionVersion = submittedProcessedData.displayAccessionVersion()
         if (selectedSequenceEntries.all {
@@ -333,7 +335,8 @@ class SubmissionDatabaseService(
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
         val accessionVersionsToUpdate = SequenceEntriesView
-            .select { statusCondition and accessionCondition and scopeCondition and groupCondition }
+            .selectAll()
+            .where { statusCondition and accessionCondition and scopeCondition and groupCondition }
             .map { AccessionVersion(it[SequenceEntriesView.accessionColumn], it[SequenceEntriesView.versionColumn]) }
 
         if (accessionVersionsToUpdate.isEmpty()) {
@@ -363,14 +366,12 @@ class SubmissionDatabaseService(
     fun getLatestVersions(organism: Organism): Map<Accession, Version> {
         val maxVersionExpression = SequenceEntriesView.versionColumn.max()
         return SequenceEntriesView
-            .slice(SequenceEntriesView.accessionColumn, maxVersionExpression)
-            .select(
-                where = {
-                    SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-                        organism,
-                    )
-                },
-            )
+            .select(SequenceEntriesView.accessionColumn, maxVersionExpression)
+            .where {
+                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+                    organism,
+                )
+            }
             .groupBy(SequenceEntriesView.accessionColumn)
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
     }
@@ -379,14 +380,12 @@ class SubmissionDatabaseService(
         val maxVersionExpression = SequenceEntriesView.versionColumn.max()
 
         return SequenceEntriesView
-            .slice(SequenceEntriesView.accessionColumn, maxVersionExpression)
-            .select(
-                where = {
-                    SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
-                        (SequenceEntriesView.isRevocationColumn eq true) and
-                        SequenceEntriesView.organismIs(organism)
-                },
-            )
+            .select(SequenceEntriesView.accessionColumn, maxVersionExpression)
+            .where {
+                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
+                    (SequenceEntriesView.isRevocationColumn eq true) and
+                    SequenceEntriesView.organismIs(organism)
+            }
             .groupBy(SequenceEntriesView.accessionColumn)
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
     }
@@ -400,7 +399,7 @@ class SubmissionDatabaseService(
                     (DataUseTermsTable.isNewestDataUseTerms)
             },
         )
-            .slice(
+            .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.isRevocationColumn,
@@ -413,13 +412,11 @@ class SubmissionDatabaseService(
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
-            .select(
-                where = {
-                    SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-                        organism,
-                    )
-                },
-            )
+            .where {
+                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+                    organism,
+                )
+            }
             .orderBy(
                 SequenceEntriesView.accessionColumn to SortOrder.ASC,
                 SequenceEntriesView.versionColumn to SortOrder.ASC,
@@ -476,7 +473,7 @@ class SubmissionDatabaseService(
                         (DataUseTermsTable.isNewestDataUseTerms)
                 },
             )
-            .slice(
+            .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.submissionIdColumn,
@@ -489,11 +486,7 @@ class SubmissionDatabaseService(
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
-            .select(
-                where = {
-                    groupCondition
-                },
-            )
+            .where { groupCondition }
             .orderBy(SequenceEntriesView.accessionColumn)
 
         if (organism != null) {
@@ -557,21 +550,21 @@ class SubmissionDatabaseService(
 
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
         SequenceEntriesTable.insert(
-            SequenceEntriesTable.slice(
-                SequenceEntriesTable.accessionColumn,
-                SequenceEntriesTable.versionColumn.plus(1),
-                SequenceEntriesTable.submissionIdColumn,
-                SequenceEntriesTable.submitterColumn,
-                SequenceEntriesTable.groupIdColumn,
-                dateTimeParam(now),
-                booleanParam(true),
-                SequenceEntriesTable.organismColumn,
-            ).select(
-                where = {
+            SequenceEntriesTable
+                .select(
+                    SequenceEntriesTable.accessionColumn,
+                    SequenceEntriesTable.versionColumn.plus(1),
+                    SequenceEntriesTable.submissionIdColumn,
+                    SequenceEntriesTable.submitterColumn,
+                    SequenceEntriesTable.groupIdColumn,
+                    dateTimeParam(now),
+                    booleanParam(true),
+                    SequenceEntriesTable.organismColumn,
+                )
+                .where {
                     (SequenceEntriesTable.accessionColumn inList accessions) and
                         SequenceEntriesTable.isMaxVersion
                 },
-            ),
             columns = listOf(
                 SequenceEntriesTable.accessionColumn,
                 SequenceEntriesTable.versionColumn,
@@ -591,20 +584,18 @@ class SubmissionDatabaseService(
         )
 
         return SequenceEntriesView
-            .slice(
+            .select(
                 SequenceEntriesView.accessionColumn,
                 SequenceEntriesView.versionColumn,
                 SequenceEntriesView.isRevocationColumn,
                 SequenceEntriesView.groupIdColumn,
                 SequenceEntriesView.submissionIdColumn,
             )
-            .select(
-                where = {
-                    (SequenceEntriesView.accessionColumn inList accessions) and
-                        SequenceEntriesView.isMaxVersion and
-                        SequenceEntriesView.statusIs(Status.AWAITING_APPROVAL)
-                },
-            )
+            .where {
+                (SequenceEntriesView.accessionColumn inList accessions) and
+                    SequenceEntriesView.isMaxVersion and
+                    SequenceEntriesView.statusIs(Status.AWAITING_APPROVAL)
+            }
             .orderBy(SequenceEntriesView.accessionColumn)
             .map {
                 SubmissionIdMapping(
@@ -666,8 +657,8 @@ class SubmissionDatabaseService(
         val groupCondition = getGroupCondition(groupIdsFilter, authenticatedUser)
 
         val sequenceEntriesToDelete = SequenceEntriesView
-            .slice(SequenceEntriesView.accessionColumn, SequenceEntriesView.versionColumn)
-            .select { accessionCondition and scopeCondition and groupCondition }
+            .select(SequenceEntriesView.accessionColumn, SequenceEntriesView.versionColumn)
+            .where { accessionCondition and scopeCondition and groupCondition }
             .map {
                 AccessionVersion(
                     it[SequenceEntriesView.accessionColumn],
@@ -730,7 +721,7 @@ class SubmissionDatabaseService(
             organism,
         )
 
-        val selectedSequenceEntry = SequenceEntriesView.slice(
+        val selectedSequenceEntry = SequenceEntriesView.select(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
             SequenceEntriesView.groupIdColumn,
@@ -741,11 +732,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.warningsColumn,
             SequenceEntriesView.isRevocationColumn,
         )
-            .select(
-                where = {
-                    SequenceEntriesView.accessionVersionEquals(accessionVersion)
-                },
-            )
+            .where { SequenceEntriesView.accessionVersionEquals(accessionVersion) }
             .first()
 
         if (selectedSequenceEntry[SequenceEntriesView.isRevocationColumn]) {
