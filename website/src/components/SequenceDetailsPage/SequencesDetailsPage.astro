@@ -8,6 +8,7 @@ import { routes } from '../../routes/routes.ts';
 import { GroupManagementClient } from '../../services/groupManagementClient';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { getAccessToken } from '../../utils/getAccessToken';
+import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import ErrorBox from '../common/ErrorBox.astro';
 import MdiEye from '~icons/mdi/eye';
 
@@ -19,8 +20,13 @@ interface Props {
 }
 
 const { tableData, organism, accessionVersion, dataUseTermsHistory } = Astro.props;
+
 const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
-const isRestricted = tableData.find((entry) => entry.name === 'dataUseTerms')?.value === 'RESTRICTED';
+
+dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
+const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
+
+const isRestricted = currentDataUseTerms.type === 'RESTRICTED';
 
 const runtimeConfig = getRuntimeConfig();
 
@@ -81,6 +87,16 @@ const isMyGroup =
                 <MdiEye className='w-6 h-6 inline-block mr-2' />
                 Only visible to group members
             </div>
+
+            {isRestricted && (
+                <EditDataUseTermsButton
+                    clientConfig={clientConfig}
+                    accessToken={accessToken}
+                    accessionVersion={[accessionVersion.split('.')[0]]}
+                    dataUseTerms={currentDataUseTerms}
+                    client:load
+                />
+            )}
 
             <RevokeButton
                 organism={organism}
