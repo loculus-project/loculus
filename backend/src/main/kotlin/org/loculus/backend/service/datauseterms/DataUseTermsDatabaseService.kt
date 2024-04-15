@@ -29,10 +29,10 @@ class DataUseTermsDatabaseService(
     ) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        accessionPreconditionValidator.validateAccessions(
-            authenticatedUser = authenticatedUser,
-            accessions = accessions,
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionsExist(accessions)
+                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+        }
 
         dataUseTermsPreconditionValidator.checkThatTransitionIsAllowed(accessions, newDataUseTerms)
         dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(newDataUseTerms)

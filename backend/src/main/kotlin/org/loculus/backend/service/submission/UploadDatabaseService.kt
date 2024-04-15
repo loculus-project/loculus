@@ -224,12 +224,12 @@ class UploadDatabaseService(
                 .where { uploadIdColumn eq uploadId }
                 .map { it[accessionColumn]!! }
 
-        accessionPreconditionValidator.validateAccessions(
-            authenticatedUser,
-            accessions,
-            listOf(Status.APPROVED_FOR_RELEASE),
-            organism,
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionsExist(accessions)
+                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
+                .andThatOrganismIs(organism)
+        }
 
         val updateSql = """
             UPDATE metadata_upload_aux_table m
