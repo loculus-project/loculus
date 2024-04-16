@@ -224,7 +224,7 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
         
             return (
                 <EditableDataRow
-                    label={inputField.displayName && sentenceCase(inputField.name)}
+                    label={inputField.displayName ?? sentenceCase(inputField.name)}
                     key={'raw_metadata' + inputField.name}
                     row={field}
                     onChange={(editedRow: Row) =>
