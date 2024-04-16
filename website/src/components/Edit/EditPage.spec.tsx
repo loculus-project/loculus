@@ -15,7 +15,8 @@ const queryClient = new QueryClient();
 const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
 const inputFields = [
     {
-        name: "originalMetaDataField"
+        name: "originalMetaDataField",
+        dispayName: "Original Meta Data Field",
     }
 ]
 
