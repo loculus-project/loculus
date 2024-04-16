@@ -8,6 +8,7 @@ import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { ACCESSION_FIELD } from '../../settings.ts';
 import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
+import {type InputField} from '../../types/config.ts'
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
@@ -15,7 +16,7 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import {type InputField} from '../../types/config.ts'
+
 type EditPageProps = {
     organism: string;
     clientConfig: ClientConfig;
