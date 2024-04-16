@@ -21,6 +21,7 @@ type EditPageProps = {
     clientConfig: ClientConfig;
     dataToEdit: SequenceEntryToEdit;
     accessToken: string;
+    inputFields: InputField[];
 };
 
 const logger = getClientLogger('EditPage');

@@ -8,10 +8,16 @@ import { EditPage } from './EditPage.tsx';
 import { defaultReviewData, editableEntry, metadataKey, testAccessToken, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataField, SequenceEntryToEdit, UnprocessedMetadataRecord } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import type {InputField} from 
 
 const queryClient = new QueryClient();
 
 const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
+const inputFields = [
+    {
+        name: "originalMetaDataField"
+    }
+]
 
 function renderEditPage(editedData: SequenceEntryToEdit = defaultReviewData, clientConfig: ClientConfig = dummyConfig) {
     render(
@@ -21,6 +27,7 @@ function renderEditPage(editedData: SequenceEntryToEdit = defaultReviewData, cli
                 dataToEdit={editedData}
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
+                inputFields={inputFields}
             />
         </QueryClientProvider>,
     );
