@@ -194,6 +194,6 @@ describe('SearchForm', () => {
         const closeButton = await screen.findByRole('button', { name: 'Close' });
         await userEvent.click(closeButton);
 
-        expect( await screen.findByLabelText('Field 1')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 });
