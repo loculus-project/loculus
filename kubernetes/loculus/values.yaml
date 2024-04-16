@@ -29,10 +29,18 @@ defaultOrganisms:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       instanceName: "Test Dummy Organism"
       inputFields:
-        - name: date
-          displayName: Date
-        - name: region
-          displayName: Region
+      - name: date
+        displayName: Date
+      - name: region
+        displayName: Region
+      - name: country
+        displayName: Country
+      - name: division
+        displayName: Division
+      - name: host
+        displayName: Host
+      - name: pango_lineage
+        displayName: Pango Lineage
       metadata:
         - name: date
           type: date
@@ -69,6 +77,25 @@ defaultOrganisms:
           - pango_lineage
         defaultOrder: descending
         defaultOrderBy: date
+      inputFields:
+      - name: collection_date
+        displayName: Collection Date
+      - name: clade
+        displayName: Clade  
+      - name: outbreak
+        displayName: Outbreak
+      - name: lineage
+        displayName: Lineage
+      - name: ncbi_release_date
+        displayName: NCBI Release Date
+      - name: country
+        displayName: Country
+      - name: isolate_name
+        displayName: Isolate Name
+      - name: author_affiliation
+        displayName: Author Affiliation
+      - name: authors
+        displayName: Authors
       silo:
         dateToSortBy: date
         partitionBy: pango_lineage
@@ -419,6 +446,79 @@ defaultOrganisms:
         defaultOrder: descending
       silo:
         dateToSortBy: collection_date
+      inputFields: 
+      - name: collection_date
+        displayName: Collection Date
+      - name: ncbi_release_date 
+        displayName: NCBI Release Date
+      - name: country
+        displayName: Country
+      - name: isolate_name
+        displayName: Isolate Name  
+      - name: author_affiliation
+        displayName: Author Affiliation
+      - name: authors 
+        displayName: Authors
+      - name: submitter_country
+        displayName: Submitter Country
+      - name: division
+        displayName: Division
+      - name: insdc_accession_base
+        displayName: INSDC Accession Base
+      - name: insdc_version
+        displayName: INSDC Version 
+      - name: insdc_accession_full
+        displayName: INSDC Accession Full
+      - name: bioprojects
+        displayName: BioProjects
+      - name: biosample_accession 
+        displayName: BioSample Accession
+      - name: ncbi_completeness
+        displayName: NCBI Completeness
+      - name: ncbi_host_name
+        displayName: NCBI Host Name
+      - name: ncbi_host_tax_id
+        displayName: NCBI Host Tax ID
+      - name: ncbi_is_lab_host
+        displayName: NCBI Is Lab Host
+      - name: ncbi_length
+        displayName: NCBI Length
+      - name: ncbi_protein_count
+        displayName: NCBI Protein Count
+      - name: ncbi_update_date
+        displayName: NCBI Update Date
+      - name: ncbi_sourcedb
+        displayName: NCBI Source DB 
+      - name: ncbi_virus_name
+        displayName: NCBI Virus Name
+      - name: ncbi_virus_tax_id
+        displayName: NCBI Virus Tax ID
+      - name: isolate_source
+        displayName: Isolate Source
+      - name: sra_accessions
+        displayName: SRA Accessions
+      - name: total_snps
+        displayName: Total SNPs 
+      - name: total_inserted_nucs
+        displayName: Total Inserted Nucleotides
+      - name: total_deleted_nucs
+        displayName: Total Deleted Nucleotides
+      - name: total_ambiguous_nucs
+        displayName: Total Ambiguous Nucleotides
+      - name: total_unknown_nucs
+        displayName: Total Unknown Nucleotides  
+      - name: total_frame_shifts
+        displayName: Total Frame Shifts
+      - name: frame_shifts
+        displayName: Frame Shifts
+      - name: completeness
+        displayName: Completeness
+      - name: total_stop_codons
+        displayName: Total Stop Codons
+      - name: stop_codons
+        displayName: Stop Codons
+      - name: metadata_hash
+        displayName: Metadata Hash
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
