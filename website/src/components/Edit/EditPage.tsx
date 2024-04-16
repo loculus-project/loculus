@@ -15,7 +15,6 @@ import { getAccessionVersionString } from '../../utils/extractAccessionVersion.t
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import { getSchema } from '../../config.ts';
 import {type InputField} from '../../types/config.ts'
 type EditPageProps = {
     organism: string;
@@ -26,8 +25,8 @@ type EditPageProps = {
 
 const logger = getClientLogger('EditPage');
 
-const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, accessToken }: EditPageProps) => {
-    const {inputFields} = getSchema(organism)
+const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, accessToken, inputFields }: EditPageProps) => {
+    
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
 
