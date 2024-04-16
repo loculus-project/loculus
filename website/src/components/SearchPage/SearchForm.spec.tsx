@@ -181,19 +181,19 @@ describe('SearchForm', () => {
     test('toggle field visibility', async () => {
         renderSearchForm();
 
-        expect(screen.getByLabelText('Field 1')).toBeVisible();
+        expect(await screen.findByLabelText('Field 1')).toBeVisible();
 
-        const customizeButton = screen.getByRole('button', { name: 'Customize fields' });
+        const customizeButton = await screen.findByRole('button', { name: 'Customize fields' });
         await userEvent.click(customizeButton);
 
-        const field1Checkbox = screen.getByRole('checkbox', { name: 'Field 1' });
+        const field1Checkbox = await screen.findByRole('checkbox', { name: 'Field 1' });
         expect(field1Checkbox).toBeChecked();
 
         await userEvent.click(field1Checkbox);
 
-        const closeButton = screen.getByRole('button', { name: 'Close' });
+        const closeButton = await screen.findByRole('button', { name: 'Close' });
         await userEvent.click(closeButton);
 
-        expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
+        expect( await screen.findByLabelText('Field 1')).not.toBeInTheDocument();
     });
 });
