@@ -8,7 +8,7 @@ import { EditPage } from './EditPage.tsx';
 import { defaultReviewData, editableEntry, metadataKey, testAccessToken, testOrganism } from '../../../vitest.setup.ts';
 import type { MetadataField, SequenceEntryToEdit, UnprocessedMetadataRecord } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import type {InputField} from 
+
 
 const queryClient = new QueryClient();
 
