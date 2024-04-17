@@ -85,10 +85,11 @@ organisms:
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
       {{- end }}
+      inputFields:
+        {{ $instance.inputFields | toYaml | nindent 6 }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
-    inputFields:
-      {{ $instance.inputFields | toYaml | nindent 6 }}
+
   {{- end }}
 {{- end }}
 
