@@ -126,7 +126,6 @@ rule submit_to_loculus:
 
 rule approve:
     input:
-        submitted="results/submitted",
         config="config/config.yaml",
     params:
         log_level=LOG_LEVEL,
