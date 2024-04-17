@@ -35,7 +35,7 @@ function renderSubmissionForm() {
             accessToken={testAccessToken}
             organism={testOrganism}
             clientConfig={testConfig.public}
-            groupsOfUser={testGroups.map((groupNames) => ({ ...group, groupName: groupNames.groupName }))}
+            group={group}
         />,
     );
 }
@@ -75,16 +75,6 @@ describe('SubmitForm', () => {
 
         await waitFor(() => {
             expect(getByText((text) => text.includes('Please select a sequences file'))).toBeInTheDocument();
-        });
-    });
-
-    test('should have options to select a group if there is more than one', async () => {
-        const { getByText, getByLabelText } = renderSubmissionForm();
-        await userEvent.click(getByLabelText('Select group'));
-
-        await waitFor(() => {
-            expect(getByText(testGroups[0].groupName)).toBeInTheDocument();
-            expect(getByText(testGroups[1].groupName)).toBeInTheDocument();
         });
     });
 

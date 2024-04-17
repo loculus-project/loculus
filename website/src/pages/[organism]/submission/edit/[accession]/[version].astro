@@ -13,12 +13,7 @@ const accessToken = getAccessToken(Astro.locals.session)!;
 
 const clientConfig = getRuntimeConfig().public;
 
-const dataToEdit = await BackendClient.create().astroFileTypeHelpers.getDataToEdit(
-    organism,
-    accessToken,
-    accession,
-    version,
-);
+const dataToEdit = await BackendClient.create().getDataToEdit(organism, accessToken, accession, version);
 ---
 
 <BaseLayout title={`Edit ${accession}.${version}`}>

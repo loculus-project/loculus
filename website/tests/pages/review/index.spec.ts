@@ -9,7 +9,7 @@ test.describe('The review page', () => {
     }) => {
         const { token, groupId } = await loginAsTestUser();
 
-        await reviewPage.goto();
+        await reviewPage.goto(groupId);
 
         const { total } = await reviewPage.getReviewPageOverview();
 
@@ -23,7 +23,7 @@ test.describe('The review page', () => {
     test('should allow bulk approval', async ({ reviewPage, loginAsTestUser }) => {
         const { token, groupId } = await loginAsTestUser();
 
-        await reviewPage.goto();
+        await reviewPage.goto(groupId);
 
         const { total } = await reviewPage.getReviewPageOverview();
 
@@ -43,7 +43,7 @@ test.describe('The review page', () => {
 
         await prepareDataToBe('erroneous', token, groupId);
 
-        await reviewPage.goto();
+        await reviewPage.goto(groupId);
 
         const { total } = await reviewPage.getReviewPageOverview();
 

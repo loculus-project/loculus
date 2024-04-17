@@ -1,7 +1,7 @@
 package org.loculus.backend.service.groupmanagement
 
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.NotFoundException
@@ -26,7 +26,8 @@ class GroupManagementPreconditionValidator(
         }
 
         val existingGroups = GroupsTable
-            .select { GroupsTable.id inList groupIds }
+            .selectAll()
+            .where { GroupsTable.id inList groupIds }
             .map { it[GroupsTable.id].value }
             .toSet()
 
@@ -38,7 +39,8 @@ class GroupManagementPreconditionValidator(
 
         val username = authenticatedUser.username
         val userGroups = UserGroupsTable
-            .select {
+            .selectAll()
+            .where {
                 (UserGroupsTable.groupIdColumn inList existingGroups) and
                     (UserGroupsTable.userNameColumn eq username)
             }

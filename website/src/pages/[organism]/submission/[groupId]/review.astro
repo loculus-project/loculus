@@ -1,0 +1,30 @@
+---
+import { ReviewPage } from '../../../../components/ReviewPage/ReviewPage';
+import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
+import { getRuntimeConfig } from '../../../../config';
+import { type ClientConfig } from '../../../../types/runtimeConfig';
+import { getAccessToken } from '../../../../utils/getAccessToken';
+import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
+
+const organism = Astro.params.organism!;
+const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
+
+const clientConfig: ClientConfig = getRuntimeConfig().public;
+---
+
+<SubmissionPageWrapper title='Review current submissions' organism={organism} groupsResult={groupsResult}>
+    {
+        groupsResult.match(
+            ({ currentGroup: group }) => (
+                <ReviewPage
+                    clientConfig={clientConfig}
+                    organism={organism}
+                    group={group}
+                    accessToken={getAccessToken(Astro.locals.session)!}
+                    client:load
+                />
+            ),
+            () => undefined,
+        )
+    }
+</SubmissionPageWrapper>

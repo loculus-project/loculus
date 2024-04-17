@@ -11,6 +11,7 @@ import {
     deleteAllDataScope,
     deleteProcessedDataWithErrorsScope,
     type GetSequencesResponse,
+    type Group,
     hasErrorsStatus,
     inProcessingStatus,
     type PageQuery,
@@ -34,6 +35,7 @@ let oldSequenceData: GetSequencesResponse | null = null;
 type ReviewPageProps = {
     clientConfig: ClientConfig;
     organism: string;
+    group: Group;
     accessToken: string;
 };
 
@@ -66,12 +68,12 @@ const NumberAndVisibility = ({
     );
 };
 
-const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessToken }) => {
+const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, accessToken }) => {
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     const [pageQuery, setPageQuery] = useState<PageQuery>({ page: 1, size: pageSizeOptions[2] });
 
-    const hooks = useSubmissionOperations(organism, clientConfig, accessToken, openErrorFeedback, pageQuery);
+    const hooks = useSubmissionOperations(organism, group, clientConfig, accessToken, openErrorFeedback, pageQuery);
 
     const showErrors = hooks.includedStatuses.includes(hasErrorsStatus);
     const showUnprocessed =
@@ -229,6 +231,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                                                     'Are you sure you want to discard all sequences with errors?',
                                                 onConfirmation: () => {
                                                     hooks.deleteSequenceEntries({
+                                                        groupIdsFilter: [group.groupId],
                                                         scope: deleteProcessedDataWithErrorsScope.value,
                                                     });
                                                 },
@@ -248,6 +251,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                                             dialogText: `Are you sure you want to discard all ${finishedCount} processed sequences?`,
                                             onConfirmation: () => {
                                                 hooks.deleteSequenceEntries({
+                                                    groupIdsFilter: [group.groupId],
                                                     scope: deleteAllDataScope.value,
                                                 });
                                             },
@@ -270,6 +274,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                             dialogText: 'Are you sure you want to release all valid sequences?',
                             onConfirmation: () =>
                                 hooks.approveProcessedData({
+                                    groupIdsFilter: [group.groupId],
                                     scope: approveAllDataScope.value,
                                 }),
                         })
@@ -293,12 +298,14 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, accessTo
                             approveAccessionVersion={() =>
                                 hooks.approveProcessedData({
                                     accessionVersionsFilter: [sequence],
+                                    groupIdsFilter: [group.groupId],
                                     scope: approveAllDataScope.value,
                                 })
                             }
                             deleteAccessionVersion={() =>
                                 hooks.deleteSequenceEntries({
                                     accessionVersionsFilter: [sequence],
+                                    groupIdsFilter: [group.groupId],
                                     scope: deleteAllDataScope.value,
                                 })
                             }

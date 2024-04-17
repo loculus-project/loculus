@@ -15,6 +15,7 @@ import org.loculus.backend.api.DeleteSequenceScope
 import org.loculus.backend.api.DeleteSequenceScope.ALL
 import org.loculus.backend.api.SequenceEntryStatus
 import org.loculus.backend.api.Status
+import org.loculus.backend.api.Status.AWAITING_APPROVAL
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -217,6 +218,28 @@ class DeleteSequencesEndpointTest(
 
     @Test
     fun `WHEN deleting sequence entry of wrong organism THEN throws an unprocessableEntity error`() {
+        val defaultOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = DEFAULT_ORGANISM)
+        val otherOrganismData = convenienceClient.prepareDataTo(AWAITING_APPROVAL, organism = OTHER_ORGANISM)
+
+        client.deleteSequenceEntries(
+            scope = ALL,
+            organism = OTHER_ORGANISM,
+        )
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(jsonPath("$.[*]", hasSize<List<*>>(otherOrganismData.size)))
+            .andExpect(jsonPath("$.[*].accession", hasItem(otherOrganismData.first().accession)))
+
+        convenienceClient.getSequenceEntry(
+            accession = defaultOrganismData.first().accession,
+            version = 1,
+            organism = DEFAULT_ORGANISM,
+        )
+            .assertStatusIs(AWAITING_APPROVAL)
+    }
+
+    @Test
+    fun `GIVEN multiple organisms WHEN I delete all sequences THEN deletes only sequences of that organism`() {
         val accessionVersion = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM).submissionIdMappings[0]
 
         client.deleteSequenceEntries(

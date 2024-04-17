@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
@@ -110,11 +111,13 @@ class UploadDatabaseService(
 
     fun getUploadSubmissionIds(uploadId: String): Pair<List<SubmissionId>, List<SubmissionId>> = Pair(
         MetadataUploadAuxTable
-            .select { uploadIdColumn eq uploadId }
+            .selectAll()
+            .where { uploadIdColumn eq uploadId }
             .map { it[submissionIdColumn] },
 
         SequenceUploadAuxTable
-            .select { sequenceUploadIdColumn eq uploadId }
+            .selectAll()
+            .where { sequenceUploadIdColumn eq uploadId }
             .map {
                 it[sequenceSubmissionIdColumn]
             },
@@ -217,16 +220,16 @@ class UploadDatabaseService(
     ) {
         val accessions =
             MetadataUploadAuxTable
-                .slice(accessionColumn)
-                .select { uploadIdColumn eq uploadId }
+                .select(accessionColumn)
+                .where { uploadIdColumn eq uploadId }
                 .map { it[accessionColumn]!! }
 
-        accessionPreconditionValidator.validateAccessions(
-            authenticatedUser,
-            accessions,
-            listOf(Status.APPROVED_FOR_RELEASE),
-            organism,
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionsExist(accessions)
+                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
+                .andThatOrganismIs(organism)
+        }
 
         val updateSql = """
             UPDATE metadata_upload_aux_table m
@@ -252,8 +255,8 @@ class UploadDatabaseService(
     fun generateNewAccessionsForOriginalUpload(uploadId: String, organism: Organism) {
         val submissionIds =
             MetadataUploadAuxTable
-                .slice(submissionIdColumn)
-                .select { uploadIdColumn eq uploadId }
+                .select(submissionIdColumn)
+                .where { uploadIdColumn eq uploadId }
                 .map { it[submissionIdColumn] }
 
         val nextAccessions = getNextSequenceNumbers(submissionIds.size).map {
