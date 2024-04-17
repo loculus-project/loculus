@@ -87,6 +87,8 @@ organisms:
       {{- end }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
+    inputFields:
+      {{ $instance.inputFields | toYaml | nindent 6 }}
   {{- end }}
 {{- end }}
 
