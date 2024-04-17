@@ -369,7 +369,7 @@ defaultOrganisms:
         - name: frame_shifts
           type: string
         - name: completeness
-          type: string
+          type: float
         - name: total_stop_codons
           type: int
         - name: stop_codons
@@ -455,7 +455,7 @@ defaultOrganisms:
             completeness:
               function: identity
               args:
-                type: str
+                type: float
               inputs:
                 input: nextclade.coverage
             total_stop_codons:
