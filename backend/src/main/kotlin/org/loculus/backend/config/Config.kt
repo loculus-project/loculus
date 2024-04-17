@@ -29,7 +29,7 @@ data class Schema(
     val metadata: List<Metadata>,
 )
 
-// Json property names need to be kept in sync with website config
+// The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`
 enum class MetadataType {
     @JsonProperty("string")
     STRING,
