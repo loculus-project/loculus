@@ -5,6 +5,8 @@ import logging
 import subprocess  # noqa: S404
 import time
 from collections.abc import Sequence
+from http import HTTPStatus
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 
@@ -42,7 +44,7 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     headers = {"Authorization": "Bearer " + get_jwt(config)}
     response = requests.post(url, data=params, headers=headers, timeout=10)
     if not response.ok:
-        if response.status_code == 422:
+        if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
             logging.debug(f"{response.text}.\nSleeping for a while.")
             time.sleep(60 * 10)
             return []
@@ -317,8 +319,7 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
     params = {"pipelineVersion": config.pipeline_version}
     response = requests.post(url, data=ndjson_string, headers=headers, params=params, timeout=10)
     if not response.ok:
-        with open("failed_submission.json", "w", encoding="utf-8") as f:
-            f.write(ndjson_string)
+        Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
             f"Submitting processed data failed. Status code: {response.status_code}\n"
             f"Response: {response.text}\n"
