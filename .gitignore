@@ -6,6 +6,7 @@
 !.idea/runConfigurations
 *.iml
 .vscode/*
+!.vscode/extensions.json
 
 # build output
 dist/
