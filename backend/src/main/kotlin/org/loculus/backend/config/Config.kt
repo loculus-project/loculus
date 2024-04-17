@@ -29,6 +29,7 @@ data class Schema(
     val metadata: List<Metadata>,
 )
 
+// Json property names need to be kept in sync with website config
 enum class MetadataType {
     @JsonProperty("string")
     STRING,
@@ -38,9 +39,6 @@ enum class MetadataType {
 
     @JsonProperty("float")
     FLOAT,
-
-    @JsonProperty("double")
-    DOUBLE,
 
     @JsonProperty("number")
     NUMBER,
