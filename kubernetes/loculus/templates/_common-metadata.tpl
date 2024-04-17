@@ -77,6 +77,8 @@ organisms:
       description: {{ quote .description }}
       {{ end }}
       primaryKey: accessionVersion
+      inputFields:
+        {{ $instance.inputFields | toYaml | nindent 8}}
       metadata:
         {{ $metadata := concat $commonMetadata .metadata
             | include "loculus.generateWebsiteMetadata"
@@ -85,11 +87,8 @@ organisms:
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
       {{- end }}
-      inputFields:
-        {{ $instance.inputFields | toYaml | nindent 6 }}
     referenceGenomes:
       {{ $instance.referenceGenomes | toYaml | nindent 6 }}
-
   {{- end }}
 {{- end }}
 
