@@ -27,5 +27,4 @@ SILO <-- Backend : provide sequence entries
 LAPIS --> Website : sequence query results
 LAPIS <- SILO : sequence query results
 
-
 @enduml
