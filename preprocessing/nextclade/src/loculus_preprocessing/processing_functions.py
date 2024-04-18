@@ -293,7 +293,7 @@ class ProcessingFunctions:
                 case "int":
                     output_datum = int(input_datum)
                 case "float":
-                    output_datum = round(float(input_datum), 5)
+                    output_datum = float(input_datum)
                 case _:
                     output_datum = input_datum
         else:
