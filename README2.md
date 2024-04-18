@@ -15,6 +15,10 @@ Additional documentation for development is available in each folder's README. T
   Check this for local development setup instructions.
 - Authorization is performed by our own keycloak instance. See config in [`keycloak-image`](kubernetes/loculus/templates/keycloak-deployment.yaml) and [`realm-config`](kubernetes/loculus/templates/keycloak-config-map.yaml). The keycloak login theme is built with a custom [keycloakify](keycloak/keycloakify) build.
 
+The following diagram shows a rough overview of the involved software components:
+
+![architecture](./backend/docs/plantuml/architectureOverview.svg)
+
 ## GitHub Actions
 
 While the documentation is still a work in progress, a look at the [`.github/workflows`](/.github/workflows) folder might be helpful:
