@@ -362,12 +362,12 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
-          customDisplay:
-            type: link
-            url: "https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:{{value}}"
         - name: ncbi_virus_tax_id
           type: int
           autocomplete: true
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:{{value}}"
         - name: isolate_source
           type: string
           generateIndex: true
