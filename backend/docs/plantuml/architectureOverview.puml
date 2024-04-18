@@ -8,20 +8,23 @@ folder SILO-LAPIS {
 component "Loculus Website" as Website
 component "Loculus Backend" as Backend
 component "Postgres DB" as Postgres
-component "Preprocessing Pipeline" as pipeline
+
+component "Preprocessing Pipeline" as Preprocessing
+component "Ingest Pipeline" as Ingest
 
 component Keycloak
 
-Website --> Keycloak : check authentication
-Backend --> Keycloak : check authentication
-
-Website -> Backend : upload sequence data
-Backend --> pipeline : fetch new sequence entries
+Website -r-> Backend : upload sequence data
 Backend <-> Postgres : persist sequence entries
-Backend <-- pipeline : submit enriched sequence entries
+Backend --> Preprocessing : fetch new sequence entries
+Backend <-- Preprocessing : submit enriched sequence entries
+Ingest -d-> Backend : new Genbank sequences
 
-SILO <-- Backend : provide sequence entries
 LAPIS --> Website : sequence query results
+SILO <-- Backend : provide sequence entries
 LAPIS <- SILO : sequence query results
+
+Website -d-> Keycloak : authenticate
+Backend -d-> Keycloak : authenticate
 
 @enduml
