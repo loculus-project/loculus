@@ -14,17 +14,18 @@ component "Ingest Pipeline" as Ingest
 
 component Keycloak
 
-Website -r-> Backend : upload sequence data
+Website --> Keycloak : authenticate
+Backend --> Keycloak : authenticate
+
+Website -> Backend : upload sequence data
 Backend <-> Postgres : persist sequence entries
 Backend --> Preprocessing : fetch new sequence entries
 Backend <-- Preprocessing : submit enriched sequence entries
-Ingest -d-> Backend : new Genbank sequences
+Ingest --> Backend : new Genbank sequences
 
-LAPIS --> Website : sequence query results
 SILO <-- Backend : provide sequence entries
+LAPIS --> Website : sequence query results
 LAPIS <- SILO : sequence query results
 
-Website -d-> Keycloak : authenticate
-Backend -d-> Keycloak : authenticate
 
 @enduml
