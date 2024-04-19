@@ -100,8 +100,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         return mockMvc.perform(
             get(addOrganismToPath("/get-sequences", organism = organism))
                 .withAuth(jwt)
-                .param("groupIdsFilter", groupIdsFilter?.joinToString { it.toString() })
-                .param("statusesFilter", statusesFilter?.joinToString { it.name })
+                .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
+                .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
                 .param("warningsFilter", warningsFilter?.name)
                 .param("page", page?.toString())
                 .param("size", size?.toString()),
@@ -205,6 +205,27 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .file(sequencesFile)
             .file(metadataFile)
             .withAuth(jwt),
+    )
+
+    fun getOriginalMetadata(
+        organism: String = DEFAULT_ORGANISM,
+        jwt: String? = jwtForDefaultUser,
+        groupIdsFilter: List<Int>? = null,
+        statusesFilter: List<Status>? = null,
+        fields: List<String>? = null,
+        compression: String? = null,
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/get-original-metadata", organism = organism))
+            .withAuth(jwt)
+            .also {
+                when (compression) {
+                    null -> it
+                    else -> it.param("compression", compression)
+                }
+            }
+            .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
+            .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
+            .param("fields", fields?.joinToString(",")),
     )
 
     private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String {

@@ -236,6 +236,12 @@ data class OriginalData<SequenceType>(
     val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
 )
 
+data class AccessionVersionOriginalMetadata(
+    override val accession: Accession,
+    override val version: Version,
+    val originalMetadata: Map<String, String?>,
+) : AccessionVersionInterface
+
 enum class Status {
     @JsonProperty("RECEIVED")
     RECEIVED,
