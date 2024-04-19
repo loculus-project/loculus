@@ -6,11 +6,11 @@ import NeedToLogin from '../common/NeedToLogin.astro';
 
 interface Props {
     title: string;
-    organism: string;
     groupsResult: GetGroupsAndCurrentGroupResult;
 }
 
-const { title, groupsResult, organism } = Astro.props;
+const { title, groupsResult } = Astro.props;
+const { pathname, search } = Astro.url;
 ---
 
 <BaseLayout title={title}>
@@ -21,7 +21,8 @@ const { title, groupsResult, organism } = Astro.props;
                     <SubmissionGroupSelector
                         groups={groupsOfUser}
                         selectedGroupId={group.groupId}
-                        organism={organism}
+                        pathname={pathname}
+                        search={search}
                         client:load
                     />
                     <h1 class='title'>{title}</h1>

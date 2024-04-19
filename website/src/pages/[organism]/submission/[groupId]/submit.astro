@@ -17,7 +17,7 @@ Astro.response.headers.append('Pragma', 'no-cache');
 Astro.response.headers.append('Expires', '0');
 ---
 
-<SubmissionPageWrapper title='Submit sequences' organism={organism} groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Submit sequences' groupsResult={groupsResult}>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
