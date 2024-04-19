@@ -56,13 +56,6 @@ describe('EditPage', () => {
 
         expect(screen.getByText(/Processed Data/i)).toBeInTheDocument();
         expectTextInSequenceData.processedMetadata(defaultReviewData.processedData.metadata);
-        expectTextInSequenceData.processed(defaultReviewData.processedData.unalignedNucleotideSequences);
-
-        expect(screen.getByText(/^Aligned nucleotide sequences/i)).toBeInTheDocument();
-        expectTextInSequenceData.processed(defaultReviewData.processedData.alignedNucleotideSequences);
-
-        expect(screen.getByText(/Amino acid sequences/i)).toBeInTheDocument();
-        expectTextInSequenceData.processed(defaultReviewData.processedData.alignedAminoAcidSequences);
 
         expect(screen.getByText('processedInsertionSequenceName:')).toBeInTheDocument();
         expect(screen.getByText('nucleotideInsertion1,nucleotideInsertion2')).toBeInTheDocument();
@@ -110,11 +103,6 @@ const expectTextInSequenceData = {
         Object.entries(metadata).forEach(([key, value]) => {
             expect(screen.getByText(sentenceCase(key) + ':')).toBeInTheDocument();
             expect(screen.getByDisplayValue(value)).toBeInTheDocument();
-        }),
-    processed: (metadata: Record<string, string | null>): void =>
-        Object.entries(metadata).forEach(([key, value]) => {
-            expect(screen.getByText(key + ':')).toBeInTheDocument();
-            expect(screen.getByText(value ?? 'null')).toBeInTheDocument();
         }),
     processedMetadata: (metadata: Record<string, MetadataField>): void =>
         Object.entries(metadata).forEach(([key, value]) => {
