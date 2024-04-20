@@ -37,6 +37,9 @@ type DataUploadFormProps = {
 
 const logger = getClientLogger('DataUploadForm');
 
+// This should be the same value as defined in the backend.
+const MAX_UPLOAD_SIZE = '800 MB';
+
 const DataUseTerms = ({
     dataUseTermsType,
     setDataUseTermsType,
@@ -435,6 +438,12 @@ function handleError(onError: (message: string) => void, action: Action) {
             switch (error.response.status) {
                 case 400:
                     onError('Failed to submit sequence entries: ' + error.response.data.detail);
+                    return;
+                case 413:
+                    onError(
+                        `The uploaded file exceeds the maximum allowed size of ${MAX_UPLOAD_SIZE}. Please compress ` +
+                            'the file or split it into smaller submissions.',
+                    );
                     return;
                 case 422:
                     onError('The submitted file content was invalid: ' + error.response.data.detail);
