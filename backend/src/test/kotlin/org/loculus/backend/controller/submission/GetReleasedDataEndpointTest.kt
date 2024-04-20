@@ -4,14 +4,20 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.github.luben.zstd.ZstdInputStream
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.greaterThan
+import org.hamcrest.Matchers.hasSize
 import org.hamcrest.Matchers.matchesPattern
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
 import org.loculus.backend.api.Status
@@ -21,16 +27,25 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
+import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
+import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.testcontainers.shaded.org.awaitility.Awaitility.await
 
 private val ADDED_FIELDS_WITH_UNKNOWN_VALUES_FOR_RELEASE = listOf(
     "releasedAt",
     "submissionId",
     "submittedAt",
+    "groupId",
 )
 
 @EndpointTest
@@ -60,7 +75,7 @@ class GetReleasedDataEndpointTest(
     fun `GIVEN no sequence entries in database THEN returns empty response`() {
         val response = submissionControllerClient.getReleasedData()
 
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData>()
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
         assertThat(responseBody, `is`(emptyList()))
     }
 
@@ -70,7 +85,7 @@ class GetReleasedDataEndpointTest(
 
         val response = submissionControllerClient.getReleasedData()
 
-        val responseBody = response.expectNdjsonAndGetContent<ProcessedData>()
+        val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
         assertThat(responseBody.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
 
@@ -85,7 +100,7 @@ class GetReleasedDataEndpointTest(
                 "accessionVersion" to TextNode("$id.$version"),
                 "isRevocation" to TextNode("false"),
                 "submitter" to TextNode(DEFAULT_USER_NAME),
-                "group" to TextNode(DEFAULT_GROUP_NAME),
+                "groupName" to TextNode(DEFAULT_GROUP_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
                 "dataUseTerms" to TextNode("OPEN"),
             )
@@ -100,6 +115,7 @@ class GetReleasedDataEndpointTest(
                     "submittedAt" -> expectIsTimestampWithCurrentYear(value)
                     "releasedAt" -> expectIsTimestampWithCurrentYear(value)
                     "submissionId" -> assertThat(value.textValue(), matchesPattern("^custom\\d$"))
+                    "groupId" -> assertThat(value.intValue(), greaterThan(0))
                     else -> assertThat(value, `is`(expectedMetadata[key]))
                 }
             }
@@ -122,7 +138,8 @@ class GetReleasedDataEndpointTest(
             latestVersion5,
         ) = prepareRevokedAndRevocationAndRevisedVersions()
 
-        val response = submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData>()
+        val response =
+            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
         assertThat(
             response.findAccessionVersionStatus(accession, revokedVersion1),
@@ -163,7 +180,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.approveProcessedSequenceEntries(accessVersions)
 
         val firstSequenceEntry =
-            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData>()[0]
+            submissionControllerClient.getReleasedData().expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()[0]
 
         for (absentField in absentFields) {
             assertThat(firstSequenceEntry.metadata[absentField], `is`(NullNode.instance))
@@ -175,7 +192,7 @@ class GetReleasedDataEndpointTest(
         convenienceClient.prepareRevokedSequenceEntries()
 
         val revocationEntry = submissionControllerClient.getReleasedData()
-            .expectNdjsonAndGetContent<ProcessedData>()
+            .expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
             .find { it.metadata["isRevocation"]!!.asBoolean() }!!
 
         for ((key, value) in revocationEntry.metadata) {
@@ -185,7 +202,8 @@ class GetReleasedDataEndpointTest(
                 "submittedAt" -> expectIsTimestampWithCurrentYear(value)
                 "releasedAt" -> expectIsTimestampWithCurrentYear(value)
                 "submitter" -> assertThat(value, `is`(TextNode(DEFAULT_USER_NAME)))
-                "group" -> assertThat(value, `is`(TextNode(DEFAULT_GROUP_NAME)))
+                "groupName" -> assertThat(value, `is`(TextNode(DEFAULT_GROUP_NAME)))
+                "groupId" -> assertThat(value.intValue(), `is`(greaterThan(0)))
                 "accession", "version", "accessionVersion", "submissionId" -> {}
                 "dataUseTerms" -> assertThat(value, `is`(TextNode("OPEN")))
                 else -> assertThat("value for $key", value, `is`(NullNode.instance))
@@ -216,6 +234,34 @@ class GetReleasedDataEndpointTest(
         assertThat(revocationEntry.aminoAcidInsertions, `is`(expectedAminoAcidInsertions))
     }
 
+    @Test
+    fun `WHEN I request zstd compressed data THEN should return zstd compressed data`() {
+        convenienceClient.prepareDataTo(Status.APPROVED_FOR_RELEASE)
+
+        val response = submissionControllerClient.getReleasedData(compression = "zstd")
+            .andExpect(status().isOk)
+            .andExpect(content().contentType(MediaType.APPLICATION_NDJSON_VALUE))
+            .andExpect(header().string(HttpHeaders.CONTENT_ENCODING, "zstd"))
+            .andReturn()
+            .response
+        await().until {
+            response.isCommitted
+        }
+        val content = response.contentAsByteArray
+
+        val decompressedContent = ZstdInputStream(content.inputStream())
+            .apply { setContinuous(true) }
+            .readAllBytes()
+            .decodeToString()
+
+        val data = decompressedContent.lines()
+            .filter { it.isNotBlank() }
+            .map { jacksonObjectMapper.readValue<ProcessedData<GeneticSequence>>(it) }
+
+        assertThat(data, hasSize(NUMBER_OF_SEQUENCES))
+        assertThat(data[0].metadata, `is`(not(emptyMap())))
+    }
+
     private fun prepareRevokedAndRevocationAndRevisedVersions(): PreparedVersions {
         val preparedSubmissions = convenienceClient.prepareDataTo(Status.APPROVED_FOR_RELEASE)
         convenienceClient.reviseAndProcessDefaultSequenceEntries(preparedSubmissions.map { it.accession })
@@ -243,7 +289,10 @@ class GetReleasedDataEndpointTest(
     }
 }
 
-private fun List<ProcessedData>.findAccessionVersionStatus(accession: Accession, version: Version): String {
+private fun List<ProcessedData<GeneticSequence>>.findAccessionVersionStatus(
+    accession: Accession,
+    version: Version,
+): String {
     val processedData =
         find { it.metadata["accession"]?.asText() == accession && it.metadata["version"]?.asLong() == version }
             ?: error("Could not find accession version $accession.$version")

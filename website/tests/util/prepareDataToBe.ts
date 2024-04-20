@@ -2,48 +2,39 @@ import { approveProcessedData, revokeReleasedData, submitRevisedDataViaApi, subm
 import { fakeProcessingPipeline, type PreprocessingOptions } from './preprocessingPipeline.ts';
 import type { AccessionVersion } from '../../src/types/backend.ts';
 import { extractAccessionVersion } from '../../src/utils/extractAccessionVersion.ts';
-import { DEFAULT_GROUP_NAME, testSequenceCount } from '../e2e.fixture.ts';
+import { testSequenceCount } from '../e2e.fixture.ts';
 
 export const prepareDataToBe = (
     state: 'approvedForRelease' | 'erroneous' | 'awaitingApproval' | 'revoked' | 'revisedForRelease',
     token: string,
-    numberOfSequenceEntries: number = testSequenceCount,
-    groupName: string = DEFAULT_GROUP_NAME,
+    groupId: number,
 ): Promise<AccessionVersion[]> => {
     switch (state) {
         case 'approvedForRelease':
-            return prepareDataToBeApprovedForRelease(numberOfSequenceEntries, token, groupName);
+            return prepareDataToBeApprovedForRelease(token, groupId);
         case 'erroneous':
-            return prepareDataToHaveErrors(numberOfSequenceEntries, token, groupName);
+            return prepareDataToHaveErrors(token, groupId);
         case 'awaitingApproval':
-            return prepareDataToBeAwaitingApproval(numberOfSequenceEntries, token, groupName);
+            return prepareDataToBeAwaitingApproval(token, groupId);
         case 'revoked':
-            return prepareDataToBeRevoked(numberOfSequenceEntries, token, groupName);
+            return prepareDataToBeRevoked(token, groupId);
         case 'revisedForRelease':
-            return prepareDataToBeRevisedForRelease(numberOfSequenceEntries, token, groupName);
+            return prepareDataToBeRevisedForRelease(token, groupId);
     }
 };
 
 const absurdlyManySoThatAllSequencesAreInProcessing = 10_000;
 
-async function prepareDataToBeProcessing(
-    numberOfSequenceEntries: number,
-    token: string,
-    groupName: string = DEFAULT_GROUP_NAME,
-) {
-    const submittedSequences = await submitViaApi(numberOfSequenceEntries, token, groupName);
+async function prepareDataToBeProcessing(token: string, groupId: number) {
+    const submittedSequences = await submitViaApi(testSequenceCount, token, groupId);
 
     await fakeProcessingPipeline.query(absurdlyManySoThatAllSequencesAreInProcessing);
 
     return submittedSequences;
 }
 
-const prepareDataToHaveErrors = async (
-    numberOfSequenceEntries: number = testSequenceCount,
-    token: string,
-    groupName: string = DEFAULT_GROUP_NAME,
-) => {
-    const sequenceEntries = await prepareDataToBeProcessing(numberOfSequenceEntries, token, groupName);
+const prepareDataToHaveErrors = async (token: string, groupId: number) => {
+    const sequenceEntries = await prepareDataToBeProcessing(token, groupId);
 
     const options: PreprocessingOptions[] = sequenceEntries
         .map(extractAccessionVersion)
@@ -53,12 +44,8 @@ const prepareDataToHaveErrors = async (
     return sequenceEntries;
 };
 
-const prepareDataToBeAwaitingApproval = async (
-    numberOfSequenceEntries: number = testSequenceCount,
-    token: string,
-    groupName: string = DEFAULT_GROUP_NAME,
-) => {
-    const sequenceEntries = await prepareDataToBeProcessing(numberOfSequenceEntries, token, groupName);
+const prepareDataToBeAwaitingApproval = async (token: string, groupId: number) => {
+    const sequenceEntries = await prepareDataToBeProcessing(token, groupId);
 
     const options: PreprocessingOptions[] = sequenceEntries.map((sequence) => ({ ...sequence, error: false }));
     await fakeProcessingPipeline.submit(options);
@@ -66,37 +53,26 @@ const prepareDataToBeAwaitingApproval = async (
     return sequenceEntries;
 };
 
-const prepareDataToBeApprovedForRelease = async (
-    numberOfSequenceEntries: number = testSequenceCount,
-    token: string,
-    groupName: string = DEFAULT_GROUP_NAME,
-) => {
-    const sequenceEntries = await prepareDataToBeAwaitingApproval(numberOfSequenceEntries, token, groupName);
+const prepareDataToBeApprovedForRelease = async (token: string, groupId: number) => {
+    const sequenceEntries = await prepareDataToBeAwaitingApproval(token, groupId);
 
-    await approveProcessedData(sequenceEntries, token);
+    await approveProcessedData(sequenceEntries, token, groupId);
 
     return sequenceEntries;
 };
 
-const prepareDataToBeRevoked = async (
-    numberOfSequenceEntries: number = testSequenceCount,
-    token: string,
-    groupName: string = DEFAULT_GROUP_NAME,
-) => {
-    const sequenceEntries = await prepareDataToBeApprovedForRelease(numberOfSequenceEntries, token, groupName);
+const prepareDataToBeRevoked = async (token: string, groupId: number) => {
+    const sequenceEntries = await prepareDataToBeApprovedForRelease(token, groupId);
 
     return revokeReleasedData(
         sequenceEntries.map((entry) => entry.accession),
         token,
+        groupId,
     );
 };
 
-const prepareDataToBeRevisedForRelease = async (
-    numberOfSequenceEntries: number = testSequenceCount,
-    token: string,
-    groupName: string = DEFAULT_GROUP_NAME,
-) => {
-    const sequenceEntries = await prepareDataToBeApprovedForRelease(numberOfSequenceEntries, token, groupName);
+const prepareDataToBeRevisedForRelease = async (token: string, groupId: number) => {
+    const sequenceEntries = await prepareDataToBeApprovedForRelease(token, groupId);
 
     const submittedRevisionAccessionVersion = await submitRevisedDataViaApi(
         sequenceEntries.map((entry) => entry.accession),
@@ -112,7 +88,7 @@ const prepareDataToBeRevisedForRelease = async (
     }));
     await fakeProcessingPipeline.submit(options);
 
-    await approveProcessedData(submittedRevisionAccessionVersion, token);
+    await approveProcessedData(submittedRevisionAccessionVersion, token, groupId);
 
     return submittedRevisionAccessionVersion;
 };

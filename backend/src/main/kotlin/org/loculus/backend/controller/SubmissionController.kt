@@ -10,10 +10,13 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
+import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
 import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
 import org.loculus.backend.api.Accessions
+import org.loculus.backend.api.CompressionFormat
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.GetSequenceResponse
@@ -72,7 +75,7 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @Parameter(description = GROUP_DESCRIPTION) @RequestParam groupName: String,
+        @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
         @Parameter(description = "Data Use terms under which data is released.")
@@ -89,7 +92,7 @@ class SubmissionController(
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            groupName,
+            groupId,
             DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil),
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
@@ -128,6 +131,7 @@ class SubmissionController(
             ),
         ],
     )
+    @ApiResponse(responseCode = "422", description = EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE)
     @PostMapping("/extract-unprocessed-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun extractUnprocessedData(
         @PathVariable @Valid
@@ -138,12 +142,22 @@ class SubmissionController(
             message = "You can extract at max $MAX_EXTRACTED_SEQUENCE_ENTRIES sequence entries at once.",
         )
         numberOfSequenceEntries: Int,
+        @RequestParam
+        pipelineVersion: Long,
     ): ResponseEntity<StreamingResponseBody> {
+        val currentProcessingPipelineVersion = submissionDatabaseService.getCurrentProcessingPipelineVersion()
+        if (pipelineVersion < currentProcessingPipelineVersion) {
+            throw UnprocessableEntityException(
+                "The processing pipeline version $pipelineVersion is not accepted " +
+                    "anymore. The current pipeline version is $currentProcessingPipelineVersion.",
+            )
+        }
+
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-
-        val streamBody =
-            stream { submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism) }
+        val streamBody = streamTransactioned {
+            submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
+        }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
 
@@ -157,6 +171,14 @@ class SubmissionController(
                 ),
             ],
         ),
+        parameters = [
+            Parameter(
+                name = "pipelineVersion",
+                description = "Version of the processing pipeline",
+                required = true,
+                schema = Schema(implementation = Int::class),
+            ),
+        ],
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "400", description = "On invalid NDJSON line. Rolls back the whole transaction.")
@@ -165,8 +187,10 @@ class SubmissionController(
     fun submitProcessedData(
         @PathVariable @Valid
         organism: Organism,
+        @RequestParam
+        pipelineVersion: Long,
         request: HttpServletRequest,
-    ) = submissionDatabaseService.updateProcessedData(request.inputStream, organism)
+    ) = submissionDatabaseService.updateProcessedData(request.inputStream, organism, pipelineVersion)
 
     @Operation(description = GET_RELEASED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)
@@ -181,13 +205,16 @@ class SubmissionController(
     )
     @GetMapping("/get-released-data", produces = [MediaType.APPLICATION_NDJSON_VALUE])
     fun getReleasedData(
-        @PathVariable @Valid
-        organism: Organism,
+        @PathVariable @Valid organism: Organism,
+        @RequestParam compression: CompressionFormat?,
     ): ResponseEntity<StreamingResponseBody> {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        if (compression != null) {
+            headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
+        }
 
-        val streamBody = stream { releasedDataModel.getReleasedData(organism) }
+        val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
@@ -222,10 +249,10 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @Parameter(
-            description = "Filter by group name. If not provided, all groups are considered.",
+            description = "Filter by group ids. If not provided, all groups are considered.",
         )
         @RequestParam(required = false)
-        groupsFilter: List<String>?,
+        groupIdsFilter: List<Int>?,
         @Parameter(
             description = "Filter by status. If not provided, all statuses are considered.",
         )
@@ -249,12 +276,59 @@ class SubmissionController(
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
-        groupsFilter,
+        groupIdsFilter,
         statusesFilter,
         warningsFilter,
         page,
         size,
     )
+
+    @Operation(description = "Retrieve original metadata of submitted accession versions.")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponse(
+        responseCode = "200",
+        description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
+    )
+    @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getOriginalMetadata(
+        @PathVariable @Valid
+        organism: Organism,
+        @Parameter(
+            description = "The metadata fields that should be returned. If not provided, all fields are returned.",
+        )
+        @RequestParam(required = false)
+        fields: List<String>?,
+        @Parameter(
+            description = "Filter by group ids. If not provided, all groups are considered.",
+        )
+        @RequestParam(required = false)
+        groupIdsFilter: List<Int>?,
+        @Parameter(
+            description = "Filter by status. If not provided, all statuses are considered.",
+        )
+        @RequestParam(required = false)
+        statusesFilter: List<Status>?,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestParam compression: CompressionFormat?,
+    ): ResponseEntity<StreamingResponseBody> {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        if (compression != null) {
+            headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
+        }
+
+        val streamBody = streamTransactioned(compression) {
+            submissionDatabaseService.streamOriginalMetadata(
+                authenticatedUser,
+                organism,
+                groupIdsFilter?.takeIf { it.isNotEmpty() },
+                statusesFilter?.takeIf { it.isNotEmpty() },
+                fields?.takeIf { it.isNotEmpty() },
+            )
+        }
+
+        return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)
@@ -268,6 +342,7 @@ class SubmissionController(
     ): List<AccessionVersion> = submissionDatabaseService.approveProcessedData(
         authenticatedUser = authenticatedUser,
         accessionVersionsFilter = body.accessionVersionsFilter,
+        groupIdsFilter = body.groupIdsFilter,
         organism = organism,
         scope = body.scope,
     )
@@ -295,18 +370,31 @@ class SubmissionController(
     ): List<AccessionVersion> = submissionDatabaseService.deleteSequenceEntryVersions(
         body.accessionVersionsFilter,
         authenticatedUser,
+        body.groupIdsFilter,
         organism,
         body.scope,
     )
 
-    private fun <T> stream(sequenceProvider: () -> Sequence<T>) = StreamingResponseBody { outputStream ->
-        try {
-            iteratorStreamer.streamAsNdjson(sequenceProvider(), outputStream)
-        } catch (e: Exception) {
-            log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
-            outputStream.write(
-                "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
-            )
+    private fun <T> streamTransactioned(
+        compressionFormat: CompressionFormat? = null,
+        sequenceProvider: () -> Sequence<T>,
+    ) = StreamingResponseBody { responseBodyStream ->
+        val outputStream = when (compressionFormat) {
+            CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
+            null -> responseBodyStream
+        }
+
+        outputStream.use { stream ->
+            transaction {
+                try {
+                    iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
+                } catch (e: Exception) {
+                    log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
+                    stream.write(
+                        "An unexpected error occurred while streaming, aborting the stream: ${e.message}".toByteArray(),
+                    )
+                }
+            }
         }
     }
 }

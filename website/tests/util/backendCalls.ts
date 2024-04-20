@@ -1,19 +1,12 @@
 import { createFileContent, createModifiedFileContent } from './createFileContent.ts';
-import { type Accession, type AccessionVersion, type Group, openDataUseTermsType } from '../../src/types/backend.ts';
+import { type Accession, type AccessionVersion, openDataUseTermsType } from '../../src/types/backend.ts';
 import { createAuthorizationHeader } from '../../src/utils/createAuthorizationHeader.ts';
-import {
-    backendClient,
-    DEFAULT_GROUP,
-    DEFAULT_GROUP_NAME,
-    dummyOrganism,
-    groupManagementClient,
-    testSequenceCount,
-} from '../e2e.fixture.ts';
+import { backendClient, dummyOrganism, testSequenceCount } from '../e2e.fixture.ts';
 
 export const submitViaApi = async (
     numberOfSequenceEntries: number = testSequenceCount,
     token: string,
-    groupName: string = DEFAULT_GROUP_NAME,
+    groupId: number,
 ) => {
     const fileContent = createFileContent(numberOfSequenceEntries);
 
@@ -22,7 +15,7 @@ export const submitViaApi = async (
         {
             metadataFile: new File([fileContent.metadataContent], 'metadata.tsv'),
             sequenceFile: new File([fileContent.sequenceFileContent], 'sequences.fasta'),
-            groupName,
+            groupId,
             dataUseTermsType: openDataUseTermsType,
             restrictedUntil: null,
         },
@@ -32,10 +25,7 @@ export const submitViaApi = async (
         },
     );
 
-    if (response.isOk()) {
-        return response.value;
-    }
-    throw new Error(response.error.detail);
+    return response._unsafeUnwrap();
 };
 
 export const submitRevisedDataViaApi = async (accessions: Accession[], token: string): Promise<AccessionVersion[]> => {
@@ -58,9 +48,14 @@ export const submitRevisedDataViaApi = async (accessions: Accession[], token: st
     return response.value;
 };
 
-export const approveProcessedData = async (accessionVersions: AccessionVersion[], token: string): Promise<void> => {
+export const approveProcessedData = async (
+    accessionVersions: AccessionVersion[],
+    token: string,
+    groupId: number,
+): Promise<void> => {
     const body = {
         accessionVersionsFilter: accessionVersions,
+        groupIdsFilter: [groupId],
         scope: 'ALL' as const,
     };
 
@@ -74,7 +69,11 @@ export const approveProcessedData = async (accessionVersions: AccessionVersion[]
     }
 };
 
-export const revokeReleasedData = async (accessions: Accession[], token: string): Promise<AccessionVersion[]> => {
+export const revokeReleasedData = async (
+    accessions: Accession[],
+    token: string,
+    groupId: number,
+): Promise<AccessionVersion[]> => {
     const body = {
         accessions,
     };
@@ -93,7 +92,11 @@ export const revokeReleasedData = async (accessions: Accession[], token: string)
 
     const confirmationResponse = await backendClient.call(
         'approveProcessedData',
-        { scope: 'ALL', accessionVersionsFilter: accessionVersions },
+        {
+            scope: 'ALL',
+            accessionVersionsFilter: accessionVersions,
+            groupIdsFilter: [groupId],
+        },
         {
             params: { organism: dummyOrganism.key },
             headers: createAuthorizationHeader(token),
@@ -105,10 +108,4 @@ export const revokeReleasedData = async (accessions: Accession[], token: string)
     }
 
     return accessionVersions;
-};
-
-export const createGroup = async (newGroup: Group = DEFAULT_GROUP, token: string) => {
-    await groupManagementClient.zodios.createGroup(newGroup, {
-        headers: createAuthorizationHeader(token),
-    });
 };

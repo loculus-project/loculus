@@ -1,7 +1,8 @@
 create sequence accession_sequence start with 1;
 
 create table groups_table (
-    group_name varchar(255) primary key,
+    group_id serial primary key,
+    group_name varchar(255),
     institution varchar(255) not null,
     address_line_1 varchar(255) not null,
     address_line_2 varchar(255),
@@ -12,19 +13,28 @@ create table groups_table (
     contact_email varchar(255) not null
 );
 
+create table current_processing_pipeline (
+    version bigint primary key,
+    started_using_at timestamp not null
+);
+
+insert into current_processing_pipeline (version, started_using_at)
+values (1, now());
+
 create table sequence_entries (
     accession text not null,
     version bigint not null,
     organism text not null,
     submission_id text not null,
     submitter text not null,
-    group_name text not null,
+    approver text,
+    group_id integer not null,
     submitted_at timestamp not null,
     released_at timestamp,
     is_revocation boolean not null default false,
     original_data jsonb,
     primary key (accession, version),
-    foreign key (group_name) references groups_table(group_name)
+    foreign key (group_id) references groups_table(group_id)
 );
 
 create index on sequence_entries (submitter);
@@ -63,7 +73,7 @@ from
     left join sequence_entries_preprocessed_data sepd on
         se.accession = sepd.accession
         and se.version = sepd.version
-        and sepd.pipeline_version = 1;
+        and sepd.pipeline_version = (select version from current_processing_pipeline);
 
 create table metadata_upload_aux_table (
     accession text,
@@ -72,7 +82,7 @@ create table metadata_upload_aux_table (
     organism text not null,
     submission_id text not null,
     submitter text not null,
-    group_name text,
+    group_id integer,
     uploaded_at timestamp not null,
     metadata jsonb not null,
     primary key (upload_id,submission_id)
@@ -87,11 +97,13 @@ create table sequence_upload_aux_table (
 );
 
 create table user_groups_table (
-     user_name text not null,
-     group_name text not null,
-     primary key (user_name, group_name),
-     foreign key (group_name) references groups_table(group_name)
+    id serial primary key,
+    user_name text not null,
+    group_id integer not null,
+    unique (user_name, group_id),
+    foreign key (group_id) references groups_table(group_id)
 );
+create index on user_groups_table (user_name);
 
 create table data_use_terms_table (
     accession text not null,
@@ -137,4 +149,11 @@ create table seqset_to_records (
         foreign key(seqset_id, seqset_version)
             references seqsets(seqset_id, seqset_version)
             on delete cascade
+);
+
+create table audit_log (
+    id bigserial primary key,
+    username text,
+    timestamp timestamp not null default now(),
+    description text not null
 );

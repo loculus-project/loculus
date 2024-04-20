@@ -6,6 +6,7 @@ import { backendApi } from '../services/backendApi.ts';
 import { backendClientHooks } from '../services/serviceHooks.ts';
 import {
     awaitingApprovalStatus,
+    type Group,
     hasErrorsStatus,
     inProcessingStatus,
     type PageQuery,
@@ -17,6 +18,7 @@ import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
 
 export function useSubmissionOperations(
     organism: string,
+    group: Group,
     clientConfig: ClientConfig,
     accessToken: string,
     openErrorFeedback: (message: string) => void,
@@ -32,6 +34,7 @@ export function useSubmissionOperations(
                 organism,
             },
             queries: {
+                groupIdsFilter: group.groupId.toString(),
                 initialStatusesFilter: allRelevantStatuses.join(','),
                 statusesFilter: includedStatuses.join(','),
                 page: pageQuery.page - 1,

@@ -9,9 +9,9 @@ new_input_data_dir="$input_data_dir/$current_timestamp"
 
 old_input_data_dir="$input_data_dir"/$(ls -1 "$input_data_dir" | sort -n | grep -E '^[0-9]+$' | tail -n 1)
 
-new_input_data="$new_input_data_dir/data.ndjson"
-old_input_data="$old_input_data_dir/data.ndjson"
-silo_input_data="$input_data_dir/data.ndjson"
+new_input_data="$new_input_data_dir/data.ndjson.zst"
+old_input_data="$old_input_data_dir/data.ndjson.zst"
+silo_input_data="$input_data_dir/data.ndjson.zst"
 
 get_token() {
   if [ -z "$KEYCLOAK_TOKEN_URL" ]; then
@@ -57,7 +57,7 @@ download_data() {
   mkdir -p "$new_input_data_dir"
   echo  "created $new_input_data_dir"
 
-  released_data_endpoint="$BACKEND_BASE_URL/get-released-data"
+  released_data_endpoint="$BACKEND_BASE_URL/get-released-data?compression=zstd"
   echo "calling $released_data_endpoint"
   
   set +e
@@ -71,7 +71,8 @@ download_data() {
     exit $exit_code
   fi
 
-  echo "downloaded $(wc -l < "$new_input_data") sequences"
+  echo "downloaded sequences"
+  ls -l "$new_input_data_dir"
   echo
 
   echo "checking for old input data dir $old_input_data_dir"
@@ -97,13 +98,15 @@ download_data() {
 
 preprocessing() {
   # TODO: #1489  Remove emptiness test once https://github.com/GenSpectrum/LAPIS-SILO/issues/244 fixed
-  if [ -s "$new_input_data_dir" ]; then
-    echo "data.ndjson is not empty, starting preprocessing"
+  rough_size_of_empty_zstd_file="12"
+  size_of_data=$(stat -c %s "$new_input_data")
+  if [ "$size_of_data" -gt "$rough_size_of_empty_zstd_file" ]; then
+    echo "data.ndjson.zst is not empty ($size_of_data bytes), starting preprocessing"
 
     rm -f "$silo_input_data"
 
-    # This is necessary because silo preprocessing expects the input data to be in a specific magic location
-    # At /preprocessing/input/data.ndjson
+    # This is necessary because the silo preprocessing is configured to expect the input data
+    # at /preprocessing/input/data.ndjson.zst
     cp "$new_input_data" "$silo_input_data"
     
     set +e
@@ -119,7 +122,7 @@ preprocessing() {
 
     echo "preprocessing for $current_timestamp done"
   else
-    echo "empty data.ndjson, deleting all input"
+    echo "empty data.ndjson.zst ($size_of_data bytes), deleting all input"
     delete_all_input
 
   fi

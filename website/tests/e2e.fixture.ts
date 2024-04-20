@@ -1,27 +1,24 @@
 import { readFileSync } from 'fs';
 
 import { type Page, test as base } from '@playwright/test';
-import { isErrorFromAlias } from '@zodios/core';
 import { ResultAsync } from 'neverthrow';
 import { Issuer } from 'openid-client';
 import winston from 'winston';
 
-import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { EditPage } from './pages/edit/edit.page';
 import { NavigationFixture } from './pages/navigation.fixture';
 import { ReviewPage } from './pages/review/review.page.ts';
 import { RevisePage } from './pages/revise/revise.page';
 import { SearchPage } from './pages/search/search.page';
+import { SeqSetPage } from './pages/seqsets/seqset.page';
 import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submission/submit.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserPage } from './pages/user/userPage/userPage.ts';
-import { createGroup } from './util/backendCalls.ts';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
-import { groupManagementApi } from '../src/services/groupManagementApi.ts';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
-import { type DataUseTerms, type Group, openDataUseTermsType } from '../src/types/backend.ts';
+import { type DataUseTerms, type NewGroup, openDataUseTermsType } from '../src/types/backend.ts';
 import { clientMetadata } from '../src/utils/clientMetadata.ts';
 import { realmPath } from '../src/utils/realmPath.ts';
 
@@ -36,7 +33,7 @@ type E2EFixture = {
     revisePage: RevisePage;
     editPage: EditPage;
     navigationFixture: NavigationFixture;
-    loginAsTestUser: () => Promise<{ username: string; token: string; groupName: string }>;
+    loginAsTestUser: () => Promise<{ username: string; token: string; groupName: string; groupId: number }>;
 };
 
 export const dummyOrganism = { key: 'dummy-organism', displayName: 'Test Dummy Organism' };
@@ -50,7 +47,7 @@ export const lapisUrl = 'http://localhost:8080/dummy-organism';
 const keycloakUrl = 'http://localhost:8083';
 
 export const DEFAULT_GROUP_NAME = 'testGroup';
-export const DEFAULT_GROUP: Group = {
+export const DEFAULT_GROUP: NewGroup = {
     groupName: DEFAULT_GROUP_NAME,
     institution: 'testInstitution',
     address: {
@@ -143,7 +140,7 @@ export async function authorize(
 
     const token = await getToken(username, password);
 
-    await createTestGroupIfNotExistent(token.accessToken, { ...DEFAULT_GROUP, groupName });
+    const groupId = await createTestGroupIfNotExistent(token.accessToken, { ...DEFAULT_GROUP, groupName });
 
     await page.context().addCookies([
         {
@@ -169,6 +166,7 @@ export async function authorize(
     return {
         username,
         groupName,
+        groupId,
         token: token.accessToken,
     };
 }
@@ -218,16 +216,16 @@ export const test = base.extend<E2EFixture>({
     },
 });
 
-export async function createTestGroupIfNotExistent(token: string, group: Group = DEFAULT_GROUP) {
-    try {
-        await createGroup(group, token);
-    } catch (error) {
-        const groupDoesAlreadyExist =
-            isErrorFromAlias(groupManagementApi, 'createGroup', error) && error.response.status === 409;
-        if (!groupDoesAlreadyExist) {
-            throw new Error(`Could not create Groups. Backend up and running? Error: ${JSON.stringify(error)}`);
-        }
+export async function createTestGroupIfNotExistent(token: string, group: NewGroup = DEFAULT_GROUP) {
+    const existingGroup = await groupManagementClient
+        .getGroupsOfUser(token)
+        .then((groups) => groups._unsafeUnwrap().find((existingGroup) => existingGroup.groupName === group.groupName));
+
+    if (existingGroup === undefined) {
+        return groupManagementClient.createGroup(token, group).then((newGroup) => newGroup._unsafeUnwrap().groupId);
     }
+
+    return existingGroup.groupId;
 }
 
 export { expect } from '@playwright/test';

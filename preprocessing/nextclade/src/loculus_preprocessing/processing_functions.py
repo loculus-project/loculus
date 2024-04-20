@@ -12,7 +12,9 @@ import pytz
 from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
+    FunctionArgs,
     ProcessingAnnotation,
+    ProcessingDatum,
     ProcessingInput,
     ProcessingResult,
 )
@@ -23,14 +25,17 @@ logger = logging.getLogger(__name__)
 class ProcessingFunctions:
     @classmethod
     def call_function(
-        cls, function_name, input_data: ProcessingInput, output_field: str
+        cls, function_name: str, args: FunctionArgs, input_data: ProcessingInput, output_field: str
     ) -> ProcessingResult:
         if hasattr(cls, function_name):
             func = getattr(cls, function_name)
             try:
-                result = func(input_data, output_field)
+                result = func(input_data, output_field, args=args)
             except Exception as e:
-                message = f"Error calling function {function_name} with arguments {input_data}: {e}"
+                message = (
+                    f"Error calling function {function_name}"
+                    f"with input {input_data} and args {args}: {e}"
+                )
                 logger.exception(message)
             if isinstance(result, ProcessingResult):
                 return result
@@ -62,7 +67,9 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def check_date(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
+    def check_date(
+        input_data: ProcessingInput, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
         If in future, return warning
@@ -110,7 +117,9 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def process_date(input_data: ProcessingInput, output_field) -> ProcessingResult:
+    def process_date(
+        input_data: ProcessingInput, output_field, args: FunctionArgs = None
+    ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error"""
         logger.debug(f"input_data: {input_data}")
         date_str = input_data["date"] or ""
@@ -215,7 +224,9 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def parse_timestamp(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
+    def parse_timestamp(
+        input_data: ProcessingInput, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
 
@@ -255,7 +266,9 @@ class ProcessingFunctions:
             )
 
     @staticmethod
-    def identity(input_data: ProcessingInput, output_field: str) -> ProcessingResult:
+    def identity(
+        input_data: ProcessingInput, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
             return ProcessingResult(
@@ -270,4 +283,19 @@ class ProcessingFunctions:
                     )
                 ],
             )
-        return ProcessingResult(datum=input_data["input"], warnings=[], errors=[])
+        input_datum = input_data["input"]
+        if not input_datum:
+            return ProcessingResult(datum=None, warnings=[], errors=[])
+
+        output_datum: ProcessingDatum
+        if args and "type" in args:
+            match args["type"]:
+                case "int":
+                    output_datum = int(input_datum)
+                case "float":
+                    output_datum = float(input_datum)
+                case _:
+                    output_datum = input_datum
+        else:
+            output_datum = input_datum
+        return ProcessingResult(datum=output_datum, warnings=[], errors=[])

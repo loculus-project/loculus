@@ -7,40 +7,25 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.Group
 import org.loculus.backend.api.Organism
+import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.toPairs
-import org.springframework.stereotype.Service
-
-@Service
-class SequenceEntriesTableProvider(private val compressionService: CompressionService) {
-
-    private val cachedTables: MutableMap<Organism?, SequenceEntriesTable> = mutableMapOf()
-
-    fun get(organism: Organism?): SequenceEntriesTable {
-        return cachedTables.getOrPut(organism) {
-            SequenceEntriesTable(compressionService, organism)
-        }
-    }
-}
+import org.loculus.backend.service.jacksonSerializableJsonb
 
 const val SEQUENCE_ENTRIES_TABLE_NAME = "sequence_entries"
 
-class SequenceEntriesTable(
-    compressionService: CompressionService,
-    organism: Organism? = null,
-) : Table(
-    SEQUENCE_ENTRIES_TABLE_NAME,
-) {
+object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
+    val originalDataColumn = jacksonSerializableJsonb<OriginalData<CompressedSequence>>("original_data").nullable()
+
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")
     val organismColumn = varchar("organism", 255)
     val submissionIdColumn = varchar("submission_id", 255)
     val submitterColumn = varchar("submitter", 255)
-    val groupNameColumn = varchar("group_name", 255)
+    val approverColumn = varchar("approver", 255)
+    val groupIdColumn = integer("group_id")
     val submittedAtColumn = datetime("submitted_at")
     val releasedAtColumn = datetime("released_at").nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
@@ -53,15 +38,15 @@ class SequenceEntriesTable(
         val subQueryTable = alias("subQueryTable")
         return wrapAsExpression(
             subQueryTable
-                .slice(subQueryTable[versionColumn].max())
-                .select {
-                    subQueryTable[accessionColumn] eq accessionColumn
-                },
+                .select(subQueryTable[versionColumn].max())
+                .where { subQueryTable[accessionColumn] eq accessionColumn },
         )
     }
 
     fun accessionVersionIsIn(accessionVersions: List<AccessionVersionInterface>) =
         Pair(accessionColumn, versionColumn) inList accessionVersions.toPairs()
 
-    fun groupIsOneOf(groups: List<Group>) = groupNameColumn inList groups.map { it.groupName }
+    fun organismIs(organism: Organism) = organismColumn eq organism.name
+
+    fun groupIsOneOf(groupIds: List<Int>) = SequenceEntriesView.groupIdColumn inList groupIds
 }

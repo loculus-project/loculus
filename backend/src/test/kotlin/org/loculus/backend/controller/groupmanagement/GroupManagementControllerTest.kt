@@ -4,8 +4,8 @@ import com.ninjasquad.springmockk.MockkBean
 import io.mockk.every
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.CoreMatchers.hasItem
+import org.hamcrest.CoreMatchers.hasItems
 import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.Matchers.containsInAnyOrder
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -29,6 +29,7 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import java.util.UUID
 
 @EndpointTest
 class GroupManagementControllerTest(
@@ -44,7 +45,22 @@ class GroupManagementControllerTest(
 
     @Test
     fun `GIVEN database preparation WHEN getting groups details THEN I get the default group with the default user`() {
-        client.getDetailsOfGroup(DEFAULT_GROUP)
+        val defaultGroupId = client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.addUserToGroup(
+            groupId = defaultGroupId,
+            usernameToAdd = ALTERNATIVE_DEFAULT_USER_NAME,
+            jwt = jwtForDefaultUser,
+        )
+            .andExpect(status().isNoContent)
+
+        val alternativeGroupId = client.createNewGroup(group = ALTERNATIVE_DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.getDetailsOfGroup(defaultGroupId)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.group.groupName").value(DEFAULT_GROUP_NAME))
@@ -60,7 +76,7 @@ class GroupManagementControllerTest(
             .andExpect(jsonPath("\$.users[*].name", hasItem(DEFAULT_USER_NAME)))
             .andExpect(jsonPath("\$.users[*].name", hasItem(ALTERNATIVE_DEFAULT_USER_NAME)))
 
-        client.getDetailsOfGroup(ALTERNATIVE_DEFAULT_GROUP)
+        client.getDetailsOfGroup(alternativeGroupId)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.group.groupName").value(ALTERNATIVE_DEFAULT_GROUP_NAME))
@@ -70,10 +86,10 @@ class GroupManagementControllerTest(
 
     @Test
     fun `GIVEN I created a group WHEN I query my groups THEN returns created group`() {
-        val jwtForAnotherUser = generateJwtFor("another user")
+        val jwtForAnotherUser = generateJwtFor(UUID.randomUUID().toString() + "testuser")
 
         client.createNewGroup(group = NEW_GROUP, jwt = jwtForAnotherUser)
-            .andExpect(status().isNoContent)
+            .andExpect(status().isOk)
 
         client.getGroupsOfUser(jwt = jwtForAnotherUser)
             .andExpect(status().isOk)
@@ -92,13 +108,18 @@ class GroupManagementControllerTest(
 
     @Test
     fun `WHEN superuser queries groups of user THEN returns all groups`() {
+        client.createNewGroup(group = DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+        client.createNewGroup(group = ALTERNATIVE_DEFAULT_GROUP, jwt = jwtForDefaultUser)
+            .andExpect(status().isOk)
+
         client.getGroupsOfUser(jwt = jwtForSuperUser)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath(
                     "\$.[*].groupName",
-                    containsInAnyOrder(DEFAULT_GROUP_NAME, ALTERNATIVE_DEFAULT_GROUP_NAME),
+                    hasItems(DEFAULT_GROUP_NAME, ALTERNATIVE_DEFAULT_GROUP_NAME),
                 ),
             )
     }
@@ -112,18 +133,12 @@ class GroupManagementControllerTest(
     }
 
     @Test
-    fun `GIVEN an existing group WHEN creating a group with same name THEN this is a bad request`() {
-        client.createNewGroup().andExpect(status().isNoContent)
-
-        client.createNewGroup().andExpect(status().isConflict)
-    }
-
-    @Test
     fun `GIVEN a group is created WHEN the details are queried THEN expect that the creator is the only member`() {
-        client.createNewGroup()
-            .andExpect(status().isNoContent)
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
 
-        client.getDetailsOfGroup()
+        client.getDetailsOfGroup(groupId)
             .andExpect(status().isOk)
             .andExpect { jsonPath("\$.users.size()", `is`(1)) }
             .andExpect { jsonPath("\$.users[0].name", `is`(DEFAULT_USER_NAME)) }
@@ -131,16 +146,16 @@ class GroupManagementControllerTest(
 
     @Test
     fun `WHEN I query details of a non-existing group THEN expect error that group does not exist`() {
-        client.getDetailsOfGroup()
+        client.getDetailsOfGroup(groupId = 123456789)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Group ${NEW_GROUP.groupName} does not exist."))
+            .andExpect(jsonPath("\$.detail").value("Group 123456789 does not exist."))
     }
 
     @Test
     fun `GIVEN a group is created WHEN all groups are queried THEN expect that the group is returned`() {
         client.createNewGroup()
-            .andExpect(status().isNoContent)
+            .andExpect(status().isOk)
 
         client.getAllGroups()
             .andExpect(status().isOk())
@@ -164,10 +179,11 @@ class GroupManagementControllerTest(
 
         val otherUser = "otherUserThatDoesNotExist"
 
-        client.createNewGroup()
-            .andExpect(status().isNoContent)
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
 
-        client.addUserToGroup(otherUser)
+        client.addUserToGroup(groupId = groupId, usernameToAdd = otherUser)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
@@ -181,13 +197,14 @@ class GroupManagementControllerTest(
     fun `GIVEN a group is created WHEN another user is added THEN expect user is in group`() {
         val otherUser = "otherUser"
 
-        client.createNewGroup()
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = otherUser)
             .andExpect(status().isNoContent)
 
-        client.addUserToGroup(otherUser)
-            .andExpect(status().isNoContent)
-
-        client.getDetailsOfGroup()
+        client.getDetailsOfGroup(groupId = groupId)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.users.size()", `is`(2)))
@@ -197,97 +214,109 @@ class GroupManagementControllerTest(
 
     @Test
     fun `WHEN a non-member tries to remove another user THEN the action is forbidden`() {
-        client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
-            .andExpect(status().isNoContent)
+        val groupId = client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
+            .andExpect(status().isOk)
+            .andGetGroupId()
 
-        client.removeUserFromGroup(ALTERNATIVE_DEFAULT_USER_NAME, jwt = jwtForDefaultUser)
+        client.removeUserFromGroup(
+            groupId = groupId,
+            userToRemove = ALTERNATIVE_DEFAULT_USER_NAME,
+            jwt = jwtForDefaultUser,
+        )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is not a member of group(s) ${NEW_GROUP.groupName}. Action not allowed.",
+                    "User $DEFAULT_USER_NAME is not a member of group(s) $groupId. Action not allowed.",
                 ),
             )
     }
 
     @Test
     fun `WHEN a non-member tries to add another user THEN the action is forbidden`() {
-        client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
-            .andExpect(status().isNoContent)
+        val groupId = client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
+            .andExpect(status().isOk)
+            .andGetGroupId()
 
-        client.addUserToGroup(DEFAULT_USER_NAME, jwt = jwtForDefaultUser)
+        client.addUserToGroup(groupId = groupId, usernameToAdd = DEFAULT_USER_NAME, jwt = jwtForDefaultUser)
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is not a member of group(s) ${NEW_GROUP.groupName}. Action not allowed.",
+                    "User $DEFAULT_USER_NAME is not a member of group(s) $groupId. Action not allowed.",
                 ),
             )
     }
 
     @Test
     fun `WHEN a superusers removes a user from a group THEN user is removed`() {
-        client.createNewGroup().andExpect(status().isNoContent)
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
 
-        client.removeUserFromGroup(DEFAULT_USER_NAME, jwt = jwtForSuperUser)
+        client.removeUserFromGroup(groupId = groupId, userToRemove = DEFAULT_USER_NAME, jwt = jwtForSuperUser)
             .andExpect(status().isNoContent)
 
-        client.getDetailsOfGroup()
+        client.getDetailsOfGroup(groupId = groupId)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.users.size()", `is`(0)))
     }
 
     @Test
     fun `WHEN a superusers adds a user to a group THEN user is added`() {
-        client.createNewGroup().andExpect(status().isNoContent)
+        val groupId = client.createNewGroup().andExpect(status().isOk).andGetGroupId()
 
-        client.addUserToGroup("another user", jwt = jwtForSuperUser)
+        client.addUserToGroup(groupId = groupId, usernameToAdd = "another user", jwt = jwtForSuperUser)
             .andExpect(status().isNoContent)
 
-        client.getDetailsOfGroup()
+        client.getDetailsOfGroup(groupId)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.users.size()", `is`(2)))
     }
 
     @Test
     fun `GIVEN a non-existing group WHEN a user is added THEN expect to find no group`() {
-        client.addUserToGroup(DEFAULT_USER_NAME)
+        val groupId = 123456789
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = DEFAULT_USER_NAME)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) ${NEW_GROUP.groupName} do not exist.",
+                    "Group(s) $groupId do not exist.",
                 ),
             )
     }
 
     @Test
     fun `GIVEN a group is created WHEN a member adds themselves THEN this is a bad request`() {
-        client.createNewGroup()
-            .andExpect(status().isNoContent)
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
 
-        client.addUserToGroup(DEFAULT_USER_NAME)
+        client.addUserToGroup(groupId = groupId, usernameToAdd = DEFAULT_USER_NAME)
             .andExpect(status().isConflict)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is already member of the group ${NEW_GROUP.groupName}.",
+                    "User $DEFAULT_USER_NAME is already member of the group $groupId.",
                 ),
             )
     }
 
     @Test
     fun `GIVEN a group member WHEN the member is removed by another member THEN the user is not a group member`() {
-        client.createNewGroup()
+        val groupId = client.createNewGroup()
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.addUserToGroup(groupId = groupId, usernameToAdd = ALTERNATIVE_DEFAULT_USER_NAME)
             .andExpect(status().isNoContent)
 
-        client.addUserToGroup(ALTERNATIVE_DEFAULT_USER_NAME)
+        client.removeUserFromGroup(groupId = groupId, userToRemove = ALTERNATIVE_DEFAULT_USER_NAME)
             .andExpect(status().isNoContent)
 
-        client.removeUserFromGroup(ALTERNATIVE_DEFAULT_USER_NAME)
-            .andExpect(status().isNoContent)
-
-        client.getDetailsOfGroup()
+        client.getDetailsOfGroup(groupId)
             .andExpect(status().isOk)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(jsonPath("\$.users.size()", `is`(1)))
@@ -297,12 +326,14 @@ class GroupManagementControllerTest(
 
     @Test
     fun `GIVEN a non-existing group WHEN a user is removed THEN expect that the group is not found`() {
-        client.removeUserFromGroup(DEFAULT_USER_NAME)
+        val groupId = 123456789
+
+        client.removeUserFromGroup(groupId = groupId, userToRemove = DEFAULT_USER_NAME)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Group(s) ${NEW_GROUP.groupName} do not exist.",
+                    "Group(s) $groupId do not exist.",
                 ),
             )
             .andReturn()
@@ -310,16 +341,17 @@ class GroupManagementControllerTest(
 
     @Test
     fun `GIVEN a group is created WHEN a member should be removed by a non-member THEN expect this is forbidden`() {
-        client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
-            .andExpect(status().isNoContent)
+        val groupId = client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
+            .andExpect(status().isOk)
+            .andGetGroupId()
 
-        client.removeUserFromGroup(DEFAULT_USER_NAME)
+        client.removeUserFromGroup(groupId = groupId, userToRemove = DEFAULT_USER_NAME)
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
                     "User $DEFAULT_USER_NAME is not a member of group(s) " +
-                        "${NEW_GROUP.groupName}. Action not allowed.",
+                        "$groupId. Action not allowed.",
                 ),
             )
             .andReturn()
@@ -334,11 +366,23 @@ class GroupManagementControllerTest(
         @JvmStatic
         fun authorizationTestCases(): List<Scenario> = listOf(
             Scenario({ jwt, client -> client.createNewGroup(jwt = jwt) }, isModifying = true),
-            Scenario({ jwt, client -> client.getDetailsOfGroup(jwt = jwt) }, isModifying = false),
+            Scenario({ jwt, client -> client.getDetailsOfGroup(groupId = 123, jwt = jwt) }, isModifying = false),
             Scenario({ jwt, client -> client.getGroupsOfUser(jwt = jwt) }, isModifying = false),
             Scenario({ jwt, client -> client.getAllGroups(jwt = jwt) }, isModifying = false),
-            Scenario({ jwt, client -> client.addUserToGroup(DEFAULT_USER_NAME, jwt = jwt) }, isModifying = true),
-            Scenario({ jwt, client -> client.removeUserFromGroup(DEFAULT_USER_NAME, jwt = jwt) }, isModifying = true),
+            Scenario(
+                { jwt, client -> client.addUserToGroup(groupId = 123, usernameToAdd = DEFAULT_USER_NAME, jwt = jwt) },
+                isModifying = true,
+            ),
+            Scenario(
+                { jwt, client ->
+                    client.removeUserFromGroup(
+                        groupId = 123,
+                        userToRemove = DEFAULT_USER_NAME,
+                        jwt = jwt,
+                    )
+                },
+                isModifying = true,
+            ),
         )
     }
 }

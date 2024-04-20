@@ -1,5 +1,5 @@
-import { authorize, expect, test } from '../../e2e.fixture';
 import { SeqSetPage } from './seqset.page';
+import { authorize, expect, test } from '../../e2e.fixture';
 
 test.describe.configure({ mode: 'serial' });
 let testSeqSetManager: SeqSetPage;
@@ -33,7 +33,7 @@ test.describe('The seqSet item page', () => {
         await expect(seqSetPage.page.getByRole('heading', { name: testSeqSetName })).toBeVisible();
         await expect(seqSetPage.page.getByText('Created date')).toBeVisible();
         await expect(seqSetPage.page.getByText('Version', { exact: true })).toBeVisible();
-        await expect(seqSetPage.page.getByText('Accession')).toBeVisible();
+        await expect(seqSetPage.page.getByText('Accession', { exact: true })).toBeVisible();
     });
 
     test('export functionality allows downloading JSON file', async ({ seqSetPage }) => {

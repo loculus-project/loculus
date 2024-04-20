@@ -28,11 +28,31 @@ def hash_row_with_columns(row: pd.Series) -> str:
     return hashlib.sha256(row_string.encode()).hexdigest()
 
 
+def split_authors(authors: str) -> str:
+    """Split authors by each second comma, then split by comma and reverse
+    So Xi,L.,Yu,X. becomes L. Xi, X. Yu
+    Where first name and last name are separated by no-break space"""
+    single_split = authors.split(",")
+    result = []
+
+    for i in range(0, len(single_split), 2):
+        if i + 1 < len(single_split):
+            result.append(single_split[i + 1].strip() + "\u00a0" + single_split[i].strip())
+        else:
+            result.append(single_split[i].strip())
+
+    return ", ".join(result)
+
+
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
-@click.option("--log-level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]))
+@click.option(
+    "--log-level",
+    default="INFO",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+)
 def main(config_file: str, input: str, output: str, log_level: str) -> None:
     logging.basicConfig(level=log_level)
     with open(config_file) as file:
@@ -40,7 +60,7 @@ def main(config_file: str, input: str, output: str, log_level: str) -> None:
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
     logging.debug(config)
-    df = pd.read_csv(input, sep="\t").sort_values(by=config.compound_country_field)
+    df = pd.read_csv(input, sep="\t", dtype=str).sort_values(by=config.compound_country_field)
     logging.debug(df.columns)
     df["division"] = df[config.compound_country_field].str.split(":", n=1).str[1].str.strip()
     logging.debug(df["division"].unique())
@@ -52,6 +72,8 @@ def main(config_file: str, input: str, output: str, log_level: str) -> None:
     logging.debug(df["insdc_accession_base"])
     df["insdc_version"] = df[config.fasta_id_field].str.split(".", n=1).str[1]
     logging.debug(df["insdc_version"].unique())
+    logging.debug(df["ncbi_submitter_names"])
+    df["ncbi_submitter_names"] = df["ncbi_submitter_names"].map(lambda x: split_authors(str(x)))
     df = df.rename(columns=config.rename)
     # Drop columns that are neither a value of `rename` nor in `keep`
     df = df.drop(columns=set(df.columns) - set(config.rename.values()) - set(config.keep))

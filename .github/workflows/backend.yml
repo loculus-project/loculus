@@ -26,16 +26,14 @@ jobs:
         with:
           java-version: "21"
           distribution: "adopt"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
       - name: Execute Tests
-        uses: gradle/gradle-build-action@v3
-        with:
-          arguments: test
-          build-root-directory: ./backend
+        run: ./gradlew test
+        working-directory: ./backend
       - name: Check Format And Lint
-        uses: gradle/gradle-build-action@v3
-        with:
-          arguments: ktlintCheck
-          build-root-directory: ./backend
+        run: ./gradlew ktlintCheck
+        working-directory: ./backend
 
   dockerImage:
     name: Build Backend Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
@@ -85,22 +83,17 @@ jobs:
           java-version: "21"
           distribution: "adopt"
 
-      - name: Extract Docker Tags
+      - name: Setup Gradle
         if: env.CACHE_HIT == 'false'
-        id: extractTag
-        run: |
-          FIRST_TAG=$(echo "${{ steps.dockerMetadata.outputs.tags }}" | head -n 1)
-          echo "firstTag=$FIRST_TAG" >> $GITHUB_ENV
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Build Docker Image For Branch
         if: env.CACHE_HIT == 'false'
-        uses: gradle/actions/setup-gradle@v3
+        run: ./gradlew bootBuildImage --imageName=${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}
+        working-directory: ./backend
         env:
           USER: ${{ github.actor }}
           TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        with:
-          arguments: bootBuildImage --imageName=${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }}
-          build-root-directory: ./backend
 
       - name: Push Docker Image
         if: env.CACHE_HIT == 'false'

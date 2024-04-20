@@ -17,27 +17,46 @@ fields:
     notSearchable: true
   - name: submitter
     type: string
-  - name: group
+    generateIndex: true
+    autocomplete: true
+  - name: groupId
+    type: int
+    autocomplete: true
+  - name: groupName
     type: string
+    generateIndex: true
+    autocomplete: true
   - name: submittedAt
     type: timestamp
+    displayName: Date submitted
   - name: releasedAt
     type: timestamp
+    displayName: Date released
   - name: dataUseTerms
     type: string
     generateIndex: true
     autocomplete: true
+    displayName: Data use terms
+    initiallyVisible: true
     customDisplay:
       type: dataUseTerms
   - name: versionStatus
     type: string
     notSearchable: true
+  {{- if $.Values.dataUseTermsUrls }}
+  - name: dataUseTermsUrl
+    type: string
+    notSearchable: true
+  {{- end}}
 {{- end}}
 
 {{/* Generate website config from passed config object */}}
 {{- define "loculus.generateWebsiteConfig" }}
 name: {{ $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
+{{ if $.Values.bannerMessage }}
+bannerMessage: {{ $.Values.bannerMessage }}
+{{ end }}
 accessionPrefix: {{ $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
@@ -73,14 +92,20 @@ fields:
 {{- range . }}
   - name: {{ .name }}
     type: {{ .type }}
-    {{- if .generateIndex }}
+    {{- if .autocomplete }}
     autocomplete: {{ .autocomplete }}
     {{- end }}
     {{- if .notSearchable }}
     notSearchable: {{ .notSearchable }}
     {{- end }}
+    {{- if .initiallyVisible }}
+    initiallyVisible: {{ .initiallyVisible }}
+    {{- end }}
     {{- if .displayName }}
     displayName: {{ .displayName }}
+    {{- end }}
+    {{- if .truncateColumnDisplayTo }}
+    truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
     {{- end }}
     {{- if .customDisplay }}
     customDisplay:
@@ -94,6 +119,8 @@ fields:
 {{- define "loculus.generateBackendConfig" }}
 accessionPrefix: {{$.Values.accessionPrefix}}
 name: {{ $.Values.name }}
+dataUseTermsUrls:
+  {{$.Values.dataUseTermsUrls | toYaml | nindent 2}}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:

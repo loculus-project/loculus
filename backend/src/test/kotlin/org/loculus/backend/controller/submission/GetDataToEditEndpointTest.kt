@@ -5,7 +5,6 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
@@ -148,7 +147,6 @@ class GetDataToEditEndpointTest(
             .prepareDataTo(
                 Status.AWAITING_APPROVAL,
                 username = DEFAULT_USER_NAME,
-                groupName = DEFAULT_GROUP_NAME,
             )
             .first()
 

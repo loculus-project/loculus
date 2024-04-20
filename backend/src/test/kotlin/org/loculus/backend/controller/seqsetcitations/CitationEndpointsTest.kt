@@ -15,7 +15,6 @@ import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
 import org.loculus.backend.service.submission.SubmissionDatabaseService
-import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -26,7 +25,6 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 @EndpointTest
 class CitationEndpointsTest(
     @Autowired private val client: SeqSetCitationsControllerClient,
-
 ) {
     @MockkBean
     lateinit var submissionDatabaseService: SubmissionDatabaseService
@@ -36,19 +34,7 @@ class CitationEndpointsTest(
 
     @BeforeEach
     fun setup() {
-        every {
-            accessionPreconditionValidator.validateAccessionVersions(any(), any())
-        } returns Unit
-
-        every {
-            accessionPreconditionValidator.validateAccessions(any<List<Accession>>(), any<List<Status>>())
-        } returns listOf(
-            AccessionPreconditionValidator.AccessionVersionGroup(
-                accession = "MOCK_ACCESSION",
-                version = 1,
-                groupName = "MOCK_GROUP",
-            ),
-        )
+        every { accessionPreconditionValidator.validate(any()) } returns Unit
     }
 
     @ParameterizedTest
@@ -95,7 +81,7 @@ class CitationEndpointsTest(
                     accession = "mock-sequence-accession",
                     version = 1L,
                     status = Status.APPROVED_FOR_RELEASE,
-                    group = "mock-group",
+                    groupId = 123,
                     submitter = "mock-submitter",
                     isRevocation = false,
                     submissionId = "mock-submission-id",

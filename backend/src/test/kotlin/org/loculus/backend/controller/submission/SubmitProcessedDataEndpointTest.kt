@@ -1,7 +1,11 @@
 package org.loculus.backend.controller.submission
 
+import com.fasterxml.jackson.databind.node.DoubleNode
+import com.fasterxml.jackson.databind.node.IntNode
+import com.fasterxml.jackson.databind.node.TextNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.hasEntry
 import org.hamcrest.Matchers.`is`
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
@@ -61,9 +65,14 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isNoContent)
 
-        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
-            Status.AWAITING_APPROVAL,
-        )
+        convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
+            .assertStatusIs(Status.AWAITING_APPROVAL)
+
+        val sequenceEntryToEdit = convenienceClient.getSequenceEntryToEdit(accession = accessions.first(), version = 1)
+        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("qc", DoubleNode(0.987654321)))
+        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("age", IntNode(42)))
+        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("region", TextNode("Europe")))
+        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("pangoLineage", TextNode("XBB.1.5")))
     }
 
     @Test
@@ -223,7 +232,7 @@ class SubmitProcessedDataEndpointTest(
 
     @Test
     fun `GIVEN I submitted invalid data and errors THEN the sequence entry is in status has errors`() {
-        val accessions = convenienceClient.submitDefaultFiles().map { it.accession }
+        val accessions = convenienceClient.submitDefaultFiles().submissionIdMappings.map { it.accession }
         convenienceClient.extractUnprocessedData(1)
         submissionControllerClient.submitProcessedData(
             PreparedProcessedData.withWrongDateFormat(accessions.first()).copy(
@@ -280,7 +289,13 @@ class SubmitProcessedDataEndpointTest(
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Accession version $nonExistentAccession.1 does not exist"))
+            .andExpect(
+                jsonPath("\$.detail")
+                    .value(
+                        "Accession version $nonExistentAccession.1 does not exist or is not awaiting " +
+                            "any processing results",
+                    ),
+            )
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1).assertStatusIs(
             Status.IN_PROCESSING,
@@ -302,7 +317,8 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "Accession version ${accessions.first()}.$nonExistentVersion does not exist",
+                    "Accession version ${accessions.first()}.$nonExistentVersion does not exist " +
+                        "or is not awaiting any processing results",
                 ),
             )
 
@@ -327,7 +343,7 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(
                 jsonPath("\$.detail").value(
                     "Accession version ${accessionsNotInProcessing.first()}.1 " +
-                        "is in not in state IN_PROCESSING (was AWAITING_APPROVAL)",
+                        "does not exist or is not awaiting any processing results",
                 ),
             )
 

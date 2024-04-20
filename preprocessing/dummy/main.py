@@ -22,6 +22,7 @@ parser.add_argument("--keycloak-user", type=str, default="dummy_preprocessing_pi
 parser.add_argument("--keycloak-password", type=str, default="dummy_preprocessing_pipeline",
                     help="Keycloak password to use for authentication")
 parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculus/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
+parser.add_argument("--pipeline-version", type=int, default=1)
 
 args = parser.parse_args()
 backendHost = args.backend_host
@@ -33,6 +34,7 @@ keycloakHost = args.keycloak_host
 keycloakUser = args.keycloak_user
 keycloakPassword = args.keycloak_password
 keycloakTokenPath = args.keycloak_token_path
+pipeline_version = args.pipeline_version
 
 
 @dataclass
@@ -58,10 +60,17 @@ class Sequence:
 
 def fetch_unprocessed_sequences(n: int) -> List[Sequence]:
     url = backendHost + "/extract-unprocessed-data"
-    params = {"numberOfSequenceEntries": n}
+    params = {
+        "numberOfSequenceEntries": n,
+        "pipelineVersion": pipeline_version
+    }
     headers = {'Authorization': 'Bearer ' + get_jwt()}
     response = requests.post(url, data=params, headers=headers)
     if not response.ok:
+        if response.status_code == 422:
+            print("{}. Sleeping for a while.".format(response.text))
+            time.sleep(60 * 10)
+            return []
         raise Exception("Fetching unprocessed data failed. Status code: {}".format(response.status_code), response.text)
     return parse_ndjson(response.text)
 
@@ -136,7 +145,7 @@ def process(unprocessed: List[Sequence]) -> List[Sequence]:
 def submit_processed_sequences(processed: List[Sequence]):
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     ndjson_string = '\n'.join(json_strings)
-    url = backendHost + "/submit-processed-data"
+    url = backendHost + "/submit-processed-data?pipelineVersion=" + str(pipeline_version)
     headers = {'Content-Type': 'application/x-ndjson', 'Authorization': 'Bearer ' + get_jwt()}
     response = requests.post(url, data=ndjson_string, headers=headers)
     if not response.ok:

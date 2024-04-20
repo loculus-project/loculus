@@ -11,7 +11,7 @@ const val PREFIX = "LOC_"
 
 class GenerateAccessionFromNumberServiceTest {
     private val accessionFromNumberService = GenerateAccessionFromNumberService(
-        BackendConfig(accessionPrefix = PREFIX, organisms = emptyMap()),
+        BackendConfig(accessionPrefix = PREFIX, organisms = emptyMap(), dataUseTermsUrls = null),
     )
 
     @Test

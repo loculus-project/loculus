@@ -2,7 +2,7 @@ import { type FC, type FormEvent, useRef, useState } from 'react';
 
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
-import type { Address, GroupDetails } from '../../types/backend.ts';
+import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
@@ -17,8 +17,7 @@ type GroupPageProps = {
     clientConfig: ClientConfig;
     accessToken: string;
     username: string;
-    groupName: string;
-    userGroupNames: string[];
+    userGroups: Group[];
 };
 
 const InnerGroupPage: FC<GroupPageProps> = ({
@@ -26,9 +25,9 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     clientConfig,
     accessToken,
     username,
-    groupName,
-    userGroupNames,
+    userGroups,
 }) => {
+    const groupName = prefetchedGroupDetails.group.groupName;
     const [newUserName, setNewUserName] = useState<string>('');
     const [userToDelete, setUserToDelete] = useState<string | null>(null);
     const dialogRef = useRef<HTMLDialogElement>(null);
@@ -100,13 +99,13 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 tabIndex={0}
                                 className='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-btn absolute top-full -left-4 min-w-60'
                             >
-                                {userGroupNames.map(
-                                    (name: string) =>
-                                        name !== groupName && (
-                                            <li key={name}>
-                                                <a href={routes.groupOverviewPage(name)}>
+                                {userGroups.map(
+                                    (group) =>
+                                        group.groupId !== prefetchedGroupDetails.group.groupId && (
+                                            <li key={group.groupId}>
+                                                <a href={routes.groupOverviewPage(group.groupId)}>
                                                     <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
-                                                    {name}
+                                                    {group.groupName}
                                                 </a>
                                             </li>
                                         ),
@@ -138,6 +137,10 @@ const InnerGroupPage: FC<GroupPageProps> = ({
             <div className='bg-gray-100 p-4 mb-4 rounded'>
                 <table className='w-full'>
                     <tbody>
+                        <tr>
+                            <td className='text-lg font-bold'>Group Id:</td>
+                            <td className='text-lg'>{groupDetails.data?.group.groupId}</td>
+                        </tr>
                         <tr>
                             <td className='text-lg font-bold'>Institution:</td>
                             <td className='text-lg'>{groupDetails.data?.group.institution}</td>

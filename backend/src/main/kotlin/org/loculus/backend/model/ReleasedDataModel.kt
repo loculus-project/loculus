@@ -1,5 +1,6 @@
 package org.loculus.backend.model
 
+import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.TextNode
 import kotlinx.datetime.Clock
@@ -10,9 +11,11 @@ import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.api.SiloVersionStatus
+import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.service.submission.RawProcessedData
 import org.loculus.backend.service.submission.SubmissionDatabaseService
 import org.loculus.backend.utils.Accession
@@ -23,9 +26,12 @@ import org.springframework.transaction.annotation.Transactional
 private val log = KotlinLogging.logger { }
 
 @Service
-class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabaseService) {
+class ReleasedDataModel(
+    private val submissionDatabaseService: SubmissionDatabaseService,
+    private val backendConfig: BackendConfig,
+) {
     @Transactional(readOnly = true)
-    fun getReleasedData(organism: Organism): Sequence<ProcessedData> {
+    fun getReleasedData(organism: Organism): Sequence<ProcessedData<GeneticSequence>> {
         log.info { "fetching released submissions" }
 
         val latestVersions = submissionDatabaseService.getLatestVersions(organism)
@@ -39,23 +45,33 @@ class ReleasedDataModel(private val submissionDatabaseService: SubmissionDatabas
         rawProcessedData: RawProcessedData,
         latestVersions: Map<Accession, Version>,
         latestRevocationVersions: Map<Accession, Version>,
-    ): ProcessedData {
+    ): ProcessedData<GeneticSequence> {
         val siloVersionStatus = computeSiloVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
         val currentDataUseTermsType = computeDataUseTerm(rawProcessedData)
 
-        val metadata = rawProcessedData.processedData.metadata +
+        var metadata = rawProcessedData.processedData.metadata +
             ("accession" to TextNode(rawProcessedData.accession)) +
             ("version" to LongNode(rawProcessedData.version)) +
             (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)) +
             ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
             ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
             ("submitter" to TextNode(rawProcessedData.submitter)) +
-            ("group" to TextNode(rawProcessedData.group)) +
+            ("groupId" to IntNode(rawProcessedData.groupId)) +
+            ("groupName" to TextNode(rawProcessedData.groupName)) +
             ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
             ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
             ("dataUseTerms" to TextNode(currentDataUseTermsType.name))
+
+        if (backendConfig.dataUseTermsUrls != null) {
+            val url = if (rawProcessedData.dataUseTerms == DataUseTerms.Open) {
+                backendConfig.dataUseTermsUrls.open
+            } else {
+                backendConfig.dataUseTermsUrls.restricted
+            }
+            metadata += ("dataUseTermsUrl" to TextNode(url))
+        }
 
         return ProcessedData(
             metadata = metadata,

@@ -8,6 +8,7 @@ import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
@@ -19,13 +20,16 @@ import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
+import org.loculus.backend.controller.DEFAULT_GROUP
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType
@@ -33,17 +37,28 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
+data class SubmissionResult(
+    val submissionIdMappings: List<SubmissionIdMapping>,
+    val groupId: Int,
+)
+
 class SubmissionConvenienceClient(
+    private val groupManagementClient: GroupManagementControllerClient,
     private val backendConfig: BackendConfig,
     private val client: SubmissionControllerClient,
     private val objectMapper: ObjectMapper,
 ) {
     fun submitDefaultFiles(
         username: String = DEFAULT_USER_NAME,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int? = null,
         organism: String = DEFAULT_ORGANISM,
         dataUseTerms: DataUseTerms = DataUseTerms.Open,
-    ): List<SubmissionIdMapping> {
+    ): SubmissionResult {
+        val groupIdToSubmitFor = groupId
+            ?: groupManagementClient
+                .createNewGroup(group = DEFAULT_GROUP, jwt = generateJwtFor(username))
+                .andGetGroupId()
+
         val isMultiSegmented = backendConfig
             .getInstanceConfig(Organism(organism))
             .referenceGenomes
@@ -57,45 +72,54 @@ class SubmissionConvenienceClient(
                 DefaultFiles.sequencesFile
             },
             organism = organism,
-            groupName = groupName,
+            groupId = groupIdToSubmitFor,
             dataUseTerm = dataUseTerms,
             jwt = generateJwtFor(username),
         )
 
-        return deserializeJsonResponse(submit)
+        return SubmissionResult(
+            submissionIdMappings = deserializeJsonResponse(submit),
+            groupId = groupIdToSubmitFor,
+        )
     }
 
     fun prepareDefaultSequenceEntriesToInProcessing(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int? = null,
     ): List<AccessionVersionInterface> {
-        submitDefaultFiles(organism = organism, username = username, groupName = groupName)
+        submitDefaultFiles(organism = organism, username = username, groupId = groupId)
         return extractUnprocessedData(organism = organism).getAccessionVersions()
     }
 
     fun submitProcessedData(
         submittedProcessedData: List<SubmittedProcessedData>,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
     ) {
-        submitProcessedData(*submittedProcessedData.toTypedArray(), organism = organism)
+        submitProcessedData(
+            *submittedProcessedData.toTypedArray(),
+            organism = organism,
+            pipelineVersion = pipelineVersion,
+        )
     }
 
     fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
     ) {
-        client.submitProcessedData(*submittedProcessedData, organism = organism)
+        client.submitProcessedData(*submittedProcessedData, organism = organism, pipelineVersion = pipelineVersion)
             .andExpect(status().isNoContent)
     }
 
     fun prepareDefaultSequenceEntriesToHasErrors(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int? = null,
     ): List<AccessionVersionInterface> {
         val accessionVersions =
-            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupName = groupName)
+            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupId = groupId)
         submitProcessedData(
             accessionVersions.map {
                 PreparedProcessedData.withErrors(accession = it.accession)
@@ -108,10 +132,10 @@ class SubmissionConvenienceClient(
     private fun prepareDefaultSequenceEntriesToAwaitingApproval(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int? = null,
     ): List<AccessionVersionInterface> {
         val accessionVersions =
-            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupName = groupName)
+            prepareDefaultSequenceEntriesToInProcessing(organism = organism, username = username, groupId = groupId)
         submitProcessedData(
             *accessionVersions.map {
                 when (organism) {
@@ -131,12 +155,12 @@ class SubmissionConvenienceClient(
     fun prepareDefaultSequenceEntriesToApprovedForRelease(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int? = null,
     ): List<AccessionVersionInterface> {
         val accessionVersions = prepareDefaultSequenceEntriesToAwaitingApproval(
             organism = organism,
             username = username,
-            groupName = groupName,
+            groupId = groupId,
         )
 
         approveProcessedSequenceEntries(
@@ -160,12 +184,12 @@ class SubmissionConvenienceClient(
     fun prepareDefaultSequenceEntriesToAwaitingApprovalForRevocation(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int? = null,
     ): List<SubmissionIdMapping> {
         val accessionVersions = prepareDefaultSequenceEntriesToApprovedForRelease(
             organism = organism,
             username = username,
-            groupName = groupName,
+            groupId = groupId,
         )
         return revokeSequenceEntries(accessionVersions.map { it.accession }, organism = organism, username = username)
     }
@@ -179,12 +203,13 @@ class SubmissionConvenienceClient(
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int = DefaultFiles.NUMBER_OF_SEQUENCES,
         organism: String = DEFAULT_ORGANISM,
-    ) = client.extractUnprocessedData(numberOfSequenceEntries, organism)
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
+    ) = client.extractUnprocessedData(numberOfSequenceEntries, organism, pipelineVersion)
         .expectNdjsonAndGetContent<UnprocessedData>()
 
     fun getSequenceEntries(
         username: String = DEFAULT_USER_NAME,
-        groupsFilter: List<String>? = null,
+        groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
         organism: String = DEFAULT_ORGANISM,
         warningsFilter: WarningsFilter = WarningsFilter.INCLUDE_WARNINGS,
@@ -193,7 +218,7 @@ class SubmissionConvenienceClient(
     ): GetSequenceResponse = deserializeJsonResponse(
         client.getSequenceEntries(
             organism = organism,
-            groupsFilter = groupsFilter,
+            groupIdsFilter = groupIdsFilter,
             statusesFilter = statusesFilter,
             warningsFilter = warningsFilter,
             jwt = generateJwtFor(username),
@@ -217,12 +242,12 @@ class SubmissionConvenienceClient(
         accession: Accession,
         version: Long,
         userName: String = DEFAULT_USER_NAME,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int? = null,
         organism: String = DEFAULT_ORGANISM,
     ): SequenceEntryStatus {
         val sequencesOfUser = getSequenceEntries(
             userName,
-            groupsFilter = listOf(groupName),
+            groupIdsFilter = groupId?.let { listOf(it) },
             organism = organism,
         ).sequenceEntries
 
@@ -312,32 +337,37 @@ class SubmissionConvenienceClient(
         status: Status,
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int? = null,
     ): List<AccessionVersionInterface> {
         return when (status) {
-            Status.RECEIVED -> submitDefaultFiles(organism = organism, username = username, groupName = groupName)
+            Status.RECEIVED -> submitDefaultFiles(
+                organism = organism,
+                username = username,
+                groupId = groupId,
+            ).submissionIdMappings
+
             Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing(
                 organism = organism,
                 username = username,
-                groupName = groupName,
+                groupId = groupId,
             )
 
             Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(
                 organism = organism,
                 username = username,
-                groupName = groupName,
+                groupId = groupId,
             )
 
             Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(
                 organism = organism,
                 username = username,
-                groupName = groupName,
+                groupId = groupId,
             )
 
             Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(
                 organism = organism,
                 username = username,
-                groupName = groupName,
+                groupId = groupId,
             )
 
             else -> throw Exception("Test issue: No data preparation defined for status $status")
@@ -345,7 +375,7 @@ class SubmissionConvenienceClient(
     }
 
     fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
-        client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData>()
+        client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =

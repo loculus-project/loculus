@@ -8,11 +8,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
-import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.service.submission.AccessionPreconditionValidator
-import org.loculus.backend.utils.Accession
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.ResultActions
@@ -27,19 +25,7 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
 
     @BeforeEach
     fun setup() {
-        every {
-            accessionPreconditionValidator.validateAccessionVersions(any(), any())
-        } returns Unit
-
-        every {
-            accessionPreconditionValidator.validateAccessions(any<List<Accession>>(), any<List<Status>>())
-        } returns listOf(
-            AccessionPreconditionValidator.AccessionVersionGroup(
-                accession = "MOCK_ACCESSION",
-                version = 1,
-                groupName = "MOCK_GROUP",
-            ),
-        )
+        every { accessionPreconditionValidator.validate(any()) } returns Unit
     }
 
     @ParameterizedTest
@@ -219,13 +205,16 @@ class SeqSetEndpointsTest(@Autowired private val client: SeqSetCitationsControll
             Scenario({ jwt, client -> client.updateSeqSet(MOCK_SEQSET_ID, MOCK_SEQSET_NAME, jwt = jwt) }, true),
             Scenario({ jwt, client -> client.getSeqSetsOfUser(jwt = jwt) }, false),
             Scenario({ jwt, client -> client.deleteSeqSet(MOCK_SEQSET_ID, jwt = jwt) }, true),
-            Scenario({ jwt, client ->
-                client.createSeqSetDOI(
-                    MOCK_SEQSET_ID,
-                    MOCK_SEQSET_VERSION,
-                    jwt = jwt,
-                )
-            }, true),
+            Scenario(
+                { jwt, client ->
+                    client.createSeqSetDOI(
+                        MOCK_SEQSET_ID,
+                        MOCK_SEQSET_VERSION,
+                        jwt = jwt,
+                    )
+                },
+                true,
+            ),
         )
     }
 }

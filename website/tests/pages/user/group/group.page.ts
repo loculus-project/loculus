@@ -16,11 +16,11 @@ export class GroupPage {
         await linkToNewGroup.click();
     }
 
-    public async goToGroupPage(groupName: string) {
-        await this.page.goto(`${baseUrl}${routes.groupOverviewPage(groupName)}`, {
+    public async goToGroupPage(groupId: number) {
+        await this.page.goto(`${baseUrl}${routes.groupOverviewPage(groupId)}`, {
             waitUntil: 'networkidle',
         });
-        await this.page.waitForURL(`${baseUrl}${routes.groupOverviewPage(groupName)}`);
+        await this.page.waitForURL(`${baseUrl}${routes.groupOverviewPage(groupId)}`);
     }
 
     public async createGroup(uniqueGroupName: string) {
@@ -53,6 +53,9 @@ export class GroupPage {
 
         const createGroupButton = this.page.getByRole('button', { name: 'Create group' });
         await createGroupButton.click();
+
+        await this.page.waitForURL(/\/group\/\d+/, { timeout: 1000 });
+        return Number(this.page.url().split('/').pop());
     }
 
     public async verifyGroupIsPresent(groupName: string) {

@@ -29,7 +29,7 @@ a {
 .title{
 
   color: theme('colors.main');
-
+  margin-left: 15px;
   font-size: 24px;
   font-weight: 600;
   word-break: break-all;
@@ -97,4 +97,13 @@ table, tr, td {
 
 * {
   @apply break-words;
+}
+
+.rs-input{
+  background: transparent; //overwrites the datepicker search element background which is otherwise white
+}
+
+.rs-picker input{
+  text-transform: lowercase;
+
 }

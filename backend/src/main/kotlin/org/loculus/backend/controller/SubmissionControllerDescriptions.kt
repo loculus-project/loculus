@@ -23,10 +23,12 @@ the headers of the fasta file must match the 'submissionId' field in the metadat
 If the underlying organism has multiple segments,
 the headers of the fasta file must be of the form '>[submissionId]_[segmentName]'.
 """
-const val GROUP_DESCRIPTION = """
+
+const val GROUP_ID_DESCRIPTION = """
+The group id of of the group which the user is a member of.
 A group is a set of users that share access to the same sequence entries.
-The group name must exist and the submitting user must be member of the group.
 """
+
 const val EXTRACT_UNPROCESSED_DATA_DESCRIPTION = """
 Extract unprocessed accession versions. This is supposed to be used as input for the preprocessing pipeline.
 Returns a stream of NDJSON and sets the status of each accession version to 'IN_PROCESSING'.
@@ -34,6 +36,10 @@ Returns a stream of NDJSON and sets the status of each accession version to 'IN_
 const val EXTRACT_UNPROCESSED_DATA_RESPONSE_DESCRIPTION = """
 Sequence data as input for the preprocessing pipeline.
 The schema is to be understood per line of the NDJSON stream.
+"""
+
+const val EXTRACT_UNPROCESSED_DATA_ERROR_RESPONSE = """
+The processing pipeline is outdated (i.e., the version is lower than the current version).
 """
 
 const val SUBMIT_EDITED_DATA_DESCRIPTION = """
@@ -54,8 +60,9 @@ returned by the processing pipeline, so that it can technically be used for rele
 """
 
 const val SUBMIT_PROCESSED_DATA_ERROR_RESPONSE_DESCRIPTION = """
-On accession version that cannot be written to the database, e.g. if the accession does not exist or processing
- pipeline submits invalid data. Rolls back the whole transaction.
+The submitted data cannot be written to the database, e.g. if the accession does not exist, if the processing pipeline
+ is outdated (i.e., the pipeline version is lower than the current one) or if the processing pipeline submits invalid
+ data. Rolls back the whole transaction.
 """
 
 const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
@@ -125,4 +132,9 @@ This returns all accession versions that have the status 'APPROVED_FOR_RELEASE'
 const val GET_RELEASED_DATA_RESPONSE_DESCRIPTION = """
 Releasable accession versions.
 The schema is to be understood per line of the NDJSON stream.    
+"""
+
+const val GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION = """
+The original metadata of submission sequence versions as NDJSON where each line is a flat JSON object where the values
+are all strings (or null).
 """

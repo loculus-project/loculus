@@ -7,6 +7,7 @@ import {
     accessionVersion,
     accessionVersionsFilterWithApprovalScope,
     accessionVersionsFilterWithDeletionScope,
+    dataUseTerms,
     dataUseTermsHistoryEntry,
     getSequencesResponse,
     problemDetail,
@@ -109,9 +110,9 @@ const getSequencesEndpoint = makeEndpoint({
     parameters: [
         authorizationHeader,
         {
-            name: 'groupsFilter',
+            name: 'groupIdsFilter',
             type: 'Query',
-            schema: z.string().optional(),
+            schema: z.string().optional(), // comma separated list of group ids (numbers)
         },
         {
             name: 'statusesFilter',
@@ -176,6 +177,11 @@ const extractUnprocessedDataEndpoint = makeEndpoint({
             type: 'Query',
             schema: z.number(),
         },
+        {
+            name: 'pipelineVersion',
+            type: 'Query',
+            schema: z.number(),
+        },
     ],
     response: z.union([z.string(), unprocessedData]),
     errors: [notAuthorizedError],
@@ -192,6 +198,11 @@ const submitProcessedDataEndpoint = makeEndpoint({
             type: 'Body',
             schema: z.string(),
         },
+        {
+            name: 'pipelineVersion',
+            type: 'Query',
+            schema: z.number(),
+        },
     ],
     response: z.never(),
     errors: [{ status: 'default', schema: problemDetail }, { status: 422, schema: problemDetail }, notAuthorizedError],
@@ -202,6 +213,28 @@ const getDataUseTermsHistoryEndpoint = makeEndpoint({
     path: '/data-use-terms/:accession',
     alias: 'getDataUseTermsHistory',
     response: z.array(dataUseTermsHistoryEntry),
+    errors: [
+        { status: 'default', schema: problemDetail },
+        { status: 404, schema: problemDetail },
+    ],
+});
+
+const setDataUseTerms = makeEndpoint({
+    method: 'put',
+    path: '/data-use-terms',
+    alias: 'setDataUseTerms',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                accessions: z.array(z.string()),
+                newDataUseTerms: dataUseTerms,
+            }),
+        },
+    ],
+    response: z.never(),
     errors: [
         { status: 'default', schema: problemDetail },
         { status: 404, schema: problemDetail },
@@ -220,4 +253,5 @@ export const backendApi = makeApi([
     extractUnprocessedDataEndpoint,
     submitProcessedDataEndpoint,
     getDataUseTermsHistoryEndpoint,
+    setDataUseTerms,
 ]);

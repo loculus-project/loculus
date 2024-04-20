@@ -12,6 +12,7 @@ import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.addOrganismToPath
 import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.jwtForGetReleasedData
@@ -32,14 +33,14 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         metadataFile: MockMultipartFile,
         sequencesFile: MockMultipartFile,
         organism: String = DEFAULT_ORGANISM,
-        groupName: String = DEFAULT_GROUP_NAME,
+        groupId: Int,
         dataUseTerm: DataUseTerms = DataUseTerms.Open,
         jwt: String? = jwtForDefaultUser,
     ): ResultActions = mockMvc.perform(
         multipart(addOrganismToPath("/submit", organism = organism))
             .file(sequencesFile)
             .file(metadataFile)
-            .param("groupName", groupName)
+            .param("groupId", groupId.toString())
             .param("dataUseTermsType", dataUseTerm.type.name)
             .param(
                 "restrictedUntil",
@@ -54,29 +55,34 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     fun extractUnprocessedData(
         numberOfSequenceEntries: Int,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
         jwt: String? = jwtForProcessingPipeline,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/extract-unprocessed-data", organism = organism))
             .withAuth(jwt)
-            .param("numberOfSequenceEntries", numberOfSequenceEntries.toString()),
+            .param("numberOfSequenceEntries", numberOfSequenceEntries.toString())
+            .param("pipelineVersion", pipelineVersion.toString()),
     )
 
     fun submitProcessedData(
         vararg submittedProcessedData: SubmittedProcessedData,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
         jwt: String? = jwtForProcessingPipeline,
     ): ResultActions {
         val stringContent = submittedProcessedData.joinToString("\n") { objectMapper.writeValueAsString(it) }
 
-        return submitProcessedDataRaw(stringContent, organism, jwt)
+        return submitProcessedDataRaw(stringContent, organism, pipelineVersion, jwt)
     }
 
     fun submitProcessedDataRaw(
         submittedProcessedData: String,
         organism: String = DEFAULT_ORGANISM,
+        pipelineVersion: Long = DEFAULT_PIPELINE_VERSION,
         jwt: String? = jwtForProcessingPipeline,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/submit-processed-data", organism = organism))
+            .param("pipelineVersion", pipelineVersion.toString())
             .contentType(MediaType.APPLICATION_NDJSON_VALUE)
             .withAuth(jwt)
             .content(submittedProcessedData),
@@ -84,7 +90,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
 
     fun getSequenceEntries(
         organism: String = DEFAULT_ORGANISM,
-        groupsFilter: List<String>? = null,
+        groupIdsFilter: List<Int>? = null,
         statusesFilter: List<Status>? = null,
         warningsFilter: WarningsFilter? = null,
         jwt: String? = jwtForDefaultUser,
@@ -94,8 +100,8 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         return mockMvc.perform(
             get(addOrganismToPath("/get-sequences", organism = organism))
                 .withAuth(jwt)
-                .param("groupsFilter", groupsFilter?.joinToString { it })
-                .param("statusesFilter", statusesFilter?.joinToString { it.name })
+                .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
+                .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
                 .param("warningsFilter", warningsFilter?.name)
                 .param("page", page?.toString())
                 .param("size", size?.toString()),
@@ -155,11 +161,20 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .withAuth(jwt),
     )
 
-    fun getReleasedData(organism: String = DEFAULT_ORGANISM, jwt: String? = jwtForGetReleasedData): ResultActions =
-        mockMvc.perform(
-            get(addOrganismToPath("/get-released-data", organism = organism))
-                .withAuth(jwt),
-        )
+    fun getReleasedData(
+        organism: String = DEFAULT_ORGANISM,
+        jwt: String? = jwtForGetReleasedData,
+        compression: String? = null,
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/get-released-data", organism = organism))
+            .also {
+                when (compression) {
+                    null -> it
+                    else -> it.param("compression", compression)
+                }
+            }
+            .withAuth(jwt),
+    )
 
     fun deleteSequenceEntries(
         scope: DeleteSequenceScope,
@@ -190,6 +205,27 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .file(sequencesFile)
             .file(metadataFile)
             .withAuth(jwt),
+    )
+
+    fun getOriginalMetadata(
+        organism: String = DEFAULT_ORGANISM,
+        jwt: String? = jwtForDefaultUser,
+        groupIdsFilter: List<Int>? = null,
+        statusesFilter: List<Status>? = null,
+        fields: List<String>? = null,
+        compression: String? = null,
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/get-original-metadata", organism = organism))
+            .withAuth(jwt)
+            .also {
+                when (compression) {
+                    null -> it
+                    else -> it.param("compression", compression)
+                }
+            }
+            .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
+            .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
+            .param("fields", fields?.joinToString(",")),
     )
 
     private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String {

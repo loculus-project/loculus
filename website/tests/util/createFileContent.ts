@@ -1,9 +1,9 @@
 import { readFileSync } from 'fs';
 
+import { ACCESSION_FIELD } from '../../src/settings.ts';
 import type { Accession } from '../../src/types/backend.ts';
 import { fastaEntryToString, parseFasta } from '../../src/utils/parseFasta.ts';
 import { metadataTestFile, sequencesTestFile, testSequenceCount } from '../e2e.fixture.ts';
-import { ACCESSION_FIELD } from '../../src/settings.ts';
 
 type FileContent = {
     metadataContent: string;

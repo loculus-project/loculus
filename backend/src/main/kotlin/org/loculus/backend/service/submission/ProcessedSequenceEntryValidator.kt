@@ -2,10 +2,9 @@ package org.loculus.backend.service.submission
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.NullNode
-import org.loculus.backend.api.AminoAcidSequence
+import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Insertion
 import org.loculus.backend.api.MetadataMap
-import org.loculus.backend.api.NucleotideSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
 import org.loculus.backend.config.BackendConfig
@@ -87,7 +86,7 @@ class ProcessedSequenceEntryValidator(
     private val schema: Schema,
     private val referenceGenome: ReferenceGenome,
 ) {
-    fun validate(processedData: ProcessedData): ProcessedData {
+    fun validate(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
         val processedDataWithAllMetadataFields = validateMetadata(processedData)
         validateNucleotideSequences(processedDataWithAllMetadataFields)
         validateAminoAcidSequences(processedDataWithAllMetadataFields)
@@ -95,7 +94,7 @@ class ProcessedSequenceEntryValidator(
         return addMissingKeysForInsertions(processedDataWithAllMetadataFields)
     }
 
-    private fun validateMetadata(processedData: ProcessedData): ProcessedData {
+    private fun validateMetadata(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
         val metadataFields = schema.metadata
         var processedMetadataMap = processedData.metadata
         validateNoUnknownInMetaData(processedMetadataMap, metadataFields.map { it.name })
@@ -169,8 +168,7 @@ class ProcessedSequenceEntryValidator(
         val isOfCorrectPrimitiveType = when (metadata.type) {
             MetadataType.STRING -> fieldValue.isTextual
             MetadataType.INTEGER -> fieldValue.isInt
-            MetadataType.FLOAT -> fieldValue.isFloat
-            MetadataType.DOUBLE -> fieldValue.isDouble
+            MetadataType.FLOAT -> fieldValue.isFloatingPointNumber
             MetadataType.NUMBER -> fieldValue.isNumber
             else -> false
         }
@@ -197,7 +195,7 @@ class ProcessedSequenceEntryValidator(
         return pangoLineageCandidate.matches(pangoLineageRegex)
     }
 
-    private fun validateNucleotideSequences(processedData: ProcessedData) {
+    private fun validateNucleotideSequences(processedData: ProcessedData<GeneticSequence>) {
         for (segment in referenceGenome.nucleotideSequences) {
             validateNoMissingSegment(
                 segment,
@@ -278,7 +276,7 @@ class ProcessedSequenceEntryValidator(
     }
 
     private fun validateNoUnknownNucleotideSymbol(
-        dataToValidate: Map<String, NucleotideSequence?>,
+        dataToValidate: Map<String, GeneticSequence?>,
         sequenceGrouping: String,
     ) {
         for ((segmentName, sequence) in dataToValidate) {
@@ -317,7 +315,7 @@ class ProcessedSequenceEntryValidator(
         where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         enumValues<ValidSymbols>().any { it.symbol == this }
 
-    private fun validateAminoAcidSequences(processedData: ProcessedData) {
+    private fun validateAminoAcidSequences(processedData: ProcessedData<GeneticSequence>) {
         for (gene in referenceGenome.genes) {
             validateNoMissingGene(gene, processedData)
             validateLengthOfSequence(
@@ -341,7 +339,7 @@ class ProcessedSequenceEntryValidator(
         validateNoUnknownAminoAcidSymbolInInsertion(processedData.aminoAcidInsertions)
     }
 
-    private fun validateNoMissingGene(gene: ReferenceSequence, processedData: ProcessedData) {
+    private fun validateNoMissingGene(gene: ReferenceSequence, processedData: ProcessedData<GeneticSequence>) {
         if (!processedData.alignedAminoAcidSequences.containsKey(gene.name)) {
             throw ProcessingValidationException("Missing the required gene '${gene.name}'.")
         }
@@ -355,7 +353,7 @@ class ProcessedSequenceEntryValidator(
         }
     }
 
-    private fun validateNoUnknownAminoAcidSymbol(dataToValidate: Map<String, AminoAcidSequence?>) {
+    private fun validateNoUnknownAminoAcidSymbol(dataToValidate: Map<String, GeneticSequence?>) {
         for ((gene, sequence) in dataToValidate) {
             if (sequence == null) {
                 continue
@@ -384,7 +382,9 @@ class ProcessedSequenceEntryValidator(
         }
     }
 
-    private fun addMissingKeysForInsertions(processedData: ProcessedData): ProcessedData {
+    private fun addMissingKeysForInsertions(
+        processedData: ProcessedData<GeneticSequence>,
+    ): ProcessedData<GeneticSequence> {
         val nucleotideInsertions = referenceGenome.nucleotideSequences.associate {
             if (it.name in processedData.nucleotideInsertions.keys) {
                 it.name to processedData.nucleotideInsertions[it.name]!!

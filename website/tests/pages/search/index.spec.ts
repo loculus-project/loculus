@@ -25,7 +25,11 @@ test.describe('The search page', () => {
         const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
 
         await searchPage.goto();
-        await searchPage.getEmptyAccessionField().fill(testAccessionVersion);
+        await searchPage.getAccessionField().click();
+        await searchPage.page.waitForTimeout(1000);
+        await searchPage.getAccessionField().fill(testAccessionVersion);
+
+        await searchPage.page.waitForTimeout(1000);
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
@@ -47,8 +51,12 @@ test.describe('The search page', () => {
         const previousAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
 
         const query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
-        await searchPage.getEmptyAccessionField().fill(query);
+        await searchPage.getAccessionField().click();
+        await searchPage.page.waitForTimeout(100);
+        await searchPage.getAccessionField().fill(query);
+        await searchPage.page.waitForTimeout(100);
         await searchPage.clickSearchButton();
+        await searchPage.page.waitForTimeout(100);
 
         const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
 
@@ -66,7 +74,10 @@ test.describe('The search page', () => {
         for (let i = 0; i < 1000; i++) {
             query += `\ndoesnotexist${i}`;
         }
-        await searchPage.getEmptyAccessionField().fill(query);
+        await searchPage.getAccessionField().click();
+        await searchPage.page.waitForTimeout(100);
+        await searchPage.getAccessionField().fill(query);
+        await searchPage.page.waitForTimeout(100);
         await searchPage.clickSearchButton();
 
         const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
@@ -90,12 +101,18 @@ test.describe('The search page', () => {
         await searchPage.goto();
 
         const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
-        await searchPage.getEmptyAccessionField().fill(testAccessionVersion);
 
-        await expect(searchPage.getFilledAccessionField()).toHaveValue(testAccessionVersion);
+        await searchPage.getAccessionField().click();
+
+        await searchPage.page.waitForTimeout(100);
+        await searchPage.getAccessionField().fill(testAccessionVersion);
+
+        await searchPage.page.waitForTimeout(100);
+
+        await expect(searchPage.getAccessionField()).toHaveValue(testAccessionVersion);
 
         await searchPage.clickResetButton();
 
-        await expect(searchPage.getEmptyAccessionField()).toHaveValue('');
+        await expect(searchPage.getAccessionField()).toHaveValue('');
     });
 });

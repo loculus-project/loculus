@@ -3,6 +3,9 @@ import z from 'zod';
 import { orderByType } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
+// These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
+export const metadataPossibleTypes = ['string', 'date', 'int', 'float', 'pango_lineage', 'timestamp'] as const;
+
 export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
@@ -11,10 +14,12 @@ export const customDisplay = z.object({
 export const metadata = z.object({
     name: z.string(),
     displayName: z.string().optional(),
-    type: z.enum(['string', 'date', 'int', 'float', 'pango_lineage', 'timestamp']),
+    type: z.enum(metadataPossibleTypes),
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
+    truncateColumnDisplayTo: z.number().optional(),
+    initiallyVisible: z.boolean().optional(),
 });
 
 export type CustomDisplay = z.infer<typeof customDisplay>;
@@ -23,6 +28,22 @@ export type Metadata = z.infer<typeof metadata>;
 export type MetadataFilter = Metadata & {
     filterValue: string;
     label?: string;
+    fieldGroup?: string;
+    grouped?: false;
+    fieldGroupDisplayName?: string;
+    isVisible?: boolean;
+};
+
+export type GroupedMetadataFilter = {
+    name: string;
+    groupedFields: MetadataFilter[];
+    type: Metadata['type'];
+    grouped: true;
+    label?: string;
+    displayName?: string;
+    isVisible?: boolean;
+    notSearchable?: boolean;
+    initiallyVisible?: boolean;
 };
 
 export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
@@ -66,5 +87,6 @@ export const websiteConfig = z.object({
     organisms: z.record(instanceConfig),
     name: z.string(),
     logo: logoConfig,
+    bannerMessage: z.string().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;

@@ -6,11 +6,13 @@ import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsInAnyOrder
 import org.hamcrest.Matchers.empty
+import org.hamcrest.Matchers.hasProperty
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status.IN_PROCESSING
 import org.loculus.backend.api.Status.RECEIVED
 import org.loculus.backend.api.UnprocessedData
+import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
@@ -25,7 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-@EndpointTest
+@EndpointTest(
+    properties = ["${BackendSpringProperty.STREAM_BATCH_SIZE}=2"],
+)
 class ExtractUnprocessedDataEndpointTest(
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val client: SubmissionControllerClient,
@@ -61,7 +65,7 @@ class ExtractUnprocessedDataEndpointTest(
 
     @Test
     fun `WHEN extracting unprocessed data THEN only previously not extracted sequence entries are returned`() {
-        val firstAccession = convenienceClient.submitDefaultFiles().first().accession
+        val accessionVersions = convenienceClient.submitDefaultFiles().submissionIdMappings
 
         val result7 = client.extractUnprocessedData(7)
         val responseBody7 = result7.expectNdjsonAndGetContent<UnprocessedData>()
@@ -69,13 +73,17 @@ class ExtractUnprocessedDataEndpointTest(
         assertThat(
             responseBody7,
             hasItem(
-                UnprocessedData(firstAccession, 1, defaultOriginalData),
+                UnprocessedData(accessionVersions.first().accession, 1, defaultOriginalData),
             ),
         )
 
         val result3 = client.extractUnprocessedData(5)
         val responseBody3 = result3.expectNdjsonAndGetContent<UnprocessedData>()
         assertThat(responseBody3, hasSize(3))
+        assertThat(
+            responseBody3,
+            hasItem(hasProperty<UnprocessedData>("accession", `is`(accessionVersions[7].accession))),
+        )
 
         val result0 = client.extractUnprocessedData(DefaultFiles.NUMBER_OF_SEQUENCES)
         val responseBody0 = result0.expectNdjsonAndGetContent<UnprocessedData>()
@@ -97,7 +105,9 @@ class ExtractUnprocessedDataEndpointTest(
     @Test
     fun `GIVEN sequence entries for multiple organisms THEN it should only return entries for that organism`() {
         val defaultOrganismEntries = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
+            .submissionIdMappings
         val otherOrganismEntries = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)
+            .submissionIdMappings
 
         val result = client.extractUnprocessedData(
             defaultOrganismEntries.size + otherOrganismEntries.size,
