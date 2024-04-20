@@ -3,7 +3,7 @@ package org.loculus.backend.api
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.utils.Accession
 import java.sql.Timestamp
-import java.util.UUID
+import java.util.*
 
 data class SubmittedSeqSetRecord(
     val accession: Accession,
@@ -18,7 +18,7 @@ data class SubmittedSeqSetRecord(
         type = "boolean",
         example = "true",
     )
-    val isFocal: Boolean? = true,
+    val isFocal: Boolean = true,
 )
 
 data class SubmittedSeqSet(
@@ -38,7 +38,7 @@ data class SeqSetRecord(
     val seqSetRecordId: Long,
     val accession: Accession,
     val type: String,
-    val isFocal: Boolean? = true,
+    val isFocal: Boolean = true,
 )
 
 data class SeqSet(

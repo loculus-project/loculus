@@ -143,7 +143,10 @@ class SeqSetCitationsDatabaseService(
         for (record in seqSetRecords) {
             val existingRecord = SeqSetRecordsTable
                 .selectAll()
-                .where { SeqSetRecordsTable.accession eq record.accession }
+                .where {
+                    (SeqSetRecordsTable.accession eq record.accession) and
+                        (SeqSetRecordsTable.isFocal eq record.isFocal)
+                }
                 .singleOrNull()
 
             val seqSetRecordId = if (existingRecord == null) {
