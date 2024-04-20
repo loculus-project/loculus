@@ -11,6 +11,7 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.Max
 import mu.KotlinLogging
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionsFilterWithApprovalScope
 import org.loculus.backend.api.AccessionVersionsFilterWithDeletionScope
@@ -51,7 +52,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody
-import java.util.*
+import java.util.UUID
 import io.swagger.v3.oas.annotations.parameters.RequestBody as SwaggerRequestBody
 
 private val log = KotlinLogging.logger { }
@@ -74,7 +75,7 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @HiddenParam authenticatedUser: AuthenticatedUser,
-        @Parameter(description = GROUP_DESCRIPTION) @RequestParam groupName: String,
+        @Parameter(description = GROUP_ID_DESCRIPTION) @RequestParam groupId: Int,
         @Parameter(description = METADATA_FILE_DESCRIPTION) @RequestParam metadataFile: MultipartFile,
         @Parameter(description = SEQUENCE_FILE_DESCRIPTION) @RequestParam sequenceFile: MultipartFile,
         @Parameter(description = "Data Use terms under which data is released.")
@@ -91,7 +92,7 @@ class SubmissionController(
             authenticatedUser,
             metadataFile,
             sequenceFile,
-            groupName,
+            groupId,
             DataUseTerms.fromParameters(dataUseTermsType, restrictedUntil),
         )
         return submitModel.processSubmissions(UUID.randomUUID().toString(), params)
@@ -154,7 +155,7 @@ class SubmissionController(
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        val streamBody = stream {
+        val streamBody = streamTransactioned {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -213,7 +214,7 @@ class SubmissionController(
             headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
         }
 
-        val streamBody = stream(compression) { releasedDataModel.getReleasedData(organism) }
+        val streamBody = streamTransactioned(compression) { releasedDataModel.getReleasedData(organism) }
 
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
     }
@@ -248,10 +249,10 @@ class SubmissionController(
         @PathVariable @Valid
         organism: Organism,
         @Parameter(
-            description = "Filter by group name. If not provided, all groups are considered.",
+            description = "Filter by group ids. If not provided, all groups are considered.",
         )
         @RequestParam(required = false)
-        groupsFilter: List<String>?,
+        groupIdsFilter: List<Int>?,
         @Parameter(
             description = "Filter by status. If not provided, all statuses are considered.",
         )
@@ -275,12 +276,59 @@ class SubmissionController(
     ): GetSequenceResponse = submissionDatabaseService.getSequences(
         authenticatedUser,
         organism,
-        groupsFilter,
+        groupIdsFilter,
         statusesFilter,
         warningsFilter,
         page,
         size,
     )
+
+    @Operation(description = "Retrieve original metadata of submitted accession versions.")
+    @ResponseStatus(HttpStatus.OK)
+    @ApiResponse(
+        responseCode = "200",
+        description = GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION,
+    )
+    @GetMapping("/get-original-metadata", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun getOriginalMetadata(
+        @PathVariable @Valid
+        organism: Organism,
+        @Parameter(
+            description = "The metadata fields that should be returned. If not provided, all fields are returned.",
+        )
+        @RequestParam(required = false)
+        fields: List<String>?,
+        @Parameter(
+            description = "Filter by group ids. If not provided, all groups are considered.",
+        )
+        @RequestParam(required = false)
+        groupIdsFilter: List<Int>?,
+        @Parameter(
+            description = "Filter by status. If not provided, all statuses are considered.",
+        )
+        @RequestParam(required = false)
+        statusesFilter: List<Status>?,
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+        @RequestParam compression: CompressionFormat?,
+    ): ResponseEntity<StreamingResponseBody> {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        if (compression != null) {
+            headers.add(HttpHeaders.CONTENT_ENCODING, compression.compressionName)
+        }
+
+        val streamBody = streamTransactioned(compression) {
+            submissionDatabaseService.streamOriginalMetadata(
+                authenticatedUser,
+                organism,
+                groupIdsFilter?.takeIf { it.isNotEmpty() },
+                statusesFilter?.takeIf { it.isNotEmpty() },
+                fields?.takeIf { it.isNotEmpty() },
+            )
+        }
+
+        return ResponseEntity(streamBody, headers, HttpStatus.OK)
+    }
 
     @Operation(description = APPROVE_PROCESSED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)
@@ -294,6 +342,7 @@ class SubmissionController(
     ): List<AccessionVersion> = submissionDatabaseService.approveProcessedData(
         authenticatedUser = authenticatedUser,
         accessionVersionsFilter = body.accessionVersionsFilter,
+        groupIdsFilter = body.groupIdsFilter,
         organism = organism,
         scope = body.scope,
     )
@@ -321,18 +370,22 @@ class SubmissionController(
     ): List<AccessionVersion> = submissionDatabaseService.deleteSequenceEntryVersions(
         body.accessionVersionsFilter,
         authenticatedUser,
+        body.groupIdsFilter,
         organism,
         body.scope,
     )
 
-    private fun <T> stream(compressionFormat: CompressionFormat? = null, sequenceProvider: () -> Sequence<T>) =
-        StreamingResponseBody { responseBodyStream ->
-            val outputStream = when (compressionFormat) {
-                CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
-                null -> responseBodyStream
-            }
+    private fun <T> streamTransactioned(
+        compressionFormat: CompressionFormat? = null,
+        sequenceProvider: () -> Sequence<T>,
+    ) = StreamingResponseBody { responseBodyStream ->
+        val outputStream = when (compressionFormat) {
+            CompressionFormat.ZSTD -> ZstdCompressorOutputStream(responseBodyStream)
+            null -> responseBodyStream
+        }
 
-            outputStream.use { stream ->
+        outputStream.use { stream ->
+            transaction {
                 try {
                     iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
                 } catch (e: Exception) {
@@ -343,4 +396,5 @@ class SubmissionController(
                 }
             }
         }
+    }
 }

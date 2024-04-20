@@ -7,7 +7,6 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.jetbrains.exposed.sql.and
-import org.jetbrains.exposed.sql.select
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.controller.BadRequestException
@@ -22,16 +21,12 @@ class DataUseTermsPreconditionValidator {
 
     fun checkThatTransitionIsAllowed(accessions: List<Accession>, newDataUseTerms: DataUseTerms) {
         val dataUseTerms = DataUseTermsTable
-            .slice(
+            .select(
                 DataUseTermsTable.accessionColumn,
                 DataUseTermsTable.dataUseTermsTypeColumn,
                 DataUseTermsTable.restrictedUntilColumn,
             )
-            .select(
-                where = {
-                    (DataUseTermsTable.accessionColumn inList accessions) and DataUseTermsTable.isNewestDataUseTerms
-                },
-            )
+            .where { (DataUseTermsTable.accessionColumn inList accessions) and DataUseTermsTable.isNewestDataUseTerms }
 
         logger.debug {
             "Checking that transition is allowed for accessions " +

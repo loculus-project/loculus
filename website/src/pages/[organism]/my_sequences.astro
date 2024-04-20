@@ -13,7 +13,7 @@ let noGroups = false;
 let errorMessage = '';
 if (groupsResult.isOk()) {
     if (groupsResult.value.length > 0) {
-        return Astro.redirect(routes.mySequencesPage(organism, groupsResult.value[0].groupName));
+        return Astro.redirect(routes.mySequencesPage(organism, groupsResult.value[0].groupId));
     }
     noGroups = true;
 } else {

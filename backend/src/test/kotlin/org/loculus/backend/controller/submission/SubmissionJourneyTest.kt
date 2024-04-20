@@ -27,7 +27,9 @@ class SubmissionJourneyTest(
 ) {
     @Test
     fun `Submission scenario, from submission, over edit and approval ending in status 'APPROVED_FOR_RELEASE'`() {
-        val accessions = convenienceClient.submitDefaultFiles().map { it.accession }
+        val accessions = convenienceClient.submitDefaultFiles()
+            .submissionIdMappings
+            .map { it.accession }
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(RECEIVED)
@@ -100,8 +102,8 @@ class SubmissionJourneyTest(
 
     @Test
     fun `Release journey scenario for two organisms`() {
-        val defaultOrganismData = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM)
-        val otherOrganismData = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM)
+        val defaultOrganismData = convenienceClient.submitDefaultFiles(organism = DEFAULT_ORGANISM).submissionIdMappings
+        val otherOrganismData = convenienceClient.submitDefaultFiles(organism = OTHER_ORGANISM).submissionIdMappings
 
         convenienceClient.extractUnprocessedData(organism = DEFAULT_ORGANISM)
         convenienceClient.extractUnprocessedData(organism = OTHER_ORGANISM)

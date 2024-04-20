@@ -8,6 +8,7 @@ import kotlinx.datetime.minus
 import kotlinx.datetime.plus
 import kotlinx.datetime.toLocalDateTime
 import org.hamcrest.Matchers.containsString
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.Arguments
@@ -15,13 +16,13 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.Organism
 import org.loculus.backend.config.BackendConfig
-import org.loculus.backend.controller.ALTERNATIVE_DEFAULT_GROUP_NAME
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.generateJwtFor
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.loculus.backend.controller.jwtForSuperUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
@@ -40,7 +41,14 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 class SubmitEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val backendConfig: BackendConfig,
+    @Autowired val groupManagementClient: GroupManagementControllerClient,
 ) {
+    var groupId: Int = 0
+
+    @BeforeEach
+    fun prepareNewGroup() {
+        groupId = groupManagementClient.createNewGroup().andGetGroupId()
+    }
 
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
@@ -48,6 +56,7 @@ class SubmitEndpointTest(
             submissionControllerClient.submit(
                 DefaultFiles.metadataFile,
                 DefaultFiles.sequencesFile,
+                groupId = 123,
                 jwt = jwt,
             )
         }
@@ -55,14 +64,16 @@ class SubmitEndpointTest(
 
     @Test
     fun `WHEN submitting on behalf of a non-existing group THEN expect that the group is not found`() {
+        val groupId = 123456789
+
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
-            groupName = "nonExistingGroup",
+            groupId = groupId,
         )
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail", containsString("Group(s) nonExistingGroup do not exist")))
+            .andExpect(jsonPath("\$.detail", containsString("Group(s) $groupId do not exist")))
     }
 
     @Test
@@ -72,6 +83,7 @@ class SubmitEndpointTest(
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
+            groupId = groupId,
             jwt = generateJwtFor(otherUser),
         )
             .andExpect(status().isForbidden)
@@ -81,7 +93,7 @@ class SubmitEndpointTest(
                     "\$.detail",
                     containsString(
                         "User $otherUser is not a member of group(s) " +
-                            "$DEFAULT_GROUP_NAME. Action not allowed.",
+                            "$groupId. Action not allowed.",
                     ),
                 ),
             )
@@ -93,7 +105,7 @@ class SubmitEndpointTest(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
             jwt = jwtForSuperUser,
-            groupName = ALTERNATIVE_DEFAULT_GROUP_NAME,
+            groupId = groupId,
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
@@ -110,6 +122,7 @@ class SubmitEndpointTest(
         submissionControllerClient.submit(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFile,
+            groupId = groupId,
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
@@ -125,6 +138,7 @@ class SubmitEndpointTest(
             DefaultFiles.metadataFile,
             DefaultFiles.sequencesFileMultiSegmented,
             organism = OTHER_ORGANISM,
+            groupId = groupId,
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
@@ -150,6 +164,7 @@ class SubmitEndpointTest(
                 """.trimIndent(),
             ),
             organism = OTHER_ORGANISM,
+            groupId = groupId,
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
@@ -173,6 +188,7 @@ class SubmitEndpointTest(
             sequencesFile,
             organism = organism.name,
             dataUseTerm = dataUseTerm,
+            groupId = groupId,
         )
             .andExpect(expectedStatus)
             .andExpect(jsonPath("\$.title").value(expectedTitle))

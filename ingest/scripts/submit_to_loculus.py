@@ -19,11 +19,16 @@ class Config:
     group_name: str
 
 
-def organism_url(config: Config):
-    return f"{config.backend_url.rstrip('/')}/{config.organism.strip('/')}"
+def backend_url(config: Config) -> str:
+    """Right strip the URL to remove trailing slashes"""
+    return f"{config.backend_url.rstrip('/')}"
 
 
-def get_jwt(config: Config):
+def organism_url(config: Config) -> str:
+    return f"{backend_url(config)}/{config.organism.strip('/')}"
+
+
+def get_jwt(config: Config) -> str:
     """
     Get a JWT token for the given username and password
     """
@@ -46,9 +51,8 @@ def get_jwt(config: Config):
     return jwt
 
 
-def create_group(config: Config):
-    # Create the ingest group
-    url = f"{config.backend_url.rstrip('/')}/groups"
+def create_group(config: Config) -> str:
+    create_group_url = f"{backend_url(config)}/groups"
     token = get_jwt(config)
     group_name = config.group_name
 
@@ -68,17 +72,41 @@ def create_group(config: Config):
         "contactEmail": "something@loculus.org",
     }
 
-    response = requests.post(url, json=data, headers=headers)
+    logging.info(f"Creating group: {group_name}")
+    create_group_response = requests.post(create_group_url, json=data, headers=headers)
 
-    if response.status_code == 409:
-        print("Group already exists")
-    # raise if not 409 and not happy 2xx
-    elif not response.ok:
-        print(f"Error creating group: {response.json()}")
-        response.raise_for_status()
+    if not create_group_response.ok:
+        print(f"Error creating group: {create_group_response.json()}")
+        create_group_response.raise_for_status()
+
+    group_id = create_group_response.json()["groupId"]
+
+    logging.info(f"Group created: {group_id}")
+
+    return group_id
 
 
-def submit(metadata, sequences, config: Config):
+def get_group_id(config: Config) -> str:
+    """Returns group id"""
+    get_user_groups_url = f"{backend_url(config)}/user/groups"
+    token = get_jwt(config)
+
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+    get_groups_response = requests.get(get_user_groups_url, headers=headers)
+    if not get_groups_response.ok:
+        get_groups_response.raise_for_status()
+
+    if len(get_groups_response.json()) > 0:
+        group_id = get_groups_response.json()[0]["groupId"]
+        logging.info(f"User is already in group: {group_id}")
+
+        return group_id
+    logging.info("User is not in any group. Creating a new group")
+    return create_group(config)
+
+
+def submit(metadata, sequences, config: Config, group_id):
     """
     Submit data to Loculus.
     """
@@ -99,7 +127,7 @@ def submit(metadata, sequences, config: Config):
 
     # Query parameters
     params = {
-        "groupName": config.group_name,
+        "groupId": group_id,
         "dataUseTermsType": "OPEN",
     }
 
@@ -185,13 +213,11 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file):
         logging.info("Submitting to Loculus")
         logging.debug(f"Config: {config}")
         # Create group if it doesn't exist
-        logging.info(f"Creating group {config.group_name}")
-        create_group(config)
-        logging.info(f"Group {config.group_name} created")
+        group_id = get_group_id(config)
 
         # Submit
         logging.info("Starting submission")
-        response = submit(metadata, sequences, config)
+        response = submit(metadata, sequences, config, group_id)
         logging.info("Submission complete")
 
     if mode == "approve":

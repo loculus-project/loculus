@@ -17,8 +17,8 @@ data class Address(
     val country: String,
 )
 
-data class Group(
-    @Schema(description = "The name of the group.", example = "Group1")
+data class NewGroup(
+    @Schema(description = "The display name of the group.", example = "Example Group")
     val groupName: String,
     @Schema(description = "The name of the institution.", example = "University of Loculus")
     val institution: String,
@@ -27,6 +27,20 @@ data class Group(
     @Schema(description = "The contact email for the group.", example = "something@loculus.org")
     val contactEmail: String,
 )
+
+data class Group(
+    @Schema(description = "The id of the group.", example = "123")
+    val groupId: Int,
+    @Schema(description = "The display name of the group.", example = "Example Group")
+    val groupName: String,
+    @Schema(description = "The name of the institution.", example = "University of Loculus")
+    val institution: String,
+    @Schema(description = "The address of the institution.")
+    val address: Address,
+    @Schema(description = "The contact email for the group.", example = "something@loculus.org")
+    val contactEmail: String,
+)
+
 data class User(
     val name: String,
 )

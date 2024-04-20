@@ -4,7 +4,14 @@ import { cleanOrganism } from './cleanOrganism';
 import { navigationItems } from '../../routes/navigationItems';
 import { getAuthUrl } from '../../utils/getAuthUrl';
 
-const { organism } = cleanOrganism(Astro.params.organism);
+interface Props {
+    implicitOrganism?: string;
+}
+
+const { implicitOrganism } = Astro.props;
+const { organism, knownOrganisms } = cleanOrganism(Astro.params.organism);
+const selectedOrganism =
+    implicitOrganism !== undefined ? knownOrganisms.find((it) => it.key === implicitOrganism) : organism;
 
 const isLoggedIn = Astro.locals.session?.isLoggedIn ?? false;
 
@@ -13,10 +20,21 @@ const loginUrl = await getAuthUrl(Astro.url.toString());
 
 <div class='flex justify-end'>
     <div class='subtitle hidden sm:flex sm:z-6 gap-4'>
-        {navigationItems.top(organism?.key, isLoggedIn, loginUrl).map(({ text, path }) => <a href={path}>{text}</a>)}
+        {
+            navigationItems
+                .top(selectedOrganism?.key, isLoggedIn, loginUrl)
+                .map(({ text, path }) => <a href={path}>{text}</a>)
+        }
     </div>
 
     <div class='sm:hidden fixed z-0'>
-        <SandwichMenu top={16} right={28} organism={organism} isLoggedIn={isLoggedIn} loginUrl={loginUrl} client:load />
+        <SandwichMenu
+            top={16}
+            right={28}
+            organism={selectedOrganism}
+            isLoggedIn={isLoggedIn}
+            loginUrl={loginUrl}
+            client:load
+        />
     </div>
 </div>

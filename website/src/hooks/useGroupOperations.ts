@@ -3,7 +3,7 @@ import { ZodiosHooks } from '@zodios/react';
 import { useCallback, useMemo } from 'react';
 
 import { groupManagementApi } from '../services/groupManagementApi.ts';
-import type { Group, GroupDetails } from '../types/backend.ts';
+import type { Group, GroupDetails, NewGroup } from '../types/backend.ts';
 import type { ClientConfig } from '../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../utils/stringifyMaybeAxiosError.ts';
@@ -21,12 +21,13 @@ export const useGroupPageHooks = ({
     prefetchedGroupDetails,
 }: UseGroupOperationsProps & { prefetchedGroupDetails: GroupDetails }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
+    const groupId = prefetchedGroupDetails.group.groupId;
     const { zodios, zodiosHooks } = useGroupManagementClient(clientConfig);
 
     const groupDetails = zodiosHooks.useGetGroupDetails(
         {
             headers: createAuthorizationHeader(accessToken),
-            params: { groupName },
+            params: { groupId },
         },
         { enabled: false, initialData: prefetchedGroupDetails },
     );
@@ -37,16 +38,16 @@ export const useGroupPageHooks = ({
 
     const addUserToGroup = useCallback(
         async (username: string) => {
-            await callAddToGroup(accessToken, setErrorMessage, zodios, groupDetails.refetch)(groupName, username);
+            await callAddToGroup(accessToken, setErrorMessage, zodios, groupDetails.refetch)(groupId, username);
         },
-        [accessToken, setErrorMessage, groupDetails.refetch, zodios, groupName],
+        [accessToken, setErrorMessage, groupDetails.refetch, zodios, groupId],
     );
 
     const removeFromGroup = useCallback(
         async (username: string) => {
-            await callRemoveFromGroup(accessToken, setErrorMessage, zodios, groupDetails.refetch)(groupName, username);
+            await callRemoveFromGroup(accessToken, setErrorMessage, zodios, groupDetails.refetch)(groupId, username);
         },
-        [accessToken, setErrorMessage, groupDetails.refetch, zodios, groupName],
+        [accessToken, setErrorMessage, groupDetails.refetch, zodios, groupId],
     );
 
     return {
@@ -66,10 +67,7 @@ export const useGroupCreation = ({
     const { zodios } = useGroupManagementClient(clientConfig);
 
     const createGroup = useCallback(
-        async (group: Group) => {
-            const result = await callCreateGroup(accessToken, zodios)(group);
-            return result;
-        },
+        async (group: NewGroup) => callCreateGroup(accessToken, zodios)(group),
         [accessToken, zodios],
     );
 
@@ -87,21 +85,32 @@ export const useGroupManagementClient = (clientConfig: ClientConfig) => {
     };
 };
 
+type CreateGroupSuccess = {
+    succeeded: true;
+    group: Group;
+};
+type CreateGroupError = {
+    succeeded: false;
+    errorMessage: string;
+};
+export type CreateGroupResult = CreateGroupSuccess | CreateGroupError;
+
 function callCreateGroup(accessToken: string, zodios: ZodiosInstance<typeof groupManagementApi>) {
-    return async (group: Group) => {
+    return async (group: NewGroup) => {
         try {
-            await zodios.createGroup(group, {
+            const groupResult = await zodios.createGroup(group, {
                 headers: createAuthorizationHeader(accessToken),
             });
             return {
                 succeeded: true,
-            };
+                group: groupResult,
+            } as CreateGroupSuccess;
         } catch (error) {
             const message = `Failed to create group: ${stringifyMaybeAxiosError(error)}`;
             return {
                 succeeded: false,
                 errorMessage: message,
-            };
+            } as CreateGroupError;
         }
     };
 }
@@ -112,12 +121,12 @@ function callRemoveFromGroup(
     zodios: ZodiosInstance<typeof groupManagementApi>,
     refetchGroups?: () => void,
 ) {
-    return async (groupName: string, username: string) => {
+    return async (groupId: number, username: string) => {
         try {
             await zodios.removeUserFromGroup(undefined, {
                 headers: createAuthorizationHeader(accessToken),
                 params: {
-                    groupName,
+                    groupId,
                     userToRemove: username,
                 },
             });
@@ -137,12 +146,12 @@ function callAddToGroup(
     zodios: ZodiosInstance<typeof groupManagementApi>,
     refetchGroups: () => void,
 ) {
-    return async (groupName: string, username: string) => {
+    return async (groupId: number, username: string) => {
         try {
             await zodios.addUserToGroup(undefined, {
                 headers: createAuthorizationHeader(accessToken),
                 params: {
-                    groupName,
+                    groupId,
                     userToAdd: username,
                 },
             });

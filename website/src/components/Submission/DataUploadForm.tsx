@@ -1,4 +1,3 @@
-import { Menu } from '@headlessui/react';
 import { isErrorFromAlias } from '@zodios/core';
 import type { AxiosError } from 'axios';
 import { type DateTime } from 'luxon';
@@ -6,7 +5,7 @@ import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementT
 
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
-import { routes } from '../../routes/routes.ts';
+import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -19,12 +18,7 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
-import { NeedAGroup } from '../common/NeedAGroup.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import DashiconsGroups from '~icons/dashicons/groups';
-import Locked from '~icons/fluent-emoji-high-contrast/locked';
-import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
-import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
 import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
 import PhDnaLight from '~icons/ph/dna-light';
@@ -35,7 +29,7 @@ type DataUploadFormProps = {
     organism: string;
     clientConfig: ClientConfig;
     action: Action;
-    groupsOfUser: Group[];
+    group: Group;
     onSuccess: () => void;
     onError: (message: string) => void;
 };
@@ -77,59 +71,10 @@ const DataUseTerms = ({
                     </label>
                     <div className='mt-2'>
                         <div className='mt-6 space-y-2'>
-                            <div className='flex items-center gap-x-3'>
-                                <input
-                                    id='data-use-open'
-                                    name='data-use'
-                                    onChange={() => setDataUseTermsType(openDataUseTermsType)}
-                                    type='radio'
-                                    checked={dataUseTermsType === openDataUseTermsType}
-                                    className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
-                                />
-                                <label
-                                    htmlFor='data-use-open'
-                                    className='block text-sm font-medium leading-6 text-gray-900'
-                                >
-                                    <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                                    Open
-                                </label>
-                            </div>
-                            <div className='text-xs pl-6 text-gray-500 pb-4'>
-                                Anyone can use and share the data (though we believe researchers should exercise
-                                scientific etiquette, including the importance of citation). Data will be released to
-                                the INSDC databases shortly after submission.{' '}
-                                <a href={routes.datauseTermsPage()} className='text-primary-600'>
-                                    Find out more
-                                </a>
-                                .
-                            </div>
-
-                            <div className='flex items-center gap-x-3'>
-                                <input
-                                    id='data-use-restricted'
-                                    name='data-use'
-                                    onChange={() => setDataUseTermsType(restrictedDataUseTermsType)}
-                                    type='radio'
-                                    checked={dataUseTermsType === restrictedDataUseTermsType}
-                                    className='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600'
-                                />
-                                <label
-                                    htmlFor='data-use-restricted'
-                                    className='block text-sm font-medium leading-6 text-gray-900'
-                                >
-                                    <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
-                                    Restricted
-                                </label>
-                            </div>
-
-                            <div className='text-xs pl-6 text-gray-500 mb-4'>
-                                Data will be restricted for a period of time. The sequences will be available but there
-                                will be limitations on how they can be used by others.{' '}
-                                <a href={routes.datauseTermsPage()} className='text-primary-600'>
-                                    Find out more
-                                </a>
-                                .
-                            </div>
+                            <DataUseTermsSelector
+                                dataUseTermsType={dataUseTermsType}
+                                setDataUseTermsType={setDataUseTermsType}
+                            />
                             {dataUseTermsType === restrictedDataUseTermsType && (
                                 <div className='text-sm pl-6 text-gray-900 mb-4'>
                                     Data will be restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.{' '}
@@ -178,53 +123,6 @@ const DevExampleData = ({
             <br />
             {metadataFile && sequenceFile && <span className='text-xs text-gray-500'>Example data loaded</span>}
         </p>
-    );
-};
-
-const GroupSelector = ({
-    groupNames,
-    selectedGroupName,
-    setSelectedGroupName,
-}: {
-    groupNames: string[];
-    selectedGroupName: string | undefined;
-    setSelectedGroupName: (groupName: string) => void;
-}) => {
-    if (groupNames.length === 1) {
-        return <div className='mb-4 text-gray-500'>Current group: {selectedGroupName}</div>;
-    }
-    return (
-        <div className='mb-4 text-gray-500 text-sm'>
-            <Menu>
-                <Menu.Button aria-label='Select group'>
-                    Current group: {selectedGroupName}
-                    <span className='text-primary-600 ml-2'>
-                        <IwwaArrowDown className='w-4 h-4 inline-block -mt-0.5' />
-                    </span>
-                </Menu.Button>
-                <Menu.Items
-                    className={`absolute z-10 bg-white border border-gray-300 divide-y divide-gray-300 min-w-56 rounded mt-2
-                transition-all duration-200 ease-in-out shadow-lg 
-                `}
-                >
-                    {groupNames.map((groupName) => (
-                        <Menu.Item key={groupName}>
-                            {({ active }) => (
-                                <button
-                                    className={`${
-                                        active ? 'bg-primary-500 text-white' : 'text-gray-900'
-                                    } flex  w-full px-4 py-2 text-sm`}
-                                    onClick={() => setSelectedGroupName(groupName)}
-                                >
-                                    <DashiconsGroups className='w-6 h-6 inline-block mr-2' />
-                                    {groupName}
-                                </button>
-                            )}
-                        </Menu.Item>
-                    ))}
-                </Menu.Items>
-            </Menu>
-        </div>
     );
 };
 
@@ -351,18 +249,13 @@ const InnerDataUploadForm = ({
     action,
     onSuccess,
     onError,
-    groupsOfUser,
+    group,
 }: DataUploadFormProps) => {
     const [metadataFile, setMetadataFile] = useState<File | null>(null);
     const [sequenceFile, setSequenceFile] = useState<File | null>(null);
     const [exampleEntries, setExampleEntries] = useState<number | undefined>(10);
 
-    const noGroup = groupsOfUser.length === 0;
-
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
-    const [selectedGroupName, setSelectedGroupName] = useState<string | undefined>(
-        noGroup ? undefined : groupsOfUser[0].groupName,
-    );
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
@@ -392,11 +285,11 @@ const InnerDataUploadForm = ({
 
         switch (action) {
             case 'submit':
-                const groupName = selectedGroupName ?? groupsOfUser[0].groupName;
+                const groupId = group.groupId;
                 submit({
                     metadataFile,
                     sequenceFile,
-                    groupName,
+                    groupId,
                     dataUseTermsType,
                     restrictedUntil:
                         dataUseTermsType === restrictedDataUseTermsType ? restrictedUntil.toFormat('yyyy-MM-dd') : null,
@@ -408,17 +301,8 @@ const InnerDataUploadForm = ({
         }
     };
 
-    if (noGroup) {
-        return <NeedAGroup />;
-    }
-
     return (
         <div className='text-left mt-3 max-w-6xl'>
-            <GroupSelector
-                groupNames={groupsOfUser.map((group) => group.groupName)}
-                selectedGroupName={selectedGroupName}
-                setSelectedGroupName={setSelectedGroupName}
-            />
             <div className='flex-col flex gap-8 divide-y'>
                 <div className='grid sm:grid-cols-3 gap-x-16'>
                     <div className=''>

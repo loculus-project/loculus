@@ -1,8 +1,8 @@
 import type { Locator, Page } from '@playwright/test';
 
-import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 import { routes } from '../../../src/routes/routes.ts';
 import type { FilterValue } from '../../../src/types/config.ts';
+import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 
 export const ACCESSION = 'Accession';
 
@@ -12,7 +12,7 @@ export class SearchPage {
     public readonly resetButton: Locator;
 
     constructor(public readonly page: Page) {
-        this.searchButton = page.getByRole('button', { name: 'Search' });
+        this.searchButton = page.getByRole('button', { name: 'Search sequences' });
         this.resetButton = page.getByRole('button', { name: 'reset' });
         this.table = page.getByRole('table');
     }
@@ -29,12 +29,7 @@ export class SearchPage {
         await this.resetButton.click();
     }
 
-    // Note: This only gets a locator when the field is empty
-    public getEmptyAccessionField() {
-        return this.page.getByPlaceholder(ACCESSION, { exact: true });
-    }
-
-    public getFilledAccessionField() {
+    public getAccessionField() {
         return this.page.getByLabel(ACCESSION, { exact: true });
     }
 

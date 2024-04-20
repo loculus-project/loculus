@@ -1,0 +1,44 @@
+---
+import { SubmissionGroupSelector } from './SubmissionGroupSelector';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { type GetGroupsAndCurrentGroupResult } from '../../utils/submissionPages';
+import NeedToLogin from '../common/NeedToLogin.astro';
+
+interface Props {
+    title: string;
+    groupsResult: GetGroupsAndCurrentGroupResult;
+}
+
+const { title, groupsResult } = Astro.props;
+const { pathname, search } = Astro.url;
+---
+
+<BaseLayout title={title}>
+    {
+        groupsResult.match(
+            ({ currentGroup: group, groupsOfUser }) => (
+                <>
+                    <SubmissionGroupSelector
+                        groups={groupsOfUser}
+                        selectedGroupId={group.groupId}
+                        pathname={pathname}
+                        search={search}
+                        client:load
+                    />
+                    <h1 class='title'>{title}</h1>
+                    <slot />
+                </>
+            ),
+            ({ type }) => {
+                switch (type) {
+                    case 'not_logged_in':
+                        return <NeedToLogin message='You need to be logged in to submit sequences.' />;
+                    case 'group_not_found':
+                        return <p class='text-red-500'>Group not found</p>;
+                    default:
+                        return <p class='text-red-500'>Unexpected error: Failed to load groups</p>;
+                }
+            },
+        )
+    }
+</BaseLayout>

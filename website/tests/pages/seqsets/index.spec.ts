@@ -1,5 +1,5 @@
-import { expect, test, authorize } from '../../e2e.fixture';
 import { SeqSetPage } from './seqset.page';
+import { expect, test, authorize } from '../../e2e.fixture';
 
 test.describe.configure({ mode: 'serial' });
 let testSeqSetManager: SeqSetPage;
@@ -22,7 +22,7 @@ test.describe('The seqSets list page', () => {
     });
 
     test('successfully creates test seqSet in beforeAll', async () => {
-        await expect(testSeqSetManager.page.getByText(testSeqSetName)).toBeVisible();
+        await expect(testSeqSetManager.page.getByRole('heading', { name: testSeqSetName })).toBeVisible();
     });
 
     test('displays create seqSet icon and opens modal on click', async ({ seqSetPage }) => {

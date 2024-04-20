@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test
 import org.loculus.backend.config.BackendConfig
 import org.loculus.backend.config.BackendSpringProperty
 import org.loculus.backend.controller.EndpointTest
+import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
+import org.loculus.backend.controller.groupmanagement.andGetGroupId
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.MediaType.APPLICATION_JSON_VALUE
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
@@ -24,9 +26,12 @@ class SingleSegmentedSubmitEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
     @Autowired val backendConfig: BackendConfig,
+    @Autowired private val groupManagementClient: GroupManagementControllerClient,
 ) {
     @Test
     fun `GIVEN valid input data without segment name THEN data is accepted and shows segment name 'main'`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
+
         submissionControllerClient.submit(
             SubmitFiles.metadataFileWith(
                 content = """
@@ -43,6 +48,7 @@ class SingleSegmentedSubmitEndpointTest(
                         GT
                 """.trimIndent(),
             ),
+            groupId = groupId,
         )
             .andExpect(status().isOk)
             .andExpect(content().contentType(APPLICATION_JSON_VALUE))
@@ -60,6 +66,7 @@ class SingleSegmentedSubmitEndpointTest(
 
     @Test
     fun `GIVEN input data with explicit default segment name THEN data is rejected`() {
+        val groupId = groupManagementClient.createNewGroup().andGetGroupId()
         val expectedDetail = "Metadata file contains 1 submissionIds that are not present in the sequence file: header1"
 
         submissionControllerClient.submit(
@@ -75,6 +82,7 @@ class SingleSegmentedSubmitEndpointTest(
                         AC
                 """.trimIndent(),
             ),
+            groupId = groupId,
         )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(jsonPath("\$.title").value("Unprocessable Entity"))

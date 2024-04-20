@@ -7,13 +7,13 @@ test.describe('The review page', () => {
         reviewPage,
         loginAsTestUser,
     }) => {
-        const { token, groupName } = await loginAsTestUser();
+        const { token, groupId } = await loginAsTestUser();
 
-        await reviewPage.goto();
+        await reviewPage.goto(groupId);
 
         const { total } = await reviewPage.getReviewPageOverview();
 
-        await submitViaApi(testSequenceCount, token, groupName);
+        await submitViaApi(testSequenceCount, token, groupId);
 
         await reviewPage.waitForTotalSequencesFulfillPredicate(
             (totalSequenceCount) => totalSequenceCount === total + testSequenceCount,
@@ -21,13 +21,13 @@ test.describe('The review page', () => {
     });
 
     test('should allow bulk approval', async ({ reviewPage, loginAsTestUser }) => {
-        const { token, groupName } = await loginAsTestUser();
+        const { token, groupId } = await loginAsTestUser();
 
-        await reviewPage.goto();
+        await reviewPage.goto(groupId);
 
         const { total } = await reviewPage.getReviewPageOverview();
 
-        await prepareDataToBe('awaitingApproval', token, testSequenceCount, groupName);
+        await prepareDataToBe('awaitingApproval', token, groupId);
 
         await reviewPage.waitForTotalSequencesFulfillPredicate(
             (totalSequenceCount) => totalSequenceCount === total + testSequenceCount,
@@ -39,11 +39,11 @@ test.describe('The review page', () => {
     });
 
     test('should allow bulk deletion', async ({ reviewPage, loginAsTestUser }) => {
-        const { token, groupName } = await loginAsTestUser();
+        const { token, groupId } = await loginAsTestUser();
 
-        await prepareDataToBe('erroneous', token, testSequenceCount, groupName);
+        await prepareDataToBe('erroneous', token, groupId);
 
-        await reviewPage.goto();
+        await reviewPage.goto(groupId);
 
         const { total } = await reviewPage.getReviewPageOverview();
 

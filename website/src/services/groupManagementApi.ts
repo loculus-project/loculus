@@ -2,7 +2,7 @@ import { makeApi, makeEndpoint } from '@zodios/core';
 import z from 'zod';
 
 import { authorizationHeader, conflictError, notAuthorizedError } from './commonApiTypes.ts';
-import { group, groupDetails } from '../types/backend.ts';
+import { group, groupDetails, newGroup } from '../types/backend.ts';
 const createGroupEndpoint = makeEndpoint({
     method: 'post',
     path: '/groups',
@@ -12,15 +12,15 @@ const createGroupEndpoint = makeEndpoint({
         {
             name: 'data',
             type: 'Body',
-            schema: group,
+            schema: newGroup,
         },
     ],
-    response: z.never(),
+    response: group,
     errors: [notAuthorizedError, conflictError],
 });
 const addUserToGroupEndpoint = makeEndpoint({
     method: 'put',
-    path: '/groups/:groupName/users/:userToAdd',
+    path: '/groups/:groupId/users/:userToAdd',
     alias: 'addUserToGroup',
     parameters: [authorizationHeader],
     response: z.never(),
@@ -28,7 +28,7 @@ const addUserToGroupEndpoint = makeEndpoint({
 });
 const removeUserFromGroupEndpoint = makeEndpoint({
     method: 'delete',
-    path: '/groups/:groupName/users/:userToRemove',
+    path: '/groups/:groupId/users/:userToRemove',
     alias: 'removeUserFromGroup',
     parameters: [authorizationHeader],
     response: z.never(),
@@ -36,7 +36,7 @@ const removeUserFromGroupEndpoint = makeEndpoint({
 });
 const getGroupDetailsEndpoint = makeEndpoint({
     method: 'get',
-    path: '/groups/:groupName',
+    path: '/groups/:groupId',
     alias: 'getGroupDetails',
     parameters: [authorizationHeader],
     response: groupDetails,

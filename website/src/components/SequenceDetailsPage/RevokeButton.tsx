@@ -14,15 +14,22 @@ type RevokeSequenceEntryProps = {
     accessToken: string;
     clientConfig: ClientConfig;
     accessionVersion: string;
+    groupId: number;
 };
 
-const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({ organism, accessToken, clientConfig, accessionVersion }) => {
+const InnerRevokeButton: FC<RevokeSequenceEntryProps> = ({
+    organism,
+    accessToken,
+    clientConfig,
+    accessionVersion,
+    groupId,
+}) => {
     const hooks = backendClientHooks(clientConfig);
     const useRevokeSequenceEntries = hooks.useRevokeSequences(
         { headers: createAuthorizationHeader(accessToken), params: { organism } },
         {
             onSuccess: () => {
-                document.location = routes.userSequenceReviewPage(organism);
+                document.location = routes.userSequenceReviewPage(organism, groupId);
             },
             onError: (error) =>
                 toast.error(getRevokeSequenceEntryErrorMessage(error), {

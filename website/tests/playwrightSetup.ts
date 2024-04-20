@@ -1,5 +1,7 @@
 import {
+    backendUrl,
     createTestGroupIfNotExistent,
+    DEFAULT_GROUP,
     DEFAULT_GROUP_NAME,
     e2eLogger,
     getToken,
@@ -8,9 +10,10 @@ import {
     testUserPassword,
 } from './e2e.fixture.ts';
 import { prepareDataToBe } from './util/prepareDataToBe.ts';
+import { getTestSequences, setTestSequences } from './util/testSequenceProvider.ts';
+import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
 import { LapisClient } from '../src/services/lapisClient.ts';
 import type { AccessionVersion } from '../src/types/backend.ts';
-import { getTestSequences, setTestSequences } from './util/testSequenceProvider.ts';
 
 enum LapisStateBeforeTests {
     NotCorrectSequencesInLapis = 'NotCorrectSequencesInLapis',
@@ -42,6 +45,7 @@ export default async function globalSetupForPlaywright() {
         },
         e2eLogger,
     );
+    const groupManagementClient = GroupManagementClient.create(backendUrl, e2eLogger);
 
     const lapisState = await checkLapisState(lapisClient);
 
@@ -54,9 +58,13 @@ export default async function globalSetupForPlaywright() {
     e2eLogger.info('No sequences found in LAPIS. Generate data for tests.');
 
     e2eLogger.info('preparing data in backend.');
-    const data = await prepareDataToBe('approvedForRelease', token);
-    const revokedData = await prepareDataToBe('revoked', token);
-    const revisedData = await prepareDataToBe('revisedForRelease', token);
+    const groupId = await groupManagementClient
+        .createGroup(token, DEFAULT_GROUP)
+        .then((result) => result._unsafeUnwrap().groupId);
+    e2eLogger.info('created group with id ' + groupId);
+    const data = await prepareDataToBe('approvedForRelease', token, groupId);
+    const revokedData = await prepareDataToBe('revoked', token, groupId);
+    const revisedData = await prepareDataToBe('revisedForRelease', token, groupId);
 
     e2eLogger.info(
         'done preparing data in backend: ' +
@@ -67,6 +75,7 @@ export default async function globalSetupForPlaywright() {
                 .join(', '),
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const _ of Array(maxNumberOfRetries)) {
         e2eLogger.info('waiting for sequences in LAPIS...');
         await waitSeconds(secondsToWait);

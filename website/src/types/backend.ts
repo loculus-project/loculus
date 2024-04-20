@@ -61,6 +61,7 @@ export const approveProcessedDataWithoutWarningsScope = z.literal('WITHOUT_WARNI
 
 export const accessionVersionsFilterWithApprovalScope = accessionVersionsFilter.merge(
     z.object({
+        groupIdsFilter: z.array(z.number()),
         scope: z.union([approveAllDataScope, approveProcessedDataWithoutWarningsScope]),
     }),
 );
@@ -72,6 +73,7 @@ export const deleteProcessedDataWithWarningsScope = z.literal('PROCESSED_WITH_WA
 
 export const accessionVersionsFilterWithDeletionScope = accessionVersionsFilter.merge(
     z.object({
+        groupIdsFilter: z.array(z.number()),
         scope: z.union([
             deleteAllDataScope,
             deleteProcessedAndRevocationConfirmationDataScope,
@@ -88,11 +90,15 @@ export const dataUseTermsTypes = [restrictedDataUseTermsType, openDataUseTermsTy
 
 export type DataUseTermsType = typeof openDataUseTermsType | typeof restrictedDataUseTermsType;
 
+export const restrictedDataUseTerms = z.object({
+    type: z.literal(restrictedDataUseTermsType),
+    restrictedUntil: z.string(),
+});
+
+export type RestrictedDataUseTerms = z.infer<typeof restrictedDataUseTerms>;
+
 export const dataUseTerms = z.union([
-    z.object({
-        type: z.literal(restrictedDataUseTermsType),
-        restrictedUntil: z.string(),
-    }),
+    restrictedDataUseTerms,
     z.object({
         type: z.literal(openDataUseTermsType),
     }),
@@ -153,6 +159,7 @@ export type UnprocessedData = z.infer<typeof unprocessedData>;
 export const sequenceEntryToEdit = accessionVersion.merge(
     z.object({
         status: statusThatAllowsEditing,
+        groupId: z.number(),
         errors: z.array(processingAnnotation).nullable(),
         warnings: z.array(processingAnnotation).nullable(),
         originalData: z.object({
@@ -178,7 +185,7 @@ export const uploadFiles = z.object({
 
 export const submitFiles = uploadFiles.merge(
     z.object({
-        groupName: z.string(),
+        groupId: z.number(),
         dataUseTermsType: z.enum(dataUseTermsTypes),
         restrictedUntil: z.string().nullable(),
     }),
@@ -203,11 +210,16 @@ export const address = z.object({
 });
 export type Address = z.infer<typeof address>;
 
-export const group = z.object({
+export const newGroup = z.object({
     groupName: z.string(),
     institution: z.string(),
     address,
     contactEmail: z.string(),
+});
+export type NewGroup = z.infer<typeof newGroup>;
+
+export const group = newGroup.extend({
+    groupId: z.number(),
 });
 export type Group = z.infer<typeof group>;
 

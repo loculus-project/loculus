@@ -17,16 +17,27 @@ fields:
     notSearchable: true
   - name: submitter
     type: string
-  - name: group
+    generateIndex: true
+    autocomplete: true
+  - name: groupId
+    type: int
+    autocomplete: true
+  - name: groupName
     type: string
+    generateIndex: true
+    autocomplete: true
   - name: submittedAt
     type: timestamp
+    displayName: Date submitted
   - name: releasedAt
     type: timestamp
+    displayName: Date released
   - name: dataUseTerms
     type: string
     generateIndex: true
     autocomplete: true
+    displayName: Data use terms
+    initiallyVisible: true
     customDisplay:
       type: dataUseTerms
   - name: versionStatus
@@ -43,6 +54,9 @@ fields:
 {{- define "loculus.generateWebsiteConfig" }}
 name: {{ $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
+{{ if $.Values.bannerMessage }}
+bannerMessage: {{ $.Values.bannerMessage }}
+{{ end }}
 accessionPrefix: {{ $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
@@ -83,6 +97,9 @@ fields:
     {{- end }}
     {{- if .notSearchable }}
     notSearchable: {{ .notSearchable }}
+    {{- end }}
+    {{- if .initiallyVisible }}
+    initiallyVisible: {{ .initiallyVisible }}
     {{- end }}
     {{- if .displayName }}
     displayName: {{ .displayName }}

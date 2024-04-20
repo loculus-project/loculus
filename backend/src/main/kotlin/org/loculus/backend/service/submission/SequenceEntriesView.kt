@@ -9,10 +9,8 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.json.exists
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
-import org.loculus.backend.api.Group
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.OriginalData
 import org.loculus.backend.api.PreprocessingAnnotation
@@ -33,7 +31,7 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val organismColumn = varchar("organism", 255)
     val submissionIdColumn = varchar("submission_id", 255)
     val submitterColumn = varchar("submitter", 255)
-    val groupNameColumn = varchar("group_name", 255)
+    val groupIdColumn = integer("group_id")
     val submittedAtColumn = datetime("submitted_at")
     val startedProcessingAtColumn = datetime("started_processing_at").nullable()
     val finishedProcessingAtColumn = datetime("finished_processing_at").nullable()
@@ -51,10 +49,8 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
         val subQueryTable = alias("subQueryTable")
         return wrapAsExpression(
             subQueryTable
-                .slice(subQueryTable[versionColumn].max())
-                .select {
-                    subQueryTable[accessionColumn] eq accessionColumn
-                },
+                .select(subQueryTable[versionColumn].max())
+                .where { subQueryTable[accessionColumn] eq accessionColumn },
         )
     }
 
@@ -73,9 +69,5 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
         (accessionColumn eq accessionVersion.accession) and
             (versionColumn eq accessionVersion.version)
 
-    fun groupIs(group: String) = groupNameColumn eq group
-
-    fun groupIsOneOf(groups: List<Group>) = groupNameColumn inList groups.map { it.groupName }
-
-    fun groupNameIsOneOf(groupNames: List<String>) = groupNameColumn inList groupNames
+    fun groupIsOneOf(groupIds: List<Int>) = groupIdColumn inList groupIds
 }

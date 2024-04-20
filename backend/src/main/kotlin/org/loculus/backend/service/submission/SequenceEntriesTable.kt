@@ -7,7 +7,6 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.alias
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
@@ -26,7 +25,7 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
     val submissionIdColumn = varchar("submission_id", 255)
     val submitterColumn = varchar("submitter", 255)
     val approverColumn = varchar("approver", 255)
-    val groupNameColumn = varchar("group_name", 255)
+    val groupIdColumn = integer("group_id")
     val submittedAtColumn = datetime("submitted_at")
     val releasedAtColumn = datetime("released_at").nullable()
     val isRevocationColumn = bool("is_revocation").default(false)
@@ -39,10 +38,8 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
         val subQueryTable = alias("subQueryTable")
         return wrapAsExpression(
             subQueryTable
-                .slice(subQueryTable[versionColumn].max())
-                .select {
-                    subQueryTable[accessionColumn] eq accessionColumn
-                },
+                .select(subQueryTable[versionColumn].max())
+                .where { subQueryTable[accessionColumn] eq accessionColumn },
         )
     }
 
@@ -50,4 +47,6 @@ object SequenceEntriesTable : Table(SEQUENCE_ENTRIES_TABLE_NAME) {
         Pair(accessionColumn, versionColumn) inList accessionVersions.toPairs()
 
     fun organismIs(organism: Organism) = organismColumn eq organism.name
+
+    fun groupIsOneOf(groupIds: List<Int>) = SequenceEntriesView.groupIdColumn inList groupIds
 }

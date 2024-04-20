@@ -14,7 +14,7 @@ type SearchPaginationProps = {
     organism: string;
     page: number;
     classOfSearchPage: ClassOfSearchPageType;
-    group?: string;
+    groupId?: number;
 };
 
 export const SearchPagination: FC<SearchPaginationProps> = ({
@@ -26,7 +26,7 @@ export const SearchPagination: FC<SearchPaginationProps> = ({
     organism,
     page,
     classOfSearchPage,
-    group,
+    groupId,
 }) => {
     return (
         <MUIPagination
@@ -36,7 +36,7 @@ export const SearchPagination: FC<SearchPaginationProps> = ({
                 navigateToSearchLikePage(
                     organism,
                     classOfSearchPage,
-                    group,
+                    groupId,
                     metadataFilter,
                     accessionFilter,
                     mutationFilter,

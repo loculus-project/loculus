@@ -62,6 +62,7 @@ data class AccessionVersionsFilterWithDeletionScope(
         description = ACCESSION_VERSIONS_FILTER_DESCRIPTION,
     )
     val accessionVersionsFilter: List<AccessionVersion>? = null,
+    val groupIdsFilter: List<Int>? = null,
     @Schema(
         description = "Scope for deletion. If scope is set to 'ALL', all sequences are deleted. " +
             "If scope is set to 'PROCESSED_WITH_ERRORS', only processed sequences with errors are deleted. " +
@@ -81,6 +82,7 @@ data class AccessionVersionsFilterWithApprovalScope(
         description = ACCESSION_VERSIONS_FILTER_DESCRIPTION,
     )
     val accessionVersionsFilter: List<AccessionVersion>? = null,
+    val groupIdsFilter: List<Int>? = null,
     @Schema(
         description = "Scope for approval. If scope is set to 'ALL', all sequences are approved. " +
             "If scope is set to 'WITHOUT_WARNINGS', only sequences without warnings are approved.",
@@ -105,6 +107,7 @@ data class SequenceEntryVersionToEdit(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
+    val groupId: Int,
     val processedData: ProcessedData<GeneticSequence>,
     val originalData: OriginalData<GeneticSequence>,
     @Schema(description = "The preprocessing will be considered failed if this is not empty")
@@ -207,7 +210,7 @@ data class SequenceEntryStatus(
     override val accession: Accession,
     override val version: Version,
     val status: Status,
-    val group: String,
+    val groupId: Int,
     val submitter: String,
     val isRevocation: Boolean = false,
     val submissionId: String,
@@ -232,6 +235,12 @@ data class OriginalData<SequenceType>(
     )
     val unalignedNucleotideSequences: Map<SegmentName, SequenceType?>,
 )
+
+data class AccessionVersionOriginalMetadata(
+    override val accession: Accession,
+    override val version: Version,
+    val originalMetadata: Map<String, String?>,
+) : AccessionVersionInterface
 
 enum class Status {
     @JsonProperty("RECEIVED")

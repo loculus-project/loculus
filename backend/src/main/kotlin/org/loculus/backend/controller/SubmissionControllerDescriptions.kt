@@ -23,10 +23,12 @@ the headers of the fasta file must match the 'submissionId' field in the metadat
 If the underlying organism has multiple segments,
 the headers of the fasta file must be of the form '>[submissionId]_[segmentName]'.
 """
-const val GROUP_DESCRIPTION = """
+
+const val GROUP_ID_DESCRIPTION = """
+The group id of of the group which the user is a member of.
 A group is a set of users that share access to the same sequence entries.
-The group name must exist and the submitting user must be member of the group.
 """
+
 const val EXTRACT_UNPROCESSED_DATA_DESCRIPTION = """
 Extract unprocessed accession versions. This is supposed to be used as input for the preprocessing pipeline.
 Returns a stream of NDJSON and sets the status of each accession version to 'IN_PROCESSING'.
@@ -130,4 +132,9 @@ This returns all accession versions that have the status 'APPROVED_FOR_RELEASE'
 const val GET_RELEASED_DATA_RESPONSE_DESCRIPTION = """
 Releasable accession versions.
 The schema is to be understood per line of the NDJSON stream.    
+"""
+
+const val GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION = """
+The original metadata of submission sequence versions as NDJSON where each line is a flat JSON object where the values
+are all strings (or null).
 """

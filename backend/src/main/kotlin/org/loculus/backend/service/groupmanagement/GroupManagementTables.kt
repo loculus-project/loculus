@@ -1,11 +1,14 @@
 package org.loculus.backend.service.groupmanagement
 
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.dao.IntEntity
+import org.jetbrains.exposed.dao.IntEntityClass
+import org.jetbrains.exposed.dao.id.EntityID
+import org.jetbrains.exposed.dao.id.IntIdTable
 
 const val GROUPS_TABLE_NAME = "groups_table"
 const val USER_GROUPS_TABLE_NAME = "user_groups_table"
 
-object GroupsTable : Table("groups_table") {
+object GroupsTable : IntIdTable(GROUPS_TABLE_NAME, "group_id") {
     val groupNameColumn = text("group_name")
     val institutionColumn = text("institution")
     val addressLine1 = text("address_line_1")
@@ -15,13 +18,30 @@ object GroupsTable : Table("groups_table") {
     val addressState = text("address_state")
     val addressCountry = text("address_country")
     val contactEmailColumn = text("contact_email")
-
-    override val primaryKey = PrimaryKey(groupNameColumn)
 }
 
-object UserGroupsTable : Table(USER_GROUPS_TABLE_NAME) {
-    val userNameColumn = text("user_name")
-    val groupNameColumn = text("group_name") references GroupsTable.groupNameColumn
+class GroupEntity(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<GroupEntity>(GroupsTable)
 
-    override val primaryKey = PrimaryKey(userNameColumn, groupNameColumn)
+    var groupName by GroupsTable.groupNameColumn
+    var institution by GroupsTable.institutionColumn
+    var addressLine1 by GroupsTable.addressLine1
+    var addressLine2 by GroupsTable.addressLine2
+    var addressPostalCode by GroupsTable.addressPostalCode
+    var addressCity by GroupsTable.addressCity
+    var addressState by GroupsTable.addressState
+    var addressCountry by GroupsTable.addressCountry
+    var contactEmail by GroupsTable.contactEmailColumn
+}
+
+object UserGroupsTable : IntIdTable(USER_GROUPS_TABLE_NAME, "id") {
+    val userNameColumn = text("user_name")
+    val groupIdColumn = integer("group_id").references(GroupsTable.id)
+}
+
+class UserGroupEntity(id: EntityID<Int>) : IntEntity(id) {
+    companion object : IntEntityClass<UserGroupEntity>(UserGroupsTable)
+
+    var userName by UserGroupsTable.userNameColumn
+    var groupId by UserGroupsTable.groupIdColumn
 }

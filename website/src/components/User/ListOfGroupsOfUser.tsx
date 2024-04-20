@@ -22,7 +22,7 @@ const InnerListOfGroupsOfUser: FC<ListOfGroupsOfUserProps> = ({ groupsOfUser }) 
                 {groupsOfUser.length > 0 ? (
                     groupsOfUser.map((group) => (
                         <li key={group.groupName} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
-                            <a className='text-lg' href={routes.groupOverviewPage(group.groupName)}>
+                            <a className='text-lg' href={routes.groupOverviewPage(group.groupId)}>
                                 <StreamlineUserMultipleGroup className='w-6 h-6 inline-block mr-2' />
                                 {group.groupName}
                             </a>

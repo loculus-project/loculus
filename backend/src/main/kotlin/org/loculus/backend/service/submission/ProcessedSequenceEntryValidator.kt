@@ -168,8 +168,7 @@ class ProcessedSequenceEntryValidator(
         val isOfCorrectPrimitiveType = when (metadata.type) {
             MetadataType.STRING -> fieldValue.isTextual
             MetadataType.INTEGER -> fieldValue.isInt
-            MetadataType.FLOAT -> fieldValue.isFloat
-            MetadataType.DOUBLE -> fieldValue.isDouble
+            MetadataType.FLOAT -> fieldValue.isFloatingPointNumber
             MetadataType.NUMBER -> fieldValue.isNumber
             else -> false
         }

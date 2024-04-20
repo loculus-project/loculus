@@ -4,7 +4,6 @@ import org.hamcrest.Matchers.containsString
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.OTHER_ORGANISM
@@ -149,7 +148,7 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
     @Test
     fun `WHEN superuser submits edited data for entry of other group THEN accepts data`() {
         val accessionVersion = convenienceClient
-            .prepareDataTo(Status.HAS_ERRORS, username = DEFAULT_USER_NAME, groupName = DEFAULT_GROUP_NAME)
+            .prepareDataTo(Status.HAS_ERRORS, username = DEFAULT_USER_NAME)
             .first()
 
         val editedData = generateUnprocessedData(accessionVersion.accession, accessionVersion.version)

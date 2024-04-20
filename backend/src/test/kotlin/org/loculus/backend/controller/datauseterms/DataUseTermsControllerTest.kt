@@ -12,7 +12,6 @@ import org.junit.jupiter.params.provider.MethodSource
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsChangeRequest
 import org.loculus.backend.api.DataUseTermsType
-import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectUnauthorizedResponse
@@ -49,7 +48,7 @@ class DataUseTermsControllerTest(
 
     @Test
     fun `GIVEN open submission WHEN getting data use terms THEN return history with one OPEN entry`() {
-        val firstAccession = submissionConvenienceClient.submitDefaultFiles().first().accession
+        val firstAccession = submissionConvenienceClient.submitDefaultFiles().submissionIdMappings.first().accession
 
         client.getDataUseTerms(firstAccession)
             .andExpect(status().isOk)
@@ -63,9 +62,11 @@ class DataUseTermsControllerTest(
 
     @Test
     fun `GIVEN changes in data use terms WHEN getting data use terms THEN return full history`() {
-        val firstAccession = submissionConvenienceClient.submitDefaultFiles(
-            dataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
-        ).first().accession
+        val firstAccession = submissionConvenienceClient
+            .submitDefaultFiles(dataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)))
+            .submissionIdMappings
+            .first()
+            .accession
 
         client.changeDataUseTerms(
             DataUseTermsChangeRequest(
@@ -111,6 +112,7 @@ class DataUseTermsControllerTest(
     fun `WHEN changing data use terms THEN show success or error`(testCase: DataUseTermsTestCase) {
         val accessions = submissionConvenienceClient
             .submitDefaultFiles(dataUseTerms = testCase.setupDataUseTerms)
+            .submissionIdMappings
             .map { it.accession }
 
         val result = client.changeDataUseTerms(
@@ -131,7 +133,8 @@ class DataUseTermsControllerTest(
     @Test
     fun `WHEN I want to change data use terms of an entry of another group THEN is forbidden`() {
         val accessions = submissionConvenienceClient
-            .submitDefaultFiles(username = DEFAULT_USER_NAME, groupName = DEFAULT_GROUP_NAME)
+            .submitDefaultFiles(username = DEFAULT_USER_NAME)
+            .submissionIdMappings
             .map { it.accession }
 
         client.changeDataUseTerms(
@@ -143,13 +146,14 @@ class DataUseTermsControllerTest(
         )
             .andExpect(status().isForbidden)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail", containsString("not a member of group(s) testGroup")))
+            .andExpect(jsonPath("\$.detail", containsString("not a member of group(s)")))
     }
 
     @Test
     fun `WHEN superuser changes data use terms of an entry of other group THEN is successful`() {
         val accessions = submissionConvenienceClient
-            .submitDefaultFiles(username = DEFAULT_USER_NAME, groupName = DEFAULT_GROUP_NAME)
+            .submitDefaultFiles(username = DEFAULT_USER_NAME)
+            .submissionIdMappings
             .map { it.accession }
 
         client.changeDataUseTerms(

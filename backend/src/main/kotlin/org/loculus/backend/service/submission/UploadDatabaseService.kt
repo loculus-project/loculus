@@ -9,6 +9,7 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.batchInsert
 import org.jetbrains.exposed.sql.deleteWhere
 import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.statements.StatementType
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.update
@@ -22,7 +23,7 @@ import org.loculus.backend.model.SubmissionParams
 import org.loculus.backend.service.GenerateAccessionFromNumberService
 import org.loculus.backend.service.datauseterms.DataUseTermsDatabaseService
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.accessionColumn
-import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupNameColumn
+import org.loculus.backend.service.submission.MetadataUploadAuxTable.groupIdColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.metadataColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.organismColumn
 import org.loculus.backend.service.submission.MetadataUploadAuxTable.submissionIdColumn
@@ -56,14 +57,14 @@ class UploadDatabaseService(
     fun batchInsertMetadataInAuxTable(
         uploadId: String,
         authenticatedUser: AuthenticatedUser,
-        groupName: String,
+        groupId: Int,
         submittedOrganism: Organism,
         uploadedMetadataBatch: List<MetadataEntry>,
         uploadedAt: LocalDateTime,
     ) {
         MetadataUploadAuxTable.batchInsert(uploadedMetadataBatch) {
             this[submitterColumn] = authenticatedUser.username
-            this[groupNameColumn] = groupName
+            this[groupIdColumn] = groupId
             this[uploadedAtColumn] = uploadedAt
             this[submissionIdColumn] = it.submissionId
             this[metadataColumn] = it.metadata
@@ -110,11 +111,13 @@ class UploadDatabaseService(
 
     fun getUploadSubmissionIds(uploadId: String): Pair<List<SubmissionId>, List<SubmissionId>> = Pair(
         MetadataUploadAuxTable
-            .select { uploadIdColumn eq uploadId }
+            .selectAll()
+            .where { uploadIdColumn eq uploadId }
             .map { it[submissionIdColumn] },
 
         SequenceUploadAuxTable
-            .select { sequenceUploadIdColumn eq uploadId }
+            .selectAll()
+            .where { sequenceUploadIdColumn eq uploadId }
             .map {
                 it[sequenceSubmissionIdColumn]
             },
@@ -132,34 +135,40 @@ class UploadDatabaseService(
                 organism,
                 submission_id,
                 submitter,
-                group_name,
+                group_id,
                 submitted_at,
                 original_data
             )
             SELECT
-                m.accession,
-                m.version,
-                m.organism,
-                m.submission_id,
-                m.submitter,
-                m.group_name,
-                m.uploaded_at,
+                metadata_upload_aux_table.accession,
+                metadata_upload_aux_table.version,
+                metadata_upload_aux_table.organism,
+                metadata_upload_aux_table.submission_id,
+                metadata_upload_aux_table.submitter,
+                metadata_upload_aux_table.group_id,
+                metadata_upload_aux_table.uploaded_at,
                 jsonb_build_object(
-                    'metadata', m.metadata,
-                    'unalignedNucleotideSequences', jsonb_object_agg(s.segment_name, s.compressed_sequence_data::jsonb)
+                    'metadata', metadata_upload_aux_table.metadata,
+                    'unalignedNucleotideSequences', 
+                    jsonb_object_agg(
+                        sequence_upload_aux_table.segment_name,
+                        sequence_upload_aux_table.compressed_sequence_data::jsonb
+                    )
                 )
             FROM
-                metadata_upload_aux_table m
+                metadata_upload_aux_table
             JOIN
-                sequence_upload_aux_table s ON m.upload_id = s.upload_id AND m.submission_id = s.submission_id
-            WHERE m.upload_id = ?
+                sequence_upload_aux_table
+                ON metadata_upload_aux_table.upload_id = sequence_upload_aux_table.upload_id 
+                AND metadata_upload_aux_table.submission_id = sequence_upload_aux_table.submission_id
+            WHERE metadata_upload_aux_table.upload_id = ?
             GROUP BY
-                m.upload_id,
-                m.organism,
-                m.submission_id,
-                m.submitter,
-                m.group_name,
-                m.uploaded_at
+                metadata_upload_aux_table.upload_id,
+                metadata_upload_aux_table.organism,
+                metadata_upload_aux_table.submission_id,
+                metadata_upload_aux_table.submitter,
+                metadata_upload_aux_table.group_id,
+                metadata_upload_aux_table.uploaded_at
             RETURNING accession, version, submission_id;
         """.trimIndent()
         val insertionResult = exec(
@@ -211,22 +220,22 @@ class UploadDatabaseService(
     ) {
         val accessions =
             MetadataUploadAuxTable
-                .slice(accessionColumn)
-                .select { uploadIdColumn eq uploadId }
+                .select(accessionColumn)
+                .where { uploadIdColumn eq uploadId }
                 .map { it[accessionColumn]!! }
 
-        accessionPreconditionValidator.validateAccessions(
-            authenticatedUser,
-            accessions,
-            listOf(Status.APPROVED_FOR_RELEASE),
-            organism,
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionsExist(accessions)
+                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+                .andThatSequenceEntriesAreInStates(listOf(Status.APPROVED_FOR_RELEASE))
+                .andThatOrganismIs(organism)
+        }
 
         val updateSql = """
             UPDATE metadata_upload_aux_table m
             SET
                 version = sequence_entries.version + 1,
-                group_name = sequence_entries.group_name
+                group_id = sequence_entries.group_id
             FROM sequence_entries
             WHERE
                 m.upload_id = ?
@@ -246,8 +255,8 @@ class UploadDatabaseService(
     fun generateNewAccessionsForOriginalUpload(uploadId: String, organism: Organism) {
         val submissionIds =
             MetadataUploadAuxTable
-                .slice(submissionIdColumn)
-                .select { uploadIdColumn eq uploadId }
+                .select(submissionIdColumn)
+                .where { uploadIdColumn eq uploadId }
                 .map { it[submissionIdColumn] }
 
         val nextAccessions = getNextSequenceNumbers(submissionIds.size).map {
