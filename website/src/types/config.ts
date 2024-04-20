@@ -20,6 +20,7 @@ export const metadata = z.object({
     customDisplay: customDisplay.optional(),
     truncateColumnDisplayTo: z.number().optional(),
     initiallyVisible: z.boolean().optional(),
+    header: z.string().optional(),
 });
 
 export type CustomDisplay = z.infer<typeof customDisplay>;

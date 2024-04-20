@@ -112,6 +112,9 @@ fields:
       type: {{ .customDisplay.type }}
       url: {{ .customDisplay.url }}
     {{- end }}
+    {{- if .header }}
+    header: {{ .header }}
+    {{- end }}
 {{- end}}
 {{- end}}
 
