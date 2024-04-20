@@ -76,48 +76,57 @@ describe('getTableData', () => {
                     name: 'metadataField1',
                     value: 'N/A',
                     customDisplay: undefined,
+                    header: '',
                 },
                 {
                     label: 'Metadata field2',
                     name: 'metadataField2',
                     value: 'N/A',
                     customDisplay: undefined,
+                    header: '',
                 },
                 {
                     label: 'Timestamp field',
                     name: 'timestampField',
                     value: 'N/A',
                     customDisplay: undefined,
+                    header: '',
                 },
                 {
                     label: 'Nucleotide substitutions',
                     name: 'nucleotideSubstitutions',
                     value: '',
+                    header: 'Mutations, insertions, deletions',
                 },
                 {
                     label: 'Nucleotide deletions',
                     name: 'nucleotideDeletions',
                     value: '',
+                    header: 'Mutations, insertions, deletions',
                 },
                 {
                     label: 'Nucleotide insertions',
                     name: 'nucleotideInsertions',
                     value: '',
+                    header: 'Mutations, insertions, deletions',
                 },
                 {
                     label: 'Amino acid substitutions',
                     name: 'aminoAcidSubstitutions',
                     value: '',
+                    header: 'Mutations, insertions, deletions',
                 },
                 {
                     label: 'Amino acid deletions',
                     name: 'aminoAcidDeletions',
                     value: '',
+                    header: 'Mutations, insertions, deletions',
                 },
                 {
                     label: 'Amino acid insertions',
                     name: 'aminoAcidInsertions',
                     value: '',
+                    header: 'Mutations, insertions, deletions',
                 },
             ]),
         );
@@ -143,11 +152,13 @@ describe('getTableData', () => {
             label: 'Metadata field1',
             name: 'metadataField1',
             value: value1,
+            header: '',
         });
         expect(data).toContainEqual({
             label: 'Metadata field2',
             name: 'metadataField2',
             value: value2,
+            header: '',
         });
     });
 
@@ -162,21 +173,25 @@ describe('getTableData', () => {
             label: 'Nucleotide substitutions',
             name: 'nucleotideSubstitutions',
             value: 'T10A, C30G',
+            header: 'Mutations, insertions, deletions',
         });
         expect(data).toContainEqual({
             label: 'Nucleotide deletions',
             name: 'nucleotideDeletions',
             value: '20, 21, 39-45, 400',
+            header: 'Mutations, insertions, deletions',
         });
         expect(data).toContainEqual({
             label: 'Amino acid substitutions',
             name: 'aminoAcidSubstitutions',
             value: 'gene1:N10Y, gene1:T30N',
+            header: 'Mutations, insertions, deletions',
         });
         expect(data).toContainEqual({
             label: 'Amino acid deletions',
             name: 'aminoAcidDeletions',
             value: 'gene1:20-23, gene1:40',
+            header: 'Mutations, insertions, deletions',
         });
     });
 
@@ -191,11 +206,13 @@ describe('getTableData', () => {
             label: 'Nucleotide insertions',
             name: 'nucleotideInsertions',
             value: 'nucleotideInsertion1, nucleotideInsertion2',
+            header: 'Mutations, insertions, deletions',
         });
         expect(data).toContainEqual({
             label: 'Amino acid insertions',
             name: 'aminoAcidInsertions',
             value: 'aminoAcidInsertion1, aminoAcidInsertion2',
+            header: 'Mutations, insertions, deletions',
         });
     });
 
@@ -209,6 +226,7 @@ describe('getTableData', () => {
             label: 'Timestamp field',
             name: 'timestampField',
             value: '2024-01-25 14:59:21 UTC',
+            header: '',
         });
     });
 });

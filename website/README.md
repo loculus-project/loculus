@@ -13,9 +13,9 @@ cp .env.example .env
 
 ### Local Development
 
-- Install packages: `npm install`
-- Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh`
-- Run `npm run start` to start a local development server with hot reloading.
+-   Install packages: `npm install`
+-   Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh`
+-   Run `npm run start` to start a local development server with hot reloading.
 
 ### Unit Tests
 
@@ -45,9 +45,9 @@ See `.env.docker` for the required variables.
 Furthermore, the website requires config files that need to be present at runtime in the directory
 specified in the `CONFIG_DIR` environment variable:
 
-- `config.json`: Contains configuration on the underlying organism. It's similar to the database config file that LAPIS uses.
-- `reference_genomes.json`: Defines names for segments of the genome and amino acids. It's equal to the file that LAPIS uses.
-- `runtime_config.json`: Contains configuration that specific for a deployed instance of the website.
+-   `config.json`: Contains configuration on the underlying organism. It's similar to the database config file that LAPIS uses.
+-   `reference_genomes.json`: Defines names for segments of the genome and amino acids. It's equal to the file that LAPIS uses.
+-   `runtime_config.json`: Contains configuration that specific for a deployed instance of the website.
 
 Check our tests and examples for working config files.
 
@@ -60,14 +60,14 @@ If the environment variable LOG_DIR is set, it will also store them in `LOG_DIR/
 
 ### Editor
 
-- [Astro](https://docs.astro.build/en/editor-setup/)
+-   [Astro](https://docs.astro.build/en/editor-setup/)
 
 ### Setup
 
-- Install node version from `.nvmrc` with `nvm install`
+-   Install node version from `.nvmrc` with `nvm install`
 
 ### General tips
 
-- Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
-- For VS code, use the ESlint extension which must be configured with `"eslint.workingDirectories": ["./website"],` in the settings.json
-- Tips & Tricks for using icons from MUI  https://mui.com/material-ui/guides/minimizing-bundle-size/
+-   Available scripts can be browsed in [`package.json`](./package.json) or by running `npm run`
+-   For VS code, use the ESlint extension which must be configured with `"eslint.workingDirectories": ["./website"],` in the settings.json
+-   Tips & Tricks for using icons from MUI https://mui.com/material-ui/guides/minimizing-bundle-size/

@@ -14,7 +14,13 @@ import {
 } from '../../types/lapis.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
-export type TableDataEntry = { label: string; name: string; value: string | number; header: string; customDisplay?: CustomDisplay; };
+export type TableDataEntry = {
+    label: string;
+    name: string;
+    value: string | number;
+    header: string;
+    customDisplay?: CustomDisplay;
+};
 
 export async function getTableData(
     accessionVersion: string,
@@ -82,15 +88,15 @@ function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(acces
     };
 }
 
-export function toHeaderMap(ListTableDataEntries: TableDataEntry[]): {[key: string]: TableDataEntry[]} {
-    const groupedData = ListTableDataEntries.reduce((acc: { [key: string]: TableDataEntry[] }, item) => {
-        if (!acc[item.header]) {
-            acc[item.header] = [];
-        }
+export function toHeaderMap(listTableDataEntries: TableDataEntry[]): { [key: string]: TableDataEntry[] } {
+    const groupedData = listTableDataEntries.reduce((acc: { [key: string]: TableDataEntry[] }, item) => {
+        // if (!acc[item.header]) {
+        //     acc[item.header] = [];
+        // }
         acc[item.header].push(item);
         return acc;
     }, {});
-    return groupedData
+    return groupedData;
 }
 
 function toTableData(config: Schema) {
@@ -112,7 +118,7 @@ function toTableData(config: Schema) {
             name: metadata.name,
             customDisplay: metadata.customDisplay,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),
-            header: metadata.header ?? "",
+            header: metadata.header ?? '',
         }));
         data.push(
             {

@@ -14,47 +14,51 @@ const headerMap = toHeaderMap(tableData);
 
 <div class='mt-2'>
     <div>
-        {Object.entries(headerMap).map(([header, names]) => (
-            <div class='pb-8'>
-                <h1 class='py-2 font-medium text-gray-900'>{header !== "" && header}</h1>
-            <table class='min-w-full'>
-                <tbody class='bg-white'>
-                    {names.map(({label, value, customDisplay}) => 
-                    <tr>
-                        <td class='py-1 whitespace-nowrap text-sm font-medium text-gray-900 text-right w-32'>
-                            {label}
-                        </td>
-                        <td class='px-4 py-1 whitespace-normal text-sm text-gray-600'>
-                            <div class='flex items-center gap-3'>
-                                {customDisplay === undefined && value}
-                                {customDisplay !== undefined &&
-                                    customDisplay.type === 'link' &&
-                                    customDisplay.url !== undefined && (
-                                        <a
-                                            href={customDisplay.url.replaceAll('{{value}}', value.toString())}
-                                            target='_blank'
-                                            class='underline'
-                                        >
-                                            {value}
-                                        </a>
-                                    )}
-                                {customDisplay !== undefined && customDisplay.type === 'dataUseTerms' && (
-                                    <>
-                                        {value}{' '}
-                                        <DataUseTermsHistoryModal
-                                            dataUseTermsHistory={dataUseTermsHistory}
-                                            client:only='react'
-                                        />
-                                    </>
-                                )}
-                            </div>
-                        </td>
-                    </tr>
-                     )}
-                </tbody>
-            </table>
-        </div>
-        ))
+        {
+            Object.entries(headerMap).map(([header, names]) => (
+                <div class='pb-8'>
+                    <h1 class='py-2 font-medium text-gray-900'>{header !== '' && header}</h1>
+                    <table class='min-w-full'>
+                        <tbody class='bg-white'>
+                            {names.map(({ label, value, customDisplay }) => (
+                                <tr>
+                                    <td class='py-1 whitespace-nowrap text-sm font-medium text-gray-900 text-right w-32'>
+                                        {label}
+                                    </td>
+                                    <td class='px-4 py-1 whitespace-normal text-sm text-gray-600'>
+                                        <div class='flex items-center gap-3'>
+                                            {customDisplay === undefined && value}
+                                            {customDisplay !== undefined &&
+                                                customDisplay.type === 'link' &&
+                                                customDisplay.url !== undefined && (
+                                                    <a
+                                                        href={customDisplay.url.replaceAll(
+                                                            '{{value}}',
+                                                            value.toString(),
+                                                        )}
+                                                        target='_blank'
+                                                        class='underline'
+                                                    >
+                                                        {value}
+                                                    </a>
+                                                )}
+                                            {customDisplay !== undefined && customDisplay.type === 'dataUseTerms' && (
+                                                <>
+                                                    {value}{' '}
+                                                    <DataUseTermsHistoryModal
+                                                        dataUseTermsHistory={dataUseTermsHistory}
+                                                        client:only='react'
+                                                    />
+                                                </>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ))
         }
-</div>
+    </div>
 </div>
