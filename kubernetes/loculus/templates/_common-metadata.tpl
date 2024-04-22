@@ -57,6 +57,10 @@ logo: {{ $.Values.logo | toYaml | nindent 6 }}
 {{ if $.Values.bannerMessage }}
 bannerMessage: {{ quote $.Values.bannerMessage }}
 {{ end }}
+{{ if $.Values.additionalHeadHTML }}
+additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
+{{end}}
+
 accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:

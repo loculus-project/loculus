@@ -783,3 +783,4 @@ auth:
   resetPasswordAllowed: true
 devMode: true # TODO https://github.com/loculus-project/loculus/issues/1568: remove this from default Values
 bannerMessage: "This is a development environment. Data will not be persisted."
+additionalHeadHTML: '<script defer data-domain="loculus.org" src="https://plausible.io/js/script.js"></script>'
