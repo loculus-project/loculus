@@ -322,8 +322,14 @@ defaultOrganisms:
             url: "https://www.ncbi.nlm.nih.gov/nuccore/{{value}}"
         - name: bioprojects
           type: string
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/bioproject/{{value}}"
         - name: biosample_accession
           type: string
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/biosample/{{value}}"
         - name: ncbi_completeness
           type: string
           generateIndex: true
@@ -335,6 +341,9 @@ defaultOrganisms:
         - name: ncbi_host_tax_id
           type: int
           autocomplete: true
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id={{value}}"
         - name: ncbi_is_lab_host
           type: string
           generateIndex: true
@@ -356,12 +365,18 @@ defaultOrganisms:
         - name: ncbi_virus_tax_id
           type: int
           autocomplete: true
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:{{value}}"
         - name: isolate_source
           type: string
           generateIndex: true
           autocomplete: true
         - name: sra_accessions
           type: string
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/sra/?term={{value}}"
         - name: total_snps
           type: int
         - name: total_inserted_nucs
