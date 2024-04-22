@@ -4,12 +4,13 @@ import { ToastContainer } from 'react-toastify';
 
 import Navigation from '../components/Navigation/Navigation.astro';
 import OrganismSelector from '../components/Navigation/OrganismSelector.astro';
+import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
 import 'react-toastify/dist/ReactToastify.css';
 import { navigationItems } from '../routes/navigationItems';
 
 const websiteConfig = getWebsiteConfig();
-const { name: websiteName, logo } = websiteConfig;
+const { name: websiteName, logo, bannerMessage } = websiteConfig;
 
 interface Props {
     title: string;
@@ -29,9 +30,10 @@ const { title, implicitOrganism } = Astro.props;
         <title>{title}</title>
     </head>
     <body>
+        <Banner message={bannerMessage} />
         <div class='flex flex-col min-h-screen w-11/12 mx-auto'>
             <ToastContainer client:load />
-            <header class='z-30 top-0 bg-white h-fit'>
+            <header class='bg-white h-fit'>
                 <nav class='flex justify-between items-center p-4'>
                     <div class='flex justify-start'>
                         <div class='flex flex-col'>
@@ -51,7 +53,7 @@ const { title, implicitOrganism } = Astro.props;
                             <OrganismSelector implicitOrganism={implicitOrganism} />
                         </div>
                     </div>
-                    <Navigation />
+                    <Navigation implicitOrganism={implicitOrganism} />
                 </nav>
                 <hr class='border-t border-gray-1000' />
 

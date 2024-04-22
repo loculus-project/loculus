@@ -106,13 +106,12 @@ rule submit_to_loculus:
             --metadata {input.metadata} \
             --sequences {input.sequences} \
             --config-file {input.config} \
-            --log-level {params.log_level} \
+            --log-level {params.log_level}
         """
 
 
 rule approve:
     input:
-        submitted="results/submitted",
         config="config/config.yaml",
     params:
         log_level=LOG_LEVEL,

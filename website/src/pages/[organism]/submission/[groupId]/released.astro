@@ -1,41 +1,21 @@
 ---
-import { MySequencesGroupSelector } from '../../../components/MySequencesPage/MySequencesGroupSelector';
-import { SearchForm } from '../../../components/SearchPage/SearchForm';
-import { SearchPagination } from '../../../components/SearchPage/SearchPagination';
-import { Table } from '../../../components/SearchPage/Table';
-import ErrorBox from '../../../components/common/ErrorBox.astro';
-import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { MY_SEQUENCES } from '../../../routes/routes';
-import { GroupManagementClient } from '../../../services/groupManagementClient';
-import { pageSize } from '../../../settings';
-import { getAccessToken } from '../../../utils/getAccessToken';
-import { processParametersAndFetchSearch } from '../../../utils/processParametersAndFetchSearch';
+import { SearchForm } from '../../../../components/SearchPage/SearchForm';
+import { SearchPagination } from '../../../../components/SearchPage/SearchPagination';
+import { Table } from '../../../../components/SearchPage/Table';
+import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
+import ErrorBox from '../../../../components/common/ErrorBox.astro';
+import { MY_SEQUENCES } from '../../../../routes/routes';
+import { pageSize } from '../../../../settings';
+import { processParametersAndFetchSearch } from '../../../../utils/processParametersAndFetchSearch';
+import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
-const groupId = parseInt(Astro.params.groupId!, 10);
-if (isNaN(groupId)) {
-    return new Response(undefined, {
-        status: 404,
-    });
-}
-const accessToken = getAccessToken(Astro.locals.session)!;
-const groupsResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
+const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 if (groupsResult.isErr()) {
-    return new Response(undefined, {
-        status: 500,
-        message: 'Failed to get groups',
-    });
+    return new Response(undefined, { status: groupsResult.error.status });
 }
-const groups = groupsResult.value;
-
-const group = groups.find((group) => group.groupId === groupId);
-if (group === undefined) {
-    return new Response(undefined, {
-        status: 404,
-    });
-}
+const { currentGroup: group } = groupsResult.value;
 
 const {
-    cleanedOrganism,
     organism,
     data,
     page,
@@ -46,13 +26,10 @@ const {
     schema,
     clientConfig,
     orderBy,
-} = await processParametersAndFetchSearch(Astro, groupId);
+} = await processParametersAndFetchSearch(Astro, group.groupId);
 ---
 
-<BaseLayout title={`${cleanedOrganism.displayName} - My sequences`}>
-    <MySequencesGroupSelector groups={groups} selectedGroupId={group.groupId} organism={organism} client:load />
-    <h1 class='title'>Released sequences</h1>
-
+<SubmissionPageWrapper title='Released sequences' groupsResult={groupsResult}>
     <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
         <div class='md:w-72'>
             <SearchForm
@@ -109,4 +86,4 @@ const {
             )
         }
     </div>
-</BaseLayout>
+</SubmissionPageWrapper>

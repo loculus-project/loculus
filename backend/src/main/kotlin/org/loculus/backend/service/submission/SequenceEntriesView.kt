@@ -9,7 +9,6 @@ import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.json.exists
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
 import org.jetbrains.exposed.sql.max
-import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.wrapAsExpression
 import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.Organism
@@ -50,10 +49,8 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
         val subQueryTable = alias("subQueryTable")
         return wrapAsExpression(
             subQueryTable
-                .slice(subQueryTable[versionColumn].max())
-                .select {
-                    subQueryTable[accessionColumn] eq accessionColumn
-                },
+                .select(subQueryTable[versionColumn].max())
+                .where { subQueryTable[accessionColumn] eq accessionColumn },
         )
     }
 

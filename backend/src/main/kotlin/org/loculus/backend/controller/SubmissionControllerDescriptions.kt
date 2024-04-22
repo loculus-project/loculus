@@ -133,3 +133,8 @@ const val GET_RELEASED_DATA_RESPONSE_DESCRIPTION = """
 Releasable accession versions.
 The schema is to be understood per line of the NDJSON stream.    
 """
+
+const val GET_ORIGINAL_METADATA_RESPONSE_DESCRIPTION = """
+The original metadata of submission sequence versions as NDJSON where each line is a flat JSON object where the values
+are all strings (or null).
+"""

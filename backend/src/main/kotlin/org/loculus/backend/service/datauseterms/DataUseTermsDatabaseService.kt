@@ -4,7 +4,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.exposed.sql.batchInsert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.selectAll
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsHistoryEntry
 import org.loculus.backend.api.DataUseTermsType
@@ -29,10 +29,10 @@ class DataUseTermsDatabaseService(
     ) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
-        accessionPreconditionValidator.validateAccessions(
-            authenticatedUser = authenticatedUser,
-            accessions = accessions,
-        )
+        accessionPreconditionValidator.validate {
+            thatAccessionsExist(accessions)
+                .andThatUserIsAllowedToEditSequenceEntries(authenticatedUser)
+        }
 
         dataUseTermsPreconditionValidator.checkThatTransitionIsAllowed(accessions, newDataUseTerms)
         dataUseTermsPreconditionValidator.checkThatRestrictedUntilIsAllowed(newDataUseTerms)
@@ -51,7 +51,8 @@ class DataUseTermsDatabaseService(
 
     fun getDataUseTermsHistory(accession: Accession): List<DataUseTermsHistoryEntry> {
         val accessionDataUseTermsHistory = DataUseTermsTable
-            .select { DataUseTermsTable.accessionColumn eq accession }
+            .selectAll()
+            .where { DataUseTermsTable.accessionColumn eq accession }
             .sortedBy { it[DataUseTermsTable.changeDateColumn] }
             .map {
                 DataUseTermsHistoryEntry(

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { type FC, type FormEventHandler, useMemo, useState, useCallback } from 'react';
 
+import { CustomizeModal } from './CustomizeModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
 import { AutoCompleteField, type AutoCompleteFieldProps } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
@@ -50,12 +51,16 @@ export const SearchForm: FC<SearchFormProps> = ({
         fieldList.map((filter) => ({
             ...filter,
             label: filter.label ?? filter.displayName ?? sentenceCase(filter.name),
+            isVisible: filter.initiallyVisible ?? false,
         })),
     );
+
+    const alwaysPresentFieldNames = ['Accession', 'Mutation'];
     const [accessionFilter, setAccessionFilter] = useState<AccessionFilter>(initialAccessionFilter);
     const [mutationFilter, setMutationFilter] = useState<MutationFilter>(initialMutationFilter);
     const [isLoading, setIsLoading] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
+    const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
 
     const handleFieldChange = useCallback(
         (metadataName: string, filter: string) => {
@@ -112,10 +117,15 @@ export const SearchForm: FC<SearchFormProps> = ({
     const fields = useMemo(
         () =>
             fieldValues.map((field) => {
+                if (field.isVisible !== true) {
+                    return null;
+                }
                 if (field.grouped === true) {
                     return (
                         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                            <h3 className='text-gray-500 text-sm mb-1'>{field.label}</h3>
+                            <h3 className='text-gray-500 text-sm mb-1'>
+                                {field.displayName !== undefined ? field.displayName : field.label}
+                            </h3>
 
                             {field.groupedFields.map((groupedField) => (
                                 <SearchField
@@ -145,6 +155,38 @@ export const SearchForm: FC<SearchFormProps> = ({
         [fieldValues, handleFieldChange, isLoading, lapisUrl, flattenedFieldValues],
     );
 
+    const toggleCustomizeModal = () => {
+        setIsCustomizeModalOpen(!isCustomizeModalOpen);
+    };
+
+    const clearValues = (possiblyGroupedFieldName: string) => {
+        const fieldInQuestion = fieldValues.find((field) => field.name === possiblyGroupedFieldName);
+        if (fieldInQuestion === undefined) {
+            return;
+        }
+
+        if (fieldInQuestion.grouped === true) {
+            for (const groupedField of fieldInQuestion.groupedFields) {
+                handleFieldChange(groupedField.name, '');
+            }
+        } else {
+            handleFieldChange(possiblyGroupedFieldName, '');
+        }
+    };
+    const handleFieldVisibilityChange = (fieldName: string, isVisible: boolean) => {
+        if (isVisible === false) {
+            clearValues(fieldName);
+        }
+        setFieldValues((prev) =>
+            prev.map((field) => {
+                if (field.name === fieldName) {
+                    return { ...field, isVisible };
+                }
+                return field;
+            }),
+        );
+    };
+
     return (
         <QueryClientProvider client={queryClient}>
             <div className='text-right -mb-10 md:hidden'>
@@ -162,13 +204,20 @@ export const SearchForm: FC<SearchFormProps> = ({
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
                     <div className='flex'>
                         <h2 className='text-lg font-semibold flex-1 md:hidden'>Search query</h2>
-                        <button className='underline' onClick={resetSearch}>
-                            Reset
-                        </button>
+                        <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
+                            <button className='underline' onClick={toggleCustomizeModal}>
+                                Customize fields
+                            </button>
+
+                            <button className='underline' onClick={resetSearch}>
+                                Reset
+                            </button>
+                        </div>
                         <button className='ml-4 md:hidden' onClick={closeOnMobile}>
                             <SandwichIcon isOpen />
                         </button>
                     </div>
+
                     <form onSubmit={handleSearch}>
                         <div className='flex flex-col'>
                             <AccessionField initialValue={initialAccessionFilter} onChange={setAccessionFilter} />
@@ -191,6 +240,13 @@ export const SearchForm: FC<SearchFormProps> = ({
                     </form>
                 </div>
             </div>
+            <CustomizeModal
+                isCustomizeModalOpen={isCustomizeModalOpen}
+                toggleCustomizeModal={toggleCustomizeModal}
+                alwaysPresentFieldNames={alwaysPresentFieldNames}
+                fieldValues={fieldValues}
+                handleFieldVisibilityChange={handleFieldVisibilityChange}
+            />
         </QueryClientProvider>
     );
 };
@@ -267,6 +323,9 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     groupedFields: [],
                     type: filter.type,
                     grouped: true,
+                    displayName: filter.fieldGroupDisplayName,
+                    label: filter.label,
+                    initiallyVisible: filter.initiallyVisible,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);

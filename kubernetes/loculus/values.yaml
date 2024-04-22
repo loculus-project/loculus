@@ -31,22 +31,28 @@ defaultOrganisms:
       metadata:
         - name: date
           type: date
+          initiallyVisible: true
         - name: region
           type: string
+          initiallyVisible: true
           generateIndex: true
           autocomplete: true
         - name: country
+          initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
         - name: division
+          initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
         - name: host
+          initiallyVisible: true
           type: string
           autocomplete: true
         - name: pango_lineage
+          initiallyVisible: true
           type: pango_lineage
           autocomplete: true
           required: true
@@ -273,6 +279,7 @@ defaultOrganisms:
           displayName: Collection date
           type: date
           required: true
+          initiallyVisible: true
         - name: ncbi_release_date
           displayName: NCBI release date
           type: date
@@ -281,6 +288,7 @@ defaultOrganisms:
           required: true
           generateIndex: true
           autocomplete: true
+          initiallyVisible: true
         - name: isolate_name
           displayName: Isolate name
           type: string
@@ -305,7 +313,7 @@ defaultOrganisms:
         - name: insdc_accession_base
           type: string
         - name: insdc_version
-          type: string
+          type: int
         - name: insdc_accession_full
           type: string
           displayName: INSDC accession
@@ -314,8 +322,14 @@ defaultOrganisms:
             url: "https://www.ncbi.nlm.nih.gov/nuccore/{{value}}"
         - name: bioprojects
           type: string
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/bioproject/{{value}}"
         - name: biosample_accession
           type: string
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/biosample/{{value}}"
         - name: ncbi_completeness
           type: string
           generateIndex: true
@@ -325,17 +339,19 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
         - name: ncbi_host_tax_id
-          type: string
-          generateIndex: true
+          type: int
           autocomplete: true
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id={{value}}"
         - name: ncbi_is_lab_host
           type: string
           generateIndex: true
           autocomplete: true
         - name: ncbi_length
-          type: string
+          type: int
         - name: ncbi_protein_count
-          type: string
+          type: int
         - name: ncbi_update_date
           type: date
         - name: ncbi_sourcedb
@@ -347,33 +363,38 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
         - name: ncbi_virus_tax_id
-          type: string
-          generateIndex: true
+          type: int
           autocomplete: true
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:{{value}}"
         - name: isolate_source
           type: string
           generateIndex: true
           autocomplete: true
         - name: sra_accessions
           type: string
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/sra/?term={{value}}"
         - name: total_snps
-          type: string
+          type: int
         - name: total_inserted_nucs
-          type: string
+          type: int
         - name: total_deleted_nucs
-          type: string
+          type: int
         - name: total_ambiguous_nucs
-          type: string
+          type: int
         - name: total_unknown_nucs
-          type: string
+          type: int
         - name: total_frame_shifts
-          type: string
+          type: int
         - name: frame_shifts
           type: string
         - name: completeness
-          type: string
+          type: float
         - name: total_stop_codons
-          type: string
+          type: int
         - name: stop_codons
           type: string
         - name: metadata_hash
@@ -416,26 +437,38 @@ defaultOrganisms:
           processing_spec:
             total_snps:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalSubstitutions
             total_inserted_nucs:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalInsertions
             total_deleted_nucs:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalDeletions
             total_ambiguous_nucs:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalNonACGTNs
             total_unknown_nucs:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalMissing
             total_frame_shifts:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.totalFrameShifts
             frame_shifts:
@@ -444,10 +477,14 @@ defaultOrganisms:
                 input: nextclade.frameShifts
             completeness:
               function: identity
+              args:
+                type: float
               inputs:
                 input: nextclade.coverage
             total_stop_codons:
               function: identity
+              args:
+                type: int
               inputs:
                 input: nextclade.qc.stopCodons.totalStopCodons
             stop_codons:
@@ -495,6 +532,8 @@ defaultOrganisms:
                 input: insdc_accession_base
             insdc_version:
               function: identity
+              args:
+                type: int
               inputs:
                 input: insdc_version
             insdc_accession_full:
@@ -519,6 +558,8 @@ defaultOrganisms:
                 input: ncbi_host_name
             ncbi_host_tax_id:
               function: identity
+              args:
+                type: int
               inputs:
                 input: ncbi_host_tax_id
             ncbi_is_lab_host:
@@ -527,10 +568,14 @@ defaultOrganisms:
                 input: ncbi_is_lab_host
             ncbi_length:
               function: identity
+              args:
+                type: int
               inputs:
                 input: ncbi_length
             ncbi_protein_count:
               function: identity
+              args:
+                type: int
               inputs:
                 input: ncbi_protein_count
             ncbi_update_date:
@@ -547,173 +592,8 @@ defaultOrganisms:
                 input: ncbi_virus_name
             ncbi_virus_tax_id:
               function: identity
-              inputs:
-                input: ncbi_virus_tax_id
-            isolate_source:
-              function: identity
-              inputs:
-                input: isolate_source
-            sra_accessions:
-              function: identity
-              inputs:
-                input: sra_accessions
-            metadata_hash:
-              function: identity
-              inputs:
-                input: metadata_hash
-      - version: 2
-        image: ghcr.io/loculus-project/preprocessing-nextclade
-        args:
-          - "prepro"
-        configFile:
-          log_level: DEBUG
-          nextclade_dataset_name: nextstrain/ebola/zaire
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
-          genes:
-            - NP
-            - VP35
-            - VP40
-            - GP
-            - sGP
-            - ssGP
-            - VP30
-            - VP24
-            - L
-          batch_size: 100
-          processing_spec:
-            total_snps:
-              function: identity
-              inputs:
-                input: nextclade.totalSubstitutions
-            total_inserted_nucs:
-              function: identity
-              inputs:
-                input: nextclade.totalInsertions
-            total_deleted_nucs:
-              function: identity
-              inputs:
-                input: nextclade.totalDeletions
-            total_ambiguous_nucs:
-              function: identity
-              inputs:
-                input: nextclade.totalNonACGTNs
-            total_unknown_nucs:
-              function: identity
-              inputs:
-                input: nextclade.totalMissing
-            total_frame_shifts:
-              function: identity
-              inputs:
-                input: nextclade.totalFrameShifts
-            frame_shifts:
-              function: identity
-              inputs:
-                input: nextclade.frameShifts
-            completeness:
-              function: identity
-              inputs:
-                input: nextclade.coverage
-            total_stop_codons:
-              function: identity
-              inputs:
-                input: nextclade.qc.stopCodons.totalStopCodons
-            stop_codons:
-              function: identity
-              inputs:
-                input: nextclade.qc.stopCodons.stopCodons
-            collection_date:
-              function: process_date
-              inputs:
-                date: collection_date
-                release_date: ncbi_release_date
-              required: true
-            ncbi_release_date:
-              function: parse_timestamp
-              inputs:
-                timestamp: ncbi_release_date
-            country:
-              function: identity
-              inputs:
-                input: country
-              required: true
-            author_affiliation:
-              function: identity
-              inputs:
-                input: author_affiliation
-            authors:
-              function: identity
-              inputs:
-                input: authors
-            isolate_name:
-              function: identity
-              inputs:
-                input: isolate_name
-            submitter_country:
-              function: identity
-              inputs:
-                input: submitter_country
-            division:
-              function: identity
-              inputs:
-                input: division
-            insdc_accession_base:
-              function: identity
-              inputs:
-                input: insdc_accession_base
-            insdc_version:
-              function: identity
-              inputs:
-                input: insdc_version
-            insdc_accession_full:
-              function: identity
-              inputs:
-                input: insdc_accession_full
-            bioprojects:
-              function: identity
-              inputs:
-                input: bioprojects
-            biosample_accession:
-              function: identity
-              inputs:
-                input: biosample_accession
-            ncbi_completeness:
-              function: identity
-              inputs:
-                input: ncbi_completeness
-            ncbi_host_name:
-              function: identity
-              inputs:
-                input: ncbi_host_name
-            ncbi_host_tax_id:
-              function: identity
-              inputs:
-                input: ncbi_host_tax_id
-            ncbi_is_lab_host:
-              function: identity
-              inputs:
-                input: ncbi_is_lab_host
-            ncbi_length:
-              function: identity
-              inputs:
-                input: ncbi_length
-            ncbi_protein_count:
-              function: identity
-              inputs:
-                input: ncbi_protein_count
-            ncbi_update_date:
-              function: parse_timestamp
-              inputs:
-                timestamp: ncbi_update_date
-            ncbi_sourcedb:
-              function: identity
-              inputs:
-                input: ncbi_sourcedb
-            ncbi_virus_name:
-              function: identity
-              inputs:
-                input: ncbi_virus_name
-            ncbi_virus_tax_id:
-              function: identity
+              args:
+                type: int
               inputs:
                 input: ncbi_virus_tax_id
             isolate_source:
@@ -732,6 +612,7 @@ defaultOrganisms:
       args:
         - snakemake
         - approve
+        - submit_to_loculus
       image: ghcr.io/loculus-project/ingest
       configFile:
         compound_country_field: ncbi_geo_location
@@ -866,7 +747,7 @@ defaultOrganisms:
         group_name: insdc_ingest_group
         username : insdc_ingest_user
         password : insdc_ingest_user
-        keycloak_client_id : test-cli
+        keycloak_client_id : backend-client
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
@@ -911,3 +792,5 @@ secrets:
     type: sealed
     data:
       apikey: somesecurekey
+bannerMessage: "This is a development environment. Data will not be persisted."
+

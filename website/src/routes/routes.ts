@@ -1,3 +1,4 @@
+import { SubmissionRouteUtils } from './SubmissionRoute.ts';
 import type { AccessionVersion } from '../types/backend.ts';
 import type { AccessionFilter, FilterValue, MutationFilter } from '../types/config.ts';
 import type { OrderBy } from '../types/lapis.ts';
@@ -13,7 +14,6 @@ export const routes = {
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
-    mySequencesWithoutGroup: (organism: string) => `/${organism}/my_sequences`,
     searchPage: <Filter extends FilterValue>(
         organism: string,
         metadataFilter: Filter[] = [],
@@ -36,10 +36,12 @@ export const routes = {
         page: number | undefined = undefined,
         orderBy?: OrderBy,
     ) =>
-        withOrganism(
+        SubmissionRouteUtils.toUrl({
+            name: 'released',
             organism,
-            `/my_sequences/${groupId}?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
-        ),
+            groupId,
+            searchParams: buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy),
+        }),
     sequencesDetailsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}`,
     sequencesVersionsPage: (accessionVersion: AccessionVersion | string) =>
@@ -52,17 +54,22 @@ export const routes = {
         return url;
     },
     createGroup: () => '/user/createGroup',
-    submissionPage: (organism: string) => withOrganism(organism, '/submission'),
-    submitPage: (organism: string) => withOrganism(organism, '/submission/submit'),
-    revisePage: (organism: string) => withOrganism(organism, '/revise'),
+    submissionPageWithoutGroup: (organism: string) => withOrganism(organism, '/submission'),
+    submissionPage: (organism: string, groupId: number) =>
+        SubmissionRouteUtils.toUrl({ name: 'portal', organism, groupId }),
+    submitPage: (organism: string, groupId: number) =>
+        SubmissionRouteUtils.toUrl({ name: 'submit', organism, groupId }),
+    revisePage: (organism: string, groupId: number) =>
+        SubmissionRouteUtils.toUrl({ name: 'revise', organism, groupId }),
     editPage: (organism: string, accessionVersion: AccessionVersion) =>
-        withOrganism(organism, `/user/edit/${accessionVersion.accession}/${accessionVersion.version}`),
+        withOrganism(organism, `/submission/edit/${accessionVersion.accession}/${accessionVersion.version}`),
     userOverviewPage: (organism?: string | undefined) => {
         const userPagePath = `/user`;
         return organism === undefined ? userPagePath : withOrganism(organism, userPagePath);
     },
     groupOverviewPage: (groupId: number) => `/group/${groupId}`,
-    userSequenceReviewPage: (organism: string) => withOrganism(organism, `/submission/review`),
+    userSequenceReviewPage: (organism: string, groupId: number) =>
+        SubmissionRouteUtils.toUrl({ name: 'review', organism, groupId }),
     versionPage: (accession: string) => `/seq/${accession}/versions`,
     seqSetsPage: (username?: string | undefined) => {
         const seqSetPagePath = `/seqsets`;

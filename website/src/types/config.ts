@@ -3,6 +3,7 @@ import z from 'zod';
 import { orderByType } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
+// These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
 export const metadataPossibleTypes = ['string', 'date', 'int', 'float', 'pango_lineage', 'timestamp'] as const;
 
 export const customDisplay = z.object({
@@ -18,6 +19,7 @@ export const metadata = z.object({
     notSearchable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
     truncateColumnDisplayTo: z.number().optional(),
+    initiallyVisible: z.boolean().optional(),
 });
 
 export type CustomDisplay = z.infer<typeof customDisplay>;
@@ -28,6 +30,8 @@ export type MetadataFilter = Metadata & {
     label?: string;
     fieldGroup?: string;
     grouped?: false;
+    fieldGroupDisplayName?: string;
+    isVisible?: boolean;
 };
 
 export type GroupedMetadataFilter = {
@@ -37,6 +41,9 @@ export type GroupedMetadataFilter = {
     grouped: true;
     label?: string;
     displayName?: string;
+    isVisible?: boolean;
+    notSearchable?: boolean;
+    initiallyVisible?: boolean;
 };
 
 export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
@@ -80,5 +87,6 @@ export const websiteConfig = z.object({
     organisms: z.record(instanceConfig),
     name: z.string(),
     logo: logoConfig,
+    bannerMessage: z.string().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;

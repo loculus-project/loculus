@@ -10,10 +10,10 @@ type RevisionFormProps = {
     accessToken: string;
     organism: string;
     clientConfig: ClientConfig;
-    groupsOfUser: Group[];
+    group: Group;
 };
 
-export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, clientConfig, groupsOfUser }) => {
+export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, clientConfig, group }) => {
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
     return (
@@ -25,9 +25,9 @@ export const RevisionForm: FC<RevisionFormProps> = ({ accessToken, organism, cli
                 clientConfig={clientConfig}
                 action='revise'
                 onError={openErrorFeedback}
-                groupsOfUser={groupsOfUser}
+                group={group}
                 onSuccess={() => {
-                    window.location.href = routes.userSequenceReviewPage(organism);
+                    window.location.href = routes.userSequenceReviewPage(organism, group.groupId);
                 }}
             />
         </div>

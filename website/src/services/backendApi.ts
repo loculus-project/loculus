@@ -7,6 +7,7 @@ import {
     accessionVersion,
     accessionVersionsFilterWithApprovalScope,
     accessionVersionsFilterWithDeletionScope,
+    dataUseTerms,
     dataUseTermsHistoryEntry,
     getSequencesResponse,
     problemDetail,
@@ -218,6 +219,28 @@ const getDataUseTermsHistoryEndpoint = makeEndpoint({
     ],
 });
 
+const setDataUseTerms = makeEndpoint({
+    method: 'put',
+    path: '/data-use-terms',
+    alias: 'setDataUseTerms',
+    parameters: [
+        authorizationHeader,
+        {
+            name: 'data',
+            type: 'Body',
+            schema: z.object({
+                accessions: z.array(z.string()),
+                newDataUseTerms: dataUseTerms,
+            }),
+        },
+    ],
+    response: z.never(),
+    errors: [
+        { status: 'default', schema: problemDetail },
+        { status: 404, schema: problemDetail },
+    ],
+});
+
 export const backendApi = makeApi([
     submitEndpoint,
     reviseEndpoint,
@@ -230,4 +253,5 @@ export const backendApi = makeApi([
     extractUnprocessedDataEndpoint,
     submitProcessedDataEndpoint,
     getDataUseTermsHistoryEndpoint,
+    setDataUseTerms,
 ]);
