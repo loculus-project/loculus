@@ -5,7 +5,7 @@ description: How to deploy a loculus instance
 
 # Prerequisites
 
-Before you get started with deploying the Loculus, there are a few prerequisites you'll need to ensure are in place. 
+Before you get started with deploying Loculus, there are a few prerequisites you'll need to ensure are in place. 
 
 ## Kubernetes Cluster with Traefik
 
