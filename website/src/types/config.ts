@@ -88,5 +88,6 @@ export const websiteConfig = z.object({
     name: z.string(),
     logo: logoConfig,
     bannerMessage: z.string().optional(),
+    additionalHeadHTML: z.string().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
