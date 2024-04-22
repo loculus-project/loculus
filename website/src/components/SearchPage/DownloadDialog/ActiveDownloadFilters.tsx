@@ -15,7 +15,7 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ metadata
         { name: 'nucleotideInsertion', value: mutationFilter.nucleotideInsertionQueries },
         { name: 'aminoAcidInsertions', value: mutationFilter.aminoAcidInsertionQueries },
     ].forEach(({ name, value }) => {
-        if (value !== undefined) {
+        if (value !== undefined && value.length > 0) {
             filterValues.push({ name, filterValue: value.join(', ') });
         }
     });
