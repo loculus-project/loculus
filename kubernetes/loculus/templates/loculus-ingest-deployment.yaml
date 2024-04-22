@@ -34,6 +34,7 @@ spec:
           volumeMounts:
             - name: loculus-ingest-config-volume-{{ $key }}
               mountPath: /package/config
+              subPath: config.yaml
       volumes:
         - name: loculus-ingest-config-volume-{{ $key }}
           configMap:
