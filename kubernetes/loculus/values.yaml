@@ -347,6 +347,7 @@ defaultOrganisms:
         - name: authors
           displayName: Authors
           type: string
+          truncateColumnDisplayTo: 10
         - name: submitter_country
           displayName: Submitter country
           type: string
@@ -439,6 +440,7 @@ defaultOrganisms:
           header: "INSDC"
         - name: length
           type: int
+          autocomplete: true
         - name: total_snps
           type: int
           header: "Mutations, insertions, deletions"
@@ -476,11 +478,11 @@ defaultOrganisms:
           - collection_date
           - country
           - division
-          - submitter_country
+          - authors
           - author_affiliation
           - ncbi_release_date
           - insdc_accession_full
-          - ncbi_length
+          - length
           - ncbi_host_name
         defaultOrderBy: collection_date
         defaultOrder: descending
