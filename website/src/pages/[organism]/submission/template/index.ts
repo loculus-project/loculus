@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import { err, type Result } from 'neverthrow';
-import { getSchema } from '../../../../config';
+
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
+import { getSchema } from '../../../../config';
 
 export const GET: APIRoute = async ({ params, redirect, request }) => {
     const rawOrganism = params.organism!;
@@ -16,7 +17,7 @@ export const GET: APIRoute = async ({ params, redirect, request }) => {
 
 
     const headers: Record<string, string> = {
-        'Content-Type': 'text/tsv', //TODO - check this
+        'Content-Type': 'text/tsv', // TODO - check this
     };
     
         const filename = `${organism.displayName.replaceAll(" ","_")}_metadata_template.tsv`;
