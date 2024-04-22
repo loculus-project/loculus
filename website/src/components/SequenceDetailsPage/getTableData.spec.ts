@@ -17,6 +17,7 @@ const schema: Schema = {
     defaultOrderBy: 'metadataField1',
     defaultOrder: 'ascending',
     primaryKey: 'primary key',
+    inputFields: []
 };
 
 const dummyError = {
