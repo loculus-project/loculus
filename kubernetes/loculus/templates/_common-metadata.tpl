@@ -52,12 +52,12 @@ fields:
 
 {{/* Generate website config from passed config object */}}
 {{- define "loculus.generateWebsiteConfig" }}
-name: {{ $.Values.name }}
+name: {{ quote $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
 {{ if $.Values.bannerMessage }}
-bannerMessage: {{ $.Values.bannerMessage }}
+bannerMessage: {{ quote $.Values.bannerMessage }}
 {{ end }}
-accessionPrefix: {{ $.Values.accessionPrefix }}
+accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
@@ -65,12 +65,12 @@ organisms:
 
     schema:
       {{- with $instance.schema }}
-      instanceName: {{ .instanceName }}
+      instanceName: {{ quote .instanceName }}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
       {{ if .description }}
-      description: {{ .description }}
+      description: {{ quote .description }}
       {{ end }}
       primaryKey: accessionVersion
       metadata:
@@ -90,8 +90,8 @@ organisms:
 {{- define "loculus.generateWebsiteMetadata" }}
 fields:
 {{- range . }}
-  - name: {{ .name }}
-    type: {{ .type }}
+  - name: {{ quote .name }}
+    type: {{ quote .type }}
     {{- if .autocomplete }}
     autocomplete: {{ .autocomplete }}
     {{- end }}
@@ -102,23 +102,23 @@ fields:
     initiallyVisible: {{ .initiallyVisible }}
     {{- end }}
     {{- if .displayName }}
-    displayName: {{ .displayName }}
+    displayName: {{ quote .displayName }}
     {{- end }}
     {{- if .truncateColumnDisplayTo }}
     truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
     {{- end }}
     {{- if .customDisplay }}
     customDisplay:
-      type: {{ .customDisplay.type }}
-      url: {{ .customDisplay.url }}
+      type: {{ quote .customDisplay.type }}
+      url: {{ quote .customDisplay.url }}
     {{- end }}
 {{- end}}
 {{- end}}
 
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
-accessionPrefix: {{$.Values.accessionPrefix}}
-name: {{ $.Values.name }}
+accessionPrefix: {{ quote $.Values.accessionPrefix }}
+name: {{ quote $.Values.name }}
 dataUseTermsUrls:
   {{$.Values.dataUseTermsUrls | toYaml | nindent 2}}
 organisms:
@@ -126,7 +126,7 @@ organisms:
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
-      instanceName: {{ .instanceName }}
+      instanceName: {{ quote .instanceName }}
       metadata:
         {{ $metadata := include "loculus.generateBackendMetadata" .metadata | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
@@ -140,8 +140,8 @@ organisms:
 {{- define "loculus.generateBackendMetadata" }}
 fields:
 {{- range . }}
-  - name: {{ .name }}
-    type: {{ .type }}
+  - name: {{ quote .name }}
+    type: {{ quote .type }}
     {{- if .required }}
     required: {{ .required }}
     {{- end }}
