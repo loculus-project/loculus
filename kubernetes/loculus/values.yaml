@@ -162,7 +162,24 @@ defaultOrganisms:
         - name: authors
           type: string
       inputFields:
-        - name: date
+        - name: collection_date
+          displayName: Collection Date
+        - name: clade
+          displayName: Clade  
+        - name: outbreak
+          displayName: Outbreak
+        - name: lineage
+          displayName: Lineage
+        - name: ncbi_release_date
+          displayName: NCBI Release Date
+        - name: country
+          displayName: Country
+        - name: isolate_name
+          displayName: Isolate Name
+        - name: author_affiliation
+          displayName: Author Affiliation
+        - name: authors
+          displayName: Authors
       website:
         tableColumns:
           - collection_date
