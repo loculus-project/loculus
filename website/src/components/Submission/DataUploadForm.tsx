@@ -6,6 +6,7 @@ import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementT
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
+import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -14,7 +15,6 @@ import {
     restrictedDataUseTermsType,
     type Group,
 } from '../../types/backend.ts';
-import {routes} from '../../routes/routes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
