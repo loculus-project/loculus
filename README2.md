@@ -27,15 +27,6 @@ While the documentation is still a work in progress, a look at the [`.github/wor
 - [`website.yml`](/.github/workflows/website.yml) runs the website tests and builds the website docker image
 - [`e2e-k3d.yml`](/.github/workflows/e2e-k3d.yml) runs the end-to-end tests
 
-## Setting up docker
-
-### Configure access to the private container registry
-
-Follow this guide <https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-with-a-personal-access-token-classic>. In short:
-
-1. Generate a GitHub personal access token (classic), e.g. by using this link: <https://github.com/settings/tokens/new?scopes=read:packages>
-1. Run `export CR_PAT=YOUR_TOKEN` (replace `YOUR_TOKEN` with the token)
-1. Run `echo $CR_PAT | docker login ghcr.io -u USERNAME --password-stdin` (Not sure what to put as username, just leaving it as `USERNAME` seemed to work)
 
 ## Authorization
 

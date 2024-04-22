@@ -41,8 +41,6 @@ helm_parser.add_argument('--dev', action='store_true',
                          help='Set up a development environment for running the website and the backend locally')
 helm_parser.add_argument('--branch', help='Set the branch to deploy with the Helm chart')
 helm_parser.add_argument('--sha', help='Set the commit sha to deploy with the Helm chart')
-helm_parser.add_argument('--dockerconfigjson',
-                         help='Set the base64 encoded dockerconfigjson secret for pulling the images')
 helm_parser.add_argument('--uninstall', action='store_true', help='Uninstall installation')
 helm_parser.add_argument('--enablePreprocessing', action='store_true',
                          help='Include deployment of preprocessing pipelines')
@@ -144,7 +142,6 @@ def handle_helm():
         '-f', args.values,
         '--set', "environment=local",
         '--set', f"branch={branch}",
-        '--set', f"dockerconfigjson={docker_config_json}",
     ]
 
     if args.sha:
@@ -164,16 +161,6 @@ def handle_helm():
         parameters += ['--set', "codespaceName="+get_codespace_name()]
 
     run_command(parameters, check=True)
-
-
-def get_docker_config_json():
-    if args.dockerconfigjson:
-        return args.dockerconfigjson
-    if os.path.isfile(os.path.expanduser('~/.loculus/dockerconfigjson')):
-        with open(os.path.expanduser('~/.loculus/dockerconfigjson'), 'r') as file:
-            return file.read().replace('\n', '').replace(' ', '').replace('%', '')
-    command = run_command('base64 ~/.docker/config.json', capture_output=True, text=True, shell=True)
-    return command.stdout.replace('\n', '')
 
 
 def handle_helm_upgrade():
