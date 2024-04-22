@@ -131,7 +131,7 @@ column_mapping:
 group_name: insdc_ingest_group
 username: insdc_ingest_user
 password: insdc_ingest_user
-keycloak_client_id: test-cli
+keycloak_client_id: backend-client
 backend_url: https://backend-main.loculus.org/
 keycloak_token_url: https://authentication-main.loculus.org/realms/loculus/protocol/openid-connect/token
 organism: ebola-zaire

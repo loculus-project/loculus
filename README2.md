@@ -41,7 +41,7 @@ Follow this guide <https://docs.github.com/en/packages/working-with-a-github-pac
 
 ### User management
 
-We use keycloak for authorization. The keycloak instance is deployed in the `loculus` namespace and exposed to the outside either under `localhost:8083` or `authentication-[your-argo-cd-path]`. The keycloak instance is configured with a realm called `loculus` and a client called `test-cli`. The realm is configured to use the exposed url of keycloak as a [frontend url](https://www.keycloak.org/server/hostname).
+We use keycloak for authorization. The keycloak instance is deployed in the `loculus` namespace and exposed to the outside either under `localhost:8083` or `authentication-[your-argo-cd-path]`. The keycloak instance is configured with a realm called `loculus` and a client called `backend-client`. The realm is configured to use the exposed url of keycloak as a [frontend url](https://www.keycloak.org/server/hostname).
 For testing we added multiple users to the realm. The users are:
 
 - `admin` with password `admin` (login under `your-exposed-keycloak-url/admin/master/console/`)

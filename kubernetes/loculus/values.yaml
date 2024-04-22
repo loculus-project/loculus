@@ -732,7 +732,7 @@ defaultOrganisms:
         group_name: insdc_ingest_group
         username : insdc_ingest_user
         password : insdc_ingest_user
-        keycloak_client_id : test-cli
+        keycloak_client_id : backend-client
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
