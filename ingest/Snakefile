@@ -1,4 +1,5 @@
 import yaml
+from pathlib import Path
 
 with open("config/defaults.yaml") as f:
     defaults = yaml.safe_load(f)
@@ -12,6 +13,7 @@ for key, value in defaults.items():
 
 config = merged_config
 
+Path("results").mkdir(parents=True, exist_ok=True)
 with open("results/config.yaml", "w") as f:
     f.write(yaml.dump(merged_config))
 
@@ -129,7 +131,6 @@ rule submit_to_loculus:
 
 rule approve:
     input:
-        submitted="results/submitted",
         config="results/config.yaml",
     params:
         log_level=LOG_LEVEL,
