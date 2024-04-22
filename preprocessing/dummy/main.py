@@ -155,7 +155,7 @@ def submit_processed_sequences(processed: List[Sequence]):
 def get_jwt():
     url = keycloakHost + keycloakTokenPath
     data = {
-        "client_id": "test-cli",
+        "client_id": "backend-client",
         "username": keycloakUser,
         "password": keycloakPassword,
         "grant_type": "password"
