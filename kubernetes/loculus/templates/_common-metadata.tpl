@@ -110,7 +110,7 @@ fields:
     {{- if .customDisplay }}
     customDisplay:
       type: {{ quote .customDisplay.type }}
-      url: {{ quote .customDisplay.url }}
+      url: {{ .customDisplay.url }}
     {{- end }}
 {{- end}}
 {{- end}}
