@@ -55,7 +55,7 @@ jobs:
       - name: Deploy with helm
         uses: WyriHaximus/github-action-helm3@v4
         with:
-          exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ github.sha }} --dockerconfigjson ${{ secrets.GHCR_DOCKER_CONFIG }}
+          exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ github.sha }}
 
       - uses: actions/setup-node@v4
         with:

@@ -128,7 +128,6 @@ spec:
         {{- end }}
 
       imagePullSecrets:
-        - name: ghcr-secret
         - name: custom-website-sealed-secret
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}

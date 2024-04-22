@@ -32,19 +32,6 @@ helm install loculus kubernetes/loculus -f my-values.yaml
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
-Create a Github personal access token (PAT) with `read:packages` scope. This is needed to pull images from the Github container registry.
-Create a file `~/.loculus/dockerconfigjson` with appropriate credentials so that k3d can pull the private images:
-
-```shell
-mkdir ~/.loculus
-
-kubectl create secret docker-registry ghcr \
---docker-server="https://ghcr.io" \
---docker-username=$YOURGITHUBUSERNAME \
---docker-password=$YOURGITHUBPAT \
--o jsonpath="{.data.\.dockerconfigjson}" \
---dry-run=client > ~/.loculus/dockerconfigjson
-```
 
 ### Setup for local development
 
@@ -128,7 +115,7 @@ Create a cluster with ports for all services exposed:
 Install the chart to deploy the services:
 
 ```shell
-../deploy.py helm --branch [your_branch] --dockerconfigjson [base64 encoded ~/.docker/config.json]
+../deploy.py helm --branch [your_branch]
 ```
 
 ## Argo CD
