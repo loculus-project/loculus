@@ -437,6 +437,8 @@ defaultOrganisms:
             type: link
             url: "https://www.ncbi.nlm.nih.gov/sra/?term={{value}}"
           header: "INSDC"
+        - name: length
+          type: int
         - name: total_snps
           type: int
           header: "Mutations, insertions, deletions"
