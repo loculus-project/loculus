@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ params }) => {
     const { inputFields } = getSchema(organism.key);
 
     const headers: Record<string, string> = {
-        'Content-Type': 'text/tsv', // TODO - check this
+        'Content-Type': 'text/tsv',
     };
 
     const filename = `${organism.displayName.replaceAll(' ', '_')}_metadata_template.tsv`;
