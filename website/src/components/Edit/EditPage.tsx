@@ -8,7 +8,7 @@ import { routes } from '../../routes/routes.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import { ACCESSION_FIELD } from '../../settings.ts';
 import type { MetadataRecord, ProcessingAnnotationSourceType, SequenceEntryToEdit } from '../../types/backend.ts';
-import {type InputField} from '../../types/config.ts'
+import { type InputField } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
@@ -27,8 +27,13 @@ type EditPageProps = {
 
 const logger = getClientLogger('EditPage');
 
-const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, accessToken, inputFields }: EditPageProps) => {
-    
+const InnerEditPage: FC<EditPageProps> = ({
+    organism,
+    dataToEdit,
+    clientConfig,
+    accessToken,
+    inputFields,
+}: EditPageProps) => {
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
 
@@ -206,48 +211,38 @@ const EditableOriginalData: FC<EditableOriginalDataProps> = ({ editedMetadata, s
     <>
         <Subtitle title='Metadata' />
         {inputFields.map((inputField) => {
-            let field
-            field = editedMetadata.find(
-                editedMetadataField=> editedMetadataField.key == inputField.name
-            )
+            let field;
+            field = editedMetadata.find((editedMetadataField) => editedMetadataField.key === inputField.name);
 
-            if (field===undefined){
+            if (field === undefined) {
                 field = {
                     key: inputField.name,
-                    value: "",
-                    initialValue: "",
+                    value: '',
+                    initialValue: '',
                     warnings: [],
-                    errors: []
-                }
-                
+                    errors: [],
+                };
             }
 
-        
             return (
                 <EditableDataRow
                     label={inputField.displayName ?? sentenceCase(inputField.name)}
                     key={'raw_metadata' + inputField.name}
                     row={field}
                     onChange={(editedRow: Row) =>
-                        setEditedMetadata((prevRows: Row[]) =>
-                            {
-                             
-                                const relevantOldRow = prevRows.find( oldRow => oldRow.key === editedRow.key)
-                                
-                                if (relevantOldRow !== undefined){
-                                    return prevRows.map((prevRow) =>
-                                        prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
-                                    )
-                                }
-                                else{
-                                    return [...prevRows, editedRow]
-                                }
-                            }
-                        )
-                    }
-                    />
-                                    
+                        setEditedMetadata((prevRows: Row[]) => {
+                            const relevantOldRow = prevRows.find((oldRow) => oldRow.key === editedRow.key);
 
+                            if (relevantOldRow !== undefined) {
+                                return prevRows.map((prevRow) =>
+                                    prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
+                                );
+                            } else {
+                                return [...prevRows, editedRow];
+                            }
+                        })
+                    }
+                />
             );
         })}
     </>
@@ -269,9 +264,9 @@ const EditableOriginalSequences: FC<EditableOriginalSequencesProps> = ({ editedS
                         prevRows.map((prevRow) =>
                             prevRow.key === editedRow.key ? { ...prevRow, value: editedRow.value } : prevRow,
                         ),
-                     )
+                    )
                 }
-            />  
+            />
         ))}
     </>
 );

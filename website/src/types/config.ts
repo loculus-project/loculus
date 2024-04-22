@@ -24,11 +24,11 @@ export const metadata = z.object({
 
 export const inputField = z.object({
     name: z.string(),
-    displayName: z.string().optional(),})
+    displayName: z.string().optional(),
+});
 
-
-    export type InputField = z.infer<typeof inputField>;
-    export type CustomDisplay = z.infer<typeof customDisplay>;
+export type InputField = z.infer<typeof inputField>;
+export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
 
 export type MetadataFilter = Metadata & {

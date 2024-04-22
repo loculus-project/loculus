@@ -193,10 +193,10 @@ describe('SearchForm', () => {
 
         const closeButton = await screen.findByRole('button', { name: 'Close' });
         await userEvent.click(closeButton);
-        
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-  });
+
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        });
 
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
