@@ -135,8 +135,6 @@ def handle_helm():
     else:
         branch = 'latest'
 
-    docker_config_json = get_docker_config_json()
-
     parameters = [
         'helm', 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
         '-f', args.values,
