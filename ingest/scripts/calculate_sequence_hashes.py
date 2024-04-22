@@ -24,7 +24,7 @@ def main(input: str, output: str, log_level: str) -> None:
         for record in records:
             results[record.id] = hashlib.md5(str(record.seq).encode()).hexdigest()
 
-    df = pd.Series(results).reset_index().rename(columns={"index": "accession", 0: "md5"})
+    df = pd.Series(results).reset_index().rename(columns={"index": "accession", 0: "sequence_md5"})
     df.to_csv(output, sep="\t", index=False)
 
 

@@ -4,7 +4,7 @@ channels:
   - bioconda
 dependencies:
   - python=3.12
-  - pip=24.0
+  - pip
   - ncbi-datasets-cli
   - snakemake
   - pandas
@@ -13,3 +13,4 @@ dependencies:
   - requests
   - seqkit
   - unzip
+  - biopython

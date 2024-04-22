@@ -106,6 +106,7 @@ rule rename_columns:
 rule prepare_metadata:
     input:
         metadata="results/metadata_post_rename.tsv",
+        sequence_hashes="results/sequence_hashes.tsv",
         config="results/config.yaml",
     output:
         metadata="results/metadata_post_prepare.tsv",
@@ -116,6 +117,7 @@ rule prepare_metadata:
         python scripts/prepare_metadata.py \
             --config-file {input.config} \
             --input {input.metadata} \
+            --sequence-hashes {input.sequence_hashes} \
             --output {output.metadata} \
             --log-level {params.log_level} \
         """
@@ -140,23 +142,27 @@ rule download_hashes:
     input:
         config="results/config.yaml",
     output:
-        hashes="results/released_hashes.tsv",
+        hashes="results/submitted_hashes.json",
+    params:
+        log_level=LOG_LEVEL,
     shell:
         """
-        python scripts/download_hashes.py \
+        python scripts/submit_to_loculus.py \
+            --mode get-submitted \
             --config-file {input.config} \
-            --output {output.hashes} \
+            --log-level {params.log_level} \
+            --output {output.hashes}
         """
 
 
 rule compare_hashes:
     input:
-        old_hashes="results/released_hashes.tsv",
+        old_hashes="results/submitted_hashes.json",
         metadata="results/metadata_post_prepare.tsv",
-        sequence_hashes="results/sequence_hashes.tsv",
     output:
         to_submit="results/to_submit.tsv",
         to_revise="results/to_revise.tsv",
+        unchanged="results/unchanged.tsv",
     shell:
         """
         python scripts/compare_hashes.py \
@@ -165,6 +171,7 @@ rule compare_hashes:
             --metadata {input.metadata} \
             --to-submit {output.to_submit} \
             --to-revise {output.to_revise} \
+            --unchanged {output.unchanged} \
         """
 
 

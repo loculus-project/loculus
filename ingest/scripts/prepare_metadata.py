@@ -25,7 +25,7 @@ class Config:
 def hash_row_with_columns(row: pd.Series) -> str:
     items = sorted((f"{col}_{val}" for col, val in row.items()))
     row_string = "".join(items)
-    return hashlib.sha256(row_string.encode()).hexdigest()
+    return hashlib.md5(row_string.encode()).hexdigest()
 
 
 def split_authors(authors: str) -> str:
@@ -47,20 +47,29 @@ def split_authors(authors: str) -> str:
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
+@click.option("--sequence-hashes", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
 @click.option(
     "--log-level",
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
 )
-def main(config_file: str, input: str, output: str, log_level: str) -> None:
+def main(config_file: str, input: str, sequence_hashes: str, output: str, log_level: str) -> None:
     logging.basicConfig(level=log_level)
     with open(config_file) as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
     logging.debug(config)
+    # Read sequence hashes
+    hash_df = pd.read_csv(sequence_hashes, sep="\t", dtype=str)
     df = pd.read_csv(input, sep="\t", dtype=str).sort_values(by=config.compound_country_field)
+
+    # Join the two dataframes on respective indexes
+    # df: fasta_id_field, and hash_df: accession
+    # But don't set the index
+    df = df.merge(hash_df, left_on=config.fasta_id_field, right_on="accession", how="inner")
+    
     logging.debug(df.columns)
     df["division"] = df[config.compound_country_field].str.split(":", n=1).str[1].str.strip()
     logging.debug(df["division"].unique())
@@ -78,7 +87,7 @@ def main(config_file: str, input: str, output: str, log_level: str) -> None:
     # Drop columns that are neither a value of `rename` nor in `keep`
     df = df.drop(columns=set(df.columns) - set(config.rename.values()) - set(config.keep))
     # Create a metadata hash that is independent of the order of the columns
-    df["metadata_hash"] = df.apply(hash_row_with_columns, axis=1)
+    df["hash"] = df.apply(hash_row_with_columns, axis=1)
     df.to_csv(output, sep="\t", index=False)
 
 

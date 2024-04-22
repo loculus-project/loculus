@@ -1,5 +1,7 @@
+import json
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 from time import sleep
 
 import click
@@ -7,6 +9,7 @@ import requests
 import yaml
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 @dataclass
 class Config:
@@ -170,6 +173,44 @@ def approve(config: Config):
     return response.json()
 
 
+def get_submitted(config: Config):
+    """Get previously submitted sequences
+    This way we can avoid submitting the same sequences again
+    """
+
+    jwt = get_jwt(config)
+
+    url = f"{organism_url(config)}/get-original-metadata"
+
+    headers = {"Authorization": f"Bearer {jwt}"}
+    params = {
+        "fields": ["insdc_accession_base", "metadata_hash"],
+        "groupIdsFilter": [],
+        "statusesFilter": [],
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    response.raise_for_status()
+
+    # Of shape ndjson with {"accession":"LOC_0003BDR","version":1,"originalMetadata":{"authors":"L. Vanderzanden, M. Bray, D. Fuller, T. Roberts, D. Custer, K. Spik, P. Jahrling, J. Huggins, A. Schmaljohn, C. Schmaljohn, C.S. Schmaljohn","country":"","division":"","bioprojects":"","ncbi_length":"2220","isolate_name":"","insdc_version":"1","metadata_hash":"11ba508af2261e0e61cd04757601ee2cc42a364fec69f99c6ff58de002673a4a","ncbi_sourcedb":"GenBank","isolate_source":"","ncbi_host_name":"","sra_accessions":"","collection_date":"","ncbi_virus_name":"Zaire ebolavirus","ncbi_host_tax_id":"","ncbi_is_lab_host":"","ncbi_update_date":"2002-08-28T00:00:00Z","ncbi_completeness":"PARTIAL","ncbi_release_date":"1998-04-02T00:00:00Z","ncbi_virus_tax_id":"186538","submitter_country":"USA","author_affiliation":"USAMRIID, Virology Division","ncbi_protein_count":"1","biosample_accession":"","insdc_accession_base":"AF054908","insdc_accession_full":"AF054908.1"}}
+    # Reshape to: "insdc": {hash, loculus}
+
+    # Initialize the dictionary to store results
+    submitted_dict = {}
+
+    # Parse each line of NDJSON
+    for line in response.iter_lines():
+        if line:  # Make sure line is not empty
+            record = json.loads(line)
+            loculus_accession = record.get("accession", "")
+            original_metadata = record.get("originalMetadata", {})
+            insdc_accession = original_metadata.get("insdc_accession_base", "")
+            hash_value = original_metadata.get("metadata_hash", "")
+            submitted_dict[insdc_accession] = {"hash": hash_value, "loculus": loculus_accession}
+
+    return submitted_dict
+
+
 # %%
 
 
@@ -187,7 +228,7 @@ def approve(config: Config):
 @click.option(
     "--mode",
     required=True,
-    type=click.Choice(["submit", "approve"]),
+    type=click.Choice(["submit", "approve", "get-submitted"]),
 )
 @click.option(
     "--log-level",
@@ -199,7 +240,12 @@ def approve(config: Config):
     required=True,
     type=click.Path(exists=True),
 )
-def submit_to_loculus(metadata, sequences, mode, log_level, config_file):
+@click.option(
+    "--output",
+    required=False,
+    type=click.Path(),
+)
+def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output):
     """
     Submit data to Loculus.
     """
@@ -227,6 +273,11 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file):
             logging.debug(f"Approved: {response}")
             sleep(10)
 
+    if mode == "get-submitted":
+        logging.info("Getting submitted sequences")
+        response = get_submitted(config)
+        Path(output).write_text(json.dumps(response))
+        logging.debug(f"Originally submitted: {response}")
 
 
 if __name__ == "__main__":

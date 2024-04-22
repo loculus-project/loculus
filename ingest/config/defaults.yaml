@@ -29,6 +29,7 @@ keep:
   - ncbi_sourcedb
   - ncbi_virus_name
   - ncbi_virus_tax_id
+  - sequence_md5
 all_fields:
   - accession
   - bioprojects
