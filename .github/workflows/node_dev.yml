@@ -31,7 +31,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install yaml package
-        run: pip install PyYAML requests
+        run: pip3 install PyYAML requests
 
       - name: Generate local test config
         run: ./generate_local_test_config.sh
