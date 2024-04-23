@@ -12,6 +12,12 @@ import type { ClientConfig } from '../../types/runtimeConfig.ts';
 const queryClient = new QueryClient();
 
 const dummyConfig = { backendUrl: 'dummy' } as ClientConfig;
+const inputFields = [
+    {
+        name: 'originalMetaDataField',
+        dispayName: 'Original Meta Data Field',
+    },
+];
 
 function renderEditPage(editedData: SequenceEntryToEdit = defaultReviewData, clientConfig: ClientConfig = dummyConfig) {
     render(
@@ -21,6 +27,7 @@ function renderEditPage(editedData: SequenceEntryToEdit = defaultReviewData, cli
                 dataToEdit={editedData}
                 clientConfig={clientConfig}
                 accessToken={testAccessToken}
+                inputFields={inputFields}
             />
         </QueryClientProvider>,
     );

@@ -6,6 +6,7 @@ import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementT
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
+import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
 import {
@@ -319,8 +320,12 @@ const InnerDataUploadForm = ({
                                     </strong>
                                 </span>
                             )}
-                            For more information on the format in which data should be uploaded and the required
-                            metadata, please refer to our{' '}
+                            You can download{' '}
+                            <a href={routes.metadataTemplate(organism)} className='text-primary-700'>
+                                a template
+                            </a>{' '}
+                            for the metadata file with column headings. For more information on the format in which data
+                            should be uploaded and the required metadata, please refer to our{' '}
                             <a href='#TODO-MVP' className='text-primary-700'>
                                 help pages
                             </a>
