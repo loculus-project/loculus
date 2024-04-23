@@ -13,6 +13,8 @@ import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader
 import { displayMetadataField } from '../../utils/displayMetadataField.ts';
 import { getAccessionVersionString } from '../../utils/extractAccessionVersion.ts';
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
+import { BoxWithTabsBox, BoxWithTabsTab, BoxWithTabsTabBar } from '../common/BoxWithTabs.tsx';
+import { FixedLengthTextViewer } from '../common/FixedLengthTextViewer.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
@@ -28,6 +30,7 @@ const logger = getClientLogger('EditPage');
 const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, accessToken }: EditPageProps) => {
     const [editedMetadata, setEditedMetadata] = useState(mapMetadataToRow(dataToEdit));
     const [editedSequences, setEditedSequences] = useState(mapSequencesToRow(dataToEdit));
+    const [processedSequenceTab, setProcessedSequenceTab] = useState(0);
 
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
 
@@ -62,7 +65,7 @@ const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, 
         submitEditedSequence(data);
     };
 
-    const processedSequenceRows = useMemo(() => extractProcessedSequences(dataToEdit), [dataToEdit]);
+    const processedSequences = useMemo(() => extractProcessedSequences(dataToEdit), [dataToEdit]);
     const processedInsertions = useMemo(() => extractInsertions(dataToEdit), [dataToEdit]);
 
     return (
@@ -106,18 +109,6 @@ const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, 
 
                     <Subtitle title='Processed Data' bold />
                     <ProcessedMetadata processedMetadata={dataToEdit.processedData.metadata} />
-                    <ProcessedSequences
-                        processedSequenceRows={processedSequenceRows}
-                        sequenceType='unalignedNucleotideSequences'
-                    />
-                    <ProcessedSequences
-                        processedSequenceRows={processedSequenceRows}
-                        sequenceType='alignedNucleotideSequences'
-                    />
-                    <ProcessedSequences
-                        processedSequenceRows={processedSequenceRows}
-                        sequenceType='alignedAminoAcidSequences'
-                    />
                     <ProcessedInsertions
                         processedInsertions={processedInsertions}
                         insertionType='nucleotideInsertions'
@@ -126,8 +117,31 @@ const InnerEditPage: FC<EditPageProps> = ({ organism, dataToEdit, clientConfig, 
                         processedInsertions={processedInsertions}
                         insertionType='aminoAcidInsertions'
                     />
+                    <Subtitle title='Sequences' />
                 </tbody>
             </table>
+            <div>
+                <BoxWithTabsTabBar>
+                    {processedSequences.map(({ label }, i) => (
+                        <BoxWithTabsTab
+                            key={label}
+                            isActive={i === processedSequenceTab}
+                            label={label}
+                            onClick={() => setProcessedSequenceTab(i)}
+                        />
+                    ))}
+                </BoxWithTabsTabBar>
+                <BoxWithTabsBox>
+                    {processedSequences[processedSequenceTab].sequence !== null && (
+                        <div className='max-h-80 overflow-auto'>
+                            <FixedLengthTextViewer
+                                text={processedSequences[processedSequenceTab].sequence!}
+                                maxLineLength={100}
+                            />
+                        </div>
+                    )}
+                </BoxWithTabsBox>
+            </div>
         </>
     );
 };
@@ -258,19 +272,6 @@ const ProcessedMetadata: FC<ProcessedMetadataProps> = ({ processedMetadata }) =>
     </>
 );
 
-type ProcessedSequencesProps = {
-    processedSequenceRows: ReturnType<typeof extractProcessedSequences>;
-    sequenceType: keyof ReturnType<typeof extractProcessedSequences>;
-};
-const ProcessedSequences: FC<ProcessedSequencesProps> = ({ processedSequenceRows, sequenceType }) => (
-    <>
-        <Subtitle key={`preprocessing_sequences_${sequenceType}`} title={sentenceCase(sequenceType)} />
-        {Object.entries(processedSequenceRows[sequenceType]).map(([key, value]) => (
-            <ProcessedDataRow key={`processed_${sequenceType}_${key}`} row={{ key, value: value ?? 'null' }} />
-        ))}
-    </>
-);
-
 type ProcessedInsertionsProps = {
     processedInsertions: ReturnType<typeof extractInsertions>;
     insertionType: keyof ReturnType<typeof extractInsertions>;
@@ -300,11 +301,21 @@ const mapSequencesToRow = (editedData: SequenceEntryToEdit): Row[] =>
         ...mapErrorsAndWarnings(editedData, key, 'NucleotideSequence'),
     }));
 
-const extractProcessedSequences = (editedData: SequenceEntryToEdit) => ({
-    unalignedNucleotideSequences: editedData.processedData.unalignedNucleotideSequences,
-    alignedNucleotideSequences: editedData.processedData.alignedNucleotideSequences,
-    alignedAminoAcidSequences: editedData.processedData.alignedAminoAcidSequences,
-});
+const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
+    return [
+        { type: 'unaligned', sequences: editedData.processedData.unalignedNucleotideSequences },
+        { type: 'aligned', sequences: editedData.processedData.alignedNucleotideSequences },
+        { type: 'gene', sequences: editedData.processedData.alignedAminoAcidSequences },
+    ].flatMap(({ type, sequences }) =>
+        Object.entries(sequences).map(([sequenceName, sequence]) => {
+            let label = sequenceName;
+            if (label === 'main' && type !== 'gene') {
+                label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+            }
+            return { label, sequence };
+        }),
+    );
+};
 
 const extractInsertions = (editedData: SequenceEntryToEdit) => ({
     nucleotideInsertions: editedData.processedData.nucleotideInsertions,

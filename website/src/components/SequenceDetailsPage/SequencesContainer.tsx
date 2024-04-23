@@ -11,6 +11,7 @@ import {
     type SequenceType,
     unalignedSequenceSegment,
 } from '../../utils/sequenceTypeHelpers';
+import { BoxWithTabsTabBar, BoxWithTabsTab, BoxWithTabsBox } from '../common/BoxWithTabs.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 
 type SequenceContainerProps = {
@@ -47,7 +48,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
                 setType={setSequenceType}
                 genes={genes}
             />
-            <div className='border p-4 max-w-[1000px]'>
+            <BoxWithTabsBox>
                 <SequencesViewer
                     organism={organism}
                     accessionVersion={accessionVersion}
@@ -55,7 +56,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
                     sequenceType={sequenceType}
                     isMultiSegmented={isMultiSegmented(nucleotideSegmentNames)}
                 />
-            </div>
+            </BoxWithTabsBox>
         </>
     );
 };
@@ -74,7 +75,7 @@ const SequenceTabs: FC<NucleotideSequenceTabsProps & { genes: string[] }> = ({
     sequenceType,
     setType,
 }) => (
-    <div className='tabs -mb-px tabs-lifted flex flex-wrap'>
+    <BoxWithTabsTabBar>
         <UnalignedNucleotideSequenceTabs
             nucleotideSegmentNames={nucleotideSegmentNames}
             sequenceType={sequenceType}
@@ -86,13 +87,13 @@ const SequenceTabs: FC<NucleotideSequenceTabsProps & { genes: string[] }> = ({
             setType={setType}
         />
         {genes.map((gene) => (
-            <Tab
+            <BoxWithTabsTab
                 isActive={isGeneSequence(gene, sequenceType)}
                 onClick={() => setType(geneSequence(gene))}
                 label={gene}
             />
         ))}
-    </div>
+    </BoxWithTabsTabBar>
 );
 
 const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
@@ -103,7 +104,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     if (!isMultiSegmented(nucleotideSegmentNames)) {
         const onlySegment = nucleotideSegmentNames[0];
         return (
-            <Tab
+            <BoxWithTabsTab
                 key={onlySegment}
                 isActive={isUnalignedSequence(sequenceType)}
                 onClick={() => setType(unalignedSequenceSegment(onlySegment))}
@@ -115,7 +116,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
     return (
         <>
             {nucleotideSegmentNames.map((segmentName) => (
-                <Tab
+                <BoxWithTabsTab
                     key={segmentName}
                     isActive={isUnalignedSequence(sequenceType)}
                     onClick={() => setType(unalignedSequenceSegment(segmentName))}
@@ -130,7 +131,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({ nucleotideSegm
     if (!isMultiSegmented(nucleotideSegmentNames)) {
         const onlySegment = nucleotideSegmentNames[0];
         return (
-            <Tab
+            <BoxWithTabsTab
                 key={onlySegment}
                 isActive={isAlignedSequence(sequenceType)}
                 onClick={() => setType(alignedSequenceSegment(onlySegment))}
@@ -142,7 +143,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({ nucleotideSegm
     return (
         <>
             {nucleotideSegmentNames.map((segmentName) => (
-                <Tab
+                <BoxWithTabsTab
                     key={segmentName}
                     isActive={isAlignedSequence(sequenceType)}
                     onClick={() => setType(alignedSequenceSegment(segmentName))}
@@ -152,18 +153,6 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({ nucleotideSegm
         </>
     );
 };
-
-type TabProps = {
-    isActive: boolean;
-    label: string;
-    onClick: () => void;
-};
-
-const Tab: FC<TabProps> = ({ isActive, label, onClick }) => (
-    <button className={`tab ${isActive ? 'tab-active' : ''}`} onClick={onClick}>
-        {label}
-    </button>
-);
 
 function isMultiSegmented(nucleotideSegmentNames: string[]) {
     return nucleotideSegmentNames.length > 1;
