@@ -177,19 +177,18 @@ function mapValueToDisplayedValue(value: undefined | null | string | number, met
 
 function substitutionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
     return mutationData
+        .filter((m) => m.mutationTo !== '-')
         .map((m) => m.mutation)
-        .filter((m) => !m.endsWith('-'))
         .join(', ');
 }
 
 function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
     const segmentPositions = new Map<string | undefined, number[]>();
     mutationData
-        .filter((m) => m.mutation.endsWith('-'))
+        .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
-            const parts = m.mutation.split(':');
-            const [segment, mutation] = parts.length === 1 ? ([undefined, parts[0]] as const) : parts;
-            const position = Number.parseInt(mutation.slice(1, -1), 10);
+            const segment: string | undefined = m.sequenceName;
+            const position = m.position;
             if (!segmentPositions.has(segment)) {
                 segmentPositions.set(segment, []);
             }
