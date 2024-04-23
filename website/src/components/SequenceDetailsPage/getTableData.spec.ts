@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { type TableDataEntry, getTableData, toHeaderMap } from './getTableData.ts';
 import { mockRequest, testConfig } from '../../../vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
+import type { MutationProportionCount } from '../../types/lapis.ts';
 import type { Schema } from '../../types/config.ts';
 
 const schema: Schema = {
@@ -209,28 +210,84 @@ describe('getTableData', () => {
     });
 });
 
-const nucleotideMutations = [
-    { count: 0, proportion: 0, mutation: 'T10A' },
-    { count: 0, proportion: 0, mutation: 'A20-' },
-    { count: 0, proportion: 0, mutation: 'A21-' },
-    { count: 0, proportion: 0, mutation: 'C30G' },
-    { count: 0, proportion: 0, mutation: 'G40-' },
-    { count: 0, proportion: 0, mutation: 'C41-' },
-    { count: 0, proportion: 0, mutation: 'T42-' },
-    { count: 0, proportion: 0, mutation: 'T39-' },
-    { count: 0, proportion: 0, mutation: 'T43-' },
-    { count: 0, proportion: 0, mutation: 'T44-' },
-    { count: 0, proportion: 0, mutation: 'T45-' },
-    { count: 0, proportion: 0, mutation: 'T400-' },
+const nucleotideMutations: MutationProportionCount[] = [
+    { count: 0, proportion: 0, mutation: 'T10A', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'A20-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'A21-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'C30G', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'G40-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'C41-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'T42-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'T39-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'T43-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'T44-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'T45-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
+    { count: 0, proportion: 0, mutation: 'T400-', mutationFrom: 'T', mutationTo: 'A', position: 10, sequenceName: '' },
 ];
-const aminoAcidMutations = [
-    { count: 0, proportion: 0, mutation: 'gene1:N10Y' },
-    { count: 0, proportion: 0, mutation: 'gene1:R20-' },
-    { count: 0, proportion: 0, mutation: 'gene1:R21-' },
-    { count: 0, proportion: 0, mutation: 'gene1:N22-' },
-    { count: 0, proportion: 0, mutation: 'gene1:P23-' },
-    { count: 0, proportion: 0, mutation: 'gene1:T30N' },
-    { count: 0, proportion: 0, mutation: 'gene1:F40-' },
+const aminoAcidMutations: MutationProportionCount[] = [
+    {
+        count: 0,
+        proportion: 0,
+        mutation: 'gene1:N10Y',
+        mutationFrom: 'T',
+        mutationTo: 'A',
+        position: 10,
+        sequenceName: 'gene1',
+    },
+    {
+        count: 0,
+        proportion: 0,
+        mutation: 'gene1:R20-',
+        mutationFrom: 'T',
+        mutationTo: 'A',
+        position: 10,
+        sequenceName: 'gene1',
+    },
+    {
+        count: 0,
+        proportion: 0,
+        mutation: 'gene1:R21-',
+        mutationFrom: 'T',
+        mutationTo: 'A',
+        position: 10,
+        sequenceName: 'gene1',
+    },
+    {
+        count: 0,
+        proportion: 0,
+        mutation: 'gene1:N22-',
+        mutationFrom: 'T',
+        mutationTo: 'A',
+        position: 10,
+        sequenceName: 'gene1',
+    },
+    {
+        count: 0,
+        proportion: 0,
+        mutation: 'gene1:P23-',
+        mutationFrom: 'T',
+        mutationTo: 'A',
+        position: 10,
+        sequenceName: 'gene1',
+    },
+    {
+        count: 0,
+        proportion: 0,
+        mutation: 'gene1:T30N',
+        mutationFrom: 'T',
+        mutationTo: 'A',
+        position: 10,
+        sequenceName: 'gene1',
+    },
+    {
+        count: 0,
+        proportion: 0,
+        mutation: 'gene1:F40-',
+        mutationFrom: 'T',
+        mutationTo: 'A',
+        position: 10,
+        sequenceName: 'gene1',
+    },
 ];
 
 const nucleotideInsertions = [
