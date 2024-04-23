@@ -1,6 +1,6 @@
 import z from 'zod';
 
-import { orderByType } from './lapis.ts';
+import { orderByType, mutationProportionCount } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
@@ -9,6 +9,7 @@ export const metadataPossibleTypes = ['string', 'date', 'int', 'float', 'pango_l
 export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
+    value: z.array(mutationProportionCount).optional(),
 });
 
 export const metadata = z.object({

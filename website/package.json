@@ -42,6 +42,7 @@
         "luxon": "^3.4.4",
         "neverthrow": "^6.2.1",
         "openid-client": "^5.6.5",
+        "polished": "^4.3.1",
         "react": "^18.2.0",
         "react-chartjs-2": "^5.2.0",
         "react-confirm-alert": "^3.0.6",

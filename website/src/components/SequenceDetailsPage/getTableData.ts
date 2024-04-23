@@ -124,8 +124,9 @@ function toTableData(config: Schema) {
             {
                 label: 'Nucleotide substitutions',
                 name: 'nucleotideSubstitutions',
-                value: substitutionsToCommaSeparatedString(nucleotideMutations),
+                value: '',
                 header: 'Mutations, insertions, deletions',
+                customDisplay: { type: 'badge', value: substitutionsList(nucleotideMutations) },
             },
             {
                 label: 'Nucleotide deletions',
@@ -142,8 +143,9 @@ function toTableData(config: Schema) {
             {
                 label: 'Amino acid substitutions',
                 name: 'aminoAcidSubstitutions',
-                value: substitutionsToCommaSeparatedString(aminoAcidMutations),
+                value: '',
                 header: 'Mutations, insertions, deletions',
+                customDisplay: { type: 'badge', value: substitutionsList(aminoAcidMutations) },
             },
             {
                 label: 'Amino acid deletions',
@@ -175,11 +177,8 @@ function mapValueToDisplayedValue(value: undefined | null | string | number, met
     return value;
 }
 
-function substitutionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
-    return mutationData
-        .filter((m) => m.mutationTo !== '-')
-        .map((m) => m.mutation)
-        .join(', ');
+function substitutionsList(mutationData: MutationProportionCount[]) {
+    return mutationData.filter((m) => m.mutationTo !== '-');
 }
 
 function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
@@ -187,8 +186,7 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
     mutationData
         .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
-            const segment = m.sequenceName ? undefined : m.sequenceName;
-            console.log(segment);
+            const segment: string = m.sequenceName;
             const position = m.position;
             if (!segmentPositions.has(segment)) {
                 segmentPositions.set(segment, []);
