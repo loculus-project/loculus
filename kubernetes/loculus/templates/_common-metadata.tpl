@@ -40,6 +40,9 @@ fields:
     initiallyVisible: true
     customDisplay:
       type: dataUseTerms
+  - name: dataUseTermsRestrictedUntil
+    type: date
+    displayName: Data use terms restricted until
   - name: versionStatus
     type: string
     notSearchable: true

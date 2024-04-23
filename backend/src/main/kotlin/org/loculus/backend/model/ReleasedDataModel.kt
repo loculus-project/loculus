@@ -2,6 +2,7 @@ package org.loculus.backend.model
 
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
+import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
@@ -10,7 +11,6 @@ import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
 import org.loculus.backend.api.DataUseTerms
-import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
@@ -48,7 +48,12 @@ class ReleasedDataModel(
     ): ProcessedData<GeneticSequence> {
         val siloVersionStatus = computeSiloVersionStatus(rawProcessedData, latestVersions, latestRevocationVersions)
 
-        val currentDataUseTermsType = computeDataUseTerm(rawProcessedData)
+        val currentDataUseTerms = computeDataUseTerm(rawProcessedData)
+        val restrictedDataUseTermsUntil = if (currentDataUseTerms is DataUseTerms.Restricted) {
+            TextNode(currentDataUseTerms.restrictedUntil.toString())
+        } else {
+            NullNode.getInstance()
+        }
 
         var metadata = rawProcessedData.processedData.metadata +
             ("accession" to TextNode(rawProcessedData.accession)) +
@@ -62,7 +67,8 @@ class ReleasedDataModel(
             ("submittedAt" to LongNode(rawProcessedData.submittedAt.toTimestamp())) +
             ("releasedAt" to LongNode(rawProcessedData.releasedAt.toTimestamp())) +
             ("versionStatus" to TextNode(siloVersionStatus.name)) +
-            ("dataUseTerms" to TextNode(currentDataUseTermsType.name))
+            ("dataUseTerms" to TextNode(currentDataUseTerms.type.name)) +
+            ("dataUseTermsRestrictedUntil" to restrictedDataUseTermsUntil)
 
         if (backendConfig.dataUseTermsUrls != null) {
             val url = if (rawProcessedData.dataUseTerms == DataUseTerms.Open) {
@@ -83,13 +89,13 @@ class ReleasedDataModel(
         )
     }
 
-    private fun computeDataUseTerm(rawProcessedData: RawProcessedData) = if (
+    private fun computeDataUseTerm(rawProcessedData: RawProcessedData): DataUseTerms = if (
         rawProcessedData.dataUseTerms is DataUseTerms.Restricted &&
-        rawProcessedData.dataUseTerms.restrictedUntil < Clock.System.now().toLocalDateTime(TimeZone.UTC).date
+        rawProcessedData.dataUseTerms.restrictedUntil > Clock.System.now().toLocalDateTime(TimeZone.UTC).date
     ) {
-        DataUseTermsType.RESTRICTED
+        DataUseTerms.Restricted(rawProcessedData.dataUseTerms.restrictedUntil)
     } else {
-        rawProcessedData.dataUseTerms.type
+        DataUseTerms.Open
     }
 
     private fun computeSiloVersionStatus(
