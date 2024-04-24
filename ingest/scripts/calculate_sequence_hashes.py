@@ -1,8 +1,11 @@
+"""For each downloaded sequences calculate md5 hash and put into JSON
+"""
 import hashlib
+import json
 import logging
+from pathlib import Path
 
 import click
-import pandas as pd
 from Bio import SeqIO
 
 
@@ -23,9 +26,10 @@ def main(input: str, output: str, log_level: str) -> None:
         records = SeqIO.parse(f, "fasta")
         for record in records:
             results[record.id] = hashlib.md5(str(record.seq).encode()).hexdigest()
+    
+    # Save results to JSON
+    Path(output).write_text(json.dumps(results, indent=4))
 
-    df = pd.Series(results).reset_index().rename(columns={"index": "accession", 0: "sequence_md5"})
-    df.to_csv(output, sep="\t", index=False)
 
 
 if __name__ == "__main__":

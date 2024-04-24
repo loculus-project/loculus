@@ -69,7 +69,7 @@ rule calculate_sequence_hashes:
     input:
         sequences="results/sequences.fasta",
     output:
-        sequence_hashes="results/sequence_hashes.tsv",
+        sequence_hashes="results/sequence_hashes.json",
     shell:
         """
         python scripts/calculate_sequence_hashes.py \
