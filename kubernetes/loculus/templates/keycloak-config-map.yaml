@@ -310,11 +310,11 @@ data:
         "frontendUrl": "http://localhost:8083"
         {{- end }}
         {{- if eq .Values.environment "server" }}
-        "adminUrl": "https://{{ $keycloakAdminHost }}"
+       , "adminUrl": "https://{{ $keycloakAdminHost }}"
         {{- else if .Values.codespaceName }}
-        "adminUrl": "https://{{ .Values.codespaceName }}-8084.app.github.dev"
+        ,"adminUrl": "https://{{ .Values.codespaceName }}-8084.app.github.dev"
         {{- else }}
-        "adminUrl": "http://localhost:8084"
+       , "adminUrl": "http://localhost:8084"
         {{- end }}
          , "userProfileEnabled" : "true"
       },
