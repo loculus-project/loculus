@@ -1,6 +1,7 @@
 {{- if eq .Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
 {{- $keycloakHost := printf "authentication-%s" .Values.host }}
+{{- $keycloakAdminHost := printf "authentication-admin-%s" .Values.host }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -41,6 +42,26 @@ spec:
   tls:
   - hosts:
     - "{{ $backendHost }}"
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: loculus-keycloak-admin-ingress
+spec:
+  rules:
+    - host: "{{ $keycloakAdminHost }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: loculus-keycloak-service
+                port:
+                  number: 8083
+  tls:
+  - hosts:
+    - "{{ $keycloakAdminHost }}"
 ---
 
 apiVersion: networking.k8s.io/v1

@@ -1,4 +1,5 @@
 {{- $keycloakHost := printf "authentication-%s" .Values.host }}
+{{- $keycloakAdminHost := printf "authentication-admin-%s" .Values.host }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -307,6 +308,13 @@ data:
         "frontendUrl": "https://{{ .Values.codespaceName }}-8083.app.github.dev"
         {{- else }}
         "frontendUrl": "http://localhost:8083"
+        {{- end }}
+        {{- if eq .Values.environment "server" }}
+        "adminUrl": "https://{{ $keycloakAdminHost }}"
+        {{- else if .Values.codespaceName }}
+        "adminUrl": "https://{{ .Values.codespaceName }}-8084.app.github.dev"
+        {{- else }}
+        "adminUrl": "http://localhost:8084"
         {{- end }}
          , "userProfileEnabled" : "true"
       },
