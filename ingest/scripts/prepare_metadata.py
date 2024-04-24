@@ -6,8 +6,10 @@
 # Like separation of country into country and division
 
 import hashlib
+import json
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 import click
 import pandas as pd
@@ -20,12 +22,6 @@ class Config:
     fasta_id_field: str
     rename: dict[str, str]
     keep: list[str]
-
-
-def hash_row_with_columns(row: pd.Series) -> str:
-    items = sorted((f"{col}_{val}" for col, val in row.items()))
-    row_string = "".join(items)
-    return hashlib.md5(row_string.encode()).hexdigest()
 
 
 def split_authors(authors: str) -> str:
@@ -62,33 +58,53 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
         config = Config(**relevant_config)
     logging.debug(config)
     # Read sequence hashes
-    hash_df = pd.read_csv(sequence_hashes, sep="\t", dtype=str)
-    df = pd.read_csv(input, sep="\t", dtype=str).sort_values(by=config.compound_country_field)
+    df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False).sort_values(
+        by=config.compound_country_field
+    )
+    # Turn tsv into list of objects
+    metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
-    # Join the two dataframes on respective indexes
-    # df: fasta_id_field, and hash_df: accession
-    # But don't set the index
-    df = df.merge(hash_df, left_on=config.fasta_id_field, right_on="accession", how="inner")
-    
-    logging.debug(df.columns)
-    df["division"] = df[config.compound_country_field].str.split(":", n=1).str[1].str.strip()
-    logging.debug(df["division"].unique())
-    df["country"] = df[config.compound_country_field].str.split(":", n=1).str[0].str.strip()
-    logging.debug(df["country"].unique())
-    df["submissionId"] = df[config.fasta_id_field]
-    logging.debug(df["submissionId"].unique())
-    df["insdc_accession_base"] = df[config.fasta_id_field].str.split(".", n=1).str[0]
-    logging.debug(df["insdc_accession_base"])
-    df["insdc_version"] = df[config.fasta_id_field].str.split(".", n=1).str[1]
-    logging.debug(df["insdc_version"].unique())
-    logging.debug(df["ncbi_submitter_names"])
-    df["ncbi_submitter_names"] = df["ncbi_submitter_names"].map(lambda x: split_authors(str(x)))
-    df = df.rename(columns=config.rename)
-    # Drop columns that are neither a value of `rename` nor in `keep`
-    df = df.drop(columns=set(df.columns) - set(config.rename.values()) - set(config.keep))
-    # Create a metadata hash that is independent of the order of the columns
-    df["hash"] = df.apply(hash_row_with_columns, axis=1)
-    df.to_csv(output, sep="\t", index=False)
+    hashes: dict[str, str] = json.loads(Path(sequence_hashes).read_text())
+
+    for record in metadata:
+        # Transform the metadata
+        try:
+            record["division"] = record[config.compound_country_field].split(":", 1)[1].strip()
+        except IndexError:
+            record["division"] = ""
+        record["country"] = record[config.compound_country_field].split(":", 1)[0].strip()
+        record["submissionId"] = record[config.fasta_id_field]
+        record["insdc_accession_base"] = record[config.fasta_id_field].split(".", 1)[0]
+        record["insdc_version"] = record[config.fasta_id_field].split(".", 1)[1]
+        record["ncbi_submitter_names"] = split_authors(record["ncbi_submitter_names"])
+
+    # Rename the fields
+    for record in metadata:
+        for from_key, to_key in config.rename.items():
+            val = record.pop(from_key)
+            record[to_key] = val
+
+    # Keep only the fields that are not in either `rename` or `keep`
+    keys_to_keep = set(config.rename.values()) | set(config.keep)
+    for record in metadata:
+        for key in list(record.keys()):
+            if key not in keys_to_keep:
+                record.pop(key)
+
+    # Calculate overall hash of metadata + sequence
+    for record in metadata:
+        # Add the hashes to the metadata
+        sequence_hash = hashes.get(record[config.rename[config.fasta_id_field]], "")
+        if sequence_hash == "":
+            logging.warning(f"No hash found for {record[config.fasta_id_field]}")
+
+        metadata_dump = json.dumps(record, sort_keys=True)
+        prehash = metadata_dump + sequence_hash
+
+        record["hash"] = hashlib.md5(prehash.encode()).hexdigest()
+
+    # Save the metadata
+    Path(output).write_text(json.dumps(metadata, indent=4))
 
 
 if __name__ == "__main__":
