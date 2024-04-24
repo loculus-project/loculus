@@ -131,6 +131,7 @@ create table seqset_records (
     seqset_record_id bigserial,
     accession text not null,
     type text not null,
+    is_focal boolean not null,
 
     primary key (seqset_record_id)
 );

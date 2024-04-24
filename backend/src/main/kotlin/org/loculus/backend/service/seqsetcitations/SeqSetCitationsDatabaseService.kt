@@ -77,6 +77,7 @@ class SeqSetCitationsDatabaseService(
                 .insert {
                     it[SeqSetRecordsTable.accession] = record.accession
                     it[SeqSetRecordsTable.type] = record.type
+                    it[SeqSetRecordsTable.isFocal] = record.isFocal ?: true
                 }
             SeqSetToRecordsTable
                 .insert {
@@ -142,7 +143,10 @@ class SeqSetCitationsDatabaseService(
         for (record in seqSetRecords) {
             val existingRecord = SeqSetRecordsTable
                 .selectAll()
-                .where { SeqSetRecordsTable.accession eq record.accession }
+                .where {
+                    (SeqSetRecordsTable.accession eq record.accession) and
+                        (SeqSetRecordsTable.isFocal eq record.isFocal)
+                }
                 .singleOrNull()
 
             val seqSetRecordId = if (existingRecord == null) {
@@ -150,6 +154,7 @@ class SeqSetCitationsDatabaseService(
                     .insert {
                         it[SeqSetRecordsTable.accession] = record.accession
                         it[SeqSetRecordsTable.type] = record.type
+                        it[SeqSetRecordsTable.isFocal] = record.isFocal ?: true
                     }
                 insertedRecord[SeqSetRecordsTable.seqSetRecordId]
             } else {
@@ -237,6 +242,7 @@ class SeqSetCitationsDatabaseService(
                     it[SeqSetRecordsTable.seqSetRecordId],
                     it[SeqSetRecordsTable.accession],
                     it[SeqSetRecordsTable.type],
+                    it[SeqSetRecordsTable.isFocal],
                 )
             }
 
@@ -470,9 +476,17 @@ class SeqSetCitationsDatabaseService(
         newSeqSetRecords: List<SubmittedSeqSetRecord>,
         newSeqSetDescription: String?,
     ) {
+        val oldSubmittedSeqSetRecords = oldSeqSetRecords.map {
+            SubmittedSeqSetRecord(
+                it.accession,
+                it.type,
+                it.isFocal,
+            )
+        }
+
         if (oldSeqSet.name == newSeqSetName &&
             oldSeqSet.description == newSeqSetDescription &&
-            oldSeqSetRecords.map { it.accession }.toSet() == newSeqSetRecords.map { it.accession }.toSet()
+            oldSubmittedSeqSetRecords == newSeqSetRecords
         ) {
             throw UnprocessableEntityException("SeqSet update must contain at least one change")
         }

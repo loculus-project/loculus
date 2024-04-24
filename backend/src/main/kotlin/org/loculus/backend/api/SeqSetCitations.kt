@@ -3,16 +3,22 @@ package org.loculus.backend.api
 import io.swagger.v3.oas.annotations.media.Schema
 import org.loculus.backend.utils.Accession
 import java.sql.Timestamp
-import java.util.UUID
+import java.util.*
 
 data class SubmittedSeqSetRecord(
     val accession: Accession,
     @Schema(
         description = "The type of the accession.",
         type = "string",
-        example = "GenBank",
+        example = "Loculus",
     )
     val type: String,
+    @Schema(
+        description = "Whether the record is focal or part of a background set.",
+        type = "boolean",
+        example = "true",
+    )
+    val isFocal: Boolean = true,
 )
 
 data class SubmittedSeqSet(
@@ -32,6 +38,7 @@ data class SeqSetRecord(
     val seqSetRecordId: Long,
     val accession: Accession,
     val type: String,
+    val isFocal: Boolean = true,
 )
 
 data class SeqSet(
@@ -42,7 +49,7 @@ data class SeqSet(
     val createdBy: String,
     val description: String?,
     @Schema(
-        description = "The DOI of the seqSet.",
+        description = "The DOI of the SeqSet.",
         type = "string",
         example = "10.1234/5678",
     )
@@ -56,7 +63,7 @@ data class ResponseSeqSet(
 
 data class CitedBy(
     @Schema(
-        description = "The years in which the seqSet or sequence was cited.",
+        description = "The years in which the SeqSet or sequence was cited.",
         type = "array",
         example = "[2000, 2001, 2002]",
     )
