@@ -42,7 +42,7 @@ export const NucSubBadge = ({ sub, className, ...rest }: { sub: NucSub; classNam
             <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
                 {qry}
             </span>
-            <span>{ } </span>
+            <span>{} </span>
         </span>
     );
 };
@@ -82,7 +82,7 @@ export const AaSubBadge = ({ sub, className, ...rest }: { sub: AaSub; className:
             <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
                 {qry}
             </span>
-            <span>{ } </span>
+            <span>{} </span>
         </span>
     );
 };
