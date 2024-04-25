@@ -34,7 +34,7 @@ export const NucSubBadge = ({ sub, className, ...rest }: { sub: NucSub; classNam
     }, [qry, ref]);
 
     return (
-        <span className={classNames('font-mono text-xs', className)} {...rest}>
+        <span className={classNames('font-mono text-xs overflow-auto', className)} {...rest}>
             <span className='px-[4px] py-[2px] rounded-s-[3px]' style={style.ref}>
                 {ref}
             </span>
@@ -42,6 +42,7 @@ export const NucSubBadge = ({ sub, className, ...rest }: { sub: NucSub; classNam
             <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
                 {qry}
             </span>
+            <span>{ } </span>
         </span>
     );
 };
@@ -81,6 +82,7 @@ export const AaSubBadge = ({ sub, className, ...rest }: { sub: AaSub; className:
             <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
                 {qry}
             </span>
+            <span>{ } </span>
         </span>
     );
 };

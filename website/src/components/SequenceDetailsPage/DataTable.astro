@@ -26,8 +26,8 @@ const headerMap = toHeaderMap(tableData);
                                     <td class='py-1 whitespace-nowrap text-sm font-medium text-gray-900 text-right w-32'>
                                         {label}
                                     </td>
-                                    <td class='px-4 py-1 whitespace-normal text-sm text-gray-600'>
-                                        <div class='flex items-center gap-3'>
+                                    <td class='px-4 py-1 text-sm text-gray-600'>
+                                        <div class='items-center gap-3 whitespace-wrap'>
                                             {customDisplay === undefined && value}
                                             {customDisplay !== undefined &&
                                                 customDisplay.type === 'badge' &&
