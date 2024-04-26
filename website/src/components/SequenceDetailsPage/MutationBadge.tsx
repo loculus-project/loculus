@@ -1,4 +1,5 @@
 import { type FC } from 'react';
+
 import type { MutationProportionCount } from '../../types/lapis';
 
 type NucSubProps = {
