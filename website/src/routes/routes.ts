@@ -17,6 +17,7 @@ export const routes = {
     searchPage: <Filter extends FilterValue>(
         organism: string,
         metadataFilter: Filter[] = [],
+        unflattenedMetadataFilter: Filter[] = [],
         accessionFilter: AccessionFilter = {},
         mutationFilter: MutationFilter = {},
         page: number | undefined = undefined,
@@ -24,7 +25,7 @@ export const routes = {
     ) =>
         withOrganism(
             organism,
-            `/search?${buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString()}`,
+            `/search?${buildSearchParams(metadataFilter, unflattenedMetadataFilter, accessionFilter,  mutationFilter, page, orderBy).toString()}`,
         ),
     metadataTemplate: (organism: string) => withOrganism(organism, `/submission/template`),
 
@@ -32,6 +33,7 @@ export const routes = {
         organism: string,
         groupId: number,
         metadataFilter: FilterValue[] = [],
+        unflattenedMetadataFilter: FilterValue[] = [],
         accessionFilter: AccessionFilter = {},
         mutationFilter: MutationFilter = {},
         page: number | undefined = undefined,
@@ -41,7 +43,7 @@ export const routes = {
             name: 'released',
             organism,
             groupId,
-            searchParams: buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy),
+            searchParams: buildSearchParams(metadataFilter, unflattenedMetadataFilter, accessionFilter, mutationFilter, page, orderBy),
         }),
     sequencesDetailsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}`,
@@ -92,22 +94,24 @@ export const navigateToSearchLikePage = (
     classOfSearchPage: ClassOfSearchPageType,
     groupId: number | undefined,
     metadataFilter: FilterValue[] = [],
+    unflattenedMetadataFilter: FilterValue[] = [],
     accessionFilter: AccessionFilter = {},
     mutationFilter: MutationFilter = {},
     page?: number,
     orderBy?: OrderBy,
 ) => {
-    const paramsString = buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString();
+    const paramsString = buildSearchParams(metadataFilter, unflattenedMetadataFilter, accessionFilter, mutationFilter, page, orderBy).toString();
 
     if (paramsString.length < approxMaxUrlLengthForSearch) {
         if (classOfSearchPage === SEARCH) {
-            location.href = routes.searchPage(organism, metadataFilter, accessionFilter, mutationFilter, page, orderBy);
+            location.href = routes.searchPage(organism, metadataFilter, unflattenedMetadataFilter, accessionFilter, mutationFilter, page, orderBy);
         }
         if (classOfSearchPage === MY_SEQUENCES) {
             location.href = routes.mySequencesPage(
                 organism,
                 groupId!,
                 metadataFilter,
+                unflattenedMetadataFilter,
                 accessionFilter,
                 mutationFilter,
                 page,
@@ -137,8 +141,10 @@ export const navigateToSearchLikePage = (
 
 const buildSearchParams = <Filter extends FilterValue>(
     metadataFilter: Filter[],
+    unflattenedMetadataFilter: Filter[],
     accessionFilter: AccessionFilter,
     mutationFilter: MutationFilter,
+
     page?: number,
     orderBy?: OrderBy,
 ) => {
@@ -147,7 +153,11 @@ const buildSearchParams = <Filter extends FilterValue>(
         if (filter.filterValue !== '') {
             params.set(filter.name, filter.filterValue);
         }
-        if (filter.isVisible !== filter.initiallyVisible) {
+        
+    });
+    unflattenedMetadataFilter.forEach((filter) => {
+      
+        if (filter.isVisible !== (filter.initiallyVisible ?? false) && filter.notSearchable!==true) {
             params.set(`${filter.name}Visibility`, (filter.isVisible ?? false).toString());
         }
     });

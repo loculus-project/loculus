@@ -99,6 +99,7 @@ export const SearchForm: FC<SearchFormProps> = ({
             classOfSearchPage,
             groupId,
             searchableFieldValues,
+            fieldValues,
             accessionFilter,
             mutationFilter,
         );
@@ -326,6 +327,7 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
                     displayName: filter.fieldGroupDisplayName,
                     label: filter.label,
                     initiallyVisible: filter.initiallyVisible,
+                    isVisible: filter.isVisible,
                 };
                 fieldList.push(fieldForGroup);
                 groupsMap.set(filter.fieldGroup, fieldForGroup);

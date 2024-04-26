@@ -93,6 +93,8 @@ export const getMetadataFilters = (
         if (options.exclude && options.exclude.includes(metadata.name)) {
             return [];
         }
+        const paramVisibility = getSearchParams(`${metadata.name}Visibility`);
+        const isVisible = paramVisibility === '' ? metadata.initiallyVisible===true : paramVisibility === 'true';
 
         if (metadata.type === 'date' || metadata.type === 'timestamp') {
             const metadataFrom = {
@@ -102,6 +104,7 @@ export const getMetadataFilters = (
                 filterValue: getSearchParams(`${metadata.name}From`),
                 fieldGroup: metadata.name,
                 fieldGroupDisplayName: metadata.displayName,
+                isVisible
             };
 
             const metadataTo = {
@@ -111,29 +114,24 @@ export const getMetadataFilters = (
                 filterValue: getSearchParams(`${metadata.name}To`),
                 fieldGroup: metadata.name,
                 fieldGroupDisplayName: metadata.displayName,
+                isVisible
             };
             return [metadataFrom, metadataTo];
         }
+
+        
 
         return [
             {
                 ...metadata,
                 filterValue: getSearchParams(metadata.name),
+                isVisible
+                
             },
         ];
     });
 
-    return fields.map(
-       (field) => {
-              const paramVisibility = getSearchParams(`${field.name}Visibility`);
-              const isVisible = paramVisibility === 'true' ? true : field.initiallyVisible;
-              return {
-               
-                ...field,
-                isVisible,
-              };
-         }
-    )
+    return fields
 };
 
 export const getOrderBy = (
