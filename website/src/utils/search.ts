@@ -7,6 +7,7 @@ import type { ProblemDetail } from '../types/backend.ts';
 import type { AccessionFilter, MetadataFilter, MutationFilter } from '../types/config.ts';
 import { type LapisBaseRequest, type OrderBy, type OrderByType, orderByType } from '../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes.ts';
+import { isVisible } from '@testing-library/user-event/dist/cjs/utils/index.js';
 
 export type SearchResponse = {
     data: TableSequenceData[];
@@ -85,7 +86,7 @@ export const getMetadataFilters = (
     options: { exclude?: string[] } = {},
 ): MetadataFilter[] => {
     const schema = getSchema(organism);
-    return schema.metadata.flatMap((metadata) => {
+    const fields = schema.metadata.flatMap((metadata) => {
         if (metadata.notSearchable === true) {
             return [];
         }
@@ -121,6 +122,18 @@ export const getMetadataFilters = (
             },
         ];
     });
+
+    return fields.map(
+       (field) => {
+              const paramVisibility = getSearchParams(`${field.name}Visibility`);
+              const isVisible = paramVisibility === 'true' ? true : field.initiallyVisible;
+              return {
+               
+                ...field,
+                isVisible,
+              };
+         }
+    )
 };
 
 export const getOrderBy = (

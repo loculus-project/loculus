@@ -51,7 +51,7 @@ export const SearchForm: FC<SearchFormProps> = ({
         fieldList.map((filter) => ({
             ...filter,
             label: filter.label ?? filter.displayName ?? sentenceCase(filter.name),
-            isVisible: filter.initiallyVisible ?? false,
+           
         })),
     );
 

@@ -53,7 +53,7 @@ export type GroupedMetadataFilter = {
     initiallyVisible?: boolean;
 };
 
-export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
+export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue' | 'isVisible' | 'initiallyVisible'>;
 
 export type AccessionFilter = {
     accession?: string[];

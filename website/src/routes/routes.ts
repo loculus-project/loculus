@@ -147,6 +147,9 @@ const buildSearchParams = <Filter extends FilterValue>(
         if (filter.filterValue !== '') {
             params.set(filter.name, filter.filterValue);
         }
+        if (filter.isVisible !== filter.initiallyVisible) {
+            params.set(`${filter.name}Visibility`, (filter.isVisible ?? false).toString());
+        }
     });
     const setCommaSeparatedParamsIfNotNotEmpty = (paramName: string, value: string[] | undefined) => {
         if (value !== undefined && value.length > 0) {
