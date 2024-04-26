@@ -1,6 +1,6 @@
 import { SubmissionRouteUtils } from './SubmissionRoute.ts';
 import type { AccessionVersion } from '../types/backend.ts';
-import type { AccessionFilter, FilterValue, MutationFilter } from '../types/config.ts';
+import type { AccessionFilter, FilterValue, MutationFilter, MetadataFilter, GroupedMetadataFilter } from '../types/config.ts';
 import type { OrderBy } from '../types/lapis.ts';
 import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
 
@@ -17,7 +17,7 @@ export const routes = {
     searchPage: <Filter extends FilterValue>(
         organism: string,
         metadataFilter: Filter[] = [],
-        unflattenedMetadataFilter: Filter[] = [],
+        unflattenedMetadataFilter: ((MetadataFilter | GroupedMetadataFilter) & { label: string })[] = [],
         accessionFilter: AccessionFilter = {},
         mutationFilter: MutationFilter = {},
         page: number | undefined = undefined,
@@ -33,7 +33,7 @@ export const routes = {
         organism: string,
         groupId: number,
         metadataFilter: FilterValue[] = [],
-        unflattenedMetadataFilter: FilterValue[] = [],
+        unflattenedMetadataFilter: ((MetadataFilter | GroupedMetadataFilter) & { label: string })[] = [],
         accessionFilter: AccessionFilter = {},
         mutationFilter: MutationFilter = {},
         page: number | undefined = undefined,
@@ -94,7 +94,7 @@ export const navigateToSearchLikePage = (
     classOfSearchPage: ClassOfSearchPageType,
     groupId: number | undefined,
     metadataFilter: FilterValue[] = [],
-    unflattenedMetadataFilter: FilterValue[] = [],
+    unflattenedMetadataFilter: ((MetadataFilter | GroupedMetadataFilter) & { label: string }) [] = [],
     accessionFilter: AccessionFilter = {},
     mutationFilter: MutationFilter = {},
     page?: number,
@@ -141,7 +141,10 @@ export const navigateToSearchLikePage = (
 
 const buildSearchParams = <Filter extends FilterValue>(
     metadataFilter: Filter[],
-    unflattenedMetadataFilter: Filter[],
+    unflattenedMetadataFilter: (
+        ((MetadataFilter | GroupedMetadataFilter) & { label: string })
+    )[],
+    
     accessionFilter: AccessionFilter,
     mutationFilter: MutationFilter,
 
