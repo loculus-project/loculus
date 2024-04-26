@@ -89,7 +89,7 @@ const getSequenceDetailsUnalignedFastaWithOrganism = async (
                       };
                       return fastaEntryToString([withSegmentSuffix]);
                   })
-                  .join('\n'),
+                  .join(''),
           );
     if (fastaResult.isOk()) {
         if (fastaResult.value.trim().length === 0) {
@@ -102,9 +102,8 @@ const getSequenceDetailsUnalignedFastaWithOrganism = async (
             });
         }
     }
-    const withNewLineTermination = fastaResult.map((fasta) => `${fasta}\n`);
 
-    return withNewLineTermination.map((fasta) => ({
+    return fastaResult.map((fasta) => ({
         type: ResultType.DATA,
         fasta,
     }));
