@@ -2,89 +2,51 @@ import { type FC } from 'react';
 
 import type { MutationProportionCount } from '../../types/lapis';
 
-type NucSubProps = {
-    pos: number;
+export type SubProps = {
+    position: number;
     mutationTo: string;
     mutationFrom: string;
+    sequenceName: string | null;
 };
 
-export type AaSub = {
-    pos: number;
-    mutationTo: string;
-    mutationFrom: string;
-    gene: string; // TODO: more generally, this might need to be CDS name or even a pair of (gene, CDS)
-};
-
-export const NucSubBadge: FC<NucSubProps> = ({ pos, mutationTo, mutationFrom }) => {
+export const SubBadge: FC<SubProps> = ({ position, mutationTo, mutationFrom, sequenceName }) => {
     return (
-        <span className='whitespace-wrap'>
-            <span className='border-2 bg-transparent rounded-[3px] font-mono text-xs overflow-auto'>
-                <span className='px-[4px] py-[2px] rounded-s-[3px]' style={{ background: getNucColor(mutationFrom) }}>
-                    {mutationFrom}
-                </span>
-                <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
-                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{ background: getNucColor(mutationTo) }}>
+        <li key={position} className='inline-block'>
+            <span className='rounded-[3px] font-mono text-xs overflow-auto'>
+                {sequenceName === null ? (
+                    <span className='px-[4px] py-[2px] rounded-s-[3px]' style={{ background: getColor(mutationFrom) }}>
+                        {mutationFrom}
+                    </span>
+                ) : (
+                    <>
+                        <span className='px-[4px] py-[2px] rounded-s-[3px] bg-gray-200'>{sequenceName}:</span>
+                        <span className='px-[4px] py-[2px]' style={{ background: getColor(mutationFrom) }}>
+                            {mutationFrom}
+                        </span>
+                    </>
+                )}
+                <span className='px-[4px] py-[2px] bg-gray-200'>{position + 1}</span>
+                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{ background: getColor(mutationTo) }}>
                     {mutationTo}
                 </span>
             </span>
-            <span> </span>
-        </span>
+        </li>
     );
 };
 
-export const AaSubBadge: FC<AaSub> = ({ pos, mutationTo, mutationFrom, gene }) => {
-    return (
-        <span className='whitespace-wrap'>
-            <span className='border-2 bg-transparent rounded-[3px] font-mono text-xs overflow-auto'>
-                <span className='px-[4px] py-[2px] rounded-s-[3px]'>{gene}:</span>
-                <span className='px-[4px] py-[2px]' style={{ background: getAaColor(mutationFrom) }}>
-                    {mutationFrom}
-                </span>
-                <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
-                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{ background: getAaColor(mutationTo) }}>
-                    {mutationTo}
-                </span>
-            </span>
-            <span> </span>
-        </span>
-    );
-};
-
-export const NUCLEOTIDE_COLORS: Record<string, string> = {
+// Based from http://ugene.net/forum/YaBB.pl?num=1337064665
+export const COLORS: Record<string, string> = {
     'A': '#db8070',
     'C': '#859dfc',
     'G': '#c2b553',
     'T': '#7fbb81',
-    'N': '#7b7b7b',
-    'R': '#e3c1ae',
-    'K': '#c1c9ad',
-    'S': '#a9c7b4',
-    'Y': '#a5bfc4',
-    'M': '#bdbcbe',
-    'W': '#c9ccaf',
-    'B': '#a6d0e3',
-    'H': '#e7e9ff',
-    'D': '#fefdfb',
-    'V': '#dadada',
-    '-': '#9d9d9d',
-} as const;
-
-export function getNucColor(nuc: string) {
-    return NUCLEOTIDE_COLORS[nuc] ?? NUCLEOTIDE_COLORS.N;
-}
-
-// Borrowed from http://ugene.net/forum/YaBB.pl?num=1337064665
-export const AMINOACID_COLORS: Record<string, string> = {
-    'A': '#e5e575',
     'V': '#e5e57c',
     'L': '#e5e550',
     'I': '#e5e514',
     'B': '#e54c4c',
-    'C': '#cee599',
     'D': '#e5774e',
     'E': '#e59c6c',
     'F': '#e2e54d',
-    'G': '#e57474',
     'H': '#9ddde5',
     'K': '#b4a2e5',
     'M': '#b7e525',
@@ -93,7 +55,6 @@ export const AMINOACID_COLORS: Record<string, string> = {
     'Q': '#e5aacd',
     'R': '#878fe5',
     'S': '#e583d8',
-    'T': '#e5b3cc',
     'W': '#4aa7e5',
     'X': '#aaaaaa',
     'Y': '#57cfe5',
@@ -102,16 +63,19 @@ export const AMINOACID_COLORS: Record<string, string> = {
     '-': '#444444',
 };
 
-export function getAaColor(aa: string): string {
-    return AMINOACID_COLORS[aa] ?? AMINOACID_COLORS.X;
+export function getColor(code: string): string {
+    return COLORS[code] ?? COLORS.X;
 }
 
 export const SubstitutionsContainer = ({ values }: { values: MutationProportionCount[] }) => {
-    return values.map(({ mutationFrom, mutationTo, position, sequenceName }) =>
-        sequenceName === null ? (
-            <NucSubBadge mutationFrom={mutationFrom} pos={position} mutationTo={mutationTo} />
-        ) : (
-            <AaSubBadge gene={sequenceName} mutationFrom={mutationFrom} pos={position} mutationTo={mutationTo} />
-        ),
-    );
+    return values.map(({ mutationFrom, mutationTo, position, sequenceName }) => (
+        <span>
+            <SubBadge
+                sequenceName={sequenceName}
+                mutationFrom={mutationFrom}
+                position={position}
+                mutationTo={mutationTo}
+            />{' '}
+        </span>
+    ));
 };

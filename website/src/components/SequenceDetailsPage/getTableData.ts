@@ -99,6 +99,55 @@ export function toHeaderMap(listTableDataEntries: TableDataEntry[]): { [key: str
     return groupedData;
 }
 
+function mutationDetails(
+    nucleotideMutations: MutationProportionCount[],
+    aminoAcidMutations: MutationProportionCount[],
+    nucleotideInsertions: InsertionCount[],
+    aminoAcidInsertions: InsertionCount[],
+): TableDataEntry[] {
+    const data: TableDataEntry[] = [
+        {
+            label: 'Nucleotide substitutions',
+            name: 'nucleotideSubstitutions',
+            value: '',
+            header: 'Mutations, insertions, deletions',
+            customDisplay: { type: 'badge', value: substitutionsList(nucleotideMutations) },
+        },
+        {
+            label: 'Nucleotide deletions',
+            name: 'nucleotideDeletions',
+            value: deletionsToCommaSeparatedString(nucleotideMutations),
+            header: 'Mutations, insertions, deletions',
+        },
+        {
+            label: 'Nucleotide insertions',
+            name: 'nucleotideInsertions',
+            value: insertionsToCommaSeparatedString(nucleotideInsertions),
+            header: 'Mutations, insertions, deletions',
+        },
+        {
+            label: 'Amino acid substitutions',
+            name: 'aminoAcidSubstitutions',
+            value: '',
+            header: 'Mutations, insertions, deletions',
+            customDisplay: { type: 'badge', value: substitutionsList(aminoAcidMutations) },
+        },
+        {
+            label: 'Amino acid deletions',
+            name: 'aminoAcidDeletions',
+            value: deletionsToCommaSeparatedString(aminoAcidMutations),
+            header: 'Mutations, insertions, deletions',
+        },
+        {
+            label: 'Amino acid insertions',
+            name: 'aminoAcidInsertions',
+            value: insertionsToCommaSeparatedString(aminoAcidInsertions),
+            header: 'Mutations, insertions, deletions',
+        },
+    ];
+    return data;
+}
+
 function toTableData(config: Schema) {
     return ({
         details,
@@ -122,46 +171,13 @@ function toTableData(config: Schema) {
                 value: mapValueToDisplayedValue(details[metadata.name], metadata),
                 header: metadata.header ?? '',
             }));
-        data.push(
-            {
-                label: 'Nucleotide substitutions',
-                name: 'nucleotideSubstitutions',
-                value: '',
-                header: 'Mutations, insertions, deletions',
-                customDisplay: { type: 'badge', value: substitutionsList(nucleotideMutations) },
-            },
-            {
-                label: 'Nucleotide deletions',
-                name: 'nucleotideDeletions',
-                value: deletionsToCommaSeparatedString(nucleotideMutations),
-                header: 'Mutations, insertions, deletions',
-            },
-            {
-                label: 'Nucleotide insertions',
-                name: 'nucleotideInsertions',
-                value: insertionsToCommaSeparatedString(nucleotideInsertions),
-                header: 'Mutations, insertions, deletions',
-            },
-            {
-                label: 'Amino acid substitutions',
-                name: 'aminoAcidSubstitutions',
-                value: '',
-                header: 'Mutations, insertions, deletions',
-                customDisplay: { type: 'badge', value: substitutionsList(aminoAcidMutations) },
-            },
-            {
-                label: 'Amino acid deletions',
-                name: 'aminoAcidDeletions',
-                value: deletionsToCommaSeparatedString(aminoAcidMutations),
-                header: 'Mutations, insertions, deletions',
-            },
-            {
-                label: 'Amino acid insertions',
-                name: 'aminoAcidInsertions',
-                value: insertionsToCommaSeparatedString(aminoAcidInsertions),
-                header: 'Mutations, insertions, deletions',
-            },
+        const mutations = mutationDetails(
+            nucleotideMutations,
+            aminoAcidMutations,
+            nucleotideInsertions,
+            aminoAcidInsertions,
         );
+        data.push(...mutations);
 
         return data;
     };
