@@ -76,6 +76,7 @@ spec:
             - "--keycloak.client=test-cli"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"
+            - "--keycloak.client=backend-client"
             - "--keycloak.url=http://loculus-keycloak-service:8083"
             - "--keycloak.user=backend"
             - "--spring.datasource.password=$(DB_PASSWORD)"
@@ -153,7 +154,6 @@ spec:
         {{- end }}
 
       imagePullSecrets:
-        - name: ghcr-secret
         - name: custom-website-sealed-secret
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}

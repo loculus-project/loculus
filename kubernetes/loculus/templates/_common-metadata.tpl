@@ -40,6 +40,9 @@ fields:
     initiallyVisible: true
     customDisplay:
       type: dataUseTerms
+  - name: dataUseTermsRestrictedUntil
+    type: date
+    displayName: Data use terms restricted until
   - name: versionStatus
     type: string
     notSearchable: true
@@ -52,12 +55,16 @@ fields:
 
 {{/* Generate website config from passed config object */}}
 {{- define "loculus.generateWebsiteConfig" }}
-name: {{ $.Values.name }}
+name: {{ quote $.Values.name }}
 logo: {{ $.Values.logo | toYaml | nindent 6 }}
 {{ if $.Values.bannerMessage }}
-bannerMessage: {{ $.Values.bannerMessage }}
+bannerMessage: {{ quote $.Values.bannerMessage }}
 {{ end }}
-accessionPrefix: {{ $.Values.accessionPrefix }}
+{{ if $.Values.additionalHeadHTML }}
+additionalHeadHTML: {{ quote $.Values.additionalHeadHTML }}
+{{end}}
+
+accessionPrefix: {{ quote $.Values.accessionPrefix }}
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
@@ -65,14 +72,16 @@ organisms:
 
     schema:
       {{- with $instance.schema }}
-      instanceName: {{ .instanceName }}
+      instanceName: {{ quote .instanceName }}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
       {{ if .description }}
-      description: {{ .description }}
+      description: {{ quote .description }}
       {{ end }}
       primaryKey: accessionVersion
+      inputFields:
+        {{ $instance.schema.inputFields | toYaml | nindent 8}}
       metadata:
         {{ $metadata := concat $commonMetadata .metadata
             | include "loculus.generateWebsiteMetadata"
@@ -90,8 +99,8 @@ organisms:
 {{- define "loculus.generateWebsiteMetadata" }}
 fields:
 {{- range . }}
-  - name: {{ .name }}
-    type: {{ .type }}
+  - name: {{ quote .name }}
+    type: {{ quote .type }}
     {{- if .autocomplete }}
     autocomplete: {{ .autocomplete }}
     {{- end }}
@@ -102,23 +111,26 @@ fields:
     initiallyVisible: {{ .initiallyVisible }}
     {{- end }}
     {{- if .displayName }}
-    displayName: {{ .displayName }}
+    displayName: {{ quote .displayName }}
     {{- end }}
     {{- if .truncateColumnDisplayTo }}
     truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
     {{- end }}
     {{- if .customDisplay }}
     customDisplay:
-      type: {{ .customDisplay.type }}
+      type: {{ quote .customDisplay.type }}
       url: {{ .customDisplay.url }}
+    {{- end }}
+    {{- if .header }}
+    header: {{ .header }}
     {{- end }}
 {{- end}}
 {{- end}}
 
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
-accessionPrefix: {{$.Values.accessionPrefix}}
-name: {{ $.Values.name }}
+accessionPrefix: {{ quote $.Values.accessionPrefix }}
+name: {{ quote $.Values.name }}
 dataUseTermsUrls:
   {{$.Values.dataUseTermsUrls | toYaml | nindent 2}}
 organisms:
@@ -126,7 +138,7 @@ organisms:
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
-      instanceName: {{ .instanceName }}
+      instanceName: {{ quote .instanceName }}
       metadata:
         {{ $metadata := include "loculus.generateBackendMetadata" .metadata | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
@@ -140,10 +152,23 @@ organisms:
 {{- define "loculus.generateBackendMetadata" }}
 fields:
 {{- range . }}
-  - name: {{ .name }}
-    type: {{ .type }}
+  - name: {{ quote .name }}
+    type: {{ quote .type }}
     {{- if .required }}
     required: {{ .required }}
     {{- end }}
 {{- end}}
 {{- end}}
+
+{{- define "loculus.publicRuntimeConfig" }}
+            {{- if .Values.codespaceName }}
+            "backendUrl": "https://{{ .Values.codespaceName }}-8079.app.github.dev",
+            {{- else if eq .Values.environment "server" }}
+            "backendUrl": "https://{{ printf "backend-%s" .Values.host }}",
+            {{- else }}
+            "backendUrl": "http://localhost:8079",
+            {{- end }}
+            "lapisUrls": {{- include "loculus.generateExternalLapisUrls" .externalLapisUrlConfig | fromYaml | toJson }},
+            "keycloakUrl":  "https://{{ printf "authentication-%s" .Values.host }}"
+{{- end }}
+

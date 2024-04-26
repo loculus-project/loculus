@@ -122,5 +122,3 @@ spec:
 {{ include "loculus.configVolume" (dict "name" "keycloak-config") | nindent 8 }}
         - name: theme-volume
           emptyDir: {}
-      imagePullSecrets:
-        - name: ghcr-secret

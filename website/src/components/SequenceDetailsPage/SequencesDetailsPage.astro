@@ -5,8 +5,8 @@ import { SequencesContainer } from './SequencesContainer';
 import { type TableDataEntry } from './getTableData';
 import { getReferenceGenomes, getRuntimeConfig } from '../../config';
 import { routes } from '../../routes/routes.ts';
-import { GroupManagementClient } from '../../services/groupManagementClient';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
+import { checkIsMyGroup } from '../../utils/checkIsMyGroup';
 import { getAccessToken } from '../../utils/getAccessToken';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import ErrorBox from '../common/ErrorBox.astro';
@@ -44,12 +44,7 @@ const clientConfig = getRuntimeConfig().public;
 const session = Astro.locals.session;
 const accessToken = getAccessToken(session);
 
-const isMyGroup =
-    accessToken !== undefined &&
-    (await GroupManagementClient.create().getGroupsOfUser(accessToken)).match(
-        (groups) => groups.some((myGroupItem) => myGroupItem.groupId === groupId),
-        () => false,
-    );
+const isMyGroup = accessToken !== undefined && (await checkIsMyGroup(accessToken, groupId));
 ---
 
 {

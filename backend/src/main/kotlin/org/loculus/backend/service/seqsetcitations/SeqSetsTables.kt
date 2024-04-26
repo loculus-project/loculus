@@ -18,6 +18,7 @@ object SeqSetRecordsTable : Table("seqset_records") {
     val seqSetRecordId = long("seqset_record_id").autoIncrement()
     val accession = varchar("accession", 255)
     val type = varchar("type", 255)
+    val isFocal = bool("is_focal").default(true)
     override val primaryKey = PrimaryKey(seqSetRecordId)
 }
 

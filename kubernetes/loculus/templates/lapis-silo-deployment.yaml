@@ -45,8 +45,6 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
-      imagePullSecrets:
-        - name: ghcr-secret
       volumes:
 {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
         - name: lapis-silo-shared-data

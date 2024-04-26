@@ -7,7 +7,6 @@ import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
-import DeleteIcon from '~icons/ci/user-remove';
 import DashiconsGroups from '~icons/dashicons/groups';
 import DashiconsPlus from '~icons/dashicons/plus';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
@@ -66,6 +65,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     };
 
     const userIsGroupMember = groupDetails.data?.users.some((user) => user.name === username) ?? false;
+    const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
     return (
         <div className='flex flex-col h-full p-4'>
@@ -84,7 +84,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
             )}
 
-            {userIsGroupMember ? (
+            {userHasEditPrivileges ? (
                 <div className='flex items-center'>
                     <h1 className='flex flex-row gap-4 title flex-grow'>
                         <label className='py-1 block title'>Group:</label>
@@ -119,12 +119,14 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             </ul>
                         </div>
                     </h1>
-                    <button
-                        onClick={() => handleOpenConfirmationDialog(username)}
-                        className='object-right p-2 loculusColor text-white rounded px-4'
-                    >
-                        Leave group
-                    </button>
+                    {userIsGroupMember && (
+                        <button
+                            onClick={() => handleOpenConfirmationDialog(username)}
+                            className='object-right p-2 loculusColor text-white rounded px-4'
+                        >
+                            Leave group
+                        </button>
+                    )}
                 </div>
             ) : (
                 <h1 className='flex flex-row gap-4 title flex-grow'>
@@ -159,7 +161,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                 </table>
             </div>
 
-            {userIsGroupMember && (
+            {userHasEditPrivileges && (
                 <>
                     <h2 className='text-lg font-bold py-4'> Users </h2>
                     <form onSubmit={handleAddUser}>
@@ -188,7 +190,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                         title='Remove user from group'
                                         aria-label={`Remove User ${user.name}`}
                                     >
-                                        <DeleteIcon className='w-4 h-4' />
+                                        Remove user
                                     </button>
                                 </li>
                             ))}

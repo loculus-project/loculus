@@ -36,7 +36,7 @@ def get_jwt(config: Config) -> str:
 
     url = config.keycloak_host.rstrip("/") + "/" + config.keycloak_token_path.lstrip("/")
     data = {
-        "client_id": "test-cli",
+        "client_id": "backend-client",
         "username": config.keycloak_user,
         "password": config.keycloak_password,
         "grant_type": "password",

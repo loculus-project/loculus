@@ -2,7 +2,7 @@
 set -eu
 
 KEYCLOAK_TOKEN_URL="http://localhost:8083/realms/loculus/protocol/openid-connect/token"
-KEYCLOAK_CLIENT_ID="test-cli"
+KEYCLOAK_CLIENT_ID="backend-client"
 
 usernameAndPassword="${1:-testuser}"
 

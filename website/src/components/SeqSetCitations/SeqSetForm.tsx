@@ -1,12 +1,14 @@
 import { AxiosError } from 'axios';
-import { type FC, type FormEvent, useState, useEffect, useCallback } from 'react';
+import { capitalCase } from 'change-case';
+import { type FC, type FormEvent, useState, useEffect } from 'react';
 
 import { getClientLogger } from '../../clientLogger';
+import { routes } from '../../routes/routes.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
-import { SeqSetRecordType, type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
+import { type SeqSet, type SeqSetRecord } from '../../types/seqSetCitation';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
-import { serializeRecordsToAccessionsInput } from '../../utils/parseAccessionInput';
+import { deserializeAccessionInput, serializeSeqSetRecords } from '../../utils/parseAccessionInput';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback';
 
 const logger = getClientLogger('SeqSetForm');
@@ -22,7 +24,10 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
     const [seqSetName, setSeqSetName] = useState(editSeqSet?.name ?? '');
     const [seqSetNameValidation, setSeqSetNameValidation] = useState('');
     const [seqSetDescription, setSeqSetDescription] = useState(editSeqSet?.description ?? '');
-    const [accessionsInput, setAccessionsInput] = useState(serializeRecordsToAccessionsInput(editSeqSetRecords));
+    const [focalAccessionsInput, setFocalAccessionsInput] = useState(serializeSeqSetRecords(editSeqSetRecords, true));
+    const [backgroundAccessionsInput, setBackgroundAccessionsInput] = useState(
+        serializeSeqSetRecords(editSeqSetRecords, false),
+    );
     const [seqSetRecordValidation, setSeqSetRecordValidation] = useState('');
 
     const {
@@ -39,23 +44,12 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
         setSeqSetRecordValidation,
     );
 
-    const getAccessionsByType = useCallback(
-        (type: SeqSetRecordType) => {
-            const accessions = accessionsInput[type];
-            return accessions
-                .split(/[,\s]/)
-                .map((accession) => accession.trim())
-                .filter(Boolean);
-        },
-        [accessionsInput],
-    );
-
     useEffect(() => {
         const validationDelay = setTimeout(async () => {
-            const seqSetRecords = getAccessionsByType(SeqSetRecordType.loculus).map((accession) => ({
-                accession,
-                type: SeqSetRecordType.loculus,
-            }));
+            const seqSetRecords = [
+                ...deserializeAccessionInput(focalAccessionsInput, true),
+                ...deserializeAccessionInput(backgroundAccessionsInput, false),
+            ];
             if (seqSetRecords.length === 0) {
                 setSeqSetRecordValidation('');
                 return;
@@ -63,13 +57,14 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
             validateSeqSetRecords(seqSetRecords);
         }, 1000);
         return () => clearTimeout(validationDelay);
-    }, [accessionsInput, getAccessionsByType, validateSeqSetRecords]);
+    }, [focalAccessionsInput, backgroundAccessionsInput, validateSeqSetRecords]);
 
-    const setAccessionInput = (accessionInput: string, type: SeqSetRecordType) => {
-        setAccessionsInput((prevState) => ({
-            ...prevState,
-            [type]: accessionInput,
-        }));
+    const setAccessionInput = (accessionInput: string, isFocal: boolean) => {
+        if (isFocal === true) {
+            setFocalAccessionsInput(accessionInput);
+        } else {
+            setBackgroundAccessionsInput(accessionInput);
+        }
     };
 
     const getSeqSetFromInput = () => {
@@ -77,10 +72,8 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
             name: seqSetName,
             description: seqSetDescription,
             records: [
-                ...getAccessionsByType(SeqSetRecordType.loculus).map((accession) => ({
-                    accession,
-                    type: SeqSetRecordType.loculus,
-                })),
+                ...deserializeAccessionInput(focalAccessionsInput, true),
+                ...deserializeAccessionInput(backgroundAccessionsInput, false),
             ],
         };
     };
@@ -92,7 +85,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
             setSeqSetNameValidation('SeqSet name is required');
             return;
         }
-        if (getAccessionsByType(SeqSetRecordType.loculus).length === 0) {
+        if (focalAccessionsInput === '' && backgroundAccessionsInput === '') {
             setSeqSetRecordValidation('At least one Loculus accession is required');
             return;
         }
@@ -119,6 +112,33 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
             return 'bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500';
         }
         return 'bg-gray-50 border border-red-300 text-gray-900 text-sm rounded-lg focus:ring-red-500 focus:border-red-500 block w-full p-2.5 dark:bg-gray-700 dark:border-red-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-red-500 dark:focus:border-red-500';
+    };
+
+    const renderAccessionInputField = (isFocal: boolean) => {
+        const isFocalStr = isFocal ? 'focal' : 'background';
+        const accessionsInput = isFocal ? focalAccessionsInput : backgroundAccessionsInput;
+        return (
+            <div>
+                <div className='mb-6' key={`loculus-${isFocalStr}-input`}>
+                    <label
+                        htmlFor={`loculus-${isFocalStr}-accession-input`}
+                        className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
+                    >
+                        {`${isFocal === true ? '* ' : ''}${capitalCase(isFocalStr)} accessions (seperated by comma or whitespace)`}
+                    </label>
+                    <textarea
+                        id={`loculus-${isFocalStr}-accession-input`}
+                        className={getTextAreaStyles(seqSetRecordValidation)}
+                        value={accessionsInput}
+                        onChange={(event: any) => {
+                            setAccessionInput(event.target.value, isFocal);
+                        }}
+                        rows={4}
+                        cols={40}
+                    />
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -157,7 +177,7 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                         htmlFor='seqSet-description'
                         className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
                     >
-                        Optional description
+                        SeqSet description
                     </label>
                     <input
                         type='text'
@@ -170,28 +190,22 @@ export const SeqSetForm: FC<SeqSetFormProps> = ({ clientConfig, accessToken, edi
                         maxLength={255}
                     />
                 </div>
-                {Object.keys(accessionsInput).map((type) => (
-                    <div className='mb-6' key={`${type}-input-field`}>
-                        <label
-                            htmlFor='seqSet-description'
-                            className='block mb-2 text-sm font-medium text-gray-900 dark:text-white'
-                        >
-                            {`* List of ${type} accessions seperated by comma, newline, or space`}
-                        </label>
-                        <textarea
-                            id={`${type}-accession-input`}
-                            className={getTextAreaStyles(seqSetRecordValidation)}
-                            value={accessionsInput[type as SeqSetRecordType]}
-                            onChange={(event: any) => {
-                                setAccessionInput(event.target.value, type as SeqSetRecordType);
-                            }}
-                            rows={4}
-                            cols={40}
-                        />
-                    </div>
-                ))}
-                <div className='pb-6 max-w-md w-full'>
-                    <p className='text-red-500 text-sm italic'>{seqSetRecordValidation}</p>
+                <h1 className='text-lg font-semibold py-4'>Accessions</h1>
+                {renderAccessionInputField(true)}
+                {renderAccessionInputField(false)}
+                <div className='max-w-md w-full'>
+                    {seqSetRecordValidation !== '' ? (
+                        <p className='pb-4 text-red-500 text-sm italic'>{seqSetRecordValidation}</p>
+                    ) : null}
+                </div>
+                <div className='pb-4'>
+                    <span className='label-text'>
+                        Review
+                        <a href={routes.datauseTermsPage()} target='_blank' className='underline ml-1'>
+                            data use terms
+                        </a>
+                        .
+                    </span>
                 </div>
             </div>
             <button

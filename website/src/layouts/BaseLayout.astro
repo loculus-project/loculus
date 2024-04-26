@@ -10,7 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { navigationItems } from '../routes/navigationItems';
 
 const websiteConfig = getWebsiteConfig();
-const { name: websiteName, logo, bannerMessage } = websiteConfig;
+const { name: websiteName, logo, bannerMessage, additionalHeadHTML } = websiteConfig;
 
 interface Props {
     title: string;
@@ -28,6 +28,7 @@ const { title, implicitOrganism } = Astro.props;
         <meta name='viewport' content='width=device-width' />
         <meta name='generator' content={Astro.generator} />
         <title>{title}</title>
+        <Fragment set:html={additionalHeadHTML} />
     </head>
     <body>
         <Banner message={bannerMessage} />

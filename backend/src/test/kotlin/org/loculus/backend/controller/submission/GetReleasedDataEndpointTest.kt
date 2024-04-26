@@ -103,6 +103,7 @@ class GetReleasedDataEndpointTest(
                 "groupName" to TextNode(DEFAULT_GROUP_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
                 "dataUseTerms" to TextNode("OPEN"),
+                "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
             )
 
             assertThat(

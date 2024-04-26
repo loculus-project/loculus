@@ -60,6 +60,7 @@ const validateSeqSetRecords = makeEndpoint({
                     z.object({
                         accession: z.string().optional(),
                         type: z.string().optional(),
+                        isFocal: z.boolean(),
                     }),
                 )
                 .optional(),
@@ -83,14 +84,13 @@ const createSeqSetEndpoint = makeEndpoint({
             schema: z.object({
                 name: z.string(),
                 description: z.string().optional(),
-                records: z
-                    .array(
-                        z.object({
-                            accession: z.string().optional(),
-                            type: z.string().optional(),
-                        }),
-                    )
-                    .optional(),
+                records: z.array(
+                    z.object({
+                        accession: z.string(),
+                        type: z.string(),
+                        isFocal: z.boolean(),
+                    }),
+                ),
             }),
         },
     ],
@@ -129,8 +129,9 @@ const updateSeqSetEndpoint = makeEndpoint({
                 records: z
                     .array(
                         z.object({
-                            accession: z.string().optional(),
-                            type: z.string().optional(),
+                            accession: z.string(),
+                            type: z.string(),
+                            isFocal: z.boolean(),
                         }),
                     )
                     .optional(),

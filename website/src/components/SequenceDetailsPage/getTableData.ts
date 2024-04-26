@@ -14,7 +14,13 @@ import {
 } from '../../types/lapis.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
-export type TableDataEntry = { label: string; name: string; value: string | number; customDisplay?: CustomDisplay };
+export type TableDataEntry = {
+    label: string;
+    name: string;
+    value: string | number;
+    header: string;
+    customDisplay?: CustomDisplay;
+};
 
 export async function getTableData(
     accessionVersion: string,
@@ -82,6 +88,17 @@ function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(acces
     };
 }
 
+export function toHeaderMap(listTableDataEntries: TableDataEntry[]): { [key: string]: TableDataEntry[] } {
+    const groupedData = listTableDataEntries.reduce((acc: { [key: string]: TableDataEntry[] }, item) => {
+        if (!(item.header in acc)) {
+            acc[item.header] = [];
+        }
+        acc[item.header].push(item);
+        return acc;
+    }, {});
+    return groupedData;
+}
+
 function toTableData(config: Schema) {
     return ({
         details,
@@ -101,37 +118,44 @@ function toTableData(config: Schema) {
             name: metadata.name,
             customDisplay: metadata.customDisplay,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),
+            header: metadata.header ?? '',
         }));
         data.push(
             {
                 label: 'Nucleotide substitutions',
                 name: 'nucleotideSubstitutions',
                 value: substitutionsToCommaSeparatedString(nucleotideMutations),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Nucleotide deletions',
                 name: 'nucleotideDeletions',
                 value: deletionsToCommaSeparatedString(nucleotideMutations),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Nucleotide insertions',
                 name: 'nucleotideInsertions',
                 value: insertionsToCommaSeparatedString(nucleotideInsertions),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Amino acid substitutions',
                 name: 'aminoAcidSubstitutions',
                 value: substitutionsToCommaSeparatedString(aminoAcidMutations),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Amino acid deletions',
                 name: 'aminoAcidDeletions',
                 value: deletionsToCommaSeparatedString(aminoAcidMutations),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Amino acid insertions',
                 name: 'aminoAcidInsertions',
                 value: insertionsToCommaSeparatedString(aminoAcidInsertions),
+                header: 'Mutations, insertions, deletions',
             },
         );
 
@@ -153,19 +177,18 @@ function mapValueToDisplayedValue(value: undefined | null | string | number, met
 
 function substitutionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
     return mutationData
+        .filter((m) => m.mutationTo !== '-')
         .map((m) => m.mutation)
-        .filter((m) => !m.endsWith('-'))
         .join(', ');
 }
 
 function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
-    const segmentPositions = new Map<string | undefined, number[]>();
+    const segmentPositions = new Map<string | null, number[]>();
     mutationData
-        .filter((m) => m.mutation.endsWith('-'))
+        .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
-            const parts = m.mutation.split(':');
-            const [segment, mutation] = parts.length === 1 ? ([undefined, parts[0]] as const) : parts;
-            const position = Number.parseInt(mutation.slice(1, -1), 10);
+            const segment: string | null = m.sequenceName;
+            const position = m.position;
             if (!segmentPositions.has(segment)) {
                 segmentPositions.set(segment, []);
             }
@@ -205,7 +228,7 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         }
     });
     return segmentRanges
-        .map(({ segment, ranges }) => ranges.map((range) => `${segment !== undefined ? segment + ':' : ''}${range}`))
+        .map(({ segment, ranges }) => ranges.map((range) => `${segment !== null ? segment + ':' : ''}${range}`))
         .flat()
         .join(', ');
 }

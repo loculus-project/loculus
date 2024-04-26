@@ -20,8 +20,15 @@ export const metadata = z.object({
     customDisplay: customDisplay.optional(),
     truncateColumnDisplayTo: z.number().optional(),
     initiallyVisible: z.boolean().optional(),
+    header: z.string().optional(),
 });
 
+export const inputField = z.object({
+    name: z.string(),
+    displayName: z.string().optional(),
+});
+
+export type InputField = z.infer<typeof inputField>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
 
@@ -64,6 +71,7 @@ const schema = z.object({
     image: z.string().optional(),
     description: z.string().optional(),
     metadata: z.array(metadata),
+    inputFields: z.array(inputField),
     tableColumns: z.array(z.string()),
     primaryKey: z.string(),
     defaultOrderBy: z.string(),
@@ -88,5 +96,6 @@ export const websiteConfig = z.object({
     name: z.string(),
     logo: logoConfig,
     bannerMessage: z.string().optional(),
+    additionalHeadHTML: z.string().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;

@@ -40,7 +40,7 @@ spec:
                 - name: KEYCLOAK_TOKEN_URL
                   value: "{{ $keycloakTokenUrl }}"
                 - name: KEYCLOAK_CLIENT_ID
-                  value: "test-cli"
+                  value: "backend-client"
                 - name: IMPORT_JOB_USER
                   value: "silo_import_job"
                 - name: IMPORT_JOB_USER_PASSWORD
@@ -65,8 +65,6 @@ spec:
                 - name: lapis-silo-database-config-processed
                   mountPath: /silo_import_job.sh
                   subPath: silo_import_job.sh
-          imagePullSecrets:
-            - name: ghcr-secret
           volumes:
 {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 12 }}
             - name: lapis-silo-shared-data
