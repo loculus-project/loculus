@@ -1,6 +1,6 @@
 ---
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
-import { NucSubBadge, AaSubBadge } from './MutationBadge';
+import { SubstitutionsContainer } from './MutationBadge';
 import { toHeaderMap, type TableDataEntry } from './getTableData';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 
@@ -14,21 +14,6 @@ const headerMap = toHeaderMap(tableData);
 ---
 
 <div class='mt-2'>
-    <div>
-        <NucSubBadge
-                mutationFrom={'T'}
-                pos={5}
-                mutationTo={'A'}
-            />
-    </div>
-    <div>
-        <AaSubBadge
-                gene={"gene1"}
-                mutationFrom={'T'}
-                pos={5}
-                mutationTo={'A'}
-            />
-    </div>
     <div>
         {
             Object.entries(headerMap).map(([header, names]) => (
@@ -45,25 +30,9 @@ const headerMap = toHeaderMap(tableData);
                                         <div class='items-center gap-3 whitespace-wrap'>
                                             {customDisplay === undefined && value}
                                             {customDisplay !== undefined &&
-                                                customDisplay.type === 'badge' && (value
-                                            )}
-                                                {/* // customDisplay.value?.map(
-                                                //     ({ mutationFrom, mutationTo, position, sequenceName }) =>
-                                                //         sequenceName === undefined ? (
-                                                //             <NucSubBadge
-                                                //                 mutationFrom={mutationFrom}
-                                                //                 pos={position}
-                                                //                 mutationTo={mutationTo}
-                                                //             />
-                                                //         ) : (
-                                                //             <AaSubBadge
-                                                //                 gene={sequenceName}
-                                                //                 mutationFrom={mutationFrom}
-                                                //                 pos={position}
-                                                //                 mutationTo={mutationTo}
-                                                //             />
-                                                //         ),
-                                                // )} */}
+                                                customDisplay.type === 'badge' && 
+                                                (customDisplay.value === undefined ? '' : <SubstitutionsContainer values={customDisplay.value}/>)
+                                            }
                                             {customDisplay !== undefined &&
                                                 customDisplay.type === 'link' &&
                                                 customDisplay.url !== undefined && (
