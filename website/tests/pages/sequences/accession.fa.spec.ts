@@ -11,7 +11,7 @@ test.describe('The sequence.fa page', () => {
         const response = await fetch(url);
         const content = await response.text();
         expect(content).toBe(
-            `>${getAccessionVersionString(testSequences.testSequenceEntry)}\n${testSequenceEntryData.unaligned}\n`,
+            `>${getAccessionVersionString(testSequences.testSequenceEntry)}\n${testSequenceEntryData.unaligned}\n\n`,
         );
     });
 
