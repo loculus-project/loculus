@@ -5,16 +5,12 @@ This website uses [Astro](https://astro.build/) for static site generation and
 
 ## Getting started
 
-Set up an `.env` file, e.g. by copying `.env.example`:
-
-```bash
-cp .env.example .env
-```
 
 ### Local Development
 
+- Set up your `.env` file, e.g. by copying `.env.example` with `cp .env.example .env`
 - Install packages: `npm install`
-- Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh`
+- Generate config files for local testing (requires Helm installed): `../generate_local_test_config.sh`. If you are not running the backend locally, run `../generate_local_test_config.sh --from-live` to point to the backend from the live server.
 - Run `npm run start` to start a local development server with hot reloading.
 
 ### Unit Tests
