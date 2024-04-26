@@ -204,7 +204,6 @@ def generate_config(helm_chart, template, output_path, codespace_name=None, from
     helm_template_cmd.extend(['--set', 'disableWebsite=true'])
     helm_template_cmd.extend(['--set', 'disableBackend=true'])
     if from_live:
-        helm_template_cmd.extend(['--set', 'fromLive=true'])
         helm_template_cmd.extend(['--set', 'environment=server'])
         helm_template_cmd.extend(['--set', 'host=main.loculus.org'])
         helm_template_cmd.extend(['--set', 'usePublicRuntimeConfigAsServerSide=true'])
