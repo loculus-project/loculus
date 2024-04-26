@@ -1,0 +1,150 @@
+import classNames from 'classnames';
+import { type CSSProperties, useMemo } from 'react';
+
+export interface NucSub {
+    pos: number;
+    qry: string;
+    ref: string;
+}
+
+export interface AaSub extends NucSub {
+    gene: string; // TODO: more generally, this might need to be CDS name or even a pair of (gene, CDS)
+}
+
+export const NucSubBadge = ({ sub, className, ...rest }: { sub: NucSub; className: string }) => {
+    const { ref, pos, qry } = sub;
+
+    const style = useMemo(() => {
+        const refBg = getNucColor(ref);
+        const qryBg = getNucColor(qry);
+
+        return {
+            ref: {
+                background: refBg,
+            },
+            qry: {
+                background: qryBg,
+            },
+        } satisfies Record<string, CSSProperties>;
+    }, [qry, ref]);
+
+    return (
+        <button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
+            <span className={classNames('font-mono text-xs overflow-auto', className)} {...rest}>
+                <span className='px-[4px] py-[2px] rounded-s-[3px]' style={style.ref}>
+                    {ref}
+                </span>
+                <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
+                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
+                    {qry}
+                </span>
+            </span>
+        </button>
+    );
+};
+
+export const AaSubBadge = ({ sub, className, ...rest }: { sub: AaSub; className: string }) => {
+    const { gene, ref, pos, qry } = sub;
+
+    const style = useMemo(() => {
+        const refBg = getNucColor(ref);
+        const qryBg = getAaColor(qry);
+        return {
+            ref: {
+                background: colorShade(refBg, 40),
+            },
+            qry: {
+                background: colorShade(qryBg, 40),
+            },
+        } satisfies Record<string, CSSProperties>;
+    }, [qry, ref]);
+
+    return (
+        <button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
+            <span className={classNames('font-mono text-xs', className)} {...rest}>
+                <span className='px-[4px] py-[2px] rounded-s-[3px]'>{gene}:</span>
+                <span className='px-[4px] py-[2px]' style={style.ref}>
+                    {ref}
+                </span>
+                <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
+                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
+                    {qry}
+                </span>
+            </span>
+        </button>
+    );
+};
+
+export const NUCLEOTIDE_COLORS: Record<string, string> = {
+    'A': '#b54330',
+    'C': '#3c5bd6',
+    'G': '#9c8d1c',
+    'T': '#409543',
+    'N': '#555555',
+    'R': '#bd8262',
+    'K': '#92a364',
+    'S': '#61a178',
+    'Y': '#5e959e',
+    'M': '#897198',
+    'W': '#a0a665',
+    'B': '#5b9fbd',
+    'H': '#949ce1',
+    'D': '#d8cda0',
+    'V': '#b496b3',
+    '-': '#777777',
+} as const;
+
+export function getNucColor(nuc: string) {
+    return NUCLEOTIDE_COLORS[nuc] ?? NUCLEOTIDE_COLORS.N;
+}
+
+// Borrowed from http://ugene.net/forum/YaBB.pl?num=1337064665
+export const AMINOACID_COLORS: Record<string, string> = {
+    'A': '#e5e575',
+    'V': '#e5e57c',
+    'L': '#e5e550',
+    'I': '#e5e514',
+    'B': '#e54c4c',
+    'C': '#cee599',
+    'D': '#e5774e',
+    'E': '#e59c6c',
+    'F': '#e2e54d',
+    'G': '#e57474',
+    'H': '#9ddde5',
+    'K': '#b4a2e5',
+    'M': '#b7e525',
+    'N': '#e57875',
+    'P': '#b6b5e5',
+    'Q': '#e5aacd',
+    'R': '#878fe5',
+    'S': '#e583d8',
+    'T': '#e5b3cc',
+    'W': '#4aa7e5',
+    'X': '#aaaaaa',
+    'Y': '#57cfe5',
+    'Z': '#777777',
+    '*': '#777777',
+    '-': '#444444',
+};
+
+export function getAaColor(aa: string): string {
+    return AMINOACID_COLORS[aa] ?? AMINOACID_COLORS.X;
+}
+
+const colorShade = (col: string, amt: number) => {
+    col = col.replace(/^#/, '');
+    if (col.length === 3) col = col[0] + col[0] + col[1] + col[1] + col[2] + col[2];
+
+    let [r, g, b]: any = col.match(/.{2}/g);
+    [r, g, b] = [parseInt(r, 16) + amt, parseInt(g, 16) + amt, parseInt(b, 16) + amt];
+
+    r = Math.max(Math.min(255, r), 0).toString(16);
+    g = Math.max(Math.min(255, g), 0).toString(16);
+    b = Math.max(Math.min(255, b), 0).toString(16);
+
+    const rr = (r.length < 2 ? '0' : '') + r;
+    const gg = (g.length < 2 ? '0' : '') + g;
+    const bb = (b.length < 2 ? '0' : '') + b;
+
+    return `#${rr}${gg}${bb}`;
+};
