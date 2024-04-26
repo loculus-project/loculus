@@ -21,18 +21,28 @@ private val log = KotlinLogging.logger { }
 
 @ConfigurationProperties(prefix = "crossref")
 data class CrossRefServiceProperties(
-    val endpoint: String,
-    val username: String,
-    val password: String,
+    val endpoint: String?,
+    val username: String?,
+    val password: String?,
 )
 
 @Service
 class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProperties) {
+    val isActive = crossRefServiceProperties.endpoint != null && crossRefServiceProperties.username != null &&
+        crossRefServiceProperties.password != null
     val dateTimeFormatterMM = DateTimeFormatter.ofPattern("MM")
     val dateTimeFormatterdd = DateTimeFormatter.ofPattern("dd")
     val dateTimeFormatteryyyy = DateTimeFormatter.ofPattern("yyyy")
 
+    private fun checkIsActive() {
+        if (!isActive) {
+            throw RuntimeException("The CrossRefService is not active as it has not been configured.")
+        }
+    }
+
     fun generateCrossRefXML(data: Map<String, Any>): String {
+        checkIsActive()
+
         // Timestamp used to fill the publication date, assumed to be the moment the xml is generated
         val doiBatchID = data["DOIBatchID"] as String? ?: UUID.randomUUID().toString()
         val now = data["now"] as LocalDate? ?: LocalDate.now()
@@ -106,6 +116,8 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
     }
 
     fun postCrossRefXML(XML: String): String {
+        checkIsActive()
+
         // This is needed per their API specification
         val formData = mapOf(
             "operation" to "doQueryUpload",
