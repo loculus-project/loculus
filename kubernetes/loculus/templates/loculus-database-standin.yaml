@@ -1,0 +1,45 @@
+{{- if not .Values.externalDatabaseUrl }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: database
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: database
+    spec:
+      containers:
+      - name: database
+        image: postgres:latest
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          value: "unsecure"
+        - name: POSTGRES_DB
+          value: "loculus"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: loculus-database-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+  selector:
+    app: loculus
+    component: database
+{{- end }}

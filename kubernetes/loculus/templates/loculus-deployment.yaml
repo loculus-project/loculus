@@ -112,7 +112,7 @@ spec:
                  key: url
            {{- else }}
             - name: DB_URL
-              value: "jdbc:postgresql://localhost:5432/loculus"
+              value: "jdbc:postgresql://loculus-database-service:5432/loculus"
            {{- end }}
            {{- if .Values.externalDatabase.usernameSealedSecret }}
             - name: DB_USERNAME
@@ -138,20 +138,6 @@ spec:
             - name: loculus-backend-config-processed
               mountPath: /config
         {{- end }}
-        {{- if not .Values.externalDatabaseUrl }}
-        - name: database
-          image: postgres:latest
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: "postgres"
-            - name: POSTGRES_PASSWORD
-              value: "unsecure"
-            - name: POSTGRES_DB
-              value: "loculus"
-        {{- end }}
-
       imagePullSecrets:
         - name: custom-website-sealed-secret
       volumes:
