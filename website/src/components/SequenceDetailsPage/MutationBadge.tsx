@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { type CSSProperties, useMemo } from 'react';
+import { useMemo } from 'react';
 
 export interface NucSub {
     pos: number;
@@ -25,7 +25,7 @@ export const NucSubBadge = ({ sub, className, ...rest }: { sub: NucSub; classNam
             qry: {
                 background: qryBg,
             },
-        } satisfies Record<string, CSSProperties>;
+        };
     }, [qry, ref]);
 
     return (
@@ -56,7 +56,7 @@ export const AaSubBadge = ({ sub, className, ...rest }: { sub: AaSub; className:
             qry: {
                 background: colorShade(qryBg, 40),
             },
-        } satisfies Record<string, CSSProperties>;
+        };
     }, [qry, ref]);
 
     return (
