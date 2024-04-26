@@ -183,11 +183,11 @@ function substitutionsToCommaSeparatedString(mutationData: MutationProportionCou
 }
 
 function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
-    const segmentPositions = new Map<string | undefined, number[]>();
+    const segmentPositions = new Map<string | null, number[]>();
     mutationData
         .filter((m) => m.mutationTo === '-')
         .forEach((m) => {
-            const segment: string | undefined = m.sequenceName;
+            const segment: string | null = m.sequenceName;
             const position = m.position;
             if (!segmentPositions.has(segment)) {
                 segmentPositions.set(segment, []);
@@ -228,7 +228,7 @@ function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]
         }
     });
     return segmentRanges
-        .map(({ segment, ranges }) => ranges.map((range) => `${segment !== undefined ? segment + ':' : ''}${range}`))
+        .map(({ segment, ranges }) => ranges.map((range) => `${segment !== null ? segment + ':' : ''}${range}`))
         .flat()
         .join(', ');
 }

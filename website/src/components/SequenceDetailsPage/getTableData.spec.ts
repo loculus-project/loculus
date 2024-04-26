@@ -218,7 +218,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'T',
         mutationTo: 'A',
         position: 10,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -227,7 +227,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'A',
         mutationTo: '-',
         position: 20,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -236,7 +236,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'A',
         mutationTo: '-',
         position: 21,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -245,7 +245,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'C',
         mutationTo: 'G',
         position: 30,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -254,7 +254,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'G',
         mutationTo: '-',
         position: 40,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -263,7 +263,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'C',
         mutationTo: '-',
         position: 41,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -272,7 +272,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'T',
         mutationTo: '-',
         position: 42,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -281,7 +281,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'T',
         mutationTo: '-',
         position: 39,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -290,7 +290,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'T',
         mutationTo: '-',
         position: 43,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -299,7 +299,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'T',
         mutationTo: '-',
         position: 44,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -308,7 +308,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'T',
         mutationTo: '-',
         position: 45,
-        sequenceName: undefined,
+        sequenceName: null,
     },
     {
         count: 0,
@@ -317,7 +317,7 @@ const nucleotideMutations: MutationProportionCount[] = [
         mutationFrom: 'T',
         mutationTo: '-',
         position: 400,
-        sequenceName: undefined,
+        sequenceName: null,
     },
 ];
 const aminoAcidMutations: MutationProportionCount[] = [
