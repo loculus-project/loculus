@@ -45,8 +45,6 @@ class CrossRefServiceTest(
 
     @Test
     fun `POST a metadata request to CrossRef's test endpoint`() {
-        println("POST a metadata request to CrossRef's test endpoint")
-
         val crossRefServicePOSTCrossRefXML = crossRefService.postCrossRefXML(crossRefXMLReference)
 
         assertEquals(crossRefServicePOSTCrossRefXML, "SUCCESS")

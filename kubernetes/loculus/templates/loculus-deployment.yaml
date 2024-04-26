@@ -73,7 +73,6 @@ spec:
             - "--crossref.endpoint=$(CROSSREF_TEST_ENDPOINT)"
             - "--crossref.username=$(CROSSREF_USERNAME)"
             - "--crossref.password=$(CROSSREF_TEST_PASSWORD)"
-            - "--keycloak.client=test-cli"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"
             - "--keycloak.client=backend-client"
