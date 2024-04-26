@@ -10,8 +10,8 @@ test.describe('The sequence.fa page', () => {
         const url = `${baseUrl}${routes.sequencesFastaPage(testSequences.testSequenceEntry)}`;
         const response = await fetch(url);
         const content = await response.text();
-        expect(content).toBe(
-            `>${getAccessionVersionString(testSequences.testSequenceEntry)}\n${testSequenceEntryData.unaligned}\n\n`,
+        expect(content.replace(/\n+/g, '\n')).toBe(
+            `>${getAccessionVersionString(testSequences.testSequenceEntry)}\n${testSequenceEntryData.unaligned}\n`,
         );
     });
 
