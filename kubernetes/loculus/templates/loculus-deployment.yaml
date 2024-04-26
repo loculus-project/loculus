@@ -112,7 +112,7 @@ spec:
                  key: url
            {{- else }}
             - name: DB_URL
-              value: "jdbc:postgresql://loculus-database-service:5432/loculus"
+              value: "jdbc:postgresql://loculus-database-service/loculus"
            {{- end }}
            {{- if .Values.externalDatabase.usernameSealedSecret }}
             - name: DB_USERNAME
