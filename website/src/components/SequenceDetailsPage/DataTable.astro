@@ -35,16 +35,16 @@ const headerMap = toHeaderMap(tableData);
                                                     ({ mutationFrom, mutationTo, position, sequenceName }) =>
                                                         sequenceName === undefined ? (
                                                             <NucSubBadge
-                                                                    rf={mutationFrom}
-                                                                    pos={position}
-                                                                    qry={mutationTo}
+                                                                mutationFrom={mutationFrom}
+                                                                pos={position}
+                                                                mutationTo={mutationTo}
                                                             />
                                                         ) : (
                                                             <AaSubBadge
-                                                                    gene={sequenceName}
-                                                                    rf={mutationFrom}
-                                                                    pos={position}
-                                                                    qry={mutationTo}
+                                                                gene={sequenceName}
+                                                                mutationFrom={mutationFrom}
+                                                                pos={position}
+                                                                mutationTo={mutationTo}
                                                             />
                                                         ),
                                                 )}

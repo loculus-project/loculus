@@ -2,46 +2,44 @@ import { type FC } from 'react';
 
 type NucSubProps = {
     pos: number;
-    qry: string;
-    rf: string;
-}
+    mutationTo: string;
+    mutationFrom: string;
+};
 
 export type AaSub = {
     pos: number;
-    qry: string;
-    rf: string;
+    mutationTo: string;
+    mutationFrom: string;
     gene: string; // TODO: more generally, this might need to be CDS name or even a pair of (gene, CDS)
-}
+};
 
-export const NucSubBadge: FC<NucSubProps> = ({pos, qry, rf}) => {
-    console.log(rf)
-
-    return (<button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
+export const NucSubBadge: FC<NucSubProps> = ({ pos, mutationTo, mutationFrom }) => {
+    return (
+        <button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
             <span className='font-mono text-xs overflow-auto'>
-                <span className='px-[4px] py-[2px] rounded-s-[3px]' style={{background: getNucColor(rf)}}>
-                    {rf}
+                <span className='px-[4px] py-[2px] rounded-s-[3px]' style={{ background: getNucColor(mutationFrom) }}>
+                    {mutationFrom}
                 </span>
                 <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
-                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{background: getNucColor(qry)}}>
-                    {qry}
+                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{ background: getNucColor(mutationTo) }}>
+                    {mutationTo}
                 </span>
             </span>
-            </button>
+        </button>
     );
 };
 
-export const AaSubBadge: FC<AaSub> = ({pos, qry, rf, gene}) => {
-
+export const AaSubBadge: FC<AaSub> = ({ pos, mutationTo, mutationFrom, gene }) => {
     return (
         <button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
             <span className='font-mono text-xs'>
                 <span className='px-[4px] py-[2px] rounded-s-[3px]'>{gene}:</span>
-                <span className='px-[4px] py-[2px]' style={{background: getAaColor(rf)}}>
-                    {rf}
+                <span className='px-[4px] py-[2px]' style={{ background: getAaColor(mutationFrom) }}>
+                    {mutationFrom}
                 </span>
                 <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
-                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{background: getAaColor(qry)}}>
-                    {qry}
+                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{ background: getAaColor(mutationTo) }}>
+                    {mutationTo}
                 </span>
             </span>
         </button>
