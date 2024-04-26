@@ -18,6 +18,8 @@ spec:
       containers:
       - name: database
         image: postgres:latest
+        command: ["postgres"]
+        args: ["-c", "listen_addresses=*"]
         ports:
         - containerPort: 5432
         env:
