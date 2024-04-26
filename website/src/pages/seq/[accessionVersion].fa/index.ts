@@ -102,9 +102,8 @@ const getSequenceDetailsUnalignedFastaWithOrganism = async (
             });
         }
     }
-    const withNewLineTermination = fastaResult.map((fasta) => `${fasta}`);
 
-    return withNewLineTermination.map((fasta) => ({
+    return fastaResult.map((fasta) => ({
         type: ResultType.DATA,
         fasta,
     }));
