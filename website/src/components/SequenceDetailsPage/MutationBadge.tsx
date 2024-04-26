@@ -1,4 +1,5 @@
 import { type FC } from 'react';
+import type { MutationProportionCount } from '../../types/lapis';
 
 type NucSubProps = {
     pos: number;
@@ -110,3 +111,13 @@ export const AMINOACID_COLORS: Record<string, string> = {
 export function getAaColor(aa: string): string {
     return AMINOACID_COLORS[aa] ?? AMINOACID_COLORS.X;
 }
+
+export const SubstitutionsContainer = ({ values }: { values: MutationProportionCount[] }) => {
+    return values.map(({ mutationFrom, mutationTo, position, sequenceName }) =>
+        sequenceName === undefined ? (
+            <NucSubBadge mutationFrom={mutationFrom} pos={position} mutationTo={mutationTo} />
+        ) : (
+            <AaSubBadge gene={sequenceName} mutationFrom={mutationFrom} pos={position} mutationTo={mutationTo} />
+        ),
+    );
+};
