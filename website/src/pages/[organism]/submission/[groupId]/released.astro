@@ -1,14 +1,19 @@
 ---
+import { EditDataUseTermsButton } from '../../../../components/DataUseTerms/EditDataUseTermsButton';
 import { SearchForm } from '../../../../components/SearchPage/SearchForm';
 import { SearchPagination } from '../../../../components/SearchPage/SearchPagination';
 import { Table } from '../../../../components/SearchPage/Table';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import ErrorBox from '../../../../components/common/ErrorBox.astro';
 import { MY_SEQUENCES } from '../../../../routes/routes';
+import { LapisClient } from '../../../../services/lapisClient.ts';
 import { pageSize } from '../../../../settings';
+import { getAccessToken } from '../../../../utils/getAccessToken';
 import { processParametersAndFetchSearch } from '../../../../utils/processParametersAndFetchSearch';
+import { combineSearchFilters } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 
+const accessToken = getAccessToken(Astro.locals.session);
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 if (groupsResult.isErr()) {
     return new Response(undefined, { status: groupsResult.error.status });
@@ -27,6 +32,30 @@ const {
     clientConfig,
     orderBy,
 } = await processParametersAndFetchSearch(Astro, group.groupId);
+
+const lapisClient = LapisClient.createForOrganism(organism);
+const searchFilters = combineSearchFilters(metadataFilter, mutationFilter, accessionFilter);
+searchFilters.DataUseTerms = 'RESTRICTED';
+const detailsResult = await lapisClient.call('details', {
+    fields: ['accessionVersion', 'dataUseTermsRestrictedUntil'],
+    ...searchFilters,
+});
+let restrictedAccessions: string[] = [];
+let earliestRestrictionDate: string = '9999-01-01';
+detailsResult.match(
+    (sequenceData) => {
+        restrictedAccessions = sequenceData.data.map((seq) => {
+            if (seq.dataUseTermsRestrictedUntil < earliestRestrictionDate) {
+                earliestRestrictionDate = seq.dataUseTermsRestrictedUntil;
+            }
+            return String(seq.accessionVersion).split('.')[0];
+        });
+    },
+    () => {
+        /* access only occurs if data is valid */
+    },
+);
+
 ---
 
 <SubmissionPageWrapper title='Released sequences' groupsResult={groupsResult}>
@@ -48,9 +77,25 @@ const {
             data.match(
                 (data) => (
                     <div class='flex-1'>
-                        <div class='mt-4 mb-1 text-sm text-gray-500'>
-                            Search returned {data.totalCount.toLocaleString()}
-                            sequence{data.totalCount === 1 ? '' : 's'}
+                        <div class='text-sm text-gray-800 mb-6 justify-between flex px-6 items-baseline'>
+                            <div class='mt-auto'>
+                                Search returned {data.totalCount.toLocaleString()}
+                                sequence{data.totalCount === 1 ? '' : 's'}
+                            </div>
+                            {restrictedAccessions.length > 0 && (
+                                <div>
+                                    <EditDataUseTermsButton
+                                        accessToken={accessToken!}
+                                        clientConfig={clientConfig}
+                                        accessions={restrictedAccessions}
+                                        dataUseTerms={{
+                                            type: 'RESTRICTED',
+                                            restrictedUntil: earliestRestrictionDate,
+                                        }}
+                                        client:load
+                                    />
+                                </div>
+                            )}
                         </div>
                         <Table
                             organism={organism}

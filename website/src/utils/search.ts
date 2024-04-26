@@ -19,15 +19,11 @@ export function addHiddenFilters(searchFormFilter: MetadataFilter[], hiddenFilte
     return [...searchFormFilter, ...hiddenFiltersToAdd];
 }
 
-export const getData = async (
-    organism: string,
+export function combineSearchFilters(
     metadataFilter: MetadataFilter[],
-    accessionFilter: AccessionFilter,
     mutationFilter: MutationFilter,
-    offset: number,
-    limit: number,
-    orderBy?: OrderBy,
-): Promise<Result<SearchResponse, ProblemDetail>> => {
+    accessionFilter: AccessionFilter,
+) {
     const metadataSearchFilters = metadataFilter
         .filter((metadata) => metadata.filterValue !== '')
         .reduce((acc: Record<string, string>, metadata) => {
@@ -44,6 +40,19 @@ export const getData = async (
     if (accessionFilter.accession !== undefined && accessionFilter.accession.length > 0) {
         searchFilters.accession = accessionFilter.accession;
     }
+    return searchFilters;
+}
+
+export const getData = async (
+    organism: string,
+    metadataFilter: MetadataFilter[],
+    accessionFilter: AccessionFilter,
+    mutationFilter: MutationFilter,
+    offset: number,
+    limit: number,
+    orderBy?: OrderBy,
+): Promise<Result<SearchResponse, ProblemDetail>> => {
+    const searchFilters = combineSearchFilters(metadataFilter, mutationFilter, accessionFilter);
 
     const config = getSchema(organism);
 

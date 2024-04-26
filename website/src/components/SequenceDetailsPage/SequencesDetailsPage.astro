@@ -92,7 +92,7 @@ const isMyGroup = accessToken !== undefined && (await checkIsMyGroup(accessToken
                 <EditDataUseTermsButton
                     clientConfig={clientConfig}
                     accessToken={accessToken}
-                    accessionVersion={[accessionVersion.split('.')[0]]}
+                    accessions={[accessionVersion.split('.')[0]]}
                     dataUseTerms={currentDataUseTerms}
                     client:load
                 />

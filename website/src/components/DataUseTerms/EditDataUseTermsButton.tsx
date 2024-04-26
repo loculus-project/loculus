@@ -15,14 +15,14 @@ import { datePickerTheme } from '../Submission/DateChangeModal';
 type EditDataUseTermsButtonProps = {
     accessToken: string;
     clientConfig: ClientConfig;
-    accessionVersion: string[];
+    accessions: string[];
     dataUseTerms: RestrictedDataUseTerms;
 };
 
 const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
     accessToken,
     clientConfig,
-    accessionVersion,
+    accessions,
     dataUseTerms,
 }) => {
     const restrictedUntil = DateTime.fromISO(dataUseTerms.restrictedUntil);
@@ -79,7 +79,10 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                         </div>
                         {dataUseTermsType === restrictedDataUseTermsType && (
                             <>
-                                <div className='text-sm pl-8 text-gray-900 mb-4 py-2'>
+                                <div className='text-sm pl-8 text-gray-900'>
+                                    {accessions.length > 1 && (
+                                        <p>{accessions.length} restricted sequences will be modified.</p>
+                                    )}
                                     Currently restricted until <b>{restrictedUntil.toFormat('yyyy-MM-dd')}</b>.<br />
                                     New restriction will be set to <b>{newRestrictedDate.toFormat('yyyy-MM-dd')}</b>.
                                 </div>
@@ -106,7 +109,7 @@ const InnerEditDataUseTermsButton: FC<EditDataUseTermsButtonProps> = ({
                         onClick={() => {
                             closeDialog();
                             useSetDataUseTerms.mutate({
-                                accessions: accessionVersion,
+                                accessions,
                                 newDataUseTerms: {
                                     type: dataUseTermsType,
                                     restrictedUntil: newRestrictedDate.toFormat('yyyy-MM-dd'),
