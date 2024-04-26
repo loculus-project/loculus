@@ -126,7 +126,7 @@ function toTableData(config: Schema) {
             {
                 label: 'Nucleotide substitutions',
                 name: 'nucleotideSubstitutions',
-                value: substitutionsToCommaSeparatedString(nucleotideMutations),
+                value: '',
                 header: 'Mutations, insertions, deletions',
                 customDisplay: { type: 'badge', value: substitutionsList(nucleotideMutations) },
             },
@@ -145,7 +145,7 @@ function toTableData(config: Schema) {
             {
                 label: 'Amino acid substitutions',
                 name: 'aminoAcidSubstitutions',
-                value: substitutionsToCommaSeparatedString(aminoAcidMutations),
+                value: '',
                 header: 'Mutations, insertions, deletions',
                 customDisplay: { type: 'badge', value: substitutionsList(aminoAcidMutations) },
             },
@@ -177,13 +177,6 @@ function mapValueToDisplayedValue(value: undefined | null | string | number, met
     }
 
     return value;
-}
-
-function substitutionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
-    return mutationData
-        .filter((m) => m.mutationTo !== '-')
-        .map((m) => m.mutation)
-        .join(', ');
 }
 
 function substitutionsList(mutationData: MutationProportionCount[]) {

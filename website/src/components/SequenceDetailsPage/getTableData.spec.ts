@@ -151,7 +151,7 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Nucleotide substitutions',
             name: 'nucleotideSubstitutions',
-            value: 'T10A, C30G',
+            value: '',
             header: 'Mutations, insertions, deletions',
             customDisplay: {
                 type: 'badge',
@@ -163,6 +163,7 @@ describe('getTableData', () => {
                         mutationTo: 'A',
                         position: 10,
                         proportion: 0,
+                        sequenceName: null,
                     },
                     {
                         count: 0,
@@ -171,6 +172,7 @@ describe('getTableData', () => {
                         mutationTo: 'G',
                         position: 30,
                         proportion: 0,
+                        sequenceName: null,
                     },
                 ],
             },
@@ -184,7 +186,7 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Amino acid substitutions',
             name: 'aminoAcidSubstitutions',
-            value: 'gene1:N10Y, gene1:T30N',
+            value: '',
             header: 'Mutations, insertions, deletions',
             customDisplay: {
                 type: 'badge',
