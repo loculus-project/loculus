@@ -1,73 +1,46 @@
-import classNames from 'classnames';
-import { useMemo } from 'react';
+import { type FC } from 'react';
 
-export interface NucSub {
+type NucSubProps = {
     pos: number;
     qry: string;
-    ref: string;
+    rf: string;
 }
 
-export interface AaSub extends NucSub {
+export type AaSub = {
+    pos: number;
+    qry: string;
+    rf: string;
     gene: string; // TODO: more generally, this might need to be CDS name or even a pair of (gene, CDS)
 }
 
-export const NucSubBadge = ({ sub, className, ...rest }: { sub: NucSub; className: string }) => {
-    const { ref, pos, qry } = sub;
+export const NucSubBadge: FC<NucSubProps> = ({pos, qry, rf}) => {
+    console.log(rf)
 
-    const style = useMemo(() => {
-        const refBg = getNucColor(ref);
-        const qryBg = getNucColor(qry);
-
-        return {
-            ref: {
-                background: refBg,
-            },
-            qry: {
-                background: qryBg,
-            },
-        };
-    }, [qry, ref]);
-
-    return (
-        <button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
-            <span className={classNames('font-mono text-xs overflow-auto', className)} {...rest}>
-                <span className='px-[4px] py-[2px] rounded-s-[3px]' style={style.ref}>
-                    {ref}
+    return (<button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
+            <span className='font-mono text-xs overflow-auto'>
+                <span className='px-[4px] py-[2px] rounded-s-[3px]' style={{background: getNucColor(rf)}}>
+                    {rf}
                 </span>
                 <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
-                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
+                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{background: getNucColor(qry)}}>
                     {qry}
                 </span>
             </span>
-        </button>
+            </button>
     );
 };
 
-export const AaSubBadge = ({ sub, className, ...rest }: { sub: AaSub; className: string }) => {
-    const { gene, ref, pos, qry } = sub;
-
-    const style = useMemo(() => {
-        const refBg = getNucColor(ref);
-        const qryBg = getAaColor(qry);
-        return {
-            ref: {
-                background: colorShade(refBg, 40),
-            },
-            qry: {
-                background: colorShade(qryBg, 40),
-            },
-        };
-    }, [qry, ref]);
+export const AaSubBadge: FC<AaSub> = ({pos, qry, rf, gene}) => {
 
     return (
         <button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
-            <span className={classNames('font-mono text-xs', className)} {...rest}>
+            <span className='font-mono text-xs'>
                 <span className='px-[4px] py-[2px] rounded-s-[3px]'>{gene}:</span>
-                <span className='px-[4px] py-[2px]' style={style.ref}>
-                    {ref}
+                <span className='px-[4px] py-[2px]' style={{background: getAaColor(rf)}}>
+                    {rf}
                 </span>
                 <span className='px-[4px] py-[2px] bg-gray-200'>{pos + 1}</span>
-                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={style.qry}>
+                <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{background: getAaColor(qry)}}>
                     {qry}
                 </span>
             </span>
@@ -76,10 +49,10 @@ export const AaSubBadge = ({ sub, className, ...rest }: { sub: AaSub; className:
 };
 
 export const NUCLEOTIDE_COLORS: Record<string, string> = {
-    'A': '#b54330',
-    'C': '#3c5bd6',
-    'G': '#9c8d1c',
-    'T': '#409543',
+    'A': '#e5e514',
+    'C': '#e59c6c',
+    'G': '#9ddde5',
+    'T': '#b7e525',
     'N': '#555555',
     'R': '#bd8262',
     'K': '#92a364',
@@ -130,21 +103,3 @@ export const AMINOACID_COLORS: Record<string, string> = {
 export function getAaColor(aa: string): string {
     return AMINOACID_COLORS[aa] ?? AMINOACID_COLORS.X;
 }
-
-const colorShade = (col: string, amt: number) => {
-    col = col.replace(/^#/, '');
-    if (col.length === 3) col = col[0] + col[0] + col[1] + col[1] + col[2] + col[2];
-
-    let [r, g, b]: any = col.match(/.{2}/g);
-    [r, g, b] = [parseInt(r, 16) + amt, parseInt(g, 16) + amt, parseInt(b, 16) + amt];
-
-    r = Math.max(Math.min(255, r), 0).toString(16);
-    g = Math.max(Math.min(255, g), 0).toString(16);
-    b = Math.max(Math.min(255, b), 0).toString(16);
-
-    const rr = (r.length < 2 ? '0' : '') + r;
-    const gg = (g.length < 2 ? '0' : '') + g;
-    const bb = (b.length < 2 ? '0' : '') + b;
-
-    return `#${rr}${gg}${bb}`;
-};
