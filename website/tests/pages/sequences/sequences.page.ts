@@ -35,6 +35,12 @@ export class SequencePage {
         await this.allVersions.click();
     }
 
+    public async waitForLoad() {
+        await this.page.waitForLoadState('domcontentloaded', { timeout: 15000 });
+        await this.page.waitForLoadState('load', { timeout: 30000 });
+        await this.page.waitForLoadState('networkidle', { timeout: 5000 });
+    }
+
     public async loadSequences() {
         await expect(this.loadButton).toBeVisible({ timeout: 60000 });
         await this.loadButton.click();

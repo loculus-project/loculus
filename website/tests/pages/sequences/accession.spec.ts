@@ -10,6 +10,8 @@ test.describe('The detailed sequence page', () => {
         await sequencePage.goto(testSequenceEntry);
         await expect(sequencePage.page.getByText(testSequenceEntryData.orf1a)).not.toBeVisible();
 
+        await sequencePage.waitForLoad();
+
         await sequencePage.loadSequences();
         await sequencePage.clickORF1aButton();
 
