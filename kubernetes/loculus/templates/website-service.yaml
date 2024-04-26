@@ -6,7 +6,7 @@ spec:
   {{- template "loculus.serviceType"}}
   selector:
     app: loculus
-    component: website-and-backend
+    component: website
   ports:
     - port: 3000
       targetPort: 3000

@@ -12,46 +12,16 @@ spec:
   selector:
     matchLabels:
       app: loculus
-      component: website-and-backend
+      component: backend
   template:
     metadata:
       labels:
         app: loculus
-        component: website-and-backend
+        component: backend
     spec:
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag) | nindent 8 }}
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
-        {{- if not .Values.disableWebsite }}
-        - name: website
-          image: "{{ if $.Values.customWebsiteImage }}{{ $.Values.customWebsiteImage }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
-          imagePullPolicy: Always
-          resources:
-            requests:
-              memory: "1300Mi"
-              cpu: "100m"
-            limits:
-              memory: "2000Mi"
-              cpu: "1000m"
-          ports:
-            - containerPort: 3000
-          volumeMounts:
-            - name: loculus-website-config-processed
-              mountPath: /config
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 5
-        {{- end }}
         {{- if not .Values.disableBackend }}
         - name: backend
           image: "ghcr.io/loculus-project/backend:{{ $dockerTag }}"
@@ -138,8 +108,5 @@ spec:
             - name: loculus-backend-config-processed
               mountPath: /config
         {{- end }}
-      imagePullSecrets:
-        - name: custom-website-sealed-secret
       volumes:
-{{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
