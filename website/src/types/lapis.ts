@@ -28,7 +28,7 @@ const mutationProportionCount = z.object({
     mutation: z.string(),
     proportion: z.number(),
     count: z.number(),
-    sequenceName: z.string().optional(),
+    sequenceName: z.any().transform((value) => value ?? undefined),
     mutationFrom: z.string(),
     mutationTo: z.string(),
     position: z.number(),
