@@ -29,6 +29,8 @@ const headerMap = toHeaderMap(tableData);
                                         <div class='flex items-center gap-3'>
                                             {customDisplay === undefined && value}
                                             {customDisplay !== undefined &&
+                                                customDisplay.type === 'badge' && value}
+                                            {customDisplay !== undefined &&
                                                 customDisplay.type === 'link' &&
                                                 customDisplay.url !== undefined && (
                                                     <a

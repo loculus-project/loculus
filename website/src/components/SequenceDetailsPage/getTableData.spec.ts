@@ -153,6 +153,27 @@ describe('getTableData', () => {
             name: 'nucleotideSubstitutions',
             value: 'T10A, C30G',
             header: 'Mutations, insertions, deletions',
+            customDisplay: {
+                type: 'badge',
+                value: [
+                    {
+                        count: 0,
+                        mutation: 'T10A',
+                        mutationFrom: 'T',
+                        mutationTo: 'A',
+                        position: 10,
+                        proportion: 0,
+                    },
+                    {
+                        count: 0,
+                        mutation: 'C30G',
+                        mutationFrom: 'C',
+                        mutationTo: 'G',
+                        position: 30,
+                        proportion: 0,
+                    },
+                ],
+            },
         });
         expect(data).toContainEqual({
             label: 'Nucleotide deletions',
@@ -165,6 +186,29 @@ describe('getTableData', () => {
             name: 'aminoAcidSubstitutions',
             value: 'gene1:N10Y, gene1:T30N',
             header: 'Mutations, insertions, deletions',
+            customDisplay: {
+                type: 'badge',
+                value: [
+                    {
+                        count: 0,
+                        mutation: 'gene1:N10Y',
+                        mutationFrom: 'N',
+                        mutationTo: 'Y',
+                        position: 10,
+                        proportion: 0,
+                        sequenceName: 'gene1',
+                    },
+                    {
+                        count: 0,
+                        mutation: 'gene1:T30N',
+                        mutationFrom: 'T',
+                        mutationTo: 'N',
+                        position: 30,
+                        proportion: 0,
+                        sequenceName: 'gene1',
+                    },
+                ],
+            },
         });
         expect(data).toContainEqual({
             label: 'Amino acid deletions',
@@ -428,6 +472,10 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         name: 'nucleotideSubstitutions',
         value: '',
         header: 'Mutations, insertions, deletions',
+        customDisplay: {
+            type: 'badge',
+            value: [],
+        },
     },
     {
         label: 'Nucleotide deletions',
@@ -446,6 +494,10 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         name: 'aminoAcidSubstitutions',
         value: '',
         header: 'Mutations, insertions, deletions',
+        customDisplay: {
+            type: 'badge',
+            value: [],
+        },
     },
     {
         label: 'Amino acid deletions',
