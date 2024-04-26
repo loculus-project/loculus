@@ -106,7 +106,7 @@ function useDeleteSeqSetAction(
         {
             onSuccess: async () => {
                 await logger.info(`Successfully deleted seqSet with seqSetId: ${seqSetId}, version ${seqSetVersion}`);
-                window.location.href = '/seqSets';
+                window.location.href = '/seqsets';
             },
             onError: async (error) => {
                 const message = `Failed to delete seqSet with error: '${JSON.stringify(error)})}'`;

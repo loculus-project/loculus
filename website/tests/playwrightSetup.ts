@@ -42,6 +42,7 @@ export default async function globalSetupForPlaywright() {
             defaultOrderBy: 'neitherDoesThis',
             defaultOrder: 'ascending',
             tableColumns: [],
+            inputFields: [],
         },
         e2eLogger,
     );

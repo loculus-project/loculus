@@ -39,8 +39,6 @@ spec:
           configMap:
             name: loculus-ingest-config-{{ $key }}
       {{- end }}
-      imagePullSecrets:
-        - name: ghcr-secret
 {{- end }}
 {{- end }}
 {{- end }}

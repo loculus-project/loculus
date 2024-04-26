@@ -51,8 +51,6 @@ spec:
           configMap:
             name: loculus-preprocessing-config-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
       {{- end }}
-      imagePullSecrets:
-        - name: ghcr-secret
 {{- end }}
 {{- end }}
 {{- end }}

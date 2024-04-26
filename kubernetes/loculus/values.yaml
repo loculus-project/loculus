@@ -28,29 +28,47 @@ defaultOrganisms:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       instanceName: "Test Dummy Organism"
+      inputFields:
+        - name: date
+          displayName: Date
+        - name: region
+          displayName: Region
+        - name: country
+          displayName: Country
+        - name: division
+          displayName: Division
+        - name: host
+          displayName: Host
+        - name: pango_lineage
+          displayName: Pango Lineage
       metadata:
         - name: date
           type: date
           initiallyVisible: true
+          header: "Collection Details"
         - name: region
           type: string
           initiallyVisible: true
           generateIndex: true
           autocomplete: true
+          header: "Collection Details"
         - name: country
           initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
+          header: "Collection Details"
         - name: division
           initiallyVisible: true
           type: string
           generateIndex: true
           autocomplete: true
+          header: "Collection Details"
         - name: host
           initiallyVisible: true
           type: string
           autocomplete: true
+          header: "Collection Details"
         - name: pango_lineage
           initiallyVisible: true
           type: pango_lineage
@@ -134,6 +152,7 @@ defaultOrganisms:
           autocomplete: true
         - name: ncbi_release_date
           type: date
+          header: "INSDC"
         - name: country
           type: string
           required: true
@@ -147,6 +166,25 @@ defaultOrganisms:
           autocomplete: true
         - name: authors
           type: string
+      inputFields:
+        - name: collection_date
+          displayName: Collection Date
+        - name: clade
+          displayName: Clade
+        - name: outbreak
+          displayName: Outbreak
+        - name: lineage
+          displayName: Lineage
+        - name: ncbi_release_date
+          displayName: NCBI Release Date
+        - name: country
+          displayName: Country
+        - name: isolate_name
+          displayName: Isolate Name
+        - name: author_affiliation
+          displayName: Author Affiliation
+        - name: authors
+          displayName: Authors
       website:
         tableColumns:
           - collection_date
@@ -283,6 +321,7 @@ defaultOrganisms:
         - name: ncbi_release_date
           displayName: NCBI release date
           type: date
+          header: "INSDC"
         - name: country
           type: string
           required: true
@@ -312,19 +351,23 @@ defaultOrganisms:
           autocomplete: true
         - name: insdc_accession_base
           type: string
+          header: "INSDC"
         - name: insdc_version
           type: int
+          header: "INSDC"
         - name: insdc_accession_full
           type: string
           displayName: INSDC accession
           customDisplay:
             type: link
             url: "https://www.ncbi.nlm.nih.gov/nuccore/{{value}}"
+          header: "INSDC"
         - name: bioprojects
           type: string
           customDisplay:
             type: link
             url: "https://www.ncbi.nlm.nih.gov/bioproject/{{value}}"
+          header: "INSDC"
         - name: biosample_accession
           type: string
           customDisplay:
@@ -334,30 +377,38 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          header: "Alignment states and QC metrics"
         - name: ncbi_host_name
           type: string
           generateIndex: true
           autocomplete: true
+          header: "Host"
         - name: ncbi_host_tax_id
           type: int
           autocomplete: true
           customDisplay:
             type: link
             url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id={{value}}"
+          header: "Host"
         - name: ncbi_is_lab_host
           type: string
           generateIndex: true
           autocomplete: true
+          header: "Host"
         - name: ncbi_length
           type: int
+          header: "INSDC"
         - name: ncbi_protein_count
           type: int
+          header: "INSDC"
         - name: ncbi_update_date
           type: date
+          header: "INSDC"
         - name: ncbi_sourcedb
           type: string
           generateIndex: true
           autocomplete: true
+          header: "INSDC"
         - name: ncbi_virus_name
           type: string
           generateIndex: true
@@ -372,31 +423,43 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          header: "Host"
         - name: sra_accessions
           type: string
           customDisplay:
             type: link
             url: "https://www.ncbi.nlm.nih.gov/sra/?term={{value}}"
+          header: "INSDC"
         - name: total_snps
           type: int
+          header: "Mutations, insertions, deletions"
         - name: total_inserted_nucs
           type: int
+          header: "Mutations, insertions, deletions"
         - name: total_deleted_nucs
           type: int
+          header: "Mutations, insertions, deletions"
         - name: total_ambiguous_nucs
           type: int
+          header: "Alignment states and QC metrics"
         - name: total_unknown_nucs
           type: int
+          header: "Alignment states and QC metrics"
         - name: total_frame_shifts
           type: int
+          header: "Alignment states and QC metrics"
         - name: frame_shifts
           type: string
+          header: "Alignment states and QC metrics"
         - name: completeness
           type: float
+          header: "Alignment states and QC metrics"
         - name: total_stop_codons
           type: int
+          header: "Alignment states and QC metrics"
         - name: stop_codons
           type: string
+          header: "Alignment states and QC metrics"
         - name: metadata_hash
           type: string
       website:
@@ -414,6 +477,79 @@ defaultOrganisms:
         defaultOrder: descending
       silo:
         dateToSortBy: collection_date
+      inputFields:
+        - name: collection_date
+          displayName: Collection Date
+        - name: ncbi_release_date
+          displayName: NCBI Release Date
+        - name: country
+          displayName: Country
+        - name: isolate_name
+          displayName: Isolate Name
+        - name: author_affiliation
+          displayName: Author Affiliation
+        - name: authors
+          displayName: Authors
+        - name: submitter_country
+          displayName: Submitter Country
+        - name: division
+          displayName: Division
+        - name: insdc_accession_base
+          displayName: INSDC Accession Base
+        - name: insdc_version
+          displayName: INSDC Version
+        - name: insdc_accession_full
+          displayName: INSDC Accession Full
+        - name: bioprojects
+          displayName: BioProjects
+        - name: biosample_accession
+          displayName: BioSample Accession
+        - name: ncbi_completeness
+          displayName: NCBI Completeness
+        - name: ncbi_host_name
+          displayName: NCBI Host Name
+        - name: ncbi_host_tax_id
+          displayName: NCBI Host Tax ID
+        - name: ncbi_is_lab_host
+          displayName: NCBI Is Lab Host
+        - name: ncbi_length
+          displayName: NCBI Length
+        - name: ncbi_protein_count
+          displayName: NCBI Protein Count
+        - name: ncbi_update_date
+          displayName: NCBI Update Date
+        - name: ncbi_sourcedb
+          displayName: NCBI Source DB
+        - name: ncbi_virus_name
+          displayName: NCBI Virus Name
+        - name: ncbi_virus_tax_id
+          displayName: NCBI Virus Tax ID
+        - name: isolate_source
+          displayName: Isolate Source
+        - name: sra_accessions
+          displayName: SRA Accessions
+        - name: total_snps
+          displayName: Total SNPs
+        - name: total_inserted_nucs
+          displayName: Total Inserted Nucleotides
+        - name: total_deleted_nucs
+          displayName: Total Deleted Nucleotides
+        - name: total_ambiguous_nucs
+          displayName: Total Ambiguous Nucleotides
+        - name: total_unknown_nucs
+          displayName: Total Unknown Nucleotides
+        - name: total_frame_shifts
+          displayName: Total Frame Shifts
+        - name: frame_shifts
+          displayName: Frame Shifts
+        - name: completeness
+          displayName: Completeness
+        - name: total_stop_codons
+          displayName: Total Stop Codons
+        - name: stop_codons
+          displayName: Stop Codons
+        - name: metadata_hash
+          displayName: Metadata Hash
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -745,9 +881,9 @@ defaultOrganisms:
           Virus Pangolin Classification: ncbi_virus_pangolin
           Virus Taxonomic ID: ncbi_virus_tax_id
         group_name: insdc_ingest_group
-        username : insdc_ingest_user
-        password : insdc_ingest_user
-        keycloak_client_id : backend-client
+        username: insdc_ingest_user
+        password: insdc_ingest_user
+        keycloak_client_id: backend-client
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
@@ -792,5 +928,4 @@ secrets:
     type: sealed
     data:
       apikey: somesecurekey
-bannerMessage: "This is a development environment. Data will not be persisted."
-
+additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'

@@ -3,5 +3,6 @@ export const testSeqSet = {
     seqSetVersion: 1,
     name: 'Test seqSet name',
     description: 'Test seqSet description',
-    loculusAccessions: 'LOC_00000AE, LOC_000001Y, LOC_000002W',
+    focalLoculusAccessions: 'LOC_00000AE, LOC_000001Y, LOC_000002W',
+    backgroundLoculusAccessions: 'LOC_000003U, LOC_000004S',
 };

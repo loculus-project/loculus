@@ -14,7 +14,13 @@ import {
 } from '../../types/lapis.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
-export type TableDataEntry = { label: string; name: string; value: string | number; customDisplay?: CustomDisplay };
+export type TableDataEntry = {
+    label: string;
+    name: string;
+    value: string | number;
+    header: string;
+    customDisplay?: CustomDisplay;
+};
 
 export async function getTableData(
     accessionVersion: string,
@@ -82,6 +88,17 @@ function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(acces
     };
 }
 
+export function toHeaderMap(listTableDataEntries: TableDataEntry[]): { [key: string]: TableDataEntry[] } {
+    const groupedData = listTableDataEntries.reduce((acc: { [key: string]: TableDataEntry[] }, item) => {
+        if (!(item.header in acc)) {
+            acc[item.header] = [];
+        }
+        acc[item.header].push(item);
+        return acc;
+    }, {});
+    return groupedData;
+}
+
 function toTableData(config: Schema) {
     return ({
         details,
@@ -101,37 +118,44 @@ function toTableData(config: Schema) {
             name: metadata.name,
             customDisplay: metadata.customDisplay,
             value: mapValueToDisplayedValue(details[metadata.name], metadata),
+            header: metadata.header ?? '',
         }));
         data.push(
             {
                 label: 'Nucleotide substitutions',
                 name: 'nucleotideSubstitutions',
                 value: substitutionsToCommaSeparatedString(nucleotideMutations),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Nucleotide deletions',
                 name: 'nucleotideDeletions',
                 value: deletionsToCommaSeparatedString(nucleotideMutations),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Nucleotide insertions',
                 name: 'nucleotideInsertions',
                 value: insertionsToCommaSeparatedString(nucleotideInsertions),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Amino acid substitutions',
                 name: 'aminoAcidSubstitutions',
                 value: substitutionsToCommaSeparatedString(aminoAcidMutations),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Amino acid deletions',
                 name: 'aminoAcidDeletions',
                 value: deletionsToCommaSeparatedString(aminoAcidMutations),
+                header: 'Mutations, insertions, deletions',
             },
             {
                 label: 'Amino acid insertions',
                 name: 'aminoAcidInsertions',
                 value: insertionsToCommaSeparatedString(aminoAcidInsertions),
+                header: 'Mutations, insertions, deletions',
             },
         );
 

@@ -39,6 +39,7 @@ module.exports = {
             },
             rules: {
                 '@typescript-eslint/naming-convention': 'off',
+                'react/jsx-no-useless-fragment': 'off',
             },
         },
         {

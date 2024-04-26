@@ -5,7 +5,7 @@ description: How to deploy a loculus instance
 
 # Prerequisites
 
-Before you get started with deploying Loculus, there are a few prerequisites you'll need to ensure are in place. 
+Before you get started with deploying Loculus, there are a few prerequisites you'll need to ensure are in place.
 
 ## Kubernetes Cluster with Traefik
 
@@ -41,7 +41,6 @@ To use an external database, you'll need to provide the necessary connection det
 
 Here's an example of how the external database configuration might look in the `values.yaml` file:
 
-
 ```yaml
 externalDatabase:
  urlSealedSecret: "ag..."
@@ -60,10 +59,10 @@ The helm chart for deploying pathoplexus is within the Loculus repo, in the `kub
 [We need to write about how to do this]
 
 ## Organism Configuration
+
 Loculus supports multiple organisms, each with its own configuration. The organisms section in the values.yaml file allows you to define the specific settings for each organism.
 
 Here's an example of how the organism configuration might look:
-
 
 ```yaml
 organisms:
@@ -74,18 +73,22 @@ organisms:
       metadata:
         - name: date
           type: date
+          header: "Collection Data"
         - name: region
           type: string
           generateIndex: true
           autocomplete: true
+          header: "Collection Data"
         - name: country
           type: string
           generateIndex: true
           autocomplete: true
+          header: "Collection Data"
         - name: division
           type: string
           generateIndex: true
           autocomplete: true
+          header: "Collection Data"
         - name: host
           type: string
           autocomplete: true
@@ -93,6 +96,12 @@ organisms:
           type: pango_lineage
           autocomplete: true
           required: true
+        - name: insdc_accession_full
+          type: string
+          displayName: INSDC accession
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/nuccore/{{value}}"
       website:
         tableColumns:
           - country
@@ -120,9 +129,14 @@ organisms:
 
 In this example, the configuration for the "ebolavirus-sudan" organism is defined. It includes schema settings, website display options, silo configuration, preprocessing details, and reference genome information.
 
+Note the metadata section includes various fields for how the metadata of specific sequences should be displayed. Each metadata item must have a `name` which will also be displayed on the page unless `displayName` is also set. The `type` of the data, as well as if the field is `required` and if `autoComplete` is enabled can also be added. Additionally, links from metadata entries to external websites can be added using the `customDisplay` option. We also allow metadata to be grouped in sections, specified by the `header` field.
+
+Additionally, the `tableColumns` section defines which metadata fields are shown as columns in the search results.
+
 You can add multiple organisms under the organisms section, each with its own unique configuration.
 
 ## Ready to Deploy?
+
 Once you have the prerequisites in place and have configured the `values.yaml` file according to your requirements, you're ready to deploy Loculus using the provided Helm chart.
 
 Run `helm install loculus kubernetes/loculus -f kubernetes/loculus/values.yaml`
