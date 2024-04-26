@@ -24,7 +24,7 @@ export type LapisBaseRequest = z.infer<typeof lapisBaseRequest>;
 
 export const mutationsRequest = lapisBaseRequest.extend({ minProportion: z.number().optional() });
 
-const mutationProportionCount = z.object({
+export const mutationProportionCount = z.object({
     mutation: z.string(),
     proportion: z.number(),
     count: z.number(),
