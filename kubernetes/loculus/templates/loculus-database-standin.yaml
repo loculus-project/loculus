@@ -15,6 +15,9 @@ spec:
         app: loculus
         component: database
     spec:
+      securityContext:
+        runAsUser: 999  # UID for postgres user in the default postgres Docker image
+        runAsNonRoot: true
       containers:
       - name: database
         image: postgres:latest
