@@ -8,7 +8,7 @@ spec:
   {{- template "loculus.serviceType"}}
   selector:
     app: loculus
-    component: website-and-backend
+    component: database
   ports:
     - port: 5432
       targetPort: 5432
