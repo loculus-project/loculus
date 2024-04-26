@@ -17,8 +17,8 @@ export type AaSub = {
 
 export const NucSubBadge: FC<NucSubProps> = ({ pos, mutationTo, mutationFrom }) => {
     return (
-        <button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
-            <span className='font-mono text-xs overflow-auto'>
+        <span className=''>
+            <span className='border-2 bg-transparent rounded-[3px] font-mono text-xs overflow-auto'>
                 <span className='px-[4px] py-[2px] rounded-s-[3px]' style={{ background: getNucColor(mutationFrom) }}>
                     {mutationFrom}
                 </span>
@@ -27,14 +27,15 @@ export const NucSubBadge: FC<NucSubProps> = ({ pos, mutationTo, mutationFrom }) 
                     {mutationTo}
                 </span>
             </span>
-        </button>
+            <span> </span>
+        </span>
     );
 };
 
 export const AaSubBadge: FC<AaSub> = ({ pos, mutationTo, mutationFrom, gene }) => {
     return (
-        <button className='border-2 bg-transparent rounded-[3px] font-mono text-xs'>
-            <span className='font-mono text-xs'>
+        <span className=''>
+            <span className='border-2 bg-transparent rounded-[3px] font-mono text-xs overflow-auto'>
                 <span className='px-[4px] py-[2px] rounded-s-[3px]'>{gene}:</span>
                 <span className='px-[4px] py-[2px]' style={{ background: getAaColor(mutationFrom) }}>
                     {mutationFrom}
@@ -44,7 +45,8 @@ export const AaSubBadge: FC<AaSub> = ({ pos, mutationTo, mutationFrom, gene }) =
                     {mutationTo}
                 </span>
             </span>
-        </button>
+            <span> </span>
+        </span>
     );
 };
 

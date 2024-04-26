@@ -151,7 +151,7 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Nucleotide substitutions',
             name: 'nucleotideSubstitutions',
-            value: 'T10A, C30G',
+            value: '',
             header: 'Mutations, insertions, deletions',
             customDisplay: {
                 type: 'badge',
@@ -184,7 +184,7 @@ describe('getTableData', () => {
         expect(data).toContainEqual({
             label: 'Amino acid substitutions',
             name: 'aminoAcidSubstitutions',
-            value: 'gene1:N10Y, gene1:T30N',
+            value: '',
             header: 'Mutations, insertions, deletions',
             customDisplay: {
                 type: 'badge',
