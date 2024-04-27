@@ -192,22 +192,60 @@ def get_submitted(config: Config):
     response = requests.get(url, headers=headers, params=params)
     response.raise_for_status()
 
-    # Of shape ndjson with {"accession":"LOC_0003BDR","version":1,"originalMetadata":{"authors":"L. Vanderzanden, M. Bray, D. Fuller, T. Roberts, D. Custer, K. Spik, P. Jahrling, J. Huggins, A. Schmaljohn, C. Schmaljohn, C.S. Schmaljohn","country":"","division":"","bioprojects":"","ncbi_length":"2220","isolate_name":"","insdc_version":"1","metadata_hash":"11ba508af2261e0e61cd04757601ee2cc42a364fec69f99c6ff58de002673a4a","ncbi_sourcedb":"GenBank","isolate_source":"","ncbi_host_name":"","sra_accessions":"","collection_date":"","ncbi_virus_name":"Zaire ebolavirus","ncbi_host_tax_id":"","ncbi_is_lab_host":"","ncbi_update_date":"2002-08-28T00:00:00Z","ncbi_completeness":"PARTIAL","ncbi_release_date":"1998-04-02T00:00:00Z","ncbi_virus_tax_id":"186538","submitter_country":"USA","author_affiliation":"USAMRIID, Virology Division","ncbi_protein_count":"1","biosample_accession":"","insdc_accession_base":"AF054908","insdc_accession_full":"AF054908.1"}}
-    # Reshape to: "insdc": {hash, loculus}
-
     # Initialize the dictionary to store results
-    submitted_dict = {}
+    submitted_dict: dict[str, dict[str, str | list]] = {}
+
+    """I want something like (in yaml)
+    insdc_accession:
+        loculus_accession: abcd
+        versions:
+        - version: 1
+          hash: abcd
+          status: ... (this needs to be queried separately)
+        - version: 2
+          hash: efg
+    
+    If the same insdc_accession has multiple loculus_accessions
+    then error, as this can't be represented here
+    """
 
     # Parse each line of NDJSON
     for line in response.iter_lines():
         if line:  # Make sure line is not empty
             record = json.loads(line)
-            loculus_accession = record.get("accession", "")
-            original_metadata = record.get("originalMetadata", {})
+            loculus_accession = record["accession"]
+            loculus_version = int(record["version"])
+            original_metadata = record["originalMetadata"]
             insdc_accession = original_metadata.get("insdc_accession_base", "")
             hash_value = original_metadata.get("metadata_hash", "")
-            submitted_dict[insdc_accession] = {"hash": hash_value, "loculus": loculus_accession}
+            if insdc_accession not in submitted_dict:
+                # Create base entry
+                submitted_dict[insdc_accession] = {
+                    "loculus_accession": loculus_accession,
+                    "versions": [],
+                }
+            else:
+                # Check accessions match, otherwise raise
+                if loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
+                    # For now to be forgiving, just move on
+                    continue
+                    print(submitted_dict)
+                    raise ValueError(
+                        f"INSDC accession {insdc_accession} has multiple loculus accessions: "
+                        f"{loculus_accession} and {submitted_dict[insdc_accession]["loculus_accession"]}"
+                    )
 
+            # Append version, hash and loculus accession
+            submitted_dict[insdc_accession]["versions"].append(
+                {
+                    "version": loculus_version,
+                    "hash": hash_value,
+                }
+            )
+    
+    # Later on, enrich with status information to prevent exhaustion
+    # of accessions
+    
     return submitted_dict
 
 
@@ -277,7 +315,7 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
         logging.info("Getting submitted sequences")
         response = get_submitted(config)
         Path(output).write_text(json.dumps(response))
-        logging.debug(f"Originally submitted: {response}")
+        # logging.debug(f"Originally submitted: {response}")
 
 
 if __name__ == "__main__":

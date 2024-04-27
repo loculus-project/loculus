@@ -102,9 +102,11 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
         prehash = metadata_dump + sequence_hash
 
         record["hash"] = hashlib.md5(prehash.encode()).hexdigest()
+    
+    meta_dict = { rec[config.rename[config.fasta_id_field]]: rec for rec in metadata }
 
     # Save the metadata
-    Path(output).write_text(json.dumps(metadata, indent=4))
+    Path(output).write_text(json.dumps(meta_dict, indent=4))
 
 
 if __name__ == "__main__":

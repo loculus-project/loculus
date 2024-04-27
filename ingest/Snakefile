@@ -126,19 +126,15 @@ rule prepare_metadata:
 
 rule download_hashes:
     """Download metadata and sequence hashes of all previously submitted sequences 
-    Potentially done via: 
-    - curl to /get-released-data
-    - jq filtering to ingest user
-    - jq subsetting to hashes
-    - jq output as tsv
-
-    Only look at the higest loculus version
-
-    Output needs to contain:
-    - insdc base accession (no version) 
-    - loculus accession
-    - metadata hash of highest version
-    - sequence hash of highest version
+    Produces mapping from INSDC accession to loculus id/version/hash
+    insdc_accession:
+        loculus_accession: abcd
+        versions:
+        -   version: 1
+            hash: abcd
+        -   version: 2
+            hash: efg
+        ...
     """
     input:
         config="results/config.yaml",
@@ -161,18 +157,40 @@ rule compare_hashes:
         old_hashes="results/submitted_hashes.json",
         metadata="results/metadata_post_prepare.json",
     output:
-        to_submit="results/to_submit.tsv",
-        to_revise="results/to_revise.tsv",
-        unchanged="results/unchanged.tsv",
+        to_submit="results/to_submit.json",
+        to_revise="results/to_revise.json",
+        unchanged="results/unchanged.json",
     shell:
         """
         python scripts/compare_hashes.py \
             --old-hashes {input.old_hashes} \
-            --sequence-hashes {input.metadata} \
             --metadata {input.metadata} \
             --to-submit {output.to_submit} \
             --to-revise {output.to_revise} \
             --unchanged {output.unchanged} \
+        """
+
+
+rule prepare_files:
+    input:
+        metadata="results/metadata_post_prepare.json",
+        sequences="results/sequences.fasta",
+        to_submit="results/to_submit.json",
+        to_revise="results/to_revise.json",
+    output:
+        # sequences_submit="results/submit_sequences.fasta",
+        # sequences_revise="results/revise_sequences.fasta",
+        metadata_submit="results/to_submit.tsv",
+        metadata_revise="results/to_revise.tsv",
+    shell:
+        """
+        python scripts/prepare_files.py \
+            --metadata-path {input.metadata} \
+            --sequences-path {input.sequences} \
+            --to-submit-path {input.to_submit} \
+            --to-revise-path {input.to_revise} \
+            --metadata-submit-path {output.metadata_submit} \
+            --metadata-revise-path {output.metadata_revise} \
         """
 
 
