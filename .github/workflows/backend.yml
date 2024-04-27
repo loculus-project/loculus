@@ -33,6 +33,8 @@ jobs:
         with:
           command: cd ./backend && ./gradlew test
           max_attempts: 3
+          timeout_minutes: 10
+          retry_wait_seconds: 1
       - name: Check Format And Lint
         run: ./gradlew ktlintCheck
         working-directory: ./backend
