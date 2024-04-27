@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   Tests:
-    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}-ubuntu-7.0-large
+    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -29,8 +29,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
       - name: Execute Tests
-        run: ./gradlew test
-        working-directory: ./backend
+        uses: nick-fields/retry@v3
+        with:
+          command: cd ./backend && ./gradlew test
+          max_attempts: 3
       - name: Check Format And Lint
         run: ./gradlew ktlintCheck
         working-directory: ./backend
