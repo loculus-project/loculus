@@ -10,7 +10,7 @@ spec:
   ports:
     - port: 3000
       targetPort: 3000
-      {{- if ne .Values.environment "server" }}
+      {{- if ne $.Values.environment "server" }}
       nodePort: 30081
       {{- end }}
       protocol: TCP
