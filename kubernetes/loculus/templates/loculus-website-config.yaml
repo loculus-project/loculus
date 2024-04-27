@@ -24,8 +24,11 @@ data:
             {{- if .Values.usePublicRuntimeConfigAsServerSide }}
             {{- template "loculus.publicRuntimeConfig" dict "Values" .Values "externalLapisUrlConfig" $externalLapisUrlConfig -}}
             {{- else }}
-
+            {{ if $.Values.environment eq "server" -}}
+            "backendUrl": "http://loculus-backend-service:8079",
+            {{- else -}}
             "backendUrl": "http://localhost:8079",
+            {{- end }}
             "lapisUrls": {{- include "loculus.generateInternalLapisUrls" . | fromYaml | toJson }},
             "keycloakUrl": "{{ if not .Values.disableWebsite -}}http://loculus-keycloak-service:8083{{ else -}}http://localhost:8083{{ end }}"
             {{- end }}
