@@ -24,7 +24,7 @@ data:
             {{- if .Values.usePublicRuntimeConfigAsServerSide }}
             {{- template "loculus.publicRuntimeConfig" dict "Values" .Values "externalLapisUrlConfig" $externalLapisUrlConfig -}}
             {{- else }}
-            {{ if $.Values.environment eq "server" -}}
+            {{ if eq $.Values.environment "server" -}}
             "backendUrl": "http://loculus-backend-service:8079",
             {{- else -}}
             "backendUrl": "http://localhost:8079",
