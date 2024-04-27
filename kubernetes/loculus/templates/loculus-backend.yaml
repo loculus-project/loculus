@@ -3,7 +3,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus
+  name: loculus-backend
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
     reloader.stakater.com/auto: "true"
