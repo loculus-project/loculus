@@ -12,7 +12,7 @@ spec:
   ports:
     - port: 5432
       targetPort: 5432
-      {{- if ne .Values.environment "server" }}
+      {{- if ne $.Values.environment "server" }}
       nodePort: 30432
       {{- end }}
       protocol: TCP

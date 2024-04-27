@@ -1,4 +1,4 @@
-{{- if eq .Values.environment "server" }}
+{{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
 {{- $keycloakHost := printf "authentication-%s" .Values.host }}
 
