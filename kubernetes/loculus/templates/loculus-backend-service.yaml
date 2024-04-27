@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: loculus-backend-service
 spec:
-  {{- template "loculus.serviceType"}}
+  {{- template "loculus.serviceType" . }}
   selector:
     app: loculus
     component: backend

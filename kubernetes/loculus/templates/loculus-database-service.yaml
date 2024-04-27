@@ -5,7 +5,7 @@ metadata:
   name: loculus-database-service
 spec:
   
-  {{- template "loculus.serviceType"}}
+  {{- template "loculus.serviceType" .}}
   selector:
     app: loculus
     component: database

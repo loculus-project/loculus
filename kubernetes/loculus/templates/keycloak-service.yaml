@@ -3,7 +3,7 @@ kind: Service
 metadata:
   name: loculus-keycloak-service
 spec:
-  {{- template "loculus.serviceType"}}
+  {{- template "loculus.serviceType" . }}
   selector:
     app: loculus
     component: keycloak
