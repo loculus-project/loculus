@@ -29,7 +29,7 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
             headerNode={msg("registerTitle")}
         >
             <form id="kc-register-form" className={getClassName("kcFormClass")} action={url.registrationAction} method="post">
-            {realm.password && social.providers !== undefined && (
+            {social.providers !== undefined && (
                     <div
                         id="kc-social-providers"
                         className={clsx(getClassName("kcFormSocialAccountContentClass"), getClassName("kcFormSocialAccountClass"))}
