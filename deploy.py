@@ -48,7 +48,7 @@ helm_parser.add_argument('--enableIngest', action='store_true',
                          help='Include deployment of ingest pipelines')
 helm_parser.add_argument('--values', help='Values file for helm chart',
                          default=HELM_VALUES_FILE)
-helm_parser.add_argument('--template', help='Just template',
+helm_parser.add_argument('--template', help='Just template and print out the YAML produced',
                         action='store_true')
 
 upgrade_parser = subparsers.add_parser('upgrade', help='Upgrade helm installation')
