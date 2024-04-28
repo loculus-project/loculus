@@ -51,11 +51,9 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                         </ul>
                     </div>
                 )}
-                {
-                    // add horizontal line with "or fill in the form below" text
-                }
+             
                 <hr />
-                <p>or fill in the form below</p>
+                <p className="text-center">..or fill in the form below</p>
 
                 <UserProfileFormFields
                     kcContext={kcContext}
