@@ -4,6 +4,7 @@ import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
 import { type TableDataEntry } from './getTableData';
 import { getReferenceGenomes, getRuntimeConfig } from '../../config';
+import { getSchema } from '../../config.ts';
 import { routes } from '../../routes/routes.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 import { checkIsMyGroup } from '../../utils/checkIsMyGroup';
@@ -45,6 +46,8 @@ const session = Astro.locals.session;
 const accessToken = getAccessToken(session);
 
 const isMyGroup = accessToken !== undefined && (await checkIsMyGroup(accessToken, groupId));
+
+const loadSequencesAutomatically = getSchema(organism).loadSequencesAutomatically === true;
 ---
 
 {
@@ -75,6 +78,7 @@ const isMyGroup = accessToken !== undefined && (await checkIsMyGroup(accessToken
         clientConfig={runtimeConfig.public}
         genes={genes}
         nucleotideSegmentNames={nucleotideSegmentNames}
+        loadSequencesAutomatically={loadSequencesAutomatically}
     />
 </div>
 

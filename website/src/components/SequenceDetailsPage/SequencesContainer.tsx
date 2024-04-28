@@ -1,7 +1,6 @@
 import { type Dispatch, type FC, type SetStateAction, useState, useEffect } from 'react';
 
 import { SequencesViewer } from './SequenceViewer';
-import { getSchema } from '../../config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import {
     alignedSequenceSegment,
@@ -21,6 +20,7 @@ type SequenceContainerProps = {
     clientConfig: ClientConfig;
     genes: string[];
     nucleotideSegmentNames: [string, ...string[]];
+    loadSequencesAutomatically: boolean;
 };
 
 export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
@@ -29,8 +29,8 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     clientConfig,
     genes,
     nucleotideSegmentNames,
+    loadSequencesAutomatically,
 }) => {
-    const loadSequencesAutomatically = getSchema(organism).loadSequencesAutomatically === true;
     const [loadSequences, setLoadSequences] = useState(false);
     useEffect(() => {
         if (loadSequencesAutomatically) {
