@@ -15,7 +15,7 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
         classes
     });
 
-    const { url, messagesPerField, recaptchaRequired, recaptchaSiteKey } = kcContext;
+    const { url, realm, social, messagesPerField, recaptchaRequired, recaptchaSiteKey } = kcContext;
 
     const { msg, msgStr } = i18n;
 
@@ -29,6 +29,27 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
             headerNode={msg("registerTitle")}
         >
             <form id="kc-register-form" className={getClassName("kcFormClass")} action={url.registrationAction} method="post">
+            {realm.password && social.providers !== undefined && (
+                    <div
+                        id="kc-social-providers"
+                        className={clsx(getClassName("kcFormSocialAccountContentClass"), getClassName("kcFormSocialAccountClass"))}
+                    >
+                        <ul
+                            className={clsx(
+                                getClassName("kcFormSocialAccountListClass"),
+                                social.providers.length > 4 && getClassName("kcFormSocialAccountDoubleListClass")
+                            )}
+                        >
+                            {social.providers.map(p => (
+                                <li key={p.providerId} className={getClassName("kcFormSocialAccountListLinkClass")}>
+                                    <a href={p.loginUrl} id={`zocial-${p.alias}`} className={clsx("zocial", p.providerId)}>
+                                        <span><img src={orcidLogoUrl} alt="ORCID logo" width={50} /> Sign in with {p.displayName}</span>
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
                 <UserProfileFormFields
                     kcContext={kcContext}
                     onIsFormSubmittableValueChange={setIsFormSubmittable}
