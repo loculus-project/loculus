@@ -23,7 +23,7 @@ jobs:
       contents: read
       checks: read
 
-    runs-on: ubuntu-latest-m
+    runs-on: ubuntu-latest
     timeout-minutes: 30
 
     env:
@@ -40,10 +40,6 @@ jobs:
       - name: Create k3d cluster
         run: |
           ./deploy.py --verbose cluster
-      - name: Template with helm2
-        uses: WyriHaximus/github-action-helm3@v4
-        with:
-          exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ github.sha }} --template
       - name: Template with helm
         uses: WyriHaximus/github-action-helm3@v4
         with:
