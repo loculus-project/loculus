@@ -16,7 +16,7 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
         classes
     });
 
-    const { url, realm, social, messagesPerField, recaptchaRequired, recaptchaSiteKey } = kcContext;
+    const { url, social, messagesPerField, recaptchaRequired, recaptchaSiteKey } = kcContext;
 
     const { msg, msgStr } = i18n;
 
@@ -33,7 +33,7 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
             {social.providers !== undefined && (
                     <div
                         id="kc-social-providers"
-                        className={clsx(getClassName("kcFormSocialAccountContentClass"), getClassName("kcFormSocialAccountClass"))}
+                        
                     >
                         <ul
                             className={clsx(
@@ -44,7 +44,7 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                             {social.providers.map(p => (
                                 <li key={p.providerId} className={getClassName("kcFormSocialAccountListLinkClass")}>
                                     <a href={p.loginUrl} id={`zocial-${p.alias}`} className={clsx("zocial", p.providerId)}>
-                                        <span><img src={orcidLogoUrl} alt="ORCID logo" width={50} /> Sign in with {p.displayName}</span>
+                                        <span><img src={orcidLogoUrl} alt="ORCID logo" width={50} /> Register with {p.displayName}</span>
                                     </a>
                                 </li>
                             ))}
