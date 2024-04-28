@@ -19,5 +19,6 @@ export const serverConfig = serviceUrls.merge(
 export const runtimeConfig = z.object({
     public: serviceUrls,
     serverSide: serverConfig,
+    devMode: z.boolean(),
 });
 export type RuntimeConfig = z.infer<typeof runtimeConfig>;

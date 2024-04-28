@@ -5,11 +5,13 @@ import JwksRsa from 'jwks-rsa';
 import { err, ok, ResultAsync } from 'neverthrow';
 import { type BaseClient, type TokenSet } from 'openid-client';
 
-import { getConfiguredOrganisms } from '../config.ts';
+import { getConfiguredOrganisms, getRuntimeConfig } from '../config.ts';
 import { getInstanceLogger } from '../logger.ts';
 import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
+
+const runtimeconfig = getRuntimeConfig();
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
@@ -236,13 +238,13 @@ function setCookie(context: APIContext, token: TokenCookie) {
     context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
         httpOnly: true,
         sameSite: 'lax',
-        secure: false,
+        secure: !runtimeconfig.devMode,
         path: '/',
     });
     context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, {
         httpOnly: true,
         sameSite: 'lax',
-        secure: false,
+        secure: !runtimeconfig.devMode,
         path: '/',
     });
 }
