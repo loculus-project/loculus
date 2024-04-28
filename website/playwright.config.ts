@@ -7,7 +7,6 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
     testDir: './tests',
-    timeout: 2 * 60 * 1000,
     // This option allows parallel execution of tests in a single file.
     // It is disabled by default because it can cause issues with some tests.
     fullyParallel: false,
