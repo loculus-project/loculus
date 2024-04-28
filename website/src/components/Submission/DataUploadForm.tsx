@@ -324,8 +324,16 @@ const InnerDataUploadForm = ({
                             <a href={routes.metadataTemplate(organism)} className='text-primary-700'>
                                 a template
                             </a>{' '}
-                            for the TSV metadata file with column headings. Files can optionally be compressed, with the
-                            appropriate extension (<i>.zst</i>, <i>.gz</i>, <i>.zip</i>, <i>.xz</i>). For more
+                            for the TSV metadata file with column headings.
+                            </p>
+                            
+                            <p className='text-gray-800 text-xs mt-5 opacity-50'>
+                            Files can optionally be compressed, with the
+                            appropriate extension (<i>.zst</i>, <i>.gz</i>, <i>.zip</i>, <i>.xz</i>).
+                        </p>
+                        <p className='text-gray-800 text-xs mt-5 opacity-50'>
+                            
+                             For more
                             information on the format in which data should be uploaded and the required metadata, please
                             refer to our{' '}
                             <a href='#TODO-MVP' className='text-primary-700'>
