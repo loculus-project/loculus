@@ -316,6 +316,7 @@ defaultOrganisms:
           sequence: MKQYIVLACMCLVAAAMPTSLQQSSSSCTEEENKHHMGIDVIIKVTKQDQTPTNDKICQSVTEVTETEDDEVSEEVVKGDPTTYYTIVGAGLNMNFGFTKCPKISSISESSDGNTVNTRLSSVSPGQGKDSPAITREEALAMIKDCEMSIDIRCSEEEKDSDIKTHPVLGSNISHKKVSYKDIIGSTIVDTKCVKNLEFSVRIGDMCEESSELEVKDGFKYVDGSASEGATDDTSLIDSTKLKACV*
   ebola-zaire:
     schema:
+      loadSequencesAutomatically: true
       instanceName: "Ebola Zaire"
       image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
       description: "Ebolavirus Zaire"
