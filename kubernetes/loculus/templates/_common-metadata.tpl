@@ -73,6 +73,7 @@ organisms:
     schema:
       {{- with $instance.schema }}
       instanceName: {{ quote .instanceName }}
+      loadSequencesAutomatically: {{ quote .loadSequencesAutomatically }}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
