@@ -1,5 +1,5 @@
 // TODO: #1337 Move to config
-import { getRuntimeConfig } from "../config";
+import { getRuntimeConfig } from '../config';
 const runtimeConfig = getRuntimeConfig();
 
 export const clientMetadata = {
