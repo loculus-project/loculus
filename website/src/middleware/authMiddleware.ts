@@ -11,7 +11,6 @@ import { KeycloakClientManager } from '../utils/KeycloakClientManager.ts';
 import { getAuthUrl } from '../utils/getAuthUrl.ts';
 import { shouldMiddlewareEnforceLogin } from '../utils/shouldMiddlewareEnforceLogin.ts';
 
-const runtimeconfig = getRuntimeConfig();
 
 export const ACCESS_TOKEN_COOKIE = 'access_token';
 export const REFRESH_TOKEN_COOKIE = 'refresh_token';
@@ -234,17 +233,18 @@ async function getTokenFromParams(context: APIContext, client: BaseClient): Prom
 }
 
 function setCookie(context: APIContext, token: TokenCookie) {
+    const runtimeConfig = getRuntimeConfig();
     logger.debug(`Setting token cookie`);
     context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
         httpOnly: true,
         sameSite: 'lax',
-        secure: !runtimeconfig.devMode,
+        secure: !runtimeConfig.devMode,
         path: '/',
     });
     context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, {
         httpOnly: true,
         sameSite: 'lax',
-        secure: !runtimeconfig.devMode,
+        secure: !runtimeConfig.devMode,
         path: '/',
     });
 }
