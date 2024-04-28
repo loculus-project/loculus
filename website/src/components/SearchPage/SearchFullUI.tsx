@@ -1,4 +1,5 @@
 import { DownloadDialog } from './DownloadDialog/DownloadDialog';
+import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { Table } from './Table';
@@ -89,6 +90,7 @@ export const SearchFullUI = ({
                         )}
                     </div>
                 </div>
+                <RecentSequencesBanner />
                 <Table
                     organism={organism}
                     data={data.data}

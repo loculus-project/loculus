@@ -140,7 +140,12 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     if (total === 0) {
         return (
             <div className='pt-1 text-gray-600'>
-                You do not currently have any unreleased sequences awaiting review.
+                You do not currently have any unreleased sequences awaiting review. You can view your released sequences
+                on the{' '}
+                <a href={routes.mySequencesPage(organism, group.groupId)} className='text-primary-600 hover:underline'>
+                    Released Sequences
+                </a>{' '}
+                page.
             </div>
         );
     }
@@ -272,11 +277,14 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     onClick={() =>
                         displayConfirmationDialog({
                             dialogText: 'Are you sure you want to release all valid sequences?',
-                            onConfirmation: () =>
+                            onConfirmation: () => {
                                 hooks.approveProcessedData({
                                     groupIdsFilter: [group.groupId],
                                     scope: approveAllDataScope.value,
-                                }),
+                                });
+
+                                storeLastApprovalTime();
+                            },
                         })
                     }
                 >
@@ -295,13 +303,14 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                     <div key={sequence.accession}>
                         <ReviewCard
                             sequenceEntryStatus={sequence}
-                            approveAccessionVersion={() =>
+                            approveAccessionVersion={() => {
                                 hooks.approveProcessedData({
                                     accessionVersionsFilter: [sequence],
                                     groupIdsFilter: [group.groupId],
                                     scope: approveAllDataScope.value,
-                                })
-                            }
+                                });
+                                storeLastApprovalTime();
+                            }}
                             deleteAccessionVersion={() =>
                                 hooks.deleteSequenceEntries({
                                     accessionVersionsFilter: [sequence],
@@ -343,6 +352,11 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
             </div>
         </>
     );
+};
+
+const storeLastApprovalTime = () => {
+    const lastApprovalTime = Math.floor(Date.now() / 1000);
+    localStorage.setItem('lastApprovalTime', lastApprovalTime.toString());
 };
 
 export const ReviewPage = withQueryProvider(InnerReviewPage);
