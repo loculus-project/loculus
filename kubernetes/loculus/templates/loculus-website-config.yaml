@@ -32,7 +32,8 @@ data:
         },
         "public": {
           {{- template "loculus.publicRuntimeConfig" dict "Values" .Values "externalLapisUrlConfig" $externalLapisUrlConfig -}}
-        }
+        },
+        "backendKeycloakClientSecret" : "[[backendKeycloakClientSecret]]"
     }
 
 

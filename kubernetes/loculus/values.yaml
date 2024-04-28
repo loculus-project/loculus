@@ -935,10 +935,10 @@ secrets:
     type: sealed
     data:
       apikey: somesecurekey
-  - name: keycloak-client-secret
+  - name: backend-keycloak-client-secret
     type: autogen
     data:
-      clientSecret: "secret"
+      backendKeycloakClientSecret: ""
 additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
 bannerMessage: "This is a development environment. Data will not be persisted."
 
