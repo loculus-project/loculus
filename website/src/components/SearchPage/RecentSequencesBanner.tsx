@@ -27,7 +27,7 @@ export const RecentSequencesBanner: React.FC = () => {
         return null;
     }
     return (
-        <div className='bg-yellow-100 text-center p-4 text-yellow-800  rounded border-yellow-600 border mb-4'>
+        <div className='bg-yellow-100 text-center p-4 text-yellow-800  rounded border-yellow-600 border mb-4 opacity-70'>
             You have recently approved sequences, these must be loaded into the dataset and so may take several minutes
             to appear here.
         </div>
