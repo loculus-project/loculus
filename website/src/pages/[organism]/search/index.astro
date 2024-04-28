@@ -1,94 +1,42 @@
 ---
-import { DownloadDialog } from '../../../components/SearchPage/DownloadDialog/DownloadDialog';
-import { SearchForm } from '../../../components/SearchPage/SearchForm';
-import { SearchPagination } from '../../../components/SearchPage/SearchPagination';
-import { Table } from '../../../components/SearchPage/Table';
-import ErrorBox from '../../../components/common/ErrorBox.astro';
+import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { SEARCH } from '../../../routes/routes';
-import { pageSize } from '../../../settings';
 import { processParametersAndFetchSearch } from '../../../utils/processParametersAndFetchSearch';
-const {
-    cleanedOrganism,
-    organism,
-    data,
-    page,
-    metadataFilter,
-    metadataFilterWithoutHiddenFilters,
-    accessionFilter,
-    mutationFilter,
-    lapisUrl,
-    referenceGenomesSequenceNames,
-    schema,
-    clientConfig,
-    orderBy,
-} = await processParametersAndFetchSearch(Astro);
+const props = await processParametersAndFetchSearch(Astro);
+let theData = null;
+let theError = null;
+props.data.match(
+    (data) => {
+        theData = data;
+        theError = null;
+    },
+    (err) => {
+        theData = null;
+        theError = err;
+    },
+);
 ---
 
-<BaseLayout title={`${cleanedOrganism.displayName} - Browse`}>
+<BaseLayout title={`${props.cleanedOrganism.displayName} - Browse`}>
     <h1 class='title'>Search</h1>
-    <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
-        <div class='md:w-72'>
-            <SearchForm
-                organism={organism}
-                filters={metadataFilter}
-                initialAccessionFilter={accessionFilter}
-                initialMutationFilter={mutationFilter}
-                clientConfig={clientConfig}
-                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                classOfSearchPage={SEARCH}
-                client:load
-            />
-        </div>
-        {
-            data.match(
-                (data) => (
-                    <div class='flex-1'>
-                        <div class=' text-sm text-gray-800 mb-6 justify-between flex px-6 items-baseline'>
-                            <div class='mt-auto'>
-                                Search returned {data.totalCount.toLocaleString()}
-                                sequence{data.totalCount === 1 ? '' : 's'}
-                            </div>
-                            <div>
-                                <DownloadDialog
-                                    metadataFilter={metadataFilterWithoutHiddenFilters}
-                                    mutationFilter={mutationFilter}
-                                    referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                    lapisUrl={lapisUrl}
-                                    client:load
-                                />
-                            </div>
-                        </div>
-                        <Table
-                            organism={organism}
-                            data={data.data}
-                            schema={schema}
-                            metadataFilter={metadataFilter}
-                            accessionFilter={accessionFilter}
-                            mutationFilter={mutationFilter}
-                            page={page}
-                            orderBy={orderBy}
-                            classOfSearchPage={SEARCH}
-                            client:load
-                        />
-
-                        <div class='mt-4 flex justify-center'>
-                            <SearchPagination
-                                client:only='react'
-                                count={Math.ceil(data.totalCount / pageSize)}
-                                page={page}
-                                metadataFilter={metadataFilter}
-                                accessionFilter={accessionFilter}
-                                mutationFilter={mutationFilter}
-                                orderBy={orderBy}
-                                organism={organism}
-                                classOfSearchPage={SEARCH}
-                            />
-                        </div>
-                    </div>
-                ),
-                (error) => <ErrorBox title='Failed searching sequences'>{error.detail}</ErrorBox>,
-            )
-        }
-    </div>
+    <SearchFullUI
+        client:load
+        data={theData}
+        error={theError}
+        classOfSearchPage='SEARCH'
+        filters={props.metadataFilter}
+        initialAccessionFilter={props.accessionFilter}
+        initialMutationFilter={props.mutationFilter}
+        organism={props.organism}
+        referenceGenomesSequenceNames={props.referenceGenomesSequenceNames}
+        clientConfig={props.clientConfig}
+        orderBy={props.orderBy}
+        lapisUrl={props.lapisUrl}
+        schema={props.schema}
+        page={props.page}
+        metadataFilter={props.metadataFilter}
+        accessionFilter={props.accessionFilter}
+        mutationFilter={props.mutationFilter}
+        metadataFilterWithoutHiddenFilters={props.metadataFilterWithoutHiddenFilters}
+    />
 </BaseLayout>
