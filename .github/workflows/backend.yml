@@ -6,6 +6,10 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/backend
+  CROSSREF_USERNAME: ${{ secrets.CROSSREF_USERNAME }}
+  CROSSREF_TEST_PASSWORD: ${{ secrets.CROSSREF_TEST_PASSWORD }}
+  CROSSREF_TEST_ENDPOINT: ${{ secrets.CROSSREF_TEST_ENDPOINT }}
+  CROSSREF_DOI_PREFIX: ${{ secrets.CROSSREF_DOI_PREFIX }}
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend

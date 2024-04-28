@@ -159,3 +159,16 @@ fields:
     {{- end }}
 {{- end}}
 {{- end}}
+
+{{- define "loculus.publicRuntimeConfig" }}
+            {{- if .Values.codespaceName }}
+            "backendUrl": "https://{{ .Values.codespaceName }}-8079.app.github.dev",
+            {{- else if eq .Values.environment "server" }}
+            "backendUrl": "https://{{ printf "backend-%s" .Values.host }}",
+            {{- else }}
+            "backendUrl": "http://localhost:8079",
+            {{- end }}
+            "lapisUrls": {{- include "loculus.generateExternalLapisUrls" .externalLapisUrlConfig | fromYaml | toJson }},
+            "keycloakUrl":  "https://{{ printf "authentication-%s" .Values.host }}"
+{{- end }}
+

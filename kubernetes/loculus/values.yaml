@@ -9,6 +9,13 @@ keycloakDatabase:
   usernameSealedSecret: ""
   passwordSealedSecret: ""
   portSealedSecret: ""
+crossRef:
+  DOIPrefix: "10.62599"
+  testEndpoint: "https://test.crossref.org"
+  liveEndpoint: "https://doi.crossref.org"
+  usernameSealedSecret:
+  testPasswordSealedSecret:
+  livePasswordSealedSecret:
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
@@ -929,3 +936,5 @@ secrets:
     data:
       apikey: somesecurekey
 additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
+bannerMessage: "This is a development environment. Data will not be persisted."
+

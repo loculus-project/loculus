@@ -69,16 +69,41 @@ spec:
           ports:
             - containerPort: 8079
           args:
-            - "--spring.datasource.url=$(DB_URL)"
-            - "--spring.datasource.username=$(DB_USERNAME)"
-            - "--spring.datasource.password=$(DB_PASSWORD)"
-            - "--keycloak.user=backend"
+            - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
+            - "--crossref.endpoint=$(CROSSREF_TEST_ENDPOINT)"
+            - "--crossref.username=$(CROSSREF_USERNAME)"
+            - "--crossref.password=$(CROSSREF_TEST_PASSWORD)"
             - "--keycloak.password=backend"
             - "--keycloak.realm=loculus"
             - "--keycloak.client=backend-client"
             - "--keycloak.url=http://loculus-keycloak-service:8083"
+            - "--keycloak.user=backend"
+            - "--spring.datasource.password=$(DB_PASSWORD)"
+            - "--spring.datasource.url=$(DB_URL)"
+            - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
           env:
+          {{- if .Values.crossRef.usernameSealedSecret }}
+            - name: CROSSREF_USERNAME
+              valueFrom:
+               secretKeyRef:
+                 name: externaldb-credentials
+                 key: crossref-username
+           {{- end }}
+           {{- if .Values.crossRef.testPasswordSealedSecret }}
+            - name: CROSSREF_TEST_PASSWORD
+              valueFrom:
+               secretKeyRef:
+                 name: externaldb-credentials
+                 key: crossref-test-password
+           {{- end }}
+           {{- if .Values.crossRef.livePasswordSealedSecret }}
+            - name: CROSSREF_LIVE_PASSWORD
+              valueFrom:
+               secretKeyRef:
+                 name: externaldb-credentials
+                 key: crossref-live-password
+           {{- end }}
            {{- if .Values.externalDatabase.urlSealedSecret }}
             - name: DB_URL
               valueFrom:

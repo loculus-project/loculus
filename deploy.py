@@ -53,6 +53,8 @@ upgrade_parser = subparsers.add_parser('upgrade', help='Upgrade helm installatio
 
 config_parser = subparsers.add_parser('config', help='Generate config files')
 
+config_parser.add_argument('--from-live', action='store_true', help='Generate config files to point to the live cluster so we don`t need to run the cluster locally, only the website')
+
 args = parser.parse_args()
 
 def run_command(command: list[str], **kwargs):
@@ -64,7 +66,10 @@ def run_command(command: list[str], **kwargs):
     if args.dry_run:
         return subprocess.CompletedProcess(args=command, returncode=0, stdout="", stderr="")
     else:
-        return subprocess.run(command, **kwargs)
+        output =  subprocess.run(command, **kwargs)
+        if output.returncode != 0:
+            raise subprocess.SubprocessError(output.stderr)
+        return output
 
 
 def main():
@@ -75,7 +80,7 @@ def main():
     elif args.subcommand == 'upgrade':
         handle_helm_upgrade()
     elif args.subcommand == 'config':
-        generate_configs()
+        generate_configs(args.from_live)
 
 
 def handle_cluster():
@@ -91,7 +96,7 @@ def handle_cluster():
         print(f"Cluster '{CLUSTER_NAME}' already exists.")
     else:
         run_command(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 2",
-                       shell=True, check=True)
+                       shell=True)
 
     while not is_traefik_running():
         print("Waiting for Traefik to start...")
@@ -126,7 +131,7 @@ def cluster_exists(cluster_name):
 
 def handle_helm():
     if args.uninstall:
-        run_command(['helm', 'uninstall', HELM_RELEASE_NAME], check=True)
+        run_command(['helm', 'uninstall', HELM_RELEASE_NAME])
 
         return
 
@@ -158,19 +163,19 @@ def handle_helm():
     if get_codespace_name():
         parameters += ['--set', "codespaceName="+get_codespace_name()]
 
-    run_command(parameters, check=True)
+    run_command(parameters)
 
 
 def handle_helm_upgrade():
     parameters = [
         'helm', 'upgrade', HELM_RELEASE_NAME, HELM_CHART_DIR,
     ]
-    run_command(parameters, check=True)
+    run_command(parameters)
 
 def get_codespace_name():
     return os.environ.get('CODESPACE_NAME', None)
 
-def generate_configs():
+def generate_configs(from_live=False):
     TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
     helm_chart = str(HELM_CHART_DIR)
@@ -179,26 +184,32 @@ def generate_configs():
     output_dir = ROOT_DIR / 'website' / 'tests' / 'config' 
 
     backend_config_path = TEMP_DIR / 'backend_config.json'
-    generate_config(helm_chart, 'templates/loculus-backend-config.yaml', backend_config_path, codespace_name)
+    generate_config(helm_chart, 'templates/loculus-backend-config.yaml', backend_config_path, codespace_name, from_live)
 
     website_config_path = TEMP_DIR / 'website_config.json'
-    generate_config(helm_chart, 'templates/loculus-website-config.yaml', website_config_path, codespace_name)
+    generate_config(helm_chart, 'templates/loculus-website-config.yaml', website_config_path, codespace_name, from_live)
 
     runtime_config_path =  TEMP_DIR / 'runtime_config.json'
-    generate_config(helm_chart, 'templates/loculus-website-config.yaml', runtime_config_path, codespace_name)
+    generate_config(helm_chart, 'templates/loculus-website-config.yaml', runtime_config_path, codespace_name, from_live)
 
-    run_command(['python3', 'kubernetes/config-processor/config-processor.py', TEMP_DIR, output_dir], check=True)
+    run_command(['python3', 'kubernetes/config-processor/config-processor.py', TEMP_DIR, output_dir])
 
-def generate_config(helm_chart, template, output_path, codespace_name=None):
+def generate_config(helm_chart, template, output_path, codespace_name=None, from_live=False):
     helm_template_cmd = ['helm', 'template', 'name-does-not-matter', helm_chart, '--show-only', template]
 
     if codespace_name:
         helm_template_cmd.extend(['--set', 'codespaceName='+codespace_name])
 
-    helm_template_cmd.extend(['--set', 'environment=local'])
+    
     helm_template_cmd.extend(['--set', 'disableWebsite=true'])
     helm_template_cmd.extend(['--set', 'disableBackend=true'])
-    helm_output = run_command(helm_template_cmd, capture_output=True, text=True, check=True).stdout
+    if from_live:
+        helm_template_cmd.extend(['--set', 'environment=server'])
+        helm_template_cmd.extend(['--set', 'host=main.loculus.org'])
+        helm_template_cmd.extend(['--set', 'usePublicRuntimeConfigAsServerSide=true'])
+    else:
+        helm_template_cmd.extend(['--set', 'environment=local'])
+    helm_output = run_command(helm_template_cmd, capture_output=True, text=True).stdout
     if args.dry_run:
         return
 
