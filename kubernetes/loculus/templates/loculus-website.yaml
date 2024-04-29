@@ -1,4 +1,5 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- if not .Values.disableWebsite }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -22,7 +23,6 @@ spec:
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
-        {{- if not .Values.disableWebsite }}
         - name: website
           image: "{{ if $.Values.customWebsiteImage }}{{ $.Values.customWebsiteImage }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
           imagePullPolicy: Always
@@ -50,9 +50,8 @@ spec:
               port: 3000
             initialDelaySeconds: 5
             periodSeconds: 5
-        {{- end }}
-        
       imagePullSecrets:
         - name: custom-website-sealed-secret
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}
+ {{- end }}
