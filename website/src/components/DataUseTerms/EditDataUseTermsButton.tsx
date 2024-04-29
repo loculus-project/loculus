@@ -16,9 +16,6 @@ type EditDataUseTermsButtonProps = {
     accessToken: string;
     clientConfig: ClientConfig;
 
-
-
-    
     accessionVersion: string[];
     dataUseTerms: RestrictedDataUseTerms;
 };
