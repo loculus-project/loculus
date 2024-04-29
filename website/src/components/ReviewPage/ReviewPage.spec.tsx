@@ -13,6 +13,8 @@ import {
     type SequenceEntryStatus,
 } from '../../types/backend.ts';
 
+const unreleasedSequencesRegex = /You do not currently have any unreleased sequences awaiting review.*/;
+
 const testGroup = testGroups[0];
 
 function renderReviewPage() {
@@ -88,7 +90,7 @@ describe('ReviewPage', () => {
         const { getByText } = renderReviewPage();
 
         await waitFor(() => {
-            expect(getByText('You do not currently have any unreleased sequences awaiting review.')).toBeDefined();
+            expect(getByText(unreleasedSequencesRegex)).toBeDefined();
         });
     });
 
@@ -113,7 +115,7 @@ describe('ReviewPage', () => {
         const { getByText } = renderReviewPage();
 
         await waitFor(() => {
-            expect(getByText('You do not currently have any unreleased sequences awaiting review.')).toBeDefined();
+            expect(getByText(unreleasedSequencesRegex)).toBeDefined();
         });
 
         expect(requestedGroupFilter).toBe(testGroup.groupId.toString());
@@ -153,7 +155,7 @@ describe('ReviewPage', () => {
         getByText((text) => text.includes('Confirm')).click();
 
         await waitFor(() => {
-            expect(getByText('You do not currently have any unreleased sequences awaiting review.')).toBeDefined();
+            expect(getByText(unreleasedSequencesRegex)).toBeDefined();
         });
     });
 

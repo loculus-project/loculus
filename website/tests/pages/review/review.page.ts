@@ -33,7 +33,7 @@ export class ReviewPage {
     public async getReviewPageOverview(): Promise<ReviewPageOverview> {
         if (
             await this.page
-                .getByText('You do not currently have any unreleased sequences awaiting review.', { exact: false })
+                .getByText(/You do not currently have any unreleased sequences awaiting review.*/, { exact: false })
                 .isVisible()
         ) {
             return { processed: 0, total: 0 };

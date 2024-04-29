@@ -1,4 +1,5 @@
 import { DownloadDialog } from './DownloadDialog/DownloadDialog';
+import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { Table } from './Table';
@@ -73,10 +74,10 @@ export const SearchFullUI = ({
                 />
             </div>
             <div className='flex-1'>
+                <RecentSequencesBanner />
                 <div className=' text-sm text-gray-800 mb-6 justify-between flex px-6 items-baseline'>
                     <div className='mt-auto'>
-                        Search returned {data.totalCount.toLocaleString()}
-                        sequence{data.totalCount === 1 ? '' : 's'}
+                        Search returned {data.totalCount.toLocaleString()} sequence{data.totalCount === 1 ? '' : 's'}
                     </div>
                     <div>
                         {classOfSearchPage === SEARCH && (
