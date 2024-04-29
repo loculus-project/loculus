@@ -24,7 +24,7 @@ spec:
 {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: silo
-          image: ghcr.io/genspectrum/lapis-silo:latest
+          image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
           ports:
             - containerPort: 8081
           args:
@@ -33,7 +33,7 @@ spec:
             - name: lapis-silo-shared-data
               mountPath: /data
         - name: lapis
-          image: ghcr.io/genspectrum/lapis-v2:latest
+          image: ghcr.io/genspectrum/lapis-v2:{{ $.Values.imageTags.lapis }}
           ports:
             - containerPort: 8080
           args:

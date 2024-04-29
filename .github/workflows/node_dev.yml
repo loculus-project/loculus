@@ -22,7 +22,7 @@ jobs:
         os:
           - ubuntu-latest
           - windows-latest
-#disabled - macos-latest
+        #disabled - macos-latest
         exclude:
           - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
 

@@ -26,6 +26,7 @@ function renderSequenceViewer({
                 clientConfig={testConfig.public}
                 genes={genes}
                 nucleotideSegmentNames={nucleotideSegmentNames}
+                loadSequencesAutomatically={false}
             />
         </QueryClientProvider>,
     );
