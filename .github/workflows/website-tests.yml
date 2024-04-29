@@ -1,6 +1,7 @@
 name: website-tests
 
 on:
+  # test
   pull_request:
     paths:
       - "website/**"
