@@ -4,11 +4,11 @@ fields:
   - name: accession
     type: string
     notSearchable: true
-    hide: true
+    hideOnSequenceDetailsPage: true
   - name: version
     type: int
     notSearchable: true
-    hide: true
+    hideOnSequenceDetailsPage: true
   - name: submissionId
     type: string
   - name: accessionVersion
@@ -17,7 +17,7 @@ fields:
   - name: isRevocation
     type: string
     notSearchable: true
-    hide: true
+    hideOnSequenceDetailsPage: true
   - name: submitter
     type: string
     generateIndex: true
@@ -49,7 +49,7 @@ fields:
   - name: versionStatus
     type: string
     notSearchable: true
-    hide: true
+    hideOnSequenceDetailsPage: true
   {{- if $.Values.dataUseTermsUrls }}
   - name: dataUseTermsUrl
     type: string

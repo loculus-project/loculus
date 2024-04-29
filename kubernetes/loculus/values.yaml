@@ -302,7 +302,7 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
-          hide: true
+          hideOnSequenceDetailsPage: true
         - name: division
           type: string
           generateIndex: true
@@ -310,11 +310,11 @@ defaultOrganisms:
         - name: insdc_accession_base
           type: string
           header: "INSDC"
-          hide: true
+          hideOnSequenceDetailsPage: true
         - name: insdc_version
           type: int
           header: "INSDC"
-          hide: true
+          hideOnSequenceDetailsPage: true
         - name: insdc_accession_full
           type: string
           displayName: INSDC accession
@@ -361,7 +361,7 @@ defaultOrganisms:
         - name: ncbi_protein_count
           type: int
           header: "INSDC"
-          hide: true
+          hideOnSequenceDetailsPage: true
         - name: ncbi_update_date
           type: date
           header: "INSDC"
@@ -370,7 +370,7 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           header: "INSDC"
-          hide: true
+          hideOnSequenceDetailsPage: true
         - name: ncbi_virus_name
           type: string
           generateIndex: true
@@ -424,7 +424,7 @@ defaultOrganisms:
           header: "Alignment states and QC metrics"
         - name: metadata_hash
           type: string
-          hide: true
+          hideOnSequenceDetailsPage: true
       website:
         tableColumns:
           - collection_date

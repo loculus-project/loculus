@@ -114,7 +114,7 @@ function toTableData(config: Schema) {
         aminoAcidInsertions: InsertionCount[];
     }): TableDataEntry[] => {
         const data: TableDataEntry[] = config.metadata
-            .filter((metadata) => metadata.hide !== true)
+            .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
             .map((metadata) => ({
                 label: metadata.displayName ?? sentenceCase(metadata.name),
                 name: metadata.name,
