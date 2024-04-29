@@ -6,9 +6,8 @@ on:
       - "website/**"
       - ".github/workflows/website-tests.yml"
   push:
-    paths:
-      - "website/**"
-      - ".github/workflows/website-tests.yml"
+    branches:
+      - master
   workflow_dispatch:
 
 concurrency:

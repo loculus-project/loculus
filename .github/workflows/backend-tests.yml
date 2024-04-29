@@ -6,9 +6,8 @@ on:
       - "backend/**"
       - ".github/workflows/backend-tests.yml"
   push:
-    paths:
-      - "backend/**"
-      - ".github/workflows/backend-tests.yml"
+    branches:
+      - master
   workflow_dispatch:
 
 concurrency:
