@@ -42,7 +42,7 @@ jobs:
       - name: Create k3d cluster
         run: |
           ./deploy.py --verbose cluster &
-          CLUSTER_CREATE_PID=$! 
+          echo "CLUSTER_CREATE_PID=$! " >> $GITHUB_ENV
           
       - uses: actions/setup-node@v4
         with:
