@@ -13,7 +13,7 @@ import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { type ClassOfSearchPageType, navigateToSearchLikePage, routes } from '../../routes/routes.ts';
+import { type ClassOfSearchPageType, navigateToSearchLikePage } from '../../routes/routes.ts';
 import type { AccessionFilter, GroupedMetadataFilter, MetadataFilter, MutationFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -107,7 +107,7 @@ export const SearchForm: FC<SearchFormProps> = ({
     const resetSearch = async () => {
         setIsLoading(true);
         await clientLogger.info('reset_search');
-        location.href = routes.searchPage(organism, []);
+        location.href = location.pathname;
     };
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
