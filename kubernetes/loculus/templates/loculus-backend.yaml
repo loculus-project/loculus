@@ -1,4 +1,5 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- if not .Values.disableBackend }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -22,7 +23,6 @@ spec:
       initContainers:
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
-        {{- if not .Values.disableBackend }}
         - name: backend
           image: "ghcr.io/loculus-project/backend:{{ $dockerTag }}"
           imagePullPolicy: Always
@@ -107,6 +107,6 @@ spec:
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
-        {{- end }}
       volumes:
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
+{{- end }}
