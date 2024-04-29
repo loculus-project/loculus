@@ -113,13 +113,15 @@ function toTableData(config: Schema) {
         nucleotideInsertions: InsertionCount[];
         aminoAcidInsertions: InsertionCount[];
     }): TableDataEntry[] => {
-        const data: TableDataEntry[] = config.metadata.map((metadata) => ({
-            label: metadata.displayName ?? sentenceCase(metadata.name),
-            name: metadata.name,
-            customDisplay: metadata.customDisplay,
-            value: mapValueToDisplayedValue(details[metadata.name], metadata),
-            header: metadata.header ?? '',
-        }));
+        const data: TableDataEntry[] = config.metadata
+            .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
+            .map((metadata) => ({
+                label: metadata.displayName ?? sentenceCase(metadata.name),
+                name: metadata.name,
+                customDisplay: metadata.customDisplay,
+                value: mapValueToDisplayedValue(details[metadata.name], metadata),
+                header: metadata.header ?? '',
+            }));
         data.push(
             {
                 label: 'Nucleotide substitutions',
