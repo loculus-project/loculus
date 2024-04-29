@@ -57,8 +57,13 @@ jobs:
       - name: Install dependencies
         run: cd website && npm i
         
-      - name: Wait for cluster creation
-        run: wait $CLUSTER_CREATE_PID
+      - name: Wait for Cluster Creation
+        run: |
+          while kill -0 $CLUSTER_CREATE_PID 2>/dev/null; do
+            echo "Process $CLUSTER_CREATE_PID is still running."
+            sleep 2  # Sleep for 10 seconds before checking again
+          done
+          echo "Process $CLUSTER_CREATE_PID has completed."
         
       - name: Template with helm
         uses: WyriHaximus/github-action-helm3@v4
