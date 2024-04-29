@@ -297,9 +297,11 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           truncateColumnDisplayTo: 15
+          header: Authors
         - name: authors
           displayName: Authors
           type: string
+          header: Authors
         - name: submitter_country
           displayName: Submitter country
           type: string
