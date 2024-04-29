@@ -1,6 +1,10 @@
 name: website-tests
 
 on:
+  pull_request:
+    paths:
+      - "website/**"
+      - ".github/workflows/website-tests.yml"
   push:
     paths:
       - "website/**"
