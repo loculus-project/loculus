@@ -1,0 +1,41 @@
+name: backend-tests
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-tests.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend-tests
+  cancel-in-progress: true
+
+jobs:
+  Tests:
+    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}
+    timeout-minutes: 15
+    env:
+      CROSSREF_USERNAME: ${{ secrets.CROSSREF_USERNAME }}
+      CROSSREF_TEST_PASSWORD: ${{ secrets.CROSSREF_TEST_PASSWORD }}
+      CROSSREF_TEST_ENDPOINT: ${{ secrets.CROSSREF_TEST_ENDPOINT }}
+      CROSSREF_DOI_PREFIX: ${{ secrets.CROSSREF_DOI_PREFIX }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "adopt"
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+      - name: Execute Tests
+        uses: nick-fields/retry@v3
+        with:
+          command: cd ./backend && ./gradlew test
+          max_attempts: 3
+          timeout_minutes: 10
+          retry_wait_seconds: 1
+      - name: Check Format And Lint
+        run: ./gradlew ktlintCheck
+        working-directory: ./backend
