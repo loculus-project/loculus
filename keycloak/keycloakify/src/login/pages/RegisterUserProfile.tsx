@@ -6,6 +6,7 @@ import type { PageProps } from "keycloakify/login/pages/PageProps";
 import { useGetClassName } from "keycloakify/login/lib/useGetClassName";
 import type { KcContext } from "../kcContext";
 import type { I18n } from "../i18n";
+import orcidLogoUrl from "../assets/orcid-logo.png";
 
 export default function RegisterUserProfile(props: PageProps<Extract<KcContext, { pageId: "register-user-profile.ftl" }>, I18n>) {
     const { kcContext, i18n, doUseDefaultCss, Template, classes } = props;
@@ -15,7 +16,7 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
         classes
     });
 
-    const { url, messagesPerField, recaptchaRequired, recaptchaSiteKey } = kcContext;
+    const { url, social, messagesPerField, recaptchaRequired, recaptchaSiteKey } = kcContext;
 
     const { msg, msgStr } = i18n;
 
@@ -29,6 +30,31 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
             headerNode={msg("registerTitle")}
         >
             <form id="kc-register-form" className={getClassName("kcFormClass")} action={url.registrationAction} method="post">
+            {social.providers !== undefined && (
+                    <div
+                        id="kc-social-providers"
+                        
+                    >
+                        <ul
+                            className={clsx(
+                                getClassName("kcFormSocialAccountListClass"),
+                                social.providers.length > 4 && getClassName("kcFormSocialAccountDoubleListClass")
+                            )}
+                        >
+                            {social.providers.map(p => (
+                                <li key={p.providerId} className={getClassName("kcFormSocialAccountListLinkClass")}>
+                                    <a href={p.loginUrl} id={`zocial-${p.alias}`} className={clsx("zocial", p.providerId)}>
+                                        <span><img src={orcidLogoUrl} alt="ORCID logo" width={50} /> Register with {p.displayName}</span>
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+             
+                <hr />
+                <p className="text-center">..or fill in the form below</p>
+
                 <UserProfileFormFields
                     kcContext={kcContext}
                     onIsFormSubmittableValueChange={setIsFormSubmittable}
