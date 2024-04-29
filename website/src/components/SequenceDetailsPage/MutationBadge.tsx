@@ -1,6 +1,12 @@
-import { type FC } from 'react';
+import { type FC, useState } from 'react';
 
 import type { MutationProportionCount } from '../../types/lapis';
+import MdiTriangle from '~icons/mdi/triangle';
+import MdiTriangleDown from '~icons/mdi/triangle-down';
+
+export type SubListProps = {
+    values?: MutationProportionCount[];
+};
 
 export type SubProps = {
     position: number;
@@ -67,15 +73,55 @@ export function getColor(code: string): string {
     return COLORS[code] ?? COLORS.X;
 }
 
-export const SubstitutionsContainer = ({ values }: { values: MutationProportionCount[] }) => {
-    return values.map(({ mutationFrom, mutationTo, position, sequenceName }) => (
-        <span>
-            <SubBadge
-                sequenceName={sequenceName}
-                mutationFrom={mutationFrom}
-                position={position}
-                mutationTo={mutationTo}
-            />{' '}
-        </span>
-    ));
+export const SubstitutionsContainer: FC<SubListProps> = ({ values }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const handleFilterOpening = () => {
+        setIsOpen((prev) => !prev);
+    };
+
+    return values === undefined ? (
+        ''
+    ) : (
+        <div>
+            <div>
+                {isOpen ? (
+                    <div className='p-3'>
+                        {values.map(({ mutationFrom, mutationTo, position, sequenceName }) => (
+                            <span>
+                                <SubBadge
+                                    sequenceName={sequenceName}
+                                    mutationFrom={mutationFrom}
+                                    pos={position}
+                                    mutationTo={mutationTo}
+                                />{' '}
+                            </span>
+                        ))}
+                    </div>
+                ) : (
+                    <div className='p-3'>
+                        {values.slice(0, 50).map(({ mutationFrom, mutationTo, position, sequenceName }) => (
+                            <span>
+                                <SubBadge
+                                    sequenceName={sequenceName}
+                                    mutationFrom={mutationFrom}
+                                    pos={position}
+                                    mutationTo={mutationTo}
+                                />{' '}
+                            </span>
+                        ))}
+                    </div>
+                )}
+            </div>
+            <button type='button' className='btn' onClick={handleFilterOpening}>
+                {isOpen ? (
+                    <MdiTriangle className='w-3 h-3'></MdiTriangle>
+                ) : (
+                    <MdiTriangleDown className='w-3 h-3'></MdiTriangleDown>
+                )}
+            </button>
+        </div>
+    );
 };
+
+export default SubstitutionsContainer;
