@@ -116,6 +116,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                 className={buttonBarClass(sequenceEntryStatus.status !== awaitingApprovalStatus)}
                 onClick={approveAccessionVersion}
                 data-tooltip-id={'approve-tooltip' + sequenceEntryStatus.accession}
+                key={'approve-button-' + sequenceEntryStatus.accession}
                 disabled={sequenceEntryStatus.status !== awaitingApprovalStatus}
             >
                 <WpfPaperPlane />
@@ -138,6 +139,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                     )}
                     data-testid={`${getAccessionVersionString({ ...sequenceEntryStatus })}.edit`}
                     data-tooltip-id={'edit-tooltip' + sequenceEntryStatus.accession}
+                    key={'edit-button-' + sequenceEntryStatus.accession}
                     onClick={editAccessionVersion}
                     disabled={
                         sequenceEntryStatus.status !== hasErrorsStatus &&
@@ -164,6 +166,7 @@ const ButtonBar: FC<ButtonBarProps> = ({
                 )}
                 onClick={deleteAccessionVersion}
                 data-tooltip-id={'delete-tooltip' + sequenceEntryStatus.accession}
+                key={'delete-button-' + sequenceEntryStatus.accession}
                 disabled={
                     sequenceEntryStatus.status !== hasErrorsStatus &&
                     sequenceEntryStatus.status !== awaitingApprovalStatus
@@ -289,7 +292,10 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
     if (status === receivedStatus) {
         return (
             <div className='p-2 flex flex-col justify-between'>
-                <div data-tooltip-id={'awaitingProcessing-tooltip-' + accession}>
+                <div
+                    data-tooltip-id={'awaitingProcessing-tooltip-' + accession}
+                    key={'awaitingProcessing-tooltip-' + accession}
+                >
                     <EmptyCircle className='text-gray-500' />
                 </div>
                 <Tooltip id={'awaitingProcessing-tooltip-' + accession} content='Awaiting processing' />
@@ -300,7 +306,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
     if (status === hasErrorsStatus) {
         return (
             <div className='p-2 flex flex-col justify-between'>
-                <div data-tooltip-id={`error-tooltip-` + accession}>
+                <div data-tooltip-id={`error-tooltip-` + accession} key={'error-tooltip-' + accession}>
                     <QuestionMark className='text-red-600' />
                 </div>
                 <Tooltip id={`error-tooltip-` + accession} content='Error detected' />
@@ -311,7 +317,7 @@ const StatusIcon: FC<StatusIconProps> = ({ status, dataUseTerms, accession, hasW
     if (status === inProcessingStatus) {
         return (
             <div className='p-2 flex flex-col justify-between'>
-                <div data-tooltip-id={'inProcessing-tooltip-' + accession}>
+                <div data-tooltip-id={'inProcessing-tooltip-' + accession} key={'inProcessing-tooltip-' + accession}>
                     <span className='loading loading-spinner loading-sm' />
                 </div>
                 <Tooltip id={'inProcessing-tooltip-' + accession} content='In processing' />
