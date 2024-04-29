@@ -115,6 +115,9 @@ fields:
     {{- if .initiallyVisible }}
     initiallyVisible: {{ .initiallyVisible }}
     {{- end }}
+    {{- if .hideOnSequenceDetailsPage }}
+    hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
+    {{- end }}
     {{- if .displayName }}
     displayName: {{ quote .displayName }}
     {{- end }}
