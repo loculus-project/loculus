@@ -2,9 +2,13 @@ name: Format website code
 
 on:
   workflow_dispatch:
-
+  pull_request:
+    types: [synchronize]
+    paths:
+      - 'website/**'
 jobs:
-  build:
+  format:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
     permissions:
       contents: write
     runs-on: ubuntu-latest
