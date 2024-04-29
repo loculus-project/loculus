@@ -56,6 +56,17 @@ jobs:
 
       - name: Install dependencies
         run: cd website && npm i
+
+     - name: Get Installed Playwright Version
+        id: playwright-version
+        run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
+
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
         
       - name: Wait for Cluster Creation
         run: |
@@ -78,18 +89,6 @@ jobs:
       - name: Deploy with helm
         run: |
           ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ github.sha }}
-
-
-      - name: Get Installed Playwright Version
-        id: playwright-version
-        run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
-
-      - name: Cache Playwright Browsers
-        uses: actions/cache@v4
-        id: playwright-cache
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
 
       - name: Install Playwright Browsers and System Dependencies
         run: |
