@@ -3,14 +3,14 @@ kind: Service
 metadata:
   name: loculus-keycloak-service
 spec:
-  {{- template "loculus.serviceType"}}
+  {{- template "loculus.serviceType" . }}
   selector:
     app: loculus
     component: keycloak
   ports:
     - port: 8083
       targetPort: 8080
-      {{- if ne .Values.environment "server" }}
+      {{- if ne $.Values.environment "server" }}
       nodePort: 30083
       {{- end }}
       protocol: TCP

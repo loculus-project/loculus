@@ -3,14 +3,14 @@ kind: Service
 metadata:
   name: loculus-website-service
 spec:
-  {{- template "loculus.serviceType"}}
+  {{- template "loculus.serviceType" .}}
   selector:
     app: loculus
-    component: website-and-backend
+    component: website
   ports:
     - port: 3000
       targetPort: 3000
-      {{- if ne .Values.environment "server" }}
+      {{- if ne $.Values.environment "server" }}
       nodePort: 30081
       {{- end }}
       protocol: TCP
