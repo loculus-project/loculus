@@ -310,7 +310,7 @@ const InnerDataUploadForm = ({
                         <h2 className='font-medium text-lg'>Sequences and metadata</h2>
                         <p className='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
 
-                        <p className='text-gray-800 text-xs mt-5 opacity-50'>
+                        <p className='text-gray-400 text-xs mt-5'>
                             <MaterialSymbolsInfoOutline className='w-5 h-5 inline-block mr-2' />
                             {action === 'revise' && (
                                 <span>
@@ -321,20 +321,20 @@ const InnerDataUploadForm = ({
                                 </span>
                             )}
                             You can download{' '}
-                            <a href={routes.metadataTemplate(organism)} className='text-primary-700'>
+                            <a href={routes.metadataTemplate(organism)} className='text-primary-700  opacity-90'>
                                 a template
                             </a>{' '}
                             for the TSV metadata file with column headings.
                         </p>
 
-                        <p className='text-gray-800 text-xs mt-3 opacity-50'>
+                        <p className='text-gray-400 text-xs mt-3'>
                             Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{' '}
                             <i>.zip</i>, <i>.xz</i>).
                         </p>
-                        <p className='text-gray-800 text-xs mt-3 opacity-50'>
+                        <p className='text-gray-400 text-xs mt-3'>
                             For more information on the format in which data should be uploaded and the required
                             metadata, please refer to our{' '}
-                            <a href='#TODO-MVP' className='text-primary-700'>
+                            <a href='#TODO-MVP' className='text-primary-700 opacity-90'>
                                 help pages
                             </a>
                             .
