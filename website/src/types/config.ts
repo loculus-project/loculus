@@ -20,6 +20,7 @@ export const metadata = z.object({
     customDisplay: customDisplay.optional(),
     truncateColumnDisplayTo: z.number().optional(),
     initiallyVisible: z.boolean().optional(),
+    hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
 });
 
@@ -76,6 +77,7 @@ const schema = z.object({
     primaryKey: z.string(),
     defaultOrderBy: z.string(),
     defaultOrder: orderByType,
+    loadSequencesAutomatically: z.boolean().optional(),
 });
 export type Schema = z.infer<typeof schema>;
 

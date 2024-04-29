@@ -3,7 +3,7 @@
     "http://host.k3d.internal:8079"
     "http://loculus-backend-service:8079"
 }}
-{{- $organismcloakHost := .Values.environment | eq "server" | ternary
+{{- $organismcloakHost := $.Values.environment | eq "server" | ternary
     (printf "https://authentication-%s" $.Values.host)
     "http://loculus-keycloak-service:8083"
 }}

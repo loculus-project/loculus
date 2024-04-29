@@ -1,9 +1,10 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- if not .Values.disableBackend }}
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: loculus
+  name: loculus-backend
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
     reloader.stakater.com/auto: "true"
@@ -12,47 +13,16 @@ spec:
   selector:
     matchLabels:
       app: loculus
-      component: website-and-backend
+      component: backend
   template:
     metadata:
       labels:
         app: loculus
-        component: website-and-backend
+        component: backend
     spec:
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "loculus-website-config" "dockerTag" $dockerTag) | nindent 8 }}
 {{- include "loculus.configProcessor" (dict "name" "loculus-backend-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
-        {{- if not .Values.disableWebsite }}
-        - name: website
-          image: "{{ if $.Values.customWebsiteImage }}{{ $.Values.customWebsiteImage }}{{ else }}ghcr.io/loculus-project/website:{{ $dockerTag }}{{ end }}"
-          imagePullPolicy: Always
-          resources:
-            requests:
-              memory: "1300Mi"
-              cpu: "100m"
-            limits:
-              memory: "2000Mi"
-              cpu: "1000m"
-          ports:
-            - containerPort: 3000
-          volumeMounts:
-            - name: loculus-website-config-processed
-              mountPath: /config
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 5
-        {{- end }}
-        {{- if not .Values.disableBackend }}
         - name: backend
           image: "ghcr.io/loculus-project/backend:{{ $dockerTag }}"
           imagePullPolicy: Always
@@ -112,7 +82,7 @@ spec:
                  key: url
            {{- else }}
             - name: DB_URL
-              value: "jdbc:postgresql://localhost:5432/loculus"
+              value: "jdbc:postgresql://loculus-database-service/loculus"
            {{- end }}
            {{- if .Values.externalDatabase.usernameSealedSecret }}
             - name: DB_USERNAME
@@ -137,23 +107,6 @@ spec:
           volumeMounts:
             - name: loculus-backend-config-processed
               mountPath: /config
-        {{- end }}
-        {{- if not .Values.externalDatabaseUrl }}
-        - name: database
-          image: postgres:latest
-          ports:
-            - containerPort: 5432
-          env:
-            - name: POSTGRES_USER
-              value: "postgres"
-            - name: POSTGRES_PASSWORD
-              value: "unsecure"
-            - name: POSTGRES_DB
-              value: "loculus"
-        {{- end }}
-
-      imagePullSecrets:
-        - name: custom-website-sealed-secret
       volumes:
-{{ include "loculus.configVolume" (dict "name" "loculus-website-config") | nindent 8 }}
 {{ include "loculus.configVolume" (dict "name" "loculus-backend-config") | nindent 8 }}
+{{- end }}

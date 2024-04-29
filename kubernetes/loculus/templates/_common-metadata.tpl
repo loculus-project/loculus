@@ -4,9 +4,11 @@ fields:
   - name: accession
     type: string
     notSearchable: true
+    hideOnSequenceDetailsPage: true
   - name: version
     type: int
     notSearchable: true
+    hideOnSequenceDetailsPage: true
   - name: submissionId
     type: string
   - name: accessionVersion
@@ -15,6 +17,7 @@ fields:
   - name: isRevocation
     type: string
     notSearchable: true
+    hideOnSequenceDetailsPage: true
   - name: submitter
     type: string
     generateIndex: true
@@ -43,9 +46,11 @@ fields:
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
+    hideOnSequenceDetailsPage: true
   - name: versionStatus
     type: string
     notSearchable: true
+    hideOnSequenceDetailsPage: true
   {{- if $.Values.dataUseTermsUrls }}
   - name: dataUseTermsUrl
     type: string
@@ -73,6 +78,7 @@ organisms:
     schema:
       {{- with $instance.schema }}
       instanceName: {{ quote .instanceName }}
+      loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
@@ -109,6 +115,9 @@ fields:
     {{- end }}
     {{- if .initiallyVisible }}
     initiallyVisible: {{ .initiallyVisible }}
+    {{- end }}
+    {{- if .hideOnSequenceDetailsPage }}
+    hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
     {{- end }}
     {{- if .displayName }}
     displayName: {{ quote .displayName }}
@@ -161,9 +170,9 @@ fields:
 {{- end}}
 
 {{- define "loculus.publicRuntimeConfig" }}
-            {{- if .Values.codespaceName }}
+            {{- if $.Values.codespaceName }}
             "backendUrl": "https://{{ .Values.codespaceName }}-8079.app.github.dev",
-            {{- else if eq .Values.environment "server" }}
+            {{- else if eq $.Values.environment "server" }}
             "backendUrl": "https://{{ printf "backend-%s" .Values.host }}",
             {{- else }}
             "backendUrl": "http://localhost:8079",

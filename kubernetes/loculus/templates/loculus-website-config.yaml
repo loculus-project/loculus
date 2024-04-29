@@ -1,7 +1,7 @@
 {{- $lapisHost := "" }}
 {{- if .Values.codespaceName }}
   {{- $lapisHost = printf "https://%s-8080.app.github.dev" .Values.codespaceName }}
-{{- else if eq .Values.environment "server" }}
+{{- else if eq $.Values.environment "server" }}
   {{- $lapisHost = printf "https://lapis-%s" .Values.host }}
 {{- else }}
   {{- $lapisHost = "http://localhost:8080" }}
@@ -20,12 +20,16 @@ data:
   runtime_config.json: |
     {
         "name" : "{{ $.Values.name }}",
+        "devMode": {{ $.Values.devMode }},
         "serverSide": {
             {{- if .Values.usePublicRuntimeConfigAsServerSide }}
             {{- template "loculus.publicRuntimeConfig" dict "Values" .Values "externalLapisUrlConfig" $externalLapisUrlConfig -}}
             {{- else }}
-
+            {{ if $.Values.disableBackend -}}
             "backendUrl": "http://localhost:8079",
+            {{- else -}}
+            "backendUrl": "http://loculus-backend-service:8079",
+            {{- end }}
             "lapisUrls": {{- include "loculus.generateInternalLapisUrls" . | fromYaml | toJson }},
             "keycloakUrl": "{{ if not .Values.disableWebsite -}}http://loculus-keycloak-service:8083{{ else -}}http://localhost:8083{{ end }}"
             {{- end }}

@@ -1,89 +1,50 @@
 ---
-import { SearchForm } from '../../../../components/SearchPage/SearchForm';
-import { SearchPagination } from '../../../../components/SearchPage/SearchPagination';
-import { Table } from '../../../../components/SearchPage/Table';
+import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import ErrorBox from '../../../../components/common/ErrorBox.astro';
 import { MY_SEQUENCES } from '../../../../routes/routes';
-import { pageSize } from '../../../../settings';
 import { processParametersAndFetchSearch } from '../../../../utils/processParametersAndFetchSearch';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
-
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 if (groupsResult.isErr()) {
     return new Response(undefined, { status: groupsResult.error.status });
 }
 const { currentGroup: group } = groupsResult.value;
 
-const {
-    organism,
-    data,
-    page,
-    metadataFilter,
-    accessionFilter,
-    mutationFilter,
-    referenceGenomesSequenceNames,
-    schema,
-    clientConfig,
-    orderBy,
-} = await processParametersAndFetchSearch(Astro, group.groupId);
+const props = await processParametersAndFetchSearch(Astro, group.groupId);
+let theData = null;
+let theError = null;
+props.data.match(
+    (data) => {
+        theData = data;
+        theError = null;
+    },
+    (err) => {
+        theData = null;
+        theError = err;
+    },
+);
 ---
 
-<SubmissionPageWrapper title='Released sequences' groupsResult={groupsResult}>
-    <div class='flex flex-col md:flex-row gap-8 md:gap-4'>
-        <div class='md:w-72'>
-            <SearchForm
-                organism={organism}
-                filters={metadataFilter}
-                initialAccessionFilter={accessionFilter}
-                initialMutationFilter={mutationFilter}
-                clientConfig={clientConfig}
-                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                classOfSearchPage={MY_SEQUENCES}
-                groupId={group.groupId}
-                client:load
-            />
-        </div>
-        {
-            data.match(
-                (data) => (
-                    <div class='flex-1'>
-                        <div class='mt-4 mb-1 text-sm text-gray-500'>
-                            Search returned {data.totalCount.toLocaleString()}
-                            sequence{data.totalCount === 1 ? '' : 's'}
-                        </div>
-                        <Table
-                            organism={organism}
-                            data={data.data}
-                            schema={schema}
-                            metadataFilter={metadataFilter}
-                            accessionFilter={accessionFilter}
-                            mutationFilter={mutationFilter}
-                            page={page}
-                            orderBy={orderBy}
-                            classOfSearchPage={MY_SEQUENCES}
-                            groupId={group.groupId}
-                            client:load
-                        />
-
-                        <div class='mt-4 flex justify-center'>
-                            <SearchPagination
-                                client:only='react'
-                                count={Math.ceil(data.totalCount / pageSize)}
-                                page={page}
-                                metadataFilter={metadataFilter}
-                                accessionFilter={accessionFilter}
-                                mutationFilter={mutationFilter}
-                                orderBy={orderBy}
-                                organism={organism}
-                                classOfSearchPage={MY_SEQUENCES}
-                                groupId={group.groupId}
-                            />
-                        </div>
-                    </div>
-                ),
-                (error) => <ErrorBox title='Failed searching sequences'>{error.detail}</ErrorBox>,
-            )
-        }
-    </div>
+<SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
+    <SearchFullUI
+        client:load
+        data={theData}
+        error={theError}
+        classOfSearchPage={MY_SEQUENCES}
+        filters={props.metadataFilter}
+        initialAccessionFilter={props.accessionFilter}
+        initialMutationFilter={props.mutationFilter}
+        organism={props.organism}
+        referenceGenomesSequenceNames={props.referenceGenomesSequenceNames}
+        clientConfig={props.clientConfig}
+        orderBy={props.orderBy}
+        lapisUrl={props.lapisUrl}
+        schema={props.schema}
+        page={props.page}
+        metadataFilter={props.metadataFilter}
+        accessionFilter={props.accessionFilter}
+        mutationFilter={props.mutationFilter}
+        groupId={group.groupId}
+        metadataFilterWithoutHiddenFilters={props.metadataFilterWithoutHiddenFilters}
+    />
 </SubmissionPageWrapper>

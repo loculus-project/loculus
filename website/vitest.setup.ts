@@ -29,6 +29,7 @@ export const testConfig = {
         },
         keycloakUrl: 'http://authentication.dummy',
     },
+    devMode: true,
 } as RuntimeConfig;
 
 export const metadataKey = 'originalMetaDataField';

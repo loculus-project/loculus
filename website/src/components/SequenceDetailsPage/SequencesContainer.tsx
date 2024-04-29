@@ -1,4 +1,4 @@
-import { type Dispatch, type FC, type SetStateAction, useState } from 'react';
+import { type Dispatch, type FC, type SetStateAction, useState, useEffect } from 'react';
 
 import { SequencesViewer } from './SequenceViewer';
 import type { ClientConfig } from '../../types/runtimeConfig';
@@ -20,6 +20,7 @@ type SequenceContainerProps = {
     clientConfig: ClientConfig;
     genes: string[];
     nucleotideSegmentNames: [string, ...string[]];
+    loadSequencesAutomatically: boolean;
 };
 
 export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
@@ -28,8 +29,14 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
     clientConfig,
     genes,
     nucleotideSegmentNames,
+    loadSequencesAutomatically,
 }) => {
     const [loadSequences, setLoadSequences] = useState(false);
+    useEffect(() => {
+        if (loadSequencesAutomatically) {
+            setLoadSequences(true);
+        }
+    }, [loadSequencesAutomatically]);
     const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentNames[0]));
 
     if (!loadSequences) {

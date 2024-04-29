@@ -265,6 +265,7 @@ defaultOrganisms:
           sequence: MKQYIVLACMCLVAAAMPTSLQQSSSSCTEEENKHHMGIDVIIKVTKQDQTPTNDKICQSVTEVTETEDDEVSEEVVKGDPTTYYTIVGAGLNMNFGFTKCPKISSISESSDGNTVNTRLSSVSPGQGKDSPAITREEALAMIKDCEMSIDIRCSEEEKDSDIKTHPVLGSNISHKKVSYKDIIGSTIVDTKCVKNLEFSVRIGDMCEESSELEVKDGFKYVDGSASEGATDDTSLIDSTKLKACV*
   ebola-zaire:
     schema:
+      loadSequencesAutomatically: true
       instanceName: "Ebola Zaire"
       image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
       description: "Ebolavirus Zaire"
@@ -302,6 +303,7 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          hideOnSequenceDetailsPage: true
         - name: division
           type: string
           generateIndex: true
@@ -309,9 +311,11 @@ defaultOrganisms:
         - name: insdc_accession_base
           type: string
           header: "INSDC"
+          hideOnSequenceDetailsPage: true
         - name: insdc_version
           type: int
           header: "INSDC"
+          hideOnSequenceDetailsPage: true
         - name: insdc_accession_full
           type: string
           displayName: INSDC accession
@@ -358,6 +362,7 @@ defaultOrganisms:
         - name: ncbi_protein_count
           type: int
           header: "INSDC"
+          hideOnSequenceDetailsPage: true
         - name: ncbi_update_date
           type: date
           header: "INSDC"
@@ -366,6 +371,7 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           header: "INSDC"
+          hideOnSequenceDetailsPage: true
         - name: ncbi_virus_name
           type: string
           generateIndex: true
@@ -422,6 +428,7 @@ defaultOrganisms:
           header: "Alignment states and QC metrics"
         - name: metadata_hash
           type: string
+          hideOnSequenceDetailsPage: true
       website:
         tableColumns:
           - collection_date
@@ -748,3 +755,6 @@ auth:
 devMode: true # TODO https://github.com/loculus-project/loculus/issues/1568: remove this from default Values
 bannerMessage: "This is a development environment. Data will not be persisted."
 additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
+imageTags:
+  lapisSilo: latest
+  lapis: latest
