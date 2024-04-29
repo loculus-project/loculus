@@ -5,7 +5,7 @@ interface BannerProps {
 }
 
 export const Banner: React.FC<BannerProps> = ({ message }) => {
-    if (message === undefined) {
+    if (message ===       undefined) {
         return null;
     }
 
