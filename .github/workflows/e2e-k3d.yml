@@ -56,6 +56,7 @@ jobs:
 
       - name: Install dependencies
         run: cd website && npm i
+        
       - name: Wait for cluster creation
         run: wait $CLUSTER_CREATE_PID
         
