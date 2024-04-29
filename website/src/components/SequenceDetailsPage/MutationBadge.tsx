@@ -92,7 +92,7 @@ export const SubstitutionsContainer: FC<SubListProps> = ({ values }) => {
                                 <SubBadge
                                     sequenceName={sequenceName}
                                     mutationFrom={mutationFrom}
-                                    pos={position}
+                                    position={position}
                                     mutationTo={mutationTo}
                                 />{' '}
                             </span>
@@ -105,7 +105,7 @@ export const SubstitutionsContainer: FC<SubListProps> = ({ values }) => {
                                 <SubBadge
                                     sequenceName={sequenceName}
                                     mutationFrom={mutationFrom}
-                                    pos={position}
+                                    position={position}
                                     mutationTo={mutationTo}
                                 />{' '}
                             </span>
