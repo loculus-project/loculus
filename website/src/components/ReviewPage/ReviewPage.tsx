@@ -26,6 +26,7 @@ import BiTrash from '~icons/bi/trash';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import LucideFilter from '~icons/lucide/filter';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
+import { LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY } from '../SearchPage/RecentSequencesBanner.tsx';
 
 const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
 hover:bg-primary-500 bg-primary-600 text-white text-left mb-1`;
@@ -356,7 +357,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
 
 const storeLastApprovalTime = () => {
     const lastApprovalTime = Math.floor(Date.now() / 1000);
-    localStorage.setItem('lastApprovalTime', lastApprovalTime.toString());
+    localStorage.setItem(LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY, lastApprovalTime.toString());
 };
 
 export const ReviewPage = withQueryProvider(InnerReviewPage);

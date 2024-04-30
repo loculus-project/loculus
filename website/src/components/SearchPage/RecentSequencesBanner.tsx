@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
+export const LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY = 'lastApprovalTime';
+
 export const RecentSequencesBanner: React.FC = () => {
     const [showBanner, setShowBanner] = useState(false);
 
     useEffect(() => {
         const checkApprovalTime = () => {
-            const lastApproveTimeString = localStorage.getItem('lastApprovalTime');
+            const lastApproveTimeString = localStorage.getItem(LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY);
             if (lastApproveTimeString === null) {
                 setShowBanner(false);
                 return;
