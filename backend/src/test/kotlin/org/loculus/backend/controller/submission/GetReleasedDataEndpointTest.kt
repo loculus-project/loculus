@@ -1,6 +1,7 @@
 package org.loculus.backend.controller.submission
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.TextNode
@@ -29,7 +30,6 @@ import org.loculus.backend.controller.expectNdjsonAndGetContent
 import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.jacksonObjectMapper
 import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
@@ -87,7 +87,7 @@ class GetReleasedDataEndpointTest(
 
         val responseBody = response.expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
 
-        assertThat(responseBody.size, `is`(DefaultFiles.NUMBER_OF_SEQUENCES))
+        assertThat(responseBody.size, `is`(NUMBER_OF_SEQUENCES))
 
         responseBody.forEach {
             val id = it.metadata["accession"]!!.asText()
@@ -98,12 +98,13 @@ class GetReleasedDataEndpointTest(
                 "accession" to TextNode(id),
                 "version" to IntNode(version.toInt()),
                 "accessionVersion" to TextNode("$id.$version"),
-                "isRevocation" to TextNode("false"),
+                "isRevocation" to BooleanNode.FALSE,
                 "submitter" to TextNode(DEFAULT_USER_NAME),
                 "groupName" to TextNode(DEFAULT_GROUP_NAME),
                 "versionStatus" to TextNode("LATEST_VERSION"),
                 "dataUseTerms" to TextNode("OPEN"),
                 "dataUseTermsRestrictedUntil" to NullNode.getInstance(),
+                "booleanColumn" to BooleanNode.TRUE,
             )
 
             assertThat(
@@ -198,7 +199,7 @@ class GetReleasedDataEndpointTest(
 
         for ((key, value) in revocationEntry.metadata) {
             when (key) {
-                "isRevocation" -> assertThat(value, `is`(TextNode("true")))
+                "isRevocation" -> assertThat(value, `is`(BooleanNode.TRUE))
                 "versionStatus" -> assertThat(value, `is`(TextNode("LATEST_VERSION")))
                 "submittedAt" -> expectIsTimestampWithCurrentYear(value)
                 "releasedAt" -> expectIsTimestampWithCurrentYear(value)

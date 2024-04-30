@@ -170,6 +170,7 @@ class ProcessedSequenceEntryValidator(
             MetadataType.INTEGER -> fieldValue.isInt
             MetadataType.FLOAT -> fieldValue.isFloatingPointNumber
             MetadataType.NUMBER -> fieldValue.isNumber
+            MetadataType.BOOLEAN -> fieldValue.isBoolean
             else -> false
         }
 

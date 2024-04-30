@@ -17,7 +17,7 @@ fields:
     notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: isRevocation
-    type: string
+    type: boolean
     notSearchable: true
     hideOnSequenceDetailsPage: true
   - name: submitter

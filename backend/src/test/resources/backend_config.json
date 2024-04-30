@@ -71,6 +71,10 @@
                     {
                         "name": "qc",
                         "type": "float"
+                    },
+                    {
+                        "name": "booleanColumn",
+                        "type": "boolean"
                     }
                 ]
             }

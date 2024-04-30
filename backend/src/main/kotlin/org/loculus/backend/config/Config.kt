@@ -51,6 +51,9 @@ enum class MetadataType {
     @JsonProperty("pango_lineage")
     PANGO_LINEAGE,
 
+    @JsonProperty("boolean")
+    BOOLEAN,
+
     ;
 
     override fun toString(): String = lowerCase(name)

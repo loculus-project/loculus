@@ -1,5 +1,6 @@
 package org.loculus.backend.controller.submission
 
+import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.TextNode
@@ -73,6 +74,7 @@ class SubmitProcessedDataEndpointTest(
         assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("age", IntNode(42)))
         assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("region", TextNode("Europe")))
         assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("pangoLineage", TextNode("XBB.1.5")))
+        assertThat(sequenceEntryToEdit.processedData.metadata, hasEntry("booleanColumn", BooleanNode.TRUE))
     }
 
     @Test
@@ -471,6 +473,14 @@ class SubmitProcessedDataEndpointTest(
                 ),
                 expectedErrorMessage =
                 "Expected type 'date' in format 'yyyy-MM-dd' for field 'date', found value '\"1.2.2021\"'.",
+            ),
+            InvalidDataScenario(
+                name = "data with wrong boolean format",
+                processedDataThatNeedsAValidAccession = PreparedProcessedData.withWrongBooleanFormat(
+                    accession = "DoesNotMatter",
+                ),
+                expectedErrorMessage =
+                "Expected type 'boolean' for field 'booleanColumn', found value '\"not a boolean\"'.",
             ),
             InvalidDataScenario(
                 name = "data with wrong pango lineage format",
