@@ -275,6 +275,7 @@ defaultOrganisms:
           type: date
           required: true
           initiallyVisible: true
+          header: Sample details
         - name: ncbi_release_date
           displayName: NCBI release date
           type: date
@@ -285,18 +286,22 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           initiallyVisible: true
+          header: Sample details
         - name: isolate_name
           displayName: Isolate name
           type: string
+          header: Sample details
         - name: author_affiliation
           displayName: Author affiliation
           type: string
           generateIndex: true
           autocomplete: true
           truncateColumnDisplayTo: 15
+          header: Authors
         - name: authors
           displayName: Authors
           type: string
+          header: Authors
         - name: submitter_country
           displayName: Submitter country
           type: string
@@ -307,6 +312,7 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          header: Sample details
         - name: insdc_accession_base
           type: string
           header: "INSDC"
@@ -333,6 +339,7 @@ defaultOrganisms:
           customDisplay:
             type: link
             url: "https://www.ncbi.nlm.nih.gov/biosample/{{value}}"
+          header: "INSDC"
         - name: ncbi_completeness
           type: string
           generateIndex: true
@@ -375,12 +382,14 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          hideOnSequenceDetailsPage: true
         - name: ncbi_virus_tax_id
           type: int
           autocomplete: true
           customDisplay:
             type: link
             url: "https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:{{value}}"
+          hideOnSequenceDetailsPage: true
         - name: isolate_source
           type: string
           generateIndex: true
