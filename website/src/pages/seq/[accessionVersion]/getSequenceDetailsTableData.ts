@@ -15,22 +15,24 @@ export enum SequenceDetailsTableResultType {
     ERROR = 'error',
 }
 
-type TableData = {
+export type TableData = {
     type: SequenceDetailsTableResultType.TABLE_DATA;
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 };
 
-type Redirect = {
+export type Redirect = {
     type: SequenceDetailsTableResultType.REDIRECT;
     redirectUrl: string;
 };
 
+export type SequenceDetailsTableDataResult = Promise<Result<TableData | Redirect, ProblemDetail>>;
+
 export const getSequenceDetailsTableData = async (
     accessionVersion: string,
     organism: string,
-): Promise<Result<TableData | Redirect, ProblemDetail>> => {
+): SequenceDetailsTableDataResult => {
     const { accession, version } = parseAccessionVersionFromString(accessionVersion);
 
     const lapisClient = LapisClient.createForOrganism(organism);
