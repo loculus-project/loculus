@@ -35,8 +35,9 @@ def rename_columns(input_file, output_file):
 
 rule all:
     input:
-        "data/sequences.fasta",
-        "data/metadata.tsv",
+        "results/submitted",
+        "results/revised",
+        "results/approved",
 
 
 rule fetch_ncbi_dataset_package:
@@ -71,11 +72,13 @@ rule calculate_sequence_hashes:
         sequences="results/sequences.fasta",
     output:
         sequence_hashes="results/sequence_hashes.json",
+        sequence_json="results/sequences.json",
     shell:
         """
         python scripts/calculate_sequence_hashes.py \
             --input {input.sequences} \
-            --output {output.sequence_hashes}
+            --output-hashes {output.sequence_hashes} \
+            --output-sequences {output.sequence_json}
         """
 
 
@@ -174,14 +177,14 @@ rule compare_hashes:
 rule prepare_files:
     input:
         metadata="results/metadata_post_prepare.json",
-        sequences="results/sequences.fasta",
+        sequences="results/sequences.json",
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
     output:
-        # sequences_submit="results/submit_sequences.fasta",
-        # sequences_revise="results/revise_sequences.fasta",
-        metadata_submit="results/to_submit.tsv",
-        metadata_revise="results/to_revise.tsv",
+        sequences_submit="results/submit_sequences.fasta",
+        sequences_revise="results/revise_sequences.fasta",
+        metadata_submit="results/submit_metadata.tsv",
+        metadata_revise="results/revise_metadata.tsv",
     shell:
         """
         python scripts/prepare_files.py \
@@ -191,58 +194,60 @@ rule prepare_files:
             --to-revise-path {input.to_revise} \
             --metadata-submit-path {output.metadata_submit} \
             --metadata-revise-path {output.metadata_revise} \
+            --sequences-submit-path {output.sequences_submit} \
+            --sequences-revise-path {output.sequences_revise} \
         """
 
 
 rule submit:
     input:
-        metadata="results/metadata_post_prepare.tsv",
-        sequences="results/sequences.fasta",
+        metadata="results/submit_metadata.tsv",
+        sequences="results/submit_sequences.fasta",
         config="results/config.yaml",
-        to_submit="results/to_revise.tsv",
     output:
         submitted=touch("results/submitted"),
     params:
         log_level=LOG_LEVEL,
     shell:
         """
-        sleep 0
-        python scripts/submit_to_loculus.py \
-            --mode submit \
-            --metadata {input.metadata} \
-            --sequences {input.sequences} \
-            --config-file {input.config} \
-            --to-submit {input.to_submit} \
-            --log-level {params.log_level}
+        if [ -s {input.metadata} ]; then
+            python scripts/submit_to_loculus.py \
+                --mode submit \
+                --metadata {input.metadata} \
+                --sequences {input.sequences} \
+                --config-file {input.config} \
+                --log-level {params.log_level}
+        fi
         """
 
 
 rule revise:
     input:
-        metadata="results/metadata_post_prepare.tsv",
-        sequences="results/sequences.fasta",
+        metadata="results/revise_metadata.tsv",
+        sequences="results/revise_sequences.fasta",
         config="results/config.yaml",
-        to_revise="results/to_revise.tsv",
     output:
-        submitted=touch("results/submitted"),
+        revised=touch("results/revised"),
     params:
         log_level=LOG_LEVEL,
     shell:
         """
-        sleep 0
-        python scripts/submit_to_loculus.py \
-            --mode revise \
-            --metadata {input.metadata} \
-            --sequences {input.sequences} \
-            --config-file {input.config} \
-            --to-revise {input.to_revise} \
-            --log-level {params.log_level}
+        if [ -s {input.metadata} ]; then
+            python scripts/submit_to_loculus.py \
+                --mode revise \
+                --metadata {input.metadata} \
+                --sequences {input.sequences} \
+                --config-file {input.config} \
+                --log-level {params.log_level}
+        fi
         """
 
 
 rule approve:
     input:
         config="results/config.yaml",
+    output:
+        approved=touch("results/approved"),
     params:
         log_level=LOG_LEVEL,
     shell:
