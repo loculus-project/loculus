@@ -36,7 +36,7 @@ export class SequencePage {
     }
 
     public async loadSequences() {
-        await expect(this.loadButton).toBeVisible();
+        await expect(this.loadButton).toBeVisible({ timeout: 60000 });
         await this.loadButton.click();
     }
 

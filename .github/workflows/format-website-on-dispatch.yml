@@ -2,9 +2,13 @@ name: Format website code
 
 on:
   workflow_dispatch:
-
+  pull_request:
+    types: [synchronize, labeled]
+    paths:
+      - 'website/**'
 jobs:
-  build:
+  format:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -13,12 +17,20 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: "20"
 
+      - name: Cache .npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
+          
       - name: NPM install and format website
         working-directory: website
         run: |
@@ -31,4 +43,4 @@ jobs:
           git config --global user.email 'bot@loculus.org'
           git add -A
           git commit -m "Automated code formatting" || echo "No changes to commit"
-          git push
+          git push origin HEAD:${{ github.head_ref }}
