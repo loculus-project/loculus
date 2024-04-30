@@ -2,14 +2,14 @@ import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 import { Tooltip } from 'react-tooltip';
 
-import { routes, navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes/routes.ts';
+import { type ClassOfSearchPageType, navigateToSearchLikePage, routes } from '../../routes/routes.ts';
 import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
-import type { OrderBy } from '../../types/lapis.ts';
+import type { Metadatum, OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
 
 export type TableSequenceData = {
-    [key: string]: string | number | null;
+    [key: string]: Metadatum;
 };
 
 type TableProps = {

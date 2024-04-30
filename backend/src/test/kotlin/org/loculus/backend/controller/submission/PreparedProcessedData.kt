@@ -1,5 +1,6 @@
 package org.loculus.backend.controller.submission
 
+import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.DoubleNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.NullNode
@@ -31,6 +32,7 @@ val defaultProcessedData = ProcessedData(
         "division" to NullNode.instance,
         "dateSubmitted" to NullNode.instance,
         "sex" to NullNode.instance,
+        "booleanColumn" to BooleanNode.TRUE,
     ),
     unalignedNucleotideSequences = mapOf(
         MAIN_SEGMENT to "NNACTGNN",
@@ -189,6 +191,15 @@ object PreparedProcessedData {
         data = defaultProcessedData.copy(
             metadata = defaultProcessedData.metadata + mapOf(
                 "pangoLineage" to TextNode("A.5.invalid"),
+            ),
+        ),
+    )
+
+    fun withWrongBooleanFormat(accession: Accession) = defaultSuccessfulSubmittedData.copy(
+        accession = accession,
+        data = defaultProcessedData.copy(
+            metadata = defaultProcessedData.metadata + mapOf(
+                "booleanColumn" to TextNode("not a boolean"),
             ),
         ),
     )

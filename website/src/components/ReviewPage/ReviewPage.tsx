@@ -20,13 +20,13 @@ import {
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
+import { LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY } from '../SearchPage/RecentSequencesBanner.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
 import IwwaArrowDown from '~icons/iwwa/arrow-down';
 import LucideFilter from '~icons/lucide/filter';
 import WpfPaperPlane from '~icons/wpf/paper-plane';
-import { LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY } from '../SearchPage/RecentSequencesBanner.tsx';
 
 const menuItemClassName = `group flex rounded-md items-center w-full px-2 py-2 text-sm
 hover:bg-primary-500 bg-primary-600 text-white text-left mb-1`;

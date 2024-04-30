@@ -3,7 +3,7 @@ import { err, Result } from 'neverthrow';
 
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, Schema, CustomDisplay } from '../../types/config.ts';
+import type { CustomDisplay, Metadata, Schema } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -17,7 +17,7 @@ import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 export type TableDataEntry = {
     label: string;
     name: string;
-    value: string | number;
+    value: string | number | boolean;
     header: string;
     customDisplay?: CustomDisplay;
 };
@@ -58,7 +58,7 @@ export async function getTableData(
 }
 
 export function isRevocationEntry(tableData: TableDataEntry[]): boolean {
-    return tableData.some((entry) => entry.name === 'isRevocation' && entry.value === 'true');
+    return tableData.some((entry) => entry.name === 'isRevocation' && entry.value === true);
 }
 
 export function getLatestAccessionVersion(
@@ -183,7 +183,7 @@ function toTableData(config: Schema) {
     };
 }
 
-function mapValueToDisplayedValue(value: undefined | null | string | number, metadata: Metadata) {
+function mapValueToDisplayedValue(value: undefined | null | string | number | boolean, metadata: Metadata) {
     if (value === null || value === undefined) {
         return 'N/A';
     }

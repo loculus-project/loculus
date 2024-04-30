@@ -1,5 +1,6 @@
 package org.loculus.backend.model
 
+import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.IntNode
 import com.fasterxml.jackson.databind.node.LongNode
 import com.fasterxml.jackson.databind.node.NullNode
@@ -60,7 +61,7 @@ class ReleasedDataModel(
             ("version" to LongNode(rawProcessedData.version)) +
             (HEADER_TO_CONNECT_METADATA_AND_SEQUENCES to TextNode(rawProcessedData.submissionId)) +
             ("accessionVersion" to TextNode(rawProcessedData.displayAccessionVersion())) +
-            ("isRevocation" to TextNode(rawProcessedData.isRevocation.toString())) +
+            ("isRevocation" to BooleanNode.valueOf(rawProcessedData.isRevocation)) +
             ("submitter" to TextNode(rawProcessedData.submitter)) +
             ("groupId" to IntNode(rawProcessedData.groupId)) +
             ("groupName" to TextNode(rawProcessedData.groupName)) +

@@ -47,7 +47,10 @@ export type InsertionCount = z.infer<typeof insertionCount>;
 export const insertionsResponse = makeLapisResponse(z.array(insertionCount));
 export type InsertionsResponse = z.infer<typeof insertionsResponse>;
 
-const details = z.record(z.union([z.string(), z.number(), z.null()]));
+const metadatum = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+export type Metadatum = z.infer<typeof metadatum>;
+
+const details = z.record(metadatum);
 export type Details = z.infer<typeof details>;
 
 export const detailsResponse = makeLapisResponse(z.array(details));
@@ -80,14 +83,12 @@ export const siloVersionStatusSchema = z.enum([
 
 export type SiloVersionStatus = z.infer<typeof siloVersionStatusSchema>;
 
-export const siloBooleanWorkaround = z.enum(['true', 'false']).transform((value) => value === 'true');
-
 export const sequenceEntryHistoryEntry = accessionVersion
     .merge(
         z.object({
             accessionVersion: z.string(),
             versionStatus: siloVersionStatusSchema,
-            isRevocation: siloBooleanWorkaround,
+            isRevocation: z.boolean(),
             submittedAt: z.number(),
         }),
     )
