@@ -34,21 +34,24 @@ def main(
     logging.basicConfig(level=log_level)
 
     metadata = json.load(open(metadata_path))
+    sequences = json.load(open(sequences_path))
     to_submit = json.load(open(to_submit_path))
     to_revise = json.load(open(to_revise_path))
 
     metadata_submit = []
     metadata_revise = []
+    sequences_submit = {}
+    sequences_revise = {}
 
     for fasta_id in to_submit:
         metadata_submit.append(metadata[fasta_id])
-        # Add sequences here, once we have sequences in json format
+        sequences_submit[fasta_id] = sequences[fasta_id]
     
     for fasta_id, loculus_accession in to_revise.items():
         revise_record = metadata[fasta_id]
-        revise_record["submissionId"] = loculus_accession
+        revise_record["accession"] = loculus_accession
         metadata_revise.append(revise_record)
-        # Add sequences here, once we have sequences in json format
+        sequences_revise[fasta_id] = sequences[fasta_id]
     
     # Turn list of objects into tsv with keys as headers
    # Function to write list of dictionaries to a TSV file
@@ -61,11 +64,20 @@ def main(
             dict_writer = csv.DictWriter(output_file, keys, delimiter='\t')
             dict_writer.writeheader()
             dict_writer.writerows(data)
+    
+    def write_to_fasta(data, filename):
+        if not data:
+            Path(filename).touch()
+            return
+        with open(filename, 'w') as output_file:
+            for fasta_id, sequence in data.items():
+                output_file.write(f">{fasta_id}\n{sequence}\n")
 
     # Write data to TSV
     write_to_tsv(metadata_submit, metadata_submit_path)
     write_to_tsv(metadata_revise, metadata_revise_path)
-    
+    write_to_fasta(sequences_submit, sequences_submit_path)
+    write_to_fasta(sequences_revise, sequences_revise_path)
 
 if __name__ == "__main__":
     main()

@@ -145,6 +145,39 @@ def submit(metadata, sequences, config: Config, group_id):
     return response.json()
 
 
+def revise(metadata, sequences, config: Config, group_id):
+    """
+    Submit revision data to Loculus.
+    """
+
+    jwt = get_jwt(config)
+
+    # Endpoint URL
+    url = f"{organism_url(config)}/revise"
+
+    # Headers with Bearer Authentication
+    headers = {"Authorization": f"Bearer {jwt}"}
+
+    # Query parameters
+    params = {
+        "groupId": group_id,
+    }
+
+    with open(metadata, "rb") as metadata_file, open(sequences, "rb") as sequences_file:
+        files = {
+            "metadataFile": metadata_file,
+            "sequenceFile": sequences_file,
+        }
+
+        response = requests.post(url, headers=headers, files=files, params=params)
+
+    # Log response, and raise if not OK
+    logging.debug(response.json())
+    response.raise_for_status()
+
+    return response.json()
+
+
 def approve(config: Config):
     """
     Get sequences that were preprocessed successfully and approve them.
@@ -242,10 +275,10 @@ def get_submitted(config: Config):
                     "hash": hash_value,
                 }
             )
-    
+
     # Later on, enrich with status information to prevent exhaustion
     # of accessions
-    
+
     return submitted_dict
 
 
@@ -266,7 +299,7 @@ def get_submitted(config: Config):
 @click.option(
     "--mode",
     required=True,
-    type=click.Choice(["submit", "approve", "get-submitted"]),
+    type=click.Choice(["submit", "revise", "approve", "get-submitted"]),
 )
 @click.option(
     "--log-level",
@@ -303,6 +336,17 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
         logging.info("Starting submission")
         response = submit(metadata, sequences, config, group_id)
         logging.info("Submission complete")
+
+    if mode == "revise":
+        logging.info("Submitting revisions to Loculus")
+        logging.debug(f"Config: {config}")
+        # Create group if it doesn't exist
+        group_id = get_group_id(config)
+
+        # Submit
+        logging.info("Starting revision submission")
+        response = revise(metadata, sequences, config, group_id)
+        logging.info("Revision submission complete")
 
     if mode == "approve":
         while True:
