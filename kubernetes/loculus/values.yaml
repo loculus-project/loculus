@@ -911,6 +911,13 @@ secrets:
       username: "dummy"
       testPassword: "dummy"
       livePassword: "dummy"
+  serviceAccounts:
+    type: raw
+    data:
+      insdcIngestUserPassword: "insdc_ingest_user"
+      dummyPreprocessingPipelinePassword: "dummy_preprocessing_pipeline"
+      siloImportJobPassword: "silo_import_job"
+      backendUserPassword: "backend"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
