@@ -127,7 +127,7 @@ rule prepare_metadata:
         """
 
 
-rule download_hashes:
+rule get_previous_submissions:
     """Download metadata and sequence hashes of all previously submitted sequences 
     Produces mapping from INSDC accession to loculus id/version/hash
     insdc_accession:
@@ -135,14 +135,16 @@ rule download_hashes:
         versions:
         -   version: 1
             hash: abcd
+            status: APPROVED_FOR_RELEASE
         -   version: 2
             hash: efg
+            status: HAS_ERRORS
         ...
     """
     input:
         config="results/config.yaml",
     output:
-        hashes="results/submitted_hashes.json",
+        hashes="results/previous_submissions.json",
     params:
         log_level=LOG_LEVEL,
     shell:
@@ -157,12 +159,13 @@ rule download_hashes:
 
 rule compare_hashes:
     input:
-        old_hashes="results/submitted_hashes.json",
+        old_hashes="results/previous_submissions.json",
         metadata="results/metadata_post_prepare.json",
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
         unchanged="results/unchanged.json",
+        blocked="results/blocked.json",
     shell:
         """
         python scripts/compare_hashes.py \
@@ -171,6 +174,7 @@ rule compare_hashes:
             --to-submit {output.to_submit} \
             --to-revise {output.to_revise} \
             --unchanged {output.unchanged} \
+            --output-blocked {output.blocked} \
         """
 
 

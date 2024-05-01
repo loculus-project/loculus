@@ -1,5 +1,6 @@
 import json
 import logging
+from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 from time import sleep
@@ -206,6 +207,35 @@ def approve(config: Config):
     return response.json()
 
 
+def get_sequence_status(config: Config):
+    """Get status of each sequence"""
+    jwt = get_jwt(config)
+    
+    url = f"{organism_url(config)}/get-sequences"
+    
+    headers = {"Authorization": f"Bearer {jwt}"}
+    
+    params = {
+        "organism": config.organism,
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    
+    if not response.ok:
+        logging.error(response.json())
+    response.raise_for_status()
+
+    # Turn into dict with {accession: {version: status}}
+    result = defaultdict(dict)
+    for entry in response.json()["sequenceEntries"]:
+        accession = entry["accession"]
+        version = entry["version"]
+        status = entry["status"]
+        result[accession][version] = status
+    
+    return result
+
+
 def get_submitted(config: Config):
     """Get previously submitted sequences
     This way we can avoid submitting the same sequences again
@@ -223,6 +253,8 @@ def get_submitted(config: Config):
     }
 
     response = requests.get(url, headers=headers, params=params)
+    if not response.ok:
+        logging.error(response.json())
     response.raise_for_status()
 
     # Initialize the dictionary to store results
@@ -241,6 +273,8 @@ def get_submitted(config: Config):
     If the same insdc_accession has multiple loculus_accessions
     then error, as this can't be represented here
     """
+
+    statuses: dict[str,dict[int,str]] = get_sequence_status(config)
 
     # Parse each line of NDJSON
     for line in response.iter_lines():
@@ -273,6 +307,7 @@ def get_submitted(config: Config):
                 {
                     "version": loculus_version,
                     "hash": hash_value,
+                    "status": statuses[loculus_accession][loculus_version],
                 }
             )
 
