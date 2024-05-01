@@ -29,6 +29,8 @@ spec:
           args:
             - snakemake
             - results/approved
+            - results/submitted
+            - results/revised
       {{- if $value.ingest.configFile }}
           volumeMounts:
             - name: loculus-ingest-config-volume-{{ $key }}
@@ -45,7 +47,7 @@ kind: CronJob
 metadata:
   name: loculus-ingest-cronjob-{{ $key }}
 spec:
-  schedule: "* * * * *"
+  schedule: "*/30 * * * *" # ingest every 30 minutes (not more often to be kind to NCBI)
   startingDeadlineSeconds: 60
   concurrencyPolicy: Forbid
   jobTemplate:
