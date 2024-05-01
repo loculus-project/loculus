@@ -908,9 +908,9 @@ secrets:
   crossref:
     type: raw
     data:
-      username: ""
-      testPassword: ""
-      livePassword: ""
+      username: "dummy"
+      testPassword: "dummy"
+      livePassword: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
