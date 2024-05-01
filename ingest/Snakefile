@@ -142,6 +142,7 @@ rule get_previous_submissions:
         ...
     """
     input:
+        prepped_metadata="metadata_post_prepare.json",  # Avoid race condition of multi-submission
         config="results/config.yaml",
     output:
         hashes="results/previous_submissions.json",
@@ -149,6 +150,7 @@ rule get_previous_submissions:
         log_level=LOG_LEVEL,
     shell:
         """
+        sleep 180  # Run only once keycloak is up and database wiped
         python scripts/submit_to_loculus.py \
             --mode get-submitted \
             --config-file {input.config} \
