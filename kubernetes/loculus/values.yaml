@@ -911,7 +911,7 @@ secrets:
       username: "dummy"
       testPassword: "dummy"
       livePassword: "dummy"
-  keycloak:
+  keycloak-admin:
     type: raw
     data:
       initialAdminPassword: "admin"
