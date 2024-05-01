@@ -27,9 +27,8 @@ spec:
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
           args:
-            {{- range $arg := $value.ingest.args }}
-            - "{{ $arg }}"
-            {{- end }}
+            - snakemake
+            - results/approved
       {{- if $value.ingest.configFile }}
           volumeMounts:
             - name: loculus-ingest-config-volume-{{ $key }}
@@ -40,6 +39,42 @@ spec:
           configMap:
             name: loculus-ingest-config-{{ $key }}
       {{- end }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-ingest-cronjob-{{ $key }}
+spec:
+  schedule: "* * * * *"
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: silo-ingest-cronjob-{{ $key }}
+        spec:
+          containers:
+            - name: ingest-{{ $key }}
+              image: {{ $value.ingest.image}}:{{ $dockerTag }}
+              imagePullPolicy: Always
+              args:
+                - snakemake
+                - results/submitted
+                - results/approved
+          {{- if $value.ingest.configFile }}
+              volumeMounts:
+                - name: loculus-ingest-cronjob-config-volume-{{ $key }}
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          volumes:
+            - name: loculus-ingest-cronjob-config-volume-{{ $key }}
+              configMap:
+                name: loculus-ingest-cronjob-config-{{ $key }}
+          {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

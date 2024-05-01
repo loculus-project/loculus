@@ -21,6 +21,7 @@ disableBackend: false
 disablePreprocessing: false
 disableIngest: false
 siloImportLimitSeconds: 3600
+ingestLimitSeconds: 1800
 accessionPrefix: "LOC_"
 dataUseTermsUrls:
   open: https://#TODO-MVP/open
@@ -712,8 +713,6 @@ defaultOrganisms:
               inputs:
                 input: sra_accessions
     ingest:
-      args:
-        - snakemake
       image: ghcr.io/loculus-project/ingest
       configFile:
         taxon_id: 186538

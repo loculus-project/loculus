@@ -210,29 +210,34 @@ def approve(config: Config):
 def get_sequence_status(config: Config):
     """Get status of each sequence"""
     jwt = get_jwt(config)
-    
+
     url = f"{organism_url(config)}/get-sequences"
-    
+
     headers = {"Authorization": f"Bearer {jwt}"}
-    
+
     params = {
         "organism": config.organism,
     }
 
     response = requests.get(url, headers=headers, params=params)
-    
+
     if not response.ok:
         logging.error(response.json())
     response.raise_for_status()
 
     # Turn into dict with {accession: {version: status}}
     result = defaultdict(dict)
-    for entry in response.json()["sequenceEntries"]:
+    entries = []
+    try:
+        entries = response.json()["sequenceEntries"]
+    except requests.JSONDecodeError:
+        logging.warning(f"Error decoding JSON of /get-sequences: {response.text}")
+    for entry in entries:
         accession = entry["accession"]
         version = entry["version"]
         status = entry["status"]
         result[accession][version] = status
-    
+
     return result
 
 
@@ -274,12 +279,21 @@ def get_submitted(config: Config):
     then error, as this can't be represented here
     """
 
-    statuses: dict[str,dict[int,str]] = get_sequence_status(config)
+    statuses: dict[str, dict[int, str]] = get_sequence_status(config)
 
     # Parse each line of NDJSON
     for line in response.iter_lines():
         if line:  # Make sure line is not empty
-            record = json.loads(line)
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError as err:
+                response_summary = response.text[:50] + response.text[-50:]
+                logging.error(
+                    f"Error decoding JSON from /get-original-metadata: {line} of {response_summary}"
+                )
+                raise ValueError(
+                    f"Error decoding JSON in /get-original-metadata results: {line}"
+                ) from err
             loculus_accession = record["accession"]
             loculus_version = int(record["version"])
             original_metadata = record["originalMetadata"]
