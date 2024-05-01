@@ -19,9 +19,9 @@
     "keywords": [],
     "dependencies": {
         "evt": "^2.5.7",
-        "keycloakify": "~9.6.3",
-        "react": "~18.2.0",
-        "react-dom": "~18.2.0"
+        "keycloakify": "~9.6.7",
+        "react": "~18.3.1",
+        "react-dom": "~18.3.1"
     },
     "devDependencies": {
         "@storybook/addon-actions": "^6.5.16",
@@ -34,9 +34,9 @@
         "@storybook/preset-create-react-app": "^4.1.2",
         "@storybook/react": "^6.5.16",
         "@storybook/testing-library": "^0.2.2",
-        "@types/node": "~20.12.2",
-        "@types/react": "^18.2.73",
-        "@types/react-dom": "^18.2.23",
+        "@types/node": "~20.12.8",
+        "@types/react": "^18.3.1",
+        "@types/react-dom": "^18.3.0",
         "react-scripts": "^5.0.1",
         "rimraf": "^5.0.5",
         "typescript": "~5.1.6"
