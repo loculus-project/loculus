@@ -1,21 +1,8 @@
 environment: server
-externalDatabase:
-  urlSealedSecret: ""
-  usernameSealedSecret: ""
-  passwordSealedSecret: ""
-keycloakDatabase:
-  addrSealedSecret: ""
-  databaseSealedSecret: ""
-  usernameSealedSecret: ""
-  passwordSealedSecret: ""
-  portSealedSecret: ""
 crossRef:
   DOIPrefix: "10.62599"
   testEndpoint: "https://test.crossref.org"
   liveEndpoint: "https://doi.crossref.org"
-  usernameSealedSecret:
-  testPasswordSealedSecret:
-  livePasswordSealedSecret:
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
@@ -904,3 +891,27 @@ secrets:
     type: autogen
     data:
       backendKeycloakClientSecret: ""
+secrets:
+  - name: database
+    type: raw
+    data:
+      url: "jdbc:postgresql://loculus-database-service/loculus"
+      username: "postgres"
+      password: "password"
+  - name: keycloak-database
+    type: raw
+    data:
+      addr: "loculus-keycloak-database-service"
+      database: "keycloak"
+      username: "postgres"
+      password: "unsecure"
+      port: "5432"
+  - name: crossref
+    type: raw
+    data:
+      username: ""
+      testPassword: ""
+      livePassword: ""
+enableCrossRefCredentials: true
+runDevelopmentKeycloakDatabase: true
+runDevelopmentMainDatabase: true

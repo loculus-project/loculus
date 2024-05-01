@@ -1,5 +1,5 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{- if not .Values.keycloakDatabase.addrSealedSecret }}
+{{- if Values.runDevelopmentKeycloakDatabase }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
