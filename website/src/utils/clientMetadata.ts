@@ -1,4 +1,3 @@
-// TODO: #1337 Move to config
 import { getRuntimeConfig } from '../config';
 
 const clientMetadata = {
