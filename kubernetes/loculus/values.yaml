@@ -882,22 +882,22 @@ additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://p
 imageTags:
   lapisSilo: latest
   lapis: latest
-secretsDefault:
-  - name: smtp-password
+secrets:
+  smtp-password:
     type: raw
     data:
       secretKey: not_configured
-  - name: backend-keycloak-client-secret
+  backend-keycloak-client-secret:
     type: autogen
     data:
       backendKeycloakClientSecret: ""
-  - name: database
+  database:
     type: raw
     data:
       url: "jdbc:postgresql://loculus-database-service/loculus"
       username: "postgres"
       password: "password"
-  - name: keycloak-database
+  keycloak-database:
     type: raw
     data:
       addr: "loculus-keycloak-database-service"
@@ -905,7 +905,7 @@ secretsDefault:
       username: "postgres"
       password: "unsecure"
       port: "5432"
-  - name: crossref
+  crossref:
     type: raw
     data:
       username: ""
