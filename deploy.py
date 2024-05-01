@@ -50,6 +50,7 @@ helm_parser.add_argument('--values', help='Values file for helm chart',
                          default=HELM_VALUES_FILE)
 helm_parser.add_argument('--template', help='Just template and print out the YAML produced',
                         action='store_true')
+helm_parser.add_argument('--for-e2e', action='store_true', help='Use the E2E values file')
 
 upgrade_parser = subparsers.add_parser('upgrade', help='Upgrade helm installation')
 
@@ -141,6 +142,8 @@ def handle_helm():
         branch = args.branch
     else:
         branch = 'latest'
+    
+
 
     parameters = [
         'helm', 'template' if args.template else 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
@@ -148,7 +151,9 @@ def handle_helm():
         '--set', "environment=local",
         '--set', f"branch={branch}",
     ]
-
+    
+    if args.for_e2e:
+        parameters += ['-f', 'kubernetes/loculus/values_e2e_test.yaml']
     if args.sha:
         parameters += ['--set', f"sha={args.sha[:7]}"]
 
