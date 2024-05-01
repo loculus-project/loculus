@@ -2,6 +2,30 @@
 
 ## Overview
 
+The following is a rough overview of the pipeline's steps.
+
+### Download data from NCBI virus
+
+Using NCBI `datasets` CLI, download all sequences and corresponding NCBI curated metadata for a configurable taxon. The taxon is specified using the NCBI Taxonomy ID, and includes all child taxa, i.e. dowloading sequences for the Ebola virus taxon ID includes all sequences for more specific Ebola virus (sub)species taxon ids.
+
+Sequences and metadata are transformed into (nd)json files to simplify (de)serialization and further processing.
+
+### Transforming values to conform with Loculus' expectations
+
+Metadata as received from `datasets` is transformed to conform to Loculus' expectations. This includes for example:
+
+- renaming fields
+- transforming values, e.g. turn author strings from `LastName1, Initial1, LastName2, Initial2` into `Initial1 LastName1, Initial2 LastName2`
+- splitting fields, e.g. NCBI's single, complex collection country field (`Germany: Munich, Bavaria`) is split into multiple fields `country`, `state`, `division` (`Germany`, `Bavaria`, `Munich`)
+
+### Calculating a hash for each sequence entry
+
+Every sequence entry is to be uploaded only once and must be ignored by future periodic ingest runs unless the metadata and/or sequence has changed.
+
+To achieve this, an md5 hash is generated for each sequence entry based on the post-transform metadata and sequence content. The hash is based on all metadata fields submitted to Loculus as well as the sequence. Hence, changes to the ingest pipeline's transform step (above) can lead to changes in hash and resubmission - even without underlying data change on INSDC. Likewise, some changes to the INSDC data might not cause a sequence update on Loculus if what has been changed does not affect the post-transformed metadata.
+
+The ingest pipeline is run In order for ingest to be able to run repeatedly to include new and updated sequences, an md5 hash is calculated avoid resubmitting
+
 1. Download data from INSDC
 2. Filtering
 3. Turn into FASTA/Metadata
@@ -22,20 +46,20 @@ TLDR: The `Snakefile` contains workflows defined as rules with required input an
 
 Install micromamba, if you are on a mac:
 
-```
+```bash
 brew install micromamba
 ```
 
 Then configure micromamba
 
-```
+```bash
 micromamba shell init --shell zsh --root-prefix=~/micromamba
 source ~/.zshrc
 ```
 
 Then activate the loculus-ingest environment
 
-```
+```bash
 micromamba create -f environment.yml --platform osx-64 --rc-file .mambarc
 micromamba activate loculus-ingest
 ```
