@@ -68,13 +68,13 @@ spec:
                 - results/approved
           {{- if $value.ingest.configFile }}
               volumeMounts:
-                - name: loculus-ingest-cronjob-config-volume-{{ $key }}
+                - name: loculus-ingest-config-volume-{{ $key }}
                   mountPath: /package/config/config.yaml
                   subPath: config.yaml
           volumes:
-            - name: loculus-ingest-cronjob-config-volume-{{ $key }}
+            - name: loculus-ingest-config-volume-{{ $key }}
               configMap:
-                name: loculus-ingest-cronjob-config-{{ $key }}
+                name: loculus-ingest-config-{{ $key }}
           {{- end }}
 {{- end }}
 {{- end }}
