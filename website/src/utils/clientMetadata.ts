@@ -7,21 +7,17 @@ const clientMetadata = {
 };
 
 export const getClientMetadata = () => {
-    
-   
-
     return { ...clientMetadata, client_secret: getClientSecret() };
 };
-
 
 const getClientSecret = () => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (import.meta.env === undefined) {
-        return "dummySecret";
+        return 'dummySecret';
     }
     const configDir = import.meta.env.CONFIG_DIR;
-    if (typeof configDir !== 'string' || configDir === '' ){
+    if (typeof configDir !== 'string' || configDir === '') {
         return 'dummySecret';
     }
     return getRuntimeConfig().backendKeycloakClientSecret;
-}
+};
