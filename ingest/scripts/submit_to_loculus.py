@@ -5,6 +5,7 @@ from time import sleep
 import click
 import requests
 import yaml
+import os
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -33,9 +34,11 @@ def get_jwt(config: Config) -> str:
     Get a JWT token for the given username and password
     """
 
+    keycloak_ingest_password = os.getenv("KEYCLOAK_INGEST_PASSWORD")
+
     data = {
         "username": config.username,
-        "password": config.password,
+        "password": keycloak_ingest_password,
         "grant_type": "password",
         "client_id": config.keycloak_client_id,
     }
