@@ -1,6 +1,5 @@
 import csv
 import dataclasses
-import http.client
 import json
 import logging
 import subprocess  # noqa: S404
@@ -8,7 +7,6 @@ import time
 from collections.abc import Sequence
 from http import HTTPStatus
 from pathlib import Path
-from hashlib import md5
 from tempfile import TemporaryDirectory
 from typing import Any
 
@@ -219,9 +217,6 @@ def process_single(
     warnings: list[ProcessingAnnotation] = []
     output_metadata = {
         "length": len(unprocessed.unalignedNucleotideSequences),
-        "sequence_hash": md5(
-            unprocessed.unalignedNucleotideSequences.encode(), usedforsecurity=False
-        ),
     }
 
     for output_field, spec_dict in config.processing_spec.items():
