@@ -912,12 +912,12 @@ secrets:
       testPassword: "dummy"
       livePassword: "dummy"
   service-accounts:
-    type: raw
+    type: autogen
     data:
-      insdcIngestUserPassword: "insdc_ingest_user"
-      dummyPreprocessingPipelinePassword: "dummy_preprocessing_pipeline"
-      siloImportJobPassword: "silo_import_job"
-      backendUserPassword: "backend"
+      insdcIngestUserPassword: ""
+      dummyPreprocessingPipelinePassword: ""
+      siloImportJobPassword: ""
+      backendUserPassword: ""
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
