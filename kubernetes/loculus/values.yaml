@@ -911,6 +911,10 @@ secrets:
       username: "dummy"
       testPassword: "dummy"
       livePassword: "dummy"
+  keycloak:
+    type: raw
+    data:
+      initialAdminPassword: "admin"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
