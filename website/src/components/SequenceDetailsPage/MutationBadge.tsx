@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import {type FC, type ReactElement, useMemo, useState} from 'react';
 
 import type { MutationProportionCount } from '../../types/lapis';
 
@@ -68,14 +68,42 @@ export function getColor(code: string): string {
 }
 
 export const SubstitutionsContainer = ({ values }: { values: MutationProportionCount[] }) => {
-    return values.map(({ mutationFrom, mutationTo, position, sequenceName }) => (
-        <span>
-            <SubBadge
-                sequenceName={sequenceName}
-                mutationFrom={mutationFrom}
-                position={position}
-                mutationTo={mutationTo}
-            />{' '}
-        </span>
-    ));
+    const [showMore, setShowMore] = useState(false);
+
+    const {alwaysVisible, initiallyHidden} = useMemo(
+        () => {
+            let alwaysVisible: ReactElement[] = [];
+            let initiallyHidden: ReactElement[] = [];
+            const elements = values.map(({ mutationFrom, mutationTo, position, sequenceName }, index) => (
+                <span key={index}>
+                    <SubBadge
+                        sequenceName={sequenceName}
+                        mutationFrom={mutationFrom}
+                        position={position}
+                        mutationTo={mutationTo}
+                    />{' '}
+                </span>
+            ));
+            if (elements.length <= 10) {
+                alwaysVisible = elements;
+            } else {
+                alwaysVisible = elements.slice(0, 8);
+                initiallyHidden = elements.slice(8);
+            }
+            return { alwaysVisible, initiallyHidden };
+        },
+        [values]
+    )
+
+    return <div>
+        {alwaysVisible}
+        {initiallyHidden.length > 0 &&
+            showMore ? <>
+                {initiallyHidden}
+                <button onClick={() => setShowMore(false)} className='underline'>show less</button>
+            </> : <button onClick={() => {
+                setShowMore(true)
+            }} className='underline'>show more</button>
+        }
+    </div>;
 };

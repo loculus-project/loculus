@@ -3,7 +3,7 @@ import { err, Result } from 'neverthrow';
 
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, Schema, CustomDisplay } from '../../types/config.ts';
+import type { CustomDisplay, Metadata, MetadataType, Schema } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -20,7 +20,12 @@ export type TableDataEntry = {
     value: string | number;
     header: string;
     customDisplay?: CustomDisplay;
+    type: TableDataEntryType;
 };
+
+export type TableDataEntryType =
+    { name: 'metadata', type: MetadataType } |
+    { name: 'mutation' };
 
 export async function getTableData(
     accessionVersion: string,
@@ -88,17 +93,6 @@ function validateDetailsAreNotEmpty<T extends [DetailsResponse, ...any[]]>(acces
     };
 }
 
-export function toHeaderMap(listTableDataEntries: TableDataEntry[]): { [key: string]: TableDataEntry[] } {
-    const groupedData = listTableDataEntries.reduce((acc: { [key: string]: TableDataEntry[] }, item) => {
-        if (!(item.header in acc)) {
-            acc[item.header] = [];
-        }
-        acc[item.header].push(item);
-        return acc;
-    }, {});
-    return groupedData;
-}
-
 function mutationDetails(
     nucleotideMutations: MutationProportionCount[],
     aminoAcidMutations: MutationProportionCount[],
@@ -112,18 +106,21 @@ function mutationDetails(
             value: '',
             header: 'Mutations, insertions, deletions',
             customDisplay: { type: 'badge', value: substitutionsList(nucleotideMutations) },
+            type: { name: 'mutation' },
         },
         {
             label: 'Nucleotide deletions',
             name: 'nucleotideDeletions',
             value: deletionsToCommaSeparatedString(nucleotideMutations),
             header: 'Mutations, insertions, deletions',
+            type: { name: 'mutation' },
         },
         {
             label: 'Nucleotide insertions',
             name: 'nucleotideInsertions',
             value: insertionsToCommaSeparatedString(nucleotideInsertions),
             header: 'Mutations, insertions, deletions',
+            type: { name: 'mutation' },
         },
         {
             label: 'Amino acid substitutions',
@@ -131,18 +128,21 @@ function mutationDetails(
             value: '',
             header: 'Mutations, insertions, deletions',
             customDisplay: { type: 'badge', value: substitutionsList(aminoAcidMutations) },
+            type: { name: 'mutation' },
         },
         {
             label: 'Amino acid deletions',
             name: 'aminoAcidDeletions',
             value: deletionsToCommaSeparatedString(aminoAcidMutations),
             header: 'Mutations, insertions, deletions',
+            type: { name: 'mutation' },
         },
         {
             label: 'Amino acid insertions',
             name: 'aminoAcidInsertions',
             value: insertionsToCommaSeparatedString(aminoAcidInsertions),
             header: 'Mutations, insertions, deletions',
+            type: { name: 'mutation' },
         },
     ];
     return data;
@@ -170,6 +170,7 @@ function toTableData(config: Schema) {
                 customDisplay: metadata.customDisplay,
                 value: mapValueToDisplayedValue(details[metadata.name], metadata),
                 header: metadata.header ?? '',
+                type: { name: 'metadata', type: metadata.type }
             }));
         const mutations = mutationDetails(
             nucleotideMutations,

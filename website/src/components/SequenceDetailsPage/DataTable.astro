@@ -1,8 +1,10 @@
 ---
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { SubstitutionsContainer } from './MutationBadge';
-import { toHeaderMap, type TableDataEntry } from './getTableData';
+import { type TableDataEntry } from './getTableData';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
+import OrcidIcon from '~icons/simple-icons/orcid';
+import { getDataTableData } from './getDataTableData';
 
 interface Props {
     tableData: TableDataEntry[];
@@ -10,61 +12,120 @@ interface Props {
 }
 
 const { tableData, dataUseTermsHistory } = Astro.props;
-const headerMap = toHeaderMap(tableData);
----
+const data = getDataTableData(tableData);
 
-<div class='mt-2'>
-    <div>
+---
+<!--shadow-xl rounded-r-lg -->
+<div class=''>
+    <div class="ml-4 -mt-5 mb-4 text-gray-500 font-semibold italic">
+        Ebola virus/H.sapiens-wt/GIN/2021/Makona-G0038
+    </div>
+    <div class="px-6 mb-4 ">
         {
-            Object.entries(headerMap).map(([header, names]) => (
-                <div class='pb-8'>
-                    {header !== '' && <h1 class='py-2 font-medium text-primary-600'>{header}</h1>}
-                    <table class='table-auto'>
-                        <tbody class='bg-white'>
-                            {names.map(({ label, value, customDisplay }) => (
-                                <tr>
-                                    <td class='py-1 w-44 text-sm font-medium text-gray-900 text-right'>{label}</td>
-                                    <td class='px-4 py-1 text-sm text-gray-600'>
-                                        <div class='items-center gap-3 whitespace-wrap'>
-                                            {customDisplay === undefined && value}
-                                            {customDisplay !== undefined &&
-                                                customDisplay.type === 'badge' &&
-                                                (customDisplay.value === undefined ? (
-                                                    ''
-                                                ) : (
-                                                    <SubstitutionsContainer values={customDisplay.value} />
-                                                ))}
-                                            {customDisplay !== undefined &&
-                                                customDisplay.type === 'link' &&
-                                                customDisplay.url !== undefined && (
-                                                    <a
-                                                        href={customDisplay.url.replaceAll(
-                                                            '{{value}}',
-                                                            value.toString(),
-                                                        )}
-                                                        target='_blank'
-                                                        class='underline'
-                                                    >
-                                                        {value}
-                                                    </a>
-                                                )}
-                                            {customDisplay !== undefined && customDisplay.type === 'dataUseTerms' && (
-                                                <>
-                                                    {value}{' '}
-                                                    <DataUseTermsHistoryModal
-                                                        dataUseTermsHistory={dataUseTermsHistory}
-                                                        client:only='react'
-                                                    />
-                                                </>
+            data.topmatter.authors.map((author, index) => (<span >
+                {author}{index !== data.topmatter.authors.length - 1 && ', '}
+            </span>))
+        }
+    </div>
+
+    <div class="flex flex-row flex-wrap gap-x-6">
+        {
+            data.table
+                .filter((x) => x.header !== 'Mutations, insertions, deletions')
+                .map(({header, rows}) => (
+                <div class='p-4 [flex:1_1_0] min-w-[32rem]'>
+                    {<h1 class='py-2 text-lg font-semibold border-b'>{header}</h1>}
+                    <div class='mt-4'>
+                        {rows.filter(({label}) => !['Authors', 'Accession', 'Version', 'Submission id', 'Is revocation', 'Accession version', 'Isolate name', 'Group id', 'Group name'].includes(label)).map(({ label, value, customDisplay }) => (
+                            <div class="flex flex-row">
+                                <div class='py-1 min-w-44 w-44 text-sm font-lg font-medium text-gray-900 break-inside-avoid'>{label}</div>
+                                <div class='px-4 py-1 whitespace-normal text-sm text-gray-600 break-inside-avoid'>
+                                    <div class='flex items-center gap-3 [overflow-wrap:anywhere]'>
+                                        {customDisplay === undefined && value}
+                                        {customDisplay !== undefined &&
+                                            customDisplay.type === 'badge' &&
+                                            (customDisplay.value === undefined ? (
+                                                ''
+                                            ) : (
+                                                    <SubstitutionsContainer values={customDisplay.value} client:load />
+                                            ))}
+                                        {customDisplay !== undefined &&
+                                            customDisplay.type === 'link' &&
+                                            customDisplay.url !== undefined && (
+                                                <a
+                                                    href={customDisplay.url.replaceAll(
+                                                        '{{value}}',
+                                                        value.toString(),
+                                                    )}
+                                                    target='_blank'
+                                                    class='underline'
+                                                >
+                                                    {value}
+                                                </a>
                                             )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                        {customDisplay !== undefined && customDisplay.type === 'dataUseTerms' && (
+                                            <>
+                                                {value}{' '}
+                                                <DataUseTermsHistoryModal
+                                                    dataUseTermsHistory={dataUseTermsHistory}
+                                                    client:only='react'
+                                                />
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             ))
         }
+
+        <!--<div class='p-4 [flex:1_1_0] min-w-[32rem]'>-->
+        <!--    {<h1 class='py-2 text-lg font-semibold border-b'>Nucleotide mutations</h1>}-->
+        <!--    <div class='mt-4'>-->
+        <!--        {newHeaderMap['Mutations, insertions, deletions'].filter(({label}) => ['Nucleotide substitutions', 'Nucleotide deletions', 'Nucleotide insertions'].includes(label)).map(({ label, value, customDisplay }) => (-->
+        <!--                <div class="">-->
+        <!--                    <div class='py-1 text-sm font-lg font-medium text-gray-900 break-inside-avoid'>{label.substring(11)}</div>-->
+        <!--                    <div class='px-4 py-1 whitespace-normal text-sm text-gray-600 break-inside-avoid'>-->
+        <!--                        <div class='flex items-center gap-3 [overflow-wrap:anywhere] flex-wrap'>-->
+        <!--                            {customDisplay === undefined && (value !== '' ? value : 'None')}-->
+        <!--                            {customDisplay !== undefined &&-->
+        <!--                                customDisplay.type === 'badge' &&-->
+        <!--                                (customDisplay.value === undefined ? (-->
+        <!--                                    ''-->
+        <!--                                ) : (-->
+        <!--                                        <SubstitutionsContainer values={customDisplay.value} client:load />-->
+        <!--                                ))}-->
+        <!--                        </div>-->
+        <!--                    </div>-->
+        <!--                </div>-->
+        <!--        ))}-->
+        <!--    </div>-->
+        <!--</div>-->
+
+        <!--<div class='p-4 [flex:1_1_0] min-w-[32rem]'>-->
+        <!--    {<h1 class='py-2 text-lg font-semibold border-b'>Amino acid mutations</h1>}-->
+        <!--    <div class='mt-4'>-->
+        <!--        {newHeaderMap['Mutations, insertions, deletions'].filter(({label}) => ['Amino acid substitutions', 'Amino acid deletions', 'Amino acid insertions'].includes(label)).map(({ label, value, customDisplay }) => (-->
+        <!--                <div class="">-->
+        <!--                    <div class='py-1 text-sm font-lg font-medium text-gray-900 break-inside-avoid'>{label.substring(11)}</div>-->
+        <!--                    <div class='px-4 py-1 whitespace-normal text-sm text-gray-600 break-inside-avoid'>-->
+        <!--                        <div class='flex items-center gap-3 [overflow-wrap:anywhere] flex-wrap'>-->
+        <!--                            {customDisplay === undefined && (value !== '' ? value : 'None')}-->
+        <!--                            {customDisplay !== undefined &&-->
+        <!--                                customDisplay.type === 'badge' &&-->
+        <!--                                (customDisplay.value === undefined ? (-->
+        <!--                                    ''-->
+        <!--                                ) : (-->
+        <!--                                        <SubstitutionsContainer values={customDisplay.value} client:load />-->
+        <!--                                ))}-->
+        <!--                        </div>-->
+        <!--                    </div>-->
+        <!--                </div>-->
+        <!--        ))}-->
+        <!--    </div>-->
+        <!--</div>-->
+
     </div>
 </div>
