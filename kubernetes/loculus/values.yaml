@@ -435,9 +435,6 @@ defaultOrganisms:
         - name: stop_codons
           type: string
           header: "Alignment states and QC metrics"
-        - name: metadata_hash
-          type: string
-          hideOnSequenceDetailsPage: true
       website:
         tableColumns:
           - collection_date
@@ -524,8 +521,6 @@ defaultOrganisms:
           displayName: Total Stop Codons
         - name: stop_codons
           displayName: Stop Codons
-        - name: metadata_hash
-          displayName: Metadata Hash
     preprocessing:
       - version: 1
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -716,10 +711,6 @@ defaultOrganisms:
               function: identity
               inputs:
                 input: sra_accessions
-            metadata_hash:
-              function: identity
-              inputs:
-                input: metadata_hash
     ingest:
       args:
         - snakemake

@@ -247,7 +247,7 @@ def get_submitted(config: Config):
 
     headers = {"Authorization": f"Bearer {jwt}"}
     params = {
-        "fields": ["insdc_accession_base", "metadata_hash"],
+        "fields": ["insdc_accession_base", "hash"],
         "groupIdsFilter": [],
         "statusesFilter": [],
     }
@@ -284,7 +284,7 @@ def get_submitted(config: Config):
             loculus_version = int(record["version"])
             original_metadata = record["originalMetadata"]
             insdc_accession = original_metadata.get("insdc_accession_base", "")
-            hash_value = original_metadata.get("metadata_hash", "")
+            hash_value = original_metadata.get("hash", "")
             if insdc_accession not in submitted_dict:
                 # Create base entry
                 submitted_dict[insdc_accession] = {
