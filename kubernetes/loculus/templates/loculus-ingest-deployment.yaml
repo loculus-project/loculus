@@ -56,6 +56,9 @@ spec:
           labels:
             app: loculus
             component: silo-ingest-cronjob-{{ $key }}
+          annotations:
+            argocd.argoproj.io/sync-options: Replace=true
+            reloader.stakater.com/auto: "true"
         spec:
           restartPolicy: Never
           containers:
@@ -65,7 +68,7 @@ spec:
               args:
                 - snakemake
                 - results/submitted
-                - results/approved
+                - results/revised
           {{- if $value.ingest.configFile }}
               volumeMounts:
                 - name: loculus-ingest-config-volume-{{ $key }}
