@@ -70,11 +70,11 @@ spec:
                  name: crossref
                  key: livePassword
            {{- end }}
-           - name: BACKEND_KEYCLOAK_PASSWORD
-             valueFrom:
-               secretKeyRef:
-                 name: service-accounts
-                 key: backendUserPassword
+            - name: BACKEND_KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
             - name: DB_URL
               valueFrom:
                secretKeyRef:
