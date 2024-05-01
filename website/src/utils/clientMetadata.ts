@@ -7,13 +7,20 @@ const clientMetadata = {
 };
 
 export const getClientMetadata = () => {
-    const configDir = import.meta.env.CONFIG_DIR;
-    let backendKeycloakClientSecret;
-    if (typeof configDir !== 'string' || configDir === '') {
-        backendKeycloakClientSecret = 'dummySecret';
-    } else {
-        backendKeycloakClientSecret = getRuntimeConfig().backendKeycloakClientSecret;
-    }
+    
+   
 
-    return { ...clientMetadata, client_secret: backendKeycloakClientSecret };
+    return { ...clientMetadata, client_secret: getClientSecret() };
 };
+
+
+const getClientSecret = () => {
+    if (import.meta.env === undefined) {
+        return "dummySecret";
+    }
+    const configDir = import.meta.env.CONFIG_DIR;
+    if (typeof configDir !== 'string' || configDir === '' ){
+        return 'dummySecret';
+    }
+    return getRuntimeConfig().backendKeycloakClientSecret;
+}
