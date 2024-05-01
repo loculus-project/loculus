@@ -27,7 +27,7 @@ spec:
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
           env:
-            KEYCLOAK_INGEST_PASSWORD:
+            - name: KEYCLOAK_INGEST_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: service-accounts
