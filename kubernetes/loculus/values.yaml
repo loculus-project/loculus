@@ -882,7 +882,7 @@ additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://p
 imageTags:
   lapisSilo: latest
   lapis: latest
-secrets:
+secretsDefault:
   - name: smtp-password
     type: raw
     data:
