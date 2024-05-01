@@ -41,8 +41,15 @@ spec:
             - "--backend-host={{ $backendHost }}/{{ $organism }}"
             - "--keycloak-host={{ $organismcloakHost }}"
             - "--pipeline-version={{ $processingConfig.version }}"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
       {{- if $processingConfig.configFile }}
             - "--config=/etc/config/preprocessing-config.yaml"
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: dummyPreprocessingPipelinePassword
           volumeMounts:
             - name: preprocessing-config-volume-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
               mountPath: /etc/config
