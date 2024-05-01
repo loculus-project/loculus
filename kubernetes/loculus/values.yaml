@@ -723,8 +723,6 @@ defaultOrganisms:
     ingest:
       args:
         - snakemake
-        - approve
-        - submit_to_loculus
       image: ghcr.io/loculus-project/ingest
       configFile:
         taxon_id: 186538
