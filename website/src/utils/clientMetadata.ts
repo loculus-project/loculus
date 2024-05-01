@@ -8,5 +8,13 @@ const clientMetadata = {
 };
 
 export const getClientMetadata = () => {
-    return { ...clientMetadata, client_secret: getRuntimeConfig().backendKeycloakClientSecret };
+    const configDir = import.meta.env.CONFIG_DIR;
+    let backendKeycloakClientSecret;
+    if (typeof configDir !== 'string' || configDir === '') {
+        backendKeycloakClientSecret = 'dummySecret';
+    } else {
+        backendKeycloakClientSecret = getRuntimeConfig().backendKeycloakClientSecret;
+    }
+
+    return { ...clientMetadata, client_secret: backendKeycloakClientSecret };
 };
