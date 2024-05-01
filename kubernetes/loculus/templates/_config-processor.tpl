@@ -15,6 +15,11 @@
         secretKeyRef:
           name: smtp-password
           key: secretKey
+    - name: LOCULUSSUB_backendKeycloakClientSecret
+      valueFrom:
+        secretKeyRef:
+          name: backend-keycloak-client-secret
+          key: backendKeycloakClientSecret
 {{- end }}
 
 
