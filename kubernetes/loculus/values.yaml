@@ -891,7 +891,6 @@ secrets:
     type: autogen
     data:
       backendKeycloakClientSecret: ""
-secrets:
   - name: database
     type: raw
     data:
