@@ -44,7 +44,10 @@ spec:
                 - name: IMPORT_JOB_USER
                   value: "silo_import_job"
                 - name: IMPORT_JOB_USER_PASSWORD
-                  value: "silo_import_job"
+                  valueFrom:
+                    secretKeyRef:
+                      name: service-accounts
+                      key: siloImportJobPassword
               volumeMounts:
                 - name: lapis-silo-database-config-processed
                   mountPath: /preprocessing/input/reference_genomes.json
