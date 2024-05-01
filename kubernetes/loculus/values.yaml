@@ -911,7 +911,7 @@ secrets:
       username: "dummy"
       testPassword: "dummy"
       livePassword: "dummy"
-  serviceAccounts:
+  service-accounts:
     type: raw
     data:
       insdcIngestUserPassword: "insdc_ingest_user"
