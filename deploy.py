@@ -99,7 +99,7 @@ def handle_cluster():
     else:
         run_command(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 2",
                        shell=True)
-
+    install_secret_generator()
     while not is_traefik_running():
         print("Waiting for Traefik to start...")
         time.sleep(5)
@@ -224,6 +224,26 @@ def generate_config(helm_chart, template, output_path, codespace_name=None, from
         f.write(config_data)
 
     print(f"Wrote config to {output_path}")
+
+def install_secret_generator():
+    add_helm_repo_command = [
+        'helm', 'repo', 'add', 'mittwald', 'https://helm.mittwald.de'
+    ]
+    run_command(add_helm_repo_command)
+    print("Mittwald repository added to Helm.")
+
+    update_helm_repo_command = ['helm', 'repo', 'update']
+    run_command(update_helm_repo_command)
+    print("Helm repositories updated.")
+
+    secret_generator_chart = 'mittwald/kubernetes-secret-generator'
+    print("Installing Kubernetes Secret Generator...")
+    helm_install_command = [
+        'helm', 'upgrade', '--install', 'kubernetes-secret-generator',
+        secret_generator_chart, '--set', 'secretLength=32', '--set', 'watchNamespace=""'
+    ]
+    run_command(helm_install_command)
+
 
 if __name__ == '__main__':
     main()

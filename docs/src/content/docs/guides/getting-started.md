@@ -9,15 +9,15 @@ Before you get started with deploying Loculus, there are a few prerequisites you
 
 ## Kubernetes Cluster with Traefik
 
-To deploy Loculus, you'll currently need a Kubernetes cluster with Traefik installed. Kubernetes is an open-source container orchestration system that automates the deployment, scaling, and management of containerized applications. Traefik is a modern reverse proxy and load balancer that integrates seamlessly with Kubernetes.
+To deploy Loculus, you'll currently need a Kubernetes cluster with Traefik installed. Kubernetes is an open-source container orchestration system, and Traefik is a HTTP reverse proxy and load balancer that is used to route traffic to the Loculus application.
 
 ### Production Environment
 
-For a production environment, we recommend using [k3s](https://k3s.io/). K3s is a lightweight, certified Kubernetes distribution designed for production workloads.
+For a production environment, if you are deploying on a bare server you can use [k3s](https://k3s.io/). K3s is a lightweight, certified Kubernetes distribution designed for production workloads. You could also use a managed Kubernetes environment at a cloud provider like Digital Ocean, Vultr, AWS, etc.
 
 ### Local Development
 
-If you're working on local development or testing, [k3d](https://k3d.io/) is a great choice. K3d allows you to run Kubernetes clusters using Docker containers. It provides a convenient way to create and manage local Kubernetes clusters for development purposes.
+If you're working on local development or testing, you can use [k3d](https://k3d.io/) to instantly create a disposable k3s like cluster using Docker.
 
 ## Helm
 
@@ -25,30 +25,36 @@ Helm is a package manager for Kubernetes that simplifies the deployment and mana
 
 To deploy Loculus, you'll need to have Helm installed. Helm will be used to manage the dependencies and deploy the Loculus application using the provided Helm chart.
 
-## Sealed Secrets
 
-Sealed Secrets is a Kubernetes controller and tool for encrypting and storing sensitive information, such as passwords and API keys, as Kubernetes Secrets. It allows you to securely store and manage sensitive data in version control systems without exposing the actual values.
-
-Eventually Loculus will support various ways of managing secrets, but for now we mostly need sealed secrets. You'll need to install [Sealed Secrets](https://github.com/bitnami-labs/sealed-secrets) in your Kubernetes cluster. Sealed Secrets will be used to encrypt and manage sensitive information required by the Loculus application.
-
-## External Database (Optional)
+## External Database
 
 By default, the provided Helm chart will create temporary databases for testing and development purposes. These temporary databases are suitable for initial setup and experimentation.
 
-However, for a production deployment, it is highly recommended to use managed databases. (The temporary databases may be wiped at any time).
+However, for a production deployment, you must use a permanent database. We recommend using a managed database service like Amazon RDS, Google Cloud SQL, or DigitalOcean Managed Databases, or you can run your own database server, but you must not use the built in database for production.
 
-To use an external database, you'll need to provide the necessary connection details, such as the database URL, username, and password. These details should be encrypted using Sealed Secrets and specified in the `values.yaml` file of the Helm chart.
+To use an external database, you'll need to provide the necessary connection details, such as the database URL, username, and password. 
 
-Here's an example of how the external database configuration might look in the `values.yaml` file:
+These details are configured in the `secrets` section of the `values.yaml` file.
 
 ```yaml
-externalDatabase:
- urlSealedSecret: "ag..."
- usernameSealedSecret: "abc..
- passwordSealedSecret: "abc.."
+secrets:
+  database:
+    type: raw
+    data:
+      url: "jdbc:postgresql://loculus-database-service/loculus"
+      username: "postgres"
+      password: "password"
+  keycloak-database:
+    type: raw
+    data:
+      addr: "loculus-keycloak-database-service"
+      database: "keycloak"
+      username: "postgres"
+      password: "unsecure"
+      port: "5432"
 ```
+You can also use sealed secrets, see the [Sealed Secrets](#sealed-secrets) section for more information.
 
-Make sure to replace the sealed secret values with your own encrypted values.
 
 ## Clone the repository
 
@@ -134,6 +140,42 @@ Note the metadata section includes various fields for how the metadata of specif
 Additionally, the `tableColumns` section defines which metadata fields are shown as columns in the search results.
 
 You can add multiple organisms under the organisms section, each with its own unique configuration.
+
+## Secrets
+Our secrets configuration supports three types of secrets.
+### `raw`
+This is the simplest type of secret, it is just a key value pair.
+```yaml
+secrets:
+  database:
+    type: raw
+    data:
+      url: "jdbc:postgresql://loculus-database-service/loculus"
+      username: "postgres"
+      password: "password"
+```
+### `sealedsecret`
+This is a sealed secret, it is encrypted and can only be decrypted by the cluster.
+```yaml
+secrets:
+  database:
+    type: sealedsecret
+    clusterWide: "false" # If true the secret can be decrypted in any namespace, but must have been created with this setting enabled
+    data:
+      url: "[Encrypted Data]"
+      username: "[Encrypted Data]"
+      password: "[Encrypted Data]"
+```
+
+### `autogen`
+This is a secret that is automatically generated by the helm chart.
+```yaml
+secrets:
+  secretKey:
+    type: autogen
+    data:
+      myKey: ""
+```
 
 ## Ready to Deploy?
 
