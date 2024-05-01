@@ -895,3 +895,12 @@ additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://p
 imageTags:
   lapisSilo: latest
   lapis: latest
+secrets:
+  - name: smtp-password
+    type: raw
+    data:
+      secretKey: not_configured
+  - name: backend-keycloak-client-secret
+    type: autogen
+    data:
+      backendKeycloakClientSecret: ""

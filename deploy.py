@@ -48,8 +48,6 @@ helm_parser.add_argument('--enableIngest', action='store_true',
                          help='Include deployment of ingest pipelines')
 helm_parser.add_argument('--values', help='Values file for helm chart',
                          default=HELM_VALUES_FILE)
-helm_parser.add_argument('--template', help='Just template and print out the YAML produced',
-                        action='store_true')
 
 upgrade_parser = subparsers.add_parser('upgrade', help='Upgrade helm installation')
 
@@ -99,7 +97,7 @@ def handle_cluster():
     else:
         run_command(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 2",
                        shell=True)
-
+    install_secret_generator()
     while not is_traefik_running():
         print("Waiting for Traefik to start...")
         time.sleep(5)
@@ -143,7 +141,7 @@ def handle_helm():
         branch = 'latest'
 
     parameters = [
-        'helm', 'template' if args.template else 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
+        'helm', 'install', HELM_RELEASE_NAME, HELM_CHART_DIR,
         '-f', args.values,
         '--set', "environment=local",
         '--set', f"branch={branch}",
@@ -165,9 +163,7 @@ def handle_helm():
     if get_codespace_name():
         parameters += ['--set', "codespaceName="+get_codespace_name()]
 
-    output = run_command(parameters)
-    if args.template:
-        print(output.stdout)
+    run_command(parameters)
 
 
 def handle_helm_upgrade():
@@ -224,6 +220,26 @@ def generate_config(helm_chart, template, output_path, codespace_name=None, from
         f.write(config_data)
 
     print(f"Wrote config to {output_path}")
+
+def install_secret_generator():
+    add_helm_repo_command = [
+        'helm', 'repo', 'add', 'mittwald', 'https://helm.mittwald.de'
+    ]
+    run_command(add_helm_repo_command)
+    print("Mittwald repository added to Helm.")
+
+    update_helm_repo_command = ['helm', 'repo', 'update']
+    run_command(update_helm_repo_command)
+    print("Helm repositories updated.")
+
+    secret_generator_chart = 'mittwald/kubernetes-secret-generator'
+    print("Installing Kubernetes Secret Generator...")
+    helm_install_command = [
+        'helm', 'upgrade', '--install', 'kubernetes-secret-generator',
+        secret_generator_chart, '--set', 'secretLength=32', '--set', 'watchNamespace=""'
+    ]
+    run_command(helm_install_command)
+
 
 if __name__ == '__main__':
     main()
