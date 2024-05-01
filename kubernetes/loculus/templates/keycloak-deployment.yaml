@@ -74,7 +74,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: keycloak-admin
-                  key: initialPassword
+                  key: initialAdminPassword
             - name: KC_PROXY
               value: "edge"
             - name: PROXY_ADDRESS_FORWARDING
