@@ -57,6 +57,7 @@ spec:
             app: loculus
             component: silo-ingest-cronjob-{{ $key }}
         spec:
+          restartPolicy: Never
           containers:
             - name: ingest-{{ $key }}
               image: {{ $value.ingest.image}}:{{ $dockerTag }}
