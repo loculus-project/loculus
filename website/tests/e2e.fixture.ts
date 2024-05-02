@@ -107,8 +107,6 @@ export async function getToken(username: string, password: string) {
         }
     }
 
-    e2eLogger.info(`Getting token for user ${username}, password ${password}`);
-
     // eslint-disable-next-line
     const { access_token, refresh_token } = await client.grant({
         grant_type: 'password',
