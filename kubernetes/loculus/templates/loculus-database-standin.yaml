@@ -4,6 +4,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: loculus-database
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
 spec:
   replicas: 1
   selector:
@@ -30,4 +32,6 @@ spec:
           value: "loculus"
         - name: POSTGRES_HOST_AUTH_METHOD
           value: "trust"
+        - name: LOCULUS_VERSION
+          value: {{ $dockerTag }}
 {{- end }}

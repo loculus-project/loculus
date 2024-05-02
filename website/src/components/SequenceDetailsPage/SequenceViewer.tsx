@@ -39,10 +39,11 @@ export const SequencesViewer: FC<Props> = ({
     if (isLoading || data === undefined) {
         return <span className='loading loading-spinner loading-lg' />;
     }
+    const header = '>' + data.name + (sequenceType.name === 'main' ? '' : `_${sequenceType.name}`);
 
     return (
         <div className='max-h-80 overflow-auto'>
-            <FixedLengthTextViewer text={data.sequence} maxLineLength={LINE_LENGTH} />
+            <FixedLengthTextViewer text={data.sequence} maxLineLength={LINE_LENGTH} header={header} />
         </div>
     );
 };

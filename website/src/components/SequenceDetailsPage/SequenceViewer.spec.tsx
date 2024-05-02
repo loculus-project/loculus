@@ -62,7 +62,11 @@ describe('SequenceViewer', () => {
         renderSequenceViewer(singleSegmentedSequenceType, false);
 
         await waitFor(() => {
-            expect(screen.getByText(singleSegmentSequence)).toBeVisible();
+            expect(
+                screen.getByText(singleSegmentSequence, {
+                    exact: false,
+                }),
+            ).toBeVisible();
         });
     });
 
@@ -70,7 +74,11 @@ describe('SequenceViewer', () => {
         renderSequenceViewer(multiSegmentedSequenceType, true);
 
         await waitFor(() => {
-            expect(screen.getByText(multiSegmentSequence)).toBeVisible();
+            expect(
+                screen.getByText(multiSegmentSequence, {
+                    exact: false,
+                }),
+            ).toBeVisible();
         });
     });
 });
