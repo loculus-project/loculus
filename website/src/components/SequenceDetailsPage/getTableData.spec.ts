@@ -1,7 +1,7 @@
 import { err, ok } from 'neverthrow';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { type TableDataEntry, getTableData, toHeaderMap } from './getTableData.ts';
+import { type TableDataEntry, getTableData } from './getTableData.ts';
 import { mockRequest, testConfig } from '../../../vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import type { Schema } from '../../types/config.ts';
@@ -78,6 +78,7 @@ describe('getTableData', () => {
                 value: 'N/A',
                 customDisplay: undefined,
                 header: 'testHeader1',
+                type: { kind: 'metadata', metadataType: 'string' },
             },
             {
                 label: 'Metadata field2',
@@ -85,6 +86,7 @@ describe('getTableData', () => {
                 value: 'N/A',
                 customDisplay: undefined,
                 header: '',
+                type: { kind: 'metadata', metadataType: 'string' },
             },
             {
                 label: 'Timestamp field',
@@ -92,23 +94,11 @@ describe('getTableData', () => {
                 value: 'N/A',
                 customDisplay: undefined,
                 header: '',
+                type: { kind: 'metadata', metadataType: 'timestamp' },
             },
         ];
 
         expect(result).toStrictEqual(ok(defaultList.concat(defaultMutationsInsertionsDeletionsList)));
-    });
-
-    test('toHeaderMap should return default values when there is no data', async () => {
-        const result = await getTableData(accessionVersion, schema, lapisClient);
-
-        const data = result._unsafeUnwrap();
-        const defaultHeaderMap = toHeaderMap(data);
-
-        expect(defaultHeaderMap['Mutations, insertions, deletions']).toStrictEqual(
-            defaultMutationsInsertionsDeletionsList,
-        );
-        expect(defaultHeaderMap['']).toStrictEqual(defaultNoHeaderList);
-        expect(defaultHeaderMap.testHeader1).toStrictEqual(defaultHeader1List);
     });
 
     test('should return details field values', async () => {
@@ -132,12 +122,14 @@ describe('getTableData', () => {
             name: 'metadataField1',
             value: value1,
             header: 'testHeader1',
+            type: { kind: 'metadata', metadataType: 'string' },
         });
         expect(data).toContainEqual({
             label: 'Metadata field2',
             name: 'metadataField2',
             value: value2,
             header: '',
+            type: { kind: 'metadata', metadataType: 'string' },
         });
     });
 
@@ -176,12 +168,14 @@ describe('getTableData', () => {
                     },
                 ],
             },
+            type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
             label: 'Nucleotide deletions',
             name: 'nucleotideDeletions',
             value: '20, 21, 39-45, 400',
             header: 'Mutations, insertions, deletions',
+            type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
             label: 'Amino acid substitutions',
@@ -211,12 +205,14 @@ describe('getTableData', () => {
                     },
                 ],
             },
+            type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
             label: 'Amino acid deletions',
             name: 'aminoAcidDeletions',
             value: 'gene1:20-23, gene1:40',
             header: 'Mutations, insertions, deletions',
+            type: { kind: 'mutation' },
         });
     });
 
@@ -232,12 +228,14 @@ describe('getTableData', () => {
             name: 'nucleotideInsertions',
             value: 'nucleotideInsertion1, nucleotideInsertion2',
             header: 'Mutations, insertions, deletions',
+            type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
             label: 'Amino acid insertions',
             name: 'aminoAcidInsertions',
             value: 'aminoAcidInsertion1, aminoAcidInsertion2',
             header: 'Mutations, insertions, deletions',
+            type: { kind: 'mutation' },
         });
     });
 
@@ -252,6 +250,7 @@ describe('getTableData', () => {
             name: 'timestampField',
             value: '2024-01-25 14:59:21 UTC',
             header: '',
+            type: { kind: 'metadata', metadataType: 'timestamp' },
         });
     });
 });
@@ -441,33 +440,6 @@ const aminoAcidInsertions = [
     { count: 0, insertion: 'aminoAcidInsertion2' },
 ];
 
-const defaultNoHeaderList: TableDataEntry[] = [
-    {
-        label: 'Metadata field2',
-        name: 'metadataField2',
-        value: 'N/A',
-        customDisplay: undefined,
-        header: '',
-    },
-    {
-        label: 'Timestamp field',
-        name: 'timestampField',
-        value: 'N/A',
-        customDisplay: undefined,
-        header: '',
-    },
-];
-
-const defaultHeader1List: TableDataEntry[] = [
-    {
-        label: 'Metadata field1',
-        name: 'metadataField1',
-        value: 'N/A',
-        customDisplay: undefined,
-        header: 'testHeader1',
-    },
-];
-
 const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
     {
         label: 'Nucleotide substitutions',
@@ -478,18 +450,21 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
             type: 'badge',
             value: [],
         },
+        type: { kind: 'mutation' },
     },
     {
         label: 'Nucleotide deletions',
         name: 'nucleotideDeletions',
         value: '',
         header: 'Mutations, insertions, deletions',
+        type: { kind: 'mutation' },
     },
     {
         label: 'Nucleotide insertions',
         name: 'nucleotideInsertions',
         value: '',
         header: 'Mutations, insertions, deletions',
+        type: { kind: 'mutation' },
     },
     {
         label: 'Amino acid substitutions',
@@ -500,17 +475,20 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
             type: 'badge',
             value: [],
         },
+        type: { kind: 'mutation' },
     },
     {
         label: 'Amino acid deletions',
         name: 'aminoAcidDeletions',
         value: '',
         header: 'Mutations, insertions, deletions',
+        type: { kind: 'mutation' },
     },
     {
         label: 'Amino acid insertions',
         name: 'aminoAcidInsertions',
         value: '',
         header: 'Mutations, insertions, deletions',
+        type: { kind: 'mutation' },
     },
 ];

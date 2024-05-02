@@ -4,7 +4,7 @@ import { mutationProportionCount, orderByType } from './lapis.ts';
 import { referenceGenomes } from './referencesGenomes.ts';
 
 // These metadata types need to be kept in sync with the backend config class `MetadataType` in Config.kt
-export const metadataPossibleTypes = [
+const metadataPossibleTypes = z.enum([
     'string',
     'date',
     'int',
@@ -12,7 +12,8 @@ export const metadataPossibleTypes = [
     'pango_lineage',
     'timestamp',
     'boolean',
-] as const;
+    'authors',
+] as const);
 
 export const customDisplay = z.object({
     type: z.string(),
@@ -23,7 +24,7 @@ export const customDisplay = z.object({
 export const metadata = z.object({
     name: z.string(),
     displayName: z.string().optional(),
-    type: z.enum(metadataPossibleTypes),
+    type: metadataPossibleTypes,
     autocomplete: z.boolean().optional(),
     notSearchable: z.boolean().optional(),
     customDisplay: customDisplay.optional(),
@@ -41,6 +42,7 @@ export const inputField = z.object({
 export type InputField = z.infer<typeof inputField>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
+export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 
 export type MetadataFilter = Metadata & {
     filterValue: string;
