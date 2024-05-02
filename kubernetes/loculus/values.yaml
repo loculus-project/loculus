@@ -918,6 +918,10 @@ secrets:
       dummyPreprocessingPipelinePassword: ""
       siloImportJobPassword: ""
       backendUserPassword: ""
+  keycloak-admin:
+    type: raw
+    data:
+      initialAdminPassword: "admin"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true

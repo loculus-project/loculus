@@ -19,7 +19,7 @@ import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../src/middleware/aut
 import { BackendClient } from '../src/services/backendClient';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
 import { type DataUseTerms, type NewGroup, openDataUseTermsType } from '../src/types/backend.ts';
-import { clientMetadata } from '../src/utils/clientMetadata.ts';
+import { getClientMetadata } from '../src/utils/clientMetadata.ts';
 import { realmPath } from '../src/utils/realmPath.ts';
 
 type E2EFixture = {
@@ -93,7 +93,7 @@ const testUserTokens: Record<string, TokenCookie> = {};
 export async function getToken(username: string, password: string) {
     const issuerUrl = `${keycloakUrl}${realmPath}`;
     const keycloakIssuer = await Issuer.discover(issuerUrl);
-    const client = new keycloakIssuer.Client(clientMetadata);
+    const client = new keycloakIssuer.Client(getClientMetadata());
 
     if (username in testUserTokens) {
         const accessToken = testUserTokens[username].accessToken;

@@ -40,7 +40,6 @@
         secretKeyRef:
           name: backend-keycloak-client-secret
           key: backendKeycloakClientSecret
-
 {{- end }}
 
 
