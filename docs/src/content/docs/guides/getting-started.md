@@ -177,6 +177,10 @@ secrets:
       myKey: ""
 ```
 
+## Cert-manager
+
+For production deployments you may need to [install cert-manager](https://medium.com/@faturrahmanmakruf/configure-https-in-traefik-with-cert-manager-and-lets-encrypt-db60960e2283)
+
 ## Ready to Deploy?
 
 Once you have the prerequisites in place and have configured the `values.yaml` file according to your requirements, you're ready to deploy Loculus using the provided Helm chart.
