@@ -35,6 +35,8 @@ def get_jwt(config: Config) -> str:
     """
 
     keycloak_ingest_password = os.getenv("KEYCLOAK_INGEST_PASSWORD")
+    if not keycloak_ingest_password:
+        keycloak_ingest_password = config.password
 
     data = {
         "username": config.username,
