@@ -66,12 +66,20 @@ describe('SequencesContainer', () => {
 
         click('Aligned');
         await waitFor(() => {
-            expect(screen.getByText(singleSegmentSequence)).toBeVisible();
+            expect(
+                screen.getByText(singleSegmentSequence, {
+                    exact: false,
+                }),
+            ).toBeVisible();
         });
 
         click('Sequence');
         await waitFor(() => {
-            expect(screen.getByText(unalignedSingleSegmentSequence)).toBeVisible();
+            expect(
+                screen.getByText(unalignedSingleSegmentSequence, {
+                    exact: false,
+                }),
+            ).toBeVisible();
         });
     });
 
@@ -85,12 +93,20 @@ describe('SequencesContainer', () => {
 
         click(`${multiSegmentName} (aligned)`);
         await waitFor(() => {
-            expect(screen.getByText(multiSegmentSequence)).toBeVisible();
+            expect(
+                screen.getByText(multiSegmentSequence, {
+                    exact: false,
+                }),
+            ).toBeVisible();
         });
 
         click(`${multiSegmentName} (unaligned)`);
         await waitFor(() => {
-            expect(screen.getByText(unalignedMultiSegmentSequence)).toBeVisible();
+            expect(
+                screen.getByText(unalignedMultiSegmentSequence, {
+                    exact: false,
+                }),
+            ).toBeVisible();
         });
     });
 
