@@ -152,8 +152,8 @@ def handle_helm():
         '--set', f"branch={branch}",
     ]
     
-    if args.for_e2e:
-        parameters += ['-f', 'kubernetes/loculus/values_e2e_test.yaml']
+    if args.for_e2e or args.dev:
+        parameters += ['-f', 'kubernetes/loculus/values_e2e_and_dev.yaml']
     if args.sha:
         parameters += ['--set', f"sha={args.sha[:7]}"]
 
