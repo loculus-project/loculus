@@ -141,9 +141,9 @@ data:
             }
           },
           {
-            "username": "dummy_preprocessing_pipeline",
+            "username": "preprocessing_pipeline",
             "enabled": true,
-            "email": "dummy_preprocessing_pipeline@void.o",
+            "email": "preprocessing_pipeline@void.o",
             "emailVerified" : true,
             "firstName": "Dummy",
             "lastName": "Preprocessing",

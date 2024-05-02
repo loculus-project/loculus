@@ -3,6 +3,6 @@ secrets:
       type: raw
       data:
         insdcIngestUserPassword: "insdc_ingest"
-        dummyPreprocessingPipelinePassword: "dummy_preprocessing_pipeline"
+        dummyPreprocessingPipelinePassword: "preprocessing_pipeline"
         siloImportJobPassword: "silo_import_job"
         backendUserPassword: "backend"

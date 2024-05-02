@@ -56,8 +56,8 @@ async function submit(preprocessingOptions: PreprocessingOptions[]) {
 }
 
 async function getJwtTokenForPreprocessingPipeline(
-    username: string = 'dummy_preprocessing_pipeline',
-    password: string = 'dummy_preprocessing_pipeline',
+    username: string = 'preprocessing_pipeline',
+    password: string = 'preprocessing_pipeline',
 ): Promise<string> {
     const token = await getToken(username, password);
 

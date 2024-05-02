@@ -19,7 +19,7 @@ CLI_TYPES = [str, int, float, bool]
 class Config:
     backend_host: str = "http://127.0.0.1:8079"
     keycloak_host: str = "http://172.0.0.1:8083"
-    keycloak_user: str = "dummy_preprocessing_pipeline"
+    keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = ""
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
     nextclade_dataset_name: str = "nextstrain/mpox/all-clades"
