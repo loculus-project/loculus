@@ -101,7 +101,6 @@ export const SearchFullUI = ({
                     orderBy={orderBy}
                     classOfSearchPage={SEARCH}
                 />
-
                 <div className='mt-4 flex justify-center'>
                     <SearchPagination
                         count={Math.ceil(data.totalCount / pageSize)}
