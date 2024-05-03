@@ -24,7 +24,7 @@ export const RecentSequencesBanner: React.FC = ({organism}: {organism:string}) =
 
         // Clear the interval on component unmount
         return () => clearInterval(intervalId);
-    }, []);
+    }, [organism]);
     if (!showBanner) {
         return null;
     }
