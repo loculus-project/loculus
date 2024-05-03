@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 export const getLastApprovalTimeKey = (organism: string) => organism + "lastApprovalTime"
 
-export const RecentSequencesBanner: React.FC = ({organism: string}) => {
+export const RecentSequencesBanner: React.FC = ({organism}: {organism:string}) => {
     const [showBanner, setShowBanner] = useState(false);
 
     useEffect(() => {
