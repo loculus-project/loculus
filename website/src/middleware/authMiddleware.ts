@@ -237,13 +237,13 @@ function setCookie(context: APIContext, token: TokenCookie) {
     context.cookies.set(ACCESS_TOKEN_COOKIE, token.accessToken, {
         httpOnly: true,
         sameSite: 'lax',
-        secure: !runtimeConfig.devMode,
+        secure: !runtimeConfig.insecureCookies,
         path: '/',
     });
     context.cookies.set(REFRESH_TOKEN_COOKIE, token.refreshToken, {
         httpOnly: true,
         sameSite: 'lax',
-        secure: !runtimeConfig.devMode,
+        secure: !runtimeConfig.insecureCookies,
         path: '/',
     });
 }
