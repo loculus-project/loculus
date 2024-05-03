@@ -26,10 +26,8 @@ test.describe('The search page', () => {
 
         await searchPage.goto();
         await searchPage.getAccessionField().click();
-        await searchPage.page.waitForTimeout(1000);
         await searchPage.getAccessionField().fill(testAccessionVersion);
 
-        await searchPage.page.waitForTimeout(1000);
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
@@ -42,22 +40,19 @@ test.describe('The search page', () => {
             ])}`,
         );
         await expect(searchPage.page.getByText(testAccessionVersion, { exact: true })).toBeVisible();
-        await expect(searchPage.page.getByText('2002-12-15')).toBeVisible();
-        await expect(searchPage.page.getByText('B.1.1.7')).toBeVisible();
+        const rowLocator = searchPage.page.locator('tr');
+        await expect(rowLocator.getByText('2002-12-15')).toBeVisible();
+        await expect(rowLocator.getByText('B.1.1.7')).toBeVisible();
     });
 
     test('should search a few sequence entries by accession', async ({ searchPage }) => {
         await searchPage.goto();
         const previousAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
-        await searchPage.page.waitForTimeout(100);
 
         const query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
         await searchPage.getAccessionField().click();
-        await searchPage.page.waitForTimeout(100);
         await searchPage.getAccessionField().fill(query);
-        await searchPage.page.waitForTimeout(100);
         await searchPage.clickSearchButton();
-        await searchPage.page.waitForTimeout(100);
 
         const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
 
@@ -76,9 +71,7 @@ test.describe('The search page', () => {
             query += `\ndoesnotexist${i}`;
         }
         await searchPage.getAccessionField().click();
-        await searchPage.page.waitForTimeout(100);
         await searchPage.getAccessionField().fill(query);
-        await searchPage.page.waitForTimeout(100);
         await searchPage.clickSearchButton();
 
         const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
@@ -105,10 +98,7 @@ test.describe('The search page', () => {
 
         await searchPage.getAccessionField().click();
 
-        await searchPage.page.waitForTimeout(100);
         await searchPage.getAccessionField().fill(testAccessionVersion);
-
-        await searchPage.page.waitForTimeout(100);
 
         await expect(searchPage.getAccessionField()).toHaveValue(testAccessionVersion);
 

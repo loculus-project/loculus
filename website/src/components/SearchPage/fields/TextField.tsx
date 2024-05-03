@@ -59,7 +59,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
         id,
         value,
         onChange,
-        autocomplete: autoComplete,
+        autoComplete,
         disabled,
     };
 
