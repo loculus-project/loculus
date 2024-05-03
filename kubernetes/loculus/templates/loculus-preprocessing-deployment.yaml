@@ -34,6 +34,12 @@ spec:
         - name: preprocessing-{{ $organism }}
           image: {{ $processingConfig.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
+          env:
+            - name: KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: dummyPreprocessingPipelinePassword
           args:
             {{- range $arg := $processingConfig.args }}
             - "{{ $arg }}"
@@ -41,6 +47,7 @@ spec:
             - "--backend-host={{ $backendHost }}/{{ $organism }}"
             - "--keycloak-host={{ $organismcloakHost }}"
             - "--pipeline-version={{ $processingConfig.version }}"
+            - "--keycloak-password=$(KEYCLOAK_PASSWORD)"
       {{- if $processingConfig.configFile }}
             - "--config=/etc/config/preprocessing-config.yaml"
           volumeMounts:

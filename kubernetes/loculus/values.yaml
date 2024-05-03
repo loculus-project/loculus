@@ -911,6 +911,13 @@ secrets:
       username: "dummy"
       testPassword: "dummy"
       livePassword: "dummy"
+  service-accounts:
+    type: autogen
+    data:
+      insdcIngestUserPassword: ""
+      dummyPreprocessingPipelinePassword: ""
+      siloImportJobPassword: ""
+      backendUserPassword: ""
   keycloak-admin:
     type: raw
     data:

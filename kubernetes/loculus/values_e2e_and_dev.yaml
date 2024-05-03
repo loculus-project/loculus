@@ -1,0 +1,8 @@
+secrets:
+    service-accounts:
+      type: raw
+      data:
+        insdcIngestUserPassword: "insdc_ingest"
+        dummyPreprocessingPipelinePassword: "preprocessing_pipeline"
+        siloImportJobPassword: "silo_import_job"
+        backendUserPassword: "backend"

@@ -88,58 +88,6 @@ data:
             }
           },
           {
-            "username": "insdc_ingest_user",
-            "enabled": true,
-            "email": "insdc_ingest_user@void.o",
-            "emailVerified" : true,
-            "firstName": "INSDC Ingest",
-            "lastName": "User",
-            "credentials": [
-              {
-                "type": "password",
-                "value": "insdc_ingest_user"
-              }
-            ],
-            "realmRoles": [
-              "user",
-              "offline_access"
-            ],
-            "attributes": {
-              "university": "University of Test"
-            },
-            "clientRoles": {
-              "account": [
-                "manage-account"
-              ]
-            }
-          },
-          {
-            "username": "dummy_preprocessing_pipeline",
-            "enabled": true,
-            "email": "dummy_preprocessing_pipeline@void.o",
-            "emailVerified" : true,
-            "firstName": "Dummy",
-            "lastName": "Preprocessing",
-            "credentials": [
-              {
-                "type": "password",
-                "value": "dummy_preprocessing_pipeline"
-              }
-            ],
-            "realmRoles": [
-              "preprocessing_pipeline",
-              "offline_access"
-            ],
-            "attributes": {
-              "university": "University of Test"
-            },
-            "clientRoles": {
-              "account": [
-                "manage-account"
-              ]
-            }
-          },
-          {
             "username": "superuser",
             "enabled": true,
             "email": "superuser@void.o",
@@ -164,8 +112,60 @@ data:
                 "manage-account"
               ]
             }
+          }, 
+          {{ end }}
+          {
+            "username": "insdc_ingest_user",
+            "enabled": true,
+            "email": "insdc_ingest_user@void.o",
+            "emailVerified" : true,
+            "firstName": "INSDC Ingest",
+            "lastName": "User",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[insdcIngestUserPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "user",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
           },
-        {{ end }}
+          {
+            "username": "preprocessing_pipeline",
+            "enabled": true,
+            "email": "preprocessing_pipeline@void.o",
+            "emailVerified" : true,
+            "firstName": "Dummy",
+            "lastName": "Preprocessing",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[dummyPreprocessingPipelinePassword]]"
+              }
+            ],
+            "realmRoles": [
+              "preprocessing_pipeline",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
         {
           "username": "silo_import_job",
           "enabled": true,
@@ -176,7 +176,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "silo_import_job"
+              "value": "[[siloImportJobPassword]]"
             }
           ],
           "realmRoles": [
@@ -205,7 +205,7 @@ data:
           "credentials": [
             {
               "type": "password",
-              "value": "backend"
+              "value": "[[backendUserPassword]]"
             }
           ],
           "clientRoles": {

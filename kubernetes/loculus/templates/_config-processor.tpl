@@ -15,6 +15,26 @@
         secretKeyRef:
           name: smtp-password
           key: secretKey
+    - name: LOCULUSSUB_insdcIngestUserPassword
+      valueFrom:
+        secretKeyRef:
+          name: service-accounts
+          key: insdcIngestUserPassword
+    - name: LOCULUSSUB_dummyPreprocessingPipelinePassword
+      valueFrom:
+        secretKeyRef:
+          name: service-accounts
+          key: dummyPreprocessingPipelinePassword
+    - name: LOCULUSSUB_siloImportJobPassword
+      valueFrom:
+        secretKeyRef:
+          name: service-accounts
+          key: siloImportJobPassword
+    - name: LOCULUSSUB_backendUserPassword
+      valueFrom:
+        secretKeyRef:
+          name: service-accounts
+          key: backendUserPassword
     - name: LOCULUSSUB_backendKeycloakClientSecret
       valueFrom:
         secretKeyRef:

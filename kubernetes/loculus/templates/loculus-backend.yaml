@@ -43,7 +43,7 @@ spec:
             - "--crossref.endpoint=$(CROSSREF_TEST_ENDPOINT)"
             - "--crossref.username=$(CROSSREF_USERNAME)"
             - "--crossref.password=$(CROSSREF_TEST_PASSWORD)"
-            - "--keycloak.password=backend"
+            - "--keycloak.password=$(BACKEND_KEYCLOAK_PASSWORD)"
             - "--keycloak.realm=loculus"
             - "--keycloak.client=backend-client"
             - "--keycloak.url=http://loculus-keycloak-service:8083"
@@ -70,6 +70,11 @@ spec:
                  name: crossref
                  key: livePassword
            {{- end }}
+            - name: BACKEND_KEYCLOAK_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: backendUserPassword
             - name: DB_URL
               valueFrom:
                secretKeyRef:

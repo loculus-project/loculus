@@ -17,9 +17,9 @@ parser.add_argument("--withWarnings", action="store_true", help="Add warnings to
 parser.add_argument("--randomWarnError", action="store_true", help="Make errors and warnings occur stochastically")
 parser.add_argument("--maxSequences", type=int, help="Max number of sequence entry versions to process.")
 parser.add_argument("--keycloak-host", type=str, default="http://172.0.0.1:8083", help="Host address of Keycloak")
-parser.add_argument("--keycloak-user", type=str, default="dummy_preprocessing_pipeline",
+parser.add_argument("--keycloak-user", type=str, default="preprocessing_pipeline",
                     help="Keycloak user to use for authentication")
-parser.add_argument("--keycloak-password", type=str, default="dummy_preprocessing_pipeline",
+parser.add_argument("--keycloak-password", type=str,
                     help="Keycloak password to use for authentication")
 parser.add_argument("--keycloak-token-path", type=str, default="/realms/loculus/protocol/openid-connect/token", help="Path to Keycloak token endpoint")
 parser.add_argument("--pipeline-version", type=int, default=1)
