@@ -49,6 +49,7 @@ export const SearchFullUI = ({
     error,
     classOfSearchPage,
 }: SearchFullUIProps) => {
+
     if (error !== null) {
         return (
             <div className='bg-red-100 p-4 text-red-900'>
