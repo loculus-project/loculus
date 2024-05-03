@@ -284,7 +284,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     scope: approveAllDataScope.value,
                                 });
 
-                                storeLastApprovalTime();
+                                storeLastApprovalTime(organism);
                             },
                         })
                     }
@@ -310,7 +310,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     groupIdsFilter: [group.groupId],
                                     scope: approveAllDataScope.value,
                                 });
-                                storeLastApprovalTime();
+                                storeLastApprovalTime(organism);
                             }}
                             deleteAccessionVersion={() =>
                                 hooks.deleteSequenceEntries({
@@ -355,7 +355,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     );
 };
 
-const storeLastApprovalTime = () => {
+const storeLastApprovalTime = (organism: string) => {
     const lastApprovalTime = Math.floor(Date.now() / 1000);
     localStorage.setItem(getLastApprovalTimeKey(organism), lastApprovalTime.toString());
 };
