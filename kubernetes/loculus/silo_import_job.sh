@@ -180,7 +180,7 @@ main() {
     if [ -z "$REPEAT_IMPORT" ]; then
       break  # If REPEAT_IMPORT is not set, break the loop and finish
     else
-      sleep 60  # Wait for 60 seconds before the next iteration
+      sleep 20  # Wait for 60 seconds before the next iteration
     fi
   done
 }
