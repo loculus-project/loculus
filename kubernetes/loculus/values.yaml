@@ -880,8 +880,8 @@ devMode: true # TODO https://github.com/loculus-project/loculus/issues/1568: rem
 bannerMessage: "This is a development environment. Data will not be persisted."
 additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
 imageTags:
-  lapisSilo: @sha256:b7238a8ddced5c2661d8778b838c3a5aa0bd860c
-  lapis: @sha256:8c3ba601452415e6f3c1cea5209bdfdc0398efa1
+  lapisSilo: "@sha256:b7238a8ddced5c2661d8778b838c3a5aa0bd860c"
+  lapis: "@sha256:8c3ba601452415e6f3c1cea5209bdfdc0398efa1"
 secrets:
   smtp-password:
     type: raw
