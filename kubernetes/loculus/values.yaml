@@ -929,3 +929,4 @@ secrets:
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
+usePodStorageForSilo: true

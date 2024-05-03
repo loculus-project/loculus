@@ -1,3 +1,4 @@
+{{ if not $.Values.usePodStorageForSilo }}
 {{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
 apiVersion: v1
@@ -11,3 +12,4 @@ spec:
     requests:
       storage: 1Gi
 {{- end }}
+{{ end }}

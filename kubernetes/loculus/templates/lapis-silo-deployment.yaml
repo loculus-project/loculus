@@ -1,4 +1,6 @@
 {{- $dockerTag := include "loculus.dockerTag" $.Values }}
+{{- $keycloakTokenUrl := "http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/token" }}
+
 {{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
 apiVersion: apps/v1
@@ -21,7 +23,7 @@ spec:
         component: lapis-silo-{{ $key }}
     spec:
       initContainers:
-{{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
+        {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: silo
           image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
@@ -45,9 +47,70 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
+        {{ if $.Values.usePodStorageForSilo }}  
+        - name: silo-preprocessing
+          image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - /silo_import_job.sh
+          env:
+            - name: BACKEND_BASE_URL
+              {{- if $.Values.disableBackend }}
+              value: "http://host.k3d.internal:8079/{{ $key }}"
+              {{- else }}
+              value: "http://loculus-backend-service:8079/{{ $key }}"
+              {{- end }}
+            - name: KEYCLOAK_TOKEN_URL
+              value: "{{ $keycloakTokenUrl }}"
+            - name: KEYCLOAK_CLIENT_ID
+              value: "backend-client"
+            - name: IMPORT_JOB_USER
+              value: "silo_import_job"
+            {{ if $.Values.usePodStorageForSilo }}
+            - name: REPEAT_IMPORT
+              value: "true"
+            {{ end }}
+            - name: IMPORT_JOB_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: siloImportJobPassword
+          volumeMounts:
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/reference_genomes.json
+              subPath: reference_genomes.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /preprocessing/input/pangolineage_alias.json
+              subPath: pangolineage_alias.json
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/preprocessing_config.yaml
+              subPath: preprocessing_config.yaml
+            - name: lapis-silo-database-config-processed
+              mountPath: /app/database_config.yaml
+              subPath: database_config.yaml
+            - name: lapis-silo-shared-data
+              mountPath: /preprocessing/output
+            - name: lapis-silo-input-data-cache
+              mountPath: /preprocessing/input
+            - name: lapis-silo-database-config-processed
+              mountPath: /silo_import_job.sh
+              subPath: silo_import_job.sh
+      {{end}}
       volumes:
-{{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
+        {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
         - name: lapis-silo-shared-data
+          {{ if not $.Values.usePodStorageForSilo }}
           persistentVolumeClaim:
             claimName: lapis-silo-shared-data-{{ $key }}
+          {{else}}
+          emptyDir: {}
+          {{end}}
+        - name: lapis-silo-input-data-cache
+          {{ if not $.Values.usePodStorageForSilo }}
+          persistentVolumeClaim:
+            claimName: lapis-silo-input-data-cache-{{ $key }}
+          {{else}}
+          emptyDir: {}
+          {{end}}
 {{- end }}
