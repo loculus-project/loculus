@@ -25,7 +25,7 @@ spec:
 {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 12 }}
           containers:
             - name: silo-preprocessing
-              image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
+              image: ghcr.io/genspectrum/lapis-silo{{ $.Values.imageTags.lapisSilo }}
               imagePullPolicy: IfNotPresent
               command:
                 - sh
