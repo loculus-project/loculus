@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 
 export const getLastApprovalTimeKey = (organism: string) => organism + 'lastApprovalTime';
 
-
 interface RecentSequencesBannerProps {
     organism: string;
 }
