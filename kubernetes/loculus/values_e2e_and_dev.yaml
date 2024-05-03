@@ -6,3 +6,4 @@ secrets:
         dummyPreprocessingPipelinePassword: "preprocessing_pipeline"
         siloImportJobPassword: "silo_import_job"
         backendUserPassword: "backend"
+createTestAccounts: true
