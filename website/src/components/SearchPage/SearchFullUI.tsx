@@ -74,7 +74,7 @@ export const SearchFullUI = ({
                 />
             </div>
             <div className='flex-1'>
-                <RecentSequencesBanner />
+                <RecentSequencesBanner organism={organism} />
                 <div className=' text-sm text-gray-800 mb-6 justify-between flex px-6 items-baseline'>
                     <div className='mt-auto'>
                         Search returned {data.totalCount.toLocaleString()} sequence{data.totalCount === 1 ? '' : 's'}

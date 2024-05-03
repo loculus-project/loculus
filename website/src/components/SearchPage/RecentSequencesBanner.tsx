@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
-export const LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY = 'lastApprovalTime';
+export const getLastApprovalTimeKey = (organism: string) => organism + "lastApprovalTime"
 
-export const RecentSequencesBanner: React.FC = () => {
+export const RecentSequencesBanner: React.FC = ({organism: string}) => {
     const [showBanner, setShowBanner] = useState(false);
 
     useEffect(() => {
         const checkApprovalTime = () => {
-            const lastApproveTimeString = localStorage.getItem(LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY);
+            const lastApproveTimeString = localStorage.getItem(getLastApprovalTimeKey(organism));
             if (lastApproveTimeString === null) {
                 setShowBanner(false);
                 return;
