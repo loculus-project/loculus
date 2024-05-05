@@ -1,7 +1,9 @@
 ---
+import { AuthorList } from './AuthorList';
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
 import { SubstitutionsContainer } from './MutationBadge';
-import { toHeaderMap, type TableDataEntry } from './getTableData';
+import { getDataTableData } from './getDataTableData';
+import { type TableDataEntry } from './getTableData';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 
 interface Props {
@@ -10,18 +12,25 @@ interface Props {
 }
 
 const { tableData, dataUseTermsHistory } = Astro.props;
-const headerMap = toHeaderMap(tableData);
+const data = getDataTableData(tableData);
 ---
 
-<div class='mt-2'>
+<div>
+    {
+        data.topmatter.authors !== undefined && data.topmatter.authors.length > 0 && (
+            <div class='px-6 mb-4'>
+                <AuthorList authors={data.topmatter.authors} client:load />
+            </div>
+        )
+    }
     <div>
         {
-            Object.entries(headerMap).map(([header, names]) => (
+            data.table.map(({ header, rows }) => (
                 <div class='pb-8'>
                     {header !== '' && <h1 class='py-2 font-medium text-primary-600'>{header}</h1>}
                     <table class='table-auto'>
                         <tbody class='bg-white'>
-                            {names.map(({ label, value, customDisplay }) => (
+                            {rows.map(({ label, value, customDisplay }) => (
                                 <tr>
                                     <td class='py-1 w-44 text-sm font-medium text-gray-900 text-right'>{label}</td>
                                     <td class='px-4 py-1 text-sm text-gray-600'>

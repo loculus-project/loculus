@@ -287,7 +287,7 @@ defaultOrganisms:
           header: Authors
         - name: authors
           displayName: Authors
-          type: string
+          type: authors
           header: Authors
         - name: submitter_country
           displayName: Submitter country

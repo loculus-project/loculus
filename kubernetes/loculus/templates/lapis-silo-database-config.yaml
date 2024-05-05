@@ -16,7 +16,7 @@ data:
       metadata:
       {{- range (concat $commonMetadata .metadata) }}
         - name: {{ .name }}
-          type: {{ (.type | eq "timestamp") | ternary "int" .type }}
+          type: {{ (.type | eq "timestamp") | ternary "int" ((.type | eq "authors") | ternary "string" .type) }}
           {{- if .generateIndex }}
           generateIndex: {{ .generateIndex }}
           {{- end }}
