@@ -1,0 +1,31 @@
+---
+import DataTableEntryValue from './DataTableEntryValue.astro';
+import type { TableDataEntry } from './getTableData';
+import type { DataUseTermsHistoryEntry } from '../../types/backend';
+
+interface Props {
+    data: TableDataEntry;
+    dataUseTermsHistory: DataUseTermsHistoryEntry[];
+}
+
+const { data, dataUseTermsHistory } = Astro.props;
+const { label, type } = data;
+---
+
+{
+    type.kind === 'metadata' && (
+        <div class='text-sm grid my-1' style='grid-template-columns: 200px 1fr;'>
+            <div class='font-medium text-gray-900 break-inside-avoid pr-4'>{label}</div>
+            <DataTableEntryValue data={data} dataUseTermsHistory={dataUseTermsHistory} />
+        </div>
+    )
+}
+
+{
+    type.kind === 'mutation' && (
+        <div class='text-sm my-1'>
+            <div class='font-medium text-gray-900 break-inside-avoid py-2'>{label}</div>
+            <DataTableEntryValue data={data} dataUseTermsHistory={dataUseTermsHistory} />
+        </div>
+    )
+}

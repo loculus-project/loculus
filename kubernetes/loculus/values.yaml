@@ -390,13 +390,13 @@ defaultOrganisms:
           header: "INSDC"
         - name: total_snps
           type: int
-          header: "Mutations, insertions, deletions"
+          header: "Alignment states and QC metrics"
         - name: total_inserted_nucs
           type: int
-          header: "Mutations, insertions, deletions"
+          header: "Alignment states and QC metrics"
         - name: total_deleted_nucs
           type: int
-          header: "Mutations, insertions, deletions"
+          header: "Alignment states and QC metrics"
         - name: total_ambiguous_nucs
           type: int
           header: "Alignment states and QC metrics"

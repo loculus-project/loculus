@@ -141,10 +141,10 @@ describe('getTableData', () => {
 
         const data = result._unsafeUnwrap();
         expect(data).toContainEqual({
-            label: 'Nucleotide substitutions',
+            label: 'Substitutions',
             name: 'nucleotideSubstitutions',
             value: '',
-            header: 'Mutations, insertions, deletions',
+            header: 'Nucleotide mutations',
             customDisplay: {
                 type: 'badge',
                 value: [
@@ -171,17 +171,17 @@ describe('getTableData', () => {
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
-            label: 'Nucleotide deletions',
+            label: 'Deletions',
             name: 'nucleotideDeletions',
             value: '20, 21, 39-45, 400',
-            header: 'Mutations, insertions, deletions',
+            header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
-            label: 'Amino acid substitutions',
+            label: 'Substitutions',
             name: 'aminoAcidSubstitutions',
             value: '',
-            header: 'Mutations, insertions, deletions',
+            header: 'Amino acid mutations',
             customDisplay: {
                 type: 'badge',
                 value: [
@@ -208,10 +208,10 @@ describe('getTableData', () => {
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
-            label: 'Amino acid deletions',
+            label: 'Deletions',
             name: 'aminoAcidDeletions',
             value: 'gene1:20-23, gene1:40',
-            header: 'Mutations, insertions, deletions',
+            header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         });
     });
@@ -224,17 +224,17 @@ describe('getTableData', () => {
 
         const data = result._unsafeUnwrap();
         expect(data).toContainEqual({
-            label: 'Nucleotide insertions',
+            label: 'Insertions',
             name: 'nucleotideInsertions',
             value: 'nucleotideInsertion1, nucleotideInsertion2',
-            header: 'Mutations, insertions, deletions',
+            header: 'Nucleotide mutations',
             type: { kind: 'mutation' },
         });
         expect(data).toContainEqual({
-            label: 'Amino acid insertions',
+            label: 'Insertions',
             name: 'aminoAcidInsertions',
             value: 'aminoAcidInsertion1, aminoAcidInsertion2',
-            header: 'Mutations, insertions, deletions',
+            header: 'Amino acid mutations',
             type: { kind: 'mutation' },
         });
     });
@@ -442,10 +442,10 @@ const aminoAcidInsertions = [
 
 const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
     {
-        label: 'Nucleotide substitutions',
+        label: 'Substitutions',
         name: 'nucleotideSubstitutions',
         value: '',
-        header: 'Mutations, insertions, deletions',
+        header: 'Nucleotide mutations',
         customDisplay: {
             type: 'badge',
             value: [],
@@ -453,24 +453,24 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         type: { kind: 'mutation' },
     },
     {
-        label: 'Nucleotide deletions',
+        label: 'Deletions',
         name: 'nucleotideDeletions',
         value: '',
-        header: 'Mutations, insertions, deletions',
+        header: 'Nucleotide mutations',
         type: { kind: 'mutation' },
     },
     {
-        label: 'Nucleotide insertions',
+        label: 'Insertions',
         name: 'nucleotideInsertions',
         value: '',
-        header: 'Mutations, insertions, deletions',
+        header: 'Nucleotide mutations',
         type: { kind: 'mutation' },
     },
     {
-        label: 'Amino acid substitutions',
+        label: 'Substitutions',
         name: 'aminoAcidSubstitutions',
         value: '',
-        header: 'Mutations, insertions, deletions',
+        header: 'Amino acid mutations',
         customDisplay: {
             type: 'badge',
             value: [],
@@ -478,17 +478,17 @@ const defaultMutationsInsertionsDeletionsList: TableDataEntry[] = [
         type: { kind: 'mutation' },
     },
     {
-        label: 'Amino acid deletions',
+        label: 'Deletions',
         name: 'aminoAcidDeletions',
         value: '',
-        header: 'Mutations, insertions, deletions',
+        header: 'Amino acid mutations',
         type: { kind: 'mutation' },
     },
     {
-        label: 'Amino acid insertions',
+        label: 'Insertions',
         name: 'aminoAcidInsertions',
         value: '',
-        header: 'Mutations, insertions, deletions',
+        header: 'Amino acid mutations',
         type: { kind: 'mutation' },
     },
 ];

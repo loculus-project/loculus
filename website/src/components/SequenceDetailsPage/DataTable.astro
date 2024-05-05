@@ -1,7 +1,6 @@
 ---
 import { AuthorList } from './AuthorList';
-import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
-import { SubstitutionsContainer } from './MutationBadge';
+import DataTableEntry from './DataTableEntry.astro';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './getTableData';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
@@ -23,55 +22,16 @@ const data = getDataTableData(tableData);
             </div>
         )
     }
-    <div>
+    <div class='grid gap-x-6' style='grid-template-columns: repeat(auto-fill,minmax(32rem, 1fr))'>
         {
             data.table.map(({ header, rows }) => (
-                <div class='pb-8'>
-                    {header !== '' && <h1 class='py-2 font-medium text-primary-600'>{header}</h1>}
-                    <table class='table-auto'>
-                        <tbody class='bg-white'>
-                            {rows.map(({ label, value, customDisplay }) => (
-                                <tr>
-                                    <td class='py-1 w-44 text-sm font-medium text-gray-900 text-right'>{label}</td>
-                                    <td class='px-4 py-1 text-sm text-gray-600'>
-                                        <div class='items-center gap-3 whitespace-wrap'>
-                                            {customDisplay === undefined && value}
-                                            {customDisplay !== undefined &&
-                                                customDisplay.type === 'badge' &&
-                                                (customDisplay.value === undefined ? (
-                                                    ''
-                                                ) : (
-                                                    <SubstitutionsContainer values={customDisplay.value} />
-                                                ))}
-                                            {customDisplay !== undefined &&
-                                                customDisplay.type === 'link' &&
-                                                customDisplay.url !== undefined && (
-                                                    <a
-                                                        href={customDisplay.url.replaceAll(
-                                                            '{{value}}',
-                                                            value.toString(),
-                                                        )}
-                                                        target='_blank'
-                                                        class='underline'
-                                                    >
-                                                        {value}
-                                                    </a>
-                                                )}
-                                            {customDisplay !== undefined && customDisplay.type === 'dataUseTerms' && (
-                                                <>
-                                                    {value}{' '}
-                                                    <DataUseTermsHistoryModal
-                                                        dataUseTermsHistory={dataUseTermsHistory}
-                                                        client:only='react'
-                                                    />
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div class='p-4'>
+                    <h1 class='py-2 text-lg font-semibold border-b'>{header}</h1>
+                    <div class='mt-4'>
+                        {rows.map((entry) => (
+                            <DataTableEntry data={entry} dataUseTermsHistory={dataUseTermsHistory} />
+                        ))}
+                    </div>
                 </div>
             ))
         }

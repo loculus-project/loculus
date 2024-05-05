@@ -1,0 +1,43 @@
+---
+import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
+import { SubstitutionsContainer } from './MutationBadge';
+import type { TableDataEntry } from './getTableData';
+import type { DataUseTermsHistoryEntry } from '../../types/backend';
+
+interface Props {
+    data: TableDataEntry;
+    dataUseTermsHistory: DataUseTermsHistoryEntry[];
+}
+
+const { data, dataUseTermsHistory } = Astro.props;
+const { value, customDisplay } = data;
+---
+
+<div class='whitespace-normal text-gray-600 break-inside-avoid'>
+    <div class='whitespace-wrap'>
+        {customDisplay === undefined && (value !== '' ? value : <span class='italic'>N/A</span>)}
+        {
+            customDisplay !== undefined &&
+                customDisplay.type === 'badge' &&
+                (customDisplay.value === undefined ? (
+                    <span class='italic'>N/A</span>
+                ) : (
+                    <SubstitutionsContainer values={customDisplay.value} client:load />
+                ))
+        }
+        {
+            customDisplay !== undefined && customDisplay.type === 'link' && customDisplay.url !== undefined && (
+                <a href={customDisplay.url.replaceAll('{{value}}', value.toString())} target='_blank' class='underline'>
+                    {value}
+                </a>
+            )
+        }
+        {
+            customDisplay !== undefined && customDisplay.type === 'dataUseTerms' && (
+                <>
+                    {value} <DataUseTermsHistoryModal dataUseTermsHistory={dataUseTermsHistory} client:only='react' />
+                </>
+            )
+        }
+    </div>
+</div>
