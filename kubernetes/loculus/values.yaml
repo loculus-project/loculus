@@ -922,10 +922,6 @@ secrets:
     type: raw
     data:
       initialAdminPassword: "admin"
-  orcid:
-    type: raw
-    data:
-      orcidSecret: "dummy"
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true

@@ -40,11 +40,6 @@
         secretKeyRef:
           name: backend-keycloak-client-secret
           key: backendKeycloakClientSecret
-    - name: LOCULUSSUB_orcidSecret
-      valueFrom:
-        secretKeyRef:
-          name: orcid
-          key: orcidSecret
 {{- end }}
 
 
