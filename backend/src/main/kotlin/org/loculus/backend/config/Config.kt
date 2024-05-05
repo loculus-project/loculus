@@ -54,9 +54,6 @@ enum class MetadataType {
     @JsonProperty("boolean")
     BOOLEAN,
 
-    @JsonProperty("authors")
-    AUTHORS,
-
     ;
 
     override fun toString(): String = lowerCase(name)
