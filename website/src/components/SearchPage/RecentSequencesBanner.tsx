@@ -1,17 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
-export const getLastApprovalTimeKey = (organism: string) => organism + 'lastApprovalTime';
+export const LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY = 'lastApprovalTime';
 
-interface RecentSequencesBannerProps {
-    organism: string;
-}
-
-export const RecentSequencesBanner: React.FC<RecentSequencesBannerProps> = ({ organism }) => {
+export const RecentSequencesBanner: React.FC = () => {
     const [showBanner, setShowBanner] = useState(false);
 
     useEffect(() => {
         const checkApprovalTime = () => {
-            const lastApproveTimeString = localStorage.getItem(getLastApprovalTimeKey(organism));
+            const lastApproveTimeString = localStorage.getItem(LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY);
             if (lastApproveTimeString === null) {
                 setShowBanner(false);
                 return;
@@ -28,7 +24,7 @@ export const RecentSequencesBanner: React.FC<RecentSequencesBannerProps> = ({ or
 
         // Clear the interval on component unmount
         return () => clearInterval(intervalId);
-    }, [organism]);
+    }, []);
     if (!showBanner) {
         return null;
     }

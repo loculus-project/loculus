@@ -20,7 +20,7 @@ import {
 } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
 import { displayConfirmationDialog } from '../ConfirmationDialog.tsx';
-import { getLastApprovalTimeKey } from '../SearchPage/RecentSequencesBanner.tsx';
+import { LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY } from '../SearchPage/RecentSequencesBanner.tsx';
 import { ManagedErrorFeedback, useErrorFeedbackState } from '../common/ManagedErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import BiTrash from '~icons/bi/trash';
@@ -284,7 +284,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     scope: approveAllDataScope.value,
                                 });
 
-                                storeLastApprovalTime(organism);
+                                storeLastApprovalTime();
                             },
                         })
                     }
@@ -310,7 +310,7 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
                                     groupIdsFilter: [group.groupId],
                                     scope: approveAllDataScope.value,
                                 });
-                                storeLastApprovalTime(organism);
+                                storeLastApprovalTime();
                             }}
                             deleteAccessionVersion={() =>
                                 hooks.deleteSequenceEntries({
@@ -355,9 +355,9 @@ const InnerReviewPage: FC<ReviewPageProps> = ({ clientConfig, organism, group, a
     );
 };
 
-const storeLastApprovalTime = (organism: string) => {
+const storeLastApprovalTime = () => {
     const lastApprovalTime = Math.floor(Date.now() / 1000);
-    localStorage.setItem(getLastApprovalTimeKey(organism), lastApprovalTime.toString());
+    localStorage.setItem(LAST_APPROVAL_TIME_LOCAL_STORAGE_KEY, lastApprovalTime.toString());
 };
 
 export const ReviewPage = withQueryProvider(InnerReviewPage);
