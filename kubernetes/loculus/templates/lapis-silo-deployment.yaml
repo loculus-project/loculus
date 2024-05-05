@@ -47,7 +47,6 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
-        {{ if $.Values.usePodStorageForSilo }}  
         - name: silo-preprocessing
           image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
           imagePullPolicy: IfNotPresent
@@ -67,10 +66,6 @@ spec:
               value: "backend-client"
             - name: IMPORT_JOB_USER
               value: "silo_import_job"
-            {{ if $.Values.usePodStorageForSilo }}
-            - name: REPEAT_IMPORT
-              value: "true"
-            {{ end }}
             - name: IMPORT_JOB_USER_PASSWORD
               valueFrom:
                 secretKeyRef:
@@ -99,21 +94,10 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /silo_import_wrapper.sh
               subPath: silo_import_wrapper.sh
-      {{end}}
       volumes:
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
         - name: lapis-silo-shared-data
-          {{ if not $.Values.usePodStorageForSilo }}
-          persistentVolumeClaim:
-            claimName: lapis-silo-shared-data-{{ $key }}
-          {{else}}
           emptyDir: {}
-          {{end}}
         - name: lapis-silo-input-data-cache
-          {{ if not $.Values.usePodStorageForSilo }}
-          persistentVolumeClaim:
-            claimName: lapis-silo-input-data-cache-{{ $key }}
-          {{else}}
           emptyDir: {}
-          {{end}}
 {{- end }}
