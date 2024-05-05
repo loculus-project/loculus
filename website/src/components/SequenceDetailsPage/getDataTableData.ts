@@ -30,7 +30,7 @@ export function getDataTableData(listTableDataEntries: TableDataEntry[]): DataTa
                 .toString()
                 .split(',')
                 .map((x) => x.trim());
-            break;
+            continue;
         }
 
         if (!tableHeaderMap.has(entry.header)) {
