@@ -29,7 +29,7 @@ export const testConfig = {
         },
         keycloakUrl: 'http://authentication.dummy',
     },
-    insecureCookies: true,
+    devMode: true,
     backendKeycloakClientSecret: 'dummy',
 } as RuntimeConfig;
 

@@ -20,6 +20,6 @@ export const runtimeConfig = z.object({
     public: serviceUrls,
     serverSide: serverConfig,
     backendKeycloakClientSecret: z.string().min(5),
-    insecureCookies: z.boolean(),
+    devMode: z.boolean(),
 });
 export type RuntimeConfig = z.infer<typeof runtimeConfig>;

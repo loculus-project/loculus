@@ -1,4 +1,3 @@
-createTestAccounts: true
 secrets:
   smtp-password:
     type: sealedsecret
