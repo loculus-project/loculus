@@ -157,32 +157,23 @@ cleanup_output_data() {
 }
 
 main() {
-  while :  # Infinite loop, will run until the script is killed or an error causes exit
-  do
-    echo "----------------------------------------"
-    echo "Script started at: $(date)"
+  echo "----------------------------------------"
+  echo "Script started at: $(date)"
 
-    echo "Current content of input data dir: $input_data_dir"
-    ls -l $input_data_dir
-    echo "Current content of output data dir: /preprocessing/output"
-    ls -l /preprocessing/output
-    echo
+  echo "Current content of input data dir: $input_data_dir"
+  ls -l $input_data_dir
+  echo "Current content of output data dir: /preprocessing/output"
+  ls -l /preprocessing/output
+  echo
 
-    # cleanup at start in case we fail later
-    cleanup_output_data
-    get_token
-    download_data
-    preprocessing
+  # cleanup at start in case we fail later
+  cleanup_output_data
+  get_token
+  download_data
+  preprocessing
 
-    echo "done"
-    echo "----------------------------------------"
-
-    if [ -z "$REPEAT_IMPORT" ]; then
-      break  # If REPEAT_IMPORT is not set, break the loop and finish
-    else
-      sleep 20  # Wait for 60 seconds before the next iteration
-    fi
-  done
+  echo "done"
+  echo "----------------------------------------"
 }
 
 main

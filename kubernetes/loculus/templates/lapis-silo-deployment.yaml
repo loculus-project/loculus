@@ -53,7 +53,7 @@ spec:
           imagePullPolicy: IfNotPresent
           command:
             - sh
-            - /silo_import_job.sh
+            - /silo_import_wrapper.sh
           env:
             - name: BACKEND_BASE_URL
               {{- if $.Values.disableBackend }}
@@ -96,6 +96,9 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /silo_import_job.sh
               subPath: silo_import_job.sh
+            - name: lapis-silo-database-config-processed
+              mountPath: /silo_import_wrapper.sh
+              subPath: silo_import_wrapper.sh
       {{end}}
       volumes:
         {{- include "loculus.configVolume" (dict "name" "lapis-silo-database-config" "configmap" (printf "lapis-silo-database-config-%s" $key)) | nindent 8 }}
