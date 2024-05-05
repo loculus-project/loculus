@@ -20,7 +20,7 @@ data:
   runtime_config.json: |
     {
         "name" : "{{ $.Values.name }}",
-        "devMode": {{ $.Values.devMode }},
+        "insecureCookies": {{ $.Values.insecureCookies }},
         "serverSide": {
             {{- if .Values.usePublicRuntimeConfigAsServerSide }}
             {{- template "loculus.publicRuntimeConfig" dict "Values" .Values "externalLapisUrlConfig" $externalLapisUrlConfig -}}

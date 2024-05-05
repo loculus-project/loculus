@@ -29,7 +29,7 @@ data:
       "accessTokenLifespan": 36000,
       "ssoSessionIdleTimeout": 36000,
       "users": [
-        {{ if $.Values.devMode }}
+        {{ if $.Values.createTestAccounts }}
           {{- $browsers := list "firefox" "webkit" "chromium"}}
           {{- range $_, $browser := $browsers }}
             {{- range $index, $_ := until 20}}
