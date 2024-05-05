@@ -4,7 +4,7 @@
 while true
 do
     # Execute your script
-    ./silo_import_job.sh
+    sh /silo_import_job.sh
     
     # Wait for 30 seconds before running it again
     sleep 30
