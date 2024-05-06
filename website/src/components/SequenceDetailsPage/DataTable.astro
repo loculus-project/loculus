@@ -22,7 +22,7 @@ const data = getDataTableData(tableData);
             </div>
         )
     }
-    <div class='grid gap-x-6' style='grid-template-columns: repeat(auto-fill,minmax(32rem, 1fr))'>
+    <div class='grid gap-x-6' style='grid-template-columns: repeat(auto-fill,minmax(min(100vw, 32rem), 1fr))'>
         {
             data.table.map(({ header, rows }) => (
                 <div class='p-4'>

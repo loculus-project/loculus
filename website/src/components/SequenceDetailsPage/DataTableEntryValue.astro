@@ -15,7 +15,7 @@ const { value, customDisplay } = data;
 
 <div class='whitespace-normal text-gray-600 break-inside-avoid'>
     <div class='whitespace-wrap'>
-        {customDisplay === undefined && (value !== '' ? value : <span class='italic'>N/A</span>)}
+        {customDisplay === undefined && (value !== '' ? value : <span class='italic'>None</span>)}
         {
             customDisplay !== undefined &&
                 customDisplay.type === 'badge' &&
