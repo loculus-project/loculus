@@ -2,10 +2,48 @@
 
 ## Overview
 
-1. Download data from INSDC
-2. Filtering
-3. Turn into FASTA/Metadata
-4. Upload to loculus
+The following is a rough overview of the pipeline's steps.
+
+### Download data from NCBI virus
+
+Using NCBI `datasets` CLI, download all sequences and corresponding NCBI curated metadata for a configurable taxon. The taxon is specified using the NCBI Taxonomy ID, and includes all child taxa, i.e. dowloading sequences for the Ebola virus taxon ID includes all sequences for more specific Ebola virus (sub)species taxon ids.
+
+Sequences and metadata are transformed into (nd)json files to simplify (de)serialization and further processing.
+
+### Transforming values to conform with Loculus' expectations
+
+Metadata as received from `datasets` is transformed to conform to Loculus' expectations. This includes for example:
+
+- renaming fields
+- transforming values, e.g. turn author strings from `LastName1, Initial1, LastName2, Initial2` into `Initial1 LastName1, Initial2 LastName2`
+- splitting fields, e.g. NCBI's single, complex collection country field (`Germany: Munich, Bavaria`) is split into multiple fields `country`, `state`, `division` (`Germany`, `Bavaria`, `Munich`)
+
+### Calculating a hash for each sequence entry
+
+Every sequence entry is to be uploaded only once and must be ignored by future periodic ingest runs unless the metadata and/or sequence has changed.
+
+To achieve this, an md5 hash is generated for each sequence entry based on the post-transform metadata and sequence content. The hash is based on all metadata fields submitted to Loculus as well as the sequence. Hence, changes to the ingest pipeline's transform step (above) can lead to changes in hash and resubmission - even without underlying data change on INSDC. Likewise, some changes to the INSDC data might not cause a sequence update on Loculus if what has been changed does not affect the post-transformed metadata.
+
+### Getting status and hashes of previously submitted sequences and triaging
+
+Before uploading new sequences, the pipeline queries the Loculus backend for the status and hash of all previously submitted sequences. This is done to avoid uploading sequences that have already been submitted and have not changed. Furthermore, only accessions whose higest version is in status `APPROVED_FOR_RELEASE` can be updated through revision. Entries in other states cannot currently be updated (TODO: Potentially use `/submit-edited-data` endpoint to allow updating entries in more states).
+
+Hashes and statuses are used to triage sequences into 4 categories which determine the action to be taken:
+
+- `submit`: Sequences that have not been submitted before
+- `revise`: Sequences that have been submitted before and have changed
+- `no_change`: Sequences that have been submitted before and have not changed
+- `blocked`: Sequences that have been submitted before but are not in a state that allows updating
+
+### Uploading sequences to Loculus
+
+Depending on the triage category, sequences are either submitted as new entries or revised.
+
+### Approving sequences in status `WAITING_FOR_APPROVAL`
+
+Due to the current Loculus backend design, sequences that are submitted as new entries or revised are not automatically approved for release. Instead, they are put into status `WAITING_FOR_APPROVAL` and must be approved manually through the Loculus backend.
+
+The `ingest` pipeline handles this step by continuously polling the Loculus backend for sequences in status `WAITING_FOR_APPROVAL` and approving them.
 
 ## Deployment
 
@@ -22,20 +60,20 @@ TLDR: The `Snakefile` contains workflows defined as rules with required input an
 
 Install micromamba, if you are on a mac:
 
-```
+```bash
 brew install micromamba
 ```
 
 Then configure micromamba
 
-```
+```bash
 micromamba shell init --shell zsh --root-prefix=~/micromamba
 source ~/.zshrc
 ```
 
 Then activate the loculus-ingest environment
 
-```
+```bash
 micromamba create -f environment.yml --platform osx-64 --rc-file .mambarc
 micromamba activate loculus-ingest
 ```
@@ -43,3 +81,25 @@ micromamba activate loculus-ingest
 Then run snakemake using `snakemake` or `snakemake {rule}`.
 
 Note that by default the pipeline will submit sequences to main. If you want to change this to another branch (that has a preview tag) you can modify the `backend_url` and `keycloak_token_url` arguments in the `config.yaml` file. They are of the form `https://backend-{branch_name}.loculus.org/` and `https://authentication-{branch_name}.loculus.org`. Alternatively, if you are running the backend locally you can also specify the local backend port: `http://localhost:8079` and the local keyclock port: `http://localhost:8083`.
+
+## Testing
+
+Currently, there is not automated testing other than running the pipeline manually and in preview deployments.
+
+## Roadmap
+
+### Automated testing
+
+We should add automated integration tests:
+
+- Set up deployment with backend (including database) and keycloak
+- Feed mocked `datasets` output into the pipeline, covering various scenarios
+- Check that backend ends up in the expected state
+
+To be able to run tests independently, we should use UUIDs for mock data. Currently, clearing the database is not possible without redeploying everything (see <https://github.com/loculus-project/loculus/issues/1764>).
+
+One complication for testing is that we don't have ARM containers for the backend yet (see <https://github.com/loculus-project/loculus/issues/1765>).
+
+### Multi-segment support
+
+Currently, the pipeline only supports single-segment sequences. We need to add support for multi-segment viruses, like CCHF and Influenza.

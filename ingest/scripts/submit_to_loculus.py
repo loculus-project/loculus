@@ -1,5 +1,8 @@
+import json
 import logging
+from collections import defaultdict
 from dataclasses import dataclass
+from pathlib import Path
 from time import sleep
 
 import click
@@ -8,6 +11,7 @@ import yaml
 import os
 
 logging.basicConfig(level=logging.DEBUG)
+
 
 @dataclass
 class Config:
@@ -147,6 +151,39 @@ def submit(metadata, sequences, config: Config, group_id):
     return response.json()
 
 
+def revise(metadata, sequences, config: Config, group_id):
+    """
+    Submit revision data to Loculus.
+    """
+
+    jwt = get_jwt(config)
+
+    # Endpoint URL
+    url = f"{organism_url(config)}/revise"
+
+    # Headers with Bearer Authentication
+    headers = {"Authorization": f"Bearer {jwt}"}
+
+    # Query parameters
+    params = {
+        "groupId": group_id,
+    }
+
+    with open(metadata, "rb") as metadata_file, open(sequences, "rb") as sequences_file:
+        files = {
+            "metadataFile": metadata_file,
+            "sequenceFile": sequences_file,
+        }
+
+        response = requests.post(url, headers=headers, files=files, params=params)
+
+    # Log response, and raise if not OK
+    logging.debug(response.json())
+    response.raise_for_status()
+
+    return response.json()
+
+
 def approve(config: Config):
     """
     Get sequences that were preprocessed successfully and approve them.
@@ -175,6 +212,130 @@ def approve(config: Config):
     return response.json()
 
 
+def get_sequence_status(config: Config):
+    """Get status of each sequence"""
+    jwt = get_jwt(config)
+
+    url = f"{organism_url(config)}/get-sequences"
+
+    headers = {"Authorization": f"Bearer {jwt}"}
+
+    params = {
+        "organism": config.organism,
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+
+    if not response.ok:
+        logging.error(response.json())
+    response.raise_for_status()
+
+    # Turn into dict with {accession: {version: status}}
+    result = defaultdict(dict)
+    entries = []
+    try:
+        entries = response.json()["sequenceEntries"]
+    except requests.JSONDecodeError:
+        logging.warning(f"Error decoding JSON of /get-sequences: {response.text}")
+    for entry in entries:
+        accession = entry["accession"]
+        version = entry["version"]
+        status = entry["status"]
+        result[accession][version] = status
+
+    return result
+
+
+def get_submitted(config: Config):
+    """Get previously submitted sequences
+    This way we can avoid submitting the same sequences again
+    """
+
+    jwt = get_jwt(config)
+
+    url = f"{organism_url(config)}/get-original-metadata"
+
+    headers = {"Authorization": f"Bearer {jwt}"}
+    params = {
+        "fields": ["insdc_accession_base", "hash"],
+        "groupIdsFilter": [],
+        "statusesFilter": [],
+    }
+
+    response = requests.get(url, headers=headers, params=params)
+    if not response.ok:
+        logging.error(response.json())
+    response.raise_for_status()
+
+    # Initialize the dictionary to store results
+    submitted_dict: dict[str, dict[str, str | list]] = {}
+
+    """I want something like (in yaml)
+    insdc_accession:
+        loculus_accession: abcd
+        versions:
+        - version: 1
+          hash: abcd
+          status: ... (this needs to be queried separately)
+        - version: 2
+          hash: efg
+    
+    If the same insdc_accession has multiple loculus_accessions
+    then error, as this can't be represented here
+    """
+
+    statuses: dict[str, dict[int, str]] = get_sequence_status(config)
+
+    # Parse each line of NDJSON
+    for line in response.iter_lines():
+        if line:  # Make sure line is not empty
+            try:
+                record = json.loads(line)
+            except json.JSONDecodeError as err:
+                response_summary = response.text[:50] + response.text[-50:]
+                logging.error(
+                    f"Error decoding JSON from /get-original-metadata: {line} of {response_summary}"
+                )
+                raise ValueError(
+                    f"Error decoding JSON in /get-original-metadata results: {line}"
+                ) from err
+            loculus_accession = record["accession"]
+            loculus_version = int(record["version"])
+            original_metadata = record["originalMetadata"]
+            insdc_accession = original_metadata.get("insdc_accession_base", "")
+            hash_value = original_metadata.get("hash", "")
+            if insdc_accession not in submitted_dict:
+                # Create base entry
+                submitted_dict[insdc_accession] = {
+                    "loculus_accession": loculus_accession,
+                    "versions": [],
+                }
+            else:
+                # Check accessions match, otherwise raise
+                if loculus_accession != submitted_dict[insdc_accession]["loculus_accession"]:
+                    # For now to be forgiving, just move on
+                    continue
+                    print(submitted_dict)
+                    raise ValueError(
+                        f"INSDC accession {insdc_accession} has multiple loculus accessions: "
+                        f"{loculus_accession} and {submitted_dict[insdc_accession]["loculus_accession"]}"
+                    )
+
+            # Append version, hash and loculus accession
+            submitted_dict[insdc_accession]["versions"].append(
+                {
+                    "version": loculus_version,
+                    "hash": hash_value,
+                    "status": statuses[loculus_accession][loculus_version],
+                }
+            )
+
+    # Later on, enrich with status information to prevent exhaustion
+    # of accessions
+
+    return submitted_dict
+
+
 # %%
 
 
@@ -192,7 +353,7 @@ def approve(config: Config):
 @click.option(
     "--mode",
     required=True,
-    type=click.Choice(["submit", "approve"]),
+    type=click.Choice(["submit", "revise", "approve", "get-submitted"]),
 )
 @click.option(
     "--log-level",
@@ -204,7 +365,12 @@ def approve(config: Config):
     required=True,
     type=click.Path(exists=True),
 )
-def submit_to_loculus(metadata, sequences, mode, log_level, config_file):
+@click.option(
+    "--output",
+    required=False,
+    type=click.Path(),
+)
+def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output):
     """
     Submit data to Loculus.
     """
@@ -225,6 +391,17 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file):
         response = submit(metadata, sequences, config, group_id)
         logging.info("Submission complete")
 
+    if mode == "revise":
+        logging.info("Submitting revisions to Loculus")
+        logging.debug(f"Config: {config}")
+        # Create group if it doesn't exist
+        group_id = get_group_id(config)
+
+        # Submit
+        logging.info("Starting revision submission")
+        response = revise(metadata, sequences, config, group_id)
+        logging.info("Revision submission complete")
+
     if mode == "approve":
         while True:
             logging.info("Approving sequences")
@@ -232,6 +409,11 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file):
             logging.debug(f"Approved: {response}")
             sleep(10)
 
+    if mode == "get-submitted":
+        logging.info("Getting submitted sequences")
+        response = get_submitted(config)
+        Path(output).write_text(json.dumps(response))
+        # logging.debug(f"Originally submitted: {response}")
 
 
 if __name__ == "__main__":
