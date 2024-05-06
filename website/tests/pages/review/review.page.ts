@@ -38,19 +38,18 @@ export class ReviewPage {
         const nothingToReviewIsVisible = await nothingToReview.isVisible();
         if (nothingToReviewIsVisible) {
             return { processed: 0, total: 0 };
+        }
+        const infoText = await sequencesProcessed.textContent();
+
+        const matchResult = infoText?.match(/(\d+) of (\d+) sequences processed/) ?? null;
+
+        if (matchResult !== null) {
+            const processed = parseInt(matchResult[1], 10);
+            const total = parseInt(matchResult[2], 10);
+
+            return { processed, total };
         } else {
-            const infoText = await sequencesProcessed.textContent();
-
-            const matchResult = infoText?.match(/(\d+) of (\d+) sequences processed/) ?? null;
-
-            if (matchResult !== null) {
-                const processed = parseInt(matchResult[1], 10);
-                const total = parseInt(matchResult[2], 10);
-
-                return { processed, total };
-            } else {
-                throw new Error('Unable to extract processed sequences information from the page.');
-            }
+            throw new Error('Unable to extract processed sequences information from the page.');
         }
     }
 
