@@ -25,9 +25,7 @@ export class ReviewPage {
     }
 
     public async goto(groupId: number) {
-        await this.page.goto(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`, {
-            waitUntil: 'networkidle',
-        });
+        await this.page.goto(`${baseUrl}${routes.userSequenceReviewPage(dummyOrganism.key, groupId)}`);
     }
 
     public async getReviewPageOverview(): Promise<ReviewPageOverview> {
