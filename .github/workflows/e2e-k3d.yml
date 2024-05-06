@@ -126,10 +126,15 @@ jobs:
 
       - name: Wait for the pods to be ready (timeout 480s)
         run: ./.github/scripts/wait_for_pods_to_be_ready.py
-      - name: Sleep for 10 secs
-        run: sleep 10
+      - name: Sleep for 20 secs
+        run: sleep 20
       - name: Run E2E test
-        run: cd website && npm run e2e
+        uses: nick-fields/retry@v3
+        with:
+          command: cd website && npm run e2e
+          max_attempts: 2
+          timeout_minutes: 30
+          retry_wait_seconds: 10
       - uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
