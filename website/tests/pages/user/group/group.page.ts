@@ -7,7 +7,7 @@ export class GroupPage {
     constructor(public readonly page: Page) {}
 
     public async goToUserPage() {
-        await this.page.goto(`${baseUrl}${routes.userOverviewPage()}`, { waitUntil: 'networkidle' });
+        await this.page.goto(`${baseUrl}${routes.userOverviewPage()}`, { waitUntil: 'load' });
         await this.page.waitForURL(`${baseUrl}${routes.userOverviewPage()}`);
     }
 
@@ -17,9 +17,7 @@ export class GroupPage {
     }
 
     public async goToGroupPage(groupId: number) {
-        await this.page.goto(`${baseUrl}${routes.groupOverviewPage(groupId)}`, {
-            waitUntil: 'networkidle',
-        });
+        await this.page.goto(`${baseUrl}${routes.groupOverviewPage(groupId)}`);
         await this.page.waitForURL(`${baseUrl}${routes.groupOverviewPage(groupId)}`);
     }
 
