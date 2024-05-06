@@ -275,19 +275,7 @@ const SearchField: FC<AutoCompleteFieldProps> = (props) => {
 };
 
 const SearchButton: FC<{ isLoading: boolean }> = ({ isLoading }) => (
-    <button
-        className='normal-case 
-     py-2 rounded-md font-semibold px-4 text-sm
-     border-primary-600 border
-     text-primary-600 bg-white
-     w-full
-     hover:bg-primary-600 hover:text-white
-
-    
-    '
-        type='submit'
-        disabled={isLoading}
-    >
+    <button className='outlineButton w-full' type='submit' disabled={isLoading}>
         {isLoading ? <CircularProgress size={20} color='inherit' /> : 'Search sequences'}
     </button>
 );

@@ -41,6 +41,13 @@ a {
   font-weight: 400;
 }
 
+@layer utilities {
+  .outlineButton {
+    @apply normal-case py-2 rounded-md font-semibold px-4 text-sm border-primary-600 border text-primary-600 bg-white
+    hover:bg-primary-600 hover:text-white;
+  }
+}
+
 .loculusColor{
   background: theme('colors.main');
   &:hover {

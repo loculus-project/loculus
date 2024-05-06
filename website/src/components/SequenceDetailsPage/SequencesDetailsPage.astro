@@ -62,14 +62,6 @@ const loadSequencesAutomatically = getSchema(organism).loadSequencesAutomaticall
     )
 }
 <DataTable tableData={tableData} dataUseTermsHistory={dataUseTermsHistory} />
-<div>
-    <a
-        class='mt-4 inline-block text-primary-700 hover:text-blue-800'
-        href={routes.sequencesFastaPage(accessionVersion) + '?download'}
-    >
-        Download FASTA
-    </a>
-</div>
 <div class='mt-10'>
     <SequencesContainer
         client:load
