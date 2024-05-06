@@ -7,7 +7,7 @@ export class UserPage {
     constructor(public readonly page: Page) {}
 
     public async goToUserPage() {
-        await this.page.goto(`${baseUrl}${routes.userOverviewPage()}`, { waitUntil: 'networkidle' });
+        await this.page.goto(`${baseUrl}${routes.userOverviewPage()}`, { waitUntil: 'load' });
         await this.page.waitForURL(`${baseUrl}${routes.userOverviewPage()}`);
     }
 

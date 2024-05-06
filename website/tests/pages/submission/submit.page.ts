@@ -23,7 +23,7 @@ export class SubmitPage {
 
     public async goto(groupId: number) {
         await this.page.goto(`${baseUrl}${routes.submitPage(dummyOrganism.key, groupId)}`, {
-            waitUntil: 'networkidle',
+            waitUntil: 'load',
         });
     }
 

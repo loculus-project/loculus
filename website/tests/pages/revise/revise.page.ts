@@ -18,7 +18,7 @@ export class RevisePage {
 
     public async goto(groupId: number) {
         await this.page.goto(`${baseUrl}${routes.revisePage(dummyOrganism.key, groupId)}`, {
-            waitUntil: 'networkidle',
+            waitUntil: 'load',
         });
     }
 
