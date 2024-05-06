@@ -45,15 +45,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
     return (
         <>
-            <button
-                className='normal-case 
-                py-2 rounded-md font-semibold px-4 text-sm
-                border-primary-600 border
-                text-primary-600 bg-white
-                w-full
-                hover:bg-primary-600 hover:text-white'
-                onClick={openDialog}
-            >
+            <button className='outlineButton' onClick={openDialog}>
                 Download
             </button>
 
