@@ -33,18 +33,60 @@ spec:
                   name: service-accounts
                   key: insdcIngestUserPassword
           args:
-            {{- range $arg := $value.ingest.args }}
-            - "{{ $arg }}"
-            {{- end }}
+            - snakemake
+            - results/approved
+            - results/submitted # Remove in production, see #1777
+            - results/revised # Remove in production, see #1777
       {{- if $value.ingest.configFile }}
           volumeMounts:
             - name: loculus-ingest-config-volume-{{ $key }}
-              mountPath: /package/config
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
       volumes:
         - name: loculus-ingest-config-volume-{{ $key }}
           configMap:
             name: loculus-ingest-config-{{ $key }}
       {{- end }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: loculus-ingest-cronjob-{{ $key }}
+spec:
+  schedule: "*/30 * * * *" # ingest every 30 minutes (not more often to be kind to NCBI)
+  startingDeadlineSeconds: 60
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: {{ $.Values.ingestLimitSeconds }}
+      template:
+        metadata:
+          labels:
+            app: loculus
+            component: silo-ingest-cronjob-{{ $key }}
+          annotations:
+            argocd.argoproj.io/sync-options: Replace=true
+            reloader.stakater.com/auto: "true"
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: ingest-{{ $key }}
+              image: {{ $value.ingest.image}}:{{ $dockerTag }}
+              imagePullPolicy: Always
+              args:
+                - snakemake
+                - results/submitted
+                - results/revised
+          {{- if $value.ingest.configFile }}
+              volumeMounts:
+                - name: loculus-ingest-config-volume-{{ $key }}
+                  mountPath: /package/config/config.yaml
+                  subPath: config.yaml
+          volumes:
+            - name: loculus-ingest-config-volume-{{ $key }}
+              configMap:
+                name: loculus-ingest-config-{{ $key }}
+          {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

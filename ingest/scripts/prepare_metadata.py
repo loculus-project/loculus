@@ -6,12 +6,22 @@
 # Like separation of country into country and division
 
 import hashlib
+import json
 import logging
 from dataclasses import dataclass
+from pathlib import Path
 
 import click
 import pandas as pd
 import yaml
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    encoding="utf-8",
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
+    datefmt="%H:%M:%S",
+)
 
 
 @dataclass
@@ -20,12 +30,6 @@ class Config:
     fasta_id_field: str
     rename: dict[str, str]
     keep: list[str]
-
-
-def hash_row_with_columns(row: pd.Series) -> str:
-    items = sorted((f"{col}_{val}" for col, val in row.items()))
-    row_string = "".join(items)
-    return hashlib.sha256(row_string.encode()).hexdigest()
 
 
 def split_authors(authors: str) -> str:
@@ -47,39 +51,69 @@ def split_authors(authors: str) -> str:
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
+@click.option("--sequence-hashes", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
 @click.option(
     "--log-level",
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
 )
-def main(config_file: str, input: str, output: str, log_level: str) -> None:
-    logging.basicConfig(level=log_level)
+def main(config_file: str, input: str, sequence_hashes: str, output: str, log_level: str) -> None:
+    logger.setLevel(log_level)
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
     with open(config_file) as file:
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
-    logging.debug(config)
-    df = pd.read_csv(input, sep="\t", dtype=str).sort_values(by=config.compound_country_field)
-    logging.debug(df.columns)
-    df["division"] = df[config.compound_country_field].str.split(":", n=1).str[1].str.strip()
-    logging.debug(df["division"].unique())
-    df["country"] = df[config.compound_country_field].str.split(":", n=1).str[0].str.strip()
-    logging.debug(df["country"].unique())
-    df["submissionId"] = df[config.fasta_id_field]
-    logging.debug(df["submissionId"].unique())
-    df["insdc_accession_base"] = df[config.fasta_id_field].str.split(".", n=1).str[0]
-    logging.debug(df["insdc_accession_base"])
-    df["insdc_version"] = df[config.fasta_id_field].str.split(".", n=1).str[1]
-    logging.debug(df["insdc_version"].unique())
-    logging.debug(df["ncbi_submitter_names"])
-    df["ncbi_submitter_names"] = df["ncbi_submitter_names"].map(lambda x: split_authors(str(x)))
-    df = df.rename(columns=config.rename)
-    # Drop columns that are neither a value of `rename` nor in `keep`
-    df = df.drop(columns=set(df.columns) - set(config.rename.values()) - set(config.keep))
-    # Create a metadata hash that is independent of the order of the columns
-    df["metadata_hash"] = df.apply(hash_row_with_columns, axis=1)
-    df.to_csv(output, sep="\t", index=False)
+    logger.debug(config)
+
+    logger.info(f"Reading metadata from {input}")
+    df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
+    metadata: list[dict[str, str]] = df.to_dict(orient="records")
+
+    sequence_hashes: dict[str, str] = json.loads(Path(sequence_hashes).read_text())
+
+    for record in metadata:
+        # Transform the metadata
+        try:
+            record["division"] = record[config.compound_country_field].split(":", 1)[1].strip()
+        except IndexError:
+            record["division"] = ""
+        record["country"] = record[config.compound_country_field].split(":", 1)[0].strip()
+        record["submissionId"] = record[config.fasta_id_field]
+        record["insdc_accession_base"] = record[config.fasta_id_field].split(".", 1)[0]
+        record["insdc_version"] = record[config.fasta_id_field].split(".", 1)[1]
+        record["ncbi_submitter_names"] = split_authors(record["ncbi_submitter_names"])
+
+    for record in metadata:
+        for from_key, to_key in config.rename.items():
+            val = record.pop(from_key)
+            record[to_key] = val
+
+    keys_to_keep = set(config.rename.values()) | set(config.keep)
+    for record in metadata:
+        for key in list(record.keys()):
+            if key not in keys_to_keep:
+                record.pop(key)
+
+    # Calculate overall hash of metadata + sequence
+    for record in metadata:
+        sequence_hash = sequence_hashes.get(record[config.rename[config.fasta_id_field]], "")
+        if sequence_hash == "":
+            raise ValueError(f"No hash found for {record[config.fasta_id_field]}")
+
+        metadata_dump = json.dumps(record, sort_keys=True)
+        prehash = metadata_dump + sequence_hash
+
+        record["hash"] = hashlib.md5(prehash.encode()).hexdigest()
+
+    meta_dict = {rec[config.rename[config.fasta_id_field]]: rec for rec in metadata}
+
+    Path(output).write_text(json.dumps(meta_dict, indent=4))
+
+    logging.info(f"Saved metadata for {len(metadata)} sequences")
 
 
 if __name__ == "__main__":
