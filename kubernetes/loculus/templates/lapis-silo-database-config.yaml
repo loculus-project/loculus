@@ -1,5 +1,6 @@
 {{- $commonMetadata := (include "loculus.commonMetadata" . | fromYaml).fields }}
 {{- $importScriptLines := .Files.Lines "silo_import_job.sh" }}
+{{- $importScriptWrapperLines := .Files.Lines "silo_import_wrapper.sh" }}
 
 {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
@@ -39,6 +40,10 @@ data:
 
   silo_import_job.sh: |
     {{ range $importScriptLines }}
+    {{ . }}{{ end }}
+
+  silo_import_wrapper.sh: |
+    {{ range $importScriptWrapperLines }}
     {{ . }}{{ end }}
 
   pangolineage_alias.json: "{}"
