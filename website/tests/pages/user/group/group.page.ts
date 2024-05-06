@@ -17,9 +17,7 @@ export class GroupPage {
     }
 
     public async goToGroupPage(groupId: number) {
-        await this.page.goto(`${baseUrl}${routes.groupOverviewPage(groupId)}`, {
-            waitUntil: 'load',
-        });
+        await this.page.goto(`${baseUrl}${routes.groupOverviewPage(groupId)}`);
         await this.page.waitForURL(`${baseUrl}${routes.groupOverviewPage(groupId)}`);
     }
 

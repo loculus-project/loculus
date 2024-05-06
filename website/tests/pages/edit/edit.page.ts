@@ -14,9 +14,7 @@ export class EditPage {
     }
 
     public async goto(accessionVersion: AccessionVersion) {
-        await this.page.goto(`${baseUrl}${routes.editPage(dummyOrganism.key, accessionVersion)}`, {
-            waitUntil: 'load',
-        });
+        await this.page.goto(`${baseUrl}${routes.editPage(dummyOrganism.key, accessionVersion)}`);
     }
 
     public async submit(groupId: number) {
