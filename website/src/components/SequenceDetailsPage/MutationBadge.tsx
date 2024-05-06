@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import { type FC, type ReactElement, useMemo, useState } from 'react';
 
 import type { MutationProportionCount } from '../../types/lapis';
 
@@ -67,15 +67,53 @@ export function getColor(code: string): string {
     return COLORS[code] ?? COLORS.X;
 }
 
+const MAX_INITIAL_NUMBER_BADGES = 20;
+
 export const SubstitutionsContainer = ({ values }: { values: MutationProportionCount[] }) => {
-    return values.map(({ mutationFrom, mutationTo, position, sequenceName }) => (
-        <span>
-            <SubBadge
-                sequenceName={sequenceName}
-                mutationFrom={mutationFrom}
-                position={position}
-                mutationTo={mutationTo}
-            />{' '}
-        </span>
-    ));
+    const [showMore, setShowMore] = useState(false);
+
+    const { alwaysVisible, initiallyHidden } = useMemo(() => {
+        let alwaysVisible: ReactElement[] = [];
+        let initiallyHidden: ReactElement[] = [];
+        const elements = values.map(({ mutationFrom, mutationTo, position, sequenceName }, index) => (
+            <span key={index}>
+                <SubBadge
+                    sequenceName={sequenceName}
+                    mutationFrom={mutationFrom}
+                    position={position}
+                    mutationTo={mutationTo}
+                />{' '}
+            </span>
+        ));
+        if (elements.length <= MAX_INITIAL_NUMBER_BADGES) {
+            alwaysVisible = elements;
+        } else {
+            alwaysVisible = elements.slice(0, MAX_INITIAL_NUMBER_BADGES - 2);
+            initiallyHidden = elements.slice(MAX_INITIAL_NUMBER_BADGES - 2);
+        }
+        return { alwaysVisible, initiallyHidden };
+    }, [values]);
+
+    return (
+        <div>
+            {alwaysVisible}
+            {initiallyHidden.length > 0 && showMore ? (
+                <>
+                    {initiallyHidden}
+                    <button onClick={() => setShowMore(false)} className='underline'>
+                        Show less
+                    </button>
+                </>
+            ) : (
+                <button
+                    onClick={() => {
+                        setShowMore(true);
+                    }}
+                    className='underline'
+                >
+                    Show more
+                </button>
+            )}
+        </div>
+    );
 };
