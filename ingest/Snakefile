@@ -1,3 +1,22 @@
+import yaml
+from pathlib import Path
+
+with open("config/defaults.yaml") as f:
+    defaults = yaml.safe_load(f)
+
+# Merge configs, using defaults only as fallback
+# Write to results/config.yaml
+merged_config = config
+for key, value in defaults.items():
+    if not key in config:
+        config[key] = value
+
+config = merged_config
+
+Path("results").mkdir(parents=True, exist_ok=True)
+with open("results/config.yaml", "w") as f:
+    f.write(yaml.dump(merged_config))
+
 TAXON_ID = config["taxon_id"]
 ALL_FIELDS = ",".join(config["all_fields"])
 COLUMN_MAPPING = config["column_mapping"]
@@ -16,8 +35,9 @@ def rename_columns(input_file, output_file):
 
 rule all:
     input:
-        "data/sequences.fasta",
-        "data/metadata.tsv",
+        "results/submitted",
+        "results/revised",
+        "results/approved",
 
 
 rule fetch_ncbi_dataset_package:
@@ -43,6 +63,23 @@ rule extract_ncbi_dataset_sequences:
             ncbi_dataset/data/genomic.fna \
         | seqkit seq -i -w0 \
         > {output.ncbi_dataset_sequences}
+        """
+
+
+rule calculate_sequence_hashes:
+    """Output JSON: {insdc_accession: md5_sequence_hash, ...}"""
+    input:
+        sequences="results/sequences.fasta",
+        script="scripts/calculate_sequence_hashes.py",
+    output:
+        sequence_hashes="results/sequence_hashes.json",
+        sequence_json="results/sequences.json",
+    shell:
+        """
+        python scripts/calculate_sequence_hashes.py \
+            --input {input.sequences} \
+            --output-hashes {output.sequence_hashes} \
+            --output-sequences {output.sequence_json}
         """
 
 
@@ -74,9 +111,11 @@ rule rename_columns:
 rule prepare_metadata:
     input:
         metadata="results/metadata_post_rename.tsv",
-        config="config/config.yaml",
+        sequence_hashes="results/sequence_hashes.json",
+        config="results/config.yaml",
+        script="scripts/prepare_metadata.py",
     output:
-        metadata="results/metadata_post_prepare.tsv",
+        metadata="results/metadata_post_prepare.json",
     params:
         log_level=LOG_LEVEL,
     shell:
@@ -84,40 +123,153 @@ rule prepare_metadata:
         python scripts/prepare_metadata.py \
             --config-file {input.config} \
             --input {input.metadata} \
+            --sequence-hashes {input.sequence_hashes} \
             --output {output.metadata} \
             --log-level {params.log_level} \
         """
 
 
-rule submit_to_loculus:
+rule get_previous_submissions:
+    """Download metadata and sequence hashes of all previously submitted sequences 
+    Produces mapping from INSDC accession to loculus id/version/hash
+    insdc_accession:
+        loculus_accession: abcd
+        versions:
+        -   version: 1
+            hash: abcd
+            status: APPROVED_FOR_RELEASE
+        -   version: 2
+            hash: efg
+            status: HAS_ERRORS
+        ...
+    """
     input:
-        metadata="results/metadata_post_prepare.tsv",
-        sequences="results/sequences.fasta",
-        config="config/config.yaml",
+        prepped_metadata="results/metadata_post_prepare.json",  # Reduce likelihood of race condition of multi-submission
+        config="results/config.yaml",
+        script="scripts/call_loculus.py",
+    output:
+        hashes="results/previous_submissions.json",
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        sleep 120  # Run only once keycloak is up and database wiped
+        python scripts/call_loculus.py \
+            --mode get-submitted \
+            --config-file {input.config} \
+            --log-level {params.log_level} \
+            --output {output.hashes}
+        """
+
+
+rule compare_hashes:
+    input:
+        old_hashes="results/previous_submissions.json",
+        metadata="results/metadata_post_prepare.json",
+        script="scripts/compare_hashes.py",
+    output:
+        to_submit="results/to_submit.json",
+        to_revise="results/to_revise.json",
+        unchanged="results/unchanged.json",
+        blocked="results/blocked.json",
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python scripts/compare_hashes.py \
+            --old-hashes {input.old_hashes} \
+            --metadata {input.metadata} \
+            --to-submit {output.to_submit} \
+            --to-revise {output.to_revise} \
+            --unchanged {output.unchanged} \
+            --output-blocked {output.blocked} \
+            --log-level {params.log_level} \
+        """
+
+
+rule prepare_files:
+    input:
+        metadata="results/metadata_post_prepare.json",
+        sequences="results/sequences.json",
+        to_submit="results/to_submit.json",
+        to_revise="results/to_revise.json",
+        script="scripts/prepare_files.py",
+    output:
+        sequences_submit="results/submit_sequences.fasta",
+        sequences_revise="results/revise_sequences.fasta",
+        metadata_submit="results/submit_metadata.tsv",
+        metadata_revise="results/revise_metadata.tsv",
+    shell:
+        """
+        python scripts/prepare_files.py \
+            --metadata-path {input.metadata} \
+            --sequences-path {input.sequences} \
+            --to-submit-path {input.to_submit} \
+            --to-revise-path {input.to_revise} \
+            --metadata-submit-path {output.metadata_submit} \
+            --metadata-revise-path {output.metadata_revise} \
+            --sequences-submit-path {output.sequences_submit} \
+            --sequences-revise-path {output.sequences_revise} \
+        """
+
+
+rule submit:
+    input:
+        metadata="results/submit_metadata.tsv",
+        sequences="results/submit_sequences.fasta",
+        config="results/config.yaml",
+        script="scripts/call_loculus.py",
     output:
         submitted=touch("results/submitted"),
     params:
         log_level=LOG_LEVEL,
     shell:
         """
-        sleep 180
-        python scripts/submit_to_loculus.py \
-            --mode submit \
-            --metadata {input.metadata} \
-            --sequences {input.sequences} \
-            --config-file {input.config} \
-            --log-level {params.log_level}
+        if [ -s {input.metadata} ]; then
+            python scripts/call_loculus.py \
+                --mode submit \
+                --metadata {input.metadata} \
+                --sequences {input.sequences} \
+                --config-file {input.config} \
+                --log-level {params.log_level}
+        fi
+        """
+
+
+rule revise:
+    input:
+        metadata="results/revise_metadata.tsv",
+        sequences="results/revise_sequences.fasta",
+        config="results/config.yaml",
+        script="scripts/call_loculus.py",
+    output:
+        revised=touch("results/revised"),
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        if [ -s {input.metadata} ]; then
+            python scripts/call_loculus.py \
+                --mode revise \
+                --metadata {input.metadata} \
+                --sequences {input.sequences} \
+                --config-file {input.config} \
+                --log-level {params.log_level}
+        fi
         """
 
 
 rule approve:
     input:
-        config="config/config.yaml",
+        config="results/config.yaml",
+        script="scripts/call_loculus.py",
+    output:
+        approved=touch("results/approved"),
     params:
         log_level=LOG_LEVEL,
     shell:
         """
-        python scripts/submit_to_loculus.py \
+        python scripts/call_loculus.py \
             --mode approve \
             --config-file {input.config} \
             --log-level {params.log_level} \
