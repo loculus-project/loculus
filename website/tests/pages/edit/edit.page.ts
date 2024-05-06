@@ -15,7 +15,7 @@ export class EditPage {
 
     public async goto(accessionVersion: AccessionVersion) {
         await this.page.goto(`${baseUrl}${routes.editPage(dummyOrganism.key, accessionVersion)}`, {
-            waitUntil: 'networkidle',
+            waitUntil: 'load',
         });
     }
 

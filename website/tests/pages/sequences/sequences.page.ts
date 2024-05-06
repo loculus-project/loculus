@@ -25,7 +25,7 @@ export class SequencePage {
 
     public async goto(accessionVersion: AccessionVersion) {
         await this.page.goto(`${baseUrl}${routes.sequencesDetailsPage(accessionVersion)}`, {
-            waitUntil: 'networkidle',
+            waitUntil: 'load',
         });
         await expect(this.page).toHaveTitle(getAccessionVersionString(accessionVersion));
     }
