@@ -29,27 +29,37 @@ export class ReviewPage {
     }
 
     public async getReviewPageOverview(): Promise<ReviewPageOverview> {
-        if (
-            await this.page
-                .getByText(/You do not currently have any unreleased sequences awaiting review.*/, { exact: false })
-                .isVisible()
-        ) {
+        // Wait for the first of these selectors to become visible
+        const waitForEither = Promise.race([
+            this.page.waitForSelector(
+                ':text(/You do not currently have any unreleased sequences awaiting review./, { state: "visible" })',
+            ),
+            this.page.waitForSelector(':text("sequences processed", { state: "visible" })'),
+        ]);
+
+        // Execute the race condition promise
+        await waitForEither;
+
+        // Check which text is visible and handle accordingly
+        const isNoSequencesTextVisible = await this.page.isVisible(
+            ':text(/You do not currently have any unreleased sequences awaiting review./, { exact: false })',
+        );
+
+        if (isNoSequencesTextVisible) {
             return { processed: 0, total: 0 };
-        }
-
-        await this.page.waitForSelector(':text("sequences processed")');
-
-        const infoText = await this.page.$eval(':text("sequences processed")', (element) => element.textContent);
-
-        const matchResult = infoText?.match(/(\d+) of (\d+) sequences processed/) ?? null;
-
-        if (matchResult !== null) {
-            const processed = parseInt(matchResult[1], 10);
-            const total = parseInt(matchResult[2], 10);
-
-            return { processed, total };
         } else {
-            throw new Error('Unable to extract processed sequences information from the page.');
+            const infoText = await this.page.$eval(':text("sequences processed")', (element) => element.textContent);
+
+            const matchResult = infoText?.match(/(\d+) of (\d+) sequences processed/) ?? null;
+
+            if (matchResult !== null) {
+                const processed = parseInt(matchResult[1], 10);
+                const total = parseInt(matchResult[2], 10);
+
+                return { processed, total };
+            } else {
+                throw new Error('Unable to extract processed sequences information from the page.');
+            }
         }
     }
 
