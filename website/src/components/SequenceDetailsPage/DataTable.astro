@@ -1,6 +1,6 @@
 ---
 import { AuthorList } from './AuthorList';
-import DataTableEntry from './DataTableEntry.astro';
+import DataTableEntry from './DataTableEntry.tsx';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './getTableData';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
@@ -28,8 +28,10 @@ const data = getDataTableData(tableData);
                 <div class='p-4'>
                     <h1 class='py-2 text-lg font-semibold border-b'>{header}</h1>
                     <div class='mt-4'>
-                        {rows.map((entry) => (
-                            <DataTableEntry data={entry} dataUseTermsHistory={dataUseTermsHistory} />
+                        {rows.map((entry,i) => (
+                            <DataTableEntry data={entry} dataUseTermsHistory={dataUseTermsHistory} 
+                             key={i} 
+                            />
                         ))}
                     </div>
                 </div>
