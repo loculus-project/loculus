@@ -63,8 +63,6 @@ def main(
         metadata_revise.append(revise_record)
         sequences_revise[fasta_id] = sequences[fasta_id]
     
-    # Turn list of objects into tsv with keys as headers
-   # Function to write list of dictionaries to a TSV file
     def write_to_tsv(data, filename):
         if not data:
             Path(filename).touch()
@@ -83,7 +81,6 @@ def main(
             for fasta_id, sequence in data.items():
                 output_file.write(f">{fasta_id}\n{sequence}\n")
 
-    # Write data to TSV
     write_to_tsv(metadata_submit, metadata_submit_path)
     write_to_tsv(metadata_revise, metadata_revise_path)
     write_to_fasta(sequences_submit, sequences_submit_path)

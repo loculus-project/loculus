@@ -286,7 +286,9 @@ def get_submitted(config: Config):
     try:
         entries = list(jsonlines.Reader(response.iter_lines()).iter())
     except jsonlines.Error as err:
-        response_summary = response.text[:50] + response.text[-50:]
+        response_summary = (
+            response if len(response) < 100 else response.text[:50] + response.text[-50:]
+        )
         logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
         raise ValueError() from err
 
@@ -391,7 +393,9 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
     if mode in ["submit", "revise"]:
         logging.info(f"Starting {mode}")
         try:
-            group_id = get_or_create_group(config, allow_creation=True if mode == "submit" else False)
+            group_id = get_or_create_group(
+                config, allow_creation=True if mode == "submit" else False
+            )
         except ValueError as e:
             logger.error(f"Aborting {mode} due to error: {e}")
             return

@@ -70,14 +70,10 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
     logger.debug(config)
 
     logger.info(f"Reading metadata from {input}")
-    # Read sequence hashes
-    df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False).sort_values(
-        by=config.compound_country_field
-    )
-    # Turn tsv into list of objects
+    df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
-    hashes: dict[str, str] = json.loads(Path(sequence_hashes).read_text())
+    sequence_hashes: dict[str, str] = json.loads(Path(sequence_hashes).read_text())
 
     for record in metadata:
         # Transform the metadata
@@ -91,13 +87,11 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
         record["insdc_version"] = record[config.fasta_id_field].split(".", 1)[1]
         record["ncbi_submitter_names"] = split_authors(record["ncbi_submitter_names"])
 
-    # Rename the fields
     for record in metadata:
         for from_key, to_key in config.rename.items():
             val = record.pop(from_key)
             record[to_key] = val
 
-    # Keep only the fields that are not in either `rename` or `keep`
     keys_to_keep = set(config.rename.values()) | set(config.keep)
     for record in metadata:
         for key in list(record.keys()):
@@ -106,10 +100,9 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
 
     # Calculate overall hash of metadata + sequence
     for record in metadata:
-        # Add the hashes to the metadata
-        sequence_hash = hashes.get(record[config.rename[config.fasta_id_field]], "")
+        sequence_hash = sequence_hashes.get(record[config.rename[config.fasta_id_field]], "")
         if sequence_hash == "":
-            logger.warning(f"No hash found for {record[config.fasta_id_field]}")
+            raise ValueError(f"No hash found for {record[config.fasta_id_field]}")
 
         metadata_dump = json.dumps(record, sort_keys=True)
         prehash = metadata_dump + sequence_hash
@@ -118,7 +111,6 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
 
     meta_dict = {rec[config.rename[config.fasta_id_field]]: rec for rec in metadata}
 
-    # Save the metadata
     Path(output).write_text(json.dumps(meta_dict, indent=4))
 
     logging.info(f"Saved metadata for {len(metadata)} sequences")

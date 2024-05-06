@@ -47,11 +47,11 @@ def main(
         loculus["versions"] = sorted(loculus["versions"], key=lambda x: x["version"])
 
     submit = []  # INSDC accessions to submit
-    revise = {}  # Mapping from INSDC accessions to loculus accession, required for revision
-    noop = {}  # Mapping from INSDC accessions to equivalent loculus accession, no change required
+    revise = {}  # Mapping from INSDC accessions to loculus accession of sequences to revise
+    noop = {}  # Mapping from INSDC accessions to equivalent loculus accession of sequences for which no action is needed
     blocked = defaultdict(
         dict
-    )  # Mapping from INSDC accessions to equivalent loculus accession, cannot be updated due to status
+    )  # Mapping from INSDC accessions to equivalent loculus accession of sequences that cannot be updated due to status
 
     for fasta_id, record in new_metadata.items():
         try:
@@ -72,7 +72,6 @@ def main(
             logger.error(f"Error processing {fasta_id}, {submitted[insdc_accession_base]}: {e}")
             
 
-    # Iterate over metadata and decide what to do with it
     outputs = [
         (submit, to_submit, "Sequences to submit"),
         (revise, to_revise, "Sequences to revise"),
