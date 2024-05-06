@@ -192,7 +192,7 @@ defaultOrganisms:
       silo:
         dateToSortBy: collection_date
     preprocessing:
-      - version: 1
+      - version: 2
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
           - "prepro"
@@ -510,7 +510,7 @@ defaultOrganisms:
         - name: metadata_hash
           displayName: Metadata Hash
     preprocessing:
-      - version: 1
+      - version: 2
         image: ghcr.io/loculus-project/preprocessing-nextclade
         args:
           - "prepro"
