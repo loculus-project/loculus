@@ -2,3 +2,4 @@ rerun-incomplete: true
 printshellcmds: true
 cores: all
 configfile: config/config.yaml
+keep-going: true
