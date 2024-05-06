@@ -771,12 +771,12 @@ secrets:
       testPassword: "dummy"
       livePassword: "dummy"
   service-accounts:
-    type: autogen
+    type: raw # Undo before merge
     data:
-      insdcIngestUserPassword: ""
-      dummyPreprocessingPipelinePassword: ""
-      siloImportJobPassword: ""
-      backendUserPassword: ""
+      insdcIngestUserPassword: "insdc_ingest_user"
+      dummyPreprocessingPipelinePassword: "dummy"
+      siloImportJobPassword: "silo"
+      backendUserPassword: "backend"
   keycloak-admin:
     type: raw
     data:
