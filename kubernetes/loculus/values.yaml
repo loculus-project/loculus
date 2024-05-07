@@ -6,7 +6,7 @@ crossRef:
 disableWebsite: false
 disableBackend: false
 disablePreprocessing: false
-disableIngest: false
+disableIngest: true
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
 accessionPrefix: "LOC_"
