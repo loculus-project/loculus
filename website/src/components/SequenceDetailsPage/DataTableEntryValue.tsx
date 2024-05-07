@@ -46,8 +46,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                 )}
                 {customDisplay?.type === 'dataUseTerms' && (
                     <>
-                        {value}{' '}
-                        <DataUseTermsHistoryModal dataUseTermsHistory={dataUseTermsHistory}  />
+                        {value} <DataUseTermsHistoryModal dataUseTermsHistory={dataUseTermsHistory} />
                     </>
                 )}
             </div>
