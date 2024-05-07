@@ -1,5 +1,5 @@
 ---
-import DataTable from './DataTable.astro';
+import DataTable from './DataTable';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import {
@@ -42,4 +42,4 @@ const relevantData = tableData.filter((entry) => relevantFieldsForRevocationVers
 const dataTableData = getDataTableData(relevantData);
 ---
 
-<DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} />
+<DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} client:load />

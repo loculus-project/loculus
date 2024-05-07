@@ -1,5 +1,5 @@
 ---
-import DataTable from './DataTable.astro';
+import DataTable from './DataTable';
 import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
 import { getDataTableData } from './getDataTableData';
@@ -63,7 +63,7 @@ const dataTableData = getDataTableData(tableData);
         </ErrorBox>
     )
 }
-<DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} />
+<DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} client:load />
 <div class='mt-10'>
     <SequencesContainer
         client:load
