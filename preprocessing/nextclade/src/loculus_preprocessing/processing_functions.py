@@ -13,8 +13,8 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     FunctionArgs,
+    ProcessedMetadataValue,
     ProcessingAnnotation,
-    ProcessingDatum,
     ProcessingInput,
     ProcessingResult,
 )
@@ -287,7 +287,7 @@ class ProcessingFunctions:
         if not input_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
 
-        output_datum: ProcessingDatum
+        output_datum: ProcessedMetadataValue
         if args and "type" in args:
             match args["type"]:
                 case "int":

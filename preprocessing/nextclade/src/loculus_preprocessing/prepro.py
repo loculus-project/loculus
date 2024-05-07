@@ -3,6 +3,7 @@ import dataclasses
 import json
 import logging
 import subprocess  # noqa: S404
+import sys
 import time
 from collections.abc import Sequence
 from http import HTTPStatus
@@ -27,6 +28,7 @@ from .datatypes import (
     NucleotideSequence,
     ProcessedData,
     ProcessedEntry,
+    ProcessedMetadata,
     ProcessingAnnotation,
     ProcessingInput,
     ProcessingSpec,
@@ -35,6 +37,9 @@ from .datatypes import (
     UnprocessedEntry,
 )
 from .processing_functions import ProcessingFunctions
+
+# https://stackoverflow.com/questions/15063936
+csv.field_size_limit(sys.maxsize)
 
 
 def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
@@ -180,7 +185,8 @@ def parse_nextclade_tsv(
                 if gene in aa_ins:
                     aa_ins[gene].append(val)
                     logging.debug(
-                        f"Note: Nextclade found AA insertion in gene missing from config: {gene}: {val}"
+                        "Note: Nextclade found AA insertion in gene missing from config in gene "
+                        f"{gene}: {val}"
                     )
             amino_acid_insertions[id] = aa_ins
     return nucleotide_insertions, amino_acid_insertions
@@ -219,7 +225,7 @@ def process_single(
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
-    output_metadata = {
+    output_metadata: ProcessedMetadata = {
         "length": len(unprocessed.unalignedNucleotideSequences),
     }
 

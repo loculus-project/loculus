@@ -13,8 +13,10 @@ FunctionName = str  # Name of function present in processing_functions
 ArgName = str  # Name of argument present in processing_functions
 ArgValue = str  # Name of argument present in processing_functions
 InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
-ProcessingInput = dict[str, str | None]
-ProcessingDatum = str | int | float | None
+ProcessedMetadataValue = str | int | float | None
+ProcessedMetadata = dict[str, ProcessedMetadataValue]
+InputMetadataValue = str
+InputMetadata = dict[str, InputMetadataValue]
 
 
 @unique
@@ -37,7 +39,7 @@ class ProcessingAnnotation:
 
 @dataclass
 class UnprocessedData:
-    metadata: dict[str, str]
+    metadata: InputMetadata
     unalignedNucleotideSequences: dict[str, NucleotideSequence]
 
 
@@ -62,7 +64,7 @@ class ProcessingSpec:
 # For single segment, need to generalize for multi segments later
 @dataclass
 class UnprocessedAfterNextclade:
-    inputMetadata: dict[str, Any]  # Original user supplied metadata
+    inputMetadata: InputMetadata
     nextcladeMetadata: dict[str, Any] | None  # Derived metadata produced by Nextclade
     unalignedNucleotideSequences: NucleotideSequence
     alignedNucleotideSequences: NucleotideSequence | None
@@ -73,7 +75,7 @@ class UnprocessedAfterNextclade:
 
 @dataclass
 class ProcessedData:
-    metadata: dict[str, Any]
+    metadata: ProcessedMetadata
     unalignedNucleotideSequences: dict[str, Any]
     alignedNucleotideSequences: dict[str, Any]
     nucleotideInsertions: dict[str, Any]
@@ -97,6 +99,6 @@ class ProcessedEntry:
 
 @dataclass
 class ProcessingResult:
-    datum: ProcessingDatum
+    datum: ProcessedMetadataValue
     warnings: list[ProcessingAnnotation] = field(default_factory=list)
     errors: list[ProcessingAnnotation] = field(default_factory=list)

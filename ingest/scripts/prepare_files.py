@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import sys
 from pathlib import Path
 
 import click
@@ -13,6 +14,8 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
+# https://stackoverflow.com/questions/15063936
+csv.field_size_limit(sys.maxsize)
 
 @click.command()
 @click.option("--metadata-path", required=True, type=click.Path(exists=True))
