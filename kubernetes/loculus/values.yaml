@@ -1226,7 +1226,7 @@ defaultOrganisms:
           - authors
           - author_affiliation
           - ncbi_release_date
-          - insdc_accession_full
+          - ncbi_host_name
           - length
           - lineage
         defaultOrderBy: collection_date
