@@ -37,7 +37,7 @@ spec:
             - results/approved
             - results/submitted # Remove in production, see #1777
             - results/revised # Remove in production, see #1777
-            - --all-temp
+            - --all-temp # Reduce disk usage by not keeping files around
       {{- if $value.ingest.configFile }}
           volumeMounts:
             - name: loculus-ingest-config-volume-{{ $key }}
@@ -84,7 +84,7 @@ spec:
                 - snakemake
                 - results/submitted
                 - results/revised
-                - --all-temp
+                - --all-temp # Reduce disk usage by not keeping files around
           {{- if $value.ingest.configFile }}
               volumeMounts:
                 - name: loculus-ingest-config-volume-{{ $key }}

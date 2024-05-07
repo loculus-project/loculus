@@ -578,6 +578,7 @@ defaultOrganisms:
       image: ghcr.io/loculus-project/ingest
       configFile:
         taxon_id: 10244
+        subsample_fraction: 0.1
     referenceGenomes:
       nucleotideSequences:
         - name: "main"

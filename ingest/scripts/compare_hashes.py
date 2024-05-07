@@ -12,6 +12,10 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
+def md5_float(md5: str) -> float:
+    """Turn a string randomly but stably into a float between 0 and 1"""
+    return int(md5, 16) / 16 ** 32
+
 
 @click.command()
 @click.option("--old-hashes", required=True, type=click.Path(exists=True))
@@ -20,6 +24,7 @@ logging.basicConfig(
 @click.option("--to-revise", required=True, type=click.Path())
 @click.option("--unchanged", required=True, type=click.Path())
 @click.option("--output-blocked", required=True, type=click.Path())
+@click.option("--subsample-fraction", required=True, type=float)
 @click.option(
     "--log-level",
     default="INFO",
@@ -32,6 +37,7 @@ def main(
     to_revise: str,
     unchanged: str,
     output_blocked: str,
+    subsample_fraction: float,
     log_level: str,
 ) -> None:
     logger.setLevel(log_level)
@@ -56,6 +62,9 @@ def main(
     for fasta_id, record in new_metadata.items():
         try:
             insdc_accession_base = record["insdc_accession_base"]
+            keep = md5_float(insdc_accession_base) <= subsample_fraction
+            if not keep:
+                continue
             if insdc_accession_base not in submitted:
                 submit.append(fasta_id)
             else:
