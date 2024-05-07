@@ -1569,12 +1569,12 @@ secrets:
       testPassword: "dummy"
       livePassword: "dummy"
   service-accounts:
-    type: autogen
+    type: raw
     data:
-      insdcIngestUserPassword: ""
-      dummyPreprocessingPipelinePassword: ""
-      siloImportJobPassword: ""
-      backendUserPassword: ""
+      insdcIngestUserPassword: "dummy"
+      dummyPreprocessingPipelinePassword: "dummy"
+      siloImportJobPassword: "dummy"
+      backendUserPassword: "dummy"
   keycloak-admin:
     type: raw
     data:
