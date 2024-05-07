@@ -1,24 +1,16 @@
 // Import necessary functions, types, and components
 import { type APIRoute } from 'astro';
 
-import { findOrganismAndData, type FindOrganismAndDataResult } from './findOrganismAndData';
+import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
 import { getReferenceGenomes, getSchema, getRuntimeConfig } from '../../../config';
 import { type Group } from '../../../types/backend';
 import { getMyGroups } from '../../../utils/getMyGroups';
 
-
-// Define type for request params and session
-type RequestParams = {
-    params: {
-        accessionVersion: string;
-        accessToken?: string;
-    };
-};
-
-export const GET: APIRoute = async ({ params }: RequestParams) => {
+export const GET: APIRoute = async (req) => {
+    const params = req.params as { accessionVersion: string; accessToken?: string };
     const { accessionVersion, accessToken } = params;
-    const sequenceDetailsTableData: FindOrganismAndDataResult =  await findOrganismAndData(accessionVersion);
+    const sequenceDetailsTableData: any = await findOrganismAndData(accessionVersion);
 
     if (sequenceDetailsTableData.isOk() !== true) {
         return new Response(
@@ -55,7 +47,7 @@ export const GET: APIRoute = async ({ params }: RequestParams) => {
     const schema = getSchema(organism);
     const runtimeConfig = getRuntimeConfig();
 
-    const detailsDataUIProps: DetailsDataUIResponse = {
+    const detailsDataUIProps = {
         tableData: result.tableData,
         organism,
         referenceGenomes,
