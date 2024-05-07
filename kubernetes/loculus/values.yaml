@@ -1069,6 +1069,7 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          initiallyVisible: true
           header: Sample details
         - name: isolate_name
           displayName: Isolate name
@@ -1096,6 +1097,7 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          initiallyVisible: true
           header: Sample details
         - name: insdc_accession_base
           type: string
@@ -1133,6 +1135,7 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          initiallyVisible: true
           header: "Host"
         - name: ncbi_host_tax_id
           type: int
@@ -1145,10 +1148,12 @@ defaultOrganisms:
           type: string
           generateIndex: true
           autocomplete: true
+          initiallyVisible: true
           header: "Host"
         - name: ncbi_length
           type: int
           header: "INSDC"
+          hideOnSequenceDetailsPage: true
         - name: ncbi_protein_count
           type: int
           header: "INSDC"
