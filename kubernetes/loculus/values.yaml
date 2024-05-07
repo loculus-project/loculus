@@ -1064,24 +1064,12 @@ defaultOrganisms:
           autocomplete: true
           initiallyVisible: true
           header: Sample details
-        - name: clade
-          displayName: Clade
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: Clade & Lineage
-        - name: outbreak
-          displayName: Outbreak
-          type: string
-          generateIndex: true
-          autocomplete: true
-          header: Clade & Lineage
         - name: lineage
           displayName: Lineage
           type: string
           generateIndex: true
           autocomplete: true
-          header: Clade & Lineage
+          header: Sample details
         - name: isolate_name
           displayName: Isolate name
           type: string
@@ -1240,7 +1228,7 @@ defaultOrganisms:
           - ncbi_release_date
           - insdc_accession_full
           - length
-          - clade
+          - lineage
         defaultOrderBy: collection_date
         defaultOrder: descending
       silo:
@@ -1488,7 +1476,7 @@ defaultOrganisms:
               function: identity
               inputs:
                 input: sra_accessions
-            clade:
+            lineage:
               function: identity
               inputs:
                 input: nextclade.clade
