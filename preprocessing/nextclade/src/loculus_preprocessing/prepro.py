@@ -3,6 +3,7 @@ import dataclasses
 import json
 import logging
 import subprocess  # noqa: S404
+import sys
 import time
 from collections.abc import Sequence
 from http import HTTPStatus
@@ -23,18 +24,22 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     GeneName,
+    InputMetadata,
     NucleotideInsertion,
     NucleotideSequence,
     ProcessedData,
     ProcessedEntry,
+    ProcessedMetadata,
     ProcessingAnnotation,
-    ProcessingInput,
     ProcessingSpec,
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
 )
 from .processing_functions import ProcessingFunctions
+
+# https://stackoverflow.com/questions/15063936
+csv.field_size_limit(sys.maxsize)
 
 
 def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
@@ -177,7 +182,12 @@ def parse_nextclade_tsv(
                 if not ins:
                     continue
                 gene, val = ins.split(":", maxsplit=1)
-                aa_ins[gene].append(val)
+                if gene in aa_ins:
+                    aa_ins[gene].append(val)
+                    logging.debug(
+                        "Note: Nextclade found AA insertion in gene missing from config in gene "
+                        f"{gene}: {val}"
+                    )
             amino_acid_insertions[id] = aa_ins
     return nucleotide_insertions, amino_acid_insertions
 
@@ -215,7 +225,7 @@ def process_single(
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
-    output_metadata = {
+    output_metadata: ProcessedMetadata = {
         "length": len(unprocessed.unalignedNucleotideSequences),
     }
 
@@ -226,7 +236,7 @@ def process_single(
             required=spec_dict.get("required", False),
             args=spec_dict.get("args", {}),
         )
-        input_data: ProcessingInput = {}
+        input_data: InputMetadata = {}
         for arg_name, input_path in spec.inputs.items():
             input_data[arg_name] = None
             # If field starts with "nextclade.", take from nextclade metadata

@@ -171,6 +171,7 @@ rule compare_hashes:
         blocked="results/blocked.json",
     params:
         log_level=LOG_LEVEL,
+        subsample_fraction=config.get("subsample_fraction", 1.0),
     shell:
         """
         python scripts/compare_hashes.py \
@@ -181,6 +182,7 @@ rule compare_hashes:
             --unchanged {output.unchanged} \
             --output-blocked {output.blocked} \
             --log-level {params.log_level} \
+            --subsample-fraction {params.subsample_fraction} \
         """
 
 
