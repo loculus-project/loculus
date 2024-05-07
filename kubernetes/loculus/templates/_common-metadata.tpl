@@ -29,9 +29,6 @@ fields:
     type: int
     autocomplete: true
     header: Submission Details
-    customDisplay:
-      type: link
-      url: "/group/{{"{{"}}value{{"}}"}}"
   - name: groupName
     type: string
     generateIndex: true
@@ -68,9 +65,6 @@ fields:
     type: string
     notSearchable: true
     header: Data Use Terms
-    customDisplay:
-      type: link
-      url: "{{"{{"}}value{{"}}"}}"
   {{- end}}
 {{- end}}
 
