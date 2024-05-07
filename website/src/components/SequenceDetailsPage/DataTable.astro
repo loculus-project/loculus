@@ -28,8 +28,10 @@ const data = getDataTableData(tableData);
                 <div class='p-4'>
                     <h1 class='py-2 text-lg font-semibold border-b'>{header}</h1>
                     <div class='mt-4'>
-                        {rows.map((entry, i) => (
-                            <DataTableEntry data={entry} dataUseTermsHistory={dataUseTermsHistory} key={i} />
+                        {rows.map((entry) => (
+                            <DataTableEntry data={entry} dataUseTermsHistory={dataUseTermsHistory} 
+                            client:load
+                            />
                         ))}
                     </div>
                 </div>
