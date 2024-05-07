@@ -98,6 +98,7 @@ const SequenceTabs: FC<NucleotideSequenceTabsProps & { genes: string[] }> = ({
                 isActive={isGeneSequence(gene, sequenceType)}
                 onClick={() => setType(geneSequence(gene))}
                 label={gene}
+                key={gene}
             />
         ))}
     </BoxWithTabsTabBar>
