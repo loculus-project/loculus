@@ -10,7 +10,6 @@ interface Props {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 }
 
-// React component using the defined props
 const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) => {
     const { value, customDisplay } = data;
 
