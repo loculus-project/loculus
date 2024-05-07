@@ -64,7 +64,7 @@ spec:
         metadata:
           labels:
             app: loculus
-            component: silo-ingest-cronjob-{{ $key }}
+            component: loculus-ingest-cronjob-{{ $key }}
           annotations:
             argocd.argoproj.io/sync-options: Replace=true
             reloader.stakater.com/auto: "true"
