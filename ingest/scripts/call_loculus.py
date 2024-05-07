@@ -288,7 +288,7 @@ def get_submitted(config: Config):
     except jsonlines.Error as err:
         response_summary = response.text
         if len(response_summary) > 100:
-            response_summary = response_summary[:50] + response_summary[-50:]
+            response_summary = response_summary[:50] + "\n[..]\n" + response_summary[-50:]
         logger.error(f"Error decoding JSON from /get-original-metadata: {response_summary}")
         raise ValueError() from err
 
