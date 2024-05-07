@@ -2,7 +2,7 @@
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
 import RevocationEntryDataTable from '../../../components/SequenceDetailsPage/RevocationEntryDataTable.astro';
-import SequencesDataUI from '../../../components/SequenceDetailsPage/SequenceDataUI.astro';
+import {SequenceDataUI} from '../../../components/SequenceDetailsPage/SequenceDataUI.tsx';
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.astro';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
 import { isRevocationEntry } from '../../../components/SequenceDetailsPage/getTableData';
@@ -76,7 +76,7 @@ const runtimeConfig = getRuntimeConfig();
                                 dataUseTermsHistory={result.dataUseTermsHistory}
                             />
                         ) : (
-                            <SequencesDataUI
+                            <SequenceDataUI
                                 tableData={result.tableData}
                                 organism={organism}
                                 referenceGenomes={getReferenceGenomes(organism)}
@@ -87,6 +87,7 @@ const runtimeConfig = getRuntimeConfig();
                                 clientConfig={clientConfig}
                                 myGroups={myGroups}
                                 accessToken={accessToken}
+                                client:load
                             />
                         ))}
                 </>

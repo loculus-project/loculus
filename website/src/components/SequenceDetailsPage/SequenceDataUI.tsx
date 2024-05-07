@@ -1,0 +1,115 @@
+import {getDataTableData} from './getDataTableData';
+
+import DataTable from './DataTable';
+import {RevokeButton} from './RevokeButton';
+import {SequencesContainer} from './SequencesContainer';
+
+import { type TableDataEntry } from './types';
+import { routes } from '../../routes/routes';
+import { type DataUseTermsHistoryEntry, type Group } from '../../types/backend';
+import { type Schema } from '../../types/config';
+import { type ReferenceGenomes } from '../../types/referencesGenomes';
+import { type RuntimeConfig, type ClientConfig } from '../../types/runtimeConfig';
+import {EditDataUseTermsButton} from '../DataUseTerms/EditDataUseTermsButton';
+import MdiEye from '~icons/mdi/eye';
+
+interface Props {
+    tableData: TableDataEntry[];
+    organism: string;
+    accessionVersion: string;
+    dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    referenceGenomes: ReferenceGenomes;
+    schema: Schema;
+    runtimeConfig: RuntimeConfig;
+    clientConfig: ClientConfig;
+    myGroups: Group[];
+    accessToken: string | undefined;
+}
+
+export const SequenceDataUI: React.FC<Props> = ({
+    tableData,
+    organism,
+    accessionVersion,
+    dataUseTermsHistory,
+    referenceGenomes,
+    schema,
+    runtimeConfig,
+    clientConfig,
+    myGroups,
+    accessToken,
+} : Props) => {
+
+
+
+  
+    const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
+    const isMyGroup = myGroups.some((group) => group.groupId === groupId);
+
+    dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
+    const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
+
+    const dataUseTermsIndex = tableData.findIndex((entry) => entry.name === 'dataUseTerms');
+    if (dataUseTermsIndex !== -1) {
+        tableData[dataUseTermsIndex].value = currentDataUseTerms.type;
+    }
+
+    const isRestricted = currentDataUseTerms.type === 'RESTRICTED';
+
+    const genes = referenceGenomes.genes.map((g) => g.name);
+    const nucleotideSegmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name) as [string, ...string[]];
+
+    const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
+
+    const dataTableData = getDataTableData(tableData);
+
+    return (
+        <>
+            {isRestricted && (
+                <div className='bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4' role='alert'>
+                    This sequence is only available under the Restricted Use Terms. If you make use of this data, you must
+                    follow the <a href={routes.datauseTermsPage()} className='underline'>terms of use.</a>
+                </div>
+            )}
+            <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} />
+            <div className='mt-10'>
+              
+                <SequencesContainer
+                    organism={organism}
+                    accessionVersion={accessionVersion}
+                    clientConfig={runtimeConfig.public}
+                    genes={genes}
+                    nucleotideSegmentNames={nucleotideSegmentNames}
+                    loadSequencesAutomatically={loadSequencesAutomatically}
+                /> 
+            </div>
+
+            {isMyGroup && accessToken && (
+                <div className='mt-5'>
+                    <hr />
+                    <h2 className='text-xl font-bold mt-10 mb-3'>Sequence Management</h2>
+                    <div className='text-sm text-gray-400 mb-4 block'>
+                        <MdiEye className='w-6 h-6 inline-block mr-2' />
+                        Only visible to group members
+                    </div>
+
+                    {isRestricted && (
+                        <EditDataUseTermsButton
+                            clientConfig={clientConfig}
+                            accessToken={accessToken}
+                            accessionVersion={[accessionVersion.split('.')[0]]}
+                            dataUseTerms={currentDataUseTerms}
+                        />
+                    )}
+
+                    <RevokeButton
+                        organism={organism}
+                        clientConfig={clientConfig}
+                        accessionVersion={accessionVersion.split('.')[0]}
+                        accessToken={accessToken}
+                        groupId={groupId}
+                    />
+                </div>
+            )}
+        </>
+    );
+};
