@@ -1,7 +1,7 @@
 import React from 'react';
 
 import DataTableEntryValue from './DataTableEntryValue';
-import { type TableDataEntry } from './getTableData';
+import { type TableDataEntry } from './types';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 
 interface Props {
