@@ -1,6 +1,6 @@
 import type { TableDataEntry } from './types.ts';
 
-type DataTableData = {
+export type DataTableData = {
     topmatter: {
         authors: string[] | undefined;
     };
