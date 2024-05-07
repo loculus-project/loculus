@@ -1,35 +1,33 @@
 ---
 import { AuthorList } from './AuthorList';
-import DataTableEntry from './DataTableEntry.astro';
-import { getDataTableData } from './getDataTableData';
-import { type TableDataEntry } from './getTableData';
+import DataTableEntry from './DataTableEntry';
+import { type DataTableData } from './getDataTableData';
 import { type DataUseTermsHistoryEntry } from '../../types/backend';
 
 interface Props {
-    tableData: TableDataEntry[];
+    dataTableData: DataTableData;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
 }
 
-const { tableData, dataUseTermsHistory } = Astro.props;
-const data = getDataTableData(tableData);
+const { dataTableData, dataUseTermsHistory } = Astro.props;
 ---
 
 <div>
     {
-        data.topmatter.authors !== undefined && data.topmatter.authors.length > 0 && (
+        dataTableData.topmatter.authors !== undefined && dataTableData.topmatter.authors.length > 0 && (
             <div class='px-6 mb-4'>
-                <AuthorList authors={data.topmatter.authors} client:load />
+                <AuthorList authors={dataTableData.topmatter.authors} client:load />
             </div>
         )
     }
     <div class='grid gap-x-6' style='grid-template-columns: repeat(auto-fill,minmax(min(100vw, 32rem), 1fr))'>
         {
-            data.table.map(({ header, rows }) => (
+            dataTableData.table.map(({ header, rows }) => (
                 <div class='p-4'>
                     <h1 class='py-2 text-lg font-semibold border-b'>{header}</h1>
                     <div class='mt-4'>
                         {rows.map((entry) => (
-                            <DataTableEntry data={entry} dataUseTermsHistory={dataUseTermsHistory} />
+                            <DataTableEntry data={entry} dataUseTermsHistory={dataUseTermsHistory} client:load />
                         ))}
                     </div>
                 </div>

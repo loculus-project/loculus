@@ -2,7 +2,8 @@
 import DataTable from './DataTable.astro';
 import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
-import { type TableDataEntry } from './getTableData';
+import { getDataTableData } from './getDataTableData';
+import { type TableDataEntry } from './types';
 import { getReferenceGenomes, getRuntimeConfig } from '../../config';
 import { getSchema } from '../../config.ts';
 import { routes } from '../../routes/routes.ts';
@@ -48,6 +49,7 @@ const accessToken = getAccessToken(session);
 const isMyGroup = accessToken !== undefined && (await checkIsMyGroup(accessToken, groupId));
 
 const loadSequencesAutomatically = getSchema(organism).loadSequencesAutomatically === true;
+const dataTableData = getDataTableData(tableData);
 ---
 
 {
@@ -61,7 +63,7 @@ const loadSequencesAutomatically = getSchema(organism).loadSequencesAutomaticall
         </ErrorBox>
     )
 }
-<DataTable tableData={tableData} dataUseTermsHistory={dataUseTermsHistory} />
+<DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} />
 <div class='mt-10'>
     <SequencesContainer
         client:load

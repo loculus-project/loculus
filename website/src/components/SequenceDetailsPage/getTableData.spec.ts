@@ -1,7 +1,8 @@
 import { err, ok } from 'neverthrow';
 import { beforeEach, describe, expect, test } from 'vitest';
 
-import { type TableDataEntry, getTableData } from './getTableData.ts';
+import { getTableData } from './getTableData.ts';
+import { type TableDataEntry } from './types.ts';
 import { mockRequest, testConfig } from '../../../vitest.setup.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import type { Schema } from '../../types/config.ts';
