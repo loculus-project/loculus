@@ -380,26 +380,6 @@ defaultOrganisms:
           displayName: Isolate Source
         - name: sra_accessions
           displayName: SRA Accessions
-        - name: total_snps
-          displayName: Total SNPs
-        - name: total_inserted_nucs
-          displayName: Total Inserted Nucleotides
-        - name: total_deleted_nucs
-          displayName: Total Deleted Nucleotides
-        - name: total_ambiguous_nucs
-          displayName: Total Ambiguous Nucleotides
-        - name: total_unknown_nucs
-          displayName: Total Unknown Nucleotides
-        - name: total_frame_shifts
-          displayName: Total Frame Shifts
-        - name: frame_shifts
-          displayName: Frame Shifts
-        - name: completeness
-          displayName: Completeness
-        - name: total_stop_codons
-          displayName: Total Stop Codons
-        - name: stop_codons
-          displayName: Stop Codons
     preprocessing:
       - version: 2
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -843,26 +823,6 @@ defaultOrganisms:
           displayName: Isolate Source
         - name: sra_accessions
           displayName: SRA Accessions
-        - name: total_snps
-          displayName: Total SNPs
-        - name: total_inserted_nucs
-          displayName: Total Inserted Nucleotides
-        - name: total_deleted_nucs
-          displayName: Total Deleted Nucleotides
-        - name: total_ambiguous_nucs
-          displayName: Total Ambiguous Nucleotides
-        - name: total_unknown_nucs
-          displayName: Total Unknown Nucleotides
-        - name: total_frame_shifts
-          displayName: Total Frame Shifts
-        - name: frame_shifts
-          displayName: Frame Shifts
-        - name: completeness
-          displayName: Completeness
-        - name: total_stop_codons
-          displayName: Total Stop Codons
-        - name: stop_codons
-          displayName: Stop Codons
     preprocessing:
       - version: 2
         image: ghcr.io/loculus-project/preprocessing-nextclade
