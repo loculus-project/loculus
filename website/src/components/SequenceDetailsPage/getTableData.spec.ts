@@ -3,10 +3,10 @@ import { beforeEach, describe, expect, test } from 'vitest';
 
 import { type TableDataEntry, getTableData } from './getTableData.ts';
 import { mockRequest, testConfig } from '../../../vitest.setup.ts';
+import { getInstanceLogger } from '../../logger.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import type { Schema } from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
-import { getInstanceLogger } from '../../logger.ts';
 
 const schema: Schema = {
     instanceName: 'instance name',
