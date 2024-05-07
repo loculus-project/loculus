@@ -4,14 +4,12 @@ import { RevokeButton } from './RevokeButton';
 import { SequencesContainer } from './SequencesContainer';
 import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
-import { getReferenceGenomes, getRuntimeConfig } from '../../config';
-import { getSchema } from '../../config.ts';
 import { routes } from '../../routes/routes.ts';
-import { type DataUseTermsHistoryEntry } from '../../types/backend';
-import { checkIsMyGroup } from '../../utils/checkIsMyGroup';
-import { getAccessToken } from '../../utils/getAccessToken';
+import { type DataUseTermsHistoryEntry, type Group } from '../../types/backend';
+import { type Schema } from '../../types/config';
+import { type ReferenceGenomes } from '../../types/referencesGenomes';
+import { type ClientConfig, type RuntimeConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
-import ErrorBox from '../common/ErrorBox.astro';
 import MdiEye from '~icons/mdi/eye';
 
 interface Props {
@@ -19,11 +17,30 @@ interface Props {
     organism: string;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    referenceGenomes: ReferenceGenomes;
+    schema: Schema;
+    runtimeConfig: RuntimeConfig;
+    clientConfig: ClientConfig;
+    myGroups: Group[];
+    accessToken: string | undefined;
 }
 
-const { tableData, organism, accessionVersion, dataUseTermsHistory } = Astro.props;
+const {
+    tableData,
+    organism,
+    accessionVersion,
+    dataUseTermsHistory,
+    schema,
+    accessToken,
+
+    clientConfig,
+    referenceGenomes,
+    runtimeConfig,
+    myGroups,
+} = Astro.props;
 
 const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
+const isMyGroup = myGroups.some((group) => group.groupId === groupId);
 
 dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
 const currentDataUseTerms = dataUseTermsHistory[0].dataUseTerms;
@@ -35,32 +52,22 @@ if (dataUseTermsIndex !== -1) {
 
 const isRestricted = currentDataUseTerms.type === 'RESTRICTED';
 
-const runtimeConfig = getRuntimeConfig();
-
-const referenceGenomes = getReferenceGenomes(organism);
-
 const genes = referenceGenomes.genes.map((g) => g.name);
 const nucleotideSegmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name) as [string, ...string[]];
 
-const clientConfig = getRuntimeConfig().public;
-const session = Astro.locals.session;
-const accessToken = getAccessToken(session);
-
-const isMyGroup = accessToken !== undefined && (await checkIsMyGroup(accessToken, groupId));
-
-const loadSequencesAutomatically = getSchema(organism).loadSequencesAutomatically === true;
+const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 const dataTableData = getDataTableData(tableData);
 ---
 
 {
     isRestricted && (
-        <ErrorBox title='Restricted sequence' level='warning'>
+        <div class='bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4' role='alert'>
             This sequence is only available under the Restricted Use Terms. If you make use of this data, you must
             follow the{' '}
             <a href={routes.datauseTermsPage()} class='underline'>
                 terms of use.
             </a>
-        </ErrorBox>
+        </div>
     )
 }
 <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} />
@@ -77,7 +84,7 @@ const dataTableData = getDataTableData(tableData);
 </div>
 
 {
-    isMyGroup && (
+    isMyGroup === true && accessToken !== undefined && (
         <div class='mt-5'>
             <hr />
             <h2 class='text-xl font-bold mt-10 mb-3'>Sequence Management</h2>
