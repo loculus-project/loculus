@@ -13,9 +13,9 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     FunctionArgs,
+    InputMetadata,
+    ProcessedMetadataValue,
     ProcessingAnnotation,
-    ProcessingDatum,
-    ProcessingInput,
     ProcessingResult,
 )
 
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 class ProcessingFunctions:
     @classmethod
     def call_function(
-        cls, function_name: str, args: FunctionArgs, input_data: ProcessingInput, output_field: str
+        cls, function_name: str, args: FunctionArgs, input_data: InputMetadata, output_field: str
     ) -> ProcessingResult:
         if hasattr(cls, function_name):
             func = getattr(cls, function_name)
@@ -68,7 +68,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def check_date(
-        input_data: ProcessingInput, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Check that date is complete YYYY-MM-DD
         If not according to format return error
@@ -118,7 +118,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def process_date(
-        input_data: ProcessingInput, output_field, args: FunctionArgs = None
+        input_data: InputMetadata, output_field, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Parse date string. If it's incomplete, add 01-01, if no year, return null and error"""
         logger.debug(f"input_data: {input_data}")
@@ -225,7 +225,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def parse_timestamp(
-        input_data: ProcessingInput, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
@@ -267,7 +267,7 @@ class ProcessingFunctions:
 
     @staticmethod
     def identity(
-        input_data: ProcessingInput, output_field: str, args: FunctionArgs = None
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
     ) -> ProcessingResult:
         """Identity function, takes input_data["input"] and returns it as output"""
         if "input" not in input_data:
@@ -287,7 +287,7 @@ class ProcessingFunctions:
         if not input_datum:
             return ProcessingResult(datum=None, warnings=[], errors=[])
 
-        output_datum: ProcessingDatum
+        output_datum: ProcessedMetadataValue
         if args and "type" in args:
             match args["type"]:
                 case "int":
