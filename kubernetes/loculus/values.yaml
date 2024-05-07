@@ -131,21 +131,13 @@ defaultOrganisms:
       description: "Mpox, formerly monkeypox, is a rare viral disease that occurs mainly in remote parts of Central and West Africa, near tropical rainforests. Recently global outbreaks have occurred."
       metadata:
         - name: collection_date
+          displayName: Collection date
           type: date
           required: true
-        - name: clade
-          type: string
-          generateIndex: true
-          autocomplete: true
-        - name: outbreak
-          type: string
-          generateIndex: true
-          autocomplete: true
-        - name: lineage
-          type: string
-          generateIndex: true
-          autocomplete: true
+          initiallyVisible: true
+          header: Sample details
         - name: ncbi_release_date
+          displayName: NCBI release date
           type: date
           header: "INSDC"
         - name: country
@@ -153,23 +145,193 @@ defaultOrganisms:
           required: true
           generateIndex: true
           autocomplete: true
-        - name: isolate_name
-          type: string
-        - name: author_affiliation
+          initiallyVisible: true
+          header: Sample details
+        - name: clade
+          displayName: Clade
           type: string
           generateIndex: true
           autocomplete: true
-        - name: authors
+          header: Clade & Lineage
+        - name: outbreak
+          displayName: Outbreak
           type: string
+          generateIndex: true
+          autocomplete: true
+          header: Clade & Lineage
+        - name: lineage
+          displayName: Lineage
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Clade & Lineage
+        - name: isolate_name
+          displayName: Isolate name
+          type: string
+          header: Sample details
+        - name: author_affiliation
+          displayName: Author affiliation
+          type: string
+          generateIndex: true
+          autocomplete: true
+          truncateColumnDisplayTo: 15
+          header: Authors
+        - name: authors
+          displayName: Authors
+          type: authors
+          header: Authors
+          truncateColumnDisplayTo: 15
+        - name: submitter_country
+          displayName: Submitter country
+          type: string
+          generateIndex: true
+          autocomplete: true
+          hideOnSequenceDetailsPage: true
+        - name: division
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: Sample details
+        - name: insdc_accession_base
+          type: string
+          header: "INSDC"
+          hideOnSequenceDetailsPage: true
+        - name: insdc_version
+          type: int
+          header: "INSDC"
+          hideOnSequenceDetailsPage: true
+        - name: insdc_accession_full
+          type: string
+          displayName: INSDC accession
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/nuccore/{{value}}"
+          header: "INSDC"
+        - name: bioprojects
+          type: string
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/bioproject/{{value}}"
+          header: "INSDC"
+        - name: biosample_accession
+          type: string
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/biosample/{{value}}"
+          header: "INSDC"
+        - name: ncbi_completeness
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Alignment states and QC metrics"
+        - name: ncbi_host_name
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Host"
+        - name: ncbi_host_tax_id
+          type: int
+          autocomplete: true
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?mode=info&id={{value}}"
+          header: "Host"
+        - name: ncbi_is_lab_host
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Host"
+        - name: ncbi_length
+          type: int
+          header: "INSDC"
+        - name: ncbi_protein_count
+          type: int
+          header: "INSDC"
+          hideOnSequenceDetailsPage: true
+        - name: ncbi_update_date
+          type: date
+          header: "INSDC"
+        - name: ncbi_sourcedb
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "INSDC"
+          hideOnSequenceDetailsPage: true
+        - name: ncbi_virus_name
+          type: string
+          generateIndex: true
+          autocomplete: true
+          hideOnSequenceDetailsPage: true
+        - name: ncbi_virus_tax_id
+          type: int
+          autocomplete: true
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/labs/virus/vssi/#/virus?SeqType_s=Nucleotide&VirusLineage_ss=taxid:{{value}}"
+          hideOnSequenceDetailsPage: true
+        - name: isolate_source
+          type: string
+          generateIndex: true
+          autocomplete: true
+          header: "Host"
+        - name: sra_accessions
+          type: string
+          customDisplay:
+            type: link
+            url: "https://www.ncbi.nlm.nih.gov/sra/?term={{value}}"
+          header: "INSDC"
+        - name: length
+          type: int
+          autocomplete: true
+        - name: total_snps
+          type: int
+          header: "Alignment states and QC metrics"
+        - name: total_inserted_nucs
+          type: int
+          header: "Alignment states and QC metrics"
+        - name: total_deleted_nucs
+          type: int
+          header: "Alignment states and QC metrics"
+        - name: total_ambiguous_nucs
+          type: int
+          header: "Alignment states and QC metrics"
+        - name: total_unknown_nucs
+          type: int
+          header: "Alignment states and QC metrics"
+        - name: total_frame_shifts
+          type: int
+          header: "Alignment states and QC metrics"
+        - name: frame_shifts
+          type: string
+          header: "Alignment states and QC metrics"
+        - name: completeness
+          type: float
+          header: "Alignment states and QC metrics"
+        - name: total_stop_codons
+          type: int
+          header: "Alignment states and QC metrics"
+        - name: stop_codons
+          type: string
+          header: "Alignment states and QC metrics"
+      website:
+        tableColumns:
+          - collection_date
+          - country
+          - division
+          - authors
+          - author_affiliation
+          - ncbi_release_date
+          - insdc_accession_full
+          - length
+          - clade
+          - lineage
+        defaultOrderBy: collection_date
+        defaultOrder: descending
+      silo:
+        dateToSortBy: collection_date
       inputFields:
         - name: collection_date
           displayName: Collection Date
-        - name: clade
-          displayName: Clade
-        - name: outbreak
-          displayName: Outbreak
-        - name: lineage
-          displayName: Lineage
         - name: ncbi_release_date
           displayName: NCBI Release Date
         - name: country
@@ -180,18 +342,64 @@ defaultOrganisms:
           displayName: Author Affiliation
         - name: authors
           displayName: Authors
-      website:
-        tableColumns:
-          - collection_date
-          - country
-          - clade
-          - lineage
-          - author_affiliation
-          - ncbi_release_date
-        defaultOrderBy: collection_date
-        defaultOrder: descending
-      silo:
-        dateToSortBy: collection_date
+        - name: submitter_country
+          displayName: Submitter Country
+        - name: division
+          displayName: Division
+        - name: insdc_accession_base
+          displayName: INSDC Accession Base
+        - name: insdc_version
+          displayName: INSDC Version
+        - name: insdc_accession_full
+          displayName: INSDC Accession Full
+        - name: bioprojects
+          displayName: BioProjects
+        - name: biosample_accession
+          displayName: BioSample Accession
+        - name: ncbi_completeness
+          displayName: NCBI Completeness
+        - name: ncbi_host_name
+          displayName: NCBI Host Name
+        - name: ncbi_host_tax_id
+          displayName: NCBI Host Tax ID
+        - name: ncbi_is_lab_host
+          displayName: NCBI Is Lab Host
+        - name: ncbi_length
+          displayName: NCBI Length
+        - name: ncbi_protein_count
+          displayName: NCBI Protein Count
+        - name: ncbi_update_date
+          displayName: NCBI Update Date
+        - name: ncbi_sourcedb
+          displayName: NCBI Source DB
+        - name: ncbi_virus_name
+          displayName: NCBI Virus Name
+        - name: ncbi_virus_tax_id
+          displayName: NCBI Virus Tax ID
+        - name: isolate_source
+          displayName: Isolate Source
+        - name: sra_accessions
+          displayName: SRA Accessions
+        - name: total_snps
+          displayName: Total SNPs
+        - name: total_inserted_nucs
+          displayName: Total Inserted Nucleotides
+        - name: total_deleted_nucs
+          displayName: Total Deleted Nucleotides
+        - name: total_ambiguous_nucs
+          displayName: Total Ambiguous Nucleotides
+        - name: total_unknown_nucs
+          displayName: Total Unknown Nucleotides
+        - name: total_frame_shifts
+          displayName: Total Frame Shifts
+        - name: frame_shifts
+          displayName: Frame Shifts
+        - name: completeness
+          displayName: Completeness
+        - name: total_stop_codons
+          displayName: Total Stop Codons
+        - name: stop_codons
+          displayName: Stop Codons
     preprocessing:
       - version: 2
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -200,11 +408,67 @@ defaultOrganisms:
         configFile:
           log_level: DEBUG
           nextclade_dataset_name: nextstrain/mpox/all-clades
-          nextclade_dataset_tag: 2024-01-16--20-31-02Z
+          nextclade_dataset_tag: 2024-04-19--07-50-39Z
           genes:
-            OPG001: 247
-          batch_size: 100
+            - OPG001
+          batch_size: 20
           processing_spec:
+            total_snps:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: nextclade.totalSubstitutions
+            total_inserted_nucs:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: nextclade.totalInsertions
+            total_deleted_nucs:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: nextclade.totalDeletions
+            total_ambiguous_nucs:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: nextclade.totalNonACGTNs
+            total_unknown_nucs:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: nextclade.totalMissing
+            total_frame_shifts:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: nextclade.totalFrameShifts
+            frame_shifts:
+              function: identity
+              inputs:
+                input: nextclade.frameShifts
+            completeness:
+              function: identity
+              args:
+                type: float
+              inputs:
+                input: nextclade.coverage
+            total_stop_codons:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: nextclade.qc.stopCodons.totalStopCodons
+            stop_codons:
+              function: identity
+              inputs:
+                input: nextclade.qc.stopCodons.stopCodons
             collection_date:
               function: process_date
               inputs:
@@ -215,18 +479,6 @@ defaultOrganisms:
               function: parse_timestamp
               inputs:
                 timestamp: ncbi_release_date
-            clade:
-              function: identity
-              inputs:
-                input: nextclade.clade
-            outbreak:
-              function: identity
-              inputs:
-                input: nextclade.customNodeAttributes.outbreak
-            lineage:
-              function: identity
-              inputs:
-                input: nextclade.customNodeAttributes.lineage
             country:
               function: identity
               inputs:
@@ -244,6 +496,108 @@ defaultOrganisms:
               function: identity
               inputs:
                 input: isolate_name
+            submitter_country:
+              function: identity
+              inputs:
+                input: submitter_country
+            division:
+              function: identity
+              inputs:
+                input: division
+            insdc_accession_base:
+              function: identity
+              inputs:
+                input: insdc_accession_base
+            insdc_version:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: insdc_version
+            insdc_accession_full:
+              function: identity
+              inputs:
+                input: insdc_accession_full
+            bioprojects:
+              function: identity
+              inputs:
+                input: bioprojects
+            biosample_accession:
+              function: identity
+              inputs:
+                input: biosample_accession
+            ncbi_completeness:
+              function: identity
+              inputs:
+                input: ncbi_completeness
+            ncbi_host_name:
+              function: identity
+              inputs:
+                input: ncbi_host_name
+            ncbi_host_tax_id:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: ncbi_host_tax_id
+            ncbi_is_lab_host:
+              function: identity
+              inputs:
+                input: ncbi_is_lab_host
+            ncbi_length:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: ncbi_length
+            ncbi_protein_count:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: ncbi_protein_count
+            ncbi_update_date:
+              function: parse_timestamp
+              inputs:
+                timestamp: ncbi_update_date
+            ncbi_sourcedb:
+              function: identity
+              inputs:
+                input: ncbi_sourcedb
+            ncbi_virus_name:
+              function: identity
+              inputs:
+                input: ncbi_virus_name
+            ncbi_virus_tax_id:
+              function: identity
+              args:
+                type: int
+              inputs:
+                input: ncbi_virus_tax_id
+            isolate_source:
+              function: identity
+              inputs:
+                input: isolate_source
+            sra_accessions:
+              function: identity
+              inputs:
+                input: sra_accessions
+            clade:
+              function: identity
+              inputs:
+                input: nextclade.clade
+            outbreak:
+              function: identity
+              inputs:
+                input: nextclade.customNodeAttributes.outbreak
+            lineage:
+              function: identity
+              inputs:
+                input: nextclade.customNodeAttributes.lineage
+    ingest:
+      image: ghcr.io/loculus-project/ingest
+      configFile:
+        taxon_id: 10244
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
@@ -290,6 +644,7 @@ defaultOrganisms:
           displayName: Authors
           type: authors
           header: Authors
+          truncateColumnDisplayTo: 15
         - name: submitter_country
           displayName: Submitter country
           type: string
