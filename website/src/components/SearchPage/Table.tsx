@@ -23,6 +23,7 @@ type TableProps = {
     orderBy: OrderBy;
     classOfSearchPage: ClassOfSearchPageType;
     groupId?: number;
+    setPreviewedSeqId: (seqId: string | null) => void;
 };
 
 export const Table: FC<TableProps> = ({
@@ -36,6 +37,7 @@ export const Table: FC<TableProps> = ({
     orderBy,
     classOfSearchPage,
     groupId,
+    setPreviewedSeqId
 }) => {
     const primaryKey = schema.primaryKey;
 
@@ -133,6 +135,10 @@ export const Table: FC<TableProps> = ({
                                     <a
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800'
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            setPreviewedSeqId(row[primaryKey] as string);
+                                        }}
                                     >
                                         {row[primaryKey]}
                                     </a>

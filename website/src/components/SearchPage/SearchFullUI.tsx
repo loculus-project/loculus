@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
+import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table } from './Table';
 import { SEARCH } from '../../routes/routes';
 import { type ClassOfSearchPageType } from '../../routes/routes.ts';
@@ -59,9 +61,16 @@ export const SearchFullUI = ({
     }
 
     data = data as SearchResponse;
+    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
+            <SeqPreviewModal
+                seqId={previewedSeqId}
+                accessToken={undefined}
+                isOpen={previewedSeqId !== null}
+                onClose={() => setPreviewedSeqId(null)}
+            />
             <div className='md:w-72'>
                 <SearchForm
                     organism={organism}
@@ -100,6 +109,7 @@ export const SearchFullUI = ({
                     page={page}
                     orderBy={orderBy}
                     classOfSearchPage={SEARCH}
+                    setPreviewedSeqId={setPreviewedSeqId}
                 />
                 <div className='mt-4 flex justify-center'>
                     <SearchPagination
