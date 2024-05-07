@@ -177,7 +177,11 @@ def parse_nextclade_tsv(
                 if not ins:
                     continue
                 gene, val = ins.split(":", maxsplit=1)
-                aa_ins[gene].append(val)
+                if gene in aa_ins:
+                    aa_ins[gene].append(val)
+                    logging.debug(
+                        f"Note: Nextclade found AA insertion in gene missing from config: {gene}: {val}"
+                    )
             amino_acid_insertions[id] = aa_ins
     return nucleotide_insertions, amino_acid_insertions
 
