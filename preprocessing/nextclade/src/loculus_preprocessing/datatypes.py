@@ -15,7 +15,7 @@ ArgValue = str  # Name of argument present in processing_functions
 InputField = str  # Name of field in input data, either inputMetadata or NextcladeMetadata
 ProcessedMetadataValue = str | int | float | None
 ProcessedMetadata = dict[str, ProcessedMetadataValue]
-InputMetadataValue = str
+InputMetadataValue = str | None
 InputMetadata = dict[str, InputMetadataValue]
 
 

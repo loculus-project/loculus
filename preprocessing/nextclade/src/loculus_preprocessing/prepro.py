@@ -24,13 +24,13 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     GeneName,
+    InputMetadata,
     NucleotideInsertion,
     NucleotideSequence,
     ProcessedData,
     ProcessedEntry,
     ProcessedMetadata,
     ProcessingAnnotation,
-    ProcessingInput,
     ProcessingSpec,
     UnprocessedAfterNextclade,
     UnprocessedData,
@@ -236,7 +236,7 @@ def process_single(
             required=spec_dict.get("required", False),
             args=spec_dict.get("args", {}),
         )
-        input_data: ProcessingInput = {}
+        input_data: InputMetadata = {}
         for arg_name, input_path in spec.inputs.items():
             input_data[arg_name] = None
             # If field starts with "nextclade.", take from nextclade metadata
