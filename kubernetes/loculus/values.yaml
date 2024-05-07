@@ -23,6 +23,7 @@ defaultOrganisms:
     schema:
       image: "https://www.un.org/sites/un2.un.org/files/field/image/1583952355.1997.jpg"
       instanceName: "Test Dummy Organism"
+      description: "This is a test organism for testing purposes."
       inputFields:
         - name: date
           displayName: Date
@@ -590,8 +591,8 @@ defaultOrganisms:
     schema:
       loadSequencesAutomatically: true
       instanceName: "Ebola Zaire"
+      description: "Ebola Virus Zairense is a species of the genus Ebolavirus, which is a member of the Filoviridae family. It is the most dangerous of the known Ebola viruses, and is associated with the highest case-fatality rate."
       image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
-      description: "Ebolavirus Zaire"
       metadata:
         - name: collection_date
           displayName: Collection date
@@ -1044,8 +1045,8 @@ defaultOrganisms:
   west-nile:
     schema:
       instanceName: "West Nile Virus"
-      image: "https://cdn.who.int/media/images/default-source/health-topics/monkeypox/12763.tmb-1200v.jpg?sfvrsn=cd044fbd_37"
-      description: "West Nile Virus (WNV) is a mosquito-borne flavivirus that causes West Nile fever. It is a member of the family Flaviviridae, specifically from the genus Flavivirus, which also contains the Zika virus, dengue virus, and yellow fever virus. West Nile virus is primarily transmitted by Culex mosquitoes, which acquire the virus by feeding on infected birds. Humans and other mammals can become infected when bitten by infected mosquitoes. In a very small number of cases, West Nile virus has been spread through blood transfusions, organ transplants, and from mother to baby during pregnancy, delivery, or breastfeeding."
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/West_Nile_Virus_Image.jpg/256px-West_Nile_Virus_Image.jpg?20200815184100"
+      description: "West Nile Virus (WNV) is a mosquito-borne flavivirus that causes West Nile fever. It is a member of the family Flaviviridae, which also contains the Zika virus, dengue virus, and yellow fever virus. West Nile virus is primarily transmitted by Culex mosquitoes, which acquire the virus by feeding on infected birds. Humans and other mammals can become infected when bitten by infected mosquitoes."
       metadata:
         - name: collection_date
           displayName: Collection date
