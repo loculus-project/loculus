@@ -1,5 +1,6 @@
 ---
 import DataTable from './DataTable.astro';
+import { getDataTableData } from './getDataTableData';
 import { type TableDataEntry } from './types';
 import {
     ACCESSION_VERSION_FIELD,
@@ -38,6 +39,7 @@ const relevantFieldsForRevocationVersions = [
 ];
 
 const relevantData = tableData.filter((entry) => relevantFieldsForRevocationVersions.includes(entry.name));
+const dataTableData = getDataTableData(relevantData);
 ---
 
-<DataTable tableData={relevantData} dataUseTermsHistory={dataUseTermsHistory} />
+<DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} />
