@@ -19,7 +19,7 @@ export default defineConfig({
         screenshot: 'only-on-failure',
     },
     globalSetup: './tests/playwrightSetup.ts',
-    timeout: 2 * 60 * 1000, // Extend further if we get timeouts in CI
+    timeout: 1 * 60 * 1000, // Extend further if we get timeouts in CI
 
     projects: [
         {
