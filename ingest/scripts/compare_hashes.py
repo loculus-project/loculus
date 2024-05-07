@@ -1,6 +1,7 @@
 import json
 import logging
 from collections import defaultdict
+from hashlib import md5
 
 import click
 
@@ -12,9 +13,9 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
-def md5_float(md5: str) -> float:
+def md5_float(string: str) -> float:
     """Turn a string randomly but stably into a float between 0 and 1"""
-    return int(md5, 16) / 16 ** 32
+    return int(md5(string.encode()).hexdigest(), 16) / 16 ** 32
 
 
 @click.command()
