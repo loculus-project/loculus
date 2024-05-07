@@ -1,9 +1,10 @@
 import { sentenceCase } from 'change-case';
 import { err, Result } from 'neverthrow';
 
+import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { CustomDisplay, Metadata, MetadataType, Schema } from '../../types/config.ts';
+import type { Metadata, Schema } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -13,17 +14,6 @@ import {
     type SequenceEntryHistoryEntry,
 } from '../../types/lapis.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
-
-export type TableDataEntry = {
-    label: string;
-    name: string;
-    value: string | number | boolean;
-    header: string;
-    customDisplay?: CustomDisplay;
-    type: TableDataEntryType;
-};
-
-export type TableDataEntryType = { kind: 'metadata'; metadataType: MetadataType } | { kind: 'mutation' };
 
 export async function getTableData(
     accessionVersion: string,

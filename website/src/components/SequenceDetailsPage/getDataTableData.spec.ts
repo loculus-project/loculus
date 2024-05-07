@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 
 import { getDataTableData } from './getDataTableData.ts';
-import { type TableDataEntry } from './getTableData.ts';
+import { type TableDataEntry } from './types.ts';
 
 describe('getDataTableData', () => {
     test('should group entries according to header', () => {

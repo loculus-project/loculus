@@ -1,4 +1,4 @@
-import type { TableDataEntry } from './getTableData.ts';
+import type { TableDataEntry } from './types.ts';
 
 type DataTableData = {
     topmatter: {

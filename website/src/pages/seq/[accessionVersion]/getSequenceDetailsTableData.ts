@@ -1,6 +1,7 @@
 import { Result } from 'neverthrow';
 
-import { getTableData, type TableDataEntry } from '../../../components/SequenceDetailsPage/getTableData.ts';
+import { getTableData } from '../../../components/SequenceDetailsPage/getTableData';
+import { type TableDataEntry } from '../../../components/SequenceDetailsPage/types.ts';
 import { getSchema } from '../../../config.ts';
 import { routes } from '../../../routes/routes.ts';
 import { BackendClient } from '../../../services/backendClient.ts';
