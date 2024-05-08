@@ -157,7 +157,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             </button>
                         </div>
                     </form>
-                    <div className='aflex-1 overflow-y-auto'>
+                    <div className='flex-1 overflow-y-auto'>
                         <ul>
                             {groupDetails.data?.users.map((user) => (
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
