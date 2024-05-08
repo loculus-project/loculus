@@ -9,6 +9,7 @@ import { type Schema } from '../../types/config';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { type RuntimeConfig, type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
+import ErrorBox from '../common/ErrorBox';
 import MdiEye from '~icons/mdi/eye';
 
 interface Props {
@@ -60,13 +61,13 @@ export const SequenceDataUI: React.FC<Props> = ({
     return (
         <>
             {isRestricted && (
-                <div className='bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4' role='alert'>
+                <ErrorBox title='Restricted sequence' level='warning'>
                     This sequence is only available under the Restricted Use Terms. If you make use of this data, you
                     must follow the{' '}
                     <a href={routes.datauseTermsPage()} className='underline'>
                         terms of use.
                     </a>
-                </div>
+                </ErrorBox>
             )}
             <DataTable dataTableData={dataTableData} dataUseTermsHistory={dataUseTermsHistory} />
             <div className='mt-10'>
