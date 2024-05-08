@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: database
-        image: postgres:latest
+        image: ghcr.io/cloudnative-pg/postgresql:latest # Use ghcr to avoid dockerhub rate limits
         ports:
         - containerPort: 5432
         env:
