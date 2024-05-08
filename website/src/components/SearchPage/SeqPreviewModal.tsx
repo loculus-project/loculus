@@ -40,10 +40,6 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessT
                 <div className='min-h-screen px-8 text-center'>
                     <Dialog.Overlay className='fixed inset-0 bg-black opacity-30' />
 
-                    <span className='inline-block h-screen align-middle' aria-hidden='true'>
-                        &#8203;
-                    </span>
-
                     <div className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
                         <div className='flex justify-between items-center'>
                             <Dialog.Title as='h3' className='text-xl font-medium leading-6 text-primary-700 pl-6'>
