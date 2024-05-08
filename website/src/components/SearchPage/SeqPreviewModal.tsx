@@ -55,7 +55,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessT
                                     title='Download FASTA'
                                     className={BUTTONCLASS}
                                     onClick={() => {
-                                        document.location = routes.sequencesFastaPage(seqId);
+                                        document.location = routes.sequencesFastaPage(seqId, true);
                                     }}
                                 >
                                     <IcBaselineDownload className='w-6 h-6' />
