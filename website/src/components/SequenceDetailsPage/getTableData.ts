@@ -4,7 +4,7 @@ import { err, Result } from 'neverthrow';
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, Schema } from '../../types/config.ts';
+import type { Metadata, Schema, SegmentedMutations } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -93,7 +93,7 @@ function mutationDetails(
             name: 'nucleotideSubstitutions',
             value: '',
             header: 'Nucleotide mutations',
-            customDisplay: { type: 'badge', value: substitutionsList(nucleotideMutations) },
+            customDisplay: { type: 'badge', value: substitutionsMap(nucleotideMutations) },
             type: { kind: 'mutation' },
         },
         {
@@ -115,7 +115,7 @@ function mutationDetails(
             name: 'aminoAcidSubstitutions',
             value: '',
             header: 'Amino acid mutations',
-            customDisplay: { type: 'badge', value: substitutionsList(aminoAcidMutations) },
+            customDisplay: { type: 'badge', value: substitutionsMap(aminoAcidMutations) },
             type: { kind: 'mutation' },
         },
         {
@@ -184,8 +184,26 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
     return value;
 }
 
-function substitutionsList(mutationData: MutationProportionCount[]) {
-    return mutationData.filter((m) => m.mutationTo !== '-');
+export function substitutionsMap(mutationData: MutationProportionCount[]): SegmentedMutations[] {
+    const result: SegmentedMutations[] = [];
+    const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
+
+    const segmentMutationsMap = new Map<string, MutationProportionCount[]>();
+    for (const entry of substitutionData) {
+        let sequenceName = '';
+        if (entry.sequenceName !== null) {
+            sequenceName = entry.sequenceName;
+        }
+        if (!segmentMutationsMap.has(sequenceName)) {
+            segmentMutationsMap.set(sequenceName, []);
+        }
+        segmentMutationsMap.get(sequenceName)!.push(entry);
+    }
+    for (const [segment, mutations] of segmentMutationsMap.entries()) {
+        result.push({ segment, mutations });
+    }
+
+    return result;
 }
 
 function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
