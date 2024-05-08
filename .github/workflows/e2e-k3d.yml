@@ -47,6 +47,20 @@ jobs:
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
 
+      - name: Setup Docker Hub Auth for k3d
+        run: |
+          mkdir -p $HOME/.k3d
+          echo "mirrors:
+            docker.io:
+              endpoint:
+                - https://registry-1.docker.io
+            configs:
+              docker.io:
+                auth:
+                  username: ${{ secrets.DOCKERHUB_USERNAME }}
+                  password: ${{ secrets.DOCKERHUB_TOKEN_READ_PUBLIC }}
+          " > $HOME/.k3d/registries.yaml
+
       - uses: azure/setup-helm@v4
 
       - name: Create k3d cluster
