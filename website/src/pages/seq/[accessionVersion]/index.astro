@@ -8,15 +8,21 @@ import SequencesDataPage from '../../../components/SequenceDetailsPage/Sequences
 import { isRevocationEntry } from '../../../components/SequenceDetailsPage/getTableData';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { getInstanceLogger } from '../../../logger';
 
 const accessionVersion = Astro.params.accessionVersion!;
 
 const sequenceDetailsTableData = await findOrganismAndData(accessionVersion);
 
+const logger = getInstanceLogger('/seq/[accessionVersion]');
+
+logger.debug(`Request for ${accessionVersion}`);
+
 if (
     sequenceDetailsTableData.isOk() &&
     sequenceDetailsTableData.value.result.type === SequenceDetailsTableResultType.REDIRECT
 ) {
+    logger.debug(`Redirecting to ${sequenceDetailsTableData.value.result.redirectUrl}`);
     return Astro.redirect(sequenceDetailsTableData.value.result.redirectUrl);
 }
 ---

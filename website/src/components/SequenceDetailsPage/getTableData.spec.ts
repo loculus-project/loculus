@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, test } from 'vitest';
 import { getTableData } from './getTableData.ts';
 import { type TableDataEntry } from './types.ts';
 import { mockRequest, testConfig } from '../../../vitest.setup.ts';
+import { getInstanceLogger } from '../../logger.ts';
 import { LapisClient } from '../../services/lapisClient.ts';
 import type { Schema } from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
@@ -34,7 +35,11 @@ const dummyError = {
 
 const accessionVersion = 'accession';
 
-const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls.dummy, schema);
+const lapisClient = LapisClient.create(
+    testConfig.serverSide.lapisUrls.dummy,
+    schema,
+    getInstanceLogger('lapisClient/SequenceDetailsPage'),
+);
 
 describe('getTableData', () => {
     beforeEach(() => {
