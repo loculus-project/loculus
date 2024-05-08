@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { DataUseTermsHistoryModal } from './DataUseTermsHistoryModal';
-import { SubstitutionsContainer } from './MutationBadge';
+import { SubstitutionsContainers } from './MutationBadge';
 import { type TableDataEntry } from './types.ts';
 import { type DataUseTermsHistoryEntry } from '../../types/backend.ts';
 
@@ -21,7 +21,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                     (customDisplay.value === undefined ? (
                         <span className='italic'>N/A</span>
                     ) : (
-                        <SubstitutionsContainer values={customDisplay.value} />
+                        <SubstitutionsContainers values={customDisplay.value} />
                     ))}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
                     <a

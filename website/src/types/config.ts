@@ -15,10 +15,15 @@ const metadataPossibleTypes = z.enum([
     'authors',
 ] as const);
 
+export const segmentedMutations = z.object({
+    segment: z.string(),
+    mutations: z.array(mutationProportionCount),
+});
+
 export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
-    value: z.array(mutationProportionCount).optional(),
+    value: z.array(segmentedMutations).optional(),
 });
 
 export const metadata = z.object({
@@ -43,6 +48,7 @@ export type InputField = z.infer<typeof inputField>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
 export type MetadataType = z.infer<typeof metadataPossibleTypes>;
+export type SegmentedMutations = z.infer<typeof segmentedMutations>;
 
 export type MetadataFilter = Metadata & {
     filterValue: string;
