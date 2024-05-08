@@ -18,18 +18,10 @@ export const SubBadge: FC<SubProps> = ({ position, mutationTo, mutationFrom, seq
     return (
         <li key={position} className='inline-block'>
             <span className='rounded-[3px] font-mono text-xs overflow-auto'>
-                {sequenceName === null ? (
-                    <span className='px-[4px] py-[2px] rounded-s-[3px]' style={{ background: getColor(mutationFrom) }}>
-                        {mutationFrom}
-                    </span>
-                ) : (
-                    <>
-                        <span className='px-[4px] py-[2px] rounded-s-[3px] bg-gray-200'>{sequenceName}:</span>
-                        <span className='px-[4px] py-[2px]' style={{ background: getColor(mutationFrom) }}>
-                            {mutationFrom}
-                        </span>
-                    </>
-                )}
+                {sequenceName !== null && <span className='px-[4px] py-[2px] sr-only'>{sequenceName}:</span>}
+                <span className='px-[4px] py-[2px] rounded-s-[3px]' style={{ background: getColor(mutationFrom) }}>
+                    {mutationFrom}
+                </span>
                 <span className='px-[4px] py-[2px] bg-gray-200'>{position + 1}</span>
                 <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{ background: getColor(mutationTo) }}>
                     {mutationTo}
