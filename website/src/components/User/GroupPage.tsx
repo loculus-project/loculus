@@ -171,6 +171,9 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                                 ${user.name === username ? ' You will lose access to the group.' : ''}`,
                                                 onConfirmation: async () => {
                                                     await removeFromGroup(user.name);
+                                                    if (user.name === username) {
+                                                        window.location.href = routes.userOverviewPage();
+                                                    }
                                                 },
                                             });
                                         }}
