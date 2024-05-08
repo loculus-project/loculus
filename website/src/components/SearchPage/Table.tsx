@@ -136,8 +136,10 @@ export const Table: FC<TableProps> = ({
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800'
                                         onClick={(e) => {
-                                            e.preventDefault();
-                                            setPreviewedSeqId(row[primaryKey] as string);
+                                            if (!e.ctrlKey && !e.metaKey) {
+                                                e.preventDefault();
+                                                setPreviewedSeqId(row[primaryKey] as string);
+                                            }
                                         }}
                                     >
                                         {row[primaryKey]}

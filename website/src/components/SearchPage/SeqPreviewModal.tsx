@@ -88,8 +88,6 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessT
                                 <div>Failed to load sequence data</div>
                             )}
                         </div>
-
-     
                     </div>
                 </div>
             </Dialog>
