@@ -43,11 +43,11 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessT
                             {seqId}
                         </Dialog.Title>
 
-                        <div className='mt-4 text-gray-700'>
+                        <div className='mt-4 text-gray-700 overflow-y-auto h-[calc(100vh-200px)]'>
                             {isLoading ? (
                                 <div>Loading...</div>
                             ) : data !== null ? (
-                                <div className='overflow-y-auto max-h-[calc(100vh-200px)]'>
+                                <div className=''>
                                     <SequenceDataUI {...data} />
                                 </div>
                             ) : (
