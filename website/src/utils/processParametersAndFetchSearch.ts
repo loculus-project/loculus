@@ -2,6 +2,8 @@ import { URLSearchParams } from 'url';
 
 import type { AstroGlobal } from 'astro';
 
+import { getAccessToken } from './getAccessToken';
+import { getMyGroups } from './getMyGroups';
 import {
     addHiddenFilters,
     getAccessionFilter,
@@ -12,7 +14,7 @@ import {
     getReferenceGenomesSequenceNames,
 } from './search';
 import { cleanOrganism } from '../components/Navigation/cleanOrganism';
-import { getLapisUrl, getRuntimeConfig, getSchema } from '../config';
+import { getLapisUrl, getRuntimeConfig, getSchema, getReferenceGenomes } from '../config';
 import { GROUP_ID_FIELD, hiddenDefaultSearchFilters, pageSize } from '../settings';
 
 export async function processParametersAndFetchSearch(astro: AstroGlobal, groupIdForMySequences?: number) {
@@ -24,6 +26,7 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
     const schema = getSchema(organism);
     const clientConfig = getRuntimeConfig().public;
     const lapisUrl = getLapisUrl(clientConfig, organism);
+    const referenceGenomes = getReferenceGenomes(organism);
     let postParams = new URLSearchParams();
 
     if (astro.request.method === 'POST') {
@@ -75,6 +78,13 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
 
     const data = await getData(organism, metadataFilter, accessionFilter, mutationFilter, offset, pageSize, orderBy);
 
+    const session = astro.locals.session;
+    const accessToken = getAccessToken(session);
+    let myGroups = [];
+    if (accessToken !== undefined) {
+        myGroups = await getMyGroups(accessToken);
+    }
+
     return {
         organism,
         cleanedOrganism,
@@ -89,5 +99,8 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
         schema,
         clientConfig,
         orderBy,
+        referenceGenomes,
+        myGroups,
+        accessToken,
     };
 }

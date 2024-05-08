@@ -2,12 +2,17 @@
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
 import RevocationEntryDataTable from '../../../components/SequenceDetailsPage/RevocationEntryDataTable.astro';
+import { SequenceDataUI } from '../../../components/SequenceDetailsPage/SequenceDataUI.tsx';
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.astro';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
-import SequencesDataPage from '../../../components/SequenceDetailsPage/SequencesDetailsPage.astro';
 import { isRevocationEntry } from '../../../components/SequenceDetailsPage/getTableData';
-import ErrorBox from '../../../components/common/ErrorBox.astro';
+import ErrorBox from '../../../components/common/ErrorBox.tsx';
+import { getSchema, getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { type Group } from '../../../types/backend';
+import { getAccessToken } from '../../../utils/getAccessToken';
+import { getMyGroups } from '../../../utils/getMyGroups';
+import { getReferenceGenomesSequenceNames } from '../../../utils/search';
 
 const accessionVersion = Astro.params.accessionVersion!;
 
@@ -19,6 +24,18 @@ if (
 ) {
     return Astro.redirect(sequenceDetailsTableData.value.result.redirectUrl);
 }
+
+const session = Astro.locals.session;
+const accessToken = getAccessToken(session);
+const clientConfig = getRuntimeConfig().public;
+
+let myGroups: Group[] = [];
+
+if (accessToken !== undefined) {
+    myGroups = await getMyGroups(accessToken);
+}
+
+const runtimeConfig = getRuntimeConfig();
 ---
 
 <BaseLayout
@@ -60,11 +77,18 @@ if (
                                 dataUseTermsHistory={result.dataUseTermsHistory}
                             />
                         ) : (
-                            <SequencesDataPage
+                            <SequenceDataUI
                                 tableData={result.tableData}
                                 organism={organism}
+                                referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
                                 accessionVersion={accessionVersion}
                                 dataUseTermsHistory={result.dataUseTermsHistory}
+                                schema={getSchema(organism)}
+                                runtimeConfig={runtimeConfig}
+                                clientConfig={clientConfig}
+                                myGroups={myGroups}
+                                accessToken={accessToken}
+                                client:load
                             />
                         ))}
                 </>

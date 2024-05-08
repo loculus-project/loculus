@@ -1,11 +1,15 @@
+import { useState } from 'react';
+
 import { DownloadDialog } from './DownloadDialog/DownloadDialog';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
+import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table } from './Table';
 import { SEARCH } from '../../routes/routes';
 import { type ClassOfSearchPageType } from '../../routes/routes.ts';
 import { pageSize } from '../../settings';
+import type { Group } from '../../types/backend.ts';
 import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
@@ -31,6 +35,8 @@ interface SearchFullUIProps {
     page: number;
     data: SearchResponse | null;
     error: null | { message: string };
+    myGroups: Group[];
+    accessToken: string | undefined;
 }
 
 export const SearchFullUI = ({
@@ -48,7 +54,11 @@ export const SearchFullUI = ({
     orderBy,
     error,
     classOfSearchPage,
+    myGroups,
+    accessToken,
 }: SearchFullUIProps) => {
+    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
+
     if (error !== null) {
         return (
             <div className='bg-red-100 p-4 text-red-900'>
@@ -62,6 +72,14 @@ export const SearchFullUI = ({
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
+            <SeqPreviewModal
+                seqId={previewedSeqId ?? ''}
+                accessToken={accessToken}
+                isOpen={previewedSeqId !== null}
+                onClose={() => setPreviewedSeqId(null)}
+                referenceGenomeSequenceNames={referenceGenomesSequenceNames}
+                myGroups={myGroups}
+            />
             <div className='md:w-72'>
                 <SearchForm
                     organism={organism}
@@ -100,6 +118,7 @@ export const SearchFullUI = ({
                     page={page}
                     orderBy={orderBy}
                     classOfSearchPage={SEARCH}
+                    setPreviewedSeqId={setPreviewedSeqId}
                 />
                 <div className='mt-4 flex justify-center'>
                     <SearchPagination

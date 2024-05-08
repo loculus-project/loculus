@@ -21,7 +21,7 @@ test.describe('The search page', () => {
         await expect(searchPage.page.getByText('No data')).toBeVisible();
     });
 
-    test('should search one existing sequence entry by accession', async ({ searchPage }) => {
+    test('should search one existing sequence entry by accession, then click it', async ({ searchPage }) => {
         const testAccessionVersion = getAccessionVersionString(getTestSequences().testSequenceEntry);
 
         await searchPage.goto();
@@ -39,10 +39,15 @@ test.describe('The search page', () => {
                 },
             ])}`,
         );
-        await expect(searchPage.page.getByText(testAccessionVersion, { exact: true })).toBeVisible();
+        const accessionLink = searchPage.page.getByText(testAccessionVersion, { exact: true });
+        await expect(accessionLink).toBeVisible();
+
         const rowLocator = searchPage.page.locator('tr');
         await expect(rowLocator.getByText('2002-12-15')).toBeVisible();
         await expect(rowLocator.getByText('B.1.1.7')).toBeVisible();
+
+        await accessionLink.click();
+        await expect(searchPage.page.getByText('Amino acid mutations')).toBeVisible();
     });
 
     test('should search a few sequence entries by accession', async ({ searchPage }) => {
