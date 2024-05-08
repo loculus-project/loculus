@@ -4,10 +4,10 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 
 FROM base as prod-deps
-RUN npm install --production
+RUN npm install --omit=dev
 
 FROM base as build-deps
-RUN npm install --production=false
+RUN npm install
 
 FROM build-deps as build
 COPY . .
