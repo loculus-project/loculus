@@ -43,18 +43,6 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         await addUserToGroup(newUserName);
         setNewUserName('');
     };
-    /*
-    const handleDeleteUser = async () => {
-        if (userToDelete !== null) {
-            await removeFromGroup(userToDelete);
-            if (userToDelete === username) {
-                window.location.href = routes.userOverviewPage();
-            } else {
-                setUserToDelete(null);
-            }
-        }
-    };
-    */
 
     const userIsGroupMember = groupDetails.data?.users.some((user) => user.name === username) ?? false;
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
