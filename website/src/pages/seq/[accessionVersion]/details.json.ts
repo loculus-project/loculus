@@ -1,4 +1,3 @@
-// Import necessary functions, types, and components
 import { type APIRoute } from 'astro';
 
 import { findOrganismAndData } from './findOrganismAndData';
