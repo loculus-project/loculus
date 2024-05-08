@@ -76,6 +76,11 @@ jobs:
         if: env.CACHE_HIT == 'false'
         uses: gradle/actions/setup-gradle@v3
 
+      - name: Build Backend
+        if: env.CACHE_HIT == 'false'
+        working-directory: ./backend
+        run: ./gradlew bootJar
+
       - name: Build and push image if input files changed
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v5
