@@ -184,6 +184,7 @@ def parse_nextclade_tsv(
                 gene, val = ins.split(":", maxsplit=1)
                 if gene in aa_ins:
                     aa_ins[gene].append(val)
+                else:
                     logging.debug(
                         "Note: Nextclade found AA insertion in gene missing from config in gene "
                         f"{gene}: {val}"
