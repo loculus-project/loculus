@@ -591,7 +591,7 @@ defaultOrganisms:
     schema:
       loadSequencesAutomatically: true
       instanceName: "Ebola Zaire"
-      description: "Ebola Virus Zairense is a species of the genus Ebolavirus, which is a member of the Filoviridae family. It is the most dangerous of the known Ebola viruses, and is associated with the highest case-fatality rate."
+      description: "Zaire ebolavirus is a species of the genus Ebolavirus, which is a member of the Filoviridae family. It is the most dangerous of the known Ebola viruses, and is associated with the highest case-fatality rate."
       image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
       metadata:
         - name: collection_date
@@ -1046,7 +1046,7 @@ defaultOrganisms:
     schema:
       instanceName: "West Nile Virus"
       image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/West_Nile_Virus_Image.jpg/256px-West_Nile_Virus_Image.jpg?20200815184100"
-      description: "West Nile Virus (WNV) is a mosquito-borne flavivirus that causes West Nile fever. It is a member of the family Flaviviridae, which also contains the Zika virus, dengue virus, and yellow fever virus. West Nile virus is primarily transmitted by Culex mosquitoes, which acquire the virus by feeding on infected birds. Humans and other mammals can become infected when bitten by infected mosquitoes."
+      description: "West Nile Virus (WNV) is a mosquito-borne flavivirus of the family Flaviviridae, which also contains the Zika virus, dengue virus, and yellow fever virus. It is primarily transmitted by Culex mosquitoes, which acquire the virus by feeding on infected birds."
       metadata:
         - name: collection_date
           displayName: Collection date
