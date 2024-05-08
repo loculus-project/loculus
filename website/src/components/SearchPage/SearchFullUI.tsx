@@ -58,6 +58,7 @@ export const SearchFullUI = ({
     accessToken,
 }: SearchFullUIProps) => {
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
+    const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
 
     if (error !== null) {
         return (
@@ -79,6 +80,8 @@ export const SearchFullUI = ({
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
                 myGroups={myGroups}
+                isHalfScreen={previewHalfScreen}
+                setIsHalfScreen={setPreviewHalfScreen}
             />
             <div className='md:w-72'>
                 <SearchForm
@@ -119,6 +122,7 @@ export const SearchFullUI = ({
                     orderBy={orderBy}
                     classOfSearchPage={SEARCH}
                     setPreviewedSeqId={setPreviewedSeqId}
+                    previewedSeqId={previewedSeqId}
                 />
                 <div className='mt-4 flex justify-center'>
                     <SearchPagination
@@ -132,6 +136,7 @@ export const SearchFullUI = ({
                         classOfSearchPage={SEARCH}
                     />
                 </div>
+                {previewHalfScreen && previewedSeqId !== null && <div className='h-[calc(50vh)]'></div>}
             </div>
         </div>
     );
