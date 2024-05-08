@@ -2,6 +2,8 @@ import { URLSearchParams } from 'url';
 
 import type { AstroGlobal } from 'astro';
 
+import { getAccessToken } from './getAccessToken';
+import { getMyGroups } from './getMyGroups';
 import {
     addHiddenFilters,
     getAccessionFilter,
@@ -76,6 +78,13 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
 
     const data = await getData(organism, metadataFilter, accessionFilter, mutationFilter, offset, pageSize, orderBy);
 
+    const session = astro.locals.session;
+    const accessToken = getAccessToken(session);
+    let myGroups = [];
+    if (accessToken !== undefined) {
+        myGroups = await getMyGroups(accessToken);
+    }
+
     return {
         organism,
         cleanedOrganism,
@@ -91,5 +100,7 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
         clientConfig,
         orderBy,
         referenceGenomes,
+        myGroups,
+        accessToken,
     };
 }

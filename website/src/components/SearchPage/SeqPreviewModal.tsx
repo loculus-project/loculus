@@ -2,6 +2,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
 import { routes } from '../../routes/routes';
+import { type Group } from '../../types/backend';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import IcBaselineDownload from '~icons/ic/baseline-download';
@@ -16,6 +17,7 @@ interface SeqPreviewModalProps {
     isOpen: boolean;
     onClose: () => void;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
+    myGroups: Group[];
 }
 
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
@@ -24,6 +26,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     isOpen,
     onClose,
     referenceGenomeSequenceNames,
+    myGroups,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<any | null>(null);
@@ -32,11 +35,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     useEffect(() => {
         if (seqId) {
             setIsLoading(true);
-            void fetch(`/seq/${seqId}/details.json`, {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            })
+            void fetch(`/seq/${seqId}/details.json`)
                 .then((res) => res.json())
                 .then(setData)
                 .catch(() => setIsError(true))
@@ -91,6 +90,8 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                                     <SequenceDataUI
                                         {...data}
                                         referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                                        myGroups={myGroups}
+                                        accessToken={accessToken}
                                     />
                                 </div>
                             ) : (

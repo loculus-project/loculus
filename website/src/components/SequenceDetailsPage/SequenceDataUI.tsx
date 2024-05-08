@@ -37,6 +37,7 @@ export const SequenceDataUI: React.FC<Props> = ({
     referenceGenomeSequenceNames,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
+
     const isMyGroup = myGroups.some((group) => group.groupId === groupId);
 
     dataUseTermsHistory.sort((a, b) => (a.changeDate > b.changeDate ? -1 : 1));
@@ -104,6 +105,7 @@ export const SequenceDataUI: React.FC<Props> = ({
                         accessToken={accessToken}
                         groupId={groupId}
                     />
+                    <div className='text-sm text-gray-400 mt-4 block'>&nbsp;</div>
                 </div>
             )}
         </>

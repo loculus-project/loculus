@@ -9,6 +9,7 @@ import { Table } from './Table';
 import { SEARCH } from '../../routes/routes';
 import { type ClassOfSearchPageType } from '../../routes/routes.ts';
 import { pageSize } from '../../settings';
+import type { Group } from '../../types/backend.ts';
 import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
@@ -34,6 +35,8 @@ interface SearchFullUIProps {
     page: number;
     data: SearchResponse | null;
     error: null | { message: string };
+    myGroups: Group[];
+    accessToken: string | undefined;
 }
 
 export const SearchFullUI = ({
@@ -51,6 +54,8 @@ export const SearchFullUI = ({
     orderBy,
     error,
     classOfSearchPage,
+    myGroups,
+    accessToken,
 }: SearchFullUIProps) => {
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
 
@@ -69,10 +74,11 @@ export const SearchFullUI = ({
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
-                accessToken={undefined}
+                accessToken={accessToken}
                 isOpen={previewedSeqId !== null}
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
+                myGroups={myGroups}
             />
             <div className='md:w-72'>
                 <SearchForm
