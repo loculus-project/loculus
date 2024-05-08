@@ -38,7 +38,7 @@ type DataUseTermsHistoryContainerProps = {
 
 const DataUseTermsHistoryDialog: FC<DataUseTermsHistoryContainerProps> = ({ dataUseTermsHistory }) => {
     const formatDate = (dateString: string) =>
-        DateTime.fromISO(dateString, { zone: FixedOffsetZone.utcInstance }).toFormat('yyyy-MM-dd TTT');
+        DateTime.fromISO(dateString, { zone: FixedOffsetZone.utcInstance }).setLocale('en').toFormat('yyyy-MM-dd T');
 
     return (
         <div className='modal-box w-auto max-w-md'>
