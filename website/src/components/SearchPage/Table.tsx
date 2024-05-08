@@ -136,7 +136,24 @@ export const Table: FC<TableProps> = ({
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800'
                                         onClick={(e) => {
-                                            if (!e.ctrlKey && !e.metaKey) {
+                                            function detectMob() {
+                                                const toMatch = [
+                                                    /Android/i,
+                                                    /webOS/i,
+                                                    /iPhone/i,
+                                                    /iPod/i,
+                                                    /BlackBerry/i,
+                                                    /Windows Phone/i,
+                                                ];
+
+                                                return toMatch.some((toMatchItem) => {
+                                                    return navigator.userAgent.match(toMatchItem);
+                                                });
+                                            }
+
+                                            const screenWidth = window.screen.width;
+
+                                            if (!e.ctrlKey && !e.metaKey && screenWidth > 1024 && !detectMob()) {
                                                 e.preventDefault();
                                                 setPreviewedSeqId(row[primaryKey] as string);
                                             }
