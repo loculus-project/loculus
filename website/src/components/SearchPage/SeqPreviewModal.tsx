@@ -1,8 +1,14 @@
 import { Dialog, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
+import { routes } from '../../routes/routes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
+import IcBaselineDownload from '~icons/ic/baseline-download';
+import MaterialSymbolsClose from '~icons/material-symbols/close';
+import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
 
+const BUTTONCLASS =
+    'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500';
 interface SeqPreviewModalProps {
     seqId: string;
     accessToken?: string;
@@ -38,12 +44,40 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessT
                         &#8203;
                     </span>
 
-                    <div className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl'>
-                        <Dialog.Title as='h3' className='text-lg font-medium leading-6 text-gray-900'>
-                            {seqId}
-                        </Dialog.Title>
+                    <div className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
+                        <div className='flex justify-between items-center'>
+                            <Dialog.Title as='h3' className='text-xl font-medium leading-6 text-primary-700 pl-6'>
+                                {seqId}
+                            </Dialog.Title>
+                            <div>
+                                <button
+                                    type='button'
+                                    title='Download FASTA'
+                                    className={BUTTONCLASS}
+                                    onClick={() => {
+                                        document.location = routes.sequencesFastaPage(seqId);
+                                    }}
+                                >
+                                    <IcBaselineDownload className='w-6 h-6' />
+                                </button>
+                                <button
+                                    title='Open in full window'
+                                    type='button'
+                                    className={BUTTONCLASS}
+                                    onClick={() => {
+                                        document.location = routes.sequencesDetailsPage(seqId);
+                                    }}
+                                >
+                                    <OouiNewWindowLtr className='w-6 h-6' />
+                                </button>
 
-                        <div className='mt-4 text-gray-700 overflow-y-auto h-[calc(100vh-200px)]'>
+                                <button type='button' className={BUTTONCLASS} onClick={onClose} title='Close'>
+                                    <MaterialSymbolsClose className='w-6 h-6' />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className='mt-4 text-gray-700 overflow-y-auto h-[calc(100vh-150px)]'>
                             {isLoading ? (
                                 <div>Loading...</div>
                             ) : data !== null ? (
@@ -55,15 +89,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessT
                             )}
                         </div>
 
-                        <div className='mt-6'>
-                            <button
-                                type='button'
-                                className='inline-flex justify-center px-4 py-2 text-sm font-medium text-blue-900 bg-blue-100 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500'
-                                onClick={onClose}
-                            >
-                                Close
-                            </button>
-                        </div>
+     
                     </div>
                 </div>
             </Dialog>
