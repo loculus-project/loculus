@@ -11,7 +11,7 @@ import { type ClassOfSearchPageType } from '../../routes/routes.ts';
 import { pageSize } from '../../settings';
 import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
-import type { ReferenceGenomesSequenceNames, ReferenceGenomes } from '../../types/referencesGenomes.ts';
+import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
 
@@ -34,7 +34,6 @@ interface SearchFullUIProps {
     page: number;
     data: SearchResponse | null;
     error: null | { message: string };
-    referenceGenomes: ReferenceGenomes;
 }
 
 export const SearchFullUI = ({
@@ -52,7 +51,6 @@ export const SearchFullUI = ({
     orderBy,
     error,
     classOfSearchPage,
-    referenceGenomes,
 }: SearchFullUIProps) => {
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
 
@@ -74,7 +72,7 @@ export const SearchFullUI = ({
                 accessToken={undefined}
                 isOpen={previewedSeqId !== null}
                 onClose={() => setPreviewedSeqId(null)}
-                referenceGenomes={referenceGenomes}
+                referenceGenomeSequenceNames={referenceGenomesSequenceNames}
             />
             <div className='md:w-72'>
                 <SearchForm

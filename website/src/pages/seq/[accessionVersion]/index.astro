@@ -7,11 +7,12 @@ import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBa
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
 import { isRevocationEntry } from '../../../components/SequenceDetailsPage/getTableData';
 import ErrorBox from '../../../components/common/ErrorBox.astro';
-import { getSchema, getRuntimeConfig, getReferenceGenomes } from '../../../config';
+import { getSchema, getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { type Group } from '../../../types/backend';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
+import { getReferenceGenomesSequenceNames } from '../../../utils/search';
 
 const accessionVersion = Astro.params.accessionVersion!;
 
@@ -79,7 +80,7 @@ const runtimeConfig = getRuntimeConfig();
                             <SequenceDataUI
                                 tableData={result.tableData}
                                 organism={organism}
-                                referenceGenomes={getReferenceGenomes(organism)}
+                                referenceGenomeSequenceNames={getReferenceGenomesSequenceNames(organism)}
                                 accessionVersion={accessionVersion}
                                 dataUseTermsHistory={result.dataUseTermsHistory}
                                 schema={getSchema(organism)}

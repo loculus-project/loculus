@@ -2,7 +2,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
 import { routes } from '../../routes/routes';
-import { type ReferenceGenomes } from '../../types/referencesGenomes';
+import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -15,7 +15,7 @@ interface SeqPreviewModalProps {
     accessToken?: string;
     isOpen: boolean;
     onClose: () => void;
-    referenceGenomes: ReferenceGenomes;
+    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 }
 
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
@@ -23,7 +23,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     accessToken,
     isOpen,
     onClose,
-    referenceGenomes,
+    referenceGenomeSequenceNames,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<any | null>(null);
@@ -88,7 +88,10 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                                 <div>Loading...</div>
                             ) : data !== null && !isError ? (
                                 <div className=''>
-                                    <SequenceDataUI {...data} referenceGenomes={referenceGenomes} />
+                                    <SequenceDataUI
+                                        {...data}
+                                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                                    />
                                 </div>
                             ) : (
                                 <div>Failed to load sequence data</div>

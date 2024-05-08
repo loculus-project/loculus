@@ -6,7 +6,7 @@ import { type TableDataEntry } from './types';
 import { routes } from '../../routes/routes';
 import { type DataUseTermsHistoryEntry, type Group } from '../../types/backend';
 import { type Schema } from '../../types/config';
-import { type ReferenceGenomes } from '../../types/referencesGenomes';
+import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { type RuntimeConfig, type ClientConfig } from '../../types/runtimeConfig';
 import { EditDataUseTermsButton } from '../DataUseTerms/EditDataUseTermsButton';
 import MdiEye from '~icons/mdi/eye';
@@ -16,12 +16,12 @@ interface Props {
     organism: string;
     accessionVersion: string;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
-    referenceGenomes: ReferenceGenomes;
     schema: Schema;
     runtimeConfig: RuntimeConfig;
     clientConfig: ClientConfig;
     myGroups: Group[];
     accessToken: string | undefined;
+    referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
 }
 
 export const SequenceDataUI: React.FC<Props> = ({
@@ -29,12 +29,12 @@ export const SequenceDataUI: React.FC<Props> = ({
     organism,
     accessionVersion,
     dataUseTermsHistory,
-    referenceGenomes,
     schema,
     runtimeConfig,
     clientConfig,
     myGroups,
     accessToken,
+    referenceGenomeSequenceNames,
 }: Props) => {
     const groupId = tableData.find((entry) => entry.name === 'groupId')!.value as number;
     const isMyGroup = myGroups.some((group) => group.groupId === groupId);
@@ -49,8 +49,8 @@ export const SequenceDataUI: React.FC<Props> = ({
 
     const isRestricted = currentDataUseTerms.type === 'RESTRICTED';
 
-    const genes = referenceGenomes.genes.map((g) => g.name);
-    const nucleotideSegmentNames = referenceGenomes.nucleotideSequences.map((s) => s.name) as [string, ...string[]];
+    const genes = referenceGenomeSequenceNames.genes;
+    const nucleotideSegmentNames = referenceGenomeSequenceNames.nucleotideSequences;
 
     const loadSequencesAutomatically = schema.loadSequencesAutomatically === true;
 
