@@ -24,7 +24,7 @@ jobs:
       checks: read
       actions: read # Required by workflow-telemetry-action
 
-    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}-ubuntu-7.0-xlarge
+    runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}-ubuntu-7.0-large
     timeout-minutes: 30
 
     env:
