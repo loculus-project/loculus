@@ -12,7 +12,7 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/website
-  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }} # When to build for arm as well
+  BUILD_ARM: "true"
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website
