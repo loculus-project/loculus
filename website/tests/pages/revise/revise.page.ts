@@ -14,15 +14,20 @@ export class RevisePage {
 
     public async submitRevisedData(accessions: Accession[]) {
         await Promise.all([this.setSequenceFile(), this.setRevisedMetadataFile(accessions)]);
+        await this.page.getByRole('button', { name: 'Discard file' }).nth(1).waitFor({ state: 'visible' }); // Wait for two buttons to be visible
         await this.page.getByRole('button', { name: 'Submit' }).click();
     }
 
     private async setSequenceFile(file: string = sequencesTestFile) {
-        await this.page.getByLabel('Sequence file').setInputFiles(file);
+        const sequencePicker = this.page.getByLabel('Sequence file');
+        await sequencePicker.waitFor({ state: 'visible' });
+        await sequencePicker.setInputFiles(file);
     }
 
     private async setRevisedMetadataFile(accessions: Accession[]) {
-        await this.page.getByLabel('Metadata file').setInputFiles({
+        const metadataPicker = this.page.getByLabel('Metadata file');
+        await metadataPicker.waitFor({ state: 'visible' });
+        await metadataPicker.setInputFiles({
             name: 'metadata.tsv',
             mimeType: 'text/plain',
             buffer: Buffer.from(createModifiedFileContent(accessions).metadataContent),
