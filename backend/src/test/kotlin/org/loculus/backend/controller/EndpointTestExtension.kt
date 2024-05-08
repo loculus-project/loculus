@@ -93,7 +93,7 @@ private val log = KotlinLogging.logger { }
 
 class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
     companion object {
-        private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("ghcr.io/cloudnative-pg/postgresql:latest")
+        private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
         private var isStarted = false
     }
 
