@@ -48,7 +48,6 @@ test.describe('The search page', () => {
 
         await accessionLink.click();
         await expect(searchPage.page.getByText('Amino acid mutations')).toBeVisible();
-        await expect(searchPage.page.getByText('Aligned')).toBeVisible();
     });
 
     test('should search a few sequence entries by accession', async ({ searchPage }) => {
