@@ -92,7 +92,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                         <button
                             onClick={() => {
                                 displayConfirmationDialog({
-                                    dialogText: `Are you sure you want to leave the group ${groupName}?`,
+                                    dialogText: `Are you sure you want to leave the ${groupName} group?`,
 
                                     onConfirmation: async () => {
                                         await removeFromGroup(username);
@@ -162,27 +162,23 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             {groupDetails.data?.users.map((user) => (
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                                     <span className='text-lg'>{user.name}</span>
-                                    <button
-                                        onClick={() => {
-                                            displayConfirmationDialog({
-                                                dialogText: `Are you sure you want to remove ${
-                                                    user.name === username ? 'yourself' : user.name
-                                                } from the group?
-                                                ${user.name === username ? ' You will lose access to the group.' : ''}`,
-                                                onConfirmation: async () => {
-                                                    await removeFromGroup(user.name);
-                                                    if (user.name === username) {
-                                                        window.location.href = routes.userOverviewPage();
-                                                    }
-                                                },
-                                            });
-                                        }}
-                                        className='px-2 py-1 loculusColor text-white rounded'
-                                        title='Remove user from group'
-                                        aria-label={`Remove User ${user.name}`}
-                                    >
-                                        Remove user
-                                    </button>
+                                    {user.name !== username && (
+                                        <button
+                                            onClick={() => {
+                                                displayConfirmationDialog({
+                                                    dialogText: `Are you sure you want to remove ${user.name} from the group ${groupName}?`,
+                                                    onConfirmation: async () => {
+                                                        await removeFromGroup(user.name);
+                                                    },
+                                                });
+                                            }}
+                                            className='px-2 py-1 loculusColor text-white rounded'
+                                            title='Remove user from group'
+                                            aria-label={`Remove User ${user.name}`}
+                                        >
+                                            Remove user
+                                        </button>
+                                    )}
                                 </li>
                             ))}
                         </ul>
