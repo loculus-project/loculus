@@ -55,26 +55,16 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                                 {seqId}
                             </Dialog.Title>
                             <div>
-                                <button
-                                    type='button'
-                                    title='Download FASTA'
-                                    className={BUTTONCLASS}
-                                    onClick={() => {
-                                        document.location = routes.sequencesFastaPage(seqId, true);
-                                    }}
-                                >
+                                <a href={routes.sequencesFastaPage(seqId, true)} className={BUTTONCLASS}>
                                     <IcBaselineDownload className='w-6 h-6' />
-                                </button>
-                                <button
+                                </a>
+                                <a
+                                    href={routes.sequencesDetailsPage(seqId)}
                                     title='Open in full window'
-                                    type='button'
                                     className={BUTTONCLASS}
-                                    onClick={() => {
-                                        document.location = routes.sequencesDetailsPage(seqId);
-                                    }}
                                 >
                                     <OouiNewWindowLtr className='w-6 h-6' />
-                                </button>
+                                </a>
 
                                 <button type='button' className={BUTTONCLASS} onClick={onClose} title='Close'>
                                     <MaterialSymbolsClose className='w-6 h-6' />
