@@ -28,7 +28,7 @@ jobs:
     timeout-minutes: 30
 
     env:
-      ALL_BROWSERS: "true"
+      ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
 
     steps:
       - name: Collect Workflow Telemetry
