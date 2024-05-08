@@ -12,7 +12,7 @@ import {
     getReferenceGenomesSequenceNames,
 } from './search';
 import { cleanOrganism } from '../components/Navigation/cleanOrganism';
-import { getLapisUrl, getRuntimeConfig, getSchema } from '../config';
+import { getLapisUrl, getRuntimeConfig, getSchema, getReferenceGenomes } from '../config';
 import { GROUP_ID_FIELD, hiddenDefaultSearchFilters, pageSize } from '../settings';
 
 export async function processParametersAndFetchSearch(astro: AstroGlobal, groupIdForMySequences?: number) {
@@ -24,6 +24,7 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
     const schema = getSchema(organism);
     const clientConfig = getRuntimeConfig().public;
     const lapisUrl = getLapisUrl(clientConfig, organism);
+    const referenceGenomes = getReferenceGenomes(organism);
     let postParams = new URLSearchParams();
 
     if (astro.request.method === 'POST') {
@@ -89,5 +90,6 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
         schema,
         clientConfig,
         orderBy,
+        referenceGenomes,
     };
 }

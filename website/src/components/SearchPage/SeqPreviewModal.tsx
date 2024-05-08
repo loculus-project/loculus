@@ -2,6 +2,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
 import { routes } from '../../routes/routes';
+import { type ReferenceGenomes } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
@@ -14,11 +15,19 @@ interface SeqPreviewModalProps {
     accessToken?: string;
     isOpen: boolean;
     onClose: () => void;
+    referenceGenomes: ReferenceGenomes;
 }
 
-export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessToken, isOpen, onClose }) => {
+export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
+    seqId,
+    accessToken,
+    isOpen,
+    onClose,
+    referenceGenomes,
+}) => {
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<any | null>(null);
+    const [isError, setIsError] = useState(false);
 
     useEffect(() => {
         if (seqId) {
@@ -30,6 +39,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessT
             })
                 .then((res) => res.json())
                 .then(setData)
+                .catch(() => setIsError(true))
                 .finally(() => setIsLoading(false));
         }
     }, [accessToken, seqId]);
@@ -76,9 +86,9 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessT
                         <div className='mt-4 text-gray-700 overflow-y-auto h-[calc(100vh-150px)]'>
                             {isLoading ? (
                                 <div>Loading...</div>
-                            ) : data !== null ? (
+                            ) : data !== null && !isError ? (
                                 <div className=''>
-                                    <SequenceDataUI {...data} />
+                                    <SequenceDataUI {...data} referenceGenomes={referenceGenomes} />
                                 </div>
                             ) : (
                                 <div>Failed to load sequence data</div>

@@ -3,7 +3,7 @@ import { type APIRoute } from 'astro';
 
 import { findOrganismAndData } from './findOrganismAndData';
 import { SequenceDetailsTableResultType } from './getSequenceDetailsTableData';
-import { getReferenceGenomes, getSchema, getRuntimeConfig } from '../../../config';
+import { getSchema, getRuntimeConfig } from '../../../config';
 import { type Group } from '../../../types/backend';
 import { getMyGroups } from '../../../utils/getMyGroups';
 
@@ -43,14 +43,12 @@ export const GET: APIRoute = async (req) => {
         myGroups = await getMyGroups(accessToken);
     }
 
-    const referenceGenomes = getReferenceGenomes(organism);
     const schema = getSchema(organism);
     const runtimeConfig = getRuntimeConfig();
 
     const detailsDataUIProps = {
         tableData: result.tableData,
         organism,
-        referenceGenomes,
         accessionVersion,
         dataUseTermsHistory: result.dataUseTermsHistory,
         schema,
