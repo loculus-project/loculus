@@ -1,4 +1,5 @@
 import { useState } from 'react';
+
 import { DownloadDialog } from './DownloadDialog/DownloadDialog';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
@@ -51,6 +52,8 @@ export const SearchFullUI = ({
     error,
     classOfSearchPage,
 }: SearchFullUIProps) => {
+    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
+
     if (error !== null) {
         return (
             <div className='bg-red-100 p-4 text-red-900'>
@@ -61,12 +64,11 @@ export const SearchFullUI = ({
     }
 
     data = data as SearchResponse;
-    const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <SeqPreviewModal
-                seqId={previewedSeqId}
+                seqId={previewedSeqId ?? ''}
                 accessToken={undefined}
                 isOpen={previewedSeqId !== null}
                 onClose={() => setPreviewedSeqId(null)}

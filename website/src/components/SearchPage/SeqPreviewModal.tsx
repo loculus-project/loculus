@@ -1,28 +1,23 @@
-import React, { useEffect, useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
+import React, { useEffect, useState } from 'react';
 
+import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 
 interface SeqPreviewModalProps {
     seqId: string;
-    accessToken: string;
+    accessToken?: string;
     isOpen: boolean;
     onClose: () => void;
 }
 
-export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
-    seqId,
-    accessToken,
-    isOpen,
-    onClose,
-}) => {
+export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({ seqId, accessToken, isOpen, onClose }) => {
     const [isLoading, setIsLoading] = useState(true);
-    const [data, setData] = useState(null);
+    const [data, setData] = useState<any | null>(null);
 
     useEffect(() => {
         if (seqId) {
             setIsLoading(true);
-            fetch(`/seq/${seqId}/details.json`, {
+            void fetch(`/seq/${seqId}/details.json`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
@@ -31,10 +26,8 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                 .then(setData)
                 .finally(() => setIsLoading(false));
         }
-    }, [seqId]);
-   
-    
-    
+    }, [accessToken, seqId]);
+
     return (
         <Transition appear show={isOpen}>
             <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={onClose}>
@@ -53,12 +46,9 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
                         <div className='mt-4 text-gray-700'>
                             {isLoading ? (
                                 <div>Loading...</div>
-                            ) : data ? (
-                                <div
-                                    className='overflow-y-auto max-h-[calc(100vh-200px)]'>
-                                    <SequenceDataUI
-                                       {...data}
-                                    />
+                            ) : data !== null ? (
+                                <div className='overflow-y-auto max-h-[calc(100vh-200px)]'>
+                                    <SequenceDataUI {...data} />
                                 </div>
                             ) : (
                                 <div>Failed to load sequence data</div>

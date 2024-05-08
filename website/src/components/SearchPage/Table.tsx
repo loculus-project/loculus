@@ -37,7 +37,7 @@ export const Table: FC<TableProps> = ({
     orderBy,
     classOfSearchPage,
     groupId,
-    setPreviewedSeqId
+    setPreviewedSeqId,
 }) => {
     const primaryKey = schema.primaryKey;
 
