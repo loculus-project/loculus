@@ -8,13 +8,21 @@ on:
         description: "Build for ARM as well"
         default: false
         required: false
+  workflow_call:
+    inputs:
+      build_arm:
+        type: boolean
+        description: "Build for ARM as well"
+        default: false
+        required: false
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/ingest
-  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }}
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ingest
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ingest-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
 
 jobs:
@@ -45,6 +53,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
             type=sha,prefix=commit-
+            type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3

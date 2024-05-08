@@ -1,0 +1,46 @@
+# Trigger a build of all docker images including ARM images
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  checks: read
+
+jobs:
+  trigger-backend:
+    uses: ./.github/workflows/backend.yml
+    with:
+      build_arm: true
+
+  trigger-config-preprocessor:
+    uses: ./.github/workflows/config-preprocessor-build.yml
+    with:
+      build_arm: true
+
+  trigger-dummy-preprocessing:
+    uses: ./.github/workflows/dummyPreprocessing.yml
+    with:
+      build_arm: true
+
+  trigger-ingest:
+    uses: ./.github/workflows/ingest.yml
+    with:
+      build_arm: true
+
+  trigger-keycloakify:
+    uses: ./.github/workflows/keycloakify-build.yml
+    with:
+      build_arm: true
+
+  trigger-preprocessing-nextclade:
+    uses: ./.github/workflows/preprocessing-nextclade.yml
+    with:
+      build_arm: true
+
+  trigger-website:
+    uses: ./.github/workflows/website.yml
+    with:
+      build_arm: true
