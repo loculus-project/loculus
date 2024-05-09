@@ -270,10 +270,6 @@ const InnerDataUploadForm = ({
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
-
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData(exampleEntries);
 
