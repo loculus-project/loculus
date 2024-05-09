@@ -39,6 +39,8 @@ spec:
           ports:
             - containerPort: 8079
           args:
+            - "-Xms8m"
+            - "-Xmx12m"
             - "--crossref.doi-prefix=$(CROSSREF_DOI_PREFIX)"
             - "--crossref.endpoint=$(CROSSREF_TEST_ENDPOINT)"
             - "--crossref.username=$(CROSSREF_USERNAME)"
