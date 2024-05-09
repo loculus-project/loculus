@@ -5,7 +5,7 @@ on:
   pull_request:
     types: [synchronize, labeled]
     paths:
-      - 'website/**'
+      - "website/**"
 jobs:
   format:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'format_me'))
@@ -23,14 +23,14 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: "20"
+          node-version-file: ./website/.nvmrc
 
       - name: Cache .npm
         uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
-          
+
       - name: NPM install and format website
         working-directory: website
         run: |
