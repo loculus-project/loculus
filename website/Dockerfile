@@ -1,4 +1,6 @@
-FROM node:lts-alpine as build-deps
+ARG NODE_VERSION=22
+FROM node:${NODE_VERSION}-alpine as build-deps
+
 WORKDIR /app
 
 COPY .env.docker .env
@@ -8,7 +10,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:lts-alpine
+FROM node:${NODE_VERSION}-alpine
 
 WORKDIR /app
 
