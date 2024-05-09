@@ -16,6 +16,7 @@
         "format-fast": "prettier --ignore-path \"../.gitignore\" --write \"./**/*.{ts,tsx,json,astro,cjs,mjs}\"",
         "test": "vitest",
         "e2e": "npx playwright test",
+        "e2e:ui": "npx playwright test --ui --headed",
         "e2e:headed": "npx playwright test --headed"
     },
     "dependencies": {
