@@ -143,6 +143,12 @@ const UploadComponent = ({
 }) => {
     const [myFile, rawSetMyFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     const setMyFile = useCallback(
         (file: File | null) => {
             setFile(file);
@@ -203,23 +209,23 @@ const UploadComponent = ({
                     <div className='text-center'>
                         <Icon className='mx-auto h-12 w-12 text-gray-300' aria-hidden='true' />
                         <div className='mt-4  text-sm leading-6 text-gray-600'>
-                            <label
-                                htmlFor='file-upload'
-                                className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'
-                            >
-                                <span onClick={handleUpload}>Upload a file</span>
-                                <input
-                                    id={name}
-                                    name={name}
-                                    type='file'
-                                    className='sr-only'
-                                    aria-label={title}
-                                    onChange={(event) => {
-                                        const file = event.target.files?.[0] || null;
-                                        setMyFile(file);
-                                    }}
-                                    ref={fileInputRef}
-                                />
+                            <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                                <span onClick={handleUpload}>Upload a file </span>
+                                {isClient && (
+                                    <input
+                                        id={name}
+                                        name={name}
+                                        type='file'
+                                        className='sr-only'
+                                        aria-label={title}
+                                        data-testid={name}
+                                        onChange={(event) => {
+                                            const file = event.target.files?.[0] || null;
+                                            setMyFile(file);
+                                        }}
+                                        ref={fileInputRef}
+                                    />
+                                )}
                             </label>
                             <span className='pl-1'>or drag and drop</span>
                         </div>
@@ -232,6 +238,7 @@ const UploadComponent = ({
                     <div className='text-sm text-gray-500 py-5'>{myFile.name}</div>
                     <button
                         onClick={() => setMyFile(null)}
+                        data-testid={`discard_${name}`}
                         className='
                     text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
                     >
@@ -259,6 +266,12 @@ const InnerDataUploadForm = ({
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
+
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData(exampleEntries);
@@ -387,9 +400,9 @@ const InnerDataUploadForm = ({
                     <button
                         name='submit'
                         type='submit'
-                        className='rounded-md bg-primary-600 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600'
+                        className='rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 bg-primary-600 text-white hover:bg-primary-500'
                         onClick={handleSubmit}
-                        disabled={isLoading}
+                        disabled={isLoading || !isClient}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
                             <span className='loading loading-spinner loading-sm' />
