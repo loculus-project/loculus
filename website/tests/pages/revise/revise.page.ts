@@ -1,5 +1,4 @@
-import type { Page } from '@playwright/test';
-import { expect } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 import { routes } from '../../../src/routes/routes.ts';
 import type { Accession } from '../../../src/types/backend.ts';
