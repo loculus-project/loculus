@@ -40,12 +40,15 @@ jobs:
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+          echo "hello world" >> $GITHUB_STEP_SUMMARY
 
       - uses: azure/setup-helm@v4
 
       - name: Create k3d cluster
         run: |
           ./deploy.py --verbose cluster 2>&1 | tee cluster.log
+          cat cluster.log
+          echo "hello world" >> $GITHUB_STEP_SUMMARY
           cat cluster.log >> $GITHUB_STEP_SUMMARY
 
       - name: Template with helm
