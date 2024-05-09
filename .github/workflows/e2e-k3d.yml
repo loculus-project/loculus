@@ -133,7 +133,11 @@ jobs:
       - name: Sleep for 10 secs
         run: sleep 10
       - name: Run E2E test
-        run: cd website && npm run e2e
+        run: |
+          cd website && npm run e2e 2>&1 | tee output.txt
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
