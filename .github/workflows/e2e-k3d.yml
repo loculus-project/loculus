@@ -40,16 +40,12 @@ jobs:
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
-          echo "hello world" >> $GITHUB_STEP_SUMMARY
 
       - uses: azure/setup-helm@v4
 
       - name: Create k3d cluster
         run: |
-          ./deploy.py --verbose cluster 2>&1 | tee cluster.log
-          cat cluster.log
-          echo "hello world" >> $GITHUB_STEP_SUMMARY
-          cat cluster.log >> $GITHUB_STEP_SUMMARY
+          ./deploy.py --verbose cluster
 
       - name: Template with helm
         uses: WyriHaximus/github-action-helm3@v4
@@ -138,10 +134,10 @@ jobs:
         run: sleep 10
       - name: Run E2E test
         run: |
-          cd website && npm run e2e | tee output.txt
-          # echo "```" >> $GITHUB_STEP_SUMMARY
+          cd website && npm run e2e 2>&1 | tee output.txt
+          echo '```' >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
-          # echo "```" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
