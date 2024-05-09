@@ -209,12 +209,16 @@ const UploadComponent = ({
                     <div className='text-center'>
                         <Icon className='mx-auto h-12 w-12 text-gray-300' aria-hidden='true' />
                         <div className='mt-4  text-sm leading-6 text-gray-600'>
-                            <label
-                                htmlFor='file-upload'
-                                className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'
-                            >
-                                <span onClick={handleUpload}>Upload a file </span>
-                                {isClient ? (
+                            {!isClient ? (
+                                <span className='inline relative cursor-not-allowed rounded-md bg-gray-200 font-semibold text-gray-400'>
+                                    Upload a file
+                                </span>
+                            ) : (
+                                <label
+                                    htmlFor='file-upload'
+                                    className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'
+                                >
+                                    <span onClick={handleUpload}>Upload a file </span>
                                     <input
                                         id={name}
                                         name={name}
@@ -228,8 +232,8 @@ const UploadComponent = ({
                                         }}
                                         ref={fileInputRef}
                                     />
-                                ) : null}
-                            </label>
+                                </label>
+                            )}
                             <span className='pl-1'>or drag and drop</span>
                         </div>
                         <p className='text-xs leading-5 text-gray-600'>{fileType}</p>
@@ -269,6 +273,12 @@ const InnerDataUploadForm = ({
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
+
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData(exampleEntries);
@@ -397,9 +407,9 @@ const InnerDataUploadForm = ({
                     <button
                         name='submit'
                         type='submit'
-                        className='rounded-md bg-primary-600 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600'
+                        className={`rounded-md py-2 text-sm font-semibold shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${!isClient ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-primary-600 text-white hover:bg-primary-500'}`}
                         onClick={handleSubmit}
-                        disabled={isLoading}
+                        disabled={!isClient || isLoading}
                     >
                         <div className={`absolute ml-1.5 inline-flex ${isLoading ? 'visible' : 'invisible'}`}>
                             <span className='loading loading-spinner loading-sm' />
