@@ -45,7 +45,8 @@ jobs:
 
       - name: Create k3d cluster
         run: |
-          ./deploy.py --verbose cluster
+          ./deploy.py --verbose cluster 2>&1 | tee cluster.log
+          cat cluster.log >> $GITHUB_STEP_SUMMARY
 
       - name: Template with helm
         uses: WyriHaximus/github-action-helm3@v4
@@ -135,9 +136,9 @@ jobs:
       - name: Run E2E test
         run: |
           cd website && npm run e2e | tee output.txt
-          echo "```" >> $GITHUB_STEP_SUMMARY
+          # echo "```" >> $GITHUB_STEP_SUMMARY
           sed -n '/Running [0-9]\+ tests/,$p' output.txt >> $GITHUB_STEP_SUMMARY
-          echo "```" >> $GITHUB_STEP_SUMMARY
+          # echo "```" >> $GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
