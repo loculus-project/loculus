@@ -6,7 +6,6 @@ WORKDIR /app
 COPY .env.docker .env
 COPY package.json package-lock.json ./
 
-
 FROM base as prod-deps
 RUN npm install --omit=dev
 
