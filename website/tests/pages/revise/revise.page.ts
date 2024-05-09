@@ -13,24 +13,25 @@ export class RevisePage {
     }
 
     public async submitRevisedData(accessions: Accession[]) {
-        await Promise.all([this.setSequenceFile(), this.setRevisedMetadataFile(accessions)]);
+        await this.setSequenceFile();
+        await this.setRevisedMetadataFile(accessions);
         await this.page.getByRole('button', { name: 'Discard file' }).nth(1).waitFor({ state: 'visible' }); // Wait for two buttons to be visible
         await this.page.getByRole('button', { name: 'Submit' }).click();
     }
 
     private async setSequenceFile(file: string = sequencesTestFile) {
-        const sequencePicker = this.page.getByLabel('Sequence file');
-        await sequencePicker.waitFor({ state: 'visible' });
+        const sequencePicker = this.page.getByTestId('sequence_file');
         await sequencePicker.setInputFiles(file);
+        await sequencePicker.waitFor({ state: 'hidden' });
     }
 
     private async setRevisedMetadataFile(accessions: Accession[]) {
-        const metadataPicker = this.page.getByLabel('Metadata file');
-        await metadataPicker.waitFor({ state: 'visible' });
+        const metadataPicker = this.page.getByTestId('metadata_file');
         await metadataPicker.setInputFiles({
             name: 'metadata.tsv',
             mimeType: 'text/plain',
             buffer: Buffer.from(createModifiedFileContent(accessions).metadataContent),
         });
+        await metadataPicker.waitFor({ state: 'hidden' });
     }
 }
