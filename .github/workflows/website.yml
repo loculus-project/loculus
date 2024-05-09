@@ -3,9 +3,16 @@ name: website
 on:
   push:
   workflow_dispatch:
+    inputs:
+      build_arm:
+        type: boolean
+        description: "Build for ARM as well"
+        default: false
+        required: false
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/website
+  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }} # When to build for arm as well
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website
@@ -27,7 +34,7 @@ jobs:
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('website/**', '.github/workflows/website.yml') }})
-          echo "DIR_HASH=$DIR_HASH" >> $GITHUB_ENV
+          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
         id: dockerMetadata
@@ -65,6 +72,7 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=website-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=website-${{ github.ref }}
+          platforms: ${{ env.BUILD_ARM && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
 
       - name: Retag and push existing image if cache hit
         if: env.CACHE_HIT == 'true'
