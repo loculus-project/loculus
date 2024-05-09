@@ -227,7 +227,6 @@ const UploadComponent = ({
                                             setMyFile(file);
                                         }}
                                         ref={fileInputRef}
-                                        disabled={myFile === undefined}
                                     />
                                 ) : null}
                             </label>
@@ -270,8 +269,6 @@ const InnerDataUploadForm = ({
     const { submit, revise, isLoading } = useSubmitFiles(accessToken, organism, clientConfig, onSuccess, onError);
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
-
-    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
         setIsClient(true);
