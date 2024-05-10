@@ -1,4 +1,4 @@
-FROM node:21-bookworm as builder
+FROM node:22-bookworm as builder
 
 USER root
 RUN apt-get update && apt-get install -y maven
