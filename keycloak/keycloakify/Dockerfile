@@ -1,4 +1,6 @@
-FROM node:22-bookworm as builder
+ARG KEYCLOAK_ORCID_VERSION=1.3.0
+ARG NODE_VERSION=22
+FROM node:${NODE_VERSION}-bookworm as builder
 
 USER root
 RUN apt-get update && apt-get install -y maven
@@ -8,7 +10,7 @@ RUN mvn --version
 RUN yarn versions
 
 WORKDIR /app
-RUN wget  https://github.com/eosc-kc/keycloak-orcid/releases/download/1.3.0/keycloak-orcid-1.3.0.jar
+RUN wget  https://github.com/eosc-kc/keycloak-orcid/releases/download/${KEYCLOAK_ORCID_VERSION}/keycloak-orcid-${KEYCLOAK_ORCID_VERSION}.jar
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile
 COPY . .
