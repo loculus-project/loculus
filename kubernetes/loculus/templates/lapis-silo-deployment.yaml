@@ -29,10 +29,10 @@ spec:
           image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
           resources:
             requests:
-              memory: "300Mi"
+              memory: "100Mi"
               cpu: "10m"
             limits:
-              memory: "3Gi"
+              memory: "500Mi"
               cpu: "200m"
           ports:
             - containerPort: 8081
@@ -45,10 +45,10 @@ spec:
           image: ghcr.io/genspectrum/lapis-v2:{{ $.Values.imageTags.lapis }}
           resources:
             requests:
-              memory: "300Mi"
+              memory: "100Mi"
               cpu: "10m"
             limits:
-              memory: "3Gi"
+              memory: "500Mi"
               cpu: "200m"
           ports:
             - containerPort: 8080
