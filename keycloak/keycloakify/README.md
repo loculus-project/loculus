@@ -25,3 +25,12 @@ https://docs.keycloakify.dev/
 ### Keycloak ORCID
 
 https://github.com/eosc-kc/keycloak-orcid
+
+## Installing yarn 4
+
+Prerequisite: node
+
+```bash
+corepack enable
+corepack install yarn
+```
