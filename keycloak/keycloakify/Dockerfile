@@ -19,6 +19,6 @@ FROM alpine:3.19
 RUN mkdir /output
 COPY --from=builder /app/build_keycloak/target/*.jar /output/
 RUN apk add --no-cache wget curl
-RUN wget -P /output https://github.com/eosc-kc/keycloak-orcid/releases/download/${NODE_VERSION}/keycloak-orcid-${NODE_VERSION}.jar
+RUN wget -P /output https://github.com/eosc-kc/keycloak-orcid/releases/download/${KEYCLOAK_ORCID_VERSION}/keycloak-orcid-${KEYCLOAK_ORCID_VERSION}.jar
 RUN ls -l /output
 CMD sh -c 'cp /output/*.jar /destination/'
