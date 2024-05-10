@@ -30,7 +30,7 @@ export const SubBadge: FC<SubProps> = ({ position, mutationTo, mutationFrom, seq
                         </span>
                     </>
                 )}
-                <span className='px-[4px] py-[2px] bg-gray-200'>{position + 1}</span>
+                <span className='px-[4px] py-[2px] bg-gray-200'>{position}</span>
                 <span className='px-[4px] py-[2px] rounded-e-[3px]' style={{ background: getColor(mutationTo) }}>
                     {mutationTo}
                 </span>
