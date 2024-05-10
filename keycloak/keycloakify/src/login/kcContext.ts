@@ -2,8 +2,6 @@ import { createGetKcContext } from "keycloakify/login";
 
 export type KcContextExtension =
   | { pageId: "login.ftl" }
-  | { pageId: "my-extra-page-1.ftl" }
-  | { pageId: "my-extra-page-2.ftl"; someCustomValue: string }
   // NOTE: register.ftl is deprecated in favor of register-user-profile.ftl
   // but let's say we use it anyway and have this plugin enabled: https://github.com/micedre/keycloak-mail-whitelisting
   // keycloak-mail-whitelisting define the non standard ftl global authorizedMailDomains, we declare it here.
@@ -20,7 +18,7 @@ export const { getKcContext } = createGetKcContext<KcContextExtension>({
       pageId: "login.ftl",
       locale: {
         //When we test the login page we do it in french
-        currentLanguageTag: "fr",
+        currentLanguageTag: "en",
       },
       //Uncomment the following line for hiding the Alert message
       //"message": undefined
@@ -28,14 +26,10 @@ export const { getKcContext } = createGetKcContext<KcContextExtension>({
       //message: { type: "error", summary: "This is an error" }
     },
     {
-      pageId: "my-extra-page-2.ftl",
-      someCustomValue: "foo bar baz",
-    },
-    {
       //NOTE: You will either use register.ftl (legacy) or register-user-profile.ftl, not both
       pageId: "register-user-profile.ftl",
       locale: {
-        currentLanguageTag: "fr",
+        currentLanguageTag: "en",
       },
       profile: {
         attributes: [
