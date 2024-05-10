@@ -1,4 +1,3 @@
-ARG KEYCLOAK_ORCID_VERSION=1.3.0
 ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-bookworm as builder
 
@@ -16,6 +15,7 @@ COPY . .
 RUN yarn build-keycloak-theme
 
 FROM alpine:3.19
+ARG KEYCLOAK_ORCID_VERSION=1.3.0
 RUN mkdir /output
 COPY --from=builder /app/build_keycloak/target/*.jar /output/
 RUN apk add --no-cache wget curl
