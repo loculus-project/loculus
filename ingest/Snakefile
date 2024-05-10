@@ -38,14 +38,15 @@ rule all:
 
 
 rule fetch_ncbi_dataset_package:
+    # TODO: #1844 Set API key through secret
     output:
         dataset_package="results/ncbi_dataset.zip",
-    retries: 5
     shell:
         """
         datasets download virus genome taxon {TAXON_ID} \
             --no-progressbar \
-            --filename {output.dataset_package}
+            --filename {output.dataset_package} \
+            --api-key 15c4ff96de265753f878bb08d88ca64df909 \
         """
 
 
