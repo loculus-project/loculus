@@ -6,12 +6,6 @@
     "type": "git",
     "url": "git://github.com/loculus-project/loculus.git"
   },
-  "keycloakify": {
-    "themeName": "loculus",
-    "extraThemeProperties": [
-      "foo=bar"
-    ]
-  },
   "type": "module",
   "scripts": {
     "dev": "vite",

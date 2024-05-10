@@ -1,6 +1,8 @@
 # Keycloakify theme
 
-This is a keycloak theme, built with keycloakify, and branched from <https://github.com/keycloakify/keycloakify-starter>
+This is a keycloak theme, built with keycloakify, and branched from <https://github.com/keycloakify/keycloakify-starter>.
+
+We last synced with upstream on 2024-05-11.
 
 To preview in the storybook:
 
@@ -10,3 +12,5 @@ yarn storybook
 ```
 
 To build a JAR and package it into an image that copies it to an output directory, build the Dockerfile. (This is done by CI).
+
+Currently, only the login theme is implemented.
