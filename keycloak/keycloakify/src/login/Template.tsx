@@ -29,10 +29,9 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
 
   const { getClassName } = useGetClassName({ doUseDefaultCss, classes });
 
-  const { msg, changeLocale, labelBySupportedLanguageTag, currentLanguageTag } =
-    i18n;
+  const { msg } = i18n;
 
-  const { realm, locale, auth, url, message, isAppInitiatedAction } = kcContext;
+  const { auth, url, message, isAppInitiatedAction } = kcContext;
 
   const { isReady } = usePrepareTemplate({
     doFetchDefaultThemeResources: doUseDefaultCss,
@@ -83,31 +82,6 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
         )}
       >
         <header className={getClassName("kcFormHeaderClass")}>
-          {realm.internationalizationEnabled &&
-            (assert(locale !== undefined), true) &&
-            locale.supported.length > 1 && (
-              <div id="kc-locale">
-                <div
-                  id="kc-locale-wrapper"
-                  className={getClassName("kcLocaleWrapperClass")}
-                >
-                  <div className="kc-dropdown" id="kc-locale-dropdown">
-                    <a href="#" id="kc-current-locale-link">
-                      {labelBySupportedLanguageTag[currentLanguageTag]}
-                    </a>
-                    <ul>
-                      {locale.supported.map(({ languageTag }) => (
-                        <li key={languageTag} className="kc-dropdown-item">
-                          <a href="#" onClick={() => changeLocale(languageTag)}>
-                            {labelBySupportedLanguageTag[languageTag]}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            )}
           {!(
             auth !== undefined &&
             auth.showUsername &&

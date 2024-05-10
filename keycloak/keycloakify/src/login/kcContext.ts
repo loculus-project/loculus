@@ -16,10 +16,6 @@ export const { getKcContext } = createGetKcContext<KcContextExtension>({
   mockData: [
     {
       pageId: "login.ftl",
-      locale: {
-        //When we test the login page we do it in french
-        currentLanguageTag: "en",
-      },
       //Uncomment the following line for hiding the Alert message
       //"message": undefined
       //Uncomment the following line for showing an Error message
@@ -28,9 +24,6 @@ export const { getKcContext } = createGetKcContext<KcContextExtension>({
     {
       //NOTE: You will either use register.ftl (legacy) or register-user-profile.ftl, not both
       pageId: "register-user-profile.ftl",
-      locale: {
-        currentLanguageTag: "en",
-      },
       profile: {
         attributes: [
           {
