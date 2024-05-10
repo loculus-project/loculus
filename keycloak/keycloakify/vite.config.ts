@@ -12,7 +12,7 @@ export default defineConfig({
     commonjs(),
     keycloakify({
       // See: https://docs.keycloakify.dev/build-options#themename
-      themeName: "keycloakify-starter",
+      themeName: "loculus",
       // See: https://docs.keycloakify.dev/environnement-variables
       extraThemeProperties: ["MY_ENV_VARIABLE=${env.MY_ENV_VARIABLE:}"],
       // This is a hook that will be called after the build is done
