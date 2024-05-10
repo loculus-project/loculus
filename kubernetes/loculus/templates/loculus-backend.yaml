@@ -32,7 +32,6 @@ spec:
               cpu: "100m"
             limits:
               memory: "1Gi" # Backend requires at least 635741K of memory
-              cpu: "1000m"
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"

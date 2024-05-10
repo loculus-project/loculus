@@ -32,7 +32,6 @@ spec:
               cpu: "100m"
             limits:
               memory: "1Gi"
-              cpu: "1000m"
           ports:
             - containerPort: 3000
           volumeMounts:

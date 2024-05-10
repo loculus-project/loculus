@@ -27,7 +27,6 @@ spec:
             cpu: "100m"
           limits:
             memory: "2Gi"
-            cpu: "500m"
         ports:
         - containerPort: 5432
         env:

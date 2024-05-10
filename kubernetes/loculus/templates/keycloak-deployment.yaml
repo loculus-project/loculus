@@ -46,7 +46,6 @@ spec:
               cpu: "20m"
             limits:
               memory: "3Gi"
-              cpu: "1"
           env:
             - name: DB_ADDR
               valueFrom:

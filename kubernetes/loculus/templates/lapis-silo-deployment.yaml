@@ -33,7 +33,6 @@ spec:
               cpu: "10m"
             limits:
               memory: "2Gi"
-              cpu: "200m"
           ports:
             - containerPort: 8081
           args:
@@ -49,7 +48,6 @@ spec:
               cpu: "10m"
             limits:
               memory: "500Mi"
-              cpu: "200m"
           ports:
             - containerPort: 8080
           args:
@@ -70,7 +68,6 @@ spec:
               cpu: "10m"
             limits:
               memory: "1Gi"
-              cpu: "1000m"
           command:
             - sh
             - /silo_import_wrapper.sh
