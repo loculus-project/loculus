@@ -14,7 +14,7 @@ kind: Ingress
 metadata:
   name: loculus-website-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "compression-middleware@kubernetescrd"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-compression-middleware@kubernetescrd"
 spec:
   rules:
     - host: "{{ .Values.host }}"
