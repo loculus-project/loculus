@@ -1,0 +1,158 @@
+---
+import DataUseTerms from './DataUseTerms.astro';
+import DevExampleData from './DevExampleData.astro';
+import UploadComponent from './UploadComponent.astro';
+import type { Action } from './common';
+import { routes } from '../../routes/routes';
+import type { Group } from '../../types/backend';
+import type { ClientConfig } from '../../types/runtimeConfig';
+import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
+import MaterialSymbolsLightDataTableOutline from '~icons/material-symbols-light/data-table-outline';
+import PhDnaLight from '~icons/ph/dna-light';
+
+interface Props {
+    accessToken: string;
+    organism: string;
+    clientConfig: ClientConfig;
+    action: Action;
+    group: Group;
+}
+
+const { accessToken, organism, clientConfig, action, group } = Astro.props;
+---
+
+<form id='dataUploadForm'>
+    <div class='text-left mt-3 max-w-6xl'>
+        <div class='flex-col flex gap-8 divide-y'>
+            <div class='grid sm:grid-cols-3 gap-x-16'>
+                <div class=''>
+                    <h2 class='font-medium text-lg'>Sequences and metadata</h2>
+                    <p class='text-gray-500 text-sm'>Select your sequence data and metadata files</p>
+
+                    <p class='text-gray-400 text-xs mt-5'>
+                        <MaterialSymbolsInfoOutline className='w-5 h-5 inline-block mr-2' />
+                        {
+                            action === 'revise' && (
+                                <span>
+                                    <strong>
+                                        For revisions, your metadata file must contain an "accession" column, with the
+                                        accession in the database. <br />
+                                    </strong>
+                                </span>
+                            )
+                        }
+                        You can download{' '}
+                        <a href={routes.metadataTemplate(organism)} class='text-primary-700 opacity-90'>
+                            a template
+                        </a>{' '}
+                        for the TSV metadata file with column headings.
+                    </p>
+
+                    <p class='text-gray-400 text-xs mt-3'>
+                        Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{
+                            ' '
+                        }
+                        <i>.zip</i>, <i>.xz</i>).
+                    </p>
+                    <p class='text-gray-400 text-xs mt-3'>
+                        For more information on the format in which data should be uploaded and the required metadata,
+                        please refer to our{' '}
+                        <a href='#TODO-MVP' class='text-primary-700 opacity-90'> help pages </a>
+                        .
+                    </p>
+                    {organism.startsWith('dummy-organism') && action === 'submit' && <DevExampleData />}
+                </div>
+                <div class='sm:col-span-2'>
+                    <input type='hidden' name='groupId' value={group.groupId} />
+                    <div class='px-8'>
+                        <div class='flex flex-col gap-6 max-w-64'>
+                            <div class='sm:col-span-3'>
+                                <UploadComponent name='sequenceFile' title='Sequence file' fileType='FASTA file'>
+                                    <PhDnaLight className='w-full h-full' slot='icon' />
+                                </UploadComponent>
+                            </div>
+                            <div class='sm:col-span-3'>
+                                <UploadComponent name='metadataFile' title='Metadata file' fileType='TSV file'>
+                                    <MaterialSymbolsLightDataTableOutline className='w-full h-full' slot='icon' />
+                                </UploadComponent>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {action !== 'revise' && <DataUseTerms />}
+            <div class='flex flex-wrap items-center justify-end gap-x-6 pt-3'>
+                <div class='text-red-500 w-full sm:w-auto hidden' id='dataUploadFormErrorMessage'></div>
+                <button
+                    id='submitButton'
+                    type='submit'
+                    class='rounded-md bg-primary-600 w-48 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600'
+                >
+                    <div id='loadingSpinner' class='absolute ml-1.5 inline-flex invisible'>
+                        <span class='loading loading-spinner loading-sm'></span>
+                    </div>
+                    <span class='flex-1 text-center mx-8'>Submit sequences</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<x-data
+    data-data={JSON.stringify({
+        clientConfig,
+        group,
+        organism,
+        accessToken,
+        action,
+    })}
+>
+</x-data>
+
+<script>
+    import { getElements, setIsLoading, submit, setInputFile, setErrorMessage } from './common';
+    import { getExampleFiles } from './example';
+    const elements = getElements();
+
+    class Data extends HTMLElement {
+        constructor() {
+            super();
+            let numberExampleEntries: number | undefined = undefined;
+
+            const { clientConfig, organism, accessToken, group, action } = JSON.parse(this.dataset.data!);
+            elements.uploadForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                const formData = new FormData(this);
+                const sequenceFileIsSet = (formData.get('sequenceFile') as File).name !== '';
+                const metadataFileIsSet = (formData.get('metadataFile') as File).name !== '';
+                if (
+                    numberExampleEntries !== undefined &&
+                    numberExampleEntries > 0 &&
+                    !sequenceFileIsSet &&
+                    !metadataFileIsSet
+                ) {
+                    const { sequenceFile, metadataFile } = getExampleFiles(this.numberExampleEntries, action);
+                    formData.set('sequenceFile', sequenceFile);
+                    formData.set('metadataFile', metadataFile);
+                } else if (!sequenceFileIsSet) {
+                    setErrorMessage('Please select a sequence file');
+                    return;
+                } else if (!metadataFileIsSet) {
+                    setErrorMessage('Please select a metadata file');
+                    return;
+                }
+                setIsLoading(true);
+                submit(clientConfig, action, formData, organism, accessToken, group.groupId);
+            });
+
+            window.addEventListener('devExampleDataLoaded', ((e: CustomEvent<{ numberEntries: number }>) => {
+                numberExampleEntries = e.detail.numberEntries;
+                setInputFile('sequenceFile', undefined);
+                setInputFile('metadataFile', undefined);
+                elements.devExampleData.message.classList.remove('hidden');
+            }) as EventListener);
+        }
+    }
+
+    customElements.define('x-data', Data);
+</script>

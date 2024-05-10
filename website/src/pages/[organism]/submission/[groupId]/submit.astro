@@ -1,5 +1,5 @@
 ---
-import { SubmissionForm } from '../../../../components/Submission/SubmissionForm';
+import SubmissionForm from '../../../../components/Submission/SubmissionForm.astro';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { getRuntimeConfig } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
@@ -17,7 +17,7 @@ Astro.response.headers.append('Pragma', 'no-cache');
 Astro.response.headers.append('Expires', '0');
 ---
 
-<SubmissionPageWrapper title='Submit sequences' groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Submit sequences' groupsResult={groupsResult} noToast>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
@@ -26,7 +26,6 @@ Astro.response.headers.append('Expires', '0');
                     organism={organism}
                     clientConfig={clientConfig}
                     group={group}
-                    client:load
                 />
             ),
             () => undefined,

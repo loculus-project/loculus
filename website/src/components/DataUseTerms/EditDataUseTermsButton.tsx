@@ -5,12 +5,12 @@ import { toast } from 'react-toastify';
 
 import { withQueryProvider } from './../common/withQueryProvider';
 import DataUseTermsSelector from './DataUseTermsSelector';
+import { datePickerTheme } from './DateChangeModal.tsx';
 import { backendClientHooks } from '../../services/serviceHooks';
 import { type RestrictedDataUseTerms, type DataUseTermsType, restrictedDataUseTermsType } from '../../types/backend.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError';
-import { datePickerTheme } from '../Submission/DateChangeModal';
 
 type EditDataUseTermsButtonProps = {
     accessToken: string;

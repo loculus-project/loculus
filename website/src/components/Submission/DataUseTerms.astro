@@ -1,0 +1,96 @@
+---
+import { routes } from '../../routes/routes';
+import { dateTimeInMonths } from '../../utils/DateTimeInMonths';
+import Locked from '~icons/fluent-emoji-high-contrast/locked';
+import Unlocked from '~icons/fluent-emoji-high-contrast/unlocked';
+---
+
+<div class='grid sm:grid-cols-3 mt-0 pt-10'>
+    <div>
+        <h2 class='font-medium text-lg'>Terms of use</h2>
+        <p class='text-gray-500 text-sm'>Specify how your data can be used</p>
+    </div>
+    <div class='grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 col-span-2'>
+        <div class='sm:col-span-4 px-8'>
+            <label class='block text-sm font-medium leading-6 text-gray-900'> Terms of use for these data </label>
+            <div class='mt-2'>
+                <div class='mt-6 space-y-2'>
+                    <div>
+                        <input
+                            id='data-use-open'
+                            name='dataUseTermsType'
+                            type='radio'
+                            value='OPEN'
+                            checked
+                            class='h-4 w-4 p-2 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
+                        />
+                        <label for='data-use-open' class='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'>
+                            <Unlocked className='h-4 w-4 inline-block mr-2 -mt-1' />
+                            Open
+                        </label>
+                        <div class='text-xs pl-8 text-gray-500 pb-4'>
+                            Anyone can use and share the data (though we believe researchers should exercise scientific
+                            etiquette, including the importance of citation). Data will be released to the INSDC
+                            databases shortly after submission.{' '}
+                            <a href={routes.datauseTermsPage()} class='text-primary-600'> Find out more </a>
+                            .
+                        </div>
+                    </div>
+                    <div>
+                        <input
+                            id='data-use-restricted'
+                            name='dataUseTermsType'
+                            type='radio'
+                            value='RESTRICTED'
+                            class='h-4 w-4 border-gray-300 text-iteal-600 focus:ring-iteal-600 inline-block'
+                        />
+                        <label
+                            for='data-use-restricted'
+                            class='ml-2 h-4 p-2 text-sm font-medium leading-6 text-gray-900'
+                        >
+                            <Locked className='h-4 w-4 inline-block mr-2 -mt-1' />
+                            Restricted
+                        </label>
+                        <div class='text-xs pl-8 text-gray-500 mb-4'>
+                            Data will be restricted for a period of time. The sequences will be available but there will
+                            be limitations on how they can be used by others.{' '}
+                            <a href={routes.datauseTermsPage()} class='text-primary-600'> Find out more </a>
+                            .
+                        </div>
+                    </div>
+                    <label class='text-sm pl-6 text-gray-900 mb-4 hidden' id='dataRestrictedUntilSelector'>
+                        Data will be restricted until
+                        <input
+                            type='date'
+                            name='restrictedUntil'
+                            min={dateTimeInMonths(0).toISODate()}
+                            max={dateTimeInMonths(12).toISODate()}
+                        />
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    import { dateTimeInMonths } from '../../utils/DateTimeInMonths';
+
+    const openCheckbox = document.getElementById('data-use-open') as HTMLInputElement;
+    const restrictedCheckbox = document.getElementById('data-use-restricted') as HTMLInputElement;
+    const restrictedUntilDiv = document.getElementById('dataRestrictedUntilSelector') as HTMLDivElement;
+    const restrictedUntilInput = document.getElementsByName('restrictedUntil')[0] as HTMLInputElement;
+
+    function updateVisibility() {
+        if (restrictedCheckbox.checked) {
+            restrictedUntilDiv.classList.remove('hidden');
+            restrictedUntilInput.value = dateTimeInMonths(6).toISODate();
+        } else {
+            restrictedUntilDiv.classList.add('hidden');
+            restrictedUntilInput.value = '';
+        }
+    }
+
+    openCheckbox.addEventListener('change', updateVisibility);
+    restrictedCheckbox.addEventListener('change', updateVisibility);
+</script>

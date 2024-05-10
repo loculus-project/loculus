@@ -1,0 +1,24 @@
+---
+import DataUploadForm from './DataUploadForm.astro';
+import type { Group } from '../../types/backend';
+import type { ClientConfig } from '../../types/runtimeConfig';
+
+interface Props {
+    accessToken: string;
+    organism: string;
+    clientConfig: ClientConfig;
+    group: Group;
+}
+
+const { accessToken, organism, clientConfig, group } = Astro.props;
+---
+
+<div class='flex flex-col items-center'>
+    <DataUploadForm
+        accessToken={accessToken}
+        organism={organism}
+        clientConfig={clientConfig}
+        action='revise'
+        group={group}
+    />
+</div>

@@ -1,0 +1,95 @@
+---
+interface Props {
+    name: string;
+    title: string;
+    fileType: string;
+}
+
+const { name, title, fileType } = Astro.props;
+---
+
+<div class='sm:col-span-4'>
+    <label class='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
+    <div
+        id={'uploadComponentFileUnset-' + name}
+        class='uploadComponentBox mt-2 flex justify-center rounded-lg border border-dashed px-6 py-6 border-gray-900/25 h-40'
+        data-name={name}
+    >
+        <div class='text-center'>
+            <div class='mx-auto h-12 w-12 text-gray-300' aria-hidden='true'><slot name='icon' /></div>
+            <div class='mt-4 text-sm leading-6 text-gray-600'>
+                <label
+                    class='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'
+                >
+                    <span>Upload a file</span>
+                    <input
+                        id={'uploadComponentInput-' + name}
+                        name={name}
+                        type='file'
+                        class='sr-only uploadFileInput'
+                        aria-label={title}
+                    />
+                </label>
+                <span class='pl-1'>or drag and drop</span>
+            </div>
+            <p class='text-xs leading-5 text-gray-600'>{fileType}</p>
+        </div>
+    </div>
+
+    <div id={'uploadComponentFileSet-' + name} class='h-40 text-center hidden'>
+        <div class='w-12 h-12 text-gray-300 mx-auto my-4'><slot name='icon' /></div>
+        <div class='text-sm text-gray-500 py-5' id={'uploadComponentFileName-' + name}></div>
+        <button
+            data-name={name}
+            class='uploadComponentDiscardFile
+                 text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+        >
+            Discard file
+        </button>
+    </div>
+</div>
+
+<script>
+    import { getElements, setInputFile } from './common';
+    const elements = getElements().uploadComponent;
+
+    const uploadInputs = document.querySelectorAll<HTMLInputElement>('input.uploadFileInput');
+    uploadInputs.forEach((input) => {
+        const name = input.getAttribute('name')!;
+        input.addEventListener('change', () => {
+            const filename = input.files?.[0]?.name;
+            setInputFile(name, filename);
+        });
+    });
+
+    const discardButtons = document.querySelectorAll('button.uploadComponentDiscardFile');
+    discardButtons.forEach((button) => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const name = button.getAttribute('data-name')!;
+            setInputFile(name, undefined);
+        });
+    });
+
+    const uploadBoxes = document.querySelectorAll<HTMLDivElement>('.uploadComponentBox');
+    uploadBoxes.forEach((box) => {
+        const name = box.getAttribute('data-name')!;
+        box.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            box.classList.add('bg-green-100');
+        });
+        box.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            box.classList.remove('bg-green-100');
+        });
+        box.addEventListener('drop', (e) => {
+            e.preventDefault();
+            box.classList.remove('bg-green-100');
+            const files = e.dataTransfer?.files || null;
+            elements.input(name).files = files;
+            if (files !== null) {
+                setInputFile(name, files[0]?.name);
+            }
+        });
+    });
+</script>

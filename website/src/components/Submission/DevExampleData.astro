@@ -1,0 +1,28 @@
+---
+
+---
+
+<p class='text-gray-800 text-xs mt-5 opacity-50'>
+    <label>
+        Add dev example data
+        <br />
+        <input id='exampleDataNumber' value='10' type='number' class='w-32' />
+    </label>
+    <button id='exampleDataLoadButton' type='button' class='border rounded px-2 py-1'> Load Example Data </button>{' '}
+    <br />
+    <span id='exampleDataLoadedMessage' class='text-xs text-gray-500 hidden'>Example data loaded</span>
+</p>
+
+<script>
+    import { getElements } from './common';
+    const elements = getElements().devExampleData;
+
+    elements.load.addEventListener('click', () => {
+        const numberEntries = Number.parseInt(elements.numberEntries.value, 10);
+        window.dispatchEvent(
+            new CustomEvent('devExampleDataLoaded', {
+                detail: { numberEntries },
+            }),
+        );
+    });
+</script>

@@ -7,13 +7,14 @@ import NeedToLogin from '../common/NeedToLogin.astro';
 interface Props {
     title: string;
     groupsResult: GetGroupsAndCurrentGroupResult;
+    noToast?: boolean;
 }
 
-const { title, groupsResult } = Astro.props;
+const { title, groupsResult, noToast } = Astro.props;
 const { pathname, search } = Astro.url;
 ---
 
-<BaseLayout title={title}>
+<BaseLayout title={title} noToast={noToast}>
     {
         groupsResult.match(
             ({ currentGroup: group, groupsOfUser }) => (
@@ -23,7 +24,6 @@ const { pathname, search } = Astro.url;
                         selectedGroupId={group.groupId}
                         pathname={pathname}
                         search={search}
-                        client:load
                     />
                     <h1 class='title'>{title}</h1>
                     <slot />

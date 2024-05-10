@@ -1,5 +1,5 @@
 ---
-import { RevisionForm } from '../../../../components/Submission/RevisionForm';
+import RevisionForm from '../../../../components/Submission/RevisionForm.astro';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { getRuntimeConfig } from '../../../../config';
 import { getAccessToken } from '../../../../utils/getAccessToken';
@@ -11,7 +11,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
 const clientConfig = getRuntimeConfig().public;
 ---
 
-<SubmissionPageWrapper title='Revise sequences' groupsResult={groupsResult}>
+<SubmissionPageWrapper title='Revise sequences' groupsResult={groupsResult} noToast>
     {
         groupsResult.match(
             ({ currentGroup: group }) => (
@@ -20,7 +20,6 @@ const clientConfig = getRuntimeConfig().public;
                     organism={organism}
                     clientConfig={clientConfig}
                     group={group}
-                    client:load
                 />
             ),
             () => undefined,

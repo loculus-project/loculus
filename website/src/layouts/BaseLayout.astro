@@ -15,9 +15,10 @@ const { name: websiteName, logo, bannerMessage, additionalHeadHTML } = websiteCo
 interface Props {
     title: string;
     implicitOrganism?: string;
+    noToast?: boolean;
 }
 
-const { title, implicitOrganism } = Astro.props;
+const { title, implicitOrganism, noToast = false } = Astro.props;
 ---
 
 <html lang='en'>
@@ -33,7 +34,7 @@ const { title, implicitOrganism } = Astro.props;
     <body>
         <Banner message={bannerMessage} />
         <div class='flex flex-col min-h-screen w-11/12 mx-auto'>
-            <ToastContainer client:load />
+            {!noToast && <ToastContainer client:load />}
             <header class='bg-white h-fit'>
                 <nav class='flex justify-between items-center p-4'>
                     <div class='flex justify-start'>
