@@ -26,6 +26,13 @@ spec:
         - name: ingest-{{ $key }}
           image: {{ $value.ingest.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "500Mi"
+              cpu: "100m"
+            limits:
+              memory: "10Gi"
+              cpu: "1000m"
           env:
             - name: KEYCLOAK_INGEST_PASSWORD
               valueFrom:
