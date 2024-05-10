@@ -1,4 +1,6 @@
-FROM node:lts-alpine as base
+ARG NODE_VERSION=22
+FROM node:${NODE_VERSION}-alpine as base
+
 WORKDIR /app
 
 COPY .env.docker .env
