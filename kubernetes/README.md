@@ -32,7 +32,6 @@ helm install loculus kubernetes/loculus -f my-values.yaml
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
-
 ### Setup for local development
 
 #### TLDR
@@ -126,9 +125,43 @@ The preview is intended to simulate the full backend and associated containers. 
 
 We do not currently support branch names containing underscores and other characters that can't go in domain names.
 
-### Secrets
+## Secrets
 
 For preview instances this repo contains [sealed secrets](https://sealed-secrets.netlify.app/) that allow the loculus-bot to access the GitHub container registry and (separately) the GitHub repository. These are encrypted such that they can only be decrypted on our cluster but are cluster-wide so can be used in any namespace.
+
+## Setting up kubeconfig locally to access the remote cluster
+
+To access the remote cluster without `ssh`ing to the containing machine, you need to set up your `kubeconfig` file.
+
+You can get the `kubeconfig` file from the server by sshing to the server and running:
+
+```shell
+sudo kubectl config view --raw
+```
+
+You need to add each of the clusters, users, and contexts to your local `~/.kube/config` file. You can change the `user`/`cluster`/`context` `name`s, but the `context` must contain the correct `user` and `cluster` names.
+
+The key information to add are the `client-certificate-data` and `client-certificate-data` for the user, and `certificate-authority-data` and `server` for the cluster.
+
+You can then switch between contexts, first listing them with:
+
+```shell
+kubectl config get-contexts
+```
+
+And then switching with:
+
+```shell
+kubectl config use-context [context_name]
+```
+
+You can confirm that you are connected to the correct cluster with:
+
+```shell
+kubectl cluster-info
+```
+
+See [kubeconfig docs](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/) for more information.
 
 ## Tips
 
