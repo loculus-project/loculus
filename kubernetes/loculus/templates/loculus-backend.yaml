@@ -28,10 +28,10 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
-              memory: "100Mi"
+              memory: "640Mi"
               cpu: "100m"
             limits:
-              memory: "500Mi"
+              memory: "1Gi" # Backend requires at least 635741K of memory
               cpu: "1000m"
           livenessProbe:
             httpGet:
