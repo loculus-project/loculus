@@ -1,3 +1,10 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: compression-middleware
+spec:
+  compress: {}
+---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
 {{- $keycloakHost := printf "authentication-%s" .Values.host }}
@@ -6,6 +13,8 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-website-ingress
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: compression-middleware@kubernetescrd
 spec:
   rules:
     - host: "{{ .Values.host }}"
