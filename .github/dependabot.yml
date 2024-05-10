@@ -43,3 +43,57 @@ updates:
           update-types:
             - "minor"
             - "patch"
+  - package-ecosystem: docker
+    directory: keycloak/keycloakify
+    schedule:
+      interval: weekly
+    groups:
+      minorAndPatch:
+          update-types:
+            - "minor"
+            - "patch"
+  - package-ecosystem: docker
+    directory: backend/
+    schedule:
+      interval: weekly
+    groups:
+      minorAndPatch:
+          update-types:
+            - "minor"
+            - "patch"
+  - package-ecosystem: docker
+    directory: website/
+    schedule:
+      interval: weekly
+    groups:
+      minorAndPatch:
+          update-types:
+            - "minor"
+            - "patch"
+  - package-ecosystem: docker
+    directory: ingest/
+    schedule:
+      interval: weekly
+    groups:
+      minorAndPatch:
+          update-types:
+            - "minor"
+            - "patch"
+  - package-ecosystem: docker
+    directory: preprocessing/
+    schedule:
+      interval: weekly
+    groups:
+      minorAndPatch:
+          update-types:
+            - "minor"
+            - "patch"
+  - package-ecosystem: docker
+    directory: kubernetes/
+    schedule:
+      interval: weekly
+    groups:
+      minorAndPatch:
+          update-types:
+            - "minor"
+            - "patch"
