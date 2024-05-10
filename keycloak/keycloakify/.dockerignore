@@ -5,6 +5,8 @@ dist
 dist_keycloak
 .devcontainer
 .gitignore
+Dockerfile
+.dockerignore
 
 # Logs
 logs
