@@ -165,6 +165,8 @@ See [kubeconfig docs](https://kubernetes.io/docs/concepts/configuration/organize
 
 ## Tips
 
+You can find frequently used `kubectl` commands in the [KUBECTL_FAQ.md](./KUBECTL_FAQ.md) file.
+
 ### Debugging failed deployments with kubectl
 
 If a deployment fails, you can use `kubectl` to get more information. For example, to see the status of the pods:
