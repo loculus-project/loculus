@@ -34,6 +34,12 @@ spec:
         - name: preprocessing-{{ $organism }}
           image: {{ $processingConfig.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "40Mi"
+              cpu: "10m"
+            limits:
+              memory: "1Gi"
           env:
             - name: KEYCLOAK_PASSWORD
               valueFrom:
