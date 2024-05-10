@@ -42,10 +42,10 @@ spec:
           image: quay.io/keycloak/keycloak:23.0
           resources:
             requests:
-              memory: "200Mi"
+              memory: "500Mi"
               cpu: "20m"
             limits:
-              memory: "500Mi"
+              memory: "1000Mi"
               cpu: "200m"
           env:
             - name: DB_ADDR
@@ -94,6 +94,9 @@ spec:
               value: "{{ include "keycloakUrl" . }}"
             - name: KC_FEATURES
               value: "declarative-user-profile"
+            # see https://github.com/keycloak/keycloak/blob/77b58275ca06d1cbe430c51db74479a7e1b409b5/quarkus/dist/src/main/content/bin/kc.sh#L95-L150
+            - name: KC_RUN_IN_CONTAINER
+              value: "true"
           args:
             - "start"
             - "--import-realm"
