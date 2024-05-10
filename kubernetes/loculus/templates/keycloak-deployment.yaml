@@ -42,10 +42,10 @@ spec:
           image: quay.io/keycloak/keycloak:23.0
           resources:
           requests:
-            memory: "400Mi"
+            memory: "200Mi"
             cpu: "20m"
           limits:
-            memory: "1Gi"
+            memory: "500Mi"
             cpu: "200m"
           env:
             - name: DB_ADDR
