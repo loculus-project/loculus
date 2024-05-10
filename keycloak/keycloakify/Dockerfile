@@ -1,6 +1,7 @@
-ARG KEYCLOAK_ORCID_VERSION=1.3.0
 ARG NODE_VERSION=22
 FROM node:${NODE_VERSION}-bookworm as builder
+
+ARG KEYCLOAK_ORCID_VERSION=1.3.0
 
 USER root
 RUN apt-get update && apt-get install -y maven
