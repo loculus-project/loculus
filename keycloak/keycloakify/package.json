@@ -8,10 +8,11 @@
   },
   "type": "module",
   "scripts": {
-    "start": "copy-keycloak-resources-to-public && react-scripts start",
-    "storybook": "copy-keycloak-resources-to-public && storybook dev -p 6006",
-    "build": "react-scripts build && rimraf build/keycloak-resources",
-    "build-keycloak-theme": "yarn build && keycloakify"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "build-keycloak-theme": "yarn build && keycloakify",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "author": "u/garronej",
   "license": "MIT",
