@@ -1,4 +1,4 @@
-FROM node:21-bookworm as builder
+FROM node:22-bookworm as builder
 
 USER root
 RUN apt-get update && apt-get install -y maven
@@ -17,6 +17,6 @@ FROM alpine:3.19
 RUN mkdir /output
 COPY --from=builder /app/dist_keycloak/target/*.jar /output/
 RUN apk add --no-cache wget curl
-RUN wget -P /output https://github.com/eosc-kc/keycloak-orcid/releases/download/1.2.0/keycloak-orcid-1.2.0.jar
+RUN wget -P /output https://github.com/eosc-kc/keycloak-orcid/releases/download/1.3.0/keycloak-orcid-1.3.0.jar
 RUN ls -l /output
 CMD sh -c 'cp /output/*.jar /destination/'
