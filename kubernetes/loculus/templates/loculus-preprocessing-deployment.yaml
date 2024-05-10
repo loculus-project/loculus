@@ -35,12 +35,12 @@ spec:
           image: {{ $processingConfig.image}}:{{ $dockerTag }}
           imagePullPolicy: Always
           resources:
-          requests:
-            memory: "40Mi"
-            cpu: "10m"
-          limits:
-            memory: "200Mi"
-            cpu: "1000m"
+            requests:
+              memory: "40Mi"
+              cpu: "10m"
+            limits:
+              memory: "200Mi"
+              cpu: "1000m"
           env:
             - name: KEYCLOAK_PASSWORD
               valueFrom:
