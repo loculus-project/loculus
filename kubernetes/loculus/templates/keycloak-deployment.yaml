@@ -40,6 +40,13 @@ spec:
         - name: keycloak
           # TODO #1221
           image: quay.io/keycloak/keycloak:23.0
+          resources:
+          requests:
+            memory: "400Mi"
+            cpu: "20m"
+          limits:
+            memory: "1Gi"
+            cpu: "200m"
           env:
             - name: DB_ADDR
               valueFrom:
