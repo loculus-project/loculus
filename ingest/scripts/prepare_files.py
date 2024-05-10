@@ -58,7 +58,11 @@ def main(
 
     for fasta_id in to_submit:
         metadata_submit.append(metadata[fasta_id])
-        sequences_submit[fasta_id] = sequences[fasta_id]
+        nucleotideSequences = ["S", "M", "L"]
+        for nucleotideSequence in nucleotideSequences:
+            segmented_fasta_id = fasta_id + '_' + nucleotideSequence
+            if segmented_fasta_id in sequences:
+                sequences_submit[segmented_fasta_id] = sequences[segmented_fasta_id]
     
     for fasta_id, loculus_accession in to_revise.items():
         revise_record = metadata[fasta_id]

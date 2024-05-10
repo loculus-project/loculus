@@ -17,21 +17,31 @@ CLI_TYPES = [str, int, float, bool]
 
 @dataclass
 class Config:
-    backend_host: str = "http://127.0.0.1:8079/ebola-zaire"
+    backend_host: str = "http://127.0.0.1:8079/cchf"
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
-    nextclade_dataset_name: str = "nextstrain/mpox/all-clades"
+    nextclade_dataset_name: str = "nextstrain/cchf/all-lineages"
     nextclade_dataset_tag: str | None = None
     nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
     config_file: str | None = None
     log_level: str = "DEBUG"
-    genes: list[str] = dataclasses.field(default_factory=list)
-    keep_tmp_dir: bool = False
+    genes: list[str] = dataclasses.field(default_factory=lambda: ["RdRp", "GPC", "NP"])
+    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["M", "S", "L"])
+    keep_tmp_dir: bool = True
     reference_length: int = 197209
     batch_size: int = 5
-    processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
+    processing_spec: dict[str, dict[str, Any]] = dataclasses.field(
+        default_factory=lambda: {
+            "collection_date": {
+                "function": "process_date",
+                "inputs": {"date": "collection_date", "release_date": "ncbi_release_date"},
+                "required": "true",
+            },
+            "country": {"function": "identity", "inputs": {"input": "country"}, "required": "true"},
+        }
+    )
     pipeline_version: int = 1
 
 

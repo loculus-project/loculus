@@ -38,7 +38,8 @@ This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It re
 
    ```bash
    mamba activate loculus-nextclade
-   python main.py
+   pip install -e .
+   prepro
    ```
 
 ### Docker

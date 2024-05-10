@@ -1,0 +1,3 @@
+##gff-version 3
+##sequence-region NC_005301.3 1 12108
+NC_005301.3	feature	gene	77	11914	.	+	.	gene_name="RdRp"

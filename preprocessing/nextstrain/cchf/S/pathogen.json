@@ -1,0 +1,12 @@
+{
+  "files": {
+    "reference": "reference_S.fasta",
+    "pathogenJson": "pathogen.json",
+    "genomeAnnotation": "genome_annotation.gff3",
+    "treeJson": "CCHF_notreeknit_S.json",
+    "examples": "sequences_S.fasta",
+    "readme": "README.md",
+    "changelog": "CHANGELOG.md"
+  },
+  "schemaVersion": "3.0.0"
+}

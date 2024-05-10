@@ -1,0 +1,3 @@
+##gff-version 3
+##sequence-region NC_005300.2 1 5366
+NC_005300.2	feature	gene	93	5147	.	+	.	gene_name="GPC"
