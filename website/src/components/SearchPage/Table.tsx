@@ -24,6 +24,7 @@ type TableProps = {
     classOfSearchPage: ClassOfSearchPageType;
     groupId?: number;
     setPreviewedSeqId: (seqId: string | null) => void;
+    previewedSeqId: string | null;
 };
 
 export const Table: FC<TableProps> = ({
@@ -38,6 +39,7 @@ export const Table: FC<TableProps> = ({
     classOfSearchPage,
     groupId,
     setPreviewedSeqId,
+    previewedSeqId,
 }) => {
     const primaryKey = schema.primaryKey;
 
@@ -130,11 +132,16 @@ export const Table: FC<TableProps> = ({
                     </thead>
                     <tbody className='bg-white'>
                         {data.map((row, index) => (
-                            <tr key={index} className='hover:bg-primary-100 border-gray-100 '>
+                            <tr
+                                key={index}
+                                className={`hover:bg-primary-100 border-gray-100 ${
+                                    row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
+                                } `}
+                            >
                                 <td className='px-2  whitespace-nowrap    text-primary-900 pl-6'>
                                     <a
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
-                                        className='text-primary-900 hover:text-primary-800'
+                                        className='text-primary-900 hover:text-primary-800 hover:no-underline'
                                         onClick={(e) => {
                                             function detectMob() {
                                                 const toMatch = [
@@ -159,7 +166,8 @@ export const Table: FC<TableProps> = ({
                                             }
                                         }}
                                     >
-                                        {row[primaryKey]}
+                                        {' '}
+                                        {row[primaryKey]}{' '}
                                     </a>
                                 </td>
                                 {columns.map((c) => (

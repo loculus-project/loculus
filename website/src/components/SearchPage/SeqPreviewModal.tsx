@@ -7,10 +7,13 @@ import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
+import MaterialSymbolsLightWidthFull from '~icons/material-symbols-light/width-full';
+import MdiDockBottom from '~icons/mdi/dock-bottom';
 import OouiNewWindowLtr from '~icons/ooui/new-window-ltr';
 
 const BUTTONCLASS =
     'inline-flex justify-center px-4 py-2 text-sm font-medium text-gray-900 border border-transparent rounded-md hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500';
+
 interface SeqPreviewModalProps {
     seqId: string;
     accessToken?: string;
@@ -18,6 +21,8 @@ interface SeqPreviewModalProps {
     onClose: () => void;
     referenceGenomeSequenceNames: ReferenceGenomesSequenceNames;
     myGroups: Group[];
+    isHalfScreen?: boolean;
+    setIsHalfScreen: (isHalfScreen: boolean) => void;
 }
 
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
@@ -27,6 +32,8 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     onClose,
     referenceGenomeSequenceNames,
     myGroups,
+    isHalfScreen = false,
+    setIsHalfScreen,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<any | null>(null);
@@ -43,54 +50,72 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         }
     }, [accessToken, seqId]);
 
+    const content = (
+        <div
+            className={`mt-4 text-gray-700 overflow-y-auto ${isHalfScreen ? 'h-[calc(50vh-9rem)]' : 'h-[calc(100vh-9rem)]'}`}
+        >
+            {isLoading ? (
+                <div>Loading...</div>
+            ) : data !== null && !isError ? (
+                <SequenceDataUI
+                    {...data}
+                    referenceGenomeSequenceNames={referenceGenomeSequenceNames}
+                    myGroups={myGroups}
+                    accessToken={accessToken}
+                />
+            ) : (
+                <div>Failed to load sequence data</div>
+            )}
+        </div>
+    );
+
+    const controls = (
+        <div className='flex justify-between items-center'>
+            <div className='text-xl font-medium leading-6 text-primary-700 pl-6'>{seqId}</div>
+            <div>
+                <button
+                    type='button'
+                    className={BUTTONCLASS}
+                    onClick={() => setIsHalfScreen(!isHalfScreen)}
+                    title={isHalfScreen ? 'Expand sequence details view' : 'Dock sequence details view'}
+                >
+                    {isHalfScreen ? (
+                        <MaterialSymbolsLightWidthFull className='w-6 h-6' />
+                    ) : (
+                        <MdiDockBottom className='w-6 h-6' />
+                    )}
+                </button>
+                <a href={routes.sequencesFastaPage(seqId, true)} className={BUTTONCLASS}>
+                    <IcBaselineDownload className='w-6 h-6' />
+                </a>
+                <a href={routes.sequencesDetailsPage(seqId)} title='Open in full window' className={BUTTONCLASS}>
+                    <OouiNewWindowLtr className='w-6 h-6' />
+                </a>
+                <button type='button' className={BUTTONCLASS} onClick={onClose} title='Close'>
+                    <MaterialSymbolsClose className='w-6 h-6' />
+                </button>
+            </div>
+        </div>
+    );
+
     return (
-        <Transition appear show={isOpen}>
-            <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={onClose}>
-                <div className='min-h-screen px-8 text-center'>
-                    <Dialog.Overlay className='fixed inset-0 bg-black opacity-30' />
-
-                    <div className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
-                        <div className='flex justify-between items-center'>
-                            <Dialog.Title as='h3' className='text-xl font-medium leading-6 text-primary-700 pl-6'>
-                                {seqId}
-                            </Dialog.Title>
-                            <div>
-                                <a href={routes.sequencesFastaPage(seqId, true)} className={BUTTONCLASS}>
-                                    <IcBaselineDownload className='w-6 h-6' />
-                                </a>
-                                <a
-                                    href={routes.sequencesDetailsPage(seqId)}
-                                    title='Open in full window'
-                                    className={BUTTONCLASS}
-                                >
-                                    <OouiNewWindowLtr className='w-6 h-6' />
-                                </a>
-
-                                <button type='button' className={BUTTONCLASS} onClick={onClose} title='Close'>
-                                    <MaterialSymbolsClose className='w-6 h-6' />
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className='mt-4 text-gray-700 overflow-y-auto h-[calc(100vh-150px)]'>
-                            {isLoading ? (
-                                <div>Loading...</div>
-                            ) : data !== null && !isError ? (
-                                <div className=''>
-                                    <SequenceDataUI
-                                        {...data}
-                                        referenceGenomeSequenceNames={referenceGenomeSequenceNames}
-                                        myGroups={myGroups}
-                                        accessToken={accessToken}
-                                    />
-                                </div>
-                            ) : (
-                                <div>Failed to load sequence data</div>
-                            )}
+        <Transition appear show={isOpen} as={React.Fragment}>
+            {isHalfScreen ? (
+                <div className='fixed bottom-0 w-full left-0 z-10 bg-white p-6 border-t border-gray-400'>
+                    {controls}
+                    {content}
+                </div>
+            ) : (
+                <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={onClose}>
+                    <div className='min-h-screen px-8 text-center'>
+                        <Dialog.Overlay className='fixed inset-0 bg-black opacity-30' />
+                        <div className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
+                            {controls}
+                            {content}
                         </div>
                     </div>
-                </div>
-            </Dialog>
+                </Dialog>
+            )}
         </Transition>
     );
 };
