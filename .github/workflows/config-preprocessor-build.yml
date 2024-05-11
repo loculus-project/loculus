@@ -8,14 +8,14 @@ on:
         type: boolean
         description: "Build for ARM as well"
         default: false
-        required: false
+        required: true
   workflow_call:
     inputs:
       build_arm:
-        type: boolean
+        type: string
         description: "Build for ARM as well"
-        default: false
-        required: false
+        default: "false"
+        required: true
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/config-processor

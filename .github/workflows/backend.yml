@@ -12,14 +12,14 @@ on:
   workflow_call:
     inputs:
       build_arm:
-        type: boolean
+        type: string
         description: "Build for ARM as well"
-        default: false
-        required: false
+        default: "false"
+        required: true
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/backend
-  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }}
+  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm == 'true'}}
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend
@@ -55,8 +55,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
             type=sha,prefix=commit-
-            type=raw,value=${{ github.ref == 'refs/heads/main' && 'main' || github.ref }}-arm,enable=${{ env.BUILD_ARM }}
-
+            type=raw,value=${{ github.ref == 'refs/heads/main' && 'main' || github.ref }}-arm,enable=${{ env.BUILD_ARM == true || env.BUILD_ARM == 'true'}}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
