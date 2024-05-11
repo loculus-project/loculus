@@ -1,7 +1,6 @@
 # Trigger a build of all docker images including ARM images
 
 on:
-  push:
   workflow_dispatch:
 
 permissions:
