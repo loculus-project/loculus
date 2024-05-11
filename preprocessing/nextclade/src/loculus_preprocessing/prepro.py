@@ -109,6 +109,7 @@ def enrich_with_nextclade(
             f"--output-all={result_dir}",
             f"--input-dataset={dataset_dir}",
             f"--output-translations={result_dir}/nextclade.cds_translation.{{cds}}.fasta",
+            "--jobs=1",
             "--",
             f"{input_file}",
         ]
