@@ -56,6 +56,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
             type=sha,prefix=commit-
+            type=raw,value=${{ github.ref == 'refs/heads/main' && 'main' || github.ref }}-arm,enable=${{ env.BUILD_ARM }}
       - name: Check if image exists
         id: check-image
         run: |
