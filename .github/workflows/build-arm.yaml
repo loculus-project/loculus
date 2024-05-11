@@ -1,6 +1,7 @@
 # Trigger a build of all docker images including ARM images
 
 on:
+  push:
   workflow_dispatch:
     inputs:
       build_arm:
@@ -9,38 +10,41 @@ on:
         default: true
         required: false
 
+env:
+  BUILD_ARM: ${{ github.event.inputs.build_arm || 'true' }}
+
 jobs:
   trigger-backend:
     uses: ./.github/workflows/backend.yml
     with:
-      build_arm: ${{ github.event.inputs.build_arm }}
+      build_arm: ${{ github.env.BUILD_ARM }}
 
   trigger-config-preprocessor:
     uses: ./.github/workflows/config-preprocessor-build.yml
     with:
-      build_arm: ${{ github.event.inputs.build_arm }}
+      build_arm: ${{ github.env.BUILD_ARM }}
 
   trigger-dummy-preprocessing:
     uses: ./.github/workflows/dummyPreprocessing.yml
     with:
-      build_arm: ${{ github.event.inputs.build_arm }}
+      build_arm: ${{ github.env.BUILD_ARM }}
 
   trigger-ingest:
     uses: ./.github/workflows/ingest.yml
     with:
-      build_arm: ${{ github.event.inputs.build_arm }}
+      build_arm: ${{ github.env.BUILD_ARM }}
 
   trigger-keycloakify:
     uses: ./.github/workflows/keycloakify-build.yml
     with:
-      build_arm: ${{ github.event.inputs.build_arm }}
+      build_arm: ${{ github.env.BUILD_ARM }}
 
   trigger-preprocessing-nextclade:
     uses: ./.github/workflows/preprocessing-nextclade.yml
     with:
-      build_arm: ${{ github.event.inputs.build_arm }}
+      build_arm: ${{ github.env.BUILD_ARM }}
 
   trigger-website:
     uses: ./.github/workflows/website.yml
     with:
-      build_arm: ${{ github.event.inputs.build_arm }}
+      build_arm: ${{ github.env.BUILD_ARM }}
