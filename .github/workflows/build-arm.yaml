@@ -11,7 +11,7 @@ on:
         required: false
 
 env:
-  BUILD_ARM: ${{ github.event.inputs.build_arm || 'true' }}
+  BUILD_ARM: "true"
 
 jobs:
   trigger-backend:
