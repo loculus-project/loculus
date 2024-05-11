@@ -53,43 +53,16 @@ updates:
             - "minor"
             - "patch"
   - package-ecosystem: docker
-    directory: backend/
-    schedule:
-      interval: weekly
-    groups:
-      minorAndPatch:
-          update-types:
-            - "minor"
-            - "patch"
-  - package-ecosystem: docker
-    directory: website/
-    schedule:
-      interval: weekly
-    groups:
-      minorAndPatch:
-          update-types:
-            - "minor"
-            - "patch"
-  - package-ecosystem: docker
-    directory: ingest/
-    schedule:
-      interval: weekly
-    groups:
-      minorAndPatch:
-          update-types:
-            - "minor"
-            - "patch"
-  - package-ecosystem: docker
-    directory: preprocessing/
-    schedule:
-      interval: weekly
-    groups:
-      minorAndPatch:
-          update-types:
-            - "minor"
-            - "patch"
-  - package-ecosystem: docker
-    directory: kubernetes/
+    directories:
+      - website
+      - backend
+      - keycloak/keycloakify
+      - preprocessing/nextclade
+      - preprocessing/dummy
+      - ingest
+      - kubernetes/config-processor
+      - kubernetes/loculus
+      - kubernetes/loculus/templates
     schedule:
       interval: weekly
     groups:
