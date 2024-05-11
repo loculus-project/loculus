@@ -1,8 +1,18 @@
-name: preprocessing-nextclade
+name: preprocessing-nextclade-image
 
 on:
+  pull_request:
   push:
+    branches:
+      - main
   workflow_dispatch:
+    inputs:
+      build_arm:
+        type: boolean
+        description: "Build for ARM as well"
+        default: false
+        required: false
+  workflow_call:
     inputs:
       build_arm:
         type: boolean
@@ -12,14 +22,15 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-nextclade
-  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }}
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-nextclade
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-nextclade-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
 
 jobs:
-  dockerImage:
+  preprocessing-nextclade-image:
     name: Build preprocessing-nextclade Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -33,8 +44,8 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/nextclade/**', '.github/workflows/preprocessing-nextclade.yml') }})
-          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
+          DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/nextclade/**', '.github/workflows/preprocessing-nextclade-image.yml') }})
+          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
         id: dockerMetadata
@@ -46,6 +57,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
             type=sha,prefix=commit-
+            type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -72,7 +84,7 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=nextclade-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=nextclade-${{ github.ref }}
-          platforms: ${{ env.BUILD_ARM && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
 
       - name: Retag and push existing image if cache hit
         if: env.CACHE_HIT == 'true'

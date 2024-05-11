@@ -1,29 +1,40 @@
-name: config-processor-build
+name: config-processor-image
 
 on:
+  pull_request:
   push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       build_arm:
         type: boolean
         description: "Build for ARM as well"
         default: false
-        required: false
+        required: true
+  workflow_call:
+    inputs:
+      build_arm:
+        type: string
+        description: "Build for ARM as well"
+        default: "false"
+        required: true
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/config-processor
-  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }} # When to build for arm as well
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
 
 defaults:
   run:
     working-directory: ./kubernetes/config-processor
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-config-processor
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-config-processor-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
 
 jobs:
-  dockerImage:
+  config-processor-image:
     name: Build config-processor Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -50,6 +61,7 @@ jobs:
             type=ref,event=branch
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=sha,prefix=commit-
+            type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
       - name: Build and push image
         uses: docker/build-push-action@v5
         with:
@@ -58,4 +70,4 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=config-preprocessor-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=config-preprocessor-${{ github.ref }}
-          platforms: ${{ env.BUILD_ARM && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}

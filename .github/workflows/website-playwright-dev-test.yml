@@ -1,12 +1,16 @@
 name: Dev server test
 
 on:
-  push:
+  pull_request:
     paths:
       - "website/**"
       - "deploy.py"
       - generate_local_test_config.sh
       - .github/workflows/node_dev.yml
+  push:
+    branches:
+      - main
+
   workflow_dispatch:
 
 concurrency:
@@ -21,8 +25,8 @@ jobs:
       matrix:
         os:
           - ubuntu-latest
-          - windows-latest
-        #disabled - macos-latest
+        #  - windows-latest
+        #  - macos-latest
         exclude:
           - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
 

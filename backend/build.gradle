@@ -79,3 +79,11 @@ tasks.named('bootBuildImage') {
     // https://paketo.io/docs/howto/configuration/
     environment["BPE_SPRING_PROFILES_ACTIVE"] = "docker"
 }
+
+tasks.named("jar") {
+    enabled = false // prevent to generate plain jar
+}
+tasks.named("bootJar") {
+    enabled = true
+    archiveVersion.set("")
+}

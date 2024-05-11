@@ -1,7 +1,10 @@
-name: keycloakify-build
+name: keycloakify-image
 
 on:
+  pull_request:
   push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       build_arm:
@@ -9,17 +12,24 @@ on:
         description: "Build for ARM as well"
         default: false
         required: false
-
+  workflow_call:
+    inputs:
+      build_arm:
+        type: boolean
+        description: "Build for ARM as well"
+        default: false
+        required: false
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/keycloakify
-  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }} # When to build for arm as well
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+  BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-build
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-buil-${{github.event.inputs.build_arm}}d
   cancel-in-progress: true
 
 jobs:
-  dockerImage:
+  keycloakify-image:
     name: Build keycloakify Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -38,8 +48,8 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('./keycloak/keycloakify/**','.github/workflows/keycloakify-build.yml') }})
-          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
+          DIR_HASH=$(echo -n ${{ hashFiles('./keycloak/keycloakify/**','.github/workflows/keycloakify-image.yml') }})
+          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata
         uses: docker/metadata-action@v5
@@ -50,6 +60,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
             type=sha,prefix=commit-
+            type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
       - name: Check if image exists
         id: check-image
         run: |
@@ -71,7 +82,7 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=keycloakify-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=keycloakify-${{ github.ref }}
-          platforms: ${{ env.BUILD_ARM && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           build-args: NODE_VERSION=${{ env.NODE_VERSION }}
       - name: Tag and push image if cache hit
         if: env.CACHE_HIT == 'true'
