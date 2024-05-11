@@ -1,6 +1,7 @@
 name: keycloakify-test
 
 on:
+  workflow_dispatch:
   pull_request:
     paths:
       - "keycloak/keycloakify/**"
@@ -14,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  keycloakify-test:
     name: Test keycloakify local builds
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -36,6 +37,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: keycloak/keycloakify/.nvmrc
+          cache-dependency-path: keycloak/keycloakify/yarn.lock
           cache: "yarn" # uses the system node, which was updated prior.
       - name: Install dependencies
         run: yarn install --immutable
