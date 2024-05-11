@@ -19,7 +19,7 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-dummy
-  BUILD_ARM: ${{ (github.event.inputs.build_arm || github.ref == 'refs/heads/main')  && 'true' || 'false' }}
+  BUILD_ARM: ${{ github.event.inputs.build_arm || github.inputs.build_arm || github.ref == 'refs/heads/main' }}
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-dumm-${{github.event.inputs.build_arm}}y
