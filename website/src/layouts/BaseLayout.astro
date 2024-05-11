@@ -8,6 +8,7 @@ import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
 import 'react-toastify/dist/ReactToastify.css';
 import { navigationItems } from '../routes/navigationItems';
+import { ViewTransitions } from 'astro:transitions';
 
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, logo, bannerMessage, additionalHeadHTML } = websiteConfig;
@@ -22,6 +23,7 @@ const { title, implicitOrganism } = Astro.props;
 
 <html lang='en'>
     <head>
+<ViewTransitions />
         <meta charset='utf-8' />
         <link rel='icon' type='image/svg+xml' href='/favicon.svg' />
         <link rel='preload' as='image' href='/favicon.svg' />
@@ -31,6 +33,7 @@ const { title, implicitOrganism } = Astro.props;
         <Fragment set:html={additionalHeadHTML} />
     </head>
     <body>
+
         <Banner message={bannerMessage} />
         <div class='flex flex-col min-h-screen w-11/12 mx-auto'>
             <ToastContainer client:load />
