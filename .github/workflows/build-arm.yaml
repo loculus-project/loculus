@@ -13,6 +13,11 @@ on:
 env:
   BUILD_ARM: "true"
 
+permissions:
+  contents: read
+  packages: write
+  checks: read
+
 jobs:
   trigger-backend:
     uses: ./.github/workflows/backend.yml
