@@ -1,5 +1,4 @@
-name: website
-
+name: ingest-image
 on:
   pull_request:
   push:
@@ -19,18 +18,19 @@ on:
         description: "Build for ARM as well"
         default: false
         required: false
+
 env:
-  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/website
+  DOCKER_IMAGE_NAME: ghcr.io/loculus-project/ingest
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website-${{github.event.inputs.build_arm}}
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-ingest-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
 
 jobs:
-  website-docker:
-    name: Build Website Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
+  ingest-image:
+    name: Build ingest Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -43,8 +43,8 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('website/**', '.github/workflows/website.yml') }})
-          echo "DIR_HASH=$NON_ARM_HASH" >> $GITHUB_ENV
+          DIR_HASH=$(echo -n ${{ hashFiles('ingest/**', '.github/workflows/ingest-image.yml') }})
+          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
         id: dockerMetadata
@@ -74,23 +74,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Get node version build arg
-        if: env.CACHE_HIT == 'false'
-        run: |
-          NODE_VERSION=$(cat website/.nvmrc | tr -cd [:digit:].)
-          echo "NODE_VERSION=$NODE_VERSION" >> $GITHUB_ENV
-
-      - name: Build and push image
+      - name: Build and push image if input files changed
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v5
         with:
-          context: ./website
+          context: ./ingest
           push: true
           tags: ${{ steps.dockerMetadata.outputs.tags }}
-          cache-from: type=gha,scope=website-${{ github.ref }}
-          cache-to: type=gha,mode=max,scope=website-${{ github.ref }}
-          platforms: ${{ env.BUILD_ARM == 'true' == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
-          build-args: NODE_VERSION=${{ env.NODE_VERSION }}
+          cache-from: type=gha,scope=ingest-${{ github.ref }}
+          cache-to: type=gha,mode=max,scope=ingest-${{ github.ref }}
+          platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
 
       - name: Retag and push existing image if cache hit
         if: env.CACHE_HIT == 'true'

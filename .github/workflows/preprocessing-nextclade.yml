@@ -44,7 +44,7 @@ jobs:
       - name: Generate files hash
         id: files-hash
         run: |
-          DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/nextclade/**', '.github/workflows/preprocessing-nextclade.yml') }})
+          DIR_HASH=$(echo -n ${{ hashFiles('preprocessing/nextclade/**', '.github/workflows/preprocessing-nextclade-image.yml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
