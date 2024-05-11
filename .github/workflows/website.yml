@@ -19,7 +19,7 @@ on:
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/website
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-  BUILD_ARM: ${{ github.event.inputs.build_arm || github.inputs.build_arm || github.ref == 'refs/heads/main' }}
+  BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-website-${{github.event.inputs.build_arm}}
