@@ -2,18 +2,18 @@ import { Meta, StoryObj } from "@storybook/react";
 import { createPageStory } from "../createPageStory";
 
 const { PageStory } = createPageStory({
-  pageId: "login.ftl",
+  pageId: "register-user-profile.ftl",
 });
 
 const meta = {
-  title: "login/Login",
+  title: "login/RegisterUserProfile",
   component: PageStory,
 } satisfies Meta<typeof PageStory>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
+export const WithSocialProviders: Story = {
   render: () => (
     <PageStory
       kcContext={{
@@ -27,6 +27,17 @@ export const Default: Story = {
             },
           ],
         },
+      }}
+    />
+  ),
+};
+
+export const WithRecaptcha: Story = {
+  render: () => (
+    <PageStory
+      kcContext={{
+        recaptchaRequired: true,
+        recaptchaSiteKey: "your-site-key",
       }}
     />
   ),
