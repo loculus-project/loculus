@@ -8,7 +8,7 @@ To preview in the storybook:
 
 ```bash
 nvm use # use the correct node version
-yarn install --frozen-dependencies # install dependencies (it's like npm install)
+yarn install --immutable # install dependencies (it's like npm install)
 yarn storybook
 ```
 
