@@ -44,6 +44,15 @@ updates:
             - "minor"
             - "patch"
   - package-ecosystem: docker
+    directory: website
+    schedule:
+      interval: weekly
+    groups:
+      minorAndPatch:
+          update-types:
+            - "minor"
+            - "patch"
+  - package-ecosystem: docker
     directories:
       - website
       - backend
