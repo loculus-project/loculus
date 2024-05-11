@@ -2,7 +2,7 @@ name: E2E test (on kubernetes)
 
 on:
   workflow_dispatch:
-  push:
+  pull_request:
     paths:
       - "backend/**"
       - "keycloak/**"
@@ -11,6 +11,9 @@ on:
       - "deploy.py"
       - ".github/scripts/**"
       - ".github/workflows/**"
+  push:
+    branches:
+      - main
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-e2e-k3d

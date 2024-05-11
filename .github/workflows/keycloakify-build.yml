@@ -1,7 +1,10 @@
-name: keycloakify-build
+name: keycloakify-image
 
 on:
+  pull_request:
   push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       build_arm:
@@ -26,7 +29,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  dockerImage:
+  keycloakify-image:
     name: Build keycloakify Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
     runs-on: ubuntu-latest
     timeout-minutes: 30
