@@ -44,7 +44,7 @@ jobs:
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('website/**', '.github/workflows/website.yml') }})
-          if [ ${{ env.BUILD_ARM }} ]; then
+          if [ ${{ env.BUILD_ARM }} == true ]; then
             echo "NON_ARM_HASH=$DIR_HASH" >> $GITHUB_ENV
             echo "DIR_HASH=$DIR_HASH-arm" >> $GITHUB_ENV
           else
