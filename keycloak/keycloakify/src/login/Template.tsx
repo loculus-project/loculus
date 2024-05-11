@@ -44,7 +44,7 @@ export default function Template(props: TemplateProps<KcContext, I18n>) {
   });
 
   useState(() => {
-    document.title = "Log in";
+    document.title = "Sign in";
   });
 
   if (!isReady) {
