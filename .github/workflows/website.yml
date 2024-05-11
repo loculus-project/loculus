@@ -44,12 +44,7 @@ jobs:
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('website/**', '.github/workflows/website.yml') }})
-          if [ ${{ env.BUILD_ARM }} == true ]; then
-            echo "NON_ARM_HASH=$DIR_HASH" >> $GITHUB_ENV
-            echo "DIR_HASH=$DIR_HASH-arm" >> $GITHUB_ENV
-          else
-            echo "DIR_HASH=$NON_ARM_HASH" >> $GITHUB_ENV
-          fi
+          echo "DIR_HASH=$NON_ARM_HASH" >> $GITHUB_ENV
 
       - name: Setup Docker metadata
         id: dockerMetadata
@@ -62,7 +57,6 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=commit-
             type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
-            type=raw,value=${{ env.NON_ARM_HASH }},enable=${{ env.BUILD_ARM }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
