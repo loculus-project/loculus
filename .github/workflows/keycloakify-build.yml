@@ -18,10 +18,10 @@ on:
         required: false
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/keycloakify
-  BUILD_ARM: "true"
+  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }}
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-build
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-buil-${{github.event.inputs.build_arm}}d
   cancel-in-progress: true
 
 jobs:

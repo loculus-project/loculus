@@ -19,14 +19,14 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/config-processor
-  BUILD_ARM: "true"
+  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm }}
 
 defaults:
   run:
     working-directory: ./kubernetes/config-processor
 
 concurrency:
-  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-config-processor
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-config-processor-${{github.event.inputs.build_arm}}
   cancel-in-progress: true
 
 jobs:
