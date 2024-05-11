@@ -9,7 +9,13 @@ on:
         description: "Build for ARM as well"
         default: false
         required: false
-
+  workflow_call:
+    inputs:
+      build_arm:
+        type: boolean
+        description: "Build for ARM as well"
+        default: false
+        required: false
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/website
   BUILD_ARM: "true"

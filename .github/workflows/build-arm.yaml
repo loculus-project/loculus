@@ -1,0 +1,46 @@
+# Trigger a build of all docker images including ARM images
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_arm:
+        type: boolean
+        description: "Build for ARM as well"
+        default: true
+        required: false
+
+jobs:
+  trigger-backend:
+    uses: ./.github/workflows/backend.yml
+    with:
+      build_arm: ${{ github.event.inputs.build_arm }}
+
+  trigger-config-preprocessor:
+    uses: ./.github/workflows/config-preprocessor-build.yml
+    with:
+      build_arm: ${{ github.event.inputs.build_arm }}
+
+  trigger-dummy-preprocessing:
+    uses: ./.github/workflows/dummyPreprocessing.yml
+    with:
+      build_arm: ${{ github.event.inputs.build_arm }}
+
+  trigger-ingest:
+    uses: ./.github/workflows/ingest.yml
+    with:
+      build_arm: ${{ github.event.inputs.build_arm }}
+
+  trigger-keycloakify:
+    uses: ./.github/workflows/keycloakify-build.yml
+    with:
+      build_arm: ${{ github.event.inputs.build_arm }}
+
+  trigger-preprocessing-nextclade:
+    uses: ./.github/workflows/preprocessing-nextclade.yml
+    with:
+      build_arm: ${{ github.event.inputs.build_arm }}
+
+  trigger-website:
+    uses: ./.github/workflows/website.yml
+    with:
+      build_arm: ${{ github.event.inputs.build_arm }}
