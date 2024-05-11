@@ -55,7 +55,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
             type=sha,prefix=commit-
-            type=raw,value=${{ github.ref == 'refs/heads/main' && 'main' || github.ref }}-arm,enable=${{ env.BUILD_ARM }}
+            type=raw,value=${{ github.head_ref || github.ref_name }}-arm,enable=${{ env.BUILD_ARM }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
