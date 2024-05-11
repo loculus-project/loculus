@@ -44,15 +44,6 @@ updates:
             - "minor"
             - "patch"
   - package-ecosystem: docker
-    directory: keycloak/keycloakify
-    schedule:
-      interval: weekly
-    groups:
-      minorAndPatch:
-          update-types:
-            - "minor"
-            - "patch"
-  - package-ecosystem: docker
     directories:
       - website
       - backend
