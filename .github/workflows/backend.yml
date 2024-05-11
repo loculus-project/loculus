@@ -19,7 +19,7 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/backend
-  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm == 'true' || github.event.inputs.build_arm == true}}
+  BUILD_ARM: ${{ github.ref == 'refs/heads/main' || github.event.inputs.build_arm == 'true' || github.event.inputs.build_arm == true && 'true' || 'false' }}
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend
