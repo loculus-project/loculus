@@ -67,4 +67,4 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=config-preprocessor-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=config-preprocessor-${{ github.ref }}
-          platforms: ${{ env.BUILD_ARM && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}

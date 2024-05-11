@@ -79,7 +79,7 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=keycloakify-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=keycloakify-${{ github.ref }}
-          platforms: ${{ env.BUILD_ARM && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           build-args: NODE_VERSION=${{ env.NODE_VERSION }}
       - name: Tag and push image if cache hit
         if: env.CACHE_HIT == 'true'
