@@ -19,6 +19,7 @@ on:
 
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-nextclade
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   BUILD_ARM: ${{ github.event.inputs.build_arm || github.inputs.build_arm || github.ref == 'refs/heads/main' }}
 
 concurrency:
@@ -53,7 +54,7 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=branch
             type=sha,prefix=commit-
-            type=raw,value=${{ github.ref == 'refs/heads/main' && 'main' || github.ref }}-arm,enable=${{ env.BUILD_ARM }}
+            type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
