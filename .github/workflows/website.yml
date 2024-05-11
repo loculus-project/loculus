@@ -1,7 +1,6 @@
 name: website
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       build_arm:
