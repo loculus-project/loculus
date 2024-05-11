@@ -1,0 +1,47 @@
+name: keycloakify-test
+
+on:
+  pull_request:
+    paths:
+      - "keycloak/keycloakify/**"
+      - ".github/workflows/keycloakify-test.yml"
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-test
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test keycloakify local builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: keycloak/keycloakify
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: keycloak/keycloakify/.nvmrc
+      - run: |
+          corepack enable &&
+          corepack install # use the in-repo yarn version
+      - name: Setup Yarn in Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: keycloak/keycloakify/.nvmrc
+          cache: "yarn" # uses the system node, which was updated prior.
+      - name: Install dependencies
+        run: yarn install --immutable
+      - name: Build
+        run: yarn build
+      - name: Build storybook
+        run: yarn build-storybook
+      - name: Build keycloak theme
+        run: yarn build-keycloak-theme
