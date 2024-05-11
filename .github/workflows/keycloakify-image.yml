@@ -49,7 +49,7 @@ jobs:
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('./keycloak/keycloakify/**','.github/workflows/keycloakify-image.yml') }})
-          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM && '-arm'|| '' }}" >> $GITHUB_ENV
+          echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
       - name: Setup Docker metadata
         id: dockerMetadata
         uses: docker/metadata-action@v5
