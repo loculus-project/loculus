@@ -12,7 +12,7 @@ export class SeqSetPage {
 
     public async gotoDetail(seqSetName: string = testSeqSet.name) {
         await this.gotoList();
-        await this.page.getByText(seqSetName).first().click();
+        await this.page.getByTestId(seqSetName).first().click();
         await this.page.waitForLoadState();
     }
 
