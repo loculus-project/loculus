@@ -37,9 +37,6 @@ jobs:
       ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
 
     steps:
-      - name: Collect Workflow Telemetry
-        uses: catchpoint/workflow-telemetry-action@v2
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
