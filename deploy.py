@@ -245,7 +245,8 @@ def install_secret_generator():
     print("Installing Kubernetes Secret Generator...")
     helm_install_command = [
         'helm', 'upgrade', '--install', 'kubernetes-secret-generator',
-        secret_generator_chart, '--set', 'secretLength=32', '--set', 'watchNamespace=""'
+        secret_generator_chart, '--set', 'secretLength=32', '--set', 'watchNamespace=""',
+        '--set', 'resources.limits.memory=400Mi', '--set', 'resources.requests.memory=200Mi'
     ]
     run_command(helm_install_command)
 
