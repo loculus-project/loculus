@@ -2,6 +2,12 @@ name: E2E test (on kubernetes)
 
 on:
   workflow_dispatch:
+    inputs:
+      all_browsers:
+        description: "Run tests on all browsers"
+        required: false
+        default: false
+        type: boolean
   pull_request:
     paths:
       - "backend/**"
@@ -31,7 +37,7 @@ jobs:
     timeout-minutes: 30
 
     env:
-      ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' && 'true' || 'false' }}
+      ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' || github.event.inputs.all_browsers && 'true' || 'false' }}
 
     steps:
       - name: Collect Workflow Telemetry
