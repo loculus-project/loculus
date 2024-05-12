@@ -53,21 +53,29 @@ export class ReviewPage {
         }
     }
 
-    public async waitForTotalSequencesFulfillPredicate(
-        predicate: (totalSequenceCount: number) => boolean,
+    public async waitForTotalSequenceCountCorrect(
+        expectedTotal: number,
+        comparator: 'less' | 'equal' = 'equal',
         retries: number = 10,
         delayInSeconds: number = 1,
     ) {
+        let currentTotal;
         for (let i = 0; i < retries; i++) {
             await new Promise((resolve) => setTimeout(resolve, delayInSeconds * 1000));
 
-            const { total: currentTotal } = await this.getReviewPageOverview();
-            if (predicate(currentTotal)) {
-                return true;
+            currentTotal = (await this.getReviewPageOverview()).total;
+            switch (comparator) {
+                case 'equal':
+                    if (currentTotal === expectedTotal) {
+                        return true;
+                    }
+                case 'less':
+                    if (currentTotal < expectedTotal) {
+                        return true;
+                    }
             }
         }
-
-        throw new Error(`Waiting for total count of sequences to match predicate, but total did not match predicate`);
+        throw new Error(`Sequence count ${currentTotal} not ${comparator} expected count ${expectedTotal}`);
     }
 
     public async approveAll() {
