@@ -1570,9 +1570,9 @@ secrets:
       siloImportJobPassword: ""
       backendUserPassword: ""
   keycloak-admin:
-    type: raw
+    type: autogen
     data:
-      initialAdminPassword: "admin"
+      initialAdminPassword: "dummy"
   orcid:
     type: raw
     data:
