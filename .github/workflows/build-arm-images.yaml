@@ -10,36 +10,36 @@ permissions:
 
 jobs:
   trigger-backend:
-    uses: ./.github/workflows/backend.yml
+    uses: ./.github/workflows/backend-image.yml
     with:
       build_arm: true
 
   trigger-config-preprocessor:
-    uses: ./.github/workflows/config-preprocessor-build.yml
+    uses: ./.github/workflows/config-preprocessor-image.yml
     with:
       build_arm: true
 
   trigger-dummy-preprocessing:
-    uses: ./.github/workflows/dummyPreprocessing.yml
+    uses: ./.github/workflows/preprocessing-dummy-image.yml
     with:
       build_arm: true
 
   trigger-ingest:
-    uses: ./.github/workflows/ingest.yml
+    uses: ./.github/workflows/ingest-image.yml
     with:
       build_arm: true
 
   trigger-keycloakify:
-    uses: ./.github/workflows/keycloakify-build.yml
+    uses: ./.github/workflows/keycloakify-image.yml
     with:
       build_arm: true
 
   trigger-preprocessing-nextclade:
-    uses: ./.github/workflows/preprocessing-nextclade.yml
+    uses: ./.github/workflows/preprocessing-nextclade-image.yml
     with:
       build_arm: true
 
   trigger-website:
-    uses: ./.github/workflows/website.yml
+    uses: ./.github/workflows/website-image.yml
     with:
       build_arm: true

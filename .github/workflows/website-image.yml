@@ -89,7 +89,7 @@ jobs:
           tags: ${{ steps.dockerMetadata.outputs.tags }}
           cache-from: type=gha,scope=website-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=website-${{ github.ref }}
-          platforms: ${{ env.BUILD_ARM == 'true' == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
+          platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
           build-args: NODE_VERSION=${{ env.NODE_VERSION }}
 
       - name: Retag and push existing image if cache hit
