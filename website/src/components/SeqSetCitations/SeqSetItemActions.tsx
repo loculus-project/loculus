@@ -1,4 +1,4 @@
-import { type FC, useState } from 'react';
+import { type FC, useState, useEffect } from 'react';
 
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
@@ -32,6 +32,11 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
@@ -51,13 +56,13 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
             <div className='flex-row items-center justify-between w-full'>
                 <div className='flex justify-start items-center pt-4 pb-8'>
                     <div className='pr-2'>
-                        <button className='btn' onClick={() => setExportModalVisible(true)}>
+                        <button className='btn' onClick={() => setExportModalVisible(true)} disabled={!isClient}>
                             Export
                         </button>
                     </div>
                     <div className='px-2'>
                         {isAdminView ? (
-                            <button className='btn' onClick={() => setEditModalVisible(true)}>
+                            <button className='btn' onClick={() => setEditModalVisible(true)} disabled={!isClient}>
                                 Edit
                             </button>
                         ) : null}
@@ -72,6 +77,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
                                         onConfirmation: handleDeleteSeqSet,
                                     })
                                 }
+                                disabled={!isClient}
                             >
                                 Delete
                             </button>

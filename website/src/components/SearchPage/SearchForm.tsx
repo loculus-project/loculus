@@ -1,7 +1,7 @@
 import CircularProgress from '@mui/material/CircularProgress';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { type FC, type FormEventHandler, useMemo, useState, useCallback } from 'react';
+import { type FC, type FormEventHandler, useMemo, useState, useCallback, useEffect } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
@@ -61,6 +61,10 @@ export const SearchForm: FC<SearchFormProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const handleFieldChange = useCallback(
         (metadataName: string, filter: string) => {
@@ -123,9 +127,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                 if (field.grouped === true) {
                     return (
                         <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
-                            <h3 className='text-gray-500 text-sm mb-1'>
-                                {field.displayName !== undefined ? field.displayName : field.label}
-                            </h3>
+                            <h3 className='text-gray-500 text-sm mb-1'>{field.displayName}</h3>
 
                             {field.groupedFields.map((groupedField) => (
                                 <SearchField
@@ -234,7 +236,7 @@ export const SearchForm: FC<SearchFormProps> = ({
                                 style={{ background: 'linear-gradient(to bottom, transparent, white)' }}
                             />
                             <div className='bg-white pb-2 pt-1.5'>
-                                <SearchButton isLoading={isLoading} />
+                                <SearchButton isLoading={isLoading} isClient={isClient} />
                             </div>
                         </div>
                     </form>
@@ -274,9 +276,11 @@ const SearchField: FC<AutoCompleteFieldProps> = (props) => {
     }
 };
 
-const SearchButton: FC<{ isLoading: boolean }> = ({ isLoading }) => (
+export const searchButtonText = 'Search sequences';
+
+const SearchButton: FC<{ isLoading: boolean; isClient: boolean }> = ({ isLoading }) => (
     <button className='outlineButton w-full' type='submit' disabled={isLoading}>
-        {isLoading ? <CircularProgress size={20} color='inherit' /> : 'Search sequences'}
+        {isLoading ? <CircularProgress size={20} color='inherit' /> : searchButtonText}
     </button>
 );
 

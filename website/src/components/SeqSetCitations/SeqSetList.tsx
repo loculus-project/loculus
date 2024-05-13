@@ -1,5 +1,5 @@
 import MUIPagination from '@mui/material/Pagination';
-import { type FC, type MouseEvent, useState, useMemo } from 'react';
+import { type FC, type MouseEvent, useState, useMemo, useEffect } from 'react';
 
 import { routes } from '../../routes/routes';
 import type { SeqSet } from '../../types/seqSetCitation';
@@ -85,7 +85,12 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<keyof SeqSet>('createdAt');
     const [page, setPage] = useState(1);
+    const [isClient, setIsClient] = useState(false);
     const rowsPerPage = 5;
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     const handleRequestSort = (_: MouseEvent<unknown>, property: keyof SeqSet) => {
         const isAsc = orderBy === property && order === 'asc';
@@ -174,6 +179,7 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
                                 className='hover:bg-primary-100 border-gray-100 cursor-pointer'
                                 onClick={(event) => handleClick(event, row.seqSetId, row.seqSetVersion.toString())}
                                 key={row.seqSetId}
+                                data-testid={isClient ? row.name : 'disabled'}
                             >
                                 <td className='px-2 whitespace-nowrap text-primary-900 pl-6'>
                                     {formatDate(row.createdAt)}
