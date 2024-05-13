@@ -24,7 +24,7 @@ env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/preprocessing-dummy
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
-  sha: ${{ github.head_ref || github.sha }}
+  sha: ${{ github.event.pull_request.base.sha || github.sha }}
 
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-preprocessing-dumm-${{github.event.inputs.build_arm}}y
