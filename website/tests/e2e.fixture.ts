@@ -15,6 +15,7 @@ import { SequencePage } from './pages/sequences/sequences.page';
 import { SubmitPage } from './pages/submission/submit.page';
 import { GroupPage } from './pages/user/group/group.page.ts';
 import { UserPage } from './pages/user/userPage/userPage.ts';
+import { throwOnConsole } from './util/throwOnConsole.ts';
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from '../src/middleware/authMiddleware';
 import { BackendClient } from '../src/services/backendClient';
 import { GroupManagementClient } from '../src/services/groupManagementClient.ts';
@@ -171,42 +172,46 @@ export async function authorize(
     };
 }
 
+type PageConstructor<T> = new (page: Page) => T;
+
+async function setupPageWithConsoleListener<T>(
+    page: Page,
+    pageClass: PageConstructor<T>,
+    use: (pageInstance: T) => Promise<void>,
+) {
+    const pageInstance = new pageClass(page);
+    const cleanup = throwOnConsole(page); // Setup console listener and get cleanup function
+    await use(pageInstance);
+    cleanup();
+}
+
 export const test = base.extend<E2EFixture>({
     searchPage: async ({ page }, use) => {
-        const searchPage = new SearchPage(page);
-        await use(searchPage);
+        await setupPageWithConsoleListener(page, SearchPage, use);
     },
     sequencePage: async ({ page }, use) => {
-        const sequencePage = new SequencePage(page);
-        await use(sequencePage);
+        await setupPageWithConsoleListener(page, SequencePage, use);
     },
     submitPage: async ({ page }, use) => {
-        const submitPage = new SubmitPage(page);
-        await use(submitPage);
+        await setupPageWithConsoleListener(page, SubmitPage, use);
     },
     reviewPage: async ({ page }, use) => {
-        const reviewPage = new ReviewPage(page);
-        await use(reviewPage);
+        await setupPageWithConsoleListener(page, ReviewPage, use);
     },
     userPage: async ({ page }, use) => {
-        const userPage = new UserPage(page);
-        await use(userPage);
+        await setupPageWithConsoleListener(page, UserPage, use);
     },
     groupPage: async ({ page }, use) => {
-        const groupPage = new GroupPage(page);
-        await use(groupPage);
+        await setupPageWithConsoleListener(page, GroupPage, use);
     },
     seqSetPage: async ({ page }, use) => {
-        const seqSetPage = new SeqSetPage(page);
-        await use(seqSetPage);
+        await setupPageWithConsoleListener(page, SeqSetPage, use);
     },
     revisePage: async ({ page }, use) => {
-        const revisePage = new RevisePage(page);
-        await use(revisePage);
+        await setupPageWithConsoleListener(page, RevisePage, use);
     },
     editPage: async ({ page }, use) => {
-        const editPage = new EditPage(page);
-        await use(editPage);
+        await setupPageWithConsoleListener(page, EditPage, use);
     },
     navigationFixture: async ({ page }, use) => {
         await use(new NavigationFixture(page));
