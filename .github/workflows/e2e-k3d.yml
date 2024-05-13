@@ -38,7 +38,7 @@ jobs:
 
     env:
       ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' || github.event.inputs.all_browsers && 'true' || 'false' }}
-      sha: ${{ github.event.pull_request.base.sha || github.sha }}
+      sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
     steps:
       - name: Collect Workflow Telemetry
