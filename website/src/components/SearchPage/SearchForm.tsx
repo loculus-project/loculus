@@ -1,7 +1,7 @@
 import CircularProgress from '@mui/material/CircularProgress';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { type FC, type FormEventHandler, useMemo, useState, useCallback, useEffect } from 'react';
+import { type FC, type FormEventHandler, useMemo, useState, useCallback } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
@@ -12,6 +12,7 @@ import { NormalTextField } from './fields/NormalTextField';
 import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
+import useClientFlag from '../../hooks/isClient.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { type ClassOfSearchPageType, navigateToSearchLikePage } from '../../routes/routes.ts';
 import type { AccessionFilter, GroupedMetadataFilter, MetadataFilter, MutationFilter } from '../../types/config.ts';
@@ -61,10 +62,7 @@ export const SearchForm: FC<SearchFormProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
-    const [isClient, setIsClient] = useState(false);
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
+    const isClient = useClientFlag();
 
     const handleFieldChange = useCallback(
         (metadataName: string, filter: string) => {

@@ -1,8 +1,9 @@
-import { type FC, useState, useEffect } from 'react';
+import { type FC, useState } from 'react';
 
 import { ExportSeqSet } from './ExportSeqSet';
 import { SeqSetForm } from './SeqSetForm';
 import { getClientLogger } from '../../clientLogger';
+import useClientFlag from '../../hooks/isClient.ts';
 import { seqSetCitationClientHooks } from '../../services/serviceHooks';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import type { SeqSetRecord, SeqSet } from '../../types/seqSetCitation';
@@ -32,11 +33,7 @@ const SeqSetItemActionsInner: FC<SeqSetItemActionsProps> = ({
     const [editModalVisible, setEditModalVisible] = useState(false);
     const [exportModalVisible, setExportModalVisible] = useState(false);
     const { errorMessage, isErrorOpen, openErrorFeedback, closeErrorFeedback } = useErrorFeedbackState();
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
+    const isClient = useClientFlag();
 
     const { mutate: deleteSeqSet } = useDeleteSeqSetAction(
         clientConfig,
