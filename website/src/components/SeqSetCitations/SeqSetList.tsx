@@ -1,6 +1,7 @@
 import MUIPagination from '@mui/material/Pagination';
-import { type FC, type MouseEvent, useState, useMemo, useEffect } from 'react';
+import { type FC, type MouseEvent, useState, useMemo } from 'react';
 
+import useClientFlag from '../../hooks/isClient';
 import { routes } from '../../routes/routes';
 import type { SeqSet } from '../../types/seqSetCitation';
 import MdiTriangle from '~icons/mdi/triangle';
@@ -85,12 +86,8 @@ export const SeqSetList: FC<SeqSetListProps> = ({ seqSets, username }) => {
     const [order, setOrder] = useState<Order>('desc');
     const [orderBy, setOrderBy] = useState<keyof SeqSet>('createdAt');
     const [page, setPage] = useState(1);
-    const [isClient, setIsClient] = useState(false);
+    const isClient = useClientFlag();
     const rowsPerPage = 5;
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
 
     const handleRequestSort = (_: MouseEvent<unknown>, property: keyof SeqSet) => {
         const isAsc = orderBy === property && order === 'asc';
