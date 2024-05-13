@@ -9,7 +9,6 @@ import { AutoCompleteField, type AutoCompleteFieldProps } from './fields/AutoCom
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
-import { PangoLineageField } from './fields/PangoLineageField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { type ClassOfSearchPageType, navigateToSearchLikePage } from '../../routes/routes.ts';
@@ -22,49 +21,34 @@ import { getLapisUrl } from '../../config.ts';
 
 const queryClient = new QueryClient();
 
-interface SearchFormProps {
-    organism: string;
-    filters: MetadataFilter[];
-    initialAccessionFilter: AccessionFilter;
-    initialMutationFilter: MutationFilter;
-    clientConfig: ClientConfig;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    classOfSearchPage: ClassOfSearchPageType;
-    groupId?: number;
-}
 
 const clientLogger = getClientLogger('SearchForm');
 
-export const SearchForm: FC<SearchFormProps> = ({
+export const SearchForm = ({
     organism,
-    metadataFilterWithoutHiddenFilters,
-    initialAccessionFilter,
-    initialMutationFilter,
+   
+    flatMetadataSchema,
     clientConfig,
-    referenceGenomesSequenceNames,
-    classOfSearchPage,
-    groupId,
-    allFields,
-    fieldValues
+    fieldValues,
+    setAFieldValue
+
 }) => {
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
 
-    const withoutUnsearchable = metadataFilterWithoutHiddenFilters.filter((filter) => !filter.notSearchable);
+    const withoutUnsearchable = flatMetadataSchema.filter((filter) => !filter.notSearchable);
 
-    const groupedFields = useMemo(() => consolidateGroupedFields(withoutUnsearchable), [withoutUnsearchable]);
-    
     return (
         <QueryClientProvider client={queryClient}>
         <div>
             {
-                groupedFields.map((filter) => 
+                withoutUnsearchable.map((filter) => 
                     <p className='border border-gray-300 p-2'>
                         { JSON.stringify(filter) }
                         <SearchField field={filter} 
                         lapisUrl={lapisUrl}
-                        allFields={allFields}
                         fieldValues={fieldValues}
+                        setAFieldValue={setAFieldValue}
                         />
                     </p>
 
@@ -78,7 +62,7 @@ export const SearchForm: FC<SearchFormProps> = ({
 }
 
 
-const SearchField = ({field, lapisUrl, allFields, fieldValues}) => {
+const SearchField = ({field, lapisUrl, allFields, fieldValues, setAFieldValue}) => {
     
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
@@ -90,6 +74,7 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues}) => {
                     <div>
                     <SearchField field={f} 
                     fieldValues={fieldValues}
+                    setAFieldValue={setAFieldValue}
                     
                     />
                     { JSON.stringify(f) }
@@ -107,9 +92,7 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues}) => {
             return <div>date</div>
         /*case 'timestamp':
             return <TimestampField {...props} />;
-        case 'pango_lineage':
-            return <PangoLineageField {...props} />;
-            */
+*/
         default:
             if (field.autocomplete === true) {
                
@@ -123,36 +106,13 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues}) => {
             }
             return <NormalTextField type={field.type} field={field} 
             fieldValue={fieldValues[field.name]}
+            handleFieldChange={ (value) =>
+                setAFieldValue(
+                    field.name, value
+                )
+            }
             
             />;
     }
     
-};
-
-const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
-    const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
-    const groupsMap = new Map<string, GroupedMetadataFilter>();
-
-    for (const filter of filters) {
-        if (filter.fieldGroup !== undefined) {
-            if (!groupsMap.has(filter.fieldGroup)) {
-                const fieldForGroup: GroupedMetadataFilter = {
-                    name: filter.fieldGroup,
-                    groupedFields: [],
-                    type: filter.type,
-                    grouped: true,
-                    displayName: filter.fieldGroupDisplayName,
-                    label: filter.label,
-                    initiallyVisible: filter.initiallyVisible,
-                };
-                fieldList.push(fieldForGroup);
-                groupsMap.set(filter.fieldGroup, fieldForGroup);
-            }
-            groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
-        } else {
-            fieldList.push(filter);
-        }
-    }
-
-    return fieldList;
 };

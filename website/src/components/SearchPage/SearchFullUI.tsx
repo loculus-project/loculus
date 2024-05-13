@@ -56,23 +56,37 @@ export const SearchFullUI = ({
     accessToken,
     initialMetadataFilterWithoutHiddenFilters,
     hiddenSearchFeatures,
+    metadataSchema,
 }: SearchFullUIProps) => {
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
     const [metadataFilterWithoutHiddenFilters, setMetadataFilterWithoutHiddenFilters] = useState<MetadataFilter[]>(initialMetadataFilterWithoutHiddenFilters);
     const [fieldValues, setFieldValues] = useState({}); 
-    const allFields = []
+    const setAFieldValue = (fieldName: string, value: string) => {
+        setFieldValues(
+            (prev) => ({
+                ...prev,
+                [fieldName]: value,
+            })
+        );
+    }
 
-    if (error !== null) {
+    const flatMetadataSchema = consolidateGroupedFields(metadataSchema)
+
+    console.log("fieldVal", fieldValues)
+
+    const allFields = []
+    console.log("err", error);
+
+    if (error !== null && error !==undefined){
         return (
             <div className='bg-red-100 p-4 text-red-900'>
                 <div className='text-lg font-bold'>Error</div>
                 {error.message}
+                
             </div>
         );
     }
-
-    data = data as SearchResponse;
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -89,7 +103,7 @@ export const SearchFullUI = ({
             <div className='md:w-72'>
                 <SearchForm
                     organism={organism}
-                    metadataFilterWithoutHiddenFilters={metadataFilterWithoutHiddenFilters}
+                    
                     setMetadataFilterWithoutHiddenFilters={setMetadataFilterWithoutHiddenFilters}
                     initialAccessionFilter={accessionFilter}
                     initialMutationFilter={mutationFilter}
@@ -97,9 +111,41 @@ export const SearchFullUI = ({
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                     classOfSearchPage={SEARCH}
                     fieldValues={fieldValues}
+                    setAFieldValue={setAFieldValue}
+                    flatMetadataSchema={flatMetadataSchema}
                 />
             </div>
         
         </div>
     );
+};
+
+
+
+const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | GroupedMetadataFilter)[] => {
+    const fieldList: (MetadataFilter | GroupedMetadataFilter)[] = [];
+    const groupsMap = new Map<string, GroupedMetadataFilter>();
+
+    for (const filter of filters) {
+        if (filter.fieldGroup !== undefined) {
+            if (!groupsMap.has(filter.fieldGroup)) {
+                const fieldForGroup: GroupedMetadataFilter = {
+                    name: filter.fieldGroup,
+                    groupedFields: [],
+                    type: filter.type,
+                    grouped: true,
+                    displayName: filter.fieldGroupDisplayName,
+                    label: filter.label,
+                    initiallyVisible: filter.initiallyVisible,
+                };
+                fieldList.push(fieldForGroup);
+                groupsMap.set(filter.fieldGroup, fieldForGroup);
+            }
+            groupsMap.get(filter.fieldGroup)!.groupedFields.push(filter);
+        } else {
+            fieldList.push(filter);
+        }
+    }
+
+    return fieldList;
 };

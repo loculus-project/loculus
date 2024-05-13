@@ -23,6 +23,7 @@ const logger = getClientLogger('AutoCompleteField');
 
 
 export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, handleFieldChange, lapisUrl }) => {
+    return null;
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
     const {
