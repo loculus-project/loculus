@@ -35,7 +35,7 @@ export const TimestampField: FC<FieldProps> = (props) => (
 
 const CustomizedDatePicker: FC<FieldProps & ValueConverter> = ({
     field,
-    handleFieldChange,
+    setAFieldValue,
     dateToValueConverter,
     valueToDateConverter,
 }) => {
@@ -52,13 +52,13 @@ const CustomizedDatePicker: FC<FieldProps & ValueConverter> = ({
                         if (value && isNaN(value.getTime())) {
                             return;
                         }
-                        handleFieldChange(field.name, dateToValueConverter(value));
+                        setAFieldValue(field.name, dateToValueConverter(value));
                     }}
                     onChangeCalendarDate={(value) => {
-                        handleFieldChange(field.name, dateToValueConverter(value));
+                        setAFieldValue(field.name, dateToValueConverter(value));
                     }}
                     onClean={() => {
-                        handleFieldChange(field.name, '');
+                        setAFieldValue(field.name, '');
                     }}
                 />
             </div>

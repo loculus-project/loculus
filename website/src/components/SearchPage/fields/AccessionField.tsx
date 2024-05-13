@@ -21,7 +21,7 @@ export const AccessionField: FC<AccessionFieldProps> = ({ initialValue, onChange
                 notSearchable: false,
                 filterValue: textValue,
             }}
-            handleFieldChange={(_, filter) => {
+            setAFieldValue={(_, filter) => {
                 setTextValue(filter);
                 const accessions = filter
                     .split(/[\t,;\n ]/)

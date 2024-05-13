@@ -22,7 +22,7 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 const logger = getClientLogger('AutoCompleteField');
 
 
-export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, handleFieldChange, lapisUrl }) => {
+export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, setAFieldValue, lapisUrl }) => {
     return null;
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
@@ -65,7 +65,7 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, handleFie
     );
 
     return (
-        <Combobox value={field.filterValue} onChange={(value) => handleFieldChange(field.name, value)}>
+        <Combobox value={field.filterValue} onChange={(value) => setAFieldValue(field.name, value)}>
             <div className='relative'>
                 <Combobox.Input
                     className='w-full py-2 pl-3  text-sm leading-5
@@ -83,7 +83,7 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, handleFie
                         className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                         onClick={() => {
                             setQuery('');
-                            handleFieldChange(field.name, '');
+                            setAFieldValue(field.name, '');
                         }}
                     >
                         <svg className='w-5 h-5 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>

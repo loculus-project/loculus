@@ -4,7 +4,7 @@ import type { MetadataFilter } from '../../../types/config.ts';
 
 export type FieldProps = {
     field: MetadataFilter;
-    handleFieldChange: (metadataName: string, filter: string) => void;
+    setAFieldValue: (metadataName: string, filter: string) => void;
     isLoading: boolean;
     multiline?: boolean;
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;

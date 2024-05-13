@@ -27,7 +27,7 @@ const clientLogger = getClientLogger('SearchForm');
 export const SearchForm = ({
     organism,
    
-    flatMetadataSchema,
+    consolidatedMetadataSchema,
     clientConfig,
     fieldValues,
     setAFieldValue
@@ -36,7 +36,7 @@ export const SearchForm = ({
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
 
-    const withoutUnsearchable = flatMetadataSchema.filter((filter) => !filter.notSearchable);
+    const withoutUnsearchable = consolidatedMetadataSchema.filter((filter) => !filter.notSearchable);
 
     return (
         <QueryClientProvider client={queryClient}>
@@ -45,6 +45,9 @@ export const SearchForm = ({
                 withoutUnsearchable.map((filter) => 
                     <p className='border border-gray-300 p-2'>
                         { JSON.stringify(filter) }
+                        value: {
+                            fieldValues[filter.name]
+                        }
                         <SearchField field={filter} 
                         lapisUrl={lapisUrl}
                         fieldValues={fieldValues}
@@ -106,11 +109,8 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues, setAFieldValue}) 
             }
             return <NormalTextField type={field.type} field={field} 
             fieldValue={fieldValues[field.name]}
-            handleFieldChange={ (value) =>
-                setAFieldValue(
-                    field.name, value
-                )
-            }
+            setAFieldValue={setAFieldValue}
+            
             
             />;
     }

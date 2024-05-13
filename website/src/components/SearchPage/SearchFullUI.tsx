@@ -71,7 +71,7 @@ export const SearchFullUI = ({
         );
     }
 
-    const flatMetadataSchema = consolidateGroupedFields(metadataSchema)
+    const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchema)
 
     console.log("fieldVal", fieldValues)
 
@@ -112,7 +112,7 @@ export const SearchFullUI = ({
                     classOfSearchPage={SEARCH}
                     fieldValues={fieldValues}
                     setAFieldValue={setAFieldValue}
-                    flatMetadataSchema={flatMetadataSchema}
+                    consolidatedMetadataSchema={consolidatedMetadataSchema}
                 />
             </div>
         
