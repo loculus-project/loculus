@@ -52,6 +52,7 @@ jobs:
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+          k3d version
 
       - uses: azure/setup-helm@v4
 
