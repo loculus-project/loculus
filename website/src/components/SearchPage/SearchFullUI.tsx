@@ -15,53 +15,26 @@ import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
+import useQueryAsState from './useQueryAsState.js';
 
-interface SearchFullUIProps {
-    organism: string;
-    filters: MetadataFilter[];
-    initialAccessionFilter: AccessionFilter;
-    initialMutationFilter: MutationFilter;
-    clientConfig: ClientConfig;
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
-    classOfSearchPage: ClassOfSearchPageType;
-    groupId?: number;
-    orderBy: OrderBy;
-    lapisUrl: string;
-    schema: Schema;
-    accessionFilter: AccessionFilter;
-    mutationFilter: MutationFilter;
-    initialMetadataFilterWithoutHiddenFilters: MetadataFilter[];
-    hiddenSearchFeatures: MetadataFilter[];
-    page: number;
-    data: SearchResponse | null;
-    error: null | { message: string };
-    myGroups: Group[];
-    accessToken: string | undefined;
-}
 
-export const SearchFullUI = ({
-    organism,
-    data,
-    page,
-    accessionFilter,
-    mutationFilter,
-    lapisUrl,
-    referenceGenomesSequenceNames,
-    schema,
-    clientConfig,
-    orderBy,
-    error,
-    classOfSearchPage,
-    myGroups,
-    accessToken,
-    initialMetadataFilterWithoutHiddenFilters,
-    hiddenSearchFeatures,
-    metadataSchema,
-}: SearchFullUIProps) => {
+export const SearchFullUI = (
+    {metadataSchema,
+        accessToken,
+        referenceGenomesSequenceNames,
+        myGroups,
+        organism,
+        clientConfig
+
+    }
+
+
+
+) => {
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
-    const [metadataFilterWithoutHiddenFilters, setMetadataFilterWithoutHiddenFilters] = useState<MetadataFilter[]>(initialMetadataFilterWithoutHiddenFilters);
-    const [fieldValues, setFieldValues] = useState({}); 
+   
+    const [fieldValues, setFieldValues] = useQueryAsState({})
     const setAFieldValue = (fieldName: string, value: string) => {
         setFieldValues(
             (prev) => ({
@@ -75,18 +48,6 @@ export const SearchFullUI = ({
 
     console.log("fieldVal", fieldValues)
 
-    const allFields = []
-    console.log("err", error);
-
-    if (error !== null && error !==undefined){
-        return (
-            <div className='bg-red-100 p-4 text-red-900'>
-                <div className='text-lg font-bold'>Error</div>
-                {error.message}
-                
-            </div>
-        );
-    }
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -104,9 +65,7 @@ export const SearchFullUI = ({
                 <SearchForm
                     organism={organism}
                     
-                    setMetadataFilterWithoutHiddenFilters={setMetadataFilterWithoutHiddenFilters}
-                    initialAccessionFilter={accessionFilter}
-                    initialMutationFilter={mutationFilter}
+                  
                     clientConfig={clientConfig}
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                     classOfSearchPage={SEARCH}
