@@ -41,6 +41,8 @@ jobs:
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
     steps:
+      - name: Shorten sha
+        run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
 
