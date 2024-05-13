@@ -141,8 +141,8 @@ jobs:
       #     wait-interval: 2
       # # End of wait block
 
-      - name: Wait for the pods to be ready (timeout 480s)
-        run: ./.github/scripts/wait_for_pods_to_be_ready.py
+      - name: Wait for the pods to be ready
+        run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout 900
       - name: Sleep for 10 secs
         run: sleep 10
       - name: Run E2E test
