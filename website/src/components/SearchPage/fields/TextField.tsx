@@ -16,7 +16,7 @@ interface TextFieldProps {
     disabled?: boolean;
     onChange?: ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     autoComplete?: string;
-    value?: string | number | readonly string[];
+    fieldValue?: string | number | readonly string[];
     className?: string;
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     placeholder?: string;
@@ -26,7 +26,7 @@ interface TextFieldProps {
 }
 
 export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, TextFieldProps>(function (props, ref) {
-    const { label, disabled, onChange, autoComplete, value, className, onFocus, multiline, onBlur } = props;
+    const { label, disabled, onChange, autoComplete, fieldValue, className, onFocus, multiline, onBlur } = props;
     const id = useId();
     const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
     const [hasFocus, setHasFocus] = useState(false);
@@ -57,7 +57,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
 
     const standardProps = {
         id,
-        value,
+        fieldValue,
         onChange,
         autoComplete,
         disabled,
@@ -92,7 +92,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
         <div className='relative my-1'>
             <textarea
                 {...textareaProps}
-                rows={hasFocus || (value !== undefined && value.toString().split('\n').length > 1) ? 4 : 1}
+                rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
                 className={`rounded-md block px-2.5 pb-1.5 pt-3 w-full text-sm text-gray-900 bg-transparent border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer ${className}`}
                 placeholder=''
             />

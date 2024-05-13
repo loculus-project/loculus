@@ -24,7 +24,8 @@ props.data.match(
         data={theData}
         error={theError}
         classOfSearchPage='SEARCH'
-        filters={props.metadataFilter}
+        hiddenSearchFeatures={props.hiddenSearchFeatures}
+        initialMetadataFilterWithoutHiddenFilters={props.metadataFilterWithoutHiddenFilters}
         initialAccessionFilter={props.accessionFilter}
         initialMutationFilter={props.mutationFilter}
         organism={props.organism}
@@ -34,7 +35,6 @@ props.data.match(
         lapisUrl={props.lapisUrl}
         schema={props.schema}
         page={props.page}
-        metadataFilter={props.metadataFilter}
         accessionFilter={props.accessionFilter}
         mutationFilter={props.mutationFilter}
         metadataFilterWithoutHiddenFilters={props.metadataFilterWithoutHiddenFilters}

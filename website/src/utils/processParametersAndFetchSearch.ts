@@ -65,7 +65,7 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
               }
             : {},
     );
-    const metadataFilter = addHiddenFilters(metadataFilterWithoutHiddenFilters, hiddenSearchFeatures);
+    
     const accessionFilter = getAccessionFilter(getSearchParams);
     const mutationFilter = getMutationFilter(getSearchParams);
 
@@ -76,7 +76,10 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
 
     const referenceGenomesSequenceNames = getReferenceGenomesSequenceNames(organism);
 
-    const data = await getData(organism, metadataFilter, accessionFilter, mutationFilter, offset, pageSize, orderBy);
+    const data = await getData(organism, 
+        addHiddenFilters(metadataFilterWithoutHiddenFilters, hiddenSearchFeatures)
+        
+        , accessionFilter, mutationFilter, offset, pageSize, orderBy);
 
     const session = astro.locals.session;
     const accessToken = getAccessToken(session);
@@ -90,8 +93,8 @@ export async function processParametersAndFetchSearch(astro: AstroGlobal, groupI
         cleanedOrganism,
         data,
         page,
-        metadataFilter,
         metadataFilterWithoutHiddenFilters,
+        hiddenSearchFeatures,
         accessionFilter,
         mutationFilter,
         lapisUrl,

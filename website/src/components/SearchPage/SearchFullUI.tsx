@@ -28,10 +28,10 @@ interface SearchFullUIProps {
     orderBy: OrderBy;
     lapisUrl: string;
     schema: Schema;
-    metadataFilter: MetadataFilter[];
     accessionFilter: AccessionFilter;
     mutationFilter: MutationFilter;
-    metadataFilterWithoutHiddenFilters: MetadataFilter[];
+    initialMetadataFilterWithoutHiddenFilters: MetadataFilter[];
+    hiddenSearchFeatures: MetadataFilter[];
     page: number;
     data: SearchResponse | null;
     error: null | { message: string };
@@ -43,8 +43,6 @@ export const SearchFullUI = ({
     organism,
     data,
     page,
-    metadataFilter,
-    metadataFilterWithoutHiddenFilters,
     accessionFilter,
     mutationFilter,
     lapisUrl,
@@ -56,9 +54,14 @@ export const SearchFullUI = ({
     classOfSearchPage,
     myGroups,
     accessToken,
+    initialMetadataFilterWithoutHiddenFilters,
+    hiddenSearchFeatures,
 }: SearchFullUIProps) => {
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
+    const [metadataFilterWithoutHiddenFilters, setMetadataFilterWithoutHiddenFilters] = useState<MetadataFilter[]>(initialMetadataFilterWithoutHiddenFilters);
+    const [fieldValues, setFieldValues] = useState({}); 
+    const allFields = []
 
     if (error !== null) {
         return (
@@ -86,58 +89,17 @@ export const SearchFullUI = ({
             <div className='md:w-72'>
                 <SearchForm
                     organism={organism}
-                    filters={metadataFilter}
+                    metadataFilterWithoutHiddenFilters={metadataFilterWithoutHiddenFilters}
+                    setMetadataFilterWithoutHiddenFilters={setMetadataFilterWithoutHiddenFilters}
                     initialAccessionFilter={accessionFilter}
                     initialMutationFilter={mutationFilter}
                     clientConfig={clientConfig}
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                     classOfSearchPage={SEARCH}
+                    fieldValues={fieldValues}
                 />
             </div>
-            <div className='flex-1'>
-                <RecentSequencesBanner organism={organism} />
-                <div className=' text-sm text-gray-800 mb-6 justify-between flex px-6 items-baseline'>
-                    <div className='mt-auto'>
-                        Search returned {data.totalCount.toLocaleString()} sequence{data.totalCount === 1 ? '' : 's'}
-                    </div>
-                    <div>
-                        {classOfSearchPage === SEARCH && (
-                            <DownloadDialog
-                                metadataFilter={metadataFilterWithoutHiddenFilters}
-                                mutationFilter={mutationFilter}
-                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                lapisUrl={lapisUrl}
-                            />
-                        )}
-                    </div>
-                </div>
-                <Table
-                    organism={organism}
-                    data={data.data}
-                    schema={schema}
-                    metadataFilter={metadataFilter}
-                    accessionFilter={accessionFilter}
-                    mutationFilter={mutationFilter}
-                    page={page}
-                    orderBy={orderBy}
-                    classOfSearchPage={SEARCH}
-                    setPreviewedSeqId={setPreviewedSeqId}
-                    previewedSeqId={previewedSeqId}
-                />
-                <div className='mt-4 flex justify-center'>
-                    <SearchPagination
-                        count={Math.ceil(data.totalCount / pageSize)}
-                        page={page}
-                        metadataFilter={metadataFilter}
-                        accessionFilter={accessionFilter}
-                        mutationFilter={mutationFilter}
-                        orderBy={orderBy}
-                        organism={organism}
-                        classOfSearchPage={SEARCH}
-                    />
-                </div>
-                {previewHalfScreen && previewedSeqId !== null && <div className='h-[calc(50vh)]'></div>}
-            </div>
+        
         </div>
     );
 };

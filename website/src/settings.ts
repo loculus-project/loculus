@@ -17,11 +17,13 @@ export const DATA_USE_TERMS_FIELD = 'dataUseTerms';
 export const hiddenDefaultSearchFilters = [
     {
         name: VERSION_STATUS_FIELD,
-        filterValue: siloVersionStatuses.latestVersion,
         type: 'string' as const,
         notSearchable: true,
     },
-    { name: IS_REVOCATION_FIELD, filterValue: 'false', type: 'string' as const, notSearchable: true },
+    { name: IS_REVOCATION_FIELD, type: 'string' as const, notSearchable: true },
 ];
+
+
+// TODONOW: add the necessary values for these fields above
 
 export const metadataDefaultDownloadDataFormat = 'tsv';

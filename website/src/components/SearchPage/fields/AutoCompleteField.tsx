@@ -1,7 +1,6 @@
 import { Combobox } from '@headlessui/react';
 import { type FC, useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 
-import type { FieldProps } from './FieldProps';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
@@ -22,12 +21,8 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 
 const logger = getClientLogger('AutoCompleteField');
 
-export type AutoCompleteFieldProps = FieldProps & {
-    allFields: MetadataFilter[];
-    lapisUrl: string;
-};
 
-export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, allFields, handleFieldChange, lapisUrl }) => {
+export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, handleFieldChange, lapisUrl }) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
     const {
