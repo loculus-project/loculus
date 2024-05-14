@@ -49,7 +49,7 @@ spec:
           env:
             - name: KC_DB
               value: postgres
-            - name: DB_ADDR
+            - name: KC_DB_URL_HOST
               valueFrom:
                 secretKeyRef:
                   name: keycloak-database
