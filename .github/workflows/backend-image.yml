@@ -60,8 +60,8 @@ jobs:
           tags: |
             type=raw,value=${{ env.DIR_HASH }}
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=ref,event=branch
             type=raw,value=commit-${{ env.sha }}
+            type=raw,value=${{ env.BRANCH_NAME }}
             type=raw,value=${{ env.BRANCH_NAME }}-arm,enable=${{ env.BUILD_ARM }}
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
