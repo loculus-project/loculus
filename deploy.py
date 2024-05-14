@@ -98,7 +98,7 @@ def handle_cluster():
     if cluster_exists(CLUSTER_NAME):
         print(f"Cluster '{CLUSTER_NAME}' already exists.")
     else:
-        run_command(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 2",
+        run_command(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 1",
                        shell=True)
     install_secret_generator()
     install_reloader()
