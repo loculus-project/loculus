@@ -11,6 +11,8 @@ old_input_data_dir="$input_data_dir"/$(ls -1 "$input_data_dir" | sort -n | grep 
 
 new_input_data="$new_input_data_dir/data.ndjson.zst"
 old_input_data="$old_input_data_dir/data.ndjson.zst"
+new_input_touchfile="$new_input_data_dir/processing"
+old_input_touchfile="$old_input_data_dir/processing"
 silo_input_data="$input_data_dir/data.ndjson.zst"
 
 get_token() {
@@ -56,6 +58,9 @@ delete_all_input () {
 download_data() {
   mkdir -p "$new_input_data_dir"
   echo  "created $new_input_data_dir"
+  
+  # Set flag to be cleared when processing succeeds to avoid getting stuck with no output data
+  touch "$new_input_touchfile"
 
   released_data_endpoint="$BACKEND_BASE_URL/get-released-data?compression=zstd"
   echo "calling $released_data_endpoint"
@@ -77,18 +82,25 @@ download_data() {
 
   echo "checking for old input data dir $old_input_data_dir"
   if [[ -f "$old_input_data" ]]; then
-    old_hash=$(md5sum < "$old_input_data" | awk '{print $1}')
-    new_hash=$(md5sum < "$new_input_data" | awk '{print $1}')
-    echo "old hash: $old_hash"
-    echo "new hash: $new_hash"
-    if [ "$new_hash" = "$old_hash" ]; then
-      echo "Hashes are equal, skipping preprocessing"
-      echo "Deleting input data dir $new_input_data_dir"
-      rm -rf "$new_input_data_dir"
-      exit 0
+    if [[ -f "$old_input_touchfile" ]]; then
+      echo "Old input data dir was not processed successfully"
+      echo "Skipping hash check, deleting old input data dir"
+      rm -rf "$old_input_data_dir"
     else
-      echo "Hashes are unequal, deleting old input data dir"
-      rm -rf "$old_input_data_dir:?}"
+      echo "Old input data dir was processed successfully"
+      old_hash=$(md5sum < "$old_input_data" | awk '{print $1}')
+      new_hash=$(md5sum < "$new_input_data" | awk '{print $1}')
+      echo "old hash: $old_hash"
+      echo "new hash: $new_hash"
+      if [ "$new_hash" = "$old_hash" ]; then
+        echo "Hashes are equal, skipping preprocessing"
+        echo "Deleting new input data dir $new_input_data_dir"
+        rm -rf "$new_input_data_dir"
+        exit 0
+      else
+        echo "Hashes are unequal, deleting old input data dir"
+        rm -rf "$old_input_data_dir:?}"
+      fi
     fi
   else
     echo "No old input data dir found"
@@ -118,6 +130,10 @@ preprocessing() {
       echo "SiloApi command failed with exit code $exit_code, cleaning up and exiting."
       delete_all_input # Delete input so that we don't skip preprocessing next time due to hash equality
       exit $exit_code
+    else
+      echo "SiloApi command succeeded"
+      echo "Removing touchfile $new_input_touchfile to indicate successful processing"
+      rm -f "$new_input_touchfile"
     fi
 
     echo "preprocessing for $current_timestamp done"
