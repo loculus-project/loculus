@@ -10,7 +10,7 @@ export const NormalTextField = forwardRef<HTMLInputElement, FieldProps>((props, 
         <TextField
             label={field.label}
             type={field.type}
-            value={fieldValue}
+            fieldValue={fieldValue}
             disabled={isLoading}
             onFocus={onFocus}
             onBlur={onBlur}

@@ -43,8 +43,9 @@ export const SearchForm = ({
         <div>
             {
                 withoutUnsearchable.map((filter) => 
-                    <p className='border border-gray-300 p-2'>
-                        { JSON.stringify(filter) }
+                    <p className='border border-gray-300 p-2' key={filter.name}>
+                      <span className='text-xs leading-4'>
+                          { JSON.stringify(filter) }</span>
                         value: {
                             fieldValues[filter.name]
                         }
@@ -104,6 +105,9 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues, setAFieldValue}) 
             }
             return <NormalTextField type={field.type} field={field} 
             fieldValue={fieldValues[field.name]}
+            bla={
+                console.log("fieldVal", field.name, fieldValues, fieldValues[field.name])
+            }
             setAFieldValue={setAFieldValue}
             
             

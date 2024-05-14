@@ -4,11 +4,13 @@ export default function useQueryAsState(defaultDict) {
     const [valueDict, setValueDict] = useState(defaultDict);
     useEffect(() => {
         const urlParams = new URLSearchParams(window.location.search);
+        
         const newDict = {};
         for (const [key, value] of urlParams) {
             newDict[key] = value;
         }
         setValueDict(newDict);
+        console.log('useQueryAsState', newDict);
     }
     , []);
     useEffect(() => {
