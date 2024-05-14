@@ -81,7 +81,7 @@ export const InnerSearchFullUI = ({
         setIsHalfScreen={setPreviewHalfScreen}
       />
       <div className='md:w-72'>
-        {/*
+       
         <SearchForm
           organism={organism}
           clientConfig={clientConfig}
@@ -90,10 +90,10 @@ export const InnerSearchFullUI = ({
           fieldValues={fieldValues}
           setAFieldValue={setAFieldValue}
           consolidatedMetadataSchema={consolidatedMetadataSchema}
+            lapisUrl={lapisUrl}
           
         />
-        */
-  }
+        
       </div>
       <div className='flex-1'>
         {aggregatedHook.isLoading ? (

@@ -42,11 +42,14 @@ export const Table: FC<TableProps> = ({
         if (orderBy.field === field) {
             if (orderBy.type === 'ascending') {
                console.log('orderBy', orderBy);
+               //TODONOW
             } else {
                console.log('orderBy', orderBy);
+                //TODONOW
             }
         } else {
             console.log('orderBy', orderBy);
+             //TODONOW
         }
     };
 

@@ -30,11 +30,12 @@ export const SearchForm = ({
     consolidatedMetadataSchema,
     clientConfig,
     fieldValues,
-    setAFieldValue
+    setAFieldValue,
+    lapisUrl
 
 }) => {
 
-    const lapisUrl = getLapisUrl(clientConfig, organism);
+  
 
     const withoutUnsearchable = consolidatedMetadataSchema.filter((filter) => !filter.notSearchable);
 
@@ -105,9 +106,7 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues, setAFieldValue}) 
             }
             return <NormalTextField type={field.type} field={field} 
             fieldValue={fieldValues[field.name]}
-            bla={
-                console.log("fieldVal", field.name, fieldValues, fieldValues[field.name])
-            }
+            
             setAFieldValue={setAFieldValue}
             
             
