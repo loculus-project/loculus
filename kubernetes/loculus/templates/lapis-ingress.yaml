@@ -13,6 +13,8 @@ spec:
     accessControlAllowOriginList: 
       - "*"
     accessControlMaxAge: 100
+    accessControlAllowHeaders:
+      - "*"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
