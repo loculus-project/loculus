@@ -1,11 +1,25 @@
 {{- $lapisHost := printf "lapis-%s" .Values.host }}
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: cors-all-origins
+spec:
+  headers:
+    accessControlAllowMethods:
+      - "GET"
+      - "OPTIONS"
+      - "PUT"
+      - "HEAD"
+    accessControlAllowOrigin: "*"
+    accessControlMaxAge: 100
+    addVaryHeader: "true"
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{- $first := true }}{{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins,{{- $first := true }}{{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
