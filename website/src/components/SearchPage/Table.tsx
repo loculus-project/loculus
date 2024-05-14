@@ -2,8 +2,8 @@ import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 import { Tooltip } from 'react-tooltip';
 
-import { type ClassOfSearchPageType, navigateToSearchLikePage, routes } from '../../routes/routes.ts';
-import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
+import { routes } from '../../routes/routes.ts';
+import type {  Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
@@ -13,33 +13,20 @@ export type TableSequenceData = {
 };
 
 type TableProps = {
-    organism: string;
     schema: Schema;
     data: TableSequenceData[];
-    metadataFilter: MetadataFilter[];
-    accessionFilter: AccessionFilter;
-    mutationFilter: MutationFilter;
-    page: number;
-    orderBy: OrderBy;
-    classOfSearchPage: ClassOfSearchPageType;
-    groupId?: number;
     setPreviewedSeqId: (seqId: string | null) => void;
     previewedSeqId: string | null;
+    orderBy: OrderBy;
+
 };
 
 export const Table: FC<TableProps> = ({
-    organism,
     data,
     schema,
-    metadataFilter,
-    accessionFilter,
-    mutationFilter,
-    page,
-    orderBy,
-    classOfSearchPage,
-    groupId,
     setPreviewedSeqId,
     previewedSeqId,
+    orderBy,
 }) => {
     const primaryKey = schema.primaryKey;
 
@@ -54,48 +41,12 @@ export const Table: FC<TableProps> = ({
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
             if (orderBy.type === 'ascending') {
-                navigateToSearchLikePage(
-                    organism,
-                    classOfSearchPage,
-                    groupId,
-                    metadataFilter,
-                    accessionFilter,
-                    mutationFilter,
-                    page,
-                    {
-                        field,
-                        type: 'descending',
-                    },
-                );
+               console.log('orderBy', orderBy);
             } else {
-                navigateToSearchLikePage(
-                    organism,
-                    classOfSearchPage,
-                    groupId,
-                    metadataFilter,
-                    accessionFilter,
-                    mutationFilter,
-                    page,
-                    {
-                        field,
-                        type: 'ascending',
-                    },
-                );
+               console.log('orderBy', orderBy);
             }
         } else {
-            navigateToSearchLikePage(
-                organism,
-                classOfSearchPage,
-                groupId,
-                metadataFilter,
-                accessionFilter,
-                mutationFilter,
-                page,
-                {
-                    field,
-                    type: 'ascending',
-                },
-            );
+            console.log('orderBy', orderBy);
         }
     };
 

@@ -10,7 +10,7 @@ import { SEARCH } from '../../routes/routes';
 import { type ClassOfSearchPageType } from '../../routes/routes.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
+import { metadata, type AccessionFilter, type MetadataFilter, type MutationFilter, type Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -20,23 +20,26 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+
 interface InnerSearchFullUIProps {
-  metadataSchema: MetadataFilter[];
   accessToken: string;
   referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
   myGroups: Group[];
   organism: string;
   clientConfig: ClientConfig;
+  schema: Schema;
 }
 
 export const InnerSearchFullUI = ({
-  metadataSchema,
   accessToken,
   referenceGenomesSequenceNames,
   myGroups,
   organism,
-  clientConfig
+  clientConfig,
+  schema
 }: InnerSearchFullUIProps) => {
+    const metadataSchema = schema.metadata;
+   
   const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
   const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
   const [fieldValues, setFieldValues] = useQueryAsState({});
@@ -54,10 +57,13 @@ export const InnerSearchFullUI = ({
   const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
   const aggregatedHook = hooks.useAggregated({},{}); 
   const detailsHook = hooks.useDetails({},{});
+ 
 
   useEffect(() => {
     aggregatedHook.mutate({ fields: [], nucleotideMutations: [], aminoAcidMutations: [], nucleotideInsertions: [], aminoAcidInsertions: [] });
-    detailsHook.mutate({ fields: [], nucleotideMutations: [], aminoAcidMutations: [], nucleotideInsertions: [], aminoAcidInsertions: [] });
+    detailsHook.mutate({ fields: [...schema.tableColumns, schema.primaryKey
+    ], nucleotideMutations: [], aminoAcidMutations: [], nucleotideInsertions: [], aminoAcidInsertions: [] ,
+        limit: pageSize, offset: 0 });
     }, [fieldValues]);
 
     
@@ -97,8 +103,21 @@ export const InnerSearchFullUI = ({
         ) : (
         <p>as
             {
-                JSON.stringify(detailsHook.data)
-            }
+               detailsHook.data &&
+            
+             <Table
+                schema={schema}
+                data={detailsHook.data.data}
+                setPreviewedSeqId={setPreviewedSeqId}
+                previewedSeqId={previewedSeqId}
+                orderBy={{
+                    field: 'name',
+                    type: 'ascending',
+                    } as OrderBy}
+                
+            
+            />
+}
         </p>
         )}
       </div>
