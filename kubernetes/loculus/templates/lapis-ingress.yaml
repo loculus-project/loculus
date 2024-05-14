@@ -10,7 +10,8 @@ spec:
       - "OPTIONS"
       - "PUT"
       - "HEAD"
-    accessControlAllowOrigin: "*"
+    accessControlAllowOriginList: 
+      - "*"
     accessControlMaxAge: 100
 ---
 apiVersion: networking.k8s.io/v1
