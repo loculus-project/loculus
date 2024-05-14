@@ -39,6 +39,7 @@ jobs:
     env:
       ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' || github.event.inputs.all_browsers && 'true' || 'false' }}
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 180 }}
 
     steps:
       - name: Shorten sha
@@ -52,6 +53,7 @@ jobs:
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+          k3d version
 
       - uses: azure/setup-helm@v4
 
@@ -141,8 +143,8 @@ jobs:
       #     wait-interval: 2
       # # End of wait block
 
-      - name: Wait for the pods to be ready (timeout 480s)
-        run: ./.github/scripts/wait_for_pods_to_be_ready.py
+      - name: Wait for the pods to be ready
+        run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
       - name: Sleep for 10 secs
         run: sleep 10
       - name: Run E2E test
