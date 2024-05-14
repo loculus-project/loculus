@@ -54,28 +54,26 @@ spec:
                 secretKeyRef:
                   name: keycloak-database
                   key: addr
-            - name: KC_PORT
+            - name: KC_DB_URL_PORT
               valueFrom:
                 secretKeyRef:
                   name: keycloak-database
                   key: port        
-            - name: DB_DATABASE
+            - name: KC_DB_URL_DATABASE
               valueFrom:
                 secretKeyRef:
                   name: keycloak-database
                   key: database
-            - name: DB_USER
+            - name: KC_DB_USER
               valueFrom:
                 secretKeyRef:
                   name: keycloak-database
                   key: username
-            - name: DB_PASSWORD
+            - name: KC_DB_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: keycloak-database
                   key: password
-            - name: DB_VENDOR
-              value: "postgres"
             - name: KEYCLOAK_ADMIN
               value: "admin"
             - name: KEYCLOAK_ADMIN_PASSWORD
