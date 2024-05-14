@@ -39,7 +39,7 @@ spec:
               memory: "40Mi"
               cpu: "10m"
             limits:
-              memory: "1Gi"
+              memory: "3Gi"
           env:
             - name: KEYCLOAK_PASSWORD
               valueFrom:

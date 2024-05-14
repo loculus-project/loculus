@@ -31,7 +31,7 @@ spec:
               memory: "640Mi"
               cpu: "100m"
             limits:
-              memory: "1Gi" # Backend requires at least 635741K of memory
+              memory: "5Gi" # Backend requires at least 635741K of memory
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"
@@ -59,6 +59,8 @@ spec:
             - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
           env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
           {{- if .Values.enableCrossRefCredentials }}
             - name: CROSSREF_USERNAME
               valueFrom:
