@@ -47,6 +47,8 @@ spec:
             limits:
               memory: "3Gi"
           env:
+            - name: KC_DB
+              value: postgres
             - name: DB_ADDR
               valueFrom:
                 secretKeyRef:
@@ -100,6 +102,7 @@ spec:
             - "start"
             - "--import-realm"
             - "--cache=local"
+            - 
           ports:
             - containerPort: 8080
           volumeMounts:
