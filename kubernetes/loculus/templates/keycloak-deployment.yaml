@@ -64,7 +64,7 @@ spec:
                 secretKeyRef:
                   name: keycloak-database
                   key: database
-            - name: KC_DB_USER
+            - name: KC_DB_USERNAME
               valueFrom:
                 secretKeyRef:
                   name: keycloak-database
