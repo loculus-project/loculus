@@ -57,6 +57,9 @@ export const InnerSearchFullUI = ({
   const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
   const aggregatedHook = hooks.useAggregated({},{}); 
   const detailsHook = hooks.useDetails({},{});
+
+  console.log("referenceGenomeSequenceNames", referenceGenomesSequenceNames);
+
  
 
   useEffect(() => {
@@ -76,7 +79,11 @@ export const InnerSearchFullUI = ({
         isOpen={previewedSeqId !== null}
         onClose={() => setPreviewedSeqId(null)}
         referenceGenomeSequenceNames={referenceGenomesSequenceNames}
-        myGroups={myGroups}
+        myGroups={[]
+            //TODONOW
+
+
+        }
         isHalfScreen={previewHalfScreen}
         setIsHalfScreen={setPreviewHalfScreen}
       />
