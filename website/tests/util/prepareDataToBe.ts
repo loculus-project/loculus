@@ -28,7 +28,11 @@ const absurdlyManySoThatAllSequencesAreInProcessing = 10_000;
 async function prepareDataToBeProcessing(token: string, groupId: number) {
     const submittedSequences = await submitViaApi(testSequenceCount, token, groupId);
 
-    await fakeProcessingPipeline.query(absurdlyManySoThatAllSequencesAreInProcessing);
+    await Promise.all([
+        fakeProcessingPipeline.query(absurdlyManySoThatAllSequencesAreInProcessing),
+        fakeProcessingPipeline.query(absurdlyManySoThatAllSequencesAreInProcessing),
+        fakeProcessingPipeline.query(absurdlyManySoThatAllSequencesAreInProcessing),
+    ]);
 
     return submittedSequences;
 }
@@ -36,9 +40,7 @@ async function prepareDataToBeProcessing(token: string, groupId: number) {
 const prepareDataToHaveErrors = async (token: string, groupId: number) => {
     const sequenceEntries = await prepareDataToBeProcessing(token, groupId);
 
-    const options: PreprocessingOptions[] = sequenceEntries
-        .map(extractAccessionVersion)
-        .map((sequence) => ({ ...sequence, error: true }));
+    const options: PreprocessingOptions[] = sequenceEntries.map((sequence) => ({ ...sequence, error: true }));
     await fakeProcessingPipeline.submit(options);
 
     return sequenceEntries;

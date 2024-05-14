@@ -155,7 +155,7 @@ class SubmissionController(
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        val streamBody = streamTransactioned {
+        val streamBody = streamTransactioned(doLog = true) {
             submissionDatabaseService.streamUnprocessedSubmissions(numberOfSequenceEntries, organism, pipelineVersion)
         }
         return ResponseEntity(streamBody, headers, HttpStatus.OK)
@@ -377,6 +377,7 @@ class SubmissionController(
 
     private fun <T> streamTransactioned(
         compressionFormat: CompressionFormat? = null,
+        doLog: Boolean = false,
         sequenceProvider: () -> Sequence<T>,
     ) = StreamingResponseBody { responseBodyStream ->
         val outputStream = when (compressionFormat) {
@@ -387,7 +388,16 @@ class SubmissionController(
         outputStream.use { stream ->
             transaction {
                 try {
-                    iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
+                    synchronized(this) {
+                        if (doLog) {
+
+                            log.info { "enter synchronized" }
+                        }
+                        iteratorStreamer.streamAsNdjson(sequenceProvider(), stream)
+                        if (doLog) {
+                            log.info { "before return synchronized" }
+                        }
+                    }
                 } catch (e: Exception) {
                     log.error(e) { "An unexpected error occurred while streaming, aborting the stream: $e" }
                     stream.write(

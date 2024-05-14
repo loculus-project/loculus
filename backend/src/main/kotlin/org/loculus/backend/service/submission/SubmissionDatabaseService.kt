@@ -123,13 +123,15 @@ class SubmissionDatabaseService(
         val table = SequenceEntriesTable
         val preprocessing = SequenceEntriesPreprocessedDataTable
 
-        return table
+        log.info { "enter fetchUnprocessedEntriesAndUpdateToInProcessing" }
+
+        val fetchSize = table
             .select(table.accessionColumn, table.versionColumn, table.originalDataColumn)
             .where {
                 table.organismIs(organism) and
                     not(table.isRevocationColumn) and
                     notExists(
-                        preprocessing.selectAll().where {
+                        preprocessing.select(preprocessing.accessionColumn).where {
                             (table.accessionColumn eq preprocessing.accessionColumn) and
                                 (table.versionColumn eq preprocessing.versionColumn) and
                                 (preprocessing.pipelineVersionColumn eq pipelineVersion)
@@ -139,9 +141,13 @@ class SubmissionDatabaseService(
             .orderBy(table.accessionColumn)
             .limit(numberOfSequenceEntries)
             .fetchSize(streamBatchSize)
+
+        return fetchSize
             .asSequence()
             .chunked(streamBatchSize)
             .map { chunk ->
+                log.info { "chunk: ${chunk.map { it[table.accessionColumn] to it[table.versionColumn] }}" }
+
                 val chunkOfUnprocessedData = chunk.map {
                     UnprocessedData(
                         it[table.accessionColumn],
@@ -156,6 +162,7 @@ class SubmissionDatabaseService(
                 chunkOfUnprocessedData
             }
             .flatten()
+            .also { log.info { "exit fetchUnprocessedEntriesAndUpdateToInProcessing" } }
     }
 
     private fun updateStatusToProcessing(sequenceEntries: List<UnprocessedData>, pipelineVersion: Long) {
