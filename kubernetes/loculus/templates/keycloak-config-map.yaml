@@ -195,32 +195,6 @@ data:
             }
           },
         {
-          "username": "silo_import_job",
-          "enabled": true,
-          "email": "silo_import_job@void.o",
-          "emailVerified": true,
-          "firstName": "SILO",
-          "lastName": "ImportJob",
-          "credentials": [
-            {
-              "type": "password",
-              "value": "[[siloImportJobPassword]]"
-            }
-          ],
-          "realmRoles": [
-            "get_released_data",
-            "offline_access"
-          ],
-          "attributes": {
-            "university": "University of Test"
-          },
-          "clientRoles": {
-            "account": [
-              "manage-account"
-            ]
-          }
-        },
-        {
           "username": "backend",
           "enabled": true,
           "email": "nothing@void.o",

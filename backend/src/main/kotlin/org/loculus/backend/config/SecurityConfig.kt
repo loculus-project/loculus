@@ -4,7 +4,6 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
 import org.loculus.backend.auth.Roles.EXTERNAL_METADATA_UPDATER
-import org.loculus.backend.auth.Roles.GET_RELEASED_DATA
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.beans.factory.InitializingBean
@@ -41,10 +40,6 @@ class SecurityConfig {
     private val defaultAccessDeniedHandler = DelegatingAccessDeniedHandler(
         linkedMapOf(CsrfException::class.java to AccessDeniedHandlerImpl()),
         BearerTokenAccessDeniedHandler(),
-    )
-
-    private val endpointsForGettingReleasedData = arrayOf(
-        "/*/get-released-data",
     )
 
     private val endpointsForPreprocessingPipeline = arrayOf(
@@ -89,7 +84,6 @@ class SecurityConfig {
             auth.requestMatchers(
                 *endpointsForExternalMetadataUpdater,
             ).hasAuthority(EXTERNAL_METADATA_UPDATER)
-            auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }
