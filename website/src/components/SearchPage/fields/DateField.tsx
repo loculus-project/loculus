@@ -47,8 +47,10 @@ const CustomizedDatePicker = ({
                     {field.label}
                 </label>
                 <DatePicker
+                    
                     name={field.name}
-                    defaultValue={fieldValue ? valueToDateConverter(fieldValue) : undefined}
+                    value={fieldValue ? valueToDateConverter(fieldValue) : undefined}
+
                    
                     onChange={(value) => {
                         if (value && isNaN(value.getTime())) {
