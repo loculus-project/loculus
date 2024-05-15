@@ -240,3 +240,12 @@ export const pageQuery = z.object({
 });
 
 export type PageQuery = z.infer<typeof pageQuery>;
+
+export const info = z.object({
+    name: z.string(),
+    status: z.string(),
+    documentation: z.string(),
+    isInDebugMode: z.boolean(),
+});
+
+export type Info = z.infer<typeof info>;

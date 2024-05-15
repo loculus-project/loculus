@@ -82,10 +82,10 @@ async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]
 
             return unprocessedDataAsNdjson
                 .split('\n')
-                .filter((line: string) => line.length > 0)
-                .map((line: string): UnprocessedData => {
+                .filter((line) => line.length > 0)
+                .map((line) => {
                     try {
-                        return JSON.parse(line) as UnprocessedData;
+                        return unprocessedData.parse(JSON.parse(line));
                     } catch (error) {
                         if (error instanceof SyntaxError) {
                             throw new Error(
