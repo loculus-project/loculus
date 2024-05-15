@@ -675,6 +675,7 @@ defaultOrganisms:
           generateIndex: true
           autocomplete: true
           header: "Host"
+          initiallyVisible: true
         - name: ncbi_host_tax_id
           type: int
           autocomplete: true
