@@ -9,7 +9,7 @@ import type { MetadataFilter } from '../../../types/config.ts';
 const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField
         ref={ref}
-        value={props.value}
+        fieldValue={props.value}
         onChange={props.onChange}
         onFocus={props.onFocus}
         disabled={props.disabled}
@@ -22,7 +22,7 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 const logger = getClientLogger('AutoCompleteField');
 
 
-export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, allFields }) => {
+export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, allFields, fieldValue }) => {
    
    
     const buttonRef = useRef<HTMLButtonElement>(null);
@@ -76,7 +76,7 @@ export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, allFields }
     );
 
     return (
-        <Combobox value={field.filterValue} onChange={(value) => setAFieldValue(field.name, value)}>
+        <Combobox value={fieldValue} onChange={(value) => setAFieldValue(field.name, value)}>
             <div className='relative'>
                 <Combobox.Input
                     className='w-full py-2 pl-3  text-sm leading-5

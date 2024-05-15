@@ -142,6 +142,7 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues, setAFieldValue}) 
                 lapisUrl={lapisUrl}
                 allFields={fieldValues}
                 setAFieldValue={setAFieldValue}
+                fieldValue= {fieldValues[field.name]}
                 />;
             }
             return <NormalTextField type={field.type} field={field} 
