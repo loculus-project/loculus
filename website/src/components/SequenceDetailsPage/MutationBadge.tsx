@@ -18,7 +18,7 @@ export const SubBadge: FC<SubProps> = ({ position, mutationTo, mutationFrom, seq
     return (
         <li key={position} className='inline-block'>
             <span className='rounded-[3px] font-mono text-xs overflow-auto'>
-                {sequenceName !== null && <span className='px-[4px] py-[2px] sr-only'>{sequenceName}:</span>}
+                {sequenceName !== null && <span className='px-[4px] py-[2px] hidden-but-searchable'>{sequenceName}:</span>}
                 <span className='px-[4px] py-[2px] rounded-s-[3px]' style={{ background: getColor(mutationFrom) }}>
                     {mutationFrom}
                 </span>
