@@ -3,7 +3,7 @@ import type { FC, ReactElement } from 'react';
 import { Tooltip } from 'react-tooltip';
 
 import { routes } from '../../routes/routes.ts';
-import type {  Schema } from '../../types/config.ts';
+import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
@@ -18,16 +18,9 @@ type TableProps = {
     setPreviewedSeqId: (seqId: string | null) => void;
     previewedSeqId: string | null;
     orderBy: OrderBy;
-
 };
 
-export const Table: FC<TableProps> = ({
-    data,
-    schema,
-    setPreviewedSeqId,
-    previewedSeqId,
-    orderBy,
-}) => {
+export const Table: FC<TableProps> = ({ data, schema, setPreviewedSeqId, previewedSeqId, orderBy }) => {
     const primaryKey = schema.primaryKey;
 
     const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));
@@ -41,15 +34,15 @@ export const Table: FC<TableProps> = ({
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
             if (orderBy.type === 'ascending') {
-               console.log('orderBy', orderBy);
-               //TODONOW
+                console.log('orderBy', orderBy);
+                // TODONOW
             } else {
-               console.log('orderBy', orderBy);
-                //TODONOW
+                console.log('orderBy', orderBy);
+                // TODONOW
             }
         } else {
             console.log('orderBy', orderBy);
-             //TODONOW
+            // TODONOW
         }
     };
 

@@ -1,7 +1,7 @@
 import { DateTime } from 'luxon';
 import type { FC } from 'react';
-import { DatePicker } from 'rsuite';
 import { useState } from 'react';
+import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
 
@@ -33,13 +33,7 @@ export const TimestampField = (props) => (
     />
 );
 
-const CustomizedDatePicker = ({
-    field,
-    setAFieldValue,
-    dateToValueConverter,
-    valueToDateConverter,
-    fieldValue,
-}) => {
+const CustomizedDatePicker = ({ field, setAFieldValue, dateToValueConverter, valueToDateConverter, fieldValue }) => {
     console.log('fieldValue', fieldValue, field, valueToDateConverter(fieldValue));
     const [triggerUpdate, setTriggerUpdate] = useState(false);
     return (
@@ -48,42 +42,24 @@ const CustomizedDatePicker = ({
                 <label htmlFor={field.name} className='block text-sm  w-10 my-3 text-right mr-2 text-gray-400'>
                     {field.label}
                 </label>
-                {
-                    fieldValue
-                }
+                {fieldValue}
                 <DatePicker
-                    
                     name={field.name}
                     defaultValue={fieldValue ? valueToDateConverter(fieldValue) : undefined}
-                
                     key={field.name}
-                
-
-
-                   onChangeCalendarDate={(date) => {
+                    onChangeCalendarDate={(date) => {
                         setAFieldValue(field.name, dateToValueConverter(date));
-                        
-                    }
-                    }
-
+                    }}
                     onChange={(date) => {
-                       if(date){
-                        setAFieldValue(field.name, dateToValueConverter(date));
-                       
-                    }
-                    else{
-                        setAFieldValue(field.name, '');
-                       
-                    }
-                    }
-                    }
-
+                        if (date) {
+                            setAFieldValue(field.name, dateToValueConverter(date));
+                        } else {
+                            setAFieldValue(field.name, '');
+                        }
+                    }}
                     onClean={() => {
                         setAFieldValue(field.name, '');
-                        
-                    }
-                }
-                    
+                    }}
                 />
             </div>
         </div>

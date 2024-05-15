@@ -73,10 +73,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             placeholder: '',
             label: label !== undefined ? label : '',
         };
-        return <FloatingLabel {...inputProps} variant='outlined' type='text'
-        value={fieldValue}
-        
-        />;
+        return <FloatingLabel {...inputProps} variant='outlined' type='text' value={fieldValue} />;
     }
     const refTextArea = ref as ForwardedRef<HTMLTextAreaElement>;
 
@@ -92,20 +89,21 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
         value: fieldValue,
     };
 
-    console.log("fieldVal23", fieldValue)
+    console.log('fieldVal23', fieldValue);
 
     return (
-        <div className='relative my-1'>asd
+        <div className='relative my-1'>
+            asd
             <textarea
                 {...textareaProps}
                 rows={hasFocus || (fieldValue !== undefined && fieldValue.toString().split('\n').length > 1) ? 4 : 1}
                 className={`rounded-md block px-2.5 pb-1.5 pt-3 w-full text-sm text-gray-900 bg-transparent border-1 border-gray-300 appearance-none dark:text-white dark:border-gray-600 dark:focus:border-blue-500 focus:outline-none focus:ring-0 focus:border-blue-600 peer ${className}`}
-                placeholder='' 
-                bla={
-                    console.log("fieldVal2", fieldValue)
-                }
-            >{props.fieldValue}</textarea>123
-
+                placeholder=''
+                bla={console.log('fieldVal2', fieldValue)}
+            >
+                {props.fieldValue}
+            </textarea>
+            123
             <label
                 htmlFor={id}
                 className={`absolute text-sm text-gray-500 dark:text-gray-400 ${

@@ -23,7 +23,6 @@ export const hiddenDefaultSearchFilters = [
     { name: IS_REVOCATION_FIELD, type: 'string' as const, notSearchable: true },
 ];
 
-
 // TODONOW: add the necessary values for these fields above
 
 export const metadataDefaultDownloadDataFormat = 'tsv';

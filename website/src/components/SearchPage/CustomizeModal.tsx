@@ -22,7 +22,6 @@ const CheckboxField: React.FC<CheckboxFieldProps> = ({ label, checked, onChange,
     </div>
 );
 
-
 interface CustomizeModalProps {
     isCustomizeModalOpen: boolean;
     toggleCustomizeModal: () => void;
@@ -61,17 +60,16 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
                                 <CheckboxField key={fieldName} label={fieldName} checked disabled />
                             ))}
 
-                            {Array.from(visibilities)
-                                .map(([fieldName, visible]) => (
-                                    <CheckboxField
-                                        key={fieldName}
-                                        label={fieldName}
-                                        checked={visible}
-                                        onChange={(e) => {
-                                            setAVisibility(fieldName, e.target.checked);
-                                        }}
-                                    />
-                                ))}
+                            {Array.from(visibilities).map(([fieldName, visible]) => (
+                                <CheckboxField
+                                    key={fieldName}
+                                    label={fieldName}
+                                    checked={visible}
+                                    onChange={(e) => {
+                                        setAVisibility(fieldName, e.target.checked);
+                                    }}
+                                />
+                            ))}
                         </div>
 
                         <div className='mt-6'>

@@ -13,9 +13,9 @@ type SearchPaginationProps = {
 
 export const SearchPagination: FC<SearchPaginationProps> = ({
     count,
-   
+
     page,
-    setPage
+    setPage,
 }) => {
     return (
         <MUIPagination

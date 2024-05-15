@@ -52,13 +52,11 @@ export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
 
 export type MetadataFilter = Metadata & {
-
     label?: string;
     fieldGroup?: string;
     grouped?: false;
     fieldGroupDisplayName?: string;
     isVisible?: boolean;
-   
 };
 
 export type GroupedMetadataFilter = {
@@ -71,9 +69,7 @@ export type GroupedMetadataFilter = {
     isVisible?: boolean;
     notSearchable?: boolean;
     initiallyVisible?: boolean;
-   
 };
-
 
 export type AccessionFilter = {
     accession?: string[];

@@ -10,6 +10,7 @@ import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { getClientLogger } from '../../clientLogger.ts';
+import { getLapisUrl } from '../../config.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { type ClassOfSearchPageType, navigateToSearchLikePage } from '../../routes/routes.ts';
 import type { AccessionFilter, GroupedMetadataFilter, MetadataFilter, MutationFilter } from '../../types/config.ts';
@@ -17,10 +18,8 @@ import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay';
 import { SandwichIcon } from '../SandwichIcon';
-import { getLapisUrl } from '../../config.ts';
 
 const queryClient = new QueryClient();
-
 
 const clientLogger = getClientLogger('SearchForm');
 
@@ -35,127 +34,107 @@ interface SearchFormProps {
     setAVisibility: (fieldName: string, value: boolean) => void;
 }
 
-
 export const SearchForm = ({
     organism,
-   
+
     consolidatedMetadataSchema,
     clientConfig,
     fieldValues,
     setAFieldValue,
     lapisUrl,
     visibilities,
-    setAVisibility
-
+    setAVisibility,
 }) => {
-
-  
-
     const visibleFields = consolidatedMetadataSchema.filter((field) => visibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
     const toggleCustomizeModal = () => setIsCustomizeModalOpen(!isCustomizeModalOpen);
 
-
     return (
         <QueryClientProvider client={queryClient}>
-        <div>
-        <button className='underline'
-                            onClick={toggleCustomizeModal}
-                            >
+            <div
+                className={`${
+                    false ? 'translate-y-0' : 'translate-y-full'
+                } fixed bottom-0 left-0 w-full bg-white h-4/5 rounded-t-lg overflow-auto offCanvasTransform
+                      md:translate-y-0 md:static md:h-auto md:overflow-visible md:min-w-72`}
+            >
+                <div className='shadow-xl rounded-r-lg px-4 pt-4'>
+                    <div className='flex'>
+                        <h2 className='text-lg font-semibold flex-1 md:hidden'>Search query</h2>
+                        <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
+                            <button className='underline' onClick={toggleCustomizeModal}>
                                 Customize fields
                             </button>
-                         
-                         {
-
-                           <CustomizeModal
-                isCustomizeModalOpen={isCustomizeModalOpen}
-                toggleCustomizeModal={toggleCustomizeModal}
-                alwaysPresentFieldNames={[]}
-                visibilities={visibilities}
-                setAVisibility={setAVisibility}
-            />
-                            }
-                         
-
-            {
-                visibleFields.map((filter) => 
-                 
-                        <SearchField field={filter} 
-                        lapisUrl={lapisUrl}
-                        fieldValues={fieldValues}
-                        setAFieldValue={setAFieldValue}
-                        key={filter.name}
-                        />
-                   
-
-                )
-            }
-
-        </div>
+                        </div>{' '}
+                    </div>
+                    <CustomizeModal
+                        isCustomizeModalOpen={isCustomizeModalOpen}
+                        toggleCustomizeModal={toggleCustomizeModal}
+                        alwaysPresentFieldNames={[]}
+                        visibilities={visibilities}
+                        setAVisibility={setAVisibility}
+                    />
+                    <div className='flex flex-col'>
+                        {visibleFields.map((filter) => (
+                            <SearchField
+                                field={filter}
+                                lapisUrl={lapisUrl}
+                                fieldValues={fieldValues}
+                                setAFieldValue={setAFieldValue}
+                                key={filter.name}
+                            />
+                        ))}
+                    </div>{' '}
+                </div>
+            </div>
         </QueryClientProvider>
     );
+};
 
-}
-
-
-const SearchField = ({field, lapisUrl, fieldValues, setAFieldValue}) => {
+const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue }) => {
     console.log('fv', fieldValues);
-    
-    
+
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
     if (field.grouped) {
         return (
-            <div className='border border-gray-300 p-2'>
-                <h2>{field.displayName}</h2>
-               
+            <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
+                <h3 className='text-gray-500 text-sm mb-1'>
+                    {field.displayName !== undefined ? field.displayName : field.label}
+                </h3>
+
                 {field.groupedFields.map((f) => (
-                 
-                    <SearchField field={f} 
-                    fieldValues={fieldValues}
-                    setAFieldValue={setAFieldValue}
-                    key={f.name}
-                    
-                    />
-                   
-                   
-              
-                   
+                    <SearchField field={f} fieldValues={fieldValues} setAFieldValue={setAFieldValue} key={f.name} />
                 ))}
             </div>
         );
     }
 
-
     switch (field.type) {
         case 'date':
-            return <DateField 
-            field={field}
-            fieldValue={fieldValues[field.name]}
-            setAFieldValue={setAFieldValue}
-            />;
-        /*case 'timestamp':
+            return <DateField field={field} fieldValue={fieldValues[field.name]} setAFieldValue={setAFieldValue} />;
+        /* case 'timestamp':
             return <TimestampField {...props} />;
 */
         default:
             if (field.autocomplete === true) {
-                
-               
-                return <AutoCompleteField field={field}
-                lapisUrl={lapisUrl}
-                allFields={fieldValues}
-                setAFieldValue={setAFieldValue}
-                fieldValue= {fieldValues[field.name]}
-                />;
+                return (
+                    <AutoCompleteField
+                        field={field}
+                        lapisUrl={lapisUrl}
+                        allFields={fieldValues}
+                        setAFieldValue={setAFieldValue}
+                        fieldValue={fieldValues[field.name]}
+                    />
+                );
             }
-            return <NormalTextField type={field.type} field={field} 
-            fieldValue={fieldValues[field.name]}
-            
-            setAFieldValue={setAFieldValue}
-            
-            
-            />;
+            return (
+                <NormalTextField
+                    type={field.type}
+                    field={field}
+                    fieldValue={fieldValues[field.name]}
+                    setAFieldValue={setAFieldValue}
+                />
+            );
     }
-    
 };
