@@ -22,28 +22,23 @@ const CheckboxField: React.FC<CheckboxFieldProps> = ({ label, checked, onChange,
     </div>
 );
 
-interface FieldValue {
-    name: string;
-    label: string;
-    isVisible?: boolean;
-    notSearchable?: boolean;
-}
 
 interface CustomizeModalProps {
     isCustomizeModalOpen: boolean;
     toggleCustomizeModal: () => void;
     alwaysPresentFieldNames: string[];
-    fieldValues: FieldValue[];
-    handleFieldVisibilityChange: (fieldName: string, isVisible: boolean) => void;
+    visibilities: Map<string, boolean>;
+    setAVisibility: (fieldName: string, isVisible: boolean) => void;
 }
 
 export const CustomizeModal: React.FC<CustomizeModalProps> = ({
     isCustomizeModalOpen,
     toggleCustomizeModal,
     alwaysPresentFieldNames,
-    fieldValues,
-    handleFieldVisibilityChange,
+    visibilities,
+    setAVisibility,
 }) => {
+    console.log('CustomizeModal', visibilities);
     return (
         <Transition appear show={isCustomizeModalOpen}>
             <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={toggleCustomizeModal}>
@@ -66,15 +61,14 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
                                 <CheckboxField key={fieldName} label={fieldName} checked disabled />
                             ))}
 
-                            {fieldValues
-                                .filter((field) => field.notSearchable !== true)
-                                .map((field) => (
+                            {Array.from(visibilities)
+                                .map(([fieldName, visible]) => (
                                     <CheckboxField
-                                        key={field.name}
-                                        label={field.label}
-                                        checked={field.isVisible !== false}
+                                        key={fieldName}
+                                        label={fieldName}
+                                        checked={visible}
                                         onChange={(e) => {
-                                            handleFieldVisibilityChange(field.name, e.target.checked);
+                                            setAVisibility(fieldName, e.target.checked);
                                         }}
                                     />
                                 ))}

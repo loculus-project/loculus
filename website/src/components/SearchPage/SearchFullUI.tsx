@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { DownloadDialog } from './DownloadDialog/DownloadDialog';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
@@ -19,6 +19,10 @@ import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { CustomizeModal } from './CustomizeModal.tsx';
+
+const VISIBILITY_PREFIX = 'visibility_';
+
 
 
 interface InnerSearchFullUIProps {
@@ -42,13 +46,56 @@ export const InnerSearchFullUI = ({
    
   const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
   const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
-  const [fieldValues, setFieldValues] = useQueryAsState({});
+  const [state, setState] = useQueryAsState({});
+  
+let orderBy; //TODONOW
+
+const visibilities = useMemo(() => {
+    
+    const visibilities = new Map<string, boolean>();
+    schema.metadata.forEach((field) => {
+        visibilities.set(field.name, field.initiallyVisible);
+        }
+    );
+
+    const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(VISIBILITY_PREFIX));
+
+
+    
+    for (const key of visibilityKeys) {
+      visibilities.set(key.slice(VISIBILITY_PREFIX.length), state[key] === 'true');
+    }
+    return visibilities;
+  }
+    , [state]);
+
+const fieldValues = useMemo(() => {
+    const fieldKeys = Object.keys(state).filter((key) => !key.startsWith(VISIBILITY_PREFIX));
+    const values = {}
+    for (const key of fieldKeys) {
+        values[key] = state[key];
+    }
+    return values;
+  }
+    , [state]);
+
+    console.log("fieldValues", fieldValues);
+
+
+
   const setAFieldValue = (fieldName: string, value: string) => {
-    setFieldValues((prev) => ({
+    setState((prev) => ({
       ...prev,
       [fieldName]: value,
     }));
   };
+
+  const setAVisibility = (fieldName: string, visible: boolean) => {
+    setState((prev) => ({
+      ...prev,
+      [`${VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
+    }));
+  }
 
   const lapisUrl = getLapisUrl(clientConfig, organism);
 
@@ -69,10 +116,13 @@ export const InnerSearchFullUI = ({
         limit: pageSize, offset: 0 });
     }, [fieldValues]);
 
+
+
     
 
   return (
     <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
+      
       <SeqPreviewModal
         seqId={previewedSeqId ?? ''}
         accessToken={accessToken}
@@ -98,6 +148,8 @@ export const InnerSearchFullUI = ({
           setAFieldValue={setAFieldValue}
           consolidatedMetadataSchema={consolidatedMetadataSchema}
             lapisUrl={lapisUrl}
+            visibilities={visibilities}
+            setAVisibility={setAVisibility}
           
         />
         

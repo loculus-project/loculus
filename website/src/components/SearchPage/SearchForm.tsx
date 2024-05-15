@@ -31,23 +31,46 @@ export const SearchForm = ({
     clientConfig,
     fieldValues,
     setAFieldValue,
-    lapisUrl
+    lapisUrl,
+    visibilities,
+    setAVisibility
 
 }) => {
 
   
 
     const withoutUnsearchable = consolidatedMetadataSchema.filter((filter) => !filter.notSearchable);
+    const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
+    const toggleCustomizeModal = () => setIsCustomizeModalOpen(!isCustomizeModalOpen);
+
 
     return (
         <QueryClientProvider client={queryClient}>
         <div>
+        <button className='underline'
+                            onClick={toggleCustomizeModal}
+                            >
+                                Customize fields
+                            </button>
+                         
+                         {
+
+                           <CustomizeModal
+                isCustomizeModalOpen={isCustomizeModalOpen}
+                toggleCustomizeModal={toggleCustomizeModal}
+                alwaysPresentFieldNames={[]}
+                visibilities={visibilities}
+                setAVisibility={setAVisibility}
+            />
+                            }
+                         
+
             {
                 withoutUnsearchable.map((filter) => 
-                    <p className='border border-gray-300 p-2' key={filter.name}>
+                    <div className='border border-gray-300 p-2' key={filter.name}>
                       <span className='text-xs leading-4'>
                           { JSON.stringify(filter) }</span>
-                        value: {
+                        valuer: {
                             fieldValues[filter.name]
                         }
                         <SearchField field={filter} 
@@ -55,7 +78,7 @@ export const SearchForm = ({
                         fieldValues={fieldValues}
                         setAFieldValue={setAFieldValue}
                         />
-                    </p>
+                    </div>
 
                 )
             }
