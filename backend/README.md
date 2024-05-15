@@ -12,20 +12,30 @@ All commands mentioned in this section are run from the `backend` directory unle
 
 #### TLDR
 
-```sh
-../generate_local_test_config.sh
-# Start the database as a daemon (if not already running)
-docker run -d \
-  --name loculus_postgres \
-  -e POSTGRES_DB=loculus \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=unsecure \
-  -p 5432:5432 \
-  postgres:latest
-./start_dev.sh
-# Shut down the database when done
-docker stop loculus_postgres
-```
+1. Start the database as a daemon (if not already running):
+
+   ```sh
+   docker run -d \
+   --name loculus_postgres \
+   -e POSTGRES_DB=loculus \
+   -e POSTGRES_USER=postgres \
+   -e POSTGRES_PASSWORD=unsecure \
+   -p 5432:5432 \
+   postgres:latest
+   ```
+
+2. Start the backend (including test config):
+
+   ```sh
+   ../generate_local_test_config.sh
+   ./start_dev.sh
+   ```
+
+3. Clean up the database when done:
+
+   ```sh
+   docker stop loculus_postgres
+   ```
 
 #### Details
 
@@ -108,3 +118,7 @@ Since the API has endpoints that deal with NDJSON, the documentation of those en
 "the provided schema is a valid JSON schema for each line of the NDJSON file".
 
 The Swagger UI and OpenAPI specification is generated via the [Springdoc plugin](https://springdoc.org/).
+
+```
+
+```
