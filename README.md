@@ -2,7 +2,7 @@
 
 Loculus is a software package to power microbial genomial databases.
 
-### [Visit the Loculus documentation website](https://loculus-project.github.io/loculus/)
+## [Visit the Loculus documentation website](https://loculus-project.github.io/loculus/)
 
 Additional documentation for development is available in each folder's README. This file contains a high-level overview of the project and shared development information that is best kept in one place.
 
@@ -26,7 +26,6 @@ While the documentation is still a work in progress, a look at the [`.github/wor
 - [`backend.yml`](/.github/workflows/backend.yml) runs the backend tests and builds the backend docker image
 - [`website.yml`](/.github/workflows/website.yml) runs the website tests and builds the website docker image
 - [`e2e-k3d.yml`](/.github/workflows/e2e-k3d.yml) runs the end-to-end tests
-
 
 ## Authorization
 
