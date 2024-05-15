@@ -4,6 +4,7 @@ import { routes } from '../../../src/routes/routes.ts';
 import type { AccessionVersion } from '../../../src/types/backend.ts';
 import { getAccessionVersionString } from '../../../src/utils/extractAccessionVersion.ts';
 import { baseUrl } from '../../e2e.fixture';
+import { throwOnConsole } from '../../util/throwOnConsole.ts';
 
 export class SequencePage {
     public readonly notLatestVersionBanner: Locator;
@@ -19,6 +20,7 @@ export class SequencePage {
         this.allVersions = this.page.getByRole('link', {
             name: `All versions`,
         });
+        throwOnConsole(page);
         this.notLatestVersionBanner = this.page.getByText('This is not the latest version of this sequence entry.');
         this.revocationVersionBanner = this.page.getByText('This is a revocation version.');
     }

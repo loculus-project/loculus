@@ -40,7 +40,7 @@ test.describe('The seqSet item page', () => {
         await seqSetPage.gotoDetail(testSeqSetName);
         await expect(seqSetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
         await seqSetPage.page.getByRole('button', { name: 'Export' }).click();
-        await seqSetPage.waitForLoad();
+        await seqSetPage.page.waitForLoadState();
 
         await seqSetPage.page.getByTestId('json-radio').waitFor();
         await seqSetPage.page.getByTestId('json-radio').click();
@@ -56,7 +56,7 @@ test.describe('The seqSet item page', () => {
         await seqSetPage.gotoDetail(testSeqSetName);
         await expect(seqSetPage.page.getByRole('button', { name: 'Export' })).toBeVisible();
         await seqSetPage.page.getByRole('button', { name: 'Export' }).click();
-        await seqSetPage.waitForLoad();
+        await seqSetPage.page.waitForLoadState();
 
         await seqSetPage.page.getByTestId('tsv-radio').waitFor();
         await seqSetPage.page.getByTestId('tsv-radio').click();
@@ -72,11 +72,11 @@ test.describe('The seqSet item page', () => {
         await seqSetPage.gotoDetail(testSeqSetName);
         await expect(seqSetPage.page.getByRole('button', { name: 'Delete' })).toBeVisible();
         await seqSetPage.page.getByRole('button', { name: 'Delete' }).click();
-        await seqSetPage.waitForLoad();
+        await seqSetPage.page.waitForLoadState();
 
         await expect(async () => {
             await seqSetPage.page.getByRole('button', { name: 'Cancel' }).click();
-            await seqSetPage.waitForLoad();
+            await seqSetPage.page.waitForLoadState();
             await expect(seqSetPage.page.getByRole('heading', { name: testSeqSetName })).toBeVisible();
         }).toPass();
     });
@@ -86,14 +86,14 @@ test.describe('The seqSet item page', () => {
         await seqSetPage.gotoDetail(testSeqSetName);
         await expect(seqSetPage.page.getByRole('button', { name: 'Edit' })).toBeVisible();
         await seqSetPage.page.getByRole('button', { name: 'Edit' }).click();
-        await seqSetPage.waitForLoad();
+        await seqSetPage.page.waitForLoadState();
 
         await expect(async () => {
             await expect(seqSetPage.page.getByText('Edit SeqSet')).toBeVisible();
             await seqSetPage.page.locator('#seqSet-name').fill(editSeqSetName);
             await seqSetPage.page.getByRole('button', { name: 'Save' }).click();
-            await seqSetPage.waitForLoad();
-            await expect(seqSetPage.page.getByText(editSeqSetName)).toBeVisible();
+            await seqSetPage.page.waitForLoadState();
+            await expect(await seqSetPage.page.getByText(editSeqSetName).locator('visible=true')).toBeVisible();
         }).toPass();
 
         await seqSetPage.deleteTestSeqSet(editSeqSetName);

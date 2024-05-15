@@ -6,6 +6,7 @@ import { type FormEvent, useState, useRef, useEffect, useCallback, type ElementT
 import { DateChangeModal } from './DateChangeModal';
 import { getClientLogger } from '../../clientLogger.ts';
 import DataUseTermsSelector from '../../components/DataUseTerms/DataUseTermsSelector';
+import useClientFlag from '../../hooks/isClient.ts';
 import { routes } from '../../routes/routes.ts';
 import { backendApi } from '../../services/backendApi.ts';
 import { backendClientHooks } from '../../services/serviceHooks.ts';
@@ -143,11 +144,7 @@ const UploadComponent = ({
 }) => {
     const [myFile, rawSetMyFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
+    const isClient = useClientFlag();
 
     const setMyFile = useCallback(
         (file: File | null) => {
@@ -267,11 +264,7 @@ const InnerDataUploadForm = ({
     const [dataUseTermsType, setDataUseTermsType] = useState<DataUseTermsType>(openDataUseTermsType);
     const [restrictedUntil, setRestrictedUntil] = useState<DateTime>(dateTimeInMonths(6));
 
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-        setIsClient(true);
-    }, []);
+    const isClient = useClientFlag();
 
     const handleLoadExampleData = async () => {
         const { metadataFileContent, revisedMetadataFileContent, sequenceFileContent } = getExampleData(exampleEntries);

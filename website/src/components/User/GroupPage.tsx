@@ -1,5 +1,6 @@
 import { type FC, type FormEvent, useState } from 'react';
 
+import useClientFlag from '../../hooks/isClient.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
@@ -30,6 +31,8 @@ const InnerGroupPage: FC<GroupPageProps> = ({
     const [newUserName, setNewUserName] = useState<string>('');
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+
+    const isClient = useClientFlag();
 
     const { groupDetails, removeFromGroup, addUserToGroup } = useGroupPageHooks({
         clientConfig,
@@ -101,6 +104,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 });
                             }}
                             className='object-right p-2 loculusColor text-white rounded px-4'
+                            disabled={!isClient}
                         >
                             Leave group
                         </button>
@@ -152,7 +156,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 className='p-2 border border-gray-300 rounded mr-2'
                                 required
                             />
-                            <button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
+                            <button
+                                type='submit'
+                                className='px-4 py-2 loculusColor text-white rounded'
+                                disabled={!isClient}
+                            >
                                 Add User
                             </button>
                         </div>
@@ -175,6 +183,7 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                             className='px-2 py-1 loculusColor text-white rounded'
                                             title='Remove user from group'
                                             aria-label={`Remove User ${user.name}`}
+                                            disabled={!isClient}
                                         >
                                             Remove user
                                         </button>

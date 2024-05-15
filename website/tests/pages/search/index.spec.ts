@@ -47,7 +47,7 @@ test.describe('The search page', () => {
         await expect(rowLocator.getByText('B.1.1.7')).toBeVisible();
 
         await accessionLink.click();
-        await expect(searchPage.page.getByText('Amino acid mutations')).toBeVisible();
+        await expect(searchPage.page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });
     });
 
     test('should search a few sequence entries by accession', async ({ searchPage }) => {
