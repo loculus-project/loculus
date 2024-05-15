@@ -11,6 +11,7 @@ import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { getClientLogger } from '../../clientLogger.ts';
 import { getLapisUrl } from '../../config.ts';
+import useClientFlag from '../../hooks/isClient.ts';
 import { useOffCanvas } from '../../hooks/useOffCanvas';
 import { type ClassOfSearchPageType, navigateToSearchLikePage } from '../../routes/routes.ts';
 import type { AccessionFilter, GroupedMetadataFilter, MetadataFilter, MutationFilter } from '../../types/config.ts';
@@ -127,6 +128,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue }) => {
                         fieldValue={fieldValues[field.name]}
                     />
                 );
+
             }
             return (
                 <NormalTextField

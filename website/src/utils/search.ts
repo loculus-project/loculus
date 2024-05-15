@@ -99,7 +99,7 @@ export const getMetadataFilters = (
                 name: `${metadata.name}From`,
                 displayName: 'From',
                 fieldGroup: metadata.name,
-                fieldGroupDisplayName: metadata.displayName,
+                fieldGroupDisplayName: metadata.displayName ?? metadata.name,
             };
 
             const metadataTo = {
@@ -107,7 +107,7 @@ export const getMetadataFilters = (
                 name: `${metadata.name}To`,
                 displayName: 'To',
                 fieldGroup: metadata.name,
-                fieldGroupDisplayName: metadata.displayName,
+                fieldGroupDisplayName: metadata.displayName ?? metadata.name,
             };
             return [metadataFrom, metadataTo];
         }

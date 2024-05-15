@@ -1,4 +1,4 @@
-{{- if not .Values.externalDatabaseUrl }}
+{{- if .Values.runDevelopmentMainDatabase }}
 apiVersion: v1
 kind: Service
 metadata:

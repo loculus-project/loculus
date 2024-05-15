@@ -2,7 +2,7 @@
 
 Loculus is a software package to power microbial genomial databases.
 
-### [Visit the Loculus documentation website](https://loculus-project.github.io/loculus/)
+## [Visit the Loculus documentation website](https://loculus-project.github.io/loculus/)
 
 Additional documentation for development is available in each folder's README. This file contains a high-level overview of the project and shared development information that is best kept in one place.
 
@@ -27,7 +27,6 @@ While the documentation is still a work in progress, a look at the [`.github/wor
 - [`website.yml`](/.github/workflows/website.yml) runs the website tests and builds the website docker image
 - [`e2e-k3d.yml`](/.github/workflows/e2e-k3d.yml) runs the end-to-end tests
 
-
 ## Authorization
 
 ### User management
@@ -36,8 +35,8 @@ We use keycloak for authorization. The keycloak instance is deployed in the `loc
 For testing we added multiple users to the realm. The users are:
 
 - `admin` with password `admin` (login under `your-exposed-keycloak-url/admin/master/console/`)
-- `testuser` with password `testuser` (login under `your-exposed-keycloak-url/realms/loculus/account/`)
-- and more testusers, for each browser in the e2e test following the pattern: `testuser_[processId]_[browser]` with password `testuser_[processId]_[browser]`
+- `testuser:testuser` (read as username: `testuser`, password `testuser`) and `superuser:superuser` (login under `your-exposed-keycloak-url/realms/loculus/account/`)
+- and more testusers, for each browser in the e2e test following the pattern: `testuser_[processId]_[browser]:testuser_[processId]_[browser]`
 - These testusers will be added to the `testGroup` in the setup for e2e tests. If you change the number of browsers in the e2e test, you need to adapt `website/tests/playwrightSetup.ts` accordingly.
 - To validate that a user exists we also created a technical user for the backend with username `backend` and password `backend`. The technical user is authorized to view users and groups and in principle to manage its own account.
 

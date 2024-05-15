@@ -1,6 +1,7 @@
 import { type ComponentProps, type FC, type FormEvent, type PropsWithChildren, useState } from 'react';
 
 import { listOfCountries } from './listOfCountries.ts';
+import useClientFlag from '../../hooks/isClient.ts';
 import { useGroupCreation } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
@@ -56,6 +57,8 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
         }
     };
 
+    const isClient = useClientFlag();
+
     return (
         <div className='p-4 max-w-6xl mx-auto'>
             <h2 className='title'>Create a new group</h2>
@@ -83,7 +86,11 @@ const InnerGroupCreationForm: FC<GroupManagerProps> = ({ clientConfig, accessTok
                     </div>
 
                     <div className='flex justify-end py-8 gap-4 '>
-                        <button type='submit' className='btn btn-primary px-4 py-2 loculusColor text-white rounded'>
+                        <button
+                            type='submit'
+                            className='btn btn-primary px-4 py-2 loculusColor text-white rounded'
+                            disabled={!isClient}
+                        >
                             Create group
                         </button>
                     </div>

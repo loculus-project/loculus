@@ -3,7 +3,7 @@ import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { SearchForm } from './SearchForm';
+import { SearchForm, searchButtonText } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { routes, SEARCH } from '../../routes/routes.ts';
 import type { MetadataFilter } from '../../types/config.ts';
@@ -19,8 +19,6 @@ global.ResizeObserver = class FakeResizeObserver {
     // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-empty-function
     unobserve() {}
 };
-
-const searchButtonText = 'Search sequences';
 
 vi.mock('../../config', () => ({
     fetchAutoCompletion: vi.fn().mockResolvedValue([]),
@@ -173,7 +171,7 @@ describe('SearchForm', () => {
 
         await userEvent.type(dateField, '2025');
 
-        await userEvent.click(screen.getByRole('button', { name: 'Search sequences' }));
+        await userEvent.click(screen.getByRole('button', { name: searchButtonText }));
 
         expect(window.location.href).toContain(`${dateFieldName}=2025-01-25`);
     });
