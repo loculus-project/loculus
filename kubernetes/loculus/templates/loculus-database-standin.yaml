@@ -1,5 +1,5 @@
 {{- $dockerTag := include "loculus.dockerTag" .Values }}
-{{- if not .Values.externalDatabaseUrl }}
+{{- if .Values.runDevelopmentMainDatabase }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
