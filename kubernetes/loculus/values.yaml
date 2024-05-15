@@ -1443,7 +1443,6 @@ secrets:
       insdcIngestUserPassword: ""
       preprocessingPipelinePassword: ""
       externalMetadataUpdaterPassword: ""
-      siloImportJobPassword: ""
       backendUserPassword: ""
   keycloak-admin:
     type: raw

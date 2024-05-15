@@ -25,11 +25,8 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_USER_NAME
 import org.loculus.backend.controller.EndpointTest
-import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectNdjsonAndGetContent
-import org.loculus.backend.controller.expectUnauthorizedResponse
 import org.loculus.backend.controller.jacksonObjectMapper
-import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
@@ -54,22 +51,6 @@ class GetReleasedDataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
 ) {
     val currentYear = Clock.System.now().toLocalDateTime(TimeZone.UTC).year
-
-    @Test
-    fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
-        expectUnauthorizedResponse {
-            submissionControllerClient.getReleasedData(jwt = it)
-        }
-    }
-
-    @Test
-    fun `GIVEN authorization token with THEN returns 403 Forbidden`() {
-        expectForbiddenResponse {
-            submissionControllerClient.getReleasedData(
-                jwt = jwtForDefaultUser,
-            )
-        }
-    }
 
     @Test
     fun `GIVEN no sequence entries in database THEN returns empty response`() {

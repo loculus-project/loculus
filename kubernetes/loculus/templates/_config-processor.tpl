@@ -37,11 +37,6 @@
         secretKeyRef:
           name: service-accounts
           key: externalMetadataUpdaterPassword
-    - name: LOCULUSSUB_siloImportJobPassword
-      valueFrom:
-        secretKeyRef:
-          name: service-accounts
-          key: siloImportJobPassword
     - name: LOCULUSSUB_backendUserPassword
       valueFrom:
         secretKeyRef:
