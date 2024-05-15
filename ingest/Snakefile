@@ -50,19 +50,6 @@ rule fetch_ncbi_dataset_package:
         """
 
 
-# rule extract_ncbi_dataset_sequences:
-#     input:
-#         dataset_package="results/ncbi_dataset.zip",
-#     output:
-#         ncbi_dataset_sequences="results/sequences.fasta",
-#     shell:
-#         """
-#         unzip -jp {input.dataset_package} \
-#             ncbi_dataset/data/genomic.fna \
-#         | seqkit seq -i -w0 \
-#         > {output.ncbi_dataset_sequences}
-#         """
-
 rule extract_ncbi_dataset_sequences_full:
     input:
         dataset_package="results/ncbi_dataset.zip",
@@ -76,8 +63,9 @@ rule extract_ncbi_dataset_sequences_full:
         > {output.ncbi_dataset_sequences}
         """
 
+
 rule format_segmented_viruses:
-    """Add segment to INSDC label"""
+    """Check if viruses are segmented, if so add segment to INSDC label"""
     input:
         sequences="results/sequences_full.fasta",
         script="scripts/segmented_viruses_format.py",
@@ -94,7 +82,7 @@ rule format_segmented_viruses:
             --input-metadata {input.ncbi_dataset_tsv} \
             --output-seq {output.sequences_processed} \
             --output-metadata {output.ncbi_dataset_tsv}
-        """   
+        """
 
 
 rule calculate_sequence_hashes:
@@ -223,6 +211,7 @@ rule compare_hashes:
 
 rule prepare_files:
     input:
+        config="results/config.yaml",
         metadata="results/metadata_post_prepare.json",
         sequences="results/sequences.json",
         to_submit="results/to_submit.json",
@@ -236,6 +225,7 @@ rule prepare_files:
     shell:
         """
         python scripts/prepare_files.py \
+            --config-file {input.config} \
             --metadata-path {input.metadata} \
             --sequences-path {input.sequences} \
             --to-submit-path {input.to_submit} \

@@ -126,22 +126,22 @@ def enrich_with_nextclade(
                         f.write(f">{id}\n")
                         f.write(f"{seg_dict[segment]}\n")
 
-        command = [
-            "nextclade3",
-            "run",
-            f"--output-all={result_dir}",
-            f"--input-dataset={dataset_dir}",
-            f"--output-translations={
-                result_dir}/nextclade.cds_translation.{{cds}}.fasta",
-            "--jobs=1",
-            "--",
-            f"{input_file}",
-        ]
-        logging.debug(f"Running nextclade: {command}")
+            command = [
+                "nextclade3",
+                "run",
+                f"--output-all={result_dir}",
+                f"--input-dataset={dataset_dir}",
+                f"--output-translations={
+                    result_dir}/nextclade.cds_translation.{{cds}}.fasta",
+                "--jobs=1",
+                "--",
+                f"{input_file}",
+            ]
+            logging.debug(f"Running nextclade: {command}")
 
-          # TODO: Capture stderr and log at DEBUG level
-          exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
-           if exit_code != 0:
+            # TODO: Capture stderr and log at DEBUG level
+            exit_code = subprocess.run(command, check=False).returncode  # noqa: S603
+            if exit_code != 0:
                 msg = f"nextclade failed with exit code {exit_code}"
                 raise Exception(msg)
 
