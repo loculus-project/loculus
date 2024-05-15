@@ -18,4 +18,11 @@ export class BackendClient extends ZodiosWrapperClient<typeof backendApi> {
             headers: createAuthorizationHeader(token),
         });
     }
+
+    public async isInDebugMode() {
+        return (await this.call('info')).match(
+            (info) => info.isInDebugMode,
+            () => false,
+        );
+    }
 }
