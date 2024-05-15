@@ -1426,13 +1426,13 @@ defaultOrganisms:
           nextclade_dataset_name: nextstrain/cchf/all-lineages
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cchf/data_output
           nucleotideSequences:
-            - name: L
-            - name: M
-            - name: S
+            - L
+            - M
+            - S
           genes:
-            - name: RdRp
-            - name: GPC
-            - name: NP
+            - RdRp
+            - GPC
+            - NP
           batch_size: 100
           processing_spec:
             total_snps:
