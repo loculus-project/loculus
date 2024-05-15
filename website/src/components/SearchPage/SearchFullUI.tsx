@@ -51,15 +51,17 @@ export const InnerSearchFullUI = ({
             if (field.rangeSearch) {
                 const fromField = {
                     ...field,
-                    name: `${field.name}_from`,
-                    label: `From ${field.label}`,
-                    fieldGroup: field.name
+                    name: `${field.name}From`,
+                    label: `From`,
+                    fieldGroup: field.name,
+                    fieldGroupDisplayName: field.displayName,
                 };
                 const toField = {
                     ...field,
-                    name: `${field.name}_to`,
-                    label: `To ${field.label}`,
-                    fieldGroup: field.name
+                    name: `${field.name}To`,
+                    label: `To`,
+                    fieldGroup: field.name,
+                    fieldGroupDisplayName: field.displayName,
                 };
                 result.push(fromField);
                 result.push(toField);
@@ -143,7 +145,8 @@ const fieldValues = useMemo(() => {
  
 
   useEffect(() => {
-    const sequenceFilters = Object.fromEntries(metadataSchema.map((field) => [field.name, fieldValues[field.name]]).filter(([, value]) => value !== undefined && value !== ''));
+
+    const sequenceFilters = Object.fromEntries(Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''));
     console.log("sequenceFilters", sequenceFilters);
 
 

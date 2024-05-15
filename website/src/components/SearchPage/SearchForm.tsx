@@ -80,18 +80,14 @@ export const SearchForm = ({
 
             {
                 visibleFields.map((filter) => 
-                    <div className='border border-gray-300 p-2' key={filter.name}>
-                      <span className='text-xs leading-4'>
-                          { JSON.stringify(filter) }</span>
-                        valuer: {
-                            fieldValues[filter.name]
-                        }
+                 
                         <SearchField field={filter} 
                         lapisUrl={lapisUrl}
                         fieldValues={fieldValues}
                         setAFieldValue={setAFieldValue}
+                        key={filter.name}
                         />
-                    </div>
+                   
 
                 )
             }
@@ -103,7 +99,9 @@ export const SearchForm = ({
 }
 
 
-const SearchField = ({field, lapisUrl, allFields, fieldValues, setAFieldValue}) => {
+const SearchField = ({field, lapisUrl, fieldValues, setAFieldValue}) => {
+    console.log('fv', fieldValues);
+    
     
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
@@ -111,15 +109,17 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues, setAFieldValue}) 
         return (
             <div className='border border-gray-300 p-2'>
                 <h2>{field.displayName}</h2>
+               
                 {field.groupedFields.map((f) => (
-                    <div>
+                 
                     <SearchField field={f} 
                     fieldValues={fieldValues}
                     setAFieldValue={setAFieldValue}
+                    key={f.name}
                     
                     />
-                    { JSON.stringify(f) }
-                    </div>
+                   
+                   
               
                    
                 ))}
@@ -130,7 +130,11 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues, setAFieldValue}) 
 
     switch (field.type) {
         case 'date':
-            return <div>date</div>
+            return <DateField 
+            field={field}
+            fieldValue={fieldValues[field.name]}
+            setAFieldValue={setAFieldValue}
+            />;
         /*case 'timestamp':
             return <TimestampField {...props} />;
 */

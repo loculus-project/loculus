@@ -2,7 +2,6 @@ import { DateTime } from 'luxon';
 import type { FC } from 'react';
 import { DatePicker } from 'rsuite';
 
-import type { FieldProps } from './FieldProps';
 import 'rsuite/DatePicker/styles/index.css';
 
 type ValueConverter = {
@@ -10,7 +9,7 @@ type ValueConverter = {
     valueToDateConverter: (value: string) => Date | undefined;
 };
 
-export const DateField: FC<FieldProps> = (props) => (
+export const DateField = (props) => (
     <CustomizedDatePicker
         {...props}
         dateToValueConverter={(date) => {
@@ -22,7 +21,7 @@ export const DateField: FC<FieldProps> = (props) => (
     />
 );
 
-export const TimestampField: FC<FieldProps> = (props) => (
+export const TimestampField = (props) => (
     <CustomizedDatePicker
         {...props}
         dateToValueConverter={(date) => (date ? String(Math.floor(date.getTime() / 1000)) : '')}
@@ -33,12 +32,14 @@ export const TimestampField: FC<FieldProps> = (props) => (
     />
 );
 
-const CustomizedDatePicker: FC<FieldProps & ValueConverter> = ({
+const CustomizedDatePicker = ({
     field,
     setAFieldValue,
     dateToValueConverter,
     valueToDateConverter,
+    fieldValue,
 }) => {
+    console.log('fieldValue', fieldValue, field, valueToDateConverter(fieldValue));
     return (
         <div>
             <div className='flex justify-between items-center'>
@@ -47,7 +48,8 @@ const CustomizedDatePicker: FC<FieldProps & ValueConverter> = ({
                 </label>
                 <DatePicker
                     name={field.name}
-                    defaultValue={field.filterValue ? valueToDateConverter(field.filterValue) : undefined}
+                    defaultValue={fieldValue ? valueToDateConverter(fieldValue) : undefined}
+                   
                     onChange={(value) => {
                         if (value && isNaN(value.getTime())) {
                             return;
