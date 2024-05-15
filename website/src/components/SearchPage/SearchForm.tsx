@@ -24,6 +24,18 @@ const queryClient = new QueryClient();
 
 const clientLogger = getClientLogger('SearchForm');
 
+interface SearchFormProps {
+    organism: string;
+    metadataSchema: GroupedMetadataFilter[];
+    clientConfig: ClientConfig;
+    fieldValues: Record<string, string>;
+    setAFieldValue: (fieldName: string, value: string) => void;
+    lapisUrl: string;
+    visibilities: Map<string, boolean>;
+    setAVisibility: (fieldName: string, value: boolean) => void;
+}
+
+
 export const SearchForm = ({
     organism,
    
@@ -39,7 +51,8 @@ export const SearchForm = ({
 
   
 
-    const withoutUnsearchable = consolidatedMetadataSchema.filter((filter) => !filter.notSearchable);
+    const visibleFields = consolidatedMetadataSchema.filter((field) => visibilities.get(field.name));
+
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
     const toggleCustomizeModal = () => setIsCustomizeModalOpen(!isCustomizeModalOpen);
 
@@ -66,7 +79,7 @@ export const SearchForm = ({
                          
 
             {
-                withoutUnsearchable.map((filter) => 
+                visibleFields.map((filter) => 
                     <div className='border border-gray-300 p-2' key={filter.name}>
                       <span className='text-xs leading-4'>
                           { JSON.stringify(filter) }</span>

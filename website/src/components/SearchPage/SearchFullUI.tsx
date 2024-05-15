@@ -110,8 +110,12 @@ const fieldValues = useMemo(() => {
  
 
   useEffect(() => {
-    aggregatedHook.mutate({ fields: [], nucleotideMutations: [], aminoAcidMutations: [], nucleotideInsertions: [], aminoAcidInsertions: [] });
-    detailsHook.mutate({ fields: [...schema.tableColumns, schema.primaryKey
+    const sequenceFilters = Object.fromEntries(metadataSchema.map((field) => [field.name, fieldValues[field.name]]).filter(([, value]) => value !== undefined && value !== ''));
+    console.log("sequenceFilters", sequenceFilters);
+
+
+    aggregatedHook.mutate({...sequenceFilters, fields: [], nucleotideMutations: [], aminoAcidMutations: [], nucleotideInsertions: [], aminoAcidInsertions: [] });
+    detailsHook.mutate({...sequenceFilters, fields: [...schema.tableColumns, schema.primaryKey
     ], nucleotideMutations: [], aminoAcidMutations: [], nucleotideInsertions: [], aminoAcidInsertions: [] ,
         limit: pageSize, offset: 0 });
     }, [fieldValues]);
