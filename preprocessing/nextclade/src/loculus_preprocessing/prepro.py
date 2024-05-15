@@ -2,6 +2,7 @@ import csv
 import dataclasses
 import json
 import logging
+import os
 import subprocess  # noqa: S404
 import sys
 import time
@@ -10,12 +11,11 @@ from http import HTTPStatus
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Optional
-from distutils.dir_util import copy_tree
-import os
 
 import dpath
 import requests
 from Bio import SeqIO
+from distutils.dir_util import copy_tree
 
 from .backend import get_jwt
 from .config import Config
@@ -47,8 +47,7 @@ csv.field_size_limit(sys.maxsize)
 def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
-    params = {"numberOfSequenceEntries": n,
-              "pipelineVersion": config.pipeline_version}
+    params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
     headers = {"Authorization": "Bearer " + get_jwt(config)}
     response = requests.post(url, data=params, headers=headers, timeout=10)
     if not response.ok:
@@ -87,13 +86,16 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 def enrich_with_nextclade(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
-    unaligned_nucleotide_sequences: dict[AccessionVersion,
-                                         dict[str, Optional[NucleotideSequence]]] = {}
+    unaligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[str, Optional[NucleotideSequence]]
+    ] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
-    aligned_aminoacid_sequences: dict[AccessionVersion,
-                                      dict[GeneName, AminoAcidSequence | None]] = {}
-    aligned_nucleotide_sequences: dict[AccessionVersion,
-                                       dict[str, Optional[NucleotideSequence]]] = {}
+    aligned_aminoacid_sequences: dict[
+        AccessionVersion, dict[GeneName, AminoAcidSequence | None]
+    ] = {}
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[str, Optional[NucleotideSequence]]
+    ] = {}
     for entry in unprocessed:
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
@@ -105,32 +107,32 @@ def enrich_with_nextclade(
         for segment in config.nucleotideSequences:
             aligned_nucleotide_sequences[id][segment] = None
             if segment in entry.data.unalignedNucleotideSequences:
-                unaligned_nucleotide_sequences[id][segment] = entry.data.unalignedNucleotideSequences[segment]
+                unaligned_nucleotide_sequences[id][segment] = (
+                    entry.data.unalignedNucleotideSequences[segment]
+                )
             else:
                 unaligned_nucleotide_sequences[id][segment] = None
 
     nextclade_metadata: dict[AccessionVersion, dict[str, Any]] = {}
-    nucleotide_insertions: dict[AccessionVersion,
-                                dict[str, list[NucleotideInsertion]]] = {}
-    amino_acid_insertions: dict[AccessionVersion,
-                                dict[GeneName, list[AminoAcidInsertion]]] = {}
-    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:
+    nucleotide_insertions: dict[AccessionVersion, dict[str, list[NucleotideInsertion]]] = {}
+    amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]] = {}
+    with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
         for segment in config.nucleotideSequences:
-            result_dir_seg = result_dir + "/" + segment
-            dataset_dir_seg = dataset_dir + "/" + segment
+            result_dir_seg = result_dir if segment == "main" else result_dir + "/" + segment
+            dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
             input_file = result_dir_seg + "/input.fasta"
             os.makedirs(os.path.dirname(input_file), exist_ok=True)
             with open(input_file, "w", encoding="utf-8") as f:
                 for id, seg_dict in unaligned_nucleotide_sequences.items():
-                    if segment in seg_dict.keys():
+                    if segment in seg_dict:
                         f.write(f">{id}\n")
                         f.write(f"{seg_dict[segment]}\n")
 
             command = [
                 "nextclade3",
                 "run",
-                f"--output-all={result_dir}",
-                f"--input-dataset={dataset_dir}",
+                f"--output-all={result_dir_seg}",
+                f"--input-dataset={dataset_dir_seg}",
                 f"--output-translations={
                     result_dir}/nextclade.cds_translation.{{cds}}.fasta",
                 "--jobs=1",
@@ -145,26 +147,26 @@ def enrich_with_nextclade(
                 msg = f"nextclade failed with exit code {exit_code}"
                 raise Exception(msg)
 
-            logging.debug(f"Nextclade results available in {result_dir}")
+            logging.debug("Nextclade results available in %s", result_dir)
 
-            with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
+            with open(
+                result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8"
+            ) as aligned_nucs:
                 aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
                 for aligned_sequence in aligned_nuc:
                     sequence_id: str = aligned_sequence.id
-                    aligned_nucleotide_sequences[sequence_id][segment] = str(
-                        aligned_sequence.seq)
+                    aligned_nucleotide_sequences[sequence_id][segment] = str(aligned_sequence.seq)
 
             for gene in config.genes:
-                translation_path = result_dir_seg + \
-                    f"/nextclade.cds_translation.{gene}.fasta"
+                translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
                 try:
                     with open(translation_path, encoding="utf-8") as aligned_translations:
-                        aligned_translation = SeqIO.parse(
-                            aligned_translations, "fasta")
+                        aligned_translation = SeqIO.parse(aligned_translations, "fasta")
                         for aligned_sequence in aligned_translation:
                             sequence_id = aligned_sequence.id
                             aligned_aminoacid_sequences[sequence_id][gene] = str(
-                                aligned_sequence.seq)
+                                aligned_sequence.seq
+                            )
                 except FileNotFoundError:
                     # TODO: Add warning to each sequence
                     logging.info(
@@ -174,7 +176,8 @@ def enrich_with_nextclade(
 
             parse_nextclade_json(result_dir_seg, nextclade_metadata)
             parse_nextclade_tsv(
-                amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment)
+                amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
+            )
 
     return {
         id: UnprocessedAfterNextclade(
@@ -190,18 +193,20 @@ def enrich_with_nextclade(
     }
 
 
-def parse_nextclade_tsv(amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]],
-                        nucleotide_insertions: dict[AccessionVersion, dict[str, list[NucleotideInsertion]]],
-                        result_dir: str, config: Config, segment: str
-                        ):
+def parse_nextclade_tsv(
+    amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]],
+    nucleotide_insertions: dict[AccessionVersion, dict[str, list[NucleotideInsertion]]],
+    result_dir: str,
+    config: Config,
+    segment: str,
+):
     with open(result_dir + "/nextclade.tsv", encoding="utf-8") as nextclade_tsv:
         reader = csv.DictReader(nextclade_tsv, delimiter="\t")
         for row in reader:
             id = row["seqName"]
 
             nuc_ins_str = list(row["insertions"].split(","))
-            nucleotide_insertions[id] = {
-                segment: [] if nuc_ins_str == [""] else nuc_ins_str}
+            nucleotide_insertions[id] = {segment: [] if nuc_ins_str == [""] else nuc_ins_str}
 
             aa_ins: dict[str, list[str]] = {gene: [] for gene in config.genes}
             aa_ins_split = row["aaInsertions"].split(",")
@@ -254,11 +259,12 @@ def process_single(
     warnings: list[ProcessingAnnotation] = []
     len_dict: dict[str, str | int | float | None] = {}
     for segment in config.nucleotideSequences:
-        if unprocessed.unalignedNucleotideSequences[segment] is None:
-            len_dict["length_" + segment] = None
+        sequence = unprocessed.unalignedNucleotideSequences[segment]
+        key = "length" if segment == "main" else "length_" + segment
+        if sequence:
+            len_dict[key] = len(sequence)
         else:
-            len_dict["length_" +
-                     segment] = len(unprocessed.unalignedNucleotideSequences[segment])
+            len_dict[key] = None
     output_metadata: ProcessedMetadata = len_dict
 
     for output_field, spec_dict in config.processing_spec.items():
@@ -290,7 +296,7 @@ def process_single(
                         )
                     )
                     continue
-                sub_path = input_path[len(nextclade_prefix):]
+                sub_path = input_path[len(nextclade_prefix) :]
                 input_data[arg_name] = str(
                     dpath.get(
                         unprocessed.nextcladeMetadata,
@@ -356,8 +362,7 @@ def process_all(
 
 
 def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Config) -> None:
-    json_strings = [json.dumps(dataclasses.asdict(sequence))
-                    for sequence in processed]
+    json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
     with open("data.json", "w", encoding="utf-8") as f:
         for seq in processed:
             json.dump(dataclasses.asdict(seq), f)
@@ -368,11 +373,9 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
         "Authorization": "Bearer " + get_jwt(config),
     }
     params = {"pipelineVersion": config.pipeline_version}
-    response = requests.post(url, data=ndjson_string,
-                             headers=headers, params=params, timeout=10)
+    response = requests.post(url, data=ndjson_string, headers=headers, params=params, timeout=10)
     if not response.ok:
-        Path("failed_submission.json").write_text(
-            ndjson_string, encoding="utf-8")
+        Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
         msg = (
             f"Submitting processed data failed. Status code: {
                 response.status_code}\n"
@@ -395,11 +398,9 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
         ]
 
         if config.nextclade_dataset_tag is not None:
-            dataset_download_command.append(
-                f"--tag={config.nextclade_dataset_tag}")
+            dataset_download_command.append(f"--tag={config.nextclade_dataset_tag}")
 
-        logging.info("Downloading Nextclade dataset: %s",
-                     dataset_download_command)
+        logging.info("Downloading Nextclade dataset: %s", dataset_download_command)
         if subprocess.run(dataset_download_command, check=False).returncode != 0:  # noqa: S603
             msg = "Dataset download failed"
             raise RuntimeError(msg)
@@ -414,12 +415,10 @@ def run(config: Config) -> None:
         total_processed = 0
         while True:
             logging.debug("Fetching unprocessed sequences")
-            unprocessed = fetch_unprocessed_sequences(
-                config.batch_size, config)
+            unprocessed = fetch_unprocessed_sequences(config.batch_size, config)
             if len(unprocessed) == 0:
                 # sleep 1 sec and try again
-                logging.debug(
-                    "No unprocessed sequences found. Sleeping for 1 second.")
+                logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
                 time.sleep(1)
                 continue
             # Process the sequences, get result as dictionary
@@ -428,8 +427,7 @@ def run(config: Config) -> None:
             try:
                 submit_processed_sequences(processed, config)
             except RuntimeError as e:
-                logging.exception(
-                    "Submitting processed data failed. Traceback : %s", e)
+                logging.exception("Submitting processed data failed. Traceback : %s", e)
                 continue
             total_processed += len(processed)
             logging.info("Processed %s sequences", len(processed))

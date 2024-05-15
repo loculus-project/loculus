@@ -1,3 +1,10 @@
 ##gff-version 3
+#!gff-spec-version 1.21
+#!processor NCBI annotwriter
 ##sequence-region NC_005300.2 1 5366
-NC_005300.2	feature	gene	93	5147	.	+	.	gene_name="GPC"
+##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3052518
+NC_005300.2	RefSeq	region	1	5366	.	+	.	ID=NC_005300.2:1..5366;Dbxref=taxon:3052518;Name=M;country=Nigeria: Sokoto;gbkey=Src;genome=genomic;mol_type=genomic RNA;nat-host=Hyalomma excavatum;note=from YARU%2C New Haven%2C Conn. SMB passed 13 time in suckling mouse brain followed by 2 passes in CDC Vero E6 cells;old-name=Crimean-Congo hemorrhagic fever virus;segment=M;strain=IbAr10200
+NC_005300.2	RefSeq	primer_binding_site	1	18	.	+	.	ID=id-NC_005300.2:1..18;gbkey=primer_bind
+NC_005300.2	RefSeq	gene	93	5147	.	+	.	gene_name="GPC";ID=gene-CCFHV_sMgp1;Dbxref=GeneID:2943074;Name=CCFHV_sMgp1;gbkey=Gene;gene_biotype=protein_coding;locus_tag=CCFHV_sMgp1
+NC_005300.2	RefSeq	CDS	93	5147	.	+	0	ID=cds-NP_950235.1;Parent=gene-CCFHV_sMgp1;Dbxref=GenBank:NP_950235.1,GeneID:2943074;Name=NP_950235.1;gbkey=CDS;locus_tag=CCFHV_sMgp1;product=glycoprotein precursor;protein_id=NP_950235.1
+NC_005300.2	RefSeq	primer_binding_site	5349	5366	.	-	.	ID=id-NC_005300.2:5349..5366;gbkey=primer_bind
