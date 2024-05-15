@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
-import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table } from './Table';
 import { SEARCH } from '../../routes/routes';
@@ -20,6 +19,7 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CustomizeModal } from './CustomizeModal.tsx';
+import { SearchPagination } from './SearchPagination';
 
 const VISIBILITY_PREFIX = 'visibility_';
 
@@ -47,6 +47,7 @@ export const InnerSearchFullUI = ({
   const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
   const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
   const [state, setState] = useQueryAsState({});
+  const [page, setPage] = useState(1);
   
 let orderBy; //TODONOW
 
@@ -95,6 +96,10 @@ const fieldValues = useMemo(() => {
       ...prev,
       [`${VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
     }));
+    // if visible is false, we should also remove the field from the fieldValues
+    if (!visible) {
+      setAFieldValue(fieldName, '');
+    }
   }
 
   const lapisUrl = getLapisUrl(clientConfig, organism);
@@ -117,8 +122,11 @@ const fieldValues = useMemo(() => {
     aggregatedHook.mutate({...sequenceFilters, fields: [], nucleotideMutations: [], aminoAcidMutations: [], nucleotideInsertions: [], aminoAcidInsertions: [] });
     detailsHook.mutate({...sequenceFilters, fields: [...schema.tableColumns, schema.primaryKey
     ], nucleotideMutations: [], aminoAcidMutations: [], nucleotideInsertions: [], aminoAcidInsertions: [] ,
-        limit: pageSize, offset: 0 });
-    }, [fieldValues]);
+        limit: pageSize, offset: (page - 1) * pageSize});
+    }, [fieldValues, page]);
+
+
+    const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
 
 
 
@@ -159,12 +167,19 @@ const fieldValues = useMemo(() => {
         
       </div>
       <div className='flex-1'>
+      <RecentSequencesBanner organism={organism} />
         {aggregatedHook.isLoading ? (
           <p>Loading...</p>
         ) : aggregatedHook.error ? (
           <p>Error: {aggregatedHook.error.message}</p>
         ) : (
-        <p>as
+            <div>
+                { totalSequences &&
+                 <div className='mt-auto'>
+                        Search returned {totalSequences.toLocaleString()} sequence{totalSequences === 1 ? '' : 's'}
+                    </div>
+}
+        
             {
                detailsHook.data &&
             
@@ -180,8 +195,21 @@ const fieldValues = useMemo(() => {
                 
             
             />
+
 }
-        </p>
+<div className='mt-4 flex justify-center'>
+    {totalSequences!==undefined &&
+                    <SearchPagination
+                        count={Math.ceil(
+                            totalSequences
+                            / pageSize)}
+                        page={page}
+                        setPage={setPage}
+                      
+                    />
+                        }
+                </div>
+       </div>
         )}
       </div>
     </div>
