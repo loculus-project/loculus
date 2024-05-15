@@ -126,6 +126,9 @@ fields:
     {{- if .initiallyVisible }}
     initiallyVisible: {{ .initiallyVisible }}
     {{- end }}
+    {{- if or (eq .type "timestamp") (eq .type "date") }}
+    rangeSearch: true
+    {{- end }}
     {{- if .hideOnSequenceDetailsPage }}
     hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
     {{- end }}

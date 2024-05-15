@@ -43,6 +43,34 @@ export const InnerSearchFullUI = ({
   schema
 }: InnerSearchFullUIProps) => {
     const metadataSchema = schema.metadata;
+
+    const metadataSchemaWithExpandedRanges = useMemo (() => {
+
+        const result = [];
+        for (const field of metadataSchema) {
+            if (field.rangeSearch) {
+                const fromField = {
+                    ...field,
+                    name: `${field.name}_from`,
+                    label: `From ${field.label}`,
+                    fieldGroup: field.name
+                };
+                const toField = {
+                    ...field,
+                    name: `${field.name}_to`,
+                    label: `To ${field.label}`,
+                    fieldGroup: field.name
+                };
+                result.push(fromField);
+                result.push(toField);
+            }
+            else {
+                result.push(field);
+            }
+        }
+        return result;
+    }
+    , [metadataSchema]);
    
   const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
   const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
@@ -104,7 +132,7 @@ const fieldValues = useMemo(() => {
 
   const lapisUrl = getLapisUrl(clientConfig, organism);
 
-  const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchema);
+  const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchemaWithExpandedRanges);
 
   const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
   const aggregatedHook = hooks.useAggregated({},{}); 
