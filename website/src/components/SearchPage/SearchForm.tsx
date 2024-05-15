@@ -136,9 +136,13 @@ const SearchField = ({field, lapisUrl, allFields, fieldValues, setAFieldValue}) 
 */
         default:
             if (field.autocomplete === true) {
+                
                
-                // TODONOW: do autocompletion
-                "pass"
+                return <AutoCompleteField field={field}
+                lapisUrl={lapisUrl}
+                allFields={fieldValues}
+                setAFieldValue={setAFieldValue}
+                />;
             }
             return <NormalTextField type={field.type} field={field} 
             fieldValue={fieldValues[field.name]}

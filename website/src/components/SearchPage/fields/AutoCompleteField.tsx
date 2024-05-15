@@ -22,8 +22,9 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 const logger = getClientLogger('AutoCompleteField');
 
 
-export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, setAFieldValue, lapisUrl }) => {
-    return null;
+export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, allFields }) => {
+   
+   
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
     const {
@@ -33,6 +34,8 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, setAField
         mutate,
     } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
 
+    console.log('data', data);
+
     useEffect(() => {
         if (error) {
             void logger.error('Error while loading autocomplete options: ' + error.message + ' - ' + error.stack);
@@ -40,8 +43,16 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, setAField
     }, [error]);
 
     const handleOpen = () => {
-        const otherFieldsFilter = getOtherFieldsFilter(allFields, field);
-        mutate({ fields: [field.name], ...otherFieldsFilter });
+        const otherFields = {...allFields};
+        delete otherFields[field.name];
+
+        Object.keys(otherFields).forEach((key) => {
+            if (otherFields[key] === '') {
+                delete otherFields[key];
+            }
+        });
+        
+        mutate({ fields: [field.name], ...otherFields });
         if (buttonRef.current) {
             buttonRef.current.click();
         }
@@ -155,9 +166,3 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, setAField
         </Combobox>
     );
 };
-
-function getOtherFieldsFilter(allFields: MetadataFilter[], field: MetadataFilter) {
-    return allFields
-        .filter((f) => f.name !== field.name && f.filterValue !== '')
-        .reduce((acc, f) => ({ ...acc, [f.name]: f.filterValue }), {});
-}
