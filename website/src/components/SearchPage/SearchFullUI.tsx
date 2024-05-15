@@ -20,7 +20,7 @@ import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { SearchPagination } from './SearchPagination';
-
+import { DatePicker } from 'rsuite';
 const VISIBILITY_PREFIX = 'visibility_';
 
 

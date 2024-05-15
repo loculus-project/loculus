@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import type { FC } from 'react';
 import { DatePicker } from 'rsuite';
+import { useState } from 'react';
 
 import 'rsuite/DatePicker/styles/index.css';
 
@@ -40,30 +41,49 @@ const CustomizedDatePicker = ({
     fieldValue,
 }) => {
     console.log('fieldValue', fieldValue, field, valueToDateConverter(fieldValue));
+    const [triggerUpdate, setTriggerUpdate] = useState(false);
     return (
         <div>
             <div className='flex justify-between items-center'>
                 <label htmlFor={field.name} className='block text-sm  w-10 my-3 text-right mr-2 text-gray-400'>
                     {field.label}
                 </label>
+                {
+                    fieldValue
+                }
                 <DatePicker
                     
                     name={field.name}
-                    value={fieldValue ? valueToDateConverter(fieldValue) : undefined}
+                    defaultValue={fieldValue ? valueToDateConverter(fieldValue) : undefined}
+                
+                    key={field.name}
+                
 
-                   
-                    onChange={(value) => {
-                        if (value && isNaN(value.getTime())) {
-                            return;
-                        }
-                        setAFieldValue(field.name, dateToValueConverter(value));
-                    }}
-                    onChangeCalendarDate={(value) => {
-                        setAFieldValue(field.name, dateToValueConverter(value));
-                    }}
+
+                   onChangeCalendarDate={(date) => {
+                        setAFieldValue(field.name, dateToValueConverter(date));
+                        
+                    }
+                    }
+
+                    onChange={(date) => {
+                       if(date){
+                        setAFieldValue(field.name, dateToValueConverter(date));
+                       
+                    }
+                    else{
+                        setAFieldValue(field.name, '');
+                       
+                    }
+                    }
+                    }
+
                     onClean={() => {
                         setAFieldValue(field.name, '');
-                    }}
+                        
+                    }
+                }
+                    
                 />
             </div>
         </div>
