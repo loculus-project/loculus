@@ -9,7 +9,7 @@ metadata:
   name: loculus-preprocessing-config-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
 data:
   preprocessing-config.yaml: |
-    {{- $processingConfig.configFile | toYaml | nindent 4 -}}
+    {{- $processingConfig.configFile | toYaml | nindent 4 }}
     processing_spec: 
       {{- include "loculus.preprocessingSpecs" $metadata | nindent 6 }}
 {{- end }}
