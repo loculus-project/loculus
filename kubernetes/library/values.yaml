@@ -1,0 +1,71 @@
+# Default values for library.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+logo:
+  url: "/favicon.svg"
+  width: 100
+  height: 100
+defaultOrganisms:
+  ebola-zaire:
+    schema:
+      loadSequencesAutomatically: true
+      instanceName: "Ebola Zaire"
+      description: "Zaire ebolavirus is a species of the genus Ebolavirus, which is a member of the Filoviridae family. It is the most dangerous of the known Ebola viruses, and is associated with the highest case-fatality rate."
+      image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
+      metadata:
+        - name: collection_date
+          displayName: Collection date
+          type: date
+          required: true
+          initiallyVisible: true
+          header: Sample details
+        - name: ncbi_release_date
+          displayName: NCBI release date
+          type: date
+          header: "INSDC"
+          noInput: true
+          preprocessing:
+            function: parse_timestamp
+        - name: country
+          type: string
+          required: true
+          generateIndex: true
+          autocomplete: true
+          initiallyVisible: true
+          header: Sample details
+          input:
+            guidance: "Lorem"
+            example: "Ipsum"
+        - name: isolate_name
+          displayName: Isolate name
+          type: string
+          header: Sample details
+        - name: total_unknown_nucs
+          type: int
+          header: "Alignment states and QC metrics"
+          input: false # Generated without submitter
+          preprocessing: "nextclade.totalNonACGTNs"
+        - name: speciment_collector_sample_id
+          displayName: Specimen Collector Sample Id
+          type: string
+          header: Sample details
+          ingest: ncbi_isolate_name
+      website:
+        tableColumns:
+          - collection_date
+          - country
+        defaultOrderBy: collection_date
+        defaultOrder: descending
+      silo:
+        dateToSortBy: collection_date
+      extraInputFields:
+        - name: submissionId
+          displayName: Submission ID
+          definition: FASTA ID
+          guidance: Used to match the sequence(s) to the metadata
+    extraInputFields:
+      - name: submissionId
+        displayName: Submission ID
+        definition: FASTA ID
+        guidance: Used to match the sequence(s) to the metadata
+        position: first

@@ -36,6 +36,9 @@ defaultOrganisms:
           displayName: NCBI release date
           type: date
           header: "INSDC"
+          noInput: true
+          preprocessing:
+            function: parse_timestamp
         - name: country
           type: string
           required: true
@@ -54,6 +57,7 @@ defaultOrganisms:
           type: int
           header: "Alignment states and QC metrics"
           input: false # Generated without submitter
+          preprocessing: "nextclade.totalNonACGTNs"
         - name: speciment_collector_sample_id
           displayName: Specimen Collector Sample Id
           type: string

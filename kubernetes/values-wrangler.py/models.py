@@ -86,8 +86,9 @@ fields = []
 TO_KEEP = ["name", "displayName", "definition", "guidance"]
 
 for field in metadata:
-    to_add = {k: v for k, v in field.items() if k in TO_KEEP}
-    fields.append(to_add)
+    if "noInput" in field:
+        to_add = {k: v for k, v in field.items() if k in TO_KEEP}
+        fields.append(to_add)
 
 extra_fields = data["defaultOrganisms"]["ebola-zaire"]["extraInputFields"]
 
@@ -120,3 +121,33 @@ with open("kubernetes/values-wrangler/ingest_remap.yaml", "w") as f:
 # Schema to preprocessing config
 #####
 
+specs = {}
+
+for field in metadata:
+    spec = {
+        "function": "identity",
+        "inputs": {"input": field["name"]},
+    }
+    if "type" in field:
+        match field["type"]:
+            case "int":
+                spec["args"] = {"type": "int"}
+            case "float":
+                spec["args"] = {"type": "float"}
+            case _:
+                pass
+    if "preprocessing" in field:
+        if isinstance(field["preprocessing"], str):
+            spec["inputs"] = {"input": field["preprocessing"]}
+        if "function" in field["preprocessing"]:
+            spec["function"] = field["preprocessing"]["function"]
+        if "args" in field["preprocessing"]:
+            spec["args"] = field["preprocessing"]["args"]
+        if "inputs" in field["preprocessing"]:
+            spec["inputs"] = field["preprocessing"]["inputs"]
+    specs[field["name"]] = spec
+
+
+with open("kubernetes/values-wrangler/prepro_spec.yaml", "w") as f:
+    yaml.dump(specs, f)
+# %%
