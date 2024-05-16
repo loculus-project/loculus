@@ -1,0 +1,16 @@
+inputFields:
+- definition: FASTA ID
+  displayName: Submission ID
+  guidance: Used to match the sequence(s) to the metadata
+  name: submissionId
+  position: first
+- displayName: Collection date
+  name: collection_date
+- displayName: NCBI release date
+  name: ncbi_release_date
+- name: country
+- displayName: Isolate name
+  name: isolate_name
+- name: total_unknown_nucs
+- displayName: Specimen Collector Sample Id
+  name: speciment_collector_sample_id
