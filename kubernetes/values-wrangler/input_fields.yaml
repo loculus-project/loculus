@@ -1,8 +1,0 @@
-inputFields:
-- definition: FASTA ID
-  displayName: Submission ID
-  guidance: Used to match the sequence(s) to the metadata
-  name: submissionId
-  position: first
-- displayName: NCBI release date
-  name: ncbi_release_date
