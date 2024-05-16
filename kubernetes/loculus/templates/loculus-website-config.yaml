@@ -16,7 +16,6 @@ metadata:
 data:
   website_config.json: |
     {{ include "loculus.generateWebsiteConfig" . | fromYaml | toJson }}
-
   runtime_config.json: |
     {
         "name" : "{{ $.Values.name }}",
@@ -39,6 +38,3 @@ data:
         },
         "backendKeycloakClientSecret" : "[[backendKeycloakClientSecret]]"
     }
-
-
-        

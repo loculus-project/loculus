@@ -100,7 +100,10 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
 
     # Calculate overall hash of metadata + sequence
     for record in metadata:
-        sequence_hash = sequence_hashes.get(record[config.rename[config.fasta_id_field]], "")
+        fasta_id_field = config.fasta_id_field
+        if config.fasta_id_field in config.rename:
+            fasta_id_field = config.rename[config.fasta_id_field]
+        sequence_hash = sequence_hashes.get(record[fasta_id_field], "")
         if sequence_hash == "":
             raise ValueError(f"No hash found for {record[config.fasta_id_field]}")
 
@@ -109,7 +112,7 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
 
         record["hash"] = hashlib.md5(prehash.encode()).hexdigest()
 
-    meta_dict = {rec[config.rename[config.fasta_id_field]]: rec for rec in metadata}
+    meta_dict = {rec[fasta_id_field]: rec for rec in metadata}
 
     Path(output).write_text(json.dumps(meta_dict, indent=4))
 
