@@ -775,6 +775,13 @@ defaultOrganisms:
       silo:
         dateToSortBy: collection_date
       inputFields:
+        - name: submissionId
+          displayName: Submission ID
+          definition: FASTA ID
+          guidance: Used to match the sequence(s) to the metadata. In the case of
+            multiple segments, the segment name must be appended to the submission ID
+            with an underscore. For example, if the submission ID is "seq1" and the
+            segment name is "L", the submission ID for the segment should be "seq1_L".
         - name: specimen_collector_sample_id
           ontology_id: GENEPIO:0001123
           definition: The user-defined name for the sample.
@@ -830,7 +837,7 @@ defaultOrganisms:
           guidance: Provide the country name from the pick list in the template
           example: South Africa
           displayName: Geo Loc name (country)
-        - name: geo_loc_admin_1 name (state/province/territory)
+        - name: geo_loc_admin_1
           ontology_id: GENEPIO:0001185
           definition: The state/province/territory of origin of the sample.
           guidance: 'Provide the state/province/territory name from the GAZ geography ontology.
