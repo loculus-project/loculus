@@ -149,9 +149,10 @@ rule get_previous_submissions:
         hashes="results/previous_submissions.json",
     params:
         log_level=LOG_LEVEL,
+        sleep=config["post_start_sleep"],
     shell:
         """
-        sleep 120  # Run only once keycloak is up and database wiped
+        sleep {params.sleep}
         python scripts/call_loculus.py \
             --mode get-submitted \
             --config-file {input.config} \
