@@ -33,6 +33,7 @@ keep:
   - ncbi_virus_name
   - ncbi_virus_tax_id
   - sequence_md5
+  - genbank_accession
 all_fields:
   - accession
   - bioprojects
