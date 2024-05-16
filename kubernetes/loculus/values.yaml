@@ -84,7 +84,6 @@ defaultOrganismConfig: &defaultOrganismConfig
       configFile: &preprocessingConfigFile
         log_level: DEBUG
         nextclade_dataset_name: nextstrain/ebola/zaire
-        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
         genes: [ NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L ]
         batch_size: 100
   ingest: &ingest
@@ -117,6 +116,11 @@ defaultOrganismConfig: &defaultOrganismConfig
 defaultOrganisms:
   ebola-zaire:
     <<: *defaultOrganismConfig
+    preprocessing:
+    - <<: *preprocessing
+      configFile:
+        <<: *preprocessingConfigFile
+        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   mpox:
     <<: *defaultOrganismConfig
     schema:
