@@ -1,8 +1,9 @@
-{{- define "my-library-chart.inputFields" -}}
-{{- $data := .Values }}
-{{- $metadata := index $data.defaultOrganisms "ebola-zaire" "schema" "metadata" }}
-{{- $extraFields := index $data.defaultOrganisms "ebola-zaire" "extraInputFields" }}
+{{- define "loculus.inputFields" -}}
+{{- $data := . }}
+{{- $metadata := $data.metadata }}
+{{- $extraFields := $data.extraInputFields }}
 {{- $TO_KEEP := list "name" "displayName" "definition" "guidance" }}
+
 
 {{- $fieldsDict := dict }}
 {{- $index := 0 }}
@@ -38,6 +39,5 @@
 {{- end }}
 
 {{- $inputFields := values $fieldsDict }}
-{{- $output := dict "inputFields" $inputFields }}
-{{- toYaml $output | nindent 4 }}
+{{- toYaml $inputFields }}
 {{- end -}}
