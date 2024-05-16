@@ -33,6 +33,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: Sample details
         preprocessing:
           function: parse_timestamp
+          inputs:
+            timestamp: collection_date
         ingest: ncbi_collection_date
       - name: ncbi_release_date
         displayName: NCBI release date
@@ -41,6 +43,8 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         preprocessing:
           function: parse_timestamp
+          inputs:
+            timestamp: collection_date
       - name: country
         type: string
         required: true
