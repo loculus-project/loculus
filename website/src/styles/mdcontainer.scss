@@ -31,6 +31,16 @@
 .mdContainer ol li {
   @apply ml-4 my-1;
 }
+
+.mdContainer .alternative-lists ol {
+  @apply list-decimal list-outside my-2;
+}
+
+.mdContainer .alternative-lists ol li {
+  @apply ml-0 my-2;
+}
+
+
 /* Level 1 - Direct children of .mdContainer */
 .mdContainer > ul {
   list-style-type: disc;
