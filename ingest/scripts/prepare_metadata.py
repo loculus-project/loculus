@@ -103,7 +103,7 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
         fasta_id_field = config.fasta_id_field
         if config.fasta_id_field in config.rename:
             fasta_id_field = config.rename[config.fasta_id_field]
-        sequence_hash = sequence_hashes.get(record[fasta_id_field]], "")
+        sequence_hash = sequence_hashes.get(record[fasta_id_field], "")
         if sequence_hash == "":
             raise ValueError(f"No hash found for {record[config.fasta_id_field]}")
 
