@@ -1577,12 +1577,6 @@ secrets:
     type: raw
     data:
       orcidSecret: "dummy"
-  custom-website-sealed-secret:
-    rawType: kubernetes.io/dockerconfigjson
-    type: sealedsecret
-    clusterWide: "true"
-    data:
-      .dockerconfigjson: AgBjOFuqwG5XcDHTZYd21Ub35UKqO1WTApx+Ne3R8xwtvRybDC62HojojGZIpuBqzdjK+FMbaYRjkutMgJrg6YAolKCG2kW2GzC2lK9Z4RT5EUfVJDIlGNBItheCQTAakOZimNJKVt7PN1cdILe1gasKxviRzApU1TOiRZcKKzAW+5yVMiBt2sIG9Kpttq6eZSUQR/7ATBPrcmF2qs+AlWkkbmZrF+7atZYQ4UneoZLfNc2Nq8tcvz4GhF0vi5MeRNdvl7k48WTC/r73mDk7bAqoUB/YSw1y0UOxqhy2gLhIivhKnN9fB0q7uUNjn3QT0gsb99Ukeq6pozmaoF6y91SiK5W3JzXdFcm1D1DOtvJC5VOSvRSwJkePFUMOzaX4e+VwS5iM3TSZ7kNlZeaSWh6IW21eTjW3Gtxk/5DTfCoXi9O2IgYbKtWq6jzlCdgrrSXmgQ7DjrVMw46V1VRJ+wqe3Xa/oZwX6abzDOa3069KXz1m2Ca4g1GIcpdj3+F/WNPAnRJRHpaADd7/cYKTwze3r2mpiQ8ixRr7RMtqe59ELrOY30m4kXmScgH3sCYuBnJbd902nA1sdowRuBTeURY0ciMFeEw/M/laBFe0fjojbQsULGYq6VFAU1KxqUqV11yUXzAV7rlO8c9sla1ETweQoAG3bt+p0eIr3H5ZGbHRjyK+P7izy3XlA6XQ8UtsA1gqPx/QM8M7Ux7zP9z4ZYRf6VqKi2HjnlA5kfDGD52uupa8K2eEb1jYnRp6kCk7oDHX57GBj1ptPTpAFGBZDHU8fHqiEMmFuBldClEcCo2A1vvhhJpfQRyi4Z8FHv53zhnXDrwM/JfuVCSXr19fhPU=
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
