@@ -1,4 +1,5 @@
 {{- range $organism, $organismConfig := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- $metadata := $organismConfig.schema.metadata }}
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
 {{- if $processingConfig.configFile }}
 ---
@@ -9,6 +10,8 @@ metadata:
 data:
   preprocessing-config.yaml: |
     {{- $processingConfig.configFile | toYaml | nindent 4 -}}
+    processing_spec: 
+      {{- include "loculus.preprocessingSpecs" $metadata | nindent 6 }}
 {{- end }}
 {{- end }}
 {{- end }}

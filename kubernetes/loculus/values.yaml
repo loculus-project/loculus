@@ -76,12 +76,7 @@ defaultOrganisms:
           displayName: Submission ID
           definition: FASTA ID
           guidance: Used to match the sequence(s) to the metadata
-    extraInputFields:
-      - name: submissionId
-        displayName: Submission ID
-        definition: FASTA ID
-        guidance: Used to match the sequence(s) to the metadata
-        position: first
+          position: first
     preprocessing:
       - version: 2
         image: ghcr.io/loculus-project/preprocessing-nextclade
@@ -102,179 +97,179 @@ defaultOrganisms:
             - VP24
             - L
           batch_size: 100
-          processing_spec: # Dynamically generated from metadata above
-          # By default, pass input through with identity
-          # Use type from field if present, otherwise default to string
-          # Use inputs from input field name, allow override
-            total_snps:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: nextclade.totalSubstitutions
-            total_inserted_nucs:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: nextclade.totalInsertions
-            total_deleted_nucs:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: nextclade.totalDeletions
-            total_ambiguous_nucs:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: nextclade.totalNonACGTNs
-            total_unknown_nucs:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: nextclade.totalMissing
-            total_frame_shifts:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: nextclade.totalFrameShifts
-            frame_shifts:
-              function: identity
-              inputs:
-                input: nextclade.frameShifts
-            completeness:
-              function: identity
-              args:
-                type: float
-              inputs:
-                input: nextclade.coverage
-            total_stop_codons:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: nextclade.qc.stopCodons.totalStopCodons
-            stop_codons:
-              function: identity
-              inputs:
-                input: nextclade.qc.stopCodons.stopCodons
-            collection_date:
-              function: process_date
-              inputs:
-                date: collection_date
-                release_date: ncbi_release_date
-              required: true
-            ncbi_release_date:
-              function: parse_timestamp
-              inputs:
-                timestamp: ncbi_release_date
-            country:
-              function: identity
-              inputs:
-                input: country
-              required: true
-            author_affiliation:
-              function: identity
-              inputs:
-                input: author_affiliation
-            authors:
-              function: identity
-              inputs:
-                input: authors
-            isolate_name:
-              function: identity
-              inputs:
-                input: isolate_name
-            submitter_country:
-              function: identity
-              inputs:
-                input: submitter_country
-            division:
-              function: identity
-              inputs:
-                input: division
-            insdc_accession_base:
-              function: identity
-              inputs:
-                input: insdc_accession_base
-            insdc_version:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: insdc_version
-            insdc_accession_full:
-              function: identity
-              inputs:
-                input: insdc_accession_full
-            bioprojects:
-              function: identity
-              inputs:
-                input: bioprojects
-            biosample_accession:
-              function: identity
-              inputs:
-                input: biosample_accession
-            ncbi_completeness:
-              function: identity
-              inputs:
-                input: ncbi_completeness
-            ncbi_host_name:
-              function: identity
-              inputs:
-                input: ncbi_host_name
-            ncbi_host_tax_id:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: ncbi_host_tax_id
-            ncbi_is_lab_host:
-              function: identity
-              inputs:
-                input: ncbi_is_lab_host
-            ncbi_length:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: ncbi_length
-            ncbi_protein_count:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: ncbi_protein_count
-            ncbi_update_date:
-              function: parse_timestamp
-              inputs:
-                timestamp: ncbi_update_date
-            ncbi_sourcedb:
-              function: identity
-              inputs:
-                input: ncbi_sourcedb
-            ncbi_virus_name:
-              function: identity
-              inputs:
-                input: ncbi_virus_name
-            ncbi_virus_tax_id:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: ncbi_virus_tax_id
-            isolate_source:
-              function: identity
-              inputs:
-                input: isolate_source
-            sra_accessions:
-              function: identity
-              inputs:
-                input: sra_accessions
+          # processing_spec: # Dynamically generated from metadata above
+          # # By default, pass input through with identity
+          # # Use type from field if present, otherwise default to string
+          # # Use inputs from input field name, allow override
+          #   total_snps:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: nextclade.totalSubstitutions
+          #   total_inserted_nucs:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: nextclade.totalInsertions
+          #   total_deleted_nucs:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: nextclade.totalDeletions
+          #   total_ambiguous_nucs:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: nextclade.totalNonACGTNs
+          #   total_unknown_nucs:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: nextclade.totalMissing
+          #   total_frame_shifts:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: nextclade.totalFrameShifts
+          #   frame_shifts:
+          #     function: identity
+          #     inputs:
+          #       input: nextclade.frameShifts
+          #   completeness:
+          #     function: identity
+          #     args:
+          #       type: float
+          #     inputs:
+          #       input: nextclade.coverage
+          #   total_stop_codons:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: nextclade.qc.stopCodons.totalStopCodons
+          #   stop_codons:
+          #     function: identity
+          #     inputs:
+          #       input: nextclade.qc.stopCodons.stopCodons
+          #   collection_date:
+          #     function: process_date
+          #     inputs:
+          #       date: collection_date
+          #       release_date: ncbi_release_date
+          #     required: true
+          #   ncbi_release_date:
+          #     function: parse_timestamp
+          #     inputs:
+          #       timestamp: ncbi_release_date
+          #   country:
+          #     function: identity
+          #     inputs:
+          #       input: country
+          #     required: true
+          #   author_affiliation:
+          #     function: identity
+          #     inputs:
+          #       input: author_affiliation
+          #   authors:
+          #     function: identity
+          #     inputs:
+          #       input: authors
+          #   isolate_name:
+          #     function: identity
+          #     inputs:
+          #       input: isolate_name
+          #   submitter_country:
+          #     function: identity
+          #     inputs:
+          #       input: submitter_country
+          #   division:
+          #     function: identity
+          #     inputs:
+          #       input: division
+          #   insdc_accession_base:
+          #     function: identity
+          #     inputs:
+          #       input: insdc_accession_base
+          #   insdc_version:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: insdc_version
+          #   insdc_accession_full:
+          #     function: identity
+          #     inputs:
+          #       input: insdc_accession_full
+          #   bioprojects:
+          #     function: identity
+          #     inputs:
+          #       input: bioprojects
+          #   biosample_accession:
+          #     function: identity
+          #     inputs:
+          #       input: biosample_accession
+          #   ncbi_completeness:
+          #     function: identity
+          #     inputs:
+          #       input: ncbi_completeness
+          #   ncbi_host_name:
+          #     function: identity
+          #     inputs:
+          #       input: ncbi_host_name
+          #   ncbi_host_tax_id:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: ncbi_host_tax_id
+          #   ncbi_is_lab_host:
+          #     function: identity
+          #     inputs:
+          #       input: ncbi_is_lab_host
+          #   ncbi_length:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: ncbi_length
+          #   ncbi_protein_count:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: ncbi_protein_count
+          #   ncbi_update_date:
+          #     function: parse_timestamp
+          #     inputs:
+          #       timestamp: ncbi_update_date
+          #   ncbi_sourcedb:
+          #     function: identity
+          #     inputs:
+          #       input: ncbi_sourcedb
+          #   ncbi_virus_name:
+          #     function: identity
+          #     inputs:
+          #       input: ncbi_virus_name
+          #   ncbi_virus_tax_id:
+          #     function: identity
+          #     args:
+          #       type: int
+          #     inputs:
+          #       input: ncbi_virus_tax_id
+          #   isolate_source:
+          #     function: identity
+          #     inputs:
+          #       input: isolate_source
+          #   sra_accessions:
+          #     function: identity
+          #     inputs:
+          #       input: sra_accessions
     ingest:
       image: ghcr.io/loculus-project/ingest
       configFile:

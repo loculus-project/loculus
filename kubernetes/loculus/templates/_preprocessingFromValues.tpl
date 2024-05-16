@@ -1,6 +1,5 @@
-{{- define "my-library-chart.specs" -}}
-{{- $data := .Values }}
-{{- $metadata := index $data.defaultOrganisms "ebola-zaire" "schema" "metadata" }}
+{{- define "loculus.preprocessingSpecs" -}}
+{{- $metadata := . }}
 {{- $specs := dict }}
 
 {{- range $field := $metadata }}
@@ -36,6 +35,5 @@
 {{- $_ := set $specs $name $spec }}
 {{- end }}
 
-{{- $output := dict "specs" $specs }}
-{{- toYaml $output | nindent 4 }}
+{{- toYaml $specs }}
 {{- end -}}
