@@ -1418,7 +1418,7 @@ defaultOrganisms:
         configFile:
           log_level: DEBUG
           nextclade_dataset_name: nextstrain/cchfv/linked
-          nextclade_dataset_server: https://raw.githubusercontent.com/anna-parker/nextclade_data/cchfv/data_output
+          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
           nucleotideSequences:
             - L
             - M
