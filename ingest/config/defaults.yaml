@@ -3,7 +3,7 @@
 log_level: DEBUG
 compound_country_field: ncbi_geo_location
 fasta_id_field: genbank_accession
-rename: # Dynamically generated from values.yaml
+rename:
   genbank_accession: insdc_accession_full
   ncbi_collection_date: collection_date
   ncbi_isolate_name: isolate_name
