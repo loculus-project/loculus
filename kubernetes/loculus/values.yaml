@@ -1342,12 +1342,6 @@ defaultOrganisms:
         - name: completeness
           type: float
           header: "Alignment states and QC metrics"
-        - name: total_stop_codons
-          type: int
-          header: "Alignment states and QC metrics"
-        - name: stop_codons
-          type: string
-          header: "Alignment states and QC metrics"
       website:
         tableColumns:
           - collection_date
@@ -1423,8 +1417,8 @@ defaultOrganisms:
           - "prepro"
         configFile:
           log_level: DEBUG
-          nextclade_dataset_name: nextstrain/cchf/all-lineages
-          nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cchf/data_output
+          nextclade_dataset_name: nextstrain/cchfv/linked
+          nextclade_dataset_server: https://raw.githubusercontent.com/anna-parker/nextclade_data/cchfv/data_output
           nucleotideSequences:
             - L
             - M
@@ -1481,16 +1475,6 @@ defaultOrganisms:
                 type: float
               inputs:
                 input: nextclade.coverage
-            total_stop_codons:
-              function: identity
-              args:
-                type: int
-              inputs:
-                input: nextclade.qc.stopCodons.totalStopCodons
-            stop_codons:
-              function: identity
-              inputs:
-                input: nextclade.qc.stopCodons.stopCodons
             collection_date:
               function: process_date
               inputs:
@@ -1612,6 +1596,10 @@ defaultOrganisms:
       image: ghcr.io/loculus-project/ingest
       configFile:
         taxon_id: 3052518
+        nucleotideSequences:
+          - M
+          - L
+          - S
     referenceGenomes:
       nucleotideSequences:
         - name: L

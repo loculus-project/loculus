@@ -1,8 +1,0 @@
-##gff-version 3
-#!gff-spec-version 1.21
-#!processor NCBI annotwriter
-##sequence-region NC_005302.1 1 1672
-##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=3052518
-NC_005302.1	RefSeq	region	1	1672	.	+	.	ID=NC_005302.1:1..1672;Dbxref=taxon:3052518;Name=S;gbkey=Src;genome=genomic;mol_type=genomic RNA;old-name=Crimean-Congo hemorrhagic fever virus;segment=S;strain=10200
-NC_005302.1	RefSeq	gene	56	1504	.	+	.	gene_name="NP";ID=gene-CCFHVsSgp1;Dbxref=GeneID:2943076;Name=CCFHVsSgp1;gbkey=Gene;gene_biotype=protein_coding;locus_tag=CCFHVsSgp1
-NC_005302.1	RefSeq	CDS	56	1504	.	+	0	ID=cds-NP_950237.1;Parent=gene-CCFHVsSgp1;Dbxref=GenBank:NP_950237.1,GeneID:2943076;Name=NP_950237.1;gbkey=CDS;locus_tag=CCFHVsSgp1;product=nucleoprotein;protein_id=NP_950237.1

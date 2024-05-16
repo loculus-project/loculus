@@ -60,3 +60,11 @@ docker run -it --platform=linux/amd64 --network host --rm nextclade_processing p
 
 - Install Ruff to lint/format
 - Use `mypy` to check types: `mypy -p src  --python-version 3.12`
+
+When deployed on kubernetes the preprocessing pipeline reads in config files which are created in `loculus/kubernetes/loculus/templates/loculus-preprocessing-config.yaml`. When run locally the pipeline uses only the default values defined in `preprocessing/nextclade/src/loculus_preprocessing/config.py`. When running the preprocessing pipeline locally it makes sense to create a local config file and use this in the pipeline as follows:
+
+```
+prepro --config-file=preprocessing-config.yaml --keep-tmp-dir
+```
+
+Additionally, the `--keep-tmp-dir` is useful for debugging issues.

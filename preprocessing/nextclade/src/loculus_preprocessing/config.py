@@ -22,9 +22,11 @@ class Config:
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
-    nextclade_dataset_name: str = "nextstrain/cchf/all-lineages"
+    nextclade_dataset_name: str = "nextstrain/cchfv/linked"
     nextclade_dataset_tag: str | None = None
-    nextclade_dataset_server: str = "https://data.clades.nextstrain.org/v3"
+    nextclade_dataset_server: str = (
+        "https://raw.githubusercontent.com/anna-parker/nextclade_data/cchfv/data_output"
+    )
     config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=lambda: ["RdRp", "GPC", "NP"])

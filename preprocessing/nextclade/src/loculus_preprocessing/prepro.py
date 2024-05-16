@@ -15,7 +15,6 @@ from typing import Any, Optional
 import dpath
 import requests
 from Bio import SeqIO
-from distutils.dir_util import copy_tree
 
 from .backend import get_jwt
 from .config import Config
@@ -124,7 +123,7 @@ def enrich_with_nextclade(
             os.makedirs(os.path.dirname(input_file), exist_ok=True)
             with open(input_file, "w", encoding="utf-8") as f:
                 for id, seg_dict in unaligned_nucleotide_sequences.items():
-                    if segment in seg_dict:
+                    if segment in seg_dict and seg_dict[segment] is not None:
                         f.write(f">{id}\n")
                         f.write(f"{seg_dict[segment]}\n")
 
@@ -134,7 +133,7 @@ def enrich_with_nextclade(
                 f"--output-all={result_dir_seg}",
                 f"--input-dataset={dataset_dir_seg}",
                 f"--output-translations={
-                    result_dir}/nextclade.cds_translation.{{cds}}.fasta",
+                    result_dir_seg}/nextclade.cds_translation.{{cds}}.fasta",
                 "--jobs=1",
                 "--",
                 f"{input_file}",
@@ -318,9 +317,15 @@ def process_single(
                 # )
                 continue
             input_data[arg_name] = unprocessed.inputMetadata[input_path]
-        processing_result = ProcessingFunctions.call_function(
-            spec.function, spec.args, input_data, output_field
-        )
+        try:
+            processing_result = ProcessingFunctions.call_function(
+                spec.function, spec.args, input_data, output_field
+            )
+        except:
+            print(spec)
+            print(input_data)
+            raise Exception("processing failed")
+
         errors.extend(processing_result.errors)
         warnings.extend(processing_result.warnings)
         output_metadata[output_field] = processing_result.datum
@@ -387,14 +392,20 @@ def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Conf
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
-    if config.nextclade_dataset_name != "nextstrain/cchf/all-lineages":
+    for segment in config.nucleotideSequences:
+        nextclade_dataset_name = (
+            config.nextclade_dataset_name
+            if segment == "main"
+            else config.nextclade_dataset_name + "/" + segment
+        )
+        dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
         dataset_download_command = [
             "nextclade3",
             "dataset",
             "get",
-            f"--name={config.nextclade_dataset_name}",
+            f"--name={nextclade_dataset_name}",
             f"--server={config.nextclade_dataset_server}",
-            f"--output-dir={dataset_dir}",
+            f"--output-dir={dataset_dir_seg}",
         ]
 
         if config.nextclade_dataset_tag is not None:
@@ -405,8 +416,6 @@ def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
             msg = "Dataset download failed"
             raise RuntimeError(msg)
         logging.info("Nextclade dataset downloaded successfully")
-    else:
-        copy_tree("../nextstrain/cchf", dataset_dir)
 
 
 def run(config: Config) -> None:
