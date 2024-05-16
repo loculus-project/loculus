@@ -57,6 +57,10 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Alignment states and QC metrics"
         input: false # Generated without submitter
         preprocessing: "nextclade.totalNonACGTNs"
+      - name: length
+        type: int
+        header: "Alignment states and QC metrics"
+        input: false # Generated without submitter
     website:
       tableColumns:
         - collection_date
