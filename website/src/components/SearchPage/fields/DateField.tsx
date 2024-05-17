@@ -47,9 +47,7 @@ const CustomizedDatePicker = ({ field, setAFieldValue, dateToValueConverter, val
                     name={field.name}
                     defaultValue={fieldValue ? valueToDateConverter(fieldValue) : undefined}
                     key={field.name}
-                    onChangeCalendarDate={(date) => {
-                        setAFieldValue(field.name, dateToValueConverter(date));
-                    }}
+                   
                     onChange={(date) => {
                         if (date) {
                             setAFieldValue(field.name, dateToValueConverter(date));
