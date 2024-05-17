@@ -178,10 +178,12 @@ export const InnerSearchFullUI = ({
             aminoAcidInsertions: [],
             limit: pageSize,
             offset: (page - 1) * pageSize,
-            orderBy: {
-                field: orderByField,
-                type: orderDirection,
-            }
+            orderBy: [
+                {
+                    field: orderByField,
+                    type: orderDirection,
+                } as OrderBy,
+            ]
         });
     }, [fieldValues, page]);
 
