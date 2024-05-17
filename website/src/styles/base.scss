@@ -114,3 +114,12 @@ table, tr, td {
   text-transform: lowercase;
 
 }
+
+.appearSlowly {
+  animation: appearAnim 0s 1s forwards;
+  opacity: 0; 
+}
+
+@keyframes appearAnim {
+  to   { opacity: 1; }
+}

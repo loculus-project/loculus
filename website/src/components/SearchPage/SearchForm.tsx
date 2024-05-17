@@ -92,8 +92,7 @@ export const SearchForm = ({
 };
 
 const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue }) => {
-    console.log('fv', fieldValues);
-
+   
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
     if (field.grouped) {

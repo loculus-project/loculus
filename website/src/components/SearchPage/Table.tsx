@@ -26,6 +26,8 @@ export const Table: FC<TableProps> = ({ data, schema, setPreviewedSeqId, preview
     setOrderByField,
     setOrderDirection,
  }) => {
+
+    console.log("renderTable", data, schema, previewedSeqId, orderBy);
     const primaryKey = schema.primaryKey;
 
     const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));

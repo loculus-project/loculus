@@ -31,7 +31,6 @@ export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, allFields, 
         mutate,
     } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
 
-    console.log('data', data);
 
     useEffect(() => {
         if (error) {

@@ -189,6 +189,25 @@ export const InnerSearchFullUI = ({
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
 
+    const [oldData, setOldData] = useState<SearchResponse | null>(null);
+    const [oldCount, setOldCount] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
+            setOldData(detailsHook.data.data);
+        }
+        
+    }
+    , [detailsHook.data?.data, oldData]);
+
+    useEffect(() => {
+        if (aggregatedHook.data?.data && oldCount !== aggregatedHook.data.data[0].count) {
+            setOldCount(aggregatedHook.data.data[0].count);
+        }
+    }
+    , [aggregatedHook.data?.data, oldCount]);
+
+
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <SeqPreviewModal
@@ -220,23 +239,31 @@ export const InnerSearchFullUI = ({
             </div>
             <div className='flex-1'>
                 <RecentSequencesBanner organism={organism} />
-                {aggregatedHook.isLoading ? (
-                    <p>Loading...</p>
-                ) : aggregatedHook.error ? (
-                    <p>Error: {aggregatedHook.error.message}</p>
-                ) : (
-                    <div>
-                        {totalSequences && (
+             
+                    <div
+                        className={`
+                        ${detailsHook.isLoading || aggregatedHook.isLoading ? 'opacity-50 pointer-events-none' : ''}
+                        `}
+                        >
                             <div className='mt-auto'>
-                                Search returned {totalSequences.toLocaleString()} sequence
+                                Search returned {totalSequences ? totalSequences.toLocaleString(): 
+                                oldCount ? oldCount.toLocaleString() : 0
+                                }{" "}sequence
                                 {totalSequences === 1 ? '' : 's'}
+                                {
+                                    detailsHook.isLoading || aggregatedHook.isLoading ? (
+                                        <span className="loading loading-spinner loading-xs ml-3 appearSlowly"
+                                        
+                                        ></span>
+                                    ) : null
+                                }
                             </div>
-                        )}
+                        
 
-                        {detailsHook.data && (
+                       
                             <Table
                                 schema={schema}
-                                data={detailsHook.data.data}
+                                data={detailsHook.data?.data !== undefined ? detailsHook.data.data : (oldData ?? [])}
                                 setPreviewedSeqId={setPreviewedSeqId}
                                 previewedSeqId={previewedSeqId}
                                 orderBy={
@@ -248,7 +275,7 @@ export const InnerSearchFullUI = ({
                                 setOrderByField={setOrderByField}
                                 setOrderDirection={setOrderDirection}
                             />
-                        )}
+                        
                         <div className='mt-4 flex justify-center'>
                             {totalSequences !== undefined && (
                                 <SearchPagination
@@ -259,7 +286,7 @@ export const InnerSearchFullUI = ({
                             )}
                         </div>
                     </div>
-                )}
+            
             </div>
         </div>
     );

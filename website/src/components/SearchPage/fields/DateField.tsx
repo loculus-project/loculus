@@ -34,7 +34,6 @@ export const TimestampField = (props) => (
 );
 
 const CustomizedDatePicker = ({ field, setAFieldValue, dateToValueConverter, valueToDateConverter, fieldValue }) => {
-    console.log('fieldValue', fieldValue, field, valueToDateConverter(fieldValue));
     const [triggerUpdate, setTriggerUpdate] = useState(false);
     return (
         <div>
