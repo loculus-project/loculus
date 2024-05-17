@@ -85,3 +85,12 @@
 .mdContainer .indent{
     @apply ml-4;
 }
+
+.mdContainer .lettered-list ol{
+   list-style-type: lower-latin;
+}
+
+.mdContainer .roman-list ol{
+   list-style-type: lower-roman;
+}
+
