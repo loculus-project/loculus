@@ -89,7 +89,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
-      taxon_id: 3048448
+      taxon_id: 186538
   referenceGenomes:
     nucleotideSequences:
       - name: "main"
@@ -140,7 +140,7 @@ defaultOrganisms:
       <<: *ingest
       configFile:
         <<: *ingestConfigFile
-        taxon_id: 186538
+        taxon_id: 10244
         subsample_fraction: 0.1
     referenceGenomes:
       nucleotideSequences:
