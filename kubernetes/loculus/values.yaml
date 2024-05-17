@@ -55,12 +55,12 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: total_unknown_nucs
         type: int
         header: "Alignment states and QC metrics"
-        input: false # Generated without submitter
+        noInput: true
         preprocessing: "nextclade.totalNonACGTNs"
       - name: length
         type: int
         header: "Alignment states and QC metrics"
-        input: false # Generated without submitter
+        noInput: true
     website:
       tableColumns:
         - collection_date
@@ -89,7 +89,7 @@ defaultOrganismConfig: &defaultOrganismConfig
   ingest: &ingest
     image: ghcr.io/loculus-project/ingest
     configFile: &ingestConfigFile
-      taxon_id: 186538
+      taxon_id: 3048448
   referenceGenomes:
     nucleotideSequences:
       - name: "main"
