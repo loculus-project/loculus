@@ -18,9 +18,14 @@ type TableProps = {
     setPreviewedSeqId: (seqId: string | null) => void;
     previewedSeqId: string | null;
     orderBy: OrderBy;
+    setOrderByField: (field: string) => void;
+    setOrderDirection: (direction: 'ascending' | 'descending') => void;
 };
 
-export const Table: FC<TableProps> = ({ data, schema, setPreviewedSeqId, previewedSeqId, orderBy }) => {
+export const Table: FC<TableProps> = ({ data, schema, setPreviewedSeqId, previewedSeqId, orderBy,
+    setOrderByField,
+    setOrderDirection,
+ }) => {
     const primaryKey = schema.primaryKey;
 
     const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));
@@ -34,15 +39,13 @@ export const Table: FC<TableProps> = ({ data, schema, setPreviewedSeqId, preview
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
             if (orderBy.type === 'ascending') {
-                console.log('orderBy', orderBy);
-                // TODONOW
+                setOrderDirection('descending');
             } else {
-                console.log('orderBy', orderBy);
-                // TODONOW
+                setOrderDirection('ascending');
             }
         } else {
-            console.log('orderBy', orderBy);
-            // TODONOW
+            setOrderByField(field);
+            setOrderDirection('ascending');
         }
     };
 

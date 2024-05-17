@@ -28,6 +28,9 @@ import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
 
+const orderKey = 'orderBy';
+const orderDirectionKey = 'order';
+
 const VISIBILITY_PREFIX = 'visibility_';
 
 interface InnerSearchFullUIProps {
@@ -81,7 +84,23 @@ export const InnerSearchFullUI = ({
     const [state, setState] = useQueryAsState({});
     const [page, setPage] = useState(1);
 
-    let orderBy; // TODONOW
+    const orderByField = state.orderBy ?? schema.primaryKey;
+    const orderDirection = state.order ?? 'ascending';
+
+    const setOrderByField = (field: string) => {
+        setState((prev) => ({
+            ...prev,
+            orderBy: field,
+        }));
+    }
+    const setOrderDirection = (direction: string) => {
+        setState((prev) => ({
+            ...prev,
+            order: direction,
+        }));
+    }
+
+
 
     const visibilities = useMemo(() => {
         const visibilities = new Map<string, boolean>();
@@ -98,7 +117,7 @@ export const InnerSearchFullUI = ({
     }, [state]);
 
     const fieldValues = useMemo(() => {
-        const fieldKeys = Object.keys(state).filter((key) => !key.startsWith(VISIBILITY_PREFIX));
+        const fieldKeys = Object.keys(state).filter((key) => !key.startsWith(VISIBILITY_PREFIX)).filter((key) => key !== orderKey && key !== orderDirectionKey);
         const values = {};
         for (const key of fieldKeys) {
             values[key] = state[key];
@@ -159,6 +178,10 @@ export const InnerSearchFullUI = ({
             aminoAcidInsertions: [],
             limit: pageSize,
             offset: (page - 1) * pageSize,
+            orderBy: {
+                field: orderByField,
+                type: orderDirection,
+            }
         });
     }, [fieldValues, page]);
 
@@ -216,10 +239,12 @@ export const InnerSearchFullUI = ({
                                 previewedSeqId={previewedSeqId}
                                 orderBy={
                                     {
-                                        field: 'name',
-                                        type: 'ascending',
+                                        field: orderByField,
+                                        type: orderDirection,
                                     } as OrderBy
                                 }
+                                setOrderByField={setOrderByField}
+                                setOrderDirection={setOrderDirection}
                             />
                         )}
                         <div className='mt-4 flex justify-center'>
