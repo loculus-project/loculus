@@ -1,10 +1,6 @@
 import MUIPagination from '@mui/material/Pagination';
 import type { FC } from 'react';
 
-import { navigateToSearchLikePage, type ClassOfSearchPageType } from '../../routes/routes';
-import type { AccessionFilter, MetadataFilter, MutationFilter } from '../../types/config.ts';
-import type { OrderBy } from '../../types/lapis.ts';
-
 type SearchPaginationProps = {
     count: number;
     page: number;

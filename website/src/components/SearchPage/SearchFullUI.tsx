@@ -249,15 +249,17 @@ export const InnerSearchFullUI = ({
             </div>
             <div className='flex-1'>
                 <RecentSequencesBanner organism={organism} />
-             
+            { 
+            !(totalSequences===undefined && oldCount === null) && 
                     <div
                         className={`
                         ${detailsHook.isLoading || aggregatedHook.isLoading ? 'opacity-50 pointer-events-none' : ''}
                         `}
                         >
-                            <div className='mt-auto'>
-                                Search returned {totalSequences ? totalSequences.toLocaleString(): 
-                                oldCount ? oldCount.toLocaleString() : 0
+                            <div className='mt-auto' 
+                            >
+                                Search returned {totalSequences!==undefined ? totalSequences.toLocaleString(): 
+                               ( oldCount ? oldCount.toLocaleString() : "")
                                 }{" "}sequence
                                 {totalSequences === 1 ? '' : 's'}
                                 {
@@ -296,6 +298,7 @@ export const InnerSearchFullUI = ({
                             )}
                         </div>
                     </div>
+}
             
             </div>
         </div>
