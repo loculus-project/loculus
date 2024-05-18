@@ -96,7 +96,7 @@ const isValidAminoAcidInsertionQuery = (text: string, referenceGenomesSequenceNa
     }
 };
 
-const parseMutationString = (value: string, referenceGenomesSequenceNames): MutationQuery[] => {
+export const parseMutationString = (value: string, referenceGenomesSequenceNames): MutationQuery[] => {
     return value.split(',').map(mutation => {
         const trimmedMutation = mutation.trim();
         if (isValidNucleotideMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {

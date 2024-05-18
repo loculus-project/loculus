@@ -28,6 +28,8 @@ import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
 
+import { parseMutationString } from './fields/MutationField.tsx';
+
 const orderKey = 'orderBy';
 const orderDirectionKey = 'order';
 
@@ -164,23 +166,26 @@ export const InnerSearchFullUI = ({
         if (sequenceFilters.accession) {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
-        console.log('sequenceFilters', sequenceFilters);
+        
+        delete sequenceFilters.mutation;
 
-        aggregatedHook.mutate({
+        const mutationFilter = parseMutationString(fieldValues.mutation ?? '', referenceGenomesSequenceNames);
+
+        const commonParameters ={
             ...sequenceFilters,
-            fields: [],
-            nucleotideMutations: [],
-            aminoAcidMutations: [],
-            nucleotideInsertions: [],
-            aminoAcidInsertions: [],
+        nucleotideMutations: mutationFilter.filter( (m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion').map((m) => m.text),
+        aminoAcidMutations:    mutationFilter.filter( (m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion').map((m) => m.text),
+         nucleotideInsertions: mutationFilter.filter( (m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion').map((m) => m.text),
+        aminoAcidInsertions: mutationFilter.filter( (m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion').map((m) => m.text),
+        }
+        aggregatedHook.mutate({
+        
+            ...commonParameters,
+            fields: []
         });
         detailsHook.mutate({
-            ...sequenceFilters,
+            ...commonParameters,
             fields: [...schema.tableColumns, schema.primaryKey],
-            nucleotideMutations: [],
-            aminoAcidMutations: [],
-            nucleotideInsertions: [],
-            aminoAcidInsertions: [],
             limit: pageSize,
             offset: (page - 1) * pageSize,
             orderBy: [
