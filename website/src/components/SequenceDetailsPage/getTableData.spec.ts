@@ -1,4 +1,4 @@
-import { err, ok } from 'neverthrow';
+import { err } from 'neverthrow';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { getTableData } from './getTableData.ts';
@@ -38,7 +38,7 @@ const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls.dummy, sc
 
 describe('getTableData', () => {
     beforeEach(() => {
-        mockRequest.lapis.details(200, { data: [{ dummyField: 'dummyValue' }] });
+        mockRequest.lapis.details(200, { data: [toLapisEntry({ dummyField: 'dummyValue' })] });
         mockRequest.lapis.nucleotideMutations(200, { data: [] });
         mockRequest.lapis.aminoAcidMutations(200, { data: [] });
         mockRequest.lapis.nucleotideInsertions(200, { data: [] });
@@ -99,7 +99,8 @@ describe('getTableData', () => {
             },
         ];
 
-        expect(result).toStrictEqual(ok(defaultList.concat(defaultMutationsInsertionsDeletionsList)));
+        const data = result._unsafeUnwrap().data;
+        expect(data).toStrictEqual(defaultList.concat(defaultMutationsInsertionsDeletionsList));
     });
 
     test('should return details field values', async () => {
@@ -112,12 +113,12 @@ describe('getTableData', () => {
                     metadataField1: value1,
                     metadataField2: value2,
                 },
-            ],
+            ].map((d) => toLapisEntry(d)),
         });
 
         const result = await getTableData('accession', schema, lapisClient);
 
-        const data = result._unsafeUnwrap();
+        const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Metadata field1',
             name: 'metadataField1',
@@ -140,7 +141,7 @@ describe('getTableData', () => {
 
         const result = await getTableData('accession', schema, lapisClient);
 
-        const data = result._unsafeUnwrap();
+        const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
@@ -233,7 +234,7 @@ describe('getTableData', () => {
 
         const result = await getTableData('accession', schema, lapisClient);
 
-        const data = result._unsafeUnwrap();
+        const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'nucleotideInsertions',
@@ -255,7 +256,7 @@ describe('getTableData', () => {
 
         const result = await getTableData('accession', schema, lapisClient);
 
-        const data = result._unsafeUnwrap();
+        const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Timestamp field',
             name: 'timestampField',
@@ -264,7 +265,25 @@ describe('getTableData', () => {
             type: { kind: 'metadata', metadataType: 'timestamp' },
         });
     });
+
+    test('should correctly determine revocation entry', async () => {
+        for (const expectedIsRevocation of [true, false]) {
+            mockRequest.lapis.details(200, {
+                data: [toLapisEntry({}, expectedIsRevocation)],
+            });
+            const result = await getTableData('accession', schema, lapisClient);
+            const isRevocation = result._unsafeUnwrap().isRevocation;
+            expect(isRevocation).toBe(expectedIsRevocation);
+        }
+    });
 });
+
+function toLapisEntry(entry: Record<string, any>, isRevocation = false) {
+    return {
+        ...entry,
+        isRevocation,
+    };
+}
 
 const nucleotideMutations: MutationProportionCount[] = [
     {
