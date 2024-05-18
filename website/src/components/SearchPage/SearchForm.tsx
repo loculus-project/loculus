@@ -1,7 +1,6 @@
-import CircularProgress from '@mui/material/CircularProgress';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import { type FC, type FormEventHandler, useMemo, useState, useCallback } from 'react';
+import {  useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
@@ -10,18 +9,11 @@ import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { getClientLogger } from '../../clientLogger.ts';
-import { getLapisUrl } from '../../config.ts';
-import { useOffCanvas } from '../../hooks/useOffCanvas';
-import { type ClassOfSearchPageType, navigateToSearchLikePage } from '../../routes/routes.ts';
-import type { AccessionFilter, GroupedMetadataFilter, MetadataFilter, MutationFilter } from '../../types/config.ts';
-import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type {  GroupedMetadataFilter } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { OffCanvasOverlay } from '../OffCanvasOverlay';
-import { SandwichIcon } from '../SandwichIcon';
+
 
 const queryClient = new QueryClient();
-
-const clientLogger = getClientLogger('SearchForm');
 
 interface SearchFormProps {
     organism: string;
@@ -81,6 +73,7 @@ export const SearchForm = ({
                     
                     
                     />
+                    
                         {visibleFields.map((filter) => (
                             <SearchField
                                 field={filter}
