@@ -73,6 +73,10 @@ export const SearchForm = ({
                     <AccessionField 
                     textValue={fieldValues.accession}
                     setTextValue={(value) => setAFieldValue('accession', value)}
+                    bla={
+                        console.log('fieldValues.accession', fieldValues.accession)
+                    }
+                    
                     
                     
                     />

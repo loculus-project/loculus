@@ -19,12 +19,13 @@ export const AccessionField: FC<AccessionFieldProps> = ({ textValue, setTextValu
                 autocomplete: false,
                 name: 'accession',
                 notSearchable: false,
-                filterValue: textValue,
+               
             }}
             setAFieldValue={(_, filter) => {
                 setTextValue(filter);
                 
             }}
+            fieldValue={textValue}
             isLoading={false}
             multiline
         />
