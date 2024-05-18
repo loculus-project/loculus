@@ -2,7 +2,6 @@ import { DateTime, FixedOffsetZone } from 'luxon';
 import { type FC, useRef } from 'react';
 
 import { type DataUseTermsHistoryEntry, restrictedDataUseTermsType } from '../../types/backend.ts';
-import DataUseTermsHistoryIcon from '~icons/mdi/clipboard-text-history-outline';
 
 export type DataUseTermsHistoryProps = {
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
@@ -23,11 +22,11 @@ export const DataUseTermsHistoryModal: FC<DataUseTermsHistoryProps> = ({ dataUse
                 <DataUseTermsHistoryDialog dataUseTermsHistory={dataUseTermsHistory} />
             </dialog>
 
-            <div>
-                <button className='icon-button' onClick={handleOpenHistoryDialog}>
-                    <DataUseTermsHistoryIcon />
+            <span>
+                <button className='underline' onClick={handleOpenHistoryDialog}>
+                    (history)
                 </button>
-            </div>
+            </span>
         </>
     );
 };
