@@ -1,6 +1,4 @@
 import { DateTime } from 'luxon';
-import type { FC } from 'react';
-import { useState } from 'react';
 import { DatePicker } from 'rsuite';
 
 import 'rsuite/DatePicker/styles/index.css';
@@ -34,7 +32,6 @@ export const TimestampField = (props) => (
 );
 
 const CustomizedDatePicker = ({ field, setAFieldValue, dateToValueConverter, valueToDateConverter, fieldValue }) => {
-    const [triggerUpdate, setTriggerUpdate] = useState(false);
     return (
         <div>
             <div className='flex justify-between items-center'>

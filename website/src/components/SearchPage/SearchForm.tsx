@@ -13,6 +13,7 @@ import type {  GroupedMetadataFilter } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 
+
 const queryClient = new QueryClient();
 
 interface SearchFormProps {
@@ -36,11 +37,13 @@ export const SearchForm = ({
     lapisUrl,
     visibilities,
     setAVisibility,
+    referenceGenomesSequenceNames
 }) => {
     const visibleFields = consolidatedMetadataSchema.filter((field) => visibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
     const toggleCustomizeModal = () => setIsCustomizeModalOpen(!isCustomizeModalOpen);
+    
 
     return (
         <QueryClientProvider client={queryClient}>
@@ -72,6 +75,15 @@ export const SearchForm = ({
                     setTextValue={(value) => setAFieldValue('accession', value)}
                     
                     
+                    />
+                    
+                  
+                        <MutationField 
+                    referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                    value={fieldValues.mutation ?? ''}
+                    onChange={(value) => setAFieldValue('mutation', value)}
+                     
+                   
                     />
                     
                         {visibleFields.map((filter) => (
