@@ -1,10 +1,9 @@
 import { Combobox } from '@headlessui/react';
-import { type FC, useEffect, useMemo, useState, useRef, forwardRef } from 'react';
+import { useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import type { MetadataFilter } from '../../../types/config.ts';
 
 const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField

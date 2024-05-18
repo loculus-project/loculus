@@ -1,7 +1,6 @@
-import { type FC, useState } from 'react';
+import { type FC } from 'react';
 
 import { NormalTextField } from './NormalTextField.tsx';
-import type { AccessionFilter } from '../../../types/config.ts';
 
 type AccessionFieldProps = {
     textValue: string;

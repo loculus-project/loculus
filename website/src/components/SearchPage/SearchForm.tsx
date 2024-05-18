@@ -4,11 +4,10 @@ import {  useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
-import { AutoCompleteField, type AutoCompleteFieldProps } from './fields/AutoCompleteField';
+import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
-import { getClientLogger } from '../../clientLogger.ts';
 import type {  GroupedMetadataFilter } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -73,9 +72,7 @@ export const SearchForm = ({
                     <AccessionField 
                     textValue={fieldValues.accession}
                     setTextValue={(value) => setAFieldValue('accession', value)}
-                    bla={
-                        console.log('fieldValues.accession', fieldValues.accession)
-                    }
+                  
                     
                     
                     

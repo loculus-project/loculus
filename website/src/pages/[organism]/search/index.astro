@@ -1,8 +1,7 @@
 ---
 import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
-import { getRuntimeConfig } from '../../../config';
-import { getSchema } from '../../../config';
+import { getRuntimeConfig,getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
@@ -12,7 +11,6 @@ const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
 
 const clientConfig = getRuntimeConfig().public;
 const schema = getSchema(cleanedOrganism.key);
-const metadataSchema = schema.metadata;
 
 const accessToken = getAccessToken(Astro.locals.session);
 const myGroups = getMyGroups(accessToken);

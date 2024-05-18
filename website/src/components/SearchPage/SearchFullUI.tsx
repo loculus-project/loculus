@@ -9,6 +9,7 @@ import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
 import { Table } from './Table';
+import { parseMutationString } from './fields/MutationField.tsx';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
 import { SEARCH } from '../../routes/routes';
@@ -28,7 +29,6 @@ import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
 
-import { parseMutationString } from './fields/MutationField.tsx';
 
 const orderKey = 'orderBy';
 const orderDirectionKey = 'order';
