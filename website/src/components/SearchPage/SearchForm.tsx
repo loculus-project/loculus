@@ -75,6 +75,12 @@ export const SearchForm = ({
                         setAVisibility={setAVisibility}
                     />
                     <div className='flex flex-col'>
+                    <AccessionField 
+                    textValue={fieldValues.accession}
+                    setTextValue={(value) => setAFieldValue('accession', value)}
+                    
+                    
+                    />
                         {visibleFields.map((filter) => (
                             <SearchField
                                 field={filter}

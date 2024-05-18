@@ -159,6 +159,11 @@ export const InnerSearchFullUI = ({
         const sequenceFilters = Object.fromEntries(
             Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
         );
+
+        // if field name is accession, split on ,
+        if (sequenceFilters.accession) {
+            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
+        }
         console.log('sequenceFilters', sequenceFilters);
 
         aggregatedHook.mutate({
@@ -329,3 +334,20 @@ export const SearchFullUI = (props: ClassOfSearchPageType) => {
         </QueryClientProvider>
     );
 };
+
+
+const textAccessionsToList = (text: string): string[] => {
+
+    const accessions = text
+    .split(/[\t,;\n ]/)
+    .map((s) => s.trim())
+    .filter((s) => s !== '')
+    .map((s) => {
+        if (s.includes('.')) {
+            return s.split('.')[0];
+        }
+        return s;
+    });
+
+    return accessions;
+}
