@@ -4,15 +4,10 @@ import { useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-
-type Field = {
-    // TODONOW: delete this
-    name: string;
-    label: string;
-};
+import { type GroupedMetadataFilter, type MetadataFilter } from '../../../types/config.ts';
 
 type AutoCompleteFieldProps = {
-    field: Field;
+    field: MetadataFilter | GroupedMetadataFilter;
     setAFieldValue: (fieldName: string, value: string) => void;
     lapisUrl: string;
     fieldValue: string;

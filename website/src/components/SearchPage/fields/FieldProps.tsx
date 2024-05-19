@@ -9,4 +9,5 @@ export type FieldProps = {
     multiline?: boolean;
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+    fieldValue: string;
 };

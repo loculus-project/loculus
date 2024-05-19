@@ -31,6 +31,9 @@ interface InnerSearchFullUIProps {
     clientConfig: ClientConfig;
     schema: Schema;
 }
+interface QueryState {
+    [key: string]: string;
+  }
 
 export const InnerSearchFullUI = ({
     accessToken,
@@ -45,7 +48,7 @@ export const InnerSearchFullUI = ({
     const metadataSchemaWithExpandedRanges = useMemo(() => {
         const result = [];
         for (const field of metadataSchema) {
-            if (field.rangeSearch) {
+            if (field.rangeSearch===true) {
                 const fromField = {
                     ...field,
                     name: `${field.name}From`,
@@ -78,13 +81,13 @@ export const InnerSearchFullUI = ({
     const orderDirection = state.order ?? 'ascending';
 
     const setOrderByField = (field: string) => {
-        setState((prev) => ({
+        setState((prev: QueryState) => ({
             ...prev,
             orderBy: field,
         }));
     };
     const setOrderDirection = (direction: string) => {
-        setState((prev) => ({
+        setState((prev: QueryState) => ({
             ...prev,
             order: direction,
         }));
@@ -93,7 +96,7 @@ export const InnerSearchFullUI = ({
     const visibilities = useMemo(() => {
         const visibilities = new Map<string, boolean>();
         schema.metadata.forEach((field) => {
-            visibilities.set(field.name, field.initiallyVisible);
+            visibilities.set(field.name, field.initiallyVisible===true);
         });
 
         const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(VISIBILITY_PREFIX));
@@ -102,13 +105,14 @@ export const InnerSearchFullUI = ({
             visibilities.set(key.slice(VISIBILITY_PREFIX.length), state[key] === 'true');
         }
         return visibilities;
-    }, [state]);
+    }, [schema.metadata, state]);
 
     const fieldValues = useMemo(() => {
         const fieldKeys = Object.keys(state)
             .filter((key) => !key.startsWith(VISIBILITY_PREFIX))
             .filter((key) => key !== orderKey && key !== orderDirectionKey);
-        const values = {};
+           
+            const values: Record<string, any> = {};
         for (const key of fieldKeys) {
             values[key] = state[key];
         }
@@ -116,14 +120,14 @@ export const InnerSearchFullUI = ({
     }, [state]);
 
     const setAFieldValue = (fieldName: string, value: string) => {
-        setState((prev) => ({
+        setState((prev: any) => ({
             ...prev,
             [fieldName]: value,
         }));
     };
 
     const setAVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev) => ({
+        setState((prev: any) => ({
             ...prev,
             [`${VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
         }));
@@ -141,15 +145,12 @@ export const InnerSearchFullUI = ({
     const aggregatedHook = hooks.useAggregated({}, {});
     const detailsHook = hooks.useDetails({}, {});
 
-    console.log('referenceGenomeSequenceNames', referenceGenomesSequenceNames);
-
     const lapisSearchParameters = useMemo(() => {
         const sequenceFilters = Object.fromEntries(
             Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
         );
 
-        // if field name is accession, split on ,
-        if (sequenceFilters.accession) {
+        if (sequenceFilters.accession!=='' && sequenceFilters.accession!==undefined) {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
 
