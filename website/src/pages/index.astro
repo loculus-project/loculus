@@ -1,16 +1,18 @@
 ---
+import Faq from '../components/IndexPage/FAQ.mdx';
+import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
 import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { routes } from '../routes/routes';
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName } = websiteConfig;
+import '../styles/mdcontainer.scss';
 ---
 
 <BaseLayout title='Home'>
     <div class='max-w-6xl mx-auto'>
-        <p class='text-gray-700 my-4'>
-            Welcome to {websiteName}, a system for sharing pathogen genome data.
-        </p>
+        <WelcomeMessage websiteName={websiteName} />
+
         <h2 class='font-semibold text-gray-700 my-3 text-lg'>Explore {websiteName} data!</h2>
 
         <div class='flex flex-wrap'>
@@ -26,6 +28,9 @@ const { name: websiteName } = websiteConfig;
                     </a>
                 ))
             }
+        </div>
+        <div class='mdContainer'>
+            <Faq />
         </div>
     </div>
 </BaseLayout>
