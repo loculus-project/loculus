@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, isError } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { DatePicker } from 'rsuite';
 
@@ -249,6 +249,31 @@ export const InnerSearchFullUI = ({
             </div>
             <div className='flex-1'>
                 <RecentSequencesBanner organism={organism} />
+                {
+                    console.log(detailsHook,"det")
+                }
+                {
+                   ( detailsHook.isError || aggregatedHook.isError) &&
+                   <div className="bg-red-800"
+                   >
+                    
+                    <p>There was an error loading the data.</p>
+                  
+                    <p>{detailsHook.error?.message}</p>
+                    <p>{aggregatedHook.error?.message}</p>
+
+
+
+                    </div>
+                }
+                {
+                    (detailsHook.isPaused || aggregatedHook.isPaused) && 
+                    (!detailsHook.isSuccess || !aggregatedHook.isSuccess) &&
+                    <div className='bg-red-800'>
+                        Connection problem
+                        </div>
+
+                }
             { 
             !(totalSequences===undefined && oldCount === null) && 
                     <div

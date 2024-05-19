@@ -84,7 +84,7 @@ export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, allFields, 
                     placeholder={field.label}
                     as={CustomInput}
                 />
-                {(field.filterValue !== '' || query !== '') && (
+                {( (fieldValue !== '' && fieldValue !==  undefined) || query !== '') && (
                     <button
                         className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                         onClick={() => {
