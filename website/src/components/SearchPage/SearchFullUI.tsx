@@ -9,8 +9,6 @@ import { Table } from './Table';
 import { parseMutationString } from './fields/MutationField.tsx';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
-import { SEARCH } from '../../routes/routes';
-import { type ClassOfSearchPageType } from '../../routes/routes.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
@@ -116,8 +114,6 @@ export const InnerSearchFullUI = ({
         }
         return values;
     }, [state]);
-
-    console.log('fieldValues', fieldValues);
 
     const setAFieldValue = (fieldName: string, value: string) => {
         setState((prev) => ({
@@ -341,7 +337,7 @@ const consolidateGroupedFields = (filters: MetadataFilter[]): (MetadataFilter | 
     return fieldList;
 };
 
-export const SearchFullUI = (props: ClassOfSearchPageType) => {
+export const SearchFullUI = (props: InnerSearchFullUIProps) => {
     const queryClient = new QueryClient();
 
     return (

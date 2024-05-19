@@ -10,18 +10,21 @@ import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import type { GroupedMetadataFilter } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
 const queryClient = new QueryClient();
 
 interface SearchFormProps {
     organism: string;
-    metadataSchema: GroupedMetadataFilter[];
+    consolidatedMetadataSchema: GroupedMetadataFilter[];
     clientConfig: ClientConfig;
     fieldValues: Record<string, string>;
     setAFieldValue: (fieldName: string, value: string) => void;
     lapisUrl: string;
     visibilities: Map<string, boolean>;
     setAVisibility: (fieldName: string, value: boolean) => void;
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
+    lapisSearchParameters: Record<string, any>;
 }
 
 export const SearchForm = ({
@@ -35,7 +38,7 @@ export const SearchForm = ({
     setAVisibility,
     referenceGenomesSequenceNames,
     lapisSearchParameters,
-}) => {
+}: SearchFormProps) => {
     const visibleFields = consolidatedMetadataSchema.filter((field) => visibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
@@ -94,7 +97,17 @@ export const SearchForm = ({
     );
 };
 
-const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearchParameters }) => {
+interface SearchFieldProps {
+    field: GroupedMetadataFilter;
+    lapisUrl: string;
+    fieldValues: Record<string, string>;
+    setAFieldValue: (fieldName: string, value: string) => void;
+    lapisSearchParameters: Record<string, any>;
+}
+
+
+
+const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearchParameters }: SearchFieldProps) => {
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
     if (field.grouped) {
