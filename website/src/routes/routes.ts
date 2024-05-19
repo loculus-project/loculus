@@ -1,7 +1,5 @@
 import { SubmissionRouteUtils } from './SubmissionRoute.ts';
 import type { AccessionVersion } from '../types/backend.ts';
-import type { AccessionFilter, FilterValue, MutationFilter } from '../types/config.ts';
-import type { OrderBy } from '../types/lapis.ts';
 import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
 
 export const approxMaxAcceptableUrlLength = 1900;
@@ -14,15 +12,9 @@ export const routes = {
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
-    searchPage: <Filter extends FilterValue>(
-        organism: string,
-        metadataFilter: Filter[] = [],
-        accessionFilter: AccessionFilter = {},
-        mutationFilter: MutationFilter = {},
-        page: number | undefined = undefined,
-        orderBy?: OrderBy,
+    searchPage: (
+        organism: string
     ) =>
-        // TODONOW: cleanup
         withOrganism(
             organism,
             `/search`
@@ -32,11 +24,6 @@ export const routes = {
     mySequencesPage: (
         organism: string,
         groupId: number,
-        metadataFilter: FilterValue[] = [],
-        accessionFilter: AccessionFilter = {},
-        mutationFilter: MutationFilter = {},
-        page: number | undefined = undefined,
-        orderBy?: OrderBy,
     ) =>
         SubmissionRouteUtils.toUrl({
             name: 'released',
