@@ -1,9 +1,6 @@
 import { QueryClient, QueryClientProvider, isError } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { DatePicker } from 'rsuite';
 
-import { CustomizeModal } from './CustomizeModal.tsx';
-import { DownloadDialog } from './DownloadDialog/DownloadDialog';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
@@ -249,15 +246,18 @@ export const InnerSearchFullUI = ({
             </div>
             <div className='flex-1'>
                 <RecentSequencesBanner organism={organism} />
+               
                 {
-                    console.log(detailsHook,"det")
-                }
-                {
-                   ( detailsHook.isError || aggregatedHook.isError) &&
-                   <div className="bg-red-800"
+                   ( detailsHook.isError || aggregatedHook.isError) && <>
+                   detailsHook.error?.status === 503 ? <div> No data in database
+                    </div> :
+                   <div className="bg-red-400"
                    >
                     
                     <p>There was an error loading the data.</p>
+                    <p>
+                        {JSON.stringify(detailsHook.error)}
+                    </p>
                   
                     <p>{detailsHook.error?.message}</p>
                     <p>{aggregatedHook.error?.message}</p>
@@ -265,6 +265,7 @@ export const InnerSearchFullUI = ({
 
 
                     </div>
+                    </>
 
                 }
                 {

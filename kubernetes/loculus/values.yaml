@@ -729,7 +729,7 @@ defaultOrganisms:
           header: "INSDC"
         - name: length
           type: int
-          autocomplete: true
+          rangeSearch: true
         - name: total_snps
           type: int
           header: "Alignment states and QC metrics"
