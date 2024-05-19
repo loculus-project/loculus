@@ -1,5 +1,5 @@
 import { IS_REVOCATION_FIELD, metadataDefaultDownloadDataFormat, VERSION_STATUS_FIELD } from '../../../settings.ts';
-import type { FilterValue, MutationFilter } from '../../../types/config.ts';
+import type { AccessionFilter, FilterValue, MutationFilter } from '../../../types/config.ts';
 import { siloVersionStatuses } from '../../../types/lapis.ts';
 
 export type DownloadDataType =
@@ -18,6 +18,7 @@ export type DownloadOption = {
 };
 
 export const generateDownloadUrl = (
+    accessionFilter: AccessionFilter,
     metadataFilter: FilterValue[],
     mutationFilter: MutationFilter,
     option: DownloadOption,
@@ -39,24 +40,36 @@ export const generateDownloadUrl = (
     if (option.compression !== undefined) {
         params.set('compression', option.compression);
     }
+    if (accessionFilter.accession !== undefined) {
+        for (const accession of accessionFilter.accession) {
+            params.append('accession', accession);
+        }
+    }
     for (const { name, filterValue } of metadataFilter) {
         if (filterValue.trim().length > 0) {
             params.set(name, filterValue);
         }
     }
-    if (mutationFilter.nucleotideMutationQueries !== undefined) {
+    if (mutationFilter.nucleotideMutationQueries !== undefined && mutationFilter.nucleotideMutationQueries.length > 0) {
         params.set('nucleotideMutations', mutationFilter.nucleotideMutationQueries.join(','));
     }
-    if (mutationFilter.aminoAcidMutationQueries !== undefined) {
+    if (mutationFilter.aminoAcidMutationQueries !== undefined && mutationFilter.aminoAcidMutationQueries.length > 0) {
         params.set('aminoAcidMutations', mutationFilter.aminoAcidMutationQueries.join(','));
     }
-    if (mutationFilter.nucleotideInsertionQueries !== undefined) {
+    if (
+        mutationFilter.nucleotideInsertionQueries !== undefined &&
+        mutationFilter.nucleotideInsertionQueries.length > 0
+    ) {
         params.set('nucleotideInsertions', mutationFilter.nucleotideInsertionQueries.join(','));
     }
-    if (mutationFilter.aminoAcidInsertionQueries !== undefined) {
+    if (mutationFilter.aminoAcidInsertionQueries !== undefined && mutationFilter.aminoAcidInsertionQueries.length > 0) {
         params.set('aminoAcidInsertions', mutationFilter.aminoAcidInsertionQueries.join(','));
     }
-    return `${baseUrl}?${params}`;
+    return {
+        url: `${baseUrl}?${params}`,
+        baseUrl,
+        params,
+    };
 };
 
 const getEndpoint = (dataType: DownloadDataType) => {
