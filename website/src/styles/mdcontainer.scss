@@ -1,18 +1,18 @@
 
-.mdContainer{
-    @apply max-w-3xl mx-auto;
+.mdContainerItself{
+    @apply max-w-3xl mx-auto break-normal;
   }
   
   .mdContainer h1{
-    @apply text-2xl font-semibold text-main break-all my-3;
+    @apply text-2xl font-semibold text-main my-3  mt-8;
   }
   
   .mdContainer h2{
-    @apply text-xl font-semibold text-main break-all my-3;
+    @apply text-xl font-semibold text-main my-3 mt-6;
   }
   
   .mdContainer h3{
-    @apply text-lg font-semibold text-main break-all my-3;
+    @apply text-lg font-semibold text-main my-3;
 
   }
   
@@ -31,6 +31,16 @@
 .mdContainer ol li {
   @apply ml-4 my-1;
 }
+
+.mdContainer .alternative-lists ol {
+  @apply list-decimal list-outside my-2;
+}
+
+.mdContainer .alternative-lists ol li {
+  @apply ml-0 my-2;
+}
+
+
 /* Level 1 - Direct children of .mdContainer */
 .mdContainer > ul {
   list-style-type: disc;
@@ -67,3 +77,20 @@
   margin-top: 4px;
   margin-bottom: 4px;
 }
+
+.mdContainer li p {
+  display: inline
+}
+
+.mdContainer .indent{
+    @apply ml-4;
+}
+
+.mdContainer .lettered-list ol{
+   list-style-type: lower-latin;
+}
+
+.mdContainer .roman-list ol{
+   list-style-type: lower-roman;
+}
+

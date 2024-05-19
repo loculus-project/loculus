@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
-import type { FilterValue, MutationFilter } from '../../../types/config.ts';
+import type { AccessionFilter, FilterValue, MutationFilter } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
@@ -14,6 +14,7 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 const defaultLapisUrl = 'https://lapis';
 
 async function renderDialog(
+    accessionFilter: AccessionFilter = {},
     metadataFilter: FilterValue[] = [],
     mutationFilter: MutationFilter = {},
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames = defaultReferenceGenome,
@@ -21,6 +22,7 @@ async function renderDialog(
 ) {
     render(
         <DownloadDialog
+            accessionFilter={accessionFilter}
             metadataFilter={metadataFilter}
             mutationFilter={mutationFilter}
             referenceGenomesSequenceNames={referenceGenomesSequenceNames}
@@ -47,7 +49,7 @@ describe('DownloadDialog', () => {
     });
 
     test('should display active filters if there are some', async () => {
-        await renderDialog([{ name: 'field1', filterValue: 'value1' }], {
+        await renderDialog({}, [{ name: 'field1', filterValue: 'value1' }], {
             nucleotideMutationQueries: ['A123T', 'G234C'],
         });
         expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
@@ -75,24 +77,24 @@ describe('DownloadDialog', () => {
     });
 
     test('should generate the right download link', async () => {
-        await renderDialog([{ name: 'field1', filterValue: 'value1' }]);
+        await renderDialog({ accession: ['accession1', 'accession2'] }, [{ name: 'field1', filterValue: 'value1' }]);
         await checkAgreement();
 
         expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/details?downloadAsFile=true&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&field1=value1`,
+            `${defaultLapisUrl}/sample/details?downloadAsFile=true&versionStatus=LATEST_VERSION&isRevocation=false&dataUseTerms=OPEN&dataFormat=tsv&accession=accession1&accession=accession2&field1=value1`,
         );
 
         await userEvent.click(screen.getByLabelText(/Yes, include older versions/));
         await userEvent.click(screen.getByLabelText(/Raw nucleotide sequences/));
         await userEvent.click(screen.getByLabelText(/Gzip/));
         expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&dataUseTerms=OPEN&compression=gzip&field1=value1`,
+            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&dataUseTerms=OPEN&compression=gzip&accession=accession1&accession=accession2&field1=value1`,
         );
 
         await userEvent.click(screen.getByLabelText(/include restricted data/));
         await userEvent.click(screen.getByLabelText(/Zstandard/));
         expect(getDownloadHref()).toBe(
-            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&compression=zstd&field1=value1`,
+            `${defaultLapisUrl}/sample/unalignedNucleotideSequences?downloadAsFile=true&compression=zstd&accession=accession1&accession=accession2&field1=value1`,
         );
     });
 });

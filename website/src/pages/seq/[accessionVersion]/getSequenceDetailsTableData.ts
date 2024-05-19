@@ -21,6 +21,7 @@ export type TableData = {
     tableData: TableDataEntry[];
     sequenceEntryHistory: SequenceEntryHistory;
     dataUseTermsHistory: DataUseTermsHistoryEntry[];
+    isRevocation: boolean;
 };
 
 export type Redirect = {
@@ -60,9 +61,10 @@ export const getSequenceDetailsTableData = async (
     return Result.combine([tableDataResult, sequenceEntryHistoryResult, dataUseHistoryResult]).map(
         ([tableData, sequenceEntryHistory, dataUseTermsHistory]) => ({
             type: SequenceDetailsTableResultType.TABLE_DATA as const,
-            tableData,
+            tableData: tableData.data,
             sequenceEntryHistory,
             dataUseTermsHistory,
+            isRevocation: tableData.isRevocation,
         }),
     );
 };

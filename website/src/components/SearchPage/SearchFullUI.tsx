@@ -265,6 +265,7 @@ export const InnerSearchFullUI = ({
 
 
                     </div>
+
                 }
                 {
                     (detailsHook.isPaused || aggregatedHook.isPaused) && 
@@ -311,6 +312,16 @@ export const InnerSearchFullUI = ({
                                 }
                                 setOrderByField={setOrderByField}
                                 setOrderDirection={setOrderDirection}
+
+                    <div>
+                        {classOfSearchPage === SEARCH && (
+                            <DownloadDialog
+                                accessionFilter={accessionFilter}
+                                metadataFilter={metadataFilterWithoutHiddenFilters}
+                                mutationFilter={mutationFilter}
+                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                lapisUrl={lapisUrl}
+
                             />
                         
                         <div className='mt-4 flex justify-center'>

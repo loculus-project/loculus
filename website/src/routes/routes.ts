@@ -4,7 +4,7 @@ import type { AccessionFilter, FilterValue, MutationFilter } from '../types/conf
 import type { OrderBy } from '../types/lapis.ts';
 import { getAccessionVersionString } from '../utils/extractAccessionVersion.ts';
 
-const approxMaxUrlLengthForSearch = 1900;
+export const approxMaxAcceptableUrlLength = 1900;
 export const SEARCH = 'SEARCH';
 export const MY_SEQUENCES = 'MY_SEQUENCES';
 
@@ -82,7 +82,7 @@ export const routes = {
     },
     logout: () => '/logout',
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
-    datauseTermsPage: () => '/docs/data-use-terms',
+    datauseTermsPage: () => '/governance/data_use_terms',
 };
 
 export type ClassOfSearchPageType = 'SEARCH' | 'MY_SEQUENCES';
@@ -99,7 +99,7 @@ export const navigateToSearchLikePage = (
 ) => {
     const paramsString = buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy).toString();
 
-    if (paramsString.length < approxMaxUrlLengthForSearch) {
+    if (paramsString.length < approxMaxAcceptableUrlLength) {
         if (classOfSearchPage === SEARCH) {
             location.href = routes.searchPage(organism, metadataFilter, accessionFilter, mutationFilter, page, orderBy);
         }
