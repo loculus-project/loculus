@@ -25,10 +25,9 @@ interface SearchFormProps {
 }
 
 export const SearchForm = ({
-    organism,
+    
 
     consolidatedMetadataSchema,
-    clientConfig,
     fieldValues,
     setAFieldValue,
     lapisUrl,
@@ -121,9 +120,9 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
     switch (field.type) {
         case 'date':
             return <DateField field={field} fieldValue={fieldValues[field.name]} setAFieldValue={setAFieldValue} />;
-        /* case 'timestamp':
-            return <TimestampField {...props} />;
-*/
+        case 'timestamp':
+            return <TimestampField field={field} fieldValue={fieldValues[field.name]} setAFieldValue={setAFieldValue} />;
+
         default:
             if (field.autocomplete === true) {
                 return (
