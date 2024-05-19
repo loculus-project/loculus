@@ -36,7 +36,8 @@ export const SearchForm = ({
     lapisUrl,
     visibilities,
     setAVisibility,
-    referenceGenomesSequenceNames
+    referenceGenomesSequenceNames,
+    lapisSearchParameters
 }) => {
     const visibleFields = consolidatedMetadataSchema.filter((field) => visibilities.get(field.name));
 
@@ -94,6 +95,7 @@ export const SearchForm = ({
                                 fieldValues={fieldValues}
                                 setAFieldValue={setAFieldValue}
                                 key={filter.name}
+                                lapisSearchParameters={lapisSearchParameters}
                             />
                         ))}
                     </div>{' '}
@@ -103,7 +105,7 @@ export const SearchForm = ({
     );
 };
 
-const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue }) => {
+const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearchParameters }) => {
    
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
@@ -115,7 +117,10 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue }) => {
                 </h3>
 
                 {field.groupedFields.map((f) => (
-                    <SearchField field={f} fieldValues={fieldValues} setAFieldValue={setAFieldValue} key={f.name} />
+                    <SearchField field={f} fieldValues={fieldValues} setAFieldValue={setAFieldValue} key={f.name} 
+                    
+                    lapisSearchParameters={lapisSearchParameters}
+                    />
                 ))}
             </div>
         );
@@ -133,9 +138,9 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue }) => {
                     <AutoCompleteField
                         field={field}
                         lapisUrl={lapisUrl}
-                        allFields={fieldValues}
                         setAFieldValue={setAFieldValue}
                         fieldValue={fieldValues[field.name]}
+                        lapisSearchParameters={lapisSearchParameters}
                     />
                 );
             }

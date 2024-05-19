@@ -20,7 +20,7 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 
 const logger = getClientLogger('AutoCompleteField');
 
-export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, allFields, fieldValue }) => {
+export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, fieldValue, lapisSearchParameters }) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
     const {
@@ -38,8 +38,9 @@ export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, allFields, 
     }, [error]);
 
     const handleOpen = () => {
-        const otherFields = { ...allFields };
+        const otherFields = { ...lapisSearchParameters };
         delete otherFields[field.name];
+
 
         Object.keys(otherFields).forEach((key) => {
             if (otherFields[key] === '') {
@@ -48,6 +49,7 @@ export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, allFields, 
         });
 
         mutate({ fields: [field.name], ...otherFields });
+        console.log('mutate', { fields: [field.name], ...otherFields });
         if (buttonRef.current) {
             buttonRef.current.click();
         }

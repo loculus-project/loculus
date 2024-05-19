@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider, isError } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
@@ -99,8 +99,6 @@ export const InnerSearchFullUI = ({
         }));
     }
 
-
-
     const visibilities = useMemo(() => {
         const visibilities = new Map<string, boolean>();
         schema.metadata.forEach((field) => {
@@ -154,7 +152,7 @@ export const InnerSearchFullUI = ({
 
     console.log('referenceGenomeSequenceNames', referenceGenomesSequenceNames);
 
-    useEffect(() => {
+    const lapisSearchParameters = useMemo(() => {
         const sequenceFilters = Object.fromEntries(
             Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
         );
@@ -168,20 +166,22 @@ export const InnerSearchFullUI = ({
 
         const mutationFilter = parseMutationString(fieldValues.mutation ?? '', referenceGenomesSequenceNames);
 
-        const commonParameters ={
+        return {
             ...sequenceFilters,
-        nucleotideMutations: mutationFilter.filter( (m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion').map((m) => m.text),
-        aminoAcidMutations:    mutationFilter.filter( (m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion').map((m) => m.text),
-         nucleotideInsertions: mutationFilter.filter( (m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion').map((m) => m.text),
-        aminoAcidInsertions: mutationFilter.filter( (m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion').map((m) => m.text),
-        }
+            nucleotideMutations: mutationFilter.filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion').map((m) => m.text),
+            aminoAcidMutations: mutationFilter.filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion').map((m) => m.text),
+            nucleotideInsertions: mutationFilter.filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion').map((m) => m.text),
+            aminoAcidInsertions: mutationFilter.filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion').map((m) => m.text),
+        };
+    }, [fieldValues, referenceGenomesSequenceNames]);
+
+    useEffect(() => {
         aggregatedHook.mutate({
-        
-            ...commonParameters,
+            ...lapisSearchParameters,
             fields: []
         });
         detailsHook.mutate({
-            ...commonParameters,
+            ...lapisSearchParameters,
             fields: [...schema.tableColumns, schema.primaryKey],
             limit: pageSize,
             offset: (page - 1) * pageSize,
@@ -192,7 +192,9 @@ export const InnerSearchFullUI = ({
                 } as OrderBy,
             ]
         });
-    }, [fieldValues, page]);
+    }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection
+
+    ]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
 
@@ -242,6 +244,8 @@ export const InnerSearchFullUI = ({
                     lapisUrl={lapisUrl}
                     visibilities={visibilities}
                     setAVisibility={setAVisibility}
+                    lapisSearchParameters={lapisSearchParameters}
+                   
                 />
             </div>
             <div className='flex-1'>
