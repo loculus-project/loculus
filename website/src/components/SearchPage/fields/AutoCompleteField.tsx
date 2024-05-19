@@ -5,6 +5,20 @@ import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 
+type Field = {
+    //TODONOW: delete this
+    name: string;
+    label: string;
+};
+
+type AutoCompleteFieldProps = {
+    field: Field;
+    setAFieldValue: (fieldName: string, value: string) => void;
+    lapisUrl: string;
+    fieldValue: string;
+    lapisSearchParameters: Record<string, any>;
+};
+
 const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField
         ref={ref}
@@ -20,7 +34,13 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 
 const logger = getClientLogger('AutoCompleteField');
 
-export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, fieldValue, lapisSearchParameters }) => {
+export const AutoCompleteField = ({
+    field,
+    setAFieldValue,
+    lapisUrl,
+    fieldValue,
+    lapisSearchParameters,
+}: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
     const {
@@ -29,7 +49,6 @@ export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, fieldValue,
         error,
         mutate,
     } = lapisClientHooks(lapisUrl).zodiosHooks.useAggregated({}, {});
-
 
     useEffect(() => {
         if (error) {
@@ -41,7 +60,6 @@ export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, fieldValue,
         const otherFields = { ...lapisSearchParameters };
         delete otherFields[field.name];
 
-
         Object.keys(otherFields).forEach((key) => {
             if (otherFields[key] === '') {
                 delete otherFields[key];
@@ -49,7 +67,6 @@ export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, fieldValue,
         });
 
         mutate({ fields: [field.name], ...otherFields });
-        console.log('mutate', { fields: [field.name], ...otherFields });
         if (buttonRef.current) {
             buttonRef.current.click();
         }
@@ -86,7 +103,7 @@ export const AutoCompleteField = ({ field, setAFieldValue, lapisUrl, fieldValue,
                     placeholder={field.label}
                     as={CustomInput}
                 />
-                {( (fieldValue !== '' && fieldValue !==  undefined) || query !== '') && (
+                {((fieldValue !== '' && fieldValue !== undefined) || query !== '') && (
                     <button
                         className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                         onClick={() => {

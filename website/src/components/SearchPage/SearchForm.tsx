@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
-import {  useState } from 'react';
+import { useState } from 'react';
 
 import { CustomizeModal } from './CustomizeModal.tsx';
 import { AccessionField } from './fields/AccessionField.tsx';
@@ -8,10 +8,8 @@ import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
-import type {  GroupedMetadataFilter } from '../../types/config.ts';
+import type { GroupedMetadataFilter } from '../../types/config.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-
-
 
 const queryClient = new QueryClient();
 
@@ -37,13 +35,12 @@ export const SearchForm = ({
     visibilities,
     setAVisibility,
     referenceGenomesSequenceNames,
-    lapisSearchParameters
+    lapisSearchParameters,
 }) => {
     const visibleFields = consolidatedMetadataSchema.filter((field) => visibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
     const toggleCustomizeModal = () => setIsCustomizeModalOpen(!isCustomizeModalOpen);
-    
 
     return (
         <QueryClientProvider client={queryClient}>
@@ -70,24 +67,17 @@ export const SearchForm = ({
                         setAVisibility={setAVisibility}
                     />
                     <div className='flex flex-col'>
-                    <AccessionField 
-                    textValue={fieldValues.accession}
-                    setTextValue={(value) => setAFieldValue('accession', value)}
-                  
-                    
-                    
-                    
-                    />
-                    
-                  
-                        <MutationField 
-                    referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                    value={fieldValues.mutation ?? ''}
-                    onChange={(value) => setAFieldValue('mutation', value)}
-                     
-                   
-                    />
-                    
+                        <AccessionField
+                            textValue={fieldValues.accession}
+                            setTextValue={(value) => setAFieldValue('accession', value)}
+                        />
+
+                        <MutationField
+                            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                            value={fieldValues.mutation ?? ''}
+                            onChange={(value) => setAFieldValue('mutation', value)}
+                        />
+
                         {visibleFields.map((filter) => (
                             <SearchField
                                 field={filter}
@@ -106,7 +96,6 @@ export const SearchForm = ({
 };
 
 const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearchParameters }) => {
-   
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
     if (field.grouped) {
@@ -117,9 +106,12 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
                 </h3>
 
                 {field.groupedFields.map((f) => (
-                    <SearchField field={f} fieldValues={fieldValues} setAFieldValue={setAFieldValue} key={f.name} 
-                    
-                    lapisSearchParameters={lapisSearchParameters}
+                    <SearchField
+                        field={f}
+                        fieldValues={fieldValues}
+                        setAFieldValue={setAFieldValue}
+                        key={f.name}
+                        lapisSearchParameters={lapisSearchParameters}
                     />
                 ))}
             </div>

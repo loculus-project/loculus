@@ -14,18 +14,12 @@ import { type ClassOfSearchPageType } from '../../routes/routes.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import {
-    metadata,
-    type AccessionFilter,
-    type MetadataFilter,
-    type MutationFilter,
-    type Schema,
-} from '../../types/config.ts';
+
+import { type MetadataFilter, type Schema } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
-
 
 const orderKey = 'orderBy';
 const orderDirectionKey = 'order';
@@ -91,13 +85,13 @@ export const InnerSearchFullUI = ({
             ...prev,
             orderBy: field,
         }));
-    }
+    };
     const setOrderDirection = (direction: string) => {
         setState((prev) => ({
             ...prev,
             order: direction,
         }));
-    }
+    };
 
     const visibilities = useMemo(() => {
         const visibilities = new Map<string, boolean>();
@@ -114,7 +108,9 @@ export const InnerSearchFullUI = ({
     }, [state]);
 
     const fieldValues = useMemo(() => {
-        const fieldKeys = Object.keys(state).filter((key) => !key.startsWith(VISIBILITY_PREFIX)).filter((key) => key !== orderKey && key !== orderDirectionKey);
+        const fieldKeys = Object.keys(state)
+            .filter((key) => !key.startsWith(VISIBILITY_PREFIX))
+            .filter((key) => key !== orderKey && key !== orderDirectionKey);
         const values = {};
         for (const key of fieldKeys) {
             values[key] = state[key];
@@ -161,24 +157,32 @@ export const InnerSearchFullUI = ({
         if (sequenceFilters.accession) {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
-        
+
         delete sequenceFilters.mutation;
 
         const mutationFilter = parseMutationString(fieldValues.mutation ?? '', referenceGenomesSequenceNames);
 
         return {
             ...sequenceFilters,
-            nucleotideMutations: mutationFilter.filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion').map((m) => m.text),
-            aminoAcidMutations: mutationFilter.filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion').map((m) => m.text),
-            nucleotideInsertions: mutationFilter.filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion').map((m) => m.text),
-            aminoAcidInsertions: mutationFilter.filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion').map((m) => m.text),
+            nucleotideMutations: mutationFilter
+                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
+                .map((m) => m.text),
+            aminoAcidMutations: mutationFilter
+                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
+                .map((m) => m.text),
+            nucleotideInsertions: mutationFilter
+                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
+                .map((m) => m.text),
+            aminoAcidInsertions: mutationFilter
+                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
+                .map((m) => m.text),
         };
     }, [fieldValues, referenceGenomesSequenceNames]);
 
     useEffect(() => {
         aggregatedHook.mutate({
             ...lapisSearchParameters,
-            fields: []
+            fields: [],
         });
         detailsHook.mutate({
             ...lapisSearchParameters,
@@ -190,11 +194,9 @@ export const InnerSearchFullUI = ({
                     field: orderByField,
                     type: orderDirection,
                 } as OrderBy,
-            ]
+            ],
         });
-    }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection
-
-    ]);
+    }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
 
@@ -205,17 +207,13 @@ export const InnerSearchFullUI = ({
         if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
             setOldData(detailsHook.data.data);
         }
-        
-    }
-    , [detailsHook.data?.data, oldData]);
+    }, [detailsHook.data?.data, oldData]);
 
     useEffect(() => {
         if (aggregatedHook.data?.data && oldCount !== aggregatedHook.data.data[0].count) {
             setOldCount(aggregatedHook.data.data[0].count);
         }
-    }
-    , [aggregatedHook.data?.data, oldCount]);
-
+    }, [aggregatedHook.data?.data, oldCount]);
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -237,7 +235,6 @@ export const InnerSearchFullUI = ({
                     organism={organism}
                     clientConfig={clientConfig}
                     referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                    classOfSearchPage={SEARCH}
                     fieldValues={fieldValues}
                     setAFieldValue={setAFieldValue}
                     consolidatedMetadataSchema={consolidatedMetadataSchema}
@@ -245,80 +242,62 @@ export const InnerSearchFullUI = ({
                     visibilities={visibilities}
                     setAVisibility={setAVisibility}
                     lapisSearchParameters={lapisSearchParameters}
-                   
                 />
             </div>
             <div className='flex-1'>
                 <RecentSequencesBanner organism={organism} />
-               
-                {
-                   ( detailsHook.isError || aggregatedHook.isError) && <>
-                   detailsHook.error?.status === 503 ? <div> No data in database
-                    </div> :
-                   <div className="bg-red-400"
-                   >
-                    
-                    <p>There was an error loading the data.</p>
-                    <p>
-                        {JSON.stringify(detailsHook.error)}
-                    </p>
-                  
-                    <p>{detailsHook.error?.message}</p>
-                    <p>{aggregatedHook.error?.message}</p>
 
+                {(detailsHook.isError || aggregatedHook.isError) && (
+                    <>
+                        detailsHook.error?.status === 503 ? <div> No data in database</div> :
+                        <div className='bg-red-400'>
+                            <p>There was an error loading the data.</p>
+                            <p>{JSON.stringify(detailsHook.error)}</p>
 
-
-                    </div>
-                    </>
-
-                }
-                {
-                    (detailsHook.isPaused || aggregatedHook.isPaused) && 
-                    (!detailsHook.isSuccess || !aggregatedHook.isSuccess) &&
-                    <div className='bg-red-800'>
-                        Connection problem
+                            <p>{detailsHook.error?.message}</p>
+                            <p>{aggregatedHook.error?.message}</p>
                         </div>
-
-                }
-            { 
-            !(totalSequences===undefined && oldCount === null) && 
+                    </>
+                )}
+                {(detailsHook.isPaused || aggregatedHook.isPaused) &&
+                    (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
+                        <div className='bg-red-800'>Connection problem</div>
+                    )}
+                {!(totalSequences === undefined && oldCount === null) && (
                     <div
                         className={`
                         ${detailsHook.isLoading || aggregatedHook.isLoading ? 'opacity-50 pointer-events-none' : ''}
                         `}
-                        >
-                            <div className='mt-auto' 
-                            >
-                                Search returned {totalSequences!==undefined ? totalSequences.toLocaleString(): 
-                               ( oldCount ? oldCount.toLocaleString() : "")
-                                }{" "}sequence
-                                {totalSequences === 1 ? '' : 's'}
-                                {
-                                    detailsHook.isLoading || aggregatedHook.isLoading ? (
-                                        <span className="loading loading-spinner loading-xs ml-3 appearSlowly"
-                                        
-                                        ></span>
-                                    ) : null
-                                }
-                            </div>
-                        
+                    >
+                        <div className='mt-auto'>
+                            Search returned{' '}
+                            {totalSequences !== undefined
+                                ? totalSequences.toLocaleString()
+                                : oldCount
+                                  ? oldCount.toLocaleString()
+                                  : ''}{' '}
+                            sequence
+                            {totalSequences === 1 ? '' : 's'}
+                            {detailsHook.isLoading || aggregatedHook.isLoading ? (
+                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                            ) : null}
+                        </div>
 
-                       
-                            <Table
-                                schema={schema}
-                                data={detailsHook.data?.data !== undefined ? detailsHook.data.data : (oldData ?? [])}
-                                setPreviewedSeqId={setPreviewedSeqId}
-                                previewedSeqId={previewedSeqId}
-                                orderBy={
-                                    {
-                                        field: orderByField,
-                                        type: orderDirection,
-                                    } as OrderBy
-                                }
-                                setOrderByField={setOrderByField}
-                                setOrderDirection={setOrderDirection}
-                            />
-                        
+                        <Table
+                            schema={schema}
+                            data={detailsHook.data?.data !== undefined ? detailsHook.data.data : oldData ?? []}
+                            setPreviewedSeqId={setPreviewedSeqId}
+                            previewedSeqId={previewedSeqId}
+                            orderBy={
+                                {
+                                    field: orderByField,
+                                    type: orderDirection,
+                                } as OrderBy
+                            }
+                            setOrderByField={setOrderByField}
+                            setOrderDirection={setOrderDirection}
+                        />
+
                         <div className='mt-4 flex justify-center'>
                             {totalSequences !== undefined && (
                                 <SearchPagination
@@ -329,8 +308,7 @@ export const InnerSearchFullUI = ({
                             )}
                         </div>
                     </div>
-}
-            
+                )}
             </div>
         </div>
     );
@@ -374,19 +352,17 @@ export const SearchFullUI = (props: ClassOfSearchPageType) => {
     );
 };
 
-
 const textAccessionsToList = (text: string): string[] => {
-
     const accessions = text
-    .split(/[\t,;\n ]/)
-    .map((s) => s.trim())
-    .filter((s) => s !== '')
-    .map((s) => {
-        if (s.includes('.')) {
-            return s.split('.')[0];
-        }
-        return s;
-    });
+        .split(/[\t,;\n ]/)
+        .map((s) => s.trim())
+        .filter((s) => s !== '')
+        .map((s) => {
+            if (s.includes('.')) {
+                return s.split('.')[0];
+            }
+            return s;
+        });
 
     return accessions;
-}
+};

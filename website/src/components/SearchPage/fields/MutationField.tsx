@@ -2,7 +2,6 @@ import { Combobox, Transition } from '@headlessui/react';
 import { type FC, Fragment, useMemo, useState } from 'react';
 import * as React from 'react';
 
-import type { MutationFilter } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 import type { BaseType } from '../../../utils/sequenceTypeHelpers.ts';
 
@@ -18,14 +17,19 @@ type MutationQuery = {
     text: string;
 };
 
-const isValidNucleotideMutationQuery = (text: string, referenceGenomesSequenceNames: ReferenceGenomesSequenceNames): boolean => {
+const isValidNucleotideMutationQuery = (
+    text: string,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+): boolean => {
     try {
         const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
         const textUpper = text.toUpperCase();
         let mutation = textUpper;
         if (isMultiSegmented) {
             const [segment, _mutation] = textUpper.split(':');
-            const existingSegments = new Set(referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()));
+            const existingSegments = new Set(
+                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
+            );
             if (!existingSegments.has(segment)) {
                 return false;
             }
@@ -37,7 +41,10 @@ const isValidNucleotideMutationQuery = (text: string, referenceGenomesSequenceNa
     }
 };
 
-const isValidAminoAcidMutationQuery = (text: string, referenceGenomesSequenceNames: ReferenceGenomesSequenceNames): boolean => {
+const isValidAminoAcidMutationQuery = (
+    text: string,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+): boolean => {
     try {
         const textUpper = text.toUpperCase();
         const [gene, mutation] = textUpper.split(':');
@@ -51,7 +58,10 @@ const isValidAminoAcidMutationQuery = (text: string, referenceGenomesSequenceNam
     }
 };
 
-const isValidNucleotideInsertionQuery = (text: string, referenceGenomesSequenceNames: ReferenceGenomesSequenceNames): boolean => {
+const isValidNucleotideInsertionQuery = (
+    text: string,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+): boolean => {
     try {
         const isMultiSegmented = referenceGenomesSequenceNames.nucleotideSequences.length > 1;
         const textUpper = text.toUpperCase();
@@ -64,7 +74,9 @@ const isValidNucleotideInsertionQuery = (text: string, referenceGenomesSequenceN
             ? split
             : ([undefined, ...split] as [undefined | string, string, string]);
         if (segment !== undefined) {
-            const existingSegments = new Set(referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()));
+            const existingSegments = new Set(
+                referenceGenomesSequenceNames.nucleotideSequences.map((n) => n.toUpperCase()),
+            );
             if (!existingSegments.has(segment)) {
                 return false;
             }
@@ -78,7 +90,10 @@ const isValidNucleotideInsertionQuery = (text: string, referenceGenomesSequenceN
     }
 };
 
-const isValidAminoAcidInsertionQuery = (text: string, referenceGenomesSequenceNames: ReferenceGenomesSequenceNames): boolean => {
+const isValidAminoAcidInsertionQuery = (
+    text: string,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+): boolean => {
     try {
         const textUpper = text.toUpperCase();
         if (!textUpper.startsWith('INS_')) {
@@ -96,27 +111,33 @@ const isValidAminoAcidInsertionQuery = (text: string, referenceGenomesSequenceNa
     }
 };
 
-export const parseMutationString = (value: string, referenceGenomesSequenceNames): MutationQuery[] => {
-    return value.split(',').map(mutation => {
-        const trimmedMutation = mutation.trim();
-        if (isValidNucleotideMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-            return { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-        }
-        if (isValidAminoAcidMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-            return { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
-        }
-        if (isValidNucleotideInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-            return { baseType: 'nucleotide', mutationType: 'insertion', text: trimmedMutation };
-        }
-        if (isValidAminoAcidInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
-            return { baseType: 'aminoAcid', mutationType: 'insertion', text: trimmedMutation };
-        }
-        return null;
-    }).filter(Boolean) as MutationQuery[];
+export const parseMutationString = (
+    value: string,
+    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames,
+): MutationQuery[] => {
+    return value
+        .split(',')
+        .map((mutation) => {
+            const trimmedMutation = mutation.trim();
+            if (isValidNucleotideMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
+                return { baseType: 'nucleotide', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
+            }
+            if (isValidAminoAcidMutationQuery(trimmedMutation, referenceGenomesSequenceNames)) {
+                return { baseType: 'aminoAcid', mutationType: 'substitutionOrDeletion', text: trimmedMutation };
+            }
+            if (isValidNucleotideInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
+                return { baseType: 'nucleotide', mutationType: 'insertion', text: trimmedMutation };
+            }
+            if (isValidAminoAcidInsertionQuery(trimmedMutation, referenceGenomesSequenceNames)) {
+                return { baseType: 'aminoAcid', mutationType: 'insertion', text: trimmedMutation };
+            }
+            return null;
+        })
+        .filter(Boolean) as MutationQuery[];
 };
 
 const serializeMutationQueries = (selectedOptions: MutationQuery[]): string => {
-    return selectedOptions.map(option => option.text).join(', ');
+    return selectedOptions.map((option) => option.text).join(', ');
 };
 
 export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequenceNames, value, onChange }) => {
@@ -124,7 +145,10 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
     const [inputValue, setInputValue] = useState('');
     const [hasFocus, setHasFocus] = useState(false);
 
-    const selectedOptions = useMemo(() => parseMutationString(value,referenceGenomesSequenceNames), [value]);
+    const selectedOptions = useMemo(
+        () => parseMutationString(value, referenceGenomesSequenceNames),
+        [value, referenceGenomesSequenceNames],
+    );
 
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = event.target.value;

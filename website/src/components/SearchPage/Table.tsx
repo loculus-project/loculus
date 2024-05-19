@@ -22,12 +22,16 @@ type TableProps = {
     setOrderDirection: (direction: 'ascending' | 'descending') => void;
 };
 
-export const Table: FC<TableProps> = ({ data, schema, setPreviewedSeqId, previewedSeqId, orderBy,
+export const Table: FC<TableProps> = ({
+    data,
+    schema,
+    setPreviewedSeqId,
+    previewedSeqId,
+    orderBy,
     setOrderByField,
     setOrderDirection,
- }) => {
-
-    console.log("renderTable", data, schema, previewedSeqId, orderBy);
+}) => {
+    console.log('renderTable', data, schema, previewedSeqId, orderBy);
     const primaryKey = schema.primaryKey;
 
     const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));

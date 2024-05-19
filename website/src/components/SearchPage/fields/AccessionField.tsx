@@ -8,8 +8,6 @@ type AccessionFieldProps = {
 };
 
 export const AccessionField: FC<AccessionFieldProps> = ({ textValue, setTextValue }) => {
-   
-
     return (
         <NormalTextField
             field={{
@@ -18,11 +16,9 @@ export const AccessionField: FC<AccessionFieldProps> = ({ textValue, setTextValu
                 autocomplete: false,
                 name: 'accession',
                 notSearchable: false,
-               
             }}
             setAFieldValue={(_, filter) => {
                 setTextValue(filter);
-                
             }}
             fieldValue={textValue}
             isLoading={false}

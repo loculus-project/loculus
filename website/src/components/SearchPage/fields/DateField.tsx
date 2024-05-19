@@ -38,12 +38,11 @@ const CustomizedDatePicker = ({ field, setAFieldValue, dateToValueConverter, val
                 <label htmlFor={field.name} className='block text-sm w-10 my-3 text-right mr-2 text-gray-400'>
                     {field.label}
                 </label>
-                
+
                 <DatePicker
                     name={field.name}
                     defaultValue={fieldValue ? valueToDateConverter(fieldValue) : undefined}
                     key={field.name}
-                   
                     onChange={(date) => {
                         if (date) {
                             setAFieldValue(field.name, dateToValueConverter(date));
