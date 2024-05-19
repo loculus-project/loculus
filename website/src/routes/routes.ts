@@ -22,7 +22,7 @@ export const routes = {
         page: number | undefined = undefined,
         orderBy?: OrderBy,
     ) =>
-        //TODONOW: cleanup
+        // TODONOW: cleanup
         withOrganism(
             organism,
             `/search`
@@ -42,7 +42,7 @@ export const routes = {
             name: 'released',
             organism,
             groupId,
-            searchParams: buildSearchParams(metadataFilter, accessionFilter, mutationFilter, page, orderBy),
+            searchParams: new URLSearchParams({}),
         }),
     sequencesDetailsPage: (accessionVersion: AccessionVersion | string) =>
         `/seq/${getAccessionVersionString(accessionVersion)}`,

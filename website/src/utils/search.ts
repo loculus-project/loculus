@@ -1,7 +1,6 @@
 
 import type { TableSequenceData } from '../components/SearchPage/Table.tsx';
 import { getReferenceGenomes } from '../config.ts';
-
 import type {  MetadataFilter } from '../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../types/referencesGenomes.ts';
 

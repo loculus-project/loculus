@@ -1,14 +1,17 @@
 import { DateTime } from 'luxon';
 import { DatePicker } from 'rsuite';
-
 import 'rsuite/DatePicker/styles/index.css';
 
-type ValueConverter = {
+
+type CustomizedDatePickerProps = {
+    field: { name: string; label: string };
+    setAFieldValue: (name: string, value: string) => void;
     dateToValueConverter: (date: Date | null) => string;
     valueToDateConverter: (value: string) => Date | undefined;
+    fieldValue: string;
 };
 
-export const DateField = (props) => (
+export const DateField: React.FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (props) => (
     <CustomizedDatePicker
         {...props}
         dateToValueConverter={(date) => {
@@ -20,28 +23,27 @@ export const DateField = (props) => (
     />
 );
 
-export const TimestampField = (props) => (
+export const TimestampField: React.FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (props) => (
     <CustomizedDatePicker
         {...props}
         dateToValueConverter={(date) => (date ? String(Math.floor(date.getTime() / 1000)) : '')}
         valueToDateConverter={(value) => {
-            const timestamp = parseInt(value, 10);
+            const timestamp = Math.max(parseInt(value, 10));    
             return isNaN(timestamp) ? undefined : new Date(timestamp * 1000);
         }}
     />
 );
 
-const CustomizedDatePicker = ({ field, setAFieldValue, dateToValueConverter, valueToDateConverter, fieldValue }) => {
+const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({ field, setAFieldValue, dateToValueConverter, valueToDateConverter, fieldValue }) => {
     return (
         <div>
             <div className='flex justify-between items-center'>
                 <label htmlFor={field.name} className='block text-sm w-10 my-3 text-right mr-2 text-gray-400'>
                     {field.label}
                 </label>
-
                 <DatePicker
                     name={field.name}
-                    defaultValue={fieldValue ? valueToDateConverter(fieldValue) : undefined}
+                    value={fieldValue ? valueToDateConverter(fieldValue) : undefined}
                     key={field.name}
                     onChange={(date) => {
                         if (date) {

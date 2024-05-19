@@ -6,7 +6,7 @@ import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 
 type Field = {
-    //TODONOW: delete this
+    // TODONOW: delete this
     name: string;
     label: string;
 };
