@@ -82,7 +82,7 @@ export const routes = {
     },
     logout: () => '/logout',
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
-    datauseTermsPage: () => '/docs/data-use-terms',
+    datauseTermsPage: () => '/governance/data_use_terms',
 };
 
 export type ClassOfSearchPageType = 'SEARCH' | 'MY_SEQUENCES';
