@@ -103,6 +103,7 @@ export const SearchFullUI = ({
                     <div>
                         {classOfSearchPage === SEARCH && (
                             <DownloadDialog
+                                accessionFilter={accessionFilter}
                                 metadataFilter={metadataFilterWithoutHiddenFilters}
                                 mutationFilter={mutationFilter}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}

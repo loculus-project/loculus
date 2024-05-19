@@ -1,13 +1,15 @@
-import { type FC, useMemo, useRef, useState } from 'react';
+import { type FC, useRef, useState } from 'react';
 
 import { ActiveDownloadFilters } from './ActiveDownloadFilters.tsx';
+import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
-import { type DownloadOption, generateDownloadUrl } from './generateDownloadUrl.ts';
+import { type DownloadOption } from './generateDownloadUrl.ts';
 import { routes } from '../../../routes/routes.ts';
-import type { FilterValue, MutationFilter } from '../../../types/config.ts';
+import type { AccessionFilter, FilterValue, MutationFilter } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadDialogProps = {
+    accessionFilter: AccessionFilter;
     metadataFilter: FilterValue[];
     mutationFilter: MutationFilter;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
@@ -15,6 +17,7 @@ type DownloadDialogProps = {
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
+    accessionFilter,
     metadataFilter,
     mutationFilter,
     referenceGenomesSequenceNames,
@@ -35,13 +38,6 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
             dialogRef.current.close();
         }
     };
-
-    const downloadUrl = useMemo(() => {
-        if (downloadOption === undefined || !agreedToDataUseTerms) {
-            return '#';
-        }
-        return generateDownloadUrl(metadataFilter, mutationFilter, downloadOption, lapisUrl);
-    }, [downloadOption, lapisUrl, metadataFilter, mutationFilter, agreedToDataUseTerms]);
 
     return (
         <>
@@ -82,13 +78,15 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         </label>
                     </div>
 
-                    <a
-                        className={`btn loculusColor ${!agreedToDataUseTerms ? 'btn-disabled' : ''} text-white`}
-                        href={downloadUrl}
+                    <DownloadButton
+                        disabled={!agreedToDataUseTerms}
+                        lapisUrl={lapisUrl}
+                        downloadOption={downloadOption}
+                        accessionFilter={accessionFilter}
+                        metadataFilter={metadataFilter}
+                        mutationFilter={mutationFilter}
                         onClick={closeDialog}
-                    >
-                        Download
-                    </a>
+                    />
                 </div>
             </dialog>
         </>
