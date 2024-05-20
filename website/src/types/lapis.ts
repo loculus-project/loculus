@@ -62,6 +62,9 @@ export const aggregatedResponse = makeLapisResponse(z.array(aggregatedItem));
 function makeLapisResponse<T extends ZodTypeAny>(data: T) {
     return z.object({
         data,
+        info: z.object({
+            dataVersion: z.string(),
+        }),
     });
 }
 

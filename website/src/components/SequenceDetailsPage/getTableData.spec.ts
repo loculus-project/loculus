@@ -32,17 +32,21 @@ const dummyError = {
     },
 };
 
+const info = {
+    dataVersion: '1704063600',
+};
+
 const accessionVersion = 'accession';
 
 const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls.dummy, schema);
 
 describe('getTableData', () => {
     beforeEach(() => {
-        mockRequest.lapis.details(200, { data: [toLapisEntry({ dummyField: 'dummyValue' })] });
-        mockRequest.lapis.nucleotideMutations(200, { data: [] });
-        mockRequest.lapis.aminoAcidMutations(200, { data: [] });
-        mockRequest.lapis.nucleotideInsertions(200, { data: [] });
-        mockRequest.lapis.aminoAcidInsertions(200, { data: [] });
+        mockRequest.lapis.details(200, { info, data: [toLapisEntry({ dummyField: 'dummyValue' })] });
+        mockRequest.lapis.nucleotideMutations(200, { info, data: [] });
+        mockRequest.lapis.aminoAcidMutations(200, { info, data: [] });
+        mockRequest.lapis.nucleotideInsertions(200, { info, data: [] });
+        mockRequest.lapis.aminoAcidInsertions(200, { info, data: [] });
     });
 
     test('should return an error when getSequenceDetails fails', async () => {
@@ -108,6 +112,7 @@ describe('getTableData', () => {
         const value2 = 'value 2';
 
         mockRequest.lapis.details(200, {
+            info,
             data: [
                 {
                     metadataField1: value1,
@@ -136,8 +141,8 @@ describe('getTableData', () => {
     });
 
     test('should return data of mutations', async () => {
-        mockRequest.lapis.nucleotideMutations(200, { data: nucleotideMutations });
-        mockRequest.lapis.aminoAcidMutations(200, { data: aminoAcidMutations });
+        mockRequest.lapis.nucleotideMutations(200, { info, data: nucleotideMutations });
+        mockRequest.lapis.aminoAcidMutations(200, { info, data: aminoAcidMutations });
 
         const result = await getTableData('accession', schema, lapisClient);
 
@@ -229,8 +234,8 @@ describe('getTableData', () => {
     });
 
     test('should return data of insertions', async () => {
-        mockRequest.lapis.nucleotideInsertions(200, { data: nucleotideInsertions });
-        mockRequest.lapis.aminoAcidInsertions(200, { data: aminoAcidInsertions });
+        mockRequest.lapis.nucleotideInsertions(200, { info, data: nucleotideInsertions });
+        mockRequest.lapis.aminoAcidInsertions(200, { info, data: aminoAcidInsertions });
 
         const result = await getTableData('accession', schema, lapisClient);
 
@@ -252,7 +257,7 @@ describe('getTableData', () => {
     });
 
     test('should map timestamps to human readable dates', async () => {
-        mockRequest.lapis.details(200, { data: [{ timestampField: 1706194761 }] });
+        mockRequest.lapis.details(200, { info, data: [{ timestampField: 1706194761 }] });
 
         const result = await getTableData('accession', schema, lapisClient);
 
@@ -269,6 +274,7 @@ describe('getTableData', () => {
     test('should correctly determine revocation entry', async () => {
         for (const expectedIsRevocation of [true, false]) {
             mockRequest.lapis.details(200, {
+                info,
                 data: [toLapisEntry({}, expectedIsRevocation)],
             });
             const result = await getTableData('accession', schema, lapisClient);
