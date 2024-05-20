@@ -3,7 +3,7 @@ import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
-import { SearchForm, searchButtonText } from './SearchForm';
+import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { routes, SEARCH } from '../../routes/routes.ts';
 import type { MetadataFilter } from '../../types/config.ts';
@@ -102,8 +102,6 @@ describe('SearchForm', () => {
         const filterValue = 'test';
         await userEvent.type(screen.getByLabelText('Field 1'), filterValue);
 
-        const searchButton = screen.getByRole('button', { name: searchButtonText });
-        await userEvent.click(searchButton);
 
         expect(window.location.href).toBe(
             routes.searchPage(testOrganism, [{ ...defaultSearchFormFilters[0], filterValue }]),
@@ -147,7 +145,6 @@ describe('SearchForm', () => {
 
         await userEvent.type(timestampField, '2025');
 
-        await userEvent.click(screen.getByRole('button', { name: searchButtonText }));
 
         expect(window.location.href).toContain(`${timestampFieldName}=1737769600`);
     });
@@ -171,7 +168,6 @@ describe('SearchForm', () => {
 
         await userEvent.type(dateField, '2025');
 
-        await userEvent.click(screen.getByRole('button', { name: searchButtonText }));
 
         expect(window.location.href).toContain(`${dateFieldName}=2025-01-25`);
     });
