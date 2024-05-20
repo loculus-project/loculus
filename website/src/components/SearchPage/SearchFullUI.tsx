@@ -128,6 +128,7 @@ export const InnerSearchFullUI = ({
             ...prev,
             [fieldName]: value,
         }));
+        setPage(1);
     };
 
     const setAVisibility = (fieldName: string, visible: boolean) => {
