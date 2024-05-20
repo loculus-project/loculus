@@ -7,7 +7,6 @@ export const SEARCH = 'SEARCH';
 export const MY_SEQUENCES = 'MY_SEQUENCES';
 
 export const routes = {
-    aboutPage: () => '/about',
     apiDocumentationPage: () => '/api_documentation',
     governancePage: () => '/governance',
     statusPage: () => '/status',
