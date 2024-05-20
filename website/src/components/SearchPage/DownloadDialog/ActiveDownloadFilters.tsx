@@ -1,6 +1,5 @@
 import type { FC } from 'react';
 
-import type { FilterValue, MutationFilter } from '../../../types/config.ts';
 
 type ActiveDownloadFiltersProps = {
     lapisSearchParameters: Record<string, any>;
@@ -8,8 +7,7 @@ type ActiveDownloadFiltersProps = {
 
 export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({lapisSearchParameters  }) => {
     return null;
-    //TODONOW
-    const filterValues: FilterValue[] = [];
+    // TODONOW
     lapisSearchParameters.forEach((value, key) => {
         if (value !== undefined && value !== '') {
             filterValues.push({ name: key, filterValue: value });

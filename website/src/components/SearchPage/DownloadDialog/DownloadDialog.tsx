@@ -5,7 +5,6 @@ import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadOption } from './generateDownloadUrl.ts';
 import { routes } from '../../../routes/routes.ts';
-import type { AccessionFilter, FilterValue, MutationFilter } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadDialogProps = {

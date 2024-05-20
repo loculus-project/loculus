@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import { routes, SEARCH } from '../../routes/routes.ts';
-import type { MetadataFilter } from '../../types/config.ts';
+import type { GroupedMetadataFilter, MetadataFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -56,23 +56,33 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     genes: ['gene1', 'gene2'],
 };
 
+const defaultVisibilities = new Map(defaultSearchFormFilters.map(filter => [filter.name, true]));
+
 function renderSearchForm(
     searchFormFilters: MetadataFilter[] = [...defaultSearchFormFilters],
     clientConfig: ClientConfig = testConfig.public,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
-    filterValues: { [key: string]: string } = {},
+    fieldValues: { [key: string]: string } = {},
+    visibilities: Map<string, boolean> = defaultVisibilities,
 ) {
+    const consolidatedMetadataSchema: GroupedMetadataFilter[] = searchFormFilters.map(filter => ({
+        ...filter,
+        grouped: false
+    }));
+
     render(
         <QueryClientProvider client={queryClient}>
             <SearchForm
                 organism={testOrganism}
-                filters={searchFormFilters}
-                initialAccessionFilter={{}}
-                initialMutationFilter={{}}
+                consolidatedMetadataSchema={consolidatedMetadataSchema}
                 clientConfig={clientConfig}
-                classOfSearchPage={SEARCH}
+                fieldValues={fieldValues}
+                setAFieldValue={vi.fn()}
+                lapisUrl='lapis.dummy.url'
+                visibilities={visibilities}
+                setAVisibility={vi.fn()}
                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                filterValues={filterValues}
+                lapisSearchParameters={{}}
             />
         </QueryClientProvider>,
     );
@@ -96,6 +106,7 @@ describe('SearchForm', () => {
     });
 
     test('should redirect according to filters', async () => {
+        const setAFieldValue = vi.fn();
         renderSearchForm();
 
         const filterValue = 'test';
@@ -105,7 +116,7 @@ describe('SearchForm', () => {
             { ...defaultSearchFormFilters[0], filterValue },
         ];
 
-        expect(window.location.href).toBe(routes.searchPage(testOrganism, expectedFilters));
+        expect(setAFieldValue).toHaveBeenCalledWith('field1', filterValue);
     });
 
     test('should not render the form with fields with flag notSearchable', async () => {

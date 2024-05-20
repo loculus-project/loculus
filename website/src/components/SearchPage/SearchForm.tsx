@@ -124,6 +124,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
                         setAFieldValue={setAFieldValue}
                         key={f.name}
                         lapisSearchParameters={lapisSearchParameters}
+                        lapisUrl={lapisUrl}
                     />
                 ))}
             </div>
