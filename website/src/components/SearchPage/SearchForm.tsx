@@ -11,7 +11,8 @@ import { NormalTextField } from './fields/NormalTextField';
 import type { GroupedMetadataFilter, MetadataFilter } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-
+import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
+import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 const queryClient = new QueryClient();
 
 interface SearchFormProps {
@@ -40,23 +41,42 @@ export const SearchForm = ({
     const visibleFields = consolidatedMetadataSchema.filter((field) => visibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
+    const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
     const toggleCustomizeModal = () => setIsCustomizeModalOpen(!isCustomizeModalOpen);
 
     return (
         <QueryClientProvider client={queryClient}>
+                      <div className='text-right -mb-10 md:hidden'>
+                <button onClick={toggleMobileOpen} className='btn btn-xs'>
+                    Modify search query
+                </button>
+            </div>
+            {isMobileOpen && <OffCanvasOverlay className='md:hidden' onClick={closeOnMobile} />}
             <div
                 className={`${
-                    false ? 'translate-y-0' : 'translate-y-full'
+                    isMobileOpen ? 'translate-y-0' : 'translate-y-full'
                 } fixed bottom-0 left-0 w-full bg-white h-4/5 rounded-t-lg overflow-auto offCanvasTransform
                       md:translate-y-0 md:static md:h-auto md:overflow-visible md:min-w-72`}
             >
+                
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
+                <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
                     <div className='flex'>
-                        <h2 className='text-lg font-semibold flex-1 md:hidden'>Search query</h2>
+                        
+                        <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
                         <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
                             <button className='underline' onClick={toggleCustomizeModal}>
                                 Customize fields
                             </button>
+                            <button className='underline' onClick={
+
+                                () => {
+                                    window.location.href = './';
+                                }
+                            }>
+                                Reset
+                            </button>
+                        </div>
                         </div>{' '}
                     </div>
                     <CustomizeModal

@@ -42,7 +42,7 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
 
     return (
         <Transition appear show={isCustomizeModalOpen}>
-            <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={toggleCustomizeModal}>
+            <Dialog as='div' className='fixed inset-0 z-50 overflow-y-auto' onClose={toggleCustomizeModal}>
                 <div className='min-h-screen px-4 text-center'>
                     <Dialog.Overlay className='fixed inset-0 bg-black opacity-30' />
 
