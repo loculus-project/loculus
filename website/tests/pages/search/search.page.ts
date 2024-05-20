@@ -1,7 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 
 import { routes } from '../../../src/routes/routes.ts';
-import type { FilterValue } from '../../../src/types/config.ts';
 import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 
 export const ACCESSION = 'Accession';
@@ -33,8 +32,11 @@ export class SearchPage {
         return this.page.getByLabel(ACCESSION, { exact: true });
     }
 
-    public async searchFor(params: FilterValue[]) {
-        await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key, params)}`);
+    public async searchFor(params: { name: string; filterValue: string }[]) {
+        await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key)}${
+            params.map((param) => `&${param.name}=${param.filterValue}`).join('')
+        
+        }`);
     }
 
     public async getTableContent() {

@@ -110,7 +110,7 @@ interface SearchFieldProps {
 const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearchParameters }: SearchFieldProps) => {
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
-    if (field.grouped) {
+    if (field.grouped === true) {
         return (
             <div key={field.name} className='flex flex-col border p-3 mb-3 rounded-md border-gray-300'>
                 <h3 className='text-gray-500 text-sm mb-1'>

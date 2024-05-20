@@ -18,7 +18,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesSequenceNames,
     lapisUrl,
 }) => {
-    console.log(lapisSearchParameters, "lapisSearchParameters");
+
     
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();

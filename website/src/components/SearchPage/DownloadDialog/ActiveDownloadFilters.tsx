@@ -6,19 +6,11 @@ type ActiveDownloadFiltersProps = {
 };
 
 export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({lapisSearchParameters  }) => {
-    return null;
-    // TODONOW
-    lapisSearchParameters.forEach((value, key) => {
-        if (value !== undefined && value !== '') {
-            filterValues.push({ name: key, filterValue: value });
-        }
-    }
-    );
-
-
-    if (filterValues.length === 0) {
-        return undefined;
-    }
+    let filterValues = Object.entries(lapisSearchParameters)
+        .filter((vals) => vals[1] !== undefined && vals[1] !== '')
+        .map(([name, filterValue]) => ({ name, filterValue }));
+    
+    filterValues = filterValues.filter(({ filterValue }) => filterValue.length>0)
 
     return (
         <div className='mb-4'>

@@ -271,7 +271,7 @@ export const InnerSearchFullUI = ({
                             Search returned{' '}
                             {totalSequences !== undefined
                                 ? totalSequences.toLocaleString()
-                                : oldCount
+                                : oldCount !== null
                                   ? oldCount.toLocaleString()
                                   : ''}{' '}
                             sequence
@@ -280,14 +280,13 @@ export const InnerSearchFullUI = ({
                                 <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
                             ) : null}
                         </div>
-                        { lapisSearchParameters &&
+                      
                         <DownloadDialog 
                             lapisUrl={lapisUrl}
                             lapisSearchParameters={lapisSearchParameters}
-                            organism={organism}
                             referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         />
-                        }
+                        
 
                         <Table
                             schema={schema}
