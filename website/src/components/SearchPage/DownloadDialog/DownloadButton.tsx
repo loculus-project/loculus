@@ -8,8 +8,7 @@ type DownloadButtonProps = {
     downloadOption: DownloadOption | undefined;
     lapisUrl: string;
     accessionFilter: AccessionFilter;
-    metadataFilter: FilterValue[];
-    mutationFilter: MutationFilter;
+    lapisSearchParameters: Record<string, any>;
     disabled?: boolean;
     onClick?: () => void;
 };
@@ -18,8 +17,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
     downloadOption,
     lapisUrl,
     accessionFilter,
-    metadataFilter,
-    mutationFilter,
+    lapisSearchParameters,
     disabled = false,
     onClick,
 }) => {
@@ -38,9 +36,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
         }
 
         const { url, baseUrl, params } = generateDownloadUrl(
-            accessionFilter,
-            metadataFilter,
-            mutationFilter,
+            lapisSearchParameters,
             downloadOption,
             lapisUrl,
         );
@@ -62,7 +58,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
                 }
             },
         };
-    }, [downloadOption, disabled, accessionFilter, metadataFilter, mutationFilter, lapisUrl, onClick]);
+    }, [downloadOption, disabled, accessionFilter, lapisSearchParameters, lapisUrl, onClick]);
 
     return (
         <a

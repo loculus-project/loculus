@@ -3,22 +3,20 @@ import type { FC } from 'react';
 import type { FilterValue, MutationFilter } from '../../../types/config.ts';
 
 type ActiveDownloadFiltersProps = {
-    metadataFilter: FilterValue[];
-    mutationFilter: MutationFilter;
+    lapisSearchParameters: Record<string, any>;
 };
 
-export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ metadataFilter, mutationFilter }) => {
-    const filterValues: FilterValue[] = metadataFilter.filter((f) => f.filterValue.length > 0);
-    [
-        { name: 'nucleotideMutations', value: mutationFilter.nucleotideMutationQueries },
-        { name: 'aminoAcidMutations', value: mutationFilter.aminoAcidMutationQueries },
-        { name: 'nucleotideInsertion', value: mutationFilter.nucleotideInsertionQueries },
-        { name: 'aminoAcidInsertions', value: mutationFilter.aminoAcidInsertionQueries },
-    ].forEach(({ name, value }) => {
-        if (value !== undefined && value.length > 0) {
-            filterValues.push({ name, filterValue: value.join(', ') });
+export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({lapisSearchParameters  }) => {
+    return null;
+    //TODONOW
+    const filterValues: FilterValue[] = [];
+    lapisSearchParameters.forEach((value, key) => {
+        if (value !== undefined && value !== '') {
+            filterValues.push({ name: key, filterValue: value });
         }
-    });
+    }
+    );
+
 
     if (filterValues.length === 0) {
         return undefined;

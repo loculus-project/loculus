@@ -9,20 +9,18 @@ import type { AccessionFilter, FilterValue, MutationFilter } from '../../../type
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadDialogProps = {
-    accessionFilter: AccessionFilter;
-    metadataFilter: FilterValue[];
-    mutationFilter: MutationFilter;
+    lapisSearchParameters: Record<string, any>;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisUrl: string;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
-    accessionFilter,
-    metadataFilter,
-    mutationFilter,
+    lapisSearchParameters,
     referenceGenomesSequenceNames,
     lapisUrl,
 }) => {
+    console.log(lapisSearchParameters, "lapisSearchParameters");
+    
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(false);
@@ -53,7 +51,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
                     <h3 className='font-bold text-2xl mb-4'>Download</h3>
 
-                    <ActiveDownloadFilters metadataFilter={metadataFilter} mutationFilter={mutationFilter} />
+                    <ActiveDownloadFilters lapisSearchParameters={lapisSearchParameters} />
                     <DownloadForm
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}
@@ -82,9 +80,7 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         disabled={!agreedToDataUseTerms}
                         lapisUrl={lapisUrl}
                         downloadOption={downloadOption}
-                        accessionFilter={accessionFilter}
-                        metadataFilter={metadataFilter}
-                        mutationFilter={mutationFilter}
+                        lapisSearchParameters={lapisSearchParameters}
                         onClick={closeDialog}
                     />
                 </div>

@@ -18,14 +18,19 @@ export type DownloadOption = {
 };
 
 export const generateDownloadUrl = (
-    accessionFilter: AccessionFilter,
-    metadataFilter: FilterValue[],
-    mutationFilter: MutationFilter,
+    lapisSearchParameters: Record<string, any>,
     option: DownloadOption,
     lapisUrl: string,
 ) => {
     const baseUrl = `${lapisUrl}${getEndpoint(option.dataType)}`;
     const params = new URLSearchParams();
+    console.log(lapisSearchParameters, "lapisSearchParameters2");
+    return {
+        url: `${baseUrl}?${params}`,
+        baseUrl,
+        params,
+    };
+    
     params.set('downloadAsFile', 'true');
     if (!option.includeOldData) {
         params.set(VERSION_STATUS_FIELD, siloVersionStatuses.latestVersion);

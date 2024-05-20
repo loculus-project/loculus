@@ -17,6 +17,7 @@ import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
+import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 
 const orderKey = 'orderBy';
 const orderDirectionKey = 'order';
@@ -211,7 +212,7 @@ export const InnerSearchFullUI = ({
             setOldCount(aggregatedHook.data.data[0].count);
         }
     }, [aggregatedHook.data?.data, oldCount]);
-
+    
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <SeqPreviewModal
@@ -279,6 +280,14 @@ export const InnerSearchFullUI = ({
                                 <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
                             ) : null}
                         </div>
+                        { lapisSearchParameters &&
+                        <DownloadDialog 
+                            lapisUrl={lapisUrl}
+                            lapisSearchParameters={lapisSearchParameters}
+                            organism={organism}
+                            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                        />
+                        }
 
                         <Table
                             schema={schema}
