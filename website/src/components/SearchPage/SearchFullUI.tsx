@@ -116,7 +116,7 @@ export const InnerSearchFullUI = ({
             .filter((key) => !key.startsWith(VISIBILITY_PREFIX))
             .filter((key) => key !== orderKey && key !== orderDirectionKey);
 
-        const values: Record<string, any> = hiddenFieldValues ?? {};
+        const values: Record<string, any> = {...hiddenFieldValues} ;
         for (const key of fieldKeys) {
             values[key] = state[key];
         }
@@ -178,6 +178,8 @@ export const InnerSearchFullUI = ({
                 .map((m) => m.text),
         };
     }, [fieldValues, referenceGenomesSequenceNames]);
+
+    console.log('lapisSearchParameters', lapisSearchParameters);
 
     useEffect(() => {
         aggregatedHook.mutate({
