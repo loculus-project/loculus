@@ -3,6 +3,8 @@ import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
 import { getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from "../../../settings";
+import { siloVersionStatuses } from "../../../types/lapis";
 import { getAccessToken } from '../../../utils/getAccessToken';
 import { getMyGroups } from '../../../utils/getMyGroups';
 import { getReferenceGenomesSequenceNames } from '../../../utils/search';
@@ -20,7 +22,7 @@ const clientConfig = getRuntimeConfig().public;
 const schema = getSchema(cleanedOrganism.key);
 
 const accessToken = getAccessToken(Astro.locals.session);
-const myGroups = accessToken !== undefined ? getMyGroups(accessToken) : [];
+const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : [];
 
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 ---
@@ -35,5 +37,12 @@ const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrg
         schema={schema}
         myGroups={myGroups}
         referenceGenomesSequenceNames={referenceGenomeSequenceNames}
+        hiddenFieldValues={
+            {
+                [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+                [IS_REVOCATION_FIELD]: 'false',
+
+            }
+        }
     />
 </BaseLayout>

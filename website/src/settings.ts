@@ -1,5 +1,3 @@
-import { siloVersionStatuses } from './types/lapis.ts';
-
 export const pageSize = 100;
 
 export const ACCESSION_VERSION_FIELD = 'accessionVersion';
@@ -13,16 +11,5 @@ export const SUBMITTER_FIELD = 'submitter';
 export const GROUP_NAME_FIELD = 'groupName';
 export const GROUP_ID_FIELD = 'groupId';
 export const DATA_USE_TERMS_FIELD = 'dataUseTerms';
-
-export const hiddenDefaultSearchFilters = [
-    {
-        name: VERSION_STATUS_FIELD,
-        type: 'string' as const,
-        notSearchable: true,
-    },
-    { name: IS_REVOCATION_FIELD, type: 'string' as const, notSearchable: true },
-];
-
-// TODONOW: add the necessary values for these fields above
 
 export const metadataDefaultDownloadDataFormat = 'tsv';

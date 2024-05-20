@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
@@ -6,7 +8,6 @@ import { SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
 import type { GroupedMetadataFilter, MetadataFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
-import { lapisUrl } from '../../../tests/e2e.fixture.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -69,7 +70,7 @@ function renderSearchFullUI({
             tableColumns: ['field1', 'field2', 'field3'],
             primaryKey: 'field1',
         },
-        lapisUrl : "/"
+       
     };
 
     render(<SearchFullUI {...props} />);

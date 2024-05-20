@@ -39,7 +39,6 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
     setAVisibility,
     nameToLabelMap,
 }) => {
-    console.log('nameToLabelMap', nameToLabelMap);
 
     return (
         <Transition appear show={isCustomizeModalOpen}>

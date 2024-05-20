@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { sentenceCase } from 'change-case';
 import { useEffect, useMemo, useState } from 'react';
 
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
@@ -18,7 +19,6 @@ import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
-import { sentenceCase } from 'change-case';
 
 const orderKey = 'orderBy';
 const orderDirectionKey = 'order';
@@ -32,6 +32,7 @@ interface InnerSearchFullUIProps {
     organism: string;
     clientConfig: ClientConfig;
     schema: Schema;
+    hiddenFieldValues?: Record<string, string>;
 }
 interface QueryState {
     [key: string]: string;
@@ -44,6 +45,7 @@ export const InnerSearchFullUI = ({
     organism,
     clientConfig,
     schema,
+    hiddenFieldValues,
 }: InnerSearchFullUIProps) => {
     const metadataSchema = schema.metadata;
 
@@ -114,12 +116,12 @@ export const InnerSearchFullUI = ({
             .filter((key) => !key.startsWith(VISIBILITY_PREFIX))
             .filter((key) => key !== orderKey && key !== orderDirectionKey);
 
-        const values: Record<string, any> = {};
+        const values: Record<string, any> = hiddenFieldValues ?? {};
         for (const key of fieldKeys) {
             values[key] = state[key];
         }
         return values;
-    }, [state]);
+    }, [state, hiddenFieldValues]);
 
     const setAFieldValue = (fieldName: string, value: string) => {
         setState((prev: any) => ({
@@ -223,8 +225,7 @@ export const InnerSearchFullUI = ({
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
                 myGroups={
-                    []
-                    // TODONOW
+                    myGroups
                 }
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
@@ -246,17 +247,21 @@ export const InnerSearchFullUI = ({
             <div className='flex-1'>
                 <RecentSequencesBanner organism={organism} />
 
-                {(detailsHook.isError || aggregatedHook.isError) && (
-                    <>
-                        { detailsHook.error?.status === 503 ? <div> No data in database</div> :
+                {
+                    console.log('aggregatedHook', aggregatedHook)
+                }
+
+                {(detailsHook.isError || aggregatedHook.isError) && ( aggregatedHook.error?.response?.status === 503 ? <div
+                    className='p-3 rounded-lg text-lg text-gray-700 text-italic'
+                > The database is currently empty.</div> :
                         <div className='bg-red-400 p-3 rounded-lg'>
                             <p>There was an error loading the data.</p>
                             <p className="text-xs">{JSON.stringify(detailsHook.error)}</p>
 
                             <p>{detailsHook.error?.message}</p>
                             <p>{aggregatedHook.error?.message}</p>
-                        </div>}
-                    </>
+                        </div>
+                    
                 )}
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
