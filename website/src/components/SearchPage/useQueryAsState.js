@@ -10,7 +10,6 @@ export default function useQueryAsState(defaultDict) {
             newDict[key] = value;
         }
         setValueDict(newDict);
-        console.log('useQueryAsState', newDict);
     }
     , []);
     useEffect(() => {
