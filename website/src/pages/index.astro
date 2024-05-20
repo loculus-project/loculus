@@ -1,12 +1,19 @@
 ---
 import Faq from '../components/IndexPage/FAQ.mdx';
+import OrganismCard from '../components/IndexPage/OrganismCard.astro';
 import WelcomeMessage from '../components/IndexPage/WelcomeMessage.astro';
+import { getOrganismStatisticsMap } from '../components/IndexPage/getOrganismStatistics';
 import { getConfiguredOrganisms, getWebsiteConfig } from '../config';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { routes } from '../routes/routes';
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName } = websiteConfig;
 import '../styles/mdcontainer.scss';
+
+const numberDaysAgoStatistics = 30;
+const organismStatisticsMap = await getOrganismStatisticsMap(
+    getConfiguredOrganisms().map((organism) => organism.key),
+    numberDaysAgoStatistics,
+);
 ---
 
 <BaseLayout title='Home'>
@@ -17,15 +24,14 @@ import '../styles/mdcontainer.scss';
 
         <div class='flex flex-wrap'>
             {
-                getConfiguredOrganisms().map(({ key, displayName, image, description }) => (
-                    <a
-                        href={routes.organismStartPage(key)}
-                        class='block rounded border border-gray-300 p-4 m-2 w-64 text-center hover:bg-gray-100'
-                    >
-                        {image !== undefined && <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />}
-                        <h3 class='font-semibold text-gray-700'>{displayName}</h3>
-                        <p class='text-gray-700 text-sm'>{description}</p>
-                    </a>
+                getConfiguredOrganisms().map(({ key, displayName, image }) => (
+                    <OrganismCard
+                        key={key}
+                        image={image}
+                        displayName={displayName}
+                        organismStatistics={organismStatisticsMap.get(key)!}
+                        numberDaysAgoStatistics={numberDaysAgoStatistics}
+                    />
                 ))
             }
         </div>
