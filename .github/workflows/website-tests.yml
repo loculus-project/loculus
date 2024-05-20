@@ -35,7 +35,7 @@ jobs:
       - run: npm ci
       - run: npm run check-format
       - run: npm run check-types
-
+        if: always()
   unitTests:
     name: Unit Tests
     runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}
