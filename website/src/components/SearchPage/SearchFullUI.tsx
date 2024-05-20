@@ -192,6 +192,7 @@ export const InnerSearchFullUI = ({
                 } as OrderBy,
             ],
         });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;

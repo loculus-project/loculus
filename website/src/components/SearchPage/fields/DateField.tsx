@@ -1,5 +1,6 @@
 import { DateTime } from 'luxon';
 import { DatePicker } from 'rsuite';
+
 import 'rsuite/DatePicker/styles/index.css';
 import {type MetadataFilter } from '../../../types/config';
 
