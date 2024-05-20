@@ -46,7 +46,7 @@ export const SearchForm = ({
 
     return (
         <QueryClientProvider client={queryClient}>
-                      <div className='text-right -mb-10 md:hidden'>
+            <div className='text-right -mb-10 md:hidden'>
                 <button onClick={toggleMobileOpen} className='btn btn-xs'>
                     Modify search query
                 </button>
@@ -58,25 +58,23 @@ export const SearchForm = ({
                 } fixed bottom-0 left-0 w-full bg-white h-4/5 rounded-t-lg overflow-auto offCanvasTransform
                       md:translate-y-0 md:static md:h-auto md:overflow-visible md:min-w-72`}
             >
-                
                 <div className='shadow-xl rounded-r-lg px-4 pt-4'>
-                <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
+                    <h2 className='text-lg font-semibold flex-1 md:hidden mb-2'>Search query</h2>
                     <div className='flex'>
-                        
                         <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
-                        <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
-                            <button className='underline' onClick={toggleCustomizeModal}>
-                                Customize fields
-                            </button>
-                            <button className='underline' onClick={
-
-                                () => {
-                                    window.location.href = './';
-                                }
-                            }>
-                                Reset
-                            </button>
-                        </div>
+                            <div className='flex items-center justify-between w-full mb-2 text-primary-700'>
+                                <button className='underline' onClick={toggleCustomizeModal}>
+                                    Customize fields
+                                </button>
+                                <button
+                                    className='underline'
+                                    onClick={() => {
+                                        window.location.href = './';
+                                    }}
+                                >
+                                    Reset
+                                </button>
+                            </div>
                         </div>{' '}
                     </div>
                     <CustomizeModal

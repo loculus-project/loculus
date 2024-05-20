@@ -116,7 +116,7 @@ export const InnerSearchFullUI = ({
             .filter((key) => !key.startsWith(VISIBILITY_PREFIX))
             .filter((key) => key !== orderKey && key !== orderDirectionKey);
 
-        const values: Record<string, any> = {...hiddenFieldValues} ;
+        const values: Record<string, any> = { ...hiddenFieldValues };
         for (const key of fieldKeys) {
             values[key] = state[key];
         }
@@ -226,9 +226,7 @@ export const InnerSearchFullUI = ({
                 isOpen={previewedSeqId !== null}
                 onClose={() => setPreviewedSeqId(null)}
                 referenceGenomeSequenceNames={referenceGenomesSequenceNames}
-                myGroups={
-                    myGroups
-                }
+                myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
             />
@@ -249,22 +247,23 @@ export const InnerSearchFullUI = ({
             <div className='flex-1'>
                 <RecentSequencesBanner organism={organism} />
 
-                {
-                    console.log('aggregatedHook', aggregatedHook)
-                }
+                {console.log('aggregatedHook', aggregatedHook)}
 
-                {(detailsHook.isError || aggregatedHook.isError) && ( aggregatedHook.error?.response?.status === 503 ? <div
-                    className='p-3 rounded-lg text-lg text-gray-700 text-italic'
-                > The database is currently empty.</div> :
+                {(detailsHook.isError || aggregatedHook.isError) &&
+                    (aggregatedHook.error?.response?.status === 503 ? (
+                        <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
+                            {' '}
+                            The database is currently empty.
+                        </div>
+                    ) : (
                         <div className='bg-red-400 p-3 rounded-lg'>
                             <p>There was an error loading the data.</p>
-                            <p className="text-xs">{JSON.stringify(detailsHook.error)}</p>
+                            <p className='text-xs'>{JSON.stringify(detailsHook.error)}</p>
 
                             <p>{detailsHook.error?.message}</p>
                             <p>{aggregatedHook.error?.message}</p>
                         </div>
-                    
-                )}
+                    ))}
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
                     (!detailsHook.isSuccess || !aggregatedHook.isSuccess) && (
                         <div className='bg-red-800'>Connection problem</div>
@@ -276,25 +275,25 @@ export const InnerSearchFullUI = ({
                         `}
                     >
                         <div className='text-sm text-gray-800 mb-6 justify-between flex px-6 items-baseline'>
-                        <div className='mt-auto'>
-                            Search returned{' '}
-                            {totalSequences !== undefined
-                                ? totalSequences.toLocaleString()
-                                : oldCount !== null
-                                  ? oldCount.toLocaleString()
-                                  : ''}{' '}
-                            sequence
-                            {totalSequences === 1 ? '' : 's'}
-                            {detailsHook.isLoading || aggregatedHook.isLoading ? (
-                                <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
-                            ) : null}
-                        </div>
+                            <div className='mt-auto'>
+                                Search returned{' '}
+                                {totalSequences !== undefined
+                                    ? totalSequences.toLocaleString()
+                                    : oldCount !== null
+                                      ? oldCount.toLocaleString()
+                                      : ''}{' '}
+                                sequence
+                                {totalSequences === 1 ? '' : 's'}
+                                {detailsHook.isLoading || aggregatedHook.isLoading ? (
+                                    <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
+                                ) : null}
+                            </div>
 
-                        <DownloadDialog
-                            lapisUrl={lapisUrl}
-                            lapisSearchParameters={lapisSearchParameters}
-                            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                        />
+                            <DownloadDialog
+                                lapisUrl={lapisUrl}
+                                lapisSearchParameters={lapisSearchParameters}
+                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                            />
                         </div>
 
                         <Table

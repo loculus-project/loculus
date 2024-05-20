@@ -70,7 +70,6 @@ function renderSearchFullUI({
             tableColumns: ['field1', 'field2', 'field3'],
             primaryKey: 'field1',
         },
-       
     };
 
     render(<SearchFullUI {...props} />);
@@ -94,8 +93,7 @@ describe('SearchFullUI', () => {
     });
 
     test('should redirect according to filters', async () => {
-       
-        renderSearchFullUI( );
+        renderSearchFullUI();
 
         const filterValue = 'test';
         const labelText = 'Field 1';
@@ -111,10 +109,8 @@ describe('SearchFullUI', () => {
         await act(async () => {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         });
-        
+
         expect(window.history.state.path).toContain(`field1=${filterValue}`);
-
-
     });
 
     test('should not render the form with fields with flag notSearchable', async () => {
@@ -143,10 +139,8 @@ describe('SearchFullUI', () => {
                     name: timestampFieldName,
                     type: 'timestamp' as const,
                     initiallyVisible: true,
-
                 },
             ],
-           
         });
 
         const timestampLabel = screen.getByText('Timestamp field');
@@ -154,7 +148,6 @@ describe('SearchFullUI', () => {
         if (!timestampField) {
             throw new Error('Timestamp field not found');
         }
-        
     });
 
     test('should display date field', async () => {
@@ -166,10 +159,9 @@ describe('SearchFullUI', () => {
                     type: 'date' as const,
                     initiallyVisible: true,
                 },
-            ]
-           
+            ],
         });
- 
+
         const dateLabel = screen.getByText('Date field');
         const dateField = dateLabel.nextElementSibling?.getElementsByTagName('input')[0];
         if (!dateField) {
@@ -198,8 +190,7 @@ describe('SearchFullUI', () => {
 
         const closeButton = await screen.findByRole('button', { name: 'Close' });
         await userEvent.click(closeButton);
-       
-       
+
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 });
