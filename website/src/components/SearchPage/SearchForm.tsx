@@ -8,7 +8,7 @@ import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
-import type { GroupedMetadataFilter , MetadataFilter} from '../../types/config.ts';
+import type { GroupedMetadataFilter, MetadataFilter } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
@@ -28,8 +28,6 @@ interface SearchFormProps {
 }
 
 export const SearchForm = ({
-    
-
     consolidatedMetadataSchema,
     fieldValues,
     setAFieldValue,
@@ -67,12 +65,13 @@ export const SearchForm = ({
                         alwaysPresentFieldNames={[]}
                         visibilities={visibilities}
                         setAVisibility={setAVisibility}
-                        nameToLabelMap={
-                            consolidatedMetadataSchema.reduce((acc, field) => {
+                        nameToLabelMap={consolidatedMetadataSchema.reduce(
+                            (acc, field) => {
                                 acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
                                 return acc;
-                            }, {} as Record<string, string>)
-                        }
+                            },
+                            {} as Record<string, string>,
+                        )}
                     />
                     <div className='flex flex-col'>
                         <AccessionField
@@ -111,8 +110,6 @@ interface SearchFieldProps {
     lapisSearchParameters: Record<string, any>;
 }
 
-
-
 const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearchParameters }: SearchFieldProps) => {
     field.label = field.label ?? field.displayName ?? sentenceCase(field.name);
 
@@ -139,9 +136,17 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
 
     switch (field.type) {
         case 'date':
-            return <DateField field={field} fieldValue={fieldValues[field.name] ?? ''} setAFieldValue={setAFieldValue} />;
+            return (
+                <DateField field={field} fieldValue={fieldValues[field.name] ?? ''} setAFieldValue={setAFieldValue} />
+            );
         case 'timestamp':
-            return <TimestampField field={field} fieldValue={fieldValues[field.name] ?? ''} setAFieldValue={setAFieldValue} />;
+            return (
+                <TimestampField
+                    field={field}
+                    fieldValue={fieldValues[field.name] ?? ''}
+                    setAFieldValue={setAFieldValue}
+                />
+            );
 
         default:
             if (field.autocomplete === true) {

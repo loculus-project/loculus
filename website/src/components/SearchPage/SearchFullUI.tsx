@@ -35,7 +35,7 @@ interface InnerSearchFullUIProps {
 }
 interface QueryState {
     [key: string]: string;
-  }
+}
 
 export const InnerSearchFullUI = ({
     accessToken,
@@ -50,7 +50,7 @@ export const InnerSearchFullUI = ({
     const metadataSchemaWithExpandedRanges = useMemo(() => {
         const result = [];
         for (const field of metadataSchema) {
-            if (field.rangeSearch===true) {
+            if (field.rangeSearch === true) {
                 const fromField = {
                     ...field,
                     name: `${field.name}From`,
@@ -98,7 +98,7 @@ export const InnerSearchFullUI = ({
     const visibilities = useMemo(() => {
         const visibilities = new Map<string, boolean>();
         schema.metadata.forEach((field) => {
-            visibilities.set(field.name, field.initiallyVisible===true);
+            visibilities.set(field.name, field.initiallyVisible === true);
         });
 
         const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(VISIBILITY_PREFIX));
@@ -113,8 +113,8 @@ export const InnerSearchFullUI = ({
         const fieldKeys = Object.keys(state)
             .filter((key) => !key.startsWith(VISIBILITY_PREFIX))
             .filter((key) => key !== orderKey && key !== orderDirectionKey);
-           
-            const values: Record<string, any> = {};
+
+        const values: Record<string, any> = {};
         for (const key of fieldKeys) {
             values[key] = state[key];
         }
@@ -152,7 +152,7 @@ export const InnerSearchFullUI = ({
             Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
         );
 
-        if (sequenceFilters.accession!=='' && sequenceFilters.accession!==undefined) {
+        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
             sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
         }
 
@@ -194,7 +194,7 @@ export const InnerSearchFullUI = ({
                 } as OrderBy,
             ],
         });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
@@ -213,7 +213,7 @@ export const InnerSearchFullUI = ({
             setOldCount(aggregatedHook.data.data[0].count);
         }
     }, [aggregatedHook.data?.data, oldCount]);
-    
+
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
             <SeqPreviewModal
@@ -281,18 +281,21 @@ export const InnerSearchFullUI = ({
                                 <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
                             ) : null}
                         </div>
-                      
-                        <DownloadDialog 
+
+                        <DownloadDialog
                             lapisUrl={lapisUrl}
                             lapisSearchParameters={lapisSearchParameters}
                             referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         />
-                        
-                            
+
                         <Table
                             schema={schema}
-                            data={detailsHook.data?.data !== undefined ? (detailsHook.data.data as TableSequenceData[]) : oldData ?? []}
-                               setPreviewedSeqId={setPreviewedSeqId}
+                            data={
+                                detailsHook.data?.data !== undefined
+                                    ? (detailsHook.data.data as TableSequenceData[])
+                                    : oldData ?? []
+                            }
+                            setPreviewedSeqId={setPreviewedSeqId}
                             previewedSeqId={previewedSeqId}
                             orderBy={
                                 {
@@ -303,7 +306,6 @@ export const InnerSearchFullUI = ({
                             setOrderByField={setOrderByField}
                             setOrderDirection={setOrderDirection}
                         />
-
 
                         <div className='mt-4 flex justify-center'>
                             {totalSequences !== undefined && (

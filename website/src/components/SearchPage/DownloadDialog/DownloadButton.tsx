@@ -32,11 +32,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             };
         }
 
-        const { url, baseUrl, params } = generateDownloadUrl(
-            lapisSearchParameters,
-            downloadOption,
-            lapisUrl,
-        );
+        const { url, baseUrl, params } = generateDownloadUrl(lapisSearchParameters, downloadOption, lapisUrl);
         const useGet = url.length <= approxMaxAcceptableUrlLength;
         if (useGet) {
             return {

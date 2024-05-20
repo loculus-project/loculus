@@ -11,19 +11,10 @@ export const routes = {
     governancePage: () => '/governance',
     statusPage: () => '/status',
     organismStartPage: (organism: string) => `/${organism}`,
-    searchPage: (
-        organism: string
-    ) =>
-        withOrganism(
-            organism,
-            `/search`
-        ),
+    searchPage: (organism: string) => withOrganism(organism, `/search`),
     metadataTemplate: (organism: string) => withOrganism(organism, `/submission/template`),
 
-    mySequencesPage: (
-        organism: string,
-        groupId: number,
-    ) =>
+    mySequencesPage: (organism: string, groupId: number) =>
         SubmissionRouteUtils.toUrl({
             name: 'released',
             organism,
@@ -71,7 +62,6 @@ export const routes = {
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
     datauseTermsPage: () => '/governance/data_use_terms',
 };
-
 
 function withOrganism(organism: string, path: `/${string}`) {
     return `/${organism}${path}`;

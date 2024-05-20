@@ -23,7 +23,7 @@ export const generateDownloadUrl = (
 ) => {
     const baseUrl = `${lapisUrl}${getEndpoint(option.dataType)}`;
     const params = new URLSearchParams();
-    
+
     params.set('downloadAsFile', 'true');
     if (!option.includeOldData) {
         params.set(VERSION_STATUS_FIELD, siloVersionStatuses.latestVersion);
@@ -44,19 +44,12 @@ export const generateDownloadUrl = (
         }
     }
 
-    const mutationKeys = [
-        'nucleotideMutations',
-        'aminoAcidMutations',
-        'nucleotideInsertions',
-        'aminoAcidInsertions',
-    ];
-
-
+    const mutationKeys = ['nucleotideMutations', 'aminoAcidMutations', 'nucleotideInsertions', 'aminoAcidInsertions'];
 
     for (const [key, value] of Object.entries(lapisSearchParameters)) {
         // Skip accession and mutations
         if (key === 'accession' || mutationKeys.includes(key)) {
-                 continue;
+            continue;
         }
         const trimmedValue = value.trim();
         if (trimmedValue.length > 0) {
@@ -66,12 +59,10 @@ export const generateDownloadUrl = (
 
     mutationKeys.forEach((key) => {
         if (lapisSearchParameters[key] !== undefined) {
-           params.set(key, lapisSearchParameters[key].join(','));
+            params.set(key, lapisSearchParameters[key].join(','));
         }
-    }
-    );
+    });
 
-    
     return {
         url: `${baseUrl}?${params}`,
         baseUrl,

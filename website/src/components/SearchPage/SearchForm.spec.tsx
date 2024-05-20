@@ -51,7 +51,7 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     genes: ['gene1', 'gene2'],
 };
 
-const defaultVisibilities = new Map(defaultSearchFormFilters.map(filter => [filter.name, true]));
+const defaultVisibilities = new Map(defaultSearchFormFilters.map((filter) => [filter.name, true]));
 
 function renderSearchForm({
     searchFormFilters = [...defaultSearchFormFilters],
@@ -61,10 +61,7 @@ function renderSearchForm({
     visibilities = defaultVisibilities,
     setAFieldValue = vi.fn(),
 } = {}) {
-    const consolidatedMetadataSchema: (
-        | MetadataFilter
-        | GroupedMetadataFilter
-    )[] = searchFormFilters.map(filter => ({
+    const consolidatedMetadataSchema: (MetadataFilter | GroupedMetadataFilter)[] = searchFormFilters.map((filter) => ({
         ...filter,
         grouped: false,
     }));
@@ -77,13 +74,13 @@ function renderSearchForm({
                 clientConfig={clientConfig}
                 fieldValues={fieldValues}
                 setAFieldValue={setAFieldValue}
-                lapisUrl="lapis.dummy.url"
+                lapisUrl='lapis.dummy.url'
                 visibilities={visibilities}
                 setAVisibility={vi.fn()}
                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                 lapisSearchParameters={{}}
             />
-        </QueryClientProvider>
+        </QueryClientProvider>,
     );
 }
 
@@ -119,16 +116,14 @@ describe('SearchForm', () => {
         // wait 1 sec
         await act(async () => {
             await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-        );
+        });
         await userEvent.type(document.activeElement as HTMLElement, filterValue);
 
         await act(async () => {
             await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
-        );
-        
-        throw new Error('stop here'+ valuer);
+        });
+
+        throw new Error('stop here' + valuer);
 
         expect(setAFieldValue).toHaveBeenCalledWith('field1', filterValue);
     });
@@ -226,6 +221,5 @@ describe('SearchForm', () => {
         await screen.findByLabelText('Field 1');
         screen.logTestingPlaygroundURL();
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
-
     });
 });

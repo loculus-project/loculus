@@ -33,10 +33,11 @@ export class SearchPage {
     }
 
     public async searchFor(params: { name: string; filterValue: string }[]) {
-        await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key)}${
-            params.map((param) => `&${param.name}=${param.filterValue}`).join('')
-        
-        }`);
+        await this.page.goto(
+            `${baseUrl}${routes.searchPage(dummyOrganism.key)}${params
+                .map((param) => `&${param.name}=${param.filterValue}`)
+                .join('')}`,
+        );
     }
 
     public async getTableContent() {

@@ -31,7 +31,7 @@ test.describe('The search page', () => {
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
-            `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${testAccessionVersion}`
+            `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${testAccessionVersion}`,
         );
         const accessionLink = searchPage.page.getByText(testAccessionVersion, { exact: true });
         await expect(accessionLink).toBeVisible();

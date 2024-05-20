@@ -18,8 +18,6 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
     referenceGenomesSequenceNames,
     lapisUrl,
 }) => {
-
-    
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
     const [agreedToDataUseTerms, setAgreedToDataUseTerms] = useState(false);

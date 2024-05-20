@@ -37,10 +37,10 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
     alwaysPresentFieldNames,
     visibilities,
     setAVisibility,
-    nameToLabelMap
+    nameToLabelMap,
 }) => {
     console.log('nameToLabelMap', nameToLabelMap);
-    
+
     return (
         <Transition appear show={isCustomizeModalOpen}>
             <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={toggleCustomizeModal}>
