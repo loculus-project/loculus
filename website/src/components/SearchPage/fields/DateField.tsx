@@ -1,10 +1,11 @@
 import { DateTime } from 'luxon';
 import { DatePicker } from 'rsuite';
 import 'rsuite/DatePicker/styles/index.css';
+import {type MetadataFilter } from '../../../types/config';
 
 
 type CustomizedDatePickerProps = {
-    field: { name: string; label: string };
+    field: MetadataFilter;
     setAFieldValue: (name: string, value: string) => void;
     dateToValueConverter: (date: Date | null) => string;
     valueToDateConverter: (value: string) => Date | undefined;

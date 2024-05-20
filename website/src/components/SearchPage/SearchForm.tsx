@@ -8,9 +8,9 @@ import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
-import type { GroupedMetadataFilter } from '../../types/config.ts';
-import type { ClientConfig } from '../../types/runtimeConfig.ts';
+import type { GroupedMetadataFilter , MetadataFilter} from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
+import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 const queryClient = new QueryClient();
 
@@ -98,9 +98,9 @@ export const SearchForm = ({
 };
 
 interface SearchFieldProps {
-    field: GroupedMetadataFilter;
+    field: GroupedMetadataFilter | MetadataFilter;
     lapisUrl: string;
-    fieldValues: Record<string, string>;
+    fieldValues: Record<string, string | undefined>;
     setAFieldValue: (fieldName: string, value: string) => void;
     lapisSearchParameters: Record<string, any>;
 }
@@ -132,9 +132,9 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
 
     switch (field.type) {
         case 'date':
-            return <DateField field={field} fieldValue={fieldValues[field.name]} setAFieldValue={setAFieldValue} />;
+            return <DateField field={field} fieldValue={fieldValues[field.name] ?? ''} setAFieldValue={setAFieldValue} />;
         case 'timestamp':
-            return <TimestampField field={field} fieldValue={fieldValues[field.name]} setAFieldValue={setAFieldValue} />;
+            return <TimestampField field={field} fieldValue={fieldValues[field.name] ?? ''} setAFieldValue={setAFieldValue} />;
 
         default:
             if (field.autocomplete === true) {
@@ -143,7 +143,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
                         field={field}
                         lapisUrl={lapisUrl}
                         setAFieldValue={setAFieldValue}
-                        fieldValue={fieldValues[field.name]}
+                        fieldValue={fieldValues[field.name] ?? ''}
                         lapisSearchParameters={lapisSearchParameters}
                     />
                 );
@@ -152,7 +152,7 @@ const SearchField = ({ field, lapisUrl, fieldValues, setAFieldValue, lapisSearch
                 <NormalTextField
                     type={field.type}
                     field={field}
-                    fieldValue={fieldValues[field.name]}
+                    fieldValue={fieldValues[field.name] ?? ''}
                     setAFieldValue={setAFieldValue}
                 />
             );

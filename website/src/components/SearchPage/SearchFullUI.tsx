@@ -12,7 +12,7 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import { type MetadataFilter, type Schema } from '../../types/config.ts';
+import { type MetadataFilter, type Schema, type GroupedMetadataFilter } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';

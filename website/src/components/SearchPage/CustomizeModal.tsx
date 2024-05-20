@@ -37,7 +37,7 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
     visibilities,
     setAVisibility,
 }) => {
-    console.log('CustomizeModal', visibilities);
+    
     return (
         <Transition appear show={isCustomizeModalOpen}>
             <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={toggleCustomizeModal}>
