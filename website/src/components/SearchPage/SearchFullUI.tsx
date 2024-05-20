@@ -248,14 +248,14 @@ export const InnerSearchFullUI = ({
 
                 {(detailsHook.isError || aggregatedHook.isError) && (
                     <>
-                        detailsHook.error?.status === 503 ? <div> No data in database</div> :
-                        <div className='bg-red-400'>
+                        { detailsHook.error?.status === 503 ? <div> No data in database</div> :
+                        <div className='bg-red-400 p-3 rounded-lg'>
                             <p>There was an error loading the data.</p>
-                            <p>{JSON.stringify(detailsHook.error)}</p>
+                            <p className="text-xs">{JSON.stringify(detailsHook.error)}</p>
 
                             <p>{detailsHook.error?.message}</p>
                             <p>{aggregatedHook.error?.message}</p>
-                        </div>
+                        </div>}
                     </>
                 )}
                 {(detailsHook.isPaused || aggregatedHook.isPaused) &&
