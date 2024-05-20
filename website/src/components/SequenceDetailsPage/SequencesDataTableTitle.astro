@@ -1,15 +1,11 @@
 ---
-import { sentenceCase } from 'change-case';
-
+import { SequenceEntryHistoryMenu } from './SequenceEntryHistoryMenu';
 import { routes } from '../../routes/routes';
 import { type SequenceEntryHistory } from '../../types/lapis';
-import { getVersionStatusColor } from '../../utils/getVersionStatusColor';
 import IcBaselineDownload from '~icons/ic/baseline-download';
-import IcBaselineHistory from '~icons/ic/baseline-history';
-import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
 
 interface Props {
-    sequenceEntryHistory?: SequenceEntryHistory;
+    sequenceEntryHistory?: SequenceEntryHistory[];
     organism: string;
     accessionVersion: string;
     showFastaDownload: boolean;
@@ -26,36 +22,10 @@ const { sequenceEntryHistory, accessionVersion, showFastaDownload } = Astro.prop
     <div class='pt-2'>
         {
             sequenceEntryHistory !== undefined && sequenceEntryHistory.length > 1 && (
-                <>
-                    <div class='dropdown dropdown-hover hidden sm:inline-block'>
-                        <label tabindex='0' class='btn btn-sm btn-outline py-1'>
-                            <a href={routes.versionPage(accessionVersion)} class='text-sm'>
-                                All versions
-                            </a>
-                            <Arrow />
-                        </label>
-                        <ul
-                            tabindex='0'
-                            class='dropdown-content z-[1] menu p-1 shadow bg-base-100 rounded-box absolute top-full left-0 text-sm'
-                        >
-                            {sequenceEntryHistory.map((version) => (
-                                <li>
-                                    <a href={routes.sequencesDetailsPage(version.accessionVersion)}>
-                                        {version.accessionVersion}
-                                        <p class={`font-bold ${getVersionStatusColor(version.versionStatus)}`}>
-                                            ({sentenceCase(version.versionStatus)})
-                                        </p>
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div class='sm:hidden inline-block'>
-                        <a href={routes.versionPage(accessionVersion)} class='text-xl'>
-                            <IcBaselineHistory />
-                        </a>
-                    </div>
-                </>
+                <SequenceEntryHistoryMenu
+                    sequenceEntryHistory={sequenceEntryHistory}
+                    accessionVersion={accessionVersion}
+                />
             )
         }
         {
