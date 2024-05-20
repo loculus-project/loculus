@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
-import type { AccessionFilter, MutationFilter } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
@@ -48,9 +47,7 @@ describe('DownloadDialog', () => {
         });
         expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
         expect(screen.queryByText('field1: value1')).toBeInTheDocument();
-        // write out all content to debug
-        screen.debug();
-        screen.logTestingPlaygroundURL()
+   
 
         expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
     });
