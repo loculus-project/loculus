@@ -67,6 +67,12 @@ export const SearchForm = ({
                         alwaysPresentFieldNames={[]}
                         visibilities={visibilities}
                         setAVisibility={setAVisibility}
+                        nameToLabelMap={
+                            consolidatedMetadataSchema.reduce((acc, field) => {
+                                acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
+                                return acc;
+                            }, {} as Record<string, string>)
+                        }
                     />
                     <div className='flex flex-col'>
                         <AccessionField

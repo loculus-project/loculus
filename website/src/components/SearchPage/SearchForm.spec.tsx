@@ -127,7 +127,7 @@ describe('SearchForm', () => {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         }
         );
-        screen.logTestingPlaygroundURL();
+        
         throw new Error('stop here'+ valuer);
 
         expect(setAFieldValue).toHaveBeenCalledWith('field1', filterValue);
@@ -202,7 +202,13 @@ describe('SearchForm', () => {
     });
 
     test('toggle field visibility', async () => {
-        renderSearchForm();
+        renderSearchForm({
+            visibilities: new Map([
+                ['field1', true],
+                ['field2', true],
+                ['field3', true],
+            ]),
+        });
 
         expect(await screen.findByLabelText('Field 1')).toBeVisible();
 
@@ -216,11 +222,10 @@ describe('SearchForm', () => {
 
         const closeButton = await screen.findByRole('button', { name: 'Close' });
         await userEvent.click(closeButton);
-
-        await act(async () => {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-        });
-
+        // wait for the label to disappear
+        await screen.findByLabelText('Field 1');
+        screen.logTestingPlaygroundURL();
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
+
     });
 });

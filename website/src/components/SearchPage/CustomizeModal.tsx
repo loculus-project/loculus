@@ -28,6 +28,7 @@ interface CustomizeModalProps {
     alwaysPresentFieldNames: string[];
     visibilities: Map<string, boolean>;
     setAVisibility: (fieldName: string, isVisible: boolean) => void;
+    nameToLabelMap: Record<string, string>;
 }
 
 export const CustomizeModal: React.FC<CustomizeModalProps> = ({
@@ -36,7 +37,9 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
     alwaysPresentFieldNames,
     visibilities,
     setAVisibility,
+    nameToLabelMap
 }) => {
+    console.log('nameToLabelMap', nameToLabelMap);
     
     return (
         <Transition appear show={isCustomizeModalOpen}>
@@ -63,7 +66,7 @@ export const CustomizeModal: React.FC<CustomizeModalProps> = ({
                             {Array.from(visibilities).map(([fieldName, visible]) => (
                                 <CheckboxField
                                     key={fieldName}
-                                    label={fieldName}
+                                    label={nameToLabelMap[fieldName]}
                                     checked={visible}
                                     onChange={(e) => {
                                         setAVisibility(fieldName, e.target.checked);

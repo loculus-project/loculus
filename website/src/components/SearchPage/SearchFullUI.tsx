@@ -18,6 +18,7 @@ import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
+import { sentenceCase } from 'change-case';
 
 const orderKey = 'orderBy';
 const orderDirectionKey = 'order';
@@ -55,14 +56,14 @@ export const InnerSearchFullUI = ({
                     name: `${field.name}From`,
                     label: `From`,
                     fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName,
+                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
                 };
                 const toField = {
                     ...field,
                     name: `${field.name}To`,
                     label: `To`,
                     fieldGroup: field.name,
-                    fieldGroupDisplayName: field.displayName,
+                    fieldGroupDisplayName: field.displayName ?? sentenceCase(field.name),
                 };
                 result.push(fromField);
                 result.push(toField);
