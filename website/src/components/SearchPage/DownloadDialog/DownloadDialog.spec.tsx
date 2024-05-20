@@ -14,9 +14,7 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 const defaultLapisUrl = 'https://lapis';
 
 async function renderDialog(
-    lapisSearchParameters: AccessionFilter = {},
-    activeFilters: MutationFilter[] = [],
-    nucleotideMutationQueries: string[] = [],
+    lapisSearchParameters: any = {},
 ) {
     render(
         <DownloadDialog
@@ -45,8 +43,8 @@ describe('DownloadDialog', () => {
     });
 
     test('should display active filters if there are some', async () => {
-        await renderDialog({}, [{ name: 'field1', filterValue: 'value1' }], {
-            nucleotideMutationQueries: ['A123T', 'G234C'],
+        await renderDialog( { field1: 'value1' ,
+            nucleotideMutations: 'A123T,G234C',
         });
         expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
         expect(screen.queryByText('field1: value1')).toBeInTheDocument();
@@ -73,7 +71,8 @@ describe('DownloadDialog', () => {
     });
 
     test('should generate the right download link', async () => {
-        await renderDialog({ accession: ['accession1', 'accession2'] }, [{ name: 'field1', filterValue: 'value1' }]);
+        await renderDialog({ accession: ['accession1', 'accession2'] ,
+         field1: 'value1' });
         await checkAgreement();
 
         expect(getDownloadHref()).toBe(

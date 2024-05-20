@@ -18,7 +18,8 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({lapisSear
             <div className='flex flex-row flex-wrap gap-4'>
                 {filterValues.map(({ name, filterValue }) => (
                     <div key={name} className='border-black border rounded-full px-2 py-1 text-sm'>
-                        {name}: {filterValue}
+                        {name}: {// join commas for multiple values
+                        typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}
                     </div>
                 ))}
             </div>
