@@ -10,12 +10,8 @@ import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenome
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
-    // This is needed or we get a test failure: https://github.com/tailwindlabs/headlessui/discussions/2414
-    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-empty-function
     observe() {}
-    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-empty-function
     disconnect() {}
-    // eslint-disable-next-line @typescript-eslint/explicit-member-accessibility, @typescript-eslint/no-empty-function
     unobserve() {}
 };
 
@@ -57,20 +53,20 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
 
 const defaultVisibilities = new Map(defaultSearchFormFilters.map(filter => [filter.name, true]));
 
-function renderSearchForm(
-    searchFormFilters: MetadataFilter[] = [...defaultSearchFormFilters],
-    clientConfig: ClientConfig = testConfig.public,
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
-    fieldValues: { [key: string]: string } = {},
-    visibilities: Map<string, boolean> = defaultVisibilities,
-) {
+function renderSearchForm({
+    searchFormFilters = [...defaultSearchFormFilters],
+    clientConfig = testConfig.public,
+    referenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
+    fieldValues = {},
+    visibilities = defaultVisibilities,
+    setAFieldValue = vi.fn(),
+} = {}) {
     const consolidatedMetadataSchema: (
         | MetadataFilter
         | GroupedMetadataFilter
-    
     )[] = searchFormFilters.map(filter => ({
         ...filter,
-        grouped: false
+        grouped: false,
     }));
 
     render(
@@ -80,14 +76,14 @@ function renderSearchForm(
                 consolidatedMetadataSchema={consolidatedMetadataSchema}
                 clientConfig={clientConfig}
                 fieldValues={fieldValues}
-                setAFieldValue={vi.fn()}
-                lapisUrl='lapis.dummy.url'
+                setAFieldValue={setAFieldValue}
+                lapisUrl="lapis.dummy.url"
                 visibilities={visibilities}
                 setAVisibility={vi.fn()}
                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                 lapisSearchParameters={{}}
             />
-        </QueryClientProvider>,
+        </QueryClientProvider>
     );
 }
 
@@ -109,26 +105,47 @@ describe('SearchForm', () => {
     });
 
     test('should redirect according to filters', async () => {
-        const setAFieldValue = vi.fn();
-        renderSearchForm();
+        let valuer = '';
+        const setAFieldValue = vi.fn((field, value) => {
+            valuer = value;
+        });
+        renderSearchForm({ setAFieldValue });
 
         const filterValue = 'test';
-        await userEvent.type(screen.getByLabelText('Field 1'), filterValue);
+        const labelText = 'Field 1';
+        // first click on Field 1, then type in it. use findByLabelText to wait for the field to appear
+        await userEvent.click(await screen.findByLabelText(labelText));
+        // send typing events
+        // wait 1 sec
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        );
+        await userEvent.type(document.activeElement as HTMLElement, filterValue);
+
+        await act(async () => {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+        );
+        screen.logTestingPlaygroundURL();
+        throw new Error('stop here'+ valuer);
 
         expect(setAFieldValue).toHaveBeenCalledWith('field1', filterValue);
     });
 
     test('should not render the form with fields with flag notSearchable', async () => {
-        renderSearchForm([
-            ...defaultSearchFormFilters,
-            {
-                name: 'NotSearchable',
-                type: 'string' as const,
-                autocomplete: false,
-                notSearchable: true,
-                initiallyVisible: true,
-            },
-        ]);
+        renderSearchForm({
+            searchFormFilters: [
+                ...defaultSearchFormFilters,
+                {
+                    name: 'NotSearchable',
+                    type: 'string' as const,
+                    autocomplete: false,
+                    notSearchable: true,
+                    initiallyVisible: true,
+                },
+            ],
+        });
 
         expect(screen.getByLabelText('Field 1')).toBeDefined();
         expect(screen.queryByPlaceholderText('NotSearchable')).not.toBeInTheDocument();
@@ -136,18 +153,16 @@ describe('SearchForm', () => {
 
     test('should display dates of timestamp fields', async () => {
         const timestampFieldName = 'timestampField';
-        renderSearchForm(
-            [
+        renderSearchForm({
+            searchFormFilters: [
                 {
                     name: timestampFieldName,
                     type: 'timestamp' as const,
                     initiallyVisible: true,
                 },
             ],
-            testConfig.public,
-            defaultReferenceGenomesSequenceNames,
-            { [timestampFieldName]: '1706147200' }
-        );
+            fieldValues: { [timestampFieldName]: '1706147200' },
+        });
 
         const timestampLabel = screen.getByText('Timestamp field');
         const timestampField = timestampLabel.nextElementSibling?.getElementsByTagName('input')[0];
@@ -163,18 +178,16 @@ describe('SearchForm', () => {
 
     test('should display dates of date fields', async () => {
         const dateFieldName = 'dateField';
-        renderSearchForm(
-            [
+        renderSearchForm({
+            searchFormFilters: [
                 {
                     name: dateFieldName,
                     type: 'date' as const,
                     initiallyVisible: true,
                 },
             ],
-            testConfig.public,
-            defaultReferenceGenomesSequenceNames,
-            { [dateFieldName]: '2024-01-25' }
-        );
+            fieldValues: { [dateFieldName]: '2024-01-25' },
+        });
 
         const dateLabel = screen.getByText('Date field');
         const dateField = dateLabel.nextElementSibling?.getElementsByTagName('input')[0];
