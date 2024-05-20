@@ -8,7 +8,8 @@ metadata:
   name: loculus-preprocessing-config-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
 data:
   preprocessing-config.yaml: |
-    {{- $processingConfig.configFile | toYaml | nindent 4 -}}
+    {{- $processingConfig.configFile | toYaml | nindent 4 }}
+    organism: {{ $organism }}
 {{- end }}
 {{- end }}
 {{- end }}
