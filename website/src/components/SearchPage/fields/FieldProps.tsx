@@ -10,4 +10,5 @@ export type FieldProps = {
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     fieldValue: string;
+    type?: "string" | "boolean" | "float" | "int" | "pango_lineage" | "authors";
 };

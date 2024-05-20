@@ -287,11 +287,11 @@ export const InnerSearchFullUI = ({
                             referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         />
                         
-
+                            
                         <Table
                             schema={schema}
-                            data={detailsHook.data?.data !== undefined ? detailsHook.data.data : oldData ?? []}
-                            setPreviewedSeqId={setPreviewedSeqId}
+                            data={detailsHook.data?.data !== undefined ? (detailsHook.data.data as TableSequenceData[]) : oldData ?? []}
+                               setPreviewedSeqId={setPreviewedSeqId}
                             previewedSeqId={previewedSeqId}
                             orderBy={
                                 {
@@ -302,6 +302,7 @@ export const InnerSearchFullUI = ({
                             setOrderByField={setOrderByField}
                             setOrderDirection={setOrderDirection}
                         />
+
 
                         <div className='mt-4 flex justify-center'>
                             {totalSequences !== undefined && (

@@ -64,7 +64,11 @@ function renderSearchForm(
     fieldValues: { [key: string]: string } = {},
     visibilities: Map<string, boolean> = defaultVisibilities,
 ) {
-    const consolidatedMetadataSchema: GroupedMetadataFilter[] = searchFormFilters.map(filter => ({
+    const consolidatedMetadataSchema: (
+        | MetadataFilter
+        | GroupedMetadataFilter
+    
+    )[] = searchFormFilters.map(filter => ({
         ...filter,
         grouped: false
     }));
@@ -110,10 +114,6 @@ describe('SearchForm', () => {
 
         const filterValue = 'test';
         await userEvent.type(screen.getByLabelText('Field 1'), filterValue);
-
-        const expectedFilters = [
-            { ...defaultSearchFormFilters[0], filterValue },
-        ];
 
         expect(setAFieldValue).toHaveBeenCalledWith('field1', filterValue);
     });

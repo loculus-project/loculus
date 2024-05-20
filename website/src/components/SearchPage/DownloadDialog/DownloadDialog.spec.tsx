@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { beforeAll, describe, expect, test, vi } from 'vitest';
 
 import { DownloadDialog } from './DownloadDialog.tsx';
-import type { AccessionFilter, FilterValue, MutationFilter } from '../../../types/config.ts';
+import type { AccessionFilter, MutationFilter } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
@@ -14,19 +14,15 @@ const defaultReferenceGenome: ReferenceGenomesSequenceNames = {
 const defaultLapisUrl = 'https://lapis';
 
 async function renderDialog(
-    accessionFilter: AccessionFilter = {},
-    metadataFilter: FilterValue[] = [],
-    mutationFilter: MutationFilter = {},
-    referenceGenomesSequenceNames: ReferenceGenomesSequenceNames = defaultReferenceGenome,
-    lapisUrl: string = defaultLapisUrl,
+    lapisSearchParameters: AccessionFilter = {},
+    activeFilters: MutationFilter[] = [],
+    nucleotideMutationQueries: string[] = [],
 ) {
     render(
         <DownloadDialog
-            accessionFilter={accessionFilter}
-            metadataFilter={metadataFilter}
-            mutationFilter={mutationFilter}
-            referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-            lapisUrl={lapisUrl}
+            lapisSearchParameters={lapisSearchParameters}
+            referenceGenomesSequenceNames={defaultReferenceGenome}
+            lapisUrl={defaultLapisUrl}
         />,
     );
 

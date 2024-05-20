@@ -16,7 +16,7 @@ const queryClient = new QueryClient();
 
 interface SearchFormProps {
     organism: string;
-    consolidatedMetadataSchema: GroupedMetadataFilter[];
+    consolidatedMetadataSchema: (GroupedMetadataFilter | MetadataFilter)[];
     clientConfig: ClientConfig;
     fieldValues: Record<string, string>;
     setAFieldValue: (fieldName: string, value: string) => void;
