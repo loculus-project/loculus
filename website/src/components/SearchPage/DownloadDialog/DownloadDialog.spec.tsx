@@ -48,7 +48,11 @@ describe('DownloadDialog', () => {
         });
         expect(screen.queryByText(/Active filters/)).toBeInTheDocument();
         expect(screen.queryByText('field1: value1')).toBeInTheDocument();
-        expect(screen.queryByText(/A123T, G234C/)).toBeInTheDocument();
+        // write out all content to debug
+        screen.debug();
+        screen.logTestingPlaygroundURL()
+
+        expect(screen.queryByText(/A123T,G234C/)).toBeInTheDocument();
     });
 
     test('should not display active filters if there are none', async () => {
