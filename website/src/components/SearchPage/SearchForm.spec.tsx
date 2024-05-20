@@ -27,20 +27,18 @@ vi.mock('../../config', () => ({
 
 const queryClient = new QueryClient();
 
-const defaultSearchFormFilters = [
+const defaultSearchFormFilters: MetadataFilter[] = [
     {
         name: 'field1',
         type: 'string' as const,
         label: 'Field 1',
         autocomplete: false,
-        filterValue: '',
         initiallyVisible: true,
     },
     {
         name: 'field2',
         type: 'date' as const,
         autocomplete: false,
-        filterValue: '',
         label: 'Field 2',
         initiallyVisible: true,
     },
@@ -49,12 +47,11 @@ const defaultSearchFormFilters = [
         type: 'pango_lineage' as const,
         label: 'Field 3',
         autocomplete: true,
-        filterValue: '',
         initiallyVisible: true,
     },
 ];
 
-const defaultReferenceGenomesSequenceNames = {
+const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     nucleotideSequences: ['main'],
     genes: ['gene1', 'gene2'],
 };
@@ -63,6 +60,7 @@ function renderSearchForm(
     searchFormFilters: MetadataFilter[] = [...defaultSearchFormFilters],
     clientConfig: ClientConfig = testConfig.public,
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
+    filterValues: { [key: string]: string } = {},
 ) {
     render(
         <QueryClientProvider client={queryClient}>
@@ -74,6 +72,7 @@ function renderSearchForm(
                 clientConfig={clientConfig}
                 classOfSearchPage={SEARCH}
                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                filterValues={filterValues}
             />
         </QueryClientProvider>,
     );
@@ -102,10 +101,11 @@ describe('SearchForm', () => {
         const filterValue = 'test';
         await userEvent.type(screen.getByLabelText('Field 1'), filterValue);
 
+        const expectedFilters = [
+            { ...defaultSearchFormFilters[0], filterValue },
+        ];
 
-        expect(window.location.href).toBe(
-            routes.searchPage(testOrganism, [{ ...defaultSearchFormFilters[0], filterValue }]),
-        );
+        expect(window.location.href).toBe(routes.searchPage(testOrganism, expectedFilters));
     });
 
     test('should not render the form with fields with flag notSearchable', async () => {
@@ -115,7 +115,6 @@ describe('SearchForm', () => {
                 name: 'NotSearchable',
                 type: 'string' as const,
                 autocomplete: false,
-                filterValue: '',
                 notSearchable: true,
                 initiallyVisible: true,
             },
@@ -127,14 +126,18 @@ describe('SearchForm', () => {
 
     test('should display dates of timestamp fields', async () => {
         const timestampFieldName = 'timestampField';
-        renderSearchForm([
-            {
-                name: timestampFieldName,
-                type: 'timestamp' as const,
-                filterValue: '1706147200',
-                initiallyVisible: true,
-            },
-        ]);
+        renderSearchForm(
+            [
+                {
+                    name: timestampFieldName,
+                    type: 'timestamp' as const,
+                    initiallyVisible: true,
+                },
+            ],
+            testConfig.public,
+            defaultReferenceGenomesSequenceNames,
+            { [timestampFieldName]: '1706147200' }
+        );
 
         const timestampLabel = screen.getByText('Timestamp field');
         const timestampField = timestampLabel.nextElementSibling?.getElementsByTagName('input')[0];
@@ -145,20 +148,24 @@ describe('SearchForm', () => {
 
         await userEvent.type(timestampField, '2025');
 
-
         expect(window.location.href).toContain(`${timestampFieldName}=1737769600`);
     });
 
     test('should display dates of date fields', async () => {
         const dateFieldName = 'dateField';
-        renderSearchForm([
-            {
-                name: dateFieldName,
-                type: 'date' as const,
-                filterValue: '2024-01-25',
-                initiallyVisible: true,
-            },
-        ]);
+        renderSearchForm(
+            [
+                {
+                    name: dateFieldName,
+                    type: 'date' as const,
+                    initiallyVisible: true,
+                },
+            ],
+            testConfig.public,
+            defaultReferenceGenomesSequenceNames,
+            { [dateFieldName]: '2024-01-25' }
+        );
+
         const dateLabel = screen.getByText('Date field');
         const dateField = dateLabel.nextElementSibling?.getElementsByTagName('input')[0];
         if (!dateField) {
@@ -167,7 +174,6 @@ describe('SearchForm', () => {
         expect(dateField).toHaveValue('2024-01-25');
 
         await userEvent.type(dateField, '2025');
-
 
         expect(window.location.href).toContain(`${dateFieldName}=2025-01-25`);
     });
