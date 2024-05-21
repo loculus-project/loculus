@@ -195,61 +195,64 @@ const UploadComponent = ({
     return (
         <div className='sm:col-span-4'>
             <label className='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
-            {!myFile ? (
-                <div
-                    className={`mt-2 flex justify-center rounded-lg border border-dashed  px-6 py-6 border-gray-900/25 h-40
-                    ${isDragOver ? 'bg-green-100' : ''}  `}
-                    onDragOver={handleDragOver}
-                    onDragLeave={handleDragLeave}
-                    onDrop={handleDrop}
-                >
-                    <div className='text-center'>
-                        <Icon className='mx-auto h-12 w-12 text-gray-300' aria-hidden='true' />
-                        <div className='mt-4  text-sm leading-6 text-gray-600'>
-                            <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
-                                <span
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        handleUpload();
-                                    }}
-                                >
-                                    Upload a file
-                                </span>
-                                {isClient && (
-                                    <input
-                                        id={name}
-                                        name={name}
-                                        type='file'
-                                        className='sr-only'
-                                        aria-label={title}
-                                        data-testid={name}
-                                        onChange={(event) => {
-                                            const file = event.target.files?.[0] || null;
-                                            setMyFile(file);
-                                        }}
-                                        ref={fileInputRef}
-                                    />
-                                )}
-                            </label>
-                            <span className='pl-1'>or drag and drop</span>
-                        </div>
-                        <p className='text-xs leading-5 text-gray-600'>{fileType}</p>
-                    </div>
-                </div>
-            ) : (
-                <div className='h-40 text-center'>
-                    <Icon className='w-12 h-12 text-gray-300 mx-auto my-4' />
-                    <div className='text-sm text-gray-500 py-5'>{myFile.name}</div>
-                    <button
-                        onClick={() => setMyFile(null)}
-                        data-testid={`discard_${name}`}
-                        className='
-                    text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+            <div className='flex flex-col h-40'>
+                {!myFile ? (
+                    <div
+                        className={`flex items-center justify-center rounded-lg border border-dashed px-6 py-6 border-gray-900/25
+                        ${isDragOver ? 'bg-green-100' : ''} flex-1`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
                     >
-                        Discard file
-                    </button>
-                </div>
-            )}
+                        <div className='text-center'>
+                            <Icon className='mx-auto h-12 w-12 text-gray-300' aria-hidden='true' />
+                            <div className='mt-4 text-sm leading-6 text-gray-600'>
+                                <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
+                                    <span
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            handleUpload();
+                                        }}
+                                    >
+                                        Upload a file
+                                    </span>
+                                    {isClient && (
+                                        <input
+                                            id={name}
+                                            name={name}
+                                            type='file'
+                                            className='sr-only'
+                                            aria-label={title}
+                                            data-testid={name}
+                                            onChange={(event) => {
+                                                const file = event.target.files?.[0] || null;
+                                                setMyFile(file);
+                                            }}
+                                            ref={fileInputRef}
+                                        />
+                                    )}
+                                </label>
+                                <span className='pl-1'>or drag and drop</span>
+                            </div>
+                            <p className='text-xs leading-5 text-gray-600'>{fileType}</p>
+                        </div>
+                    </div>
+                ) : (
+                    <div className='flex items-center justify-center text-center flex-1 px-4 py-2'>
+                        <div>
+                            <Icon className='w-12 h-12 text-gray-300 mx-auto mb-4' />
+                            <div className='text-sm text-gray-500 mb-2'>{myFile.name}</div>
+                            <button
+                                onClick={() => setMyFile(null)}
+                                data-testid={`discard_${name}`}
+                                className='text-xs break-words text-gray-700 py-1.5 px-4 border border-gray-300 rounded-md hover:bg-gray-50'
+                            >
+                                Discard file
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
