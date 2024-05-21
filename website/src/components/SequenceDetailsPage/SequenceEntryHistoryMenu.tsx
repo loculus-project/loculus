@@ -10,9 +10,14 @@ import Arrow from '~icons/ic/sharp-keyboard-arrow-down';
 interface Props {
     sequenceEntryHistory: SequenceEntryHistory[];
     accessionVersion: string;
+    setPreviewedSeqId?: (seqId: string | null) => void;
 }
 
-export const SequenceEntryHistoryMenu: React.FC<Props> = ({ sequenceEntryHistory, accessionVersion }) => {
+export const SequenceEntryHistoryMenu: React.FC<Props> = ({
+    sequenceEntryHistory,
+    accessionVersion,
+    setPreviewedSeqId,
+}) => {
     return (
         <>
             <div className='dropdown dropdown-hover hidden sm:inline-block'>
@@ -28,7 +33,15 @@ export const SequenceEntryHistoryMenu: React.FC<Props> = ({ sequenceEntryHistory
                 >
                     {sequenceEntryHistory.map((version) => (
                         <li key={version.accessionVersion}>
-                            <a href={routes.sequencesDetailsPage(version.accessionVersion)}>
+                            <a
+                                href={routes.sequencesDetailsPage(version.accessionVersion)}
+                                onClick={(e) => {
+                                    if (setPreviewedSeqId) {
+                                        setPreviewedSeqId(version.accessionVersion);
+                                        e.preventDefault();
+                                    }
+                                }}
+                            >
                                 {version.accessionVersion}
                                 <p className={`font-bold ${getVersionStatusColor(version.versionStatus)}`}>
                                     ({sentenceCase(version.versionStatus)})
