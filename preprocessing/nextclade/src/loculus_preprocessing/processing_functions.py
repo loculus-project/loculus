@@ -120,7 +120,13 @@ class ProcessingFunctions:
     def process_date(
         input_data: InputMetadata, output_field, args: FunctionArgs = None
     ) -> ProcessingResult:
-        """Parse date string. If it's incomplete, add 01-01, if no year, return null and error"""
+        """Parse date string. If it's incomplete, add 01-01, if no year, return null and error
+        input_data:
+            date: str, date string to parse
+            release_date: str, optional release date to compare against
+        args:
+            required: bool, if true, return error if date is missing (optional)
+        """
         logger.debug(f"input_data: {input_data}")
         date_str = input_data["date"] or ""
         release_date_str = input_data.get("release_date", "") or ""
@@ -141,17 +147,19 @@ class ProcessingFunctions:
         errors = []
 
         if len(date_str) == 0:
+            if args and args.get("required"):
+                errors.append(
+                            ProcessingAnnotation(
+                                source=[
+                                    AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                                ],
+                                message="Collection date is required",
+                            )
+                )
             return ProcessingResult(
                 datum=None,
                 warnings=[],
-                errors=[
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                        ],
-                        message="Collection date is required",
-                    )
-                ],
+                errors=errors,
             )
 
         for format, message in formats_to_messages.items():

@@ -207,7 +207,7 @@ def generate_configs(from_live=False):
     generate_config(helm_chart, 'templates/loculus-website-config.yaml', runtime_config_path, codespace_name, from_live)
 
     ingest_configmap_path = TEMP_DIR / 'config.yaml'
-    ingest_template_path = 'templates/loculus-ingest-config.yaml'
+    ingest_template_path = 'templates/ingest-config.yaml'
     ingest_configout_path = TEMP_DIR / 'ingest-config.yaml'
     generate_config(helm_chart, ingest_template_path, ingest_configmap_path, codespace_name, from_live, ingest_configout_path)
 

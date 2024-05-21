@@ -25,7 +25,7 @@ const CustomDisplayComponent: React.FC<Props> = ({ data, dataUseTermsHistory }) 
                     ))}
                 {customDisplay?.type === 'link' && customDisplay.url !== undefined && (
                     <a
-                        href={customDisplay.url.replace('{{value}}', value.toString())}
+                        href={customDisplay.url.replace('__value__', value.toString())}
                         target='_blank'
                         className='underline'
                     >

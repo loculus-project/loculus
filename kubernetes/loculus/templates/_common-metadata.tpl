@@ -65,8 +65,19 @@ fields:
     type: string
     notSearchable: true
     header: Data Use Terms
+    customDisplay:
+      type: link
+      url: "__value__"
   {{- end}}
 {{- end}}
+
+{{/* Patches schema by adding to it */}}
+{{- define "loculus.patchMetadataSchema" -}}
+{{- $patchedSchema := deepCopy . }}
+{{- $toAdd := . | dig "metadataAdd" list -}}
+{{- $patchedMetadata := concat .metadata $toAdd -}}
+{{- set $patchedSchema "metadata" $patchedMetadata | toYaml -}}
+{{- end -}}
 
 {{/* Generate website config from passed config object */}}
 {{- define "loculus.generateWebsiteConfig" }}
@@ -84,9 +95,8 @@ accessionPrefix: {{ quote $.Values.accessionPrefix }}
 organisms:
   {{- range $key, $instance := (.Values.organisms | default .Values.defaultOrganisms) }}
   {{ $key }}:
-
     schema:
-      {{- with $instance.schema }}
+      {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       instanceName: {{ quote .instanceName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
       {{ if .image }}
@@ -96,8 +106,7 @@ organisms:
       description: {{ quote .description }}
       {{ end }}
       primaryKey: accessionVersion
-      inputFields:
-        {{ $instance.schema.inputFields | toYaml | nindent 8}}
+      inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
       metadata:
         {{ $metadata := concat $commonMetadata .metadata
             | include "loculus.generateWebsiteMetadata"
@@ -116,7 +125,7 @@ organisms:
 fields:
 {{- range . }}
   - name: {{ quote .name }}
-    type: {{ quote .type }}
+    type: {{ .type | default "string" | quote }}
     {{- if .autocomplete }}
     autocomplete: {{ .autocomplete }}
     {{- end }}
@@ -143,9 +152,7 @@ fields:
       type: {{ quote .customDisplay.type }}
       url: {{ .customDisplay.url }}
     {{- end }}
-    {{- if .header }}
-    header: {{ .header }}
-    {{- end }}
+    header: {{ default "Other" .header }}
 {{- end}}
 {{- end}}
 
@@ -162,7 +169,10 @@ organisms:
       {{- with $instance.schema }}
       instanceName: {{ quote .instanceName }}
       metadata:
-        {{ $metadata := include "loculus.generateBackendMetadata" .metadata | fromYaml }}
+        {{ $metadata := (include "loculus.patchMetadataSchema" .
+          | fromYaml).metadata
+          | include "loculus.generateBackendMetadata"
+          | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:
@@ -175,7 +185,7 @@ organisms:
 fields:
 {{- range . }}
   - name: {{ quote .name }}
-    type: {{ quote .type }}
+    type: {{ .type | default "string" | quote }}
     {{- if .required }}
     required: {{ .required }}
     {{- end }}
