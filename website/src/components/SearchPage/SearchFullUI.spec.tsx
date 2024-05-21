@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-member-accessibility */
 /* eslint-disable @typescript-eslint/no-empty-function */
 
-import { render, screen, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SearchFullUI } from './SearchFullUI';
@@ -92,7 +91,7 @@ describe('SearchFullUI', () => {
         expect(screen.getByText('Field 2')).toBeDefined();
         expect(screen.getByLabelText('Field 3')).toBeDefined();
     });
-/*
+    /*
     test('should redirect according to filters', async () => {
         renderSearchFullUI();
 
@@ -171,7 +170,7 @@ describe('SearchFullUI', () => {
             throw new Error('Date field not found');
         }
     });
-/*
+    /*
     test('toggle field visibility', async () => {
         renderSearchFullUI({});
 
@@ -192,4 +191,3 @@ describe('SearchFullUI', () => {
     });
     */
 });
-

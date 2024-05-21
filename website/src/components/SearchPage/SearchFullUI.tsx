@@ -150,7 +150,6 @@ export const InnerSearchFullUI = ({
     };
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
-   
 
     const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchemaWithExpandedRanges);
 
