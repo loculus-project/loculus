@@ -22,8 +22,8 @@ interface SearchFormProps {
     fieldValues: FieldValues;
     setAFieldValue: SetAFieldValue;
     lapisUrl: string;
-    visibilities: Map<string, boolean>;
-    setAVisibility: (fieldName: string, value: boolean) => void;
+    searchVisibilities: Map<string, boolean>;
+    setASearchVisibility: (fieldName: string, value: boolean) => void;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisSearchParameters: Record<string, any>;
 }
@@ -33,12 +33,12 @@ export const SearchForm = ({
     fieldValues,
     setAFieldValue,
     lapisUrl,
-    visibilities,
-    setAVisibility,
+    searchVisibilities,
+    setASearchVisibility,
     referenceGenomesSequenceNames,
     lapisSearchParameters,
 }: SearchFormProps) => {
-    const visibleFields = consolidatedMetadataSchema.filter((field) => visibilities.get(field.name));
+    const visibleFields = consolidatedMetadataSchema.filter((field) => searchVisibilities.get(field.name));
 
     const [isCustomizeModalOpen, setIsCustomizeModalOpen] = useState(false);
     const { isOpen: isMobileOpen, close: closeOnMobile, toggle: toggleMobileOpen } = useOffCanvas();
@@ -78,11 +78,12 @@ export const SearchForm = ({
                         </div>{' '}
                     </div>
                     <CustomizeModal
+                        thingToCustomize='search field'
                         isCustomizeModalOpen={isCustomizeModalOpen}
                         toggleCustomizeModal={toggleCustomizeModal}
                         alwaysPresentFieldNames={[]}
-                        visibilities={visibilities}
-                        setAVisibility={setAVisibility}
+                        visibilities={searchVisibilities}
+                        setAVisibility={setASearchVisibility}
                         nameToLabelMap={consolidatedMetadataSchema.reduce(
                             (acc, field) => {
                                 acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
