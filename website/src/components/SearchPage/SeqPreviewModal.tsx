@@ -57,6 +57,12 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div
             className={`mt-4 text-gray-700 overflow-y-auto ${isHalfScreen ? 'h-[calc(50vh-9rem)]' : 'h-[calc(100vh-9rem)]'}`}
         >
+            {data !== null && data.isRevocation === true && (
+                <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative' role='alert'>
+                    <strong className='font-bold'>This sequence has been revoked.</strong>
+                </div>
+            )}
+
             {isLoading ? (
                 <div>Loading...</div>
             ) : data !== null && !isError ? (

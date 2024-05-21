@@ -37,6 +37,7 @@ export const metadata = z.object({
     initiallyVisible: z.boolean().optional(),
     hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
+    rangeSearch: z.boolean().optional(),
 });
 
 export const inputField = z.object({
@@ -51,7 +52,6 @@ export type MetadataType = z.infer<typeof metadataPossibleTypes>;
 export type SegmentedMutations = z.infer<typeof segmentedMutations>;
 
 export type MetadataFilter = Metadata & {
-    filterValue: string;
     label?: string;
     fieldGroup?: string;
     grouped?: false;
@@ -70,8 +70,6 @@ export type GroupedMetadataFilter = {
     notSearchable?: boolean;
     initiallyVisible?: boolean;
 };
-
-export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
 
 export type AccessionFilter = {
     accession?: string[];
@@ -118,3 +116,6 @@ export const websiteConfig = z.object({
     additionalHeadHTML: z.string().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
+
+export type FieldValues = Record<string, string | number>;
+export type SetAFieldValue = (fieldName: string, value: string | number) => void;
