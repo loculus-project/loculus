@@ -5,6 +5,7 @@ import { routes } from '../../routes/routes';
 import { type Group } from '../../types/backend';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes';
 import { SequenceDataUI } from '../SequenceDetailsPage/SequenceDataUI';
+import { SequenceEntryHistoryMenu } from '../SequenceDetailsPage/SequenceEntryHistoryMenu';
 import IcBaselineDownload from '~icons/ic/baseline-download';
 import MaterialSymbolsClose from '~icons/material-symbols/close';
 import MaterialSymbolsLightWidthFull from '~icons/material-symbols-light/width-full';
@@ -23,6 +24,7 @@ interface SeqPreviewModalProps {
     myGroups: Group[];
     isHalfScreen?: boolean;
     setIsHalfScreen: (isHalfScreen: boolean) => void;
+    setPreviewedSeqId?: (seqId: string | null) => void;
 }
 
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
@@ -34,6 +36,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     myGroups,
     isHalfScreen = false,
     setIsHalfScreen,
+    setPreviewedSeqId,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<any | null>(null);
@@ -73,6 +76,13 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div className='flex justify-between items-center'>
             <div className='text-xl font-medium leading-6 text-primary-700 pl-6'>{seqId}</div>
             <div>
+                {data !== null && data?.sequenceEntryHistory !== undefined && data?.sequenceEntryHistory.length > 1 && (
+                    <SequenceEntryHistoryMenu
+                        sequenceEntryHistory={data?.sequenceEntryHistory}
+                        accessionVersion={seqId}
+                        setPreviewedSeqId={setPreviewedSeqId}
+                    />
+                )}
                 <button
                     type='button'
                     className={BUTTONCLASS}
