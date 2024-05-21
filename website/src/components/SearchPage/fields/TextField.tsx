@@ -30,6 +30,8 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
     const id = useId();
     const [isTransitionEnabled, setIsTransitionEnabled] = useState(false);
     const [hasFocus, setHasFocus] = useState(false);
+    const numericTypes = ['number', 'int', 'float'];
+    const inputType = props.type !== undefined && numericTypes.includes(props.type) ? 'number' : 'text';
 
     useEffect(() => {
         const timeout = setTimeout(() => {
@@ -72,7 +74,7 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
             placeholder: '',
             label: label !== undefined ? label : '',
         };
-        return <FloatingLabel {...inputProps} variant='outlined' type='text' value={fieldValue} />;
+        return <FloatingLabel {...inputProps} variant='outlined' type={inputType} value={fieldValue} />;
     }
     const refTextArea = ref as ForwardedRef<HTMLTextAreaElement>;
 

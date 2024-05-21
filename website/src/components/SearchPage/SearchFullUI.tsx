@@ -125,17 +125,15 @@ export const InnerSearchFullUI = ({
 
     const setAFieldValue = (fieldName: string, value: string) => {
         setState((prev: any) => {
-            
-           const newState =  {
-            ...prev,
-            [fieldName]: value,
-        }
-        if (value === '') {
-            delete newState[fieldName];
-        }
-        return newState;
-    
-    });
+            const newState = {
+                ...prev,
+                [fieldName]: value,
+            };
+            if (value === '') {
+                delete newState[fieldName];
+            }
+            return newState;
+        });
         setPage(1);
     };
 

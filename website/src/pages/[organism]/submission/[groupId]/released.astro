@@ -1,0 +1,48 @@
+---
+import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
+import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
+import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
+import { getRuntimeConfig, getSchema } from '../../../../config';
+import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
+import { siloVersionStatuses } from '../../../../types/lapis';
+import { getAccessToken } from '../../../../utils/getAccessToken';
+import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
+import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
+const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
+if (groupsResult.isErr()) {
+    return new Response(undefined, { status: groupsResult.error.status });
+}
+const { currentGroup: group } = groupsResult.value;
+
+const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+if (!cleanedOrganism) {
+    return {
+        statusCode: 404,
+        body: 'Organism not found',
+    };
+}
+
+const clientConfig = getRuntimeConfig().public;
+const schema = getSchema(cleanedOrganism.key);
+
+const accessToken = getAccessToken(Astro.locals.session);
+
+const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
+---
+
+<SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
+    <SearchFullUI
+        client:load
+        clientConfig={clientConfig}
+        organism={cleanedOrganism.key}
+        schema={schema}
+        myGroups={[group]}
+        accessToken={accessToken}
+        referenceGenomesSequenceNames={referenceGenomeSequenceNames}
+        hiddenFieldValues={{
+            [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+            [GROUP_ID_FIELD]: group.groupId,
+        }}
+    />
+</SubmissionPageWrapper>
