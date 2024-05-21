@@ -15,10 +15,9 @@ import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import { type MetadataFilter, type Schema, type GroupedMetadataFilter, type FieldValues } from '../../types/config.ts';
+import { type OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import type { SearchResponse } from '../../utils/search.ts';
-import { type OrderByType, type OrderBy } from '../../types/lapis.ts';
 const orderKey = 'orderBy';
 const orderDirectionKey = 'order';
 
@@ -125,7 +124,7 @@ export const InnerSearchFullUI = ({
         return values;
     }, [state, hiddenFieldValues]);
 
-    const setAFieldValue = (fieldName: string, value: string) => {
+    const setAFieldValue = (fieldName: string, value: string | number) => {
         setState((prev: any) => {
             const newState = {
                 ...prev,
@@ -193,10 +192,13 @@ export const InnerSearchFullUI = ({
             ...lapisSearchParameters,
             fields: [],
         });
-        const OrderByList : OrderBy[] =[ {
-            field: orderByField,
-            type: orderDirection ,
-        }];
+        const OrderByList: OrderBy[] = [
+            {
+                field: orderByField,
+                type: orderDirection,
+            },
+        ];
+        // @ts-expect-error because the hooks don't accept OrderBy
         detailsHook.mutate({
             ...lapisSearchParameters,
             fields: [...schema.tableColumns, schema.primaryKey],
@@ -209,7 +211,7 @@ export const InnerSearchFullUI = ({
 
     const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
 
-    const [oldData, setOldData] = useState<SearchResponse | null>(null);
+    const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
     const [oldCount, setOldCount] = useState<number | null>(null);
 
     useEffect(() => {
@@ -255,6 +257,7 @@ export const InnerSearchFullUI = ({
                 <RecentSequencesBanner organism={organism} />
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
+                    // @ts-expect-error because response is not expected on error, but does exist
                     (aggregatedHook.error?.response?.status === 503 ? (
                         <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
                             {' '}
