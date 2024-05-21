@@ -230,6 +230,7 @@ export const InnerSearchFullUI = ({
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
+                setPreviewedSeqId={setPreviewedSeqId}
             />
             <div className='md:w-72'>
                 <SearchForm
