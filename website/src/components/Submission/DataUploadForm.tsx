@@ -207,7 +207,14 @@ const UploadComponent = ({
                         <Icon className='mx-auto h-12 w-12 text-gray-300' aria-hidden='true' />
                         <div className='mt-4  text-sm leading-6 text-gray-600'>
                             <label className='inline relative cursor-pointer rounded-md bg-white font-semibold text-primary-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-primary-600 focus-within:ring-offset-2 hover:text-primary-500'>
-                                <span onClick={handleUpload}>Upload a file </span>
+                                <span
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        handleUpload();
+                                    }}
+                                >
+                                    Upload a file
+                                </span>
                                 {isClient && (
                                     <input
                                         id={name}
