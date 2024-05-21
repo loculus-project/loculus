@@ -343,6 +343,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         displayName: Host Age
         type: int
         header: Host
+        rangeSearch: true
       - name: host_age_bin
         ontology_id: GENEPIO:0001394
         definition: The age category of the host at the time of sampling.
@@ -694,6 +695,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
+        rangeSearch: true
       - name: host_name_scientific
         generateIndex: true
         autocomplete: true
@@ -768,6 +770,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
+        rangeSearch: true
         preprocessing:
           args: { type: int }
           inputs: { input: nextclade.totalSubstitutions }
@@ -775,6 +778,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
+        rangeSearch: true
         preprocessing:
           args: { type: int }
           inputs: { input: nextclade.totalInsertions }
@@ -782,6 +786,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
+        rangeSearch: true
         preprocessing:
           args: { type: int }
           inputs: { input: nextclade.totalDeletions }
@@ -789,6 +794,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
+        rangeSearch: true
         preprocessing:
           args: { type: int }
           inputs: { input: "nextclade.totalNonACGTNs" }
@@ -796,11 +802,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
+        rangeSearch: true
         preprocessing:
           args: { type: int }
           inputs: { input: nextclade.totalMissing }
       - name: total_frame_shifts
         type: int
+        rangeSearch: true
         header: "Alignment states and QC metrics"
         noInput: true
         preprocessing:
