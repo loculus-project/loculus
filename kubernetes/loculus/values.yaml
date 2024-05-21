@@ -22,7 +22,6 @@ defaultOrganismConfig: &defaultOrganismConfig
   schema: &schema
     loadSequencesAutomatically: true
     instanceName: "Ebola Zaire"
-    description: "Zaire ebolavirus is a species of the genus Ebolavirus, which is a member of the Filoviridae family. It is the most dangerous of the known Ebola viruses, and is associated with the highest case-fatality rate."
     image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
     ### Field list
     ## General fields
@@ -900,6 +899,10 @@ defaultOrganisms:
         nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   ebola-sudan:
     <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      instanceName: "Ebola Sudan"
+      image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
     preprocessing:
     - <<: *preprocessing
       configFile:
