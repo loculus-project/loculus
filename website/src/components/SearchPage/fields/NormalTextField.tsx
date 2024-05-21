@@ -1,15 +1,15 @@
 import { forwardRef, type FocusEventHandler } from 'react';
 
 import { TextField } from './TextField';
-import type { MetadataFilter } from '../../../types/config.ts';
+import type { MetadataFilter, SetAFieldValue } from '../../../types/config.ts';
 
 export type NormalFieldProps = {
     field: MetadataFilter;
-    setAFieldValue: (metadataName: string, filter: string) => void;
+    setAFieldValue: SetAFieldValue;
     multiline?: boolean;
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
     onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-    fieldValue: string;
+    fieldValue: string | number;
     type?: 'string' | 'boolean' | 'float' | 'int' | 'pango_lineage' | 'authors';
 };
 

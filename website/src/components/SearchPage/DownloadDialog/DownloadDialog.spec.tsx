@@ -18,6 +18,7 @@ async function renderDialog(lapisSearchParameters: any = {}) {
             lapisSearchParameters={lapisSearchParameters}
             referenceGenomesSequenceNames={defaultReferenceGenome}
             lapisUrl={defaultLapisUrl}
+            hiddenFieldValues={{}}
         />,
     );
 

@@ -9,7 +9,7 @@ import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
 import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
-import type { GroupedMetadataFilter, MetadataFilter } from '../../types/config.ts';
+import type { GroupedMetadataFilter, MetadataFilter, FieldValues, SetAFieldValue } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
@@ -19,8 +19,8 @@ interface SearchFormProps {
     organism: string;
     consolidatedMetadataSchema: (GroupedMetadataFilter | MetadataFilter)[];
     clientConfig: ClientConfig;
-    fieldValues: Record<string, string>;
-    setAFieldValue: (fieldName: string, value: string) => void;
+    fieldValues: FieldValues;
+    setAFieldValue: SetAFieldValue;
     lapisUrl: string;
     visibilities: Map<string, boolean>;
     setAVisibility: (fieldName: string, value: boolean) => void;
@@ -93,13 +93,13 @@ export const SearchForm = ({
                     />
                     <div className='flex flex-col'>
                         <AccessionField
-                            textValue={fieldValues.accession}
+                            textValue={fieldValues.accession as string}
                             setTextValue={(value) => setAFieldValue('accession', value)}
                         />
 
                         <MutationField
                             referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                            value={'mutation' in fieldValues ? fieldValues.mutation : ''}
+                            value={'mutation' in fieldValues ? (fieldValues.mutation as string) : ''}
                             onChange={(value) => setAFieldValue('mutation', value)}
                         />
 
@@ -123,8 +123,8 @@ export const SearchForm = ({
 interface SearchFieldProps {
     field: GroupedMetadataFilter | MetadataFilter;
     lapisUrl: string;
-    fieldValues: Record<string, string | undefined>;
-    setAFieldValue: (fieldName: string, value: string) => void;
+    fieldValues: FieldValues;
+    setAFieldValue: SetAFieldValue;
     lapisSearchParameters: Record<string, any>;
 }
 

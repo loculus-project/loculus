@@ -1,10 +1,10 @@
 import type { FocusEventHandler } from 'react';
 
-import type { MetadataFilter } from '../../../types/config.ts';
+import type { MetadataFilter, SetAFieldValue } from '../../../types/config.ts';
 
 export type FieldProps = {
     field: MetadataFilter;
-    setAFieldValue: (metadataName: string, filter: string) => void;
+    setAFieldValue: SetAFieldValue;
     isLoading: boolean;
     multiline?: boolean;
     onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;

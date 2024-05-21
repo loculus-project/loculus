@@ -4,13 +4,13 @@ import { useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import { type GroupedMetadataFilter, type MetadataFilter } from '../../../types/config.ts';
+import { type GroupedMetadataFilter, type MetadataFilter, type SetAFieldValue } from '../../../types/config.ts';
 
 type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
-    setAFieldValue: (fieldName: string, value: string) => void;
+    setAFieldValue: SetAFieldValue;
     lapisUrl: string;
-    fieldValue?: string;
+    fieldValue?: string | number;
     lapisSearchParameters: Record<string, any>;
 };
 

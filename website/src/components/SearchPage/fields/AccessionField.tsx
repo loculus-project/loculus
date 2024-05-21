@@ -18,7 +18,7 @@ export const AccessionField: FC<AccessionFieldProps> = ({ textValue, setTextValu
                 notSearchable: false,
             }}
             setAFieldValue={(_, filter) => {
-                setTextValue(filter);
+                setTextValue(filter as string);
             }}
             fieldValue={textValue}
             multiline

@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
-import type { MetadataFilter } from '../../types/config.ts';
+import type { MetadataFilter, Schema } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
@@ -69,7 +69,7 @@ function renderSearchFullUI({
             metadata: metadataSchema,
             tableColumns: ['field1', 'field2', 'field3'],
             primaryKey: 'field1',
-        },
+        } as Schema,
     };
 
     render(<SearchFullUI {...props} />);

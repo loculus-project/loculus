@@ -5,13 +5,14 @@ import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
 import { type DownloadOption } from './generateDownloadUrl.ts';
 import { routes } from '../../../routes/routes.ts';
+import type { FieldValues } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadDialogProps = {
     lapisSearchParameters: Record<string, any>;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisUrl: string;
-    hiddenFieldValues: Record<string, string>;
+    hiddenFieldValues: FieldValues;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({

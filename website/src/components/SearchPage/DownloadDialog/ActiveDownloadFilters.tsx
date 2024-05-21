@@ -1,8 +1,10 @@
 import type { FC } from 'react';
 
+import type { FieldValues } from '../../../types/config';
+
 type ActiveDownloadFiltersProps = {
     lapisSearchParameters: Record<string, any>;
-    hiddenFieldValues: Record<string, string>;
+    hiddenFieldValues: FieldValues;
 };
 
 export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSearchParameters, hiddenFieldValues }) => {
@@ -23,10 +25,7 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSea
             <div className='flex flex-row flex-wrap gap-4'>
                 {filterValues.map(({ name, filterValue }) => (
                     <div key={name} className='border-black border rounded-full px-2 py-1 text-sm'>
-                        {name}:{' '}
-                        {
-                            typeof filterValue === 'object' ? filterValue.join(', ') : filterValue
-                        }
+                        {name}: {typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}
                     </div>
                 ))}
             </div>

@@ -14,7 +14,7 @@ import { getLapisUrl } from '../../config.ts';
 import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
-import { type MetadataFilter, type Schema, type GroupedMetadataFilter } from '../../types/config.ts';
+import { type MetadataFilter, type Schema, type GroupedMetadataFilter, type FieldValues } from '../../types/config.ts';
 import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
@@ -32,7 +32,7 @@ interface InnerSearchFullUIProps {
     organism: string;
     clientConfig: ClientConfig;
     schema: Schema;
-    hiddenFieldValues?: Record<string, string>;
+    hiddenFieldValues?: FieldValues;
 }
 interface QueryState {
     [key: string]: string;
@@ -47,6 +47,9 @@ export const InnerSearchFullUI = ({
     schema,
     hiddenFieldValues,
 }: InnerSearchFullUIProps) => {
+    if (!hiddenFieldValues) {
+        hiddenFieldValues = {};
+    }
     const metadataSchema = schema.metadata;
 
     const metadataSchemaWithExpandedRanges = useMemo(() => {

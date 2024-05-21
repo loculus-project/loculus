@@ -116,3 +116,6 @@ export const websiteConfig = z.object({
     additionalHeadHTML: z.string().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
+
+export type FieldValues = Record<string, string | number>;
+export type SetAFieldValue = (fieldName: string, value: string | number) => void;
