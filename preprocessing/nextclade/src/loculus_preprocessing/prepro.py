@@ -232,6 +232,8 @@ def process_single(
     }
 
     for output_field, spec_dict in config.processing_spec.items():
+        if output_field == "length":
+            continue
         spec = ProcessingSpec(
             inputs=spec_dict["inputs"],
             function=spec_dict["function"],
@@ -269,14 +271,15 @@ def process_single(
                 )
                 continue
             if input_path not in unprocessed.inputMetadata:
-                warnings.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
-                        ],
-                        message=f"Metadata field '{input_path}' not found in input",
-                    )
-                )
+                # Suppress warning to prevent spamming for now until we have more sophisticated solution
+                # warnings.append(
+                #     ProcessingAnnotation(
+                #         source=[
+                #             AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
+                #         ],
+                #         message=f"Metadata field '{input_path}' not found in input",
+                #     )
+                # )
                 continue
             input_data[arg_name] = unprocessed.inputMetadata[input_path]
         processing_result = ProcessingFunctions.call_function(
