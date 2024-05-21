@@ -26,7 +26,7 @@ const orderDirectionKey = 'order';
 const VISIBILITY_PREFIX = 'visibility_';
 
 interface InnerSearchFullUIProps {
-    accessToken: string;
+    accessToken?: string;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     myGroups: Group[];
     organism: string;
@@ -124,10 +124,18 @@ export const InnerSearchFullUI = ({
     }, [state, hiddenFieldValues]);
 
     const setAFieldValue = (fieldName: string, value: string) => {
-        setState((prev: any) => ({
+        setState((prev: any) => {
+            
+           const newState =  {
             ...prev,
             [fieldName]: value,
-        }));
+        }
+        if (value === '') {
+            delete newState[fieldName];
+        }
+        return newState;
+    
+    });
         setPage(1);
     };
 

@@ -57,7 +57,6 @@ export const TextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, Text
 
     const standardProps = {
         id,
-        fieldValue,
         onChange,
         autoComplete,
         disabled,
