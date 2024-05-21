@@ -895,7 +895,6 @@ defaultOrganisms:
     - <<: *preprocessing
       configFile:
         <<: *preprocessingConfigFile
-        taxon_id: 186538
         nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
   ebola-sudan:
     <<: *defaultOrganismConfig
@@ -907,9 +906,13 @@ defaultOrganisms:
     - <<: *preprocessing
       configFile:
         <<: *preprocessingConfigFile
-        taxon_id: 3052460
         nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/ebola/data_output
         nextclade_dataset_name: nextstrain/ebola/sudan
+    ingest:
+      <<: *ingest
+      configFile:
+        <<: *ingestConfigFile
+        taxon_id: 3052460
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
