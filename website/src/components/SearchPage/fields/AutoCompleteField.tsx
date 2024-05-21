@@ -10,7 +10,7 @@ type AutoCompleteFieldProps = {
     field: MetadataFilter | GroupedMetadataFilter;
     setAFieldValue: (fieldName: string, value: string) => void;
     lapisUrl: string;
-    fieldValue: string;
+    fieldValue?: string;
     lapisSearchParameters: Record<string, any>;
 };
 

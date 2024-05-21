@@ -180,8 +180,6 @@ export const InnerSearchFullUI = ({
         };
     }, [fieldValues, referenceGenomesSequenceNames]);
 
-    console.log('lapisSearchParameters', lapisSearchParameters);
-
     useEffect(() => {
         aggregatedHook.mutate({
             ...lapisSearchParameters,
@@ -248,8 +246,6 @@ export const InnerSearchFullUI = ({
             </div>
             <div className='flex-1'>
                 <RecentSequencesBanner organism={organism} />
-
-                {console.log('aggregatedHook', aggregatedHook)}
 
                 {(detailsHook.isError || aggregatedHook.isError) &&
                     (aggregatedHook.error?.response?.status === 503 ? (

@@ -8,10 +8,10 @@ import { AutoCompleteField } from './fields/AutoCompleteField';
 import { DateField, TimestampField } from './fields/DateField.tsx';
 import { MutationField } from './fields/MutationField.tsx';
 import { NormalTextField } from './fields/NormalTextField';
+import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import type { GroupedMetadataFilter, MetadataFilter } from '../../types/config.ts';
 import { type ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
-import { useOffCanvas } from '../../hooks/useOffCanvas.ts';
 import { OffCanvasOverlay } from '../OffCanvasOverlay.tsx';
 const queryClient = new QueryClient();
 
@@ -99,7 +99,7 @@ export const SearchForm = ({
 
                         <MutationField
                             referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                            value={fieldValues.mutation ?? ''}
+                            value={'mutation' in fieldValues ? fieldValues.mutation : ''}
                             onChange={(value) => setAFieldValue('mutation', value)}
                         />
 

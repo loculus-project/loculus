@@ -54,7 +54,7 @@ function renderSearchFullUI({
     clientConfig = testConfig.public,
     referenceGenomesSequenceNames = defaultReferenceGenomesSequenceNames,
 } = {}) {
-    const consolidatedMetadataSchema: (MetadataFilter | GroupedMetadataFilter)[] = searchFormFilters.map((filter) => ({
+    const metadataSchema: (MetadataFilter)[] = searchFormFilters.map((filter) => ({
         ...filter,
         grouped: false,
     }));
@@ -66,7 +66,7 @@ function renderSearchFullUI({
         organism: testOrganism,
         clientConfig,
         schema: {
-            metadata: consolidatedMetadataSchema,
+            metadata: metadataSchema,
             tableColumns: ['field1', 'field2', 'field3'],
             primaryKey: 'field1',
         },
@@ -170,13 +170,7 @@ describe('SearchFullUI', () => {
     });
 
     test('toggle field visibility', async () => {
-        renderSearchFullUI({
-            visibilities: new Map([
-                ['field1', true],
-                ['field2', true],
-                ['field3', true],
-            ]),
-        });
+        renderSearchFullUI({});
 
         expect(await screen.findByLabelText('Field 1')).toBeVisible();
 

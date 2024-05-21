@@ -21,7 +21,6 @@ export const AccessionField: FC<AccessionFieldProps> = ({ textValue, setTextValu
                 setTextValue(filter);
             }}
             fieldValue={textValue}
-            isLoading={false}
             multiline
         />
     );
