@@ -297,6 +297,7 @@ export const InnerSearchFullUI = ({
                                 lapisUrl={lapisUrl}
                                 lapisSearchParameters={lapisSearchParameters}
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                hiddenFieldValues={hiddenFieldValues}
                             />
                         </div>
 

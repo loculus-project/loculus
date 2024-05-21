@@ -11,12 +11,14 @@ type DownloadDialogProps = {
     lapisSearchParameters: Record<string, any>;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisUrl: string;
+    hiddenFieldValues: Record<string, string>;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
     lapisSearchParameters,
     referenceGenomesSequenceNames,
     lapisUrl,
+    hiddenFieldValues,
 }) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
@@ -48,7 +50,10 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
                     <h3 className='font-bold text-2xl mb-4'>Download</h3>
 
-                    <ActiveDownloadFilters lapisSearchParameters={lapisSearchParameters} />
+                    <ActiveDownloadFilters
+                        lapisSearchParameters={lapisSearchParameters}
+                        hiddenFieldValues={hiddenFieldValues}
+                    />
                     <DownloadForm
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}

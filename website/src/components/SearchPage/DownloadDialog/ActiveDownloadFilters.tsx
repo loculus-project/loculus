@@ -2,11 +2,13 @@ import type { FC } from 'react';
 
 type ActiveDownloadFiltersProps = {
     lapisSearchParameters: Record<string, any>;
+    hiddenFieldValues: Record<string, string>;
 };
 
-export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSearchParameters }) => {
+export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSearchParameters, hiddenFieldValues }) => {
     let filterValues = Object.entries(lapisSearchParameters)
         .filter((vals) => vals[1] !== undefined && vals[1] !== '')
+        .filter(([name, val]) => !(Object.keys(hiddenFieldValues).includes(name) && hiddenFieldValues[name] === val))
         .map(([name, filterValue]) => ({ name, filterValue }));
 
     filterValues = filterValues.filter(({ filterValue }) => filterValue.length > 0);
@@ -23,7 +25,6 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSea
                     <div key={name} className='border-black border rounded-full px-2 py-1 text-sm'>
                         {name}:{' '}
                         {
-                            // join commas for multiple values
                             typeof filterValue === 'object' ? filterValue.join(', ') : filterValue
                         }
                     </div>
