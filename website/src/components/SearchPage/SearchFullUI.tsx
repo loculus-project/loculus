@@ -82,8 +82,8 @@ export const InnerSearchFullUI = ({
     const [state, setState] = useQueryAsState({});
     const [page, setPage] = useState(1);
 
-    const orderByField = state.orderBy ?? schema.primaryKey;
-    const orderDirection = state.order ?? 'ascending';
+    const orderByField = state.orderBy ?? schema.defaultOrderBy ?? schema.primaryKey;
+    const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
 
     const setOrderByField = (field: string) => {
         setState((prev: QueryState) => ({
