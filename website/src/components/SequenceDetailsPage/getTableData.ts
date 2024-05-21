@@ -160,6 +160,7 @@ function toTableData(config: Schema) {
     }): TableDataEntry[] => {
         const data: TableDataEntry[] = config.metadata
             .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
+            .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
             .map((metadata) => ({
                 label: metadata.displayName ?? sentenceCase(metadata.name),
                 name: metadata.name,

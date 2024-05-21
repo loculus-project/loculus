@@ -76,35 +76,8 @@ describe('getTableData', () => {
     test('should return default values when there is no data', async () => {
         const result = await getTableData(accessionVersion, schema, lapisClient);
 
-        const defaultList: TableDataEntry[] = [
-            {
-                label: 'Metadata field1',
-                name: 'metadataField1',
-                value: 'N/A',
-                customDisplay: undefined,
-                header: 'testHeader1',
-                type: { kind: 'metadata', metadataType: 'string' },
-            },
-            {
-                label: 'Metadata field2',
-                name: 'metadataField2',
-                value: 'N/A',
-                customDisplay: undefined,
-                header: '',
-                type: { kind: 'metadata', metadataType: 'string' },
-            },
-            {
-                label: 'Timestamp field',
-                name: 'timestampField',
-                value: 'N/A',
-                customDisplay: undefined,
-                header: '',
-                type: { kind: 'metadata', metadataType: 'timestamp' },
-            },
-        ];
-
         const data = result._unsafeUnwrap().data;
-        expect(data).toStrictEqual(defaultList.concat(defaultMutationsInsertionsDeletionsList));
+        expect(data).toStrictEqual(defaultMutationsInsertionsDeletionsList);
     });
 
     test('should return details field values', async () => {
