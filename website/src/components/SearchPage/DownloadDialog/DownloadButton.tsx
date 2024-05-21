@@ -2,14 +2,11 @@ import { type FC, type MouseEventHandler, useMemo } from 'react';
 
 import { type DownloadOption, generateDownloadUrl } from './generateDownloadUrl.ts';
 import { approxMaxAcceptableUrlLength } from '../../../routes/routes.ts';
-import type { AccessionFilter, FilterValue, MutationFilter } from '../../../types/config.ts';
 
 type DownloadButtonProps = {
     downloadOption: DownloadOption | undefined;
     lapisUrl: string;
-    accessionFilter: AccessionFilter;
-    metadataFilter: FilterValue[];
-    mutationFilter: MutationFilter;
+    lapisSearchParameters: Record<string, any>;
     disabled?: boolean;
     onClick?: () => void;
 };
@@ -17,9 +14,7 @@ type DownloadButtonProps = {
 export const DownloadButton: FC<DownloadButtonProps> = ({
     downloadOption,
     lapisUrl,
-    accessionFilter,
-    metadataFilter,
-    mutationFilter,
+    lapisSearchParameters,
     disabled = false,
     onClick,
 }) => {
@@ -37,13 +32,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
             };
         }
 
-        const { url, baseUrl, params } = generateDownloadUrl(
-            accessionFilter,
-            metadataFilter,
-            mutationFilter,
-            downloadOption,
-            lapisUrl,
-        );
+        const { url, baseUrl, params } = generateDownloadUrl(lapisSearchParameters, downloadOption, lapisUrl);
         const useGet = url.length <= approxMaxAcceptableUrlLength;
         if (useGet) {
             return {
@@ -62,7 +51,7 @@ export const DownloadButton: FC<DownloadButtonProps> = ({
                 }
             },
         };
-    }, [downloadOption, disabled, accessionFilter, metadataFilter, mutationFilter, lapisUrl, onClick]);
+    }, [downloadOption, disabled, lapisSearchParameters, lapisUrl, onClick]);
 
     return (
         <a

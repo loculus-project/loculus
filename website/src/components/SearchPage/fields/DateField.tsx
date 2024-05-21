@@ -1,16 +1,20 @@
 import { DateTime } from 'luxon';
-import type { FC } from 'react';
 import { DatePicker } from 'rsuite';
 
-import type { FieldProps } from './FieldProps';
 import 'rsuite/DatePicker/styles/index.css';
+import { type MetadataFilter, type SetAFieldValue } from '../../../types/config';
 
-type ValueConverter = {
+type CustomizedDatePickerProps = {
+    field: MetadataFilter;
+    setAFieldValue: SetAFieldValue;
     dateToValueConverter: (date: Date | null) => string;
     valueToDateConverter: (value: string) => Date | undefined;
+    fieldValue: string | number;
 };
 
-export const DateField: FC<FieldProps> = (props) => (
+export const DateField: React.FC<Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>> = (
+    props,
+) => (
     <CustomizedDatePicker
         {...props}
         dateToValueConverter={(date) => {
@@ -22,22 +26,25 @@ export const DateField: FC<FieldProps> = (props) => (
     />
 );
 
-export const TimestampField: FC<FieldProps> = (props) => (
+export const TimestampField: React.FC<
+    Omit<CustomizedDatePickerProps, 'dateToValueConverter' | 'valueToDateConverter'>
+> = (props) => (
     <CustomizedDatePicker
         {...props}
         dateToValueConverter={(date) => (date ? String(Math.floor(date.getTime() / 1000)) : '')}
         valueToDateConverter={(value) => {
-            const timestamp = parseInt(value, 10);
+            const timestamp = Math.max(parseInt(value, 10));
             return isNaN(timestamp) ? undefined : new Date(timestamp * 1000);
         }}
     />
 );
 
-const CustomizedDatePicker: FC<FieldProps & ValueConverter> = ({
+const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
     field,
-    handleFieldChange,
+    setAFieldValue,
     dateToValueConverter,
     valueToDateConverter,
+    fieldValue,
 }) => {
     return (
         <div>
@@ -47,18 +54,17 @@ const CustomizedDatePicker: FC<FieldProps & ValueConverter> = ({
                 </label>
                 <DatePicker
                     name={field.name}
-                    defaultValue={field.filterValue ? valueToDateConverter(field.filterValue) : undefined}
-                    onChange={(value) => {
-                        if (value && isNaN(value.getTime())) {
-                            return;
+                    value={fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : undefined}
+                    key={field.name}
+                    onChange={(date) => {
+                        if (date) {
+                            setAFieldValue(field.name, dateToValueConverter(date));
+                        } else {
+                            setAFieldValue(field.name, '');
                         }
-                        handleFieldChange(field.name, dateToValueConverter(value));
-                    }}
-                    onChangeCalendarDate={(value) => {
-                        handleFieldChange(field.name, dateToValueConverter(value));
                     }}
                     onClean={() => {
-                        handleFieldChange(field.name, '');
+                        setAFieldValue(field.name, '');
                     }}
                 />
             </div>

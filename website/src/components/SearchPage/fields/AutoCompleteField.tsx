@@ -1,16 +1,23 @@
 import { Combobox } from '@headlessui/react';
-import { type FC, useEffect, useMemo, useState, useRef, forwardRef } from 'react';
+import { useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 
-import type { FieldProps } from './FieldProps';
 import { TextField } from './TextField.tsx';
 import { getClientLogger } from '../../../clientLogger.ts';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
-import type { MetadataFilter } from '../../../types/config.ts';
+import { type GroupedMetadataFilter, type MetadataFilter, type SetAFieldValue } from '../../../types/config.ts';
+
+type AutoCompleteFieldProps = {
+    field: MetadataFilter | GroupedMetadataFilter;
+    setAFieldValue: SetAFieldValue;
+    lapisUrl: string;
+    fieldValue?: string | number;
+    lapisSearchParameters: Record<string, any>;
+};
 
 const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>((props, ref) => (
     <TextField
         ref={ref}
-        value={props.value}
+        fieldValue={props.value}
         onChange={props.onChange}
         onFocus={props.onFocus}
         disabled={props.disabled}
@@ -22,12 +29,13 @@ const CustomInput = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLI
 
 const logger = getClientLogger('AutoCompleteField');
 
-export type AutoCompleteFieldProps = FieldProps & {
-    allFields: MetadataFilter[];
-    lapisUrl: string;
-};
-
-export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, allFields, handleFieldChange, lapisUrl }) => {
+export const AutoCompleteField = ({
+    field,
+    setAFieldValue,
+    lapisUrl,
+    fieldValue,
+    lapisSearchParameters,
+}: AutoCompleteFieldProps) => {
     const buttonRef = useRef<HTMLButtonElement>(null);
     const [query, setQuery] = useState('');
     const {
@@ -44,8 +52,16 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, allFields
     }, [error]);
 
     const handleOpen = () => {
-        const otherFieldsFilter = getOtherFieldsFilter(allFields, field);
-        mutate({ fields: [field.name], ...otherFieldsFilter });
+        const otherFields = { ...lapisSearchParameters };
+        delete otherFields[field.name];
+
+        Object.keys(otherFields).forEach((key) => {
+            if (otherFields[key] === '') {
+                delete otherFields[key];
+            }
+        });
+
+        mutate({ fields: [field.name], ...otherFields });
         if (buttonRef.current) {
             buttonRef.current.click();
         }
@@ -69,7 +85,7 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, allFields
     );
 
     return (
-        <Combobox value={field.filterValue} onChange={(value) => handleFieldChange(field.name, value)}>
+        <Combobox value={fieldValue} onChange={(value) => setAFieldValue(field.name, value)}>
             <div className='relative'>
                 <Combobox.Input
                     className='w-full py-2 pl-3  text-sm leading-5
@@ -82,12 +98,12 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, allFields
                     placeholder={field.label}
                     as={CustomInput}
                 />
-                {(field.filterValue !== '' || query !== '') && (
+                {((fieldValue !== '' && fieldValue !== undefined) || query !== '') && (
                     <button
                         className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                         onClick={() => {
                             setQuery('');
-                            handleFieldChange(field.name, '');
+                            setAFieldValue(field.name, '');
                         }}
                     >
                         <svg className='w-5 h-5 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
@@ -159,9 +175,3 @@ export const AutoCompleteField: FC<AutoCompleteFieldProps> = ({ field, allFields
         </Combobox>
     );
 };
-
-function getOtherFieldsFilter(allFields: MetadataFilter[], field: MetadataFilter) {
-    return allFields
-        .filter((f) => f.name !== field.name && f.filterValue !== '')
-        .reduce((acc, f) => ({ ...acc, [f.name]: f.filterValue }), {});
-}
