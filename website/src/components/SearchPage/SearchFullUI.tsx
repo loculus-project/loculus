@@ -101,7 +101,7 @@ export const InnerSearchFullUI = ({
     const visibilities = useMemo(() => {
         const visibilities = new Map<string, boolean>();
         schema.metadata.forEach((field) => {
-            if(field.hideOnSequenceDetailsPage === true) {
+            if (field.hideOnSequenceDetailsPage === true) {
                 return;
             }
             visibilities.set(field.name, field.initiallyVisible === true);
