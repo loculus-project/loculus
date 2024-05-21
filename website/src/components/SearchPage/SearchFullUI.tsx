@@ -7,7 +7,7 @@ import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
 import { SearchPagination } from './SearchPagination';
 import { SeqPreviewModal } from './SeqPreviewModal';
-import { Table } from './Table';
+import { Table, type TableSequenceData } from './Table';
 import { parseMutationString } from './fields/MutationField.tsx';
 import useQueryAsState from './useQueryAsState.js';
 import { getLapisUrl } from '../../config.ts';
@@ -15,11 +15,10 @@ import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import { pageSize } from '../../settings';
 import type { Group } from '../../types/backend.ts';
 import { type MetadataFilter, type Schema, type GroupedMetadataFilter, type FieldValues } from '../../types/config.ts';
-import type { OrderBy } from '../../types/lapis.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import type { SearchResponse } from '../../utils/search.ts';
-
+import { type OrderByType, type OrderBy } from '../../types/lapis.ts';
 const orderKey = 'orderBy';
 const orderDirectionKey = 'order';
 
@@ -194,17 +193,16 @@ export const InnerSearchFullUI = ({
             ...lapisSearchParameters,
             fields: [],
         });
+        const OrderByList : OrderBy[] =[ {
+            field: orderByField,
+            type: orderDirection ,
+        }];
         detailsHook.mutate({
             ...lapisSearchParameters,
             fields: [...schema.tableColumns, schema.primaryKey],
             limit: pageSize,
             offset: (page - 1) * pageSize,
-            orderBy: [
-                {
-                    field: orderByField,
-                    type: orderDirection,
-                } as OrderBy,
-            ],
+            orderBy: OrderByList,
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
