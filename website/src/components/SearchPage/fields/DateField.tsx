@@ -54,7 +54,7 @@ const CustomizedDatePicker: React.FC<CustomizedDatePickerProps> = ({
                 </label>
                 <DatePicker
                     name={field.name}
-                    value={fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : undefined}
+                    defaultValue={fieldValue !== '' ? valueToDateConverter(fieldValue.toString()) : undefined}
                     key={field.name}
                     onChange={(date) => {
                         if (date) {
