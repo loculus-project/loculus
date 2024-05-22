@@ -1,5 +1,6 @@
 {{- range $organism, $organismConfig := (.Values.organisms | default .Values.defaultOrganisms) }}
 {{- $metadata := ($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).metadata }}
+{{- $segmented := (($organismConfig.schema | include "loculus.patchMetadataSchema" | fromYaml).segmented | default false ) }}
 {{- range $processingIndex, $processingConfig := $organismConfig.preprocessing }}
 {{- if $processingConfig.configFile }}
 ---
@@ -11,7 +12,8 @@ data:
   preprocessing-config.yaml: |
     {{- $processingConfig.configFile | toYaml | nindent 4 }}
     processing_spec: 
-      {{- include "loculus.preprocessingSpecs" $metadata | nindent 6 }}
+      {{- $args := dict "metadata" $metadata "segmented" $segmented }}
+      {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}
     organism: {{ $organism }}
 {{- end }}
 {{- end }}

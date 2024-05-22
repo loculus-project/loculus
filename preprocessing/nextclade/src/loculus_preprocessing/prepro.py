@@ -250,6 +250,74 @@ def null_per_backend(x: Any) -> bool:
             return False
 
 
+def get_metadata(
+    inputs, function, required, args, output_field, unprocessed, output_metadata, errors, warnings
+):
+    spec = ProcessingSpec(
+        inputs=inputs,
+        function=function,
+        required=required,
+        args=args,
+    )
+    input_data: InputMetadata = {}
+    for arg_name, input_path in spec.inputs.items():
+        input_data[arg_name] = None
+        # If field starts with "nextclade.", take from nextclade metadata
+        nextclade_prefix = "nextclade."
+        if input_path.startswith(nextclade_prefix):
+            # Remove "nextclade." prefix
+            if unprocessed.nextcladeMetadata is None:
+                errors.append(
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(
+                                name="main",
+                                type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                            )
+                        ],
+                        message="Nucleotide sequence failed to align",
+                    )
+                )
+                continue
+            sub_path = input_path[len(nextclade_prefix) :]
+            input_data[arg_name] = str(
+                dpath.get(
+                    unprocessed.nextcladeMetadata,
+                    sub_path,
+                    separator=".",
+                    default=None,
+                )
+            )
+            continue
+        if input_path not in unprocessed.inputMetadata:
+            warnings.append(
+                ProcessingAnnotation(
+                    source=[AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)],
+                    message=f"Metadata field '{input_path}' not found in input",
+                )
+            )
+            continue
+        input_data[arg_name] = unprocessed.inputMetadata[input_path]
+    try:
+        processing_result = ProcessingFunctions.call_function(
+            spec.function, spec.args, input_data, output_field
+        )
+    except:
+        print(spec)
+        print(input_data)
+        raise Exception("processing failed")
+
+    errors.extend(processing_result.errors)
+    warnings.extend(processing_result.warnings)
+    output_metadata[output_field] = processing_result.datum
+    if null_per_backend(processing_result.datum) and spec.required:
+        logging.warn(
+            f"Metadata field {output_field} is required but nullish: "
+            f"{processing_result.datum}, setting to 'Not provided'"
+        )
+        output_metadata[output_field] = "Not provided"
+
+
 def process_single(
     id: AccessionVersion, unprocessed: UnprocessedAfterNextclade, config: Config
 ) -> ProcessedEntry:
@@ -269,73 +337,32 @@ def process_single(
     for output_field, spec_dict in config.processing_spec.items():
         if output_field == "length":
             continue
-        spec = ProcessingSpec(
-            inputs=spec_dict["inputs"],
-            function=spec_dict["function"],
-            required=spec_dict.get("required", False),
-            args=spec_dict.get("args", {}),
-        )
-        input_data: InputMetadata = {}
-        for arg_name, input_path in spec.inputs.items():
-            input_data[arg_name] = None
-            # If field starts with "nextclade.", take from nextclade metadata
-            nextclade_prefix = "nextclade."
-            if input_path.startswith(nextclade_prefix):
-                # Remove "nextclade." prefix
-                if unprocessed.nextcladeMetadata is None:
-                    errors.append(
-                        ProcessingAnnotation(
-                            source=[
-                                AnnotationSource(
-                                    name="main",
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                )
-                            ],
-                            message="Nucleotide sequence failed to align",
-                        )
-                    )
-                    continue
-                sub_path = input_path[len(nextclade_prefix) :]
-                input_data[arg_name] = str(
-                    dpath.get(
-                        unprocessed.nextcladeMetadata,
-                        sub_path,
-                        separator=".",
-                        default=None,
-                    )
+        args = spec_dict.get("args", {})
+        if args.get("segmented"):
+            for segment in config.nucleotideSequences:
+                get_metadata(
+                    spec_dict["inputs"] + "_" + segment,
+                    spec_dict["function"],
+                    spec_dict.get("required", False),
+                    args,
+                    output_field + "_" + segment,
+                    unprocessed,
+                    output_metadata,
+                    errors,
+                    warnings,
                 )
-                continue
-            if input_path not in unprocessed.inputMetadata:
-                # Suppress warning to prevent spamming for now until we have more sophisticated solution
-                # warnings.append(
-                #     ProcessingAnnotation(
-                #         source=[
-                #             AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
-                #         ],
-                #         message=f"Metadata field '{input_path}' not found in input",
-                #     )
-                # )
-                continue
-            input_data[arg_name] = unprocessed.inputMetadata[input_path]
-        try:
-            processing_result = ProcessingFunctions.call_function(
-                spec.function, spec.args, input_data, output_field
+        else:
+            get_metadata(
+                spec_dict["inputs"],
+                spec_dict["function"],
+                spec_dict.get("required", False),
+                args,
+                output_field + "_" + segment,
+                unprocessed,
+                output_metadata,
+                errors,
+                warnings,
             )
-        except:
-            print(spec)
-            print(input_data)
-            raise Exception("processing failed")
-
-        errors.extend(processing_result.errors)
-        warnings.extend(processing_result.warnings)
-        output_metadata[output_field] = processing_result.datum
-        if null_per_backend(processing_result.datum) and spec.required:
-            logging.warn(
-                f"Metadata field {output_field} is required but nullish: "
-                f"{processing_result.datum}, setting to 'Not provided'"
-            )
-            output_metadata[output_field] = "Not provided"
-
     logging.debug(f"Processed {id}: {output_metadata}")
 
     return ProcessedEntry(

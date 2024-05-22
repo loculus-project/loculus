@@ -143,11 +143,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
+        segmented: true
       - name: insdc_version
         type: int
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
+        segmented: true
       - name: insdc_accession_full
         displayName: INSDC accession
         customDisplay:
@@ -156,18 +158,21 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: genbank_accession
         noInput: true
+        segmented: true
       - name: bioproject_accessions
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
         header: "INSDC"
         ingest: bioprojects
+        segmented: true
       - name: biosample_accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
         header: "INSDC" 
         noInput: true
+        segmented: true
       - name: culture_id
         displayName: Culture ID
         header: Sample details
@@ -692,11 +697,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         header: "INSDC"
         noInput: true
+        segmented: true
       - name: length
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
+        segmented: true
       - name: host_name_scientific
         generateIndex: true
         autocomplete: true
@@ -1190,6 +1197,7 @@ defaultOrganisms:
     schema:
       <<: *schema
       instanceName: "Crimean-Congo Hemorrhagic Fever Virus"
+      segmented: true
       image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg/1920px-Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg"
       website:
         <<: *website

@@ -1,5 +1,6 @@
 {{- define "loculus.preprocessingSpecs" -}}
-{{- $metadata := . }}
+{{- $metadata := .metadata }}
+{{- $use_segments := .segmented }}
 {{- $specs := dict }}
 
 {{- range $field := $metadata }}
@@ -13,6 +14,13 @@
   {{- else if eq $type "float" }}
     {{- $_ := set $spec "args" (dict "type" "float") }}
   {{- end }}
+{{- end }}
+
+{{- if $use_segments }}
+{{- if hasKey $field "segmented" }}
+  {{- $segmented := index $field "segmented" }}
+  {{- $_ := set $spec "args" (dict "segmented" true) }}
+{{- end }}
 {{- end }}
 
 {{- if hasKey $field "preprocessing" }}

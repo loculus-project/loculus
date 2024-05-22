@@ -99,6 +99,7 @@ organisms:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       instanceName: {{ quote .instanceName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
+      {{- $segmented := (.segmented | default false )}}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
@@ -108,10 +109,8 @@ organisms:
       primaryKey: accessionVersion
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
       metadata:
-        {{ $metadata := concat $commonMetadata .metadata
-            | include "loculus.generateWebsiteMetadata"
-            | fromYaml
-         }}
+        {{- $args := dict "metadata" .metadata "segmented" $segmented }}
+        {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
       {{- end }}
@@ -123,38 +122,80 @@ organisms:
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
 fields:
-{{- range . }}
-  - name: {{ quote .name }}
-    type: {{ .type | default "string" | quote }}
-    {{- if .autocomplete }}
-    autocomplete: {{ .autocomplete }}
-    {{- end }}
-    {{- if .notSearchable }}
-    notSearchable: {{ .notSearchable }}
-    {{- end }}
-    {{- if .initiallyVisible }}
-    initiallyVisible: {{ .initiallyVisible }}
-    {{- end }}
-    {{- if or (or (eq .type "timestamp")  (eq .type "date")) ( .rangeSearch) }}
-    rangeSearch: true
-    {{- end }}
-    {{- if .hideOnSequenceDetailsPage }}
-    hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
-    {{- end }}
-    {{- if .displayName }}
-    displayName: {{ quote .displayName }}
-    {{- end }}
-    {{- if .truncateColumnDisplayTo }}
-    truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
-    {{- end }}
-    {{- if .customDisplay }}
-    customDisplay:
-      type: {{ quote .customDisplay.type }}
-      url: {{ .customDisplay.url }}
-    {{- end }}
-    header: {{ default "Other" .header }}
+{{- $metadataList := .metadata }}
+{{- $use_segments := .segmented }}
+{{- $segments := list "M" "S" "L" }}
+{{- range $metadataList }}
+{{- $currentItem := . }}
+{{- if and $use_segments .segmented }}
+  {{- range $segment := $segments }}
+    - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
+      type: {{ $currentItem.type | default "string" | quote }}
+      {{- if $currentItem.autocomplete }}
+      autocomplete: {{ $currentItem.autocomplete }}
+      {{- end }}
+      {{- if $currentItem.notSearchable }}
+      notSearchable: {{ $currentItem.notSearchable }}
+      {{- end }}
+      {{- if $currentItem.initiallyVisible }}
+      initiallyVisible: {{ $currentItem.initiallyVisible }}
+      {{- end }}
+      {{- if or (or (eq $currentItem.type "timestamp")  (eq $currentItem.type "date")) ( $currentItem.rangeSearch) }}
+      rangeSearch: true
+      {{- end }}
+      {{- if $currentItem.hideOnSequenceDetailsPage }}
+      hideOnSequenceDetailsPage: {{ $currentItem.hideOnSequenceDetailsPage }}
+      {{- end }}
+      {{- if $currentItem.displayName }}
+      displayName: {{ quote $currentItem.displayName }}
+      {{- end }}
+      {{- if $currentItem.truncateColumnDisplayTo }}
+      truncateColumnDisplayTo: {{ $currentItem.truncateColumnDisplayTo }}
+      {{- end }}
+      {{- if $currentItem.customDisplay }}
+      customDisplay:
+        type: {{ quote $currentItem.customDisplay.type }}
+        url: {{ $currentItem.customDisplay.url }}
+      {{- end }}
+      header: {{ default "Other" $currentItem.header }}
+  {{- end}}
+{{- else }}
+    - name: {{ quote .name }}
+      type: {{ .type | default "string" | quote }}
+      {{- if .autocomplete }}
+      autocomplete: {{ .autocomplete }}
+      {{- end }}
+      {{- if .notSearchable }}
+      notSearchable: {{ .notSearchable }}
+      {{- end }}
+      {{- if .initiallyVisible }}
+      initiallyVisible: {{ .initiallyVisible }}
+      {{- end }}
+      {{- if .segmented }}
+      segmented: {{ .segmented }}
+      {{- end }}
+      {{- if or (or (eq .type "timestamp")  (eq .type "date")) ( .rangeSearch) }}
+      rangeSearch: true
+      {{- end }}
+      {{- if .hideOnSequenceDetailsPage }}
+      hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
+      {{- end }}
+      {{- if .displayName }}
+      displayName: {{ quote .displayName }}
+      {{- end }}
+      {{- if .truncateColumnDisplayTo }}
+      truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
+      {{- end }}
+      {{- if .customDisplay }}
+      customDisplay:
+        type: {{ quote .customDisplay.type }}
+        url: {{ .customDisplay.url }}
+      {{- end }}
+      header: {{ default "Other" .header }}
 {{- end}}
 {{- end}}
+{{- end}}
+
 
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
@@ -167,12 +208,11 @@ organisms:
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
+      {{- $segmented := (.segmented | default false )}}
       instanceName: {{ quote .instanceName }}
       metadata:
-        {{ $metadata := (include "loculus.patchMetadataSchema" .
-          | fromYaml).metadata
-          | include "loculus.generateBackendMetadata"
-          | fromYaml }}
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "segmented" $segmented }}
+        {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:
@@ -183,12 +223,27 @@ organisms:
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendMetadata" }}
 fields:
-{{- range . }}
+{{- $metadataList := .metadata }}
+{{- $use_segments := .segmented }}
+{{- $segments := list "M" "S" "L" }}
+{{- range $metadataList }}
+{{- $currentItem := . }}
+{{- $segmented := (.segmented | default false )}}
+{{- if and $use_segments $segmented }}
+{{- range $segment := $segments }}
+  - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
+    type: {{ $currentItem.type | default "string" | quote }}
+    {{- if $currentItem.required }}
+    required: {{ $currentItem.required }}
+    {{- end }}
+{{- end}}
+{{- else }}
   - name: {{ quote .name }}
     type: {{ .type | default "string" | quote }}
     {{- if .required }}
     required: {{ .required }}
     {{- end }}
+{{- end}}
 {{- end}}
 {{- end}}
 
