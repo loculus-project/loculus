@@ -715,7 +715,6 @@ class SubmissionDatabaseService(
                     SequenceEntriesTable.versionColumn eq editedAccessionVersion.version
             },
         ) {
-            it[statusColumn] = Status.RECEIVED.name
             it[originalDataColumn] = compressionService
                 .compressSequencesInOriginalData(editedAccessionVersion.data, organism)
         }
