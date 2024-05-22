@@ -25,7 +25,7 @@ spec:
           resources:
             requests:
               memory: "100Mi"
-              {{ include "loculus.standardCPURequest" $ | indent 14 }}
+              {{ include "loculus.standardCPURequest" $ }}
             limits:
               memory: "100Mi"
           ports:

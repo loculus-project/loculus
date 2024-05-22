@@ -37,7 +37,7 @@ spec:
           resources:
             requests:
               memory: "40Mi"
-              {{ include "loculus.standardCPURequest" $ | indent 14 }}
+              {{ include "loculus.standardCPURequest" $ }}
             limits:
               memory: "3Gi"
           env:
