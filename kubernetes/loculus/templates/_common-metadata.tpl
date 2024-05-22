@@ -54,10 +54,12 @@ fields:
     type: timestamp
     displayName: Date submitted
     header: Submission details
+    rangeSearch: true
   - name: releasedAt
     type: timestamp
     displayName: Date released
     header: Submission details
+    rangeSearch: true
   - name: dataUseTerms
     type: string
     generateIndex: true
