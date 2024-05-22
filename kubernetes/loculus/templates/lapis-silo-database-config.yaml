@@ -12,7 +12,7 @@ data:
   {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
   database_config.yaml: |
     schema:
-      instanceName: {{ .instanceName }}
+      instanceName: {{ .organismName }}
       opennessLevel: OPEN
       metadata:
       {{- range (concat $commonMetadata .metadata) }}

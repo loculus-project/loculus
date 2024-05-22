@@ -97,7 +97,7 @@ organisms:
   {{ $key }}:
     schema:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
-      instanceName: {{ quote .instanceName }}
+      organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
       {{ if .image }}
       image: {{ .image }}
@@ -167,7 +167,7 @@ organisms:
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
-      instanceName: {{ quote .instanceName }}
+      organismName: {{ quote .organismName }}
       metadata:
         {{ $metadata := (include "loculus.patchMetadataSchema" .
           | fromYaml).metadata
