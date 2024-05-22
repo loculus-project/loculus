@@ -346,7 +346,7 @@ const InnerDataUploadForm = ({
                         <p className='text-gray-400 text-xs mt-3'>
                             For more information on the format in which data should be uploaded and the required
                             metadata, please refer to our{' '}
-                            <a href='#TODO-MVP' className='text-primary-700 opacity-90'>
+                            <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>
                                 help pages
                             </a>
                             .
