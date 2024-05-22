@@ -9,7 +9,7 @@ from typing import List, Optional
 
 import requests
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--backend-host", type=str, default="http://127.0.0.1:8079",
