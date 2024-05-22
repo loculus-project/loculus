@@ -56,6 +56,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       - name: sample_collection_date
         displayName: Collection date
         type: date
+        rangeSearch: true
         initiallyVisible: true
         header: Sample details
         ingest: ncbi_collection_date
