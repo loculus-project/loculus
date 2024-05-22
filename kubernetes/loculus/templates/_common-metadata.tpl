@@ -11,7 +11,7 @@ fields:
     hideOnSequenceDetailsPage: true
   - name: submissionId
     type: string
-    header: Submission Details
+    header: Submission details
   - name: accessionVersion
     type: string
     notSearchable: true
@@ -24,38 +24,38 @@ fields:
     type: string
     generateIndex: true
     autocomplete: true
-    header: Submission Details
+    header: Submission details
   - name: groupId
     type: int
     autocomplete: true
-    header: Submission Details
+    header: Submission details
   - name: groupName
     type: string
     generateIndex: true
     autocomplete: true
-    header: Submission Details
+    header: Submission details
   - name: submittedAt
     type: timestamp
     displayName: Date submitted
-    header: Submission Details
+    header: Submission details
   - name: releasedAt
     type: timestamp
     displayName: Date released
-    header: Submission Details
+    header: Submission details
   - name: dataUseTerms
     type: string
     generateIndex: true
     autocomplete: true
-    displayName: Data Use Terms
+    displayName: data use terms
     initiallyVisible: true
     customDisplay:
       type: dataUseTerms
-    header: Data Use Terms
+    header: data use terms
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
-    header: Data Use Terms
+    header: data use terms
   - name: versionStatus
     type: string
     notSearchable: true
@@ -64,7 +64,7 @@ fields:
   - name: dataUseTermsUrl
     type: string
     notSearchable: true
-    header: Data Use Terms
+    header: data use terms
     customDisplay:
       type: link
       url: "__value__"
