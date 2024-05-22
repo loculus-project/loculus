@@ -24,7 +24,7 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
 
         <div class='flex flex-wrap'>
             {
-                getConfiguredOrganisms().map(({ key, displayName, image }) => (
+                getConfiguredOrganisms().slice(0,3).map(({ key, displayName, image }) => (
                     <OrganismCard
                         key={key}
                         image={image}
