@@ -1,12 +1,15 @@
 import argparse
 import dataclasses
 import json
+import logging
 import random
 import time
 from dataclasses import dataclass, field
 from typing import List, Optional
 
 import requests
+
+logging.basicConfig(level=logging.DEBUG)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--backend-host", type=str, default="http://127.0.0.1:8079",
@@ -68,7 +71,7 @@ def fetch_unprocessed_sequences(n: int) -> List[Sequence]:
     response = requests.post(url, data=params, headers=headers)
     if not response.ok:
         if response.status_code == 422:
-            print("{}. Sleeping for a while.".format(response.text))
+            logging.debug("{}. Sleeping for a while.".format(response.text))
             time.sleep(60 * 10)
             return []
         raise Exception("Fetching unprocessed data failed. Status code: {}".format(response.status_code), response.text)
@@ -171,7 +174,7 @@ def main():
     locally_processed = 0
 
     if watch_mode:
-        print("Started in watch mode - waiting 10 seconds before fetching data.")
+        logging.debug("Started in watch mode - waiting 10 seconds before fetching data.")
         time.sleep(10)
 
     if args.maxSequences and args.maxSequences < 100:
@@ -183,8 +186,8 @@ def main():
         unprocessed = fetch_unprocessed_sequences(sequences_to_fetch)
         if len(unprocessed) == 0:
             if watch_mode:
-                print("Processed {} sequences. Sleeping for 10 seconds.".format(locally_processed))
-                time.sleep(10)
+                logging.debug("Processed {} sequences. Sleeping for 10 seconds.".format(locally_processed))
+                time.sleep(2)
                 locally_processed = 0
                 continue
             else:
@@ -196,7 +199,7 @@ def main():
 
         if args.maxSequences and total_processed >= args.maxSequences:
             break
-    print("Total processed sequences: {}".format(total_processed))
+    logging.debug("Total processed sequences: {}".format(total_processed))
 
 
 if __name__ == "__main__":
