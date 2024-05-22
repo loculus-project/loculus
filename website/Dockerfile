@@ -3,6 +3,11 @@ FROM node:${NODE_VERSION}-alpine as base
 
 WORKDIR /app
 
+RUN groupadd -g 1000 appuser && \
+    useradd -m -u 1000 -g appuser -s /bin/bash appuser
+
+USER appuser
+
 COPY .env.docker .env
 COPY package.json package-lock.json ./
 
