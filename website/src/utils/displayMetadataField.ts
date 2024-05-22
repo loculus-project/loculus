@@ -13,7 +13,5 @@ export const displayMetadataField = (value: MetadataField) => {
         return value.toFixed(2);
     }
 
-   
-        return value.toString();
-    
+    return value.toString();
 };
