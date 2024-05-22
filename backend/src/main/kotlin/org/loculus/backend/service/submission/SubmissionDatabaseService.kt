@@ -709,6 +709,16 @@ class SubmissionDatabaseService(
                 .andThatOrganismIs(organism)
         }
 
+        SequenceEntriesTable.update(
+            where = {
+                (SequenceEntriesTable.accessionColumn eq editedAccessionVersion.accession) and
+                    (SequenceEntriesTable.versionColumn eq editedAccessionVersion.version)
+            },
+        ) {
+            it[originalDataColumn] = compressionService
+                .compressSequencesInOriginalData(editedAccessionVersion.data, organism)
+        }
+
         SequenceEntriesPreprocessedDataTable.deleteWhere {
             accessionVersionEquals(editedAccessionVersion)
         }
