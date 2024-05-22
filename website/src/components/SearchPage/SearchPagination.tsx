@@ -17,7 +17,12 @@ export const SearchPagination: FC<SearchPaginationProps> = ({
         <MUIPagination
             count={count}
             page={page}
-            onChange={(_, newPage) => setPage(newPage)}
+            onChange={(_, newPage) => {setPage(newPage)
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+
+            }
             color='primary'
             variant='outlined'
             shape='rounded'
