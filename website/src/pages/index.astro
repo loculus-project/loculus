@@ -22,7 +22,7 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
 
         <h2 class='font-semibold text-gray-700 my-3 text-lg'>Explore {websiteName} data!</h2>
 
-        <div class='flex flex-wrap'>
+        <div class='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4'>
             {
                 getConfiguredOrganisms().map(({ key, displayName, image }) => (
                     <OrganismCard
