@@ -46,16 +46,16 @@ fields:
     type: string
     generateIndex: true
     autocomplete: true
-    displayName: data use terms
+    displayName: Data use terms
     initiallyVisible: true
     customDisplay:
       type: dataUseTerms
-    header: data use terms
+    header: Data use terms
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
-    header: data use terms
+    header: Data use terms
   - name: versionStatus
     type: string
     notSearchable: true
@@ -64,7 +64,7 @@ fields:
   - name: dataUseTermsUrl
     type: string
     notSearchable: true
-    header: data use terms
+    header: Data use terms
     customDisplay:
       type: link
       url: "__value__"
@@ -203,4 +203,3 @@ fields:
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" .externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "https://{{ printf "authentication-%s" .Values.host }}"
 {{- end }}
-
