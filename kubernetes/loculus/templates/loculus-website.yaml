@@ -29,7 +29,7 @@ spec:
           resources:
             requests:
               memory: "200Mi"
-              cpu: "100m"
+              {{ include "loculus.standardCPURequest" $ }}
             limits:
               memory: "1Gi"
           ports:
