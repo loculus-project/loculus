@@ -1,3 +1,16 @@
+{{- define "loculus.websiteUrl" -}}
+{{- $websiteHost := "" }}
+{{- if $.Values.codespaceName }}
+  {{- $websiteHost = printf "https://%s-3000.app.github.dev" $.Values.codespaceName }}
+{{- else if eq $.Values.environment "server" }}
+  {{- $websiteHost = printf "https://%s" $.Values.host }}
+{{- else }}
+  {{- $websiteHost = "http://localhost:3000" }}
+{{- end }}
+{{- printf $websiteHost }}
+{{- end }}
+
+
 {{/* Get common metadata fields */}}
 {{- define "loculus.commonMetadata" }}
 fields:
@@ -29,6 +42,9 @@ fields:
     type: int
     autocomplete: true
     header: Submission details
+    customDisplay:
+      type: link
+      url: {{ include "loculus.websiteUrl" $ -}} /group/__value__
   - name: groupName
     type: string
     generateIndex: true
