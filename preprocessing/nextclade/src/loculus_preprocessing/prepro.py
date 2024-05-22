@@ -231,6 +231,7 @@ def process_single(
         "length": len(unprocessed.unalignedNucleotideSequences),
     }
 
+    alignment_failed = False
     for output_field, spec_dict in config.processing_spec.items():
         if output_field == "length":
             continue
@@ -248,17 +249,7 @@ def process_single(
             if input_path.startswith(nextclade_prefix):
                 # Remove "nextclade." prefix
                 if unprocessed.nextcladeMetadata is None:
-                    errors.append(
-                        ProcessingAnnotation(
-                            source=[
-                                AnnotationSource(
-                                    name="main",
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                )
-                            ],
-                            message="Nucleotide sequence failed to align",
-                        )
-                    )
+                    alignment_failed = True
                     continue
                 sub_path = input_path[len(nextclade_prefix) :]
                 input_data[arg_name] = str(
@@ -294,6 +285,19 @@ def process_single(
                 f"{processing_result.datum}, setting to 'Not provided'"
             )
             output_metadata[output_field] = "Not provided"
+
+    if alignment_failed:
+        errors.append(
+            ProcessingAnnotation(
+                source=[
+                    AnnotationSource(
+                        name="main",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    )
+                ],
+                message="Nucleotide sequence failed to align",
+            )
+        )
 
     logging.debug(f"Processed {id}: {output_metadata}")
 
