@@ -19,7 +19,7 @@ export const SearchPagination: FC<SearchPaginationProps> = ({
             page={page}
             onChange={(_, newPage) => {
                 setPage(newPage);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({ top: 0 });
             }}
             color='primary'
             variant='outlined'
