@@ -51,7 +51,7 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     if not response.ok:
         if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
             logging.debug(f"{response.text}.\nSleeping for a while.")
-            time.sleep(60 * 10)
+            time.sleep(60 * 1)
             return []
         msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
         raise Exception(

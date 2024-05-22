@@ -9,6 +9,7 @@ disablePreprocessing: false
 disableIngest: false
 siloImportLimitSeconds: 3600
 ingestLimitSeconds: 1800
+preprocessingTimeout: 600
 accessionPrefix: "LOC_"
 dataUseTermsUrls:
   open: https://#TODO-MVP/open
