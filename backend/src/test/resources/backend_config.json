@@ -21,7 +21,7 @@
                 ]
             },
             "schema": {
-                "instanceName": "Test",
+                "organismName": "Test",
                 "metadata": [
                     {
                         "name": "date",
@@ -103,7 +103,7 @@
                 ]
             },
             "schema": {
-                "instanceName": "Test",
+                "organismName": "Test",
                 "metadata": [
                     {
                         "name": "date",
