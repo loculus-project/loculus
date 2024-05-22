@@ -241,6 +241,7 @@ def process_single(
             args=spec_dict.get("args", {}),
         )
         input_data: InputMetadata = {}
+        nextclade_failed = False
         for arg_name, input_path in spec.inputs.items():
             input_data[arg_name] = None
             # If field starts with "nextclade.", take from nextclade metadata
@@ -248,17 +249,7 @@ def process_single(
             if input_path.startswith(nextclade_prefix):
                 # Remove "nextclade." prefix
                 if unprocessed.nextcladeMetadata is None:
-                    errors.append(
-                        ProcessingAnnotation(
-                            source=[
-                                AnnotationSource(
-                                    name="main",
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                )
-                            ],
-                            message="Nucleotide sequence failed to align",
-                        )
-                    )
+                    nextclade_failed = True
                     continue
                 sub_path = input_path[len(nextclade_prefix) :]
                 input_data[arg_name] = str(
@@ -282,6 +273,18 @@ def process_single(
                 # )
                 continue
             input_data[arg_name] = unprocessed.inputMetadata[input_path]
+        if nextclade_failed:
+            errors.append(
+                ProcessingAnnotation(
+                    source=[
+                        AnnotationSource(
+                            name="main",
+                            type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                        )
+                    ],
+                    message="Nucleotide sequence failed to align",
+                )
+            )
         processing_result = ProcessingFunctions.call_function(
             spec.function, spec.args, input_data, output_field
         )
