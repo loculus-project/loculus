@@ -1,6 +1,10 @@
 package org.loculus.backend.controller.submission
 
+import org.hamcrest.MatcherAssert.assertThat
+import org.hamcrest.Matchers.anEmptyMap
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.`is`
+import org.hamcrest.Matchers.not
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.UnprocessedData
@@ -60,6 +64,26 @@ class SubmitEditedSequenceEntryVersionEndpointTest(
 
         convenienceClient.getSequenceEntry(accession = accessions.first(), version = 1)
             .assertStatusIs(Status.RECEIVED)
+    }
+
+    @Test
+    fun `GIVEN a sequence entry is processed WHEN I submit edited data THEN has changed original data`() {
+        val firstAccession = convenienceClient.prepareDataTo(Status.AWAITING_APPROVAL)
+            .map { it.accession }
+            .first()
+
+        val entryBeforeEdit = convenienceClient.getOriginalMetadata()
+            .find { it.accession == firstAccession && it.version == 1L }!!
+        assertThat(entryBeforeEdit.originalMetadata, `is`(not(anEmptyMap())))
+
+        val editedData = generateUnprocessedData(firstAccession)
+
+        client.submitEditedSequenceEntryVersion(editedData)
+            .andExpect(status().isNoContent)
+
+        val entryAfterEdit = convenienceClient.getOriginalMetadata()
+            .find { it.accession == firstAccession && it.version == 1L }!!
+        assertThat(entryAfterEdit.originalMetadata, `is`(anEmptyMap()))
     }
 
     @Test

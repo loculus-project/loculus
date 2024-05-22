@@ -711,8 +711,7 @@ class SubmissionDatabaseService(
 
         SequenceEntriesTable.update(
             where = {
-                (SequenceEntriesTable.accessionColumn eq editedAccessionVersion.accession) and
-                    (SequenceEntriesTable.versionColumn eq editedAccessionVersion.version)
+                SequenceEntriesTable.accessionVersionIsIn(listOf(editedAccessionVersion))
             },
         ) {
             it[originalDataColumn] = compressionService
