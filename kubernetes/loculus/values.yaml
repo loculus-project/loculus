@@ -1196,7 +1196,7 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
-      instanceName: "Crimean-Congo Hemorrhagic Fever Virus"
+      organismName: "Crimean-Congo Hemorrhagic Fever Virus"
       segmented: true
       image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg/1920px-Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg"
       website:

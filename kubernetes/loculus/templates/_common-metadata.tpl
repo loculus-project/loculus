@@ -225,7 +225,6 @@ organisms:
     schema:
       {{- with $instance.schema }}
       {{- $segmented := (.segmented | default false )}}
-      instanceName: {{ quote .instanceName }}
       organismName: {{ quote .organismName }}
       metadata:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "segmented" $segmented }}
