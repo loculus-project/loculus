@@ -12,16 +12,30 @@ data:
   {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
   database_config.yaml: |
     schema:
+      {{- $use_segments := (.segmented | default false )}}
+      {{- $segments := list "M" "S" "L" }}
       instanceName: {{ .instanceName }}
       opennessLevel: OPEN
       metadata:
       {{- range (concat $commonMetadata .metadata) }}
+      {{- $currentItem := . }}
+      {{- if and $use_segments .segmented }}
+        {{- range $segment := $segments }}
+        - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
+          {{- $type := default "string" $currentItem.type }}
+          type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
+          {{- if $currentItem.generateIndex }}
+          generateIndex: {{ $currentItem.generateIndex }}
+          {{- end }}
+        {{- end }}
+      {{- else }}
         - name: {{ .name }}
           {{- $type := default "string" .type }}
           type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
           {{- if .generateIndex }}
           generateIndex: {{ .generateIndex }}
           {{- end }}
+      {{- end }}
       {{- end }}
         - name: nucleotideInsertions
           type: insertion
