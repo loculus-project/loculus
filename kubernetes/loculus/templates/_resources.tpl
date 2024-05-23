@@ -1,0 +1,1 @@
+{{- define "loculus.standardCPURequest" }}{{- if $.Values.reduceResourceRequest }}cpu: "10m"{{- else }}cpu: "100m"{{- end }}{{- end }}

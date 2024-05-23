@@ -61,7 +61,12 @@ jobs:
         run: |
           ./deploy.py --verbose cluster
 
-      - name: Template with helm
+      - name: Default template with helm
+        uses: WyriHaximus/github-action-helm3@v4
+        with:
+          exec: helm template loculus kubernetes/loculus
+
+      - name: E2E Template with helm
         uses: WyriHaximus/github-action-helm3@v4
         with:
           exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e --template > /tmp/helm_template.yaml
@@ -71,6 +76,7 @@ jobs:
         with:
           name: helm-template
           path: /tmp/helm_template.yaml
+
       - name: Deploy with helm
         run: |
           ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e

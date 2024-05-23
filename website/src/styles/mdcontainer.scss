@@ -94,3 +94,19 @@
    list-style-type: lower-roman;
 }
 
+.mdContainer table {
+  @apply w-full table-auto border-collapse mt-6 mb-6;
+}
+
+.mdContainer th,
+.mdContainer td {
+  @apply border border-gray-300 px-4 py-2 text-left border-solid;
+}
+
+.mdContainer th {
+  @apply bg-gray-100 font-semibold;
+}
+
+.mdContainer tbody tr:nth-child(even) {
+  @apply bg-gray-50;
+}

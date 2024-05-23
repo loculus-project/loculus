@@ -334,6 +334,7 @@ def process_single(
             len_dict[key] = None
     output_metadata: ProcessedMetadata = len_dict
 
+    alignment_failed = False
     for output_field, spec_dict in config.processing_spec.items():
         if output_field == "length":
             continue

@@ -74,7 +74,7 @@ organisms:
   ebolavirus-sudan:
     schema:
       image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
-      instanceName: "Ebolavirus Sudan"
+      organismName: "Ebolavirus Sudan"
       metadata:
         - name: date
           type: date

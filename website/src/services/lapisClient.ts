@@ -49,7 +49,6 @@ export class LapisClient extends ZodiosWrapperClient<typeof lapisApi> {
 
     public getSequenceEntryVersionDetails(accessionVersion: string) {
         return this.call('details', {
-            // why?
             [this.schema.primaryKey]: accessionVersion,
         });
     }
