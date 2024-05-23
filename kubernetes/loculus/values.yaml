@@ -1206,7 +1206,7 @@ defaultOrganisms:
           - geo_loc_country
           - geo_loc_admin_1
           - authors
-          - author_affiliation
+          - author_affiliations
           - ncbi_release_date
           - host_name_scientific
           - length_M
