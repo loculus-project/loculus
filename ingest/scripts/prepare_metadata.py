@@ -67,7 +67,7 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
 
     with open(config_file) as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config[key] for key in Config.__annotations__}
+        relevant_config = {key: full_config.get(key, None) for key in Config.__annotations__}
         config = Config(**relevant_config)
         single_segment: bool = not config.nucleotideSequences or (
             len(config.nucleotideSequences) == 1 and config.nucleotideSequences[0] == "main"
