@@ -7,20 +7,21 @@
 {{- $name := index $field "name" }}
 {{- $spec := dict "function" "identity" "inputs" (dict "input" $name) }}
 
+{{- $args := dict }}
 {{- if hasKey $field "type" }}
   {{- $type := index $field "type" }}
-  {{- if eq $type "int" }}
-    {{- $_ := set $spec "args" (dict "type" "int") }}
-  {{- else if eq $type "float" }}
-    {{- $_ := set $spec "args" (dict "type" "float") }}
+  {{- $args := set $args "type" $type }}
+{{- end }}
+
+{{- if and $use_segments (hasKey $field "segmented") }}
+  {{- $segmented := index $field "segmented" }}
+  {{- if eq $segmented true }}
+    {{- $args := set $args "segmented" true }}
   {{- end }}
 {{- end }}
 
-{{- if $use_segments }}
-{{- if hasKey $field "segmented" }}
-  {{- $segmented := index $field "segmented" }}
-  {{- $_ := set $spec "args" (dict "segmented" true) }}
-{{- end }}
+{{- if ne (len $args) 0 }}
+  {{- $_ := set $spec "args" $args }}
 {{- end }}
 
 {{- if hasKey $field "preprocessing" }}

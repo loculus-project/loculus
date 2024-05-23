@@ -338,10 +338,13 @@ def process_single(
         if output_field == "length":
             continue
         args = spec_dict.get("args", {})
-        if args.get("segmented"):
+        if args.get("segmented", None):
             for segment in config.nucleotideSequences:
+                segmented_input: dict[str, Any] = {}
+                for i in spec_dict["inputs"]:
+                    segmented_input[i] = spec_dict["inputs"][i] + "_" + segment
                 get_metadata(
-                    spec_dict["inputs"] + "_" + segment,
+                    segmented_input,
                     spec_dict["function"],
                     spec_dict.get("required", False),
                     args,
@@ -357,7 +360,7 @@ def process_single(
                 spec_dict["function"],
                 spec_dict.get("required", False),
                 args,
-                output_field + "_" + segment,
+                output_field,
                 unprocessed,
                 output_metadata,
                 errors,
