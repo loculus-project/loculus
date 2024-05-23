@@ -125,7 +125,7 @@ organisms:
       primaryKey: accessionVersion
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
       metadata:
-        {{- $args := dict "metadata" .metadata "segmented" $segmented }}
+        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "segmented" $segmented }}
         {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
