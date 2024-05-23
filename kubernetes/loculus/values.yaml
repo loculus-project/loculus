@@ -1208,7 +1208,7 @@ defaultOrganisms:
           - authors
           - author_affiliation
           - ncbi_release_date
-          - ncbi_host_name
+          - host_name_scientific
           - length_M
           - length_S
           - length_L
