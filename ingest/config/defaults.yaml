@@ -34,6 +34,18 @@ keep:
   - ncbi_virus_tax_id
   - sequence_md5
   - genbank_accession
+  - joint_accession
+  - segment
+segment_specific:
+  - biosample_accession
+  - ncbi_completeness
+  - ncbi_length
+  - ncbi_protein_count
+  - segment
+  - submissionId
+  - insdc_accession_base
+  - insdc_version
+  - insdc_accession_full
 all_fields:
   - accession
   - bioprojects

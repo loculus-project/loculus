@@ -51,8 +51,13 @@ def main(
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     with open(config_file) as file:
         config = yaml.safe_load(file)
-        segmented: bool = not ('nucleotideSequences' not in config or (len(
-            config['nucleotideSequences']) == 1 and config['nucleotideSequences'][0] == 'main'))
+        segmented: bool = not (
+            "nucleotideSequences" not in config
+            or (
+                len(config["nucleotideSequences"]) == 1
+                and config["nucleotideSequences"][0] == "main"
+            )
+        )
 
     metadata = json.load(open(metadata_path))
     sequences = json.load(open(sequences_path))
@@ -67,8 +72,8 @@ def main(
     for fasta_id in to_submit:
         metadata_submit.append(metadata[fasta_id])
         if segmented:
-            for nucleotideSequence in config['nucleotideSequences']:
-                segmented_fasta_id = fasta_id + '_' + nucleotideSequence
+            for nucleotideSequence in config["nucleotideSequences"]:
+                segmented_fasta_id = fasta_id + "_" + nucleotideSequence
                 if segmented_fasta_id in sequences:
                     sequences_submit[segmented_fasta_id] = sequences[segmented_fasta_id]
         else:
@@ -78,15 +83,21 @@ def main(
         revise_record = metadata[fasta_id]
         revise_record["accession"] = loculus_accession
         metadata_revise.append(revise_record)
-        sequences_revise[fasta_id] = sequences[fasta_id]
+        if segmented:
+            for nucleotideSequence in config["nucleotideSequences"]:
+                segmented_fasta_id = fasta_id + "_" + nucleotideSequence
+                if segmented_fasta_id in sequences:
+                    sequences_revise[segmented_fasta_id] = sequences[segmented_fasta_id]
+        else:
+            sequences_revise[fasta_id] = sequences[fasta_id]
 
     def write_to_tsv(data, filename):
         if not data:
             Path(filename).touch()
             return
         keys = data[0].keys()
-        with open(filename, 'w', newline='') as output_file:
-            dict_writer = csv.DictWriter(output_file, keys, delimiter='\t')
+        with open(filename, "w", newline="") as output_file:
+            dict_writer = csv.DictWriter(output_file, keys, delimiter="\t")
             dict_writer.writeheader()
             dict_writer.writerows(data)
 
@@ -94,7 +105,7 @@ def main(
         if not data:
             Path(filename).touch()
             return
-        with open(filename, 'w') as output_file:
+        with open(filename, "w") as output_file:
             for fasta_id, sequence in data.items():
                 output_file.write(f">{fasta_id}\n{sequence}\n")
 
