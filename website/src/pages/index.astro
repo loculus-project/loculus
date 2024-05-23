@@ -20,8 +20,6 @@ const organismStatisticsMap = await getOrganismStatisticsMap(
     <div class='max-w-6xl mx-auto'>
         <WelcomeMessage websiteName={websiteName} />
 
-        <h2 class='font-semibold text-gray-700 my-3 text-lg'>Explore {websiteName} data!</h2>
-
         <div class='flex flex-wrap'>
             {
                 getConfiguredOrganisms().map(({ key, displayName, image }) => (

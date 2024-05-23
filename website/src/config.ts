@@ -33,7 +33,7 @@ export type Organism = {
 export function getConfiguredOrganisms() {
     return Object.entries(getWebsiteConfig().organisms).map(([key, instance]) => ({
         key,
-        displayName: instance.schema.instanceName,
+        displayName: instance.schema.organismName,
         image: instance.schema.image,
         description: instance.schema.description,
     }));

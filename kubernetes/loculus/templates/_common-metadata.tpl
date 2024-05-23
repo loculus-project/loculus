@@ -1,3 +1,16 @@
+{{- define "loculus.websiteUrl" -}}
+{{- $websiteHost := "" }}
+{{- if $.Values.codespaceName }}
+  {{- $websiteHost = printf "https://%s-3000.app.github.dev" $.Values.codespaceName }}
+{{- else if eq $.Values.environment "server" }}
+  {{- $websiteHost = printf "https://%s" $.Values.host }}
+{{- else }}
+  {{- $websiteHost = "http://localhost:3000" }}
+{{- end }}
+{{- printf $websiteHost }}
+{{- end }}
+
+
 {{/* Get common metadata fields */}}
 {{- define "loculus.commonMetadata" }}
 fields:
@@ -11,7 +24,7 @@ fields:
     hideOnSequenceDetailsPage: true
   - name: submissionId
     type: string
-    header: Submission Details
+    header: Submission details
   - name: accessionVersion
     type: string
     notSearchable: true
@@ -24,38 +37,41 @@ fields:
     type: string
     generateIndex: true
     autocomplete: true
-    header: Submission Details
+    header: Submission details
   - name: groupId
     type: int
     autocomplete: true
-    header: Submission Details
+    header: Submission details
+    customDisplay:
+      type: link
+      url: {{ include "loculus.websiteUrl" $ -}} /group/__value__
   - name: groupName
     type: string
     generateIndex: true
     autocomplete: true
-    header: Submission Details
+    header: Submission details
   - name: submittedAt
     type: timestamp
     displayName: Date submitted
-    header: Submission Details
+    header: Submission details
   - name: releasedAt
     type: timestamp
     displayName: Date released
-    header: Submission Details
+    header: Submission details
   - name: dataUseTerms
     type: string
     generateIndex: true
     autocomplete: true
-    displayName: Data Use Terms
+    displayName: Data use terms
     initiallyVisible: true
     customDisplay:
       type: dataUseTerms
-    header: Data Use Terms
+    header: Data use terms
   - name: dataUseTermsRestrictedUntil
     type: date
     displayName: Data use terms restricted until
     hideOnSequenceDetailsPage: true
-    header: Data Use Terms
+    header: Data use terms
   - name: versionStatus
     type: string
     notSearchable: true
@@ -64,7 +80,7 @@ fields:
   - name: dataUseTermsUrl
     type: string
     notSearchable: true
-    header: Data Use Terms
+    header: Data use terms
     customDisplay:
       type: link
       url: "__value__"
@@ -97,7 +113,7 @@ organisms:
   {{ $key }}:
     schema:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
-      instanceName: {{ quote .instanceName }}
+      organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
       {{- $segmented := (.segmented | default false )}}
       {{ if .image }}
@@ -210,6 +226,7 @@ organisms:
       {{- with $instance.schema }}
       {{- $segmented := (.segmented | default false )}}
       instanceName: {{ quote .instanceName }}
+      organismName: {{ quote .organismName }}
       metadata:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "segmented" $segmented }}
         {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
@@ -258,4 +275,3 @@ fields:
             "lapisUrls": {{- include "loculus.generateExternalLapisUrls" .externalLapisUrlConfig | fromYaml | toJson }},
             "keycloakUrl":  "https://{{ printf "authentication-%s" .Values.host }}"
 {{- end }}
-

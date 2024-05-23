@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
 import org.loculus.backend.auth.Roles.GET_RELEASED_DATA
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
+import org.loculus.backend.auth.Roles.SUPER_USER
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -58,6 +59,10 @@ class SecurityConfig {
         "/get-author",
     )
 
+    private val debugEndpoints = arrayOf(
+        "/debug/*",
+    )
+
     @Bean
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
@@ -78,6 +83,7 @@ class SecurityConfig {
                 auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
                 auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
                 auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
+                auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
                 auth.anyRequest().authenticated()
             }
             .oauth2ResourceServer { oauth2 ->

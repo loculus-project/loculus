@@ -14,7 +14,7 @@ data:
     schema:
       {{- $use_segments := (.segmented | default false )}}
       {{- $segments := list "M" "S" "L" }}
-      instanceName: {{ .instanceName }}
+      instanceName: {{ .organismName }}
       opennessLevel: OPEN
       metadata:
       {{- range (concat $commonMetadata .metadata) }}

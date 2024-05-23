@@ -37,7 +37,7 @@ export default async function globalSetupForPlaywright() {
         lapisUrl,
         {
             metadata: [],
-            instanceName: 'Test',
+            organismName: 'Test',
             primaryKey: 'doesNotMatter',
             defaultOrderBy: 'neitherDoesThis',
             defaultOrder: 'ascending',

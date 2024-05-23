@@ -7,3 +7,6 @@ secrets:
         siloImportJobPassword: "silo_import_job"
         backendUserPassword: "backend"
 createTestAccounts: true
+backendExtraArgs:
+  - "--loculus.debug-mode=true"
+reduceResourceRequest: true
