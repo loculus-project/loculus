@@ -38,7 +38,7 @@ def split_authors(authors: str) -> str:
     """Split authors by each second comma, then split by comma and reverse
     So Xi,L.,Yu,X. becomes L. Xi, X. Yu
     Where first name and last name are separated by no-break space"""
-    single_split = sorted(authors.split(","))
+    single_split = authors.split(",")
     result = []
 
     for i in range(0, len(single_split), 2):
@@ -47,7 +47,7 @@ def split_authors(authors: str) -> str:
         else:
             result.append(single_split[i].strip())
 
-    return ", ".join(result)
+    return ", ".join(sorted(result))
 
 
 @click.command()
