@@ -116,6 +116,7 @@ organisms:
       organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
       {{- $segmented := (.segmented | default false )}}
+      {{- $nucleotideSequences := (.nucleotideSequences | default false )}}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
@@ -125,7 +126,7 @@ organisms:
       primaryKey: accessionVersion
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
       metadata:
-        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "segmented" $segmented }}
+        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "segmented" $segmented "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
@@ -140,7 +141,7 @@ organisms:
 fields:
 {{- $metadataList := .metadata }}
 {{- $use_segments := .segmented }}
-{{- $segments := list "M" "S" "L" }}
+{{- $segments := .nucleotideSequences }}
 {{- range $metadataList }}
 {{- $currentItem := . }}
 {{- if and $use_segments .segmented }}
@@ -225,9 +226,10 @@ organisms:
     schema:
       {{- with $instance.schema }}
       {{- $segmented := (.segmented | default false )}}
+      {{- $nucleotideSequences := (.nucleotideSequences | default false )}}
       organismName: {{ quote .organismName }}
       metadata:
-        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "segmented" $segmented }}
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "segmented" $segmented "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{- end }}
@@ -241,7 +243,7 @@ organisms:
 fields:
 {{- $metadataList := .metadata }}
 {{- $use_segments := .segmented }}
-{{- $segments := list "M" "S" "L" }}
+{{- $segments := .nucleotideSequences}}
 {{- range $metadataList }}
 {{- $currentItem := . }}
 {{- $segmented := (.segmented | default false )}}
