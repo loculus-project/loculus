@@ -32,6 +32,7 @@ class Config:
     password: str
     group_name: str
     nucleotideSequences: list[str]
+    segmented: str
 
 
 def backend_url(config: Config) -> str:
@@ -252,7 +253,7 @@ def get_sequence_status(config: Config):
     return result
 
 
-def get_submitted(config: Config, segmented: str):
+def get_submitted(config: Config):
     """Get previously submitted sequences
     This way we can avoid submitting the same sequences again
     Output is a dictionary with INSDC accession as key
@@ -270,14 +271,14 @@ def get_submitted(config: Config, segmented: str):
 
     url = f"{organism_url(config)}/get-original-metadata"
 
-    if segmented:
+    if config.segmented:
         insdc_key = [
             "insdc_accession_base" + "_" + segment for segment in config.nucleotideSequences
         ]
     else:
         insdc_key = ["insdc_accession_base"]
 
-    fields = ["hash"].append(insdc_key)
+    fields = ["hash"] + insdc_key
 
     params = {
         "fields": fields,
@@ -317,7 +318,7 @@ def get_submitted(config: Config, segmented: str):
         loculus_version = int(entry["version"])
         original_metadata: dict[str, str] = entry["originalMetadata"]
         hash_value = original_metadata.get("hash", "")
-        if segmented:
+        if config.segmented:
             insdc_accession = "".join([original_metadata[key] for key in insdc_key])
         else:
             insdc_accession = original_metadata.get("insdc_accession_base", "")
@@ -403,10 +404,6 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
         full_config = yaml.safe_load(file)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
-        segmented: bool = not (
-            len(config.nucleotideSequences) == 0
-            or (len(config.nucleotideSequences) == 1 and config.nucleotideSequences[0] == "main")
-        )
 
     logger.debug(f"Config: {config}")
 

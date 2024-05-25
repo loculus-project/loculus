@@ -2,6 +2,7 @@ import json
 import logging
 from collections import defaultdict
 from hashlib import md5
+from dataclasses import dataclass
 import yaml
 
 import click
@@ -13,6 +14,12 @@ logging.basicConfig(
     format="%(asctime)s %(levelname)8s (%(filename)20s:%(lineno)4d) - %(message)s ",
     datefmt="%H:%M:%S",
 )
+
+
+@dataclass
+class Config:
+    segmented: str
+    nucleotideSequences: list[str]
 
 
 def md5_float(string: str) -> float:
@@ -49,14 +56,9 @@ def main(
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     with open(config_file) as file:
-        config = yaml.safe_load(file)
-        segmented: bool = not (
-            "nucleotideSequences" not in config
-            or (
-                len(config["nucleotideSequences"]) == 1
-                and config["nucleotideSequences"][0] == "main"
-            )
-        )
+        full_config = yaml.safe_load(file)
+        relevant_config = {key: full_config[key] for key in Config.__annotations__}
+        config = Config(**relevant_config)
 
     submitted: dict = json.load(open(old_hashes))
     new_metadata = json.load(open(metadata))
@@ -74,9 +76,9 @@ def main(
     )  # Mapping from INSDC accessions to equivalent loculus accession of sequences that cannot be updated due to status
 
     for fasta_id, record in new_metadata.items():
-        if segmented:
+        if config.segmented:
             insdc_keys = [
-                "insdc_accession_base" + "_" + segment for segment in config["nucleotideSequences"]
+                "insdc_accession_base" + "_" + segment for segment in config.nucleotideSequences
             ]
         else:
             insdc_keys = ["insdc_accession_base"]

@@ -5,10 +5,18 @@ import re
 import logging
 import pandas as pd
 import shutil
+from dataclasses import dataclass
 
 import click
 from Bio import SeqIO
 import yaml
+
+
+@dataclass
+class Config:
+    segmented: str
+    nucleotideSequences: list[str]
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -41,10 +49,9 @@ def main(
     logger.setLevel(log_level)
 
     with open(config_file) as file:
-        config = yaml.safe_load(file)
-        single_segment: bool = "nucleotideSequences" not in config or (
-            len(config["nucleotideSequences"]) == 1 and config["nucleotideSequences"][0] == "main"
-        )
+        full_config = yaml.safe_load(file)
+        relevant_config = {key: full_config[key] for key in Config.__annotations__}
+        config = Config(**relevant_config)
 
     def write_to_fasta(data, filename):
         if not data:
@@ -54,7 +61,7 @@ def main(
             for record in data:
                 file.write(f">{record.id}\n{record.seq}\n")
 
-    if single_segment:
+    if not config.segmented:
         logger.debug("No segments found, assuming single-segment virus")
         with open(input_seq) as f:
             records = SeqIO.parse(f, "fasta")
@@ -71,7 +78,7 @@ def main(
         with open(input_seq) as f:
             records = SeqIO.parse(f, "fasta")
             for record in records:
-                for segment in config["nucleotideSequences"]:
+                for segment in config.nucleotideSequences:
                     re_input = re.compile(".*segment {0}.*".format(segment), re.IGNORECASE)
                     found_segment = re_input.search(record.description)
                     if found_segment:
@@ -127,7 +134,7 @@ def main(
                 & (metadata_df["ncbi_collection_date"] == date)
             ]
             if isolate:
-                if len(isolate_group) > len(config["nucleotideSequences"]):
+                if len(isolate_group) > len(config.nucleotideSequences):
                     logging.warn(
                         f"Found {len(isolate_group)} sequences for isolate: {isolate}, {date} "
                         "uploading segments individually."
@@ -141,7 +148,7 @@ def main(
         logging.info(
             f"Total of {len(metadata_df["joint_accession"].unique())} joint sequences after joining"
         )
-        if number_of_segmented_records // len(config["nucleotideSequences"]) > len(
+        if number_of_segmented_records // len(config.nucleotideSequences) > len(
             metadata_df["joint_accession"].unique()
         ):
             raise ValueError(

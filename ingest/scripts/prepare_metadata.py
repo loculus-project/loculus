@@ -31,7 +31,8 @@ class Config:
     rename: dict[str, str]
     keep: list[str]
     segment_specific: list[str]
-    nucleotideSequences: list[str] | None = None
+    nucleotideSequences: list[str]
+    segmented: str
 
 
 def split_authors(authors: str) -> str:
@@ -67,11 +68,8 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
 
     with open(config_file) as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config.get(key, None) for key in Config.__annotations__}
+        relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
-        single_segment: bool = not config.nucleotideSequences or (
-            len(config.nucleotideSequences) == 1 and config.nucleotideSequences[0] == "main"
-        )
     logger.debug(config)
 
     logger.info(f"Reading metadata from {input}")
@@ -103,7 +101,7 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
             if key not in keys_to_keep:
                 record.pop(key)
 
-    if not single_segment:
+    if config.segmented:
         segments: list[str] = config.nucleotideSequences if config.nucleotideSequences else []
         selected_dict = pd.DataFrame(metadata)
 

@@ -4,8 +4,16 @@ import logging
 import sys
 import yaml
 from pathlib import Path
+from dataclasses import dataclass
 
 import click
+
+
+@dataclass
+class Config:
+    segmented: str
+    nucleotideSequences: list[str]
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -47,17 +55,13 @@ def main(
     log_level: str,
 ) -> None:
     logger = logging.getLogger(__name__)
+    logger.setLevel(log_level)
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     with open(config_file) as file:
-        config = yaml.safe_load(file)
-        segmented: bool = not (
-            "nucleotideSequences" not in config
-            or (
-                len(config["nucleotideSequences"]) == 1
-                and config["nucleotideSequences"][0] == "main"
-            )
-        )
+        full_config = yaml.safe_load(file)
+        relevant_config = {key: full_config[key] for key in Config.__annotations__}
+        config = Config(**relevant_config)
 
     metadata = json.load(open(metadata_path))
     sequences = json.load(open(sequences_path))
@@ -71,8 +75,8 @@ def main(
 
     for fasta_id in to_submit:
         metadata_submit.append(metadata[fasta_id])
-        if segmented:
-            for nucleotideSequence in config["nucleotideSequences"]:
+        if config.segmented:
+            for nucleotideSequence in config.nucleotideSequences:
                 segmented_fasta_id = fasta_id + "_" + nucleotideSequence
                 if segmented_fasta_id in sequences:
                     sequences_submit[segmented_fasta_id] = sequences[segmented_fasta_id]
@@ -83,8 +87,8 @@ def main(
         revise_record = metadata[fasta_id]
         revise_record["accession"] = loculus_accession
         metadata_revise.append(revise_record)
-        if segmented:
-            for nucleotideSequence in config["nucleotideSequences"]:
+        if config.segmented:
+            for nucleotideSequence in config.nucleotideSequences:
                 segmented_fasta_id = fasta_id + "_" + nucleotideSequence
                 if segmented_fasta_id in sequences:
                     sequences_revise[segmented_fasta_id] = sequences[segmented_fasta_id]

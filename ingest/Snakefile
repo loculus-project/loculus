@@ -10,6 +10,14 @@ for key, value in defaults.items():
     if not key in config:
         config[key] = value
 
+# Check if organism is segmented
+if "nucleotideSequences" not in config:
+    config["nucleotideSequences"] = ["main"]
+config["segmented"] = not (
+    len(config["nucleotideSequences"]) == 1
+    and config["nucleotideSequences"][0] == "main"
+)
+
 Path("results").mkdir(parents=True, exist_ok=True)
 with open("results/config.yaml", "w") as f:
     f.write(yaml.dump(config))

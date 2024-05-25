@@ -4,10 +4,18 @@ import hashlib
 import json
 import logging
 from pathlib import Path
+from dataclasses import dataclass
 import yaml
 
 import click
 from Bio import SeqIO
+
+
+@dataclass
+class Config:
+    segmented: str
+    nucleotideSequences: list[str]
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
@@ -35,10 +43,9 @@ def main(
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     with open(config_file) as file:
-        config = yaml.safe_load(file)
-        single_segment: bool = "nucleotideSequences" not in config or (
-            len(config["nucleotideSequences"]) == 1 and config["nucleotideSequences"][0] == "main"
-        )
+        full_config = yaml.safe_load(file)
+        relevant_config = {key: full_config[key] for key in Config.__annotations__}
+        config = Config(**relevant_config)
 
     hashes = {}
     sequences = {}
@@ -48,12 +55,12 @@ def main(
         for record in records:
             hashes[record.id] = hashlib.md5(str(record.seq).encode()).hexdigest()
             sequences[record.id] = str(record.seq)
-    if not single_segment:
+    if config.segmented:
         joint_hashes = {}
         joint_record_keys = ["_".join(hash.split("_")[:-1]) for hash in hashes.keys()]
         for rec in joint_record_keys:
             prehash = ""
-            for segment in config["nucleotideSequences"]:
+            for segment in config.nucleotideSequences:
                 seg_hash = hashes.get(rec + "_" + segment)
                 if seg_hash:
                     prehash += seg_hash
