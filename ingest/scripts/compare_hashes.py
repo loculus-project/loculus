@@ -82,10 +82,12 @@ def main(
             ]
         else:
             insdc_keys = ["insdc_accession_base"]
-        has_insdc_key = any([record[key] != "" for key in insdc_keys])
+        has_insdc_key = any([record[key] is not None or record[key] != "" for key in insdc_keys])
         if has_insdc_key:
             try:
-                insdc_accession_base = "".join([record[key] for key in insdc_keys])
+                insdc_accession_base = "".join(
+                    ["" if record[key] is None else record[key] for key in insdc_keys]
+                )
                 keep = md5_float(insdc_accession_base) <= subsample_fraction
                 if not keep:
                     continue
