@@ -10,6 +10,18 @@ Using NCBI `datasets` CLI, download all sequences and corresponding NCBI curated
 
 Sequences and metadata are transformed into (nd)json files to simplify (de)serialization and further processing.
 
+### Format segmented viruses
+
+NCBI handles segmented viruses differently than loculus. In NCBI each segment is uploaded separately and has its own accession ID and corresponding metadata. In loculus a sample is uploaded with all its segments and receives its own accession ID. This is done by having one accession ID per sample with one corresponding metadata entry and at most as many fasta entries as there are samples, each labeled `accessionID + '_' + segmentName`.
+
+The segment a sample corresponds to can only be determined from the descriptions of a sequence fasta record. In `segmented_viruses_format.py` we discard all sequences with unclear segment annotations and add `segment` as a metadata field. (TODO: Use nextclade instead of a regex search to determine which segment the sequence aligns with best to keep as much data as possible).
+
+We additionally group NCBI segments based on `ncbi_isolate_name` and `ncbi_collection_date`. If too many entries are grouped using this metric, or if no isolate information exists, we upload the segments individually. (TODO: Potentially only split the group when processing metadata - what happens if we have to split the group later?)
+
+We add a `joint_accession` field to the metadata which consists of a concatenated list of all `genbank_accession` IDs of the segments in the group and modify each fasta record to use `joint_accession` with the concatenated segment as their ID.
+
+Later, when processing the metadata, we confirm all grouped segments share the same non-segment-specific metadata fields before uploading them to loculus as one sample.
+
 ### Transforming values to conform with Loculus' expectations
 
 Metadata as received from `datasets` is transformed to conform to Loculus' expectations. This includes for example:
@@ -18,15 +30,19 @@ Metadata as received from `datasets` is transformed to conform to Loculus' expec
 - transforming values, e.g. turn author strings from `LastName1, Initial1, LastName2, Initial2` into `Initial1 LastName1, Initial2 LastName2`
 - splitting fields, e.g. NCBI's single, complex collection country field (`Germany: Munich, Bavaria`) is split into multiple fields `country`, `state`, `division` (`Germany`, `Bavaria`, `Munich`)
 
+Note that the `submissionId` is just the `genbank_accession` for non-segmented viruses, but the concatenation of the `genbank_accession` for each segment for segmented viruses.
+
 ### Calculating a hash for each sequence entry
 
 Every sequence entry is to be uploaded only once and must be ignored by future periodic ingest runs unless the metadata and/or sequence has changed.
 
 To achieve this, an md5 hash is generated for each sequence entry based on the post-transform metadata and sequence content. The hash is based on all metadata fields submitted to Loculus as well as the sequence. Hence, changes to the ingest pipeline's transform step (above) can lead to changes in hash and resubmission - even without underlying data change on INSDC. Likewise, some changes to the INSDC data might not cause a sequence update on Loculus if what has been changed does not affect the post-transformed metadata.
 
+For segmented viruses we calculate the md5 hash of each segment and then concatenate the hashes of each segment before again hashing the hashes. We then store a dictionary of the hash of each sample group, using `joint-accession` as a key. (TODO: as this occurs prior to checking that all metadata fields exist we should store these as per sequence - this requires a change to compare_hashes as well).
+
 ### Getting status and hashes of previously submitted sequences and triaging
 
-Before uploading new sequences, the pipeline queries the Loculus backend for the status and hash of all previously submitted sequences. This is done to avoid uploading sequences that have already been submitted and have not changed. Furthermore, only accessions whose higest version is in status `APPROVED_FOR_RELEASE` can be updated through revision. Entries in other states cannot currently be updated (TODO: Potentially use `/submit-edited-data` endpoint to allow updating entries in more states).
+Before uploading new sequences, the pipeline queries the Loculus backend for the status and hash of all previously submitted sequences. This is done to avoid uploading sequences that have already been submitted and have not changed. Furthermore, only accessions whose highest version is in status `APPROVED_FOR_RELEASE` can be updated through revision. Entries in other states cannot currently be updated (TODO: Potentially use `/submit-edited-data` endpoint to allow updating entries in more states).
 
 Hashes and statuses are used to triage sequences into 4 categories which determine the action to be taken:
 
@@ -71,7 +87,7 @@ In production the ingest pipeline runs in a docker container that takes a config
 We use the Snakemake workflow management system which also uses different config files:
 
 - `profiles/default/config.yaml` sets default command line options while running Snakemake.
-- `config/config.yaml` turns into a config dict in the `Snakefile` (attributes defined in this file become global variables in the `Snakefile`).
+- `config/config.yaml` and `config/defaults.yaml` turn into a config dict in the `Snakefile` (attributes defined in this file become global variables in the `Snakefile`). The `config/config.yaml` file used in production is generated by the `kubernetes/loculus/templates/loculus-preprocessing-config.yaml`.
 
 TLDR: The `Snakefile` contains workflows defined as rules with required input and expected output files. By default Snakemake takes the first rule as the target one and then constructs a graph of dependencies (a DAG) required to produce the expected output of the first rule. The target rule can be specified using `snakemake {rule}`
 
@@ -120,10 +136,6 @@ We should add automated integration tests:
 To be able to run tests independently, we should use UUIDs for mock data. Currently, clearing the database is not possible without redeploying everything (see <https://github.com/loculus-project/loculus/issues/1764>).
 
 One complication for testing is that we don't have ARM containers for the backend yet (see <https://github.com/loculus-project/loculus/issues/1765>).
-
-### Multi-segment support
-
-Currently, the pipeline only supports single-segment sequences. We need to add support for multi-segment viruses, like CCHF and Influenza.
 
 ### Recover from processing errors
 

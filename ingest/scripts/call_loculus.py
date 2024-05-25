@@ -428,7 +428,7 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
 
     if mode == "get-submitted":
         logger.info("Getting submitted sequences")
-        response = get_submitted(config, segmented)
+        response = get_submitted(config)
         Path(output).write_text(json.dumps(response))
 
 
