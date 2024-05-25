@@ -164,7 +164,7 @@ fields:
       hideOnSequenceDetailsPage: {{ $currentItem.hideOnSequenceDetailsPage }}
       {{- end }}
       {{- if $currentItem.displayName }}
-      displayName: {{ printf "%s_%s" $currentItem.displayName $segment | quote }}
+      displayName: {{ printf "%s %s" $currentItem.displayName $segment | quote }}
       {{- end }}
       {{- if $currentItem.truncateColumnDisplayTo }}
       truncateColumnDisplayTo: {{ $currentItem.truncateColumnDisplayTo }}

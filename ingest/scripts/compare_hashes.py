@@ -73,42 +73,36 @@ def main(
         dict
     )  # Mapping from INSDC accessions to equivalent loculus accession of sequences that cannot be updated due to status
 
-    def compare(indsc_accession):
-        for fasta_id, record in new_metadata.items():
-            if record[indsc_accession]:
-                try:
-                    insdc_accession_base = record[indsc_accession]
-                    keep = md5_float(insdc_accession_base) <= subsample_fraction
-                    if not keep:
-                        continue
-                    if insdc_accession_base not in submitted:
-                        submit.append(fasta_id)
-                    else:
-                        latest = submitted[insdc_accession_base]["versions"][-1]
-                        if latest["hash"] != record["hash"]:
-                            status = latest["status"]
-                            if status == "APPROVED_FOR_RELEASE":
-                                revise[fasta_id] = submitted[insdc_accession_base][
-                                    "loculus_accession"
-                                ]
-                            else:
-                                blocked[status][fasta_id] = submitted[insdc_accession_base][
-                                    "loculus_accession"
-                                ]
+    for fasta_id, record in new_metadata.items():
+        if segmented:
+            insdc_keys = [
+                "insdc_accession_base" + "_" + segment for segment in config["nucleotideSequences"]
+            ]
+        else:
+            insdc_keys = ["insdc_accession_base"]
+        has_insdc_key = any([record[key] != "" for key in insdc_keys])
+        if has_insdc_key:
+            try:
+                insdc_accession_base = "".join([record[key] for key in insdc_keys])
+                keep = md5_float(insdc_accession_base) <= subsample_fraction
+                if not keep:
+                    continue
+                if insdc_accession_base not in submitted:
+                    submit.append(fasta_id)
+                else:
+                    latest = submitted[insdc_accession_base]["versions"][-1]
+                    if latest["hash"] != record["hash"]:
+                        status = latest["status"]
+                        if status == "APPROVED_FOR_RELEASE":
+                            revise[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
                         else:
-                            noop[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
-                except Exception as e:
-                    logger.error(
-                        f"Error processing {fasta_id}, {submitted[insdc_accession_base]}: {e}"
-                    )
-
-    if segmented:
-        for segment in config["nucleotideSequences"]:
-            indsc_accession = "insdc_accession_base" + "_" + segment
-            compare(indsc_accession)
-        submit = list(set(submit) - revise.keys() - blocked.keys())
-    else:
-        compare("insdc_accession_base")
+                            blocked[status][fasta_id] = submitted[insdc_accession_base][
+                                "loculus_accession"
+                            ]
+                    else:
+                        noop[fasta_id] = submitted[insdc_accession_base]["loculus_accession"]
+            except Exception as e:
+                logger.error(f"Error processing {fasta_id}, {submitted[insdc_accession_base]}: {e}")
 
     outputs = [
         (submit, to_submit, "Sequences to submit"),
