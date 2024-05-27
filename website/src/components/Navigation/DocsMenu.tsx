@@ -5,10 +5,6 @@ import React from 'react';
 import XIcon from '~icons/material-symbols/close';
 import MenuIcon from '~icons/material-symbols/menu';
 
-interface Frontmatter {
-  title: string;
-  order?: number;
-}
 
 type Page = MDXInstance<Record<string, any>>;
 
