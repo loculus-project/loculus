@@ -7,7 +7,6 @@
 *.iml
 .vscode/*
 .venv
-preprocessing/nextclade/data.json
 
 # build output
 dist/
