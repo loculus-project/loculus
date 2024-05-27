@@ -1,10 +1,10 @@
+import { Disclosure } from '@headlessui/react';
+import type { MDXInstance } from 'astro';
 import React from 'react';
 
-import { Disclosure } from '@headlessui/react';
-import MenuIcon from '~icons/material-symbols/menu';
 import XIcon from '~icons/material-symbols/close';
+import MenuIcon from '~icons/material-symbols/menu';
 
-import type { MDXInstance } from 'astro';
 interface Frontmatter {
   title: string;
   order?: number;
@@ -24,7 +24,7 @@ const groupPagesByDirectory = (pages: Page[]): Record<string, Page[]> => {
     const pathParts = page.url!== undefined ? page.url.split('/') : [''];
     const dir = pathParts.slice(2, -1).join('/');
 
-    if (!groupedPages[dir]) {
+    if (groupedPages.hasOwnProperty(dir) === false) {
       groupedPages[dir] = [];
     }
     groupedPages[dir].push(page);
