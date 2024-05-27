@@ -1,11 +1,11 @@
-accession	submissionId	date	region	country	division	host	pango_lineage
-1	custom0	2020-12-26	Europe	Switzerland	Bern	Homo sapiens	B.1.1
-2	custom1	2020-12-15	Europe	Switzerland	Schaffhausen	Homo sapiens	B.1.2
-3	custom2	2020-12-02	Europe	Switzerland	Bern	Homo sapiens	B.1.3
-4	custom3	2020-12-25	Europe	Switzerland	Schaffhausen	Homo sapiens	B.1.1
-5	custom4	2020-12-03	Europe	Switzerland	Zürich	Homo sapiens	B.1.2
-6	custom5	2020-12-23	Europe	Switzerland	Basel-Land	Homo sapiens	B.1.3
-7	custom6	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	B.1.1
-8	custom7	2020-12-31	Europe	Switzerland	Sankt Gallen	Homo sapiens	B.1.2
-9	custom8	2020-12-16	Europe	Switzerland	Aargau	Homo sapiens	B.1.3
-10	custom9	2020-12-01	Europe	Switzerland	Basel-Stadt	Homo sapiens	B.1.1
+accesssion	submissionId	sample_collection_date	geo_loc_country	geo_loc_admin_1	host_name_scientific
+1	custom1	2020-12-15	Germany	Schaffhausen	Homo sapiens
+2	custom2	2020-12-02	Netherlands	Amsterdam	Homo sapiens
+3	custom3	2020-12-25	Switzerland	Schaffhausen	Homo sapiens
+4	custom4	2020-12-03	Switzerland	Zürich	Homo sapiens
+5	custom5	2020-12-23	Switzerland	Basel-Land	Homo sapiens
+6	custom6	2020-12-16	Switzerland	Aargau	Homo sapiens
+7	custom7	2020-12-31	Switzerland	Sankt Gallen	Homo sapiens
+8	custom8	2020-12-16	Switzerland	Aargau	Homo sapiens
+9	custom9	2020-12-01	Switzerland	Basel-Stadt	Homo sapiens
+0	custom0	2020-12-26	Switzerland	Bern	Homo sapiens
