@@ -148,22 +148,6 @@ export const InnerSearchFullUI = ({
         }));
     };
 
-    const visibilities = useMemo(() => {
-        const visibilities = new Map<string, boolean>();
-        schema.metadata.forEach((field) => {
-            if (field.hideOnSequenceDetailsPage === true) {
-                return;
-            }
-            visibilities.set(field.name, field.initiallyVisible === true);
-        });
-
-        const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(VISIBILITY_PREFIX));
-
-        for (const key of visibilityKeys) {
-            visibilities.set(key.slice(VISIBILITY_PREFIX.length), state[key] === 'true');
-        }
-        return visibilities;
-    }, [schema.metadata, state]);
     const fieldValues = useMemo(() => {
         const fieldKeys = Object.keys(state)
             .filter((key) => !key.startsWith(VISIBILITY_PREFIX) && !key.startsWith(COLUMN_VISIBILITY_PREFIX))
