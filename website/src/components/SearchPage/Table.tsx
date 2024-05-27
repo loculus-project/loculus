@@ -70,7 +70,7 @@ export const Table: FC<TableProps> = ({
                         <tr>
                             <th
                                 onClick={() => handleSort(primaryKey)}
-                                className='px-2 py-3 pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
+                                className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
                             >
                                 {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
                             </th>
@@ -93,7 +93,7 @@ export const Table: FC<TableProps> = ({
                                     row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
                                 } `}
                             >
-                                <td className='px-2  whitespace-nowrap    text-primary-900 pl-6'>
+                                <td className='px-2  whitespace-nowrap    text-primary-900 md:pl-6'>
                                     <a
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
