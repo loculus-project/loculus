@@ -49,7 +49,6 @@ updates:
       - backend
       - keycloak/keycloakify
       - preprocessing/nextclade
-      - preprocessing/dummy
       - ingest
       - kubernetes/config-processor
       - kubernetes/loculus

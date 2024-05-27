@@ -19,11 +19,6 @@ jobs:
     with:
       build_arm: true
 
-  trigger-dummy-preprocessing:
-    uses: ./.github/workflows/preprocessing-dummy-image.yml
-    with:
-      build_arm: true
-
   trigger-ingest:
     uses: ./.github/workflows/ingest-image.yml
     with:
