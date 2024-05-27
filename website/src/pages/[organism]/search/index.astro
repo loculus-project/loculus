@@ -27,8 +27,8 @@ const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : []
 const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 ---
 
-<BaseLayout title={`${cleanedOrganism.displayName} - Browse`}>
-    <h1 class='title'>Search</h1>
+<BaseLayout title={`${cleanedOrganism.displayName} - Browse`} noHorizontalPadding>
+    <h1 class='title px-3 py-2'>Search</h1>
 
     <SearchFullUI
         client:load

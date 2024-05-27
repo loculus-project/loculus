@@ -93,7 +93,7 @@ test.describe('The seqSet item page', () => {
             await seqSetPage.page.locator('#seqSet-name').fill(editSeqSetName);
             await seqSetPage.page.getByRole('button', { name: 'Save' }).click();
             await seqSetPage.page.waitForLoadState();
-            await expect(await seqSetPage.page.getByText(editSeqSetName).locator('visible=true')).toBeVisible();
+            await expect(seqSetPage.page.getByText(editSeqSetName).locator('visible=true')).toBeVisible();
         }).toPass();
 
         await seqSetPage.deleteTestSeqSet(editSeqSetName);

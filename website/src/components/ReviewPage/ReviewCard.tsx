@@ -197,16 +197,18 @@ const isAnnotationPresent = (metadataField: string) => (item: ProcessingAnnotati
 
 const MetadataList: FC<MetadataListProps> = ({ data, isLoading }) =>
     !isLoading &&
-    Object.entries(data.processedData.metadata).map(([metadataName, value], index) => (
-        <KeyValueComponent
-            accessionVersion={getAccessionVersionString(data)}
-            key={index}
-            keyName={metadataName}
-            value={displayMetadataField(value)}
-            warnings={data.warnings?.filter(isAnnotationPresent(metadataName))}
-            errors={data.errors?.filter(isAnnotationPresent(metadataName))}
-        />
-    ));
+    Object.entries(data.processedData.metadata).map(([metadataName, value], index) =>
+        value === null ? null : (
+            <KeyValueComponent
+                accessionVersion={getAccessionVersionString(data)}
+                key={index}
+                keyName={metadataName}
+                value={displayMetadataField(value)}
+                warnings={data.warnings?.filter(isAnnotationPresent(metadataName))}
+                errors={data.errors?.filter(isAnnotationPresent(metadataName))}
+            />
+        ),
+    );
 
 type ErrorsProps = {
     errors: ProcessingAnnotation[];

@@ -9,7 +9,7 @@ import type { Schema } from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
 
 const schema: Schema = {
-    instanceName: 'instance name',
+    organismName: 'instance name',
     metadata: [
         { name: 'metadataField1', type: 'string', header: 'testHeader1' },
         { name: 'metadataField2', type: 'string' },

@@ -9,7 +9,7 @@ const organismKeys = Object.keys(websiteConfig.organisms);
 
 const organismToDisplayName = Object.fromEntries(
     organismKeys.map((organism) => {
-        return [organism, websiteConfig.organisms[organism].schema.instanceName];
+        return [organism, websiteConfig.organisms[organism].schema.organismName];
     }),
 );
 

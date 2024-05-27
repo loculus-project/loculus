@@ -22,6 +22,9 @@ def replace_url_with_content(file_content):
         response = requests.get(url)
         if response.status_code == 200:
             file_content = file_content.replace(f"[[URL:{url}]]", response.text.strip())
+        else:
+            error_details = f"URL: {url}, Status Code: {response.status_code}, Reason: {response.reason}"
+            raise ValueError(f"Problem downloading {error_details}")
     return file_content
 
 def make_substitutions(file_content, substitutions):

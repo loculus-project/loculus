@@ -53,7 +53,7 @@ secrets:
       port: "5432"
 ```
 
-You can also use sealed secrets, see the [Sealed Secrets](#sealed-secrets) section for more information.
+You can also use sealed secrets, see the [Sealed Secrets](#sealedsecret) section for more information.
 
 ## Clone the repository
 
@@ -74,7 +74,7 @@ organisms:
   ebolavirus-sudan:
     schema:
       image: "https://cdn.britannica.com/01/179201-050-FED1B381/filamentous-ebolavirus-particles-scanning-electron-micrograph-cell.jpg?w=400&h=300&c=crop"
-      instanceName: "Ebolavirus Sudan"
+      organismName: "Ebolavirus Sudan"
       metadata:
         - name: date
           type: date

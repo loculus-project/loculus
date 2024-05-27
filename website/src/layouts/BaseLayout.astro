@@ -8,6 +8,7 @@ import { Banner } from '../components/common/Banner';
 import { getWebsiteConfig } from '../config';
 import 'react-toastify/dist/ReactToastify.css';
 import { navigationItems } from '../routes/navigationItems';
+import { BackendClient } from '../services/backendClient';
 
 const websiteConfig = getWebsiteConfig();
 const { name: websiteName, logo, bannerMessage, additionalHeadHTML } = websiteConfig;
@@ -15,9 +16,12 @@ const { name: websiteName, logo, bannerMessage, additionalHeadHTML } = websiteCo
 interface Props {
     title: string;
     implicitOrganism?: string;
+    noHorizontalPadding?: boolean;
 }
 
-const { title, implicitOrganism } = Astro.props;
+const { title, implicitOrganism, noHorizontalPadding } = Astro.props;
+
+const backendIsInDebugMode = await BackendClient.create().isInDebugMode();
 ---
 
 <html lang='en'>
@@ -31,6 +35,7 @@ const { title, implicitOrganism } = Astro.props;
         <Fragment set:html={additionalHeadHTML} />
     </head>
     <body>
+        {backendIsInDebugMode && <div class='bg-red-500 text-white text-center p-2'>Backend is in debug mode</div>}
         <Banner message={bannerMessage} />
         <div class='flex flex-col min-h-screen w-11/12 mx-auto'>
             <ToastContainer client:load />
@@ -61,7 +66,7 @@ const { title, implicitOrganism } = Astro.props;
                 <slot name='banner' />
             </header>
 
-            <div class='flex-grow mt-3 mb-5'>
+            <div class:list={['flex-grow', 'mt-3', 'mb-5', noHorizontalPadding === true ? '' : 'px-4']}>
                 <slot />
             </div>
 

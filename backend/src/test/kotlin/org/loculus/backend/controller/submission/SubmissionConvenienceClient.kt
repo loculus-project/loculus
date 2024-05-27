@@ -6,6 +6,7 @@ import org.hamcrest.CoreMatchers.equalTo
 import org.hamcrest.MatcherAssert.assertThat
 import org.loculus.backend.api.AccessionVersion
 import org.loculus.backend.api.AccessionVersionInterface
+import org.loculus.backend.api.AccessionVersionOriginalMetadata
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.GeneticSequence
@@ -30,6 +31,7 @@ import org.loculus.backend.controller.generateJwtFor
 import org.loculus.backend.controller.getAccessionVersions
 import org.loculus.backend.controller.groupmanagement.GroupManagementControllerClient
 import org.loculus.backend.controller.groupmanagement.andGetGroupId
+import org.loculus.backend.controller.jwtForDefaultUser
 import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.loculus.backend.utils.Accession
 import org.springframework.http.MediaType
@@ -376,6 +378,24 @@ class SubmissionConvenienceClient(
 
     fun getReleasedData(organism: String = DEFAULT_ORGANISM) =
         client.getReleasedData(organism).expectNdjsonAndGetContent<ProcessedData<GeneticSequence>>()
+
+    fun getOriginalMetadata(
+        organism: String = DEFAULT_ORGANISM,
+        jwt: String? = jwtForDefaultUser,
+        groupIdsFilter: List<Int>? = null,
+        statusesFilter: List<Status>? = null,
+        fields: List<String>? = null,
+        compression: String? = null,
+    ) = client
+        .getOriginalMetadata(
+            organism = organism,
+            jwt = jwt,
+            groupIdsFilter = groupIdsFilter,
+            statusesFilter = statusesFilter,
+            fields = fields,
+            compression = compression,
+        )
+        .expectNdjsonAndGetContent<AccessionVersionOriginalMetadata>()
 
     private inline fun <reified T> deserializeJsonResponse(resultActions: ResultActions): T {
         val content =
