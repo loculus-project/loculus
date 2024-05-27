@@ -38,7 +38,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             setLoadSequences(true);
         }
     }, [loadSequencesAutomatically]);
-    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentNames[0]));
+    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentNames[1]));
 
     if (!loadSequences) {
         return (
@@ -127,7 +127,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
             {nucleotideSegmentNames.map((segmentName) => (
                 <BoxWithTabsTab
                     key={segmentName}
-                    isActive={isUnalignedSequence(sequenceType)}
+                    isActive={isUnalignedSequence(sequenceType) && segmentName == sequenceType.name}
                     onClick={() => setType(unalignedSequenceSegment(segmentName))}
                     label={`${segmentName} (unaligned)`}
                 />
