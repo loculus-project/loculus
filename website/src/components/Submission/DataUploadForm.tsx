@@ -19,6 +19,7 @@ import {
 import type { ClientConfig } from '../../types/runtimeConfig.ts';
 import { dateTimeInMonths } from '../../utils/DateTimeInMonths.tsx';
 import { createAuthorizationHeader } from '../../utils/createAuthorizationHeader.ts';
+import { exampleSequence } from '../../utils/exampleSequence.ts';
 import { stringifyMaybeAxiosError } from '../../utils/stringifyMaybeAxiosError.ts';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import MaterialSymbolsInfoOutline from '~icons/material-symbols/info-outline';
@@ -482,7 +483,7 @@ function getExampleData(randomEntries = 20) {
 
         metadataContent += `${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\n`;
         revisedMetadataContent += `${i + 1}\t${submissionId}\t${date}\t${region}\t${country}\t${division}\t${host}\n`;
-        sequenceContent += `>${submissionId}\nACTG\n`;
+        sequenceContent += `>${submissionId}\n${exampleSequence}\n`;
     }
 
     return {
