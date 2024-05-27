@@ -66,14 +66,7 @@ const backendIsInDebugMode = await BackendClient.create().isInDebugMode();
                 <slot name='banner' />
             </header>
 
-            <div class:list={[
-  'flex-grow',
-  'mt-3',
-  'mb-5',
-  noHorizontalPadding===true ? '' : 'px-4'
-]}
-
->
+            <div class:list={['flex-grow', 'mt-3', 'mb-5', noHorizontalPadding === true ? '' : 'px-4']}>
                 <slot />
             </div>
 
