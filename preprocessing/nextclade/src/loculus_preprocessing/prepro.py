@@ -324,17 +324,16 @@ def process_single(
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
-    len_dict: dict[str, str | int | float | None] = {}
+    len_dict: dict[str, str | int] = {}
     for segment in config.nucleotideSequences:
         sequence = unprocessed.unalignedNucleotideSequences[segment]
         key = "length" if segment == "main" else "length_" + segment
         if sequence:
             len_dict[key] = len(sequence)
         else:
-            len_dict[key] = None
+            len_dict[key] = 0
     output_metadata: ProcessedMetadata = len_dict
 
-    alignment_failed = False
     for output_field, spec_dict in config.processing_spec.items():
         if output_field == "length":
             continue
@@ -397,11 +396,15 @@ def process_all(
     return processed_results
 
 
-def submit_processed_sequences(processed: Sequence[ProcessedEntry], config: Config) -> None:
+def submit_processed_sequences(
+    processed: Sequence[ProcessedEntry], dataset_dir: str, config: Config
+) -> None:
     json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
-    with open("data.json", "w", encoding="utf-8") as f:
-        for seq in processed:
-            json.dump(dataclasses.asdict(seq), f)
+    if config.keep_tmp_dir:
+        # For debugging: write all submit requests to submission_requests.json
+        with open(dataset_dir + "/submission_requests.json", "w", encoding="utf-8") as f:
+            for seq in processed:
+                json.dump(dataclasses.asdict(seq), f)
     ndjson_string = "\n".join(json_strings)
     url = config.backend_host.rstrip("/") + "/submit-processed-data"
     headers = {
@@ -465,7 +468,7 @@ def run(config: Config) -> None:
             processed = process_all(unprocessed, dataset_dir, config)
             # Submit the result
             try:
-                submit_processed_sequences(processed, config)
+                submit_processed_sequences(processed, dataset_dir, config)
             except RuntimeError as e:
                 logging.exception("Submitting processed data failed. Traceback : %s", e)
                 continue

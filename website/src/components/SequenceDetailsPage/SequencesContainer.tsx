@@ -38,7 +38,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
             setLoadSequences(true);
         }
     }, [loadSequencesAutomatically]);
-    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentNames[1]));
+    const [sequenceType, setSequenceType] = useState<SequenceType>(unalignedSequenceSegment(nucleotideSegmentNames[0]));
 
     if (!loadSequences) {
         return (
