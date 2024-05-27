@@ -53,7 +53,7 @@ secrets:
       port: "5432"
 ```
 
-You can also use sealed secrets, see the [Sealed Secrets](#sealed-secrets) section for more information.
+You can also use sealed secrets, see the [Sealed Secrets](#sealedsecret) section for more information.
 
 ## Clone the repository
 
