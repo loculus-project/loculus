@@ -10,17 +10,11 @@ Using NCBI `datasets` CLI, download all sequences and corresponding NCBI curated
 
 Sequences and metadata are transformed into (nd)json files to simplify (de)serialization and further processing.
 
-### Format segmented viruses
+### Segmented viruses
 
 NCBI handles segmented viruses differently than loculus. In NCBI each segment is uploaded separately and has its own accession ID and corresponding metadata. In loculus a sample is uploaded with all its segments and receives its own accession ID. This is done by having one accession ID per sample with one corresponding metadata entry and at most as many fasta entries as there are samples, each labeled `accessionID + '_' + segmentName`.
 
-The segment a sample corresponds to can only be determined from the descriptions of a sequence fasta record. In `segmented_viruses_format.py` we discard all sequences with unclear segment annotations and add `segment` as a metadata field. (TODO: Use nextclade instead of a regex search to determine which segment the sequence aligns with best to keep as much data as possible).
-
-We additionally group NCBI segments based on `ncbi_isolate_name` and `ncbi_collection_date`. If too many entries are grouped using this metric, or if no isolate information exists, we upload the segments individually. (TODO: Potentially only split the group when processing metadata - what happens if we have to split the group later?)
-
-We add a `joint_accession` field to the metadata which consists of a concatenated list of all `genbank_accession` IDs of the segments in the group and modify each fasta record to use `joint_accession` with the concatenated segment as their ID.
-
-Later, when processing the metadata, we confirm all grouped segments share the same non-segment-specific metadata fields before uploading them to loculus as one sample.
+The segment a sample corresponds to can only be determined from the descriptions of a sequence fasta record. In `get_segment_details.py` we discard all sequences with unclear segment annotations and add `segment` as a metadata field. (TODO: Use nextclade instead of a regex search to determine which segment the sequence aligns with best to keep as much data as possible).
 
 ### Transforming values to conform with Loculus' expectations
 
@@ -38,7 +32,13 @@ Every sequence entry is to be uploaded only once and must be ignored by future p
 
 To achieve this, an md5 hash is generated for each sequence entry based on the post-transform metadata and sequence content. The hash is based on all metadata fields submitted to Loculus as well as the sequence. Hence, changes to the ingest pipeline's transform step (above) can lead to changes in hash and resubmission - even without underlying data change on INSDC. Likewise, some changes to the INSDC data might not cause a sequence update on Loculus if what has been changed does not affect the post-transformed metadata.
 
-For segmented viruses we calculate the md5 hash of each segment and then concatenate the hashes of each segment before again hashing the hashes. We then store a dictionary of the hash of each sample group, using `joint-accession` as a key. (TODO: as this occurs prior to checking that all metadata fields exist we should store these as per sequence - this requires a change to compare_hashes as well).
+For segmented viruses we calculate the md5 hash of each segment and then, after grouping segments we concatenate the hashes of each segment before again hashing the hashes.
+
+### Grouping segmented viruses
+
+In NCBI sequences are uploaded for each segment separately. To upload all segments from the same isolate we need to group the sequences. We do this by grouping NCBI segments based on `ncbi_isolate_name` and other isolate-specific attributes. Segments will only be uploaded together if all these parameters match. We also add additionally checks to prevent multiple sequences of the same segment being grouped together. If a check fails, or the segments do not have isolate information, the segments will be uploaded individually.
+
+We group segments by adding a `joint_accession` field to the metadata which consists of a concatenated list of all `genbank_accession` IDs of the segments in the group. Each fasta record is also modified to use `joint_accession` with the concatenated segment as their ID (as required by loculus).
 
 ### Getting status and hashes of previously submitted sequences and triaging
 

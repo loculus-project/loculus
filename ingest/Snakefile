@@ -23,6 +23,7 @@ with open("results/config.yaml", "w") as f:
     f.write(yaml.dump(config))
 
 TAXON_ID = config["taxon_id"]
+SEGMENTED = config["segmented"]
 ALL_FIELDS = ",".join(config["all_fields"])
 COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
@@ -58,30 +59,46 @@ rule fetch_ncbi_dataset_package:
         """
 
 
-rule extract_ncbi_dataset_sequences_full:
+def get_extract_output(wildcard):
+    if wildcard:
+        return ("results/sequences_full.fasta",)
+    else:
+        return ("results/sequences.fasta",)
+
+
+rule extract_ncbi_dataset_sequences:
     input:
         dataset_package="results/ncbi_dataset.zip",
     output:
-        ncbi_dataset_sequences="results/sequences_full.fasta",
+        ncbi_dataset_sequences=get_extract_output(SEGMENTED),
+    params:
+        segmented=SEGMENTED,
     shell:
         """
-        unzip -jp {input.dataset_package} \
+        if [[ {params.segmented} ]]; then
+            unzip -jp {input.dataset_package} \
             ncbi_dataset/data/genomic.fna \
-        | seqkit seq -w0 \
-        > {output.ncbi_dataset_sequences}
+            | seqkit seq -w0 \
+            > {output.ncbi_dataset_sequences}
+        else
+            unzip -jp {input.dataset_package} \
+            ncbi_dataset/data/genomic.fna \
+            | seqkit seq -i -w0 \
+            > {output.ncbi_dataset_sequences}
+        fi
         """
 
 
-rule format_segmented_viruses:
-    """Check if viruses are segmented, if so add segment to INSDC label"""
+rule get_segment_details:
+    """Check if viruses are segmented, if so add segment to metadata"""
     input:
         sequences="results/sequences_full.fasta",
-        script="scripts/segmented_viruses_format.py",
+        script="scripts/get_segment_details.py",
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
         config="results/config.yaml",
     output:
         sequences_processed="results/sequences.fasta",
-        ncbi_dataset_tsv="results/metadata_post_format.tsv",
+        ncbi_dataset_tsv="results/metadata_post_segment.tsv",
     shell:
         """
         python {input.script} \
@@ -98,14 +115,12 @@ rule calculate_sequence_hashes:
     input:
         sequences="results/sequences.fasta",
         script="scripts/calculate_sequence_hashes.py",
-        config="results/config.yaml",
     output:
         sequence_hashes="results/sequence_hashes.json",
         sequence_json="results/sequences.json",
     shell:
         """
         python scripts/calculate_sequence_hashes.py \
-            --config-file {input.config} \
             --input {input.sequences} \
             --output-hashes {output.sequence_hashes} \
             --output-sequences {output.sequence_json}
@@ -137,9 +152,16 @@ rule rename_columns:
         rename_columns(input.ncbi_dataset_tsv, output.ncbi_dataset_tsv)
 
 
+def get_prepare_metadata(wildcard):
+    if wildcard:
+        return ("results/metadata_post_segment.tsv",)
+    else:
+        return ("results/metadata_post_rename.tsv",)
+
+
 rule prepare_metadata:
     input:
-        metadata="results/metadata_post_format.tsv",
+        metadata=get_prepare_metadata(SEGMENTED),
         sequence_hashes="results/sequence_hashes.json",
         config="results/config.yaml",
         script="scripts/prepare_metadata.py",
@@ -158,6 +180,36 @@ rule prepare_metadata:
         """
 
 
+rule group_segments:
+    input:
+        metadata="results/metadata_post_prepare.json",
+        sequences="results/sequences.json",
+        config="results/config.yaml",
+        script="scripts/group_segments.py",
+    output:
+        metadata="results/metadata_post_group.json",
+        sequences="results/sequences_post_group.json",
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python scripts/group_segments.py \
+            --config-file {input.config} \
+            --input-metadata {input.metadata} \
+            --input-seq {input.sequences} \
+            --output-metadata {output.metadata} \
+            --output-seq {output.sequences} \
+            --log-level {params.log_level} \
+        """
+
+
+def get_grouped_metadata(wildcard):
+    if wildcard:
+        return ("results/metadata_post_group.json",)
+    else:
+        return ("results/metadata_post_prepare.json",)
+
+
 rule get_previous_submissions:
     """Download metadata and sequence hashes of all previously submitted sequences 
     Produces mapping from INSDC accession to loculus id/version/hash
@@ -173,7 +225,7 @@ rule get_previous_submissions:
         ...
     """
     input:
-        prepped_metadata="results/metadata_post_prepare.json",  # Reduce likelihood of race condition of multi-submission
+        prepped_metadata=get_grouped_metadata(SEGMENTED),  # Reduce likelihood of race condition of multi-submission
         config="results/config.yaml",
         script="scripts/call_loculus.py",
     output:
@@ -196,7 +248,7 @@ rule compare_hashes:
     input:
         config="results/config.yaml",
         old_hashes="results/previous_submissions.json",
-        metadata="results/metadata_post_prepare.json",
+        metadata=get_grouped_metadata(SEGMENTED),
         script="scripts/compare_hashes.py",
     output:
         to_submit="results/to_submit.json",
@@ -221,11 +273,18 @@ rule compare_hashes:
         """
 
 
+def get_grouped_sequences(wildcard):
+    if wildcard:
+        return ("results/sequences_post_group.json",)
+    else:
+        return ("results/sequences.json",)
+
+
 rule prepare_files:
     input:
         config="results/config.yaml",
-        metadata="results/metadata_post_prepare.json",
-        sequences="results/sequences.json",
+        metadata=get_grouped_metadata(SEGMENTED),
+        sequences=get_grouped_sequences(SEGMENTED),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
         script="scripts/prepare_files.py",

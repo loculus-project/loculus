@@ -70,10 +70,8 @@ def main(
 
     submit = []  # INSDC accessions to submit
     revise = {}  # Mapping from INSDC accessions to loculus accession of sequences to revise
-    noop = {}  # Mapping from INSDC accessions to equivalent loculus accession of sequences for which no action is needed
-    blocked = defaultdict(
-        dict
-    )  # Mapping from INSDC accessions to equivalent loculus accession of sequences that cannot be updated due to status
+    noop = {}  # Mapping for sequences for which no action is needed
+    blocked = defaultdict(dict)  # Mapping for sequences that cannot be updated due to status
 
     for fasta_id, record in new_metadata.items():
         if config.segmented:

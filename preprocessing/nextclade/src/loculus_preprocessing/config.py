@@ -18,7 +18,7 @@ CLI_TYPES = [str, int, float, bool]
 @dataclass
 class Config:
     organism: str = "mpox"
-    backend_host: str = "http://127.0.0.1:8079/cchf"
+    backend_host: str = None  # Set default to None or similar placeholder
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
@@ -35,6 +35,10 @@ class Config:
     batch_size: int = 5
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     pipeline_version: int = 1
+
+    def __post_init__(self):
+        if self.backend_host is None:  # Check if backend_host wasn't set during initialization
+            self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
 
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:
