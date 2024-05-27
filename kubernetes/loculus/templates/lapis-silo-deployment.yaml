@@ -47,7 +47,7 @@ spec:
               memory: "100Mi"
               cpu: "10m"
             limits:
-              memory: "500Mi"
+              memory: "2Gi"
           ports:
             - containerPort: 8080
           args:
