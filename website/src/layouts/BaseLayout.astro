@@ -70,7 +70,7 @@ const backendIsInDebugMode = await BackendClient.create().isInDebugMode();
   'flex-grow',
   'mt-3',
   'mb-5',
-  {!noHorizontalPadding:'px-4'}
+  noHorizontalPadding ? '' : 'px-4'
 ]}
 
 >
