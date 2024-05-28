@@ -6,23 +6,16 @@ import { getConfiguredOrganisms } from '../../../config.ts';
 export async function findOrganismAndData(accessionVersion: string) {
     const organisms = getConfiguredOrganisms();
 
-    const promises = organisms.map(async ({ key }) => {
-        return {
-            organism: key,
-            result: await getSequenceDetailsTableData(accessionVersion, key),
-        };
-    });
+    const promises = organisms.map(({ key }) =>
+        getSequenceDetailsTableData(accessionVersion, key).then((result) =>
+            result.isOk() ? ok({ organism: key, result: result.value }) : Promise.reject(),
+        ),
+    );
 
-    const queries = await Promise.all(promises);
-
-    for (const { organism, result } of queries) {
-        if (result.isOk()) {
-            return ok({
-                organism,
-                result: result.value,
-            });
-        }
+    try {
+        const firstSuccess = await Promise.any(promises);
+        return firstSuccess;
+    } catch (error) {
+        return err({ type: SequenceDetailsTableResultType.ERROR });
     }
-
-    return err({ type: SequenceDetailsTableResultType.ERROR });
 }
