@@ -3,6 +3,7 @@ import dataclasses
 import json
 import logging
 import os
+import re
 import subprocess  # noqa: S404
 import sys
 import time
@@ -327,7 +328,7 @@ def process_single(
     output_metadata: ProcessedMetadata = len_dict
 
     for output_field, spec_dict in config.processing_spec.items():
-        if output_field == "length":
+        if re.search("^length", output_field):
             continue
         spec = ProcessingSpec(
             inputs=spec_dict["inputs"],
