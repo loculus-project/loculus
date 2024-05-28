@@ -1185,7 +1185,7 @@ defaultOrganisms:
         - name: "ORF7a"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF7a.fasta]]"
         - name: "ORF7b"
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORf7b.fasta]]"
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF7b.fasta]]"
         - name: "ORF8"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF8.fasta]]"
         - name: "ORF9b"

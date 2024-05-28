@@ -285,7 +285,7 @@ export const InnerSearchFullUI = ({
                         ${detailsHook.isLoading || aggregatedHook.isLoading ? 'opacity-50 pointer-events-none' : ''}
                         `}
                     >
-                        <div className='text-sm text-gray-800 mb-6 justify-between flex px-6 items-baseline'>
+                        <div className='text-sm text-gray-800 mb-6 justify-between flex md:px-6 items-baseline'>
                             <div className='mt-auto'>
                                 Search returned{' '}
                                 {totalSequences !== undefined

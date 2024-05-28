@@ -16,9 +16,10 @@ const { name: websiteName, logo, bannerMessage, additionalHeadHTML } = websiteCo
 interface Props {
     title: string;
     implicitOrganism?: string;
+    noHorizontalPadding?: boolean;
 }
 
-const { title, implicitOrganism } = Astro.props;
+const { title, implicitOrganism, noHorizontalPadding } = Astro.props;
 
 const backendIsInDebugMode = await BackendClient.create().isInDebugMode();
 ---
@@ -65,7 +66,7 @@ const backendIsInDebugMode = await BackendClient.create().isInDebugMode();
                 <slot name='banner' />
             </header>
 
-            <div class='flex-grow mt-3 mb-5'>
+            <div class:list={['flex-grow', 'mt-3', 'mb-5', noHorizontalPadding === true ? '' : 'px-4']}>
                 <slot />
             </div>
 

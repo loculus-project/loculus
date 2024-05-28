@@ -10,6 +10,8 @@ export type OrganismStatistics = {
 };
 type OrganismStatisticsMap = Map<string, OrganismStatistics>;
 
+const TIMEOUT_MS = 500;
+
 export const getOrganismStatisticsMap = async (
     organismNames: string[],
     numberDaysAgo: number,
@@ -26,14 +28,19 @@ export const getOrganismStatisticsMap = async (
 
 const getOrganismStatistics = async (organism: string, numberDaysAgo: number): Promise<OrganismStatistics> => {
     const [{ total, lastUpdatedAt }, recent] = await Promise.all([
-        getTotalAndLastUpdatedAt(organism),
-        getRecent(organism, numberDaysAgo),
+        withTimeout(getTotalAndLastUpdatedAt(organism), TIMEOUT_MS, { total: -1, lastUpdatedAt: undefined }),
+        withTimeout(getRecent(organism, numberDaysAgo), TIMEOUT_MS, 0),
     ]);
     return {
         totalSequences: total,
         recentSequences: recent,
         lastUpdatedAt,
     };
+};
+
+const withTimeout = <T>(promise: Promise<T>, ms: number, defaultValue: T): Promise<T> => {
+    const timeout = new Promise<T>((resolve) => setTimeout(() => resolve(defaultValue), ms));
+    return Promise.race([promise, timeout]);
 };
 
 const getTotalAndLastUpdatedAt = async (
