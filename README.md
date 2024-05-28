@@ -14,6 +14,8 @@ If you would like to develop with a full local loculus instance you need to firs
 2. Deploy the backend: [backend](/backend/README.md)
 3. Deploy the frontend/website: [website](/website/README.md)
 
+Note that if you are developing the backend or frontend/website in isolation a full local loculus instance is not required. See the individual READMEs for more information.
+
 ## Architecture
 
 - Backend code is in `backend`, see [`backend/README.md`](/backend/README.md)
