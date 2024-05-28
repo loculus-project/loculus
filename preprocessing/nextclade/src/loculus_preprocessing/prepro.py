@@ -9,7 +9,7 @@ from collections.abc import Sequence
 from http import HTTPStatus
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, Literal, TypeVar
 
 import dpath
 import requests
@@ -42,14 +42,23 @@ from .processing_functions import ProcessingFunctions
 csv.field_size_limit(sys.maxsize)
 
 
-def mask_terminal_gaps(sequence: str) -> NucleotideSequence:
+GenericSequence = TypeVar("GenericSequence", AminoAcidSequence, NucleotideSequence)
+
+
+def mask_terminal_gaps(
+    sequence: GenericSequence, mask_char: Literal["N"] | Literal["X"] = "N"
+) -> GenericSequence:
     # https://chatgpt.com/share/b213c687-38c4-4c62-98a8-4fecb210d479
     if not sequence:
         return ""
 
+    if mask_char not in {"N", "X"}:
+        error_message = "mask_char must be 'N' or 'X'"
+        raise ValueError(error_message)
+
     # Entire sequence of gaps
     if not sequence.strip("-"):
-        return "N" * len(sequence)
+        return mask_char * len(sequence)
 
     # Find the index of the first non-'-' character
     first_non_gap = 0
@@ -63,13 +72,13 @@ def mask_terminal_gaps(sequence: str) -> NucleotideSequence:
 
     # Replace terminal gaps with 'N'
     return (
-        "N" * first_non_gap
+        mask_char * first_non_gap
         + sequence[first_non_gap:last_non_gap]
-        + "N" * (len(sequence) - last_non_gap)
+        + mask_char * (len(sequence) - last_non_gap)
     )
 
 
-def load_aligned_sequences(result_dir: str) -> dict[AccessionVersion, NucleotideSequence]:
+def load_aligned_nuc_sequences(result_dir: str) -> dict[AccessionVersion, NucleotideSequence]:
     aligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
     with open(f"{result_dir}/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
         for aligned_sequence in SeqIO.parse(aligned_nucs, "fasta"):
@@ -160,7 +169,7 @@ def enrich_with_nextclade(
 
         logging.debug(f"Nextclade results available in {result_dir}")
 
-        aligned_nucleotide_sequences = load_aligned_sequences(result_dir)
+        aligned_nucleotide_sequences = load_aligned_nuc_sequences(result_dir)
 
         for gene in config.genes:
             translation_path = result_dir + f"/nextclade.cds_translation.{gene}.fasta"
@@ -169,7 +178,10 @@ def enrich_with_nextclade(
                     aligned_translation = SeqIO.parse(aligned_translations, "fasta")
                     for aligned_sequence in aligned_translation:
                         sequence_id = aligned_sequence.id
-                        aligned_aminoacid_sequences[sequence_id][gene] = str(aligned_sequence.seq)
+                        masked_sequence = mask_terminal_gaps(
+                            str(aligned_sequence.seq), mask_char="X"
+                        )
+                        aligned_aminoacid_sequences[sequence_id][gene] = masked_sequence
             except FileNotFoundError:
                 # TODO: Add warning to each sequence
                 logging.info(
