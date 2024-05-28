@@ -1,5 +1,4 @@
 import { IS_REVOCATION_FIELD, metadataDefaultDownloadDataFormat, VERSION_STATUS_FIELD } from '../../../settings.ts';
-import type { FilterValue, MutationFilter } from '../../../types/config.ts';
 import { siloVersionStatuses } from '../../../types/lapis.ts';
 
 export type DownloadDataType =
@@ -18,13 +17,13 @@ export type DownloadOption = {
 };
 
 export const generateDownloadUrl = (
-    metadataFilter: FilterValue[],
-    mutationFilter: MutationFilter,
+    lapisSearchParameters: Record<string, any>,
     option: DownloadOption,
     lapisUrl: string,
 ) => {
     const baseUrl = `${lapisUrl}${getEndpoint(option.dataType)}`;
     const params = new URLSearchParams();
+
     params.set('downloadAsFile', 'true');
     if (!option.includeOldData) {
         params.set(VERSION_STATUS_FIELD, siloVersionStatuses.latestVersion);
@@ -39,24 +38,36 @@ export const generateDownloadUrl = (
     if (option.compression !== undefined) {
         params.set('compression', option.compression);
     }
-    for (const { name, filterValue } of metadataFilter) {
-        if (filterValue.trim().length > 0) {
-            params.set(name, filterValue);
+    if (lapisSearchParameters.accession !== undefined) {
+        for (const accession of lapisSearchParameters.accession) {
+            params.append('accession', accession);
         }
     }
-    if (mutationFilter.nucleotideMutationQueries !== undefined) {
-        params.set('nucleotideMutations', mutationFilter.nucleotideMutationQueries.join(','));
+
+    const mutationKeys = ['nucleotideMutations', 'aminoAcidMutations', 'nucleotideInsertions', 'aminoAcidInsertions'];
+
+    for (const [key, value] of Object.entries(lapisSearchParameters)) {
+        // Skip accession and mutations
+        if (key === 'accession' || mutationKeys.includes(key)) {
+            continue;
+        }
+        const trimmedValue = value.trim();
+        if (trimmedValue.length > 0) {
+            params.set(key, trimmedValue);
+        }
     }
-    if (mutationFilter.aminoAcidMutationQueries !== undefined) {
-        params.set('aminoAcidMutations', mutationFilter.aminoAcidMutationQueries.join(','));
-    }
-    if (mutationFilter.nucleotideInsertionQueries !== undefined) {
-        params.set('nucleotideInsertions', mutationFilter.nucleotideInsertionQueries.join(','));
-    }
-    if (mutationFilter.aminoAcidInsertionQueries !== undefined) {
-        params.set('aminoAcidInsertions', mutationFilter.aminoAcidInsertionQueries.join(','));
-    }
-    return `${baseUrl}?${params}`;
+
+    mutationKeys.forEach((key) => {
+        if (lapisSearchParameters[key] !== undefined) {
+            params.set(key, lapisSearchParameters[key].join(','));
+        }
+    });
+
+    return {
+        url: `${baseUrl}?${params}`,
+        baseUrl,
+        params,
+    };
 };
 
 const getEndpoint = (dataType: DownloadDataType) => {

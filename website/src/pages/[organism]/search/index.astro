@@ -1,42 +1,46 @@
 ---
+import { cleanOrganism } from '../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../components/SearchPage/SearchFullUI';
+import { getRuntimeConfig, getSchema } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { processParametersAndFetchSearch } from '../../../utils/processParametersAndFetchSearch';
-const props = await processParametersAndFetchSearch(Astro);
-let theData = null;
-let theError = null;
-props.data.match(
-    (data) => {
-        theData = data;
-        theError = null;
-    },
-    (err) => {
-        theData = null;
-        theError = err;
-    },
-);
+import { VERSION_STATUS_FIELD, IS_REVOCATION_FIELD } from '../../../settings';
+import { siloVersionStatuses } from '../../../types/lapis';
+import { getAccessToken } from '../../../utils/getAccessToken';
+import { getMyGroups } from '../../../utils/getMyGroups';
+import { getReferenceGenomesSequenceNames } from '../../../utils/search';
+
+const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+if (!cleanedOrganism) {
+    return {
+        statusCode: 404,
+        body: 'Organism not found',
+    };
+}
+
+const clientConfig = getRuntimeConfig().public;
+const schema = getSchema(cleanedOrganism.key);
+
+const accessToken = getAccessToken(Astro.locals.session);
+const myGroups = accessToken !== undefined ? await getMyGroups(accessToken) : [];
+
+const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 ---
 
-<BaseLayout title={`${props.cleanedOrganism.displayName} - Browse`}>
-    <h1 class='title'>Search</h1>
+<BaseLayout title={`${cleanedOrganism.displayName} - Browse`} noHorizontalPadding>
+    <h1 class='title px-3 py-2'>Search</h1>
+
     <SearchFullUI
         client:load
-        data={theData}
-        error={theError}
-        classOfSearchPage='SEARCH'
-        filters={props.metadataFilter}
-        initialAccessionFilter={props.accessionFilter}
-        initialMutationFilter={props.mutationFilter}
-        organism={props.organism}
-        referenceGenomesSequenceNames={props.referenceGenomesSequenceNames}
-        clientConfig={props.clientConfig}
-        orderBy={props.orderBy}
-        lapisUrl={props.lapisUrl}
-        schema={props.schema}
-        page={props.page}
-        metadataFilter={props.metadataFilter}
-        accessionFilter={props.accessionFilter}
-        mutationFilter={props.mutationFilter}
-        metadataFilterWithoutHiddenFilters={props.metadataFilterWithoutHiddenFilters}
+        clientConfig={clientConfig}
+        organism={cleanedOrganism.key}
+        schema={schema}
+        myGroups={myGroups}
+        accessToken={accessToken}
+        referenceGenomesSequenceNames={referenceGenomeSequenceNames}
+        hiddenFieldValues={{
+            [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+            [IS_REVOCATION_FIELD]: 'false',
+        }}
     />
 </BaseLayout>

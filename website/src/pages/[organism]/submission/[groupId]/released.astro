@@ -1,8 +1,12 @@
 ---
+import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import { SearchFullUI } from '../../../../components/SearchPage/SearchFullUI';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
-import { MY_SEQUENCES } from '../../../../routes/routes';
-import { processParametersAndFetchSearch } from '../../../../utils/processParametersAndFetchSearch';
+import { getRuntimeConfig, getSchema } from '../../../../config';
+import { GROUP_ID_FIELD, VERSION_STATUS_FIELD } from '../../../../settings';
+import { siloVersionStatuses } from '../../../../types/lapis';
+import { getAccessToken } from '../../../../utils/getAccessToken';
+import { getReferenceGenomesSequenceNames } from '../../../../utils/search';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 if (groupsResult.isErr()) {
@@ -10,41 +14,35 @@ if (groupsResult.isErr()) {
 }
 const { currentGroup: group } = groupsResult.value;
 
-const props = await processParametersAndFetchSearch(Astro, group.groupId);
-let theData = null;
-let theError = null;
-props.data.match(
-    (data) => {
-        theData = data;
-        theError = null;
-    },
-    (err) => {
-        theData = null;
-        theError = err;
-    },
-);
+const { organism: cleanedOrganism } = cleanOrganism(Astro.params.organism);
+
+if (!cleanedOrganism) {
+    return {
+        statusCode: 404,
+        body: 'Organism not found',
+    };
+}
+
+const clientConfig = getRuntimeConfig().public;
+const schema = getSchema(cleanedOrganism.key);
+
+const accessToken = getAccessToken(Astro.locals.session);
+
+const referenceGenomeSequenceNames = getReferenceGenomesSequenceNames(cleanedOrganism.key);
 ---
 
 <SubmissionPageWrapper groupsResult={groupsResult} title='Released sequences'>
     <SearchFullUI
         client:load
-        data={theData}
-        error={theError}
-        classOfSearchPage={MY_SEQUENCES}
-        filters={props.metadataFilter}
-        initialAccessionFilter={props.accessionFilter}
-        initialMutationFilter={props.mutationFilter}
-        organism={props.organism}
-        referenceGenomesSequenceNames={props.referenceGenomesSequenceNames}
-        clientConfig={props.clientConfig}
-        orderBy={props.orderBy}
-        lapisUrl={props.lapisUrl}
-        schema={props.schema}
-        page={props.page}
-        metadataFilter={props.metadataFilter}
-        accessionFilter={props.accessionFilter}
-        mutationFilter={props.mutationFilter}
-        groupId={group.groupId}
-        metadataFilterWithoutHiddenFilters={props.metadataFilterWithoutHiddenFilters}
+        clientConfig={clientConfig}
+        organism={cleanedOrganism.key}
+        schema={schema}
+        myGroups={[group]}
+        accessToken={accessToken}
+        referenceGenomesSequenceNames={referenceGenomeSequenceNames}
+        hiddenFieldValues={{
+            [VERSION_STATUS_FIELD]: siloVersionStatuses.latestVersion,
+            [GROUP_ID_FIELD]: group.groupId,
+        }}
     />
 </SubmissionPageWrapper>

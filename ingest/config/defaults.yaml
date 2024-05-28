@@ -1,5 +1,6 @@
 # Values here are defaults for the `config` variable in the Snakefile
 # Purpose is to keep the `values.yaml` config file clean
+post_start_sleep: 0
 log_level: DEBUG
 compound_country_field: ncbi_geo_location
 fasta_id_field: genbank_accession
@@ -32,6 +33,7 @@ keep:
   - ncbi_virus_name
   - ncbi_virus_tax_id
   - sequence_md5
+  - genbank_accession
 all_fields:
   - accession
   - bioprojects

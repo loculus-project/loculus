@@ -1,0 +1,20 @@
+{{- $testconfig := .Values.testconfig | default false }}
+{{- $backendHost := .Values.environment | eq "server" | ternary (printf "https://backend-%s" $.Values.host) ($testconfig | ternary "http://localhost:8079" "http://loculus-backend-service:8079") }}
+{{- $keycloakHost := .Values.environment | eq "server" | ternary (printf "https://authentication-%s" $.Values.host) ($testconfig | ternary "http://localhost:8083" "http://loculus-keycloak-service:8083") }}
+{{- range $key, $values := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- if $values.ingest }}
+{{- $metadata := (include "loculus.patchMetadataSchema" $values.schema | fromYaml).metadata }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: loculus-ingest-config-{{ $key }}
+data:
+  config.yaml: |
+    {{- $values.ingest.configFile | toYaml | nindent 4 }}
+    organism: {{ $key }}
+    backend_url: {{ $backendHost }}
+    keycloak_token_url: {{ $keycloakHost -}}/realms/loculus/protocol/openid-connect/token
+    {{- include "loculus.ingestRename" $metadata | nindent 4 }}
+{{- end }}
+{{- end }}

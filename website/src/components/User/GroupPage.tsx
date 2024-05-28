@@ -1,10 +1,11 @@
-import { type FC, type FormEvent, useRef, useState } from 'react';
+import { type FC, type FormEvent, useState } from 'react';
 
+import useClientFlag from '../../hooks/isClient.ts';
 import { useGroupPageHooks } from '../../hooks/useGroupOperations.ts';
 import { routes } from '../../routes/routes.ts';
 import type { Address, Group, GroupDetails } from '../../types/backend.ts';
 import { type ClientConfig } from '../../types/runtimeConfig.ts';
-import { ConfirmationDialog } from '../DeprecatedConfirmationDialog.tsx';
+import { displayConfirmationDialog } from '../ConfirmationDialog.js';
 import { ErrorFeedback } from '../ErrorFeedback.tsx';
 import { withQueryProvider } from '../common/withQueryProvider.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
@@ -28,10 +29,10 @@ const InnerGroupPage: FC<GroupPageProps> = ({
 }) => {
     const groupName = prefetchedGroupDetails.group.groupName;
     const [newUserName, setNewUserName] = useState<string>('');
-    const [userToDelete, setUserToDelete] = useState<string | null>(null);
-    const dialogRef = useRef<HTMLDialogElement>(null);
 
     const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+
+    const isClient = useClientFlag();
 
     const { groupDetails, removeFromGroup, addUserToGroup } = useGroupPageHooks({
         clientConfig,
@@ -46,40 +47,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
         setNewUserName('');
     };
 
-    const handleDeleteUser = async () => {
-        if (userToDelete !== null) {
-            await removeFromGroup(userToDelete);
-            if (userToDelete === username) {
-                window.location.href = routes.userOverviewPage();
-            } else {
-                setUserToDelete(null);
-            }
-        }
-    };
-
-    const handleOpenConfirmationDialog = (username: string) => {
-        setUserToDelete(username);
-        if (dialogRef.current) {
-            dialogRef.current.showModal();
-        }
-    };
-
     const userIsGroupMember = groupDetails.data?.users.some((user) => user.name === username) ?? false;
     const userHasEditPrivileges = userGroups.some((group) => group.groupId === prefetchedGroupDetails.group.groupId);
 
     return (
         <div className='flex flex-col h-full p-4'>
-            <dialog ref={dialogRef} className='modal'>
-                <ConfirmationDialog
-                    onConfirmation={handleDeleteUser}
-                    dialogText={
-                        userToDelete === username
-                            ? `Do you really want to leave ${groupName}?`
-                            : `Do you really want to remove ${userToDelete} from ${groupName}?`
-                    }
-                />
-            </dialog>
-
             {errorMessage !== undefined && (
                 <ErrorFeedback message={errorMessage} onClose={() => setErrorMessage(undefined)} />
             )}
@@ -121,8 +93,18 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                     </h1>
                     {userIsGroupMember && (
                         <button
-                            onClick={() => handleOpenConfirmationDialog(username)}
+                            onClick={() => {
+                                displayConfirmationDialog({
+                                    dialogText: `Are you sure you want to leave the ${groupName} group?`,
+
+                                    onConfirmation: async () => {
+                                        await removeFromGroup(username);
+                                        window.location.href = routes.userOverviewPage();
+                                    },
+                                });
+                            }}
                             className='object-right p-2 loculusColor text-white rounded px-4'
+                            disabled={!isClient}
                         >
                             Leave group
                         </button>
@@ -174,7 +156,11 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                                 className='p-2 border border-gray-300 rounded mr-2'
                                 required
                             />
-                            <button type='submit' className='px-4 py-2 loculusColor text-white rounded'>
+                            <button
+                                type='submit'
+                                className='px-4 py-2 loculusColor text-white rounded'
+                                disabled={!isClient}
+                            >
                                 Add User
                             </button>
                         </div>
@@ -184,14 +170,24 @@ const InnerGroupPage: FC<GroupPageProps> = ({
                             {groupDetails.data?.users.map((user) => (
                                 <li key={user.name} className='flex items-center gap-6 bg-gray-100 p-2 mb-2 rounded'>
                                     <span className='text-lg'>{user.name}</span>
-                                    <button
-                                        onClick={() => handleOpenConfirmationDialog(user.name)}
-                                        className='px-2 py-1 loculusColor text-white rounded'
-                                        title='Remove user from group'
-                                        aria-label={`Remove User ${user.name}`}
-                                    >
-                                        Remove user
-                                    </button>
+                                    {user.name !== username && (
+                                        <button
+                                            onClick={() => {
+                                                displayConfirmationDialog({
+                                                    dialogText: `Are you sure you want to remove ${user.name} from the group ${groupName}?`,
+                                                    onConfirmation: async () => {
+                                                        await removeFromGroup(user.name);
+                                                    },
+                                                });
+                                            }}
+                                            className='px-2 py-1 loculusColor text-white rounded'
+                                            title='Remove user from group'
+                                            aria-label={`Remove User ${user.name}`}
+                                            disabled={!isClient}
+                                        >
+                                            Remove user
+                                        </button>
+                                    )}
                                 </li>
                             ))}
                         </ul>

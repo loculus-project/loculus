@@ -15,10 +15,15 @@ const metadataPossibleTypes = z.enum([
     'authors',
 ] as const);
 
+export const segmentedMutations = z.object({
+    segment: z.string(),
+    mutations: z.array(mutationProportionCount),
+});
+
 export const customDisplay = z.object({
     type: z.string(),
     url: z.string().optional(),
-    value: z.array(mutationProportionCount).optional(),
+    value: z.array(segmentedMutations).optional(),
 });
 
 export const metadata = z.object({
@@ -32,6 +37,7 @@ export const metadata = z.object({
     initiallyVisible: z.boolean().optional(),
     hideOnSequenceDetailsPage: z.boolean().optional(),
     header: z.string().optional(),
+    rangeSearch: z.boolean().optional(),
 });
 
 export const inputField = z.object({
@@ -43,9 +49,9 @@ export type InputField = z.infer<typeof inputField>;
 export type CustomDisplay = z.infer<typeof customDisplay>;
 export type Metadata = z.infer<typeof metadata>;
 export type MetadataType = z.infer<typeof metadataPossibleTypes>;
+export type SegmentedMutations = z.infer<typeof segmentedMutations>;
 
 export type MetadataFilter = Metadata & {
-    filterValue: string;
     label?: string;
     fieldGroup?: string;
     grouped?: false;
@@ -65,8 +71,6 @@ export type GroupedMetadataFilter = {
     initiallyVisible?: boolean;
 };
 
-export type FilterValue = Pick<MetadataFilter, 'name' | 'filterValue'>;
-
 export type AccessionFilter = {
     accession?: string[];
 };
@@ -79,7 +83,7 @@ export type MutationFilter = {
 };
 
 const schema = z.object({
-    instanceName: z.string(),
+    organismName: z.string(),
     image: z.string().optional(),
     description: z.string().optional(),
     metadata: z.array(metadata),
@@ -112,3 +116,6 @@ export const websiteConfig = z.object({
     additionalHeadHTML: z.string().optional(),
 });
 export type WebsiteConfig = z.infer<typeof websiteConfig>;
+
+export type FieldValues = Record<string, string | number>;
+export type SetAFieldValue = (fieldName: string, value: string | number) => void;

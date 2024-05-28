@@ -13,7 +13,9 @@ export const referenceGenomes = z.object({
 });
 export type ReferenceGenomes = z.infer<typeof referenceGenomes>;
 
+export type NucleotideSegmentNames = string[];
+
 export type ReferenceGenomesSequenceNames = {
-    nucleotideSequences: string[];
+    nucleotideSequences: NucleotideSegmentNames;
     genes: string[];
 };

@@ -1,4 +1,4 @@
-import { err, ok } from 'neverthrow';
+import { err } from 'neverthrow';
 import { beforeEach, describe, expect, test } from 'vitest';
 
 import { getTableData } from './getTableData.ts';
@@ -9,7 +9,7 @@ import type { Schema } from '../../types/config.ts';
 import type { MutationProportionCount } from '../../types/lapis.ts';
 
 const schema: Schema = {
-    instanceName: 'instance name',
+    organismName: 'instance name',
     metadata: [
         { name: 'metadataField1', type: 'string', header: 'testHeader1' },
         { name: 'metadataField2', type: 'string' },
@@ -32,17 +32,21 @@ const dummyError = {
     },
 };
 
+const info = {
+    dataVersion: '1704063600',
+};
+
 const accessionVersion = 'accession';
 
 const lapisClient = LapisClient.create(testConfig.serverSide.lapisUrls.dummy, schema);
 
 describe('getTableData', () => {
     beforeEach(() => {
-        mockRequest.lapis.details(200, { data: [{ dummyField: 'dummyValue' }] });
-        mockRequest.lapis.nucleotideMutations(200, { data: [] });
-        mockRequest.lapis.aminoAcidMutations(200, { data: [] });
-        mockRequest.lapis.nucleotideInsertions(200, { data: [] });
-        mockRequest.lapis.aminoAcidInsertions(200, { data: [] });
+        mockRequest.lapis.details(200, { info, data: [toLapisEntry({ dummyField: 'dummyValue' })] });
+        mockRequest.lapis.nucleotideMutations(200, { info, data: [] });
+        mockRequest.lapis.aminoAcidMutations(200, { info, data: [] });
+        mockRequest.lapis.nucleotideInsertions(200, { info, data: [] });
+        mockRequest.lapis.aminoAcidInsertions(200, { info, data: [] });
     });
 
     test('should return an error when getSequenceDetails fails', async () => {
@@ -72,34 +76,8 @@ describe('getTableData', () => {
     test('should return default values when there is no data', async () => {
         const result = await getTableData(accessionVersion, schema, lapisClient);
 
-        const defaultList: TableDataEntry[] = [
-            {
-                label: 'Metadata field1',
-                name: 'metadataField1',
-                value: 'N/A',
-                customDisplay: undefined,
-                header: 'testHeader1',
-                type: { kind: 'metadata', metadataType: 'string' },
-            },
-            {
-                label: 'Metadata field2',
-                name: 'metadataField2',
-                value: 'N/A',
-                customDisplay: undefined,
-                header: '',
-                type: { kind: 'metadata', metadataType: 'string' },
-            },
-            {
-                label: 'Timestamp field',
-                name: 'timestampField',
-                value: 'N/A',
-                customDisplay: undefined,
-                header: '',
-                type: { kind: 'metadata', metadataType: 'timestamp' },
-            },
-        ];
-
-        expect(result).toStrictEqual(ok(defaultList.concat(defaultMutationsInsertionsDeletionsList)));
+        const data = result._unsafeUnwrap().data;
+        expect(data).toStrictEqual(defaultMutationsInsertionsDeletionsList);
     });
 
     test('should return details field values', async () => {
@@ -107,17 +85,18 @@ describe('getTableData', () => {
         const value2 = 'value 2';
 
         mockRequest.lapis.details(200, {
+            info,
             data: [
                 {
                     metadataField1: value1,
                     metadataField2: value2,
                 },
-            ],
+            ].map((d) => toLapisEntry(d)),
         });
 
         const result = await getTableData('accession', schema, lapisClient);
 
-        const data = result._unsafeUnwrap();
+        const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Metadata field1',
             name: 'metadataField1',
@@ -135,12 +114,12 @@ describe('getTableData', () => {
     });
 
     test('should return data of mutations', async () => {
-        mockRequest.lapis.nucleotideMutations(200, { data: nucleotideMutations });
-        mockRequest.lapis.aminoAcidMutations(200, { data: aminoAcidMutations });
+        mockRequest.lapis.nucleotideMutations(200, { info, data: nucleotideMutations });
+        mockRequest.lapis.aminoAcidMutations(200, { info, data: aminoAcidMutations });
 
         const result = await getTableData('accession', schema, lapisClient);
 
-        const data = result._unsafeUnwrap();
+        const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Substitutions',
             name: 'nucleotideSubstitutions',
@@ -150,22 +129,27 @@ describe('getTableData', () => {
                 type: 'badge',
                 value: [
                     {
-                        count: 0,
-                        mutation: 'T10A',
-                        mutationFrom: 'T',
-                        mutationTo: 'A',
-                        position: 10,
-                        proportion: 0,
-                        sequenceName: null,
-                    },
-                    {
-                        count: 0,
-                        mutation: 'C30G',
-                        mutationFrom: 'C',
-                        mutationTo: 'G',
-                        position: 30,
-                        proportion: 0,
-                        sequenceName: null,
+                        segment: '',
+                        mutations: [
+                            {
+                                count: 0,
+                                mutation: 'T10A',
+                                mutationFrom: 'T',
+                                mutationTo: 'A',
+                                position: 10,
+                                proportion: 0,
+                                sequenceName: null,
+                            },
+                            {
+                                count: 0,
+                                mutation: 'C30G',
+                                mutationFrom: 'C',
+                                mutationTo: 'G',
+                                position: 30,
+                                proportion: 0,
+                                sequenceName: null,
+                            },
+                        ],
                     },
                 ],
             },
@@ -187,22 +171,27 @@ describe('getTableData', () => {
                 type: 'badge',
                 value: [
                     {
-                        count: 0,
-                        mutation: 'gene1:N10Y',
-                        mutationFrom: 'N',
-                        mutationTo: 'Y',
-                        position: 10,
-                        proportion: 0,
-                        sequenceName: 'gene1',
-                    },
-                    {
-                        count: 0,
-                        mutation: 'gene1:T30N',
-                        mutationFrom: 'T',
-                        mutationTo: 'N',
-                        position: 30,
-                        proportion: 0,
-                        sequenceName: 'gene1',
+                        segment: 'gene1',
+                        mutations: [
+                            {
+                                count: 0,
+                                mutation: 'gene1:N10Y',
+                                mutationFrom: 'N',
+                                mutationTo: 'Y',
+                                position: 10,
+                                proportion: 0,
+                                sequenceName: 'gene1',
+                            },
+                            {
+                                count: 0,
+                                mutation: 'gene1:T30N',
+                                mutationFrom: 'T',
+                                mutationTo: 'N',
+                                position: 30,
+                                proportion: 0,
+                                sequenceName: 'gene1',
+                            },
+                        ],
                     },
                 ],
             },
@@ -218,12 +207,12 @@ describe('getTableData', () => {
     });
 
     test('should return data of insertions', async () => {
-        mockRequest.lapis.nucleotideInsertions(200, { data: nucleotideInsertions });
-        mockRequest.lapis.aminoAcidInsertions(200, { data: aminoAcidInsertions });
+        mockRequest.lapis.nucleotideInsertions(200, { info, data: nucleotideInsertions });
+        mockRequest.lapis.aminoAcidInsertions(200, { info, data: aminoAcidInsertions });
 
         const result = await getTableData('accession', schema, lapisClient);
 
-        const data = result._unsafeUnwrap();
+        const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Insertions',
             name: 'nucleotideInsertions',
@@ -241,11 +230,11 @@ describe('getTableData', () => {
     });
 
     test('should map timestamps to human readable dates', async () => {
-        mockRequest.lapis.details(200, { data: [{ timestampField: 1706194761 }] });
+        mockRequest.lapis.details(200, { info, data: [{ timestampField: 1706194761 }] });
 
         const result = await getTableData('accession', schema, lapisClient);
 
-        const data = result._unsafeUnwrap();
+        const data = result._unsafeUnwrap().data;
         expect(data).toContainEqual({
             label: 'Timestamp field',
             name: 'timestampField',
@@ -254,7 +243,26 @@ describe('getTableData', () => {
             type: { kind: 'metadata', metadataType: 'timestamp' },
         });
     });
+
+    test('should correctly determine revocation entry', async () => {
+        for (const expectedIsRevocation of [true, false]) {
+            mockRequest.lapis.details(200, {
+                info,
+                data: [toLapisEntry({}, expectedIsRevocation)],
+            });
+            const result = await getTableData('accession', schema, lapisClient);
+            const isRevocation = result._unsafeUnwrap().isRevocation;
+            expect(isRevocation).toBe(expectedIsRevocation);
+        }
+    });
 });
+
+function toLapisEntry(entry: Record<string, any>, isRevocation = false) {
+    return {
+        ...entry,
+        isRevocation,
+    };
+}
 
 const nucleotideMutations: MutationProportionCount[] = [
     {

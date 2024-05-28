@@ -2,8 +2,8 @@ import { capitalCase } from 'change-case';
 import type { FC, ReactElement } from 'react';
 import { Tooltip } from 'react-tooltip';
 
-import { type ClassOfSearchPageType, navigateToSearchLikePage, routes } from '../../routes/routes.ts';
-import type { AccessionFilter, MetadataFilter, MutationFilter, Schema } from '../../types/config.ts';
+import { routes } from '../../routes/routes.ts';
+import type { Schema } from '../../types/config.ts';
 import type { Metadatum, OrderBy } from '../../types/lapis.ts';
 import MdiTriangle from '~icons/mdi/triangle';
 import MdiTriangleDown from '~icons/mdi/triangle-down';
@@ -13,29 +13,23 @@ export type TableSequenceData = {
 };
 
 type TableProps = {
-    organism: string;
     schema: Schema;
     data: TableSequenceData[];
-    metadataFilter: MetadataFilter[];
-    accessionFilter: AccessionFilter;
-    mutationFilter: MutationFilter;
-    page: number;
+    setPreviewedSeqId: (seqId: string | null) => void;
+    previewedSeqId: string | null;
     orderBy: OrderBy;
-    classOfSearchPage: ClassOfSearchPageType;
-    groupId?: number;
+    setOrderByField: (field: string) => void;
+    setOrderDirection: (direction: 'ascending' | 'descending') => void;
 };
 
 export const Table: FC<TableProps> = ({
-    organism,
     data,
     schema,
-    metadataFilter,
-    accessionFilter,
-    mutationFilter,
-    page,
+    setPreviewedSeqId,
+    previewedSeqId,
     orderBy,
-    classOfSearchPage,
-    groupId,
+    setOrderByField,
+    setOrderDirection,
 }) => {
     const primaryKey = schema.primaryKey;
 
@@ -50,48 +44,13 @@ export const Table: FC<TableProps> = ({
     const handleSort = (field: string) => {
         if (orderBy.field === field) {
             if (orderBy.type === 'ascending') {
-                navigateToSearchLikePage(
-                    organism,
-                    classOfSearchPage,
-                    groupId,
-                    metadataFilter,
-                    accessionFilter,
-                    mutationFilter,
-                    page,
-                    {
-                        field,
-                        type: 'descending',
-                    },
-                );
+                setOrderDirection('descending');
             } else {
-                navigateToSearchLikePage(
-                    organism,
-                    classOfSearchPage,
-                    groupId,
-                    metadataFilter,
-                    accessionFilter,
-                    mutationFilter,
-                    page,
-                    {
-                        field,
-                        type: 'ascending',
-                    },
-                );
+                setOrderDirection('ascending');
             }
         } else {
-            navigateToSearchLikePage(
-                organism,
-                classOfSearchPage,
-                groupId,
-                metadataFilter,
-                accessionFilter,
-                mutationFilter,
-                page,
-                {
-                    field,
-                    type: 'ascending',
-                },
-            );
+            setOrderByField(field);
+            setOrderDirection('ascending');
         }
     };
 
@@ -111,7 +70,7 @@ export const Table: FC<TableProps> = ({
                         <tr>
                             <th
                                 onClick={() => handleSort(primaryKey)}
-                                className='px-2 py-3 pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
+                                className='px-2 py-3 md:pl-6 text-xs font-medium tracking-wider text-gray-500 uppercase cursor-pointer text-left'
                             >
                                 {capitalCase(primaryKey)} {orderBy.field === primaryKey && orderIcon}
                             </th>
@@ -128,13 +87,42 @@ export const Table: FC<TableProps> = ({
                     </thead>
                     <tbody className='bg-white'>
                         {data.map((row, index) => (
-                            <tr key={index} className='hover:bg-primary-100 border-gray-100 '>
-                                <td className='px-2  whitespace-nowrap    text-primary-900 pl-6'>
+                            <tr
+                                key={index}
+                                className={`hover:bg-primary-100 border-gray-100 ${
+                                    row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
+                                } `}
+                            >
+                                <td className='px-2  whitespace-nowrap    text-primary-900 md:pl-6'>
                                     <a
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
-                                        className='text-primary-900 hover:text-primary-800'
+                                        className='text-primary-900 hover:text-primary-800 hover:no-underline'
+                                        onClick={(e) => {
+                                            function detectMob() {
+                                                const toMatch = [
+                                                    /Android/i,
+                                                    /webOS/i,
+                                                    /iPhone/i,
+                                                    /iPod/i,
+                                                    /BlackBerry/i,
+                                                    /Windows Phone/i,
+                                                ];
+
+                                                return toMatch.some((toMatchItem) => {
+                                                    return navigator.userAgent.match(toMatchItem);
+                                                });
+                                            }
+
+                                            const screenWidth = window.screen.width;
+
+                                            if (!e.ctrlKey && !e.metaKey && screenWidth > 1024 && !detectMob()) {
+                                                e.preventDefault();
+                                                setPreviewedSeqId(row[primaryKey] as string);
+                                            }
+                                        }}
                                     >
-                                        {row[primaryKey]}
+                                        {' '}
+                                        {row[primaryKey]}{' '}
                                     </a>
                                 </td>
                                 {columns.map((c) => (

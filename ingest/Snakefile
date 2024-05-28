@@ -38,14 +38,15 @@ rule all:
 
 
 rule fetch_ncbi_dataset_package:
+    # TODO: #1844 Set API key through secret
     output:
         dataset_package="results/ncbi_dataset.zip",
-    retries: 5
     shell:
         """
         datasets download virus genome taxon {TAXON_ID} \
             --no-progressbar \
-            --filename {output.dataset_package}
+            --filename {output.dataset_package} \
+            --api-key 15c4ff96de265753f878bb08d88ca64df909 \
         """
 
 
@@ -148,9 +149,10 @@ rule get_previous_submissions:
         hashes="results/previous_submissions.json",
     params:
         log_level=LOG_LEVEL,
+        sleep=config["post_start_sleep"],
     shell:
         """
-        sleep 120  # Run only once keycloak is up and database wiped
+        sleep {params.sleep}
         python scripts/call_loculus.py \
             --mode get-submitted \
             --config-file {input.config} \

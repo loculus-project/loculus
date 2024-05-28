@@ -98,9 +98,10 @@ def handle_cluster():
     if cluster_exists(CLUSTER_NAME):
         print(f"Cluster '{CLUSTER_NAME}' already exists.")
     else:
-        run_command(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 2",
+        run_command(f"k3d cluster create {CLUSTER_NAME} {' '.join(PORTS)} --agents 1",
                        shell=True)
     install_secret_generator()
+    install_reloader()
     while not is_traefik_running():
         print("Waiting for Traefik to start...")
         time.sleep(5)
@@ -153,7 +154,7 @@ def handle_helm():
     ]
     
     if args.for_e2e or args.dev:
-        parameters += ['-f', 'kubernetes/loculus/values_e2e_and_dev.yaml']
+        parameters += ['-f', HELM_CHART_DIR / 'values_e2e_and_dev.yaml']
     if args.sha:
         parameters += ['--set', f"sha={args.sha[:7]}"]
 
@@ -187,6 +188,10 @@ def get_codespace_name():
 def generate_configs(from_live=False):
     TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
+    # Delete all files in the temp directory
+    for file in TEMP_DIR.iterdir():
+        file.unlink()
+
     helm_chart = str(HELM_CHART_DIR)
     codespace_name = get_codespace_name()
 
@@ -201,10 +206,23 @@ def generate_configs(from_live=False):
     runtime_config_path =  TEMP_DIR / 'runtime_config.json'
     generate_config(helm_chart, 'templates/loculus-website-config.yaml', runtime_config_path, codespace_name, from_live)
 
+    ingest_configmap_path = TEMP_DIR / 'config.yaml'
+    ingest_template_path = 'templates/ingest-config.yaml'
+    ingest_configout_path = TEMP_DIR / 'ingest-config.yaml'
+    generate_config(helm_chart, ingest_template_path, ingest_configmap_path, codespace_name, from_live, ingest_configout_path)
+
+    prepro_configmap_path = TEMP_DIR / 'preprocessing-config.yaml'
+    prepro_template_path = 'templates/loculus-preprocessing-config.yaml'
+    prepro_configout_path = TEMP_DIR / 'preprocessing-config.yaml'
+    generate_config(helm_chart, prepro_template_path, prepro_configmap_path, codespace_name, from_live, prepro_configout_path)
+
     run_command(['python3', 'kubernetes/config-processor/config-processor.py', TEMP_DIR, output_dir])
 
-def generate_config(helm_chart, template, output_path, codespace_name=None, from_live=False):
+def generate_config(helm_chart, template, configmap_path, codespace_name=None, from_live=False, output_path=None):
     helm_template_cmd = ['helm', 'template', 'name-does-not-matter', helm_chart, '--show-only', template]
+
+    if not output_path:
+        output_path = configmap_path
 
     if codespace_name:
         helm_template_cmd.extend(['--set', 'codespaceName='+codespace_name])
@@ -218,17 +236,25 @@ def generate_config(helm_chart, template, output_path, codespace_name=None, from
         helm_template_cmd.extend(['--set', 'usePublicRuntimeConfigAsServerSide=true'])
     else:
         helm_template_cmd.extend(['--set', 'environment=local'])
+        helm_template_cmd.extend(['--set', 'testconfig=true'])
     helm_output = run_command(helm_template_cmd, capture_output=True, text=True).stdout
     if args.dry_run:
         return
 
-    parsed_yaml = yaml.safe_load(helm_output)
-    config_data = parsed_yaml['data'][output_path.name]
+    parsed_yaml = list(yaml.full_load_all(helm_output))
+    if len(parsed_yaml) == 1:
+        config_data = parsed_yaml[0]['data'][configmap_path.name]
 
-    with open(output_path, 'w') as f:
-        f.write(config_data)
+        with open(output_path, 'w') as f:
+            f.write(config_data)
 
-    print(f"Wrote config to {output_path}")
+        print(f"Wrote config to {output_path}")
+    elif any(substring in template for substring in ["ingest", "preprocessing"]):
+        for doc in parsed_yaml:
+            config_data = yaml.safe_load(doc['data'][configmap_path.name])
+            with open(output_path.with_suffix(f'.{config_data["organism"]}.yaml'), 'w') as f:
+                yaml.dump(config_data, f)
+                print(f"Wrote config to {f.name}")
 
 def install_secret_generator():
     add_helm_repo_command = [
@@ -245,10 +271,30 @@ def install_secret_generator():
     print("Installing Kubernetes Secret Generator...")
     helm_install_command = [
         'helm', 'upgrade', '--install', 'kubernetes-secret-generator',
-        secret_generator_chart, '--set', 'secretLength=32', '--set', 'watchNamespace=""'
+        secret_generator_chart, '--set', 'secretLength=32', '--set', 'watchNamespace=""',
+        '--set', 'resources.limits.memory=400Mi', '--set', 'resources.requests.memory=200Mi'
     ]
     run_command(helm_install_command)
 
+def install_reloader():
+    add_helm_repo_command = [
+        'helm', 'repo', 'add', 'stakater', 'https://stakater.github.io/stakater-charts'
+    ]
+    run_command(add_helm_repo_command)
+    print("Stakater added to repositories.")
+
+    update_helm_repo_command = ['helm', 'repo', 'update']
+    run_command(update_helm_repo_command)
+    print("Helm repositories updated.")
+
+    secret_generator_chart = 'stakater/reloader'
+    print("Installing Reloader...")
+    helm_install_command = [
+        'helm', 'upgrade', '--install', 'reloader', secret_generator_chart,
+        '--set', 'reloader.deployment.resources.limits.memory=200Mi',
+        '--set', 'reloader.deployment.resources.requests.memory=100Mi'
+    ]
+    run_command(helm_install_command)
 
 if __name__ == '__main__':
     main()

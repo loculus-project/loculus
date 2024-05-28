@@ -2,6 +2,7 @@ import { test, testSequenceCount } from '../../e2e.fixture';
 import { submitViaApi } from '../../util/backendCalls.ts';
 import { prepareDataToBe } from '../../util/prepareDataToBe.ts';
 
+// This test must not be run in parallel with other tests that submit, approve or delete sequences.
 test.describe('The review page', () => {
     test('should show the total sequences and an increase when new submission occurs', async ({
         reviewPage,
@@ -15,9 +16,7 @@ test.describe('The review page', () => {
 
         await submitViaApi(testSequenceCount, token, groupId);
 
-        await reviewPage.waitForTotalSequencesFulfillPredicate(
-            (totalSequenceCount) => totalSequenceCount === total + testSequenceCount,
-        );
+        await reviewPage.waitForTotalSequenceCountCorrect(total + testSequenceCount);
     });
 
     test('should allow bulk approval', async ({ reviewPage, loginAsTestUser }) => {
@@ -29,13 +28,11 @@ test.describe('The review page', () => {
 
         await prepareDataToBe('awaitingApproval', token, groupId);
 
-        await reviewPage.waitForTotalSequencesFulfillPredicate(
-            (totalSequenceCount) => totalSequenceCount === total + testSequenceCount,
-        );
+        await reviewPage.waitForTotalSequenceCountCorrect(total + testSequenceCount);
 
         await reviewPage.approveAll();
 
-        await reviewPage.waitForTotalSequencesFulfillPredicate((totalSequenceCount) => totalSequenceCount === total);
+        await reviewPage.waitForTotalSequenceCountCorrect(total);
     });
 
     test('should allow bulk deletion', async ({ reviewPage, loginAsTestUser }) => {
@@ -49,6 +46,6 @@ test.describe('The review page', () => {
 
         await reviewPage.deleteAll();
 
-        await reviewPage.waitForTotalSequencesFulfillPredicate((totalSequenceCount) => totalSequenceCount < total);
+        await reviewPage.waitForTotalSequenceCountCorrect(total, 'less');
     });
 });

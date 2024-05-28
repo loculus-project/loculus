@@ -1,6 +1,7 @@
 import { type Dispatch, type FC, type SetStateAction, useState, useEffect } from 'react';
 
 import { SequencesViewer } from './SequenceViewer';
+import type { NucleotideSegmentNames } from '../../types/referencesGenomes.ts';
 import type { ClientConfig } from '../../types/runtimeConfig';
 import {
     alignedSequenceSegment,
@@ -19,7 +20,7 @@ type SequenceContainerProps = {
     accessionVersion: string;
     clientConfig: ClientConfig;
     genes: string[];
-    nucleotideSegmentNames: [string, ...string[]];
+    nucleotideSegmentNames: NucleotideSegmentNames;
     loadSequencesAutomatically: boolean;
 };
 
@@ -71,7 +72,7 @@ export const InnerSequencesContainer: FC<SequenceContainerProps> = ({
 export const SequencesContainer = withQueryProvider(InnerSequencesContainer);
 
 type NucleotideSequenceTabsProps = {
-    nucleotideSegmentNames: [string, ...string[]];
+    nucleotideSegmentNames: NucleotideSegmentNames;
     sequenceType: SequenceType;
     setType: Dispatch<SetStateAction<SequenceType>>;
 };

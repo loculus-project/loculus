@@ -26,6 +26,12 @@ spec:
         - name: backend
           image: "ghcr.io/loculus-project/backend:{{ $dockerTag }}"
           imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "640Mi"
+              {{ include "loculus.standardCPURequest" $ }}
+            limits:
+              memory: "3Gi" # Backend requires at least 635741K of memory
           livenessProbe:
             httpGet:
               path: "/actuator/health/liveness"
@@ -52,7 +58,13 @@ spec:
             - "--spring.datasource.url=$(DB_URL)"
             - "--spring.datasource.username=$(DB_USERNAME)"
             - "--spring.security.oauth2.resourceserver.jwt.jwk-set-uri=http://loculus-keycloak-service:8083/realms/loculus/protocol/openid-connect/certs"
+            - "--loculus.cleanup.task.reset-stale-in-processing-after-seconds={{- .Values.preprocessingTimeout | default 120 }}"
+            {{- if .Values.backendExtraArgs }}
+              {{- .Values.backendExtraArgs | toYaml | nindent 12 }}
+            {{- end }}
           env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2
           {{- if .Values.enableCrossRefCredentials }}
             - name: CROSSREF_USERNAME
               valueFrom:

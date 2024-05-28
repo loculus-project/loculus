@@ -23,7 +23,10 @@ object BackendSpringProperty {
     const val STALE_AFTER_SECONDS = "loculus.cleanup.task.reset-stale-in-processing-after-seconds"
     const val CLEAN_UP_RUN_EVERY_SECONDS = "loculus.cleanup.task.run-every-seconds"
     const val STREAM_BATCH_SIZE = "loculus.stream.batch-size"
+    const val DEBUG_MODE = "loculus.debug-mode"
 }
+
+const val DEBUG_MODE_ON_VALUE = "true"
 
 private val logger = mu.KotlinLogging.logger {}
 

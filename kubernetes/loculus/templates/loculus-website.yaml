@@ -28,11 +28,10 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
-              memory: "1300Mi"
-              cpu: "100m"
+              memory: "200Mi"
+              {{ include "loculus.standardCPURequest" $ }}
             limits:
-              memory: "2000Mi"
-              cpu: "1000m"
+              memory: "1Gi"
           ports:
             - containerPort: 3000
           volumeMounts:

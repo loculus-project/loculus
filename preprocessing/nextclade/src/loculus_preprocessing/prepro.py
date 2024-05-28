@@ -51,7 +51,7 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedE
     if not response.ok:
         if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
             logging.debug(f"{response.text}.\nSleeping for a while.")
-            time.sleep(60 * 10)
+            time.sleep(60 * 1)
             return []
         msg = f"Fetching unprocessed data failed. Status code: {response.status_code}"
         raise Exception(
@@ -109,6 +109,7 @@ def enrich_with_nextclade(
             f"--output-all={result_dir}",
             f"--input-dataset={dataset_dir}",
             f"--output-translations={result_dir}/nextclade.cds_translation.{{cds}}.fasta",
+            "--jobs=1",
             "--",
             f"{input_file}",
         ]
@@ -184,6 +185,7 @@ def parse_nextclade_tsv(
                 gene, val = ins.split(":", maxsplit=1)
                 if gene in aa_ins:
                     aa_ins[gene].append(val)
+                else:
                     logging.debug(
                         "Note: Nextclade found AA insertion in gene missing from config in gene "
                         f"{gene}: {val}"
@@ -229,7 +231,10 @@ def process_single(
         "length": len(unprocessed.unalignedNucleotideSequences),
     }
 
+    alignment_failed = False
     for output_field, spec_dict in config.processing_spec.items():
+        if output_field == "length":
+            continue
         spec = ProcessingSpec(
             inputs=spec_dict["inputs"],
             function=spec_dict["function"],
@@ -244,17 +249,7 @@ def process_single(
             if input_path.startswith(nextclade_prefix):
                 # Remove "nextclade." prefix
                 if unprocessed.nextcladeMetadata is None:
-                    errors.append(
-                        ProcessingAnnotation(
-                            source=[
-                                AnnotationSource(
-                                    name="main",
-                                    type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
-                                )
-                            ],
-                            message="Nucleotide sequence failed to align",
-                        )
-                    )
+                    alignment_failed = True
                     continue
                 sub_path = input_path[len(nextclade_prefix) :]
                 input_data[arg_name] = str(
@@ -267,14 +262,15 @@ def process_single(
                 )
                 continue
             if input_path not in unprocessed.inputMetadata:
-                warnings.append(
-                    ProcessingAnnotation(
-                        source=[
-                            AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
-                        ],
-                        message=f"Metadata field '{input_path}' not found in input",
-                    )
-                )
+                # Suppress warning to prevent spamming for now until we have more sophisticated solution
+                # warnings.append(
+                #     ProcessingAnnotation(
+                #         source=[
+                #             AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
+                #         ],
+                #         message=f"Metadata field '{input_path}' not found in input",
+                #     )
+                # )
                 continue
             input_data[arg_name] = unprocessed.inputMetadata[input_path]
         processing_result = ProcessingFunctions.call_function(
@@ -289,6 +285,19 @@ def process_single(
                 f"{processing_result.datum}, setting to 'Not provided'"
             )
             output_metadata[output_field] = "Not provided"
+
+    if alignment_failed:
+        errors.append(
+            ProcessingAnnotation(
+                source=[
+                    AnnotationSource(
+                        name="main",
+                        type=AnnotationSourceType.NUCLEOTIDE_SEQUENCE,
+                    )
+                ],
+                message="Nucleotide sequence failed to align",
+            )
+        )
 
     logging.debug(f"Processed {id}: {output_metadata}")
 

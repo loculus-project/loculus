@@ -22,6 +22,12 @@ spec:
       containers:
         - name: loculus-keycloak-database
           image: postgres:latest
+          resources:
+            requests:
+              memory: "100Mi"
+              {{ include "loculus.standardCPURequest" $ }}
+            limits:
+              memory: "100Mi"
           ports:
             - containerPort: 5432
           env:

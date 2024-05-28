@@ -4,7 +4,7 @@ import { err, Result } from 'neverthrow';
 import type { TableDataEntry } from './types.js';
 import { type LapisClient } from '../../services/lapisClient.ts';
 import type { ProblemDetail } from '../../types/backend.ts';
-import type { Metadata, Schema } from '../../types/config.ts';
+import type { Metadata, Schema, SegmentedMutations } from '../../types/config.ts';
 import {
     type Details,
     type DetailsResponse,
@@ -15,11 +15,16 @@ import {
 } from '../../types/lapis.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
+type GetTableDataResult = {
+    data: TableDataEntry[];
+    isRevocation: boolean;
+};
+
 export async function getTableData(
     accessionVersion: string,
     schema: Schema,
     lapisClient: LapisClient,
-): Promise<Result<TableDataEntry[], ProblemDetail>> {
+): Promise<Result<GetTableDataResult, ProblemDetail>> {
     return Promise.all([
         lapisClient.getSequenceEntryVersionDetails(accessionVersion),
         lapisClient.getSequenceMutations(accessionVersion, 'nucleotide'),
@@ -46,12 +51,15 @@ export async function getTableData(
                         aminoAcidInsertions: aminoAcidInsertions.data,
                     }),
                 )
-                .map(toTableData(schema)),
+                .map((data) => ({
+                    data: toTableData(schema)(data),
+                    isRevocation: isRevocationEntry(data.details),
+                })),
         );
 }
 
-export function isRevocationEntry(tableData: TableDataEntry[]): boolean {
-    return tableData.some((entry) => entry.name === 'isRevocation' && entry.value === true);
+function isRevocationEntry(details: Details): boolean {
+    return details.isRevocation === true;
 }
 
 export function getLatestAccessionVersion(
@@ -93,7 +101,7 @@ function mutationDetails(
             name: 'nucleotideSubstitutions',
             value: '',
             header: 'Nucleotide mutations',
-            customDisplay: { type: 'badge', value: substitutionsList(nucleotideMutations) },
+            customDisplay: { type: 'badge', value: substitutionsMap(nucleotideMutations) },
             type: { kind: 'mutation' },
         },
         {
@@ -115,7 +123,7 @@ function mutationDetails(
             name: 'aminoAcidSubstitutions',
             value: '',
             header: 'Amino acid mutations',
-            customDisplay: { type: 'badge', value: substitutionsList(aminoAcidMutations) },
+            customDisplay: { type: 'badge', value: substitutionsMap(aminoAcidMutations) },
             type: { kind: 'mutation' },
         },
         {
@@ -152,6 +160,7 @@ function toTableData(config: Schema) {
     }): TableDataEntry[] => {
         const data: TableDataEntry[] = config.metadata
             .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
+            .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
             .map((metadata) => ({
                 label: metadata.displayName ?? sentenceCase(metadata.name),
                 name: metadata.name,
@@ -184,8 +193,26 @@ function mapValueToDisplayedValue(value: undefined | null | string | number | bo
     return value;
 }
 
-function substitutionsList(mutationData: MutationProportionCount[]) {
-    return mutationData.filter((m) => m.mutationTo !== '-');
+export function substitutionsMap(mutationData: MutationProportionCount[]): SegmentedMutations[] {
+    const result: SegmentedMutations[] = [];
+    const substitutionData = mutationData.filter((m) => m.mutationTo !== '-');
+
+    const segmentMutationsMap = new Map<string, MutationProportionCount[]>();
+    for (const entry of substitutionData) {
+        let sequenceName = '';
+        if (entry.sequenceName !== null) {
+            sequenceName = entry.sequenceName;
+        }
+        if (!segmentMutationsMap.has(sequenceName)) {
+            segmentMutationsMap.set(sequenceName, []);
+        }
+        segmentMutationsMap.get(sequenceName)!.push(entry);
+    }
+    for (const [segment, mutations] of segmentMutationsMap.entries()) {
+        result.push({ segment, mutations });
+    }
+
+    return result;
 }
 
 function deletionsToCommaSeparatedString(mutationData: MutationProportionCount[]) {
