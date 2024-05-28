@@ -36,10 +36,6 @@ class Config:
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     pipeline_version: int = 1
 
-    def __post_init__(self):
-        if self.backend_host is None:  # Check if backend_host wasn't set during initialization
-            self.backend_host = f"http://127.0.0.1:8079/{self.organism}"
-
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:
     config = copy.deepcopy(config)
@@ -97,6 +93,8 @@ def get_config() -> Config:
     # Overwrite config with config in config_file
     if args.config_file:
         config = load_config_from_yaml(args.config_file, config)
+    if config.backend_host is None:  # Check if backend_host wasn't set during initialization
+        config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
 
     # Use environment variables if available
     for key in config.__dict__:

@@ -1,48 +1,61 @@
 {{- define "loculus.preprocessingSpecs" -}}
+
 {{- $metadata := .metadata }}
 {{- $use_segments := .segmented }}
-{{- $specs := dict }}
+{{- $segments := .nucleotideSequences}}
 
-{{- range $field := $metadata }}
-{{- $name := index $field "name" }}
-{{- $spec := dict "function" "identity" "inputs" (dict "input" $name) }}
-
-{{- $args := dict }}
-{{- if hasKey $field "type" }}
-  {{- $type := index $field "type" }}
-  {{- $args := set $args "type" $type }}
-{{- end }}
-
-{{- if and $use_segments (hasKey $field "segmented") }}
-  {{- $segmented := index $field "segmented" }}
-  {{- if eq $segmented true }}
-    {{- $args := set $args "segmented" true }}
+{{- range $metadata }}
+{{- $currentItem := . }}
+{{- if and $use_segments .segmented }}
+{{- range $segment := $segments }}
+{{ printf "%s_%s :" $currentItem.name $segment}}
+  {{- if $currentItem.type }}
+  args:
+    type: {{ $currentItem.type }}
   {{- end }}
-{{- end }}
-
-{{- if ne (len $args) 0 }}
-  {{- $_ := set $spec "args" $args }}
-{{- end }}
-
-{{- if hasKey $field "preprocessing" }}
-  {{- $preprocessing := index $field "preprocessing" }}
-  {{- if eq (typeOf $preprocessing) "string" }}
-    {{- $_ := set $spec "inputs" (dict "input" $preprocessing) }}
+  {{- if $currentItem.preprocessing }}
+  {{- if hasKey $currentItem.preprocessing "function" }}
+  function: {{ index $currentItem.preprocessing "function" }}
   {{- else }}
-    {{- if hasKey $preprocessing "function" }}
-      {{- $_ := set $spec "function" (index $preprocessing "function") }}
-    {{- end }}
-    {{- if hasKey $preprocessing "args" }}
-      {{- $_ := set $spec "args" (index $preprocessing "args") }}
-    {{- end }}
-    {{- if hasKey $preprocessing "inputs" }}
-      {{- $_ := set $spec "inputs" (index $preprocessing "inputs") }}
+  function: identity
+  {{- end }}
+  {{- if hasKey $currentItem.preprocessing "inputs" }}
+  inputs: 
+    {{- with index $currentItem.preprocessing "inputs" }}
+    {{- . | toYaml | nindent 4 }}
     {{- end }}
   {{- end }}
-{{- end }}
+  {{- else }}
+  function: identity
+  inputs: 
+    input: {{ printf "%s_%s" $currentItem.name $segment }}
+  {{- end }}
+{{- end}}
 
-{{- $_ := set $specs $name $spec }}
-{{- end }}
+{{- else }}
+{{ printf "%s :" .name }}
+  {{- if .type }}
+  args:
+    type: {{ .type }}
+  {{- end }}
+  {{- if .preprocessing }}
+  {{- if hasKey .preprocessing "function" }}
+  function: {{ index .preprocessing "function" }}
+  {{- else }}
+  function: identity
+  {{- end }}
+  {{- if hasKey .preprocessing "inputs" }}
+  inputs: 
+    {{- with index .preprocessing "inputs" }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  {{- end }}
+  {{- else }}
+  function: identity
+  inputs: 
+    input: {{ .name }}
+  {{- end }}
+  {{- end }}
 
-{{- toYaml $specs }}
-{{- end -}}
+{{- end }}
+{{- end }}

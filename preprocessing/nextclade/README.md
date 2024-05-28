@@ -1,10 +1,10 @@
-# Rudimentary SARS-CoV-2 Preprocessing Pipeline
+# Rudimentary Preprocessing Pipeline
 
-This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`.
+This preprocessing pipeline is still a work in progress. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`.
 
 ## Overview
 
-1. Download Nextclade dataset
+1. Download [Nextclade dataset](https://docs.nextstrain.org/projects/nextclade/en/stable/user/datasets.html) for the pathogen - this is required for the preprocessing pipeline. Follow the steps in the [dataset creation guide](https://github.com/nextstrain/nextclade_data/blob/master/docs/dataset-creation-guide.md) to create a dataset for your pathogen if a dataset does not currently exist.
 1. Poll server for new sequences
 1. Put sequences into temporary directory
 1. Run Nextclade on sequences

@@ -1,7 +1,7 @@
 # ruff: noqa: N815
 from dataclasses import dataclass, field
 from enum import StrEnum, unique
-from typing import Any, Optional
+from typing import Any
 
 AccessionVersion = str
 GeneName = str
@@ -67,8 +67,8 @@ class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata
     # Derived metadata produced by Nextclade
     nextcladeMetadata: dict[str, Any] | None
-    unalignedNucleotideSequences: dict[str, Optional[NucleotideSequence]]
-    alignedNucleotideSequences: dict[str, Optional[NucleotideSequence]]
+    unalignedNucleotideSequences: dict[str, NucleotideSequence | None]
+    alignedNucleotideSequences: dict[str, NucleotideSequence | None]
     nucleotideInsertions: dict[str, list[NucleotideInsertion]]
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]

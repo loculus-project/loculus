@@ -149,12 +149,12 @@ class ProcessingFunctions:
         if len(date_str) == 0:
             if args and args.get("required"):
                 errors.append(
-                            ProcessingAnnotation(
-                                source=[
-                                    AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                                ],
-                                message="Collection date is required",
-                            )
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message="Collection date is required",
+                    )
                 )
             return ProcessingResult(
                 datum=None,
@@ -232,9 +232,7 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def parse_timestamp(
-        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
-    ) -> ProcessingResult:
+    def parse_timestamp(input_data: InputMetadata, output_field: str) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
 

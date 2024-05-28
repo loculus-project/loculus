@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from http import HTTPStatus
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Optional
+from typing import Any
 
 import dpath
 import requests
@@ -32,6 +32,7 @@ from .datatypes import (
     ProcessedEntry,
     ProcessedMetadata,
     ProcessingAnnotation,
+    ProcessingResult,
     ProcessingSpec,
     UnprocessedAfterNextclade,
     UnprocessedData,
@@ -86,15 +87,13 @@ def enrich_with_nextclade(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     unaligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[str, Optional[NucleotideSequence]]
+        AccessionVersion, dict[str, NucleotideSequence | None]
     ] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
     ] = {}
-    aligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[str, Optional[NucleotideSequence]]
-    ] = {}
+    aligned_nucleotide_sequences: dict[AccessionVersion, dict[str, NucleotideSequence | None]] = {}
     for entry in unprocessed:
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
@@ -251,14 +250,12 @@ def null_per_backend(x: Any) -> bool:
 
 
 def get_metadata(
-    inputs, function, required, args, output_field, unprocessed, output_metadata, errors, warnings
-):
-    spec = ProcessingSpec(
-        inputs=inputs,
-        function=function,
-        required=required,
-        args=args,
-    )
+    spec: ProcessingSpec,
+    output_field: str,
+    unprocessed: UnprocessedAfterNextclade,
+    errors: list[ProcessingAnnotation],
+    warnings: list[ProcessingAnnotation],
+) -> ProcessingResult:
     input_data: InputMetadata = {}
     for arg_name, input_path in spec.inputs.items():
         input_data[arg_name] = None
@@ -309,13 +306,8 @@ def get_metadata(
 
     errors.extend(processing_result.errors)
     warnings.extend(processing_result.warnings)
-    output_metadata[output_field] = processing_result.datum
-    if null_per_backend(processing_result.datum) and spec.required:
-        logging.warn(
-            f"Metadata field {output_field} is required but nullish: "
-            f"{processing_result.datum}, setting to 'Not provided'"
-        )
-        output_metadata[output_field] = "Not provided"
+
+    return processing_result
 
 
 def process_single(
@@ -337,35 +329,26 @@ def process_single(
     for output_field, spec_dict in config.processing_spec.items():
         if output_field == "length":
             continue
-        args = spec_dict.get("args", {})
-        if args.get("segmented", None):
-            for segment in config.nucleotideSequences:
-                segmented_input: dict[str, Any] = {}
-                for i in spec_dict["inputs"]:
-                    segmented_input[i] = spec_dict["inputs"][i] + "_" + segment
-                get_metadata(
-                    segmented_input,
-                    spec_dict["function"],
-                    spec_dict.get("required", False),
-                    args,
-                    output_field + "_" + segment,
-                    unprocessed,
-                    output_metadata,
-                    errors,
-                    warnings,
-                )
-        else:
-            get_metadata(
-                spec_dict["inputs"],
-                spec_dict["function"],
-                spec_dict.get("required", False),
-                args,
-                output_field,
-                unprocessed,
-                output_metadata,
-                errors,
-                warnings,
+        spec = ProcessingSpec(
+            inputs=spec_dict["inputs"],
+            function=spec_dict["function"],
+            required=spec_dict.get("required", False),
+            args=spec_dict.get("args", {}),
+        )
+        processing_result = get_metadata(
+            spec,
+            output_field,
+            unprocessed,
+            errors,
+            warnings,
+        )
+        output_metadata[output_field] = processing_result.datum
+        if null_per_backend(processing_result.datum) and spec.required:
+            logging.warn(
+                f"Metadata field {output_field} is required but nullish: "
+                f"{processing_result.datum}, setting to 'Not provided'"
             )
+            output_metadata[output_field] = "Not provided"
     logging.debug(f"Processed {id}: {output_metadata}")
 
     return ProcessedEntry(
