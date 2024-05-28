@@ -42,6 +42,43 @@ from .processing_functions import ProcessingFunctions
 csv.field_size_limit(sys.maxsize)
 
 
+def mask_terminal_gaps(sequence: str) -> NucleotideSequence:
+    # https://chatgpt.com/share/b213c687-38c4-4c62-98a8-4fecb210d479
+    if not sequence:
+        return ""
+
+    # Entire sequence of gaps
+    if not sequence.strip("-"):
+        return "N" * len(sequence)
+
+    # Find the index of the first non-'-' character
+    first_non_gap = 0
+    while first_non_gap < len(sequence) and sequence[first_non_gap] == "-":
+        first_non_gap += 1
+
+    # Find the index of the last non-'-' character
+    last_non_gap = len(sequence)
+    while last_non_gap > 0 and sequence[last_non_gap - 1] == "-":
+        last_non_gap -= 1
+
+    # Replace terminal gaps with 'N'
+    return (
+        "N" * first_non_gap
+        + sequence[first_non_gap:last_non_gap]
+        + "N" * (len(sequence) - last_non_gap)
+    )
+
+
+def load_aligned_sequences(result_dir: str) -> dict[AccessionVersion, NucleotideSequence]:
+    aligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
+    with open(f"{result_dir}/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
+        for aligned_sequence in SeqIO.parse(aligned_nucs, "fasta"):
+            sequence_id: AccessionVersion = aligned_sequence.id
+            sequence: NucleotideSequence = str(aligned_sequence.seq)
+            aligned_nucleotide_sequences[sequence_id] = mask_terminal_gaps(sequence)
+    return aligned_nucleotide_sequences
+
+
 def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
     url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
     logging.debug(f"Fetching {n} unprocessed sequences from {url}")
@@ -123,12 +160,7 @@ def enrich_with_nextclade(
 
         logging.debug(f"Nextclade results available in {result_dir}")
 
-        aligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
-        with open(result_dir + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
-            aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
-            for aligned_sequence in aligned_nuc:
-                sequence_id: str = aligned_sequence.id
-                aligned_nucleotide_sequences[sequence_id] = str(aligned_sequence.seq)
+        aligned_nucleotide_sequences = load_aligned_sequences(result_dir)
 
         for gene in config.genes:
             translation_path = result_dir + f"/nextclade.cds_translation.{gene}.fasta"
@@ -262,7 +294,8 @@ def process_single(
                 )
                 continue
             if input_path not in unprocessed.inputMetadata:
-                # Suppress warning to prevent spamming for now until we have more sophisticated solution
+                # Suppress warning to prevent spamming for now until
+                # we have a more sophisticated solution
                 # warnings.append(
                 #     ProcessingAnnotation(
                 #         source=[
