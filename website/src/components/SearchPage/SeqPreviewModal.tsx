@@ -24,6 +24,7 @@ interface SeqPreviewModalProps {
     myGroups: Group[];
     isHalfScreen?: boolean;
     setIsHalfScreen: (isHalfScreen: boolean) => void;
+    setPreviewedSeqId?: (seqId: string | null) => void;
 }
 
 export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
@@ -35,6 +36,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
     myGroups,
     isHalfScreen = false,
     setIsHalfScreen,
+    setPreviewedSeqId,
 }) => {
     const [isLoading, setIsLoading] = useState(true);
     const [data, setData] = useState<any | null>(null);
@@ -55,6 +57,12 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div
             className={`mt-4 text-gray-700 overflow-y-auto ${isHalfScreen ? 'h-[calc(50vh-9rem)]' : 'h-[calc(100vh-9rem)]'}`}
         >
+            {data !== null && data.isRevocation === true && (
+                <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative' role='alert'>
+                    <strong className='font-bold'>This sequence has been revoked.</strong>
+                </div>
+            )}
+
             {isLoading ? (
                 <div>Loading...</div>
             ) : data !== null && !isError ? (
@@ -74,6 +82,13 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
         <div className='flex justify-between items-center'>
             <div className='text-xl font-medium leading-6 text-primary-700 pl-6'>{seqId}</div>
             <div>
+                {data !== null && data?.sequenceEntryHistory !== undefined && data?.sequenceEntryHistory.length > 1 && (
+                    <SequenceEntryHistoryMenu
+                        sequenceEntryHistory={data?.sequenceEntryHistory}
+                        accessionVersion={seqId}
+                        setPreviewedSeqId={setPreviewedSeqId}
+                    />
+                )}
                 <button
                     type='button'
                     className={BUTTONCLASS}
