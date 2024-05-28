@@ -37,9 +37,9 @@ spec:
           resources:
             requests:
               memory: "40Mi"
-              {{ include "loculus.standardCPURequest" $ }}
+              cpu: "10m"
             limits:
-              memory: "3Gi"
+              memory: "1Gi"
           env:
             - name: KEYCLOAK_PASSWORD
               valueFrom:

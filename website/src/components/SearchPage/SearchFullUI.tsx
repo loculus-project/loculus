@@ -79,155 +79,17 @@ export const InnerSearchFullUI = ({
 
     const [previewedSeqId, setPreviewedSeqId] = useState<string | null>(null);
     const [previewHalfScreen, setPreviewHalfScreen] = useState(false);
-    const [state, setState] = useQueryAsState({});
-    const [page, setPage] = useState(1);
 
-    const orderByField = state.orderBy ?? schema.defaultOrderBy ?? schema.primaryKey;
-    const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
-
-    const setOrderByField = (field: string) => {
-        setState((prev: QueryState) => ({
-            ...prev,
-            orderBy: field,
-        }));
-    };
-    const setOrderDirection = (direction: string) => {
-        setState((prev: QueryState) => ({
-            ...prev,
-            order: direction,
-        }));
-    };
-
-    const visibilities = useMemo(() => {
-        const visibilities = new Map<string, boolean>();
-        schema.metadata.forEach((field) => {
-            if (field.hideOnSequenceDetailsPage === true) {
-                return;
-            }
-            visibilities.set(field.name, field.initiallyVisible === true);
-        });
-
-        const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(VISIBILITY_PREFIX));
-
-        for (const key of visibilityKeys) {
-            visibilities.set(key.slice(VISIBILITY_PREFIX.length), state[key] === 'true');
-        }
-        return visibilities;
-    }, [schema.metadata, state]);
-
-    const fieldValues = useMemo(() => {
-        const fieldKeys = Object.keys(state)
-            .filter((key) => !key.startsWith(VISIBILITY_PREFIX))
-            .filter((key) => key !== orderKey && key !== orderDirectionKey);
-
-        const values: Record<string, any> = { ...hiddenFieldValues };
-        for (const key of fieldKeys) {
-            values[key] = state[key];
-        }
-        return values;
-    }, [state, hiddenFieldValues]);
-
-    const setAFieldValue = (fieldName: string, value: string | number) => {
-        setState((prev: any) => {
-            const newState = {
-                ...prev,
-                [fieldName]: value,
-            };
-            if (value === '') {
-                delete newState[fieldName];
-            }
-            return newState;
-        });
-        setPage(1);
-    };
-
-    const setAVisibility = (fieldName: string, visible: boolean) => {
-        setState((prev: any) => ({
-            ...prev,
-            [`${VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
-        }));
-        // if visible is false, we should also remove the field from the fieldValues
-        if (!visible) {
-            setAFieldValue(fieldName, '');
-        }
-    };
-
-    const lapisUrl = getLapisUrl(clientConfig, organism);
-
-    const consolidatedMetadataSchema = consolidateGroupedFields(metadataSchemaWithExpandedRanges);
-
-    const hooks = lapisClientHooks(lapisUrl).zodiosHooks;
-    const aggregatedHook = hooks.useAggregated({}, {});
-    const detailsHook = hooks.useDetails({}, {});
-
-    const lapisSearchParameters = useMemo(() => {
-        const sequenceFilters = Object.fromEntries(
-            Object.entries(fieldValues).filter(([, value]) => value !== undefined && value !== ''),
+    if (error !== null) {
+        return (
+            <div className='bg-red-100 p-4 text-red-900'>
+                <div className='text-lg font-bold'>Error</div>
+                {error.message}
+            </div>
         );
+    }
 
-        if (sequenceFilters.accession !== '' && sequenceFilters.accession !== undefined) {
-            sequenceFilters.accession = textAccessionsToList(sequenceFilters.accession);
-        }
-
-        delete sequenceFilters.mutation;
-
-        const mutationFilter = parseMutationString(fieldValues.mutation ?? '', referenceGenomesSequenceNames);
-
-        return {
-            ...sequenceFilters,
-            nucleotideMutations: mutationFilter
-                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'substitutionOrDeletion')
-                .map((m) => m.text),
-            aminoAcidMutations: mutationFilter
-                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'substitutionOrDeletion')
-                .map((m) => m.text),
-            nucleotideInsertions: mutationFilter
-                .filter((m) => m.baseType === 'nucleotide' && m.mutationType === 'insertion')
-                .map((m) => m.text),
-            aminoAcidInsertions: mutationFilter
-                .filter((m) => m.baseType === 'aminoAcid' && m.mutationType === 'insertion')
-                .map((m) => m.text),
-        };
-    }, [fieldValues, referenceGenomesSequenceNames]);
-
-    useEffect(() => {
-        aggregatedHook.mutate({
-            ...lapisSearchParameters,
-            fields: [],
-        });
-        const OrderByList: OrderBy[] = [
-            {
-                field: orderByField,
-                type: orderDirection,
-            },
-        ];
-        // @ts-expect-error because the hooks don't accept OrderBy
-        detailsHook.mutate({
-            ...lapisSearchParameters,
-            fields: [...schema.tableColumns, schema.primaryKey],
-            limit: pageSize,
-            offset: (page - 1) * pageSize,
-            orderBy: OrderByList,
-        });
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [lapisSearchParameters, schema.tableColumns, schema.primaryKey, pageSize, page, orderByField, orderDirection]);
-
-    const totalSequences = aggregatedHook.data?.data[0].count ?? undefined;
-
-    const [oldData, setOldData] = useState<TableSequenceData[] | null>(null);
-    const [oldCount, setOldCount] = useState<number | null>(null);
-
-    useEffect(() => {
-        if (detailsHook.data?.data && oldData !== detailsHook.data.data) {
-            setOldData(detailsHook.data.data);
-        }
-    }, [detailsHook.data?.data, oldData]);
-
-    useEffect(() => {
-        if (aggregatedHook.data?.data && oldCount !== aggregatedHook.data.data[0].count) {
-            setOldCount(aggregatedHook.data.data[0].count);
-        }
-    }, [aggregatedHook.data?.data, oldCount]);
+    data = data as SearchResponse;
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
@@ -240,7 +102,6 @@ export const InnerSearchFullUI = ({
                 myGroups={myGroups}
                 isHalfScreen={previewHalfScreen}
                 setIsHalfScreen={setPreviewHalfScreen}
-                setPreviewedSeqId={setPreviewedSeqId}
             />
             <div className='md:w-72'>
                 <SearchForm
@@ -306,38 +167,35 @@ export const InnerSearchFullUI = ({
                                 referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                                 hiddenFieldValues={hiddenFieldValues}
                             />
-                        </div>
-
-                        <Table
-                            schema={schema}
-                            data={
-                                detailsHook.data?.data !== undefined
-                                    ? (detailsHook.data.data as TableSequenceData[])
-                                    : oldData ?? []
-                            }
-                            setPreviewedSeqId={setPreviewedSeqId}
-                            previewedSeqId={previewedSeqId}
-                            orderBy={
-                                {
-                                    field: orderByField,
-                                    type: orderDirection,
-                                } as OrderBy
-                            }
-                            setOrderByField={setOrderByField}
-                            setOrderDirection={setOrderDirection}
-                        />
-
-                        <div className='mt-4 flex justify-center'>
-                            {totalSequences !== undefined && (
-                                <SearchPagination
-                                    count={Math.ceil(totalSequences / pageSize)}
-                                    page={page}
-                                    setPage={setPage}
-                                />
-                            )}
-                        </div>
+                        )}
                     </div>
-                )}
+                </div>
+                <Table
+                    organism={organism}
+                    data={data.data}
+                    schema={schema}
+                    metadataFilter={metadataFilter}
+                    accessionFilter={accessionFilter}
+                    mutationFilter={mutationFilter}
+                    page={page}
+                    orderBy={orderBy}
+                    classOfSearchPage={SEARCH}
+                    setPreviewedSeqId={setPreviewedSeqId}
+                    previewedSeqId={previewedSeqId}
+                />
+                <div className='mt-4 flex justify-center'>
+                    <SearchPagination
+                        count={Math.ceil(data.totalCount / pageSize)}
+                        page={page}
+                        metadataFilter={metadataFilter}
+                        accessionFilter={accessionFilter}
+                        mutationFilter={mutationFilter}
+                        orderBy={orderBy}
+                        organism={organism}
+                        classOfSearchPage={SEARCH}
+                    />
+                </div>
+                {previewHalfScreen && previewedSeqId !== null && <div className='h-[calc(50vh)]'></div>}
             </div>
         </div>
     );

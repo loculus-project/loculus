@@ -17,20 +17,9 @@ type TableProps = {
     data: TableSequenceData[];
     setPreviewedSeqId: (seqId: string | null) => void;
     previewedSeqId: string | null;
-    orderBy: OrderBy;
-    setOrderByField: (field: string) => void;
-    setOrderDirection: (direction: 'ascending' | 'descending') => void;
 };
 
-export const Table: FC<TableProps> = ({
-    data,
-    schema,
-    setPreviewedSeqId,
-    previewedSeqId,
-    orderBy,
-    setOrderByField,
-    setOrderDirection,
-}) => {
+export const Table: FC<TableProps> = ({ data, schema, setPreviewedSeqId, previewedSeqId }) => {
     const primaryKey = schema.primaryKey;
 
     const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));
@@ -93,7 +82,7 @@ export const Table: FC<TableProps> = ({
                                     row[primaryKey] === previewedSeqId ? 'bg-gray-200' : ''
                                 } `}
                             >
-                                <td className='px-2  whitespace-nowrap    text-primary-900 md:pl-6'>
+                                <td className='px-2  whitespace-nowrap    text-primary-900 pl-6'>
                                     <a
                                         href={routes.sequencesDetailsPage(row[primaryKey] as string)}
                                         className='text-primary-900 hover:text-primary-800 hover:no-underline'
