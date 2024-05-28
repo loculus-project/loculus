@@ -165,6 +165,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
         header: "INSDC"
         ingest: bioprojects
+        noInput: true
         segmented: true
       - name: biosample_accession
         customDisplay:
@@ -1236,18 +1237,18 @@ defaultOrganisms:
     referenceGenomes:
       nucleotideSequences:
         - name: L
-          sequence: [[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_L.fasta]]
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_L.fasta]]"
         - name: M
-          sequence: [[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_M.fasta]]
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_M.fasta]]"
         - name: S
-          sequence: [[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_S.fasta]]
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_S.fasta]]"
       genes:
         - name: RdRp
-          sequence: [[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/RdRp.fasta]]
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/RdRp.fasta]]"
         - name: GPC
-          sequence: [[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/GPC.fasta]]
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/GPC.fasta]]"
         - name: NP
-          sequence: [[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/NP.fasta]]
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/NP.fasta]]"
 auth:
   smtp:
     host: "in-v3.mailjet.com"
