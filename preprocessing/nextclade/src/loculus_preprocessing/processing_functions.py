@@ -232,7 +232,9 @@ class ProcessingFunctions:
         )
 
     @staticmethod
-    def parse_timestamp(input_data: InputMetadata, output_field: str) -> ProcessingResult:
+    def parse_timestamp(
+        input_data: InputMetadata, output_field: str, args: FunctionArgs = None
+    ) -> ProcessingResult:
         """Parse a timestamp string, e.g. 2022-11-01T00:00:00Z and return a YYYY-MM-DD string"""
         timestamp = input_data["timestamp"]
 
