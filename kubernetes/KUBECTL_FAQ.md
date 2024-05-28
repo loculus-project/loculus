@@ -33,3 +33,21 @@ pp-hetzner01   4250m        35%    53130Mi         82%
 ```shell
 kubectl get pods -o "custom-columns=NAMESPACE:.metadata.namespace,NAME:.metadata.name,MEMORY_REQUESTS:.spec.containers[*].resources.requests.memory,MEMORY_LIMITS:.spec.containers[*].resources.limits.memory,CPU_REQUESTS:.spec.containers[*].resources.requests.cpu,CPU_LIMITS:.spec.containers[*].resources.limits.cpu" -A | sort
 ```
+
+## Get a secret
+
+If you want to get a secret (e.g. for debugging), that is used in a pod like this:
+
+```yaml
+- name: KEYCLOAK_INGEST_PASSWORD
+  valueFrom:
+    secretKeyRef:
+      name: service-accounts
+      key: insdcIngestUserPassword
+```
+
+You can get the secret like this:
+
+```shell
+kubectl get secret service-accounts -o jsonpath="{.data.insdcIngestUserPassword}" | base64 --decode; echo
+```
