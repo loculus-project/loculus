@@ -4,6 +4,14 @@
 
 The following is a rough overview of the pipeline's steps.
 
+The snakemake DAG can be visualized using [graphviz](https://en.wikipedia.org/wiki/Graphviz):
+
+```bash
+snakemake --dag  | dot -Tpng > dag.png
+```
+
+![snakemake DAG](dag.png)
+
 ### Download data from NCBI virus
 
 Using NCBI `datasets` CLI, download all sequences and corresponding NCBI curated metadata for a configurable taxon. The taxon is specified using the NCBI Taxonomy ID, and includes all child taxa, i.e. dowloading sequences for the Ebola virus taxon ID includes all sequences for more specific Ebola virus (sub)species taxon ids.
