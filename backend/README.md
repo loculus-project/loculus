@@ -69,6 +69,8 @@ We use Flyway, so that the service can provision an empty/existing DB without an
 
 The service listens, by default, to **port 8079**: <http://localhost:8079/swagger-ui/index.html>.
 
+Note: When using a postgresSQL development platform (e.g. pgAdmin) the hostname is 127.0.0.1 and not localhost - this is defined in the `deploy.py` file.
+
 ### Operating the backend behind a proxy
 
 When running the backend behind a proxy, the proxy needs to set X-Forwarded headers:
