@@ -41,6 +41,7 @@ keep:
   - joint_accession
 segment_specific:
   - biosample_accession
+  - bioproject_accessions
   - ncbi_completeness
   - sra_run_accession
   - ncbi_length
