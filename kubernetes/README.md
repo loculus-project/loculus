@@ -32,6 +32,9 @@ helm install loculus kubernetes/loculus -f my-values.yaml
 
 Install [k3d](https://k3d.io/v5.6.0/) and [helm](https://helm.sh/).
 
+
+We deploy to kubernetes via the `../deploy.py` script. It requires you to have `pyyaml` and `requests` installed.
+
 ### Setup for local development
 
 #### TLDR
