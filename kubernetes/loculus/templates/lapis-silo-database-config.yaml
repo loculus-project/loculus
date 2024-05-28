@@ -36,6 +36,7 @@ data:
           generateIndex: {{ .generateIndex }}
           {{- end }}
       {{- end }}
+      {{- end }}
       primaryKey: accessionVersion
       {{- .silo | toYaml | nindent 6 }}
   {{- end }}
