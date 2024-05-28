@@ -25,7 +25,7 @@ data class InstanceConfig(
 )
 
 data class Schema(
-    val instanceName: String,
+    val organismName: String,
     val metadata: List<Metadata>,
 )
 

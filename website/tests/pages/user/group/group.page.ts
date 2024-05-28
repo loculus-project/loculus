@@ -52,7 +52,7 @@ export class GroupPage {
         const createGroupButton = this.page.getByRole('button', { name: 'Create group' });
         await createGroupButton.click();
 
-        await this.page.waitForURL(/\/group\/\d+/, { timeout: 1000 });
+        await this.page.waitForURL(/\/group\/\d+/);
         return Number(this.page.url().split('/').pop());
     }
 

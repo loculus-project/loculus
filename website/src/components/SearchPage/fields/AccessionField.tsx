@@ -1,16 +1,13 @@
-import { type FC, useState } from 'react';
+import { type FC } from 'react';
 
 import { NormalTextField } from './NormalTextField.tsx';
-import type { AccessionFilter } from '../../../types/config.ts';
 
 type AccessionFieldProps = {
-    initialValue: AccessionFilter;
-    onChange: (accessionFilter: AccessionFilter) => void;
+    textValue: string;
+    setTextValue: (value: string) => void;
 };
 
-export const AccessionField: FC<AccessionFieldProps> = ({ initialValue, onChange }) => {
-    const [textValue, setTextValue] = useState((initialValue.accession ?? []).sort().join('\n'));
-
+export const AccessionField: FC<AccessionFieldProps> = ({ textValue, setTextValue }) => {
     return (
         <NormalTextField
             field={{
@@ -19,24 +16,11 @@ export const AccessionField: FC<AccessionFieldProps> = ({ initialValue, onChange
                 autocomplete: false,
                 name: 'accession',
                 notSearchable: false,
-                filterValue: textValue,
             }}
-            handleFieldChange={(_, filter) => {
-                setTextValue(filter);
-                const accessions = filter
-                    .split(/[\t,;\n ]/)
-                    .map((s) => s.trim())
-                    .filter((s) => s !== '')
-                    .map((s) => {
-                        if (s.includes('.')) {
-                            return s.split('.')[0];
-                        }
-                        return s;
-                    });
-                const uniqueAccessions = [...new Set(accessions)];
-                onChange({ accession: uniqueAccessions });
+            setAFieldValue={(_, filter) => {
+                setTextValue(filter as string);
             }}
-            isLoading={false}
+            fieldValue={textValue}
             multiline
         />
     );

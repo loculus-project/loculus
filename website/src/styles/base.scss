@@ -29,7 +29,6 @@ a {
 .title{
 
   color: theme('colors.main');
-  margin-left: 15px;
   font-size: 24px;
   font-weight: 600;
   word-break: break-all;
@@ -113,4 +112,13 @@ table, tr, td {
 .rs-picker input{
   text-transform: lowercase;
 
+}
+
+.appearSlowly {
+  animation: appearAnim 0s 1s forwards;
+  opacity: 0; 
+}
+
+@keyframes appearAnim {
+  to   { opacity: 1; }
 }

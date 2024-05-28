@@ -31,7 +31,7 @@ test.describe('The seqSets list page', () => {
 
         await expect(async () => {
             await seqSetPage.page.getByTestId('AddIcon').click();
-            await seqSetPage.waitForLoad();
+            await seqSetPage.page.waitForLoadState();
             await expect(seqSetPage.page.getByText('Create a SeqSet')).toBeVisible();
         }).toPass();
     });
@@ -45,7 +45,7 @@ test.describe('The seqSets list page', () => {
         await seqSetPage.gotoList();
         await expect(async () => {
             await seqSetPage.page.getByText(testSeqSetName).first().click();
-            await seqSetPage.waitForLoad();
+            await seqSetPage.page.waitForLoadState();
             await expect(seqSetPage.page.getByRole('heading', { name: testSeqSetName })).toBeVisible();
         }).toPass();
     });

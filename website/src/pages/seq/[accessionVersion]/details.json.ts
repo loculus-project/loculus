@@ -36,6 +36,9 @@ export const GET: APIRoute = async (req) => {
         schema,
         runtimeConfig,
         clientConfig,
+        isRevocation: result.isRevocation,
+        sequenceEntryHistory:
+            result.type === SequenceDetailsTableResultType.TABLE_DATA ? result.sequenceEntryHistory : undefined,
     };
 
     return new Response(JSON.stringify(detailsDataUIProps), {

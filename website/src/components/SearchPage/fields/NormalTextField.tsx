@@ -1,20 +1,29 @@
-import { forwardRef } from 'react';
+import { forwardRef, type FocusEventHandler } from 'react';
 
-import type { FieldProps } from './FieldProps';
 import { TextField } from './TextField';
+import type { MetadataFilter, SetAFieldValue } from '../../../types/config.ts';
 
-export const NormalTextField = forwardRef<HTMLInputElement, FieldProps>((props, ref) => {
-    const { field, handleFieldChange, isLoading, multiline, onFocus, onBlur } = props;
+export type NormalFieldProps = {
+    field: MetadataFilter;
+    setAFieldValue: SetAFieldValue;
+    multiline?: boolean;
+    onFocus?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+    onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+    fieldValue: string | number;
+    type?: 'string' | 'boolean' | 'float' | 'int' | 'pango_lineage' | 'authors';
+};
+
+export const NormalTextField = forwardRef<HTMLInputElement, NormalFieldProps>((props, ref) => {
+    const { field, setAFieldValue, multiline, onFocus, onBlur, fieldValue } = props;
 
     return (
         <TextField
             label={field.label}
             type={field.type}
-            value={field.filterValue}
-            disabled={isLoading}
+            fieldValue={fieldValue}
             onFocus={onFocus}
             onBlur={onBlur}
-            onChange={(e) => handleFieldChange(field.name, e.target.value)}
+            onChange={(e) => setAFieldValue(field.name, e.target.value)}
             autoComplete='off'
             multiline={multiline}
             ref={ref}

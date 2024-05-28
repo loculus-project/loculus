@@ -27,6 +27,12 @@ spec:
       containers:
         - name: silo
           image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "10m"
+            limits:
+              memory: "2Gi"
           ports:
             - containerPort: 8081
           args:
@@ -36,6 +42,12 @@ spec:
               mountPath: /data
         - name: lapis
           image: ghcr.io/genspectrum/lapis-v2:{{ $.Values.imageTags.lapis }}
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "10m"
+            limits:
+              memory: "500Mi"
           ports:
             - containerPort: 8080
           args:
@@ -50,6 +62,12 @@ spec:
         - name: silo-preprocessing
           image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              memory: "100Mi"
+              cpu: "10m"
+            limits:
+              memory: "3Gi"
           command:
             - sh
             - /silo_import_wrapper.sh

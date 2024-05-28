@@ -1,24 +1,44 @@
 ---
-import { getRuntimeConfig } from '../../config';
+import { getRuntimeConfig, getWebsiteConfig } from '../../config';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-
 const clientConfig = getRuntimeConfig().public;
+
+const websiteConfig = getWebsiteConfig();
+
+const organismKeys = Object.keys(websiteConfig.organisms);
+
+const organismToDisplayName = Object.fromEntries(
+    organismKeys.map((organism) => {
+        return [organism, websiteConfig.organisms[organism].schema.organismName];
+    }),
+);
+
+const BUTTON_CLASS =
+    'inline-block px-6 py-3 bg-primary-400 text-white font-semibold rounded-lg shadow-md hover:bg-primary-500  mr-2 hover:no-underline';
 ---
 
-<BaseLayout title='Api Docs'>
-    <h1 class='title'>Api Documentation</h1>
-    <a class='mt-8' href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
-        Click here for the API documentation of the backend server.
-    </a>
-    <br />
-    {
-        Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
-            <>
-                <a class='mt-8' href={url + '/swagger-ui/index.html'}>
-                    Click here for the API documentation of the query engine LAPIS for the organism {organism}.
-                </a>
-                <br />
-            </>
-        ))
-    }
+<BaseLayout title='API Documentation'>
+    <div class='container mx-auto p-8'>
+        <h1 class='title'>API Documentation</h1>
+
+        <div class='mb-8 mt-6'>
+            <h2 class='text-xl font-semibold text-primary-400 mb-4'>Backend Server</h2>
+            <a class={BUTTON_CLASS} href={clientConfig.backendUrl + '/swagger-ui/index.html'}>
+                View Backend API Documentation
+            </a>
+        </div>
+
+        <div>
+            <h2 class='text-xl font-semibold text-primary-400 mb-4'>LAPIS Query Engines</h2>
+            <div class='space-y-4'>
+                {
+                    Object.entries(clientConfig.lapisUrls).map(([organism, url]) => (
+                        <a class={BUTTON_CLASS} href={url + '/swagger-ui/index.html'}>
+                            {organismToDisplayName[organism]} LAPIS API Documentation
+                        </a>
+                    ))
+                }
+            </div>
+        </div>
+    </div>
 </BaseLayout>

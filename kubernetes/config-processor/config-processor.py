@@ -1,7 +1,8 @@
 import os
-import shutil
-import requests
 import re
+import shutil
+
+import requests
 
 
 def copy_structure(input_dir, output_dir):
@@ -11,6 +12,8 @@ def copy_structure(input_dir, output_dir):
             os.makedirs(dir_path, exist_ok=True)
         for file in files:
             file_path = os.path.join(output_dir, os.path.relpath(os.path.join(root, file), input_dir))
+            # Make sure the directory exists
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
             shutil.copy(os.path.join(root, file), file_path)
 
 def replace_url_with_content(file_content):
@@ -18,7 +21,10 @@ def replace_url_with_content(file_content):
     for url in set(urls):
         response = requests.get(url)
         if response.status_code == 200:
-            file_content = file_content.replace(f"[[URL:{url}]]", response.text)
+            file_content = file_content.replace(f"[[URL:{url}]]", response.text.strip())
+        else:
+            error_details = f"URL: {url}, Status Code: {response.status_code}, Reason: {response.reason}"
+            raise ValueError(f"Problem downloading {error_details}")
     return file_content
 
 def make_substitutions(file_content, substitutions):

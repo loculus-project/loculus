@@ -9,15 +9,16 @@ kind: ConfigMap
 metadata:
   name: lapis-silo-database-config-{{ $key }}
 data:
-  {{- with $instance.schema }}
+  {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
   database_config.yaml: |
     schema:
-      instanceName: {{ .instanceName }}
+      instanceName: {{ .organismName }}
       opennessLevel: OPEN
       metadata:
       {{- range (concat $commonMetadata .metadata) }}
         - name: {{ .name }}
-          type: {{ (.type | eq "timestamp") | ternary "int" ((.type | eq "authors") | ternary "string" .type) }}
+          {{- $type := default "string" .type }}
+          type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
           {{- if .generateIndex }}
           generateIndex: {{ .generateIndex }}
           {{- end }}
@@ -46,5 +47,6 @@ data:
     {{ range $importScriptWrapperLines }}
     {{ . }}{{ end }}
 
-  pangolineage_alias.json: "{}"
+  pangolineage_alias.json: |
+    {{ $instance.pangolineage_alias | default dict | toJson }}
 {{- end }}

@@ -15,11 +15,16 @@ import {
 } from '../../types/lapis.ts';
 import { parseUnixTimestamp } from '../../utils/parseUnixTimestamp.ts';
 
+type GetTableDataResult = {
+    data: TableDataEntry[];
+    isRevocation: boolean;
+};
+
 export async function getTableData(
     accessionVersion: string,
     schema: Schema,
     lapisClient: LapisClient,
-): Promise<Result<TableDataEntry[], ProblemDetail>> {
+): Promise<Result<GetTableDataResult, ProblemDetail>> {
     return Promise.all([
         lapisClient.getSequenceEntryVersionDetails(accessionVersion),
         lapisClient.getSequenceMutations(accessionVersion, 'nucleotide'),
@@ -46,12 +51,15 @@ export async function getTableData(
                         aminoAcidInsertions: aminoAcidInsertions.data,
                     }),
                 )
-                .map(toTableData(schema)),
+                .map((data) => ({
+                    data: toTableData(schema)(data),
+                    isRevocation: isRevocationEntry(data.details),
+                })),
         );
 }
 
-export function isRevocationEntry(tableData: TableDataEntry[]): boolean {
-    return tableData.some((entry) => entry.name === 'isRevocation' && entry.value === true);
+function isRevocationEntry(details: Details): boolean {
+    return details.isRevocation === true;
 }
 
 export function getLatestAccessionVersion(
@@ -152,6 +160,7 @@ function toTableData(config: Schema) {
     }): TableDataEntry[] => {
         const data: TableDataEntry[] = config.metadata
             .filter((metadata) => metadata.hideOnSequenceDetailsPage !== true)
+            .filter((metadata) => details[metadata.name] !== null && metadata.name in details)
             .map((metadata) => ({
                 label: metadata.displayName ?? sentenceCase(metadata.name),
                 name: metadata.name,

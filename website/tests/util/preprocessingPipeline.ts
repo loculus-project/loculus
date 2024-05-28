@@ -82,9 +82,21 @@ async function query(numberOfSequenceEntries: number): Promise<UnprocessedData[]
 
             return unprocessedDataAsNdjson
                 .split('\n')
-                .filter((line: string) => line.length > 0)
-                .map((line: string): UnprocessedData => {
-                    return JSON.parse(line) as UnprocessedData;
+                .filter((line) => line.length > 0)
+                .map((line) => {
+                    try {
+                        return unprocessedData.parse(JSON.parse(line));
+                    } catch (error) {
+                        if (error instanceof SyntaxError) {
+                            throw new Error(
+                                'Invalid JSON syntax error: ' +
+                                    error.message +
+                                    ' for response:\n ' +
+                                    unprocessedDataAsNdjson,
+                            );
+                        }
+                        throw error;
+                    }
                 });
         },
         (error) => {

@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
 import subprocess
 import time
 
 
-def main():
-    end_time = time.time() + 480
+def main(timeout=480):
+    end_time = time.time() + timeout
 
     while True:
         pods = get_pods()
@@ -22,22 +23,22 @@ def main():
         except KeyError as e:
             print("KeyError:", e, "continuing...")
 
-        print("Sleeping for 10 seconds...")
-        time.sleep(10)
+        print("Sleeping for 5 seconds...")
+        time.sleep(5)
 
 
 def get_pods():
-    cmd = ['kubectl', 'get', 'pods', '-l', 'app=loculus', '-o', 'json']
+    cmd = ["kubectl", "get", "pods", "-l", "app=loculus", "-o", "json"]
     result = subprocess.run(cmd, capture_output=True, text=True)
-    return json.loads(result.stdout)['items']
+    return json.loads(result.stdout)["items"]
 
 
 def all_pods_are_ready(pods):
     for pod in pods:
-        if "silo-import-cronjob" in pod['metadata']['name']:
+        if "silo-import-cronjob" in pod["metadata"]["name"]:
             continue
-        print("Status of:", pod['metadata']['name'], "-", pod['status']['phase'])
-        if pod['status']['phase'] == 'Succeeded':
+        print("Status of:", pod["metadata"]["name"], "-", pod["status"]["phase"])
+        if pod["status"]["phase"] == "Succeeded":
             continue
         if has_container_that_is_not_ready(pod):
             return False
@@ -45,12 +46,15 @@ def all_pods_are_ready(pods):
 
 
 def has_container_that_is_not_ready(pod):
-    for container_status in pod['status']['containerStatuses']:
-        if container_status['ready'] is False:
-            print(container_status['name'], "is not ready")
+    for container_status in pod["status"]["containerStatuses"]:
+        if container_status["ready"] is False:
+            print(container_status["name"], "is not ready")
             return True
     return False
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Wait for pods to be ready")
+    parser.add_argument("--timeout", type=int, default=480, help="Timeout in seconds")
+    args = parser.parse_args()
+    main(timeout=args.timeout)

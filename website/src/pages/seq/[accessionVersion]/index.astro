@@ -5,7 +5,6 @@ import RevocationEntryDataTable from '../../../components/SequenceDetailsPage/Re
 import { SequenceDataUI } from '../../../components/SequenceDetailsPage/SequenceDataUI.tsx';
 import SequencesBanner from '../../../components/SequenceDetailsPage/SequencesBanner.astro';
 import SequencesDataTableTitle from '../../../components/SequenceDetailsPage/SequencesDataTableTitle.astro';
-import { isRevocationEntry } from '../../../components/SequenceDetailsPage/getTableData';
 import ErrorBox from '../../../components/common/ErrorBox.tsx';
 import { getSchema, getRuntimeConfig } from '../../../config';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
@@ -66,12 +65,11 @@ const runtimeConfig = getRuntimeConfig();
                                 : undefined
                         }
                         showFastaDownload={
-                            result.type === SequenceDetailsTableResultType.TABLE_DATA &&
-                            !isRevocationEntry(result.tableData)
+                            result.type === SequenceDetailsTableResultType.TABLE_DATA && result.isRevocation
                         }
                     />
                     {result.type === SequenceDetailsTableResultType.TABLE_DATA &&
-                        (isRevocationEntry(result.tableData) ? (
+                        (result.isRevocation ? (
                             <RevocationEntryDataTable
                                 tableData={result.tableData}
                                 dataUseTermsHistory={result.dataUseTermsHistory}

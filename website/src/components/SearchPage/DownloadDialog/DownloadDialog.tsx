@@ -1,24 +1,25 @@
-import { type FC, useMemo, useRef, useState } from 'react';
+import { type FC, useRef, useState } from 'react';
 
 import { ActiveDownloadFilters } from './ActiveDownloadFilters.tsx';
+import { DownloadButton } from './DownloadButton.tsx';
 import { DownloadForm } from './DownloadForm.tsx';
-import { type DownloadOption, generateDownloadUrl } from './generateDownloadUrl.ts';
+import { type DownloadOption } from './generateDownloadUrl.ts';
 import { routes } from '../../../routes/routes.ts';
-import type { FilterValue, MutationFilter } from '../../../types/config.ts';
+import type { FieldValues } from '../../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../../types/referencesGenomes.ts';
 
 type DownloadDialogProps = {
-    metadataFilter: FilterValue[];
-    mutationFilter: MutationFilter;
+    lapisSearchParameters: Record<string, any>;
     referenceGenomesSequenceNames: ReferenceGenomesSequenceNames;
     lapisUrl: string;
+    hiddenFieldValues: FieldValues;
 };
 
 export const DownloadDialog: FC<DownloadDialogProps> = ({
-    metadataFilter,
-    mutationFilter,
+    lapisSearchParameters,
     referenceGenomesSequenceNames,
     lapisUrl,
+    hiddenFieldValues,
 }) => {
     const dialogRef = useRef<HTMLDialogElement>(null);
     const [downloadOption, setDownloadOption] = useState<DownloadOption | undefined>();
@@ -36,13 +37,6 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
         }
     };
 
-    const downloadUrl = useMemo(() => {
-        if (downloadOption === undefined || !agreedToDataUseTerms) {
-            return '#';
-        }
-        return generateDownloadUrl(metadataFilter, mutationFilter, downloadOption, lapisUrl);
-    }, [downloadOption, lapisUrl, metadataFilter, mutationFilter, agreedToDataUseTerms]);
-
     return (
         <>
             <button className='outlineButton' onClick={openDialog}>
@@ -57,7 +51,10 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
 
                     <h3 className='font-bold text-2xl mb-4'>Download</h3>
 
-                    <ActiveDownloadFilters metadataFilter={metadataFilter} mutationFilter={mutationFilter} />
+                    <ActiveDownloadFilters
+                        lapisSearchParameters={lapisSearchParameters}
+                        hiddenFieldValues={hiddenFieldValues}
+                    />
                     <DownloadForm
                         referenceGenomesSequenceNames={referenceGenomesSequenceNames}
                         onChange={setDownloadOption}
@@ -82,13 +79,13 @@ export const DownloadDialog: FC<DownloadDialogProps> = ({
                         </label>
                     </div>
 
-                    <a
-                        className={`btn loculusColor ${!agreedToDataUseTerms ? 'btn-disabled' : ''} text-white`}
-                        href={downloadUrl}
+                    <DownloadButton
+                        disabled={!agreedToDataUseTerms}
+                        lapisUrl={lapisUrl}
+                        downloadOption={downloadOption}
+                        lapisSearchParameters={lapisSearchParameters}
                         onClick={closeDialog}
-                    >
-                        Download
-                    </a>
+                    />
                 </div>
             </dialog>
         </>

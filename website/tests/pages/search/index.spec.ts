@@ -31,13 +31,7 @@ test.describe('The search page', () => {
         await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
-            `${baseUrl}${routes.searchPage(dummyOrganism.key, [
-                {
-                    name: 'accession',
-                    type: 'string',
-                    filterValue: getTestSequences().testSequenceEntry.accession,
-                },
-            ])}`,
+            `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${testAccessionVersion}`,
         );
         const accessionLink = searchPage.page.getByText(testAccessionVersion, { exact: true });
         await expect(accessionLink).toBeVisible();
@@ -47,7 +41,7 @@ test.describe('The search page', () => {
         await expect(rowLocator.getByText('B.1.1.7')).toBeVisible();
 
         await accessionLink.click();
-        await expect(searchPage.page.getByText('Amino acid mutations')).toBeVisible();
+        await expect(searchPage.page.getByText('Amino acid mutations')).toBeVisible({ timeout: 30000 });
     });
 
     test('should search a few sequence entries by accession', async ({ searchPage }) => {

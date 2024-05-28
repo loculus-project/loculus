@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version-file: ./website/.nvmrc
       - uses: actions/cache@v4
         with:
           path: ~/.npm
@@ -35,7 +35,7 @@ jobs:
       - run: npm ci
       - run: npm run check-format
       - run: npm run check-types
-
+        if: always()
   unitTests:
     name: Unit Tests
     runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}
@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version-file: ./website/.nvmrc
       - name: Cache .npm
         uses: actions/cache@v4
         with:

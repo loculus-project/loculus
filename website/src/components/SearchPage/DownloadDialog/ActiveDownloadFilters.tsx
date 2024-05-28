@@ -1,27 +1,22 @@
 import type { FC } from 'react';
 
-import type { FilterValue, MutationFilter } from '../../../types/config.ts';
+import type { FieldValues } from '../../../types/config';
 
 type ActiveDownloadFiltersProps = {
-    metadataFilter: FilterValue[];
-    mutationFilter: MutationFilter;
+    lapisSearchParameters: Record<string, any>;
+    hiddenFieldValues: FieldValues;
 };
 
-export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ metadataFilter, mutationFilter }) => {
-    const filterValues: FilterValue[] = metadataFilter.filter((f) => f.filterValue.length > 0);
-    [
-        { name: 'nucleotideMutations', value: mutationFilter.nucleotideMutationQueries },
-        { name: 'aminoAcidMutations', value: mutationFilter.aminoAcidMutationQueries },
-        { name: 'nucleotideInsertion', value: mutationFilter.nucleotideInsertionQueries },
-        { name: 'aminoAcidInsertions', value: mutationFilter.aminoAcidInsertionQueries },
-    ].forEach(({ name, value }) => {
-        if (value !== undefined && value.length > 0) {
-            filterValues.push({ name, filterValue: value.join(', ') });
-        }
-    });
+export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ lapisSearchParameters, hiddenFieldValues }) => {
+    let filterValues = Object.entries(lapisSearchParameters)
+        .filter((vals) => vals[1] !== undefined && vals[1] !== '')
+        .filter(([name, val]) => !(Object.keys(hiddenFieldValues).includes(name) && hiddenFieldValues[name] === val))
+        .map(([name, filterValue]) => ({ name, filterValue }));
+
+    filterValues = filterValues.filter(({ filterValue }) => filterValue.length > 0);
 
     if (filterValues.length === 0) {
-        return undefined;
+        return null;
     }
 
     return (
@@ -30,7 +25,7 @@ export const ActiveDownloadFilters: FC<ActiveDownloadFiltersProps> = ({ metadata
             <div className='flex flex-row flex-wrap gap-4'>
                 {filterValues.map(({ name, filterValue }) => (
                     <div key={name} className='border-black border rounded-full px-2 py-1 text-sm'>
-                        {name}: {filterValue}
+                        {name}: {typeof filterValue === 'object' ? filterValue.join(', ') : filterValue}
                     </div>
                 ))}
             </div>

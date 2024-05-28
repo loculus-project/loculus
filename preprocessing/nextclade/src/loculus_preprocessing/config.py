@@ -17,10 +17,10 @@ CLI_TYPES = [str, int, float, bool]
 
 @dataclass
 class Config:
-    backend_host: str = "http://127.0.0.1:8079"
-    keycloak_host: str = "http://172.0.0.1:8083"
+    backend_host: str = "http://127.0.0.1:8079/ebola-zaire"
+    keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
-    keycloak_password: str = ""
+    keycloak_password: str = "preprocessing_pipeline"
     keycloak_token_path: str = "realms/loculus/protocol/openid-connect/token"
     nextclade_dataset_name: str = "nextstrain/mpox/all-clades"
     nextclade_dataset_tag: str | None = None
