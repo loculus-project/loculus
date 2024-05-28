@@ -328,7 +328,11 @@ def process_single(
     output_metadata: ProcessedMetadata = len_dict
 
     for output_field, spec_dict in config.processing_spec.items():
-        if re.search("^length", output_field):
+        length_fields = [
+            "length" if segment == "main" else "length_" + segment
+            for segment in config.nucleotideSequences
+        ]
+        if output_field in length_fields:
             continue
         spec = ProcessingSpec(
             inputs=spec_dict["inputs"],
