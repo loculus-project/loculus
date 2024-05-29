@@ -63,7 +63,7 @@ spec:
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
         - name: silo-preprocessing
-          image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
+          image: {{ $.Values.images.lapisSilo }}
           imagePullPolicy: IfNotPresent
           resources:
             requests:
