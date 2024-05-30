@@ -731,10 +731,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         generateIndex: true
         autocomplete: true
         header: "Host"
-      - name: ncbi_length
-        type: int
-        header: "INSDC"
-        noInput: true
       - name: ncbi_protein_count
         type: int
         header: "INSDC"
