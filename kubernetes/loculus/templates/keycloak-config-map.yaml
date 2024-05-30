@@ -28,6 +28,7 @@ data:
       "registrationAllowed": true,
       "accessTokenLifespan": 36000,
       "ssoSessionIdleTimeout": 36000,
+      "actionTokenGeneratedByUserLifespan": 1800,
       "users": [
         {{ if $.Values.createTestAccounts }}
           {{- $browsers := list "firefox" "webkit" "chromium"}}
