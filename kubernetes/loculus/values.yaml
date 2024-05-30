@@ -1175,7 +1175,7 @@ bannerMessage: "This is a development environment. Data will not be persisted."
 additionalHeadHTML: '<script defer data-domain="main.loculus.org" src="https://plausible.io/js/script.js"></script>'
 images:
   lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.1"
-  lapis: "ghcr.io/genspectrum/lapis-v2@sha256:c14cde565691aec2b8ff58e3243de09201f2c69c2912fa54c06377b6c53f04b0"
+  lapis: "ghcr.io/genspectrum/lapis-v2:0.2.2"
 secrets:
   smtp-password:
     type: raw
