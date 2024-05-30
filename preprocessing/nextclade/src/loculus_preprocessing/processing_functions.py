@@ -149,12 +149,12 @@ class ProcessingFunctions:
         if len(date_str) == 0:
             if args and args.get("required"):
                 errors.append(
-                            ProcessingAnnotation(
-                                source=[
-                                    AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
-                                ],
-                                message="Collection date is required",
-                            )
+                    ProcessingAnnotation(
+                        source=[
+                            AnnotationSource(name=output_field, type=AnnotationSourceType.METADATA)
+                        ],
+                        message="Collection date is required",
+                    )
                 )
             return ProcessingResult(
                 datum=None,

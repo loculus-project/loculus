@@ -51,7 +51,7 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl }) => {
             {({ open }) => (
                 <>
                     <div className='flex items-center justify-between px-4 py-3 bg-gray-100'>
-                        <div className='text-lg font-semibold text-primary-600 sm:text-primary-800'>Documentation</div>
+                        <div className='text-lg font-semibold text-primary-600'>Documentation</div>
                         <div className='sm:hidden'>
                             <Disclosure.Button className='text-primary-600 hover:text-primary-800 focus:outline-none'>
                                 {open ? (
@@ -93,7 +93,7 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl }) => {
                         <ul className='list-none m-0 p-0'>
                             {Object.entries(groupedPages).map(([dir, pages]) => (
                                 <li key={dir} className='border-b border-gray-200 last:border-0'>
-                                    <div className='p-4 text-primary-700 font-semibold bg-gray-100'>
+                                    <div className='p-4 text-primary-600 font-semibold bg-gray-100'>
                                         {toTitleCase(dir.replaceAll('-', ' '))}
                                     </div>
                                     <ul className='list-none m-0 p-0'>
