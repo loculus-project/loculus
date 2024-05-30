@@ -70,7 +70,7 @@ spec:
               memory: "10Mi"
               cpu: "10m"
             limits:
-              memory: "3Gi"
+              memory: "10Gi"
           command:
             - sh
             - /silo_import_wrapper.sh
