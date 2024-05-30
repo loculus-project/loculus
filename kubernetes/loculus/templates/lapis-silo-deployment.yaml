@@ -32,7 +32,7 @@ spec:
               memory: "100Mi"
               cpu: "10m"
             limits:
-              memory: "2Gi"
+              memory: "10Gi"
           ports:
             - containerPort: 8081
           args:
