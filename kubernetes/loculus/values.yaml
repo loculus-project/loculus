@@ -898,7 +898,7 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
-      instanceName: "RSV A"
+      organismName: "RSV A"
       image: ""
     preprocessing:
     - <<: *preprocessing
@@ -919,7 +919,7 @@ defaultOrganisms:
     <<: *defaultOrganismConfig
     schema:
       <<: *schema
-      instanceName: "RSV B"
+      organismName: "RSV B"
       image: ""
     preprocessing:
     - <<: *preprocessing
