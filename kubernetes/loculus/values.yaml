@@ -905,7 +905,7 @@ defaultOrganisms:
       configFile:
         <<: *preprocessingConfigFile
         nextclade_dataset_name: nextstrain/rsv/a
-        genes: [ F, G, SH, G2, P, M2-1, M2-2, L ]
+        genes: [ F, G, L, M, M2-1, M2-2, "N", NS1, NS2, P, SH ]
     ingest:
       <<: *ingest
       configFile:
@@ -919,18 +919,24 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/F.fasta]]"
         - name: G
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/G.fasta]]"
-        - name: SH
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/SH.fasta]]"
-        - name: G2
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/G2.fasta]]"
-        - name: P
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/P.fasta]]"
+        - name: L
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/L.fasta]]"
+        - name: M
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/M.fasta]]"
         - name: M2-1
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/M2-1.fasta]]"
         - name: M2-2
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/M2-2.fasta]]"
-        - name: L
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/L.fasta]]"
+        - name: "N"
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/N.fasta]]"
+        - name: NS1
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/NS1.fasta]]"
+        - name: NS2
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/NS2.fasta]]"
+        - name: P
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/P.fasta]]"
+        - name: SH
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/SH.fasta]]"
   rsv-b:
     <<: *defaultOrganismConfig
     schema:
@@ -947,18 +953,24 @@ defaultOrganisms:
             sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/F.fasta]]"
           - name: G
             sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/G.fasta]]"
-          - name: SH
-            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/SH.fasta]]"
-          - name: G2
-            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/G2.fasta]]"
-          - name: P
-            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/P.fasta]]"
+          - name: L
+            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/L.fasta]]"
+          - name: M
+            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/M.fasta]]"
           - name: M2-1
             sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/M2-1.fasta]]"
           - name: M2-2
             sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/M2-2.fasta]]"
-          - name: L
-            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/L.fasta]]"
+          - name: "N"
+            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/N.fasta]]"
+          - name: NS1
+            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/NS1.fasta]]"
+          - name: NS2
+            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/NS2.fasta]]"
+          - name: P
+            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/P.fasta]]"
+          - name: SH
+            sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/SH.fasta]]"
     ingest:
       <<: *ingest
       configFile:
@@ -967,7 +979,7 @@ defaultOrganisms:
       nucleotideSequences:
         - name: "main"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/reference.fasta]]"
-      genes: [ F, G, SH, G2, P, M2-1, M2-2, L]
+      genes: [ F, G, L, M, M2-1, M2-2, "N", NS1, NS2, P, SH ]
 auth:
   smtp:
     host: "in-v3.mailjet.com"
