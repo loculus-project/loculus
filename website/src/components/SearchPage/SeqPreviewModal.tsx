@@ -64,7 +64,7 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
             )}
 
             {isLoading ? (
-                <div>Loading...</div>
+                <div className="appearSlowly">Loading...</div>
             ) : data !== null && !isError ? (
                 <SequenceDataUI
                     {...data}
