@@ -10,8 +10,14 @@ export const Banner: React.FC<BannerProps> = ({ message }) => {
     }
 
     return (
-        <div className='absolute top-0 right-0 m-1 bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-1.5 rounded-md  opacity-70'>
-            <p className='text-xs font-medium'>{message}</p>
+        <div className=' bg-gray-100 border-b border-gray-400 text-gray-700 px-4 py-1   opacity-50'>
+            <p
+                style={{
+                    fontSize: '.7rem',
+                }}
+            >
+                {message}
+            </p>
         </div>
     );
 };
