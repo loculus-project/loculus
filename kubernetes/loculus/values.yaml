@@ -771,6 +771,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           args: { type: int }
           inputs: { input: nextclade.totalSubstitutions }
+      - name: lineage
+        header: "Lineage"
+        noInput: true
+        generateIndex: true
+        autocomplete: true
+        initiallyVisible: true
+        preprocessing:
+          inputs: { input: nextclade.clade }
       - name: total_inserted_nucs
         type: int
         header: "Alignment states and QC metrics"
@@ -839,6 +847,7 @@ defaultOrganismConfig: &defaultOrganismConfig
       tableColumns:
         - sample_collection_date
         - ncbi_release_date
+        - lineage
         - authors
         - author_affiliations
         - geo_loc_country
