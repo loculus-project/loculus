@@ -905,7 +905,7 @@ defaultOrganisms:
       configFile:
         <<: *preprocessingConfigFile
         nextclade_dataset_name: nextstrain/rsv/a
-        genes: [ F, G, L, M, M2-1, M2-2, "N", NS1, NS2, P, SH ]
+        genes: [ F, G, L, M, "N", NS1, NS2, P, SH ]
     ingest:
       <<: *ingest
       configFile:
@@ -923,10 +923,6 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/L.fasta]]"
         - name: M
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/M.fasta]]"
-        - name: M2-1
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/M2-1.fasta]]"
-        - name: M2-2
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/M2-2.fasta]]"
         - name: "N"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-a/N.fasta]]"
         - name: NS1
@@ -948,7 +944,7 @@ defaultOrganisms:
       configFile:
         <<: *preprocessingConfigFile
         nextclade_dataset_name: nextstrain/rsv/b
-        genes: [ F, G, L, M, M2-1, M2-2, "N", NS1, NS2, P, SH ]
+        genes: [ F, G, L, M, "N", NS1, NS2, P, SH ]
     ingest:
       <<: *ingest
       configFile:
@@ -966,10 +962,6 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/L.fasta]]"
         - name: M
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/M.fasta]]"
-        - name: M2-1
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/M2-1.fasta]]"
-        - name: M2-2
-          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/M2-2.fasta]]"
         - name: "N"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/rsv-b/N.fasta]]"
         - name: NS1
