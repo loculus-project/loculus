@@ -19,9 +19,7 @@ export const Banner: React.FC<BannerProps> = ({ message, lastTimeBannerWasClosed
     const serverClientOffset = serverTime - initialClientTime;
 
     const setBannerClosed = () => {
-        // set lastTimeBannerWasClosed cookie to now
         document.cookie = `lastTimeBannerWasClosed=${Date.now() + serverClientOffset}; max-age=${60 * 60 * 24 * 365}`;
-        // reload page
         window.location.reload();
     };
 
