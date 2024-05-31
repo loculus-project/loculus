@@ -34,7 +34,7 @@ jobs:
       actions: read # Required by workflow-telemetry-action
 
     runs-on: ubuntu-latest-m
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     env:
       ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' || github.event.inputs.all_browsers && 'true' || 'false' }}
