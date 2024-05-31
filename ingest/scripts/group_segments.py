@@ -1,4 +1,4 @@
-"""Script to group segmented viruses together prior to submission to Loculus"""
+"""Script to group segments together into sequence entries prior to submission to Loculus"""
 
 import hashlib
 import json

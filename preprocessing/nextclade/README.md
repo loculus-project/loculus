@@ -1,4 +1,4 @@
-# Rudimentary Preprocessing Pipeline
+# Preprocessing Pipeline
 
 This preprocessing pipeline is still a work in progress. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`.
 
@@ -60,7 +60,7 @@ docker run -it --platform=linux/amd64 --network host --rm nextclade_processing p
 
 - Install Ruff to lint/format
 
-When deployed on kubernetes the preprocessing pipeline reads in config files which are created in `loculus/kubernetes/loculus/templates/loculus-preprocessing-config.yaml`. When run locally the pipeline uses only the default values defined in `preprocessing/nextclade/src/loculus_preprocessing/config.py`. When running the preprocessing pipeline locally it makes sense to create a local config file using the command:
+When deployed on kubernetes the preprocessing pipeline reads in config files which are created by `loculus/kubernetes/loculus/templates/loculus-preprocessing-config.yaml`. When run locally the pipeline uses only the default values defined in `preprocessing/nextclade/src/loculus_preprocessing/config.py`. When running the preprocessing pipeline locally it makes sense to create a local config file using the command:
 
 ```
 ../../generate_local_test_config.sh
