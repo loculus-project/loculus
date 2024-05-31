@@ -82,16 +82,16 @@ def mask_terminal_gaps(
 
 
 def load_aligned_nuc_sequences(
-    result_dir_seg: str, segment: str
+    result_dir_seg: str,
+    segment: str,
+    aligned_nucleotide_sequences: dict[AccessionVersion, dict[str, NucleotideSequence | None]],
 ) -> dict[AccessionVersion, NucleotideSequence]:
-    aligned_nucleotide_sequences: dict[AccessionVersion, NucleotideSequence] = {}
     with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
         aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
         for aligned_sequence in aligned_nuc:
             sequence_id: str = aligned_sequence.id
             sequence: NucleotideSequence = str(aligned_sequence.seq)
             aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
-    return aligned_nucleotide_sequences
 
 
 def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
@@ -197,7 +197,7 @@ def enrich_with_nextclade(
 
             logging.debug("Nextclade results available in %s", result_dir)
 
-            aligned_nucleotide_sequences = load_aligned_nuc_sequences(result_dir_seg, segment)
+            load_aligned_nuc_sequences(result_dir_seg, segment, aligned_nucleotide_sequences)
 
             for gene in config.genes:
                 translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
