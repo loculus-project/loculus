@@ -24,8 +24,8 @@ spec:
           image: postgres:latest
           resources:
             requests:
-              memory: "100Mi"
-              {{ include "loculus.standardCPURequest" $ }}
+              memory: "30Mi"
+              cpu: 10m
             limits:
               memory: "100Mi"
           ports:
