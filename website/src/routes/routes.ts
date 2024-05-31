@@ -60,7 +60,7 @@ export const routes = {
     },
     logout: () => '/logout',
     organismSelectorPage: (redirectTo: string) => `/organism-selector/${redirectTo}`,
-    datauseTermsPage: () => '/governance/data_use_terms',
+    datauseTermsPage: () => '/governance/data-use-terms',
 };
 
 function withOrganism(organism: string, path: `/${string}`) {
