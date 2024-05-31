@@ -47,7 +47,7 @@ export const SearchForm = ({
     return (
         <QueryClientProvider client={queryClient}>
             <div className='text-right -mb-10 md:hidden'>
-                <button onClick={toggleMobileOpen} className='btn btn-xs'>
+                <button onClick={toggleMobileOpen} className='btn btn-xs bg-primary-600 text-white'>
                     Modify search query
                 </button>
             </div>
