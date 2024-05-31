@@ -68,6 +68,8 @@ spec:
           resources:
             limits:
               memory: "10Gi"
+            requests:
+              memory: "20Mi"
           command:
             - sh
             - /silo_import_wrapper.sh
