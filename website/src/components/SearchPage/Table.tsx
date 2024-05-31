@@ -16,7 +16,7 @@ function formatField(value: any, maxLength: number): string {
     if (typeof value === 'string' && value.toString().length > maxLength) {
         return `${value.toString().slice(0, maxLength)}…`;
     } else if (typeof value === 'number' && Number.isInteger(value)) {
-        return value.toLocaleString();
+        return value.toLocaleString('en-US');
     } else {
         return value;
     }
