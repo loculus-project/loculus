@@ -11,6 +11,8 @@ interface Props {
 }
 
 const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } = Astro.props;
+
+const formatNumber = (num: number) => new Intl.NumberFormat('en-US').format(num);
 ---
 
 <a
@@ -20,8 +22,8 @@ const { key, image, displayName, organismStatistics, numberDaysAgoStatistics } =
     {image !== undefined && <img src={image} class='h-32 mx-auto mb-4' alt={displayName} />}
     <h3 class='font-semibold'>{displayName}</h3>
     <p class='text-sm'>
-        {organismStatistics.totalSequences} sequences<br />
-        (+{organismStatistics.recentSequences} in last {numberDaysAgoStatistics} days)<br />
+        {formatNumber(organismStatistics.totalSequences)} sequences<br />
+        (+{formatNumber(organismStatistics.recentSequences)} in last {numberDaysAgoStatistics} days)<br />
         {organismStatistics.lastUpdatedAt && <>Last updated {organismStatistics.lastUpdatedAt.toRelative()}</>}
     </p>
 </a>
