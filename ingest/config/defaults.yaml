@@ -43,7 +43,6 @@ segment_specific:
   - bioproject_accessions
   - ncbi_completeness
   - sra_run_accession
-  - ncbi_length
   - ncbi_protein_count
   - insdc_accession_base
   - insdc_version
