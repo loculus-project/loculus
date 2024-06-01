@@ -44,7 +44,7 @@ const mockUseDetails = vi.fn();
 const defaultSearchFormFilters: MetadataFilter[] = [
     {
         name: 'field1',
-        type: 'date',
+        type: 'string',
         autocomplete: false,
         label: 'Field 1',
         initiallyVisible: true,
