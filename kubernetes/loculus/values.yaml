@@ -14,7 +14,7 @@ accessionPrefix: "LOC_"
 dataUseTermsUrls:
   open: https://#TODO-MVP/open
   restricted: https://#TODO-MVP/restricted
-name: "Loculus"
+name: "Pathoplexus"
 logo:
   url: "/favicon.svg"
   width: 100
