@@ -7,9 +7,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { SearchForm } from './SearchForm';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
-import type {  MetadataFilter } from '../../types/config.ts';
+import type { MetadataFilter } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
-
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -82,7 +81,6 @@ describe('SearchForm', () => {
         expect(screen.getByText('Field 3')).toBeInTheDocument();
     });
 
-   
     it('handles field value changes', async () => {
         renderSearchForm();
 
@@ -99,5 +97,4 @@ describe('SearchForm', () => {
         fireEvent.click(resetButton);
         expect(window.location.href).toMatch(/\/$/);
     });
-
 });

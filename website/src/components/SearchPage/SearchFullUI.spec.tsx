@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-empty-function */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchFullUI } from './SearchFullUI';
@@ -204,5 +205,18 @@ describe('SearchFullUI', () => {
         if (!dateField) {
             throw new Error('Date field not found');
         }
+    });
+
+    it('toggle field visibility', async () => {
+        renderSearchFullUI({});
+        expect(await screen.findByLabelText('Field 1')).toBeVisible();
+        const customizeButton = await screen.findByRole('button', { name: 'Customize fields' });
+        await userEvent.click(customizeButton);
+        const field1Checkbox = await screen.findByRole('checkbox', { name: 'Field 1' });
+        expect(field1Checkbox).toBeChecked();
+        await userEvent.click(field1Checkbox);
+        const closeButton = await screen.findByRole('button', { name: 'Close' });
+        await userEvent.click(closeButton);
+        expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
 });
