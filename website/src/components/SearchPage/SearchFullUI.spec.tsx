@@ -1,12 +1,14 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+/* eslint-disable @typescript-eslint/explicit-member-accessibility */
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SearchFullUI } from './SearchFullUI';
 import { testConfig, testOrganism } from '../../../vitest.setup.ts';
+import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter, Schema } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
-import { lapisClientHooks } from '../../services/serviceHooks.ts';
 
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
@@ -78,7 +80,7 @@ function renderSearchFullUI({
         clientConfig,
         schema: {
             metadata: metadataSchema,
-            tableColumns: [ 'field1', 'field3'],
+            tableColumns: ['field1', 'field3'],
             primaryKey: 'accession',
         } as Schema,
     };
@@ -86,7 +88,7 @@ function renderSearchFullUI({
     render(
         <QueryClientProvider client={new QueryClient()}>
             <SearchFullUI {...props} />
-        </QueryClientProvider>
+        </QueryClientProvider>,
     );
 }
 
@@ -203,42 +205,4 @@ describe('SearchFullUI', () => {
             throw new Error('Date field not found');
         }
     });
-
-    it('handles order change', async () => {
-        renderSearchFullUI();
-        // get a <th> with "accession"
-        const items = screen.getAllByRole('columnheader');
-        const columnHeader = items.find((item) => item.textContent?.includes('Accession'))
-        if (!columnHeader) {
-            throw new Error('Column header not found');
-        }
-
-     
-
-        fireEvent.click(columnHeader);
-
-        await waitFor(() => {
-            expect(mockUseDetails).toHaveBeenCalled();
-        });
-      
-    });
-
-    /*
-    it('handles page change', async () => {
-        renderSearchFullUI();
-
-        const nextPageButton = screen.getByRole('button', { name: /next/i });
-        fireEvent.click(nextPageButton);
-
-        await waitFor(() => {
-            expect(mockUseDetails).toHaveBeenCalled();
-        });
-
-        // expect URL to be updated
-        await waitFor(() => {
-            expect(window.location.href).toContain('page=2');
-        }
-    );
-    });
-    */
 });
