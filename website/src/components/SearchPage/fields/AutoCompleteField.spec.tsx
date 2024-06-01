@@ -1,4 +1,4 @@
-please adjust my updated code:
+
 
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -15,6 +15,7 @@ vi.mock('../../../clientLogger.ts', () => ({
 }));
 
 const mockUseAggregated = vi.fn();
+// @ts-expect-error because mockReturnValue is not defined in the type definition
 lapisClientHooks.mockReturnValue({
     zodiosHooks: {
         useAggregated: mockUseAggregated,
