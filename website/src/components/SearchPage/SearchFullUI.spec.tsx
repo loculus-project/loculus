@@ -219,4 +219,15 @@ describe('SearchFullUI', () => {
         await userEvent.click(closeButton);
         expect(screen.queryByLabelText('Field 1')).not.toBeInTheDocument();
     });
+
+    it('should update the URL with query parameters when a search is performed', async () => {
+        renderSearchFullUI();
+
+        const field1Input = await screen.findByLabelText('Field 1');
+        await userEvent.type(field1Input, 'abc');
+
+        await waitFor(() => {
+            expect(window.history.state.path).toContain('?field1=abc');
+        });
+    });
 });
