@@ -1,5 +1,3 @@
-
-
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
@@ -28,7 +26,6 @@ describe('AutoCompleteField', () => {
         label: 'Test Field',
         type: 'string',
         autocomplete: true,
-        
     };
     const setAFieldValue = vi.fn();
     const lapisUrl = 'https://example.com/api';
