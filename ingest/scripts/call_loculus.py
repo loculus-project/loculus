@@ -32,7 +32,7 @@ class Config:
     password: str
     group_name: str
     nucleotideSequences: list[str]
-    segmented: str
+    segmented: bool
 
 
 def backend_url(config: Config) -> str:

@@ -61,14 +61,14 @@ def main(
                 file.write(f">{record.id}\n{record.seq}\n")
 
     if not config.segmented:
-        logger.error("Error: tried to get segment for non-segmented virus")
+        raise ValueError({"ERROR: tried to get segment for non-segmented virus"})
     else:
         metadata_df = pd.read_csv(input_metadata, sep="\t", dtype=str, keep_default_na=False)
         number_of_records = len(metadata_df)
         logging.info(f"Found {number_of_records} sequences")
 
         # Discard all sequences with unclear segment annotations
-        # Append segment to end of NCBI accession ID to conform with LAPIS formatting
+        # Append segment to end of NCBI accession ID to conform with Loculus formatting
         metadata_df["segment"] = None
         segmented_seq = {}
         processed_seq = []

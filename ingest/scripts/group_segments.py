@@ -81,7 +81,7 @@ def main(
     number_of_segmented_records = len(metadata_df)
 
     if not config.segmented:
-        logger.error(f"Error: tried to get segment for non-segmented virus")
+        raise ValueError({"ERROR: tried to get segment for non-segmented virus"})
     else:
         segments: list[str] = config.nucleotideSequences if config.nucleotideSequences else []
         # Group sequences according to isolate, collection date and isolate specific values

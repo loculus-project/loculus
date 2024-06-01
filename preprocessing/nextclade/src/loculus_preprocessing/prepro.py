@@ -3,7 +3,6 @@ import dataclasses
 import json
 import logging
 import os
-import re
 import subprocess  # noqa: S404
 import sys
 import time
