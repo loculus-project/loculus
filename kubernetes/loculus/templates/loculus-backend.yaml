@@ -29,7 +29,7 @@ spec:
           resources:
             requests:
               memory: "640Mi"
-              cpu: "250"
+              cpu: "250m"
             limits:
               memory: "3Gi" # Backend requires at least 635741K of memory
           livenessProbe:
