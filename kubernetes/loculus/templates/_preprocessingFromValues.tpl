@@ -6,7 +6,7 @@
 
 {{- range $metadata }}
 {{- $currentItem := . }}
-{{- if and $use_segments .segmented }}
+{{- if and $use_segments .per_segment }}
 {{- range $segment := $segments }}
 {{ printf "%s_%s :" $currentItem.name $segment}}
   {{- if $currentItem.type }}

@@ -144,7 +144,7 @@ fields:
 {{- $segments := .nucleotideSequences }}
 {{- range $metadataList }}
 {{- $currentItem := . }}
-{{- if and $use_segments .segmented }}
+{{- if and $use_segments .per_segment }}
   {{- range $segment := $segments }}
     - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
       type: {{ $currentItem.type | default "string" | quote }}
@@ -187,9 +187,6 @@ fields:
       {{- end }}
       {{- if .initiallyVisible }}
       initiallyVisible: {{ .initiallyVisible }}
-      {{- end }}
-      {{- if .segmented }}
-      segmented: {{ .segmented }}
       {{- end }}
       {{- if or (or (eq .type "timestamp")  (eq .type "date")) ( .rangeSearch) }}
       rangeSearch: true
@@ -246,8 +243,8 @@ fields:
 {{- $segments := .nucleotideSequences}}
 {{- range $metadataList }}
 {{- $currentItem := . }}
-{{- $segmented := (.segmented | default false )}}
-{{- if and $use_segments $segmented }}
+{{- $per_segment := (.per_segment | default false )}}
+{{- if and $use_segments $per_segment }}
 {{- range $segment := $segments }}
   - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
     type: {{ $currentItem.type | default "string" | quote }}
