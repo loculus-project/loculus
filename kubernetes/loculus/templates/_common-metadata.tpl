@@ -115,10 +115,7 @@ organisms:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
-      {{- $nucleotideSequences := list "main" }}
-      {{- if .nucleotideSequences }}
-      {{- $nucleotideSequences := .nucleotideSequences }}
-      {{- end }}
+      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
@@ -229,10 +226,7 @@ organisms:
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
-      {{- $nucleotideSequences := list "main" }}
-      {{- if .nucleotideSequences }}
-      {{- $nucleotideSequences := .nucleotideSequences }}
-      {{- end }}
+      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       organismName: {{ quote .organismName }}
       metadata:
         {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
