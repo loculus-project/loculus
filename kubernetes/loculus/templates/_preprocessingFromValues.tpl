@@ -1,8 +1,13 @@
 {{- define "loculus.preprocessingSpecs" -}}
 
 {{- $metadata := .metadata }}
-{{- $use_segments := .segmented }}
 {{- $segments := .nucleotideSequences}}
+{{- $use_segments := false }} # Default to false
+{{- if or (lt (len $segments) 1) (and (eq (len $segments) 1) (eq (index $segments 0) "main")) }}
+{{- $use_segments = false }}
+{{- else }}
+{{- $use_segments = true }}
+{{- end }}
 
 {{- range $metadata }}
 {{- $currentItem := . }}

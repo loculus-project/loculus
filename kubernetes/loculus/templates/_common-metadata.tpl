@@ -115,8 +115,10 @@ organisms:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
-      {{- $segmented := (.segmented | default false )}}
-      {{- $nucleotideSequences := (.nucleotideSequences | default false )}}
+      {{- $nucleotideSequences := list "main" }}
+      {{- if .nucleotideSequences }}
+      {{- $nucleotideSequences := .nucleotideSequences }}
+      {{- end }}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
@@ -126,7 +128,7 @@ organisms:
       primaryKey: accessionVersion
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
       metadata:
-        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "segmented" $segmented "nucleotideSequences" $nucleotideSequences}}
+        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
@@ -140,8 +142,13 @@ organisms:
 {{- define "loculus.generateWebsiteMetadata" }}
 fields:
 {{- $metadataList := .metadata }}
-{{- $use_segments := .segmented }}
 {{- $segments := .nucleotideSequences }}
+{{- $use_segments := false }} # Default to false
+{{- if or (lt (len $segments) 1) (and (eq (len $segments) 1) (eq (index $segments 0) "main")) }}
+{{- $use_segments = false }}
+{{- else }}
+{{- $use_segments = true }}
+{{- end }}
 {{- range $metadataList }}
 {{- $currentItem := . }}
 {{- if and $use_segments .per_segment }}
@@ -222,11 +229,13 @@ organisms:
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
-      {{- $segmented := (.segmented | default false )}}
-      {{- $nucleotideSequences := (.nucleotideSequences | default false )}}
+      {{- $nucleotideSequences := list "main" }}
+      {{- if .nucleotideSequences }}
+      {{- $nucleotideSequences := .nucleotideSequences }}
+      {{- end }}
       organismName: {{ quote .organismName }}
       metadata:
-        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "segmented" $segmented "nucleotideSequences" $nucleotideSequences}}
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
         {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{- end }}
@@ -239,8 +248,13 @@ organisms:
 {{- define "loculus.generateBackendMetadata" }}
 fields:
 {{- $metadataList := .metadata }}
-{{- $use_segments := .segmented }}
-{{- $segments := .nucleotideSequences}}
+{{- $segments := .nucleotideSequences }}
+{{- $use_segments := false }} # Default to false
+{{- if or (lt (len $segments) 1) (and (eq (len $segments) 1) (eq (index $segments 0) "main")) }}
+{{- $use_segments = false }}
+{{- else }}
+{{- $use_segments = true }}
+{{- end }}
 {{- range $metadataList }}
 {{- $currentItem := . }}
 {{- $per_segment := (.per_segment | default false )}}

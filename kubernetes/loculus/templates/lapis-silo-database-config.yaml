@@ -12,15 +12,23 @@ data:
   {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
   database_config.yaml: |
     schema:
-      {{- $use_segments := (.segmented | default false )}}
-      {{- $segments := list "M" "S" "L" }}
+      {{- $use_segments := false }} # Default to false
+      {{- $nucleotideSequences := list "main" }}
+      {{- if .nucleotideSequences }}
+      {{- $nucleotideSequences := .nucleotideSequences }}
+      {{- end }}
+      {{- if or (lt (len $nucleotideSequences) 1) (and (eq (len $nucleotideSequences) 1) (eq (index $nucleotideSequences 0) "main")) }}
+      {{- $use_segments = false }}
+      {{- else }}
+      {{- $use_segments = true }}
+      {{- end }}
       instanceName: {{ .organismName }}
       opennessLevel: OPEN
       metadata:
       {{- range (concat $commonMetadata .metadata) }}
       {{- $currentItem := . }}
       {{- if and $use_segments .per_segment }}
-        {{- range $segment := $segments }}
+        {{- range $segment := .nucleotideSequences }}
         - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
           {{- $type := default "string" $currentItem.type }}
           type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}

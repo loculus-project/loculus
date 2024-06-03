@@ -157,14 +157,13 @@ You can add multiple organisms under the organisms section, each with its own un
 
 ### Multi-segmented pathogens
 
-In Loculus, sequence data from multi-segmented viruses is stored in accessioned sequence entries which group together the segments from a particular sample or isolate. Multi-segmented organisms should be annotated with `segmented: True`, with a list with the names of the segments supplied as `nucleotideSequences`. For CCHFV this looks like:
+In Loculus, sequence data from multi-segmented viruses is stored in accessioned sequence entries which group together the segments from a particular sample or isolate. Multi-segmented organisms should be annotated with a list with the names of the segments supplied as `nucleotideSequences`. For CCHFV this looks like:
 
 ```yaml
 organisms:
   cchf:
     schema:
       organismName: "Crimean-Congo Hemorrhagic Fever Virus"
-      segmented: true
       nucleotideSequences: [L, M, S]
       metadata:
         - name: length
