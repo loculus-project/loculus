@@ -115,15 +115,33 @@ rule extract_ncbi_dataset_sequences:
         """
 
 
+rule calculate_sequence_hashes:
+    """Output JSON: {insdc_accession: md5_sequence_hash, ...}"""
+    input:
+        script="scripts/calculate_sequence_hashes.py",
+        sequences="results/sequences.fasta",
+    output:
+        sequence_hashes="results/sequence_hashes.json",
+        sequence_json="results/sequences.json",
+    shell:
+        """
+        python {input.script} \
+            --input {input.sequences} \
+            --output-hashes {output.sequence_hashes} \
+            --output-sequences {output.sequence_json}
+        """
+
+
 if SEGMENTED:
 
     rule parse_segment_details:
         # Parse segment information from sequence headers
         # Add parsed segment information to metadata
         # Create fasta file with header containing only sequence ID
+        # TODO: Use `nextclade split` to annotate segments, instead of reliance on headers
         input:
-            sequences="results/sequences_full.fasta",
             script="scripts/get_segment_details.py",
+            sequences="results/sequences_full.fasta",
             ncbi_dataset_tsv="results/metadata_post_rename.tsv",
             config="results/config.yaml",
         output:
@@ -140,25 +158,9 @@ if SEGMENTED:
             """
 
 
-rule calculate_sequence_hashes:
-    """Output JSON: {insdc_accession: md5_sequence_hash, ...}"""
-    input:
-        sequences="results/sequences.fasta",
-        script="scripts/calculate_sequence_hashes.py",
-    output:
-        sequence_hashes="results/sequence_hashes.json",
-        sequence_json="results/sequences.json",
-    shell:
-        """
-        python scripts/calculate_sequence_hashes.py \
-            --input {input.sequences} \
-            --output-hashes {output.sequence_hashes} \
-            --output-sequences {output.sequence_json}
-        """
-
-
 rule prepare_metadata:
     input:
+        script="scripts/prepare_metadata.py",
         metadata=(
             "results/metadata_post_segment.tsv"
             if SEGMENTED
@@ -166,14 +168,13 @@ rule prepare_metadata:
         ),
         sequence_hashes="results/sequence_hashes.json",
         config="results/config.yaml",
-        script="scripts/prepare_metadata.py",
     output:
         metadata="results/metadata_post_prepare.json",
     params:
         log_level=LOG_LEVEL,
     shell:
         """
-        python scripts/prepare_metadata.py \
+        python {input.script} \
             --config-file {input.config} \
             --input {input.metadata} \
             --sequence-hashes {input.sequence_hashes} \
@@ -186,10 +187,10 @@ if SEGMENTED:
 
     rule group_segments:
         input:
+            script="scripts/group_segments.py",
             metadata="results/metadata_post_prepare.json",
             sequences="results/sequences.json",
             config="results/config.yaml",
-            script="scripts/group_segments.py",
         output:
             metadata="results/metadata_post_group.json",
             sequences="results/sequences_post_group.json",
@@ -197,7 +198,7 @@ if SEGMENTED:
             log_level=LOG_LEVEL,
         shell:
             """
-            python scripts/group_segments.py \
+            python {input.script} \
                 --config-file {input.config} \
                 --input-metadata {input.metadata} \
                 --input-seq {input.sequences} \
@@ -224,13 +225,13 @@ rule get_previous_submissions:
     input:
         # Reduce likelihood of race condition of multi-submission
         # By delaying the start of the script
+        script="scripts/call_loculus.py",
         prepped_metadata=(
             "results/metadata_post_group.json"
             if SEGMENTED
             else "results/metadata_post_prepare.json"
         ),
         config="results/config.yaml",
-        script="scripts/call_loculus.py",
     output:
         hashes="results/previous_submissions.json",
     params:
@@ -239,7 +240,7 @@ rule get_previous_submissions:
     shell:
         """
         sleep {params.sleep}
-        python scripts/call_loculus.py \
+        python {input.script} \
             --mode get-submitted \
             --config-file {input.config} \
             --log-level {params.log_level} \
@@ -249,6 +250,7 @@ rule get_previous_submissions:
 
 rule compare_hashes:
     input:
+        script="scripts/compare_hashes.py",
         config="results/config.yaml",
         old_hashes="results/previous_submissions.json",
         metadata=(
@@ -256,7 +258,6 @@ rule compare_hashes:
             if SEGMENTED
             else "results/metadata_post_prepare.json"
         ),
-        script="scripts/compare_hashes.py",
     output:
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
@@ -268,7 +269,7 @@ rule compare_hashes:
         subsample_fraction=config.get("subsample_fraction", 1.0),
     shell:
         """
-        python scripts/compare_hashes.py \
+        python {input.script} \
             --config-file {input.config} \
             --old-hashes {input.old_hashes} \
             --metadata {input.metadata} \
@@ -284,6 +285,7 @@ rule compare_hashes:
 
 rule prepare_files:
     input:
+        script="scripts/prepare_files.py",
         config="results/config.yaml",
         metadata=(
             "results/metadata_post_group.json"
@@ -297,7 +299,6 @@ rule prepare_files:
         ),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
-        script="scripts/prepare_files.py",
     output:
         sequences_submit="results/submit_sequences.fasta",
         sequences_revise="results/revise_sequences.fasta",
@@ -305,7 +306,7 @@ rule prepare_files:
         metadata_revise="results/revise_metadata.tsv",
     shell:
         """
-        python scripts/prepare_files.py \
+        python {input.script} \
             --config-file {input.config} \
             --metadata-path {input.metadata} \
             --sequences-path {input.sequences} \
@@ -320,10 +321,10 @@ rule prepare_files:
 
 rule submit:
     input:
+        script="scripts/call_loculus.py",
         metadata="results/submit_metadata.tsv",
         sequences="results/submit_sequences.fasta",
         config="results/config.yaml",
-        script="scripts/call_loculus.py",
     output:
         submitted=touch("results/submitted"),
     params:
@@ -331,7 +332,7 @@ rule submit:
     shell:
         """
         if [ -s {input.metadata} ]; then
-            python scripts/call_loculus.py \
+            python {input.script} \
                 --mode submit \
                 --metadata {input.metadata} \
                 --sequences {input.sequences} \
@@ -343,10 +344,10 @@ rule submit:
 
 rule revise:
     input:
+        script="scripts/call_loculus.py",
         metadata="results/revise_metadata.tsv",
         sequences="results/revise_sequences.fasta",
         config="results/config.yaml",
-        script="scripts/call_loculus.py",
     output:
         revised=touch("results/revised"),
     params:
@@ -354,7 +355,7 @@ rule revise:
     shell:
         """
         if [ -s {input.metadata} ]; then
-            python scripts/call_loculus.py \
+            python {input.script} \
                 --mode revise \
                 --metadata {input.metadata} \
                 --sequences {input.sequences} \
@@ -366,15 +367,15 @@ rule revise:
 
 rule approve:
     input:
-        config="results/config.yaml",
         script="scripts/call_loculus.py",
+        config="results/config.yaml",
     output:
         approved=touch("results/approved"),
     params:
         log_level=LOG_LEVEL,
     shell:
         """
-        python scripts/call_loculus.py \
+        python {input.script} \
             --mode approve \
             --config-file {input.config} \
             --log-level {params.log_level} \
