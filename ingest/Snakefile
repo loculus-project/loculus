@@ -24,10 +24,10 @@ COLUMN_MAPPING = config["column_mapping"]
 LOG_LEVEL = config.get("log_level", "INFO")
 
 
-def rename_columns(input_file, output_file):
+def rename_columns(input_file, output_file, mapping=COLUMN_MAPPING):
     with open(input_file, "r") as f:
         header = f.readline().strip().split("\t")
-        header = [COLUMN_MAPPING.get(h, h) for h in header]
+        header = [mapping.get(h, h) for h in header]
         with open(output_file, "w") as g:
             g.write("\t".join(header) + "\n")
             for line in f:
@@ -35,19 +35,29 @@ def rename_columns(input_file, output_file):
 
 
 rule all:
+    params:
+        config=lambda wildcards: str(config),
     input:
         "results/submitted",
         "results/revised",
         "results/approved",
 
 
+rule clean:
+    # Useful for testing, when debugging
+    shell:
+        "rm -rf results/*"
+
+
 rule fetch_ncbi_dataset_package:
     # TODO: #1844 Set API key through secret
     output:
         dataset_package="results/ncbi_dataset.zip",
+    params:
+        taxon_id=TAXON_ID,
     shell:
         """
-        datasets download virus genome taxon {TAXON_ID} \
+        datasets download virus genome taxon {params.taxon_id} \
             --no-progressbar \
             --filename {output.dataset_package} \
             --api-key 15c4ff96de265753f878bb08d88ca64df909 \
@@ -75,8 +85,12 @@ rule rename_columns:
         ncbi_dataset_tsv="results/metadata_post_extract.tsv",
     output:
         ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+    params:
+        mapping=COLUMN_MAPPING,
     run:
-        rename_columns(input.ncbi_dataset_tsv, output.ncbi_dataset_tsv)
+        rename_columns(
+            input.ncbi_dataset_tsv, output.ncbi_dataset_tsv, mapping=params.mapping
+        )
 
 
 rule extract_ncbi_dataset_sequences:
@@ -101,27 +115,29 @@ rule extract_ncbi_dataset_sequences:
         """
 
 
-rule parse_segment_details:
-    # Parse segment information from sequence headers
-    # Add parsed segment information to metadata
-    # Create fasta file with header containing only sequence ID
-    input:
-        sequences="results/sequences_full.fasta",
-        script="scripts/get_segment_details.py",
-        ncbi_dataset_tsv="results/metadata_post_rename.tsv",
-        config="results/config.yaml",
-    output:
-        sequences_processed="results/sequences.fasta",
-        ncbi_dataset_tsv="results/metadata_post_segment.tsv",
-    shell:
-        """
-        python {input.script} \
-            --config-file {input.config} \
-            --input-seq {input.sequences} \
-            --input-metadata {input.ncbi_dataset_tsv} \
-            --output-seq {output.sequences_processed} \
-            --output-metadata {output.ncbi_dataset_tsv}
-        """
+if SEGMENTED:
+
+    rule parse_segment_details:
+        # Parse segment information from sequence headers
+        # Add parsed segment information to metadata
+        # Create fasta file with header containing only sequence ID
+        input:
+            sequences="results/sequences_full.fasta",
+            script="scripts/get_segment_details.py",
+            ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+            config="results/config.yaml",
+        output:
+            sequences_processed="results/sequences.fasta",
+            ncbi_dataset_tsv="results/metadata_post_segment.tsv",
+        shell:
+            """
+            python {input.script} \
+                --config-file {input.config} \
+                --input-seq {input.sequences} \
+                --input-metadata {input.ncbi_dataset_tsv} \
+                --output-seq {output.sequences_processed} \
+                --output-metadata {output.ncbi_dataset_tsv}
+            """
 
 
 rule calculate_sequence_hashes:
@@ -166,31 +182,33 @@ rule prepare_metadata:
         """
 
 
-rule group_segments:
-    input:
-        metadata="results/metadata_post_prepare.json",
-        sequences="results/sequences.json",
-        config="results/config.yaml",
-        script="scripts/group_segments.py",
-    output:
-        metadata="results/metadata_post_group.json",
-        sequences="results/sequences_post_group.json",
-    params:
-        log_level=LOG_LEVEL,
-    shell:
-        """
-        python scripts/group_segments.py \
-            --config-file {input.config} \
-            --input-metadata {input.metadata} \
-            --input-seq {input.sequences} \
-            --output-metadata {output.metadata} \
-            --output-seq {output.sequences} \
-            --log-level {params.log_level} \
-        """
+if SEGMENTED:
+
+    rule group_segments:
+        input:
+            metadata="results/metadata_post_prepare.json",
+            sequences="results/sequences.json",
+            config="results/config.yaml",
+            script="scripts/group_segments.py",
+        output:
+            metadata="results/metadata_post_group.json",
+            sequences="results/sequences_post_group.json",
+        params:
+            log_level=LOG_LEVEL,
+        shell:
+            """
+            python scripts/group_segments.py \
+                --config-file {input.config} \
+                --input-metadata {input.metadata} \
+                --input-seq {input.sequences} \
+                --output-metadata {output.metadata} \
+                --output-seq {output.sequences} \
+                --log-level {params.log_level} \
+            """
 
 
 rule get_previous_submissions:
-    """Download metadata and sequence hashes of all previously submitted sequences 
+    """Download metadata and sequence hashes of all previously submitted sequences
     Produces mapping from INSDC accession to loculus id/version/hash
     insdc_accession:
         loculus_accession: abcd
@@ -244,6 +262,7 @@ rule compare_hashes:
         to_revise="results/to_revise.json",
         unchanged="results/unchanged.json",
         blocked="results/blocked.json",
+        sampled_out="results/sampled_out.json",
     params:
         log_level=LOG_LEVEL,
         subsample_fraction=config.get("subsample_fraction", 1.0),
@@ -257,6 +276,7 @@ rule compare_hashes:
             --to-revise {output.to_revise} \
             --unchanged {output.unchanged} \
             --output-blocked {output.blocked} \
+            --sampled-out-file {output.sampled_out} \
             --log-level {params.log_level} \
             --subsample-fraction {params.subsample_fraction} \
         """

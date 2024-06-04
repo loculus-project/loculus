@@ -96,7 +96,7 @@ def main(
         sequences_without_segment_info = number_of_records - len(final_metadata)
 
         logging.info(
-            f"Discarded {sequences_without_segment_info} sequences"
+            f"Discarded {sequences_without_segment_info} sequences "
             "that did not have segment information."
         )
 
