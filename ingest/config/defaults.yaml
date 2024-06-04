@@ -2,7 +2,7 @@
 # Purpose is to keep the `values.yaml` config file clean
 nucleotideSequences: ["main"]
 post_start_sleep: 0
-log_level: DEBUG
+log_level: INFO
 compound_country_field: ncbi_geo_location
 fasta_id_field: genbank_accession
 rename:
