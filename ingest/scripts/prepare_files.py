@@ -2,17 +2,17 @@ import csv
 import json
 import logging
 import sys
-import yaml
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
 import click
+import yaml
 
 
 @dataclass
 class Config:
     segmented: str
-    nucleotideSequences: list[str]
+    nucleotide_sequences: list[str]
 
 
 logger = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ def main(
     for fasta_id in to_submit:
         metadata_submit.append(metadata[fasta_id])
         if config.segmented:
-            for nucleotideSequence in config.nucleotideSequences:
+            for nucleotideSequence in config.nucleotide_sequences:
                 segmented_fasta_id = fasta_id + "_" + nucleotideSequence
                 if segmented_fasta_id in sequences:
                     sequences_submit[segmented_fasta_id] = sequences[segmented_fasta_id]
@@ -88,7 +88,7 @@ def main(
         revise_record["accession"] = loculus_accession
         metadata_revise.append(revise_record)
         if config.segmented:
-            for nucleotideSequence in config.nucleotideSequences:
+            for nucleotideSequence in config.nucleotide_sequences:
                 segmented_fasta_id = fasta_id + "_" + nucleotideSequence
                 if segmented_fasta_id in sequences:
                     sequences_revise[segmented_fasta_id] = sequences[segmented_fasta_id]

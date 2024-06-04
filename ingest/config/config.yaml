@@ -7,7 +7,7 @@ organism: ebola-zaire
 # backend_url: http://localhost:8079/
 # keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
 # organism: cchf
-# nucleotideSequences:
+# nucleotide_sequences:
 #   - M
 #   - L
 #   - S

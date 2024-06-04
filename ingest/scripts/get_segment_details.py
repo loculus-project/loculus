@@ -14,7 +14,7 @@ from Bio import SeqIO
 @dataclass
 class Config:
     segmented: str
-    nucleotideSequences: list[str]
+    nucleotide_sequences: list[str]
 
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ def main(
         with open(input_seq) as f:
             records = SeqIO.parse(f, "fasta")
             for record in records:
-                for segment in config.nucleotideSequences:
+                for segment in config.nucleotide_sequences:
                     re_input = re.compile(
                         f".*segment {segment}.*", re.IGNORECASE
                     )  # FIXME: Brittle regex: matches both `L` and `L1` for segment `L`

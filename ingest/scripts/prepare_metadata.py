@@ -30,7 +30,7 @@ class Config:
     fasta_id_field: str
     rename: dict[str, str]
     keep: list[str]
-    segmented: str
+    segmented: bool
 
 
 def split_authors(authors: str) -> str:

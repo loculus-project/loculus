@@ -11,7 +11,7 @@ for key, value in defaults.items():
         config[key] = value
 
 # Infer whether nucleotide sequences are segmented
-config["segmented"] = len(config["nucleotideSequences"]) > 1
+config["segmented"] = len(config["nucleotide_sequences"]) > 1
 
 Path("results").mkdir(parents=True, exist_ok=True)
 with open("results/config.yaml", "w") as f:
@@ -159,6 +159,7 @@ if SEGMENTED:
 
 
 rule prepare_metadata:
+    # Transform Genbank metadata keys and values to Loculus format
     input:
         script="scripts/prepare_metadata.py",
         metadata=(

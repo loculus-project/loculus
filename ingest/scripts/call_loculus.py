@@ -31,7 +31,7 @@ class Config:
     username: str
     password: str
     group_name: str
-    nucleotideSequences: list[str]
+    nucleotide_sequences: list[str]
     segmented: bool
 
 
@@ -273,7 +273,7 @@ def get_submitted(config: Config):
 
     if config.segmented:
         insdc_key = [
-            "insdc_accession_base" + "_" + segment for segment in config.nucleotideSequences
+            "insdc_accession_base" + "_" + segment for segment in config.nucleotide_sequences
         ]
     else:
         insdc_key = ["insdc_accession_base"]

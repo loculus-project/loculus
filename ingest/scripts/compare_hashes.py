@@ -19,7 +19,7 @@ logging.basicConfig(
 @dataclass
 class Config:
     segmented: str
-    nucleotideSequences: list[str]
+    nucleotide_sequences: list[str]
     debugHashes: bool = False
 
 
@@ -88,7 +88,7 @@ def main(
     for fasta_id, record in new_metadata.items():
         if config.segmented:
             insdc_keys = [
-                f"insdc_accession_base_{segment}" for segment in config.nucleotideSequences
+                f"insdc_accession_base_{segment}" for segment in config.nucleotide_sequences
             ]
         else:
             insdc_keys = ["insdc_accession_base"]

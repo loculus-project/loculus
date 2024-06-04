@@ -24,7 +24,7 @@ class Config:
     compound_country_field: str
     fasta_id_field: str
     segment_specific: list[str]
-    nucleotideSequences: list[str]
+    nucleotide_sequences: list[str]
     segmented: str
 
 
@@ -81,22 +81,7 @@ def main(
     number_of_segmented_records = len(metadata_df)
 
     if not config.segmented:
-        raise ValueError({"ERROR: tried to get segment for non-segmented virus"})
-    else:
-        segments: list[str] = config.nucleotideSequences if config.nucleotideSequences else []
-        # Group sequences according to isolate, collection date and isolate specific values
-        isolate_specific_cols = [
-            "specimen_collector_sample_id",
-            "sample_collection_date",
-        ] + list(
-            set(metadata_df.columns)
-            - set(config.segment_specific)
-            - set(["hash", "submissionId", "segment"])
-        )
-        grouped = metadata_df.groupby(isolate_specific_cols)
-        print(isolate_specific_cols)
-        # Add joint_accession value: concatenated list of NCBI accession values
-        metadata_df["joint_accession"] = ""
+    SEGMENTS = config.nucleotide_sequences
 
         processed_seq = {}
         segmented_seq = json.load(open(input_seq))
@@ -107,7 +92,7 @@ def main(
             isolate_group = grouped.get_group((args))
             ## If isolate is not given do not group segments
             if isolate:
-                if len(isolate_group) > len(config.nucleotideSequences):
+            if len(isolate_group) > len(config.nucleotide_sequences):
                     logging.warn(
                         f"Found {len(isolate_group)} sequences for isolate: {isolate} "
                         "uploading segments individually."
@@ -145,7 +130,7 @@ def main(
         logging.info(
             f"Total of {len(metadata_df["joint_accession"].unique())} joint sequences after joining"
         )
-        if number_of_segmented_records // len(config.nucleotideSequences) > len(
+        if number_of_segmented_records // len(config.nucleotide_sequences) > len(
             metadata_df["joint_accession"].unique()
         ):
             raise ValueError(

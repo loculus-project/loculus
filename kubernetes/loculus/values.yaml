@@ -1225,7 +1225,7 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 3052518
-        nucleotideSequences:
+        nucleotide_sequences:
           - L
           - M
           - S

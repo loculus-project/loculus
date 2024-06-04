@@ -1,6 +1,6 @@
 # Values here are defaults for the `config` variable in the Snakefile
 # Purpose is to keep the `values.yaml` config file clean
-nucleotideSequences: ["main"]
+nucleotide_sequences: ["main"]
 post_start_sleep: 0
 log_level: INFO
 compound_country_field: ncbi_geo_location
@@ -39,11 +39,14 @@ keep:
   - sequence_md5
   - genbank_accession
   - joint_accession
-segment_specific:
-  - biosample_accession
-  - bioproject_accessions
+
+# Fields that that are not shared at sample level
+# But specific to each segment
+segment_specific_fields:
+  - biosample_accession # Should usually be same for each segment
+  - bioproject_accessions # Should usually be same for each segment?
   - ncbi_completeness
-  - sra_run_accession
+  - sra_run_accession # Usually the same for each segment?
   - ncbi_protein_count
   - insdc_accession_base
   - insdc_version
