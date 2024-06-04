@@ -187,13 +187,6 @@ rule group_segments:
         """
 
 
-def get_grouped_metadata(wildcard):
-    if wildcard:
-        return ("results/metadata_post_group.json",)
-    else:
-        return ("results/metadata_post_prepare.json",)
-
-
 rule get_previous_submissions:
     """Download metadata and sequence hashes of all previously submitted sequences 
     Produces mapping from INSDC accession to loculus id/version/hash
