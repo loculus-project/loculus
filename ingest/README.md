@@ -7,10 +7,12 @@ The following is a rough overview of the pipeline's steps.
 The snakemake DAG can be visualized using [graphviz](https://en.wikipedia.org/wiki/Graphviz):
 
 ```bash
-snakemake --dag  | dot -Tpng > dag.png
+snakemake --dag | dot -Tpng > dag.png
 ```
 
-![snakemake DAG](dag.png)
+![snakemake DAG, default](dag.png)
+
+![generated with snakemake --dag --configfile ../website/tests/config/ingest-config.cchf.yaml](dag_segmented.png)
 
 ### Download data from NCBI virus
 
