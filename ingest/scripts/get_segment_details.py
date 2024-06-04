@@ -1,14 +1,14 @@
 """Get segment details for each sequence - in INSDC this is in the fasta description."""
 
-from pathlib import Path
-import re
 import logging
-import pandas as pd
+import re
 from dataclasses import dataclass
+from pathlib import Path
 
 import click
-from Bio import SeqIO
+import pandas as pd
 import yaml
+from Bio import SeqIO
 
 
 @dataclass
@@ -26,7 +26,18 @@ logging.basicConfig(
 )
 
 
-@click.command()
+def write_fasta_id_only(data, filename):
+    if not data:
+        Path(filename).touch()
+        return
+    with open(filename, "a") as file:
+        for record in data:
+            file.write(f">{record.id}\n{record.seq}\n")
+
+
+@click.command(
+    help="Parse segment details from fasta header, add to metadata, write id_only fasta"
+)
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input-seq", required=True, type=click.Path(exists=True))
 @click.option("--input-metadata", required=True, type=click.Path(exists=True))
@@ -52,14 +63,6 @@ def main(
         relevant_config = {key: full_config[key] for key in Config.__annotations__}
         config = Config(**relevant_config)
 
-    def write_to_fasta(data, filename):
-        if not data:
-            Path(filename).touch()
-            return
-        with open(filename, "a") as file:
-            for record in data:
-                file.write(f">{record.id}\n{record.seq}\n")
-
     if not config.segmented:
         raise ValueError({"ERROR: tried to get segment for non-segmented virus"})
     else:
@@ -76,8 +79,12 @@ def main(
             records = SeqIO.parse(f, "fasta")
             for record in records:
                 for segment in config.nucleotideSequences:
-                    re_input = re.compile(".*segment {0}.*".format(segment), re.IGNORECASE)
-                    found_segment = re_input.search(record.description)
+                    re_input = re.compile(
+                        f".*segment {segment}.*", re.IGNORECASE
+                    )  # FIXME: Brittle regex: matches both `L` and `L1` for segment `L`
+                    found_segment = re_input.search(
+                        record.description
+                    )  # FIXME: Doesn't handle multiple matches
                     if found_segment:
                         metadata_df.loc[
                             metadata_df["genbank_accession"] == record.id, "segment"
@@ -85,15 +92,17 @@ def main(
                         segmented_seq[record.id] = record
                         processed_seq.append(record)
 
-        metadata_df = metadata_df.dropna(subset=["segment"])
+        final_metadata = metadata_df.dropna(subset=["segment"])
+        sequences_without_segment_info = number_of_records - len(final_metadata)
 
         logging.info(
-            f"Discarded {number_of_records - len(metadata_df)} sequences that did not have segment"
-            "information."
+            f"Discarded {sequences_without_segment_info} sequences"
+            "that did not have segment information."
         )
 
-        write_to_fasta(processed_seq, output_seq)
-        metadata_df.to_csv(output_metadata, sep="\t")
+        # FIXME: Stream to file instead of loading all into memory
+        write_fasta_id_only(processed_seq, output_seq)
+        final_metadata.to_csv(output_metadata, sep="\t")
 
 
 if __name__ == "__main__":

@@ -101,8 +101,10 @@ rule extract_ncbi_dataset_sequences:
         """
 
 
-rule get_segment_details:
-    """Check if viruses are segmented, if so add segment to metadata"""
+rule parse_segment_details:
+    # Parse segment information from sequence headers
+    # Add parsed segment information to metadata
+    # Create fasta file with header containing only sequence ID
     input:
         sequences="results/sequences_full.fasta",
         script="scripts/get_segment_details.py",
