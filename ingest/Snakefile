@@ -54,18 +54,13 @@ rule fetch_ncbi_dataset_package:
         """
 
 
-def get_extract_output(wildcard):
-    if wildcard:
-        return ("results/sequences_full.fasta",)
-    else:
-        return ("results/sequences.fasta",)
-
-
 rule extract_ncbi_dataset_sequences:
     input:
         dataset_package="results/ncbi_dataset.zip",
     output:
-        ncbi_dataset_sequences=get_extract_output(SEGMENTED),
+        ncbi_dataset_sequences=(
+            "results/sequences_full.fasta" if SEGMENTED else "results/sequences.fasta"
+        ),
     params:
         segmented=SEGMENTED,
     shell:
@@ -147,16 +142,13 @@ rule rename_columns:
         rename_columns(input.ncbi_dataset_tsv, output.ncbi_dataset_tsv)
 
 
-def get_prepare_metadata(wildcard):
-    if wildcard:
-        return ("results/metadata_post_segment.tsv",)
-    else:
-        return ("results/metadata_post_rename.tsv",)
-
-
 rule prepare_metadata:
     input:
-        metadata=get_prepare_metadata(SEGMENTED),
+        metadata=(
+            "results/metadata_post_segment.tsv"
+            if SEGMENTED
+            else "results/metadata_post_rename.tsv"
+        ),
         sequence_hashes="results/sequence_hashes.json",
         config="results/config.yaml",
         script="scripts/prepare_metadata.py",
@@ -220,7 +212,13 @@ rule get_previous_submissions:
         ...
     """
     input:
-        prepped_metadata=get_grouped_metadata(SEGMENTED),  # Reduce likelihood of race condition of multi-submission
+        # Reduce likelihood of race condition of multi-submission
+        # By delaying the start of the script
+        prepped_metadata=(
+            "results/metadata_post_group.json"
+            if SEGMENTED
+            else "results/metadata_post_prepare.json"
+        ),
         config="results/config.yaml",
         script="scripts/call_loculus.py",
     output:
@@ -243,7 +241,11 @@ rule compare_hashes:
     input:
         config="results/config.yaml",
         old_hashes="results/previous_submissions.json",
-        metadata=get_grouped_metadata(SEGMENTED),
+        metadata=(
+            "results/metadata_post_group.json"
+            if SEGMENTED
+            else "results/metadata_post_prepare.json"
+        ),
         script="scripts/compare_hashes.py",
     output:
         to_submit="results/to_submit.json",
@@ -268,18 +270,19 @@ rule compare_hashes:
         """
 
 
-def get_grouped_sequences(wildcard):
-    if wildcard:
-        return ("results/sequences_post_group.json",)
-    else:
-        return ("results/sequences.json",)
-
-
 rule prepare_files:
     input:
         config="results/config.yaml",
-        metadata=get_grouped_metadata(SEGMENTED),
-        sequences=get_grouped_sequences(SEGMENTED),
+        metadata=(
+            "results/metadata_post_group.json"
+            if SEGMENTED
+            else "results/metadata_post_prepare.json"
+        ),
+        sequences=(
+            "results/sequences_post_group.json"
+            if SEGMENTED
+            else "results/sequences.json"
+        ),
         to_submit="results/to_submit.json",
         to_revise="results/to_revise.json",
         script="scripts/prepare_files.py",
