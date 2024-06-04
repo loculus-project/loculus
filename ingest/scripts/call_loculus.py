@@ -16,7 +16,7 @@ import yaml
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     encoding="utf-8",
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s %(levelname)8s %(filename)15s%(mode)s - %(message)s ",
     datefmt="%H:%M:%S",
 )
@@ -137,7 +137,7 @@ def get_or_create_group(config: Config, allow_creation: bool = False) -> str:
     """Returns group id"""
     get_user_groups_url = f"{backend_url(config)}/user/groups"
 
-    logger.debug(f"Getting groups for user: {config.username}")
+    logger.info(f"Getting groups for user: {config.username}")
     get_groups_response = make_request(HTTPMethod.GET, get_user_groups_url, config)
     if not get_groups_response.ok:
         get_groups_response.raise_for_status()
@@ -308,8 +308,8 @@ def get_submitted(config: Config):
 
     statuses: dict[str, dict[int, str]] = get_sequence_status(config)
 
-    logger.debug(f"Backend has status of: {len(statuses)} sequence entries from ingest")
-    logger.debug(f"Ingest has submitted: {len(entries)} sequence entries to ingest")
+    logger.info(f"Backend has status of: {len(statuses)} sequence entries from ingest")
+    logger.info(f"Ingest has submitted: {len(entries)} sequence entries to ingest")
 
     logger.debug(entries)
     logger.debug(statuses)
@@ -405,7 +405,7 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
         relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
 
-    logger.debug(f"Config: {config}")
+    logger.info(f"Config: {config}")
 
     if mode in ["submit", "revise"]:
         logging.info(f"Starting {mode}")
