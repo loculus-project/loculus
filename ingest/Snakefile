@@ -54,6 +54,31 @@ rule fetch_ncbi_dataset_package:
         """
 
 
+rule format_ncbi_dataset_report:
+    input:
+        dataset_package="results/ncbi_dataset.zip",
+    output:
+        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
+    params:
+        fields_to_include=ALL_FIELDS,
+    shell:
+        """
+        dataformat tsv virus-genome \
+            --package {input.dataset_package} \
+            --fields {params.fields_to_include:q} \
+            > {output.ncbi_dataset_tsv}
+        """
+
+
+rule rename_columns:
+    input:
+        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
+    output:
+        ncbi_dataset_tsv="results/metadata_post_rename.tsv",
+    run:
+        rename_columns(input.ncbi_dataset_tsv, output.ncbi_dataset_tsv)
+
+
 rule extract_ncbi_dataset_sequences:
     """
     For unsegmented sequences, we only keep the sequence ID in the header.
@@ -112,31 +137,6 @@ rule calculate_sequence_hashes:
             --output-hashes {output.sequence_hashes} \
             --output-sequences {output.sequence_json}
         """
-
-
-rule format_ncbi_dataset_report:
-    input:
-        dataset_package="results/ncbi_dataset.zip",
-    output:
-        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
-    params:
-        fields_to_include=ALL_FIELDS,
-    shell:
-        """
-        dataformat tsv virus-genome \
-            --package {input.dataset_package} \
-            --fields {params.fields_to_include:q} \
-            > {output.ncbi_dataset_tsv}
-        """
-
-
-rule rename_columns:
-    input:
-        ncbi_dataset_tsv="results/metadata_post_extract.tsv",
-    output:
-        ncbi_dataset_tsv="results/metadata_post_rename.tsv",
-    run:
-        rename_columns(input.ncbi_dataset_tsv, output.ncbi_dataset_tsv)
 
 
 rule prepare_metadata:
