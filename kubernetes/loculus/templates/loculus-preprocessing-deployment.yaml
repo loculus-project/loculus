@@ -36,7 +36,7 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
-              memory: "40Mi"
+              memory: "20Mi"
               {{ include "loculus.standardCPURequest" $ }}
             limits:
               memory: "3Gi"

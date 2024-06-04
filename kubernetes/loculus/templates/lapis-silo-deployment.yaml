@@ -44,8 +44,8 @@ spec:
           image: {{ $.Values.images.lapis }}
           resources:
             requests:
-              memory: "200Mi"
-              cpu: "10m"
+              memory: "220Mi"
+              cpu: "30m"
             limits:
               memory: "5Gi"
           ports:
@@ -66,11 +66,10 @@ spec:
           image: {{ $.Values.images.lapisSilo }}
           imagePullPolicy: IfNotPresent
           resources:
-            requests:
-              memory: "10Mi"
-              cpu: "10m"
             limits:
               memory: "10Gi"
+            requests:
+              memory: "20Mi"
           command:
             - sh
             - /silo_import_wrapper.sh
