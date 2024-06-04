@@ -997,7 +997,7 @@ defaultOrganisms:
       configFile:
         <<: *ingestConfigFile
         taxon_id: 10244
-        subsample_fraction: 0.1
+        subsample_fraction: 0.11
     referenceGenomes:
       nucleotideSequences:
         - name: "main"
