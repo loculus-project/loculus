@@ -14,6 +14,6 @@ jobs:
         uses: fergusmacd/github-action-usage@v0.9.2
         with:
           organisation: loculus-project
-          gitHubAPIKey: ${{ secrets.ORG_READ }} # Token requires read access for actions
+          gitHubAPIKey: ${{ secrets.FERGUSMACD_GITHUB_ACTION_USAGE }} # Token requires read access for actions
           raisealarmremainingminutes: -100000 # Negative so that it doesn't raise alarm when running out of free minutes
           skipReposWithoutUsage: true
