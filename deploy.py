@@ -3,10 +3,26 @@
 import argparse
 import os
 import subprocess
+import sys
 import time
 from pathlib import Path
 
-import yaml
+# Minimum version of Python required is 3.9 due to type hint usage
+if sys.version_info < (3, 9):
+    msg = f"Python 3.9 or higher is required to run the ./deploy.py script\nYou are using version {sys.version} from {sys.executable}"
+    raise RuntimeError(msg)
+
+try:
+    import yaml
+except ImportError as e:
+    msg = (
+        f"pyyaml is not installed but required by ./deploy.py\n"
+        "You can install it for example with 'pip install pyyaml' or 'conda install pyyaml' (if using conda)\n"
+        f"You are currently using Python version {sys.version} from {sys.executable}"
+    )
+    raise ImportError(
+        msg
+    ) from e
 
 script_path = Path(__file__).resolve()
 ROOT_DIR = script_path.parent
