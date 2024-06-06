@@ -77,7 +77,8 @@ def main(
             records = SeqIO.parse(f, "fasta")
             for record in records:
                 for segment in config.nucleotide_sequences:
-                    re_input = re.compile(f".*segment {segment} .*", re.IGNORECASE)
+                    re_input = re.compile(f".*segment {segment}.*", re.IGNORECASE)
+                    # FIXME: Brittle regex: matches both `L` and `L1` for segment `L`
                     found_segment = re_input.search(record.description)
                     if found_segment:
                         metadata_df.loc[
