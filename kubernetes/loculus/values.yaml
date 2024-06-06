@@ -143,11 +143,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
+        per_segment: true
       - name: insdc_version
         type: int
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
+        per_segment: true
       - name: insdc_accession_full
         displayName: INSDC accession
         customDisplay:
@@ -156,18 +158,22 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: genbank_accession
         noInput: true
+        per_segment: true
       - name: bioproject_accessions
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/bioproject/__value__"
         header: "INSDC"
         ingest: bioprojects
+        noInput: true
+        per_segment: true
       - name: biosample_accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
         header: "INSDC" 
         noInput: true
+        per_segment: true
       - name: culture_id
         displayName: Culture ID
         header: Sample details
@@ -692,11 +698,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         header: "INSDC"
         noInput: true
+        per_segment: true
       - name: length
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
+        per_segment: true
       - name: host_name_scientific
         generateIndex: true
         autocomplete: true
@@ -823,18 +831,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         preprocessing:
           args: { type: float }
           inputs: { input: nextclade.coverage }
-      - name: total_stop_codons
-        type: int
-        header: "Alignment states and QC metrics"
-        noInput: true
-        preprocessing:
-          args: { type: int }
-          inputs: { input: nextclade.qc.stopCodons.totalStopCodons }
-      - name: stop_codons
-        header: "Alignment states and QC metrics"
-        noInput: true
-        preprocessing:
-          inputs: { input: nextclade.qc.stopCodons.stopCodons }
     website: &website
       tableColumns:
         - sample_collection_date
@@ -908,6 +904,19 @@ defaultOrganisms:
       <<: *schema
       organismName: "Ebola Sudan"
       image: "https://www.nih.gov/sites/default/files/styles/featured_media_breakpoint-medium/public/news-events/news-releases/2023/niaid-03.jpg?itok=m4wFNGkn&timestamp=1675437186"
+      metadataAdd:
+        - name: total_stop_codons
+          type: int
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            args: { type: int }
+            inputs: { input: nextclade.qc.stopCodons.totalStopCodons }
+        - name: stop_codons
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: { input: nextclade.qc.stopCodons.stopCodons }
     preprocessing:
     - <<: *preprocessing
       configFile:
@@ -971,6 +980,18 @@ defaultOrganisms:
           initiallyVisible: true
           preprocessing:
             inputs: { input: nextclade.customNodeAttributes.lineage }
+        - name: total_stop_codons
+          type: int
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            args: { type: int }
+            inputs: { input: nextclade.qc.stopCodons.totalStopCodons }
+        - name: stop_codons
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: { input: nextclade.qc.stopCodons.stopCodons }
       website:
         <<: *website
         tableColumns:
@@ -1020,6 +1041,18 @@ defaultOrganisms:
           initiallyVisible: true
           preprocessing:
             inputs: { input: nextclade.clade }
+        - name: total_stop_codons
+          type: int
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            args: { type: int }
+            inputs: { input: nextclade.qc.stopCodons.totalStopCodons }
+        - name: stop_codons
+          header: "Alignment states and QC metrics"
+          noInput: true
+          preprocessing:
+            inputs: { input: nextclade.qc.stopCodons.stopCodons }
       website:
         <<: *website
         tableColumns:
@@ -1156,6 +1189,61 @@ defaultOrganisms:
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/ORF9b.fasta]]"
         - name: "S"
           sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/sars-cov-2/S.fasta]]"
+  cchf:
+    <<: *defaultOrganismConfig
+    schema:
+      <<: *schema
+      organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+      nucleotideSequences: [ L, M, S ]
+      image: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg/1920px-Crimean-Congo_Hemorrhagic_Fever_%28CCHF%29_Virus_%2840689899455%29.jpg"
+      website:
+        <<: *website
+        tableColumns:
+          - sample_collection_date
+          - geo_loc_country
+          - geo_loc_admin_1
+          - authors
+          - author_affiliations
+          - ncbi_release_date
+          - host_name_scientific
+          - length_M
+          - length_S
+          - length_L
+        defaultOrderBy: sample_collection_date
+        defaultOrder: descending
+    preprocessing:
+    - <<: *preprocessing
+      configFile:
+        <<: *preprocessingConfigFile
+        log_level: DEBUG
+        nextclade_dataset_name: nextstrain/cchfv/linked
+        nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
+        nucleotideSequences: [ L, M, S ]
+        genes: [ RdRp, GPC, NP ]
+    ingest:
+      <<: *ingest
+      configFile:
+        <<: *ingestConfigFile
+        taxon_id: 3052518
+        nucleotide_sequences:
+          - L
+          - M
+          - S
+    referenceGenomes:
+      nucleotideSequences:
+        - name: L
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_L.fasta]]"
+        - name: M
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_M.fasta]]"
+        - name: S
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/reference_S.fasta]]"
+      genes:
+        - name: RdRp
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/RdRp.fasta]]"
+        - name: GPC
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/GPC.fasta]]"
+        - name: NP
+          sequence: "[[URL:https://raw.githubusercontent.com/corneliusroemer/seqs/main/artefacts/cchf/NP.fasta]]"
 auth:
   smtp:
     host: "in-v3.mailjet.com"

@@ -127,7 +127,7 @@ const UnalignedNucleotideSequenceTabs: FC<NucleotideSequenceTabsProps> = ({
             {nucleotideSegmentNames.map((segmentName) => (
                 <BoxWithTabsTab
                     key={segmentName}
-                    isActive={isUnalignedSequence(sequenceType)}
+                    isActive={isUnalignedSequence(sequenceType) && segmentName === sequenceType.name}
                     onClick={() => setType(unalignedSequenceSegment(segmentName))}
                     label={`${segmentName} (unaligned)`}
                 />

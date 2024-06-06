@@ -1,17 +1,22 @@
 # Values here are defaults for the `config` variable in the Snakefile
 # Purpose is to keep the `values.yaml` config file clean
+nucleotide_sequences: ["main"]
 post_start_sleep: 0
-log_level: DEBUG
+log_level: INFO
 compound_country_field: ncbi_geo_location
 fasta_id_field: genbank_accession
 rename:
+  bioprojects: bioproject_accessions
+  country: geo_loc_country
+  division: geo_loc_admin_1
   genbank_accession: insdc_accession_full
-  ncbi_collection_date: collection_date
-  ncbi_isolate_name: isolate_name
-  ncbi_isolate_source: isolate_source
-  ncbi_sra_accessions: sra_accessions
-  ncbi_submitter_affiliation: author_affiliation
-  ncbi_submitter_country: submitter_country
+  ncbi_collection_date: sample_collection_date
+  ncbi_host_name: host_name_scientific
+  ncbi_host_tax_id: host_taxon_id
+  ncbi_is_lab_host: is_lab_host
+  ncbi_isolate_name: specimen_collector_sample_id
+  ncbi_sra_accessions: sra_run_accession
+  ncbi_submitter_affiliation: author_affiliations
   ncbi_submitter_names: authors
 keep:
   - division
@@ -33,6 +38,19 @@ keep:
   - ncbi_virus_tax_id
   - sequence_md5
   - genbank_accession
+  - joint_accession
+
+# Fields that that are not shared at sample level
+# But specific to each segment
+segment_specific_fields:
+  - biosample_accession # Should usually be same for each segment
+  - bioproject_accessions # Should usually be same for each segment?
+  - ncbi_completeness
+  - sra_run_accession # Usually the same for each segment?
+  - ncbi_protein_count
+  - insdc_accession_base
+  - insdc_version
+  - insdc_accession_full
 all_fields:
   - accession
   - bioprojects

@@ -65,10 +65,11 @@ class ProcessingSpec:
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata
-    nextcladeMetadata: dict[str, Any] | None  # Derived metadata produced by Nextclade
-    unalignedNucleotideSequences: NucleotideSequence
-    alignedNucleotideSequences: NucleotideSequence | None
-    nucleotideInsertions: list[NucleotideInsertion]
+    # Derived metadata produced by Nextclade
+    nextcladeMetadata: dict[str, Any] | None
+    unalignedNucleotideSequences: dict[str, NucleotideSequence | None]
+    alignedNucleotideSequences: dict[str, NucleotideSequence | None]
+    nucleotideInsertions: dict[str, list[NucleotideInsertion]]
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
 

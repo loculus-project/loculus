@@ -134,11 +134,49 @@ organisms:
 
 In this example, the configuration for the "ebolavirus-sudan" organism is defined. It includes schema settings, website display options, silo configuration, preprocessing details, and reference genome information.
 
-Note the metadata section includes various fields for how the metadata of specific sequences should be displayed. Each metadata item must have a `name` which will also be displayed on the page unless `displayName` is also set. The `type` of the data, as well as if the field is `required` and if `autoComplete` is enabled can also be added. Additionally, links from metadata entries to external websites can be added using the `customDisplay` option. We also allow metadata to be grouped in sections, specified by the `header` field.
+Note the metadata section includes various fields for how the metadata of specific sequences should be displayed. Each metadata item must have a `name` which will also be displayed on the page unless `displayName` is also set. The `type` of the data, as well as if the field is `required` and if `autoComplete` is enabled can also be added. Additionally, links from metadata entries to external websites can be added using the `customDisplay` option. We also allow metadata to be grouped in sections, specified by the `header` field. The `noInput` parameter specifies that a parameter is generated internally by loculus (can be specified in the preprocessing pipeline) and should not be expected as input.
+
+Your preprocessing pipeline can be customized for each organism. Currently, we use `nextclade run` in our preprocessing pipeline and we suggest it as a fast option to do basic checks on your input sequences. Given a `nextclade dataset` (in its simplest form a reference sequence and a gene_annotation file) nextclade tries to align new sequences to the reference and will discard sequences that cannot be aligned. It will also compute mutations, insertions and deletions for the nucleotide sequence as well as for the corresponding genes. If you would like to use our preprocessing set-up you can add a nextclade dataset to your `values.yaml` as follows:
+
+```yaml
+preprocessing:
+  - version: 1
+    image: ghcr.io/loculus-project/preprocessing-nextclade
+    args:
+      - "prepro"
+    configFile:
+      log_level: DEBUG
+      nextclade_dataset_name: nextstrain/ebola/zaire
+      genes: [NP, VP35, VP40, GP, sGP, ssGP, VP30, VP24, L]
+      batch_size: 100
+```
 
 Additionally, the `tableColumns` section defines which metadata fields are shown as columns in the search results.
 
 You can add multiple organisms under the organisms section, each with its own unique configuration.
+
+### Multi-segmented pathogens
+
+In Loculus, sequence data from multi-segmented viruses is stored in accessioned sequence entries which group together the segments from a particular sample or isolate. Multi-segmented organisms should be annotated with a list with the names of the segments supplied as `nucleotideSequences`. For CCHFV this looks like:
+
+```yaml
+organisms:
+  cchf:
+    schema:
+      organismName: "Crimean-Congo Hemorrhagic Fever Virus"
+      nucleotideSequences: [L, M, S]
+      metadata:
+        - name: length
+          type: int
+          header: "Length"
+          per_segment: true
+```
+
+Additionally, if you are using the preprocessing or ingest pipelines, `nucleotideSequences` must also be defined in those sections of the config.
+
+Metadata fields can be isolate- or segment-specific. By default we assume metadata fields are isolate-specific (i.e. are shared across all segments), therefore segment-specific fields must be marked as `per_segment` in the config file. Marking a field as `per_segment` will result in that field existing for each segment. In the example above, instead of there being one metadata field called `length` there will now be three fields called `length_L`, `length_M` and `length_S`.
+
+Loculus expects multi-segmented pathogen sequences to be submitted in a specific format. Fasta files should have a separate entry/record for each segment, with a Fasta header of `>[submissionID]_[segmentName]`, e.g. `>sample123_L` for the `L` segment of the sample with the submissionID `sample123`. Metadata is uploaded for an entire sequence entry, rather than per segment, i.e. there will be only one row for each `submissionID`.
 
 ## Secrets
 
