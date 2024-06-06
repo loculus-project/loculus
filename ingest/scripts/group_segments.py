@@ -30,21 +30,28 @@ class Config:
     segmented: bool
 
 
-def edit(isolate_group, metadata_df, segmented_seq, processed_seq, single=False):
+def add_joint_accession(
+    isolate_group: str,
+    metadata_df: pd.DataFrame,
+    segmented_seq: dict,
+    processed_seq: dict,
+    single=False,
+):
     """
-    #FIXME: Add type hints
-    #FIXME: Better function name
-    # Note: docstring below comes from Github Copilot
-    Edits the isolate group by combining the accession numbers and segments into a joint accession ID.
-    If `single` is True, each accession number is combined with its corresponding segment.
-    If `single` is False, all accession numbers are combined into a single joint accession ID, which is then combined with each segment.
+    This function does two things:
+    1. It edits the metadata_df by calculating and adding the joint_accession of each isolate_group.
+    2. It creates a new dictionary: processed_seq, this maps the joint_accession (concatenated with
+        the segment name) to the correct record. The joint_accession is used as the submissionID.
+
+    If `single` is True this means we cannot actually join the segments and each joint_accession
+    is just the insdc_accession_full combined with the segment name for the processed_seq dict.
 
     Args:
-        isolate_group (str): The isolate group identifier.
-        metadata_df (pandas.DataFrame): The metadata DataFrame containing the isolate group's information.
-        segmented_seq (dict): A dictionary containing the segmented sequences, with accession numbers as keys.
-        processed_seq (dict): A dictionary to store the processed sequences, with joint accession IDs as keys.
-        single (bool, optional): Whether to combine each accession number with its corresponding segment. Defaults to False.
+        isolate_group: The isolate group identifier.
+        metadata_df: The metadata DataFrame containing the isolate group's information.
+        segmented_seq: Map from insdc_accession_full of segments to their sequence record.
+        processed_seq: Map from joint_accession of grouped segments to their group metadata.
+        single: True if sequences should not be grouped.
     """
     accession_list = metadata_df.loc[isolate_group, "insdc_accession_full"]
     segments = metadata_df.loc[isolate_group, "segment"]
@@ -96,7 +103,6 @@ def main(
     metadata_df.rename(columns={"index": "submissionId"}, inplace=True)
     number_of_segmented_records = len(metadata_df)
 
-
     segments = config.nucleotide_sequences
     segments = []
     # Group sequences according to isolate, collection date and isolate specific values
@@ -127,7 +133,7 @@ def main(
                     f"Found {len(isolate_group)} sequences for isolate: {isolate} "
                     "uploading segments individually."
                 )
-                edit(
+                add_joint_accession(
                     grouped.groups[args],
                     metadata_df,
                     segmented_seq,
@@ -139,7 +145,7 @@ def main(
                     f"Found multiple copies of a segment for isolate: {isolate} "
                     "uploading segments individually."
                 )
-                edit(
+                add_joint_accession(
                     grouped.groups[args],
                     metadata_df,
                     segmented_seq,
@@ -147,10 +153,10 @@ def main(
                     single=True,
                 )
             else:
-                edit(grouped.groups[args], metadata_df, segmented_seq, processed_seq)
+                add_joint_accession(grouped.groups[args], metadata_df, segmented_seq, processed_seq)
         else:
             # treat each segment separately as joining not possible
-            edit(
+            add_joint_accession(
                 grouped.groups[args],
                 metadata_df,
                 segmented_seq,
