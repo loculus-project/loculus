@@ -35,9 +35,7 @@ def write_fasta_id_only(data, filename):
             file.write(f">{record.id}\n{record.seq}\n")
 
 
-@click.command(
-    help="Parse segment details from fasta header, add to metadata, write id_only fasta"
-)
+@click.command(help="Parse segment details from fasta header, add to metadata, write id_only fasta")
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input-seq", required=True, type=click.Path(exists=True))
 @click.option("--input-metadata", required=True, type=click.Path(exists=True))
@@ -79,18 +77,15 @@ def main(
             records = SeqIO.parse(f, "fasta")
             for record in records:
                 for segment in config.nucleotide_sequences:
-                    re_input = re.compile(
-                        f".*segment {segment}.*", re.IGNORECASE
-                    )  # FIXME: Brittle regex: matches both `L` and `L1` for segment `L`
-                    found_segment = re_input.search(
-                        record.description
-                    )  # FIXME: Doesn't handle multiple matches
+                    re_input = re.compile(f".*segment {segment} .*", re.IGNORECASE)
+                    found_segment = re_input.search(record.description)
                     if found_segment:
                         metadata_df.loc[
                             metadata_df["genbank_accession"] == record.id, "segment"
                         ] = segment
                         segmented_seq[record.id] = record
                         processed_seq.append(record)
+                        break
 
         final_metadata = metadata_df.dropna(subset=["segment"])
         sequences_without_segment_info = number_of_records - len(final_metadata)
@@ -100,9 +95,14 @@ def main(
             "that did not have segment information."
         )
 
-        # FIXME: Stream to file instead of loading all into memory
         write_fasta_id_only(processed_seq, output_seq)
-        final_metadata.to_csv(output_metadata, sep="\t")
+        # Instead of loading the entire df into memory write to the file in chunks
+        chunk_size = 1000
+        for chunk in range(0, len(final_metadata), chunk_size):
+            # Write header only in the first chunk
+            final_metadata.iloc[chunk : chunk + chunk_size].to_csv(
+                output_metadata, mode="a", sep="\t", index=False, header=not chunk
+            )
 
 
 if __name__ == "__main__":
