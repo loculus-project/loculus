@@ -5,6 +5,7 @@ from typing import Any
 
 AccessionVersion = str
 GeneName = str
+SegmentName = str
 NucleotideSequence = str
 AminoAcidSequence = str
 NucleotideInsertion = str
