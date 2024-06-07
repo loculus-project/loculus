@@ -1,5 +1,4 @@
 import csv
-import dataclasses
 import json
 import logging
 import os
@@ -7,16 +6,13 @@ import subprocess  # noqa: S404
 import sys
 import time
 from collections.abc import Sequence
-from http import HTTPStatus
-from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal, TypeVar
 
 import dpath
-import requests
 from Bio import SeqIO
 
-from .backend import get_jwt
+from .backend import fetch_unprocessed_sequences, submit_processed_sequences
 from .config import Config
 from .datatypes import (
     AccessionVersion,
@@ -89,8 +85,8 @@ def load_aligned_nuc_sequences(
     ],
 ) -> dict[AccessionVersion, NucleotideSequence]:
     """
-    Load the nextclade alignment results in the aligned_nucleotide_sequences dict, mapping each
-    accession to a segment: sequence dictionary.
+    Load the nextclade alignment results into the aligned_nucleotide_sequences dict, mapping each
+    accession to a segmentName: NucleotideSequence dictionary.
     """
     with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
         aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
@@ -98,26 +94,6 @@ def load_aligned_nuc_sequences(
             sequence_id: str = aligned_sequence.id
             sequence: NucleotideSequence = str(aligned_sequence.seq)
             aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
-
-
-def fetch_unprocessed_sequences(n: int, config: Config) -> Sequence[UnprocessedEntry]:
-    url = config.backend_host.rstrip("/") + "/extract-unprocessed-data"
-    logging.debug(f"Fetching {n} unprocessed sequences from {url}")
-    params = {"numberOfSequenceEntries": n, "pipelineVersion": config.pipeline_version}
-    headers = {"Authorization": "Bearer " + get_jwt(config)}
-    response = requests.post(url, data=params, headers=headers, timeout=10)
-    if not response.ok:
-        if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
-            logging.debug(f"{response.text}.\nSleeping for a while.")
-            time.sleep(60 * 1)
-            return []
-        msg = f"Fetching unprocessed data failed. Status code: {
-            response.status_code}"
-        raise Exception(
-            msg,
-            response.text,
-        )
-    return parse_ndjson(response.text)
 
 
 def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
@@ -450,35 +426,6 @@ def process_all(
     return processed_results
 
 
-def submit_processed_sequences(
-    processed: Sequence[ProcessedEntry], dataset_dir: str, config: Config
-) -> None:
-    json_strings = [json.dumps(dataclasses.asdict(sequence)) for sequence in processed]
-    if config.keep_tmp_dir:
-        # For debugging: write all submit requests to submission_requests.json
-        with open(dataset_dir + "/submission_requests.json", "w", encoding="utf-8") as f:
-            for seq in processed:
-                json.dump(dataclasses.asdict(seq), f)
-    ndjson_string = "\n".join(json_strings)
-    url = config.backend_host.rstrip("/") + "/submit-processed-data"
-    headers = {
-        "Content-Type": "application/x-ndjson",
-        "Authorization": "Bearer " + get_jwt(config),
-    }
-    params = {"pipelineVersion": config.pipeline_version}
-    response = requests.post(url, data=ndjson_string, headers=headers, params=params, timeout=10)
-    if not response.ok:
-        Path("failed_submission.json").write_text(ndjson_string, encoding="utf-8")
-        msg = (
-            f"Submitting processed data failed. Status code: {
-                response.status_code}\n"
-            f"Response: {response.text}\n"
-            f"Data sent in request: {ndjson_string[0:1000]}...\n"
-        )
-        raise RuntimeError(msg)
-    logging.info("Processed data submitted successfully")
-
-
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
     for segment in config.nucleotideSequences:
         nextclade_dataset_name = (
@@ -512,7 +459,7 @@ def run(config: Config) -> None:
         total_processed = 0
         while True:
             logging.debug("Fetching unprocessed sequences")
-            unprocessed = fetch_unprocessed_sequences(config.batch_size, config)
+            unprocessed = parse_ndjson(fetch_unprocessed_sequences(config.batch_size, config))
             if len(unprocessed) == 0:
                 # sleep 1 sec and try again
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")
