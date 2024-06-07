@@ -44,56 +44,7 @@ csv.field_size_limit(sys.maxsize)
 GenericSequence = TypeVar("GenericSequence", AminoAcidSequence, NucleotideSequence)
 
 
-def mask_terminal_gaps(
-    sequence: GenericSequence, mask_char: Literal["N"] | Literal["X"] = "N"
-) -> GenericSequence:
-    # https://chatgpt.com/share/b213c687-38c4-4c62-98a8-4fecb210d479
-    if not sequence:
-        return ""
-
-    if mask_char not in {"N", "X"}:
-        error_message = "mask_char must be 'N' or 'X'"
-        raise ValueError(error_message)
-
-    # Entire sequence of gaps
-    if not sequence.strip("-"):
-        return mask_char * len(sequence)
-
-    # Find the index of the first non-'-' character
-    first_non_gap = 0
-    while first_non_gap < len(sequence) and sequence[first_non_gap] == "-":
-        first_non_gap += 1
-
-    # Find the index of the last non-'-' character
-    last_non_gap = len(sequence)
-    while last_non_gap > 0 and sequence[last_non_gap - 1] == "-":
-        last_non_gap -= 1
-
-    # Replace terminal gaps with 'N'
-    return (
-        mask_char * first_non_gap
-        + sequence[first_non_gap:last_non_gap]
-        + mask_char * (len(sequence) - last_non_gap)
-    )
-
-
-def load_aligned_nuc_sequences(
-    result_dir_seg: str,
-    segment: str,
-    aligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
-    ],
-) -> dict[AccessionVersion, NucleotideSequence]:
-    """
-    Load the nextclade alignment results into the aligned_nucleotide_sequences dict, mapping each
-    accession to a segmentName: NucleotideSequence dictionary.
-    """
-    with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
-        aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
-        for aligned_sequence in aligned_nuc:
-            sequence_id: str = aligned_sequence.id
-            sequence: NucleotideSequence = str(aligned_sequence.seq)
-            aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
+# Functions related to reading and writing files
 
 
 def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
@@ -115,9 +66,71 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
     return entries
 
 
+def parse_nextclade_tsv(
+    amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]],
+    nucleotide_insertions: dict[AccessionVersion, dict[SegmentName, list[NucleotideInsertion]]],
+    result_dir: str,
+    config: Config,
+    segment: str,
+):
+    with open(result_dir + "/nextclade.tsv", encoding="utf-8") as nextclade_tsv:
+        reader = csv.DictReader(nextclade_tsv, delimiter="\t")
+        for row in reader:
+            id = row["seqName"]
+
+            nuc_ins_str: list[NucleotideInsertion] = list(row["insertions"].split(","))
+            nucleotide_insertions[id] = {segment: [] if nuc_ins_str == [""] else nuc_ins_str}
+
+            aa_ins: dict[GeneName, list[AminoAcidInsertion]] = {gene: [] for gene in config.genes}
+            aa_ins_split = row["aaInsertions"].split(",")
+            for ins in aa_ins_split:
+                if not ins:
+                    continue
+                gene, val = ins.split(":", maxsplit=1)
+                if gene in aa_ins:
+                    aa_ins[gene].append(val)
+                else:
+                    logging.debug(
+                        "Note: Nextclade found AA insertion in gene missing from config in gene "
+                        f"{gene}: {val}"
+                    )
+            amino_acid_insertions[id] = aa_ins
+    return nucleotide_insertions, amino_acid_insertions
+
+
+def parse_nextclade_json(
+    result_dir,
+    nextclade_metadata: dict[AccessionVersion, dict[SegmentName, dict[str, Any]]],
+    segment,
+):
+    """
+    Update nextclade_metadata object with the results of the nextclade analysis
+    """
+    with open(result_dir + "/nextclade.json", encoding="utf-8") as nextclade_json:
+        for result in json.load(nextclade_json)["results"]:
+            id = result["seqName"]
+            if id not in nextclade_metadata:
+                nextclade_metadata[id] = {}
+            nextclade_metadata[id][segment] = result
+    return nextclade_metadata
+
+
 def enrich_with_nextclade(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
+    """
+    For each unprocessed segment of each unprocessed sequence use nextclade run to perform alignment
+    and QC. The result is a mapping from each AccessionVersion to an
+    `UnprocessedAfterNextclade(
+            inputMetadata: InputMetadata
+            nextcladeMetadata: dict[SegmentName, Any] | None
+            unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
+            alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
+            nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]
+            alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
+            aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
+    )` object.
+    """
     unaligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
@@ -221,53 +234,56 @@ def enrich_with_nextclade(
     }
 
 
-def parse_nextclade_tsv(
-    amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]],
-    nucleotide_insertions: dict[AccessionVersion, dict[SegmentName, list[NucleotideInsertion]]],
-    result_dir: str,
-    config: Config,
+def mask_terminal_gaps(
+    sequence: GenericSequence, mask_char: Literal["N"] | Literal["X"] = "N"
+) -> GenericSequence:
+    # https://chatgpt.com/share/b213c687-38c4-4c62-98a8-4fecb210d479
+    if not sequence:
+        return ""
+
+    if mask_char not in {"N", "X"}:
+        error_message = "mask_char must be 'N' or 'X'"
+        raise ValueError(error_message)
+
+    # Entire sequence of gaps
+    if not sequence.strip("-"):
+        return mask_char * len(sequence)
+
+    # Find the index of the first non-'-' character
+    first_non_gap = 0
+    while first_non_gap < len(sequence) and sequence[first_non_gap] == "-":
+        first_non_gap += 1
+
+    # Find the index of the last non-'-' character
+    last_non_gap = len(sequence)
+    while last_non_gap > 0 and sequence[last_non_gap - 1] == "-":
+        last_non_gap -= 1
+
+    # Replace terminal gaps with 'N'
+    return (
+        mask_char * first_non_gap
+        + sequence[first_non_gap:last_non_gap]
+        + mask_char * (len(sequence) - last_non_gap)
+    )
+
+
+def load_aligned_nuc_sequences(
+    result_dir_seg: str,
     segment: str,
-):
-    with open(result_dir + "/nextclade.tsv", encoding="utf-8") as nextclade_tsv:
-        reader = csv.DictReader(nextclade_tsv, delimiter="\t")
-        for row in reader:
-            id = row["seqName"]
-
-            nuc_ins_str: list[NucleotideInsertion] = list(row["insertions"].split(","))
-            nucleotide_insertions[id] = {segment: [] if nuc_ins_str == [""] else nuc_ins_str}
-
-            aa_ins: dict[GeneName, list[AminoAcidInsertion]] = {gene: [] for gene in config.genes}
-            aa_ins_split = row["aaInsertions"].split(",")
-            for ins in aa_ins_split:
-                if not ins:
-                    continue
-                gene, val = ins.split(":", maxsplit=1)
-                if gene in aa_ins:
-                    aa_ins[gene].append(val)
-                else:
-                    logging.debug(
-                        "Note: Nextclade found AA insertion in gene missing from config in gene "
-                        f"{gene}: {val}"
-                    )
-            amino_acid_insertions[id] = aa_ins
-    return nucleotide_insertions, amino_acid_insertions
-
-
-def parse_nextclade_json(
-    result_dir,
-    nextclade_metadata: dict[AccessionVersion, dict[SegmentName, dict[str, Any]]],
-    segment,
-):
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ],
+) -> dict[AccessionVersion, NucleotideSequence]:
     """
-    Update nextclade_metadata object with the results of the nextclade analysis
+    Load the nextclade alignment results into the aligned_nucleotide_sequences dict, mapping each
+    accession to a segmentName: NucleotideSequence dictionary.
     """
-    with open(result_dir + "/nextclade.json", encoding="utf-8") as nextclade_json:
-        for result in json.load(nextclade_json)["results"]:
-            id = result["seqName"]
-            if id not in nextclade_metadata:
-                nextclade_metadata[id] = {}
-            nextclade_metadata[id][segment] = result
-    return nextclade_metadata
+    with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
+        aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
+        for aligned_sequence in aligned_nuc:
+            sequence_id: str = aligned_sequence.id
+            sequence: NucleotideSequence = str(aligned_sequence.seq)
+            aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
 
 
 def accession_from_str(id_str: AccessionVersion) -> str:
@@ -342,10 +358,9 @@ def get_metadata(
         processing_result = ProcessingFunctions.call_function(
             spec.function, spec.args, input_data, output_field
         )
-    except:
-        print(spec)
-        print(input_data)
-        raise Exception("processing failed")
+    except Exception as e:
+        msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
+        raise RuntimeError(msg) from e
 
     errors.extend(processing_result.errors)
     warnings.extend(processing_result.warnings)
