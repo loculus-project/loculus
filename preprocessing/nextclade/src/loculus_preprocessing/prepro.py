@@ -25,6 +25,7 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     GeneName,
+    SegmentName,
     InputMetadata,
     NucleotideInsertion,
     NucleotideSequence,
@@ -83,8 +84,14 @@ def mask_terminal_gaps(
 def load_aligned_nuc_sequences(
     result_dir_seg: str,
     segment: str,
-    aligned_nucleotide_sequences: dict[AccessionVersion, dict[str, NucleotideSequence | None]],
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ],
 ) -> dict[AccessionVersion, NucleotideSequence]:
+    """
+    Load the nextclade alignment results in the aligned_nucleotide_sequences dict, mapping each
+    accession to a segment: sequence dictionary.
+    """
     with open(result_dir_seg + "/nextclade.aligned.fasta", encoding="utf-8") as aligned_nucs:
         aligned_nuc = SeqIO.parse(aligned_nucs, "fasta")
         for aligned_sequence in aligned_nuc:
@@ -136,13 +143,15 @@ def enrich_with_nextclade(
     unprocessed: Sequence[UnprocessedEntry], dataset_dir: str, config: Config
 ) -> dict[AccessionVersion, UnprocessedAfterNextclade]:
     unaligned_nucleotide_sequences: dict[
-        AccessionVersion, dict[str, NucleotideSequence | None]
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ] = {}
     input_metadata: dict[AccessionVersion, dict[str, Any]] = {}
     aligned_aminoacid_sequences: dict[
         AccessionVersion, dict[GeneName, AminoAcidSequence | None]
     ] = {}
-    aligned_nucleotide_sequences: dict[AccessionVersion, dict[str, NucleotideSequence | None]] = {}
+    aligned_nucleotide_sequences: dict[
+        AccessionVersion, dict[SegmentName, NucleotideSequence | None]
+    ] = {}
     for entry in unprocessed:
         id = entry.accessionVersion
         input_metadata[id] = entry.data.metadata
@@ -160,8 +169,8 @@ def enrich_with_nextclade(
             else:
                 unaligned_nucleotide_sequences[id][segment] = None
 
-    nextclade_metadata: dict[AccessionVersion, dict[str, Any]] = {}
-    nucleotide_insertions: dict[AccessionVersion, dict[str, list[NucleotideInsertion]]] = {}
+    nextclade_metadata: dict[AccessionVersion, dict[SegmentName, dict[str, Any]]] = {}
+    nucleotide_insertions: dict[AccessionVersion, dict[SegmentName, list[NucleotideInsertion]]] = {}
     amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]] = {}
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
         for segment in config.nucleotideSequences:
@@ -196,6 +205,7 @@ def enrich_with_nextclade(
 
             logging.debug("Nextclade results available in %s", result_dir)
 
+            # Add aligned sequences to aligned_nucleotide_sequences
             load_aligned_nuc_sequences(result_dir_seg, segment, aligned_nucleotide_sequences)
 
             for gene in config.genes:
@@ -216,7 +226,7 @@ def enrich_with_nextclade(
                             translation_path}"
                     )
 
-            parse_nextclade_json(result_dir_seg, nextclade_metadata)
+            parse_nextclade_json(result_dir_seg, nextclade_metadata, segment)
             parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
@@ -237,7 +247,7 @@ def enrich_with_nextclade(
 
 def parse_nextclade_tsv(
     amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]],
-    nucleotide_insertions: dict[AccessionVersion, dict[str, list[NucleotideInsertion]]],
+    nucleotide_insertions: dict[AccessionVersion, dict[SegmentName, list[NucleotideInsertion]]],
     result_dir: str,
     config: Config,
     segment: str,
@@ -247,10 +257,10 @@ def parse_nextclade_tsv(
         for row in reader:
             id = row["seqName"]
 
-            nuc_ins_str = list(row["insertions"].split(","))
+            nuc_ins_str: list[NucleotideInsertion] = list(row["insertions"].split(","))
             nucleotide_insertions[id] = {segment: [] if nuc_ins_str == [""] else nuc_ins_str}
 
-            aa_ins: dict[str, list[str]] = {gene: [] for gene in config.genes}
+            aa_ins: dict[GeneName, list[AminoAcidInsertion]] = {gene: [] for gene in config.genes}
             aa_ins_split = row["aaInsertions"].split(",")
             for ins in aa_ins_split:
                 if not ins:
@@ -267,11 +277,20 @@ def parse_nextclade_tsv(
     return nucleotide_insertions, amino_acid_insertions
 
 
-def parse_nextclade_json(result_dir, nextclade_metadata: dict[AccessionVersion, dict[str, Any]]):
+def parse_nextclade_json(
+    result_dir,
+    nextclade_metadata: dict[AccessionVersion, dict[SegmentName, dict[str, Any]]],
+    segment,
+):
+    """
+    Update nextclade_metadata object with the results of the nextclade analysis
+    """
     with open(result_dir + "/nextclade.json", encoding="utf-8") as nextclade_json:
         for result in json.load(nextclade_json)["results"]:
             id = result["seqName"]
-            nextclade_metadata[id] = result
+            if id not in nextclade_metadata:
+                nextclade_metadata[id] = {}
+            nextclade_metadata[id][segment] = result
     return nextclade_metadata
 
 
@@ -307,6 +326,7 @@ def get_metadata(
         nextclade_prefix = "nextclade."
         if input_path.startswith(nextclade_prefix):
             # Remove "nextclade." prefix
+            segment = spec.args.get("segment", "main")
             if unprocessed.nextcladeMetadata is None:
                 errors.append(
                     ProcessingAnnotation(
@@ -321,14 +341,17 @@ def get_metadata(
                 )
                 continue
             sub_path = input_path[len(nextclade_prefix) :]
-            input_data[arg_name] = str(
-                dpath.get(
-                    unprocessed.nextcladeMetadata,
-                    sub_path,
-                    separator=".",
-                    default=None,
+            if segment in unprocessed.nextcladeMetadata:
+                input_data[arg_name] = str(
+                    dpath.get(
+                        unprocessed.nextcladeMetadata[segment],
+                        sub_path,
+                        separator=".",
+                        default=None,
+                    )
                 )
-            )
+            else:
+                input_data[arg_name] = None
             continue
         if input_path not in unprocessed.inputMetadata:
             warnings.append(
