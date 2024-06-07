@@ -5,7 +5,7 @@ import logging
 from http import HTTPStatus
 import dataclasses
 import json
-import Path
+from pathlib import Path
 
 import jwt
 import pytz
