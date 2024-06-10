@@ -1,17 +1,17 @@
 """Functions to interface with the backend"""
 
-import datetime as dt
-import logging
-from http import HTTPStatus
 import dataclasses
+import datetime as dt
 import json
+import logging
+import time
+from collections.abc import Sequence
+from http import HTTPStatus
 from pathlib import Path
 
 import jwt
 import pytz
 import requests
-import time
-from collections.abc import Sequence
 
 from .config import Config
 from .datatypes import (
@@ -76,7 +76,7 @@ def fetch_unprocessed_sequences(n: int, config: Config) -> str:
         if response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY:
             logging.debug(f"{response.text}.\nSleeping for a while.")
             time.sleep(60 * 1)
-            return []
+            return ""
         msg = f"Fetching unprocessed data failed. Status code: {
             response.status_code}"
         raise Exception(

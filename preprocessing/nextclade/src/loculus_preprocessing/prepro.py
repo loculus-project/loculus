@@ -21,7 +21,6 @@ from .datatypes import (
     AnnotationSource,
     AnnotationSourceType,
     GeneName,
-    SegmentName,
     InputMetadata,
     NucleotideInsertion,
     NucleotideSequence,
@@ -31,6 +30,7 @@ from .datatypes import (
     ProcessingAnnotation,
     ProcessingResult,
     ProcessingSpec,
+    SegmentName,
     UnprocessedAfterNextclade,
     UnprocessedData,
     UnprocessedEntry,
@@ -195,7 +195,10 @@ def enrich_with_nextclade(
             logging.debug("Nextclade results available in %s", result_dir)
 
             # Add aligned sequences to aligned_nucleotide_sequences
-            load_aligned_nuc_sequences(result_dir_seg, segment, aligned_nucleotide_sequences)
+            # Modifies aligned_nucleotide_sequences in place
+            aligned_nucleotide_sequences = load_aligned_nuc_sequences(
+                result_dir_seg, segment, aligned_nucleotide_sequences
+            )
 
             for gene in config.genes:
                 translation_path = result_dir_seg + f"/nextclade.cds_translation.{gene}.fasta"
@@ -273,7 +276,7 @@ def load_aligned_nuc_sequences(
     aligned_nucleotide_sequences: dict[
         AccessionVersion, dict[SegmentName, NucleotideSequence | None]
     ],
-) -> dict[AccessionVersion, NucleotideSequence]:
+) -> dict[AccessionVersion, dict[SegmentName, NucleotideSequence | None]]:
     """
     Load the nextclade alignment results into the aligned_nucleotide_sequences dict, mapping each
     accession to a segmentName: NucleotideSequence dictionary.
@@ -284,6 +287,7 @@ def load_aligned_nuc_sequences(
             sequence_id: str = aligned_sequence.id
             sequence: NucleotideSequence = str(aligned_sequence.seq)
             aligned_nucleotide_sequences[sequence_id][segment] = mask_terminal_gaps(sequence)
+    return aligned_nucleotide_sequences
 
 
 def accession_from_str(id_str: AccessionVersion) -> str:
@@ -318,6 +322,8 @@ def get_metadata(
         nextclade_prefix = "nextclade."
         if input_path.startswith(nextclade_prefix):
             # Remove "nextclade." prefix
+            if spec.args is None:
+                spec.args = {}
             segment = spec.args.get("segment", "main")
             if unprocessed.nextcladeMetadata is None:
                 errors.append(
@@ -374,15 +380,11 @@ def process_single(
     """Process a single sequence per config"""
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
-    len_dict: dict[str, str | int] = {}
+    output_metadata: ProcessedMetadata = {}
     for segment in config.nucleotideSequences:
         sequence = unprocessed.unalignedNucleotideSequences[segment]
         key = "length" if segment == "main" else "length_" + segment
-        if sequence:
-            len_dict[key] = len(sequence)
-        else:
-            len_dict[key] = 0
-    output_metadata: ProcessedMetadata = len_dict
+        output_metadata[key] = len(sequence) if sequence else 0
 
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
