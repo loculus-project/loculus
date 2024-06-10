@@ -352,12 +352,13 @@ def get_metadata(
                 input_data[arg_name] = None
             continue
         if input_path not in unprocessed.inputMetadata:
-            warnings.append(
-                ProcessingAnnotation(
-                    source=[AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)],
-                    message=f"Metadata field '{input_path}' not found in input",
+            if not spec.args.get("no_warn", False):
+                warnings.append(
+                    ProcessingAnnotation(
+                        source=[AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)],
+                        message=f"Metadata field '{input_path}' not found in input",
+                    )
                 )
-            )
             continue
         input_data[arg_name] = unprocessed.inputMetadata[input_path]
     try:
@@ -399,6 +400,7 @@ def process_single(
             required=spec_dict.get("required", False),
             args=spec_dict.get("args", {}),
         )
+        spec.args = {} if spec.args is None else spec.args
         processing_result = get_metadata(
             spec,
             output_field,

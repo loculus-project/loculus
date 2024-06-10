@@ -15,9 +15,14 @@
 {{- range $segment := $segments }}
 {{ printf "%s_%s:" $currentItem.name $segment}}
   args:
+    {{- if $currentItem.per_segment }}
     segment: {{ $segment }}
+    {{- end }}
     {{- if $currentItem.type }}
     type: {{ $currentItem.type }}
+    {{- end }}
+    {{- if $currentItem.noInput }}
+    no_warn: {{ $currentItem.noInput }}
     {{- end }}
   {{- if $currentItem.preprocessing }}
   {{- if hasKey $currentItem.preprocessing "function" }}
@@ -42,8 +47,12 @@
 {{ printf "%s:" .name }}
   {{- if .type }}
   args:
+    {{- if .type }}
     type: {{ .type }}
-  {{- end }}
+    {{- end }}
+    {{- if .noInput }}
+    no_warn: {{ .noInput }}
+    {{- end }}
   {{- if .preprocessing }}
   {{- if hasKey .preprocessing "function" }}
   function: {{ index .preprocessing "function" }}
