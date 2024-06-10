@@ -149,7 +149,7 @@ def enrich_with_nextclade(
         aligned_nucleotide_sequences[id] = {}
         for gene in config.genes:
             aligned_aminoacid_sequences[id][gene] = None
-        for segment in config.nucleotideSequences:
+        for segment in config.nucleotide_sequences:
             aligned_nucleotide_sequences[id][segment] = None
             if segment in entry.data.unalignedNucleotideSequences:
                 unaligned_nucleotide_sequences[id][segment] = (
@@ -162,7 +162,7 @@ def enrich_with_nextclade(
     nucleotide_insertions: dict[AccessionVersion, dict[SegmentName, list[NucleotideInsertion]]] = {}
     amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]] = {}
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
-        for segment in config.nucleotideSequences:
+        for segment in config.nucleotide_sequences:
             result_dir_seg = result_dir if segment == "main" else result_dir + "/" + segment
             dataset_dir_seg = dataset_dir if segment == "main" else dataset_dir + "/" + segment
             input_file = result_dir_seg + "/input.fasta"
@@ -312,6 +312,7 @@ def get_metadata(
     warnings: list[ProcessingAnnotation],
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
+    group_name = unprocessed.inputMetadata.get("groupName", "")
     for arg_name, input_path in spec.inputs.items():
         input_data[arg_name] = None
         # If field starts with "nextclade.", take from nextclade metadata
@@ -345,7 +346,11 @@ def get_metadata(
             else:
                 input_data[arg_name] = None
             continue
-        if input_path not in unprocessed.inputMetadata:
+        # Only warn if uploading user can actually upload this metadata field
+        ingest_only = spec.args.get("ingest_only", False)
+        if ((group_name == Config.ingest_user and ingest_only) or not ingest_only) and (
+            input_path not in unprocessed.inputMetadata
+        ):
             warnings.append(
                 ProcessingAnnotation(
                     source=[AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)],
@@ -375,7 +380,7 @@ def process_single(
     errors: list[ProcessingAnnotation] = []
     warnings: list[ProcessingAnnotation] = []
     len_dict: dict[str, str | int] = {}
-    for segment in config.nucleotideSequences:
+    for segment in config.nucleotide_sequences:
         sequence = unprocessed.unalignedNucleotideSequences[segment]
         key = "length" if segment == "main" else "length_" + segment
         if sequence:
@@ -387,7 +392,7 @@ def process_single(
     for output_field, spec_dict in config.processing_spec.items():
         length_fields = [
             "length" if segment == "main" else "length_" + segment
-            for segment in config.nucleotideSequences
+            for segment in config.nucleotide_sequences
         ]
         if output_field in length_fields:
             continue
@@ -442,7 +447,7 @@ def process_all(
 
 
 def download_nextclade_dataset(dataset_dir: str, config: Config) -> None:
-    for segment in config.nucleotideSequences:
+    for segment in config.nucleotide_sequences:
         nextclade_dataset_name = (
             config.nextclade_dataset_name
             if segment == "main"
@@ -475,6 +480,7 @@ def run(config: Config) -> None:
         while True:
             logging.debug("Fetching unprocessed sequences")
             unprocessed = parse_ndjson(fetch_unprocessed_sequences(config.batch_size, config))
+
             if len(unprocessed) == 0:
                 # sleep 1 sec and try again
                 logging.debug("No unprocessed sequences found. Sleeping for 1 second.")

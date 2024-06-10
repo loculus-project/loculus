@@ -1288,7 +1288,7 @@ defaultOrganisms:
           log_level: DEBUG
           nextclade_dataset_name: nextstrain/cchfv/linked
           nextclade_dataset_server: https://raw.githubusercontent.com/nextstrain/nextclade_data/cornelius-cchfv/data_output
-          nucleotideSequences: [L, M, S]
+          nucleotide_sequences: [L, M, S]
           genes: [RdRp, GPC, NP]
     ingest:
       <<: *ingest

@@ -29,12 +29,13 @@ class Config:
     config_file: str | None = None
     log_level: str = "DEBUG"
     genes: list[str] = dataclasses.field(default_factory=list)
-    nucleotideSequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])
+    nucleotide_sequences: list[str] = dataclasses.field(default_factory=lambda: ["main"])
     keep_tmp_dir: bool = False
     reference_length: int = 197209
     batch_size: int = 5
     processing_spec: dict[str, dict[str, Any]] = dataclasses.field(default_factory=dict)
     pipeline_version: int = 1
+    ingest_user: str = "insdc_ingest_user"
 
 
 def load_config_from_yaml(config_file: str, config: Config) -> Config:
