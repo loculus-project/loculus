@@ -310,9 +310,11 @@ def get_metadata(
     unprocessed: UnprocessedAfterNextclade,
     errors: list[ProcessingAnnotation],
     warnings: list[ProcessingAnnotation],
+    config: Config,
 ) -> ProcessingResult:
     input_data: InputMetadata = {}
     group_name = unprocessed.inputMetadata.get("groupName", "")
+    logging.info(f"Processing sequences from group {group_name}")
     for arg_name, input_path in spec.inputs.items():
         input_data[arg_name] = None
         # If field starts with "nextclade.", take from nextclade metadata
@@ -348,7 +350,7 @@ def get_metadata(
             continue
         # Only warn if uploading user can actually upload this metadata field
         ingest_only = spec.args.get("ingest_only", False)
-        if ((group_name == Config.ingest_user and ingest_only) or not ingest_only) and (
+        if ((group_name == config.ingest_user and ingest_only) or not ingest_only) and (
             input_path not in unprocessed.inputMetadata
         ):
             warnings.append(
@@ -357,6 +359,7 @@ def get_metadata(
                     message=f"Metadata field '{input_path}' not found in input",
                 )
             )
+        if input_path not in unprocessed.inputMetadata:
             continue
         input_data[arg_name] = unprocessed.inputMetadata[input_path]
     try:
@@ -408,6 +411,7 @@ def process_single(
             unprocessed,
             errors,
             warnings,
+            config,
         )
         output_metadata[output_field] = processing_result.datum
         if null_per_backend(processing_result.datum) and spec.required:
