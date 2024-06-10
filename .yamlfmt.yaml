@@ -1,0 +1,4 @@
+# See https://github.com/google/yamlfmt
+formatter:
+  type: basic
+  drop_merge_tag: true
