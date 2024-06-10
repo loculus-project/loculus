@@ -14,15 +14,11 @@
 {{- if and $use_segments .per_segment }}
 {{- range $segment := $segments }}
 {{ printf "%s_%s :" $currentItem.name $segment}}
-  {{- if or $currentItem.type $currentItem.per_segment}}
   args:
-    {{- if $currentItem.per_segment }}
     segment: {{ $segment }}
-    {{- end }}
     {{- if $currentItem.type }}
     type: {{ $currentItem.type }}
     {{- end }}
-  {{- end }}
   {{- if $currentItem.preprocessing }}
   {{- if hasKey $currentItem.preprocessing "function" }}
   function: {{ index $currentItem.preprocessing "function" }}

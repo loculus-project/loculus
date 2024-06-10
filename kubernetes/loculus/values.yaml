@@ -778,7 +778,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         per_segment: true
         preprocessing:
-          args: { type: int, per_segment: true }
+          args: { type: int }
           inputs: { input: nextclade.totalSubstitutions }
       - name: total_inserted_nucs
         type: int
@@ -787,7 +787,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         per_segment: true
         preprocessing:
-          args: { type: int, per_segment: true }
+          args: { type: int }
           inputs: { input: nextclade.totalInsertions }
       - name: total_deleted_nucs
         type: int
@@ -796,7 +796,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         per_segment: true
         preprocessing:
-          args: { type: int, per_segment: true }
+          args: { type: int }
           inputs: { input: nextclade.totalDeletions }
       - name: total_ambiguous_nucs
         type: int
@@ -805,7 +805,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         per_segment: true
         preprocessing:
-          args: { type: int, per_segment: true }
+          args: { type: int }
           inputs: { input: "nextclade.totalNonACGTNs" }
       - name: total_unknown_nucs
         type: int
@@ -814,7 +814,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         per_segment: true
         preprocessing:
-          args: { type: int, per_segment: true }
+          args: { type: int }
           inputs: { input: nextclade.totalMissing }
       - name: total_frame_shifts
         type: int
@@ -823,14 +823,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         per_segment: true
         preprocessing:
-          args: { type: int, per_segment: true }
+          args: { type: int }
           inputs: { input: nextclade.totalFrameShifts }
       - name: frame_shifts
         header: "Alignment states and QC metrics"
         noInput: true
         per_segment: true
         preprocessing:
-          args: { per_segment: true }
           inputs: { input: nextclade.frameShifts }
       - name: completeness
         type: float
@@ -838,7 +837,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         per_segment: true
         preprocessing:
-          args: { type: float, per_segment: true }
+          args: { type: float }
           inputs: { input: nextclade.coverage }
     website: &website
       tableColumns:
