@@ -143,13 +143,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
-        per_segment: true
+        perSegment: true
       - name: insdc_version
         type: int
         header: "INSDC"
         hideOnSequenceDetailsPage: true
         noInput: true
-        per_segment: true
+        perSegment: true
       - name: insdc_accession_full
         displayName: INSDC accession
         customDisplay:
@@ -158,7 +158,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: genbank_accession
         noInput: true
-        per_segment: true
+        perSegment: true
       - name: bioproject_accessions
         customDisplay:
           type: link
@@ -166,14 +166,14 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "INSDC"
         ingest: bioprojects
         noInput: true
-        per_segment: true
+        perSegment: true
       - name: biosample_accession
         customDisplay:
           type: link
           url: "https://www.ncbi.nlm.nih.gov/biosample/__value__"
         header: "INSDC" 
         noInput: true
-        per_segment: true
+        perSegment: true
       - name: culture_id
         displayName: Culture ID
         header: Sample details
@@ -698,13 +698,13 @@ defaultOrganismConfig: &defaultOrganismConfig
         autocomplete: true
         header: "INSDC"
         noInput: true
-        per_segment: true
+        perSegment: true
       - name: length
         type: int
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
-        per_segment: true
+        perSegment: true
       - name: host_name_scientific
         generateIndex: true
         autocomplete: true
@@ -776,7 +776,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
-        per_segment: true
+        perSegment: true
         preprocessing:
           inputs: { input: nextclade.totalSubstitutions }
       - name: total_inserted_nucs
@@ -784,7 +784,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
-        per_segment: true
+        perSegment: true
         preprocessing:
           inputs: { input: nextclade.totalInsertions }
       - name: total_deleted_nucs
@@ -792,7 +792,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
-        per_segment: true
+        perSegment: true
         preprocessing:
           inputs: { input: nextclade.totalDeletions }
       - name: total_ambiguous_nucs
@@ -800,7 +800,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
-        per_segment: true
+        perSegment: true
         preprocessing:
           inputs: { input: "nextclade.totalNonACGTNs" }
       - name: total_unknown_nucs
@@ -808,7 +808,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         header: "Alignment states and QC metrics"
         noInput: true
         rangeSearch: true
-        per_segment: true
+        perSegment: true
         preprocessing:
           inputs: { input: nextclade.totalMissing }
       - name: total_frame_shifts
@@ -816,20 +816,20 @@ defaultOrganismConfig: &defaultOrganismConfig
         rangeSearch: true
         header: "Alignment states and QC metrics"
         noInput: true
-        per_segment: true
+        perSegment: true
         preprocessing:
           inputs: { input: nextclade.totalFrameShifts }
       - name: frame_shifts
         header: "Alignment states and QC metrics"
         noInput: true
-        per_segment: true
+        perSegment: true
         preprocessing:
           inputs: { input: nextclade.frameShifts }
       - name: completeness
         type: float
         header: "Alignment states and QC metrics"
         noInput: true
-        per_segment: true
+        perSegment: true
         preprocessing:
           inputs: { input: nextclade.coverage }
     website: &website

@@ -148,7 +148,7 @@ fields:
 {{- end }}
 {{- range $metadataList }}
 {{- $currentItem := . }}
-{{- if and $use_segments .per_segment }}
+{{- if and $use_segments .perSegment }}
   {{- range $segment := $segments }}
     - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
       type: {{ $currentItem.type | default "string" | quote }}
@@ -251,8 +251,8 @@ fields:
 {{- end }}
 {{- range $metadataList }}
 {{- $currentItem := . }}
-{{- $per_segment := (.per_segment | default false )}}
-{{- if and $use_segments $per_segment }}
+{{- $perSegment := (.perSegment | default false )}}
+{{- if and $use_segments $perSegment }}
 {{- range $segment := $segments }}
   - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
     type: {{ $currentItem.type | default "string" | quote }}

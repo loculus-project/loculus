@@ -11,7 +11,7 @@
 
 {{- range $metadata }}
 {{- $currentItem := . }}
-{{- if and $use_segments .per_segment }}
+{{- if and $use_segments .perSegment }}
 {{- range $segment := $segments }}
 {{ printf "%s_%s:" $currentItem.name $segment}}
   args:
