@@ -830,7 +830,6 @@ defaultOrganismConfig: &defaultOrganismConfig
         noInput: true
         per_segment: true
         preprocessing:
-          args: { per_segment: true }
           inputs: { input: nextclade.frameShifts }
       - name: completeness
         type: float
