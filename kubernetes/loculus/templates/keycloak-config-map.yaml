@@ -1,4 +1,4 @@
-{{- $keycloakHost := printf "authentication-%s" .Values.host }}
+{ { - $keycloakHost := printf "authentication-%s" .Values.host } }
 ---
 apiVersion: v1
 kind: ConfigMap

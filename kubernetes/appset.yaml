@@ -22,20 +22,20 @@ spec:
         repoURL: https://github.com/loculus-project/argocd_metadata.git
         revision: HEAD
         files:
-        - path: "config.json"
+          - path: "config.json"
   template:
     metadata:
       name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}-{{.number}}'
 
     spec:
       destination:
-        server: 'https://kubernetes.default.svc'
+        server: "https://kubernetes.default.svc"
         namespace: 'prev-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}'
       project: default
       source:
-        path: 'kubernetes/loculus/'
-        repoURL: 'https://github.com/loculus-project/loculus.git'
-        targetRevision: '{{.branch}}'
+        path: "kubernetes/loculus/"
+        repoURL: "https://github.com/loculus-project/loculus.git"
+        targetRevision: "{{.branch}}"
         helm:
           parameters:
             - name: shortbranch
@@ -43,9 +43,9 @@ spec:
             - name: namespace # TODO(https://github.com/loculus-project/loculus/issues/979) delete this once no unsynced up branches need it
               value: 'preview-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}'
             - name: sha
-              value: '{{.head_short_sha_7}}'
+              value: "{{.head_short_sha_7}}"
             - name: branch
-              value: '{{.branch}}'
+              value: "{{.branch}}"
             - name: host
               value: '{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower  }}.loculus.org'
       syncPolicy:
