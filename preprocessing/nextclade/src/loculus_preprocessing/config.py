@@ -18,7 +18,7 @@ CLI_TYPES = [str, int, float, bool]
 @dataclass
 class Config:
     organism: str = "mpox"
-    backend_host: str = None  # Set default to None or similar placeholder
+    backend_host: str = ""
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
