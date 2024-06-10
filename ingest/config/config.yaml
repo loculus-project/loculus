@@ -1,13 +1,13 @@
-# taxon_id: 186538
-# backend_url: https://backend-main.loculus.org/
-# keycloak_token_url: https://authentication-main.loculus.org/realms/loculus/protocol/openid-connect/token
-# organism: ebola-zaire
+taxon_id: 186538
+backend_url: https://backend-main.loculus.org/
+keycloak_token_url: https://authentication-main.loculus.org/realms/loculus/protocol/openid-connect/token
+organism: ebola-zaire
 ## When running locally you should replace with local instances e.g.:
-taxon_id: 3052518
-backend_url: http://localhost:8079/
-keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
-organism: cchf
-nucleotide_sequences:
-  - M
-  - L
-  - S
+# taxon_id: 3052518
+# backend_url: http://localhost:8079/
+# keycloak_token_url: http://localhost:8083/realms/loculus/protocol/openid-connect/token
+# organism: cchf
+# nucleotide_sequences:
+#   - M
+#   - L
+#   - S
