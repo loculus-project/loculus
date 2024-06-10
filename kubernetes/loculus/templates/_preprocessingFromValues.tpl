@@ -13,7 +13,7 @@
 {{- $currentItem := . }}
 {{- if and $use_segments .per_segment }}
 {{- range $segment := $segments }}
-{{ printf "%s_%s :" $currentItem.name $segment}}
+{{ printf "%s_%s:" $currentItem.name $segment}}
   args:
     segment: {{ $segment }}
     {{- if $currentItem.type }}
@@ -39,7 +39,7 @@
 {{- end}}
 
 {{- else }}
-{{ printf "%s :" .name }}
+{{ printf "%s:" .name }}
   {{- if .type }}
   args:
     type: {{ .type }}
