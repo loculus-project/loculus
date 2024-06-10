@@ -43,7 +43,6 @@
 
 {{- else }}
 {{ printf "%s:" .name }}
-  {{- if .type }}
   args:
     {{- if .type }}
     type: {{ .type }}
