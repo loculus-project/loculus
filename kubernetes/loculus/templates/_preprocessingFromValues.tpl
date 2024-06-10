@@ -15,9 +15,7 @@
 {{- range $segment := $segments }}
 {{ printf "%s_%s:" $currentItem.name $segment}}
   args:
-    {{- if $currentItem.per_segment }}
     segment: {{ $segment }}
-    {{- end }}
     {{- if $currentItem.type }}
     type: {{ $currentItem.type }}
     {{- end }}
