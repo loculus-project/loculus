@@ -187,7 +187,7 @@ function generateAndDownloadFastaFile(editedSequences: Row[], editedData: Sequen
     const fileContent =
         editedSequences.length === 1
             ? `>${accessionVersion}\n${editedSequences[0].value}`
-            : editedSequences.map((sequence) => `>${accessionVersion}_${sequence.key}\n${sequence.value}\n\n`).join();
+            : editedSequences.map((sequence) => `>${accessionVersion}_${sequence.key}\n${sequence.value}\n`).join('');
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
