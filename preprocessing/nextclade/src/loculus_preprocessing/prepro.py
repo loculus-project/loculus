@@ -5,7 +5,9 @@ import os
 import subprocess  # noqa: S404
 import sys
 import time
+from collections import defaultdict
 from collections.abc import Sequence
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal, TypeVar
 
@@ -69,57 +71,59 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
 
 
 def parse_nextclade_tsv(
-    amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]],
-    nucleotide_insertions: dict[AccessionVersion, dict[SegmentName, list[NucleotideInsertion]]],
+    amino_acid_insertions: defaultdict[
+        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
+    ],
+    nucleotide_insertions: defaultdict[
+        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
+    ],
     result_dir: str,
     config: Config,
     segment: str,
-):
-    with open(result_dir + "/nextclade.tsv", encoding="utf-8") as nextclade_tsv:
+) -> tuple[
+    defaultdict[AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]],
+    defaultdict[AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]],
+]:
+    # with open(result_dir + "/nextclade.tsv", encoding="utf-8") as nextclade_tsv:
+    with Path(result_dir + "/nextclade.tsv").open(encoding="utf-8") as nextclade_tsv:
         reader = csv.DictReader(nextclade_tsv, delimiter="\t")
         for row in reader:
             id = row["seqName"]
 
-            nuc_ins_str: list[NucleotideInsertion] = list(row["insertions"].split(","))
-            if id in nucleotide_insertions:
-                nucleotide_insertions[id][segment] = [] if nuc_ins_str == [""] else nuc_ins_str
-            else:
-                nucleotide_insertions[id] = {segment: [] if nuc_ins_str == [""] else nuc_ins_str}
+            nuc_ins_str: list[NucleotideInsertion] = (
+                list(row["insertions"].split(",")) if row["insertions"] else []
+            )
+            nucleotide_insertions[id][segment] = nuc_ins_str
 
-            aa_ins: dict[GeneName, list[AminoAcidInsertion]] = {gene: [] for gene in config.genes}
             aa_ins_split = row["aaInsertions"].split(",")
             for ins in aa_ins_split:
                 if not ins:
                     continue
                 gene, val = ins.split(":", maxsplit=1)
-                if gene in aa_ins:
-                    aa_ins[gene].append(val)
+                if gene in config.genes:
+                    # aa_ins[gene].append(val)
+                    amino_acid_insertions[id][gene].append(val)
                 else:
                     logging.debug(
                         "Note: Nextclade found AA insertion in gene missing from config in gene "
                         f"{gene}: {val}"
                     )
-            if id in amino_acid_insertions:
-                amino_acid_insertions[id].update(aa_ins)
-            else:
-                amino_acid_insertions[id] = aa_ins
-    return nucleotide_insertions, amino_acid_insertions
+    return amino_acid_insertions, nucleotide_insertions
 
 
 def parse_nextclade_json(
     result_dir,
-    nextclade_metadata: dict[AccessionVersion, dict[SegmentName, dict[str, Any]]],
+    nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]],
     segment,
-):
+) -> defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]]:
     """
     Update nextclade_metadata object with the results of the nextclade analysis
     """
-    with open(result_dir + "/nextclade.json", encoding="utf-8") as nextclade_json:
-        for result in json.load(nextclade_json)["results"]:
-            id = result["seqName"]
-            if id not in nextclade_metadata:
-                nextclade_metadata[id] = {}
-            nextclade_metadata[id][segment] = result
+    nextclade_json_path = Path(result_dir) / "nextclade.json"
+    json_data = json.loads(nextclade_json_path.read_text(encoding="utf-8"))
+    for result in json_data["results"]:
+        id = result["seqName"]
+        nextclade_metadata[id][segment] = result
     return nextclade_metadata
 
 
@@ -166,9 +170,15 @@ def enrich_with_nextclade(
             else:
                 unaligned_nucleotide_sequences[id][segment] = None
 
-    nextclade_metadata: dict[AccessionVersion, dict[SegmentName, dict[str, Any]]] = {}
-    nucleotide_insertions: dict[AccessionVersion, dict[SegmentName, list[NucleotideInsertion]]] = {}
-    amino_acid_insertions: dict[AccessionVersion, dict[GeneName, list[AminoAcidInsertion]]] = {}
+    nextclade_metadata: defaultdict[AccessionVersion, defaultdict[SegmentName, dict[str, Any]]] = (
+        defaultdict(lambda: defaultdict(dict))
+    )
+    nucleotide_insertions: defaultdict[
+        AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
+    amino_acid_insertions: defaultdict[
+        AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]
+    ] = defaultdict(lambda: defaultdict(list))
     with TemporaryDirectory(delete=not config.keep_tmp_dir) as result_dir:  # noqa: PLR1702
         for segment in config.nucleotideSequences:
             result_dir_seg = result_dir if segment == "main" else result_dir + "/" + segment
@@ -226,19 +236,19 @@ def enrich_with_nextclade(
                             translation_path}"
                     )
 
-            parse_nextclade_json(result_dir_seg, nextclade_metadata, segment)
-            parse_nextclade_tsv(
+            nextclade_metadata = parse_nextclade_json(result_dir_seg, nextclade_metadata, segment)
+            amino_acid_insertions, nucleotide_insertions = parse_nextclade_tsv(
                 amino_acid_insertions, nucleotide_insertions, result_dir_seg, config, segment
             )
 
     return {
         id: UnprocessedAfterNextclade(
             inputMetadata=input_metadata[id],
-            nextcladeMetadata=nextclade_metadata.get(id),
+            nextcladeMetadata=nextclade_metadata[id],
             unalignedNucleotideSequences=unaligned_nucleotide_sequences[id],
             alignedNucleotideSequences=aligned_nucleotide_sequences[id],
-            nucleotideInsertions=nucleotide_insertions.get(id, {}),
-            alignedAminoAcidSequences=aligned_aminoacid_sequences.get(id, {}),
+            nucleotideInsertions=nucleotide_insertions[id],
+            alignedAminoAcidSequences=aligned_aminoacid_sequences[id],
             aminoAcidInsertions=amino_acid_insertions[id],
         )
         for id in unaligned_nucleotide_sequences
