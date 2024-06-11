@@ -133,7 +133,7 @@ describe('AutoCompleteField', () => {
         expect(screen.getByText('No options available')).toBeInTheDocument();
     });
 
-    it('handles option selection', async () => {
+    it('calls setAFieldValue, when an option is selected', async () => {
         render(
             <AutoCompleteField
                 field={field}
