@@ -338,8 +338,12 @@ const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
     ].flatMap(({ type, sequences }) =>
         Object.entries(sequences).map(([sequenceName, sequence]) => {
             let label = sequenceName;
-            if (label === 'main' && type !== 'gene') {
-                label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+            if (type !== 'gene') {
+                if (label === 'main') {
+                    label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+                } else {
+                    label = type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (aligned)`;
+                }
             }
             return { label, sequence };
         }),
