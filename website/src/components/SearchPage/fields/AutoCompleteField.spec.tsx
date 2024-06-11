@@ -46,7 +46,7 @@ describe('AutoCompleteField', () => {
         });
     });
 
-    it('renders input and options correctly', async () => {
+    it('renders input and shows all all options on empty input', async () => {
         render(
             <AutoCompleteField
                 field={field}
