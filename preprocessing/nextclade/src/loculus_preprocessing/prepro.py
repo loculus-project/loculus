@@ -79,7 +79,10 @@ def parse_nextclade_tsv(
             id = row["seqName"]
 
             nuc_ins_str: list[NucleotideInsertion] = list(row["insertions"].split(","))
-            nucleotide_insertions[id] = {segment: [] if nuc_ins_str == [""] else nuc_ins_str}
+            if id in nucleotide_insertions:
+                nucleotide_insertions[id][segment] = [] if nuc_ins_str == [""] else nuc_ins_str
+            else:
+                nucleotide_insertions[id] = {segment: [] if nuc_ins_str == [""] else nuc_ins_str}
 
             aa_ins: dict[GeneName, list[AminoAcidInsertion]] = {gene: [] for gene in config.genes}
             aa_ins_split = row["aaInsertions"].split(",")
@@ -94,7 +97,10 @@ def parse_nextclade_tsv(
                         "Note: Nextclade found AA insertion in gene missing from config in gene "
                         f"{gene}: {val}"
                     )
-            amino_acid_insertions[id] = aa_ins
+            if id in amino_acid_insertions:
+                amino_acid_insertions[id].update(aa_ins)
+            else:
+                amino_acid_insertions[id] = aa_ins
     return nucleotide_insertions, amino_acid_insertions
 
 
@@ -355,7 +361,9 @@ def get_metadata(
             if not spec.args.get("no_warn", False):
                 warnings.append(
                     ProcessingAnnotation(
-                        source=[AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)],
+                        source=[
+                            AnnotationSource(name=input_path, type=AnnotationSourceType.METADATA)
+                        ],
                         message=f"Metadata field '{input_path}' not found in input",
                     )
                 )
