@@ -87,7 +87,7 @@ describe('AutoCompleteField', () => {
         expect(options[0]).toHaveTextContent('Option 2(20)');
     });
 
-    it('displays loading state correctly', () => {
+    it('displays loading state when aggregated endpoint is in isLoading state', () => {
         mockUseAggregated.mockReturnValueOnce({
             data: null,
             isLoading: true,
