@@ -110,7 +110,7 @@ describe('AutoCompleteField', () => {
         expect(screen.getByText('Loading...')).toBeInTheDocument();
     });
 
-    it('displays error message correctly', () => {
+    it('displays error message when aggregated returns an error', () => {
         mockUseAggregated.mockReturnValueOnce({
             data: null,
             isLoading: false,
