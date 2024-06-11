@@ -154,7 +154,7 @@ const AlignmentSequenceTabs: FC<NucleotideSequenceTabsProps> = ({ nucleotideSegm
             {nucleotideSegmentNames.map((segmentName) => (
                 <BoxWithTabsTab
                     key={segmentName}
-                    isActive={isAlignedSequence(sequenceType)}
+                    isActive={isAlignedSequence(sequenceType) && segmentName === sequenceType.name}
                     onClick={() => setType(alignedSequenceSegment(segmentName))}
                     label={`${segmentName} (aligned)`}
                 />
