@@ -52,7 +52,9 @@ def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
     for json_str in ndjson_data.split("\n"):
         if len(json_str) == 0:
             continue
-        json_object = json.loads(json_str)
+        # Loculus currently cannot handle non-breaking spaces.
+        json_str_processed = json_str.replace("\N{NO-BREAK SPACE}", " ")
+        json_object = json.loads(json_str_processed)
         unprocessed_data = UnprocessedData(
             metadata=json_object["data"]["metadata"],
             unalignedNucleotideSequences=json_object["data"]["unalignedNucleotideSequences"],

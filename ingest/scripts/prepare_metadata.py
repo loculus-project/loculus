@@ -42,7 +42,7 @@ def split_authors(authors: str) -> str:
 
     for i in range(0, len(single_split), 2):
         if i + 1 < len(single_split):
-            result.append(single_split[i + 1].strip() + "\u00a0" + single_split[i].strip())
+            result.append(single_split[i + 1].strip() + " " + single_split[i].strip())
         else:
             result.append(single_split[i].strip())
 
