@@ -1,14 +1,11 @@
 name: Update argocd_metadata
-
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-
 concurrency:
   group: ci-update-argocd-metadata
-
 jobs:
   update:
     permissions:
@@ -17,18 +14,15 @@ jobs:
       checks: read
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
     steps:
       - name: Checkout Main Repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref }}
-
       - name: Get SHA - length 7
         id: get_sha
         run: |
           echo "sha=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
-
       # Waits are identical to the e2e-k3d.yml workflow file
       # Mirror changes to that file
       - name: Wait for Prepro Dummy Docker Image
@@ -38,7 +32,6 @@ jobs:
           check-name: Preprocessing dummy docker image build
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
-
       - name: Wait for Config Processor Docker Image
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
@@ -46,7 +39,6 @@ jobs:
           check-name: Build config-processor Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
-
       - name: Wait for Backend Docker Image
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
@@ -54,7 +46,6 @@ jobs:
           check-name: Build Backend Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
-
       - name: Wait for Website Docker Image
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
@@ -62,7 +53,6 @@ jobs:
           check-name: Build Website Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
-
       - name: Wait for Prepro Nextclade Docker Image
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
@@ -70,7 +60,6 @@ jobs:
           check-name: Build preprocessing-nextclade Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
-
       - name: Wait for Ingest Docker Image
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
@@ -78,7 +67,6 @@ jobs:
           check-name: Build ingest Docker Image
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
-
       - name: Wait for Keycloakify Docker Image
         uses: lewagon/wait-on-check-action@v1.3.4
         with:
@@ -87,13 +75,11 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           wait-interval: 2
       # End of wait block
-
       - name: Checkout External Repository
         uses: actions/checkout@v4
         with:
           repository: "loculus-project/argocd_metadata"
           token: ${{ secrets.ARGOCD_METADATA_PAT }}
-
       - name: Modify config.json
         run: |
           echo '{
@@ -101,7 +87,6 @@ jobs:
             "number" : 999,
             "head_short_sha_7": "${{ steps.get_sha.outputs.sha }}"
           }' > config.json
-
       - name: Commit and Push Changes
         run: |
           git config --global user.name 'Loculus bot'

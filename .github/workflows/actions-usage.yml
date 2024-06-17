@@ -1,10 +1,8 @@
 name: Github Actions Usage Stats
-
 on:
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * *" # Runs at 03:00 AM (UTC) every day
-
 jobs:
   gha-usage-minutes-report:
     runs-on: ubuntu-latest
