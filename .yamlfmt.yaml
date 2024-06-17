@@ -2,3 +2,6 @@
 formatter:
   type: basic
   drop_merge_tag: true
+gitignore_excludes: true
+exclude:
+  - kubernetes/loculus/templates
