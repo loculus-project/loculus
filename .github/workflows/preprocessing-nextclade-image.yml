@@ -70,7 +70,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - name: Build and push image if input files changed
         if: env.CACHE_HIT == 'false'
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./preprocessing/nextclade
           push: true
