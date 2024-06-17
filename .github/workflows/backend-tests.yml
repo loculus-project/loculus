@@ -1,5 +1,4 @@
 name: backend-tests
-
 on:
   pull_request:
     paths:
@@ -9,11 +8,9 @@ on:
     branches:
       - main
   workflow_dispatch:
-
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend-tests
   cancel-in-progress: true
-
 jobs:
   Tests:
     runs-on: codebuild-loculus-ci-${{ github.run_id }}-${{ github.run_attempt }}

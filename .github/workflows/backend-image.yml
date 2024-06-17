@@ -1,5 +1,4 @@
 name: backend-image
-
 on:
   pull_request:
   push:
@@ -19,17 +18,14 @@ on:
         description: "Build for ARM as well"
         default: "false"
         required: true
-
 env:
   DOCKER_IMAGE_NAME: ghcr.io/loculus-project/backend
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
-
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-backend
   cancel-in-progress: true
-
 jobs:
   backend-image:
     name: Build Backend Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml
@@ -45,13 +41,11 @@ jobs:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - uses: actions/checkout@v4
-
       - name: Generate files hash
         id: files-hash
         run: |
           DIR_HASH=$(echo -n ${{ hashFiles('backend/**', '.github/workflows/backend-image.yml') }})
           echo "DIR_HASH=$DIR_HASH${{ env.BUILD_ARM == 'true' && '-arm' || '' }}" >> $GITHUB_ENV
-
       - name: Setup Docker metadata
         id: dockerMetadata
         uses: docker/metadata-action@v5
@@ -69,32 +63,26 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Check if image exists
         id: check-image
         run: |
           EXISTS=$(docker manifest inspect ${{ env.DOCKER_IMAGE_NAME }}:${{ env.DIR_HASH }} > /dev/null 2>&1 && echo "true" || echo "false")
           echo "CACHE_HIT=$EXISTS" >> $GITHUB_ENV
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
       - name: Set up JDK
         if: env.CACHE_HIT == 'false'
         uses: actions/setup-java@v4
         with:
           java-version: "21"
           distribution: "adopt"
-
       - name: Setup Gradle
         if: env.CACHE_HIT == 'false'
         uses: gradle/actions/setup-gradle@v3
-
       - name: Build Backend
         if: env.CACHE_HIT == 'false'
         working-directory: ./backend
         run: ./gradlew bootJar
-
       - name: Build and push image if input files changed
         if: env.CACHE_HIT == 'false'
         uses: docker/build-push-action@v5
@@ -105,7 +93,6 @@ jobs:
           cache-from: type=gha,scope=backend-${{ github.ref }}
           cache-to: type=gha,mode=max,scope=backend-${{ github.ref }}
           platforms: ${{ env.BUILD_ARM == 'true' && 'linux/amd64,linux/arm64' || 'linux/amd64' }}
-
       - name: Retag and push existing image if cache hit
         if: env.CACHE_HIT == 'true'
         run: |

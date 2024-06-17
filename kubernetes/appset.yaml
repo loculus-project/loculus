@@ -22,11 +22,10 @@ spec:
         repoURL: https://github.com/loculus-project/argocd_metadata.git
         revision: HEAD
         files:
-        - path: "config.json"
+          - path: "config.json"
   template:
     metadata:
       name: 'pp-{{ (printf "%.25s" .branch) | replace "_" "-" | replace "/" "-" | trimSuffix "-" | lower }}-{{.number}}'
-
     spec:
       destination:
         server: 'https://kubernetes.default.svc'

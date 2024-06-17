@@ -1,5 +1,4 @@
 name: keycloakify-image
-
 on:
   pull_request:
   push:
@@ -24,11 +23,9 @@ env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
   BUILD_ARM: ${{ github.event.inputs.build_arm || inputs.build_arm || github.ref == 'refs/heads/main' }}
   sha: ${{ github.event.pull_request.head.sha || github.sha }}
-
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-buil-${{github.event.inputs.build_arm}}d
   cancel-in-progress: true
-
 jobs:
   keycloakify-image:
     name: Build keycloakify Docker Image # Don't change: Referenced by .github/workflows/update-argocd-metadata.yml

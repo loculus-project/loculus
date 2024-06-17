@@ -1,11 +1,11 @@
 secrets:
-    service-accounts:
-      type: raw
-      data:
-        insdcIngestUserPassword: "insdc_ingest_user"
-        dummyPreprocessingPipelinePassword: "preprocessing_pipeline"
-        siloImportJobPassword: "silo_import_job"
-        backendUserPassword: "backend"
+  service-accounts:
+    type: raw
+    data:
+      insdcIngestUserPassword: "insdc_ingest_user"
+      dummyPreprocessingPipelinePassword: "preprocessing_pipeline"
+      siloImportJobPassword: "silo_import_job"
+      backendUserPassword: "backend"
 createTestAccounts: true
 backendExtraArgs:
   - "--loculus.debug-mode=true"
