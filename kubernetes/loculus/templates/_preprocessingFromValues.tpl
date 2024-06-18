@@ -11,17 +11,13 @@
 
 {{- range $metadata }}
 {{- $currentItem := . }}
-{{- if and $use_segments .perSegment }}
+{{- if and $use_segments .per_segment }}
 {{- range $segment := $segments }}
-{{ printf "%s_%s:" $currentItem.name $segment}}
+{{ printf "%s_%s :" $currentItem.name $segment}}
+  {{- if $currentItem.type }}
   args:
-    segment: {{ $segment }}
-    {{- if $currentItem.type }}
     type: {{ $currentItem.type }}
-    {{- end }}
-    {{- if $currentItem.noInput }}
-    no_warn: {{ $currentItem.noInput }}
-    {{- end }}
+  {{- end }}
   {{- if $currentItem.preprocessing }}
   {{- if hasKey $currentItem.preprocessing "function" }}
   function: {{ index $currentItem.preprocessing "function" }}
@@ -42,14 +38,11 @@
 {{- end}}
 
 {{- else }}
-{{ printf "%s:" .name }}
+{{ printf "%s :" .name }}
+  {{- if .type }}
   args:
-    {{- if .type }}
     type: {{ .type }}
-    {{- end }}
-    {{- if .noInput }}
-    no_warn: {{ .noInput }}
-    {{- end }}
+  {{- end }}
   {{- if .preprocessing }}
   {{- if hasKey .preprocessing "function" }}
   function: {{ index .preprocessing "function" }}

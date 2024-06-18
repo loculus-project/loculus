@@ -77,9 +77,12 @@ def main(
             records = SeqIO.parse(f, "fasta")
             for record in records:
                 for segment in config.nucleotide_sequences:
-                    re_input = re.compile(f".*segment {segment}.*", re.IGNORECASE)
-                    # FIXME: Brittle regex: matches both `L` and `L1` for segment `L`
-                    found_segment = re_input.search(record.description)
+                    re_input = re.compile(
+                        f".*segment {segment}.*", re.IGNORECASE
+                    )  # FIXME: Brittle regex: matches both `L` and `L1` for segment `L`
+                    found_segment = re_input.search(
+                        record.description
+                    )  # FIXME: Doesn't handle multiple matches
                     if found_segment:
                         metadata_df.loc[
                             metadata_df["genbank_accession"] == record.id, "segment"
@@ -96,14 +99,9 @@ def main(
             "that did not have segment information."
         )
 
+        # FIXME: Stream to file instead of loading all sequences into memory
         write_fasta_id_only(processed_seq, output_seq)
-        # Instead of loading the entire df into memory write to the file in chunks
-        chunk_size = 1000
-        for chunk in range(0, len(final_metadata), chunk_size):
-            # Write header only in the first chunk
-            final_metadata.iloc[chunk : chunk + chunk_size].to_csv(
-                output_metadata, mode="a", sep="\t", index=False, header=not chunk
-            )
+        final_metadata.to_csv(output_metadata, sep="\t")
 
 
 if __name__ == "__main__":

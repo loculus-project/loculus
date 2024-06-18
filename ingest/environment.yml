@@ -9,8 +9,9 @@ dependencies:
   # Extra dependencies
   - biopython
   - click
+  - ijson
   - jsonlines
-  - ncbi-datasets-cli >=16.20.0
+  - ncbi-datasets-cli >=16.18.1
   - pandas
   - PyYAML
   - requests
