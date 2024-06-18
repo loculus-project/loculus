@@ -46,9 +46,6 @@ csv.field_size_limit(sys.maxsize)
 GenericSequence = TypeVar("GenericSequence", AminoAcidSequence, NucleotideSequence)
 
 
-# Functions related to reading and writing files
-
-
 def parse_ndjson(ndjson_data: str) -> Sequence[UnprocessedEntry]:
     entries = []
     for json_str in ndjson_data.split("\n"):
@@ -84,7 +81,6 @@ def parse_nextclade_tsv(
     defaultdict[AccessionVersion, defaultdict[GeneName, list[AminoAcidInsertion]]],
     defaultdict[AccessionVersion, defaultdict[SegmentName, list[NucleotideInsertion]]],
 ]:
-    # with open(result_dir + "/nextclade.tsv", encoding="utf-8") as nextclade_tsv:
     with Path(result_dir + "/nextclade.tsv").open(encoding="utf-8") as nextclade_tsv:
         reader = csv.DictReader(nextclade_tsv, delimiter="\t")
         for row in reader:
@@ -101,7 +97,6 @@ def parse_nextclade_tsv(
                     continue
                 gene, val = ins.split(":", maxsplit=1)
                 if gene in config.genes:
-                    # aa_ins[gene].append(val)
                     amino_acid_insertions[id][gene].append(val)
                 else:
                     logging.debug(
