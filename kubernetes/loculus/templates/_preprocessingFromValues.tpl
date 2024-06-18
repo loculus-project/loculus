@@ -19,7 +19,7 @@
   {{- if hasKey .preprocessing "inputs" }}
   inputs:
     {{- with index .preprocessing "inputs" }}
-    {{- . | toYaml | nindent 2 }}
+    {{- . | toYaml | nindent 4 }}
     {{- end }}
   {{- end }}
   {{- else }}
