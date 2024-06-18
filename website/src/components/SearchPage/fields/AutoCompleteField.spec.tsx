@@ -33,7 +33,11 @@ describe('AutoCompleteField', () => {
 
     beforeEach(() => {
         setAFieldValue.mockClear();
-        mockUseAggregated.mockReturnValue({
+        
+    });
+
+    it('renders input and shows all all options on empty input', async () => {
+        mockUseAggregated.mockReturnValue( {
             data: {
                 data: [
                     { testField: 'Option 1', count: 10 },
@@ -44,9 +48,7 @@ describe('AutoCompleteField', () => {
             error: null,
             mutate: vi.fn(),
         });
-    });
 
-    it('renders input and shows all all options on empty input', async () => {
         render(
             <AutoCompleteField
                 field={field}
@@ -68,6 +70,17 @@ describe('AutoCompleteField', () => {
     });
 
     it('filters options based on query', async () => {
+        mockUseAggregated.mockReturnValue( {
+            data: {
+                data: [
+                    { testField: 'Option 1', count: 10 },
+                    { testField: 'Option 2', count: 20 },
+                ],
+            },
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         render(
             <AutoCompleteField
                 field={field}
@@ -134,6 +147,17 @@ describe('AutoCompleteField', () => {
     });
 
     it('calls setAFieldValue, when an option is selected', async () => {
+        mockUseAggregated.mockReturnValue( {
+            data: {
+                data: [
+                    { testField: 'Option 1', count: 10 },
+                    { testField: 'Option 2', count: 20 },
+                ],
+            },
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         render(
             <AutoCompleteField
                 field={field}
@@ -153,6 +177,17 @@ describe('AutoCompleteField', () => {
     });
 
     it('clears input value on clear button click', async () => {
+        mockUseAggregated.mockReturnValue( {
+            data: {
+                data: [
+                    { testField: 'Option 1', count: 10 },
+                    { testField: 'Option 2', count: 20 },
+                ],
+            },
+            isLoading: false,
+            error: null,
+            mutate: vi.fn(),
+        });
         render(
             <AutoCompleteField
                 field={field}
