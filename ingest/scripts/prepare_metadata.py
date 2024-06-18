@@ -108,7 +108,8 @@ def main(
 
     # Get rid of all records without segment
     # TODO: Log the ones that are missing
-    metadata = [record for record in metadata if record["segment"]]
+    if config.segmented:
+        metadata = [record for record in metadata if record["segment"]]
 
     for record in metadata:
         for from_key, to_key in config.rename.items():

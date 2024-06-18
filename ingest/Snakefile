@@ -134,8 +134,8 @@ rule align:
     output:
         results="results/nextclade_{segment}.tsv",
     params:
-        dataset_server=config["nextclade_dataset_server"],
-        dataset_name=lambda w: config["nextclade_dataset_name"] + "/" + w.segment,
+        dataset_server=config.get("nextclade_dataset_server"),
+        dataset_name=lambda w: config.get("nextclade_dataset_name") + "/" + w.segment,
     shell:
         """
         nextclade run \
