@@ -160,7 +160,6 @@ organisms:
     type: {{ quote .customDisplay.type }}
     url: {{ .customDisplay.url }}
   {{- end }}
-  header: {{ default "Other" .header }}
 {{- end }}
 
 {{/* Generate website metadata from passed metadata array */}}
@@ -180,6 +179,7 @@ fields:
   {{- if .displayName }}
   displayName: {{ printf "%s %s" .displayName $segment | quote }}
   {{- end }}
+  header: {{ printf "%s %s" (default "Other" .header) $segment | quote }}
 {{- end }}
 {{- end }}
 {{- else }}
@@ -188,6 +188,7 @@ fields:
   {{- if .displayName }}
   displayName: {{ quote .displayName }}
   {{- end }}
+  header: {{ default "Other" .header }}
 {{- end}}
 {{- end}}
 {{- end}}
