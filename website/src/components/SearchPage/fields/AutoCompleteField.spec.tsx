@@ -33,11 +33,10 @@ describe('AutoCompleteField', () => {
 
     beforeEach(() => {
         setAFieldValue.mockClear();
-        
     });
 
     it('renders input and shows all all options on empty input', async () => {
-        mockUseAggregated.mockReturnValue( {
+        mockUseAggregated.mockReturnValue({
             data: {
                 data: [
                     { testField: 'Option 1', count: 10 },
@@ -70,7 +69,7 @@ describe('AutoCompleteField', () => {
     });
 
     it('filters options based on query', async () => {
-        mockUseAggregated.mockReturnValue( {
+        mockUseAggregated.mockReturnValue({
             data: {
                 data: [
                     { testField: 'Option 1', count: 10 },
@@ -147,7 +146,7 @@ describe('AutoCompleteField', () => {
     });
 
     it('calls setAFieldValue, when an option is selected', async () => {
-        mockUseAggregated.mockReturnValue( {
+        mockUseAggregated.mockReturnValue({
             data: {
                 data: [
                     { testField: 'Option 1', count: 10 },
@@ -177,7 +176,7 @@ describe('AutoCompleteField', () => {
     });
 
     it('clears input value on clear button click', async () => {
-        mockUseAggregated.mockReturnValue( {
+        mockUseAggregated.mockReturnValue({
             data: {
                 data: [
                     { testField: 'Option 1', count: 10 },
