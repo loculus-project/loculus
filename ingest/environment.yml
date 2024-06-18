@@ -11,7 +11,7 @@ dependencies:
   - click
   - ijson
   - jsonlines
-  - ncbi-datasets-cli >=16.18.1
+  - ncbi-datasets-cli >=16.21.0
   - pandas
   - PyYAML
   - requests
