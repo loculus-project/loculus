@@ -10,40 +10,9 @@ metadata:
   name: lapis-silo-database-config-{{ $key }}
 data:
   {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
+  {{- $args := merge (dict "commonMetadata" $commonMetadata) . }}
   database_config.yaml: |
-    schema:
-      {{- $use_segments := false }}
-      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
-      {{- if or (lt (len $nucleotideSequences) 1) (and (eq (len $nucleotideSequences) 1) (eq (index $nucleotideSequences 0) "main")) }}
-      {{- $use_segments = false }}
-      {{- else }}
-      {{- $use_segments = true }}
-      {{- end }}
-      instanceName: {{ .organismName }}
-      opennessLevel: OPEN
-      metadata:
-      {{- range (concat $commonMetadata .metadata) }}
-      {{- $currentItem := . }}
-      {{- if and $use_segments .perSegment }}
-        {{- range $segment := $nucleotideSequences }}
-        - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
-          {{- $type := default "string" $currentItem.type }}
-          type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
-          {{- if $currentItem.generateIndex }}
-          generateIndex: {{ $currentItem.generateIndex }}
-          {{- end }}
-        {{- end }}
-      {{- else }}
-        - name: {{ .name }}
-          {{- $type := default "string" .type }}
-          type: {{ ($type | eq "timestamp") | ternary "int" (($type | eq "authors") | ternary "string" $type) }}
-          {{- if .generateIndex }}
-          generateIndex: {{ .generateIndex }}
-          {{- end }}
-      {{- end }}
-      {{- end }}
-      primaryKey: accessionVersion
-      {{- .silo | toYaml | nindent 6 }}
+    {{ include "loculus.siloDatabaseConfig" $args | nindent 4 }}
   {{- end }}
 
   preprocessing_config.yaml: |

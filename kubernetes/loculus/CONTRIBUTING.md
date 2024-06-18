@@ -10,3 +10,12 @@ For example, to get the `website_config.json` from the `loculus-website-config` 
 helm template loculus kubernetes/loculus \
 | yq e 'select(.metadata.name == "loculus-website-config") | .data."website_config.json"'
 ```
+
+## Diffing produced Kubernetes manifests
+
+To diff produced manifests, you can use the `kuberentes/loculus/utils/yamldiff_script.py` script.
+
+1. Install yamldiff: `go install github.com/sahilm/yamldiff@latest`
+2. Create the manifests to diff: `helm template loculus kubernetes/loculus > /tmp/new.yaml`
+3. Create manifests to diff against, e.g. from main and put into `/tmp/old.yaml`
+4. Run script to diff: `python kubernetes/loculus/utils/yamldiff_script.py /tmp/old.yaml /tmp/new.yaml`
