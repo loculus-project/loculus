@@ -11,6 +11,7 @@ import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter, Schema } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
+
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
     disconnect() {}
@@ -55,6 +56,14 @@ const defaultSearchFormFilters: MetadataFilter[] = [
         label: 'Field 3',
         autocomplete: true,
         initiallyVisible: true,
+    },
+    {
+        name: 'field4',
+        type: 'string',
+        autocomplete: false,
+        label: 'Field 4',
+        displayName: 'Field 4',
+        notSearchable: true,
     },
 ];
 
@@ -229,5 +238,21 @@ describe('SearchFullUI', () => {
         await waitFor(() => {
             expect(window.history.state.path).toContain('?field1=abc');
         });
+    });
+
+    it('toggle column visibility', async () => {
+        renderSearchFullUI({});
+        // expect we can't see field 4
+        expect(screen.queryByRole('columnheader', {name:'Field 4'})).not.toBeInTheDocument();
+        const customizeButton = await screen.findByRole('button', { name: 'Customize columns' });
+        await userEvent.click(customizeButton);
+        const field4Checkbox = await screen.findByRole('checkbox', { name: 'Field 4' });
+        expect(field4Checkbox).not.toBeChecked();
+        await userEvent.click(field4Checkbox);
+        expect(field4Checkbox).toBeChecked();
+        const closeButton = await screen.findByRole('button', { name: 'Close' });
+        await userEvent.click(closeButton);
+        screen.logTestingPlaygroundURL();
+        expect(screen.getByRole('columnheader', {name:'Field 4'})).toBeVisible();
     });
 });
