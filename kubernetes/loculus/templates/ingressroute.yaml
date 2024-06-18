@@ -5,16 +5,32 @@ metadata:
 spec:
   compress: {}
 ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: redirect-middleware
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
 {{- $keycloakHost := printf "authentication-%s" .Values.host }}
+{{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
+{{- if $.Values.enforceHTTPS }}
+{{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
+{{- end }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-website-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-compression-middleware@kubernetescrd"
+    {{- if $.Values.enforceHTTPS }}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    {{- end }}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
   rules:
     - host: "{{ .Values.host }}"
@@ -35,6 +51,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-backend-ingress
+  annotations:
+    {{- if $.Values.enforceHTTPS }}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    {{- end }}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
   rules:
     - host: "{{ $backendHost }}"
@@ -57,7 +78,10 @@ kind: Ingress
 metadata:
   name: loculus-keycloak-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-compression-middleware@kubernetescrd"
+    {{- if $.Values.enforceHTTPS }}
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    {{- end }}
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
   rules:
     - host: "{{ $keycloakHost }}"
@@ -73,4 +97,4 @@ spec:
   tls:
   - hosts:
     - "{{ $keycloakHost }}"
-{{- end}}
+{{- end }}
