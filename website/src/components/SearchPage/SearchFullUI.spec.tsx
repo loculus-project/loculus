@@ -11,7 +11,6 @@ import { lapisClientHooks } from '../../services/serviceHooks.ts';
 import type { MetadataFilter, Schema } from '../../types/config.ts';
 import type { ReferenceGenomesSequenceNames } from '../../types/referencesGenomes.ts';
 
-
 global.ResizeObserver = class FakeResizeObserver {
     observe() {}
     disconnect() {}
@@ -243,7 +242,7 @@ describe('SearchFullUI', () => {
     it('toggle column visibility', async () => {
         renderSearchFullUI({});
         // expect we can't see field 4
-        expect(screen.queryByRole('columnheader', {name:'Field 4'})).not.toBeInTheDocument();
+        expect(screen.queryByRole('columnheader', { name: 'Field 4' })).not.toBeInTheDocument();
         const customizeButton = await screen.findByRole('button', { name: 'Customize columns' });
         await userEvent.click(customizeButton);
         const field4Checkbox = await screen.findByRole('checkbox', { name: 'Field 4' });
@@ -253,6 +252,6 @@ describe('SearchFullUI', () => {
         const closeButton = await screen.findByRole('button', { name: 'Close' });
         await userEvent.click(closeButton);
         screen.logTestingPlaygroundURL();
-        expect(screen.getByRole('columnheader', {name:'Field 4'})).toBeVisible();
+        expect(screen.getByRole('columnheader', { name: 'Field 4' })).toBeVisible();
     });
 });
