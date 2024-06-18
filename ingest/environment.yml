@@ -12,6 +12,7 @@ dependencies:
   - ijson
   - jsonlines
   - ncbi-datasets-cli >=16.21.0
+  - nextclade >=3.7.0
   - pandas
   - PyYAML
   - requests
