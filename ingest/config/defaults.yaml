@@ -39,7 +39,6 @@ keep:
   - sequence_md5
   - genbank_accession
   - joint_accession
-
 # Fields that that are not shared at sample level
 # But specific to each segment
 segment_specific_fields:

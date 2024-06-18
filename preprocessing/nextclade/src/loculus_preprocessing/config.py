@@ -18,7 +18,7 @@ CLI_TYPES = [str, int, float, bool]
 @dataclass
 class Config:
     organism: str = "mpox"
-    backend_host: str = None  # Set default to None or similar placeholder
+    backend_host: str = ""
     keycloak_host: str = "http://127.0.0.1:8083"
     keycloak_user: str = "preprocessing_pipeline"
     keycloak_password: str = "preprocessing_pipeline"
@@ -93,7 +93,7 @@ def get_config() -> Config:
     # Overwrite config with config in config_file
     if args.config_file:
         config = load_config_from_yaml(args.config_file, config)
-    if config.backend_host is None:  # Check if backend_host wasn't set during initialization
+    if not config.backend_host:  # Check if backend_host wasn't set during initialization
         config.backend_host = f"http://127.0.0.1:8079/{config.organism}"
 
     # Use environment variables if available

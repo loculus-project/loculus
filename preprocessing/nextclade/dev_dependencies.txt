@@ -2,3 +2,5 @@ mypy
 ruff
 types-PyYAML
 types-requests
+types-pytz
+types-python-dateutil
