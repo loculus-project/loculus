@@ -27,9 +27,6 @@ kind: Ingress
 metadata:
   name: loculus-website-ingress
   annotations:
-    {{- if $.Values.enforceHTTPS }}
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    {{- end }}
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
   rules:
@@ -52,9 +49,6 @@ kind: Ingress
 metadata:
   name: loculus-backend-ingress
   annotations:
-    {{- if $.Values.enforceHTTPS }}
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    {{- end }}
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
   rules:
@@ -78,9 +72,6 @@ kind: Ingress
 metadata:
   name: loculus-keycloak-ingress
   annotations:
-    {{- if $.Values.enforceHTTPS }}
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    {{- end }}
     traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
 spec:
   rules:
