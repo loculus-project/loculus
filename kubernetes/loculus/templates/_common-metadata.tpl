@@ -171,17 +171,19 @@ fields:
 {{- $segments := .nucleotideSequences }}
 {{- $is_segmented := gt (len $segments) 1 }}
 {{- range $metadataList }}
-{{- $currentItem := . }}
 {{- if and $is_segmented .perSegment }}
+{{- $currentItem := . }}
 {{- range $segment := $segments }}
-{{ include "loculus.standardWebsiteMetadata" $currentItem }}
-  name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
-  {{- if $currentItem.displayName }}
-  displayName: {{ printf "%s %s" $currentItem.displayName $segment | quote }}
+{{- with $currentItem }}
+{{ include "loculus.standardWebsiteMetadata" . }}
+  name: {{ printf "%s_%s" .name $segment | quote }}
+  {{- if .displayName }}
+  displayName: {{ printf "%s %s" .displayName $segment | quote }}
   {{- end }}
 {{- end }}
+{{- end }}
 {{- else }}
-{{ include "loculus.standardWebsiteMetadata" $currentItem }}
+{{ include "loculus.standardWebsiteMetadata" . }}
   name: {{ quote .name }}
   {{- if .displayName }}
   displayName: {{ quote .displayName }}
@@ -189,7 +191,6 @@ fields:
 {{- end}}
 {{- end}}
 {{- end}}
-
 
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
