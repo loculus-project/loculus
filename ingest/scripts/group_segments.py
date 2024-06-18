@@ -3,7 +3,7 @@ Example output for a single isolate with 3 segments:
 "KJ682796.1KJ682809.1KJ682819.1": {
     "ncbi_release_date": "2014-07-06T00:00:00Z",
     "ncbi_sourcedb": "GenBank",
-    "authors": "D.\u00a0Goedhals, F.J.\u00a0Burt, J.T.\u00a0Paweska, P.A.\u00a0Bester, R.\u00a0Swanepoel",
+    "authors": "D. Goedhals, F.J. Burt, J.T. Bester, R. Swanepoel",
     "joint_accession": "KJ682796.1KJ682809.1KJ682819.1",
     "insdc_version_L": "1",
     "insdc_version_M": "1",
