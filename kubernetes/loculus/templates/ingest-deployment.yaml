@@ -28,8 +28,8 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
-              memory: "500Mi"
-              {{ include "loculus.standardCPURequest" $ }}
+              memory: "80Mi"
+              cpu: "10m"
             limits:
               memory: "10Gi"
           env:
@@ -83,8 +83,9 @@ spec:
               resources:
                 requests:
                   memory: "1Gi"
-                  {{ include "loculus.standardCPURequest" $ }}
+                  cpu: "200m"
                 limits:
+                  cpu: "200m"
                   memory: "10Gi"
               env:
                 - name: KEYCLOAK_INGEST_PASSWORD

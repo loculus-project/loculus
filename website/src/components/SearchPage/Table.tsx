@@ -12,6 +12,16 @@ export type TableSequenceData = {
     [key: string]: Metadatum;
 };
 
+function formatField(value: any, maxLength: number): string {
+    if (typeof value === 'string' && value.toString().length > maxLength) {
+        return `${value.toString().slice(0, maxLength)}…`;
+    } else if (typeof value === 'number' && Number.isInteger(value)) {
+        return value.toLocaleString('en-US');
+    } else {
+        return value;
+    }
+}
+
 type TableProps = {
     schema: Schema;
     data: TableSequenceData[];
@@ -139,10 +149,7 @@ export const Table: FC<TableProps> = ({
                                         }
                                         data-tooltip-id='table-tip'
                                     >
-                                        {typeof row[c.field] === 'string' &&
-                                        row[c.field]!.toString().length > c.maxLength
-                                            ? `${row[c.field]?.toString().slice(0, c.maxLength)}…`
-                                            : row[c.field]}
+                                        {formatField(row[c.field], c.maxLength)}
                                     </td>
                                 ))}
                             </tr>

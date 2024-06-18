@@ -5,6 +5,7 @@ from typing import Any
 
 AccessionVersion = str
 GeneName = str
+SegmentName = str
 NucleotideSequence = str
 AminoAcidSequence = str
 NucleotideInsertion = str
@@ -65,10 +66,11 @@ class ProcessingSpec:
 @dataclass
 class UnprocessedAfterNextclade:
     inputMetadata: InputMetadata
-    nextcladeMetadata: dict[str, Any] | None  # Derived metadata produced by Nextclade
-    unalignedNucleotideSequences: NucleotideSequence
-    alignedNucleotideSequences: NucleotideSequence | None
-    nucleotideInsertions: list[NucleotideInsertion]
+    # Derived metadata produced by Nextclade
+    nextcladeMetadata: dict[SegmentName, Any] | None
+    unalignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
+    alignedNucleotideSequences: dict[SegmentName, NucleotideSequence | None]
+    nucleotideInsertions: dict[SegmentName, list[NucleotideInsertion]]
     alignedAminoAcidSequences: dict[GeneName, AminoAcidSequence | None]
     aminoAcidInsertions: dict[GeneName, list[AminoAcidInsertion]]
 

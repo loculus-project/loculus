@@ -1,5 +1,4 @@
 name: E2E test (on kubernetes)
-
 on:
   workflow_dispatch:
     inputs:
@@ -20,11 +19,9 @@ on:
   push:
     branches:
       - main
-
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-e2e-k3d
   cancel-in-progress: true
-
 jobs:
   k3d-e2e:
     permissions:
@@ -32,87 +29,68 @@ jobs:
       contents: read
       checks: read
       actions: read # Required by workflow-telemetry-action
-
     runs-on: ubuntu-latest-m
-    timeout-minutes: 30
-
+    timeout-minutes: 45
     env:
       ALL_BROWSERS: ${{ github.ref == 'refs/heads/main' || github.event.inputs.all_browsers && 'true' || 'false' }}
       sha: ${{ github.event.pull_request.head.sha || github.sha }}
       wait_timeout: ${{ github.ref == 'refs/heads/main' && 900 || 180 }}
-
     steps:
       - name: Shorten sha
         run: echo "sha=${sha::7}" >> $GITHUB_ENV
       - name: Collect Workflow Telemetry
         uses: catchpoint/workflow-telemetry-action@v2
-
       - name: Checkout repository
         uses: actions/checkout@v4
-
       - name: Install k3d
         run: |
           curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
           k3d version
-
       - uses: azure/setup-helm@v4
-
       - name: Create k3d cluster
         run: |
           ./deploy.py --verbose cluster
-
       - name: Default template with helm
         uses: WyriHaximus/github-action-helm3@v4
         with:
           exec: helm template loculus kubernetes/loculus
-
       - name: E2E Template with helm
         uses: WyriHaximus/github-action-helm3@v4
         with:
           exec: ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e --template > /tmp/helm_template.yaml
-
       - name: Upload default helm template
         uses: actions/upload-artifact@v4
         with:
           name: helm-template
           path: /tmp/helm_template.yaml
-
       - name: Deploy with helm
         run: |
           ./deploy.py --verbose helm --branch ${{ github.ref_name }} --sha ${{ env.sha }} --for-e2e
-
       - uses: actions/setup-node@v4
         with:
           node-version-file: ./website/.nvmrc
-
       - name: Cache .npm
         uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('website/**/package-lock.json') }}
-
       - name: Install dependencies
         run: cd website && npm i
-
       - name: Get Installed Playwright Version
         id: playwright-version
         run: cd website && echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
-
       - name: Cache Playwright Browsers
         uses: actions/cache@v4
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
-
       - name: Install Playwright Browsers and System Dependencies
         run: cd website && npx playwright install --with-deps
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-
       - name: Install only System Dependencies
         run: cd website && npx playwright install-deps
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-
       # Action misbehaved
       # # Waits are identical to the update-argocd-metadata.yml file
       # # Mirror changes to that file
@@ -148,7 +126,6 @@ jobs:
       #     repo-token: ${{ secrets.GITHUB_TOKEN }}
       #     wait-interval: 2
       # # End of wait block
-
       - name: Wait for the pods to be ready
         run: ./.github/scripts/wait_for_pods_to_be_ready.py --timeout ${{ env.wait_timeout }}
       - name: Sleep for 10 secs
@@ -172,7 +149,6 @@ jobs:
           name: test-results
           path: website/test-results/
           retention-days: 30
-
       - name: List running pods
         if: ${{ !cancelled() }}
         run: kubectl get pods --all-namespaces
@@ -182,7 +158,6 @@ jobs:
       - name: Show events
         if: ${{ !cancelled() }}
         run: kubectl get events
-
       - name: Save logs from all containers to file
         if: ${{ !cancelled() }}
         run: ./.github/scripts/collect_kubernetes_logs.sh

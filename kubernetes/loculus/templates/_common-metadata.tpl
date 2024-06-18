@@ -115,6 +115,7 @@ organisms:
       {{- with ($instance.schema | include "loculus.patchMetadataSchema" | fromYaml) }}
       organismName: {{ quote .organismName }}
       loadSequencesAutomatically: {{ .loadSequencesAutomatically | default false }}
+      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       {{ if .image }}
       image: {{ .image }}
       {{ end }}
@@ -124,10 +125,8 @@ organisms:
       primaryKey: accessionVersion
       inputFields: {{- include "loculus.inputFields" . | nindent 8 }}
       metadata:
-        {{ $metadata := concat $commonMetadata .metadata
-            | include "loculus.generateWebsiteMetadata"
-            | fromYaml
-         }}
+        {{- $args := dict "metadata" (concat $commonMetadata .metadata) "nucleotideSequences" $nucleotideSequences}}
+        {{ $metadata := include "loculus.generateWebsiteMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{ .website | toYaml | nindent 6 }}
       {{- end }}
@@ -139,38 +138,82 @@ organisms:
 {{/* Generate website metadata from passed metadata array */}}
 {{- define "loculus.generateWebsiteMetadata" }}
 fields:
-{{- range . }}
-  - name: {{ quote .name }}
-    type: {{ .type | default "string" | quote }}
-    {{- if .autocomplete }}
-    autocomplete: {{ .autocomplete }}
-    {{- end }}
-    {{- if .notSearchable }}
-    notSearchable: {{ .notSearchable }}
-    {{- end }}
-    {{- if .initiallyVisible }}
-    initiallyVisible: {{ .initiallyVisible }}
-    {{- end }}
-    {{- if or (or (eq .type "timestamp")  (eq .type "date")) ( .rangeSearch) }}
-    rangeSearch: true
-    {{- end }}
-    {{- if .hideOnSequenceDetailsPage }}
-    hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
-    {{- end }}
-    {{- if .displayName }}
-    displayName: {{ quote .displayName }}
-    {{- end }}
-    {{- if .truncateColumnDisplayTo }}
-    truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
-    {{- end }}
-    {{- if .customDisplay }}
-    customDisplay:
-      type: {{ quote .customDisplay.type }}
-      url: {{ .customDisplay.url }}
-    {{- end }}
-    header: {{ default "Other" .header }}
+{{- $metadataList := .metadata }}
+{{- $segments := .nucleotideSequences }}
+{{- $use_segments := false }} # Default to false
+{{- if or (lt (len $segments) 1) (and (eq (len $segments) 1) (eq (index $segments 0) "main")) }}
+{{- $use_segments = false }}
+{{- else }}
+{{- $use_segments = true }}
+{{- end }}
+{{- range $metadataList }}
+{{- $currentItem := . }}
+{{- if and $use_segments .perSegment }}
+  {{- range $segment := $segments }}
+    - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
+      type: {{ $currentItem.type | default "string" | quote }}
+      {{- if $currentItem.autocomplete }}
+      autocomplete: {{ $currentItem.autocomplete }}
+      {{- end }}
+      {{- if $currentItem.notSearchable }}
+      notSearchable: {{ $currentItem.notSearchable }}
+      {{- end }}
+      {{- if $currentItem.initiallyVisible }}
+      initiallyVisible: {{ $currentItem.initiallyVisible }}
+      {{- end }}
+      {{- if or (or (eq $currentItem.type "timestamp")  (eq $currentItem.type "date")) ( $currentItem.rangeSearch) }}
+      rangeSearch: true
+      {{- end }}
+      {{- if $currentItem.hideOnSequenceDetailsPage }}
+      hideOnSequenceDetailsPage: {{ $currentItem.hideOnSequenceDetailsPage }}
+      {{- end }}
+      {{- if $currentItem.displayName }}
+      displayName: {{ printf "%s %s" $currentItem.displayName $segment | quote }}
+      {{- end }}
+      {{- if $currentItem.truncateColumnDisplayTo }}
+      truncateColumnDisplayTo: {{ $currentItem.truncateColumnDisplayTo }}
+      {{- end }}
+      {{- if $currentItem.customDisplay }}
+      customDisplay:
+        type: {{ quote $currentItem.customDisplay.type }}
+        url: {{ $currentItem.customDisplay.url }}
+      {{- end }}
+      header: {{ default "Other" $currentItem.header }}
+  {{- end}}
+{{- else }}
+    - name: {{ quote .name }}
+      type: {{ .type | default "string" | quote }}
+      {{- if .autocomplete }}
+      autocomplete: {{ .autocomplete }}
+      {{- end }}
+      {{- if .notSearchable }}
+      notSearchable: {{ .notSearchable }}
+      {{- end }}
+      {{- if .initiallyVisible }}
+      initiallyVisible: {{ .initiallyVisible }}
+      {{- end }}
+      {{- if or (or (eq .type "timestamp")  (eq .type "date")) ( .rangeSearch) }}
+      rangeSearch: true
+      {{- end }}
+      {{- if .hideOnSequenceDetailsPage }}
+      hideOnSequenceDetailsPage: {{ .hideOnSequenceDetailsPage }}
+      {{- end }}
+      {{- if .displayName }}
+      displayName: {{ quote .displayName }}
+      {{- end }}
+      {{- if .truncateColumnDisplayTo }}
+      truncateColumnDisplayTo: {{ .truncateColumnDisplayTo }}
+      {{- end }}
+      {{- if .customDisplay }}
+      customDisplay:
+        type: {{ quote .customDisplay.type }}
+        url: {{ .customDisplay.url }}
+      {{- end }}
+      header: {{ default "Other" .header }}
 {{- end}}
 {{- end}}
+{{- end}}
+
 
 {{/* Generate backend config from passed config object */}}
 {{- define "loculus.generateBackendConfig" }}
@@ -183,12 +226,11 @@ organisms:
   {{ $key }}:
     schema:
       {{- with $instance.schema }}
+      {{- $nucleotideSequences := .nucleotideSequences | default (list "main")}}
       organismName: {{ quote .organismName }}
       metadata:
-        {{ $metadata := (include "loculus.patchMetadataSchema" .
-          | fromYaml).metadata
-          | include "loculus.generateBackendMetadata"
-          | fromYaml }}
+        {{- $args := dict "metadata" (include "loculus.patchMetadataSchema" . | fromYaml).metadata "nucleotideSequences" $nucleotideSequences}}
+        {{ $metadata := include "loculus.generateBackendMetadata" $args | fromYaml }}
         {{ $metadata.fields | toYaml | nindent 8 }}
       {{- end }}
     referenceGenomes:
@@ -199,12 +241,32 @@ organisms:
 {{/* Generate backend metadata from passed metadata array */}}
 {{- define "loculus.generateBackendMetadata" }}
 fields:
-{{- range . }}
+{{- $metadataList := .metadata }}
+{{- $segments := .nucleotideSequences }}
+{{- $use_segments := false }} # Default to false
+{{- if or (lt (len $segments) 1) (and (eq (len $segments) 1) (eq (index $segments 0) "main")) }}
+{{- $use_segments = false }}
+{{- else }}
+{{- $use_segments = true }}
+{{- end }}
+{{- range $metadataList }}
+{{- $currentItem := . }}
+{{- $perSegment := (.perSegment | default false )}}
+{{- if and $use_segments $perSegment }}
+{{- range $segment := $segments }}
+  - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
+    type: {{ $currentItem.type | default "string" | quote }}
+    {{- if $currentItem.required }}
+    required: {{ $currentItem.required }}
+    {{- end }}
+{{- end}}
+{{- else }}
   - name: {{ quote .name }}
     type: {{ .type | default "string" | quote }}
     {{- if .required }}
     required: {{ .required }}
     {{- end }}
+{{- end}}
 {{- end}}
 {{- end}}
 

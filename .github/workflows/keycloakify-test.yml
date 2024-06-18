@@ -1,5 +1,4 @@
 name: keycloakify-test
-
 on:
   workflow_dispatch:
   pull_request:
@@ -9,11 +8,9 @@ on:
   push:
     branches:
       - main
-
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-keycloak-test
   cancel-in-progress: true
-
 jobs:
   keycloakify-test:
     name: Test keycloakify local builds

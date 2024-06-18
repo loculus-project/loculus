@@ -1,10 +1,10 @@
-# Rudimentary SARS-CoV-2 Preprocessing Pipeline
+# Preprocessing Pipeline
 
-This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`.
+This preprocessing pipeline is still a work in progress. It requests unaligned nucleotide sequences from `/extract-unprocessed-data` and submits the results of a Nextclade run to `/submit-processed-data`.
 
 ## Overview
 
-1. Download Nextclade dataset
+1. Download [Nextclade dataset](https://docs.nextstrain.org/projects/nextclade/en/stable/user/datasets.html) for the pathogen - this is required for the preprocessing pipeline. Follow the steps in the [dataset creation guide](https://github.com/nextstrain/nextclade_data/blob/master/docs/dataset-creation-guide.md) to create a dataset for your pathogen if a dataset does not currently exist.
 1. Poll server for new sequences
 1. Put sequences into temporary directory
 1. Run Nextclade on sequences
@@ -38,7 +38,8 @@ This SARS-CoV-2 preprocessing pipeline is only for demonstration purposes. It re
 
    ```bash
    mamba activate loculus-nextclade
-   python main.py
+   pip install -e .
+   prepro
    ```
 
 ### Docker
@@ -58,4 +59,17 @@ docker run -it --platform=linux/amd64 --network host --rm nextclade_processing p
 ## Development
 
 - Install Ruff to lint/format
-- Use `mypy` to check types: `mypy -p src  --python-version 3.12`
+
+When deployed on kubernetes the preprocessing pipeline reads in config files which are created by `loculus/kubernetes/loculus/templates/loculus-preprocessing-config.yaml`. When run locally the pipeline uses only the default values defined in `preprocessing/nextclade/src/loculus_preprocessing/config.py`. When running the preprocessing pipeline locally it makes sense to create a local config file using the command:
+
+```
+../../generate_local_test_config.sh
+```
+
+and use this in the pipeline as follows:
+
+```
+prepro --config-file=../../temp/preprocessing-config.{organism}.yaml --keep-tmp-dir
+```
+
+Additionally, the `--keep-tmp-dir` is useful for debugging issues. The results of nextclade run will be stored in the temp directory, as well as a file called `submission_requests.json` which contains a log of the full submit requests that are sent to the backend.

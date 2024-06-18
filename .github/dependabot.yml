@@ -40,9 +40,9 @@ updates:
       interval: monthly
     groups:
       minorAndPatch:
-          update-types:
-            - "minor"
-            - "patch"
+        update-types:
+          - "minor"
+          - "patch"
   - package-ecosystem: docker
     directories:
       - website
@@ -58,6 +58,6 @@ updates:
       interval: weekly
     groups:
       minorAndPatch:
-          update-types:
-            - "minor"
-            - "patch"
+        update-types:
+          - "minor"
+          - "patch"

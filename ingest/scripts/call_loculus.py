@@ -16,7 +16,7 @@ import yaml
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     encoding="utf-8",
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s %(levelname)8s %(filename)15s%(mode)s - %(message)s ",
     datefmt="%H:%M:%S",
 )
@@ -31,6 +31,8 @@ class Config:
     username: str
     password: str
     group_name: str
+    nucleotide_sequences: list[str]
+    segmented: bool
 
 
 def backend_url(config: Config) -> str:
@@ -135,7 +137,7 @@ def get_or_create_group(config: Config, allow_creation: bool = False) -> str:
     """Returns group id"""
     get_user_groups_url = f"{backend_url(config)}/user/groups"
 
-    logger.debug(f"Getting groups for user: {config.username}")
+    logger.info(f"Getting groups for user: {config.username}")
     get_groups_response = make_request(HTTPMethod.GET, get_user_groups_url, config)
     if not get_groups_response.ok:
         get_groups_response.raise_for_status()
@@ -269,8 +271,17 @@ def get_submitted(config: Config):
 
     url = f"{organism_url(config)}/get-original-metadata"
 
+    if config.segmented:
+        insdc_key = [
+            "insdc_accession_base" + "_" + segment for segment in config.nucleotide_sequences
+        ]
+    else:
+        insdc_key = ["insdc_accession_base"]
+
+    fields = ["hash"] + insdc_key
+
     params = {
-        "fields": ["insdc_accession_base", "hash"],
+        "fields": fields,
         "groupIdsFilter": [],
         "statusesFilter": [],
     }
@@ -297,15 +308,21 @@ def get_submitted(config: Config):
 
     statuses: dict[str, dict[int, str]] = get_sequence_status(config)
 
-    logger.debug(f"Backend has status of: {len(statuses)} sequence entries from ingest")
-    logger.debug(f"Ingest has submitted: {len(entries)} sequence entries to ingest")
+    logger.info(f"Backend has status of: {len(statuses)} sequence entries from ingest")
+    logger.info(f"Ingest has submitted: {len(entries)} sequence entries to ingest")
 
+    logger.debug(entries)
+    logger.debug(statuses)
     for entry in entries:
         loculus_accession = entry["accession"]
         loculus_version = int(entry["version"])
         original_metadata: dict[str, str] = entry["originalMetadata"]
-        insdc_accession = original_metadata.get("insdc_accession_base", "")
         hash_value = original_metadata.get("hash", "")
+        if config.segmented:
+            insdc_accession = "".join([original_metadata[key] for key in insdc_key])
+        else:
+            insdc_accession = original_metadata.get("insdc_accession_base", "")
+
         if insdc_accession not in submitted_dict:
             submitted_dict[insdc_accession] = {
                 "loculus_accession": loculus_accession,
@@ -385,10 +402,10 @@ def submit_to_loculus(metadata, sequences, mode, log_level, config_file, output)
 
     with open(config_file) as file:
         full_config = yaml.safe_load(file)
-        relevant_config = {key: full_config[key] for key in Config.__annotations__}
+        relevant_config = {key: full_config.get(key, []) for key in Config.__annotations__}
         config = Config(**relevant_config)
 
-    logger.debug(f"Config: {config}")
+    logger.info(f"Config: {config}")
 
     if mode in ["submit", "revise"]:
         logging.info(f"Starting {mode}")

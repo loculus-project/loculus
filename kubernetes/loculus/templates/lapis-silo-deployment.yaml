@@ -26,13 +26,13 @@ spec:
         {{- include "loculus.configProcessor" (dict "name" "lapis-silo-database-config" "dockerTag" $dockerTag) | nindent 8 }}
       containers:
         - name: silo
-          image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
+          image: {{ $.Values.images.lapisSilo }}
           resources:
             requests:
               memory: "100Mi"
               cpu: "10m"
             limits:
-              memory: "2Gi"
+              memory: "10Gi"
           ports:
             - containerPort: 8081
           args:
@@ -41,17 +41,20 @@ spec:
             - name: lapis-silo-shared-data
               mountPath: /data
         - name: lapis
-          image: ghcr.io/genspectrum/lapis-v2:{{ $.Values.imageTags.lapis }}
+          image: {{ $.Values.images.lapis }}
           resources:
             requests:
-              memory: "100Mi"
-              cpu: "10m"
+              memory: "220Mi"
+              cpu: "30m"
             limits:
-              memory: "500Mi"
+              memory: "5Gi"
           ports:
             - containerPort: 8080
           args:
             - "--silo.url=http://localhost:8081"
+          env:
+            - name: JVM_OPTS
+              value: -XX:+UseContainerSupport -XX:+UseG1GC -XX:MaxHeapFreeRatio=5 -XX:MinHeapFreeRatio=2 -XX:MaxGCPauseMillis=100
           volumeMounts:
             - name: lapis-silo-database-config-processed
               mountPath: /workspace/database_config.yaml
@@ -60,14 +63,13 @@ spec:
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
         - name: silo-preprocessing
-          image: ghcr.io/genspectrum/lapis-silo:{{ $.Values.imageTags.lapisSilo }}
+          image: {{ $.Values.images.lapisSilo }}
           imagePullPolicy: IfNotPresent
           resources:
-            requests:
-              memory: "100Mi"
-              cpu: "10m"
             limits:
-              memory: "3Gi"
+              memory: "10Gi"
+            requests:
+              memory: "20Mi"
           command:
             - sh
             - /silo_import_wrapper.sh

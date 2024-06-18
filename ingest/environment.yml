@@ -10,7 +10,7 @@ dependencies:
   - biopython
   - click
   - jsonlines
-  - ncbi-datasets-cli >=16.17.1
+  - ncbi-datasets-cli >=16.20.0
   - pandas
   - PyYAML
   - requests

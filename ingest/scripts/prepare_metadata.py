@@ -30,6 +30,7 @@ class Config:
     fasta_id_field: str
     rename: dict[str, str]
     keep: list[str]
+    segmented: bool
 
 
 def split_authors(authors: str) -> str:
@@ -41,11 +42,11 @@ def split_authors(authors: str) -> str:
 
     for i in range(0, len(single_split), 2):
         if i + 1 < len(single_split):
-            result.append(single_split[i + 1].strip() + "\u00a0" + single_split[i].strip())
+            result.append(single_split[i + 1].strip() + " " + single_split[i].strip())
         else:
             result.append(single_split[i].strip())
 
-    return ", ".join(result)
+    return ", ".join(sorted(result))
 
 
 @click.command()
@@ -93,6 +94,8 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
             record[to_key] = val
 
     keys_to_keep = set(config.rename.values()) | set(config.keep)
+    if config.segmented:
+        keys_to_keep.add("segment")
     for record in metadata:
         for key in list(record.keys()):
             if key not in keys_to_keep:
