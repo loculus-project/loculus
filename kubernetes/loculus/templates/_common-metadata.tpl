@@ -220,22 +220,18 @@ organisms:
 fields:
 {{- $metadataList := .metadata }}
 {{- $segments := .nucleotideSequences }}
-{{- $use_segments := false }}
-{{- if or (lt (len $segments) 1) (and (eq (len $segments) 1) (eq (index $segments 0) "main")) }}
-{{- $use_segments = false }}
-{{- else }}
-{{- $use_segments = true }}
-{{- end }}
+{{- $is_segmented := gt (len $segments) 1 }}
 {{- range $metadataList }}
 {{- $currentItem := . }}
-{{- $perSegment := (.perSegment | default false )}}
-{{- if and $use_segments $perSegment }}
+{{- if and $is_segmented .perSegment }}
 {{- range $segment := $segments }}
-  - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
-    type: {{ $currentItem.type | default "string" | quote }}
-    {{- if $currentItem.required }}
-    required: {{ $currentItem.required }}
+{{- with $currentItem }}
+  - name: {{ printf "%s_%s" .name $segment | quote }}
+    type: {{ .type | default "string" | quote }}
+    {{- if .required }}
+    required: {{ .required }}
     {{- end }}
+{{- end }}
 {{- end}}
 {{- else }}
   - name: {{ quote .name }}
