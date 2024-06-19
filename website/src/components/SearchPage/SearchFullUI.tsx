@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sentenceCase } from 'change-case';
 import { useEffect, useMemo, useState } from 'react';
 
+import { CustomizeModal } from './CustomizeModal.tsx';
 import { DownloadDialog } from './DownloadDialog/DownloadDialog.tsx';
 import { RecentSequencesBanner } from './RecentSequencesBanner.tsx';
 import { SearchForm } from './SearchForm';
@@ -22,6 +23,8 @@ const orderKey = 'orderBy';
 const orderDirectionKey = 'order';
 
 const VISIBILITY_PREFIX = 'visibility_';
+
+const COLUMN_VISIBILITY_PREFIX = 'column_';
 
 interface InnerSearchFullUIProps {
     accessToken?: string;
@@ -49,6 +52,8 @@ export const InnerSearchFullUI = ({
         hiddenFieldValues = {};
     }
     const metadataSchema = schema.metadata;
+
+    const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
 
     const metadataSchemaWithExpandedRanges = useMemo(() => {
         const result = [];
@@ -82,23 +87,7 @@ export const InnerSearchFullUI = ({
     const [state, setState] = useQueryAsState({});
     const [page, setPage] = useState(1);
 
-    const orderByField = state.orderBy ?? schema.defaultOrderBy ?? schema.primaryKey;
-    const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
-
-    const setOrderByField = (field: string) => {
-        setState((prev: QueryState) => ({
-            ...prev,
-            orderBy: field,
-        }));
-    };
-    const setOrderDirection = (direction: string) => {
-        setState((prev: QueryState) => ({
-            ...prev,
-            order: direction,
-        }));
-    };
-
-    const visibilities = useMemo(() => {
+    const searchVisibilities = useMemo(() => {
         const visibilities = new Map<string, boolean>();
         schema.metadata.forEach((field) => {
             if (field.hideOnSequenceDetailsPage === true) {
@@ -115,9 +104,53 @@ export const InnerSearchFullUI = ({
         return visibilities;
     }, [schema.metadata, state]);
 
+    const columnVisibilities = useMemo(() => {
+        const visibilities = new Map<string, boolean>();
+        schema.metadata.forEach((field) => {
+            if (field.hideOnSequenceDetailsPage === true) {
+                return;
+            }
+            visibilities.set(field.name, schema.tableColumns.includes(field.name));
+        });
+
+        const visibilityKeys = Object.keys(state).filter((key) => key.startsWith(COLUMN_VISIBILITY_PREFIX));
+
+        for (const key of visibilityKeys) {
+            visibilities.set(key.slice(COLUMN_VISIBILITY_PREFIX.length), state[key] === 'true');
+        }
+
+        return visibilities;
+    }, [schema.metadata, schema.tableColumns, state]);
+
+    const columnsToShow = useMemo(() => {
+        return schema.metadata
+            .filter((field) => columnVisibilities.get(field.name) === true)
+            .map((field) => field.name);
+    }, [schema.metadata, columnVisibilities]);
+
+    let orderByField = state.orderBy ?? schema.defaultOrderBy ?? schema.primaryKey;
+    if (!columnsToShow.includes(orderByField)) {
+        orderByField = schema.primaryKey;
+    }
+
+    const orderDirection = state.order ?? schema.defaultOrder ?? 'ascending';
+
+    const setOrderByField = (field: string) => {
+        setState((prev: QueryState) => ({
+            ...prev,
+            orderBy: field,
+        }));
+    };
+    const setOrderDirection = (direction: string) => {
+        setState((prev: QueryState) => ({
+            ...prev,
+            order: direction,
+        }));
+    };
+
     const fieldValues = useMemo(() => {
         const fieldKeys = Object.keys(state)
-            .filter((key) => !key.startsWith(VISIBILITY_PREFIX))
+            .filter((key) => !key.startsWith(VISIBILITY_PREFIX) && !key.startsWith(COLUMN_VISIBILITY_PREFIX))
             .filter((key) => key !== orderKey && key !== orderDirectionKey);
 
         const values: Record<string, any> = { ...hiddenFieldValues };
@@ -141,7 +174,7 @@ export const InnerSearchFullUI = ({
         setPage(1);
     };
 
-    const setAVisibility = (fieldName: string, visible: boolean) => {
+    const setASearchVisibility = (fieldName: string, visible: boolean) => {
         setState((prev: any) => ({
             ...prev,
             [`${VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
@@ -150,6 +183,13 @@ export const InnerSearchFullUI = ({
         if (!visible) {
             setAFieldValue(fieldName, '');
         }
+    };
+
+    const setAColumnVisibility = (fieldName: string, visible: boolean) => {
+        setState((prev: any) => ({
+            ...prev,
+            [`${COLUMN_VISIBILITY_PREFIX}${fieldName}`]: visible ? 'true' : 'false',
+        }));
     };
 
     const lapisUrl = getLapisUrl(clientConfig, organism);
@@ -204,7 +244,7 @@ export const InnerSearchFullUI = ({
         // @ts-expect-error because the hooks don't accept OrderBy
         detailsHook.mutate({
             ...lapisSearchParameters,
-            fields: [...schema.tableColumns, schema.primaryKey],
+            fields: [...columnsToShow, schema.primaryKey],
             limit: pageSize,
             offset: (page - 1) * pageSize,
             orderBy: OrderByList,
@@ -231,6 +271,21 @@ export const InnerSearchFullUI = ({
 
     return (
         <div className='flex flex-col md:flex-row gap-8 md:gap-4'>
+            <CustomizeModal
+                thingToCustomize='column'
+                isCustomizeModalOpen={isColumnModalOpen}
+                toggleCustomizeModal={() => setIsColumnModalOpen(!isColumnModalOpen)}
+                alwaysPresentFieldNames={[]}
+                visibilities={columnVisibilities}
+                setAVisibility={setAColumnVisibility}
+                nameToLabelMap={consolidatedMetadataSchema.reduce(
+                    (acc, field) => {
+                        acc[field.name] = field.displayName ?? field.label ?? sentenceCase(field.name);
+                        return acc;
+                    },
+                    {} as Record<string, string>,
+                )}
+            />
             <SeqPreviewModal
                 seqId={previewedSeqId ?? ''}
                 accessToken={accessToken}
@@ -251,8 +306,8 @@ export const InnerSearchFullUI = ({
                     setAFieldValue={setAFieldValue}
                     consolidatedMetadataSchema={consolidatedMetadataSchema}
                     lapisUrl={lapisUrl}
-                    visibilities={visibilities}
-                    setAVisibility={setAVisibility}
+                    searchVisibilities={searchVisibilities}
+                    setASearchVisibility={setASearchVisibility}
                     lapisSearchParameters={lapisSearchParameters}
                 />
             </div>
@@ -299,13 +354,21 @@ export const InnerSearchFullUI = ({
                                     <span className='loading loading-spinner loading-xs ml-3 appearSlowly'></span>
                                 ) : null}
                             </div>
+                            <div className='flex'>
+                                <button
+                                    className='text-gray-800 hover:text-gray-600 mr-4 underline text-primary-700 hover:text-primary-500'
+                                    onClick={() => setIsColumnModalOpen(true)}
+                                >
+                                    Customize columns
+                                </button>
 
-                            <DownloadDialog
-                                lapisUrl={lapisUrl}
-                                lapisSearchParameters={lapisSearchParameters}
-                                referenceGenomesSequenceNames={referenceGenomesSequenceNames}
-                                hiddenFieldValues={hiddenFieldValues}
-                            />
+                                <DownloadDialog
+                                    lapisUrl={lapisUrl}
+                                    lapisSearchParameters={lapisSearchParameters}
+                                    referenceGenomesSequenceNames={referenceGenomesSequenceNames}
+                                    hiddenFieldValues={hiddenFieldValues}
+                                />
+                            </div>
                         </div>
 
                         <Table
@@ -325,6 +388,7 @@ export const InnerSearchFullUI = ({
                             }
                             setOrderByField={setOrderByField}
                             setOrderDirection={setOrderDirection}
+                            columnsToShow={columnsToShow}
                         />
 
                         <div className='mt-4 flex justify-center'>
