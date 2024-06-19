@@ -319,7 +319,7 @@ export const InnerSearchFullUI = ({
                     (aggregatedHook.error?.response?.status === 503 ? (
                         <div className='p-3 rounded-lg text-lg text-gray-700 text-italic'>
                             {' '}
-                            The database is currently empty.
+                            The retrieval database is currently initializing – please check back later.
                         </div>
                     ) : (
                         <div className='bg-red-400 p-3 rounded-lg'>
