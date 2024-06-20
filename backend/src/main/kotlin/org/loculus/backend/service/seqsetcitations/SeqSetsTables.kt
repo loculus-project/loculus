@@ -2,6 +2,7 @@ package org.loculus.backend.service.seqsetcitations
 
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.kotlin.datetime.datetime
+import org.loculus.backend.service.submission.SequenceEntriesTable
 
 object SeqSetsTable : Table("seqsets") {
     val seqSetId = uuid("seqset_id").autoGenerate()
@@ -14,17 +15,10 @@ object SeqSetsTable : Table("seqsets") {
     override val primaryKey = PrimaryKey(seqSetId, seqSetVersion)
 }
 
-object SeqSetRecordsTable : Table("seqset_records") {
-    val seqSetRecordId = long("seqset_record_id").autoIncrement()
-    val accession = varchar("accession", 255)
-    val type = varchar("type", 255)
-    val isFocal = bool("is_focal").default(true)
-    override val primaryKey = PrimaryKey(seqSetRecordId)
-}
-
 object SeqSetToRecordsTable : Table("seqset_to_records") {
-    val seqSetRecordId = long("seqset_record_id") references SeqSetRecordsTable.seqSetRecordId
     val seqSetId = uuid("seqset_id") references SeqSetsTable.seqSetId
     val seqSetVersion = long("seqset_version") references SeqSetsTable.seqSetVersion
-    override val primaryKey = PrimaryKey(seqSetRecordId, seqSetId, seqSetVersion)
+    val sequenceAccession = varchar("sequence_accession", 255)
+    val isFocal = bool("is_focal")
+    override val primaryKey = PrimaryKey(seqSetId, seqSetVersion, sequenceAccession)
 }

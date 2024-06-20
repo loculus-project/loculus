@@ -8,12 +8,6 @@ import java.util.*
 data class SubmittedSeqSetRecord(
     val accession: Accession,
     @Schema(
-        description = "The type of the accession.",
-        type = "string",
-        example = "Loculus",
-    )
-    val type: String,
-    @Schema(
         description = "Whether the record is focal or part of a background set.",
         type = "boolean",
         example = "true",
@@ -35,9 +29,7 @@ data class SubmittedSeqSetUpdate(
 )
 
 data class SeqSetRecord(
-    val seqSetRecordId: Long,
     val accession: Accession,
-    val type: String,
     val isFocal: Boolean = true,
 )
 

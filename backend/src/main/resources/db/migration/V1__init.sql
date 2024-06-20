@@ -127,25 +127,13 @@ create table seqsets (
     primary key (seqset_id, seqset_version)
 );
 
-create table seqset_records (
-    seqset_record_id bigserial,
-    accession text not null,
-    type text not null,
-    is_focal boolean not null,
-
-    primary key (seqset_record_id)
-);
-
 create table seqset_to_records (
-    seqset_record_id bigserial not null,
     seqset_id uuid not null,
     seqset_version int8 not null,
+    sequence_accession text not null, -- At the moment, this may but doesn't need to contain the version.
+    is_focal boolean not null,
 
-    primary key (seqset_record_id, seqset_id, seqset_version),
-    constraint foreign_key_seqset_record_id
-        foreign key(seqset_record_id)
-            references seqset_records(seqset_record_id)
-            on delete cascade,
+    primary key (seqset_id, seqset_version, sequence_accession),
     constraint foreign_key_seqset_id
         foreign key(seqset_id, seqset_version)
             references seqsets(seqset_id, seqset_version)

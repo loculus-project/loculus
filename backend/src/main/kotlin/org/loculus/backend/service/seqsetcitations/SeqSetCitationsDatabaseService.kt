@@ -65,25 +65,20 @@ class SeqSetCitationsDatabaseService(
 
         val insertedSet = SeqSetsTable
             .insert {
-                it[SeqSetsTable.name] = seqSetName
-                it[SeqSetsTable.description] = seqSetDescription ?: ""
-                it[SeqSetsTable.seqSetVersion] = 1
-                it[SeqSetsTable.createdAt] = now
-                it[SeqSetsTable.createdBy] = authenticatedUser.username
+                it[name] = seqSetName
+                it[description] = seqSetDescription ?: ""
+                it[seqSetVersion] = 1
+                it[createdAt] = now
+                it[createdBy] = authenticatedUser.username
             }
 
         for (record in seqSetRecords) {
-            val insertedRecord = SeqSetRecordsTable
-                .insert {
-                    it[SeqSetRecordsTable.accession] = record.accession
-                    it[SeqSetRecordsTable.type] = record.type
-                    it[SeqSetRecordsTable.isFocal] = record.isFocal ?: true
-                }
             SeqSetToRecordsTable
                 .insert {
-                    it[SeqSetToRecordsTable.seqSetRecordId] = insertedRecord[SeqSetRecordsTable.seqSetRecordId]
-                    it[SeqSetToRecordsTable.seqSetId] = insertedSet[SeqSetsTable.seqSetId]
-                    it[SeqSetToRecordsTable.seqSetVersion] = 1
+                    it[seqSetId] = insertedSet[SeqSetsTable.seqSetId]
+                    it[seqSetVersion] = 1
+                    it[sequenceAccession] = record.accession
+                    it[isFocal] = record.isFocal
                 }
         }
 
@@ -133,39 +128,20 @@ class SeqSetCitationsDatabaseService(
         val insertedSet = SeqSetsTable
             .insert {
                 it[SeqSetsTable.seqSetId] = seqSetUUID
-                it[SeqSetsTable.name] = seqSetName
-                it[SeqSetsTable.description] = seqSetDescription ?: ""
-                it[SeqSetsTable.seqSetVersion] = newVersion
-                it[SeqSetsTable.createdAt] = now
-                it[SeqSetsTable.createdBy] = username
+                it[name] = seqSetName
+                it[description] = seqSetDescription ?: ""
+                it[seqSetVersion] = newVersion
+                it[createdAt] = now
+                it[createdBy] = username
             }
 
         for (record in seqSetRecords) {
-            val existingRecord = SeqSetRecordsTable
-                .selectAll()
-                .where {
-                    (SeqSetRecordsTable.accession eq record.accession) and
-                        (SeqSetRecordsTable.isFocal eq record.isFocal)
-                }
-                .singleOrNull()
-
-            val seqSetRecordId = if (existingRecord == null) {
-                val insertedRecord = SeqSetRecordsTable
-                    .insert {
-                        it[SeqSetRecordsTable.accession] = record.accession
-                        it[SeqSetRecordsTable.type] = record.type
-                        it[SeqSetRecordsTable.isFocal] = record.isFocal ?: true
-                    }
-                insertedRecord[SeqSetRecordsTable.seqSetRecordId]
-            } else {
-                existingRecord[SeqSetRecordsTable.seqSetRecordId]
-            }
-
             SeqSetToRecordsTable
                 .insert {
-                    it[SeqSetToRecordsTable.seqSetVersion] = newVersion
+                    it[seqSetVersion] = newVersion
                     it[SeqSetToRecordsTable.seqSetId] = insertedSet[SeqSetsTable.seqSetId]
-                    it[SeqSetToRecordsTable.seqSetRecordId] = seqSetRecordId
+                    it[sequenceAccession] = record.accession
+                    it[isFocal] = record.isFocal
                 }
         }
 
@@ -231,7 +207,6 @@ class SeqSetCitationsDatabaseService(
         }
 
         val selectedSeqSetRecords = SeqSetToRecordsTable
-            .innerJoin(SeqSetRecordsTable)
             .selectAll()
             .where {
                 (SeqSetToRecordsTable.seqSetId eq seqSetUuid) and
@@ -239,10 +214,8 @@ class SeqSetCitationsDatabaseService(
             }
             .map {
                 SeqSetRecord(
-                    it[SeqSetRecordsTable.seqSetRecordId],
-                    it[SeqSetRecordsTable.accession],
-                    it[SeqSetRecordsTable.type],
-                    it[SeqSetRecordsTable.isFocal],
+                    it[SeqSetToRecordsTable.sequenceAccession],
+                    it[SeqSetToRecordsTable.isFocal]
                 )
             }
 
@@ -291,8 +264,8 @@ class SeqSetCitationsDatabaseService(
 
         SeqSetsTable.deleteWhere {
             (SeqSetsTable.seqSetId eq seqSetUuid) and
-                (SeqSetsTable.seqSetVersion eq version) and
-                (SeqSetsTable.createdBy eq username)
+                (seqSetVersion eq version) and
+                (createdBy eq username)
         }
     }
 
@@ -370,8 +343,7 @@ class SeqSetCitationsDatabaseService(
             .groupBy(SeqSetsTable.seqSetId)
             .alias("maxVersionPerSeqSet")
 
-        val latestSeqSetWithUserAccession = SeqSetRecordsTable
-            .innerJoin(SeqSetToRecordsTable)
+        val latestSeqSetWithUserAccession = SeqSetToRecordsTable
             .innerJoin(SeqSetsTable)
             .join(
                 maxVersionPerSeqSet,
@@ -382,10 +354,10 @@ class SeqSetCitationsDatabaseService(
                 },
             )
             .selectAll()
-            .where { (SeqSetRecordsTable.accession inList userAccessionStrings) }
+            .where { (SeqSetToRecordsTable.sequenceAccession inList userAccessionStrings) }
             .map {
                 SeqSetWithAccession(
-                    it[SeqSetRecordsTable.accession],
+                    it[SeqSetToRecordsTable.sequenceAccession],
                     it[SeqSetToRecordsTable.seqSetId],
                     it[SeqSetToRecordsTable.seqSetVersion],
                     Timestamp.valueOf(it[SeqSetsTable.createdAt].toJavaLocalDateTime()),
@@ -479,7 +451,6 @@ class SeqSetCitationsDatabaseService(
         val oldSubmittedSeqSetRecords = oldSeqSetRecords.map {
             SubmittedSeqSetRecord(
                 it.accession,
-                it.type,
                 it.isFocal,
             )
         }
