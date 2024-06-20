@@ -1186,3 +1186,4 @@ secrets:
 enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
+enforceHTTPS: true
