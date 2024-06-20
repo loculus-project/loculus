@@ -17,7 +17,6 @@ function formatField(value: any, maxLength: number, type: string): string {
         return `${value.toString().slice(0, maxLength)}…`;
     } else if (typeof value === 'number' && Number.isInteger(value)) {
         if(type === 'timestamp') {
-            // iso format
             return new Date(value*1000).toISOString().slice(0, 10);
         }
         return value.toLocaleString('en-US');
