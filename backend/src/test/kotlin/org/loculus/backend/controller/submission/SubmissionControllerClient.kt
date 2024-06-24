@@ -96,17 +96,15 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         jwt: String? = jwtForDefaultUser,
         page: Int? = null,
         size: Int? = null,
-    ): ResultActions {
-        return mockMvc.perform(
-            get(addOrganismToPath("/get-sequences", organism = organism))
-                .withAuth(jwt)
-                .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
-                .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
-                .param("warningsFilter", warningsFilter?.name)
-                .param("page", page?.toString())
-                .param("size", size?.toString()),
-        )
-    }
+    ): ResultActions = mockMvc.perform(
+        get(addOrganismToPath("/get-sequences", organism = organism))
+            .withAuth(jwt)
+            .param("groupIdsFilter", groupIdsFilter?.joinToString(",") { it.toString() })
+            .param("statusesFilter", statusesFilter?.joinToString(",") { it.name })
+            .param("warningsFilter", warningsFilter?.name)
+            .param("page", page?.toString())
+            .param("size", size?.toString()),
+    )
 
     fun getSequenceEntryToEdit(
         accession: Accession,
@@ -124,14 +122,12 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         editedData: UnprocessedData,
         organism: String = DEFAULT_ORGANISM,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions {
-        return mockMvc.perform(
-            post(addOrganismToPath("/submit-edited-data", organism = organism))
-                .withAuth(jwt)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(editedData)),
-        )
-    }
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/submit-edited-data", organism = organism))
+            .withAuth(jwt)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(objectMapper.writeValueAsString(editedData)),
+    )
 
     fun approveProcessedSequenceEntries(
         scope: ApproveDataScope,
@@ -228,13 +224,12 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .param("fields", fields?.joinToString(",")),
     )
 
-    private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String {
-        return if (listOfSequencesToApprove != null) {
+    private fun serialize(listOfSequencesToApprove: List<AccessionVersionInterface>? = null): String =
+        if (listOfSequencesToApprove != null) {
             objectMapper.writeValueAsString(
                 listOfSequencesToApprove.map { AccessionVersion(it.accession, it.version) },
             )
         } else {
             "null"
         }
-    }
 }

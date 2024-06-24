@@ -67,55 +67,48 @@ class SecurityConfig {
     fun securityFilterChain(
         httpSecurity: HttpSecurity,
         keycloakAuthoritiesConverter: KeycloakAuthenticationConverter,
-    ): SecurityFilterChain {
-        return httpSecurity
-            .authorizeHttpRequests { auth ->
-                auth.requestMatchers(
-                    "/",
-                    "favicon.ico",
-                    "/error/**",
-                    "/actuator/**",
-                    "/api-docs**",
-                    "/api-docs/**",
-                    "/swagger-ui/**",
-                ).permitAll()
-                auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
-                auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
-                auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
-                auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
-                auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
-                auth.anyRequest().authenticated()
+    ): SecurityFilterChain = httpSecurity
+        .authorizeHttpRequests { auth ->
+            auth.requestMatchers(
+                "/",
+                "favicon.ico",
+                "/error/**",
+                "/actuator/**",
+                "/api-docs**",
+                "/api-docs/**",
+                "/swagger-ui/**",
+            ).permitAll()
+            auth.requestMatchers(HttpMethod.GET, *getEndpointsThatArePublic).permitAll()
+            auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
+            auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
+            auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
+            auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
+            auth.anyRequest().authenticated()
+        }
+        .oauth2ResourceServer { oauth2 ->
+            oauth2.jwt { jwt ->
+                jwt.jwtAuthenticationConverter(keycloakAuthoritiesConverter)
             }
-            .oauth2ResourceServer { oauth2 ->
-                oauth2.jwt { jwt ->
-                    jwt.jwtAuthenticationConverter(keycloakAuthoritiesConverter)
-                }
-                    .authenticationEntryPoint(
-                        LoggingAuthenticationEntryPoint(BearerTokenAuthenticationEntryPoint()),
-                    )
-                    .accessDeniedHandler(LoggingAccessDeniedHandler(defaultAccessDeniedHandler))
-            }
-            .build()
-    }
+                .authenticationEntryPoint(
+                    LoggingAuthenticationEntryPoint(BearerTokenAuthenticationEntryPoint()),
+                )
+                .accessDeniedHandler(LoggingAccessDeniedHandler(defaultAccessDeniedHandler))
+        }
+        .build()
 }
 
 @Component
-class KeycloakAuthenticationConverter(
-    val authoritiesConverter: KeycloakAuthoritiesConverter,
-) :
+class KeycloakAuthenticationConverter(val authoritiesConverter: KeycloakAuthoritiesConverter) :
     Converter<Jwt, JwtAuthenticationToken> {
-    override fun convert(jwt: Jwt): JwtAuthenticationToken {
-        return JwtAuthenticationToken(
-            jwt,
-            authoritiesConverter.convert(jwt),
-            jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME),
-        )
-    }
+    override fun convert(jwt: Jwt): JwtAuthenticationToken = JwtAuthenticationToken(
+        jwt,
+        authoritiesConverter.convert(jwt),
+        jwt.getClaimAsString(StandardClaimNames.PREFERRED_USERNAME),
+    )
 }
 
 @Component
-class KeycloakAuthoritiesConverter :
-    Converter<Jwt, List<SimpleGrantedAuthority>> {
+class KeycloakAuthoritiesConverter : Converter<Jwt, List<SimpleGrantedAuthority>> {
     override fun convert(jwt: Jwt): List<SimpleGrantedAuthority> {
         val roles = getRoles(jwt)
         return roles.map { role: String -> SimpleGrantedAuthority(role) }

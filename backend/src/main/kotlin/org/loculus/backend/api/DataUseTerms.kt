@@ -45,10 +45,8 @@ enum class DataUseTermsType {
     companion object {
         private val stringToEnumMap: Map<String, DataUseTermsType> = entries.associateBy { it.name }
 
-        fun fromString(dataUseTermsTypeString: String): DataUseTermsType {
-            return stringToEnumMap[dataUseTermsTypeString]
-                ?: throw IllegalArgumentException("Unknown DataUseTermsType: $dataUseTermsTypeString")
-        }
+        fun fromString(dataUseTermsTypeString: String): DataUseTermsType = stringToEnumMap[dataUseTermsTypeString]
+            ?: throw IllegalArgumentException("Unknown DataUseTermsType: $dataUseTermsTypeString")
     }
 }
 
@@ -85,25 +83,21 @@ sealed interface DataUseTerms {
     }
 
     companion object {
-        fun fromParameters(type: DataUseTermsType, restrictedUntilString: String?): DataUseTerms {
-            return when (type) {
-                DataUseTermsType.OPEN -> Open
-                DataUseTermsType.RESTRICTED -> Restricted(parseRestrictedUntil(restrictedUntilString))
-            }
+        fun fromParameters(type: DataUseTermsType, restrictedUntilString: String?): DataUseTerms = when (type) {
+            DataUseTermsType.OPEN -> Open
+            DataUseTermsType.RESTRICTED -> Restricted(parseRestrictedUntil(restrictedUntilString))
         }
 
-        fun fromParameters(type: DataUseTermsType, restrictedUntilString: LocalDate?): DataUseTerms {
-            return when (type) {
-                DataUseTermsType.OPEN -> Open
-                DataUseTermsType.RESTRICTED ->
-                    if (restrictedUntilString == null) {
-                        throw BadRequestException(
-                            "The date 'restrictedUntil' must be set if 'dataUseTermsType' is RESTRICTED.",
-                        )
-                    } else {
-                        Restricted(restrictedUntilString)
-                    }
-            }
+        fun fromParameters(type: DataUseTermsType, restrictedUntilString: LocalDate?): DataUseTerms = when (type) {
+            DataUseTermsType.OPEN -> Open
+            DataUseTermsType.RESTRICTED ->
+                if (restrictedUntilString == null) {
+                    throw BadRequestException(
+                        "The date 'restrictedUntil' must be set if 'dataUseTermsType' is RESTRICTED.",
+                    )
+                } else {
+                    Restricted(restrictedUntilString)
+                }
         }
 
         private fun parseRestrictedUntil(restrictedUntilString: String?): LocalDate {
