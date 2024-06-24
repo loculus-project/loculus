@@ -40,13 +40,13 @@ const defaultReferenceGenomesSequenceNames: ReferenceGenomesSequenceNames = {
     genes: ['gene1', 'gene2'],
 };
 
-const visibilities = new Map<string, boolean>([
+const searchVisibilities = new Map<string, boolean>([
     ['field1', true],
     ['field3', true],
 ]);
 
 const setAFieldValue = vi.fn();
-const setAVisibility = vi.fn();
+const setASearchVisibility = vi.fn();
 
 const renderSearchForm = ({
     consolidatedMetadataSchema = [...defaultSearchFormFilters],
@@ -61,8 +61,8 @@ const renderSearchForm = ({
         fieldValues,
         setAFieldValue,
         lapisUrl: 'http://lapis.dummy.url',
-        visibilities,
-        setAVisibility,
+        searchVisibilities,
+        setASearchVisibility,
         referenceGenomesSequenceNames,
         lapisSearchParameters,
     };

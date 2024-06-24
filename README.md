@@ -8,7 +8,7 @@ Loculus is a software package to power microbial genomial databases.
 
 Additional documentation for development is available in each folder's README. This file contains a high-level overview of the project and shared development information that is best kept in one place.
 
-If you would like to develop with a full local loculus instance you need to first:
+If you would like to develop with a full local loculus instance for development you need to:
 
 1. Deploy a local kubernetes instance: [kubernetes](/kubernetes/README.md)
 2. Deploy the backend: [backend](/backend/README.md)
