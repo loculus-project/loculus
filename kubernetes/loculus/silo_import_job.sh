@@ -109,39 +109,30 @@ download_data() {
 }
 
 preprocessing() {
-  # TODO: #1489  Remove emptiness test once https://github.com/GenSpectrum/LAPIS-SILO/issues/244 fixed
-  rough_size_of_empty_zstd_file="12"
-  size_of_data=$(stat -c %s "$new_input_data")
-  if [ "$size_of_data" -gt "$rough_size_of_empty_zstd_file" ]; then
-    echo "data.ndjson.zst is not empty ($size_of_data bytes), starting preprocessing"
+  echo "Starting preprocessing"
 
-    rm -f "$silo_input_data"
+  rm -f "$silo_input_data"
 
-    # This is necessary because the silo preprocessing is configured to expect the input data
-    # at /preprocessing/input/data.ndjson.zst
-    cp "$new_input_data" "$silo_input_data"
-    
-    set +e
-    time /app/siloApi --preprocessing
-    exit_code=$?
-    set -e
+  # This is necessary because the silo preprocessing is configured to expect the input data
+  # at /preprocessing/input/data.ndjson.zst
+  cp "$new_input_data" "$silo_input_data"
+  
+  set +e
+  time /app/siloApi --preprocessing
+  exit_code=$?
+  set -e
 
-    if [ $exit_code -ne 0 ]; then
-      echo "SiloApi command failed with exit code $exit_code, cleaning up and exiting."
-      delete_all_input # Delete input so that we don't skip preprocessing next time due to hash equality
-      exit $exit_code
-    else
-      echo "SiloApi command succeeded"
-      echo "Removing touchfile $new_input_touchfile to indicate successful processing"
-      rm -f "$new_input_touchfile"
-    fi
-
-    echo "preprocessing for $current_timestamp done"
+  if [ $exit_code -ne 0 ]; then
+    echo "SiloApi command failed with exit code $exit_code, cleaning up and exiting."
+    delete_all_input # Delete input so that we don't skip preprocessing next time due to hash equality
+    exit $exit_code
   else
-    echo "empty data.ndjson.zst ($size_of_data bytes), deleting all input"
-    delete_all_input
-
+    echo "SiloApi command succeeded"
+    echo "Removing touchfile $new_input_touchfile to indicate successful processing"
+    rm -f "$new_input_touchfile"
   fi
+
+  echo "preprocessing for $current_timestamp done"
   echo
 }
 
