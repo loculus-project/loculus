@@ -97,8 +97,10 @@ The tests use Testcontainers to start a PostgreSQL database. This requires Docke
 
 ## Format
 
+As different IDEs have different default settings for ktlint we recommend to use the [ktlint CLI](https://github.com/pinterest/ktlint) for formatting, the `.editorconfig` contains additional custom settings.
+
 ```bash
-./gradlew ktlintFormat
+ktlint --editorconfig=.editorconfig --format
 ```
 
 ## Logs
