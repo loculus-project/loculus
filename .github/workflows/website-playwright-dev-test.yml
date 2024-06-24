@@ -1,5 +1,4 @@
 name: Dev server test
-
 on:
   pull_request:
     paths:
@@ -10,13 +9,10 @@ on:
   push:
     branches:
       - main
-
   workflow_dispatch:
-
 concurrency:
   group: ci-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}-node-dev
   cancel-in-progress: true
-
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -29,23 +25,19 @@ jobs:
         #  - macos-latest
         exclude:
           - os: ${{ github.ref != 'refs/heads/main' && 'macos-latest' }}
-
     steps:
       - uses: azure/setup-helm@v4
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install yaml package
         run: pip3 install PyYAML requests
-
       - name: Generate local test config
         run: ./generate_local_test_config.sh
-
       - name: Install dependencies
         working-directory: website
         run: |
           npm install
           npm install playwright --save-dev
-
       - name: Test dev node server
         working-directory: website
         run: |

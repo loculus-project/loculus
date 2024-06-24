@@ -30,6 +30,7 @@ type TableProps = {
     orderBy: OrderBy;
     setOrderByField: (field: string) => void;
     setOrderDirection: (direction: 'ascending' | 'descending') => void;
+    columnsToShow: string[];
 };
 
 export const Table: FC<TableProps> = ({
@@ -40,12 +41,13 @@ export const Table: FC<TableProps> = ({
     orderBy,
     setOrderByField,
     setOrderDirection,
+    columnsToShow,
 }) => {
     const primaryKey = schema.primaryKey;
 
     const maxLengths = Object.fromEntries(schema.metadata.map((m) => [m.name, m.truncateColumnDisplayTo ?? 100]));
 
-    const columns = schema.tableColumns.map((field) => ({
+    const columns = columnsToShow.map((field) => ({
         field,
         headerName: schema.metadata.find((m) => m.name === field)?.displayName ?? capitalCase(field),
         maxLength: maxLengths[field],

@@ -187,7 +187,7 @@ function generateAndDownloadFastaFile(editedSequences: Row[], editedData: Sequen
     const fileContent =
         editedSequences.length === 1
             ? `>${accessionVersion}\n${editedSequences[0].value}`
-            : editedSequences.map((sequence) => `>${accessionVersion}_${sequence.key}\n${sequence.value}\n\n`).join();
+            : editedSequences.map((sequence) => `>${accessionVersion}_${sequence.key}\n${sequence.value}\n`).join('');
 
     const blob = new Blob([fileContent], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -338,8 +338,12 @@ const extractProcessedSequences = (editedData: SequenceEntryToEdit) => {
     ].flatMap(({ type, sequences }) =>
         Object.entries(sequences).map(([sequenceName, sequence]) => {
             let label = sequenceName;
-            if (label === 'main' && type !== 'gene') {
-                label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+            if (type !== 'gene') {
+                if (label === 'main') {
+                    label = type === 'unaligned' ? 'Sequence' : 'Aligned';
+                } else {
+                    label = type === 'unaligned' ? `${sequenceName} (unaligned)` : `${sequenceName} (aligned)`;
+                }
             }
             return { label, sequence };
         }),

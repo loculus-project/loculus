@@ -24,7 +24,7 @@ data:
       metadata:
       {{- range (concat $commonMetadata .metadata) }}
       {{- $currentItem := . }}
-      {{- if and $use_segments .per_segment }}
+      {{- if and $use_segments .perSegment }}
         {{- range $segment := $nucleotideSequences }}
         - name: {{ printf "%s_%s" $currentItem.name $segment | quote }}
           {{- $type := default "string" $currentItem.type }}
