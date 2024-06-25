@@ -82,10 +82,7 @@ class ProcessedSequenceEntryValidatorFactory(private val backendConfig: BackendC
     }
 }
 
-class ProcessedSequenceEntryValidator(
-    private val schema: Schema,
-    private val referenceGenome: ReferenceGenome,
-) {
+class ProcessedSequenceEntryValidator(private val schema: Schema, private val referenceGenome: ReferenceGenome) {
     fun validate(processedData: ProcessedData<GeneticSequence>): ProcessedData<GeneticSequence> {
         val processedDataWithAllMetadataFields = validateMetadata(processedData)
         validateNucleotideSequences(processedDataWithAllMetadataFields)
@@ -192,9 +189,8 @@ class ProcessedSequenceEntryValidator(
         }
     }
 
-    private fun isValidPangoLineage(pangoLineageCandidate: String): Boolean {
-        return pangoLineageCandidate.matches(pangoLineageRegex)
-    }
+    private fun isValidPangoLineage(pangoLineageCandidate: String): Boolean =
+        pangoLineageCandidate.matches(pangoLineageRegex)
 
     private fun validateNucleotideSequences(processedData: ProcessedData<GeneticSequence>) {
         for (segment in referenceGenome.nucleotideSequences) {

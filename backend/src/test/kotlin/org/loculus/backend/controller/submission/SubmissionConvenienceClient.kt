@@ -39,10 +39,7 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-data class SubmissionResult(
-    val submissionIdMappings: List<SubmissionIdMapping>,
-    val groupId: Int,
-)
+data class SubmissionResult(val submissionIdMappings: List<SubmissionIdMapping>, val groupId: Int)
 
 class SubmissionConvenienceClient(
     private val groupManagementClient: GroupManagementControllerClient,
@@ -297,18 +294,16 @@ class SubmissionConvenienceClient(
         accessionVersionsFilter: List<AccessionVersionInterface>,
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
-    ): List<AccessionVersion> {
-        return deserializeJsonResponse(
-            client
-                .approveProcessedSequenceEntries(
-                    scope = ApproveDataScope.ALL,
-                    accessionVersionsFilter = accessionVersionsFilter,
-                    organism = organism,
-                    jwt = generateJwtFor(username),
-                )
-                .andExpect(status().isOk),
-        )
-    }
+    ): List<AccessionVersion> = deserializeJsonResponse(
+        client
+            .approveProcessedSequenceEntries(
+                scope = ApproveDataScope.ALL,
+                accessionVersionsFilter = accessionVersionsFilter,
+                organism = organism,
+                jwt = generateJwtFor(username),
+            )
+            .andExpect(status().isOk),
+    )
 
     fun reviseDefaultProcessedSequenceEntries(
         accessions: List<Accession>,
@@ -340,40 +335,38 @@ class SubmissionConvenienceClient(
         organism: String = DEFAULT_ORGANISM,
         username: String = DEFAULT_USER_NAME,
         groupId: Int? = null,
-    ): List<AccessionVersionInterface> {
-        return when (status) {
-            Status.RECEIVED -> submitDefaultFiles(
-                organism = organism,
-                username = username,
-                groupId = groupId,
-            ).submissionIdMappings
+    ): List<AccessionVersionInterface> = when (status) {
+        Status.RECEIVED -> submitDefaultFiles(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+        ).submissionIdMappings
 
-            Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing(
-                organism = organism,
-                username = username,
-                groupId = groupId,
-            )
+        Status.IN_PROCESSING -> prepareDefaultSequenceEntriesToInProcessing(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+        )
 
-            Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(
-                organism = organism,
-                username = username,
-                groupId = groupId,
-            )
+        Status.HAS_ERRORS -> prepareDefaultSequenceEntriesToHasErrors(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+        )
 
-            Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(
-                organism = organism,
-                username = username,
-                groupId = groupId,
-            )
+        Status.AWAITING_APPROVAL -> prepareDefaultSequenceEntriesToAwaitingApproval(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+        )
 
-            Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(
-                organism = organism,
-                username = username,
-                groupId = groupId,
-            )
+        Status.APPROVED_FOR_RELEASE -> prepareDefaultSequenceEntriesToApprovedForRelease(
+            organism = organism,
+            username = username,
+            groupId = groupId,
+        )
 
-            else -> throw Exception("Test issue: No data preparation defined for status $status")
-        }
+        else -> throw Exception("Test issue: No data preparation defined for status $status")
     }
 
     fun getReleasedData(organism: String = DEFAULT_ORGANISM) =

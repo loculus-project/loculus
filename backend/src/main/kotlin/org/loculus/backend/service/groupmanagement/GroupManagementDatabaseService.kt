@@ -155,23 +155,21 @@ class GroupManagementDatabaseService(
         auditLogger.log(authenticatedUser.username, "Removed $usernameToRemove from group $groupId")
     }
 
-    fun getAllGroups(): List<Group> {
-        return GroupEntity.all()
-            .map {
-                Group(
-                    groupId = it.id.value,
-                    groupName = it.groupName,
-                    institution = it.institution,
-                    address = Address(
-                        line1 = it.addressLine1,
-                        line2 = it.addressLine2,
-                        postalCode = it.addressPostalCode,
-                        city = it.addressCity,
-                        state = it.addressState,
-                        country = it.addressCountry,
-                    ),
-                    contactEmail = it.contactEmail,
-                )
-            }
-    }
+    fun getAllGroups(): List<Group> = GroupEntity.all()
+        .map {
+            Group(
+                groupId = it.id.value,
+                groupName = it.groupName,
+                institution = it.institution,
+                address = Address(
+                    line1 = it.addressLine1,
+                    line2 = it.addressLine2,
+                    postalCode = it.addressPostalCode,
+                    city = it.addressCity,
+                    state = it.addressState,
+                    country = it.addressCountry,
+                ),
+                contactEmail = it.contactEmail,
+            )
+        }
 }

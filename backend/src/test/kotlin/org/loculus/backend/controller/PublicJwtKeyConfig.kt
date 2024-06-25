@@ -8,7 +8,5 @@ import java.security.interfaces.RSAPublicKey
 @TestConfiguration
 class PublicJwtKeyConfig {
     @Bean
-    fun jwtDecoder(): NimbusJwtDecoder {
-        return NimbusJwtDecoder.withPublicKey(keyPair.public as RSAPublicKey).build()
-    }
+    fun jwtDecoder(): NimbusJwtDecoder = NimbusJwtDecoder.withPublicKey(keyPair.public as RSAPublicKey).build()
 }

@@ -41,11 +41,6 @@ data class Group(
     val contactEmail: String,
 )
 
-data class User(
-    val name: String,
-)
+data class User(val name: String)
 
-data class GroupDetails(
-    val group: Group,
-    val users: List<User>,
-)
+data class GroupDetails(val group: Group, val users: List<User>)

@@ -21,9 +21,7 @@ const val MOCK_USER_FIRST_NAME = "Test"
 const val MOCK_USER_LAST_NAME = "User"
 const val MOCK_USER_UNIVERSITY = "Test University"
 
-class SeqSetCitationsControllerClient(
-    private val mockMvc: MockMvc,
-) {
+class SeqSetCitationsControllerClient(private val mockMvc: MockMvc) {
 
     fun createSeqSet(
         seqSetName: String = MOCK_SEQSET_NAME,
