@@ -16,6 +16,7 @@ object Roles {
     const val SUPER_USER = "super_user"
     const val PREPROCESSING_PIPELINE = "preprocessing_pipeline"
     const val GET_RELEASED_DATA = "get_released_data"
+    const val EXTERNAL_SUBMITTER = "external_submitter"
 }
 
 class AuthenticatedUser(private val source: JwtAuthenticationToken) {

@@ -59,7 +59,7 @@ class CrossRefService(private val crossRefServiceProperties: CrossRefServiceProp
                 // CrossRef's queue. Because of this, presumably, the doi_batch_id is not sent back when a request to
                 // the service is successful. For this, one would have to query the equest queue and retrieve it from there
                 "doi_batch_id" { -doiBatchID }
-                "timestamp" { -now.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli().toString() }
+                "timestamp" { -now.atStartOfDay(ZoneId.of("UTC")).toInstant().toEpochMilli().toString() }
             }
 
             "body" {

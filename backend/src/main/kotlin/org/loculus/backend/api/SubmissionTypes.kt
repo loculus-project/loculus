@@ -153,6 +153,12 @@ data class ProcessedData<SequenceType>(
     val aminoAcidInsertions: Map<GeneName, List<Insertion>>,
 )
 
+data class ExternalSubmittedData(
+    override val accession: Accession,
+    override val version: Version,
+    val metadata: MetadataMap,
+) : AccessionVersionInterface
+
 @JsonDeserialize(using = InsertionDeserializer::class)
 data class Insertion(
     @Schema(example = "123", description = "Position in the sequence where the insertion starts")

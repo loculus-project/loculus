@@ -25,6 +25,8 @@ object SequenceEntriesView : Table(SEQUENCE_ENTRIES_VIEW_NAME) {
     val originalDataColumn = jacksonSerializableJsonb<OriginalData<CompressedSequence>>("original_data").nullable()
     val processedDataColumn =
         jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("processed_data").nullable()
+    val jointDataColumn =
+        jacksonSerializableJsonb<ProcessedData<CompressedSequence>>("joint_metadata").nullable()
 
     val accessionColumn = varchar("accession", 255)
     val versionColumn = long("version")

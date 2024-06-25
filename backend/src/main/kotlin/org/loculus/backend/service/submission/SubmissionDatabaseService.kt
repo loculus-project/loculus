@@ -9,6 +9,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
+import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
@@ -38,6 +39,7 @@ import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
 import org.loculus.backend.api.DeleteSequenceScope
+import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GeneticSequence
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
@@ -60,6 +62,11 @@ import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
+import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.errorsColumn
+import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.finishedProcessingAtColumn
+import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.processedDataColumn
+import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.processingStatusColumn
+import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.warningsColumn
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Value
@@ -76,6 +83,7 @@ private val log = KotlinLogging.logger { }
 @Transactional
 class SubmissionDatabaseService(
     private val processedSequenceEntryValidatorFactory: ProcessedSequenceEntryValidatorFactory,
+    private val externalMetadataValidatorFactory: ExternalMetadataValidatorFactory,
     private val accessionPreconditionValidator: AccessionPreconditionValidator,
     private val groupManagementPreconditionValidator: GroupManagementPreconditionValidator,
     private val groupManagementDatabaseService: GroupManagementDatabaseService,
@@ -192,6 +200,92 @@ class SubmissionDatabaseService(
         )
     }
 
+    fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalSubmitter: String): String {
+        log.info { "updating processed data" }
+        val reader = BufferedReader(InputStreamReader(inputStream))
+
+        val accessionVersions = mutableListOf<String>()
+        reader.lineSequence().forEach { line ->
+            val submittedExternalMetadata =
+                try {
+                    objectMapper.readValue<ExternalSubmittedData>(line)
+                } catch (e: JacksonException) {
+                    throw BadRequestException(
+                        "Failed to deserialize NDJSON line: ${e.message}",
+                        e,
+                    )
+                }
+            accessionVersions.add(submittedExternalMetadata.displayAccessionVersion())
+
+            insertExternalMetadata(
+                submittedExternalMetadata,
+                organism,
+                externalSubmitter,
+            )
+        }
+
+        auditLogger.log(
+            "external submitter $externalSubmitter",
+            "Processed ${accessionVersions.size} sequences: ${accessionVersions.joinToString()}",
+        )
+        return "<external submitter $externalSubmitter>"
+    }
+
+    private fun insertExternalMetadata(
+        submittedExternalData: ExternalSubmittedData,
+        organism: Organism,
+        externalSubmitter: String,
+    ) {
+        val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
+
+        accessionPreconditionValidator.validate {
+            thatAccessionVersionExists(submittedExternalData)
+                .andThatSequenceEntriesAreInStates(
+                    listOf(Status.APPROVED_FOR_RELEASE),
+                )
+                .andThatOrganismIs(organism)
+        }
+        validateExternalData(
+            submittedExternalData,
+            organism,
+        )
+
+        val table = ExternalMetadataTable
+        try {
+            val numberInserted =
+                table.update(
+                    where = {
+                        (table.accessionColumn eq submittedExternalData.accession) and
+                            (table.versionColumn eq submittedExternalData.version) and
+                            (table.submitterIdColumn eq externalSubmitter)
+                    },
+                ) {
+                    it[accessionColumn] = submittedExternalData.accession
+                    it[versionColumn] = submittedExternalData.version
+                    it[submitterIdColumn] = externalSubmitter
+                    it[externalMetadataColumn] = submittedExternalData.metadata
+                    it[updatedAtColumn] = now
+                }
+
+            if (numberInserted != 1) {
+                table.insert {
+                    it[accessionColumn] = submittedExternalData.accession
+                    it[versionColumn] = submittedExternalData.version
+                    it[submitterIdColumn] = externalSubmitter
+                    it[externalMetadataColumn] = submittedExternalData.metadata
+                    it[updatedAtColumn] = now
+                }
+            }
+
+            auditLogger.log(
+                "external submitter $externalSubmitter",
+                "Added external data for $submittedExternalData.accession",
+            )
+        } catch (e: ExposedSQLException) {
+            throw e
+        }
+    }
+
     private fun insertProcessedDataWithStatus(
         submittedProcessedData: SubmittedProcessedData,
         organism: Organism,
@@ -236,6 +330,14 @@ class SubmissionDatabaseService(
         processedSequenceEntryValidatorFactory.create(organism).validate(submittedProcessedData.data)
     } catch (validationException: ProcessingValidationException) {
         throwIfIsSubmissionForWrongOrganism(submittedProcessedData, organism)
+        throw validationException
+    }
+
+    private fun validateExternalData(externalSubmittedData: ExternalSubmittedData, organism: Organism) = try {
+        externalMetadataValidatorFactory
+            .create(organism)
+            .validate(externalSubmittedData.metadata)
+    } catch (validationException: ProcessingValidationException) {
         throw validationException
     }
 
@@ -392,8 +494,7 @@ class SubmissionDatabaseService(
     fun getLatestRevocationVersions(organism: Organism): Map<Accession, Version> {
         val maxVersionExpression = SequenceEntriesView.versionColumn.max()
 
-        return SequenceEntriesView
-            .select(SequenceEntriesView.accessionColumn, maxVersionExpression)
+        return SequenceEntriesView.select(SequenceEntriesView.accessionColumn, maxVersionExpression)
             .where {
                 SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and
                     (SequenceEntriesView.isRevocationColumn eq true) and
@@ -415,7 +516,7 @@ class SubmissionDatabaseService(
             SequenceEntriesView.accessionColumn,
             SequenceEntriesView.versionColumn,
             SequenceEntriesView.isRevocationColumn,
-            SequenceEntriesView.processedDataColumn,
+            SequenceEntriesView.jointDataColumn,
             SequenceEntriesView.submitterColumn,
             SequenceEntriesView.groupIdColumn,
             SequenceEntriesView.submittedAtColumn,
@@ -444,7 +545,7 @@ class SubmissionDatabaseService(
                 groupId = it[SequenceEntriesView.groupIdColumn],
                 groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
                 submissionId = it[SequenceEntriesView.submissionIdColumn],
-                processedData = when (val processedData = it[SequenceEntriesView.processedDataColumn]) {
+                processedData = when (val processedData = it[SequenceEntriesView.jointDataColumn]) {
                     null -> emptyProcessedDataProvider.provide(organism)
                     else -> compressionService.decompressSequencesInProcessedData(processedData, organism)
                 },

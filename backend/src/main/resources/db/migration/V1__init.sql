@@ -52,12 +52,63 @@ create table sequence_entries_preprocessed_data (
     primary key (accession, version, pipeline_version)
 );
 
+create table external_metadata (
+    accession text not null,
+    version bigint not null,
+    external_submitter_id text not null,
+    external_metadata jsonb,
+    updated_metadata_at timestamp not null,
+    primary key (accession, version, external_submitter_id)
+);
+
+create or replace aggregate jsonb_merge_agg(jsonb)
+(
+    sfunc = jsonb_concat,
+    stype = jsonb,
+    initcond = '{}'
+);
+
+create or replace function jsonb_concat(a jsonb, b jsonb) returns jsonb
+    as 'select $1 || $2'
+    language sql
+    immutable
+    parallel safe
+;
+
+create view all_external_metadata as
+select
+    accession,
+	version,
+    max(updated_metadata_at) as updated_metadata_at,
+    jsonb_merge_agg(external_metadata) AS external_metadata
+from external_metadata
+group by
+    accession, version;
+
+create view external_metadata_view as
+select
+    sepd.accession,
+    sepd.version,
+    em.updated_metadata_at,
+    case 
+		when em.external_metadata is null then jsonb_build_object('metadata', (sepd.processed_data->'metadata'))
+		else jsonb_build_object('metadata', em.external_metadata || (sepd.processed_data->'metadata')) 
+	end as joint_metadata
+from
+    sequence_entries_preprocessed_data sepd
+    left join all_external_metadata em  on
+        em.accession = sepd.accession
+        and em.version = sepd.version
+        and sepd.pipeline_version = (select version from current_processing_pipeline);
+
+
 create view sequence_entries_view as
 select
     se.*,
     sepd.started_processing_at,
     sepd.finished_processing_at,
-    sepd.processed_data,
+    sepd.processed_data as processed_data,
+    sepd.processed_data || em.joint_metadata as joint_metadata,
     sepd.errors,
     sepd.warnings,
     case
@@ -73,7 +124,10 @@ from
     left join sequence_entries_preprocessed_data sepd on
         se.accession = sepd.accession
         and se.version = sepd.version
-        and sepd.pipeline_version = (select version from current_processing_pipeline);
+        and sepd.pipeline_version = (select version from current_processing_pipeline)
+    left join external_metadata_view em on
+        se.accession = em.accession
+        and se.version = em.version;
 
 create table metadata_upload_aux_table (
     accession text,

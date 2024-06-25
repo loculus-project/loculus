@@ -3,6 +3,7 @@ package org.loculus.backend.config
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import mu.KotlinLogging
+import org.loculus.backend.auth.Roles.EXTERNAL_SUBMITTER
 import org.loculus.backend.auth.Roles.GET_RELEASED_DATA
 import org.loculus.backend.auth.Roles.PREPROCESSING_PIPELINE
 import org.loculus.backend.auth.Roles.SUPER_USER
@@ -51,6 +52,10 @@ class SecurityConfig {
         "/*/submit-processed-data",
     )
 
+    private val endpointsForExternalSubmitter = arrayOf(
+        "/*/submit-external-metadata",
+    )
+
     private val getEndpointsThatArePublic = arrayOf(
         "/data-use-terms/*",
         "/get-seqset",
@@ -82,6 +87,7 @@ class SecurityConfig {
             auth.requestMatchers(HttpMethod.OPTIONS).permitAll()
             auth.requestMatchers(*endpointsForPreprocessingPipeline).hasAuthority(PREPROCESSING_PIPELINE)
             auth.requestMatchers(*endpointsForGettingReleasedData).hasAuthority(GET_RELEASED_DATA)
+            auth.requestMatchers(*endpointsForExternalSubmitter).hasAuthority(EXTERNAL_SUBMITTER)
             auth.requestMatchers(*debugEndpoints).hasAuthority(SUPER_USER)
             auth.anyRequest().authenticated()
         }

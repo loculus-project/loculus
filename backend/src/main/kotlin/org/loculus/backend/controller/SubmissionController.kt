@@ -19,6 +19,7 @@ import org.loculus.backend.api.Accessions
 import org.loculus.backend.api.CompressionFormat
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DataUseTermsType
+import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.GetSequenceResponse
 import org.loculus.backend.api.Organism
 import org.loculus.backend.api.ProcessedData
@@ -191,6 +192,58 @@ class SubmissionController(
         pipelineVersion: Long,
         request: HttpServletRequest,
     ) = submissionDatabaseService.updateProcessedData(request.inputStream, organism, pipelineVersion)
+
+    @Operation(
+        description = SUBMIT_EXTERNAL_METADATA_DESCRIPTION,
+        requestBody =
+        SwaggerRequestBody(
+            content =
+            [
+                Content(
+                    mediaType = MediaType.APPLICATION_NDJSON_VALUE,
+                    schema =
+                    Schema(
+                        implementation =
+                        ExternalSubmittedData::class,
+                    ),
+                ),
+            ],
+        ),
+        parameters =
+        [
+            Parameter(
+                name = "externalSubmitter",
+                description = "Id of external submission pipeline",
+                required = true,
+                schema = Schema(implementation = String::class),
+            ),
+        ],
+    )
+    @ApiResponse(
+        responseCode = "400",
+        description = "On invalid NDJSON line. Rolls back the whole transaction.",
+    )
+    @ApiResponse(
+        responseCode = "422",
+        description = SUBMIT_EXTERNAL_METADATA_ERROR_RESPONSE_DESCRIPTION,
+    )
+    @PostMapping("/submit-external-metadata", consumes = [MediaType.APPLICATION_NDJSON_VALUE])
+    fun submitExternalMetadata(
+        @PathVariable @Valid organism: Organism,
+        @RequestParam externalSubmitter: String,
+        request: HttpServletRequest,
+    ): String {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
+        val response =
+            submissionDatabaseService.updateExternalMetadata(
+                request.inputStream,
+                organism,
+                externalSubmitter,
+            )
+
+        return response
+    }
 
     @Operation(description = GET_RELEASED_DATA_DESCRIPTION)
     @ResponseStatus(HttpStatus.OK)

@@ -18,7 +18,11 @@ data class DataUseTermsUrls(val open: String, val restricted: String)
 
 data class InstanceConfig(val schema: Schema, val referenceGenomes: ReferenceGenome)
 
-data class Schema(val organismName: String, val metadata: List<Metadata>)
+data class Schema(
+    val organismName: String,
+    val metadata: List<Metadata>,
+    val externalMetadata: List<Metadata> = emptyList(),
+)
 
 // The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`
 // They also need to be in sync with SILO database config, as the Loculus config is a sort of superset of it

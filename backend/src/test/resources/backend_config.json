@@ -76,7 +76,13 @@
                         "name": "booleanColumn",
                         "type": "boolean"
                     }
-                ]
+                ],
+              "externalMetadata" :[
+                {
+                  "name": "insdc_accession_full",
+                  "type": "string"
+                }
+              ]
             }
         },
         "otherOrganism": {

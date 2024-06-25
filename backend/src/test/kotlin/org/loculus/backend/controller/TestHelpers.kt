@@ -20,6 +20,7 @@ import org.testcontainers.shaded.org.awaitility.Awaitility.await
 const val DEFAULT_ORGANISM = "dummyOrganism"
 const val OTHER_ORGANISM = "otherOrganism"
 const val DEFAULT_PIPELINE_VERSION = 1L
+const val DEFAULT_EXTERNAL_SUBMITTER = "ena"
 
 fun AccessionVersionInterface.toAccessionVersion() = AccessionVersion(this.accession, this.version)
 

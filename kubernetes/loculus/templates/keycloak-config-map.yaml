@@ -167,6 +167,32 @@ data:
               ]
             }
           },
+          {
+            "username": "external_submitter",
+            "enabled": true,
+            "email": "external_submitter@void.o",
+            "emailVerified" : true,
+            "firstName": "Dummy",
+            "lastName": "INSDC",
+            "credentials": [
+              {
+                "type": "password",
+                "value": "[[dummyExternalSubmitterPassword]]"
+              }
+            ],
+            "realmRoles": [
+              "external_submitter",
+              "offline_access"
+            ],
+            "attributes": {
+              "university": "University of Test"
+            },
+            "clientRoles": {
+              "account": [
+                "manage-account"
+              ]
+            }
+          },
         {
           "username": "silo_import_job",
           "enabled": true,
@@ -232,6 +258,10 @@ data:
           {
             "name": "preprocessing_pipeline",
             "description": "Preprocessing pipeline privileges"
+          },
+          {
+            "name": "external_submitter",
+            "description": "External Submitter privileges"
           },
           {
             "name": "get_released_data",

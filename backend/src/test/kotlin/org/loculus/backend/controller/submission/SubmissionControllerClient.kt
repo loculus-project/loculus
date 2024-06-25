@@ -6,15 +6,18 @@ import org.loculus.backend.api.AccessionVersionInterface
 import org.loculus.backend.api.ApproveDataScope
 import org.loculus.backend.api.DataUseTerms
 import org.loculus.backend.api.DeleteSequenceScope
+import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
+import org.loculus.backend.controller.DEFAULT_EXTERNAL_SUBMITTER
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.addOrganismToPath
 import org.loculus.backend.controller.jwtForDefaultUser
+import org.loculus.backend.controller.jwtForExternalSubmissionPipeline
 import org.loculus.backend.controller.jwtForGetReleasedData
 import org.loculus.backend.controller.jwtForProcessingPipeline
 import org.loculus.backend.controller.withAuth
@@ -75,6 +78,18 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         return submitProcessedDataRaw(stringContent, organism, pipelineVersion, jwt)
     }
 
+    fun submitExternalData(
+        vararg submittedExternalData: ExternalSubmittedData,
+        organism: String = DEFAULT_ORGANISM,
+        externalSubmitter: String = DEFAULT_EXTERNAL_SUBMITTER,
+        jwt: String? = jwtForExternalSubmissionPipeline,
+    ): ResultActions {
+        val stringContent =
+            submittedExternalData.joinToString("\n") { objectMapper.writeValueAsString(it) }
+
+        return submitExternalDataRaw(stringContent, organism, externalSubmitter, jwt)
+    }
+
     fun submitProcessedDataRaw(
         submittedProcessedData: String,
         organism: String = DEFAULT_ORGANISM,
@@ -86,6 +101,19 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .contentType(MediaType.APPLICATION_NDJSON_VALUE)
             .withAuth(jwt)
             .content(submittedProcessedData),
+    )
+
+    fun submitExternalDataRaw(
+        submittedExternalData: String,
+        organism: String = DEFAULT_ORGANISM,
+        externalSubmitter: String = DEFAULT_EXTERNAL_SUBMITTER,
+        jwt: String? = jwtForExternalSubmissionPipeline,
+    ): ResultActions = mockMvc.perform(
+        post(addOrganismToPath("/submit-external-metadata", organism = organism))
+            .param("externalSubmitter", externalSubmitter)
+            .contentType(MediaType.APPLICATION_NDJSON_VALUE)
+            .withAuth(jwt)
+            .content(submittedExternalData),
     )
 
     fun getSequenceEntries(
