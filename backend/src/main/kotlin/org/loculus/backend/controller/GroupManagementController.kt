@@ -22,9 +22,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @SecurityRequirement(name = "bearerAuth")
-class GroupManagementController(
-    private val groupManagementDatabaseService: GroupManagementDatabaseService,
-) {
+class GroupManagementController(private val groupManagementDatabaseService: GroupManagementDatabaseService) {
 
     @Operation(description = "Create a new Group. The user creating the group will be added to the group.")
     @ResponseStatus(HttpStatus.OK)
@@ -43,23 +41,18 @@ class GroupManagementController(
         @Parameter(
             description = "The id of the group to get details of.",
         ) @PathVariable groupId: Int,
-    ): GroupDetails {
-        return groupManagementDatabaseService.getDetailsOfGroup(groupId)
-    }
+    ): GroupDetails = groupManagementDatabaseService.getDetailsOfGroup(groupId)
 
     @Operation(description = "Get all groups the user is a member of.")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/user/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getGroupsOfUser(@HiddenParam authenticatedUser: AuthenticatedUser): List<Group> {
-        return groupManagementDatabaseService.getGroupsOfUser(authenticatedUser)
-    }
+    fun getGroupsOfUser(@HiddenParam authenticatedUser: AuthenticatedUser): List<Group> =
+        groupManagementDatabaseService.getGroupsOfUser(authenticatedUser)
 
     @Operation(description = "Get a list of all groups.")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAllGroups(): List<Group> {
-        return groupManagementDatabaseService.getAllGroups()
-    }
+    fun getAllGroups(): List<Group> = groupManagementDatabaseService.getAllGroups()
 
     @Operation(description = "Add user to a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)

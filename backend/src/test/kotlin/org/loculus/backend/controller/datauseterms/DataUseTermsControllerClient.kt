@@ -21,14 +21,12 @@ class DataUseTermsControllerClient(private val mockMvc: MockMvc, private val obj
     fun changeDataUseTerms(
         newDataUseTerms: DataUseTermsChangeRequest,
         jwt: String? = jwtForDefaultUser,
-    ): ResultActions {
-        return mockMvc.perform(
-            put("/data-use-terms")
-                .contentType(MediaType.APPLICATION_JSON_VALUE)
-                .content(objectMapper.writeValueAsString(newDataUseTerms))
-                .withAuth(jwt),
-        )
-    }
+    ): ResultActions = mockMvc.perform(
+        put("/data-use-terms")
+            .contentType(MediaType.APPLICATION_JSON_VALUE)
+            .content(objectMapper.writeValueAsString(newDataUseTerms))
+            .withAuth(jwt),
+    )
 
     fun getDataUseTerms(accession: Accession): ResultActions = mockMvc.perform(
         get("/data-use-terms/$accession"),

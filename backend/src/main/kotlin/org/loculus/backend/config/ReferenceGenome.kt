@@ -2,10 +2,7 @@ package org.loculus.backend.config
 
 import org.loculus.backend.api.GeneticSequence
 
-data class ReferenceGenome(
-    val nucleotideSequences: List<ReferenceSequence>,
-    val genes: List<ReferenceSequence>,
-) {
+data class ReferenceGenome(val nucleotideSequences: List<ReferenceSequence>, val genes: List<ReferenceSequence>) {
     init {
         if (nucleotideSequences.size == 1 && nucleotideSequences.single().name != "main") {
             throw IllegalArgumentException("If there is only one nucleotide sequence, it must be named 'main'")
@@ -36,7 +33,4 @@ data class ReferenceGenome(
     }
 }
 
-data class ReferenceSequence(
-    val name: String,
-    val sequence: String,
-)
+data class ReferenceSequence(val name: String, val sequence: String)

@@ -19,9 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @SecurityRequirement(name = "bearerAuth")
-class DataUseTermsController(
-    private val dataUseTermsDatabaseService: DataUseTermsDatabaseService,
-) {
+class DataUseTermsController(private val dataUseTermsDatabaseService: DataUseTermsDatabaseService) {
 
     @Operation(
         description = "Change the data use terms of the given accessions. Only a change to more open terms is allowed.",

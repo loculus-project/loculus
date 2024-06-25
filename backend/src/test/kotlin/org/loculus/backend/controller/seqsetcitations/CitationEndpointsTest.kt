@@ -23,9 +23,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class CitationEndpointsTest(
-    @Autowired private val client: SeqSetCitationsControllerClient,
-) {
+class CitationEndpointsTest(@Autowired private val client: SeqSetCitationsControllerClient) {
     @MockkBean
     lateinit var submissionDatabaseService: SubmissionDatabaseService
 
