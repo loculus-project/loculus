@@ -26,10 +26,6 @@ repositories {
     mavenCentral()
 }
 
-ktlint {
-    version.set("1.3.0")
-}
-
 dependencies {
     implementation "org.springframework.boot:spring-boot-starter-web"
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
@@ -67,6 +63,11 @@ dependencies {
     testImplementation "com.ninja-squad:springmockk:4.0.2"
     testImplementation "org.testcontainers:postgresql:1.19.8"
     testImplementation "org.junit.platform:junit-platform-launcher:1.10.2"
+    ktlint("com.pinterest.ktlint:ktlint-cli:1.3.0") {
+        attributes {
+            attribute(Bundling.BUNDLING_ATTRIBUTE, getObjects().named(Bundling, Bundling.EXTERNAL))
+        }
+    }
 }
 
 tasks.named('test') {
