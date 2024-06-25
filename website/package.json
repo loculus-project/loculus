@@ -24,7 +24,7 @@
         "@astrojs/node": "^8.3.1",
         "@emotion/react": "^11.11.4",
         "@headlessui/react": "^1.7.19",
-        "@mui/material": "~5.14.20",
+        "@mui/material": "~5.15.20",
         "@mui/x-date-pickers": "^6.19.7",
         "@svgr/core": "^8.1.0",
         "@svgr/plugin-jsx": "^8.1.0",
