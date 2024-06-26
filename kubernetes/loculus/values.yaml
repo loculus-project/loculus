@@ -1176,6 +1176,7 @@ secrets:
     data:
       insdcIngestUserPassword: ""
       dummyPreprocessingPipelinePassword: ""
+      dummyExternalSubmitterPassword: ""
       siloImportJobPassword: ""
       backendUserPassword: ""
   keycloak-admin:
