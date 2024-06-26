@@ -200,7 +200,7 @@ class SubmissionDatabaseService(
         )
     }
 
-    fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalSubmitter: String): String {
+    fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalSubmitter: String) {
         log.info { "updating processed data" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
@@ -228,7 +228,6 @@ class SubmissionDatabaseService(
             "external submitter $externalSubmitter",
             "Processed ${accessionVersions.size} sequences: ${accessionVersions.joinToString()}",
         )
-        return "<external submitter $externalSubmitter>"
     }
 
     private fun insertExternalMetadata(

@@ -54,6 +54,7 @@ class SecurityConfig {
 
     private val endpointsForExternalSubmitter = arrayOf(
         "/*/submit-external-metadata",
+        "/*/get-released-data",
     )
 
     private val getEndpointsThatArePublic = arrayOf(

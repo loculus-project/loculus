@@ -100,10 +100,6 @@ Returns a list of accessions, versions and submissionIds of the submitted revise
 The version will increase by one in respect to the original accession version.
 """
 
-const val EXTERNAL_UPDATE_RESPONSE_DESCRIPTION = """
-Returns a list of accessions, versions and submissionIds of the data successfully updated with external metadata.
-"""
-
 const val REVISED_METADATA_FILE_DESCRIPTION = """
 A TSV (tab separated values) file containing the metadata of the revised data.
 The first row must contain the column names. The column 'submissionId' is required and must be unique within the 

@@ -232,17 +232,14 @@ class SubmissionController(
         @PathVariable @Valid organism: Organism,
         @RequestParam externalSubmitter: String,
         request: HttpServletRequest,
-    ): String {
+    ) {
         val headers = HttpHeaders()
         headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
-        val response =
-            submissionDatabaseService.updateExternalMetadata(
-                request.inputStream,
-                organism,
-                externalSubmitter,
-            )
-
-        return response
+        submissionDatabaseService.updateExternalMetadata(
+            request.inputStream,
+            organism,
+            externalSubmitter,
+        )
     }
 
     @Operation(description = GET_RELEASED_DATA_DESCRIPTION)
