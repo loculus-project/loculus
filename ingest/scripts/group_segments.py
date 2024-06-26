@@ -1,21 +1,20 @@
 """Script to group segments together into sequence entries prior to submission to Loculus
 Example output for a single isolate with 3 segments:
-"KJ682796.1KJ682809.1KJ682819.1": {
+"KJ682796.1.L/KJ682809.1.M/KJ682819.1.S": {
     "ncbi_release_date": "2014-07-06T00:00:00Z",
     "ncbi_sourcedb": "GenBank",
     "authors": "D. Goedhals, F.J. Burt, J.T. Bester, R. Swanepoel",
-    "joint_accession": "KJ682796.1KJ682809.1KJ682819.1",
     "insdc_version_L": "1",
     "insdc_version_M": "1",
     "insdc_version_S": "1",
     "insdc_accession_full_L": "KJ682796.1",
     "insdc_accession_full_M": "KJ682809.1",
     "insdc_accession_full_S": "KJ682819.1",
-    "hash_L": "",
-    "hash_M": "234lasdlfj234lasdf",
-    "hash_S": "asdfasdfasdfasdf",
-    "hash": "35a5e182622fc60803fbe437eb2ae262",
-    "submissionId": "KJ682796.1KJ682809.1KJ682819.1"
+    "hash_L": "ddbfc33d45267e9c1a08f8f5e76d3e39",
+    "hash_M": "f64777883ba9f5293257698255767f2c",
+    "hash_S": "f716ed13dca9c8a033d46da2f3dc2ff1",
+    "hash": "ce7056d0bd7e3d6d3eca38f56b9d10f8",
+    "submissionId": "KJ682796.1.L/KJ682809.1.M/KJ682819.1.S"
 },"""
 
 import hashlib

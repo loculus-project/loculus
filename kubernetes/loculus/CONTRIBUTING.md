@@ -13,7 +13,7 @@ helm template loculus kubernetes/loculus \
 
 ## Diffing produced Kubernetes manifests
 
-To diff produced manifests, you can use the `kuberentes/loculus/utils/yamldiff_script.py` script.
+To diff produced manifests, you can use the `diff` command and to specifically compare metadata fields you can use the `kuberentes/loculus/utils/yamldiff_script.py` script.
 
 1. Install yamldiff: `go install github.com/sahilm/yamldiff@latest`
 2. Create the manifests to diff: `helm template loculus kubernetes/loculus > /tmp/new.yaml`

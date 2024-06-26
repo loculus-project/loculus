@@ -1,3 +1,5 @@
+"""Script to compare metadata fields of .yaml files."""
+
 import os
 import subprocess
 import sys
@@ -48,4 +50,7 @@ if __name__ == "__main__":
     yaml_file1, yaml_file2 = sys.argv[1:3]
     yaml_dict1 = read_yaml_metadata_name(yaml_file1)
     yaml_dict2 = read_yaml_metadata_name(yaml_file2)
+    print(f"Comparing {yaml_file1} to {yaml_file2}")
     diff_yaml(yaml_dict1, yaml_dict2)
+    print(f"Comparing {yaml_file2} to {yaml_file1}")
+    diff_yaml(yaml_dict2, yaml_dict1)
