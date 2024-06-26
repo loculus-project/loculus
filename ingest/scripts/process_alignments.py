@@ -3,15 +3,8 @@ import os
 import pandas as pd
 import logging
 import sys
-from dataclasses import dataclass
 
 import click
-
-
-@dataclass
-class Config:
-    segmented: str
-    nucleotide_sequences: list[str]
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +21,7 @@ csv.field_size_limit(sys.maxsize)
 
 def validate_paths(ctx, param, value):
     """Custom validation function to check if all provided paths exist."""
-    paths = value.split(" ")  # Assuming paths are comma-separated
+    paths = value.split(" ")
     for path in paths:
         if not os.path.exists(path):
             msg = f"Path does not exist: {path}"
