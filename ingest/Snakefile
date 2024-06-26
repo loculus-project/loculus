@@ -101,16 +101,12 @@ rule extract_ncbi_dataset_sequences:
     input:
         dataset_package="results/ncbi_dataset.zip",
     output:
-        ncbi_dataset_sequences=(
-            "results/sequences_full.fasta" if SEGMENTED else "results/sequences.fasta"
-        ),
-    params:
-        header_arg="" if SEGMENTED else "-i",  # Keep full header if segmented
+        ncbi_dataset_sequences="results/sequences.fasta",
     shell:
         """
         unzip -jp {input.dataset_package} \
         ncbi_dataset/data/genomic.fna \
-        | seqkit seq -w0 {params.header_arg} \
+        | seqkit seq -w0 -i \
         > {output.ncbi_dataset_sequences}
         """
 
@@ -132,41 +128,47 @@ rule calculate_sequence_hashes:
         """
 
 
-if SEGMENTED:
+rule align:
+    input:
+        sequences="results/sequences.fasta",
+    output:
+        results="results/nextclade_{segment}.tsv",
+    params:
+        dataset_server=config.get("nextclade_dataset_server"),
+        dataset_name=lambda w: config.get("nextclade_dataset_name", "") + "/" + w.segment, 
+    shell:
+        """
+        nextclade run \
+            {input.sequences} \
+            --output-tsv {output.results} \
+            --server {params.dataset_server} \
+            --dataset-name {params.dataset_name} \
+        """
 
-    rule parse_segment_details:
-        # Parse segment information from sequence headers
-        # Add parsed segment information to metadata
-        # Create fasta file with header containing only sequence ID
-        # TODO: Use `nextclade split` to annotate segments, instead of reliance on headers
-        input:
-            script="scripts/get_segment_details.py",
-            sequences="results/sequences_full.fasta",
-            ncbi_dataset_tsv="results/metadata_post_rename.tsv",
-            config="results/config.yaml",
-        output:
-            sequences_processed="results/sequences.fasta",
-            ncbi_dataset_tsv="results/metadata_post_segment.tsv",
-        shell:
-            """
-            python {input.script} \
-                --config-file {input.config} \
-                --input-seq {input.sequences} \
-                --input-metadata {input.ncbi_dataset_tsv} \
-                --output-seq {output.sequences_processed} \
-                --output-metadata {output.ncbi_dataset_tsv}
-            """
+
+rule process_alignments:
+    input:
+        results=expand(
+            "results/nextclade_{segment}.tsv",
+            segment=config["nucleotide_sequences"],
+        ),
+    output:
+        merged="results/nextclade_merged.tsv",
+    shell:
+        """
+        tsv-append --header {input.results} \
+        | tsv-select --header --fields seqName,clade \
+        | tsv-filter --header --not-empty clade \
+        > {output.merged}
+        """
 
 
 rule prepare_metadata:
     # Transform Genbank metadata keys and values to Loculus format
     input:
         script="scripts/prepare_metadata.py",
-        metadata=(
-            "results/metadata_post_segment.tsv"
-            if SEGMENTED
-            else "results/metadata_post_rename.tsv"
-        ),
+        metadata="results/metadata_post_rename.tsv",
+        segments="results/nextclade_merged.tsv" if SEGMENTED else "results/config.yaml",  # else is just a dummy
         sequence_hashes="results/sequence_hashes.json",
         config="results/config.yaml",
     output:
@@ -179,34 +181,33 @@ rule prepare_metadata:
             --config-file {input.config} \
             --input {input.metadata} \
             --sequence-hashes {input.sequence_hashes} \
+            --segments {input.segments} \
             --output {output.metadata} \
             --log-level {params.log_level} \
         """
 
 
-if SEGMENTED:
-
-    rule group_segments:
-        input:
-            script="scripts/group_segments.py",
-            metadata="results/metadata_post_prepare.json",
-            sequences="results/sequences.json",
-            config="results/config.yaml",
-        output:
-            metadata="results/metadata_post_group.json",
-            sequences="results/sequences_post_group.json",
-        params:
-            log_level=LOG_LEVEL,
-        shell:
-            """
-            python {input.script} \
-                --config-file {input.config} \
-                --input-metadata {input.metadata} \
-                --input-seq {input.sequences} \
-                --output-metadata {output.metadata} \
-                --output-seq {output.sequences} \
-                --log-level {params.log_level} \
-            """
+rule group_segments:
+    input:
+        script="scripts/group_segments.py",
+        metadata="results/metadata_post_prepare.json",
+        sequences="results/sequences.json",
+        config="results/config.yaml",
+    output:
+        metadata="results/metadata_post_group.json",
+        sequences="results/sequences_post_group.json",
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python {input.script} \
+            --config-file {input.config} \
+            --input-metadata {input.metadata} \
+            --input-seq {input.sequences} \
+            --output-metadata {output.metadata} \
+            --output-seq {output.sequences} \
+            --log-level {params.log_level} \
+        """
 
 
 rule get_previous_submissions:

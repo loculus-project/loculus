@@ -66,7 +66,7 @@ def main(
             key: full_config[key] for key in Config.__annotations__ if key in full_config
         }
         config = Config(**relevant_config)
-    
+
     if debug_hashes:
         config.debugHashes = True
 
@@ -134,7 +134,7 @@ def main(
     for value, path, text in outputs:
         with open(path, "w") as file:
             json.dump(value, file)
-        logger.debug(f"{text}: {len(value)}")
+        logger.info(f"{text}: {len(value)}")
 
 
 if __name__ == "__main__":
