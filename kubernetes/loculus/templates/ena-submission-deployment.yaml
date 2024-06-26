@@ -1,0 +1,59 @@
+{{- $dockerTag := include "loculus.dockerTag" .Values }}
+{{- if not .Values.disableEnaSubmission }}
+{{- range $key, $value := (.Values.organisms | default .Values.defaultOrganisms) }}
+{{- if $value.ingest }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: loculus-ena-submission-{{ $key }}
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: loculus
+      component: loculus-ena-submission-{{ $key }}
+  template:
+    metadata:
+      labels:
+        app: loculus
+        component: loculus-ena-submission-{{ $key }}
+    spec:
+      containers:
+        - name: ena-submission-{{ $key }}
+          image: {{ $value.ingest.image}}:{{ $dockerTag }}
+          imagePullPolicy: Always
+          resources:
+            requests:
+              memory: "80Mi"
+              cpu: "10m"
+            limits:
+              memory: "10Gi"
+          env:
+            - name: EXTERNAL_SUBMISSION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: service-accounts
+                  key: dummyExternalSubmitterPassword
+          args:
+            - snakemake
+            - results/approved
+            - results/submitted # Remove in production, see #1777
+            - results/revised # Remove in production, see #1777
+            - --all-temp # Reduce disk usage by not keeping files around
+      {{- if $value.ingest.configFile }}
+          volumeMounts:
+            - name: loculus-ena-submission-config-volume-{{ $key }}
+              mountPath: /package/config/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: loculus-ena-submission-config-volume-{{ $key }}
+          configMap:
+            name: loculus-ena-submission-config-{{ $key }}
+      {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
