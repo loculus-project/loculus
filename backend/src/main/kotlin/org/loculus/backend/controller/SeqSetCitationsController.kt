@@ -35,51 +35,44 @@ class SeqSetCitationsController(
 ) {
     @Operation(description = "Get a SeqSet")
     @GetMapping("/get-seqset")
-    fun getSeqSet(@RequestParam seqSetId: String, @RequestParam version: Long?): List<SeqSet> {
-        return seqSetCitationsService.getSeqSet(seqSetId, version)
-    }
+    fun getSeqSet(@RequestParam seqSetId: String, @RequestParam version: Long?): List<SeqSet> =
+        seqSetCitationsService.getSeqSet(seqSetId, version)
 
     @Operation(description = "Validate SeqSet records")
     @PostMapping("/validate-seqset-records")
-    fun validateSeqSetRecords(@RequestBody records: List<SubmittedSeqSetRecord>) {
-        return seqSetCitationsService.validateSeqSetRecords(records)
-    }
+    fun validateSeqSetRecords(@RequestBody records: List<SubmittedSeqSetRecord>) =
+        seqSetCitationsService.validateSeqSetRecords(records)
 
     @Operation(description = "Create a new SeqSet with the specified data")
     @PostMapping("/create-seqset")
     fun createSeqSet(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestBody body: SubmittedSeqSet,
-    ): ResponseSeqSet {
-        return seqSetCitationsService.createSeqSet(authenticatedUser, body.name, body.records, body.description)
-    }
+    ): ResponseSeqSet =
+        seqSetCitationsService.createSeqSet(authenticatedUser, body.name, body.records, body.description)
 
     @Operation(description = "Update a SeqSet with the specified data")
     @PutMapping("/update-seqset")
     fun updateSeqSet(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestBody body: SubmittedSeqSetUpdate,
-    ): ResponseSeqSet {
-        return seqSetCitationsService.updateSeqSet(
-            authenticatedUser,
-            body.seqSetId,
-            body.name,
-            body.records,
-            body.description,
-        )
-    }
+    ): ResponseSeqSet = seqSetCitationsService.updateSeqSet(
+        authenticatedUser,
+        body.seqSetId,
+        body.name,
+        body.records,
+        body.description,
+    )
 
     @Operation(description = "Get a list of SeqSets created by the logged-in user")
     @GetMapping("/get-seqsets-of-user")
-    fun getSeqSets(@HiddenParam authenticatedUser: AuthenticatedUser): List<SeqSet> {
-        return seqSetCitationsService.getSeqSets(authenticatedUser)
-    }
+    fun getSeqSets(@HiddenParam authenticatedUser: AuthenticatedUser): List<SeqSet> =
+        seqSetCitationsService.getSeqSets(authenticatedUser)
 
     @Operation(description = "Get records for a SeqSet")
     @GetMapping("/get-seqset-records")
-    fun getSeqSetRecords(@RequestParam seqSetId: String, @RequestParam version: Long?): List<SeqSetRecord> {
-        return seqSetCitationsService.getSeqSetRecords(seqSetId, version)
-    }
+    fun getSeqSetRecords(@RequestParam seqSetId: String, @RequestParam version: Long?): List<SeqSetRecord> =
+        seqSetCitationsService.getSeqSetRecords(seqSetId, version)
 
     @Operation(description = "Delete a SeqSet")
     @DeleteMapping("/delete-seqset")
@@ -87,9 +80,7 @@ class SeqSetCitationsController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam seqSetId: String,
         @RequestParam version: Long,
-    ) {
-        return seqSetCitationsService.deleteSeqSet(authenticatedUser, seqSetId, version)
-    }
+    ) = seqSetCitationsService.deleteSeqSet(authenticatedUser, seqSetId, version)
 
     @Operation(description = "Create and associate a DOI to a SeqSet version")
     @PostMapping("/create-seqset-doi")
@@ -97,9 +88,7 @@ class SeqSetCitationsController(
         @HiddenParam authenticatedUser: AuthenticatedUser,
         @RequestParam seqSetId: String,
         @RequestParam version: Long,
-    ): ResponseSeqSet {
-        return seqSetCitationsService.createSeqSetDOI(authenticatedUser, seqSetId, version)
-    }
+    ): ResponseSeqSet = seqSetCitationsService.createSeqSetDOI(authenticatedUser, seqSetId, version)
 
     @Operation(description = "Get count of user sequences cited by SeqSets")
     @GetMapping("/get-user-cited-by-seqset")
@@ -111,9 +100,8 @@ class SeqSetCitationsController(
 
     @Operation(description = "Get count of SeqSet cited by publications")
     @GetMapping("/get-seqset-cited-by-publication")
-    fun getSeqSetCitedByPublication(@RequestParam seqSetId: String, @RequestParam version: Long): CitedBy {
-        return seqSetCitationsService.getSeqSetCitedByPublication(seqSetId, version)
-    }
+    fun getSeqSetCitedByPublication(@RequestParam seqSetId: String, @RequestParam version: Long): CitedBy =
+        seqSetCitationsService.getSeqSetCitedByPublication(seqSetId, version)
 
     @Operation(description = "Get an author")
     @GetMapping("/get-author")

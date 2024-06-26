@@ -164,9 +164,7 @@ class DeleteAllSequenceDataEndpointTest(
 }
 
 @EndpointTest
-class DeleteAllSequenceDataEndpointWithDebugModeOffTest(
-    @Autowired private val mockMvc: MockMvc,
-) {
+class DeleteAllSequenceDataEndpointWithDebugModeOffTest(@Autowired private val mockMvc: MockMvc) {
     @Test
     fun `GIVEN debug mode is off THEN delete all sequence data endpoint is not present`() {
         deleteAllSequences(mockMvc, jwtForSuperUser)

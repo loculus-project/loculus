@@ -14,20 +14,11 @@ data class BackendConfig(
     )
 }
 
-data class DataUseTermsUrls(
-    val open: String,
-    val restricted: String,
-)
+data class DataUseTermsUrls(val open: String, val restricted: String)
 
-data class InstanceConfig(
-    val schema: Schema,
-    val referenceGenomes: ReferenceGenome,
-)
+data class InstanceConfig(val schema: Schema, val referenceGenomes: ReferenceGenome)
 
-data class Schema(
-    val organismName: String,
-    val metadata: List<Metadata>,
-)
+data class Schema(val organismName: String, val metadata: List<Metadata>)
 
 // The Json property names need to be kept in sync with website config enum `metadataPossibleTypes` in `config.ts`
 // They also need to be in sync with SILO database config, as the Loculus config is a sort of superset of it
@@ -62,8 +53,4 @@ enum class MetadataType {
     override fun toString(): String = lowerCase(name)
 }
 
-data class Metadata(
-    val name: String,
-    val type: MetadataType,
-    val required: Boolean = false,
-)
+data class Metadata(val name: String, val type: MetadataType, val required: Boolean = false)

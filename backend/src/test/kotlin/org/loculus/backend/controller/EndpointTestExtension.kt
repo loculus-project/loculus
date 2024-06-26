@@ -46,9 +46,7 @@ import org.testcontainers.containers.PostgreSQLContainer
     SeqSetCitationsControllerClient::class,
     PublicJwtKeyConfig::class,
 )
-annotation class EndpointTest(
-    @get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [],
-)
+annotation class EndpointTest(@get:AliasFor(annotation = SpringBootTest::class) val properties: Array<String> = [])
 
 private const val SPRING_DATASOURCE_URL = "spring.datasource.url"
 private const val SPRING_DATASOURCE_USERNAME = "spring.datasource.username"
@@ -91,7 +89,9 @@ val ALTERNATIVE_DEFAULT_GROUP = NewGroup(
 
 private val log = KotlinLogging.logger { }
 
-class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
+class EndpointTestExtension :
+    BeforeEachCallback,
+    TestExecutionListener {
     companion object {
         private val postgres: PostgreSQLContainer<*> = PostgreSQLContainer<Nothing>("postgres:latest")
         private var isStarted = false
@@ -160,8 +160,7 @@ class EndpointTestExtension : BeforeEachCallback, TestExecutionListener {
     }
 }
 
-private fun clearDatabaseStatement(): String {
-    return """
+private fun clearDatabaseStatement(): String = """
         truncate table $GROUPS_TABLE_NAME cascade;
         update $CURRENT_PROCESSING_PIPELINE_TABLE set version = 1, started_using_at = now();
         truncate table $SEQUENCE_ENTRIES_TABLE_NAME;
@@ -172,4 +171,3 @@ private fun clearDatabaseStatement(): String {
         truncate $SEQUENCE_UPLOAD_TABLE_NAME;
         truncate table $DATA_USE_TERMS_TABLE_NAME cascade;
     """
-}

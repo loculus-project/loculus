@@ -288,8 +288,8 @@ class SubmissionDatabaseService(
         )
     }
 
-    private fun getGroupCondition(groupIdsFilter: List<Int>?, authenticatedUser: AuthenticatedUser): Op<Boolean> {
-        return if (groupIdsFilter != null) {
+    private fun getGroupCondition(groupIdsFilter: List<Int>?, authenticatedUser: AuthenticatedUser): Op<Boolean> =
+        if (groupIdsFilter != null) {
             groupManagementPreconditionValidator.validateUserIsAllowedToModifyGroups(
                 groupIdsFilter,
                 authenticatedUser,
@@ -300,7 +300,6 @@ class SubmissionDatabaseService(
         } else {
             SequenceEntriesView.groupIsOneOf(groupManagementDatabaseService.getGroupIdsOfUser(authenticatedUser))
         }
-    }
 
     fun approveProcessedData(
         authenticatedUser: AuthenticatedUser,
@@ -404,61 +403,59 @@ class SubmissionDatabaseService(
             .associate { it[SequenceEntriesView.accessionColumn] to it[maxVersionExpression]!! }
     }
 
-    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> {
-        return SequenceEntriesView.join(
-            DataUseTermsTable,
-            JoinType.LEFT,
-            additionalConstraint = {
-                (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
-                    (DataUseTermsTable.isNewestDataUseTerms)
-            },
+    fun streamReleasedSubmissions(organism: Organism): Sequence<RawProcessedData> = SequenceEntriesView.join(
+        DataUseTermsTable,
+        JoinType.LEFT,
+        additionalConstraint = {
+            (SequenceEntriesView.accessionColumn eq DataUseTermsTable.accessionColumn) and
+                (DataUseTermsTable.isNewestDataUseTerms)
+        },
+    )
+        .select(
+            SequenceEntriesView.accessionColumn,
+            SequenceEntriesView.versionColumn,
+            SequenceEntriesView.isRevocationColumn,
+            SequenceEntriesView.processedDataColumn,
+            SequenceEntriesView.submitterColumn,
+            SequenceEntriesView.groupIdColumn,
+            SequenceEntriesView.submittedAtColumn,
+            SequenceEntriesView.releasedAtColumn,
+            SequenceEntriesView.submissionIdColumn,
+            DataUseTermsTable.dataUseTermsTypeColumn,
+            DataUseTermsTable.restrictedUntilColumn,
         )
-            .select(
-                SequenceEntriesView.accessionColumn,
-                SequenceEntriesView.versionColumn,
-                SequenceEntriesView.isRevocationColumn,
-                SequenceEntriesView.processedDataColumn,
-                SequenceEntriesView.submitterColumn,
-                SequenceEntriesView.groupIdColumn,
-                SequenceEntriesView.submittedAtColumn,
-                SequenceEntriesView.releasedAtColumn,
-                SequenceEntriesView.submissionIdColumn,
-                DataUseTermsTable.dataUseTermsTypeColumn,
-                DataUseTermsTable.restrictedUntilColumn,
+        .where {
+            SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
+                organism,
             )
-            .where {
-                SequenceEntriesView.statusIs(Status.APPROVED_FOR_RELEASE) and SequenceEntriesView.organismIs(
-                    organism,
-                )
-            }
-            .orderBy(
-                SequenceEntriesView.accessionColumn to SortOrder.ASC,
-                SequenceEntriesView.versionColumn to SortOrder.ASC,
+        }
+        .orderBy(
+            SequenceEntriesView.accessionColumn to SortOrder.ASC,
+            SequenceEntriesView.versionColumn to SortOrder.ASC,
+        )
+        .fetchSize(streamBatchSize)
+        .asSequence()
+        .map {
+            RawProcessedData(
+                accession = it[SequenceEntriesView.accessionColumn],
+                version = it[SequenceEntriesView.versionColumn],
+                isRevocation = it[SequenceEntriesView.isRevocationColumn],
+                submitter = it[SequenceEntriesView.submitterColumn],
+                groupId = it[SequenceEntriesView.groupIdColumn],
+                groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
+                submissionId = it[SequenceEntriesView.submissionIdColumn],
+                processedData = when (val processedData = it[SequenceEntriesView.processedDataColumn]) {
+                    null -> emptyProcessedDataProvider.provide(organism)
+                    else -> compressionService.decompressSequencesInProcessedData(processedData, organism)
+                },
+                submittedAt = it[SequenceEntriesView.submittedAtColumn],
+                releasedAt = it[SequenceEntriesView.releasedAtColumn]!!,
+                dataUseTerms = DataUseTerms.fromParameters(
+                    DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
+                    it[DataUseTermsTable.restrictedUntilColumn],
+                ),
             )
-            .fetchSize(streamBatchSize)
-            .asSequence()
-            .map {
-                RawProcessedData(
-                    accession = it[SequenceEntriesView.accessionColumn],
-                    version = it[SequenceEntriesView.versionColumn],
-                    isRevocation = it[SequenceEntriesView.isRevocationColumn],
-                    submitter = it[SequenceEntriesView.submitterColumn],
-                    groupId = it[SequenceEntriesView.groupIdColumn],
-                    groupName = GroupEntity[it[SequenceEntriesView.groupIdColumn]].groupName,
-                    submissionId = it[SequenceEntriesView.submissionIdColumn],
-                    processedData = when (val processedData = it[SequenceEntriesView.processedDataColumn]) {
-                        null -> emptyProcessedDataProvider.provide(organism)
-                        else -> compressionService.decompressSequencesInProcessedData(processedData, organism)
-                    },
-                    submittedAt = it[SequenceEntriesView.submittedAtColumn],
-                    releasedAt = it[SequenceEntriesView.releasedAtColumn]!!,
-                    dataUseTerms = DataUseTerms.fromParameters(
-                        DataUseTermsType.fromString(it[DataUseTermsTable.dataUseTermsTypeColumn]),
-                        it[DataUseTermsTable.restrictedUntilColumn],
-                    ),
-                )
-            }
-    }
+        }
 
     fun getSequences(
         authenticatedUser: AuthenticatedUser,

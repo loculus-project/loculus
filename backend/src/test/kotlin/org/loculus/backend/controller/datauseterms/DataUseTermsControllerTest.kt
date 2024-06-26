@@ -198,39 +198,37 @@ class DataUseTermsControllerTest(
         )
 
         @JvmStatic
-        fun dataUseTermsTestCases(): List<DataUseTermsTestCase> {
-            return listOf(
-                DataUseTermsTestCase(
-                    setupDataUseTerms = DataUseTerms.Open,
-                    newDataUseTerms = DataUseTerms.Open,
-                    expectedStatus = status().isNoContent,
-                    expectedContentType = null,
-                    expectedDetailContains = null,
-                ),
-                DataUseTermsTestCase(
-                    setupDataUseTerms = DataUseTerms.Open,
-                    newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
-                    expectedStatus = status().isUnprocessableEntity,
-                    expectedContentType = MediaType.APPLICATION_JSON_VALUE,
-                    expectedDetailContains = "Cannot change data use terms from OPEN to RESTRICTED.",
-                ),
-                DataUseTermsTestCase(
-                    setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
-                    newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(-1)),
-                    expectedStatus = status().isBadRequest,
-                    expectedContentType = MediaType.APPLICATION_JSON_VALUE,
-                    expectedDetailContains = "The date 'restrictedUntil' must be in the future, " +
-                        "up to a maximum of 1 year from now.",
-                ),
-                DataUseTermsTestCase(
-                    setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
-                    newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(7)),
-                    expectedStatus = status().isUnprocessableEntity,
-                    expectedContentType = MediaType.APPLICATION_JSON_VALUE,
-                    expectedDetailContains = "Cannot extend restricted data use period. " +
-                        "Please choose a date before ${dateMonthsFromNow(6)}.",
-                ),
-            )
-        }
+        fun dataUseTermsTestCases(): List<DataUseTermsTestCase> = listOf(
+            DataUseTermsTestCase(
+                setupDataUseTerms = DataUseTerms.Open,
+                newDataUseTerms = DataUseTerms.Open,
+                expectedStatus = status().isNoContent,
+                expectedContentType = null,
+                expectedDetailContains = null,
+            ),
+            DataUseTermsTestCase(
+                setupDataUseTerms = DataUseTerms.Open,
+                newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
+                expectedStatus = status().isUnprocessableEntity,
+                expectedContentType = MediaType.APPLICATION_JSON_VALUE,
+                expectedDetailContains = "Cannot change data use terms from OPEN to RESTRICTED.",
+            ),
+            DataUseTermsTestCase(
+                setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
+                newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(-1)),
+                expectedStatus = status().isBadRequest,
+                expectedContentType = MediaType.APPLICATION_JSON_VALUE,
+                expectedDetailContains = "The date 'restrictedUntil' must be in the future, " +
+                    "up to a maximum of 1 year from now.",
+            ),
+            DataUseTermsTestCase(
+                setupDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(6)),
+                newDataUseTerms = DataUseTerms.Restricted(dateMonthsFromNow(7)),
+                expectedStatus = status().isUnprocessableEntity,
+                expectedContentType = MediaType.APPLICATION_JSON_VALUE,
+                expectedDetailContains = "Cannot extend restricted data use period. " +
+                    "Please choose a date before ${dateMonthsFromNow(6)}.",
+            ),
+        )
     }
 }
