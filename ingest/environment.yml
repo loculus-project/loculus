@@ -18,5 +18,4 @@ dependencies:
   - requests
   - seqkit
   - snakemake
-  - tsv-utils
   - unzip

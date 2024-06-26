@@ -148,18 +148,21 @@ rule align:
 
 rule process_alignments:
     input:
+        script="scripts/process_alignments.py",
         results=expand(
             "results/nextclade_{segment}.tsv",
             segment=config["nucleotide_sequences"],
         ),
     output:
         merged="results/nextclade_merged.tsv",
+    params:
+        log_level=LOG_LEVEL,
     shell:
         """
-        tsv-append --header {input.results} \
-        | tsv-select --header --fields seqName,clade \
-        | tsv-filter --header --not-empty clade \
-        > {output.merged}
+        python {input.script} \
+            --input "{input.results}" \
+            --output {output.merged} \
+            --log-level {params.log_level} \
         """
 
 
