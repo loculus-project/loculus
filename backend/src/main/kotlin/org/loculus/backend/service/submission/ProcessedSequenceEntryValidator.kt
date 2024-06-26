@@ -174,10 +174,10 @@ class ExternalMetadataValidatorFactory(private val backendConfig: BackendConfig)
 
 class ExternalMetadataValidator(private val schema: Schema) {
     fun validate(externalData: MetadataMap) {
-        val processedDataWithAllMetadataFields = validateMetadata(externalData)
+        val processedDataWithAllMetadataFields = validateExternalMetadata(externalData)
     }
 
-    private fun validateMetadata(externalData: MetadataMap): MetadataMap {
+    private fun validateExternalMetadata(externalData: MetadataMap): MetadataMap {
         val metadataFields = schema.externalMetadata
         var processedMetadataMap = externalData
         validateNoUnknownInMetaData(processedMetadataMap, metadataFields.map { it.name })
@@ -330,11 +330,11 @@ class ProcessedSequenceEntryValidator(private val schema: Schema, private val re
     }
 
     private inline fun <reified ValidSymbols> String.getInvalidSymbols()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         this.filter { !it.isValidSymbol<ValidSymbols>() }.toList()
 
     private inline fun <reified ValidSymbols> Char.isValidSymbol()
-        where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
+            where ValidSymbols : Enum<ValidSymbols>, ValidSymbols : Symbol =
         enumValues<ValidSymbols>().any { it.symbol == this }
 
     private fun validateAminoAcidSequences(processedData: ProcessedData<GeneticSequence>) {

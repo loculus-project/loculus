@@ -66,9 +66,8 @@ The submitted data cannot be written to the database, e.g. if the accession does
 """
 
 const val SUBMIT_EXTERNAL_METADATA_ERROR_RESPONSE_DESCRIPTION = """
-The submitted external data cannot be written to the database, e.g. if the accession does not exist, if the external submission pipeline
- is outdated (i.e., the pipeline version is lower than the current one), if the pipeline submits invalid
- data or if the external submitterId is not known. Rolls back the whole transaction.
+The submitted external data cannot be written to the database, e.g. if the accession does not exist or is in the wrong
+state, if the pipeline submits invalid data or if the external submitterId is not known. Rolls back the whole transaction.
 """
 
 const val GET_DATA_TO_EDIT_SEQUENCE_VERSION_DESCRIPTION = """
