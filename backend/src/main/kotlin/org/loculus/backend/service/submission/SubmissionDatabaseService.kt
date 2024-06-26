@@ -247,6 +247,7 @@ class SubmissionDatabaseService(
         validateExternalData(
             submittedExternalData,
             organism,
+            externalSubmitter,
         )
 
         val table = ExternalMetadataTable
@@ -332,10 +333,14 @@ class SubmissionDatabaseService(
         throw validationException
     }
 
-    private fun validateExternalData(externalSubmittedData: ExternalSubmittedData, organism: Organism) = try {
+    private fun validateExternalData(
+        externalSubmittedData: ExternalSubmittedData,
+        organism: Organism,
+        externalSubmitter: String,
+    ) = try {
         externalMetadataValidatorFactory
             .create(organism)
-            .validate(externalSubmittedData.metadata)
+            .validate(externalSubmittedData.metadata, externalSubmitter)
     } catch (validationException: ProcessingValidationException) {
         throw validationException
     }

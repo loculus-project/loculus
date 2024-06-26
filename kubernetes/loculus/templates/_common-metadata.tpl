@@ -264,6 +264,7 @@ fields:
     type: {{ .type | default "string" | quote }}
     {{- if .required }}
     required: {{ .required }}
+    externalSubmitter: "ena"
     {{- end }}
 {{- end }}
 {{- end}}
@@ -272,6 +273,7 @@ fields:
     type: {{ .type | default "string" | quote }}
     {{- if .required }}
     required: {{ .required }}
+    externalSubmitter: "ena"
     {{- end }}
 {{- end}}
 {{- end}}

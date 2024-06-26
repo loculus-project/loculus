@@ -77,12 +77,19 @@
                         "type": "boolean"
                     }
                 ],
-              "externalMetadata" :[
-                {
-                  "name": "insdc_accession_full",
-                  "type": "string"
-                }
-              ]
+                "externalMetadata": [
+                    {
+                        "name": "insdc_accession_full",
+                        "type": "string",
+                        "externalSubmitter": "ena",
+                        "required": true
+                    },
+                    {
+                        "name": "other_db_accession",
+                        "type": "string",
+                        "externalSubmitter": "other_db"
+                    }
+                ]
             }
         },
         "otherOrganism": {

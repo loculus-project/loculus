@@ -57,4 +57,9 @@ enum class MetadataType {
     override fun toString(): String = lowerCase(name)
 }
 
-data class Metadata(val name: String, val type: MetadataType, val required: Boolean = false)
+data class Metadata(
+    val name: String,
+    val type: MetadataType,
+    val required: Boolean = false,
+    val externalSubmitter: String = "",
+)

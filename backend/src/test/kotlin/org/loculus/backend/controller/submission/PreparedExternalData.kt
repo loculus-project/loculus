@@ -14,9 +14,27 @@ val defaultExternalData =
         ),
     )
 
+val otherExternalData =
+    ExternalSubmittedData(
+        accession = "If a test result shows this, processed data was not prepared correctly.",
+        version = 1,
+        metadata =
+        mapOf(
+            "other_db_accession" to TextNode("DB1.1"),
+        ),
+    )
+
 object PreparedExternalData {
     fun successfullySubmitted(accession: Accession, version: Long = defaultExternalData.version) =
         defaultExternalData.copy(
+            accession = accession,
+            version = version,
+        )
+}
+
+object PreparedOtherExternalData {
+    fun successfullySubmitted(accession: Accession, version: Long = defaultExternalData.version) =
+        otherExternalData.copy(
             accession = accession,
             version = version,
         )

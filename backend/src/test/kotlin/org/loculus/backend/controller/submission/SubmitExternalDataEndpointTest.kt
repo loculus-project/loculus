@@ -1,6 +1,9 @@
 package org.loculus.backend.controller.submission
 
+import com.fasterxml.jackson.databind.node.TextNode
+import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
+import org.hamcrest.Matchers.hasEntry
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.controller.DEFAULT_ORGANISM
@@ -53,7 +56,14 @@ class SubmitExternalDataEndpointTest(
             )
             .andExpect(status().isOk)
 
-        // check that metadata is correct and that sub-table external_metadata_view is correct
+        // Assert external metadata is in getReleasedData().
+        val releasedData = convenienceClient.getReleasedData()
+        val releasedDataAccessions = releasedData
+            .map { it.metadata["accession"]?.textValue() }
+        val loc = releasedDataAccessions.binarySearch(accessions.first())
+        val releasedSequenceEntry = releasedData[loc]
+
+        assertThat(releasedSequenceEntry.metadata, hasEntry("insdc_accession_full", TextNode("GENBANK1000.1")))
     }
 
     @Test
@@ -69,7 +79,22 @@ class SubmitExternalDataEndpointTest(
             )
             .andExpect(status().isOk)
 
-        // check that metadata is correct and that sub-table external_metadata_view is correct
+        submissionControllerClient
+            .submitExternalData(
+                PreparedOtherExternalData.successfullySubmitted(accession = accessions.first()),
+                externalSubmitter = "other_db",
+            )
+            .andExpect(status().isOk)
+
+        // Assert external metadata is in getReleasedData().
+        val releasedData = convenienceClient.getReleasedData()
+        val releasedDataAccessions = releasedData
+            .map { it.metadata["accession"]?.textValue() }
+        val loc = releasedDataAccessions.binarySearch(accessions.first())
+        val releasedSequenceEntry = releasedData[loc]
+
+        assertThat(releasedSequenceEntry.metadata, hasEntry("insdc_accession_full", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
     }
 
     private fun prepareExtractedSequencesInDatabase(
