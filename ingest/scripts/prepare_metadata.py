@@ -52,6 +52,7 @@ def split_authors(authors: str) -> str:
 @click.command()
 @click.option("--config-file", required=True, type=click.Path(exists=True))
 @click.option("--input", required=True, type=click.Path(exists=True))
+@click.option("--segments", required=False, type=click.Path())
 @click.option("--sequence-hashes", required=True, type=click.Path(exists=True))
 @click.option("--output", required=True, type=click.Path())
 @click.option(
@@ -59,10 +60,15 @@ def split_authors(authors: str) -> str:
     default="INFO",
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
 )
-def main(config_file: str, input: str, sequence_hashes: str, output: str, log_level: str) -> None:
+def main(
+    config_file: str,
+    input: str,
+    segments: str | None,
+    sequence_hashes: str,
+    output: str,
+    log_level: str,
+) -> None:
     logger.setLevel(log_level)
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
 
     with open(config_file) as file:
         full_config = yaml.safe_load(file)
@@ -74,7 +80,17 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
     df = pd.read_csv(input, sep="\t", dtype=str, keep_default_na=False)
     metadata: list[dict[str, str]] = df.to_dict(orient="records")
 
-    sequence_hashes: dict[str, str] = json.loads(Path(sequence_hashes).read_text())
+    sequence_hashes: dict[str, str] = json.loads(Path(sequence_hashes).read_text(encoding="utf-8"))
+
+    if config.segmented:
+        # Segments are a tsv file with the first column being the fasta id and the second being the segment
+        segments_dict: dict[str, str] = {}
+        with open(segments, encoding="utf-8") as file:
+            for line in file:
+                if line.startswith("seqName"):
+                    continue
+                fasta_id, segment = line.strip().split("\t")
+                segments_dict[fasta_id] = segment
 
     for record in metadata:
         # Transform the metadata
@@ -87,6 +103,13 @@ def main(config_file: str, input: str, sequence_hashes: str, output: str, log_le
         record["insdc_accession_base"] = record[config.fasta_id_field].split(".", 1)[0]
         record["insdc_version"] = record[config.fasta_id_field].split(".", 1)[1]
         record["ncbi_submitter_names"] = split_authors(record["ncbi_submitter_names"])
+        if config.segmented:
+            record["segment"] = segments_dict.get(record[config.fasta_id_field], "")
+
+    # Get rid of all records without segment
+    # TODO: Log the ones that are missing
+    if config.segmented:
+        metadata = [record for record in metadata if record["segment"]]
 
     for record in metadata:
         for from_key, to_key in config.rename.items():
