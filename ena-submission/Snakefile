@@ -1,0 +1,55 @@
+import yaml
+from pathlib import Path
+
+with open("config/config.yaml") as f:
+    defaults = yaml.safe_load(f)
+
+# Merge configs, using defaults only as fallback
+# Write to results/config.yaml
+for key, value in defaults.items():
+    if not key in config:
+        config[key] = value
+
+Path("results").mkdir(parents=True, exist_ok=True)
+with open("results/config.yaml", "w") as f:
+    f.write(yaml.dump(config))
+
+LOG_LEVEL = config.get("log_level", "INFO")
+    
+rule submit_external_metadata:
+    input:
+        script="scripts/call_loculus.py",
+        metadata="results/external_metadata.json",
+        config="results/config.yaml",
+    output:
+        submitted="results/submitted.json",
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        if [ -s {input.metadata} ]; then
+            python {input.script} \
+                --mode submit-external-metadata \
+                --metadata {input.metadata} \
+                --config-file {input.config} \
+                --output-file {output.submitted} \
+                --log-level {params.log_level}
+        fi
+        """
+
+
+rule get_ena_submission_list:
+    input:
+        script="scripts/get_ena_submission_list.py",
+        config="results/config.yaml",
+    output:
+        released="results/ena_submission_list.json",
+    params:
+        log_level=LOG_LEVEL,
+    shell:
+        """
+        python {input.script} \
+                --config-file {input.config} \
+                --output-file {output.released} \
+                --log-level {params.log_level} \
+        """

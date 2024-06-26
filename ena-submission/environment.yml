@@ -1,0 +1,16 @@
+name: loculus-ena-submission
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  # Core Python dependencies
+  - python =3.12
+  - pip >=24
+  # Extra dependencies
+  - click
+  - jsonlines
+  - PyYAML
+  - requests
+  - snakemake
+  - unzip
+  - psycopg2
