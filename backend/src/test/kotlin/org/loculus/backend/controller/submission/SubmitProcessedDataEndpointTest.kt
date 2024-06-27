@@ -420,9 +420,8 @@ class SubmitProcessedDataEndpointTest(
             .andExpect(status().isNoContent)
     }
 
-    private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM): Accession {
-        return prepareExtractedSequencesInDatabase(1, organism = organism)[0].accession
-    }
+    private fun prepareUnprocessedSequenceEntry(organism: String = DEFAULT_ORGANISM): Accession =
+        prepareExtractedSequencesInDatabase(1, organism = organism)[0].accession
 
     private fun prepareExtractedSequencesInDatabase(
         numberOfSequenceEntries: Int = SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
@@ -658,7 +657,5 @@ data class InvalidDataScenario(
     val processedDataThatNeedsAValidAccession: SubmittedProcessedData,
     val expectedErrorMessage: String,
 ) {
-    override fun toString(): String {
-        return "GIVEN $name THEN the response contains $expectedErrorMessage"
-    }
+    override fun toString(): String = "GIVEN $name THEN the response contains $expectedErrorMessage"
 }

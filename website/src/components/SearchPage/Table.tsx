@@ -12,10 +12,13 @@ export type TableSequenceData = {
     [key: string]: Metadatum;
 };
 
-function formatField(value: any, maxLength: number): string {
+function formatField(value: any, maxLength: number, type: string): string {
     if (typeof value === 'string' && value.toString().length > maxLength) {
         return `${value.toString().slice(0, maxLength)}…`;
     } else if (typeof value === 'number' && Number.isInteger(value)) {
+        if (type === 'timestamp') {
+            return new Date(value * 1000).toISOString().slice(0, 10);
+        }
         return value.toLocaleString('en-US');
     } else {
         return value;
@@ -51,6 +54,7 @@ export const Table: FC<TableProps> = ({
         field,
         headerName: schema.metadata.find((m) => m.name === field)?.displayName ?? capitalCase(field),
         maxLength: maxLengths[field],
+        type: schema.metadata.find((m) => m.name === field)?.type ?? 'string',
     }));
 
     const handleSort = (field: string) => {
@@ -152,7 +156,7 @@ export const Table: FC<TableProps> = ({
                                         }
                                         data-tooltip-id='table-tip'
                                     >
-                                        {formatField(row[c.field], c.maxLength)}
+                                        {formatField(row[c.field], c.maxLength, c.type)}
                                     </td>
                                 ))}
                             </tr>

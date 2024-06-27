@@ -10,11 +10,11 @@ metadata:
   name: loculus-preprocessing-config-{{ $organism }}-v{{ $processingConfig.version }}-{{ $processingIndex }}
 data:
   preprocessing-config.yaml: |
-    {{- $processingConfig.configFile | toYaml | nindent 4 }}
-    processing_spec: 
-      {{- $args := dict "metadata" $metadata "nucleotideSequences" $nucleotideSequences}}
-      {{- include "loculus.preprocessingSpecs" $args | nindent 6}}
     organism: {{ $organism }}
+    {{- $processingConfig.configFile | toYaml | nindent 4 }}
+    processing_spec:
+      {{- $args := dict "metadata" $metadata "nucleotideSequences" $nucleotideSequences }}
+      {{- include "loculus.preprocessingSpecs" $args | nindent 6 }}
 {{- end }}
 {{- end }}
 {{- end }}

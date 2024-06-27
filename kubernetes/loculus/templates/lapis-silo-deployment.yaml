@@ -62,6 +62,20 @@ spec:
             - name: lapis-silo-database-config-processed
               mountPath: /workspace/reference_genomes.json
               subPath: reference_genomes.json
+          readinessProbe:
+            httpGet:
+              path: /sample/info
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /sample/info
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
         - name: silo-preprocessing
           image: {{ $.Values.images.lapisSilo }}
           imagePullPolicy: IfNotPresent

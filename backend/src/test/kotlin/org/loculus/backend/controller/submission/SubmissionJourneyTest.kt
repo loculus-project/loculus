@@ -22,9 +22,7 @@ import org.loculus.backend.controller.submission.SubmitFiles.DefaultFiles
 import org.springframework.beans.factory.annotation.Autowired
 
 @EndpointTest
-class SubmissionJourneyTest(
-    @Autowired val convenienceClient: SubmissionConvenienceClient,
-) {
+class SubmissionJourneyTest(@Autowired val convenienceClient: SubmissionConvenienceClient) {
     @Test
     fun `Submission scenario, from submission, over edit and approval ending in status 'APPROVED_FOR_RELEASE'`() {
         val accessions = convenienceClient.submitDefaultFiles()

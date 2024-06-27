@@ -46,11 +46,7 @@ fun metadataEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<Me
     }
 }
 
-data class RevisionEntry(
-    val submissionId: SubmissionId,
-    val accession: Accession,
-    val metadata: Map<String, String>,
-)
+data class RevisionEntry(val submissionId: SubmissionId, val accession: Accession, val metadata: Map<String, String>)
 
 fun revisionEntryStreamAsSequence(metadataInputStream: InputStream): Sequence<RevisionEntry> {
     val csvParser = CSVParser(

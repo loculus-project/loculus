@@ -10,9 +10,7 @@ import org.springframework.stereotype.Service
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
-data class CompressedSequence(
-    val compressedSequence: String,
-)
+data class CompressedSequence(val compressedSequence: String)
 
 enum class CompressionAlgorithm(val extension: String) {
     NONE(""),

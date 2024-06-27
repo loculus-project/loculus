@@ -10,9 +10,7 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 @SpringBootTestWithoutDatabase
-class CrossRefServiceTest(
-    @Autowired private val crossRefService: CrossRefService,
-) {
+class CrossRefServiceTest(@Autowired private val crossRefService: CrossRefService) {
     private val doiBatchID: String = "3cbae87e-77b2-4560-b411-502288f3f636"
     private val doiPrefix: String = "10.62599"
     private val now: LocalDate = LocalDateTime.ofInstant(

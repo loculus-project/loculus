@@ -10,9 +10,7 @@ import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 
 @Component
-class GroupManagementPreconditionValidator(
-    private val keycloakAdapter: KeycloakAdapter,
-) {
+class GroupManagementPreconditionValidator(private val keycloakAdapter: KeycloakAdapter) {
 
     @Transactional(readOnly = true)
     fun validateUserIsAllowedToModifyGroup(groupId: Int, authenticatedUser: AuthenticatedUser) {
