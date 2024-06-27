@@ -35,7 +35,7 @@ export class SearchPage {
     }
 
     public async getTableContent() {
-        const tableData = await this.page.locator('Search Results Table').evaluateAll((rows) => {
+        const tableData = await this.page.locator('SearchResult').evaluateAll((rows) => {
             return rows.map((row) => {
                 const cells = Array.from(row.querySelectorAll('td'));
                 return cells.map((cell) => cell.textContent!.trim());
