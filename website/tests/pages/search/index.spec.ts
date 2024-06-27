@@ -39,13 +39,13 @@ test.describe('The search page', () => {
 
     test('should search a few sequence entries by accession', async ({ searchPage }) => {
         await searchPage.goto();
-        const previousAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
+        const previousAccessions = await searchPage.getTableContent();
 
         const query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
         await searchPage.getAccessionField().click();
         await searchPage.getAccessionField().fill(query);
 
-        const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
+        const newAccessions = await searchPage.getTableContent();
 
         expect(newAccessions.length).toBe(3);
         expect(newAccessions.includes(previousAccessions[0])).toBeTruthy();
@@ -62,7 +62,7 @@ test.describe('The search page', () => {
         for (var index = 1; index < elementsCount; index++) {
             const element = await rowLocator.nth(index);
             const innerText = await element.innerText();
-            previousAccessions.push(innerText.split(/[ ,]+/)[0]);
+            previousAccessions.push(innerText.split(' ')[0]);
         }
 
         let query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
@@ -72,7 +72,7 @@ test.describe('The search page', () => {
         await searchPage.getAccessionField().click();
         await searchPage.getAccessionField().fill(query);
 
-        const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
+        const newAccessions = await searchPage.getTableContent();
 
         expect(newAccessions).toBe(previousAccessions);
 

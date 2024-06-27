@@ -42,7 +42,7 @@ export class SearchPage {
         for (var index = 1; index < elementsCount; index++) {
             const element = await rowLocator.nth(index);
             const innerText = await element.innerText();
-            previousAccessions.push(innerText.split(/[ ,]+/)[0]);
+            previousAccessions.push(innerText.split(' ')[0]);
         }
         return previousAccessions;
     }
