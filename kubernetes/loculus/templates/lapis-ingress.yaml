@@ -16,12 +16,29 @@ spec:
     accessControlAllowHeaders:
       - "*"
 ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: basic-auth
+spec:
+  basicAuth:
+    secret: basic-auth-secret
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: basic-auth-secret
+type: Opaque
+data:
+  users: |2
+    {{ htpasswd "admin" "loculus123" | b64enc }}
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: lapis-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{- $first := true }}{{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ $.Release.Namespace }}-cors-all-origins@kubernetescrd,{{ $.Release.Namespace }}-basic-auth@kubernetescrd,{{- $first := true }}{{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}{{ if $first }}{{ $first = false }}{{ else }},{{ end }}{{ $.Release.Namespace }}-strip-{{ $key }}-prefix@kubernetescrd{{- end }}"
 spec:
   rules:
   - host: {{ if eq $.Values.environment "server" }}{{ $lapisHost }}{{ end }}
@@ -44,8 +61,6 @@ spec:
   - hosts:
     - {{ $lapisHost }}
   {{- end }}
-
-
 {{- range $key, $_ := (.Values.organisms | default .Values.defaultOrganisms) }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
