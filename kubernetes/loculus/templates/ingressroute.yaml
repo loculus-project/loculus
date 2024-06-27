@@ -34,9 +34,8 @@ spec:
 
 {{ $middleWareListForWebsite := $middlewareList }}
 
-#{{ if hasKey $.Values.secrets "basicauth" }}
 {{ $middleWareListForWebsite = append $middleWareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
-#{{ end }}
+
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
