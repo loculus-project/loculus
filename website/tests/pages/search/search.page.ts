@@ -28,14 +28,14 @@ export class SearchPage {
 
     public async searchFor(params: { name: string; filterValue: string }[]) {
         await this.page.goto(
-            `${baseUrl}${routes.searchPage(dummyOrganism.key)}${params
+            `${baseUrl}${routes.searchPage(dummyOrganism.key)}?${params
                 .map((param) => `&${param.name}=${param.filterValue}`)
                 .join('')}`,
         );
     }
 
     public async getTableContent() {
-        const tableData = await this.page.locator('table >> css=tr').evaluateAll((rows) => {
+        const tableData = await this.page.locator('Search Results Table').evaluateAll((rows) => {
             return rows.map((row) => {
                 const cells = Array.from(row.querySelectorAll('td'));
                 return cells.map((cell) => cell.textContent!.trim());

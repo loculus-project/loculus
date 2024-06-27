@@ -10,7 +10,7 @@ test.describe('The search page', () => {
         const tomorrow = DateTime.now().plus({ days: 1 }).toISODate();
 
         await searchPage.goto();
-        await searchPage.searchFor([{ name: 'sample_collection_dateFrom', filterValue: tomorrow }]);
+        await searchPage.searchFor([{ name: 'dateFrom', filterValue: tomorrow }]);
 
         await expect(searchPage.page.getByText('No data')).toBeVisible();
     });
