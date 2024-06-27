@@ -32,10 +32,10 @@ spec:
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
 
-{{ if $.Values.secrets.basicauth }}
+{{ $$middleWareListForWebsite:=$middlewareList }}
+
+{{ if hasKey $.Values.secrets "basicauth" }}
 {{ $middleWareListForWebsite := append $middlewareList (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
-{{ else }}
-{{ $middleWareListForWebsite := $middlewareList  }}
 {{ end }}
 
 apiVersion: networking.k8s.io/v1
