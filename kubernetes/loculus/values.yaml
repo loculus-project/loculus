@@ -1143,6 +1143,11 @@ images:
   lapisSilo: "ghcr.io/genspectrum/lapis-silo:0.2.7"
   lapis: "ghcr.io/genspectrum/lapis:0.2.3"
 secrets:
+  basic-auth:
+    type: rawhtpasswd
+    data:
+      username: loculus
+      password: widetailpotato
   smtp-password:
     type: raw
     data:

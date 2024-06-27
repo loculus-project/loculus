@@ -13,6 +13,7 @@ spec:
   redirectScheme:
     scheme: https
     permanent: true
+{{ if $.Values.secrets.basic-auth }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
@@ -20,15 +21,8 @@ metadata:
   name: basic-auth
 spec:
   basicAuth:
-    secret: basic-auth-secret
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: basic-auth-secret
-type: Opaque
-data:
-  users: {{ htpasswd "admin" "loculus123" | b64enc }}
+    secret: basic-auth
+{{ endif  }}
 ---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
@@ -37,7 +31,10 @@ data:
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
+
+{{ if $.Values.secrets.basic-auth }}
 {{ $middleWareListForWebsite := append $middlewareList (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
+{{ end }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
