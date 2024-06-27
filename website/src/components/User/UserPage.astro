@@ -8,8 +8,8 @@ import { getAccessToken } from '../../utils/getAccessToken';
 import { urlForKeycloakAccountPage } from '../../utils/urlForKeycloakAccountPage';
 import ErrorBox from '../common/ErrorBox.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
-import MaterialSymbolsLightPersonOutline from '~icons/material-symbols-light/person-outline';
 import IconoirOpenNewWindow from '~icons/iconoir/open-new-window';
+import MaterialSymbolsLightPersonOutline from '~icons/material-symbols-light/person-outline';
 
 const session = Astro.locals.session!;
 const user = session.user!; // page only accessible if user is logged in
@@ -25,6 +25,7 @@ const keycloakLogoutUrl = keycloakClient!.endSessionUrl({
 const accountPageUrl = await urlForKeycloakAccountPage(keycloakClient!);
 const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 ---
+
 <BaseLayout title='My account'>
     <div class='max-w-4xl mx-auto'>
         <div class='flex mt-4'>
@@ -51,12 +52,12 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
             >
             <a
                 href={accountPageUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                target='_blank'
+                rel='noopener noreferrer'
                 class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded text-sm flex items-center'
             >
                 Edit account information
-                <IconoirOpenNewWindow className="ml-1 w-4 h-4" />
+                <IconoirOpenNewWindow className='ml-1 w-4 h-4' />
             </a>
         </div>
         <div class='font-bold mt-12 text-lg mb-2 text-primary-700'>
