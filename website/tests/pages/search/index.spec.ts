@@ -77,7 +77,8 @@ test.describe('The search page', () => {
         await searchPage.searchFor([{ name: 'country', filterValue: 'Switzerland' }]);
 
         const rowLocator = searchPage.page.locator('tr');
-        const rowCount = await rowLocator.getByText('Switzerland').count();
+        await expect(rowLocator.getByText('Switzerland')).toBeVisible();
+        const rowCount = await rowLocator.count();
         await expect(rowCount).toBeGreaterThan(0);
     });
 
