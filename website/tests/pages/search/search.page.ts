@@ -34,16 +34,15 @@ export class SearchPage {
         );
     }
 
-    public async getTableContent() {
+    public async getAccessions(elementsCount: number) {
         const rowLocator = this.page.locator('tr');
-        const elementsCount = 4;
-        const previousAccessions = [];
+        const accessions = [];
 
-        for (let index = 1; index < elementsCount; index++) {
+        for (let index = 1; index < 1 + elementsCount; index++) {
             const element = await rowLocator.nth(index);
             const innerText = await element.innerText();
-            previousAccessions.push(innerText.split(' ')[0]);
+            accessions.push(innerText.split(' ')[0]);
         }
-        return previousAccessions;
+        return accessions;
     }
 }
