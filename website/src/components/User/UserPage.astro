@@ -9,27 +9,22 @@ import { urlForKeycloakAccountPage } from '../../utils/urlForKeycloakAccountPage
 import ErrorBox from '../common/ErrorBox.tsx';
 import DashiconsGroups from '~icons/dashicons/groups';
 import MaterialSymbolsLightPersonOutline from '~icons/material-symbols-light/person-outline';
+import IconoirOpenNewWindow from '~icons/iconoir/open-new-window';
 
 const session = Astro.locals.session!;
 const user = session.user!; // page only accessible if user is logged in
 const username = user.username!; // all users must have a username
 const name = user.name;
-
 const accessToken = getAccessToken(session)!;
-
 const logoutUrl = new URL(Astro.request.url);
 logoutUrl.pathname = routes.logout();
-
 const keycloakClient = await KeycloakClientManager.getClient();
-
 const keycloakLogoutUrl = keycloakClient!.endSessionUrl({
     post_logout_redirect_uri: logoutUrl.href,
 });
 const accountPageUrl = await urlForKeycloakAccountPage(keycloakClient!);
-
 const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(accessToken);
 ---
-
 <BaseLayout title='My account'>
     <div class='max-w-4xl mx-auto'>
         <div class='flex mt-4'>
@@ -42,7 +37,6 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
                     }}
                 />
             </div>
-
             <div>
                 <h1 class='text-gray-900 text-xl font-semibold'>{name}</h1>
                 <h2 class='text-gray-700 font-semibold'>
@@ -50,7 +44,6 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
                 </h2>
             </div>
         </div>
-
         <div class='my-2 flex gap-2'>
             <a
                 href={keycloakLogoutUrl}
@@ -58,11 +51,14 @@ const groupOfUsersResult = await GroupManagementClient.create().getGroupsOfUser(
             >
             <a
                 href={accountPageUrl}
-                class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded text-sm'
-                >Edit account information</a
+                target="_blank"
+                rel="noopener noreferrer"
+                class='bg-primary-500 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded text-sm flex items-center'
             >
+                Edit account information
+                <IconoirOpenNewWindow className="ml-1 w-4 h-4" />
+            </a>
         </div>
-
         <div class='font-bold mt-12 text-lg mb-2 text-primary-700'>
             <DashiconsGroups className='w-6 h-6 inline-block mr-2' />My groups
         </div>
