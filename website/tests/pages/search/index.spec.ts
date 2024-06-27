@@ -74,7 +74,7 @@ test.describe('The search page', () => {
 
     test('should search for existing data from one country', async ({ searchPage }) => {
         await searchPage.goto();
-        await searchPage.searchFor([{ name: 'geo_loc_country', filterValue: 'Switzerland' }]);
+        await searchPage.searchFor([{ name: 'country', filterValue: 'Switzerland' }]);
 
         const resultCount = await searchPage.page.getByText('Switzerland').count();
 
