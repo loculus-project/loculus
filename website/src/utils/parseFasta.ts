@@ -6,7 +6,7 @@ export type FastaEntry = {
 };
 
 export function parseFasta(fasta: string) {
-    if (fasta == '') {
+    if (fasta === '') {
         return [];
     }
     const fastaEntries: FastaEntry[] = [];
