@@ -34,7 +34,9 @@ spec:
 
 {{ $middleWareListForWebsite := $middlewareList }}
 
+{{ if $.Values.secrets.basicauth }}
 {{ $middleWareListForWebsite = append $middleWareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
+{{ end }}
 
 
 apiVersion: networking.k8s.io/v1
