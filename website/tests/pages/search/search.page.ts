@@ -37,9 +37,9 @@ export class SearchPage {
     public async getTableContent() {
         const rowLocator = this.page.locator('tr');
         const elementsCount = 4;
-        let previousAccessions = [];
+        const previousAccessions = [];
 
-        for (var index = 1; index < elementsCount; index++) {
+        for (let index = 1; index < elementsCount; index++) {
             const element = await rowLocator.nth(index);
             const innerText = await element.innerText();
             previousAccessions.push(innerText.split(' ')[0]);

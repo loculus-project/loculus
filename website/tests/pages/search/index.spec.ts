@@ -55,15 +55,7 @@ test.describe('The search page', () => {
 
     test('should search many sequence entries by accession', async ({ searchPage }) => {
         await searchPage.goto();
-        const rowLocator = searchPage.page.locator('tr');
-        const elementsCount = 4;
-        let previousAccessions = [];
-
-        for (var index = 1; index < elementsCount; index++) {
-            const element = await rowLocator.nth(index);
-            const innerText = await element.innerText();
-            previousAccessions.push(innerText.split(' ')[0]);
-        }
+        const previousAccessions = await searchPage.getTableContent();
 
         let query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
         for (let i = 0; i < 1000; i++) {
@@ -73,8 +65,6 @@ test.describe('The search page', () => {
         await searchPage.getAccessionField().fill(query);
 
         const newAccessions = await searchPage.getTableContent();
-
-        expect(newAccessions).toBe(previousAccessions);
 
         expect(newAccessions.length).toBe(3);
         expect(newAccessions.includes(previousAccessions[0])).toBeTruthy();
@@ -86,9 +76,9 @@ test.describe('The search page', () => {
         await searchPage.goto();
         await searchPage.searchFor([{ name: 'country', filterValue: 'Switzerland' }]);
 
-        const resultCount = await searchPage.page.getByText('Switzerland').count();
-
-        expect(resultCount).toBeGreaterThan(0);
+        const rowLocator = searchPage.page.locator('tr');
+        const rowCount = await rowLocator.getByText('Switzerland').count();
+        await expect(rowCount).toBeGreaterThan(0);
     });
 
     test('should reset the search', async ({ searchPage }) => {
