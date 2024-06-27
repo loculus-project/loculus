@@ -6,9 +6,11 @@ export type FastaEntry = {
 };
 
 export function parseFasta(fasta: string) {
+    if (fasta == '') {
+        return [];
+    }
     const fastaEntries: FastaEntry[] = [];
     let currentEntry: FastaEntry | null = null;
-
     const lines = fasta.split('\n');
     for (const line of lines) {
         if (line.startsWith('>')) {
