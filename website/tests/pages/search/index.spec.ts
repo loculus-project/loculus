@@ -55,7 +55,15 @@ test.describe('The search page', () => {
 
     test('should search many sequence entries by accession', async ({ searchPage }) => {
         await searchPage.goto();
-        const previousAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
+        const rowLocator = searchPage.page.locator('tr');
+        const elementsCount = 4;
+        let previousAccessions = [];
+
+        for (var index = 1; index < elementsCount; index++) {
+            const element = await rowLocator.nth(index);
+            const innerText = await element.innerText();
+            previousAccessions.push(innerText.split(/[ ,]+/)[0]);
+        }
 
         let query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
         for (let i = 0; i < 1000; i++) {
@@ -65,6 +73,8 @@ test.describe('The search page', () => {
         await searchPage.getAccessionField().fill(query);
 
         const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
+
+        expect(newAccessions).toBe(previousAccessions);
 
         expect(newAccessions.length).toBe(3);
         expect(newAccessions.includes(previousAccessions[0])).toBeTruthy();

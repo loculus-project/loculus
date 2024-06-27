@@ -35,12 +35,15 @@ export class SearchPage {
     }
 
     public async getTableContent() {
-        const tableData = await this.page.locator('SearchResult').evaluateAll((rows) => {
-            return rows.map((row) => {
-                const cells = Array.from(row.querySelectorAll('td'));
-                return cells.map((cell) => cell.textContent!.trim());
-            });
-        });
-        return tableData.slice(1);
+        const rowLocator = this.page.locator('tr');
+        const elementsCount = 4;
+        let previousAccessions = [];
+
+        for (var index = 1; index < elementsCount; index++) {
+            const element = await rowLocator.nth(index);
+            const innerText = await element.innerText();
+            previousAccessions.push(innerText.split(/[ ,]+/)[0]);
+        }
+        return previousAccessions;
     }
 }
