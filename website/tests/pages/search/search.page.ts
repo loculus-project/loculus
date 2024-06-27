@@ -6,22 +6,16 @@ import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 export const ACCESSION = 'Accession';
 
 export class SearchPage {
-    public readonly searchButton: Locator;
     public readonly table: Locator;
     public readonly resetButton: Locator;
 
     constructor(public readonly page: Page) {
-        this.searchButton = page.getByRole('button', { name: 'Search sequences' });
         this.resetButton = page.getByRole('button', { name: 'reset' });
         this.table = page.getByRole('table');
     }
 
     public async goto() {
         await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key)}`);
-    }
-
-    public async clickSearchButton() {
-        await this.searchButton.click();
     }
 
     public async clickResetButton() {

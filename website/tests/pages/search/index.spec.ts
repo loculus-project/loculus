@@ -6,12 +6,6 @@ import { baseUrl, dummyOrganism, expect, test } from '../../e2e.fixture';
 import { getTestSequences } from '../../util/testSequenceProvider.ts';
 
 test.describe('The search page', () => {
-    test('should show the search form with button and a table', async ({ searchPage }) => {
-        await searchPage.goto();
-        await expect(searchPage.searchButton).toBeVisible();
-        await expect(searchPage.table).toBeVisible();
-    });
-
     test('should find no data in the future', async ({ searchPage }) => {
         const tomorrow = DateTime.now().plus({ days: 1 }).toISODate();
 
@@ -27,8 +21,6 @@ test.describe('The search page', () => {
         await searchPage.goto();
         await searchPage.getAccessionField().click();
         await searchPage.getAccessionField().fill(testAccessionVersion);
-
-        await searchPage.clickSearchButton();
 
         await searchPage.page.waitForURL(
             `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${testAccessionVersion}`,
@@ -51,7 +43,6 @@ test.describe('The search page', () => {
         const query = `doesnotexist\n${previousAccessions[0]},${previousAccessions[1]}\t${previousAccessions[2]}`;
         await searchPage.getAccessionField().click();
         await searchPage.getAccessionField().fill(query);
-        await searchPage.clickSearchButton();
 
         const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
 
@@ -71,7 +62,6 @@ test.describe('The search page', () => {
         }
         await searchPage.getAccessionField().click();
         await searchPage.getAccessionField().fill(query);
-        await searchPage.clickSearchButton();
 
         const newAccessions = (await searchPage.getTableContent()).map((arr) => arr[0]);
 
