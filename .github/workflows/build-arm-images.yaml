@@ -23,6 +23,10 @@ jobs:
     uses: ./.github/workflows/ingest-image.yml
     with:
       build_arm: true
+  trigger-ena-submission:
+    uses: ./.github/workflows/ena-submission-image.yml
+    with:
+      build_arm: true
   trigger-keycloakify:
     uses: ./.github/workflows/keycloakify-image.yml
     with:
