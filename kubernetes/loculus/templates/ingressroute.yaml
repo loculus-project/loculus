@@ -22,7 +22,7 @@ metadata:
 spec:
   basicAuth:
     secret: basicauth
-{{ endif  }}
+{{ end  }}
 ---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
