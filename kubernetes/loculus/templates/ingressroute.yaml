@@ -13,7 +13,7 @@ spec:
   redirectScheme:
     scheme: https
     permanent: true
-{{ if $.Values.secrets.basic-auth }}
+{{ if $.Values.secrets.basicauth }}
 ---
 apiVersion: traefik.containo.us/v1alpha1
 kind: Middleware
