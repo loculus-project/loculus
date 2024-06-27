@@ -33,17 +33,18 @@ data:
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
 {{- $keycloakHost := printf "authentication-%s" .Values.host }}
-{{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
+{{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
+{{ $middleWareListForWebsite = append $middlewareList (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-website-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middleWareListForWebsite }}"
 spec:
   rules:
     - host: "{{ .Values.host }}"
