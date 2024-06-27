@@ -33,6 +33,7 @@ const lastTimeBannerWasClosed = Astro.cookies.get('lastTimeBannerWasClosed')?.va
         <link rel='preload' as='image' href='/favicon.svg' />
         <meta name='viewport' content='width=device-width' />
         <meta name='generator' content={Astro.generator} />
+        <meta name='robots' content='noindex' />
         <title>{title}</title>
         <Fragment set:html={additionalHeadHTML} />
     </head>
