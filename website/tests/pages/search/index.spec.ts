@@ -10,7 +10,7 @@ test.describe('The search page', () => {
         const tomorrow = DateTime.now().plus({ days: 1 }).toISODate();
 
         await searchPage.goto();
-        await searchPage.searchFor([{ name: 'dateFrom', filterValue: tomorrow }]);
+        await searchPage.searchFor([{ name: 'sample_collection_dateFrom', filterValue: tomorrow }]);
 
         await expect(searchPage.page.getByText('No data')).toBeVisible();
     });
@@ -25,7 +25,8 @@ test.describe('The search page', () => {
         await searchPage.page.waitForURL(
             `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${testAccessionVersion}`,
         );
-        const accessionLink = searchPage.page.getByText(testAccessionVersion, { exact: true });
+        const accessionLink = searchPage.page.getByText(testAccessionVersion);
+        await searchPage.page.getByText('Search returned 1 sequence');
         await expect(accessionLink).toBeVisible();
 
         const rowLocator = searchPage.page.locator('tr');
