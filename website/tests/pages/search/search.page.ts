@@ -6,22 +6,16 @@ import { baseUrl, dummyOrganism } from '../../e2e.fixture';
 export const ACCESSION = 'Accession';
 
 export class SearchPage {
-    public readonly searchButton: Locator;
     public readonly table: Locator;
     public readonly resetButton: Locator;
 
     constructor(public readonly page: Page) {
-        this.searchButton = page.getByRole('button', { name: 'Search sequences' });
         this.resetButton = page.getByRole('button', { name: 'reset' });
         this.table = page.getByRole('table');
     }
 
     public async goto() {
         await this.page.goto(`${baseUrl}${routes.searchPage(dummyOrganism.key)}`);
-    }
-
-    public async clickSearchButton() {
-        await this.searchButton.click();
     }
 
     public async clickResetButton() {
@@ -34,19 +28,21 @@ export class SearchPage {
 
     public async searchFor(params: { name: string; filterValue: string }[]) {
         await this.page.goto(
-            `${baseUrl}${routes.searchPage(dummyOrganism.key)}${params
+            `${baseUrl}${routes.searchPage(dummyOrganism.key)}?${params
                 .map((param) => `&${param.name}=${param.filterValue}`)
                 .join('')}`,
         );
     }
 
-    public async getTableContent() {
-        const tableData = await this.page.locator('table >> css=tr').evaluateAll((rows) => {
-            return rows.map((row) => {
-                const cells = Array.from(row.querySelectorAll('td'));
-                return cells.map((cell) => cell.textContent!.trim());
-            });
-        });
-        return tableData.slice(1);
+    public async getAccessions(elementsCount: number) {
+        const rowLocator = this.page.locator('tr');
+        const accessions = [];
+
+        for (let index = 1; index < 1 + elementsCount; index++) {
+            const element = await rowLocator.nth(index);
+            const innerText = await element.innerText();
+            accessions.push(innerText.split(' ')[0]);
+        }
+        return accessions;
     }
 }
