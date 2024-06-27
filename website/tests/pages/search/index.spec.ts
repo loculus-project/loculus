@@ -25,7 +25,7 @@ test.describe('The search page', () => {
         await searchPage.page.waitForURL(
             `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${testAccessionVersion}`,
         );
-        const accessionLink = searchPage.page.getByText(testAccessionVersion);
+        const accessionLink = searchPage.page.getByRole('link', { name: testAccessionVersion });
         await searchPage.page.getByText('Search returned 1 sequence');
         await expect(accessionLink).toBeVisible();
 
@@ -74,7 +74,7 @@ test.describe('The search page', () => {
 
     test('should search for existing data from one country', async ({ searchPage }) => {
         await searchPage.goto();
-        await searchPage.searchFor([{ name: 'country', filterValue: 'Switzerland' }]);
+        await searchPage.searchFor([{ name: 'geo_loc_country', filterValue: 'Switzerland' }]);
 
         const resultCount = await searchPage.page.getByText('Switzerland').count();
 
