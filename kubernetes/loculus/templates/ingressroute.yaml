@@ -14,10 +14,26 @@ spec:
     scheme: https
     permanent: true
 ---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: basic-auth
+spec:
+  basicAuth:
+    secret: basic-auth-secret
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: basic-auth-secret
+type: Opaque
+data:
+  users: {{ htpasswd "admin" "loculus123" | b64enc }}
+---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
 {{- $keycloakHost := printf "authentication-%s" .Values.host }}
-{{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) }}
+{{- $middlewareList := list (printf "%s-compression-middleware@kubernetescrd" $.Release.Namespace) (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
 {{- if $.Values.enforceHTTPS }}
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
@@ -66,7 +82,6 @@ spec:
   - hosts:
     - "{{ $backendHost }}"
 ---
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
