@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.node.TextNode
 import org.loculus.backend.api.ExternalSubmittedData
 import org.loculus.backend.utils.Accession
 
-val defaultExternalData =
+val defaultexternalMetadata =
     ExternalSubmittedData(
         accession = "If a test result shows this, processed data was not prepared correctly.",
         version = 1,
@@ -13,7 +13,7 @@ val defaultExternalData =
         ),
     )
 
-val otherExternalData =
+val otherexternalMetadata =
     ExternalSubmittedData(
         accession = "If a test result shows this, processed data was not prepared correctly.",
         version = 1,
@@ -22,17 +22,17 @@ val otherExternalData =
         ),
     )
 
-object PreparedExternalData {
-    fun successfullySubmitted(accession: Accession, version: Long = defaultExternalData.version) =
-        defaultExternalData.copy(
+object PreparedexternalMetadata {
+    fun successfullySubmitted(accession: Accession, version: Long = defaultexternalMetadata.version) =
+        defaultexternalMetadata.copy(
             accession = accession,
             version = version,
         )
 }
 
-object PreparedOtherExternalData {
-    fun successfullySubmitted(accession: Accession, version: Long = defaultExternalData.version) =
-        otherExternalData.copy(
+object PreparedOtherexternalMetadata {
+    fun successfullySubmitted(accession: Accession, version: Long = defaultexternalMetadata.version) =
+        otherexternalMetadata.copy(
             accession = accession,
             version = version,
         )

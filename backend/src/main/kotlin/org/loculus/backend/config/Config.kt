@@ -61,5 +61,5 @@ data class Metadata(
     val name: String,
     val type: MetadataType,
     val required: Boolean = false,
-    val externalSubmitter: String = "",
+    val externalMetadataUpdater: String = "",
 )

@@ -200,8 +200,8 @@ class SubmissionDatabaseService(
         )
     }
 
-    fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalSubmitter: String) {
-        log.info { "Updating metadata with external metadata received from $externalSubmitter" }
+    fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalMetadataUpdater: String) {
+        log.info { "Updating metadata with external metadata received from $externalMetadataUpdater" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
         val accessionVersions = mutableListOf<String>()
@@ -220,58 +220,58 @@ class SubmissionDatabaseService(
             insertExternalMetadata(
                 submittedExternalMetadata,
                 organism,
-                externalSubmitter,
+                externalMetadataUpdater,
             )
         }
 
         auditLogger.log(
             "Processed ${accessionVersions.size} sequences: ${accessionVersions.joinToString()}",
-            "from external submitter: $externalSubmitter",
+            "from external submitter: $externalMetadataUpdater",
         )
     }
 
     private fun insertExternalMetadata(
-        submittedExternalData: ExternalSubmittedData,
+        submittedexternalMetadata: ExternalSubmittedData,
         organism: Organism,
-        externalSubmitter: String,
+        externalMetadataUpdater: String,
     ) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         accessionPreconditionValidator.validate {
-            thatAccessionVersionExists(submittedExternalData)
+            thatAccessionVersionExists(submittedexternalMetadata)
                 .andThatSequenceEntriesAreInStates(
                     listOf(Status.APPROVED_FOR_RELEASE),
                 )
                 .andThatOrganismIs(organism)
         }
-        validateExternalData(
-            submittedExternalData,
+        validateexternalMetadata(
+            submittedexternalMetadata,
             organism,
-            externalSubmitter,
+            externalMetadataUpdater,
         )
 
         try {
             val numberInserted =
                 ExternalMetadataTable.update(
                     where = {
-                        (ExternalMetadataTable.accessionColumn eq submittedExternalData.accession) and
-                            (ExternalMetadataTable.versionColumn eq submittedExternalData.version) and
-                            (ExternalMetadataTable.submitterIdColumn eq externalSubmitter)
+                        (ExternalMetadataTable.accessionColumn eq submittedexternalMetadata.accession) and
+                            (ExternalMetadataTable.versionColumn eq submittedexternalMetadata.version) and
+                            (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
                     },
                 ) {
-                    it[accessionColumn] = submittedExternalData.accession
-                    it[versionColumn] = submittedExternalData.version
-                    it[submitterIdColumn] = externalSubmitter
-                    it[externalMetadataColumn] = submittedExternalData.metadata
+                    it[accessionColumn] = submittedexternalMetadata.accession
+                    it[versionColumn] = submittedexternalMetadata.version
+                    it[updaterIdColumn] = externalMetadataUpdater
+                    it[externalMetadataColumn] = submittedexternalMetadata.metadata
                     it[updatedAtColumn] = now
                 }
 
             if (numberInserted != 1) {
                 ExternalMetadataTable.insert {
-                    it[accessionColumn] = submittedExternalData.accession
-                    it[versionColumn] = submittedExternalData.version
-                    it[submitterIdColumn] = externalSubmitter
-                    it[externalMetadataColumn] = submittedExternalData.metadata
+                    it[accessionColumn] = submittedexternalMetadata.accession
+                    it[versionColumn] = submittedexternalMetadata.version
+                    it[updaterIdColumn] = externalMetadataUpdater
+                    it[externalMetadataColumn] = submittedexternalMetadata.metadata
                     it[updatedAtColumn] = now
                 }
             }
@@ -327,14 +327,14 @@ class SubmissionDatabaseService(
         throw validationException
     }
 
-    private fun validateExternalData(
+    private fun validateexternalMetadata(
         externalSubmittedData: ExternalSubmittedData,
         organism: Organism,
-        externalSubmitter: String,
+        externalMetadataUpdater: String,
     ) = try {
         externalMetadataValidatorFactory
             .create(organism)
-            .validate(externalSubmittedData.metadata, externalSubmitter)
+            .validate(externalSubmittedData.metadata, externalMetadataUpdater)
     } catch (validationException: ProcessingValidationException) {
         throw validationException
     }

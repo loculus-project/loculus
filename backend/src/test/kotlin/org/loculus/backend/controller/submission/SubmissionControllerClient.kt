@@ -11,13 +11,13 @@ import org.loculus.backend.api.Status
 import org.loculus.backend.api.SubmittedProcessedData
 import org.loculus.backend.api.UnprocessedData
 import org.loculus.backend.api.WarningsFilter
-import org.loculus.backend.controller.DEFAULT_EXTERNAL_SUBMITTER
+import org.loculus.backend.controller.DEFAULT_EXTERNAL_METADATA_UPDATER
 import org.loculus.backend.controller.DEFAULT_GROUP_NAME
 import org.loculus.backend.controller.DEFAULT_ORGANISM
 import org.loculus.backend.controller.DEFAULT_PIPELINE_VERSION
 import org.loculus.backend.controller.addOrganismToPath
 import org.loculus.backend.controller.jwtForDefaultUser
-import org.loculus.backend.controller.jwtForExternalSubmissionPipeline
+import org.loculus.backend.controller.jwtForExternalMetadataUpdatePipeline
 import org.loculus.backend.controller.jwtForGetReleasedData
 import org.loculus.backend.controller.jwtForProcessingPipeline
 import org.loculus.backend.controller.withAuth
@@ -78,16 +78,16 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
         return submitProcessedDataRaw(stringContent, organism, pipelineVersion, jwt)
     }
 
-    fun submitExternalData(
-        vararg submittedExternalData: ExternalSubmittedData,
+    fun submitexternalMetadata(
+        vararg submittedexternalMetadata: ExternalSubmittedData,
         organism: String = DEFAULT_ORGANISM,
-        externalSubmitter: String = DEFAULT_EXTERNAL_SUBMITTER,
-        jwt: String? = jwtForExternalSubmissionPipeline,
+        externalMetadataUpdater: String = DEFAULT_EXTERNAL_METADATA_UPDATER,
+        jwt: String? = jwtForExternalMetadataUpdatePipeline,
     ): ResultActions {
         val stringContent =
-            submittedExternalData.joinToString("\n") { objectMapper.writeValueAsString(it) }
+            submittedexternalMetadata.joinToString("\n") { objectMapper.writeValueAsString(it) }
 
-        return submitExternalDataRaw(stringContent, organism, externalSubmitter, jwt)
+        return submitexternalMetadataRaw(stringContent, organism, externalMetadataUpdater, jwt)
     }
 
     fun submitProcessedDataRaw(
@@ -103,17 +103,17 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .content(submittedProcessedData),
     )
 
-    fun submitExternalDataRaw(
-        submittedExternalData: String,
+    fun submitexternalMetadataRaw(
+        submittedexternalMetadata: String,
         organism: String = DEFAULT_ORGANISM,
-        externalSubmitter: String = DEFAULT_EXTERNAL_SUBMITTER,
-        jwt: String? = jwtForExternalSubmissionPipeline,
+        externalMetadataUpdater: String = DEFAULT_EXTERNAL_METADATA_UPDATER,
+        jwt: String? = jwtForExternalMetadataUpdatePipeline,
     ): ResultActions = mockMvc.perform(
         post(addOrganismToPath("/submit-external-metadata", organism = organism))
-            .param("externalSubmitter", externalSubmitter)
+            .param("externalMetadataUpdater", externalMetadataUpdater)
             .contentType(MediaType.APPLICATION_NDJSON_VALUE)
             .withAuth(jwt)
-            .content(submittedExternalData),
+            .content(submittedexternalMetadata),
     )
 
     fun getSequenceEntries(

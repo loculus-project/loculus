@@ -55,10 +55,10 @@ create table sequence_entries_preprocessed_data (
 create table external_metadata (
     accession text not null,
     version bigint not null,
-    external_submitter_id text not null,
+    external_metadata_updater text not null,
     external_metadata jsonb,
     updated_metadata_at timestamp not null,
-    primary key (accession, version, external_submitter_id)
+    primary key (accession, version, external_metadata_updater)
 );
 
 create or replace aggregate jsonb_merge_agg(jsonb)

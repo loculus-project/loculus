@@ -25,11 +25,11 @@
         secretKeyRef:
           name: service-accounts
           key: dummyPreprocessingPipelinePassword
-    - name: LOCULUSSUB_dummyExternalSubmitterPassword
+    - name: LOCULUSSUB_dummyExternalMetadataUpdaterPassword
       valueFrom:
         secretKeyRef:
           name: service-accounts
-          key: dummyExternalSubmitterPassword
+          key: dummyExternalMetadataUpdaterPassword
     - name: LOCULUSSUB_siloImportJobPassword
       valueFrom:
         secretKeyRef:

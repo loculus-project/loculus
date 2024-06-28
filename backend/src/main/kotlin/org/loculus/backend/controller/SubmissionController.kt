@@ -221,15 +221,15 @@ class SubmissionController(
     fun submitExternalMetadata(
         @PathVariable @Valid organism: Organism,
         @Parameter(
-            description = "Name of the external metadata submitter.",
+            description = "Name of the pipeline submitting the external metadata update.",
         )
-        @RequestParam externalSubmitter: String,
+        @RequestParam externalMetadataUpdater: String,
         request: HttpServletRequest,
     ) {
         submissionDatabaseService.updateExternalMetadata(
             request.inputStream,
             organism,
-            externalSubmitter,
+            externalMetadataUpdater,
         )
     }
 

@@ -1,179 +1,179 @@
 {
-    "accessionPrefix": "LOC_",
-    "organisms": {
-        "dummyOrganism": {
-            "referenceGenomes": {
-                "nucleotideSequences": [
-                    {
-                        "name": "main",
-                        "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
-                    }
-                ],
-                "genes": [
-                    {
-                        "name": "someLongGene",
-                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
-                    },
-                    {
-                        "name": "someShortGene",
-                        "sequence": "MADS"
-                    }
-                ]
-            },
-            "schema": {
-                "organismName": "Test",
-                "metadata": [
-                    {
-                        "name": "date",
-                        "type": "date",
-                        "required": true
-                    },
-                    {
-                        "name": "dateSubmitted",
-                        "type": "date"
-                    },
-                    {
-                        "name": "region",
-                        "type": "string",
-                        "autocomplete": true,
-                        "required": true
-                    },
-                    {
-                        "name": "country",
-                        "type": "string",
-                        "autocomplete": true,
-                        "required": true
-                    },
-                    {
-                        "name": "division",
-                        "type": "string",
-                        "autocomplete": true
-                    },
-                    {
-                        "name": "host",
-                        "type": "string",
-                        "autocomplete": true
-                    },
-                    {
-                        "name": "age",
-                        "type": "int"
-                    },
-                    {
-                        "name": "sex",
-                        "type": "string",
-                        "autocomplete": true
-                    },
-                    {
-                        "name": "pangoLineage",
-                        "type": "pango_lineage",
-                        "autocomplete": true
-                    },
-                    {
-                        "name": "qc",
-                        "type": "float"
-                    },
-                    {
-                        "name": "booleanColumn",
-                        "type": "boolean"
-                    }
-                ],
-                "externalMetadata": [
-                    {
-                        "name": "insdc_accession_full",
-                        "type": "string",
-                        "externalSubmitter": "ena",
-                        "required": true
-                    },
-                    {
-                        "name": "other_db_accession",
-                        "type": "string",
-                        "externalSubmitter": "other_db"
-                    }
-                ]
-            }
-        },
-        "otherOrganism": {
-            "referenceGenomes": {
-                "nucleotideSequences": [
-                    {
-                        "name": "notOnlySegment",
-                        "sequence": "ATCG"
-                    },
-                    {
-                        "name": "secondSegment",
-                        "sequence": "AAAAAAAAAAAAAAAA"
-                    }
-                ],
-                "genes": [
-                    {
-                        "name": "someLongGene",
-                        "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
-                    },
-                    {
-                        "name": "someShortGene",
-                        "sequence": "MADS"
-                    }
-                ]
-            },
-            "schema": {
-                "organismName": "Test",
-                "metadata": [
-                    {
-                        "name": "date",
-                        "type": "date",
-                        "required": true
-                    },
-                    {
-                        "name": "dateSubmitted",
-                        "type": "date"
-                    },
-                    {
-                        "name": "region",
-                        "type": "string",
-                        "autocomplete": true,
-                        "required": true
-                    },
-                    {
-                        "name": "specialOtherField",
-                        "type": "string",
-                        "required": false
-                    },
-                    {
-                        "name": "country",
-                        "type": "string",
-                        "autocomplete": true,
-                        "required": true
-                    },
-                    {
-                        "name": "division",
-                        "type": "string",
-                        "autocomplete": true
-                    },
-                    {
-                        "name": "host",
-                        "type": "string",
-                        "autocomplete": true
-                    },
-                    {
-                        "name": "age",
-                        "type": "int"
-                    },
-                    {
-                        "name": "sex",
-                        "type": "string",
-                        "autocomplete": true
-                    },
-                    {
-                        "name": "pangoLineage",
-                        "type": "pango_lineage",
-                        "autocomplete": true
-                    },
-                    {
-                        "name": "qc",
-                        "type": "float"
-                    }
-                ]
-            }
-        }
+  "accessionPrefix": "LOC_",
+  "organisms": {
+    "dummyOrganism": {
+      "referenceGenomes": {
+        "nucleotideSequences": [
+          {
+            "name": "main",
+            "sequence": "ATTAAAGGTTTATACCTTCCCAGGTAACAAACCAACCAACTTTCGATCT"
+          }
+        ],
+        "genes": [
+          {
+            "name": "someLongGene",
+            "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+          },
+          {
+            "name": "someShortGene",
+            "sequence": "MADS"
+          }
+        ]
+      },
+      "schema": {
+        "organismName": "Test",
+        "metadata": [
+          {
+            "name": "date",
+            "type": "date",
+            "required": true
+          },
+          {
+            "name": "dateSubmitted",
+            "type": "date"
+          },
+          {
+            "name": "region",
+            "type": "string",
+            "autocomplete": true,
+            "required": true
+          },
+          {
+            "name": "country",
+            "type": "string",
+            "autocomplete": true,
+            "required": true
+          },
+          {
+            "name": "division",
+            "type": "string",
+            "autocomplete": true
+          },
+          {
+            "name": "host",
+            "type": "string",
+            "autocomplete": true
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "sex",
+            "type": "string",
+            "autocomplete": true
+          },
+          {
+            "name": "pangoLineage",
+            "type": "pango_lineage",
+            "autocomplete": true
+          },
+          {
+            "name": "qc",
+            "type": "float"
+          },
+          {
+            "name": "booleanColumn",
+            "type": "boolean"
+          }
+        ],
+        "externalMetadata": [
+          {
+            "name": "insdc_accession_full",
+            "type": "string",
+            "externalMetadataUpdater": "ena",
+            "required": true
+          },
+          {
+            "name": "other_db_accession",
+            "type": "string",
+            "externalMetadataUpdater": "other_db"
+          }
+        ]
+      }
+    },
+    "otherOrganism": {
+      "referenceGenomes": {
+        "nucleotideSequences": [
+          {
+            "name": "notOnlySegment",
+            "sequence": "ATCG"
+          },
+          {
+            "name": "secondSegment",
+            "sequence": "AAAAAAAAAAAAAAAA"
+          }
+        ],
+        "genes": [
+          {
+            "name": "someLongGene",
+            "sequence": "AAAAAAAAAAAAAAAAAAAAAAAAA"
+          },
+          {
+            "name": "someShortGene",
+            "sequence": "MADS"
+          }
+        ]
+      },
+      "schema": {
+        "organismName": "Test",
+        "metadata": [
+          {
+            "name": "date",
+            "type": "date",
+            "required": true
+          },
+          {
+            "name": "dateSubmitted",
+            "type": "date"
+          },
+          {
+            "name": "region",
+            "type": "string",
+            "autocomplete": true,
+            "required": true
+          },
+          {
+            "name": "specialOtherField",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "country",
+            "type": "string",
+            "autocomplete": true,
+            "required": true
+          },
+          {
+            "name": "division",
+            "type": "string",
+            "autocomplete": true
+          },
+          {
+            "name": "host",
+            "type": "string",
+            "autocomplete": true
+          },
+          {
+            "name": "age",
+            "type": "int"
+          },
+          {
+            "name": "sex",
+            "type": "string",
+            "autocomplete": true
+          },
+          {
+            "name": "pangoLineage",
+            "type": "pango_lineage",
+            "autocomplete": true
+          },
+          {
+            "name": "qc",
+            "type": "float"
+          }
+        ]
+      }
     }
+  }
 }

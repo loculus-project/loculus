@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPat
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
 @EndpointTest
-class SubmitExternalDataEndpointTest(
+class SubmitExternalMetadataEndpointTest(
     @Autowired val submissionControllerClient: SubmissionControllerClient,
     @Autowired val convenienceClient: SubmissionConvenienceClient,
 ) {
@@ -25,8 +25,8 @@ class SubmitExternalDataEndpointTest(
     @Test
     fun `GIVEN invalid authorization token THEN returns 401 Unauthorized`() {
         expectUnauthorizedResponse(isModifyingRequest = true) {
-            submissionControllerClient.submitExternalData(
-                PreparedExternalData.successfullySubmitted("DoesNotMatter"),
+            submissionControllerClient.submitexternalMetadata(
+                PreparedexternalMetadata.successfullySubmitted("DoesNotMatter"),
                 jwt = it,
             )
         }
@@ -35,8 +35,8 @@ class SubmitExternalDataEndpointTest(
     @Test
     fun `GIVEN authorization token with wrong role THEN returns 403 Forbidden`() {
         expectForbiddenResponse {
-            submissionControllerClient.submitExternalData(
-                PreparedExternalData.successfullySubmitted("DoesNotMatter"),
+            submissionControllerClient.submitexternalMetadata(
+                PreparedexternalMetadata.successfullySubmitted("DoesNotMatter"),
                 jwt = jwtForDefaultUser,
             )
         }
@@ -50,8 +50,8 @@ class SubmitExternalDataEndpointTest(
             }
 
         submissionControllerClient
-            .submitExternalData(
-                PreparedExternalData.successfullySubmitted(accession = accessions.first()),
+            .submitexternalMetadata(
+                PreparedexternalMetadata.successfullySubmitted(accession = accessions.first()),
             )
             .andExpect(status().isNoContent)
 
@@ -69,15 +69,15 @@ class SubmitExternalDataEndpointTest(
             }
 
         submissionControllerClient
-            .submitExternalData(
-                PreparedExternalData.successfullySubmitted(accession = accessions.first()),
+            .submitexternalMetadata(
+                PreparedexternalMetadata.successfullySubmitted(accession = accessions.first()),
             )
             .andExpect(status().isNoContent)
 
         submissionControllerClient
-            .submitExternalData(
-                PreparedOtherExternalData.successfullySubmitted(accession = accessions.first()),
-                externalSubmitter = "other_db",
+            .submitexternalMetadata(
+                PreparedOtherexternalMetadata.successfullySubmitted(accession = accessions.first()),
+                externalMetadataUpdater = "other_db",
             )
             .andExpect(status().isNoContent)
 
@@ -93,8 +93,8 @@ class SubmitExternalDataEndpointTest(
         val accessions = convenienceClient.prepareDataTo(Status.IN_PROCESSING)
 
         submissionControllerClient
-            .submitExternalData(
-                PreparedExternalData.successfullySubmitted(accession = accessions.first().accession),
+            .submitexternalMetadata(
+                PreparedexternalMetadata.successfullySubmitted(accession = accessions.first().accession),
             )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -116,8 +116,8 @@ class SubmitExternalDataEndpointTest(
         val accession = "fake_accession"
 
         submissionControllerClient
-            .submitExternalData(
-                PreparedExternalData.successfullySubmitted(accession = accession),
+            .submitexternalMetadata(
+                PreparedexternalMetadata.successfullySubmitted(accession = accession),
             )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))

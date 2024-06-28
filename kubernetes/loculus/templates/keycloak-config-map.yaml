@@ -168,20 +168,20 @@ data:
             }
           },
           {
-            "username": "external_submitter",
+            "username": "external_metadata_updater",
             "enabled": true,
-            "email": "external_submitter@void.o",
+            "email": "external_metadata_updater@void.o",
             "emailVerified" : true,
             "firstName": "Dummy",
             "lastName": "INSDC",
             "credentials": [
               {
                 "type": "password",
-                "value": "[[dummyExternalSubmitterPassword]]"
+                "value": "[[dummyExternalMetadataUpdaterPassword]]"
               }
             ],
             "realmRoles": [
-              "external_submitter",
+              "external_metadata_updater",
               "offline_access"
             ],
             "attributes": {
@@ -260,7 +260,7 @@ data:
             "description": "Preprocessing pipeline privileges"
           },
           {
-            "name": "external_submitter",
+            "name": "external_metadata_updater",
             "description": "External Submitter privileges"
           },
           {
