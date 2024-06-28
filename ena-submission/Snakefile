@@ -15,6 +15,15 @@ with open("results/config.yaml", "w") as f:
     f.write(yaml.dump(config))
 
 LOG_LEVEL = config.get("log_level", "INFO")
+
+WEBIN_USERNAME = "Webin-66038"
+WEBIN_PASSWORD = ''
+
+
+TEST_URL = "https://wwwdev.ebi.ac.uk/ena/submit/drop-box/submit"
+# PRODUCTION_URL = "https://www.ebi.ac.uk/ena/submit/drop-box/submit"
+
+URL = TEST_URL
     
 rule submit_external_metadata:
     input:
@@ -52,4 +61,26 @@ rule get_ena_submission_list:
                 --config-file {input.config} \
                 --output-file {output.released} \
                 --log-level {params.log_level} \
+        """
+
+rule create_project:
+    """
+    Create a project in ENA
+    """
+    input:
+        project="results/project.xml",
+        submission="resources/submission.xml",
+    output:
+        "results/project_accession.xml",
+    params:
+        username=WEBIN_USERNAME,
+        password=WEBIN_PASSWORD,
+        url=URL,
+    shell:
+        """
+        curl -u {params.username}:{params.password} \
+            -F "SUBMISSION=@{input.submission}" \
+            -F "PROJECT=@{input.project}" \
+            {params.url} \
+        > {output}
         """
