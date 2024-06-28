@@ -14,6 +14,7 @@ import org.loculus.backend.api.NewGroup
 import org.loculus.backend.api.User
 import org.loculus.backend.auth.AuthenticatedUser
 import org.loculus.backend.controller.ConflictException
+import org.loculus.backend.controller.ForbiddenException
 import org.loculus.backend.controller.NotFoundException
 import org.loculus.backend.log.AuditLogger
 import org.loculus.backend.model.UNIQUE_CONSTRAINT_VIOLATION_SQL_STATE
@@ -27,8 +28,9 @@ class GroupManagementDatabaseService(
     private val auditLogger: AuditLogger,
 ) {
 
-    fun getDetailsOfGroup(groupId: Int): GroupDetails {
-        val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group $groupId does not exist.")
+    fun getDetailsOfGroup(groupId: Int, authenticatedUser: AuthenticatedUser): GroupDetails {
+        groupManagementPreconditionValidator.validateUserIsAllowedToReadGroup(groupId, authenticatedUser)
+        val groupEntity = GroupEntity.findById(groupId) ?: throw NotFoundException("Group(s) $groupId do not exist.")
         val users = UserGroupEntity.find { UserGroupsTable.groupIdColumn eq groupId }
 
         return GroupDetails(
@@ -155,21 +157,29 @@ class GroupManagementDatabaseService(
         auditLogger.log(authenticatedUser.username, "Removed $usernameToRemove from group $groupId")
     }
 
-    fun getAllGroups(): List<Group> = GroupEntity.all()
-        .map {
-            Group(
-                groupId = it.id.value,
-                groupName = it.groupName,
-                institution = it.institution,
-                address = Address(
-                    line1 = it.addressLine1,
-                    line2 = it.addressLine2,
-                    postalCode = it.addressPostalCode,
-                    city = it.addressCity,
-                    state = it.addressState,
-                    country = it.addressCountry,
-                ),
-                contactEmail = it.contactEmail,
+    fun getAllGroups(authenticatedUser: AuthenticatedUser): List<Group> {
+        if (authenticatedUser.isGroupReader) {
+            return GroupEntity.all()
+                .map {
+                    Group(
+                        groupId = it.id.value,
+                        groupName = it.groupName,
+                        institution = it.institution,
+                        address = Address(
+                            line1 = it.addressLine1,
+                            line2 = it.addressLine2,
+                            postalCode = it.addressPostalCode,
+                            city = it.addressCity,
+                            state = it.addressState,
+                            country = it.addressCountry,
+                        ),
+                        contactEmail = it.contactEmail,
+                    )
+                }
+        } else {
+            throw ForbiddenException(
+                "User ${authenticatedUser.username} is not allowed to view all group details. Action not allowed.",
             )
         }
+    }
 }

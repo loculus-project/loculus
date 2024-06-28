@@ -147,7 +147,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         client.getDetailsOfGroup(groupId = 123456789)
             .andExpect(status().isNotFound)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-            .andExpect(jsonPath("\$.detail").value("Group 123456789 does not exist."))
+            .andExpect(jsonPath("\$.detail").value("Group(s) 123456789 do not exist."))
     }
 
     @Test
@@ -155,7 +155,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         client.createNewGroup()
             .andExpect(status().isOk)
 
-        client.getAllGroups()
+        client.getAllGroups(jwt = jwtForSuperUser)
             .andExpect(status().isOk())
             .andExpect { jsonPath("\$.size()", `is`(1)) }
             .andExpect { jsonPath("\$[0].groupName", `is`(NEW_GROUP.groupName)) }
@@ -255,7 +255,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
         client.removeUserFromGroup(groupId = groupId, userToRemove = DEFAULT_USER_NAME, jwt = jwtForSuperUser)
             .andExpect(status().isNoContent)
 
-        client.getDetailsOfGroup(groupId = groupId)
+        client.getDetailsOfGroup(groupId = groupId, jwt = jwtForSuperUser)
             .andExpect(status().isOk)
             .andExpect(jsonPath("\$.users.size()", `is`(0)))
     }

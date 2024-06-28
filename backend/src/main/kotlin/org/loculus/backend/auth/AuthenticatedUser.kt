@@ -24,6 +24,9 @@ class AuthenticatedUser(private val source: JwtAuthenticationToken) {
 
     val isSuperUser: Boolean
         get() = source.authorities.any { it.authority == SUPER_USER }
+
+    val isGroupReader: Boolean
+        get() = source.authorities.any { it.authority == SUPER_USER }
 }
 
 @Component

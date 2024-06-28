@@ -18,6 +18,14 @@ class GroupManagementPreconditionValidator(private val keycloakAdapter: Keycloak
     }
 
     @Transactional(readOnly = true)
+    fun validateUserIsAllowedToReadGroup(groupId: Int, authenticatedUser: AuthenticatedUser) {
+        if (authenticatedUser.isGroupReader) {
+            return
+        }
+        validateUserIsAllowedToModifyGroups(listOf(groupId), authenticatedUser)
+    }
+
+    @Transactional(readOnly = true)
     fun validateUserIsAllowedToModifyGroups(groupIds: List<Int>, authenticatedUser: AuthenticatedUser) {
         if (authenticatedUser.isSuperUser) {
             return

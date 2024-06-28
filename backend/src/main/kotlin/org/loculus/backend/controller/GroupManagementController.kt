@@ -41,7 +41,8 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
         @Parameter(
             description = "The id of the group to get details of.",
         ) @PathVariable groupId: Int,
-    ): GroupDetails = groupManagementDatabaseService.getDetailsOfGroup(groupId)
+        @HiddenParam authenticatedUser: AuthenticatedUser,
+    ): GroupDetails = groupManagementDatabaseService.getDetailsOfGroup(groupId, authenticatedUser)
 
     @Operation(description = "Get all groups the user is a member of.")
     @ResponseStatus(HttpStatus.OK)
@@ -52,7 +53,8 @@ class GroupManagementController(private val groupManagementDatabaseService: Grou
     @Operation(description = "Get a list of all groups.")
     @ResponseStatus(HttpStatus.OK)
     @GetMapping("/groups", produces = [MediaType.APPLICATION_JSON_VALUE])
-    fun getAllGroups(): List<Group> = groupManagementDatabaseService.getAllGroups()
+    fun getAllGroups(@HiddenParam authenticatedUser: AuthenticatedUser): List<Group> =
+        groupManagementDatabaseService.getAllGroups(authenticatedUser)
 
     @Operation(description = "Add user to a group.")
     @ResponseStatus(HttpStatus.NO_CONTENT)
