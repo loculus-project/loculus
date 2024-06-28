@@ -207,14 +207,6 @@ class SubmissionController(
                 ),
             ],
         ),
-        parameters = [
-            Parameter(
-                name = "externalSubmitter",
-                description = "Id of external submission pipeline",
-                required = true,
-                schema = Schema(implementation = String::class),
-            ),
-        ],
     )
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(
@@ -228,11 +220,12 @@ class SubmissionController(
     @PostMapping("/submit-external-metadata", consumes = [MediaType.APPLICATION_NDJSON_VALUE])
     fun submitExternalMetadata(
         @PathVariable @Valid organism: Organism,
-        @RequestParam externalSubmitter: String,
+        @Parameter(
+            description = "Name of the external metadata submitter.",
+        )
+        externalSubmitter: String,
         request: HttpServletRequest,
     ) {
-        val headers = HttpHeaders()
-        headers.contentType = MediaType.parseMediaType(MediaType.APPLICATION_NDJSON_VALUE)
         submissionDatabaseService.updateExternalMetadata(
             request.inputStream,
             organism,
