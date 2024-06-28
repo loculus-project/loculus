@@ -151,6 +151,34 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
     }
 
     @Test
+    fun `WHEN defaultUser queries details of getGroups() THEN the action is forbidden`() {
+        client.getAllGroups()
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "User $DEFAULT_USER_NAME is not allowed to view all group details. Action not allowed.",
+                ),
+            )
+    }
+
+    @Test
+    fun `WHEN defaultUser queries details of another group than their own THEN the action is forbidden`() {
+        val otherGroupId = client.createNewGroup(jwt = generateJwtFor(ALTERNATIVE_DEFAULT_USER_NAME))
+            .andExpect(status().isOk)
+            .andGetGroupId()
+
+        client.getDetailsOfGroup(groupId = otherGroupId)
+            .andExpect(status().isForbidden)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail").value(
+                    "User $DEFAULT_USER_NAME is not a member of group(s) 1. Action not allowed.",
+                ),
+            )
+    }
+
+    @Test
     fun `GIVEN a group is created WHEN all groups are queried THEN expect that the group is returned`() {
         client.createNewGroup()
             .andExpect(status().isOk)
