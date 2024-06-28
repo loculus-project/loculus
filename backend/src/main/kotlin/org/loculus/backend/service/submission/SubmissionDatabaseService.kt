@@ -225,27 +225,30 @@ class SubmissionDatabaseService(
         }
 
         auditLogger.log(
-            "Processed ${accessionVersions.size} sequences: ${accessionVersions.joinToString()}",
-            "from external submitter: $externalMetadataUpdater",
+            description = (
+                "Updated external metadata of ${accessionVersions.size} sequences:" +
+                    accessionVersions.joinToString()
+                ),
+            username = externalMetadataUpdater,
         )
     }
 
     private fun insertExternalMetadata(
-        submittedexternalMetadata: ExternalSubmittedData,
+        submittedExternalMetadata: ExternalSubmittedData,
         organism: Organism,
         externalMetadataUpdater: String,
     ) {
         val now = Clock.System.now().toLocalDateTime(TimeZone.UTC)
 
         accessionPreconditionValidator.validate {
-            thatAccessionVersionExists(submittedexternalMetadata)
+            thatAccessionVersionExists(submittedExternalMetadata)
                 .andThatSequenceEntriesAreInStates(
                     listOf(Status.APPROVED_FOR_RELEASE),
                 )
                 .andThatOrganismIs(organism)
         }
-        validateexternalMetadata(
-            submittedexternalMetadata,
+        validateExternalMetadata(
+            submittedExternalMetadata,
             organism,
             externalMetadataUpdater,
         )
@@ -254,24 +257,24 @@ class SubmissionDatabaseService(
             val numberInserted =
                 ExternalMetadataTable.update(
                     where = {
-                        (ExternalMetadataTable.accessionColumn eq submittedexternalMetadata.accession) and
-                            (ExternalMetadataTable.versionColumn eq submittedexternalMetadata.version) and
+                        (ExternalMetadataTable.accessionColumn eq submittedExternalMetadata.accession) and
+                            (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
                             (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
                     },
                 ) {
-                    it[accessionColumn] = submittedexternalMetadata.accession
-                    it[versionColumn] = submittedexternalMetadata.version
+                    it[accessionColumn] = submittedExternalMetadata.accession
+                    it[versionColumn] = submittedExternalMetadata.version
                     it[updaterIdColumn] = externalMetadataUpdater
-                    it[externalMetadataColumn] = submittedexternalMetadata.metadata
+                    it[externalMetadataColumn] = submittedExternalMetadata.metadata
                     it[updatedAtColumn] = now
                 }
 
             if (numberInserted != 1) {
                 ExternalMetadataTable.insert {
-                    it[accessionColumn] = submittedexternalMetadata.accession
-                    it[versionColumn] = submittedexternalMetadata.version
+                    it[accessionColumn] = submittedExternalMetadata.accession
+                    it[versionColumn] = submittedExternalMetadata.version
                     it[updaterIdColumn] = externalMetadataUpdater
-                    it[externalMetadataColumn] = submittedexternalMetadata.metadata
+                    it[externalMetadataColumn] = submittedExternalMetadata.metadata
                     it[updatedAtColumn] = now
                 }
             }
@@ -327,7 +330,7 @@ class SubmissionDatabaseService(
         throw validationException
     }
 
-    private fun validateexternalMetadata(
+    private fun validateExternalMetadata(
         externalSubmittedData: ExternalSubmittedData,
         organism: Organism,
         externalMetadataUpdater: String,

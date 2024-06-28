@@ -79,13 +79,13 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     }
 
     fun submitexternalMetadata(
-        vararg submittedexternalMetadata: ExternalSubmittedData,
+        vararg submittedExternalMetadata: ExternalSubmittedData,
         organism: String = DEFAULT_ORGANISM,
         externalMetadataUpdater: String = DEFAULT_EXTERNAL_METADATA_UPDATER,
         jwt: String? = jwtForExternalMetadataUpdatePipeline,
     ): ResultActions {
         val stringContent =
-            submittedexternalMetadata.joinToString("\n") { objectMapper.writeValueAsString(it) }
+            submittedExternalMetadata.joinToString("\n") { objectMapper.writeValueAsString(it) }
 
         return submitexternalMetadataRaw(stringContent, organism, externalMetadataUpdater, jwt)
     }
@@ -104,7 +104,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
     )
 
     fun submitexternalMetadataRaw(
-        submittedexternalMetadata: String,
+        submittedExternalMetadata: String,
         organism: String = DEFAULT_ORGANISM,
         externalMetadataUpdater: String = DEFAULT_EXTERNAL_METADATA_UPDATER,
         jwt: String? = jwtForExternalMetadataUpdatePipeline,
@@ -113,7 +113,7 @@ class SubmissionControllerClient(private val mockMvc: MockMvc, private val objec
             .param("externalMetadataUpdater", externalMetadataUpdater)
             .contentType(MediaType.APPLICATION_NDJSON_VALUE)
             .withAuth(jwt)
-            .content(submittedexternalMetadata),
+            .content(submittedExternalMetadata),
     )
 
     fun getSequenceEntries(
