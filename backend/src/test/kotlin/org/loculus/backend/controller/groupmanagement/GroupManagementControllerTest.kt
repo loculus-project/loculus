@@ -173,7 +173,7 @@ class GroupManagementControllerTest(@Autowired private val client: GroupManageme
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
             .andExpect(
                 jsonPath("\$.detail").value(
-                    "User $DEFAULT_USER_NAME is not a member of group(s) 1. Action not allowed.",
+                    "User $DEFAULT_USER_NAME is not a member of group(s) $otherGroupId. Action not allowed.",
                 ),
             )
     }
