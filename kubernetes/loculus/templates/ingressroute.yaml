@@ -13,6 +13,16 @@ spec:
   redirectScheme:
     scheme: https
     permanent: true
+{{ if $.Values.secrets.basicauth }}
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: Middleware
+metadata:
+  name: basic-auth
+spec:
+  basicAuth:
+    secret: basicauth
+{{ end  }}
 ---
 {{- if eq $.Values.environment "server" }}
 {{- $backendHost := printf "backend-%s" .Values.host }}
@@ -22,12 +32,19 @@ spec:
 {{- $middlewareList = append $middlewareList (printf "%s-redirect-middleware@kubernetescrd" $.Release.Namespace) }}
 {{- end }}
 
+{{ $middleWareListForWebsite := $middlewareList }}
+
+{{ if $.Values.secrets.basicauth }}
+{{ $middleWareListForWebsite = append $middleWareListForWebsite (printf "%s-basic-auth@kubernetescrd" $.Release.Namespace) }}
+{{ end }}
+
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: loculus-website-ingress
   annotations:
-    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middlewareList }}"
+    traefik.ingress.kubernetes.io/router.middlewares: "{{ join "," $middleWareListForWebsite }}"
 spec:
   rules:
     - host: "{{ .Values.host }}"
@@ -66,7 +83,6 @@ spec:
   - hosts:
     - "{{ $backendHost }}"
 ---
-
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
