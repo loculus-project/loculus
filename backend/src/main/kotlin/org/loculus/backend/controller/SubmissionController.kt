@@ -195,10 +195,8 @@ class SubmissionController(
 
     @Operation(
         description = SUBMIT_EXTERNAL_METADATA_DESCRIPTION,
-        requestBody =
-        SwaggerRequestBody(
-            content =
-            [
+        requestBody = SwaggerRequestBody(
+            content = [
                 Content(
                     mediaType = MediaType.APPLICATION_NDJSON_VALUE,
                     schema =
@@ -209,8 +207,7 @@ class SubmissionController(
                 ),
             ],
         ),
-        parameters =
-        [
+        parameters = [
             Parameter(
                 name = "externalSubmitter",
                 description = "Id of external submission pipeline",
@@ -219,6 +216,7 @@ class SubmissionController(
             ),
         ],
     )
+    @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(
         responseCode = "400",
         description = "On invalid NDJSON line. Rolls back the whole transaction.",

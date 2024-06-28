@@ -5,8 +5,7 @@ import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
 import org.junit.jupiter.api.Test
-import org.loculus.backend.api.UnprocessedData
-import org.loculus.backend.controller.DEFAULT_ORGANISM
+import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
 import org.loculus.backend.controller.expectForbiddenResponse
 import org.loculus.backend.controller.expectUnauthorizedResponse
@@ -54,16 +53,12 @@ class SubmitExternalDataEndpointTest(
             .submitExternalData(
                 PreparedExternalData.successfullySubmitted(accession = accessions.first()),
             )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
-        // Assert external metadata is in getReleasedData().
-        val releasedData = convenienceClient.getReleasedData()
-        val releasedDataAccessions = releasedData
-            .map { it.metadata["accession"]?.textValue() }
-        val loc = releasedDataAccessions.binarySearch(accessions.first())
-        val releasedSequenceEntry = releasedData[loc]
+        val releasedSequenceEntry = convenienceClient.getReleasedData()
+            .find { it.metadata["accession"]?.textValue() == accessions.first() }
 
-        assertThat(releasedSequenceEntry.metadata, hasEntry("insdc_accession_full", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry?.metadata, hasEntry("insdc_accession_full", TextNode("GENBANK1000.1")))
     }
 
     @Test
@@ -77,44 +72,29 @@ class SubmitExternalDataEndpointTest(
             .submitExternalData(
                 PreparedExternalData.successfullySubmitted(accession = accessions.first()),
             )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
         submissionControllerClient
             .submitExternalData(
                 PreparedOtherExternalData.successfullySubmitted(accession = accessions.first()),
                 externalSubmitter = "other_db",
             )
-            .andExpect(status().isOk)
+            .andExpect(status().isNoContent)
 
-        // Assert external metadata is in getReleasedData().
-        val releasedData = convenienceClient.getReleasedData()
-        val releasedDataAccessions = releasedData
-            .map { it.metadata["accession"]?.textValue() }
-        val loc = releasedDataAccessions.binarySearch(accessions.first())
-        val releasedSequenceEntry = releasedData[loc]
+        val releasedSequenceEntry = convenienceClient.getReleasedData()
+            .find { it.metadata["accession"]?.textValue() == accessions.first() }
 
-        assertThat(releasedSequenceEntry.metadata, hasEntry("insdc_accession_full", TextNode("GENBANK1000.1")))
-        assertThat(releasedSequenceEntry.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
-    }
-
-    private fun prepareExtractedSequencesInDatabase(
-        numberOfSequenceEntries: Int = SubmitFiles.DefaultFiles.NUMBER_OF_SEQUENCES,
-        organism: String = DEFAULT_ORGANISM,
-    ): List<UnprocessedData> {
-        convenienceClient.submitDefaultFiles(organism = organism)
-        return convenienceClient.extractUnprocessedData(
-            numberOfSequenceEntries,
-            organism = organism,
-        )
+        assertThat(releasedSequenceEntry?.metadata, hasEntry("insdc_accession_full", TextNode("GENBANK1000.1")))
+        assertThat(releasedSequenceEntry?.metadata, hasEntry("other_db_accession", TextNode("DB1.1")))
     }
 
     @Test
     fun `GIVEN accessions are not yet in status released THEN do not allow submission`() {
-        val accessions = prepareExtractedSequencesInDatabase().map { it.accession }
+        val accessions = convenienceClient.prepareDataTo(Status.IN_PROCESSING)
 
         submissionControllerClient
             .submitExternalData(
-                PreparedExternalData.successfullySubmitted(accession = accessions.first()),
+                PreparedExternalData.successfullySubmitted(accession = accessions.first().accession),
             )
             .andExpect(status().isUnprocessableEntity)
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -124,7 +104,7 @@ class SubmitExternalDataEndpointTest(
                         containsString(
                             (
                                 "Accession versions are in not in one of the states " +
-                                    "[APPROVED_FOR_RELEASE]: ${accessions.first()}"
+                                    "[APPROVED_FOR_RELEASE]: ${accessions.first().accession}"
                                 ),
                         ),
                     ),

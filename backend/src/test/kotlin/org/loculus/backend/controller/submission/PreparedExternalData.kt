@@ -8,8 +8,7 @@ val defaultExternalData =
     ExternalSubmittedData(
         accession = "If a test result shows this, processed data was not prepared correctly.",
         version = 1,
-        metadata =
-        mapOf(
+        metadata = mapOf(
             "insdc_accession_full" to TextNode("GENBANK1000.1"),
         ),
     )
@@ -18,8 +17,7 @@ val otherExternalData =
     ExternalSubmittedData(
         accession = "If a test result shows this, processed data was not prepared correctly.",
         version = 1,
-        metadata =
-        mapOf(
+        metadata = mapOf(
             "other_db_accession" to TextNode("DB1.1"),
         ),
     )

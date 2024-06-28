@@ -201,7 +201,7 @@ class SubmissionDatabaseService(
     }
 
     fun updateExternalMetadata(inputStream: InputStream, organism: Organism, externalSubmitter: String) {
-        log.info { "updating processed data" }
+        log.info { "Updating metadata with external metadata received from $externalSubmitter" }
         val reader = BufferedReader(InputStreamReader(inputStream))
 
         val accessionVersions = mutableListOf<String>()
@@ -225,8 +225,8 @@ class SubmissionDatabaseService(
         }
 
         auditLogger.log(
-            "external submitter $externalSubmitter",
             "Processed ${accessionVersions.size} sequences: ${accessionVersions.joinToString()}",
+            "from external submitter: $externalSubmitter",
         )
     }
 
@@ -250,14 +250,13 @@ class SubmissionDatabaseService(
             externalSubmitter,
         )
 
-        val table = ExternalMetadataTable
         try {
             val numberInserted =
-                table.update(
+                ExternalMetadataTable.update(
                     where = {
-                        (table.accessionColumn eq submittedExternalData.accession) and
-                            (table.versionColumn eq submittedExternalData.version) and
-                            (table.submitterIdColumn eq externalSubmitter)
+                        (ExternalMetadataTable.accessionColumn eq submittedExternalData.accession) and
+                            (ExternalMetadataTable.versionColumn eq submittedExternalData.version) and
+                            (ExternalMetadataTable.submitterIdColumn eq externalSubmitter)
                     },
                 ) {
                     it[accessionColumn] = submittedExternalData.accession
@@ -268,7 +267,7 @@ class SubmissionDatabaseService(
                 }
 
             if (numberInserted != 1) {
-                table.insert {
+                ExternalMetadataTable.insert {
                     it[accessionColumn] = submittedExternalData.accession
                     it[versionColumn] = submittedExternalData.version
                     it[submitterIdColumn] = externalSubmitter
@@ -276,11 +275,6 @@ class SubmissionDatabaseService(
                     it[updatedAtColumn] = now
                 }
             }
-
-            auditLogger.log(
-                "external submitter $externalSubmitter",
-                "Added external data for $submittedExternalData.accession",
-            )
         } catch (e: ExposedSQLException) {
             throw e
         }

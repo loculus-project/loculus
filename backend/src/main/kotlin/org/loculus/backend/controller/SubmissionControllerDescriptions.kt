@@ -128,6 +128,7 @@ The following rules apply:
  - Given sequence entries must exist (identified by the column 'accession' in the metadata file) 
  - The user is authorized to use this endpoint
  - The last accession version is in status  'APPROVED_FOR_RELEASE', i.e. can be released externally
+
 This endpoint performs validation (type validation, missing/required fields) on the metadata.
 If any of above is not fulfilled, this will return an error and roll back the whole transaction.
 """

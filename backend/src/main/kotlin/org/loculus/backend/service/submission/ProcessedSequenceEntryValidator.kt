@@ -173,11 +173,7 @@ class ExternalMetadataValidatorFactory(private val backendConfig: BackendConfig)
 }
 
 class ExternalMetadataValidator(private val schema: Schema) {
-    fun validate(externalData: MetadataMap, externalSubmitter: String) {
-        val processedDataWithAllMetadataFields = validateExternalMetadata(externalData, externalSubmitter)
-    }
-
-    private fun validateExternalMetadata(externalData: MetadataMap, externalSubmitter: String): MetadataMap {
+    fun validate(externalData: MetadataMap, externalSubmitter: String): MetadataMap {
         val metadataFields = schema.externalMetadata.filter { it.externalSubmitter == externalSubmitter }
         var processedMetadataMap = externalData
         validateNoUnknownInMetaData(processedMetadataMap, metadataFields.map { it.name })

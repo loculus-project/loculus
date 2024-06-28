@@ -78,7 +78,7 @@ create or replace function jsonb_concat(a jsonb, b jsonb) returns jsonb
 create view all_external_metadata as
 select
     accession,
-	version,
+    version,
     max(updated_metadata_at) as updated_metadata_at,
     jsonb_merge_agg(external_metadata) AS external_metadata
 from external_metadata
@@ -87,19 +87,19 @@ group by
 
 create view external_metadata_view as
 select
-    sepd.accession,
-    sepd.version,
-    em.updated_metadata_at,
+    sequence_entries_preprocessed_data.accession,
+    sequence_entries_preprocessed_data.version,
+    all_external_metadata.updated_metadata_at,
     case 
-		when em.external_metadata is null then jsonb_build_object('metadata', (sepd.processed_data->'metadata'))
-		else jsonb_build_object('metadata', em.external_metadata || (sepd.processed_data->'metadata')) 
+	    when all_external_metadata.external_metadata is null then jsonb_build_object('metadata', (sequence_entries_preprocessed_data.processed_data->'metadata'))
+	    else jsonb_build_object('metadata', all_external_metadata.external_metadata || (sequence_entries_preprocessed_data.processed_data->'metadata')) 
 	end as joint_metadata
 from
-    sequence_entries_preprocessed_data sepd
-    left join all_external_metadata em  on
-        em.accession = sepd.accession
-        and em.version = sepd.version
-        and sepd.pipeline_version = (select version from current_processing_pipeline);
+    sequence_entries_preprocessed_data
+    left join all_external_metadata  on
+        all_external_metadata.accession = sequence_entries_preprocessed_data.accession
+        and all_external_metadata.version = sequence_entries_preprocessed_data.version
+        and sequence_entries_preprocessed_data.pipeline_version = (select version from current_processing_pipeline);
 
 
 create view sequence_entries_view as
