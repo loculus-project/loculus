@@ -223,7 +223,7 @@ class SubmissionController(
         @Parameter(
             description = "Name of the external metadata submitter.",
         )
-        externalSubmitter: String,
+        @RequestParam externalSubmitter: String,
         request: HttpServletRequest,
     ) {
         submissionDatabaseService.updateExternalMetadata(
