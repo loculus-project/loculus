@@ -379,8 +379,6 @@ def get_metadata(
         msg = f"Processing for spec: {spec} with input data: {input_data} failed with {e}"
         raise RuntimeError(msg) from e
 
-    processing_result.errors = list(set(processing_result.errors))
-    processing_result.warnings = list(set(processing_result.warnings))
     errors.extend(processing_result.errors)
     warnings.extend(processing_result.warnings)
 
@@ -441,8 +439,8 @@ def process_single(
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
         ),
-        errors=errors,
-        warnings=warnings,
+        errors=list(set(errors)),
+        warnings=list(set(warnings)),
     )
 
 
