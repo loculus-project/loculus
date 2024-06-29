@@ -1,10 +1,10 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AutoCompleteField } from './AutoCompleteField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type MetadataFilter } from '../../../types/config.ts';
-import userEvent from '@testing-library/user-event';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
