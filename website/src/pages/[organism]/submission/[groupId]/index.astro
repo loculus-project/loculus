@@ -9,11 +9,16 @@ import F7Arrow2Circlepath from '~icons/f7/arrow-2-circlepath';
 import GgCheckO from '~icons/gg/check-o';
 import IcOutlineUpload from '~icons/ic/outline-upload';
 import MdiViewListOutline from '~icons/mdi/view-list-outline';
+import { getAccessToken } from '../../../../utils/getAccessToken';
+
+
+const session = Astro.locals.session!;
+const accessToken = getAccessToken(session)!;
 
 const { organism } = cleanOrganism(Astro.params.organism);
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 // Updated function to use backendClient.call
-async function getUnreleasedSequencesCount(organism, groupId, accessToken) {
+async function getSequenceCounts(organism, groupId) {
     const backendClient = BackendClient.create();
     try {
         const response = await backendClient.call('getSequences', {
@@ -24,10 +29,17 @@ async function getUnreleasedSequencesCount(organism, groupId, accessToken) {
                 statusesFilter: 'RECEIVED,IN_PROCESSING,HAS_ERRORS,AWAITING_APPROVAL'
             }
         });
-        return response.data.totalElements;
+        const statusCounts = response.value.statusCounts;
+        const { APPROVED_FOR_RELEASE, ...others } = statusCounts;
+
+        const othersTotal = Object.values(others).reduce((sum: number, count: number) => sum + count, 0);
+        const approvedTotal = APPROVED_FOR_RELEASE || 0;
+        return { othersTotal, approvedTotal };
+
+
     } catch (error) {
         console.error('Error fetching unreleased sequences:', error);
-        return 0;
+        return { othersTotal: -1, approvedTotal: -1 };
     }
 }
 
@@ -38,7 +50,7 @@ async function getUnreleasedSequencesCount(organism, groupId, accessToken) {
     {
         groupsResult.match(
             async ({ currentGroup: group }) => {
-                const unreleasedCount = await getUnreleasedSequencesCount(organism.key, group.groupId, Astro.locals.session.accessToken);
+                const { othersTotal, approvedTotal } = await getSequenceCounts(organism!.key, group.groupId);
                 
                 const options = [
                     {
@@ -55,15 +67,20 @@ async function getUnreleasedSequencesCount(organism, groupId, accessToken) {
                     },
                     {
                         title: 'Review',
-                        description: `Review your group's unreleased submissions. (${unreleasedCount} pending)`,
+                        description: `Review your group's unreleased submissions.`,
                         route: routes.userSequenceReviewPage(organism!.key, group.groupId),
                         icon: GgCheckO,
+                        count: othersTotal,
+                        countClass: 'text-primary-600 font-semibold',
+                        countType: 'awaiting review',
                     },
                     {
                         title: 'View',
                         description: "View your group's released sequences.",
                         route: routes.mySequencesPage(organism!.key, group.groupId),
                         icon: MdiViewListOutline,
+                        count: approvedTotal,
+                        countClass: 'text-gray-500 hidden',
                     },
                 ];
 
@@ -80,6 +97,11 @@ async function getUnreleasedSequencesCount(organism, groupId, accessToken) {
                                         {option.title}
                                     </h3>
                                     <p class='text-gray-700 text-sm'>{option.description}</p>
+                                    {option.count !== undefined && option.count>0 && (
+                                        <p class={` text-sm mt-2 ${option.countClass || ''}`}>
+                                            {option.count} sequences {option.countType || ''}
+                                        </p>
+                                    )}
                                 </a>
                             ))}
                         </div>
