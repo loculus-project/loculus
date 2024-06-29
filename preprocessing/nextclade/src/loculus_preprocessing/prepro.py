@@ -382,6 +382,9 @@ def get_metadata(
     errors.extend(processing_result.errors)
     warnings.extend(processing_result.warnings)
 
+    errors = list(set(errors))
+    warnings = list(set(warnings))
+
     return processing_result
 
 
