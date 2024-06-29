@@ -24,10 +24,9 @@ async function getSequenceCounts(organism: string, groupId: number) {
         const response = await backendClient.call('getSequences', {
             params: { organism },
             headers: createAuthorizationHeader(accessToken),
-            query: {
+            queries: {
                 groupIdsFilter: groupId.toString(),
-                statusesFilter: 'RECEIVED,IN_PROCESSING,HAS_ERRORS,AWAITING_APPROVAL'
-            }
+            },
         });
 
         if (response.isErr()) {
@@ -37,16 +36,13 @@ async function getSequenceCounts(organism: string, groupId: number) {
         const statusCounts = response.value.statusCounts;
         const { APPROVED_FOR_RELEASE, ...others } = statusCounts;
 
-        const othersTotal = Object.values(others).reduce((sum:number, count) => sum + (count as number), 0);
+        const othersTotal = Object.values(others).reduce((sum: number, count) => sum + count, 0);
         const approvedTotal = APPROVED_FOR_RELEASE || 0;
         return { othersTotal, approvedTotal };
-
     } catch (error) {
-        console.error('Error fetching unreleased sequences:', error);
         return { othersTotal: -1, approvedTotal: -1 };
     }
 }
-
 ---
 
 <SubmissionPageWrapper title='Submission portal' groupsResult={groupsResult}>
@@ -54,7 +50,7 @@ async function getSequenceCounts(organism: string, groupId: number) {
         groupsResult.match(
             async ({ currentGroup: group }) => {
                 const { othersTotal, approvedTotal } = await getSequenceCounts(organism!.key, group.groupId);
-                
+
                 const options = [
                     {
                         title: 'Submit',
@@ -102,7 +98,8 @@ async function getSequenceCounts(organism: string, groupId: number) {
                                     <p class='text-gray-700 text-sm'>{option.description}</p>
                                     {option.count !== undefined && option.count > 0 && (
                                         <p class={`text-sm mt-2 ${option.countClass || ''}`}>
-                                            {option.count} sequences {option.countType || ''}
+                                            {option.count} sequences{' '}
+                                            {option.countType !== undefined ? option.countType : ''}
                                         </p>
                                     )}
                                 </a>
