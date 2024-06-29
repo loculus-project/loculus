@@ -48,7 +48,7 @@ spec:
               memory: "3Gi"
           env:
             - name: REGISTRATION_TERMS_MESSAGE
-              value: Testing, 1 2 3
+              value: {{ $.Values.registrationTermsMessage }}
             - name: KC_DB
               value: postgres
             - name: KC_DB_URL_HOST

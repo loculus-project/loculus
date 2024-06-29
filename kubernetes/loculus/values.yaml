@@ -1190,3 +1190,4 @@ enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 enforceHTTPS: true
+registrationTermsMessage: "You must agree to the terms of use."
