@@ -35,7 +35,7 @@ describe('AutoCompleteField', () => {
         setAFieldValue.mockClear();
     });
 
-    it('renders input and shows all all options on empty input', async () => {
+    it('renders input and shows all options on empty input', async () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [

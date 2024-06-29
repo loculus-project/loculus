@@ -62,9 +62,6 @@ export const AutoCompleteField = ({
         });
 
         mutate({ fields: [field.name], ...otherFields });
-        if (buttonRef.current) {
-            buttonRef.current.click();
-        }
     };
 
     const options = useMemo(
@@ -85,7 +82,7 @@ export const AutoCompleteField = ({
     );
 
     return (
-        <Combobox value={fieldValue} onChange={(value) => setAFieldValue(field.name, value)}>
+        <Combobox immediate value={fieldValue} onChange={(value) => setAFieldValue(field.name, value)}>
             <div className='relative'>
                 <ComboboxInput
                     className='w-full py-2 pl-3  text-sm leading-5
@@ -98,7 +95,7 @@ export const AutoCompleteField = ({
                     placeholder={field.label}
                     as={CustomInput}
                 />
-                {((fieldValue !== '' && fieldValue !== undefined) || query !== '') && (
+                {((fieldValue !== '' && fieldValue !== undefined && fieldValue !== null) || query !== '') && (
                     <button
                         className='absolute inset-y-0 right-8 flex items-center pr-2 h-5 top-4 bg-white rounded-sm'
                         onClick={() => {
