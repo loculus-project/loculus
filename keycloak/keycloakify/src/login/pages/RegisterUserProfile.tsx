@@ -78,9 +78,7 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                     </div>
 
                     <div>
-                    This database is subject to particular terms of use. Some data is available under the restricted use terms, which state that
-                    you may not publish focal analyses of this data without express permission of the authors.
-                    Do you agree to these terms?
+                    {kcContext.properties.MY_ENV_VARIABLE}
                     <div>
                     <input
                         type="checkbox"
