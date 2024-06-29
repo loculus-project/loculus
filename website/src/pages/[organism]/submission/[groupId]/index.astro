@@ -3,7 +3,7 @@ import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { routes } from '../../../../routes/routes';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
-import { backendApi } from '../../../../services/backendApi';
+import { BackendClient } from '../../../../services/backendClient';
 import { createAuthorizationHeader } from '../../../../utils/createAuthorizationHeader';
 import F7Arrow2Circlepath from '~icons/f7/arrow-2-circlepath';
 import GgCheckO from '~icons/gg/check-o';
@@ -12,11 +12,11 @@ import MdiViewListOutline from '~icons/mdi/view-list-outline';
 
 const { organism } = cleanOrganism(Astro.params.organism);
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
-
-// Function to get the number of unreleased sequences
+// Updated function to use backendClient.call
 async function getUnreleasedSequencesCount(organism, groupId, accessToken) {
+    const backendClient = BackendClient.create();
     try {
-        const response = await backendApi.getSequences({
+        const response = await backendClient.call('getSequences', {
             params: { organism },
             headers: createAuthorizationHeader(accessToken),
             query: {
@@ -30,6 +30,7 @@ async function getUnreleasedSequencesCount(organism, groupId, accessToken) {
         return 0;
     }
 }
+
 
 ---
 
