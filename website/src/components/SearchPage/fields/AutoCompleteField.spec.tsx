@@ -1,9 +1,10 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AutoCompleteField } from './AutoCompleteField';
 import { lapisClientHooks } from '../../../services/serviceHooks.ts';
 import { type MetadataFilter } from '../../../types/config.ts';
+import userEvent from '@testing-library/user-event';
 
 vi.mock('../../../services/serviceHooks.ts');
 vi.mock('../../../clientLogger.ts', () => ({
@@ -167,10 +168,10 @@ describe('AutoCompleteField', () => {
         );
 
         const input = screen.getByLabelText('Test Field');
-        fireEvent.focus(input);
+        await userEvent.click(input);
 
         const options = await screen.findAllByRole('option');
-        fireEvent.click(options[0]);
+        await userEvent.click(options[0]);
 
         expect(setAFieldValue).toHaveBeenCalledWith('testField', 'Option 1');
     });
