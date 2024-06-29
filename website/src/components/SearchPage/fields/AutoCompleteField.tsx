@@ -138,14 +138,14 @@ export const AutoCompleteField = ({
                         filteredOptions.map((option) => (
                             <ComboboxOption
                                 key={option.option}
-                                className={({ active }) =>
+                                className={({ focus }) =>
                                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                                        active ? 'bg-blue-500 text-white' : 'text-gray-900'
+                                        focus ? 'bg-blue-500 text-white' : 'text-gray-900'
                                     }`
                                 }
                                 value={option.option}
                             >
-                                {({ selected, active }) => (
+                                {({ selected, focus }) => (
                                     <>
                                         <span className={`inline-block ${selected ? 'font-medium' : 'font-normal'}`}>
                                             {option.option}
@@ -154,7 +154,7 @@ export const AutoCompleteField = ({
                                         {selected && (
                                             <span
                                                 className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                                                    active ? 'text-white' : 'text-blue-500'
+                                                    focus ? 'text-white' : 'text-blue-500'
                                                 }`}
                                             >
                                                 <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 20 20'>

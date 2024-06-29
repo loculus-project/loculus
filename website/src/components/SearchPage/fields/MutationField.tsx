@@ -251,8 +251,8 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                                 <ComboboxOption
                                     key={index}
                                     value={option}
-                                    className={({ active }) =>
-                                        `${active ? 'text-white bg-blue-600' : 'text-gray-900'} cursor-default select-none relative py-2 pl-10 pr-4`
+                                    className={({ focus }) =>
+                                        `${focus ? 'text-white bg-blue-600' : 'text-gray-900'} cursor-default select-none relative py-2 pl-10 pr-4`
                                     }
                                 >
                                     {({ selected }) => (
