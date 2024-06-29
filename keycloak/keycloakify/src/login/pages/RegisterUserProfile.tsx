@@ -74,8 +74,11 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                     <div style={{
                         marginLeft: "1.5em",
                          marginRight: "1.5em"
-                    }}>
-                    {kcContext.properties.REGISTRATION_TERMS_MESSAGE}
+                    }}
+                    >
+                        <div>
+                    dangerouslySetInnerHTML={{__html: kcContext.properties.REGISTRATION_TERMS_MESSAGE}}
+                    </div>
                     <div>
                     <label><input
                         type="checkbox"
