@@ -3,6 +3,8 @@ import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { routes } from '../../../../routes/routes';
 import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
+import { backendApi } from '../../../../services/backendApi';
+import { createAuthorizationHeader } from '../../../../utils/createAuthorizationHeader';
 import F7Arrow2Circlepath from '~icons/f7/arrow-2-circlepath';
 import GgCheckO from '~icons/gg/check-o';
 import IcOutlineUpload from '~icons/ic/outline-upload';
@@ -10,12 +12,33 @@ import MdiViewListOutline from '~icons/mdi/view-list-outline';
 
 const { organism } = cleanOrganism(Astro.params.organism);
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
+
+// Function to get the number of unreleased sequences
+async function getUnreleasedSequencesCount(organism, groupId, accessToken) {
+    try {
+        const response = await backendApi.getSequences({
+            params: { organism },
+            headers: createAuthorizationHeader(accessToken),
+            query: {
+                groupIdsFilter: groupId.toString(),
+                statusesFilter: 'RECEIVED,IN_PROCESSING,HAS_ERRORS,AWAITING_APPROVAL'
+            }
+        });
+        return response.data.totalElements;
+    } catch (error) {
+        console.error('Error fetching unreleased sequences:', error);
+        return 0;
+    }
+}
+
 ---
 
 <SubmissionPageWrapper title='Submission portal' groupsResult={groupsResult}>
     {
         groupsResult.match(
-            ({ currentGroup: group }) => {
+            async ({ currentGroup: group }) => {
+                const unreleasedCount = await getUnreleasedSequencesCount(organism.key, group.groupId, Astro.locals.session.accessToken);
+                
                 const options = [
                     {
                         title: 'Submit',
@@ -31,7 +54,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
                     },
                     {
                         title: 'Review',
-                        description: "Review your group's unreleased submissions.",
+                        description: `Review your group's unreleased submissions. (${unreleasedCount} pending)`,
                         route: routes.userSequenceReviewPage(organism!.key, group.groupId),
                         icon: GgCheckO,
                     },
@@ -47,7 +70,7 @@ const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.s
                     <div class='max-w-2xl mx-auto p-8'>
                         <div class='flex flex-wrap'>
                             {options.map((option) => (
-                                <a
+                                
                                     href={option.route}
                                     class='block rounded border border-gray-300 p-8 m-2 w-64 text-center hover:bg-gray-100 hover:no-underline'
                                 >
