@@ -168,9 +168,13 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
         setOptions(newOptions);
     };
 
-    const handleOptionClick = (option: MutationQuery[] | MutationQuery) => {
+    const handleOptionClick = (option: MutationQuery[] | MutationQuery | null) => {
         if (Array.isArray(option)) {
             option = option[0];
+        }
+        // Unclear how to handle null here, necessary since headlessui v2
+        if (!option) {
+            return;
         }
         const newSelectedOptions = [...selectedOptions, option];
         onChange(serializeMutationQueries(newSelectedOptions));
