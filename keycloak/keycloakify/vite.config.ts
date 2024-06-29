@@ -14,7 +14,7 @@ export default defineConfig({
       // See: https://docs.keycloakify.dev/build-options#themename
       themeName: "loculus",
       // See: https://docs.keycloakify.dev/environnement-variables
-      extraThemeProperties: ["MY_ENV_VARIABLE=${env.MY_ENV_VARIABLE:}"],
+      extraThemeProperties: ["REGISTRATION_TERMS_MESSAGE=${env.REGISTRATION_TERMS_MESSAGE:}"],
       // This is a hook that will be called after the build is done
       // but before the jar is created.
       // You can use it to add/remove/edit your theme files.

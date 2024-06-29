@@ -1190,3 +1190,5 @@ enableCrossRefCredentials: true
 runDevelopmentKeycloakDatabase: true
 runDevelopmentMainDatabase: true
 enforceHTTPS: true
+registrationTermsMessage: >
+   You must agree to the <a href="http://main.loculus.org/terms">terms of use</a>.
