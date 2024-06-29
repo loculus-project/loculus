@@ -2,23 +2,23 @@
 import { cleanOrganism } from '../../../../components/Navigation/cleanOrganism';
 import SubmissionPageWrapper from '../../../../components/Submission/SubmissionPageWrapper.astro';
 import { routes } from '../../../../routes/routes';
-import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 import { BackendClient } from '../../../../services/backendClient';
 import { createAuthorizationHeader } from '../../../../utils/createAuthorizationHeader';
+import { getAccessToken } from '../../../../utils/getAccessToken';
+import { getGroupsAndCurrentGroup } from '../../../../utils/submissionPages';
 import F7Arrow2Circlepath from '~icons/f7/arrow-2-circlepath';
 import GgCheckO from '~icons/gg/check-o';
 import IcOutlineUpload from '~icons/ic/outline-upload';
 import MdiViewListOutline from '~icons/mdi/view-list-outline';
-import { getAccessToken } from '../../../../utils/getAccessToken';
-
 
 const session = Astro.locals.session!;
 const accessToken = getAccessToken(session)!;
 
 const { organism } = cleanOrganism(Astro.params.organism);
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
+
 // Updated function to use backendClient.call
-async function getSequenceCounts(organism, groupId) {
+async function getSequenceCounts(organism: string, groupId: number) {
     const backendClient = BackendClient.create();
     try {
         const response = await backendClient.call('getSequences', {
@@ -29,20 +29,23 @@ async function getSequenceCounts(organism, groupId) {
                 statusesFilter: 'RECEIVED,IN_PROCESSING,HAS_ERRORS,AWAITING_APPROVAL'
             }
         });
+
+        if (response.isErr()) {
+            throw new Error('Failed to fetch sequences');
+        }
+
         const statusCounts = response.value.statusCounts;
         const { APPROVED_FOR_RELEASE, ...others } = statusCounts;
 
-        const othersTotal = Object.values(others).reduce((sum: number, count: number) => sum + count, 0);
+        const othersTotal = Object.values(others).reduce((sum:number, count) => sum + (count as number), 0);
         const approvedTotal = APPROVED_FOR_RELEASE || 0;
         return { othersTotal, approvedTotal };
-
 
     } catch (error) {
         console.error('Error fetching unreleased sequences:', error);
         return { othersTotal: -1, approvedTotal: -1 };
     }
 }
-
 
 ---
 
@@ -97,8 +100,8 @@ async function getSequenceCounts(organism, groupId) {
                                         {option.title}
                                     </h3>
                                     <p class='text-gray-700 text-sm'>{option.description}</p>
-                                    {option.count !== undefined && option.count>0 && (
-                                        <p class={` text-sm mt-2 ${option.countClass || ''}`}>
+                                    {option.count !== undefined && option.count > 0 && (
+                                        <p class={`text-sm mt-2 ${option.countClass || ''}`}>
                                             {option.count} sequences {option.countType || ''}
                                         </p>
                                     )}
