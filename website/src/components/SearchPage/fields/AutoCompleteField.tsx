@@ -1,4 +1,4 @@
-import { Combobox } from '@headlessui/react';
+import { Combobox, ComboboxButton, ComboboxInput, ComboboxOption, ComboboxOptions } from '@headlessui/react';
 import { useEffect, useMemo, useState, useRef, forwardRef } from 'react';
 
 import { TextField } from './TextField.tsx';
@@ -87,7 +87,7 @@ export const AutoCompleteField = ({
     return (
         <Combobox value={fieldValue} onChange={(value) => setAFieldValue(field.name, value)}>
             <div className='relative'>
-                <Combobox.Input
+                <ComboboxInput
                     className='w-full py-2 pl-3  text-sm leading-5
         text-gray-900 border border-gray-300 rounded-md focus:outline-none
          focus:ring-2 focus:ring-blue-500 focus:border-blue-500
@@ -116,16 +116,16 @@ export const AutoCompleteField = ({
                         </svg>
                     </button>
                 )}
-                <Combobox.Button
+                <ComboboxButton
                     className='absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none'
                     ref={buttonRef}
                 >
                     <svg className='w-5 h-5 text-gray-400' fill='currentColor' viewBox='0 0 20 20'>
                         <path d='M7 7l3-3 3 3m0 6l-3 3-3-3' />
                     </svg>
-                </Combobox.Button>
+                </ComboboxButton>
 
-                <Combobox.Options
+                <ComboboxOptions
                     className='absolute z-20 w-full py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm
           min-h-32
           '
@@ -136,7 +136,7 @@ export const AutoCompleteField = ({
                         <div className='px-4 py-2 text-gray-500'>No options available</div>
                     ) : (
                         filteredOptions.map((option) => (
-                            <Combobox.Option
+                            <ComboboxOption
                                 key={option.option}
                                 className={({ active }) =>
                                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
@@ -168,10 +168,10 @@ export const AutoCompleteField = ({
                                         )}
                                     </>
                                 )}
-                            </Combobox.Option>
+                            </ComboboxOption>
                         ))
                     )}
-                </Combobox.Options>
+                </ComboboxOptions>
             </div>
         </Combobox>
     );

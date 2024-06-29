@@ -1,4 +1,4 @@
-import { Disclosure } from '@headlessui/react';
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import type { MDXInstance } from 'astro';
 import React from 'react';
 
@@ -53,17 +53,17 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl }) => {
                     <div className='flex items-center justify-between px-4 py-3 bg-gray-100'>
                         <div className='text-lg font-semibold text-primary-600'>Documentation</div>
                         <div className='sm:hidden'>
-                            <Disclosure.Button className='text-primary-600 hover:text-primary-800 focus:outline-none'>
+                            <DisclosureButton className='text-primary-600 hover:text-primary-800 focus:outline-none'>
                                 {open ? (
                                     <XIcon className='w-6 h-6' aria-hidden='true' />
                                 ) : (
                                     <MenuIcon className='w-6 h-6' aria-hidden='true' />
                                 )}
-                            </Disclosure.Button>
+                            </DisclosureButton>
                         </div>
                     </div>
 
-                    <Disclosure.Panel className='sm:hidden'>
+                    <DisclosurePanel className='sm:hidden'>
                         <ul className='list-none m-0 p-0'>
                             {Object.entries(groupedPages).map(([dir, pages]) => (
                                 <li key={dir} className='border-b border-gray-200 last:border-0'>
@@ -87,7 +87,7 @@ const DocsMenu: React.FC<DocsMenuProps> = ({ docsPages, currentPageUrl }) => {
                                 </li>
                             ))}
                         </ul>
-                    </Disclosure.Panel>
+                    </DisclosurePanel>
 
                     <div className='hidden sm:block'>
                         <ul className='list-none m-0 p-0'>

@@ -1,4 +1,4 @@
-import { Combobox, Transition } from '@headlessui/react';
+import { Combobox, ComboboxInput, ComboboxOption, ComboboxOptions, Transition } from '@headlessui/react';
 import { type FC, Fragment, useMemo, useState } from 'react';
 import * as React from 'react';
 
@@ -226,7 +226,7 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                         >
                             Mutations
                         </label>
-                        <Combobox.Input
+                        <ComboboxInput
                             onFocus={() => setHasFocus(true)}
                             onBlur={() => setHasFocus(false)}
                             placeholder={hasFocus ? '' : selectedOptions.length === 0 ? 'Mutations' : 'Enter mutation'}
@@ -246,9 +246,9 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                         leaveFrom='opacity-100'
                         leaveTo='opacity-0'
                     >
-                        <Combobox.Options className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm'>
+                        <ComboboxOptions className='absolute w-full z-20 py-1 mt-1 overflow-auto text-base bg-white rounded-md shadow-lg max-h-60 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm'>
                             {options.map((option, index) => (
-                                <Combobox.Option
+                                <ComboboxOption
                                     key={index}
                                     value={option}
                                     className={({ active }) =>
@@ -260,9 +260,9 @@ export const MutationField: FC<MutationFieldProps> = ({ referenceGenomesSequence
                                             {option.text}
                                         </span>
                                     )}
-                                </Combobox.Option>
+                                </ComboboxOption>
                             ))}
-                        </Combobox.Options>
+                        </ComboboxOptions>
                     </Transition>
                 </div>
             </Combobox>
