@@ -69,13 +69,7 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                     </div>
                 )}
                 <div className={getClassName("kcFormGroupClass")} style={{ "marginBottom": 30 }}>
-                    <div id="kc-form-options" className={getClassName("kcFormOptionsClass")}>
-                        <div className={getClassName("kcFormOptionsWrapperClass")}>
-                            <span>
-                                <a href={url.loginUrl}>{msg("backToLogin")}</a>
-                            </span>
-                        </div>
-                    </div>
+                   
 
                     <div style={{
                         marginLeft: "1.5em",
@@ -110,6 +104,13 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                             value={msgStr("doRegister")}
                             disabled={!isFormSubmittable || !didAgree}
                         />
+                    </div>
+                    <div id="kc-form-options" className={getClassName("kcFormOptionsClass")}>
+                        <div className={getClassName("kcFormOptionsWrapperClass")}>
+                            <span>
+                                <a href={url.loginUrl}>{msg("backToLogin")}</a>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </form>
