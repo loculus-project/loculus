@@ -77,17 +77,21 @@ export default function RegisterUserProfile(props: PageProps<Extract<KcContext, 
                         </div>
                     </div>
 
+                    <div style={{
+                        marginLeft: "1.5em",
+                         marginRight: "1.5em"
+                    }}>
+                    {kcContext.properties.REGISTRATION_TERMS_MESSAGE}
                     <div>
-                    {kcContext.properties.MY_ENV_VARIABLE}
-                    <div>
-                    <input
+                    <label><input
                         type="checkbox"
                         id="terms"
                         name="terms"
                         onChange={(e) => {
                             setDidAgree(e.target.checked);
                         }}
-                    /> I agree
+                    /> I agree</label>
+                    
 </div>
 
                 </div>

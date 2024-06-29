@@ -47,7 +47,7 @@ spec:
             limits:
               memory: "3Gi"
           env:
-            - name: MY_ENV_VARIABLE
+            - name: REGISTRATION_TERMS_MESSAGE
               value: Testing, 1 2 3
             - name: KC_DB
               value: postgres
