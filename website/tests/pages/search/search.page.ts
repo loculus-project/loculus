@@ -39,7 +39,7 @@ export class SearchPage {
         const accessions = [];
 
         for (let index = 1; index < 1 + elementsCount; index++) {
-            const element = await rowLocator.nth(index);
+            const element = rowLocator.nth(index);
             const innerText = await element.innerText();
             accessions.push(innerText.split(' ')[0]);
         }

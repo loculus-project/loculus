@@ -26,7 +26,7 @@ test.describe('The search page', () => {
             `${baseUrl}${routes.searchPage(dummyOrganism.key)}?accession=${testAccessionVersion}`,
         );
         const accessionLink = searchPage.page.getByRole('link', { name: testAccessionVersion });
-        await searchPage.page.getByText('Search returned 1 sequence');
+        searchPage.page.getByText('Search returned 1 sequence');
         await expect(accessionLink).toBeVisible();
 
         const rowLocator = searchPage.page.locator('tr');
@@ -77,9 +77,9 @@ test.describe('The search page', () => {
         await searchPage.searchFor([{ name: 'country', filterValue: 'Switzerland' }]);
 
         await searchPage.page.locator('tr').first().waitFor();
-        const rowLocator = await searchPage.page.locator('tr').getByText('Switzerland');
+        const rowLocator = searchPage.page.locator('tr').getByText('Switzerland');
         const rowCount = await rowLocator.count();
-        await expect(rowCount).toBeGreaterThan(0);
+        expect(rowCount).toBeGreaterThan(0);
     });
 
     test('should reset the search', async ({ searchPage }) => {

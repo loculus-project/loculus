@@ -1,4 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { AutoCompleteField } from './AutoCompleteField';
@@ -35,7 +36,7 @@ describe('AutoCompleteField', () => {
         setAFieldValue.mockClear();
     });
 
-    it('renders input and shows all all options on empty input', async () => {
+    it('renders input and shows all options on empty input', async () => {
         mockUseAggregated.mockReturnValue({
             data: {
                 data: [
@@ -167,10 +168,10 @@ describe('AutoCompleteField', () => {
         );
 
         const input = screen.getByLabelText('Test Field');
-        fireEvent.focus(input);
+        await userEvent.click(input);
 
         const options = await screen.findAllByRole('option');
-        fireEvent.click(options[0]);
+        await userEvent.click(options[0]);
 
         expect(setAFieldValue).toHaveBeenCalledWith('testField', 'Option 1');
     });

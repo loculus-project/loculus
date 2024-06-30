@@ -1,4 +1,4 @@
-import { Dialog, Transition } from '@headlessui/react';
+import { Dialog, DialogPanel, Transition } from '@headlessui/react';
 import React, { useEffect, useState } from 'react';
 
 import { routes } from '../../routes/routes';
@@ -124,11 +124,11 @@ export const SeqPreviewModal: React.FC<SeqPreviewModalProps> = ({
             ) : (
                 <Dialog as='div' className='fixed inset-0 z-10 overflow-y-auto' onClose={onClose}>
                     <div className='min-h-screen px-8 text-center'>
-                        <Dialog.Overlay className='fixed inset-0 bg-black opacity-30' />
-                        <div className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
+                        <div className='fixed inset-0 bg-black opacity-30' />
+                        <DialogPanel className='inline-block w-full p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl pb-0'>
                             {controls}
                             {content}
-                        </div>
+                        </DialogPanel>
                     </div>
                 </Dialog>
             )}
