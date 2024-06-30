@@ -17,7 +17,6 @@ const accessToken = getAccessToken(session)!;
 const { organism } = cleanOrganism(Astro.params.organism);
 const groupsResult = await getGroupsAndCurrentGroup(Astro.params, Astro.locals.session);
 
-// Updated function to use backendClient.call
 async function getSequenceCounts(organism: string, groupId: number) {
     const backendClient = BackendClient.create();
     try {
@@ -66,7 +65,7 @@ async function getSequenceCounts(organism: string, groupId: number) {
                     },
                     {
                         title: 'Review',
-                        description: `Review your group's unreleased submissions.`,
+                        description: "Review your group's unreleased submissions.",
                         route: routes.userSequenceReviewPage(organism!.key, group.groupId),
                         icon: GgCheckO,
                         count: othersTotal,
