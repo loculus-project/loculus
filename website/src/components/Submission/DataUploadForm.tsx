@@ -198,9 +198,9 @@ const UploadComponent = ({
             {name === 'metadata_file' && (
                 <div>
                     <span className='text-gray-500 text-sm'>
-                        {'The documentation pages contain more detail on the required'}
+                        The documentation pages contain more detail on the required
                     </span>
-                    <a href={'/docs/concepts/metadataformat'} className='text-primary-700 text-sm'>
+                    <a href='/docs/concepts/metadataformat' className='text-primary-700 text-sm'>
                         {' '}
                         metadata format{' '}
                     </a>
