@@ -9,7 +9,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mu.KotlinLogging
-import org.jetbrains.exposed.exceptions.ExposedSQLException
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.Op
@@ -62,11 +61,6 @@ import org.loculus.backend.service.datauseterms.DataUseTermsTable
 import org.loculus.backend.service.groupmanagement.GroupEntity
 import org.loculus.backend.service.groupmanagement.GroupManagementDatabaseService
 import org.loculus.backend.service.groupmanagement.GroupManagementPreconditionValidator
-import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.errorsColumn
-import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.finishedProcessingAtColumn
-import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.processedDataColumn
-import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.processingStatusColumn
-import org.loculus.backend.service.submission.SequenceEntriesPreprocessedDataTable.warningsColumn
 import org.loculus.backend.utils.Accession
 import org.loculus.backend.utils.Version
 import org.springframework.beans.factory.annotation.Value
@@ -253,33 +247,29 @@ class SubmissionDatabaseService(
             externalMetadataUpdater,
         )
 
-        try {
-            val numberInserted =
-                ExternalMetadataTable.update(
-                    where = {
-                        (ExternalMetadataTable.accessionColumn eq submittedExternalMetadata.accession) and
-                            (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
-                            (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
-                    },
-                ) {
-                    it[accessionColumn] = submittedExternalMetadata.accession
-                    it[versionColumn] = submittedExternalMetadata.version
-                    it[updaterIdColumn] = externalMetadataUpdater
-                    it[externalMetadataColumn] = submittedExternalMetadata.metadata
-                    it[updatedAtColumn] = now
-                }
-
-            if (numberInserted != 1) {
-                ExternalMetadataTable.insert {
-                    it[accessionColumn] = submittedExternalMetadata.accession
-                    it[versionColumn] = submittedExternalMetadata.version
-                    it[updaterIdColumn] = externalMetadataUpdater
-                    it[externalMetadataColumn] = submittedExternalMetadata.metadata
-                    it[updatedAtColumn] = now
-                }
+        val numberInserted =
+            ExternalMetadataTable.update(
+                where = {
+                    (ExternalMetadataTable.accessionColumn eq submittedExternalMetadata.accession) and
+                        (ExternalMetadataTable.versionColumn eq submittedExternalMetadata.version) and
+                        (ExternalMetadataTable.updaterIdColumn eq externalMetadataUpdater)
+                },
+            ) {
+                it[accessionColumn] = submittedExternalMetadata.accession
+                it[versionColumn] = submittedExternalMetadata.version
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = submittedExternalMetadata.metadata
+                it[updatedAtColumn] = now
             }
-        } catch (e: ExposedSQLException) {
-            throw e
+
+        if (numberInserted != 1) {
+            ExternalMetadataTable.insert {
+                it[accessionColumn] = submittedExternalMetadata.accession
+                it[versionColumn] = submittedExternalMetadata.version
+                it[updaterIdColumn] = externalMetadataUpdater
+                it[externalMetadataColumn] = submittedExternalMetadata.metadata
+                it[updatedAtColumn] = now
+            }
         }
     }
 
@@ -334,13 +324,9 @@ class SubmissionDatabaseService(
         externalSubmittedData: ExternalSubmittedData,
         organism: Organism,
         externalMetadataUpdater: String,
-    ) = try {
-        externalMetadataValidatorFactory
-            .create(organism)
-            .validate(externalSubmittedData.metadata, externalMetadataUpdater)
-    } catch (validationException: ProcessingValidationException) {
-        throw validationException
-    }
+    ) = externalMetadataValidatorFactory
+        .create(organism)
+        .validate(externalSubmittedData.metadata, externalMetadataUpdater)
 
     private fun throwIfIsSubmissionForWrongOrganism(
         submittedProcessedData: SubmittedProcessedData,

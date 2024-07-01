@@ -89,6 +89,25 @@ class SubmitExternalMetadataEndpointTest(
     }
 
     @Test
+    fun `WHEN I add a metadata field of another external updater THEN returns unprocessable entity`() {
+        val accessions = convenienceClient
+            .prepareDefaultSequenceEntriesToApprovedForRelease()
+            .map { it.accession }
+
+        submissionControllerClient
+            .submitexternalMetadata(
+                PreparedexternalMetadata.successfullySubmitted(accession = accessions.first()),
+                externalMetadataUpdater = "other_db",
+            )
+            .andExpect(status().isUnprocessableEntity)
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+            .andExpect(
+                jsonPath("\$.detail")
+                    .value(containsString("Unknown fields in metadata: insdc_accession_full")),
+            )
+    }
+
+    @Test
     fun `GIVEN accessions are not yet in status released THEN do not allow submission`() {
         val accessions = convenienceClient.prepareDataTo(Status.IN_PROCESSING)
 
