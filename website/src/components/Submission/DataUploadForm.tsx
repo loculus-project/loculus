@@ -128,11 +128,6 @@ const DevExampleData = ({
     );
 };
 
-type Description = {
-    text: string;
-    href: string;
-};
-
 const UploadComponent = ({
     setFile,
     name,
@@ -140,14 +135,12 @@ const UploadComponent = ({
     // eslint-disable-next-line @typescript-eslint/naming-convention
     Icon,
     fileType,
-    description,
 }: {
     setFile: (file: File | null) => void;
     name: string;
     title: string;
     Icon: ElementType;
     fileType: string;
-    description?: Description;
 }) => {
     const [myFile, rawSetMyFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -202,12 +195,14 @@ const UploadComponent = ({
     return (
         <div className='sm:col-span-4'>
             <label className='text-gray-900 font-medium text-sm block'>{title}</label>
-            {description && (
+            {name === 'metadata_file' && (
                 <div>
-                    <span className='text-gray-500 text-sm'>{description.text}</span>
-                    <a href={description.href} className='text-primary-700 text-sm'>
+                    <span className='text-gray-500 text-sm'>
+                        {'The documentation pages contain more detail on the required'}
+                    </span>
+                    <a href={'/docs/concepts/metadataformat'} className='text-primary-700 text-sm'>
                         {' '}
-                        see help pages{' '}
+                        metadata format{' '}
                     </a>
                 </div>
             )}
@@ -330,11 +325,6 @@ const InnerDataUploadForm = ({
         }
     };
 
-    const desc: Description = {
-        text: 'The file must contain the following metadata fields:',
-        href: '/docs/concepts/metadataformat',
-    };
-
     return (
         <div className='text-left mt-3 max-w-6xl'>
             <div className='flex-col flex gap-8 divide-y'>
@@ -396,7 +386,6 @@ const InnerDataUploadForm = ({
                                         setFile={setMetadataFile}
                                         name='metadata_file'
                                         title='Metadata file'
-                                        description={desc}
                                         Icon={MaterialSymbolsLightDataTableOutline}
                                         fileType='TSV file'
                                     />
