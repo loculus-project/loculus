@@ -382,6 +382,7 @@ def get_metadata(
     errors.extend(processing_result.errors)
     warnings.extend(processing_result.warnings)
 
+
     return processing_result
 
 
@@ -438,8 +439,8 @@ def process_single(
             alignedAminoAcidSequences=unprocessed.alignedAminoAcidSequences,
             aminoAcidInsertions=unprocessed.aminoAcidInsertions,
         ),
-        errors=errors,
-        warnings=warnings,
+        errors=list(set(errors)),
+        warnings=list(set(warnings)),
     )
 
 
