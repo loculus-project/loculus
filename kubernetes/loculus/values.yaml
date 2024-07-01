@@ -63,6 +63,7 @@ defaultOrganismConfig: &defaultOrganismConfig
           function: process_date
           inputs:
             date: sample_collection_date
+        required: true
       - name: ncbi_release_date
         displayName: NCBI release date
         type: date
@@ -88,6 +89,7 @@ defaultOrganismConfig: &defaultOrganismConfig
         initiallyVisible: true
         header: Sample details
         ingest: country
+        required: true
       - name: geo_loc_admin_1
         displayName: Collection subdivision level 1
         generateIndex: true
