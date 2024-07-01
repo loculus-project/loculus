@@ -7,9 +7,6 @@
     {{- if .type }}
     type: {{ .type }}
     {{- end }}
-    {{- if .noInput }}
-    no_warn: {{ .noInput }}
-    {{- end }}
   {{- if .preprocessing }}
   {{- if hasKey .preprocessing "function" }}
   function: {{ index .preprocessing "function" }}
