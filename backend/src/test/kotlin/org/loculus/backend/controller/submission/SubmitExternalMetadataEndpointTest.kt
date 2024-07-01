@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.node.TextNode
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.containsString
 import org.hamcrest.Matchers.hasEntry
+import org.hamcrest.Matchers.not
+import org.hamcrest.collection.IsMapContaining.hasKey
 import org.junit.jupiter.api.Test
 import org.loculus.backend.api.Status
 import org.loculus.backend.controller.EndpointTest
@@ -105,6 +107,10 @@ class SubmitExternalMetadataEndpointTest(
                 jsonPath("\$.detail")
                     .value(containsString("Unknown fields in metadata: insdc_accession_full")),
             )
+        val releasedSequenceEntry = convenienceClient.getReleasedData()
+            .find { it.metadata["accession"]?.textValue() == accessions.first() }
+
+        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdc_accession_full")))
     }
 
     @Test
@@ -128,6 +134,10 @@ class SubmitExternalMetadataEndpointTest(
                         ),
                     ),
             )
+        val releasedSequenceEntry = convenienceClient.getReleasedData()
+            .find { it.metadata["accession"]?.textValue() == accessions.first().accession }
+
+        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdc_accession_full")))
     }
 
     @Test
@@ -148,5 +158,9 @@ class SubmitExternalMetadataEndpointTest(
                         ),
                     ),
             )
+        val releasedSequenceEntry = convenienceClient.getReleasedData()
+            .find { it.metadata["accession"]?.textValue() == accession }
+
+        assertThat(releasedSequenceEntry?.metadata, not(hasKey("insdc_accession_full")))
     }
 }
