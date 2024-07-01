@@ -194,7 +194,18 @@ const UploadComponent = ({
     }, [myFile, setMyFile]);
     return (
         <div className='sm:col-span-4'>
-            <label className='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
+            <label className='text-gray-900 font-medium text-sm block'>{title}</label>
+            {name === 'metadata_file' && (
+                <div>
+                    <span className='text-gray-500 text-xs'>
+                        The documentation pages contain more details on the required
+                    </span>
+                    <a href='/docs/concepts/metadataformat' className='text-primary-700 text-xs'>
+                        {' '}
+                        metadata format{' '}
+                    </a>
+                </div>
+            )}
             <div
                 className={`mt-2 flex flex-col h-40 rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
                 onDragOver={handleDragOver}
@@ -341,11 +352,7 @@ const InnerDataUploadForm = ({
 
                         <p className='text-gray-400 text-xs mt-3'>
                             Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{' '}
-                            <i>.zip</i>, <i>.xz</i>).
-                        </p>
-                        <p className='text-gray-400 text-xs mt-3'>
-                            For more information on the format in which data should be uploaded and the required
-                            metadata, please refer to our{' '}
+                            <i>.zip</i>, <i>.xz</i>). For more information please refer to our{' '}
                             <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>
                                 help pages
                             </a>

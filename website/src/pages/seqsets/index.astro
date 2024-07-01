@@ -66,6 +66,19 @@ const editAccountUrl = (await urlForKeycloakAccountPage(keycloakClient!)) + '/#/
                                     />
                                 </div>
                                 <div>
+                                    <p>
+                                        SeqSets are collections of sequences with a unique identifier that can be used
+                                        to reference that set of sequences. SeqSets can also be used to generate DOIs,
+                                        which can in turn be used in publications, public communications etc.
+                                    </p>
+                                    <p class='py-4'>
+                                        You can learn how to generate SeqSets
+                                        <a href='/docs/how-to/generate_seqset' class='text-primary-700  opacity-90'>
+                                            here.
+                                        </a>
+                                    </p>
+                                </div>
+                                <div>
                                     {seqSetsResponse.match(
                                         (seqSets) => (
                                             <SeqSetList seqSets={seqSets} username={username} client:load />
