@@ -128,6 +128,11 @@ const DevExampleData = ({
     );
 };
 
+type Description = {
+    text: string;
+    href: string;
+};
+
 const UploadComponent = ({
     setFile,
     name,
@@ -135,12 +140,14 @@ const UploadComponent = ({
     // eslint-disable-next-line @typescript-eslint/naming-convention
     Icon,
     fileType,
+    description,
 }: {
     setFile: (file: File | null) => void;
     name: string;
     title: string;
     Icon: ElementType;
     fileType: string;
+    description?: Description;
 }) => {
     const [myFile, rawSetMyFile] = useState<File | null>(null);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -194,7 +201,16 @@ const UploadComponent = ({
     }, [myFile, setMyFile]);
     return (
         <div className='sm:col-span-4'>
-            <label className='text-gray-900 leading-6 font-medium text-sm block'>{title}</label>
+            <label className='text-gray-900 font-medium text-sm block'>{title}</label>
+            {description && (
+                <div>
+                    <a className='text-gray-500 text-sm'>{description.text}</a>
+                    <a href={description.href} className='text-primary-700 text-sm'>
+                        {' '}
+                        see help pages{' '}
+                    </a>
+                </div>
+            )}
             <div
                 className={`mt-2 flex flex-col h-40 rounded-lg border ${myFile ? 'border-hidden' : 'border-dashed border-gray-900/25'} ${isDragOver && !myFile ? 'bg-green-100' : ''}`}
                 onDragOver={handleDragOver}
@@ -314,6 +330,11 @@ const InnerDataUploadForm = ({
         }
     };
 
+    const desc: Description = {
+        text: 'The file must contain the following metadata fields:',
+        href: '/docs/concepts/metadataformat',
+    };
+
     return (
         <div className='text-left mt-3 max-w-6xl'>
             <div className='flex-col flex gap-8 divide-y'>
@@ -341,11 +362,7 @@ const InnerDataUploadForm = ({
 
                         <p className='text-gray-400 text-xs mt-3'>
                             Files can optionally be compressed, with the appropriate extension (<i>.zst</i>, <i>.gz</i>,{' '}
-                            <i>.zip</i>, <i>.xz</i>).
-                        </p>
-                        <p className='text-gray-400 text-xs mt-3'>
-                            For more information on the format in which data should be uploaded and the required
-                            metadata, please refer to our{' '}
+                            <i>.zip</i>, <i>.xz</i>). For more information please refer to our{' '}
                             <a href='/docs/concepts/metadataformat' className='text-primary-700 opacity-90'>
                                 help pages
                             </a>
@@ -379,6 +396,7 @@ const InnerDataUploadForm = ({
                                         setFile={setMetadataFile}
                                         name='metadata_file'
                                         title='Metadata file'
+                                        description={desc}
                                         Icon={MaterialSymbolsLightDataTableOutline}
                                         fileType='TSV file'
                                     />
